@@ -106,7 +106,8 @@ MongoClient mongoClient = MongoClients.create("mongodb://user1:pwd1@host1/?authS
 ### SCRAM-SHA-1
 
 To explicitly create a credential of type [`SCRAM-SHA-1`]({{<docsref "core/security-scram/">}}), use the
-[`createScramSha1Credential`]({{<apiref "com/mongodb/MongoCredential.html#createScramSha1Credential(java.lang.String,java.lang.String,char[])">}}) method:
+[`createScramSha1Credential`]({{<apiref "com/mongodb/MongoCredential.html#createScramSha1Credential(java.lang.String,java.lang.String,char[])">}}) 
+method:
 
 
 ```java
@@ -198,7 +199,7 @@ Or use a connection string that explicitly specifies the `authMechanism=MONGODB-
 MongoClient mongoClient = MongoClients.create("mongodb://subjectName@host1/?authMechanism=MONGODB-X509&ssl=true");
 ```
 
-See the MongoDB server [x.509 tutorial]({{<apiref "tutorial/configure-x509-client-authentication/#add-x-509-certificate-subject-as-a-user">}})
+See the MongoDB server [x.509 tutorial]({{<docsref "tutorial/configure-x509-client-authentication/#add-x-509-certificate-subject-as-a-user">}})
 for more information about determining the subject
 name from the certificate.
 
@@ -206,7 +207,7 @@ name from the certificate.
 
 [MongoDB Enterprise](http://www.mongodb.com/products/mongodb-enterprise) supports proxy
 authentication through Kerberos service. To create a credential of type
-[Kerberos (GSSAPI)]({{<apiref "core/authentication/#kerberos-authentication">}}), use the
+[Kerberos (GSSAPI)]({{<docsref "core/authentication/#kerberos-authentication">}}), use the
 [`createGSSAPICredential`]({{<apiref "com/mongodb/MongoCredential.html#createGSSAPICredential(java.lang.String)">}})
 static factory method:
 
@@ -284,7 +285,8 @@ interoperability with Windows Active Directory and in particular the ability to 
 
 ## LDAP (PLAIN)
 
-[MongoDB Enterprise](http://www.mongodb.com/products/mongodb-enterprise) supports proxy authentication through a Lightweight Directory Access Protocol (LDAP) service. To create a credential of type [LDAP]({{<apiref "core/authentication/#ldap-proxy-authority-authentication">}}) use the
+[MongoDB Enterprise](http://www.mongodb.com/products/mongodb-enterprise) supports proxy authentication through a Lightweight Directory
+Access Protocol (LDAP) service. To create a credential of type [LDAP]({{<docsref "core/authentication/#ldap-proxy-authority-authentication ">}}) use the
 [`createPlainCredential`]({{<apiref "com/mongodb/MongoCredential.html#createPlainCredential(java.lang.String,java.lang.String,char[])">}}) static factory method:
 
 ```java

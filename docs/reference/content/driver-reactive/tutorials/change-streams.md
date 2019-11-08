@@ -63,9 +63,7 @@ To create a change stream use one of the [`MongoCollection.watch()`]({{<apiref "
 In the following example, the change stream prints out all changes it observes.
 
 ```java
-OperationSubscriber<Document> subscriber = new PrintDocumentSubscriber();
-collection.watch().subscribe(subscriber);
-subscriber.await(); // Block on the subscriber
+collection.watch().subscribe(new PrintDocumentSubscriber());
 ```
 
 ## Watch the database
@@ -76,9 +74,7 @@ create such a change stream use one of the [`MongoDatabase.watch()`]({{<apiref "
 In the following example, the change stream prints out all the changes it observes on the given database.
 
 ```java
-subscriber = new PrintDocumentSubscriber();
-database.watch().subscribe(subscriber);
-subscriber.await();
+database.watch().subscribe(new PrintDocumentSubscriber());
 ```
 
 ## Watch all databases
@@ -87,13 +83,11 @@ New in the 3.8 driver and MongoDB 4.0, applications can open a single change str
 in a MongoDB deployment. To create such a change stream use one of the 
 [`MongoClient.watch()`]({{<apiref "com/mongodb/client/MongoClient.html#watch">}}) methods.
 
-In the following example, the change stream prints out all the changes it observes on the deployement to which the `MongoClient` is
+In the following example, the change stream prints out all the changes it observes on the deployment to which the `MongoClient` is
 connected
 
 ```java
-subscriber = new PrintDocumentSubscriber();
-client.watch().subscribe(subscriber);
-subscriber.await();
+client.watch().subscribe(new PrintDocumentSubscriber());
 ```
 
 ## Filtering content
@@ -111,8 +105,6 @@ is either an `insert`, `update`, `replace` or `delete`.
 so that the document after the update is included in the results.
 
 ```java
-subscriber = new PrintDocumentSubscriber();
 collection.watch(asList(Aggregates.match(Filters.in("operationType", asList("insert", "update", "replace", "delete")))))
-        .fullDocument(FullDocument.UPDATE_LOOKUP).subscribe(subscriber);
-subscriber.await();
+        .fullDocument(FullDocument.UPDATE_LOOKUP).subscribe(new PrintDocumentSubscriber());
 ```

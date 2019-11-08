@@ -55,7 +55,7 @@ For additional information on connecting to MongoDB, see [Connect to MongoDB]({{
 
 ## Query a Collection
 
-To query the collection, you can use the collection's [`find()`]({{< apiref "com/mongodb/reactivestreams/client/MongoCollection.html#find--">}}) method.
+To query the collection, you can use the collection's [`find()`]({{< apiref "com/mongodb/reactivestreams/client/MongoCollection.html#find()">}}) method.
 
 You can call the method without any arguments to query all documents in a collection:
 
@@ -72,7 +72,7 @@ collection.find(eq("name", "456 Cookies Shop"))
 
 ## Query Filters
 
-To query for documents that match certain conditions, pass a filter document to the [`find()`]({{< apiref "com/mongodb/reactivestreams/client/MongoCollection.html#find--">}}) method.
+To query for documents that match certain conditions, pass a filter document to the [`find()`]({{< apiref "com/mongodb/reactivestreams/client/MongoCollection.html#find()">}}) method.
 
 ### Empty Filter
 
@@ -82,7 +82,7 @@ To specify an empty filter (i.e. match all documents in a collection), use an em
 collection.find(new Document()).subscribe(new PrintDocumentSubscriber());
 ```
 {{% note class="tip"%}}
-For the [`find()`]({{< apiref "com/mongodb/reactivestreams/client/MongoCollection.html#find--">}}) method, you can also call the method without passing a filter object to match all documents in a collection.
+For the [`find()`]({{< apiref "com/mongodb/reactivestreams/client/MongoCollection.html#find()">}}) method, you can also call the method without passing a filter object to match all documents in a collection.
 {{% /note %}}
 
 ```java
@@ -118,7 +118,7 @@ See also the  [Query Documents Tutorial]({{<docsref "tutorial/query-documents">}
 
 ## FindPublisher
 
-The [`find()`]({{< apiref "com/mongodb/reactivestreams/client/MongoCollection.html#find--">}}) method returns an instance of the [`FindPublisher`]({{< apiref "com/mongodb/reactivestreams/client/FindPublisher.html" >}}) interface. The interface provides various methods that you can chain to the `find()` method to modify the output or behavior of the query, such as [`sort()`]({{<apiref "com/mongodb/reactivestreams/client/FindPublisher.html#sort-org.bson.conversions.Bson-">}})  or [`projection()`]({{<apiref "com/mongodb/reactivestreams/client/FindPublisher.html#projection-org.bson.conversions.Bson-">}}), as well as for iterating the results via the `subscribe` method.
+The [`find()`]({{< apiref "com/mongodb/reactivestreams/client/MongoCollection.html#find()">}}) method returns an instance of the [`FindPublisher`]({{< apiref "com/mongodb/reactivestreams/client/FindPublisher.html" >}}) interface. The interface provides various methods that you can chain to the `find()` method to modify the output or behavior of the query, such as [`sort()`]({{<apiref "com/mongodb/reactivestreams/client/FindPublisher.html#sort(org.bson.conversions.Bson)">}})  or [`projection()`]({{<apiref "com/mongodb/reactivestreams/client/FindPublisher.html#projection(org.bson.conversions.Bson)">}}), as well as for iterating the results via the `subscribe` method.
 
 ### Projections
 
@@ -144,14 +144,14 @@ collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery"))
           .subscribe(new PrintDocumentSubscriber());
 ```
 
-In the projection document, you can also specify a projection expression using a [projection operator]({{<apiref "reference/operator/projection/">}})
+In the projection document, you can also specify a projection expression using a [projection operator]({{<docsref "reference/operator/projection/">}})
 
-For an example on using the [`Projections.metaTextScore`]({{<apiref "com/mongodb/client/model/Projections.html#metaTextScore-java.lang.String-">}}),
+For an example on using the [`Projections.metaTextScore`]({{<apiref "com/mongodb/client/model/Projections.html#metaTextScore(java.lang.String)">}}),
 see the [Text Search tutorial]({{<relref "driver-reactive/tutorials/text-search.md">}}).
 
 ### Sorts
 
-To sort documents, pass a [sort specification document]({{<docsref "reference/method/cursor.sort/#cursor.sort">}}) to the [`FindPublisher.sort()`]({{<apiref "com/mongodb/reactivestreams/client/FindPublisher.html#sort-org.bson.conversions.Bson-">}}) method.  The Java driver provides [`Sorts`]({{< relref "builders/sorts.md">}}) helpers to facilitate the sort specification document.
+To sort documents, pass a [sort specification document]({{<docsref "reference/method/cursor.sort/#cursor.sort">}}) to the [`FindPublisher.sort()`]({{<apiref "com/mongodb/reactivestreams/client/FindPublisher.html#sort(org.bson.conversions.Bson)">}}) method.  The Java driver provides [`Sorts`]({{< relref "builders/sorts.md">}}) helpers to facilitate the sort specification document.
 
 ```java
 collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery")))
@@ -191,14 +191,14 @@ For read operations on [replica sets]({{<docsref "replication/">}}) or [sharded 
       MongoClient mongoClient = MongoClients.create("mongodb://host1:27017,host2:27017/?readPreference=secondary");
       ```
 
-- In a [`MongoDatabase`]({{<apiref "com/mongodb/reactivestreams/client/MongoDatabase.html">}}) via its [`withReadPreference`]({{<apiref "com/mongodb/reactivestreams/client/MongoDatabase.html#withReadPreference-com.mongodb.ReadPreference-">}}) method.
+- In a [`MongoDatabase`]({{<apiref "com/mongodb/reactivestreams/client/MongoDatabase.html">}}) via its [`withReadPreference`]({{<apiref "com/mongodb/reactivestreams/client/MongoDatabase.html#withReadPreference(com.mongodb.ReadPreference)">}}) method.
 
     ```java
     MongoDatabase database = mongoClient.getDatabase("test")
                              .withReadPreference(ReadPreference.secondary());
     ```
 
-- In a [`MongoCollection`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html">}}) via its [`withReadPreference`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html#withReadPreference-com.mongodb.ReadPreference-">}}) method:
+- In a [`MongoCollection`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html">}}) via its [`withReadPreference`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html#withReadPreference(com.mongodb.ReadPreference)">}}) method:
 
     ```java
     MongoCollection<Document> collection = database.getCollection("restaurants")
@@ -234,14 +234,14 @@ For read operations on [replica sets]({{<docsref "replication/">}}) or [sharded 
       MongoClient mongoClient = MongoClients.create("mongodb://host1:27017,host2:27017/?readConcernLevel=majority");
       ```
 
-- In a [`MongoDatabase`]({{<apiref "com/mongodb/reactivestreams/client/MongoDatabase.html">}}) via its [`withReadConcern`]({{<apiref "com/mongodb/reactivestreams/client/MongoDatabase.html#withReadConcern-com.mongodb.ReadConcern-">}}) method, as in the following example:
+- In a [`MongoDatabase`]({{<apiref "com/mongodb/reactivestreams/client/MongoDatabase.html">}}) via its [`withReadConcern`]({{<apiref "com/mongodb/reactivestreams/client/MongoDatabase.html#withReadConcern(com.mongodb.ReadConcern)">}}) method, as in the following example:
 
     ```java
     MongoDatabase database = mongoClient.getDatabase("test")
                                         .withReadConcern(ReadConcern.MAJORITY);
     ```
 
-- In a [`MongoCollection`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html">}}) via its [`withReadConcern`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html#withReadConcern-com.mongodb.ReadConcern-">}}) method, as in the following example:
+- In a [`MongoCollection`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html">}}) via its [`withReadConcern`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html#withReadConcern(com.mongodb.ReadConcern)">}}) method, as in the following example:
 
     ```java
     MongoCollection<Document> collection = database.getCollection("restaurants")

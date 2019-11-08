@@ -42,7 +42,7 @@ the `Subscription` is not cancelled.
 For more information about reactive streams go to: [http://www.reactive-streams.org](http://www.reactive-streams.org).
 
 
-## From Async Callbacks to Subscribers
+## Subscribers
 
 The MongoDB Reactive Streams Driver API mirrors the Sync driver API and any methods that cause network IO return a `Publisher<T>`, 
 where `T` is the type of response for the operation.  

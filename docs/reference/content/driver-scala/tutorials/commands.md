@@ -10,7 +10,7 @@ pre = "<i class='fa'></i>"
 
 ## Run Commands
 
-Not all commands have a specific helper. However you can run any [MongoDB command]({{<docsref "reference/command">}}) by using the MongoDatabase's [`runCommand()`]({{<apiref "org/mongodb/scala/MongoDatabase.html#runCommand-org.bson.conversions.Bson-com.mongodb.ReadPreference-">}}) method.
+Not all commands have a specific helper. However you can run any [MongoDB command]({{<docsref "reference/command">}}) by using the MongoDatabase's [`runCommand()`]({{<scapiref "org/mongodb/scala/MongoDatabase.html#runCommand-org.bson.conversions.Bson-com.mongodb.ReadPreference-">}}) method.
 
 ## Prerequisites
 
@@ -41,7 +41,7 @@ For additional information on connecting to MongoDB, see [Connect to MongoDB]({{
 
 ## Run `buildInfo` and `collStats` Commands
 
-To run a command, construct a [`Document`]({{< apiref "org/mongodb/scala/bson/index.html#Document:org.mongodb.scala.bson.collection.immutable.Document.type" >}})
+To run a command, construct a [`Document`]({{< scapiref "org/mongodb/scala/bson/index.html#Document:org.mongodb.scala.bson.collection.immutable.Document.type" >}})
 object that specifies the command and pass it to the `runCommand()` method.
 
 The following runs the [`buildInfo`]({{<docsref "reference/command/buildInfo">}}) command and the [`collStats`]({{<docsref "reference/command/collStats">}}) command:

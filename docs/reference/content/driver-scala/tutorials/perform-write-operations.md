@@ -47,7 +47,7 @@ For additional information on connecting to MongoDB, see [Connect to MongoDB]({{
 
 ## Insert New Document
 
-To insert a single document into the collection, you can use the collection's [`insertOne()`]({{< apiref "org/mongodb/scala/MongoCollection.html#insertOne(document:TResult,options:org.mongodb.scala.model.InsertOneOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.Completed]" >}}) method.
+To insert a single document into the collection, you can use the collection's [`insertOne()`]({{< scapiref "org/mongodb/scala/MongoCollection.html#insertOne(document:TResult,options:org.mongodb.scala.model.InsertOneOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.Completed]" >}}) method.
 
 ```scala
 val document = Document("name" -> "Café Con Leche" , 
@@ -65,7 +65,7 @@ If no top-level `_id` field is specified in the document, the Java driver automa
 
 ## Insert Multiple Documents
 
-To add multiple documents, you can use the collection's [`insertMany()`]({{< apiref "org/mongodb/scala/MongoCollection.html#insertMany(documents:Seq[_<:TResult]):org.mongodb.scala.SingleObservable[org.mongodb.scala.Completed]" >}}) method, which takes a list of documents to insert.
+To add multiple documents, you can use the collection's [`insertMany()`]({{< scapiref "org/mongodb/scala/MongoCollection.html#insertMany(documents:Seq[_<:TResult]):org.mongodb.scala.SingleObservable[org.mongodb.scala.Completed]" >}}) method, which takes a list of documents to insert.
 
 The following example inserts two documents to the collection:
 
@@ -90,19 +90,19 @@ If no top-level `_id` field is specified in the documents, the Java driver autom
 
 ## Update Existing Documents
 
-To update existing documents in a collection, you can use the collection's [`updateOne()`]({{<apiref "org/mongodb/scala/MongoCollection.html#updateOne(filter:org.mongodb.scala.bson.conversions.Bson,update:Seq[org.mongodb.scala.bson.conversions.Bson],options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]">}}) or [`updateMany`]({{<apiref "org/mongodb/scala/MongoCollection.html#updateMany(filter:org.mongodb.scala.bson.conversions.Bson,update:org.mongodb.scala.bson.conversions.Bson,options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]">}}) methods.
+To update existing documents in a collection, you can use the collection's [`updateOne()`]({{<scapiref "org/mongodb/scala/MongoCollection.html#updateOne(filter:org.mongodb.scala.bson.conversions.Bson,update:Seq[org.mongodb.scala.bson.conversions.Bson],options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]">}}) or [`updateMany`]({{<scapiref "org/mongodb/scala/MongoCollection.html#updateMany(filter:org.mongodb.scala.bson.conversions.Bson,update:org.mongodb.scala.bson.conversions.Bson,options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]">}}) methods.
 
 ### Filters
 
-You can pass in a filter document to the methods to specify which documents to update. The filter document specification is the same as for [read operations]({{< relref "driver-scala/tutorials/perform-read-operations.md" >}}). To facilitate creating filter objects, the Scala driver provides the [`Filters`]({{< apiref "org/mongodb/scala/model/Filters$.html">}}) helper.
+You can pass in a filter document to the methods to specify which documents to update. The filter document specification is the same as for [read operations]({{< relref "driver-scala/tutorials/perform-read-operations.md" >}}). To facilitate creating filter objects, the Scala driver provides the [`Filters`]({{< scapiref "org/mongodb/scala/model/Filters$.html">}}) helper.
 
-To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "org/mongodb/scala/bson/index.html#Document:org.mongodb.scala.bson.collection.immutable.Document.type" >}}) object.
+To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< scapiref "org/mongodb/scala/bson/index.html#Document:org.mongodb.scala.bson.collection.immutable.Document.type" >}}) object.
 
 ### Update Operators
 
 To change a field in a document, MongoDB provides [update operators]({{<docsref "reference/operator/update">}}).  To specify the modification to perform using the update operators, use an updates document.
 
-To facilitate the creation of updates documents, the Scala driver provides the [`Updates`]({{< apiref "org/mongodb/scala/model/Updates$.html">}}) class.
+To facilitate the creation of updates documents, the Scala driver provides the [`Updates`]({{< scapiref "org/mongodb/scala/model/Updates$.html">}}) class.
 
 {{% note class="important" %}}
 The `_id` field is immutable; i.e. you cannot change the value of the `_id` field.
@@ -110,7 +110,7 @@ The `_id` field is immutable; i.e. you cannot change the value of the `_id` fiel
 
 ### Update a Single Document
 
-The [`updateOne()`]({{<apiref "org/mongodb/scala/MongoCollection.html#updateOne(filter:org.mongodb.scala.bson.conversions.Bson,update:Seq[org.mongodb.scala.bson.conversions.Bson],options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]">}}) method updates at most a single document, even if the filter condition matches multiple documents in the collection.
+The [`updateOne()`]({{<scapiref "org/mongodb/scala/MongoCollection.html#updateOne(filter:org.mongodb.scala.bson.conversions.Bson,update:Seq[org.mongodb.scala.bson.conversions.Bson],options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]">}}) method updates at most a single document, even if the filter condition matches multiple documents in the collection.
 
 The following operation on the `restaurants` collection updates a document whose `_id` field equals `BsonObjectId("57506d62f57802807471dd41")`.
 
@@ -123,9 +123,9 @@ collection.updateOne(
 
 Specifically, the operation uses:
 
-- [`Updates.set`]({{<apiref "org/mongodb/scala/model/Updates$.html#set[TItem](fieldName:String,value:TItem):org.mongodb.scala.bson.conversions.Bson">}}) to set the value of the `stars` field to `1` and the `contact.phone` field to `"228-555-9999"`, and
+- [`Updates.set`]({{<scapiref "org/mongodb/scala/model/Updates$.html#set[TItem](fieldName:String,value:TItem):org.mongodb.scala.bson.conversions.Bson">}}) to set the value of the `stars` field to `1` and the `contact.phone` field to `"228-555-9999"`, and
 
-- [`Updates.currentDate`]({{<apiref "org/mongodb/scala/model/Updates$.html#currentDate(fieldName:String):org.mongodb.scala.bson.conversions.Bson">}}) to modify the `lastModified` field to the current date. If the `lastModified` field does not exist, the operator adds the field to the document.  
+- [`Updates.currentDate`]({{<scapiref "org/mongodb/scala/model/Updates$.html#currentDate(fieldName:String):org.mongodb.scala.bson.conversions.Bson">}}) to modify the `lastModified` field to the current date. If the `lastModified` field does not exist, the operator adds the field to the document.  
 
 {{% note class="tip" %}}
 In some cases where you may need to update many fields in a document, it may be more efficient to replace the document.  See [Replace a Document](#replace-a-document).
@@ -133,7 +133,7 @@ In some cases where you may need to update many fields in a document, it may be 
 
 ### Update Multiple Documents
 
-The [`updateMany`]({{<apiref "org/mongodb/scala/MongoCollection.html#updateMany(filter:org.mongodb.scala.bson.conversions.Bson,update:Seq[org.mongodb.scala.bson.conversions.Bson],options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]">}}) method updates all documents that match the filter condition.
+The [`updateMany`]({{<scapiref "org/mongodb/scala/MongoCollection.html#updateMany(filter:org.mongodb.scala.bson.conversions.Bson,update:Seq[org.mongodb.scala.bson.conversions.Bson],options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]">}}) method updates all documents that match the filter condition.
 
 The following operation on the `restaurants` collection updates all documents whose `stars` field equals `2`.
 
@@ -146,13 +146,13 @@ collection.updateMany(
 
 Specifically, the operation uses:
 
-- [`Updates.set`]({{<apiref "org/mongodb/scala/model/Updates$.html#set[TItem](fieldName:String,value:TItem):org.mongodb.scala.bson.conversions.Bson">}}) to set the value of the `stars` field to `0` , and
+- [`Updates.set`]({{<scapiref "org/mongodb/scala/model/Updates$.html#set[TItem](fieldName:String,value:TItem):org.mongodb.scala.bson.conversions.Bson">}}) to set the value of the `stars` field to `0` , and
 
-- [`Updates.currentDate`]({{<apiref "org/mongodb/scala/model/Updates$.html#currentDate(fieldName:String):org.mongodb.scala.bson.conversions.Bson">}}) to modify the `lastModified` field to the current date. If the `lastModified` field does not exist, the operator adds the field to the document.  
+- [`Updates.currentDate`]({{<scapiref "org/mongodb/scala/model/Updates$.html#currentDate(fieldName:String):org.mongodb.scala.bson.conversions.Bson">}}) to modify the `lastModified` field to the current date. If the `lastModified` field does not exist, the operator adds the field to the document.  
 
 ### Update Options
 
-With the [`updateOne()`]({{<apiref "corg/mongodb/scala/MongoCollection.html#updateOne(filter:org.mongodb.scala.bson.conversions.Bson,update:Seq[org.mongodb.scala.bson.conversions.Bson],options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]">}}) and [`updateMany`]({{<apiref "org/mongodb/scala/MongoCollection.html#updateOne(filter:org.mongodb.scala.bson.conversions.Bson,update:Seq[org.mongodb.scala.bson.conversions.Bson],options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]">}}) methods, you can include an [`UpdateOptions`]({{<apiref "/org/mongodb/scala/model/index.html#UpdateOptions=com.mongodb.client.model.UpdateOptions">}}) document to specify the [`upsert`]({{<docsref "reference/method/db.collection.update/#upsert-option">}}) option or the [`bypassDocumentationValidation`]({{<docsref "core/document-validation/#bypass-document-validation">}}) option.
+With the [`updateOne()`]({{<scapiref "corg/mongodb/scala/MongoCollection.html#updateOne(filter:org.mongodb.scala.bson.conversions.Bson,update:Seq[org.mongodb.scala.bson.conversions.Bson],options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]">}}) and [`updateMany`]({{<scapiref "org/mongodb/scala/MongoCollection.html#updateOne(filter:org.mongodb.scala.bson.conversions.Bson,update:Seq[org.mongodb.scala.bson.conversions.Bson],options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]">}}) methods, you can include an [`UpdateOptions`]({{<apiref "org/mongodb/scala/model/index.html#UpdateOptions=com.mongodb.client.model.UpdateOptions">}}) document to specify the [`upsert`]({{<docsref "reference/method/db.collection.update/#upsert-option">}}) option or the [`bypassDocumentationValidation`]({{<docsref "core/document-validation/#bypass-document-validation">}}) option.
 
 ```scala
 collection.updateOne(
@@ -163,7 +163,7 @@ collection.updateOne(
 ```
 ## Replace an Existing Document
 
-To replace an existing document in a collection, you can use the collection's [`replaceOne`]({{< apiref "org/mongodb/scala/MongoCollection.html#replaceOne(filter:org.mongodb.scala.bson.conversions.Bson,replacement:TResult,options:org.mongodb.scala.model.ReplaceOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]">}}) method.
+To replace an existing document in a collection, you can use the collection's [`replaceOne`]({{< scapiref "org/mongodb/scala/MongoCollection.html#replaceOne(filter:org.mongodb.scala.bson.conversions.Bson,replacement:TResult,options:org.mongodb.scala.model.ReplaceOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]">}}) method.
 
 {{% note class="important" %}}
 The `_id` field is immutable; i.e. you cannot replace the `_id` field value.
@@ -171,15 +171,15 @@ The `_id` field is immutable; i.e. you cannot replace the `_id` field value.
 
 ### Filters
 
-You can pass in a filter document to the method to specify which document to replace. The filter document specification is the same as for [read operations]({{< relref "driver-scala/tutorials/perform-read-operations.md" >}}). To facilitate creating filter objects, the Scala driver provides the [`Filters`]({{< apiref "org/mongodb/scala/model/Filters$.html">}}) helper.
+You can pass in a filter document to the method to specify which document to replace. The filter document specification is the same as for [read operations]({{< relref "driver-scala/tutorials/perform-read-operations.md" >}}). To facilitate creating filter objects, the Scala driver provides the [`Filters`]({{< scapiref "org/mongodb/scala/model/Filters$.html">}}) helper.
 
-To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "org/mongodb/scala/bson/index.html#Document:org.mongodb.scala.bson.collection.immutable.Document.type" >}}) object.
+To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< scapiref "org/mongodb/scala/bson/index.html#Document:org.mongodb.scala.bson.collection.immutable.Document.type" >}}) object.
 
-The [`replaceOne`]({{< apiref "org/mongodb/scala/MongoCollection.html#replaceOne(filter:org.mongodb.scala.bson.conversions.Bson,replacement:TResult,options:org.mongodb.scala.model.ReplaceOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]">}}) method replaces at most a single document, even if the filter condition matches multiple documents in the collection.
+The [`replaceOne`]({{< scapiref "org/mongodb/scala/MongoCollection.html#replaceOne(filter:org.mongodb.scala.bson.conversions.Bson,replacement:TResult,options:org.mongodb.scala.model.ReplaceOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]">}}) method replaces at most a single document, even if the filter condition matches multiple documents in the collection.
 
 ### Replace a Document
 
-To replace a document, pass a new document to the [`replaceOne`]({{< apiref "org/mongodb/scala/MongoCollection.html#replaceOne(filter:org.mongodb.scala.bson.conversions.Bson,replacement:TResult,options:org.mongodb.scala.model.ReplaceOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]/org/mongodb/scala/MongoCollection.html#replaceOne(filter:org.mongodb.scala.bson.conversions.Bson,replacement:TResult,options:org.mongodb.scala.model.ReplaceOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]">}}) method.
+To replace a document, pass a new document to the [`replaceOne`]({{< scapiref "org/mongodb/scala/MongoCollection.html#replaceOne(filter:org.mongodb.scala.bson.conversions.Bson,replacement:TResult,options:org.mongodb.scala.model.ReplaceOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]/org/mongodb/scala/MongoCollection.html#replaceOne(filter:org.mongodb.scala.bson.conversions.Bson,replacement:TResult,options:org.mongodb.scala.model.ReplaceOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]">}}) method.
 
 {{% note class="important" %}}
 The replacement document can have different fields from the original document. In the replacement document, you can omit the `_id` field since the `_id` field is immutable; however, if you do include the `_id` field, you cannot specify a different value for the `_id` field.
@@ -199,7 +199,7 @@ See also [Update a Document](#update-a-single-document).
 
 ### Update Options
 
-With the [`replaceOne`]({{< apiref "org/mongodb/scala/MongoCollection.html#updateOne(filter:org.mongodb.scala.bson.conversions.Bson,update:Seq[org.mongodb.scala.bson.conversions.Bson],options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]">}}), you can include an [`UpdateOptions`]({{<apiref "org/mongodb/scala/model/index.html#UpdateOptions=com.mongodb.client.model.UpdateOptions">}}) document to specify the [`upsert`]({{<docsref "reference/method/db.collection.update/#upsert-option">}}) option or the [`bypassDocumentationValidation`]({{<docsref "core/document-validation/#bypass-document-validation">}}) option.
+With the [`replaceOne`]({{< scapiref "org/mongodb/scala/MongoCollection.html#updateOne(filter:org.mongodb.scala.bson.conversions.Bson,update:Seq[org.mongodb.scala.bson.conversions.Bson],options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]">}}), you can include an [`UpdateOptions`]({{<scapiref "org/mongodb/scala/model/index.html#UpdateOptions=com.mongodb.client.model.UpdateOptions">}}) document to specify the [`upsert`]({{<docsref "reference/method/db.collection.update/#upsert-option">}}) option or the [`bypassDocumentationValidation`]({{<docsref "core/document-validation/#bypass-document-validation">}}) option.
 
 ```scala
 collection.replaceOne(
@@ -213,17 +213,17 @@ collection.replaceOne(
 ## Delete Documents
 
 To delete documents in a collection, you can use the
-[`deleteOne`]({{< apiref "org/mongodb/scala/MongoCollection.html#deleteOne(filter:org.mongodb.scala.bson.conversions.Bson,options:org.mongodb.scala.model.DeleteOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.DeleteResult]">}}) and [`deleteMany`]({{< apiref "org/mongodb/scala/MongoCollection.html#deleteMany(filter:org.mongodb.scala.bson.conversions.Bson,options:org.mongodb.scala.model.DeleteOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.DeleteResult]">}}) methods.
+[`deleteOne`]({{< scapiref "org/mongodb/scala/MongoCollection.html#deleteOne(filter:org.mongodb.scala.bson.conversions.Bson,options:org.mongodb.scala.model.DeleteOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.DeleteResult]">}}) and [`deleteMany`]({{< scapiref "org/mongodb/scala/MongoCollection.html#deleteMany(filter:org.mongodb.scala.bson.conversions.Bson,options:org.mongodb.scala.model.DeleteOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.DeleteResult]">}}) methods.
 
 ### Filters
 
-You can pass in a filter document to the methods to specify which documents to delete. The filter document specification is the same as for [read operations]({{< relref "driver-scala/tutorials/perform-read-operations.md" >}}). To facilitate creating filter objects, the Scala driver provides the [`Filters`]({{< apiref "org/mongodb/scala/model/Filters$.html">}}) helper.
+You can pass in a filter document to the methods to specify which documents to delete. The filter document specification is the same as for [read operations]({{< relref "driver-scala/tutorials/perform-read-operations.md" >}}). To facilitate creating filter objects, the Scala driver provides the [`Filters`]({{< scapiref "org/mongodb/scala/model/Filters$.html">}}) helper.
 
-To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "org/mongodb/scala/bson/index.html#Document:org.mongodb.scala.bson.collection.immutable.Document.type" >}}) object.
+To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< scapiref "org/mongodb/scala/bson/index.html#Document:org.mongodb.scala.bson.collection.immutable.Document.type" >}}) object.
 
 ### Delete a Single Document
 
-The [`deleteOne`]({{< apiref "org/mongodb/scala/MongoCollection.html#deleteOne(filter:org.mongodb.scala.bson.conversions.Bson,options:org.mongodb.scala.model.DeleteOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.DeleteResult]">}}) method deletes at most a single document, even if the filter condition matches multiple documents in the collection.
+The [`deleteOne`]({{< scapiref "org/mongodb/scala/MongoCollection.html#deleteOne(filter:org.mongodb.scala.bson.conversions.Bson,options:org.mongodb.scala.model.DeleteOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.DeleteResult]">}}) method deletes at most a single document, even if the filter condition matches multiple documents in the collection.
 
 The following operation on the `restaurants` collection deletes a document whose `_id` field equals `ObjectId("57506d62f57802807471dd41")`.
 
@@ -233,7 +233,7 @@ collection.deleteOne(equal("_id", new ObjectId("57506d62f57802807471dd41"))).sub
 
 ### Delete Multiple Documents
 
-The [`deleteMany`]({{< apiref "org/mongodb/scala/MongoCollection.html?search=UpdateOptio#deleteMany(filter:org.mongodb.scala.bson.conversions.Bson,options:org.mongodb.scala.model.DeleteOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.DeleteResult]">}}) method deletes all documents that match the filter condition.
+The [`deleteMany`]({{< scapiref "org/mongodb/scala/MongoCollection.html?search=UpdateOptio#deleteMany(filter:org.mongodb.scala.bson.conversions.Bson,options:org.mongodb.scala.model.DeleteOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.DeleteResult]">}}) method deletes all documents that match the filter condition.
 
 The following operation on the `restaurants` collection deletes all documents whose `stars` field equals `4`.
 
@@ -249,9 +249,9 @@ See also [Drop a Collection]({{< relref  "driver/tutorials/databases-collections
 
 Applications can configure [write concern]({{<docsref "reference/write-concern">}}) at three levels:
 
-- In a [`MongoClient()`]({{< apiref "org/mongodb/scala/MongoClient$.html">}})
+- In a [`MongoClient()`]({{< scapiref "org/mongodb/scala/MongoClient$.html">}})
 
-  - Via [`MongoClientSettings`]({{<apiref "org/mongodb/scala/MongoClientSettings$.html">}}):
+  - Via [`MongoClientSettings`]({{<scapiref "org/mongodb/scala/MongoClientSettings$.html">}}):
 
       ```scala
       val mongoClient: MongoClient = MongoClient(MongoClientSettings.builder()
@@ -260,19 +260,19 @@ Applications can configure [write concern]({{<docsref "reference/write-concern">
                                                     .build())
       ```
 
-  - Via [`ConnectionString`]({{< apiref "org/mongodb/scala/ConnectionString$.html">}}), as in the following example:
+  - Via [`ConnectionString`]({{< scapiref "org/mongodb/scala/ConnectionString$.html">}}), as in the following example:
 
       ```scala
       val mongoClientt = MongoClient("mongodb://host1:27017,host2:27017/?w=majority")
       ```
 
-- In a [`MongoDatabase`]({{<apiref "org/mongodb/scala/MongoDatabase.html">}}) via its [`withWriteConcern`]({{<apiref "org/mongodb/scala/MongoDatabase.html#withWriteConcern(writeConcern:org.mongodb.scala.WriteConcern):org.mongodb.scala.MongoDatabase">}}) method, as in the following example:
+- In a [`MongoDatabase`]({{<scapiref "org/mongodb/scala/MongoDatabase.html">}}) via its [`withWriteConcern`]({{<scapiref "org/mongodb/scala/MongoDatabase.html#withWriteConcern(writeConcern:org.mongodb.scala.WriteConcern):org.mongodb.scala.MongoDatabase">}}) method, as in the following example:
 
     ```scala
      val database = mongoClient.getDatabase("test").withWriteConcern(WriteConcern.MAJORITY)
     ```
 
-- In a [`MongoCollection`]({{<apiref "org/mongodb/scala/MongoCollection.html">}}) via its [`withWriteConcern`]({{<apiref "org/mongodb/scala/MongoCollection.html#withWriteConcern(writeConcern:org.mongodb.scala.WriteConcern):org.mongodb.scala.MongoCollection[TResult]">}}) method, as in the following example:
+- In a [`MongoCollection`]({{<scapiref "org/mongodb/scala/MongoCollection.html">}}) via its [`withWriteConcern`]({{<scapiref "org/mongodb/scala/MongoCollection.html#withWriteConcern(writeConcern:org.mongodb.scala.WriteConcern):org.mongodb.scala.MongoCollection[TResult]">}}) method, as in the following example:
 
     ```scala
      val collection = database.getCollection("restaurants").withWriteConcern(WriteConcern.MAJORITY)

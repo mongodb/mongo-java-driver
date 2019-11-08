@@ -21,7 +21,7 @@ import scala.collection.JavaConverters._
 ```
 
 An authentication credential is represented as an instance of the
-[`MongoCredential`]({{<apiref "org/mongodb/scala/MongoCredential$.html">}}) class. The [`MongoCredential`]({{<apiref "org/mongodb/scala/MongoCredential$.html">}}) class includes static
+[`MongoCredential`]({{<scapiref "org/mongodb/scala/MongoCredential$.html">}}) class. The [`MongoCredential`]({{<scapiref "org/mongodb/scala/MongoCredential$.html">}}) class includes static
 helper methods for each of the supported authentication mechanisms.
 
 ## Default Authentication Mechanism
@@ -34,7 +34,7 @@ In MongoDB 3.0, MongoDB changed the default authentication mechanism from [`MONG
 
 To create a credential that will authenticate using the default
 authentication mechanism regardless of server version, create a
-credential using the [`createCredential`]({{<apiref "org/mongodb/scala/MongoCredential$.html#createCredential(userName:String,database:String,password:Array[Char]):com.mongodb.MongoCredential">}})
+credential using the [`createCredential`]({{<scapiref "org/mongodb/scala/MongoCredential$.html#createCredential(userName:String,database:String,password:Array[Char]):com.mongodb.MongoCredential">}})
 helper method:
 
 ```scala
@@ -76,7 +76,7 @@ which uses the `SHA-256` hashing function.
 Requires MongoDB 4.0 and `featureCompatibilityVersion` to be set to 4.0.
 
 To explicitly create a credential of type [`SCRAM-SHA-256`]({{<docsref "core/security-scram/">}}), use the
-[`createScramSha256Credential`]({{<apiref "org/mongodb/scala/MongoCredential$.html#createScramSha256Credential(userName:String,source:String,password:Array[Char]):com.mongodb.MongoCredential">}})
+[`createScramSha256Credential`]({{<scapiref "org/mongodb/scala/MongoCredential$.html#createScramSha256Credential(userName:String,source:String,password:Array[Char]):com.mongodb.MongoCredential">}})
 method:
 
 ```scala
@@ -102,7 +102,7 @@ val mongoClient: MongoClient = MongoClient("mongodb://user1:pwd1@host1/?authSour
 ### SCRAM-SHA-1
 
 To explicitly create a credential of type [`SCRAM-SHA-1`]({{<docsref "core/security-scram/">}}), use the 
-[`createScramSha1Credential`]({{<apiref "org/mongodb/scala/MongoCredential$.html#createScramSha1Credential(userName:String,source:String,password:Array[Char]):com.mongodb.MongoCredential">}}) 
+[`createScramSha1Credential`]({{<scapiref "org/mongodb/scala/MongoCredential$.html#createScramSha1Credential(userName:String,source:String,password:Array[Char]):com.mongodb.MongoCredential">}}) 
 method:
 
 ```scala
@@ -135,7 +135,7 @@ For information on upgrading to `SCRAM`, see Upgrade to [SCRAM]({{<docsref "rele
 {{% /note %}}
 
 
-To explicitly create a credential of type [`MONGODB-CR`]({{<docsref "core/security-mongodb-cr">}}) use the [`createMongCRCredential`]({{<apiref "org/mongodb/scala/MongoCredential$.html#createMongoCRCredential(userName:String,database:String,password:Array[Char]):com.mongodb.MongoCredential">}})
+To explicitly create a credential of type [`MONGODB-CR`]({{<docsref "core/security-mongodb-cr">}}) use the [`createMongCRCredential`]({{<scapiref "org/mongodb/scala/MongoCredential$.html#createMongoCRCredential(userName:String,database:String,password:Array[Char]):com.mongodb.MongoCredential">}})
 helper method:
 
 ```scala
@@ -173,7 +173,7 @@ of the X.509 certificate.
 X.509 authentication requires the use of SSL connections with
 certificate validation and is available in MongoDB 2.6 and later. To
 create a credential of this type use the
-[`createMongoX509Credential`]({{<apiref "org/mongodb/scala/MongoCredential$.html#createMongoX509Credential():com.mongodb.MongoCredential">}}) helper method:
+[`createMongoX509Credential`]({{<scapiref "org/mongodb/scala/MongoCredential$.html#createMongoX509Credential():com.mongodb.MongoCredential">}}) helper method:
 
 ```scala
 val user: String = ???     // The X.509 certificate derived user name, e.g. "CN=user,OU=OrgUnit,O=myOrg,..."
@@ -193,7 +193,7 @@ Or use a connection string that explicitly specifies the `authMechanism=MONGODB-
 val mongoClient: MongoClient = MongoClient("mongodb://subjectName@host1/?authMechanism=MONGODB-X509&ssl=true")
 ```
 
-See the MongoDB server [x.509 tutorial]({{<apiref "tutorial/configure-x509-client-authentication/#add-x-509-certificate-subject-as-a-user">}})
+See the MongoDB server [x.509 tutorial]({{<docsref "tutorial/configure-x509-client-authentication/#add-x-509-certificate-subject-as-a-user">}})
 for more information about determining the subject
 name from the certificate.
 
@@ -201,8 +201,8 @@ name from the certificate.
 
 [MongoDB Enterprise](http://www.mongodb.com/products/mongodb-enterprise) supports proxy
 authentication through Kerberos service. To create a credential of type
-[Kerberos (GSSAPI)]({{<apiref "core/authentication/#kerberos-authentication">}}), use the
-[`createGSSAPICredential`]({{<apiref "/org/mongodb/scala/MongoCredential$.html#createGSSAPICredential(userName:String):com.mongodb.MongoCredential">}})
+[Kerberos (GSSAPI)]({{<docsref "core/authentication/#kerberos-authentication">}}), use the
+[`createGSSAPICredential`]({{<apiref "org/mongodb/scala/MongoCredential$.html#createGSSAPICredential(userName:String):com.mongodb.MongoCredential">}})
 helper method:
 
 ```scala
@@ -240,17 +240,17 @@ java.security.krb5.realm=MYREALM.ME
 java.security.krb5.kdc=mykdc.myrealm.me
 ```
 
-Depending on the Kerberos setup, additional property specifications may be required, either via the application code or, in some cases, the [withMechanismProperty()]({{<apiref "org/mongodb/scala/MongoCredential$.html#withMechanismProperty-java.lang.String-T-:String">}}) method of the `MongoCredential` instance:
+Depending on the Kerberos setup, additional property specifications may be required, either via the application code or, in some cases, the [withMechanismProperty()]({{<scapiref "org/mongodb/scala/MongoCredential$.html#withMechanismProperty-java.lang.String-T-:String">}}) method of the `MongoCredential` instance:
 
-- **[`SERVICE_NAME`]({{< apiref "org/mongodb/scala/MongoCredential$.html#SERVICE_NAME_KEY:String" >}})**
-
-
-- **[`CANONICALIZE_HOST_NAME`]({{< apiref "org/mongodb/scala/MongoCredential$.html#CANONICALIZE_HOST_NAME_KEY:String" >}})**
+- **[`SERVICE_NAME`]({{< scapiref "org/mongodb/scala/MongoCredential$.html#SERVICE_NAME_KEY:String" >}})**
 
 
-- **[`JAVA_SUBJECT`]({{< apiref "org/mongodb/scala/MongoCredential$.html#JAVA_SUBJECT_KEY:String" >}})**
+- **[`CANONICALIZE_HOST_NAME`]({{< scapiref "org/mongodb/scala/MongoCredential$.html#CANONICALIZE_HOST_NAME_KEY:String" >}})**
 
-- **[`JAVA_SASL_CLIENT_PROPERTIES`]({{< apiref "org/mongodb/scala/MongoCredential$.html#JAVA_SASL_CLIENT_PROPERTIES_KEY:String" >}})**
+
+- **[`JAVA_SUBJECT`]({{< scapiref "org/mongodb/scala/MongoCredential$.html#JAVA_SUBJECT_KEY:String" >}})**
+
+- **[`JAVA_SASL_CLIENT_PROPERTIES`]({{< scapiref "org/mongodb/scala/MongoCredential$.html#JAVA_SASL_CLIENT_PROPERTIES_KEY:String" >}})**
 
 For example, to specify the `SERVICE_NAME` property via the `MongoCredential` object:
 
@@ -278,8 +278,8 @@ interoperability with Windows Active Directory and in particular the ability to 
 
 ## LDAP (PLAIN)
 
-[MongoDB Enterprise](http://www.mongodb.com/products/mongodb-enterprise) supports proxy authentication through a Lightweight Directory Access Protocol (LDAP) service. To create a credential of type [LDAP]({{<apiref "core/authentication/#ldap-proxy-authority-authentication">}}) use the
-[`createPlainCredential`]({{<apiref "org/mongodb/scala/MongoCredential$.html#createPlainCredential(userName:String,source:String,password:Array[Char]):com.mongodb.MongoCredential">}}) helper method:
+[MongoDB Enterprise](http://www.mongodb.com/products/mongodb-enterprise) supports proxy authentication through a Lightweight Directory Access Protocol (LDAP) service. To create a credential of type [LDAP]({{<docsref "core/authentication/#ldap-proxy-authority-authentication">}}) use the
+[`createPlainCredential`]({{<scapiref "org/mongodb/scala/MongoCredential$.html#createPlainCredential(userName:String,source:String,password:Array[Char]):com.mongodb.MongoCredential">}}) helper method:
 
 ```scala
 val user: String = ???            // The LDAP user name

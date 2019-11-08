@@ -1,6 +1,6 @@
-baseURL = "/mongo-java-driver/4.0"
+baseURL = "/mongo-java-driver"
 languageCode = "en-us"
-title = "MongoDB Java Driver"
+title = "MongoDB JVM Drivers"
 theme = "mongodb"
 canonifyURLs = false
 disableHugoGeneratorInject = true

@@ -107,7 +107,7 @@ The operation completed successfully
 
 ## Querying the collection
 
-Use the [find()]({{< apiref "org/mongodb/scala/MongoCollection.html#find[C](filter:org.bson.conversions.Bson)(implicite:org.mongodb.scala.Helpers.DefaultsTo[C,org.mongodb.scala.collection.immutable.Document],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.FindObservable[C]">}})
+Use the [find()]({{< scapiref "org/mongodb/scala/MongoCollection.html#find[C](filter:org.bson.conversions.Bson)(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,org.mongodb.scala.collection.immutable.Document],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.FindObservable[C]">}})
 method to query the collection.
 
 ### Find the first person in a collection
@@ -170,7 +170,7 @@ Which will print out the Person instances for Gertrude, George and Grace.
 ## Updating documents
 
 There are numerous [update operators](http://docs.mongodb.org/manual/reference/operator/update-field/)
-supported by MongoDB.  Use the [Updates]({{< apiref "org/mongodb/scala/model/Updates$">}}) helpers to help update documents in the database.
+supported by MongoDB.  Use the [Updates]({{< scapiref "org/mongodb/scala/model/Updates$">}}) helpers to help update documents in the database.
 
 The following update corrects the hyphenation for Tim Berners-Lee: 
 
@@ -183,7 +183,7 @@ which provides information about the operation including the number of documents
 
 ## Deleting documents
 
-To delete at most a single document (may be 0 if none match the filter) use the [`deleteOne`]({{< apiref "org/mongodb/scala/MongoCollection.html#deleteOne(filter:org.bson.conversions.Bson):org.mongodb.scala.Observable[org.mongodb.scala.result.DeleteResult]">}}) 
+To delete at most a single document (may be 0 if none match the filter) use the [`deleteOne`]({{< scapiref "org/mongodb/scala/MongoCollection.html#deleteOne(filter:org.bson.conversions.Bson):org.mongodb.scala.Observable[org.mongodb.scala.result.DeleteResult]">}}) 
 method:
 
 ```scala

@@ -1,18 +1,19 @@
 {{- $groupId := .Get "groupId" | default "org.mongodb" -}}
 {{- $artifactId := .Get "artifactId" -}}
 {{- $version := .Get "version" -}}
+{{- $scalaVersion := .Get "scalaVersion" -}}
 {{- $classifier := .Get "classifier" -}}
 {{- $snapshot := in $version "SNAPSHOT" -}}
 
 {{- if $snapshot -}}
-{{- $ossUrl := "https://oss.sonatype.org/content/repositories/snapshots" -}}
 <section class="maven">
 <pre><code class="ini">
 &lt;dependencies&gt;
     &lt;dependency&gt;
         &lt;groupId&gt;{{$groupId}}&lt;/groupId&gt;
         &lt;artifactId&gt;{{$artifactId}}&lt;/artifactId&gt;
-        &lt;version&gt;{{$version}}&lt;/version&gt;
+        &lt;version&gt;{{$version}}{{- if $scalaVersion -}}_{{$scalaVersion}}{{- end -}}&lt;/version&gt;{{- if $classifier }}
+        &lt;classifier&gt;{{$classifier}}&lt;/classifier&gt;{{- end }}
     &lt;/dependency&gt;
 &lt;/dependencies&gt;
 &lt;repositories&gt;
@@ -30,7 +31,7 @@
 <section class="gradle hidden">
 <pre><code>
   dependencies {
-      compile '{{$groupId}}:{{$artifactId}}:{{$version}}{{- if $classifier -}}:{{$classifier}}{{- end -}}'
+      compile '{{$groupId}}:{{$artifactId}}:{{$version}}{{- if $scalaVersion -}}_{{$scalaVersion}}{{- end -}}{{- if $classifier -}}:{{$classifier}}{{- end -}}'
   }
   repositories {
     maven {
@@ -40,15 +41,20 @@
 
 </code></pre>
 </section>
+<section class="sbt hidden">
+<pre><code>
+  libraryDependencies += "{{$groupId}}" %% "{{$artifactId}}" % "{{$version}}"{{- if $classifier -}} classifier "{{$classifier}}"{{- end -}}
+
+</code></pre>
+</section>
 {{- else -}}
-{{- $ossUrl := "https://oss.sonatype.org/content/repositories/releases" -}}
 <section class="maven">
 <pre><code class="ini">
 &lt;dependencies&gt;
     &lt;dependency&gt;
         &lt;groupId&gt;{{$groupId}}&lt;/groupId&gt;
         &lt;artifactId&gt;{{$artifactId}}&lt;/artifactId&gt;
-        &lt;version&gt;{{$version}}&lt;/version&gt;{{- if $classifier }}
+        &lt;version&gt;{{$version}}{{- if $scalaVersion -}}_{{$scalaVersion}}{{- end -}}&lt;/version&gt;{{- if $classifier }}
         &lt;classifier&gt;{{$classifier}}&lt;/classifier&gt;{{- end }}
     &lt;/dependency&gt;
 &lt;/dependencies&gt;
@@ -58,8 +64,14 @@
 <section class="gradle hidden">
 <pre><code>
   dependencies {
-      compile '{{$groupId}}:{{$artifactId}}:{{$version}}{{- if $classifier -}}:{{$classifier}}{{- end -}}'
+      compile '{{$groupId}}:{{$artifactId}}:{{$version}}{{- if $scalaVersion -}}_{{$scalaVersion}}{{- end -}}{{- if $classifier -}}:{{$classifier}}{{- end -}}'
   }
+
+</code></pre>
+</section>
+<section class="sbt hidden">
+<pre><code>
+  libraryDependencies += "{{$groupId}}" %% "{{$artifactId}}" % "{{$version}}"{{- if $classifier -}} classifier "{{$classifier}}"{{- end -}}
 
 </code></pre>
 </section>

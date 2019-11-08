@@ -149,7 +149,7 @@ collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery"))
                 .forEach(printBlock);
 ```
 
-In the projection document, you can also specify a projection expression using a [projection operator]({{<apiref "reference/operator/projection/">}})
+In the projection document, you can also specify a projection expression using a [projection operator]({{<docsref "reference/operator/projection/">}})
 
 For an example on using the [`Projections.metaTextScore`]({{<apiref "com/mongodb/client/model/Projections.html#metaTextScore(java.lang.String)">}}),
 see the [Text Search tutorial]({{<relref "driver/tutorials/text-search.md">}}).

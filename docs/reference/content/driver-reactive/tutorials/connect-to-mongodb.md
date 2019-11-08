@@ -49,7 +49,7 @@ import java.util.Arrays;
 ## `MongoClient`
 
 A [`MongoClient`]({{< apiref "com/mongodb/reactivestreams/client/MongoClient.html">}}) instance represents a pool of connections
-to the database; you will only need one instance of class `MongoClient` even with multiple threads.
+to the database; you will only need one instance of class `MongoClient` even with multiple concurrent operations.
 
 {{% note class="important" %}}
 

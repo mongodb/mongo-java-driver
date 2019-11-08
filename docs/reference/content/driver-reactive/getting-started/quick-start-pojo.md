@@ -219,12 +219,10 @@ To query the collection, you can use the collection's [`find()`]({{< apiref "com
 
 The following example prints all the Person instances in the collection:
 ```java
-ObservableSubscriber<Person> subscriber = new PrintToStringSubscriber<>();
-collection.find().subscribe(subscriber);
-subscriber.await();
+collection.find().subscribe(new PrintToStringSubscriber<>());
 ```
 
-The example blocks on the `Publisher` until its completed and outputs the following:
+The example will eventually output the following:
 
 ```bash
 Person{id='591dbc2550852fa685b3ad17', name='Ada Byron', age=20, address=Address{street='St James Square', city='London', zip='W1'}}
@@ -250,9 +248,7 @@ For example, to find the first `Person` in the database that lives in `Wimborne`
 filter object to specify the equality condition:
 
 ```java
-personSubscriber = new PrintToStringSubscriber<>();
-collection.find(eq("address.city", "Wimborne")).first().subscribe(personSubscriber);
-personSubscriber.await();
+collection.find(eq("address.city", "Wimborne")).first().subscribe(new PrintToStringSubscriber<>());
 ```
 The example prints one document:
 
@@ -263,17 +259,15 @@ Person{id='591dbc2550852fa685b3ad1a', name='Timothy Berners-Lee', age=61,
 
 ### Get All Person Instances That Match a Filter
 
-The following example returns and prints everyone where ``"age" > 30``:
+The following example prints ever document where ``"age" > 30``:
 
 ```java
-personSubscriber = new PrintToStringSubscriber<>();
-collection.find(gt("age", 30)).subscribe(personSubscriber);
-personSubscriber.await();
+collection.find(gt("age", 30)).subscribe(new PrintToStringSubscriber<>());
 ```
 
 ## Update Documents
 
-To update documents in a collection, you can use the collection's [`updateOne`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)">}})  and  [`updateMany`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) methods.
+To update documents in a collection, you can use the collection's [`updateOne`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) and [`updateMany`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) methods.
 
 Pass to the methods:
 
@@ -290,23 +284,19 @@ To update at most a single `Person`, use the [`updateOne`]({{<apiref "com/mongod
 The following example updates `Ada Byron` setting their age to `23` and name to `Ada Lovelace`:
 
 ```java
-ObservableSubscriber<UpdateResult> updateSubscriber = new OperationSubscriber<>();
 collection.updateOne(eq("name", "Ada Byron"), combine(set("age", 23), set("name", "Ada Lovelace")))
-        .subscribe(updateSubscriber);
-updateSubscriber.await();
+        .subscribe(new OperationSubscriber<>());
 ```
 
 ### Update Multiple Persons
 
-To update all Persons that match a filter, use the [`updateMany`]({{<apiref "com/mongodb/async/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) method.
+To update all Persons that match a filter, use the [`updateMany`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) method.
 
 The following example sets the zip field to `null` for all documents that have a `zip` value:
 
 ```java
-updateSubscriber = new OperationSubscriber<>();
 collection.updateMany(not(eq("zip", null)), set("zip", null))
-        .subscribe(updateSubscriber);
-updateSubscriber.await();
+        .subscribe(new OperationSubscriber<>());
 ```
 
 ### Replace a Single Person
@@ -316,9 +306,7 @@ An alternative method to change an existing `Person`, would be to use the [`repl
 The following example replaces the `Ada Lovelace` back to the original document:
 
 ```java
-updateSubscriber = new OperationSubscriber<>();
-collection.replaceOne(eq("name", "Ada Lovelace"), ada).subscribe(updateSubscriber);
-updateSubscriber.await();
+collection.replaceOne(eq("name", "Ada Lovelace"), ada).subscribe(new OperationSubscriber<>());
 ```
 
 ## Delete Documents
@@ -337,9 +325,7 @@ To delete at most a single `Person` that matches a filter, use the [`deleteOne`]
 The following example deletes at most one `Person` who lives in `Wimborne`:
 
 ```java
-ObservableSubscriber<DeleteResult> deleteSubscriber = new OperationSubscriber<>();
-collection.deleteOne(eq("address.city", "Wimborne")).subscribe(deleteSubscriber);
-deleteSubscriber.await();
+collection.deleteOne(eq("address.city", "Wimborne")).subscribe(new OperationSubscriber<>());
 ```
 
 ### Delete All Persons That Match a Filter
@@ -349,9 +335,7 @@ To delete multiple Persons matching a filter use the [`deleteMany`]({{< apiref "
 The following example deletes all Persons that live in `London`:
 
 ```java
-deleteSubscriber = new OperationSubscriber<>();
-collection.deleteMany(eq("address.city", "London")).subscribe(deleteSubscriber);
-deleteSubscriber.await();
+collection.deleteMany(eq("address.city", "London")).subscribe(new OperationSubscriber<>());
 ```
 
 ### Additional Information

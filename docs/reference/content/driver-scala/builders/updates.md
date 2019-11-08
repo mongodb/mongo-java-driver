@@ -10,7 +10,7 @@ title = "Updates"
 
 ## Updates
 
-The [`Updates`]({{< apiref "org/mongodb/scala/model/Updates$" >}}) class provides static factory methods for all the MongoDB update 
+The [`Updates`]({{< scapiref "org/mongodb/scala/model/Updates$" >}}) class provides static factory methods for all the MongoDB update 
 operators.  Each method returns an instance of the [`Bson`]({{< relref "bson/documents.md#bson" >}}) type, which can in turn be passed to
 any method that expects an update.
 

@@ -27,7 +27,7 @@ the [ismaster]({{<docsref "reference/command/isMaster/">}}) command response.
 import org.mongodb.scala._
 ```
 
-To specify compression with [`ConnectionString`]({{<apiref "org/mongodb/scala/ConnectionString$.html">}}), specify `compressors` as part of the connection
+To specify compression with [`ConnectionString`]({{<scapiref "org/mongodb/scala/ConnectionString$.html">}}), specify `compressors` as part of the connection
 string, as in:
 
 ```scala
@@ -64,7 +64,7 @@ import org.mongodb.scala._
 import scala.collection.JavaConverters._
 ```
 
-To specify compression with [`MongoClientSettings`]({{<apiref "org/mongodb/scala/MongoClientSettings$.html">}}), set the `compressors` property 
+To specify compression with [`MongoClientSettings`]({{<scapiref "org/mongodb/scala/MongoClientSettings$.html">}}), set the `compressors` property 
 to a list of `MongoCompressor` instances:
 
 ```scala
