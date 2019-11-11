@@ -147,7 +147,7 @@ final class Operations<TDocument> {
     @SuppressWarnings("deprecation")
     private <TResult> FindOperation<TResult> createFindOperation(final MongoNamespace findNamespace, final Bson filter,
                                                                  final Class<TResult> resultClass, final FindOptions options) {
-        return new FindOperation<TResult>(findNamespace, codecRegistry.get(resultClass))
+        FindOperation<TResult> operation = new FindOperation<TResult>(findNamespace, codecRegistry.get(resultClass))
                 .retryReads(retryReads)
                 .filter(filter == null ? new BsonDocument() : filter.toBsonDocument(documentClass, codecRegistry))
                 .batchSize(options.getBatchSize())
@@ -165,13 +165,19 @@ final class Operations<TDocument> {
                 .slaveOk(readPreference.isSlaveOk())
                 .collation(options.getCollation())
                 .comment(options.getComment())
-                .hint(toBsonDocumentOrNull(options.getHint()))
                 .min(toBsonDocumentOrNull(options.getMin()))
                 .max(toBsonDocumentOrNull(options.getMax()))
                 .maxScan(options.getMaxScan())
                 .returnKey(options.isReturnKey())
                 .showRecordId(options.isShowRecordId())
                 .snapshot(options.isSnapshot());
+
+        if (options.getHint() != null) {
+            operation.hint(toBsonDocument(options.getHint()));
+        } else if (options.getHintString() != null) {
+            operation.hint(new BsonString(options.getHintString()));
+        }
+        return operation;
     }
 
     <TResult> DistinctOperation<TResult> distinct(final String fieldName, final Bson filter,

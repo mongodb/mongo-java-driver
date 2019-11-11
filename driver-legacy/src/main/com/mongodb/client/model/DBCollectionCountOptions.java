@@ -62,9 +62,7 @@ public class DBCollectionCountOptions {
      * Gets the hint string to apply.
      *
      * @return the hint string, which should be the name of an existing index
-     * @deprecated Prefer {@link #getHint()}
      */
-    @Deprecated
     @Nullable
     public String getHintString() {
         return hintString;
@@ -86,9 +84,7 @@ public class DBCollectionCountOptions {
      *
      * @param hint the name of the index which should be used for the operation
      * @return this
-     * @deprecated Prefer {@link #hint(DBObject)}
      */
-    @Deprecated
     public DBCollectionCountOptions hintString(@Nullable final String hint) {
         this.hintString = hint;
         return this;
