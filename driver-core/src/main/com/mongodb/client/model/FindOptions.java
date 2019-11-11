@@ -50,6 +50,7 @@ public final class FindOptions {
     private Collation collation;
     private String comment;
     private Bson hint;
+    private String hintString;
     private Bson max;
     private Bson min;
     private long maxScan;
@@ -84,6 +85,7 @@ public final class FindOptions {
         partial = from.partial;
         comment = from.comment;
         hint = from.hint;
+        hintString = from.hintString;
         max = from.max;
         min = from.min;
         maxScan = from.maxScan;
@@ -450,6 +452,29 @@ public final class FindOptions {
      */
     public FindOptions hint(@Nullable final Bson hint) {
         this.hint = hint;
+        return this;
+    }
+
+    /**
+     * Gets the hint string to apply.
+     *
+     * @return the hint string, which should be the name of an existing index
+     * @since 3.12
+     */
+    @Nullable
+    public String getHintString() {
+        return hintString;
+    }
+
+    /**
+     * Sets the hint to apply.
+     *
+     * @param hint the name of the index which should be used for the operation
+     * @return this
+     * @since 3.12
+     */
+    public FindOptions hintString(@Nullable final String hint) {
+        this.hintString = hint;
         return this;
     }
 

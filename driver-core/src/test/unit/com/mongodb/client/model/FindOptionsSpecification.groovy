@@ -18,6 +18,7 @@ package com.mongodb.client.model
 
 import com.mongodb.CursorType
 import org.bson.BsonDocument
+import org.bson.Document
 import spock.lang.Specification
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -35,6 +36,8 @@ class FindOptionsSpecification extends Specification {
         options.getMaxAwaitTime(MILLISECONDS) == 0
         options.getProjection() == null
         options.getSort() == null
+        options.getHint() == null
+        options.getHintString() == null
         options.getLimit() == 0
         options.getSkip() == 0
         options.getBatchSize() == 0
@@ -171,5 +174,21 @@ class FindOptionsSpecification extends Specification {
 
         then:
         options.getMaxAwaitTime(SECONDS) == 1
+    }
+
+    def 'should set hint'() {
+        expect:
+        new FindOptions().hint(hint).getHint() == hint
+
+        where:
+        hint << [null, new BsonDocument(), new Document('a', 1)]
+    }
+
+    def 'should set hintString'() {
+        expect:
+        new FindOptions().hintString(hintString).getHintString() == hintString
+
+        where:
+        hintString << [null, 'a_1']
     }
 }

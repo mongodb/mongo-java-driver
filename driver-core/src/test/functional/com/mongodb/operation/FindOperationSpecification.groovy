@@ -86,6 +86,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         operation.getFilter() == null
         operation.getMaxTime(MILLISECONDS) == 0
         operation.getMaxAwaitTime(MILLISECONDS) == 0
+        operation.getHint() == null
         operation.getLimit() == 0
         operation.getSkip() == 0
         operation.getBatchSize() == 0
@@ -103,6 +104,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def filter = new BsonDocument('filter', new BsonInt32(1))
         def projection = new BsonDocument('projection', new BsonInt32(1))
         def modifiers = new BsonDocument('modifiers', new BsonInt32(1))
+        def hint = new BsonString('a_1')
 
         when:
         FindOperation operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
@@ -111,6 +113,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
                 .filter(filter)
                 .limit(20)
                 .skip(30)
+                .hint(hint)
                 .batchSize(40)
                 .projection(projection)
                 .modifiers(modifiers)
@@ -127,6 +130,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         operation.getMaxAwaitTime(MILLISECONDS) == 20000
         operation.getLimit() == 20
         operation.getSkip() == 30
+        operation.getHint() == hint
         operation.getBatchSize() == 40
         operation.getProjection() == projection
         operation.getModifiers() == modifiers
@@ -433,11 +437,15 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should apply $hint'() {
         given:
-        def hint = new BsonDocument('a', new BsonInt32(1))
-        collectionHelper.createIndex(hint)
+        def index = new BsonDocument('a', new BsonInt32(1))
+        collectionHelper.createIndex(index)
 
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
-                .modifiers(new BsonDocument('$hint', hint))
+        if (useModifer) {
+            operation.modifiers(new BsonDocument('$hint', hint))
+        } else {
+            operation.hint(hint)
+        }
         operation = async ? operation.asExplainableOperationAsync(QUERY_PLANNER) :
                 operation.asExplainableOperation(QUERY_PLANNER)
 
@@ -446,13 +454,14 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         if (serverVersionAtLeast(3, 0)) {
-            assertEquals(hint, QueryOperationHelper.getKeyPattern(explainPlan))
+            assertEquals(index, QueryOperationHelper.getKeyPattern(explainPlan))
         } else {
             assertEquals(new BsonString('BtreeCursor a_1'), explainPlan.cursor)
         }
 
         where:
-        async << [true, false]
+        [async, useModifer, hint] << [[true, false], [true, false], [new BsonDocument('a', new BsonInt32(1)),
+                                                                     new BsonString('a_1')]].combinations()
     }
 
     @IgnoreIf({ isSharded() })
