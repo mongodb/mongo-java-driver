@@ -24,7 +24,9 @@ import org.bson.BsonTimestamp;
  * The session context.
  *
  * @since 3.6
+ * @deprecated there is no replacement for this class
  */
+@Deprecated
 public interface SessionContext {
 
     /**
