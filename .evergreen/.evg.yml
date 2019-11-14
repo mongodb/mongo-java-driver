@@ -252,6 +252,15 @@ functions:
           ${PREPARE_SHELL}
           AUTH="${AUTH}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" .evergreen/run-socket-tests.sh
 
+  "run netty tests":
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          STREAM_TYPE=netty AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" .evergreen/run-tests.sh
+
   "run plain auth test":
     - command: shell.exec
       type: test
@@ -433,6 +442,11 @@ tasks:
       commands:
         - func: "bootstrap mongo-orchestration"
         - func: "run socket tests"
+
+    - name: "netty-test"
+      commands:
+        - func: "bootstrap mongo-orchestration"
+        - func: "run netty tests"
 
     - name: "atlas-test"
       commands:
@@ -665,6 +679,13 @@ buildvariants:
   tags: ["tests-socket-variant"]
   tasks:
      - name: "socket-test"
+
+- matrix_name: "tests-netty"
+  matrix_spec: { auth: "noauth", ssl: "*", jdk: "jdk8", version: ["4.2"], topology: "standalone", os: "linux" }
+  display_name: "Netty: ${version} ${topology} ${ssl} ${jdk} ${os} "
+  tags: ["tests-variant"]
+  tasks:
+    - name: "test"
 
 - matrix_name: "tests-socket-snappy-compression"
   matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk8", version: ["4.2"], topology: "standalone", os: "linux" }
