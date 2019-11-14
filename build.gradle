@@ -172,7 +172,7 @@ configure(javaCodeCheckedProjects) {
                 'org.mongodb.test.transaction.uri': System.getProperty('org.mongodb.test.transaction.uri'),
                 'org.mongodb.useSocket': System.getProperty('org.mongodb.useSocket', 'false'),
                 'org.mongodb.disableAsync': System.getProperty('org.mongodb.disableAsync', 'false'),
-                'org.mongodb.async.type': System.getProperty('org.mongodb.async.type', 'nio2'),
+                'org.mongodb.test.async.type': System.getProperty('org.mongodb.test.async.type', 'nio2'),
                 'org.mongodb.test.awsAccessKeyId': System.getProperty('org.mongodb.test.awsAccessKeyId'),
                 'org.mongodb.test.awsSecretAccessKey': System.getProperty('org.mongodb.test.awsSecretAccessKey'),
                 'jna.library.path': System.getProperty('jna.library.path')

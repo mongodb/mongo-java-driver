@@ -349,7 +349,7 @@ public final class ClusterFixture {
     }
 
     public static StreamFactory getAsyncStreamFactory() {
-        String streamType = System.getProperty("org.mongodb.async.type", "nio2");
+        String streamType = System.getProperty("org.mongodb.test.async.type", "nio2");
 
         if (streamType.equals("netty")) {
             return new NettyStreamFactory(getSocketSettings(), getSslSettings());
