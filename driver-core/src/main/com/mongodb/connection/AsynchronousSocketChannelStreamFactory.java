@@ -57,7 +57,7 @@ public class AsynchronousSocketChannelStreamFactory implements StreamFactory {
                                                   final AsynchronousChannelGroup group) {
         if (sslSettings.isEnabled()) {
             throw new UnsupportedOperationException("No SSL support in java.nio.channels.AsynchronousSocketChannel. For SSL support use "
-                    + "com.mongodb.connection.netty.NettyStreamFactoryFactory");
+                    + "com.mongodb.connection.TlsChannelStreamFactoryFactory");
         }
 
         this.settings = notNull("settings", settings);
