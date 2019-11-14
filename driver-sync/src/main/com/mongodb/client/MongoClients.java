@@ -68,14 +68,9 @@ public final class MongoClients {
      * {@code applyConnectionString} method on an instance of setting's builder class, building the setting, and adding it to an instance of
      * {@link com.mongodb.MongoClientSettings.Builder}.
      * </p>
-     * <p>
-     * The connection string's stream type is then applied by setting the
-     * {@link com.mongodb.connection.StreamFactory} to an instance of NettyStreamFactory,
-     * </p>
      *
      * @param connectionString the settings
      * @return the client
-     * @throws IllegalArgumentException if the connection string's stream type is not one of "netty" or "nio2"
      *
      * @see com.mongodb.MongoClientSettings.Builder#applyConnectionString(ConnectionString)
      */
@@ -91,7 +86,6 @@ public final class MongoClients {
      * @param connectionString       the settings
      * @param mongoDriverInformation any driver information to associate with the MongoClient
      * @return the client
-     * @throws IllegalArgumentException if the connection string's stream type is not one of "netty" or "nio2"
      * @see MongoClients#create(ConnectionString)
      */
     public static MongoClient create(final ConnectionString connectionString,

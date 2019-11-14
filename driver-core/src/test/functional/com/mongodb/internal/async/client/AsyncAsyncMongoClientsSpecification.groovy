@@ -42,8 +42,7 @@ class AsyncAsyncMongoClientsSpecification extends FunctionalSpecification {
         }
         connectionString += getConnectionString().getHosts()[0] + '/?'
         connectionString += 'ssl=' + getSslSettings().isEnabled() + '&'
-        connectionString += 'sslInvalidHostNameAllowed=' + getSslSettings().isInvalidHostNameAllowed() + '&'
-        connectionString += 'streamType=' + streamType
+        connectionString += 'sslInvalidHostNameAllowed=' + getSslSettings().isInvalidHostNameAllowed()
 
         when:
         def client = AsyncMongoClients.create(connectionString)
@@ -56,9 +55,6 @@ class AsyncAsyncMongoClientsSpecification extends FunctionalSpecification {
 
         cleanup:
         client?.close()
-
-        where:
-        streamType << ['netty', 'nio2']
     }
 
     def 'should apply connection string to cluster settings'() {
