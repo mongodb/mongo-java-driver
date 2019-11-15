@@ -939,14 +939,9 @@ public class MongoClientOptions {
         private AutoEncryptionSettings autoEncryptionSettings;
 
         /**
-         * Creates a Builder for MongoClientOptions, getting the appropriate system properties for initialization.
+         * Creates a Builder for MongoClientOptions.
          */
         public Builder() {
-            heartbeatFrequency(Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalMS", "10000")));
-            minHeartbeatFrequency(Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalNoMasterMS", "500")));
-            heartbeatConnectTimeout(Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000")));
-            heartbeatSocketTimeout(Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000")));
-            localThreshold(Integer.parseInt(System.getProperty("com.mongodb.slaveAcceptableLatencyMS", "15")));
         }
 
         /**
