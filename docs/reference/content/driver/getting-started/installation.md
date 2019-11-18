@@ -31,7 +31,7 @@ The `mongodb-driver-sync` artifact is a valid OSGi bundle whose symbolic name is
 
 {{% /note %}}
 
-{{< install artifactId="mongodb-driver-sync" version="3.11.2" dependencies="true">}}
+{{< install artifactId="mongodb-driver-sync" version="3.11.3" dependencies="true">}}
 
 ## MongoDB Driver Legacy 
 
@@ -44,7 +44,7 @@ While not deprecated, we recommend that new applications depend on the `mongodb-
 
 {{% /note %}}
 
-{{< install artifactId="mongodb-driver-legacy" version="3.11.2" dependencies="true">}}
+{{< install artifactId="mongodb-driver-legacy" version="3.11.3" dependencies="true">}}
 
 ## MongoDB Driver  
 
@@ -61,7 +61,7 @@ This module is deprecated and will no longer be published in the next major rele
 
 {{% /note %}}
 
-{{< install artifactId="mongodb-driver" version="3.11.2" dependencies="true">}}
+{{< install artifactId="mongodb-driver" version="3.11.3" dependencies="true">}}
 
 
 ## Uber Jar (Legacy)
@@ -81,4 +81,4 @@ This module is deprecated and will no longer be published in the next major rele
 
 {{% /note %}}
 
-{{< install artifactId="mongo-java-driver" version="3.11.2">}}
+{{< install artifactId="mongo-java-driver" version="3.11.3">}}
