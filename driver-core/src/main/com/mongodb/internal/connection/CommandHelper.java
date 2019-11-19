@@ -20,7 +20,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.MongoServerException;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
-import com.mongodb.session.SessionContext;
+import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;

@@ -34,7 +34,7 @@ import com.mongodb.internal.binding.WriteBinding
 import com.mongodb.internal.connection.AsyncConnection
 import com.mongodb.internal.connection.Connection
 import com.mongodb.internal.validator.NoOpFieldNameValidator
-import com.mongodb.session.SessionContext
+import com.mongodb.internal.session.SessionContext
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32

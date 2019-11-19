@@ -26,7 +26,7 @@ import com.mongodb.internal.binding.ReferenceCounted;
 import com.mongodb.internal.bulk.DeleteRequest;
 import com.mongodb.internal.bulk.InsertRequest;
 import com.mongodb.internal.bulk.UpdateRequest;
-import com.mongodb.session.SessionContext;
+import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;

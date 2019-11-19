@@ -22,7 +22,7 @@ import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.internal.binding.AsyncWriteBinding
 import com.mongodb.internal.binding.WriteBinding
-import com.mongodb.session.SessionContext
+import com.mongodb.internal.session.SessionContext
 
 class CommitTransactionOperationUnitSpecification extends OperationUnitSpecification {
     def 'should add UnknownTransactionCommitResult error label to MongoTimeoutException'() {

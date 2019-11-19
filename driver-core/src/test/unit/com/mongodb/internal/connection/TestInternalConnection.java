@@ -21,7 +21,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerId;
-import com.mongodb.session.SessionContext;
+import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
 import org.bson.ByteBuf;

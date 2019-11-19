@@ -29,7 +29,7 @@ import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Server;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.session.ClientSessionContext;
-import com.mongodb.session.SessionContext;
+import com.mongodb.internal.session.SessionContext;
 
 import static com.mongodb.assertions.Assertions.notNull;
 

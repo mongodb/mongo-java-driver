@@ -34,7 +34,7 @@ import com.mongodb.internal.binding.ReadBinding
 import com.mongodb.internal.binding.WriteBinding
 import com.mongodb.internal.connection.AsyncConnection
 import com.mongodb.internal.connection.Connection
-import com.mongodb.session.SessionContext
+import com.mongodb.internal.session.SessionContext
 import org.bson.BsonDocument
 import spock.lang.Shared
 import spock.lang.Specification

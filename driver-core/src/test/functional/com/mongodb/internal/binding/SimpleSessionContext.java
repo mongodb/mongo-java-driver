@@ -17,7 +17,7 @@
 package com.mongodb.internal.binding;
 
 import com.mongodb.ReadConcern;
-import com.mongodb.session.SessionContext;
+import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
 import org.bson.BsonTimestamp;

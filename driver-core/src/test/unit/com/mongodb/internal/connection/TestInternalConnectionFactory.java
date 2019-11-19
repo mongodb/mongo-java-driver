@@ -21,7 +21,7 @@ import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerType;
-import com.mongodb.session.SessionContext;
+import com.mongodb.internal.session.SessionContext;
 import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
 

@@ -20,7 +20,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.AsyncConnection;
-import com.mongodb.session.SessionContext;
+import com.mongodb.internal.session.SessionContext;
 
 import static org.bson.assertions.Assertions.notNull;
 

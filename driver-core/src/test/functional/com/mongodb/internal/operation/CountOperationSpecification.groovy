@@ -36,7 +36,7 @@ import com.mongodb.internal.bulk.IndexRequest
 import com.mongodb.internal.client.model.CountStrategy
 import com.mongodb.internal.connection.AsyncConnection
 import com.mongodb.internal.connection.Connection
-import com.mongodb.session.SessionContext
+import com.mongodb.internal.session.SessionContext
 import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonInt32

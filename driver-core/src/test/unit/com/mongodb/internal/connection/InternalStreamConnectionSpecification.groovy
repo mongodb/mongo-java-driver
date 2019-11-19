@@ -39,7 +39,7 @@ import com.mongodb.event.CommandFailedEvent
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.event.CommandSucceededEvent
 import com.mongodb.internal.validator.NoOpFieldNameValidator
-import com.mongodb.session.SessionContext
+import com.mongodb.internal.session.SessionContext
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString

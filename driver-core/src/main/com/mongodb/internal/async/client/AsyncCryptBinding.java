@@ -24,7 +24,7 @@ import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Cluster;
-import com.mongodb.session.SessionContext;
+import com.mongodb.internal.session.SessionContext;
 
 @SuppressWarnings("deprecation")
 public class AsyncCryptBinding implements AsyncClusterAwareReadWriteBinding {

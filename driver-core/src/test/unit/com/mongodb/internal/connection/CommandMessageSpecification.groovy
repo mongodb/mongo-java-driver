@@ -25,7 +25,7 @@ import com.mongodb.connection.ServerType
 import com.mongodb.internal.bulk.InsertRequest
 import com.mongodb.internal.bulk.WriteRequestWithIndex
 import com.mongodb.internal.validator.NoOpFieldNameValidator
-import com.mongodb.session.SessionContext
+import com.mongodb.internal.session.SessionContext
 import org.bson.BsonArray
 import org.bson.BsonBinary
 import org.bson.BsonBinaryReader

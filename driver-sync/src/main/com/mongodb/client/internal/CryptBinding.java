@@ -23,7 +23,7 @@ import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadWriteBinding;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
-import com.mongodb.session.SessionContext;
+import com.mongodb.internal.session.SessionContext;
 
 class CryptBinding implements ClusterAwareReadWriteBinding {
     private final ClusterAwareReadWriteBinding wrapped;

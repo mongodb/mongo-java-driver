@@ -30,7 +30,7 @@ import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.operation.OperationHelper.AsyncCallableWithSource;
 import com.mongodb.internal.operation.OperationHelper.CallableWithSource;
-import com.mongodb.session.SessionContext;
+import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;

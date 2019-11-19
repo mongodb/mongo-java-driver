@@ -27,7 +27,7 @@ import com.mongodb.internal.connection.Server;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.selector.WritableServerSelector;
 import com.mongodb.selector.ServerSelector;
-import com.mongodb.session.SessionContext;
+import com.mongodb.internal.session.SessionContext;
 
 import static com.mongodb.assertions.Assertions.notNull;
 

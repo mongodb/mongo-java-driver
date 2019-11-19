@@ -36,7 +36,7 @@ import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.MongoWriteConcernWithResponseException;
 import com.mongodb.internal.connection.ProtocolHelper;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
-import com.mongodb.session.SessionContext;
+import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 
