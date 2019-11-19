@@ -40,6 +40,8 @@ import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.InsertManyResult;
+import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.lang.Nullable;
 import org.bson.Document;
@@ -728,12 +730,13 @@ public interface MongoCollection<TDocument> {
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param document the document to insert
+     * @return the insert one result
      * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
      * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
      * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      */
-    void insertOne(TDocument document);
+    InsertOneResult insertOne(TDocument document);
 
     /**
      * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
@@ -741,13 +744,14 @@ public interface MongoCollection<TDocument> {
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param document the document to insert
      * @param options  the options to apply to the operation
+     * @return the insert one result
      * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
      * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
      * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.2
      */
-    void insertOne(TDocument document, InsertOneOptions options);
+    InsertOneResult insertOne(TDocument document, InsertOneOptions options);
 
     /**
      * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
@@ -755,6 +759,7 @@ public interface MongoCollection<TDocument> {
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param document      the document to insert
+     * @return the insert one result
      * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
      * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
      * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
@@ -762,7 +767,7 @@ public interface MongoCollection<TDocument> {
      * @since 3.6
      * @mongodb.server.release 3.6
      */
-    void insertOne(ClientSession clientSession, TDocument document);
+    InsertOneResult insertOne(ClientSession clientSession, TDocument document);
 
     /**
      * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
@@ -771,6 +776,7 @@ public interface MongoCollection<TDocument> {
      * @param clientSession the client session with which to associate this operation
      * @param document      the document to insert
      * @param options       the options to apply to the operation
+     * @return the insert one result
      * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
      * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
      * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
@@ -778,19 +784,20 @@ public interface MongoCollection<TDocument> {
      * @since 3.6
      * @mongodb.server.release 3.6
      */
-    void insertOne(ClientSession clientSession, TDocument document, InsertOneOptions options);
+    InsertOneResult insertOne(ClientSession clientSession, TDocument document, InsertOneOptions options);
 
     /**
      * Inserts one or more documents.  A call to this method is equivalent to a call to the {@code bulkWrite} method
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param documents the documents to insert
+     * @return the insert many result
      * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
      * @throws com.mongodb.MongoCommandException   if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException          if the write failed due some other failure
      * @see com.mongodb.client.MongoCollection#bulkWrite
      */
-    void insertMany(List<? extends TDocument> documents);
+    InsertManyResult insertMany(List<? extends TDocument> documents);
 
     /**
      * Inserts one or more documents.  A call to this method is equivalent to a call to the {@code bulkWrite} method
@@ -798,11 +805,12 @@ public interface MongoCollection<TDocument> {
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param documents the documents to insert
      * @param options   the options to apply to the operation
+     * @return the insert many result
      * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
      * @throws com.mongodb.MongoCommandException   if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException          if the write failed due some other failure
      */
-    void insertMany(List<? extends TDocument> documents, InsertManyOptions options);
+    InsertManyResult insertMany(List<? extends TDocument> documents, InsertManyOptions options);
 
     /**
      * Inserts one or more documents.  A call to this method is equivalent to a call to the {@code bulkWrite} method
@@ -810,6 +818,7 @@ public interface MongoCollection<TDocument> {
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param documents the documents to insert
+     * @return the insert many result
      * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
      * @throws com.mongodb.MongoCommandException   if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException          if the write failed due some other failure
@@ -817,7 +826,7 @@ public interface MongoCollection<TDocument> {
      * @since 3.6
      * @mongodb.server.release 3.6
      */
-    void insertMany(ClientSession clientSession, List<? extends TDocument> documents);
+    InsertManyResult insertMany(ClientSession clientSession, List<? extends TDocument> documents);
 
     /**
      * Inserts one or more documents.  A call to this method is equivalent to a call to the {@code bulkWrite} method
@@ -826,13 +835,14 @@ public interface MongoCollection<TDocument> {
      * @param clientSession the client session with which to associate this operation
      * @param documents the documents to insert
      * @param options   the options to apply to the operation
+     * @return the insert many result
      * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
      * @throws com.mongodb.MongoCommandException   if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException          if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
      */
-    void insertMany(ClientSession clientSession, List<? extends TDocument> documents, InsertManyOptions options);
+    InsertManyResult insertMany(ClientSession clientSession, List<? extends TDocument> documents, InsertManyOptions options);
 
     /**
      * Removes at most one document from the collection that matches the given filter.  If no documents match, the collection is not

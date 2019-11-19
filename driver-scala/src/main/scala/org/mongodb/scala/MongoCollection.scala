@@ -24,6 +24,7 @@ import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
 import org.mongodb.scala.result._
+import org.reactivestreams.Publisher
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
@@ -533,21 +534,21 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
    *
    * @param document the document to insert
-   * @return a Observable with a single element indicating when the operation has completed or errors with either a
+   * @return a Observable with a single element the InsertOneResult or with either a
    *         com.mongodb.DuplicateKeyException or com.mongodb.MongoException
    */
-  def insertOne(document: TResult): SingleObservable[Void] = wrapped.insertOne(document)
+  def insertOne(document: TResult): SingleObservable[InsertOneResult] = wrapped.insertOne(document)
 
   /**
    * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
    *
    * @param document the document to insert
    * @param options  the options to apply to the operation
-   * @return a Observable with a single element indicating when the operation has completed or errors with either a
+   * @return a Observable with a single element the InsertOneResult or with either a
    *         com.mongodb.DuplicateKeyException or com.mongodb.MongoException
    * @since 1.1
    */
-  def insertOne(document: TResult, options: InsertOneOptions): SingleObservable[Void] =
+  def insertOne(document: TResult, options: InsertOneOptions): SingleObservable[InsertOneResult] =
     wrapped.insertOne(document, options)
 
   /**
@@ -555,12 +556,12 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    *
    * @param clientSession the client session with which to associate this operation
    * @param document the document to insert
-   * @return a Observable with a single element indicating when the operation has completed or errors with either a
+   * @return a Observable with a single element the InsertOneResult or with either a
    *         com.mongodb.DuplicateKeyException or com.mongodb.MongoException
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def insertOne(clientSession: ClientSession, document: TResult): SingleObservable[Void] =
+  def insertOne(clientSession: ClientSession, document: TResult): SingleObservable[InsertOneResult] =
     wrapped.insertOne(clientSession, document)
 
   /**
@@ -569,7 +570,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param clientSession the client session with which to associate this operation
    * @param document the document to insert
    * @param options  the options to apply to the operation
-   * @return a Observable with a single element indicating when the operation has completed or errors with either a
+   * @return a Observable with a single element the InsertOneResult or with either a
    *         com.mongodb.DuplicateKeyException or com.mongodb.MongoException
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
@@ -578,7 +579,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
       clientSession: ClientSession,
       document: TResult,
       options: InsertOneOptions
-  ): SingleObservable[Void] =
+  ): SingleObservable[InsertOneResult] =
     wrapped.insertOne(clientSession, document, options)
 
   /**
@@ -586,10 +587,10 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * server &lt; 2.6, using this method will be faster due to constraints in the bulk API related to error handling.
    *
    * @param documents the documents to insert
-   * @return a Observable with a single element indicating when the operation has completed or errors with either a
+   * @return a Observable with a single element the InsertManyResult or with either a
    *         com.mongodb.DuplicateKeyException or com.mongodb.MongoException
    */
-  def insertMany(documents: Seq[_ <: TResult]): SingleObservable[Void] =
+  def insertMany(documents: Seq[_ <: TResult]): SingleObservable[InsertManyResult] =
     wrapped.insertMany(documents.asJava)
 
   /**
@@ -598,10 +599,10 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    *
    * @param documents the documents to insert
    * @param options   the options to apply to the operation
-   * @return a Observable with a single element indicating when the operation has completed or errors with either a
+   * @return a Observable with a single element the InsertManyResult or with either a
    *         com.mongodb.DuplicateKeyException or com.mongodb.MongoException
    */
-  def insertMany(documents: Seq[_ <: TResult], options: InsertManyOptions): SingleObservable[Void] =
+  def insertMany(documents: Seq[_ <: TResult], options: InsertManyOptions): SingleObservable[InsertManyResult] =
     wrapped.insertMany(documents.asJava, options)
 
   /**
@@ -609,12 +610,12 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    *
    * @param clientSession the client session with which to associate this operation
    * @param documents the documents to insert
-   * @return a Observable with a single element indicating when the operation has completed or errors with either a
+   * @return a Observable with a single element the InsertManyResult or with either a
    *         com.mongodb.DuplicateKeyException or com.mongodb.MongoException
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def insertMany(clientSession: ClientSession, documents: Seq[_ <: TResult]): SingleObservable[Void] =
+  def insertMany(clientSession: ClientSession, documents: Seq[_ <: TResult]): SingleObservable[InsertManyResult] =
     wrapped.insertMany(clientSession, documents.asJava)
 
   /**
@@ -623,8 +624,8 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param clientSession the client session with which to associate this operation
    * @param documents the documents to insert
    * @param options   the options to apply to the operation
-   * @return a Observable with a single element indicating when the operation has completed or errors with either a
-   *         com.mongodb.DuplicateKeyException or com.mongodb.MongoException
+   * @return a Observable with a single element the InsertManyResult or with either a
+   *         com.mongodb.DuplicateKeyException or com.mongodb.MongoExceptionn
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
@@ -632,7 +633,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
       clientSession: ClientSession,
       documents: Seq[_ <: TResult],
       options: InsertManyOptions
-  ): SingleObservable[Void] =
+  ): SingleObservable[InsertManyResult] =
     wrapped.insertMany(clientSession, documents.asJava, options)
 
   /**
@@ -1317,7 +1318,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Drops this collection from the Database.
    *
-   * @return a Observable with a single element indicating when the operation has completed
+   * @return an empty Observable that indicates when the operation has completed
    *         [[http://docs.mongodb.org/manual/reference/command/drop/ Drop Collection]]
    */
   def drop(): SingleObservable[Void] = wrapped.drop()
@@ -1326,7 +1327,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * Drops this collection from the Database.
    *
    * @param clientSession the client session with which to associate this operation
-   * @return a Observable with a single element indicating when the operation has completed
+   * @return an empty Observable that indicates when the operation has completed
    *         [[http://docs.mongodb.org/manual/reference/command/drop/ Drop Collection]]
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
@@ -1337,7 +1338,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * [[http://docs.mongodb.org/manual/reference/command/createIndexes Create Index]]
    * @param key     an object describing the index key(s), which may not be null. This can be of any type for which a `Codec` is
    *                registered
-   * @return a Observable with a single element indicating when the operation has completed
+   * @return an empty Observable that indicates when the operation has completed
    */
   def createIndex(key: Bson): SingleObservable[String] = wrapped.createIndex(key)
 
@@ -1346,7 +1347,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param key     an object describing the index key(s), which may not be null. This can be of any type for which a `Codec` is
    *                registered
    * @param options the options for the index
-   * @return a Observable with a single element indicating when the operation has completed
+   * @return an empty Observable that indicates when the operation has completed
    */
   def createIndex(key: Bson, options: IndexOptions): SingleObservable[String] =
     wrapped.createIndex(key, options)
@@ -1356,7 +1357,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param clientSession the client session with which to associate this operation
    * @param key     an object describing the index key(s), which may not be null. This can be of any type for which a `Codec` is
    *                registered
-   * @return a Observable with a single element indicating when the operation has completed
+   * @return an empty Observable that indicates when the operation has completed
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
@@ -1369,7 +1370,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param key     an object describing the index key(s), which may not be null. This can be of any type for which a `Codec` is
    *                registered
    * @param options the options for the index
-   * @return a Observable with a single element indicating when the operation has completed
+   * @return an empty Observable that indicates when the operation has completed
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
@@ -1458,7 +1459,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    *
    * [[http://docs.mongodb.org/manual/reference/command/dropIndexes/ Drop Indexes]]
    * @param indexName the name of the index to remove
-   * @return a Observable with a single element indicating when the operation has completed
+   * @return an empty Observable that indicates when the operation has completed
    */
   def dropIndex(indexName: String): SingleObservable[Void] = wrapped.dropIndex(indexName)
 
@@ -1468,7 +1469,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * [[http://docs.mongodb.org/manual/reference/command/dropIndexes/ Drop Indexes]]
    * @param indexName the name of the index to remove
    * @param dropIndexOptions options to use when dropping indexes
-   * @return a Observable with a single element indicating when the operation has completed
+   * @return an empty Observable that indicates when the operation has completed
    * @since 2.2
    */
   def dropIndex(indexName: String, dropIndexOptions: DropIndexOptions): SingleObservable[Void] =
@@ -1478,7 +1479,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * Drops the index given the keys used to create it.
    *
    * @param keys the keys of the index to remove
-   * @return a Observable with a single element indicating when the operation has completed
+   * @return an empty Observable that indicates when the operation has completed
    */
   def dropIndex(keys: Bson): SingleObservable[Void] = wrapped.dropIndex(keys)
 
@@ -1487,7 +1488,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    *
    * @param keys the keys of the index to remove
    * @param dropIndexOptions options to use when dropping indexes
-   * @return a Observable with a single element indicating when the operation has completed
+   * @return an empty Observable that indicates when the operation has completed
    * @since 2.2
    */
   def dropIndex(keys: Bson, dropIndexOptions: DropIndexOptions): SingleObservable[Void] =
@@ -1499,7 +1500,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * [[http://docs.mongodb.org/manual/reference/command/dropIndexes/ Drop Indexes]]
    * @param clientSession the client session with which to associate this operation
    * @param indexName the name of the index to remove
-   * @return a Observable with a single element indicating when the operation has completed
+   * @return an empty Observable that indicates when the operation has completed
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
@@ -1513,7 +1514,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param clientSession the client session with which to associate this operation
    * @param indexName the name of the index to remove
    * @param dropIndexOptions options to use when dropping indexes
-   * @return a Observable with a single element indicating when the operation has completed
+   * @return an empty Observable that indicates when the operation has completed
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
@@ -1529,7 +1530,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    *
    * @param clientSession the client session with which to associate this operation
    * @param keys the keys of the index to remove
-   * @return a Observable with a single element indicating when the operation has completed
+   * @return an empty Observable that indicates when the operation has completed
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
@@ -1542,7 +1543,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param clientSession the client session with which to associate this operation
    * @param keys the keys of the index to remove
    * @param dropIndexOptions options to use when dropping indexes
-   * @return a Observable with a single element indicating when the operation has completed
+   * @return an empty Observable that indicates when the operation has completed
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
@@ -1557,7 +1558,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * Drop all the indexes on this collection, except for the default on _id.
    *
    * [[http://docs.mongodb.org/manual/reference/command/dropIndexes/ Drop Indexes]]
-   * @return a Observable with a single element indicating when the operation has completed
+   * @return an empty Observable that indicates when the operation has completed
    */
   def dropIndexes(): SingleObservable[Void] = wrapped.dropIndexes()
 
@@ -1566,7 +1567,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    *
    * [[http://docs.mongodb.org/manual/reference/command/dropIndexes/ Drop Indexes]]
    * @param dropIndexOptions options to use when dropping indexes
-   * @return a Observable with a single element indicating when the operation has completed
+   * @return an empty Observable that indicates when the operation has completed
    * @since 2.2
    */
   def dropIndexes(dropIndexOptions: DropIndexOptions): SingleObservable[Void] =
@@ -1577,7 +1578,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    *
    * [[http://docs.mongodb.org/manual/reference/command/dropIndexes/ Drop Indexes]]
    * @param clientSession the client session with which to associate this operation
-   * @return a Observable with a single element indicating when the operation has completed
+   * @return an empty Observable that indicates when the operation has completed
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
@@ -1590,7 +1591,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * [[http://docs.mongodb.org/manual/reference/command/dropIndexes/ Drop Indexes]]
    * @param clientSession the client session with which to associate this operation
    * @param dropIndexOptions options to use when dropping indexes
-   * @return a Observable with a single element indicating when the operation has completed
+   * @return an empty Observable that indicates when the operation has completed
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
@@ -1602,7 +1603,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    *
    * [[http://docs.mongodb.org/manual/reference/commands/renameCollection Rename collection]]
    * @param newCollectionNamespace the name the collection will be renamed to
-   * @return a Observable with a single element indicating when the operation has completed
+   * @return an empty Observable that indicates when the operation has completed
    */
   def renameCollection(newCollectionNamespace: MongoNamespace): SingleObservable[Void] =
     wrapped.renameCollection(newCollectionNamespace)
@@ -1613,7 +1614,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * [[http://docs.mongodb.org/manual/reference/commands/renameCollection Rename collection]]
    * @param newCollectionNamespace the name the collection will be renamed to
    * @param options                the options for renaming a collection
-   * @return a Observable with a single element indicating when the operation has completed
+   * @return an empty Observable that indicates when the operation has completed
    */
   def renameCollection(
       newCollectionNamespace: MongoNamespace,
@@ -1627,7 +1628,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * [[http://docs.mongodb.org/manual/reference/commands/renameCollection Rename collection]]
    * @param clientSession the client session with which to associate this operation
    * @param newCollectionNamespace the name the collection will be renamed to
-   * @return a Observable with a single element indicating when the operation has completed
+   * @return an empty Observable that indicates when the operation has completed
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
@@ -1644,7 +1645,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param clientSession the client session with which to associate this operation
    * @param newCollectionNamespace the name the collection will be renamed to
    * @param options                the options for renaming a collection
-   * @return a Observable with a single element indicating when the operation has completed
+   * @return an empty Observable that indicates when the operation has completed
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */

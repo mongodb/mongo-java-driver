@@ -26,6 +26,10 @@ import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.WriteError;
+import com.mongodb.bulk.BulkWriteInsert;
+import com.mongodb.client.result.InsertManyResult;
+import com.mongodb.client.result.InsertOneResult;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
@@ -46,7 +50,6 @@ import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.bulk.WriteRequest;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.CountStrategy;
@@ -64,6 +67,7 @@ import org.bson.conversions.Bson;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.bulk.WriteRequest.Type.DELETE;
@@ -101,7 +105,7 @@ class AsyncMongoCollectionImpl<TDocument> implements AsyncMongoCollection<TDocum
         this.readConcern = notNull("readConcern", readConcern);
         this.uuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
         this.executor = notNull("executor", executor);
-        this.operations = new AsyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
+        this.operations = new AsyncOperations<>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
                 retryWrites, retryReads);
     }
 
@@ -224,7 +228,7 @@ class AsyncMongoCollectionImpl<TDocument> implements AsyncMongoCollection<TDocum
 
     @Override
     public <TResult> AsyncDistinctIterable<TResult> distinct(final AsyncClientSession clientSession, final String fieldName,
-                                                             final Class<TResult> resultClass) {
+                                                        final Class<TResult> resultClass) {
         return distinct(clientSession, fieldName, new BsonDocument(), resultClass);
     }
 
@@ -238,8 +242,8 @@ class AsyncMongoCollectionImpl<TDocument> implements AsyncMongoCollection<TDocum
     private <TResult> AsyncDistinctIterable<TResult> createDistinctIterable(@Nullable final AsyncClientSession clientSession,
                                                                             final String fieldName, final Bson filter,
                                                                             final Class<TResult> resultClass) {
-        return new AsyncDistinctIterableImpl<TDocument, TResult>(clientSession, namespace, documentClass, resultClass, codecRegistry,
-                readPreference, readConcern, executor, fieldName, filter, retryReads);
+        return new AsyncDistinctIterableImpl<>(clientSession, namespace, documentClass, resultClass, codecRegistry, readPreference,
+                readConcern, executor, fieldName, filter, retryReads);
     }
 
     @Override
@@ -285,7 +289,7 @@ class AsyncMongoCollectionImpl<TDocument> implements AsyncMongoCollection<TDocum
     }
 
     private <TResult> AsyncFindIterable<TResult> createFindIterable(@Nullable final AsyncClientSession clientSession, final Bson filter,
-                                                                    final Class<TResult> resultClass) {
+                                                               final Class<TResult> resultClass) {
         return new AsyncFindIterableImpl<TDocument, TResult>(clientSession, namespace, documentClass, resultClass, codecRegistry,
                 readPreference, readConcern, executor, filter, retryReads);
     }
@@ -307,7 +311,7 @@ class AsyncMongoCollectionImpl<TDocument> implements AsyncMongoCollection<TDocum
 
     @Override
     public <TResult> AsyncAggregateIterable<TResult> aggregate(final AsyncClientSession clientSession, final List<? extends Bson> pipeline,
-                                                               final Class<TResult> resultClass) {
+                                                          final Class<TResult> resultClass) {
         notNull("clientSession", clientSession);
         return createAggregateIterable(clientSession, pipeline, resultClass);
     }
@@ -315,18 +319,18 @@ class AsyncMongoCollectionImpl<TDocument> implements AsyncMongoCollection<TDocum
     private <TResult> AsyncAggregateIterable<TResult> createAggregateIterable(@Nullable final AsyncClientSession clientSession,
                                                                               final List<? extends Bson> pipeline,
                                                                               final Class<TResult> resultClass) {
-        return new AsyncAggregateIterableImpl<TDocument, TResult>(clientSession, namespace, documentClass, resultClass, codecRegistry,
+        return new AsyncAggregateIterableImpl<>(clientSession, namespace, documentClass, resultClass, codecRegistry,
                 readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION, retryReads);
     }
 
     @Override
     public AsyncChangeStreamIterable<TDocument> watch() {
-        return watch(Collections.<Bson>emptyList());
+        return watch(Collections.emptyList());
     }
 
     @Override
     public <TResult> AsyncChangeStreamIterable<TResult> watch(final Class<TResult> resultClass) {
-        return watch(Collections.<Bson>emptyList(), resultClass);
+        return watch(Collections.emptyList(), resultClass);
     }
 
     @Override
@@ -395,7 +399,7 @@ class AsyncMongoCollectionImpl<TDocument> implements AsyncMongoCollection<TDocum
     private <TResult> AsyncMapReduceIterable<TResult> createMapReduceIterable(@Nullable final AsyncClientSession clientSession,
                                                                               final String mapFunction, final String reduceFunction,
                                                                               final Class<TResult> resultClass) {
-        return new AsyncMapReduceIterableImpl<TDocument, TResult>(clientSession, namespace, documentClass, resultClass, codecRegistry,
+        return new AsyncMapReduceIterableImpl<>(clientSession, namespace, documentClass, resultClass, codecRegistry,
                 readPreference, readConcern, writeConcern, executor, mapFunction, reduceFunction);
     }
 
@@ -433,69 +437,74 @@ class AsyncMongoCollectionImpl<TDocument> implements AsyncMongoCollection<TDocum
     }
 
     @Override
-    public void insertOne(final TDocument document, final SingleResultCallback<Void> callback) {
+    public void insertOne(final TDocument document, final SingleResultCallback<InsertOneResult> callback) {
         insertOne(document, new InsertOneOptions(), callback);
     }
 
     @Override
-    public void insertOne(final TDocument document, final InsertOneOptions options, final SingleResultCallback<Void> callback) {
+    public void insertOne(final TDocument document, final InsertOneOptions options,
+                          final SingleResultCallback<InsertOneResult> callback) {
         executeInsertOne(null, document, options, callback);
     }
 
     @Override
-    public void insertOne(final AsyncClientSession clientSession, final TDocument document, final SingleResultCallback<Void> callback) {
+    public void insertOne(final AsyncClientSession clientSession, final TDocument document,
+                          final SingleResultCallback<InsertOneResult> callback) {
         insertOne(clientSession, document, new InsertOneOptions(), callback);
     }
 
     @Override
     public void insertOne(final AsyncClientSession clientSession, final TDocument document, final InsertOneOptions options,
-                          final SingleResultCallback<Void> callback) {
+                          final SingleResultCallback<InsertOneResult> callback) {
         notNull("clientSession", clientSession);
         executeInsertOne(clientSession, document, options, callback);
     }
 
     private void executeInsertOne(@Nullable final AsyncClientSession clientSession, final TDocument document,
-                                  final InsertOneOptions options, final SingleResultCallback<Void> callback) {
+                                  final InsertOneOptions options, final SingleResultCallback<InsertOneResult> callback) {
         executeSingleWriteRequest(clientSession, operations.insertOne(document, options), INSERT,
-                new SingleResultCallback<BulkWriteResult>() {
-                    @Override
-                    public void onResult(final BulkWriteResult result, final Throwable t) {
+                (result, t) -> {
+                    if (t != null) {
                         callback.onResult(null, t);
+                    } else {
+                        callback.onResult(toInsertOneResult(result), null);
                     }
                 });
     }
 
     @Override
-    public void insertMany(final List<? extends TDocument> documents, final SingleResultCallback<Void> callback) {
+    public void insertMany(final List<? extends TDocument> documents,
+                           final SingleResultCallback<InsertManyResult> callback) {
         insertMany(documents, new InsertManyOptions(), callback);
     }
 
     @Override
     public void insertMany(final List<? extends TDocument> documents, final InsertManyOptions options,
-                           final SingleResultCallback<Void> callback) {
+                           final SingleResultCallback<InsertManyResult> callback) {
         executeInsertMany(null, documents, options, callback);
     }
 
     @Override
     public void insertMany(final AsyncClientSession clientSession, final List<? extends TDocument> documents,
-                           final SingleResultCallback<Void> callback) {
+                           final SingleResultCallback<InsertManyResult> callback) {
         insertMany(clientSession, documents, new InsertManyOptions(), callback);
     }
 
     @Override
     public void insertMany(final AsyncClientSession clientSession, final List<? extends TDocument> documents,
-                           final InsertManyOptions options, final SingleResultCallback<Void> callback) {
+                           final InsertManyOptions options, final SingleResultCallback<InsertManyResult> callback) {
         notNull("clientSession", clientSession);
         executeInsertMany(clientSession, documents, options, callback);
     }
 
     private void executeInsertMany(@Nullable final AsyncClientSession clientSession, final List<? extends TDocument> documents,
-                                   final InsertManyOptions options, final SingleResultCallback<Void> callback) {
+                                   final InsertManyOptions options, final SingleResultCallback<InsertManyResult> callback) {
         executor.execute(operations.insertMany(documents, options), readConcern, clientSession,
-                new SingleResultCallback<BulkWriteResult>() {
-                    @Override
-                    public void onResult(final BulkWriteResult result, final Throwable t) {
+                (result, t) -> {
+                    if (t != null) {
                         callback.onResult(null, t);
+                    } else {
+                        callback.onResult(toInsertManyResult(result), null);
                     }
                 });
     }
@@ -548,18 +557,14 @@ class AsyncMongoCollectionImpl<TDocument> implements AsyncMongoCollection<TDocum
                                final boolean multi, final SingleResultCallback<DeleteResult> callback) {
         executeSingleWriteRequest(clientSession,
                 multi ? operations.deleteMany(filter, options) : operations.deleteOne(filter, options), DELETE,
-                new SingleResultCallback<BulkWriteResult>() {
-                    @Override
-                    public void onResult(final BulkWriteResult result, final Throwable t) {
-                        if (t != null) {
-                            callback.onResult(null, t);
+                (result, t) -> {
+                    if (t != null) {
+                        callback.onResult(null, t);
+                    } else {
+                        if (result.wasAcknowledged()) {
+                            callback.onResult(DeleteResult.acknowledged(result.getDeletedCount()), null);
                         } else {
-                            if (result.wasAcknowledged()) {
-                                callback.onResult(DeleteResult.acknowledged(result.getDeletedCount()), null);
-                            } else {
-                                callback.onResult(DeleteResult.unacknowledged(), null);
-                            }
-
+                            callback.onResult(DeleteResult.unacknowledged(), null);
                         }
                     }
                 });
@@ -592,14 +597,11 @@ class AsyncMongoCollectionImpl<TDocument> implements AsyncMongoCollection<TDocum
     private void executeReplaceOne(@Nullable final AsyncClientSession clientSession, final Bson filter, final TDocument replacement,
                                    final ReplaceOptions options, final SingleResultCallback<UpdateResult> callback) {
         executeSingleWriteRequest(clientSession, operations.replaceOne(filter, replacement, options), REPLACE,
-                new SingleResultCallback<BulkWriteResult>() {
-                    @Override
-                    public void onResult(final BulkWriteResult result, final Throwable t) {
-                        if (t != null) {
-                            callback.onResult(null, t);
-                        } else {
-                            callback.onResult(toUpdateResult(result), null);
-                        }
+                (result, t) -> {
+                    if (t != null) {
+                        callback.onResult(null, t);
+                    } else {
+                        callback.onResult(toUpdateResult(result), null);
                     }
                 });
     }
@@ -704,14 +706,11 @@ class AsyncMongoCollectionImpl<TDocument> implements AsyncMongoCollection<TDocum
                                final UpdateOptions options, final boolean multi, final SingleResultCallback<UpdateResult> callback) {
         executeSingleWriteRequest(clientSession,
                 multi ? operations.updateMany(filter, update, options) : operations.updateOne(filter, update, options), UPDATE,
-                new SingleResultCallback<BulkWriteResult>() {
-                    @Override
-                    public void onResult(final BulkWriteResult result, final Throwable t) {
-                        if (t != null) {
-                            callback.onResult(null, t);
-                        } else {
-                            callback.onResult(toUpdateResult(result), null);
-                        }
+                (result, t) -> {
+                    if (t != null) {
+                        callback.onResult(null, t);
+                    } else {
+                        callback.onResult(toUpdateResult(result), null);
                     }
                 });
     }
@@ -720,14 +719,11 @@ class AsyncMongoCollectionImpl<TDocument> implements AsyncMongoCollection<TDocum
                                final UpdateOptions options, final boolean multi, final SingleResultCallback<UpdateResult> callback) {
         executeSingleWriteRequest(clientSession,
                 multi ? operations.updateMany(filter, update, options) : operations.updateOne(filter, update, options), UPDATE,
-                new SingleResultCallback<BulkWriteResult>() {
-                    @Override
-                    public void onResult(final BulkWriteResult result, final Throwable t) {
-                        if (t != null) {
-                            callback.onResult(null, t);
-                        } else {
-                            callback.onResult(toUpdateResult(result), null);
-                        }
+                (result, t) -> {
+                    if (t != null) {
+                        callback.onResult(null, t);
+                    } else {
+                        callback.onResult(toUpdateResult(result), null);
                     }
                 });
     }
@@ -871,14 +867,11 @@ class AsyncMongoCollectionImpl<TDocument> implements AsyncMongoCollection<TDocum
 
     @Override
     public void createIndex(final Bson key, final IndexOptions indexOptions, final SingleResultCallback<String> callback) {
-        createIndexes(singletonList(new IndexModel(key, indexOptions)), new SingleResultCallback<List<String>>() {
-            @Override
-            public void onResult(final List<String> result, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    callback.onResult(result.get(0), null);
-                }
+        createIndexes(singletonList(new IndexModel(key, indexOptions)), (result, t) -> {
+            if (t != null) {
+                callback.onResult(null, t);
+            } else {
+                callback.onResult(result.get(0), null);
             }
         });
     }
@@ -891,14 +884,11 @@ class AsyncMongoCollectionImpl<TDocument> implements AsyncMongoCollection<TDocum
     @Override
     public void createIndex(final AsyncClientSession clientSession, final Bson key, final IndexOptions indexOptions,
                             final SingleResultCallback<String> callback) {
-        createIndexes(clientSession, singletonList(new IndexModel(key, indexOptions)), new SingleResultCallback<List<String>>() {
-            @Override
-            public void onResult(final List<String> result, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    callback.onResult(result.get(0), null);
-                }
+        createIndexes(clientSession, singletonList(new IndexModel(key, indexOptions)), (result, t) -> {
+            if (t != null) {
+                callback.onResult(null, t);
+            } else {
+                callback.onResult(result.get(0), null);
             }
         });
     }
@@ -930,14 +920,11 @@ class AsyncMongoCollectionImpl<TDocument> implements AsyncMongoCollection<TDocum
     private void executeCreateIndexes(@Nullable final AsyncClientSession clientSession, final List<IndexModel> indexes,
                                       final CreateIndexOptions createIndexOptions, final SingleResultCallback<List<String>> callback) {
         executor.execute(operations.createIndexes(indexes, createIndexOptions), readConcern, clientSession,
-                new SingleResultCallback<Void>() {
-                    @Override
-                    public void onResult(final Void result, final Throwable t) {
-                        if (t != null) {
-                            callback.onResult(null, t);
-                        } else {
-                            callback.onResult(IndexHelper.getIndexNames(indexes, codecRegistry), null);
-                        }
+                (result, t) -> {
+                    if (t != null) {
+                        callback.onResult(null, t);
+                    } else {
+                        callback.onResult(IndexHelper.getIndexNames(indexes, codecRegistry), null);
                     }
                 });
     }
@@ -965,7 +952,7 @@ class AsyncMongoCollectionImpl<TDocument> implements AsyncMongoCollection<TDocum
     }
 
     private <TResult> AsyncListIndexesIterable<TResult> createListIndexesIterable(@Nullable final AsyncClientSession clientSession,
-                                                                                  final Class<TResult> resultClass) {
+                                                                             final Class<TResult> resultClass) {
         return new AsyncListIndexesIterableImpl<TResult>(clientSession, namespace, resultClass, codecRegistry, readPreference, executor,
                 retryReads);
     }
@@ -1077,26 +1064,21 @@ class AsyncMongoCollectionImpl<TDocument> implements AsyncMongoCollection<TDocum
     private void executeSingleWriteRequest(@Nullable final AsyncClientSession clientSession,
                                            final AsyncWriteOperation<BulkWriteResult> writeOperation,
                                            final WriteRequest.Type type, final SingleResultCallback<BulkWriteResult> callback) {
-        executor.execute(writeOperation, readConcern, clientSession, new SingleResultCallback<BulkWriteResult>() {
-                             @Override
-                             public void onResult(final BulkWriteResult result, final Throwable t) {
-                                 if (t instanceof MongoBulkWriteException) {
-                                     MongoBulkWriteException e = (MongoBulkWriteException) t;
-                                     if (e.getWriteErrors().isEmpty()) {
-                                         callback.onResult(null,
-                                                           new MongoWriteConcernException(e.getWriteConcernError(),
-                                                                                          translateBulkWriteResult(type,
-                                                                                                                   e.getWriteResult()),
-                                                                                          e.getServerAddress()));
-                                     } else {
-                                         callback.onResult(null, new MongoWriteException(new WriteError(e.getWriteErrors().get(0)),
-                                                                                         e.getServerAddress()));
-                                     }
-                                 } else {
-                                     callback.onResult(result, t);
-                                 }
-                             }
-                         });
+        executor.execute(writeOperation, readConcern, clientSession, (result, t) -> {
+            if (t instanceof MongoBulkWriteException) {
+                MongoBulkWriteException e = (MongoBulkWriteException) t;
+                if (e.getWriteErrors().isEmpty()) {
+                    callback.onResult(null,
+                                      new MongoWriteConcernException(e.getWriteConcernError(),
+                                              translateBulkWriteResult(type, e.getWriteResult()), e.getServerAddress()));
+                } else {
+                    callback.onResult(null, new MongoWriteException(new WriteError(e.getWriteErrors().get(0)),
+                                                                    e.getServerAddress()));
+                }
+            } else {
+                callback.onResult(result, t);
+            }
+        });
     }
 
     private WriteConcernResult translateBulkWriteResult(final WriteRequest.Type type, final BulkWriteResult writeResult) {
@@ -1113,6 +1095,24 @@ class AsyncMongoCollectionImpl<TDocument> implements AsyncMongoCollection<TDocum
                                                        ? null : writeResult.getUpserts().get(0).getId());
             default:
                 throw new MongoInternalException("Unhandled write request type: " + type);
+        }
+    }
+
+    private InsertOneResult toInsertOneResult(final com.mongodb.bulk.BulkWriteResult result) {
+        if (result.wasAcknowledged()) {
+            BsonValue insertedId = result.getInserts().isEmpty() ? null : result.getInserts().get(0).getId();
+            return InsertOneResult.acknowledged(insertedId);
+        } else {
+            return InsertOneResult.unacknowledged();
+        }
+    }
+
+    private InsertManyResult toInsertManyResult(final com.mongodb.bulk.BulkWriteResult result) {
+        if (result.wasAcknowledged()) {
+            return InsertManyResult.acknowledged(result.getInserts().stream()
+                    .collect(Collectors.toMap(BulkWriteInsert::getIndex, BulkWriteInsert::getId)));
+        } else {
+            return InsertManyResult.unacknowledged();
         }
     }
 

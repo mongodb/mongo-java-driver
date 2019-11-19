@@ -22,11 +22,13 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.result.InsertManyResult;
+import com.mongodb.client.result.InsertOneResult;
+import com.mongodb.event.ConnectionPoolClearedEvent;
+import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.async.FutureResultCallback;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.connection.ConnectionPoolSettings;
-import com.mongodb.event.ConnectionPoolClearedEvent;
-import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
@@ -110,7 +112,7 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
 
         List<Document> documents = asList(Document.parse("{_id: 1}"), Document.parse("{_id: 2}"), Document.parse("{_id: 3}"),
                 Document.parse("{_id: 4}"), Document.parse("{_id: 5}"));
-        FutureResultCallback<Void> callback = new FutureResultCallback<Void>();
+        FutureResultCallback<InsertManyResult> callback = new FutureResultCallback<>();
         collection.withWriteConcern(WriteConcern.MAJORITY).insertMany(documents, callback);
         callback.get(30, TimeUnit.SECONDS);
 
@@ -145,7 +147,7 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
         int connectionCount = connectionPoolListener.countEvents(com.mongodb.event.ConnectionAddedEvent.class);
 
         try {
-            FutureResultCallback<Void> callback = new FutureResultCallback<Void>();
+            FutureResultCallback<InsertOneResult> callback = new FutureResultCallback<>();
             collection.insertOne(new Document(), callback);
             callback.get(30, TimeUnit.SECONDS);
             fail();
@@ -153,7 +155,7 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
             assertEquals(10107, e.getCode());
         }
 
-        FutureResultCallback<Void> callback = new FutureResultCallback<Void>();
+        FutureResultCallback<InsertOneResult> callback = new FutureResultCallback<>();
         collection.insertOne(new Document(), callback);
         callback.get(30, TimeUnit.SECONDS);
         assertEquals(connectionCount, connectionPoolListener.countEvents(com.mongodb.event.ConnectionAddedEvent.class));
@@ -168,7 +170,7 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
         int connectionCount = connectionPoolListener.countEvents(com.mongodb.event.ConnectionAddedEvent.class);
 
         try {
-            FutureResultCallback<Void> callback = new FutureResultCallback<Void>();
+            FutureResultCallback<InsertOneResult> callback = new FutureResultCallback<>();
             collection.insertOne(new Document(), callback);
             callback.get(30, TimeUnit.SECONDS);
             fail();
@@ -177,8 +179,8 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
         }
         assertEquals(1, connectionPoolListener.countEvents(ConnectionPoolClearedEvent.class));
 
-        FutureResultCallback<Void> callback = new FutureResultCallback<Void>();
-        collection.insertOne(new Document("test", 1), callback);
+        FutureResultCallback<InsertOneResult> callback = new FutureResultCallback<>();
+        collection.insertOne(new Document(), callback);
         callback.get(30, TimeUnit.SECONDS);
         assertEquals(connectionCount + 1, connectionPoolListener.countEvents(com.mongodb.event.ConnectionAddedEvent.class));
     }
@@ -190,7 +192,7 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
         int connectionCount = connectionPoolListener.countEvents(com.mongodb.event.ConnectionAddedEvent.class);
 
         try {
-            FutureResultCallback<Void> callback = new FutureResultCallback<Void>();
+            FutureResultCallback<InsertOneResult> callback = new FutureResultCallback<>();
             collection.insertOne(new Document(), callback);
             callback.get(30, TimeUnit.SECONDS);
         } catch (MongoException e) {
@@ -198,8 +200,8 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
         }
         assertEquals(1, connectionPoolListener.countEvents(ConnectionPoolClearedEvent.class));
 
-        FutureResultCallback<Void> callback = new FutureResultCallback<Void>();
-        collection.insertOne(new Document("test", 1), callback);
+        FutureResultCallback<InsertOneResult> callback = new FutureResultCallback<>();
+        collection.insertOne(new Document(), callback);
         callback.get(30, TimeUnit.SECONDS);
         assertEquals(connectionCount + 1, connectionPoolListener.countEvents(com.mongodb.event.ConnectionAddedEvent.class));
     }
@@ -211,7 +213,7 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
         int connectionCount = connectionPoolListener.countEvents(com.mongodb.event.ConnectionAddedEvent.class);
 
         try {
-            FutureResultCallback<Void> callback = new FutureResultCallback<Void>();
+            FutureResultCallback<InsertOneResult> callback = new FutureResultCallback<>();
             collection.insertOne(new Document(), callback);
             callback.get(30, TimeUnit.SECONDS);
         } catch (MongoException e) {
@@ -219,8 +221,8 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
         }
         assertEquals(1, connectionPoolListener.countEvents(ConnectionPoolClearedEvent.class));
 
-        FutureResultCallback<Void> callback = new FutureResultCallback<Void>();
-        collection.insertOne(new Document("test", 1), callback);
+        FutureResultCallback<InsertOneResult> callback = new FutureResultCallback<>();
+        collection.insertOne(new Document(), callback);
         callback.get(30, TimeUnit.SECONDS);
         assertEquals(connectionCount + 1, connectionPoolListener.countEvents(com.mongodb.event.ConnectionAddedEvent.class));
     }

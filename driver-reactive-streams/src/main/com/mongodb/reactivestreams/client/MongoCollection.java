@@ -40,6 +40,8 @@ import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.InsertManyResult;
+import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -679,33 +681,33 @@ public interface MongoCollection<TDocument> {
      * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
      *
      * @param document the document to insert
-     * @return an empty publisher that indicates when the operation has completed or errors with either a
+     * @return a publisher with a single element with the InsertOneResult or with either a
      * com.mongodb.DuplicateKeyException or com.mongodb.MongoException
      */
-    Publisher<Void> insertOne(TDocument document);
+    Publisher<InsertOneResult> insertOne(TDocument document);
 
     /**
      * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
      *
      * @param document the document to insert
      * @param options  the options to apply to the operation
-     * @return an empty publisher that indicates when the operation has completed or errors with either a
+     * @return a publisher with a single element with the InsertOneResult or with either a
      * com.mongodb.DuplicateKeyException or com.mongodb.MongoException
      * @since 1.2
      */
-    Publisher<Void> insertOne(TDocument document, InsertOneOptions options);
+    Publisher<InsertOneResult> insertOne(TDocument document, InsertOneOptions options);
 
     /**
      * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
      *
      * @param clientSession the client session with which to associate this operation
      * @param document the document to insert
-     * @return an empty publisher that indicates when the operation has completed or errors with either a
+     * @return a publisher with a single element with the InsertOneResult or with either a
      * com.mongodb.DuplicateKeyException or com.mongodb.MongoException
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Void> insertOne(ClientSession clientSession, TDocument document);
+    Publisher<InsertOneResult> insertOne(ClientSession clientSession, TDocument document);
 
     /**
      * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
@@ -713,43 +715,43 @@ public interface MongoCollection<TDocument> {
      * @param clientSession the client session with which to associate this operation
      * @param document the document to insert
      * @param options  the options to apply to the operation
-     * @return an empty publisher that indicates when the operation has completed or errors with either a
+     * @return a publisher with a single element with the InsertOneResult or with either a
      * com.mongodb.DuplicateKeyException or com.mongodb.MongoException
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Void> insertOne(ClientSession clientSession, TDocument document, InsertOneOptions options);
+    Publisher<InsertOneResult> insertOne(ClientSession clientSession, TDocument document, InsertOneOptions options);
 
     /**
      * Inserts a batch of documents.
      *
      * @param documents the documents to insert
-     * @return an empty publisher that indicates when the operation has completed or errors with either a
+     * @return a publisher with a single element with the InsertManyResult or with either a
      * com.mongodb.DuplicateKeyException or com.mongodb.MongoException
      */
-    Publisher<Void> insertMany(List<? extends TDocument> documents);
+    Publisher<InsertManyResult> insertMany(List<? extends TDocument> documents);
 
     /**
      * Inserts a batch of documents.
      *
      * @param documents the documents to insert
      * @param options   the options to apply to the operation
-     * @return an empty publisher that indicates when the operation has completed or errors with either a
+     * @return a publisher with a single element with the InsertManyResult or with either a
      * com.mongodb.DuplicateKeyException or com.mongodb.MongoException
      */
-    Publisher<Void> insertMany(List<? extends TDocument> documents, InsertManyOptions options);
+    Publisher<InsertManyResult> insertMany(List<? extends TDocument> documents, InsertManyOptions options);
 
     /**
      * Inserts a batch of documents.
      *
      * @param clientSession the client session with which to associate this operation
      * @param documents the documents to insert
-     * @return an empty publisher that indicates when the operation has completed or errors with either a
+     * @return a publisher with a single element with the InsertManyResult or with either a
      * com.mongodb.DuplicateKeyException or com.mongodb.MongoException
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Void> insertMany(ClientSession clientSession, List<? extends TDocument> documents);
+    Publisher<InsertManyResult> insertMany(ClientSession clientSession, List<? extends TDocument> documents);
 
     /**
      * Inserts a batch of documents.
@@ -757,12 +759,12 @@ public interface MongoCollection<TDocument> {
      * @param clientSession the client session with which to associate this operation
      * @param documents the documents to insert
      * @param options   the options to apply to the operation
-     * @return an empty publisher that indicates when the operation has completed or errors with either a
+     * @return a publisher with a single element with the InsertManyResult or with either a
      * com.mongodb.DuplicateKeyException or com.mongodb.MongoException
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Void> insertMany(ClientSession clientSession, List<? extends TDocument> documents, InsertManyOptions options);
+    Publisher<InsertManyResult> insertMany(ClientSession clientSession, List<? extends TDocument> documents, InsertManyOptions options);
 
     /**
      * Removes at most one document from the collection that matches the given filter.  If no documents match, the collection is not

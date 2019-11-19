@@ -21,11 +21,12 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoQueryException;
+import com.mongodb.client.result.InsertOneResult;
+import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.async.FutureResultCallback;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.test.CollectionHelper;
-import com.mongodb.internal.async.AsyncBatchCursor;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -59,10 +60,10 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
         assumeTrue(canRunTests());
         super.setUp();
 
-        collectionHelper = new CollectionHelper<Document>(new DocumentCodec(), new MongoNamespace(getDefaultDatabaseName(), "test"));
+        collectionHelper = new CollectionHelper<>(new DocumentCodec(), new MongoNamespace(getDefaultDatabaseName(), "test"));
 
         // create the collection before starting tests
-        FutureResultCallback<Void> callback = new FutureResultCallback<Void>();
+        FutureResultCallback<InsertOneResult> callback = new FutureResultCallback<>();
         collection.insertOne(Document.parse("{ _id : 0 }"), callback);
         futureResult(callback);
     }
@@ -154,7 +155,7 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     }
 
     private void insertOneDocument() {
-        FutureResultCallback<Void> callback = new FutureResultCallback<Void>();
+        FutureResultCallback<InsertOneResult> callback = new FutureResultCallback<>();
         collection.insertOne(Document.parse("{ x: 1 }"), callback);
         futureResult(callback);
     }
@@ -165,9 +166,7 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
 
     private AsyncBatchCursor<ChangeStreamDocument<Document>> createChangeStreamCursor(
             final AsyncChangeStreamIterable<Document> changeStreamIterable) {
-        FutureResultCallback<AsyncBatchCursor<ChangeStreamDocument<Document>>> callback =
-                new FutureResultCallback<AsyncBatchCursor<ChangeStreamDocument<Document>>>();
-
+        FutureResultCallback<AsyncBatchCursor<ChangeStreamDocument<Document>>> callback = new FutureResultCallback<>();
         changeStreamIterable.batchCursor(callback);
         return futureResult(callback);
     }

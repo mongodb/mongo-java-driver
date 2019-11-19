@@ -19,7 +19,9 @@ package com.mongodb.reactivestreams.client
 import com.mongodb.MongoDriverInformation
 import com.mongodb.MongoNamespace
 import com.mongodb.client.model.IndexModel
+import com.mongodb.client.result.InsertOneResult
 import com.mongodb.diagnostics.logging.Loggers
+import org.bson.BsonInt32
 import org.bson.Document
 import spock.lang.IgnoreIf
 
@@ -74,7 +76,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         run('find should return an empty list', collection.&find) == []
 
         then:
-        run('Insert a document', collection.&insertOne, document) == []
+        run('Insert a document', collection.&insertOne, document)[0] == InsertOneResult.acknowledged(new BsonInt32(1))
 
         then:
         run('The count is one', collection.&countDocuments)[0] == 1

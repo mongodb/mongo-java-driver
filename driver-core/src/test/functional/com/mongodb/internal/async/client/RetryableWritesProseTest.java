@@ -19,6 +19,7 @@ package com.mongodb.internal.async.client;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.async.FutureResultCallback;
+import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.test.CollectionHelper;
 import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
@@ -53,7 +54,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
         boolean exceptionFound = false;
 
         try {
-            FutureResultCallback<Void> callback = new FutureResultCallback<Void>();
+            FutureResultCallback<InsertOneResult> callback = new FutureResultCallback<InsertOneResult>();
             collection.insertOne(Document.parse("{ x : 1 }"), callback);
             futureResult(callback);
         } catch (MongoClientException e) {

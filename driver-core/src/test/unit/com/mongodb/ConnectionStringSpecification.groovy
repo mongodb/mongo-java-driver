@@ -665,7 +665,6 @@ class ConnectionStringSpecification extends Specification {
     // tests require that the driver connects to an actual replica set, it isn't possible to create specification tests
     // with URIs containing user names, since connection to a replica set that doesn't have that user defined would fail.
     // So to ensure there is proper test coverage of an authSource property specified in a TXT record, adding those tests here.
-
     def 'should use authSource from TXT record'() {
         given:
         def uri = new ConnectionString('mongodb+srv://bob:pwd@test5.test.build.10gen.cc/')

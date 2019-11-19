@@ -16,7 +16,6 @@
 
 package com.mongodb.client;
 
-import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.CreateCollectionOptions;
@@ -50,7 +49,6 @@ import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.JsonTestServerVersionChecker.skipTest;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
-import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeFalse;
 
@@ -92,14 +90,10 @@ public abstract class AbstractCrudTest {
         assumeFalse(skipTest);
         assumeFalse(isSharded());
 
-        collectionHelper = new CollectionHelper<Document>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
+        collectionHelper = new CollectionHelper<>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
 
         collectionHelper.killAllSessions();
         collectionHelper.create(collectionName, new CreateCollectionOptions(), WriteConcern.ACKNOWLEDGED);
-
-        MongoClientSettings settings = MongoClientSettings.builder(getMongoClientSettings())
-                .addCommandListener(commandListener)
-                .build();
 
         createMongoClient(commandListener);
         database = getDatabase(databaseName);
@@ -107,7 +101,7 @@ public abstract class AbstractCrudTest {
         collection = database.getCollection(collectionName, BsonDocument.class);
         helper = new JsonPoweredCrudTestHelper(description, database, collection);
         if (!data.isEmpty()) {
-            List<BsonDocument> documents = new ArrayList<BsonDocument>();
+            List<BsonDocument> documents = new ArrayList<>();
             for (BsonValue document : data) {
                 documents.add(document.asDocument());
             }

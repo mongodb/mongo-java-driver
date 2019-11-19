@@ -18,6 +18,8 @@
 package reactivestreams.documentation;
 
 import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.InsertManyResult;
+import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.MongoCollection;
@@ -83,10 +85,10 @@ public final class DocumentationSamples {
                 .append("uom", "cm");
         canvas.put("size", size);
 
-        ObservableSubscriber<Void> insertSubscriber = new OperationSubscriber<>();
+        ObservableSubscriber<InsertOneResult> insertOneSubscriber = new OperationSubscriber<>();
         collection.insertOne(canvas)
-                .subscribe(insertSubscriber);
-        insertSubscriber.await();
+                .subscribe(insertOneSubscriber);
+        insertOneSubscriber.await();
         // End Example 1
 
         // Start Example 2
@@ -125,10 +127,10 @@ public final class DocumentationSamples {
                 .append("uom", "cm");
         mousePad.put("size", mousePadSize);
 
-        insertSubscriber = new OperationSubscriber<>();
+        ObservableSubscriber<InsertManyResult> insertManySubscriber = new OperationSubscriber<>();
         collection.insertMany(asList(journal, mat, mousePad))
-                .subscribe(insertSubscriber);
-        insertSubscriber.await();
+                .subscribe(insertManySubscriber);
+        insertManySubscriber.await();
         // End Example 3
 
         ObservableSubscriber<Long> countSubscriber = new OperationSubscriber<>();
@@ -139,15 +141,15 @@ public final class DocumentationSamples {
     @Test
     public void testQueryingAtTheTopLevel() {
         // Start Example 6
-        ObservableSubscriber<Void> insertSubscriber = new OperationSubscriber<>();
+        ObservableSubscriber<InsertManyResult> insertManySubscriber = new OperationSubscriber<>();
         collection.insertMany(asList(
                 Document.parse("{ item: 'journal', qty: 25, size: { h: 14, w: 21, uom: 'cm' }, status: 'A' }"),
                 Document.parse("{ item: 'notebook', qty: 50, size: { h: 8.5, w: 11, uom: 'in' }, status: 'A' }"),
                 Document.parse("{ item: 'paper', qty: 100, size: { h: 8.5, w: 11, uom: 'in' }, status: 'D' }"),
                 Document.parse("{ item: 'planner', qty: 75, size: { h: 22.85, w: 30, uom: 'cm' }, status: 'D' }"),
                 Document.parse("{ item: 'postcard', qty: 45, size: { h: 10, w: 15.25, uom: 'cm' }, status: 'A' }"))
-        ).subscribe(insertSubscriber);
-        insertSubscriber.await();
+        ).subscribe(insertManySubscriber);
+        insertManySubscriber.await();
         // End Example 6
 
         ObservableSubscriber<Long> countSubscriber = new OperationSubscriber<>();
@@ -219,15 +221,15 @@ public final class DocumentationSamples {
     @Test
     public void testQueryingEmbeddedDocuments() {
         // Start Example 14
-        ObservableSubscriber<Void> insertSubscriber = new OperationSubscriber<>();
+        ObservableSubscriber<InsertManyResult> insertManySubscriber = new OperationSubscriber<>();
         collection.insertMany(asList(
                 Document.parse("{ item: 'journal', qty: 25, size: { h: 14, w: 21, uom: 'cm' }, status: 'A' }"),
                 Document.parse("{ item: 'notebook', qty: 50, size: { h: 8.5, w: 11, uom: 'in' }, status: 'A' }"),
                 Document.parse("{ item: 'paper', qty: 100, size: { h: 8.5, w: 11, uom: 'in' }, status: 'D' }"),
                 Document.parse("{ item: 'planner', qty: 75, size: { h: 22.85, w: 30, uom: 'cm' }, status: 'D' }"),
                 Document.parse("{ item: 'postcard', qty: 45, size: { h: 10, w: 15.25, uom: 'cm' }, status: 'A' }"))
-        ).subscribe(insertSubscriber);
-        insertSubscriber.await();
+        ).subscribe(insertManySubscriber);
+        insertManySubscriber.await();
         // End Example 14
 
         ObservableSubscriber<Long> countSubscriber = new OperationSubscriber<>();
@@ -283,15 +285,15 @@ public final class DocumentationSamples {
     public void testQueryingArrayValues() {
 
         //Start Example 20
-        ObservableSubscriber<Void> insertSubscriber = new OperationSubscriber<>();
+        ObservableSubscriber<InsertManyResult> insertManySubscriber = new OperationSubscriber<>();
        collection.insertMany(asList(
                 Document.parse("{ item: 'journal', qty: 25, tags: ['blank', 'red'], dim_cm: [ 14, 21 ] }"),
                 Document.parse("{ item: 'notebook', qty: 50, tags: ['red', 'blank'], dim_cm: [ 14, 21 ] }"),
                 Document.parse("{ item: 'paper', qty: 100, tags: ['red', 'blank', 'plain'], dim_cm: [ 14, 21 ] }"),
                 Document.parse("{ item: 'planner', qty: 75, tags: ['blank', 'red'], dim_cm: [ 22.85, 30 ] }"),
                 Document.parse("{ item: 'postcard', qty: 45, tags: ['blue'], dim_cm: [ 10, 15.25 ] }"))
-        ).subscribe(insertSubscriber);
-        insertSubscriber.await();
+        ).subscribe(insertManySubscriber);
+        insertManySubscriber.await();
         // End Example 20
 
         ObservableSubscriber<Long> countSubscriber = new OperationSubscriber<>();
@@ -367,15 +369,15 @@ public final class DocumentationSamples {
     public void testQueryingArraysContainingDocuments() {
 
         //Start Example 29
-        ObservableSubscriber<Void> insertSubscriber = new OperationSubscriber<>();
+        ObservableSubscriber<InsertManyResult> insertManySubscriber = new OperationSubscriber<>();
         collection.insertMany(asList(
                 Document.parse("{ item: 'journal', instock: [ { warehouse: 'A', qty: 5 }, { warehouse: 'C', qty: 15 } ] }"),
                 Document.parse("{ item: 'notebook', instock: [ { warehouse: 'C', qty: 5 } ] }"),
                 Document.parse("{ item: 'paper', instock: [ { warehouse: 'A', qty: 60 }, { warehouse: 'B', qty: 15 } ] }"),
                 Document.parse("{ item: 'planner', instock: [ { warehouse: 'A', qty: 40 }, { warehouse: 'B', qty: 5 } ] }"),
                 Document.parse("{ item: 'postcard', instock: [ { warehouse: 'B', qty: 15 }, { warehouse: 'C', qty: 35 } ] }"))
-        ).subscribe(insertSubscriber);
-        insertSubscriber.await();
+        ).subscribe(insertManySubscriber);
+        insertManySubscriber.await();
         // End Example 29
 
         ObservableSubscriber<Long> countSubscriber = new OperationSubscriber<>();
@@ -450,12 +452,12 @@ public final class DocumentationSamples {
     public void testQueryingNullandMissingFields() {
 
         //Start Example 38
-        ObservableSubscriber<Void> insertSubscriber = new OperationSubscriber<>();
+        ObservableSubscriber<InsertManyResult> insertManySubscriber = new OperationSubscriber<>();
         collection.insertMany(asList(
                 Document.parse("{'_id': 1, 'item': null}"),
                 Document.parse("{'_id': 2}"))
-        ).subscribe(insertSubscriber);
-        insertSubscriber.await();
+        ).subscribe(insertManySubscriber);
+        insertManySubscriber.await();
         // End Example 38
 
         ObservableSubscriber<Long> countSubscriber = new OperationSubscriber<>();
@@ -491,7 +493,7 @@ public final class DocumentationSamples {
     public void testProjectingFields() {
 
         //Start Example 42
-        ObservableSubscriber<Void> insertSubscriber = new OperationSubscriber<>();
+        ObservableSubscriber<InsertManyResult> insertManySubscriber = new OperationSubscriber<>();
         collection.insertMany(asList(
             Document.parse("{ item: 'journal', status: 'A', size: { h: 14, w: 21, uom: 'cm' }, instock: [ { warehouse: 'A', qty: 5 }]}"),
             Document.parse("{ item: 'notebook', status: 'A',  size: { h: 8.5, w: 11, uom: 'in' }, instock: [ { warehouse: 'C', qty: 5}]}"),
@@ -499,8 +501,8 @@ public final class DocumentationSamples {
             Document.parse("{ item: 'planner', status: 'D', size: { h: 22.85, w: 30, uom: 'cm' }, instock: [ { warehouse: 'A', qty: 40}]}"),
             Document.parse("{ item: 'postcard', status: 'A', size: { h: 10, w: 15.25, uom: 'cm' }, "
                     + "instock: [ { warehouse: 'B', qty: 15 }, { warehouse: 'C', qty: 35 } ] }"))
-        ).subscribe(insertSubscriber);
-        insertSubscriber.await();
+        ).subscribe(insertManySubscriber);
+        insertManySubscriber.await();
         // End Example 42
 
         ObservableSubscriber<Long> countSubscriber = new OperationSubscriber<>();
@@ -577,7 +579,7 @@ public final class DocumentationSamples {
     @Test
     public void testUpdates() {
         //Start Example 51
-        ObservableSubscriber<Void> insertSubscriber = new OperationSubscriber<>();
+        ObservableSubscriber<InsertManyResult> insertManySubscriber = new OperationSubscriber<>();
         collection.insertMany(asList(
                 Document.parse("{ item: 'canvas', qty: 100, size: { h: 28, w: 35.5, uom: 'cm' }, status: 'A' }"),
                 Document.parse("{ item: 'journal', qty: 25, size: { h: 14, w: 21, uom: 'cm' }, status: 'A' }"),
@@ -589,8 +591,8 @@ public final class DocumentationSamples {
                 Document.parse("{ item: 'postcard', qty: 45, size: { h: 10, w: 15.25, uom: 'cm' }, status: 'A' }"),
                 Document.parse("{ item: 'sketchbook', qty: 80, size: { h: 14, w: 21, uom: 'cm' }, status: 'A' }"),
                 Document.parse("{ item: 'sketch pad', qty: 95, size: { h: 22.85, w: 30.5, uom: 'cm' }, status: 'A' }"))
-        ).subscribe(insertSubscriber);
-        insertSubscriber.await();
+        ).subscribe(insertManySubscriber);
+        insertManySubscriber.await();
         // End Example 51
 
         ObservableSubscriber<Long> countSubscriber = new OperationSubscriber<>();
@@ -644,15 +646,15 @@ public final class DocumentationSamples {
     public void testDeletions() {
 
         //Start Example 55
-        ObservableSubscriber<Void> insertSubscriber = new OperationSubscriber<>();
+        ObservableSubscriber<InsertManyResult> insertManySubscriber = new OperationSubscriber<>();
         collection.insertMany(asList(
                 Document.parse("{ item: 'journal', qty: 25, size: { h: 14, w: 21, uom: 'cm' }, status: 'A' }"),
                 Document.parse("{ item: 'notebook', qty: 50, size: { h: 8.5, w: 11, uom: 'in' }, status: 'A' }"),
                 Document.parse("{ item: 'paper', qty: 100, size: { h: 8.5, w: 11, uom: 'in' }, status: 'D' }"),
                 Document.parse("{ item: 'planner', qty: 75, size: { h: 22.85, w: 30, uom: 'cm' }, status: 'D' }"),
                 Document.parse("{ item: 'postcard', qty: 45, size: { h: 10, w: 15.25, uom: 'cm' }, status: 'A' }"))
-        ).subscribe(insertSubscriber);
-        insertSubscriber.await();
+        ).subscribe(insertManySubscriber);
+        insertManySubscriber.await();
         // End Example 55
 
         ObservableSubscriber<Long> countSubscriber = new OperationSubscriber<>();

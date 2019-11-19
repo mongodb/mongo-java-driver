@@ -22,6 +22,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoException;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.FutureResultCallback;
+import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.internal.async.client.vault.AsyncClientEncryption;
 import com.mongodb.internal.async.client.vault.AsyncClientEncryptions;
@@ -106,12 +107,12 @@ public class ClientSideEncryptionCorpusTest {
         dataKeysCollection.drop(voidCallback);
         voidCallback.get();
 
-        voidCallback = new FutureResultCallback<Void>();
-        dataKeysCollection.insertOne(bsonDocumentFromPath("corpus-key-aws.json"), voidCallback);
-        voidCallback.get();
-        voidCallback = new FutureResultCallback<Void>();
-        dataKeysCollection.insertOne(bsonDocumentFromPath("corpus-key-local.json"), voidCallback);
-        voidCallback.get();
+        FutureResultCallback<InsertOneResult> insertOneCallback = new FutureResultCallback<>();
+        dataKeysCollection.insertOne(bsonDocumentFromPath("corpus-key-aws.json"), insertOneCallback);
+        insertOneCallback.get();
+        insertOneCallback = new FutureResultCallback<>();
+        dataKeysCollection.insertOne(bsonDocumentFromPath("corpus-key-local.json"), insertOneCallback);
+        insertOneCallback.get();
 
         // Step 4: Configure our objects
         Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>();
@@ -224,9 +225,9 @@ public class ClientSideEncryptionCorpusTest {
         // Step 6: insert corpusCopied
         AsyncMongoCollection<BsonDocument> encryptedCollection = autoEncryptingClient.getDatabase("db")
                 .getCollection("coll", BsonDocument.class);
-        FutureResultCallback<Void> voidCallback = new FutureResultCallback<Void>();
-        encryptedCollection.insertOne(corpusCopied, voidCallback);
-        voidCallback.get();
+        FutureResultCallback<InsertOneResult> insertOneCallback = new FutureResultCallback<>();
+        encryptedCollection.insertOne(corpusCopied, insertOneCallback);
+        insertOneCallback.get();
 
         // Step 7: check the auto decrypted document
         FutureResultCallback<BsonDocument> bsonDocumentCallback = new FutureResultCallback<BsonDocument>();

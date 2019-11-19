@@ -25,6 +25,7 @@ import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
 import org.mongodb.scala.MongoCollection
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
+import org.mongodb.scala.result.{ InsertManyResult, InsertOneResult }
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
@@ -263,30 +264,31 @@ case class SyncMongoCollection[T](wrapped: MongoCollection[T]) extends JMongoCol
   ): BulkWriteResult =
     wrapped.bulkWrite(unwrap(clientSession), requests.asScala.toSeq, options).toFuture().get()
 
-  override def insertOne(t: T): Unit = wrapped.insertOne(t).toFuture().get()
+  override def insertOne(t: T): InsertOneResult = wrapped.insertOne(t).toFuture().get()
 
-  override def insertOne(t: T, options: InsertOneOptions): Unit = wrapped.insertOne(t, options).toFuture().get()
+  override def insertOne(t: T, options: InsertOneOptions): InsertOneResult =
+    wrapped.insertOne(t, options).toFuture().get()
 
-  override def insertOne(clientSession: ClientSession, t: T): Unit =
+  override def insertOne(clientSession: ClientSession, t: T): InsertOneResult =
     wrapped.insertOne(unwrap(clientSession), t).toFuture().get()
 
-  override def insertOne(clientSession: ClientSession, t: T, options: InsertOneOptions): Unit =
+  override def insertOne(clientSession: ClientSession, t: T, options: InsertOneOptions): InsertOneResult =
     wrapped.insertOne(unwrap(clientSession), t, options).toFuture().get()
 
-  override def insertMany(documents: java.util.List[_ <: T]): Unit =
+  override def insertMany(documents: java.util.List[_ <: T]): InsertManyResult =
     wrapped.insertMany(documents.asScala.toSeq).toFuture().get()
 
-  override def insertMany(documents: java.util.List[_ <: T], options: InsertManyOptions): Unit =
+  override def insertMany(documents: java.util.List[_ <: T], options: InsertManyOptions): InsertManyResult =
     wrapped.insertMany(documents.asScala.toSeq, options).toFuture().get()
 
-  override def insertMany(clientSession: ClientSession, documents: java.util.List[_ <: T]): Unit =
+  override def insertMany(clientSession: ClientSession, documents: java.util.List[_ <: T]): InsertManyResult =
     wrapped.insertMany(unwrap(clientSession), documents.asScala.toSeq).toFuture().get()
 
   override def insertMany(
       clientSession: ClientSession,
       documents: java.util.List[_ <: T],
       options: InsertManyOptions
-  ): Unit =
+  ): InsertManyResult =
     wrapped.insertMany(unwrap(clientSession), documents.asScala.toSeq, options).toFuture().get()
 
   override def deleteOne(filter: Bson): DeleteResult =

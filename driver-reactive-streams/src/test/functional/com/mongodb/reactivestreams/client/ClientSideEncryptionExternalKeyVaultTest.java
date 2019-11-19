@@ -23,6 +23,7 @@ import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.vault.EncryptOptions;
+import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.reactivestreams.client.Fixture.ObservableSubscriber;
 import com.mongodb.reactivestreams.client.vault.ClientEncryption;
 import com.mongodb.reactivestreams.client.vault.ClientEncryptions;
@@ -79,9 +80,9 @@ public class ClientSideEncryptionExternalKeyVaultTest {
         datakeys.drop().subscribe(subscriber);
         subscriber.await(5, TimeUnit.SECONDS);
 
-        subscriber = new ObservableSubscriber<>();
-        datakeys.insertOne(bsonDocumentFromPath("external-key.json")).subscribe(subscriber);
-        subscriber.await(5, TimeUnit.SECONDS);
+        ObservableSubscriber<InsertOneResult> insertOneSubscriber = new ObservableSubscriber<>();
+        datakeys.insertOne(bsonDocumentFromPath("external-key.json")).subscribe(insertOneSubscriber);
+        insertOneSubscriber.await(5, TimeUnit.SECONDS);
 
         /* Step 2: create encryption objects. */
         Map<String, Map<String, Object>> kmsProviders = new HashMap<>();
@@ -134,7 +135,7 @@ public class ClientSideEncryptionExternalKeyVaultTest {
                 .getDatabase("db")
                 .getCollection("coll", BsonDocument.class);
         try {
-            ObservableSubscriber<Void> subscriber = new ObservableSubscriber<>();
+            ObservableSubscriber<InsertOneResult> subscriber = new ObservableSubscriber<>();
             coll.insertOne(new BsonDocument().append("encrypted", new BsonString("test"))).subscribe(subscriber);
             subscriber.await(5, TimeUnit.SECONDS);
         } catch (MongoSecurityException mse) {

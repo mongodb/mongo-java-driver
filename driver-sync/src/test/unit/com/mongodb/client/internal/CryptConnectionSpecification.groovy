@@ -22,6 +22,8 @@ import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerId
+import com.mongodb.internal.bulk.InsertRequest
+import com.mongodb.internal.bulk.WriteRequestWithIndex
 import com.mongodb.internal.connection.Connection
 import com.mongodb.internal.connection.NoOpSessionContext
 import com.mongodb.internal.connection.SplittablePayload
@@ -105,7 +107,7 @@ class CryptConnectionSpecification extends Specification {
         def payload = new SplittablePayload(INSERT, [
                 new BsonDocumentWrapper(new Document('_id', 1).append('ssid', '555-55-5555').append('b', bytes), codec),
                 new BsonDocumentWrapper(new Document('_id', 2).append('ssid', '666-66-6666').append('b', bytes), codec)
-        ])
+        ].withIndex().collect { doc, i -> new WriteRequestWithIndex(new InsertRequest(doc), i) })
         def encryptedCommand = toRaw(new BsonDocument('insert', new BsonString('test')).append('documents', new BsonArray(
                 [
                         new BsonDocument('_id', new BsonInt32(1))
@@ -160,7 +162,7 @@ class CryptConnectionSpecification extends Specification {
                 new BsonDocumentWrapper(new Document('_id', 1), codec),
                 new BsonDocumentWrapper(new Document('_id', 2), codec),
                 new BsonDocumentWrapper(new Document('_id', 3), codec)
-        ])
+        ].withIndex().collect { doc, i -> new WriteRequestWithIndex(new InsertRequest(doc), i) })
         def encryptedCommand = toRaw(new BsonDocument('insert', new BsonString('test')).append('documents', new BsonArray(
                 [
                         new BsonDocument('_id', new BsonInt32(1)),

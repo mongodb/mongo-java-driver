@@ -47,6 +47,8 @@ import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.InsertManyResult;
+import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -353,59 +355,60 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
     }
 
     @Override
-    public void insertOne(final T t) {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
+    public InsertOneResult insertOne(final T t) {
+        SingleResultSubscriber<InsertOneResult> subscriber = new SingleResultSubscriber<>();
         wrapped.insertOne(t).subscribe(subscriber);
-        subscriber.get();
+        return subscriber.get();
     }
 
     @Override
-    public void insertOne(final T t, final InsertOneOptions options) {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
+    public InsertOneResult insertOne(final T t, final InsertOneOptions options) {
+        SingleResultSubscriber<InsertOneResult> subscriber = new SingleResultSubscriber<>();
         wrapped.insertOne(t, options).subscribe(subscriber);
-        subscriber.get();
+        return subscriber.get();
     }
 
     @Override
-    public void insertOne(final ClientSession clientSession, final T t) {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
+    public InsertOneResult insertOne(final ClientSession clientSession, final T t) {
+        SingleResultSubscriber<InsertOneResult> subscriber = new SingleResultSubscriber<>();
         wrapped.insertOne(unwrap(clientSession), t).subscribe(subscriber);
-        subscriber.get();
+        return subscriber.get();
     }
 
     @Override
-    public void insertOne(final ClientSession clientSession, final T t, final InsertOneOptions options) {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
+    public InsertOneResult insertOne(final ClientSession clientSession, final T t, final InsertOneOptions options) {
+        SingleResultSubscriber<InsertOneResult> subscriber = new SingleResultSubscriber<>();
         wrapped.insertOne(unwrap(clientSession), t, options).subscribe(subscriber);
-        subscriber.get();
+        return subscriber.get();
     }
 
     @Override
-    public void insertMany(final List<? extends T> documents) {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
+    public InsertManyResult insertMany(final List<? extends T> documents) {
+        SingleResultSubscriber<InsertManyResult> subscriber = new SingleResultSubscriber<>();
         wrapped.insertMany(documents).subscribe(subscriber);
-        subscriber.get();
+        return subscriber.get();
     }
 
     @Override
-    public void insertMany(final List<? extends T> documents, final InsertManyOptions options) {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
+    public InsertManyResult insertMany(final List<? extends T> documents, final InsertManyOptions options) {
+        SingleResultSubscriber<InsertManyResult> subscriber = new SingleResultSubscriber<>();
         wrapped.insertMany(documents, options).subscribe(subscriber);
-        subscriber.get();
+        return subscriber.get();
     }
 
     @Override
-    public void insertMany(final ClientSession clientSession, final List<? extends T> documents) {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
+    public InsertManyResult insertMany(final ClientSession clientSession, final List<? extends T> documents) {
+        SingleResultSubscriber<InsertManyResult> subscriber = new SingleResultSubscriber<>();
         wrapped.insertMany(unwrap(clientSession), documents).subscribe(subscriber);
-        subscriber.get();
+        return subscriber.get();
     }
 
     @Override
-    public void insertMany(final ClientSession clientSession, final List<? extends T> documents, final InsertManyOptions options) {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
+    public InsertManyResult insertMany(final ClientSession clientSession, final List<? extends T> documents,
+                                       final InsertManyOptions options) {
+        SingleResultSubscriber<InsertManyResult> subscriber = new SingleResultSubscriber<>();
         wrapped.insertMany(unwrap(clientSession), documents, options).subscribe(subscriber);
-        subscriber.get();
+        return subscriber.get();
     }
 
     @Override

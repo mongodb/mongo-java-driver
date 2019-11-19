@@ -20,6 +20,7 @@ import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.ClusterFixture;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoException;
+import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.reactivestreams.client.Fixture.ObservableSubscriber;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -88,7 +89,7 @@ public class ClientSideEncryptionViewAreProhibitedTest {
                 .getDatabase("db")
                 .getCollection("view", BsonDocument.class);
         try {
-            ObservableSubscriber<Void> subscriber = new ObservableSubscriber<>();
+            ObservableSubscriber<InsertOneResult> subscriber = new ObservableSubscriber<>();
             coll.insertOne(new BsonDocument().append("encrypted", new BsonString("test"))).subscribe(subscriber);
             subscriber.await(ClusterFixture.TIMEOUT, TimeUnit.SECONDS);
             fail();

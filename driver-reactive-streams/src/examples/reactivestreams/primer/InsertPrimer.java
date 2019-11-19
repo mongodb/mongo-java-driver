@@ -18,7 +18,7 @@
 package reactivestreams.primer;
 
 // @imports: start
-
+import com.mongodb.client.result.InsertOneResult;
 import org.bson.Document;
 import org.junit.Test;
 import reactivestreams.helpers.SubscriberHelpers.ObservableSubscriber;
@@ -41,7 +41,7 @@ public class InsertPrimer extends PrimerTestCase {
         // @code: start
         DateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ENGLISH);
 
-        ObservableSubscriber<Void> successSubscriber = new OperationSubscriber<>();
+        ObservableSubscriber<InsertOneResult> insertOneSubscriber = new OperationSubscriber<>();
         db.getCollection("restaurants").insertOne(
                 new Document("address",
                         new Document()
@@ -62,8 +62,8 @@ public class InsertPrimer extends PrimerTestCase {
                                         .append("score", 17)))
                         .append("name", "Vella")
                         .append("restaurant_id", "41704620"))
-                .subscribe(successSubscriber);
-        successSubscriber.await();
+                .subscribe(insertOneSubscriber);
+        insertOneSubscriber.await();
         // @code: end
 
         // @post: The method does not return a result

@@ -50,5 +50,6 @@ public final class InsertRequest extends WriteRequest {
     public Type getType() {
         return Type.INSERT;
     }
+
 }
 

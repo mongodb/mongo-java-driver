@@ -16,18 +16,14 @@
 
 package com.mongodb.internal.connection;
 
-import org.bson.BsonBinaryWriter;
+import org.bson.BsonWriter;
 
 
 abstract class LevelCountingBsonWriter extends BsonWriterDecorator {
     private int level = -1;
 
-    LevelCountingBsonWriter(final BsonBinaryWriter bsonBinaryWriter) {
-        super(bsonBinaryWriter);
-    }
-
-    BsonBinaryWriter getBsonBinaryWriter() {
-        return (BsonBinaryWriter) super.getBsonWriter();
+    LevelCountingBsonWriter(final BsonWriter bsonWriter) {
+        super(bsonWriter);
     }
 
     int getCurrentLevel() {
@@ -50,5 +46,23 @@ abstract class LevelCountingBsonWriter extends BsonWriterDecorator {
     public void writeEndDocument() {
         level--;
         super.writeEndDocument();
+    }
+
+    @Override
+    public void writeStartArray() {
+        level++;
+        super.writeStartArray();
+    }
+
+    @Override
+    public void writeStartArray(final String name) {
+        level++;
+        super.writeStartArray(name);
+    }
+
+    @Override
+    public void writeEndArray() {
+        level--;
+        super.writeEndArray();
     }
 }

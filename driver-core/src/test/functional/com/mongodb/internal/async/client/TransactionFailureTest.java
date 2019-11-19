@@ -19,6 +19,7 @@ package com.mongodb.internal.async.client;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientException;
 import com.mongodb.async.FutureResultCallback;
+import com.mongodb.client.result.InsertOneResult;
 import org.bson.Document;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,13 +39,13 @@ public class TransactionFailureTest extends DatabaseTestCase {
     }
 
     @Test(expected = MongoClientException.class)
-    public void testTransactionFails() throws InterruptedException {
+    public void testTransactionFails() {
         final AsyncClientSession clientSession = createSession();
 
         try {
             clientSession.startTransaction();
 
-            FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<Void>();
+            FutureResultCallback<InsertOneResult> futureResultCallback = new FutureResultCallback<>();
             collection.insertOne(clientSession, Document.parse("{_id: 1, a: 1}"), futureResultCallback);
             futureResultCallback.get();
         } finally {
@@ -64,7 +65,6 @@ public class TransactionFailureTest extends DatabaseTestCase {
 
 
     private boolean canRunTests() {
-        return serverVersionLessThan("4.0")
-                || (serverVersionLessThan("4.1.0") && isSharded());
+        return serverVersionLessThan("4.0") || (serverVersionLessThan("4.1.0") && isSharded());
     }
 }
