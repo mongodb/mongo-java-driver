@@ -17,7 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.session.SessionContext;
+import com.mongodb.internal.session.SessionContext;
 
 public interface ProtocolExecutor {
     <T> T execute(LegacyProtocol<T> protocol, InternalConnection connection);

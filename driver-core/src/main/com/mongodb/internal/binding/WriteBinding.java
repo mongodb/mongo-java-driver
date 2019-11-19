@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.binding;
 
-import com.mongodb.session.SessionContext;
+import com.mongodb.internal.session.SessionContext;
 
 /**
  * A factory of connection sources to servers that can be written to, e.g, a standalone, a mongos, or a replica set primary.

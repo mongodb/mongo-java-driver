@@ -37,7 +37,7 @@ import com.mongodb.event.CommandListener
 import com.mongodb.event.ServerListener
 import com.mongodb.internal.bulk.InsertRequest
 import com.mongodb.internal.validator.NoOpFieldNameValidator
-import com.mongodb.session.SessionContext
+import com.mongodb.internal.session.SessionContext
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.FieldNameValidator

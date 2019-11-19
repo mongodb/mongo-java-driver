@@ -42,7 +42,7 @@ import com.mongodb.event.ConnectionPoolClosedEvent;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.internal.connection.ConcurrentPool.Prune;
 import com.mongodb.internal.thread.DaemonThreadFactory;
-import com.mongodb.session.SessionContext;
+import com.mongodb.internal.session.SessionContext;
 import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
 
