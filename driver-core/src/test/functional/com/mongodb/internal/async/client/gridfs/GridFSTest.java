@@ -21,6 +21,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.internal.async.client.AsyncMongoCollection;
 import com.mongodb.internal.async.client.DatabaseTestCase;
@@ -89,7 +90,7 @@ public class GridFSTest extends DatabaseTestCase {
 
         final List<BsonDocument> filesDocuments = processFiles(data.getArray("files", new BsonArray()), new ArrayList<BsonDocument>());
         if (!filesDocuments.isEmpty()) {
-            new MongoOperation<Void>() {
+            new MongoOperation<InsertManyResult>() {
                 @Override
                 public void execute() {
                     filesCollection.insertMany(filesDocuments, getCallback());
@@ -99,7 +100,7 @@ public class GridFSTest extends DatabaseTestCase {
 
         final List<BsonDocument> chunksDocuments = processChunks(data.getArray("chunks", new BsonArray()), new ArrayList<BsonDocument>());
         if (!chunksDocuments.isEmpty()) {
-            new MongoOperation<Void>() {
+            new MongoOperation<InsertManyResult>() {
                 @Override
                 public void execute() {
                     chunksCollection.insertMany(chunksDocuments, getCallback());
@@ -163,18 +164,18 @@ public class GridFSTest extends DatabaseTestCase {
                 }
             } else if (document.containsKey("insert") && document.containsKey("documents")) {
                 if (document.getString("insert").getValue().equals("fs.files")) {
-                    new MongoOperation<Void>() {
+                    new MongoOperation<InsertManyResult>() {
                         @Override
                         public void execute() {
-                            filesCollection.insertMany(processFiles(document.getArray("documents"), new ArrayList<BsonDocument>()),
+                            filesCollection.insertMany(processFiles(document.getArray("documents"), new ArrayList<>()),
                                     getCallback());
                         }
                     }.get();
                 } else {
-                    new MongoOperation<Void>() {
+                    new MongoOperation<InsertManyResult>() {
                         @Override
                         public void execute() {
-                            chunksCollection.insertMany(processChunks(document.getArray("documents"), new ArrayList<BsonDocument>()),
+                            chunksCollection.insertMany(processChunks(document.getArray("documents"), new ArrayList<>()),
                                     getCallback());
                         }
                     }.get();

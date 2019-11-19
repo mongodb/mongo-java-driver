@@ -17,6 +17,8 @@
 package com.mongodb.internal.async.client
 
 import com.mongodb.MongoNamespace
+import com.mongodb.client.result.InsertOneResult
+import org.bson.BsonInt32
 import org.bson.Document
 import spock.lang.IgnoreIf
 
@@ -43,7 +45,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         run(collection.find().&first) == null
 
         then: 'Insert a document'
-        run(collection.&insertOne, document) == null
+        run(collection.&insertOne, document) == InsertOneResult.acknowledged(new BsonInt32(1))
 
         then: 'The count is one'
         run(collection.&countDocuments) == 1
@@ -67,7 +69,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         run(collection.&countDocuments) == 0
 
         then: 'InsertMany documents'
-        run(collection.&insertMany, [new Document('id', 'a'), new Document('id', 'b'), new Document('id', 'c')]) == null
+        run(collection.&insertMany, [new Document('id', 'a'), new Document('id', 'b'), new Document('id', 'c')])
 
         then: 'Distinct'
         run(collection.distinct('id', String).&into, []) == ['a', 'b', 'c']

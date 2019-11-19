@@ -22,17 +22,17 @@ import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.bulk.BulkWriteError;
+import com.mongodb.bulk.BulkWriteInsert;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.BulkWriteUpsert;
 import com.mongodb.bulk.WriteConcernError;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.bulk.DeleteRequest;
-import com.mongodb.internal.bulk.InsertRequest;
 import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.bulk.WriteRequest;
+import com.mongodb.internal.bulk.WriteRequestWithIndex;
 import com.mongodb.internal.connection.BulkWriteBatchCombiner;
-import com.mongodb.internal.connection.FieldTrackingBsonWriter;
 import com.mongodb.internal.connection.IndexMap;
 import com.mongodb.internal.connection.SplittablePayload;
 import com.mongodb.internal.validator.CollectibleDocumentFieldNameValidator;
@@ -43,24 +43,22 @@ import com.mongodb.session.SessionContext;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
-import org.bson.BsonDocumentWrapper;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonValue;
-import org.bson.BsonWriter;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonValueCodecProvider;
-import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
-import org.bson.codecs.Encoder;
-import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.mongodb.internal.bulk.WriteRequest.Type.DELETE;
 import static com.mongodb.internal.bulk.WriteRequest.Type.INSERT;
@@ -71,11 +69,11 @@ import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
 import static com.mongodb.internal.operation.WriteConcernHelper.createWriteConcernError;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
+
 final class BulkWriteBatch {
     private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());
     private static final Decoder<BsonDocument> DECODER = REGISTRY.get(BsonDocument.class);
     private static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator();
-    private static final WriteRequestEncoder WRITE_REQUEST_ENCODER = new WriteRequestEncoder();
 
     private final MongoNamespace namespace;
     private final ConnectionDescription connectionDescription;
@@ -129,10 +127,10 @@ final class BulkWriteBatch {
         this.writeConcern = writeConcern;
         this.bypassDocumentValidation = bypassDocumentValidation;
         this.bulkWriteBatchCombiner = bulkWriteBatchCombiner;
-        this.batchType = writeRequestsWithIndices.isEmpty() ? INSERT : writeRequestsWithIndices.get(0).writeRequest.getType();
+        this.batchType = writeRequestsWithIndices.isEmpty() ? INSERT : writeRequestsWithIndices.get(0).getType();
         this.retryWrites = retryWrites;
 
-        List<BsonDocument> payloadItems = new ArrayList<BsonDocument>();
+        List<WriteRequestWithIndex> payloadItems = new ArrayList<>();
         List<WriteRequestWithIndex> unprocessedItems = new ArrayList<WriteRequestWithIndex>();
 
         IndexMap indexMap = IndexMap.create();
@@ -148,8 +146,8 @@ final class BulkWriteBatch {
                 }
             }
 
-            indexMap = indexMap.add(payloadItems.size(), writeRequestWithIndex.index);
-            payloadItems.add(new BsonDocumentWrapper<WriteRequest>(writeRequestWithIndex.writeRequest, WRITE_REQUEST_ENCODER));
+            indexMap = indexMap.add(payloadItems.size(), writeRequestWithIndex.getIndex());
+            payloadItems.add(writeRequestWithIndex);
         }
 
         this.indexMap = indexMap;
@@ -202,7 +200,7 @@ final class BulkWriteBatch {
                 MongoBulkWriteException bulkWriteException = getBulkWriteException(result);
                 bulkWriteBatchCombiner.addErrorResult(bulkWriteException, indexMap);
             } else {
-                bulkWriteBatchCombiner.addResult(getBulkWriteResult(result), indexMap);
+                bulkWriteBatchCombiner.addResult(getBulkWriteResult(result));
             }
         }
     }
@@ -247,7 +245,7 @@ final class BulkWriteBatch {
         if (payload.hasAnotherSplit()) {
             IndexMap nextIndexMap = IndexMap.create();
             int newIndex = 0;
-            for (int i = payload.getPosition(); i < payload.getPayload().size(); i++) {
+            for (int i = payload.getPosition(); i < payload.size(); i++) {
                 nextIndexMap = nextIndexMap.add(newIndex, indexMap.map(i));
                 newIndex++;
             }
@@ -279,17 +277,34 @@ final class BulkWriteBatch {
 
     private BulkWriteResult getBulkWriteResult(final BsonDocument result) {
         int count = result.getNumber("n").intValue();
+        List<BulkWriteInsert> insertedItems = getInsertedItems(result);
         List<BulkWriteUpsert> upsertedItems = getUpsertedItems(result);
-        return BulkWriteResult.acknowledged(batchType, count - upsertedItems.size(), getModifiedCount(result), upsertedItems);
+        return BulkWriteResult.acknowledged(batchType, count - upsertedItems.size(), getModifiedCount(result), upsertedItems,
+                insertedItems);
     }
 
-    @SuppressWarnings("unchecked")
+    private List<BulkWriteInsert> getInsertedItems(final BsonDocument result) {
+        if (payload.getPayloadType() == SplittablePayload.Type.INSERT) {
+
+            Stream<WriteRequestWithIndex> writeRequests = payload.getWriteRequestWithIndexes().stream();
+            List<Integer> writeErrors = getWriteErrors(result).stream().map(BulkWriteError::getIndex).collect(Collectors.toList());
+            if (!writeErrors.isEmpty()) {
+                writeRequests = writeRequests.filter(wr -> !writeErrors.contains(wr.getIndex()));
+            }
+            return writeRequests
+                    .map(wr -> new BulkWriteInsert(wr.getIndex(), payload.getInsertedIds().get(wr.getIndex())))
+                    .collect(Collectors.toList());
+        }
+        return Collections.emptyList();
+    }
+
+
     private List<BulkWriteUpsert> getUpsertedItems(final BsonDocument result) {
         BsonArray upsertedValue = result.getArray("upserted", new BsonArray());
-        List<BulkWriteUpsert> bulkWriteUpsertList = new ArrayList<BulkWriteUpsert>();
+        List<BulkWriteUpsert> bulkWriteUpsertList = new ArrayList<>();
         for (BsonValue upsertedItem : upsertedValue) {
             BsonDocument upsertedItemDocument = (BsonDocument) upsertedItem;
-            bulkWriteUpsertList.add(new BulkWriteUpsert(upsertedItemDocument.getNumber("index").intValue(),
+            bulkWriteUpsertList.add(new BulkWriteUpsert(indexMap.map(upsertedItemDocument.getNumber("index").intValue()),
                     upsertedItemDocument.get("_id")));
         }
         return bulkWriteUpsertList;
@@ -358,11 +373,6 @@ final class BulkWriteBatch {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private static Codec<BsonDocument> getCodec(final BsonDocument document) {
-        return (Codec<BsonDocument>) REGISTRY.get(document.getClass());
-    }
-
     private static boolean isRetryable(final WriteRequest writeRequest) {
         if (writeRequest.getType() == UPDATE || writeRequest.getType() == REPLACE) {
             return !((UpdateRequest) writeRequest).isMulti();
@@ -371,100 +381,4 @@ final class BulkWriteBatch {
         }
         return true;
     }
-
-    static class WriteRequestEncoder implements Encoder<WriteRequest> {
-
-        WriteRequestEncoder() {
-        }
-
-        @Override
-        @SuppressWarnings("unchecked")
-        public void encode(final BsonWriter writer, final WriteRequest writeRequest, final EncoderContext encoderContext) {
-            if (writeRequest.getType() == INSERT) {
-                BsonDocument document = ((InsertRequest) writeRequest).getDocument();
-                getCodec(document).encode(writer, document, EncoderContext.builder().isEncodingCollectibleDocument(true).build());
-            } else if (writeRequest.getType() == UPDATE || writeRequest.getType() == REPLACE) {
-                UpdateRequest update = (UpdateRequest) writeRequest;
-                writer.writeStartDocument();
-                writer.writeName("q");
-                getCodec(update.getFilter()).encode(writer, update.getFilter(), EncoderContext.builder().build());
-
-                BsonValue updateValue = update.getUpdateValue();
-                if (!updateValue.isDocument() && !updateValue.isArray()) {
-                    throw new IllegalArgumentException("Invalid BSON value for an update.");
-                }
-                if (updateValue.isArray() && updateValue.asArray().isEmpty()) {
-                    throw new IllegalArgumentException("Invalid pipeline for an update. The pipeline may not be empty.");
-                }
-
-                writer.writeName("u");
-                if (updateValue.isDocument()) {
-                    FieldTrackingBsonWriter fieldTrackingBsonWriter = new FieldTrackingBsonWriter(writer);
-                    getCodec(updateValue.asDocument()).encode(fieldTrackingBsonWriter, updateValue.asDocument(),
-                            EncoderContext.builder().build());
-                    if (writeRequest.getType() == UPDATE && !fieldTrackingBsonWriter.hasWrittenField()) {
-                        throw new IllegalArgumentException("Invalid BSON document for an update. The document may not be empty.");
-                    }
-                } else if (update.getType() == WriteRequest.Type.UPDATE && updateValue.isArray()) {
-                    writer.writeStartArray();
-                    for (BsonValue cur : updateValue.asArray()) {
-                        getCodec(cur.asDocument()).encode(writer, cur.asDocument(), EncoderContext.builder().build());
-                    }
-                    writer.writeEndArray();
-                }
-
-                if (update.isMulti()) {
-                    writer.writeBoolean("multi", update.isMulti());
-                }
-                if (update.isUpsert()) {
-                    writer.writeBoolean("upsert", update.isUpsert());
-                }
-                if (update.getCollation() != null) {
-                    writer.writeName("collation");
-                    BsonDocument collation = update.getCollation().asDocument();
-                    getCodec(collation).encode(writer, collation, EncoderContext.builder().build());
-                }
-                if (update.getArrayFilters() != null) {
-                    writer.writeStartArray("arrayFilters");
-                    for (BsonDocument cur: update.getArrayFilters()) {
-                        getCodec(cur).encode(writer, cur, EncoderContext.builder().build());
-                    }
-                    writer.writeEndArray();
-                }
-                writer.writeEndDocument();
-            } else {
-                DeleteRequest deleteRequest = (DeleteRequest) writeRequest;
-                writer.writeStartDocument();
-                writer.writeName("q");
-                getCodec(deleteRequest.getFilter()).encode(writer, deleteRequest.getFilter(), EncoderContext.builder().build());
-                writer.writeInt32("limit", deleteRequest.isMulti() ? 0 : 1);
-                if (deleteRequest.getCollation() != null) {
-                    writer.writeName("collation");
-                    BsonDocument collation = deleteRequest.getCollation().asDocument();
-                    getCodec(collation).encode(writer, collation, EncoderContext.builder().build());
-                }
-                writer.writeEndDocument();
-            }
-        }
-
-        @Override
-        public Class<WriteRequest> getEncoderClass() {
-            return WriteRequest.class;
-        }
-    }
-
-    static class WriteRequestWithIndex {
-        private final int index;
-        private final WriteRequest writeRequest;
-
-        WriteRequestWithIndex(final WriteRequest writeRequest, final int index) {
-            this.writeRequest = writeRequest;
-            this.index = index;
-        }
-
-        WriteRequest.Type getType() {
-            return writeRequest.getType();
-        }
-    }
-
 }

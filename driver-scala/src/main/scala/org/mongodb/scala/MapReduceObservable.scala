@@ -241,7 +241,7 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
    * Aggregates documents to a collection according to the specified map-reduce function with the given options, which must specify a
    * non-inline result.
    *
-   * @return a Observable with a single element indicating when the operation has completed
+   * @return an empty Observable that indicates when the operation has completed
    * [[http://docs.mongodb.org/manual/aggregation/ Aggregation]]
    */
   def toCollection(): SingleObservable[Void] = wrapped.toCollection()

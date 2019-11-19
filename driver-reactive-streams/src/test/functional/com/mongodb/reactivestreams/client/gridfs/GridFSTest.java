@@ -21,6 +21,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.reactivestreams.client.DatabaseTestCase;
 import com.mongodb.reactivestreams.client.JsonPoweredTestHelper;
@@ -90,14 +91,14 @@ public class GridFSTest extends DatabaseTestCase {
 
         List<BsonDocument> filesDocuments = processFiles(data.getArray("files", new BsonArray()), new ArrayList<BsonDocument>());
         if (!filesDocuments.isEmpty()) {
-            ObservableSubscriber<Void> filesInsertSubscriber = new ObservableSubscriber<>();
+            ObservableSubscriber<InsertManyResult> filesInsertSubscriber = new ObservableSubscriber<>();
             filesCollection.insertMany(filesDocuments).subscribe(filesInsertSubscriber);
             filesInsertSubscriber.await(30, SECONDS);
         }
 
         List<BsonDocument> chunksDocuments = processChunks(data.getArray("chunks", new BsonArray()), new ArrayList<BsonDocument>());
         if (!chunksDocuments.isEmpty()) {
-            ObservableSubscriber<Void> chunksInsertSubscriber = new ObservableSubscriber<>();
+            ObservableSubscriber<InsertManyResult> chunksInsertSubscriber = new ObservableSubscriber<>();
             chunksCollection.insertMany(chunksDocuments).subscribe(chunksInsertSubscriber);
             chunksInsertSubscriber.await(30, SECONDS);
         }
@@ -152,13 +153,13 @@ public class GridFSTest extends DatabaseTestCase {
                 }
             } else if (document.containsKey("insert") && document.containsKey("documents")) {
                 if (document.getString("insert").getValue().equals("fs.files")) {
-                    ObservableSubscriber<Void> insertSubscriber = new ObservableSubscriber<>();
-                    filesCollection.insertMany(processFiles(document.getArray("documents"), new ArrayList<BsonDocument>()))
+                    ObservableSubscriber<InsertManyResult> insertSubscriber = new ObservableSubscriber<>();
+                    filesCollection.insertMany(processFiles(document.getArray("documents"), new ArrayList<>()))
                             .subscribe(insertSubscriber);
                     insertSubscriber.await(30, SECONDS);
                 } else {
-                    ObservableSubscriber<Void> insertSubscriber = new ObservableSubscriber<>();
-                    chunksCollection.insertMany(processChunks(document.getArray("documents"), new ArrayList<BsonDocument>()))
+                    ObservableSubscriber<InsertManyResult> insertSubscriber = new ObservableSubscriber<>();
+                    chunksCollection.insertMany(processChunks(document.getArray("documents"), new ArrayList<>()))
                             .subscribe(insertSubscriber);
                     insertSubscriber.await(30, SECONDS);
                 }

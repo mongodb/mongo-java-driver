@@ -73,7 +73,7 @@ case class GridFSDownloadStream(private val wrapped: JGridFSDownloadStream) exte
   /**
    * Closes the input stream
    *
-   * @return a Observable with a single element indicating when the operation has completed
+   * @return an empty Observable that indicates when the operation has completed
    */
   override def close(): SingleObservable[Void] = wrapped.close()
 }

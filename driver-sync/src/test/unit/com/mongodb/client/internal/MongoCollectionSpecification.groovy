@@ -478,7 +478,7 @@ class MongoCollectionSpecification extends Specification {
     def 'bulkWrite should use MixedBulkWriteOperation correctly'() {
         given:
         def executor = new TestOperationExecutor((1..3).collect {
-            writeConcern.isAcknowledged() ? acknowledged(INSERT, 0, []) : unacknowledged()
+            writeConcern.isAcknowledged() ? acknowledged(INSERT, 0, 0, [], []) : unacknowledged()
         })
         def collection = new MongoCollectionImpl(namespace, BsonDocument, codecRegistry, readPreference, writeConcern,
                 retryWrites, true, readConcern, JAVA_LEGACY, executor)
@@ -568,7 +568,7 @@ class MongoCollectionSpecification extends Specification {
     def 'insertOne should use MixedBulkWriteOperation correctly'() {
         given:
         def executor = new TestOperationExecutor((1..3).collect {
-            writeConcern.isAcknowledged() ? acknowledged(INSERT, 0, []) : unacknowledged()
+            writeConcern.isAcknowledged() ? acknowledged(INSERT, 0, 0, [], []) : unacknowledged()
         })
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern,
                 retryWrites, true, readConcern, JAVA_LEGACY, executor)
@@ -613,7 +613,7 @@ class MongoCollectionSpecification extends Specification {
     def 'insertMany should use MixedBulkWriteOperation correctly'() {
         given:
         def executor = new TestOperationExecutor((1..3).collect {
-            writeConcern.isAcknowledged() ? acknowledged(INSERT, 0, []) : unacknowledged()
+            writeConcern.isAcknowledged() ? acknowledged(INSERT, 0, 0, [], []) : unacknowledged()
         })
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern,
                 retryWrites, true, readConcern, JAVA_LEGACY, executor)
@@ -680,7 +680,7 @@ class MongoCollectionSpecification extends Specification {
     def 'deleteOne should use MixedBulkWriteOperation correctly'() {
         given:
         def executor = new TestOperationExecutor((1..2).collect {
-            writeConcern.isAcknowledged() ? acknowledged(DELETE, 1, []) : unacknowledged()
+            writeConcern.isAcknowledged() ? acknowledged(DELETE, 1, 0, [], []) : unacknowledged()
         })
         def expectedResult = writeConcern.isAcknowledged() ? DeleteResult.acknowledged(1) : DeleteResult.unacknowledged()
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry,  readPreference, writeConcern,
@@ -721,9 +721,8 @@ class MongoCollectionSpecification extends Specification {
 
     def 'deleteOne should translate BulkWriteException correctly'() {
         given:
-        def bulkWriteException = new MongoBulkWriteException(acknowledged(0, 0, 1, null, []), [],
-                new WriteConcernError(100, 'codeName', 'Message', new BsonDocument()),
-                                                             new ServerAddress())
+        def bulkWriteException = new MongoBulkWriteException(acknowledged(0, 0, 1, null, [], []),
+                [], new WriteConcernError(100, 'codeName', 'Message', new BsonDocument()), new ServerAddress())
 
         def executor = new TestOperationExecutor([bulkWriteException])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED,
@@ -744,7 +743,7 @@ class MongoCollectionSpecification extends Specification {
     def 'deleteMany should use MixedBulkWriteOperation correctly'() {
         given:
         def executor = new TestOperationExecutor((1..2).collect {
-            writeConcern.isAcknowledged() ? acknowledged(DELETE, 1, []) : unacknowledged()
+            writeConcern.isAcknowledged() ? acknowledged(DELETE, 1, 0, [], []) : unacknowledged()
         })
         def expectedResult = writeConcern.isAcknowledged() ? DeleteResult.acknowledged(1) : DeleteResult.unacknowledged()
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry,  readPreference, writeConcern,
@@ -786,7 +785,7 @@ class MongoCollectionSpecification extends Specification {
         def executor = new TestOperationExecutor((1..2).collect {
             writeConcern.isAcknowledged() ?
                     acknowledged(REPLACE, 1, modifiedCount,
-                            upsertedId == null ? [] : [new com.mongodb.bulk.BulkWriteUpsert(0, upsertedId)]) :
+                            upsertedId == null ? [] : [new com.mongodb.bulk.BulkWriteUpsert(0, upsertedId)], []) :
                     unacknowledged()
         })
         def expectedResult = writeConcern.isAcknowledged() ?
@@ -846,16 +845,16 @@ class MongoCollectionSpecification extends Specification {
 
         where:
         bulkWriteResult                                                           | writeResult
-        acknowledged(0, 1, 0, 1, [])                                              | WriteConcernResult.acknowledged(1, true, null)
+        acknowledged(0, 1, 0, 1, [], [])                                          | WriteConcernResult.acknowledged(1, true, null)
         acknowledged(0, 0, 0, 0,
-                     [new com.mongodb.bulk.BulkWriteUpsert(0, new BsonInt32(1))]) | WriteConcernResult.acknowledged(1, false,
+                 [new com.mongodb.bulk.BulkWriteUpsert(0, new BsonInt32(1))], []) | WriteConcernResult.acknowledged(1, false,
                                                                                                                     new BsonInt32(1))
     }
 
     def 'updateOne should use MixedBulkWriteOperationOperation correctly'() {
         given:
         def executor = new TestOperationExecutor((1..2).collect {
-            writeConcern.isAcknowledged() ? acknowledged(UPDATE, 1, []) : unacknowledged()
+            writeConcern.isAcknowledged() ? acknowledged(UPDATE, 1, 0, [], []) : unacknowledged()
         })
         def expectedResult = writeConcern.isAcknowledged() ? UpdateResult.acknowledged(1, 0, null) : UpdateResult.unacknowledged()
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern,
@@ -901,7 +900,7 @@ class MongoCollectionSpecification extends Specification {
     def 'updateMany should use MixedBulkWriteOperationOperation correctly'() {
         given:
         def executor = new TestOperationExecutor((1..2).collect {
-            writeConcern.isAcknowledged() ? acknowledged(UPDATE, 5, 3, []) : unacknowledged()
+            writeConcern.isAcknowledged() ? acknowledged(UPDATE, 5, 3, [], []) : unacknowledged()
         })
         def expectedResult = writeConcern.isAcknowledged() ? UpdateResult.acknowledged(5, 3, null) : UpdateResult.unacknowledged()
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern,
@@ -955,7 +954,7 @@ class MongoCollectionSpecification extends Specification {
         e.error == new WriteError(11000, 'oops', new BsonDocument())
 
         where:
-        executor << new TestOperationExecutor([new MongoBulkWriteException(acknowledged(INSERT, 1, []),
+        executor << new TestOperationExecutor([new MongoBulkWriteException(acknowledged(INSERT, 1, 0, [], []),
                 [new BulkWriteError(11000, 'oops',
                         new BsonDocument(), 0)],
                 null, new ServerAddress())])
@@ -963,7 +962,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'should translate MongoBulkWriteException to MongoWriteConcernException'() {
         given:
-        def executor = new TestOperationExecutor([new MongoBulkWriteException(acknowledged(INSERT, 1, []), [],
+        def executor = new TestOperationExecutor([new MongoBulkWriteException(acknowledged(INSERT, 1, 0, [], []), [],
                 new WriteConcernError(42, 'codeName', 'Message', new BsonDocument()),
                 new ServerAddress())])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED,
@@ -1371,7 +1370,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'should not expect to mutate the document when inserting'() {
         given:
-        def executor = new TestOperationExecutor([null])
+        def executor = new TestOperationExecutor([acknowledged(INSERT, 1, 0, [], [])])
         def customCodecRegistry = CodecRegistries.fromRegistries(fromProviders(new ImmutableDocumentCodecProvider()), codecRegistry)
         def collection = new MongoCollectionImpl(namespace, ImmutableDocument, customCodecRegistry, readPreference, ACKNOWLEDGED,
                 true, true, readConcern, JAVA_LEGACY, executor)

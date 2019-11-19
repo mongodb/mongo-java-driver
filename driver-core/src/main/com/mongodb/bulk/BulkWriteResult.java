@@ -20,6 +20,9 @@ import com.mongodb.internal.bulk.WriteRequest;
 
 import java.util.List;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.unmodifiableList;
+
 /**
  * The result of a successful bulk write operation.
  *
@@ -74,6 +77,15 @@ public abstract class BulkWriteResult {
      */
     public abstract int getModifiedCount();
 
+    /**
+     * Gets an unmodifiable list of inserted items, or the empty list if there were none.
+     *
+     * @return a list of inserted items, or the empty list if there were none.
+     * @throws java.lang.UnsupportedOperationException if the write was unacknowledged.
+     * @see com.mongodb.WriteConcern#UNACKNOWLEDGED
+     * @since 4.0
+     */
+    public abstract List<BulkWriteInsert> getInserts();
 
     /**
      * Gets an unmodifiable list of upserted items, or the empty list if there were none.
@@ -91,9 +103,11 @@ public abstract class BulkWriteResult {
      * @param count   the number of documents matched
      * @param upserts the list of upserts
      * @return an acknowledged BulkWriteResult
+     * @deprecated Prefer {@link BulkWriteResult#acknowledged(int, int, int, Integer, List, List)} instead
      */
+    @Deprecated
     public static BulkWriteResult acknowledged(final WriteRequest.Type type, final int count, final List<BulkWriteUpsert> upserts) {
-        return acknowledged(type, count, 0, upserts);
+        return acknowledged(type, count, 0, upserts, emptyList());
     }
 
     /**
@@ -104,13 +118,31 @@ public abstract class BulkWriteResult {
      * @param modifiedCount the number of documents modified, which may be null if the server was not able to provide the count
      * @param upserts       the list of upserts
      * @return an acknowledged BulkWriteResult
+     * @deprecated Prefer {@link BulkWriteResult#acknowledged(int, int, int, Integer, List, List)} instead
      */
+    @Deprecated
     public static BulkWriteResult acknowledged(final WriteRequest.Type type, final int count, final Integer modifiedCount,
                                                final List<BulkWriteUpsert> upserts) {
+        return acknowledged(type, count, modifiedCount, upserts, emptyList());
+    }
+
+    /**
+     * Create an acknowledged BulkWriteResult
+     *
+     * @param type          the type of the write
+     * @param count         the number of documents matched
+     * @param modifiedCount the number of documents modified, which may be null if the server was not able to provide the count
+     * @param upserts       the list of upserts
+     * @param inserts       the list of inserts
+     * @return an acknowledged BulkWriteResult
+     * @since 4.0
+     */
+    public static BulkWriteResult acknowledged(final WriteRequest.Type type, final int count, final Integer modifiedCount,
+                                               final List<BulkWriteUpsert> upserts, final List<BulkWriteInsert> inserts) {
         return acknowledged(type == WriteRequest.Type.INSERT ? count : 0,
-                            (type == WriteRequest.Type.UPDATE || type == WriteRequest.Type.REPLACE) ? count : 0,
-                            type == WriteRequest.Type.DELETE ? count : 0,
-                            modifiedCount, upserts);
+                (type == WriteRequest.Type.UPDATE || type == WriteRequest.Type.REPLACE) ? count : 0,
+                type == WriteRequest.Type.DELETE ? count : 0,
+                modifiedCount, upserts, inserts);
     }
 
     /**
@@ -122,9 +154,29 @@ public abstract class BulkWriteResult {
      * @param modifiedCount the number of documents modified, which may not be null
      * @param upserts       the list of upserts
      * @return an acknowledged BulkWriteResult
+     * @deprecated Prefer {@link BulkWriteResult#acknowledged(int, int, int, Integer, List, List)} instead
      */
+    @Deprecated
     public static BulkWriteResult acknowledged(final int insertedCount, final int matchedCount, final int removedCount,
                                                final Integer modifiedCount, final List<BulkWriteUpsert> upserts) {
+        return acknowledged(insertedCount, matchedCount, removedCount, modifiedCount, upserts, emptyList());
+    }
+
+    /**
+     * Create an acknowledged BulkWriteResult
+     *
+     * @param insertedCount the number of documents inserted by the write operation
+     * @param matchedCount  the number of documents matched by the write operation
+     * @param removedCount  the number of documents removed by the write operation
+     * @param modifiedCount the number of documents modified, which may not be null
+     * @param upserts       the list of upserts
+     * @param inserts       the list of inserts
+     * @return an acknowledged BulkWriteResult
+     * @since 4.0
+     */
+    public static BulkWriteResult acknowledged(final int insertedCount, final int matchedCount, final int removedCount,
+                                               final Integer modifiedCount, final List<BulkWriteUpsert> upserts,
+                                               final List<BulkWriteInsert> inserts) {
         return new BulkWriteResult() {
             @Override
             public boolean wasAcknowledged() {
@@ -152,8 +204,13 @@ public abstract class BulkWriteResult {
             }
 
             @Override
+            public List<BulkWriteInsert> getInserts() {
+                return unmodifiableList(inserts);
+            }
+
+            @Override
             public List<BulkWriteUpsert> getUpserts() {
-                return upserts;
+                return unmodifiableList(upserts);
             }
 
             @Override
@@ -185,6 +242,9 @@ public abstract class BulkWriteResult {
                 if (!upserts.equals(that.getUpserts())) {
                     return false;
                 }
+                if (!inserts.equals(that.getInserts())) {
+                    return false;
+                }
 
                 return true;
             }
@@ -192,6 +252,7 @@ public abstract class BulkWriteResult {
             @Override
             public int hashCode() {
                 int result = upserts.hashCode();
+                result = 31 * result + inserts.hashCode();
                 result = 31 * result + insertedCount;
                 result = 31 * result + matchedCount;
                 result = 31 * result + removedCount;
@@ -207,6 +268,7 @@ public abstract class BulkWriteResult {
                        + ", removedCount=" + removedCount
                        + ", modifiedCount=" + modifiedCount
                        + ", upserts=" + upserts
+                       + ", inserts=" + inserts
                        + '}';
             }
         };
@@ -241,6 +303,11 @@ public abstract class BulkWriteResult {
 
             @Override
             public int getModifiedCount() {
+                throw getUnacknowledgedWriteException();
+            }
+
+            @Override
+            public List<BulkWriteInsert> getInserts() {
                 throw getUnacknowledgedWriteException();
             }
 

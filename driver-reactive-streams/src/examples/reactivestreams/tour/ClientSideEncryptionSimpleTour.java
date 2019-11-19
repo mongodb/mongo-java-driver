@@ -19,6 +19,7 @@ package reactivestreams.tour;
 
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoCollection;
@@ -74,9 +75,9 @@ public class ClientSideEncryptionSimpleTour {
         collection.drop().subscribe(successSubscriber);
         successSubscriber.await();
 
-        successSubscriber = new OperationSubscriber<>();
-        collection.insertOne(new Document("encryptedField", "123456789")).subscribe(successSubscriber);
-        successSubscriber.await();
+        ObservableSubscriber<InsertOneResult> insertOneSubscriber = new OperationSubscriber<>();
+        collection.insertOne(new Document("encryptedField", "123456789")).subscribe(insertOneSubscriber);
+        insertOneSubscriber.await();
 
         ObservableSubscriber<Document> documentSubscriber = new PrintDocumentSubscriber();
         collection.find().first().subscribe(documentSubscriber);

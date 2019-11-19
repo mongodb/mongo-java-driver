@@ -21,6 +21,9 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.client.result.InsertManyResult;
+import com.mongodb.client.result.InsertOneResult;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
@@ -41,7 +44,6 @@ import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
-import com.mongodb.internal.async.SingleResultCallback;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -750,13 +752,13 @@ public interface AsyncMongoCollection<TDocument> {
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param document the document to insert
-     * @param callback the callback that is completed once the insert has completed
+     * @param callback the callback that returns the insert one result
      * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
      * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
      * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      */
-    void insertOne(TDocument document, SingleResultCallback<Void> callback);
+    void insertOne(TDocument document, SingleResultCallback<InsertOneResult> callback);
 
     /**
      * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
@@ -764,14 +766,14 @@ public interface AsyncMongoCollection<TDocument> {
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param document the document to insert
      * @param options  the options to apply to the operation
-     * @param callback the callback that is completed once the insert has completed
+     * @param callback the callback that returns the insert one result
      * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
      * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
      * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      * @since 3.2
      */
-    void insertOne(TDocument document, InsertOneOptions options, SingleResultCallback<Void> callback);
+    void insertOne(TDocument document, InsertOneOptions options, SingleResultCallback<InsertOneResult> callback);
 
     /**
      * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
@@ -779,7 +781,7 @@ public interface AsyncMongoCollection<TDocument> {
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession  the client session with which to associate this operation
      * @param document the document to insert
-     * @param callback the callback that is completed once the insert has completed
+     * @param callback the callback that returns the insert one result
      * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
      * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
      * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
@@ -787,7 +789,7 @@ public interface AsyncMongoCollection<TDocument> {
      * @since 3.6
      * @mongodb.server.release 3.6
      */
-    void insertOne(AsyncClientSession clientSession, TDocument document, SingleResultCallback<Void> callback);
+    void insertOne(AsyncClientSession clientSession, TDocument document, SingleResultCallback<InsertOneResult> callback);
 
     /**
      * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
@@ -796,7 +798,7 @@ public interface AsyncMongoCollection<TDocument> {
      * @param clientSession  the client session with which to associate this operation
      * @param document the document to insert
      * @param options  the options to apply to the operation
-     * @param callback the callback that is completed once the insert has completed
+     * @param callback the callback that returns the insert one result
      * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
      * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
      * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
@@ -804,20 +806,21 @@ public interface AsyncMongoCollection<TDocument> {
      * @since 3.6
      * @mongodb.server.release 3.6
      */
-    void insertOne(AsyncClientSession clientSession, TDocument document, InsertOneOptions options, SingleResultCallback<Void> callback);
+    void insertOne(AsyncClientSession clientSession, TDocument document, InsertOneOptions options,
+                   SingleResultCallback<InsertOneResult> callback);
 
     /**
      * Inserts one or more documents.  A call to this method is equivalent to a call to the {@code bulkWrite} method
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param documents the documents to insert
-     * @param callback  the callback that is completed once the insert has completed
+     * @param callback the callback that returns the insert many result
      * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
      * @throws com.mongodb.MongoCommandException   via the callback
      * @throws com.mongodb.MongoException          if the write failed due some other failure
      * @see AsyncMongoCollection#bulkWrite
      */
-    void insertMany(List<? extends TDocument> documents, SingleResultCallback<Void> callback);
+    void insertMany(List<? extends TDocument> documents, SingleResultCallback<InsertManyResult> callback);
 
     /**
      * Inserts one or more documents.  A call to this method is equivalent to a call to the {@code bulkWrite} method
@@ -825,12 +828,12 @@ public interface AsyncMongoCollection<TDocument> {
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param documents the documents to insert
      * @param options   the options to apply to the operation
-     * @param callback  the callback that is completed once the insert has completed
+     * @param callback the callback that returns the insert many result
      * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
      * @throws com.mongodb.MongoException          if the write failed due some other failure
      * @see AsyncMongoCollection#bulkWrite
      */
-    void insertMany(List<? extends TDocument> documents, InsertManyOptions options, SingleResultCallback<Void> callback);
+    void insertMany(List<? extends TDocument> documents, InsertManyOptions options, SingleResultCallback<InsertManyResult> callback);
 
     /**
      * Inserts one or more documents.  A call to this method is equivalent to a call to the {@code bulkWrite} method
@@ -838,14 +841,14 @@ public interface AsyncMongoCollection<TDocument> {
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession  the client session with which to associate this operation
      * @param documents the documents to insert
-     * @param callback  the callback that is completed once the insert has completed
+     * @param callback the callback that returns the insert many result
      * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
      * @throws com.mongodb.MongoException          if the write failed due some other failure
      * @see AsyncMongoCollection#bulkWrite
      * @since 3.6
      * @mongodb.server.release 3.6
      */
-    void insertMany(AsyncClientSession clientSession, List<? extends TDocument> documents, SingleResultCallback<Void> callback);
+    void insertMany(AsyncClientSession clientSession, List<? extends TDocument> documents, SingleResultCallback<InsertManyResult> callback);
 
     /**
      * Inserts one or more documents.  A call to this method is equivalent to a call to the {@code bulkWrite} method
@@ -854,7 +857,7 @@ public interface AsyncMongoCollection<TDocument> {
      * @param clientSession  the client session with which to associate this operation
      * @param documents the documents to insert
      * @param options   the options to apply to the operation
-     * @param callback  the callback that is completed once the insert has completed
+     * @param callback the callback that returns the insert many result
      * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
      * @throws com.mongodb.MongoException          if the write failed due some other failure
      * @see AsyncMongoCollection#bulkWrite
@@ -862,7 +865,7 @@ public interface AsyncMongoCollection<TDocument> {
      * @mongodb.server.release 3.6
      */
     void insertMany(AsyncClientSession clientSession, List<? extends TDocument> documents, InsertManyOptions options,
-                    SingleResultCallback<Void> callback);
+                    SingleResultCallback<InsertManyResult> callback);
 
     /**
      * Removes at most one document from the collection that matches the given filter.  If no documents match, the collection is not

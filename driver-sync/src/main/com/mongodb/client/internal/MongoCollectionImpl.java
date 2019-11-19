@@ -26,6 +26,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.WriteError;
+import com.mongodb.bulk.BulkWriteInsert;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.ChangeStreamIterable;
@@ -35,6 +36,8 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.ListIndexesIterable;
 import com.mongodb.client.MapReduceIterable;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.result.InsertManyResult;
+import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
@@ -72,6 +75,7 @@ import org.bson.conversions.Bson;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.bulk.WriteRequest.Type.DELETE;
@@ -439,56 +443,59 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    public void insertOne(final TDocument document) {
-        insertOne(document, new InsertOneOptions());
+    public InsertOneResult insertOne(final TDocument document) {
+        return insertOne(document, new InsertOneOptions());
     }
 
     @Override
-    public void insertOne(final TDocument document, final InsertOneOptions options) {
+    public InsertOneResult insertOne(final TDocument document, final InsertOneOptions options) {
         notNull("document", document);
-        executeInsertOne(null, document, options);
+        return executeInsertOne(null, document, options);
     }
 
     @Override
-    public void insertOne(final ClientSession clientSession, final TDocument document) {
-        insertOne(clientSession, document, new InsertOneOptions());
+    public InsertOneResult insertOne(final ClientSession clientSession, final TDocument document) {
+        return insertOne(clientSession, document, new InsertOneOptions());
     }
 
     @Override
-    public void insertOne(final ClientSession clientSession, final TDocument document, final InsertOneOptions options) {
+    public InsertOneResult insertOne(final ClientSession clientSession, final TDocument document, final InsertOneOptions options) {
         notNull("clientSession", clientSession);
         notNull("document", document);
-        executeInsertOne(clientSession, document, options);
+        return executeInsertOne(clientSession, document, options);
     }
 
-    private void executeInsertOne(@Nullable final ClientSession clientSession, final TDocument document, final InsertOneOptions options) {
-        executeSingleWriteRequest(clientSession, operations.insertOne(document, options), INSERT);
-    }
-
-    @Override
-    public void insertMany(final List<? extends TDocument> documents) {
-        insertMany(documents, new InsertManyOptions());
+    private InsertOneResult executeInsertOne(@Nullable final ClientSession clientSession, final TDocument document,
+                                             final InsertOneOptions options) {
+        return toInsertOneResult(executeSingleWriteRequest(clientSession, operations.insertOne(document, options), INSERT));
     }
 
     @Override
-    public void insertMany(final List<? extends TDocument> documents, final InsertManyOptions options) {
-        executeInsertMany(null, documents, options);
+    public InsertManyResult insertMany(final List<? extends TDocument> documents) {
+        return insertMany(documents, new InsertManyOptions());
     }
 
     @Override
-    public void insertMany(final ClientSession clientSession, final List<? extends TDocument> documents) {
-        insertMany(clientSession, documents, new InsertManyOptions());
+    public InsertManyResult insertMany(final List<? extends TDocument> documents, final InsertManyOptions options) {
+        return executeInsertMany(null, documents, options);
     }
 
     @Override
-    public void insertMany(final ClientSession clientSession, final List<? extends TDocument> documents, final InsertManyOptions options) {
+    public InsertManyResult insertMany(final ClientSession clientSession, final List<? extends TDocument> documents) {
+        return insertMany(clientSession, documents, new InsertManyOptions());
+    }
+
+
+    @Override
+    public InsertManyResult insertMany(final ClientSession clientSession, final List<? extends TDocument> documents,
+                                       final InsertManyOptions options) {
         notNull("clientSession", clientSession);
-        executeInsertMany(clientSession, documents, options);
+        return executeInsertMany(clientSession, documents, options);
     }
 
-    private void executeInsertMany(@Nullable final ClientSession clientSession, final List<? extends TDocument> documents,
+    private InsertManyResult executeInsertMany(@Nullable final ClientSession clientSession, final List<? extends TDocument> documents,
                                    final InsertManyOptions options) {
-        executor.execute(operations.insertMany(documents, options), readConcern, clientSession);
+        return toInsertManyResult(executor.execute(operations.insertMany(documents, options), readConcern, clientSession));
     }
 
     @Override
@@ -1025,6 +1032,24 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                                 ? null : writeResult.getUpserts().get(0).getId());
             default:
                 throw new MongoInternalException("Unhandled write request type: " + type);
+        }
+    }
+
+    private InsertOneResult toInsertOneResult(final com.mongodb.bulk.BulkWriteResult result) {
+        if (result.wasAcknowledged()) {
+            BsonValue insertedId = result.getInserts().isEmpty() ? null : result.getInserts().get(0).getId();
+            return InsertOneResult.acknowledged(insertedId);
+        } else {
+            return InsertOneResult.unacknowledged();
+        }
+    }
+
+    private InsertManyResult toInsertManyResult(final com.mongodb.bulk.BulkWriteResult result) {
+        if (result.wasAcknowledged()) {
+            return InsertManyResult.acknowledged(result.getInserts().stream()
+                    .collect(Collectors.toMap(BulkWriteInsert::getIndex, BulkWriteInsert::getId)));
+        } else {
+            return InsertManyResult.unacknowledged();
         }
     }
 

@@ -17,11 +17,13 @@
 package com.mongodb.internal.async.client.gridfs;
 
 import com.mongodb.MongoGridFSException;
+
+import com.mongodb.client.result.InsertOneResult;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.client.AsyncClientSession;
 import com.mongodb.internal.async.client.AsyncMongoCollection;
 import com.mongodb.lang.Nullable;
@@ -164,30 +166,24 @@ final class AsyncGridFSUploadStreamImpl implements AsyncGridFSUploadStream {
             callbackIsWritingException(errHandlingCallback);
             return;
         }
-        writeChunk(new SingleResultCallback<Void>() {
-            @Override
-            public void onResult(final Void result, final Throwable t) {
-                if (t != null) {
+        writeChunk((result, t) -> {
+            if (t != null) {
+                releaseWritingLock();
+                errHandlingCallback.onResult(null, t);
+            } else {
+                GridFSFile gridFSFile = new GridFSFile(fileId, filename, lengthInBytes, chunkSizeBytes, new Date(),
+                        metadata);
+
+                SingleResultCallback<InsertOneResult> insertCallback = (insertOneResult, t1) -> {
+                    buffer = null;
                     releaseWritingLock();
-                    errHandlingCallback.onResult(null, t);
+                    errHandlingCallback.onResult(null, t1);
+                };
+
+                if (clientSession != null) {
+                    filesCollection.insertOne(clientSession, gridFSFile, insertCallback);
                 } else {
-                    GridFSFile gridFSFile = new GridFSFile(fileId, filename, lengthInBytes, chunkSizeBytes, new Date(),
-                            metadata);
-
-                    SingleResultCallback<Void> insertCallback = new SingleResultCallback<Void>() {
-                        @Override
-                        public void onResult(final Void result, final Throwable t) {
-                            buffer = null;
-                            releaseWritingLock();
-                            errHandlingCallback.onResult(result, t);
-                        }
-                    };
-
-                    if (clientSession != null) {
-                        filesCollection.insertOne(clientSession, gridFSFile, insertCallback);
-                    } else {
-                        filesCollection.insertOne(gridFSFile, insertCallback);
-                    }
+                    filesCollection.insertOne(gridFSFile, insertCallback);
                 }
             }
         });
@@ -214,15 +210,12 @@ final class AsyncGridFSUploadStreamImpl implements AsyncGridFSUploadStream {
         bufferOffset += amountToCopy;
         lengthInBytes += amountToCopy;
         if (bufferOffset == chunkSizeBytes) {
-            writeChunk(new SingleResultCallback<Void>() {
-                @Override
-                public void onResult(final Void result, final Throwable t) {
-                    releaseWritingLock();
-                    if (t != null) {
-                        callback.onResult(null, t);
-                    } else {
-                        write(amount, src, callback);
-                    }
+            writeChunk((result, t) -> {
+                releaseWritingLock();
+                if (t != null) {
+                    callback.onResult(null, t);
+                } else {
+                    write(amount, src, callback);
                 }
             });
         } else {
@@ -246,16 +239,13 @@ final class AsyncGridFSUploadStreamImpl implements AsyncGridFSUploadStream {
     private void writeChunk(final SingleResultCallback<Void> callback) {
         if (bufferOffset > 0) {
             Document insertDocument = new Document("files_id", fileId).append("n", chunkIndex).append("data", getData());
-            SingleResultCallback<Void> insertCallback = new SingleResultCallback<Void>() {
-                @Override
-                public void onResult(final Void result, final Throwable t) {
-                    if (t != null) {
-                        callback.onResult(null, t);
-                    } else {
-                        chunkIndex++;
-                        bufferOffset = 0;
-                        callback.onResult(null, null);
-                    }
+            SingleResultCallback<InsertOneResult> insertCallback = (result, t) -> {
+                if (t != null) {
+                    callback.onResult(null, t);
+                } else {
+                    chunkIndex++;
+                    bufferOffset = 0;
+                    callback.onResult(null, null);
                 }
             };
             if (clientSession != null) {

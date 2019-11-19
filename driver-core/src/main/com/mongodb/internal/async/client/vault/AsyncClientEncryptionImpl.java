@@ -29,7 +29,6 @@ import com.mongodb.internal.async.client.Crypts;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
-import org.bson.RawBsonDocument;
 
 import java.io.Closeable;
 
@@ -52,27 +51,21 @@ class AsyncClientEncryptionImpl implements AsyncClientEncryption, Closeable {
     @Override
     public void createDataKey(final String kmsProvider, final DataKeyOptions dataKeyOptions,
                               final SingleResultCallback<BsonBinary> callback) {
-        crypt.createDataKey(kmsProvider, dataKeyOptions, new SingleResultCallback<RawBsonDocument>() {
-            @Override
-            public void onResult(final RawBsonDocument dataKeyDocument, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    MongoNamespace namespace = new MongoNamespace(options.getKeyVaultNamespace());
-                    keyVaultClient.getDatabase(namespace.getDatabaseName())
-                            .getCollection(namespace.getCollectionName(), BsonDocument.class)
-                            .withWriteConcern(WriteConcern.MAJORITY)
-                            .insertOne(dataKeyDocument, new SingleResultCallback<Void>() {
-                                @Override
-                                public void onResult(final Void result, final Throwable t) {
-                                    if (t != null) {
-                                        callback.onResult(null, t);
-                                    } else {
-                                        callback.onResult(dataKeyDocument.getBinary("_id"), null);
-                                    }
-                                }
-                            });
-                }
+        crypt.createDataKey(kmsProvider, dataKeyOptions, (dataKeyDocument, t) -> {
+            if (t != null) {
+                callback.onResult(null, t);
+            } else {
+                MongoNamespace namespace = new MongoNamespace(options.getKeyVaultNamespace());
+                keyVaultClient.getDatabase(namespace.getDatabaseName())
+                        .getCollection(namespace.getCollectionName(), BsonDocument.class)
+                        .withWriteConcern(WriteConcern.MAJORITY)
+                        .insertOne(dataKeyDocument, (result, t1) -> {
+                            if (t1 != null) {
+                                callback.onResult(null, t1);
+                            } else {
+                                callback.onResult(dataKeyDocument.getBinary("_id"), null);
+                            }
+                        });
             }
         });
     }

@@ -17,7 +17,7 @@
 package org.mongodb.scala.documentation
 
 import org.mongodb.scala.model.{ Filters, Updates }
-import org.mongodb.scala.result.UpdateResult
+import org.mongodb.scala.result.{ InsertOneResult, UpdateResult }
 import org.mongodb.scala._
 
 import scala.concurrent.Await
@@ -70,7 +70,7 @@ class DocumentationTransactionsExampleSpec extends RequiresMongoDBISpec {
           clientSession,
           Document("employee" -> 3, "status" -> Document("new" -> "Inactive", "old" -> "Active"))
         )
-        .subscribe((res: Void) => ())
+        .subscribe((res: InsertOneResult) => ())
 
       clientSession
     })

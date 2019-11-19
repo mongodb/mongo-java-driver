@@ -50,7 +50,7 @@ trait AsyncInputStream {
   /**
    * Closes the input stream
    *
-   * @return a Observable with a single element indicating when the operation has completed
+   * @return an empty Observable that indicates when the operation has completed
    */
   def close(): SingleObservable[Void]
 }

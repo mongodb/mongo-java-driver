@@ -57,7 +57,7 @@ class BulkWriteBatchSpecification extends Specification {
         def bulkWriteBatch = BulkWriteBatch.createBulkWriteBatch(namespace, serverDescription, connectionDescription, true,
                 WriteConcern.ACKNOWLEDGED, null, false, getWriteRequests(), sessionContext)
         def payload = bulkWriteBatch.getPayload()
-        payload.setPosition(payload.getPayload().size())
+        payload.setPosition(payload.size())
 
         then:
         payload.getPayloadName() == 'documents'
@@ -68,7 +68,7 @@ class BulkWriteBatchSpecification extends Specification {
         when:
         bulkWriteBatch = bulkWriteBatch.getNextBatch()
         payload = bulkWriteBatch.getPayload()
-        payload.setPosition(payload.getPayload().size())
+        payload.setPosition(payload.size())
 
         then:
         payload.getPayloadName() == 'updates'
@@ -79,7 +79,7 @@ class BulkWriteBatchSpecification extends Specification {
         when:
         bulkWriteBatch = bulkWriteBatch.getNextBatch()
         payload = bulkWriteBatch.getPayload()
-        payload.setPosition(payload.getPayload().size())
+        payload.setPosition(payload.size())
 
         then:
         payload.getPayloadName() == 'documents'
@@ -90,7 +90,7 @@ class BulkWriteBatchSpecification extends Specification {
         when:
         bulkWriteBatch = bulkWriteBatch.getNextBatch()
         payload = bulkWriteBatch.getPayload()
-        payload.setPosition(payload.getPayload().size())
+        payload.setPosition(payload.size())
 
         then:
         payload.getPayloadName() == 'updates'
@@ -101,7 +101,7 @@ class BulkWriteBatchSpecification extends Specification {
         when:
         bulkWriteBatch = bulkWriteBatch.getNextBatch()
         payload = bulkWriteBatch.getPayload()
-        payload.setPosition(payload.getPayload().size())
+        payload.setPosition(payload.size())
 
         then:
         payload.getPayloadName() == 'deletes'
@@ -112,7 +112,7 @@ class BulkWriteBatchSpecification extends Specification {
         when:
         bulkWriteBatch = bulkWriteBatch.getNextBatch()
         payload = bulkWriteBatch.getPayload()
-        payload.setPosition(payload.getPayload().size())
+        payload.setPosition(payload.size())
 
         then:
         payload.getPayloadName() == 'documents'
@@ -123,7 +123,7 @@ class BulkWriteBatchSpecification extends Specification {
         when:
         bulkWriteBatch = bulkWriteBatch.getNextBatch()
         payload = bulkWriteBatch.getPayload()
-        payload.setPosition(payload.getPayload().size())
+        payload.setPosition(payload.size())
 
         then:
         payload.getPayloadName() == 'deletes'
@@ -137,7 +137,7 @@ class BulkWriteBatchSpecification extends Specification {
         def bulkWriteBatch = BulkWriteBatch.createBulkWriteBatch(namespace, serverDescription, connectionDescription, false,
                 WriteConcern.MAJORITY, true, false, getWriteRequests(), sessionContext)
         def payload = bulkWriteBatch.getPayload()
-        payload.setPosition(payload.getPayload().size())
+        payload.setPosition(payload.size())
 
         then:
         payload.getPayloadName() == 'documents'
@@ -150,7 +150,7 @@ class BulkWriteBatchSpecification extends Specification {
         when:
         bulkWriteBatch = bulkWriteBatch.getNextBatch()
         payload = bulkWriteBatch.getPayload()
-        payload.setPosition(payload.getPayload().size())
+        payload.setPosition(payload.size())
 
         then:
         payload.getPayloadName() == 'updates'
@@ -162,7 +162,7 @@ class BulkWriteBatchSpecification extends Specification {
         when:
         bulkWriteBatch = bulkWriteBatch.getNextBatch()
         payload = bulkWriteBatch.getPayload()
-        payload.setPosition(payload.getPayload().size())
+        payload.setPosition(payload.size())
 
         then:
         payload.getPayloadName() == 'updates'
@@ -174,7 +174,7 @@ class BulkWriteBatchSpecification extends Specification {
         when:
         bulkWriteBatch = bulkWriteBatch.getNextBatch()
         payload = bulkWriteBatch.getPayload()
-        payload.setPosition(payload.getPayload().size())
+        payload.setPosition(payload.size())
 
         then:
         payload.getPayloadName() == 'deletes'
@@ -248,7 +248,7 @@ class BulkWriteBatchSpecification extends Specification {
 
         then:
         !bulkWriteBatch.hasErrors()
-        bulkWriteBatch.getResult() == BulkWriteResult.acknowledged(0, 0, 0, 0, [new BulkWriteUpsert(0, new BsonInt32(2))])
+        bulkWriteBatch.getResult() == BulkWriteResult.acknowledged(0, 0, 0, 0, [new BulkWriteUpsert(0, new BsonInt32(2))], [])
         bulkWriteBatch.shouldProcessBatch()
     }
 

@@ -39,6 +39,8 @@ import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.InsertManyResult;
+import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.internal.async.client.AsyncMongoCollection;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
@@ -339,45 +341,46 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     }
 
     @Override
-    public Publisher<Void> insertOne(final TDocument document) {
+    public Publisher<InsertOneResult> insertOne(final TDocument document) {
         return insertOne(document, new InsertOneOptions());
     }
 
     @Override
-    public Publisher<Void> insertOne(final TDocument document, final InsertOneOptions options) {
+    public Publisher<InsertOneResult> insertOne(final TDocument document, final InsertOneOptions options) {
         return Publishers.publish(
                 callback -> wrapped.insertOne(document, options, callback));
     }
 
     @Override
-    public Publisher<Void> insertOne(final ClientSession clientSession, final TDocument document) {
+    public Publisher<InsertOneResult> insertOne(final ClientSession clientSession, final TDocument document) {
         return insertOne(clientSession, document, new InsertOneOptions());
     }
 
     @Override
-    public Publisher<Void> insertOne(final ClientSession clientSession, final TDocument document, final InsertOneOptions options) {
+    public Publisher<InsertOneResult> insertOne(final ClientSession clientSession, final TDocument document,
+                                                final InsertOneOptions options) {
         return Publishers.publish(
                 callback -> wrapped.insertOne(clientSession.getWrapped(), document, options, callback));
     }
 
     @Override
-    public Publisher<Void> insertMany(final List<? extends TDocument> documents) {
+    public Publisher<InsertManyResult> insertMany(final List<? extends TDocument> documents) {
         return insertMany(documents, new InsertManyOptions());
     }
 
     @Override
-    public Publisher<Void> insertMany(final List<? extends TDocument> documents, final InsertManyOptions options) {
+    public Publisher<InsertManyResult> insertMany(final List<? extends TDocument> documents, final InsertManyOptions options) {
         return Publishers.publish(
                 callback -> wrapped.insertMany(documents, options, callback));
     }
 
     @Override
-    public Publisher<Void> insertMany(final ClientSession clientSession, final List<? extends TDocument> documents) {
+    public Publisher<InsertManyResult> insertMany(final ClientSession clientSession, final List<? extends TDocument> documents) {
         return insertMany(clientSession, documents, new InsertManyOptions());
     }
 
     @Override
-    public Publisher<Void> insertMany(final ClientSession clientSession, final List<? extends TDocument> documents,
+    public Publisher<InsertManyResult> insertMany(final ClientSession clientSession, final List<? extends TDocument> documents,
                                          final InsertManyOptions options) {
         return Publishers.publish(
                 callback -> wrapped.insertMany(clientSession.getWrapped(), documents, options, callback));

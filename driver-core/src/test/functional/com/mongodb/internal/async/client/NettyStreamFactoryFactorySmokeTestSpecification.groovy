@@ -44,7 +44,7 @@ class NettyStreamFactoryFactorySmokeTestSpecification extends FunctionalSpecific
 
 
         then:
-        run(collection.&insertOne, document) == null
+        run(collection.&insertOne, document)
 
         then: 'The count is one'
         run(collection.&countDocuments) == 1

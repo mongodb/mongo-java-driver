@@ -18,6 +18,8 @@
 package reactivestreams.tour;
 
 import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.InsertManyResult;
+import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
@@ -86,9 +88,9 @@ public class QuickTour {
                 .append("count", 1)
                 .append("info", new Document("x", 203).append("y", 102));
 
-        successSubscriber = new OperationSubscriber<>();
-        collection.insertOne(doc).subscribe(successSubscriber);
-        successSubscriber.await();
+        ObservableSubscriber<InsertOneResult> insertOneSubscriber = new OperationSubscriber<>();
+        collection.insertOne(doc).subscribe(insertOneSubscriber);
+        insertOneSubscriber.await();
 
         // get it (since it's the only one in there since we dropped the rest earlier on)
         ObservableSubscriber<Document> documentSubscriber = new PrintDocumentSubscriber();
@@ -101,9 +103,9 @@ public class QuickTour {
             documents.add(new Document("i", i));
         }
 
-        successSubscriber = new OperationSubscriber<>();
-        collection.insertMany(documents).subscribe(successSubscriber);
-        successSubscriber.await();
+        ObservableSubscriber<InsertManyResult> insertManySubscriber = new OperationSubscriber<>();
+        collection.insertMany(documents).subscribe(insertManySubscriber);
+        insertManySubscriber.await();
 
         // find first
         documentSubscriber = new PrintDocumentSubscriber();

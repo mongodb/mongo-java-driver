@@ -144,7 +144,7 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
    * Aggregates documents according to the specified aggregation pipeline, which must end with a `\$out` stage.
    *
    * [[http://docs.mongodb.org/manual/aggregation/ Aggregation]]
-   * @return a Observable with a single element indicating when the operation has completed
+   * @return an empty Observable that indicates when the operation has completed
    */
   def toCollection(): SingleObservable[Void] = wrapped.toCollection()
 

@@ -298,7 +298,7 @@ class OperationFunctionalSpecification extends Specification {
                 assert it[1] == expectedCommand
                 if (it.size() == 9) {
                     SplittablePayload payload = it[7]
-                    payload.setPosition(payload.getPayload().size())
+                    payload.setPosition(payload.size())
                 }
                 result
             }
@@ -377,7 +377,7 @@ class OperationFunctionalSpecification extends Specification {
                 assert it[1] == expectedCommand
                 if (it.size() == 10) {
                     SplittablePayload payload = it[7]
-                    payload.setPosition(payload.getPayload().size())
+                    payload.setPosition(payload.size())
                 }
                 it.last().onResult(result, null)
             }

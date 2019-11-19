@@ -18,6 +18,8 @@
 package reactivestreams.tour;
 
 import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.InsertManyResult;
+import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
@@ -78,9 +80,9 @@ public class PojoQuickTour {
         final Person ada = new Person("Ada Byron", 20, new Address("St James Square", "London", "W1"));
         System.out.println("Original Person Model: " + ada);
 
-        successSubscriber = new OperationSubscriber<>();
-        collection.insertOne(ada).subscribe(successSubscriber);
-        successSubscriber.await();
+        ObservableSubscriber<InsertOneResult> insertOneSubscriber = new OperationSubscriber<>();
+        collection.insertOne(ada).subscribe(insertOneSubscriber);
+        insertOneSubscriber.await();
 
         // get it (since it's the only one in there since we dropped the rest earlier on)
         ObservableSubscriber<Person> personSubscriber = new PrintToStringSubscriber<>();
@@ -95,9 +97,9 @@ public class PojoQuickTour {
                 new Person("Timothy Berners-Lee", 61, new Address("Colehill", "Wimborne", null))
         );
 
-        successSubscriber = new OperationSubscriber<>();
-        collection.insertMany(people).subscribe(successSubscriber);
-        successSubscriber.await();
+        ObservableSubscriber<InsertManyResult> insertManySubscriber = new OperationSubscriber<>();
+        collection.insertMany(people).subscribe(insertManySubscriber);
+        insertManySubscriber.await();
 
         // get all the documents in the collection and print them out
         personSubscriber = new PrintToStringSubscriber<>();

@@ -35,4 +35,16 @@ package object result {
    */
   type UpdateResult = com.mongodb.client.result.UpdateResult
 
+  /**
+   * The result of an insert one operation. If the update was unacknowledged, then `wasAcknowledged` will return false and all other methods
+   * with throw an `UnsupportedOperationException`.
+   */
+  type InsertOneResult = com.mongodb.client.result.InsertOneResult
+
+  /**
+   * The result of an insert many operation. If the update was unacknowledged, then `wasAcknowledged` will return false and all other methods
+   * with throw an `UnsupportedOperationException`.
+   */
+  type InsertManyResult = com.mongodb.client.result.InsertManyResult
+
 }

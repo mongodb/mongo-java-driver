@@ -20,18 +20,19 @@ import com.mongodb.MongoBulkWriteException;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import com.mongodb.bulk.BulkWriteError;
+import com.mongodb.bulk.BulkWriteInsert;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.BulkWriteUpsert;
 import com.mongodb.bulk.WriteConcernError;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
+import static java.util.Comparator.comparingInt;
 
 /**
  * This class is not part of the public API.  It may be changed or removed at any time.
@@ -45,19 +46,10 @@ public class BulkWriteBatchCombiner {
     private int matchedCount;
     private int deletedCount;
     private int modifiedCount = 0;
-    private final Set<BulkWriteUpsert> writeUpserts = new TreeSet<BulkWriteUpsert>(new Comparator<BulkWriteUpsert>() {
-        @Override
-        public int compare(final BulkWriteUpsert o1, final BulkWriteUpsert o2) {
-            return (o1.getIndex() < o2.getIndex()) ? -1 : ((o1.getIndex() == o2.getIndex()) ? 0 : 1);
-        }
-    });
-    private final Set<BulkWriteError> writeErrors = new TreeSet<BulkWriteError>(new Comparator<BulkWriteError>() {
-        @Override
-        public int compare(final BulkWriteError o1, final BulkWriteError o2) {
-            return (o1.getIndex() < o2.getIndex()) ? -1 : ((o1.getIndex() == o2.getIndex()) ? 0 : 1);
-        }
-    });
-    private final List<WriteConcernError> writeConcernErrors = new ArrayList<WriteConcernError>();
+    private final Set<BulkWriteUpsert> writeUpserts = new TreeSet<>(comparingInt(BulkWriteUpsert::getIndex));
+    private final Set<BulkWriteInsert> writeInserts = new TreeSet<>(comparingInt(BulkWriteInsert::getIndex));
+    private final Set<BulkWriteError> writeErrors = new TreeSet<>(comparingInt(BulkWriteError::getIndex));
+    private final List<WriteConcernError> writeConcernErrors = new ArrayList<>();
 
     /**
      * Construct an instance.
@@ -76,14 +68,14 @@ public class BulkWriteBatchCombiner {
      * Add a result
      *
      * @param result   the result
-     * @param indexMap the index map
      */
-    public void addResult(final BulkWriteResult result, final IndexMap indexMap) {
+    public void addResult(final BulkWriteResult result) {
         insertedCount += result.getInsertedCount();
         matchedCount += result.getMatchedCount();
         deletedCount += result.getDeletedCount();
         modifiedCount += result.getModifiedCount();
-        mergeUpserts(result.getUpserts(), indexMap);
+        writeUpserts.addAll(result.getUpserts());
+        writeInserts.addAll(result.getInserts());
     }
 
     /**
@@ -93,7 +85,7 @@ public class BulkWriteBatchCombiner {
      * @param indexMap  the index map
      */
     public void addErrorResult(final MongoBulkWriteException exception, final IndexMap indexMap) {
-        addResult(exception.getWriteResult(), indexMap);
+        addResult(exception.getWriteResult());
         mergeWriteErrors(exception.getWriteErrors(), indexMap);
         mergeWriteConcernError(exception.getWriteConcernError());
     }
@@ -106,7 +98,7 @@ public class BulkWriteBatchCombiner {
      */
     public void addWriteErrorResult(final BulkWriteError writeError, final IndexMap indexMap) {
         notNull("writeError", writeError);
-        mergeWriteErrors(asList(writeError), indexMap);
+        mergeWriteErrors(singletonList(writeError), indexMap);
     }
 
     /**
@@ -184,14 +176,7 @@ public class BulkWriteBatchCombiner {
 
     private void mergeWriteErrors(final List<BulkWriteError> newWriteErrors, final IndexMap indexMap) {
         for (BulkWriteError cur : newWriteErrors) {
-            this.writeErrors.add(new BulkWriteError(cur.getCode(), cur.getMessage(), cur.getDetails(), indexMap.map(cur.getIndex())
-            ));
-        }
-    }
-
-    private void mergeUpserts(final List<BulkWriteUpsert> upserts, final IndexMap indexMap) {
-        for (BulkWriteUpsert bulkWriteUpsert : upserts) {
-            writeUpserts.add(new BulkWriteUpsert(indexMap.map(bulkWriteUpsert.getIndex()), bulkWriteUpsert.getId()));
+            writeErrors.add(new BulkWriteError(cur.getCode(), cur.getMessage(), cur.getDetails(), indexMap.map(cur.getIndex())));
         }
     }
 
@@ -204,7 +189,7 @@ public class BulkWriteBatchCombiner {
     private BulkWriteResult createResult() {
         return writeConcern.isAcknowledged()
                ? BulkWriteResult.acknowledged(insertedCount, matchedCount, deletedCount, modifiedCount,
-                                              new ArrayList<BulkWriteUpsert>(writeUpserts))
+                                              new ArrayList<>(writeUpserts), new ArrayList<>(writeInserts))
                : BulkWriteResult.unacknowledged();
     }
 

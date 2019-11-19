@@ -33,6 +33,8 @@ This guide uses the `Subscriber` implementations as covered in the [Quick Start 
 - The following import statements:
 
 ```java
+import com.mongodb.client.result.InsertOneResult;
+import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.reactivestreams.client.MongoClient;
@@ -192,7 +194,7 @@ To insert a Person into the collection, you can use the collection's [`insertOne
 ```java
 Person ada = new Person("Ada Byron", 20, new Address("St James Square", "London", "W1"));
 
-collection.insertOne(ada).subscribe(new OperationSubscriber<Void>());
+collection.insertOne(ada).subscribe(new OperationSubscriber<InsertOneResult>());
 ```
 
 ### Insert Many Persons
@@ -209,7 +211,7 @@ List<Person> people = asList(
         new Person("Timothy Berners-Lee", 61, new Address("Colehill", "Wimborne", null))
 );
 
-collection.insertMany(people).subscribe(new OperationSubscriber<Void>());
+collection.insertMany(people).subscribe(new OperationSubscriber<InsertManyResult>());
 ```
 
 ## Query the Collection
