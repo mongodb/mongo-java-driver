@@ -30,7 +30,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 // See https://github.com/mongodb/specifications/tree/master/source/auth/tests
 @RunWith(Parameterized.class)
@@ -93,31 +92,69 @@ public class AuthConnectionStringTest extends TestCase {
         }
 
         MongoCredential credential = connectionString.getCredential();
-        assertString("auth.db", credential.getSource());
-        assertString("auth.username", credential.getUserName());
+        if (credential != null) {
+            assertString("credential.source", credential.getSource());
+            assertString("credential.username", credential.getUserName());
+            assertMechanismProperties(credential);
 
-        // Passwords for certain auth mechanisms are ignored.
-        String password = credential.getPassword() != null ? new String(credential.getPassword()) : null;
-        if (password != null) {
-            assertString("auth.password", password);
+            // Passwords for certain auth mechanisms are ignored.
+            String password = credential.getPassword() != null ? new String(credential.getPassword()) : null;
+            if (password != null) {
+                assertString("credential.password", password);
+            }
+
+            assertMechanism("credential.mechanism", credential.getMechanism());
         }
-        if (definition.get("options").isDocument()) {
-            for (Map.Entry<String, BsonValue> option : definition.getDocument("options").entrySet()) {
-                if (option.getKey().equals("authmechanism")) {
-                    String expected = option.getValue().asString().getValue();
-                    if (expected.equals("MONGODB-CR")) {
-                        assertNotNull(connectionString.getCredential());
-                        assertNull(connectionString.getCredential().getAuthenticationMechanism());
+    }
+
+    private void assertString(final String key, final String actual) {
+        BsonValue expected = getExpectedValue(key);
+
+        if (expected.isNull()) {
+            assertNull(String.format("%s should be null", key), actual);
+        } else if (expected.isString()) {
+            String expectedString = expected.asString().getValue();
+            assertTrue(String.format("%s should be %s but was %s", key, actual, expectedString), actual.equals(expectedString));
+        } else {
+            assertTrue(String.format("%s should be %s but was %s", key, actual, expected), false);
+        }
+    }
+
+    private void assertMechanism(final String key, final String actual) {
+        BsonValue expected = getExpectedValue(key);
+
+        // MONGODB-CR was removed from the AuthenticationMechanism enum for the 4.0 release, so null will be assigned.
+        if (expected.isString() && expected.asString().getValue().equals("MONGODB-CR")) {
+            assertNull(String.format("%s should be null when the expected mechanism is MONGODB-CR", key), actual);
+        } else {
+            assertString(key, actual);
+        }
+    }
+
+    private void assertMechanismProperties(final MongoCredential credential) {
+        BsonValue expected = getExpectedValue("credential.mechanism_properties");
+
+        if (!expected.isNull()) {
+            BsonDocument document = expected.asDocument();
+            for (String key : document.keySet()) {
+                if (document.get(key).isString()) {
+                    String expectedValue = document.getString(key).getValue();
+
+                    // If the mechanism is "GSSAPI", the default SERVICE_NAME, which is stated as "mongodb" in the specification,
+                    // is set to null in the driver.
+                    if (credential.getMechanism().equals("GSSAPI") && key.equals("SERVICE_NAME") && expectedValue.equals("mongodb")) {
+                        assertNull(credential.getMechanismProperty(key, null));
                     } else {
-                        String actual = connectionString.getCredential().getAuthenticationMechanism().getMechanismName();
-                        assertEquals(expected, actual);
+                        assertEquals(expectedValue, credential.getMechanismProperty(key, null));
                     }
+                } else {
+                    assertEquals(document.getBoolean(key).getValue(), credential.getMechanismProperty(key, (Boolean) null).booleanValue());
                 }
             }
         }
     }
 
-    private void assertString(final String key, final String actual) {
+    private BsonValue getExpectedValue(final String key) {
         BsonValue expected = definition;
         if (key.contains(".")) {
             for (String subKey : key.split("\\.")) {
@@ -126,14 +163,6 @@ public class AuthConnectionStringTest extends TestCase {
         } else {
             expected = expected.asDocument().get(key);
         }
-
-        if (expected.isNull()) {
-            assertTrue(String.format("%s should be null", key), actual == null);
-        } else if (expected.isString()) {
-            String expectedString = expected.asString().getValue();
-            assertTrue(String.format("%s should be %s but was %s", key, actual, expectedString), actual.equals(expectedString));
-        } else {
-            assertTrue(String.format("%s should be %s but was %s", key, actual, expected), false);
-        }
+        return expected;
     }
 }

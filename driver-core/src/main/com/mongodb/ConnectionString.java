@@ -324,9 +324,14 @@ public class ConnectionString {
                 userName = urldecode(userInfo);
             } else {
                 idx = userInfo.indexOf(":");
+                if (idx == 0) {
+                    throw new IllegalArgumentException("No username is provided in the connection string");
+                }
                 userName = urldecode(userInfo.substring(0, idx));
                 password = urldecode(userInfo.substring(idx + 1), true).toCharArray();
             }
+        } else if (idx == 0) {
+            throw new IllegalArgumentException("The connection string contains an at-sign (@) without a user name");
         } else {
             hostIdentifier = userAndHostInformation;
         }
