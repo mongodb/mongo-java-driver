@@ -16,9 +16,14 @@
 
 package com.mongodb.internal.operation
 
+import com.mongodb.MongoException
+import com.mongodb.async.FutureResultCallback
 import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.binding.AsyncReadBinding
+import org.bson.Document
 import spock.lang.Specification
+
+import static java.util.concurrent.TimeUnit.SECONDS
 
 class AsyncChangeStreamBatchCursorSpecification extends Specification {
 
@@ -52,9 +57,6 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
         cursor.close()
 
         then:
-        1 * wrapped.isClosed() >> {
-            false
-        }
         1 * wrapped.close()
         1 * binding.release()
 
@@ -62,10 +64,91 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
         cursor.close()
 
         then:
-        1 * wrapped.isClosed() >> {
-            true
-        }
         0 * wrapped.close()
         0 * binding.release()
+    }
+
+    def 'should not close the cursor in next if the cursor was closed before next completed'() {
+        def changeStreamOpertation = Stub(ChangeStreamOperation)
+        def binding = Mock(AsyncReadBinding)
+        def wrapped = Mock(AsyncQueryBatchCursor)
+        def callback = Stub(SingleResultCallback)
+        def cursor = new AsyncChangeStreamBatchCursor(changeStreamOpertation, wrapped, binding, null)
+
+        when:
+        cursor.next(callback)
+
+        then:
+        1 * wrapped.next(_) >> {
+            // Simulate the user calling close while wrapped.next() is in flight
+            cursor.close()
+            it[0].onResult(null, null)
+        }
+
+        then:
+        noExceptionThrown()
+
+        then:
+        cursor.isClosed()
+    }
+
+    def 'should not close the cursor in tryNext if the cursor was closed before tryNext completed'() {
+        def changeStreamOpertation = Stub(ChangeStreamOperation)
+        def binding = Mock(AsyncReadBinding)
+        def wrapped = Mock(AsyncQueryBatchCursor)
+        def callback = Stub(SingleResultCallback)
+        def cursor = new AsyncChangeStreamBatchCursor(changeStreamOpertation, wrapped, binding, null)
+
+        when:
+        cursor.tryNext(callback)
+
+        then:
+        1 * wrapped.tryNext(_) >> {
+            // Simulate the user calling close while wrapped.next() is in flight
+            cursor.close()
+            it[0].onResult(null, null)
+        }
+
+        then:
+        noExceptionThrown()
+
+        then:
+        cursor.isClosed()
+    }
+
+    def 'should throw a MongoException when next/tryNext is called after the cursor is closed'() {
+        def changeStreamOpertation = Stub(ChangeStreamOperation)
+        def binding = Mock(AsyncReadBinding)
+        def wrapped = Mock(AsyncQueryBatchCursor)
+        def cursor = new AsyncChangeStreamBatchCursor(changeStreamOpertation, wrapped, binding, null)
+
+        given:
+        cursor.close()
+
+        when:
+        nextBatch(cursor)
+
+        then:
+        def exception = thrown(MongoException)
+        exception.getMessage() == 'next() called after the cursor was closed.'
+
+        when:
+        tryNextBatch(cursor)
+
+        then:
+        exception = thrown(MongoException)
+        exception.getMessage() == 'tryNext() called after the cursor was closed.'
+    }
+
+    List<Document> nextBatch(AsyncChangeStreamBatchCursor cursor) {
+        def futureResultCallback = new FutureResultCallback()
+        cursor.next(futureResultCallback)
+        futureResultCallback.get(1, SECONDS)
+    }
+
+    List<Document> tryNextBatch(AsyncChangeStreamBatchCursor cursor) {
+        def futureResultCallback = new FutureResultCallback()
+        cursor.tryNext(futureResultCallback)
+        futureResultCallback.get(1, SECONDS)
     }
 }

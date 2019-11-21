@@ -17,6 +17,7 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoChangeStreamException;
+import com.mongodb.MongoException;
 import com.mongodb.internal.async.AsyncAggregateResponseBatchCursor;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -34,6 +35,7 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
 import static com.mongodb.internal.operation.ChangeStreamBatchCursorHelper.isRetryableError;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.withAsyncReadConnection;
+import static java.lang.String.format;
 
 final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     private final AsyncReadBinding binding;
@@ -41,6 +43,12 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
 
     private volatile BsonDocument resumeToken;
     private volatile AsyncAggregateResponseBatchCursor<RawBsonDocument> wrapped;
+
+    /* protected by `this` */
+    private boolean isClosed = false;
+    private boolean isOperationInProgress = false;
+    private boolean isClosePending = false;
+    /* protected by `this` */
 
     AsyncChangeStreamBatchCursor(final ChangeStreamOperation<T> changeStreamOperation,
                                  final AsyncAggregateResponseBatchCursor<RawBsonDocument> wrapped,
@@ -66,7 +74,7 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
                 cursor.next(callback);
                 cachePostBatchResumeToken(cursor);
             }
-        }, convertResultsCallback(callback));
+        }, convertResultsCallback(callback), false);
     }
 
     @Override
@@ -78,12 +86,24 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
                 cursor.tryNext(callback);
                 cachePostBatchResumeToken(cursor);
             }
-        }, convertResultsCallback(callback));
+        }, convertResultsCallback(callback), true);
     }
 
     @Override
     public void close() {
-        if (!isClosed()) {
+        boolean closeCursor = false;
+
+        synchronized (this) {
+            if (isOperationInProgress) {
+                isClosePending = true;
+            } else {
+                closeCursor = !isClosed;
+                isClosed = true;
+                isClosePending = false;
+            }
+        }
+
+        if (closeCursor) {
             wrapped.close();
             binding.release();
         }
@@ -101,7 +121,9 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
 
     @Override
     public boolean isClosed() {
-        return wrapped.isClosed();
+        synchronized (this) {
+            return isClosed;
+        }
     }
 
     @Override
@@ -122,6 +144,17 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
     private void cachePostBatchResumeToken(final AsyncAggregateResponseBatchCursor<RawBsonDocument> queryBatchCursor) {
         if (queryBatchCursor.getPostBatchResumeToken() != null) {
             resumeToken = queryBatchCursor.getPostBatchResumeToken();
+        }
+    }
+
+    private void endOperationInProgress() {
+        boolean closePending = false;
+        synchronized (this) {
+            isOperationInProgress = false;
+            closePending = this.isClosePending;
+        }
+        if (closePending) {
+            close();
         }
     }
 
@@ -155,23 +188,35 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
         void apply(AsyncAggregateResponseBatchCursor<RawBsonDocument> cursor, SingleResultCallback<List<RawBsonDocument>> callback);
     }
 
-    private void resumeableOperation(final AsyncBlock asyncBlock, final SingleResultCallback<List<RawBsonDocument>> callback) {
+    private void resumeableOperation(final AsyncBlock asyncBlock, final SingleResultCallback<List<RawBsonDocument>> callback,
+                                     final boolean tryNext) {
+        synchronized (this) {
+            if (isClosed) {
+                callback.onResult(null, new MongoException(format("%s called after the cursor was closed.",
+                        tryNext ? "tryNext()" : "next()")));
+                return;
+            }
+            isOperationInProgress = true;
+        }
         asyncBlock.apply(wrapped, new SingleResultCallback<List<RawBsonDocument>>() {
             @Override
             public void onResult(final List<RawBsonDocument> result, final Throwable t) {
                 if (t == null) {
+                    endOperationInProgress();
                     callback.onResult(result, null);
                 } else if (isRetryableError(t)) {
                     wrapped.close();
-                    retryOperation(asyncBlock, callback);
+                    retryOperation(asyncBlock, callback, tryNext);
                 } else {
+                    endOperationInProgress();
                     callback.onResult(null, t);
                 }
             }
         });
     }
 
-    private void retryOperation(final AsyncBlock asyncBlock, final SingleResultCallback<List<RawBsonDocument>> callback) {
+    private void retryOperation(final AsyncBlock asyncBlock, final SingleResultCallback<List<RawBsonDocument>> callback,
+                                final boolean tryNext) {
         withAsyncReadConnection(binding, new AsyncCallableWithSource() {
             @Override
             public void call(final AsyncConnectionSource source, final Throwable t) {
@@ -188,7 +233,7 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
                             } else {
                                 wrapped = ((AsyncChangeStreamBatchCursor<T>) result).getWrapped();
                                 binding.release(); // release the new change stream batch cursor's reference to the binding
-                                resumeableOperation(asyncBlock, callback);
+                                resumeableOperation(asyncBlock, callback, tryNext);
                             }
                         }
                     });
