@@ -38,7 +38,6 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -65,7 +64,6 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     private final Decoder<T> decoder;
     private final long maxTimeMS;
     private final AsyncConnectionSource connectionSource;
-    private final AtomicBoolean isClosed = new AtomicBoolean();
     private final AtomicReference<ServerCursor> cursor;
     private volatile QueryResult<T> firstBatch;
     private volatile int batchSize;
@@ -73,6 +71,12 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     private volatile BsonDocument postBatchResumeToken;
     private volatile BsonTimestamp operationTime;
     private volatile boolean firstBatchEmpty;
+
+    /* protected by `this` */
+    private boolean isOperationInProgress = false;
+    private boolean isClosed = false;
+    private boolean isClosePending = false;
+    /* protected by `this` */
 
     AsyncQueryBatchCursor(final QueryResult<T> firstBatch, final int limit, final int batchSize, final long maxTimeMS,
                           final Decoder<T> decoder, final AsyncConnectionSource connectionSource, final AsyncConnection connection) {
@@ -108,7 +112,19 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
 
     @Override
     public void close() {
-        if (!isClosed.getAndSet(true)) {
+        boolean killCursor = false;
+
+        synchronized (this) {
+            if (isOperationInProgress) {
+                isClosePending = true;
+            } else {
+                killCursor = !isClosed;
+                isClosed = true;
+                isClosePending = false;
+            }
+        }
+
+        if (killCursor) {
             killCursorOnClose();
         }
     }
@@ -125,19 +141,25 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
 
     @Override
     public void setBatchSize(final int batchSize) {
-        isTrue("open", !isClosed.get());
+        synchronized (this) {
+            isTrue("open", !isClosed);
+        }
         this.batchSize = batchSize;
     }
 
     @Override
     public int getBatchSize() {
-        isTrue("open", !isClosed.get());
+        synchronized (this) {
+            isTrue("open", !isClosed);
+        }
         return batchSize;
     }
 
     @Override
     public boolean isClosed() {
-        return isClosed.get();
+        synchronized (this) {
+            return isClosed;
+        }
     }
 
     @Override
@@ -170,9 +192,19 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         } else {
             ServerCursor localCursor = getServerCursor();
             if (localCursor == null) {
-                isClosed.set(true);
+                synchronized (this) {
+                    isClosed = true;
+                }
                 callback.onResult(null, null);
             } else {
+                synchronized (this) {
+                    if (isClosed) {
+                        callback.onResult(null, new MongoException(format("%s called after the cursor was closed.",
+                                tryNext ? "tryNext()" : "next()")));
+                        return;
+                    }
+                    isOperationInProgress = true;
+                }
                 getMore(localCursor, callback, tryNext);
             }
         }
@@ -187,6 +219,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
             @Override
             public void onResult(final AsyncConnection connection, final Throwable t) {
                 if (t != null) {
+                    endOperationInProgress();
                     callback.onResult(null, t);
                 } else {
                     getMore(connection, cursor, callback, tryNext);
@@ -274,17 +307,20 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
                 .append("cursors", new BsonArray(singletonList(new BsonInt64(localCursor.getId()))));
     }
 
+    private void endOperationInProgress() {
+        boolean closePending = false;
+        synchronized (this) {
+            isOperationInProgress = false;
+            closePending = this.isClosePending;
+        }
+        if (closePending) {
+            close();
+        }
+    }
 
     private void handleGetMoreQueryResult(final AsyncConnection connection, final SingleResultCallback<List<T>> callback,
                                           final QueryResult<T> result, final boolean tryNext) {
-        if (isClosed()) {
-            connection.release();
-            callback.onResult(null, new MongoException(format("The cursor was closed before %s completed.",
-                    tryNext ? "tryNext()" : "next()")));
-            return;
-        }
-
-        cursor.getAndSet(result.getCursor());
+        cursor.set(result.getCursor());
         if (!tryNext && result.getResults().isEmpty() && result.getCursor() != null) {
             getMore(connection, result.getCursor(), callback, false);
         } else {
@@ -298,6 +334,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
                     connectionSource.release();
                 }
             }
+            endOperationInProgress();
 
             if (result.getResults().isEmpty()) {
                 callback.onResult(null, null);
@@ -328,6 +365,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
                         ? translateCommandException((MongoCommandException) t, cursor)
                         : t;
                 connection.release();
+                endOperationInProgress();
                 callback.onResult(null, translatedException);
             } else {
                 QueryResult<T> queryResult = getMoreCursorDocumentToQueryResult(result.getDocument(CURSOR),
@@ -354,6 +392,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         public void onResult(final QueryResult<T> result, final Throwable t) {
             if (t != null) {
                 connection.release();
+                endOperationInProgress();
                 callback.onResult(null, t);
             } else {
                 handleGetMoreQueryResult(connection, callback, result, tryNext);
