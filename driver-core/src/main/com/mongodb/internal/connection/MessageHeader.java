@@ -38,7 +38,7 @@ class MessageHeader {
         opCode = header.getInt();
 
         if (messageLength > maxMessageLength) {
-            throw new MongoInternalException(String.format("The reply message length %d is less than the maximum message length %d",
+            throw new MongoInternalException(String.format("The reply message length %d is greater than the maximum message length %d",
                     messageLength, maxMessageLength));
         }
     }
