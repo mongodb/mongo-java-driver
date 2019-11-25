@@ -827,7 +827,6 @@
     },
     {
       "description": "remain pinned after non-transient error on commit",
-      "skipReason": "SPEC-1320",
       "useMultipleMongoses": true,
       "operations": [
         {
@@ -876,7 +875,7 @@
                 "failCommands": [
                   "commitTransaction"
                 ],
-                "errorCode": 50
+                "errorCode": 51
               }
             }
           }
@@ -888,7 +887,7 @@
             "errorLabelsOmit": [
               "TransientTransactionError"
             ],
-            "errorCode": 50
+            "errorCode": 51
           }
         },
         {
