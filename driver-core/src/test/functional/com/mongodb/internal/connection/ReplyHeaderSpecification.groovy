@@ -160,7 +160,7 @@ class ReplyHeaderSpecification extends Specification {
 
         then:
         def ex = thrown(MongoInternalException)
-        ex.getMessage() == 'The reply message length 400 is less than the maximum message length 399'
+        ex.getMessage() == 'The reply message length 400 is greater than the maximum message length 399'
     }
 
     def 'should throw MongoInternalException on num documents < 0'() {
