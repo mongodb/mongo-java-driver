@@ -20,7 +20,10 @@ import com.mongodb.DBRef;
 import com.mongodb.Function;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.result.InsertManyResult;
+import org.bson.BsonValue;
 import org.bson.Document;
+import org.bson.RawBsonDocument;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.DocumentCodecProvider;
@@ -31,7 +34,9 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -170,6 +175,21 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
         // then
         assertEquals(documents, result);
+    }
+
+    @Test
+    public void bulkInsertRawBsonDocuments() {
+        // given
+        List<RawBsonDocument> docs = asList(RawBsonDocument.parse("{a: 1}"), RawBsonDocument.parse("{a: 2}"));
+
+        // when
+        InsertManyResult result = collection.withDocumentClass(RawBsonDocument.class).insertMany(docs);
+
+        // then
+        Map<Integer, BsonValue> expectedResult = new HashMap<>();
+        expectedResult.put(0, null);
+        expectedResult.put(1, null);
+        assertEquals(expectedResult, result.getInsertedIds());
     }
 
     // This is really a test that the default registry created in MongoClient and passed down to MongoCollection has been constructed

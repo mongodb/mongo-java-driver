@@ -19,6 +19,7 @@ package com.mongodb.internal.connection
 import com.mongodb.MongoBulkWriteException
 import com.mongodb.ServerAddress
 import com.mongodb.bulk.BulkWriteError
+import com.mongodb.bulk.BulkWriteInsert
 import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.bulk.BulkWriteUpsert
 import com.mongodb.bulk.WriteConcernError
@@ -47,13 +48,15 @@ class BulkWriteBatchCombinerSpecification extends Specification {
     def 'should get correct result for an insert'() {
         given:
         def combiner = new BulkWriteBatchCombiner(new ServerAddress(), true, ACKNOWLEDGED)
-        combiner.addResult(BulkWriteResult.acknowledged(INSERT, 1, 0, [], []))
+        combiner.addResult(BulkWriteResult.acknowledged(INSERT, 1, 0, [], [new BulkWriteInsert(6, new BsonString('id1'))]))
+        combiner.addResult(BulkWriteResult.acknowledged(INSERT, 1, 0, [], [new BulkWriteInsert(3, new BsonString('id2'))]))
 
         when:
         def result = combiner.getResult()
 
         then:
-        result == BulkWriteResult.acknowledged(INSERT, 1, 0, [], [])
+        result == BulkWriteResult.acknowledged(INSERT, 2, 0, [],
+                [new BulkWriteInsert(3, new BsonString('id2')), new BulkWriteInsert(6, new BsonString('id1'))])
     }
 
     def 'should sort upserts'() {
