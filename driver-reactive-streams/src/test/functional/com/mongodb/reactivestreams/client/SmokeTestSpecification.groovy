@@ -23,6 +23,7 @@ import com.mongodb.client.result.InsertOneResult
 import com.mongodb.diagnostics.logging.Loggers
 import org.bson.BsonInt32
 import org.bson.Document
+import org.bson.RawBsonDocument
 import spock.lang.IgnoreIf
 
 import static Fixture.getMongoClient
@@ -233,6 +234,17 @@ class SmokeTestSpecification extends FunctionalSpecification {
 
         then:
         subscriber.isCompleted()
+    }
+
+    def 'should bulk insert RawBsonDocuments'() {
+        given:
+        def docs = [RawBsonDocument.parse('{a: 1}'), RawBsonDocument.parse('{a: 2}')]
+
+        when:
+        def result = run('Insert RawBsonDocuments', collection.withDocumentClass(RawBsonDocument).&insertMany, docs)
+
+        then:
+        result.insertedIds.head() == [0:null, 1:null]
     }
 
     def run(String log, operation, ... args) {

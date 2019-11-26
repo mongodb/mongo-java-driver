@@ -20,6 +20,7 @@ import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcern
+import com.mongodb.bulk.BulkWriteInsert
 import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.bulk.BulkWriteUpsert
 import com.mongodb.client.model.Collation
@@ -225,6 +226,25 @@ class BulkWriteBatchSpecification extends Specification {
         payload.getPayloadName() == 'updates'
         payload.getPayload() == [getWriteRequestsAsDocuments()[2]]
         !bulkWriteBatch.hasAnotherBatch()
+    }
+
+    def 'should only map inserts up to the payload position'() {
+        when:
+        def bulkWriteBatch = BulkWriteBatch.createBulkWriteBatch(namespace, serverDescription, connectionDescription, false,
+                WriteConcern.ACKNOWLEDGED, null, false, getWriteRequests()[3..4], sessionContext)
+        def payload = bulkWriteBatch.getPayload()
+        payload.setPosition(1)
+        bulkWriteBatch.addResult(BsonDocument.parse('{"n": 1, "ok": 1.0}'))
+
+        then:
+        bulkWriteBatch.getResult().inserts == [new BulkWriteInsert(0, null)]
+
+        when:
+        payload.setPosition(2)
+        bulkWriteBatch.addResult(BsonDocument.parse('{"n": 1, "ok": 1.0}'))
+
+        then:
+        bulkWriteBatch.getResult().inserts == [new BulkWriteInsert(0, null), new BulkWriteInsert(1, null)]
     }
 
     def 'should not retry when at least one write is not retryable'() {

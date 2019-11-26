@@ -26,7 +26,6 @@ import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.WriteError;
-import com.mongodb.bulk.BulkWriteInsert;
 import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -66,8 +65,8 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.bulk.WriteRequest.Type.DELETE;
@@ -1110,7 +1109,7 @@ class AsyncMongoCollectionImpl<TDocument> implements AsyncMongoCollection<TDocum
     private InsertManyResult toInsertManyResult(final com.mongodb.bulk.BulkWriteResult result) {
         if (result.wasAcknowledged()) {
             return InsertManyResult.acknowledged(result.getInserts().stream()
-                    .collect(Collectors.toMap(BulkWriteInsert::getIndex, BulkWriteInsert::getId)));
+                    .collect(HashMap::new, (m, v) -> m.put(v.getIndex(), v.getId()), HashMap::putAll));
         } else {
             return InsertManyResult.unacknowledged();
         }
