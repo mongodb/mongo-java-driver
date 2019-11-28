@@ -11,6 +11,15 @@ title = "Documents"
 
 The driver includes several classes and interfaces used for representing BSON documents.
 
+{{% note class="important" %}}
+
+The server's behavior related to duplicate key names in a document is undefined. When a
+document with duplicate key names is decoded, the driver will assign the last
+value associated with the duplicate key. Storing such a document will cause
+the other values to be lost. 
+
+{{% /note %}}
+
 ### BsonDocument
 
 Although generally not needed by users of the high-level driver API, the [`BsonDocument`]({{< apiref "org/bson/BsonDocument" >}}) class is 
