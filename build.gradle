@@ -26,8 +26,9 @@ buildscript {
     }
     dependencies {
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:3.0.3'
-        classpath 'gradle.plugin.com.github.spotbugs:spotbugs-gradle-plugin:1.6.4'
-
+        classpath "com.github.spotbugs:spotbugs-gradle-plugin:3.0.0"
+        classpath 'biz.aQute.bnd:biz.aQute.bnd.gradle:4.3.1'
+        
         // Scala plugins
         classpath "com.adtran:scala-multiversion-plugin:1.0.35"
         classpath "com.diffplug.spotless:spotless-plugin-gradle:3.24.2"
@@ -81,11 +82,15 @@ configure(javaProjects) {
             java.srcDirs = ['src/main']
         }
     }
+
+    tasks.withType(GenerateModuleMetadata) {
+        enabled = false
+    }
 }
 
 configure(scalaProjects) {
     apply plugin: 'scala'
-    apply plugin: 'osgi'
+    apply plugin: 'biz.aQute.bnd.builder'
     apply plugin: 'idea'
     apply plugin: "com.adtran.scala-multiversion-plugin"
     apply plugin: "com.diffplug.gradle.spotless"
@@ -118,10 +123,14 @@ configure(scalaProjects) {
         scalaCompileOptions.deprecation = false
     }
 
+
+    tasks.withType(GenerateModuleMetadata) {
+        enabled = false
+    }
 }
 
 configure(javaMainProjects) {
-    apply plugin: 'osgi'
+    apply plugin: 'biz.aQute.bnd.builder'
     apply plugin: 'nebula.optional-base'
 
     dependencies {
@@ -296,8 +305,8 @@ apply from: 'gradle/testColorOutput.gradle'
 //////////////////////////////////////////
 // Root project configuration           //
 //////////////////////////////////////////
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.10.2'
+wrapper {
+    gradleVersion = '6.0.1'
 }
 
 if (!JavaVersion.current().isJava9Compatible()) {
