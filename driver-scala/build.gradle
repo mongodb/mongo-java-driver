@@ -92,12 +92,10 @@ ext {
 }
 
 jar {
-    manifest {
-        instruction 'Automatic-Module-Name', 'org.mongodb.scala.mongo-scala-driver'
-        instruction 'Build-Version', project.gitVersion
-        instruction 'Import-Package',
-                'org.bson.*',
-                'com.mongodb.*',
-                'org.mongo.scala.*'
-    }
+    bnd (
+        '-exportcontents': "*;-noimport:=true",
+        'Automatic-Module-Name': 'org.mongodb.scala.mongo-scala-driver',
+        'Build-Version': project.gitVersion,
+        'Import-Package': 'org.bson.*,com.mongodb.*'
+    )
 }

@@ -50,10 +50,11 @@ buildConfig {
 }
 
 jar {
-    manifest {
-        instruction 'Automatic-Module-Name', 'org.mongodb.driver.core'
-        instruction 'Build-Version', project.gitVersion
-        instruction 'Import-Package',
+    bnd(
+            '-exportcontents': "*;-noimport:=true",
+            'Automatic-Module-Name': 'org.mongodb.driver.core',
+            'Build-Version': project.gitVersion,
+            'Import-Package': [
                     'org.bson.*',                       // unfortunate that this is necessary, but if it's left out then it's not included
                     'javax.crypto.*',
                     'javax.crypto.spec.*',
@@ -70,5 +71,6 @@ jar {
                     'com.github.luben.zstd.*;resolution:=optional',
                     'org.slf4j;resolution:=optional',
                     'jnr.unixsocket;resolution:=optional'
-    }
+            ].join(',')
+    )
 }

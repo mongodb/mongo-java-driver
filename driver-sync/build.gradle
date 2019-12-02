@@ -42,11 +42,10 @@ tasks.withType(Checkstyle) {
 }
 
 jar {
-    manifest {
-        instruction 'Automatic-Module-Name', 'org.mongodb.driver.sync.client'
-        instruction 'Build-Version', project.gitVersion
-        instruction 'Import-Package',
-                'org.bson.*',
-                'com.mongodb.*'
-    }
+    bnd (
+        '-exportcontents': "*;-noimport:=true",
+        'Automatic-Module-Name': 'org.mongodb.driver.sync.client',
+        'Build-Version': project.gitVersion,
+        'Import-Package': 'org.bson.*,com.mongodb.*'
+    )
 }
