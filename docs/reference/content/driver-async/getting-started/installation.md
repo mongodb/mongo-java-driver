@@ -24,4 +24,4 @@ When TLS/SSL is enabled, the MongoDB Async Driver requires either [Netty](http:/
 
 The MongoDB Async Driver provides asynchronous API that can leverage either Netty or Java 7's AsynchronousSocketChannel for fast and non-blocking I/O.
 
-{{< install artifactId="mongodb-driver-async" version="3.11.3" dependencies="true">}}
+{{< install artifactId="mongodb-driver-async" version="3.12.0" dependencies="true">}}

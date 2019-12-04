@@ -9,7 +9,7 @@ title = "What's New"
 
 ## What's new in 3.12
 
-This release fully supports all MongoDB releases from versions 2.6 to 4.2. Key new features of the 3.11 Java driver release include:
+This release fully supports all MongoDB releases from versions 2.6 to 4.2. Key new features of the 3.12 Java driver release include:
 
 ### Security improvements
 
