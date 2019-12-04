@@ -200,4 +200,12 @@ MongoDatabase database = client.getDatabase("mydb")
 // or per collection
 MongoCollection<Document> collection = database.getCollection("mycoll")
                                                .withCodecRegistry(codecRegistry);
-```
+```   
+
+{{% note %}}
+Starting with the 3.12 release of the driver, you can also change the encoding of `UUID` instances via the `uuidRepresentation` property of
+`MongoClientSettings`.  See 
+[`MongoClientSettings.getUuidRepresentation`]({{<apiref "com/mongodb/MongoClientSettings.html#getUuidRepresentation()">}}) for
+details.
+{{% /note %}}
+

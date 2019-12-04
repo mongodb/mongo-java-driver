@@ -7,6 +7,27 @@ title = "What's New"
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
+## What's new in 3.12
+
+This release fully supports all MongoDB releases from versions 2.6 to 4.2. Key new features of the 3.11 Java driver release include:
+
+### Security improvements
+
+Client-side field level encryption is supported. Automatic encryption and decryption is available for users of
+[MongoDB Enterprise Advanced](https://www.mongodb.com/products/mongodb-enterprise-advanced), while explicit encryption and decryption is
+available for users of MongoDB Community.
+
+See [Client-side Encryption]({{<ref "driver/tutorials/client-side-encryption.md">}}) for further details.
+
+### Improved interoperability when using the native UUID type
+
+The driver now supports setting the BSON binary representation of `java.util.UUID` instances via a new `UuidRepresentation` property on
+`MongoClientSettings`.  The default representation has not changed, but it will in the upcoming 4.0 major release of the driver. 
+Applications that store UUID values in MongoDB can use this setting to easily control the representation in MongoDB without having to
+register a `Codec<Uuid>` in the `CodecRegistry`.  
+
+See [`MongoClientSettings.getUuidRepresentation`]({{<apiref "com/mongodb/MongoClientSettings.html#getUuidRepresentation()">}}) for details. 
+
 ## What's new in 3.11
 
 This release fully supports all MongoDB releases from versions 2.6 to 4.2. Key new features of the 3.11 Java driver release include:
