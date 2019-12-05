@@ -7,6 +7,13 @@ title = "Upgrade Considerations"
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
+{{% note class="important" %}}
+Please note that the 3.x series of releases (which includes support through MongoDB 4.2) will be the last releases that are compatible
+with *Java 6 or Java 7*.  The 4.0 Java driver will require a minimum of Java 8. 
+
+Please also note that support for new features in MongoDB 4.4 will likely only be available via a 4.x driver release.
+{{% /note %}}
+
 ## Upgrading from 3.11.x
 
 In the upcoming 4.0 release, all deprecated API elements except those documented as "not currently scheduled for removal" will be removed.
@@ -17,10 +24,6 @@ Currently the only deprecated API elements _not_ scheduled for removal are:
 
 To prepare for the 4.0 release, please compile with deprecation warnings enabled and replace all usage of deprecated API elements with their
 recommended replacements.
-
-Also, note that the 3.12 release (which includes support for MongoDB 4.2) will be the last release that is compatible with *Java 6
-or Java 7*.  The 4.0 Java driver will require a minimum of Java 8. The 3.12 release will also be the last non-patch release in the 3.x
-line. In particular, support for MongoDB 4.4 will only be made available via a 4.x driver release.
 
 The 3.12 release is binary and source compatible with the 3.11 release, except for methods that have been added to interfaces that
 have been marked as unstable, and changes to classes or interfaces that have been marked as internal or annotated as Beta.
