@@ -68,6 +68,8 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
             case SCRAM_SHA_1:
             case SCRAM_SHA_256:
                 return new ScramShaAuthenticator(credential);
+            case MONGODB_AWS:
+                return new AwsAuthenticator(credential);
             default:
                 throw new IllegalArgumentException("Unsupported authentication mechanism " + credential.getAuthenticationMechanism());
         }
