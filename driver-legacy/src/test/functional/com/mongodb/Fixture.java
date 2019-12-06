@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.connection.ServerDescription;
+import org.bson.UuidRepresentation;
 
 import java.util.List;
 
@@ -37,16 +38,8 @@ public final class Fixture {
 
     public static synchronized com.mongodb.MongoClient getMongoClient() {
         if (mongoClient == null) {
-            MongoClientURI mongoURI = getMongoClientURI();
-            mongoClient = new MongoClient(mongoURI);
-            Runtime.getRuntime().addShutdownHook(new ShutdownHook());
-        }
-        return mongoClient;
-    }
-
-    public static synchronized com.mongodb.MongoClient getLegacyMongoClient() {
-        if (mongoClient == null) {
-            MongoClientURI mongoURI = getMongoClientURI();
+            MongoClientURI mongoURI = new MongoClientURI(getMongoClientURIString(),
+                    MongoClientOptions.builder().uuidRepresentation(UuidRepresentation.STANDARD));
             mongoClient = new MongoClient(mongoURI);
             Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         }

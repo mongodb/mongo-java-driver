@@ -59,8 +59,9 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries
 class DBObjectCodecSpecification extends Specification {
 
     def bsonDoc = new BsonDocument()
-    def codecRegistry = fromProviders([new ValueCodecProvider(), new DBObjectCodecProvider(), new BsonValueCodecProvider()])
-    def dbObjectCodec = new DBObjectCodec(codecRegistry)
+    def codecRegistry = fromRegistries(fromCodecs(new UuidCodec(JAVA_LEGACY)),
+            fromProviders([new ValueCodecProvider(), new DBObjectCodecProvider(), new BsonValueCodecProvider()]))
+    def dbObjectCodec = new DBObjectCodec(codecRegistry).withUuidRepresentation(JAVA_LEGACY)
 
     def 'default registry should include necessary providers'() {
         when:
@@ -145,6 +146,7 @@ class DBObjectCodecSpecification extends Specification {
     def 'should encode and decode UUID as UUID with alternate UUID Codec'() {
         given:
         def codecWithAlternateUUIDCodec = new DBObjectCodec(fromRegistries(fromCodecs(new UuidCodec(STANDARD)), codecRegistry))
+                .withUuidRepresentation(STANDARD)
         def uuid = UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10')
         def doc = new BasicDBObject('uuid', uuid)
 
@@ -176,9 +178,9 @@ class DBObjectCodecSpecification extends Specification {
         value == document.get('f')
 
         where:
-        representation | value                                                   | bytes
-        STANDARD       | UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10') | [29, 0, 0, 0, 5, 102, 0, 16, 0, 0, 0, 4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0]
-        JAVA_LEGACY    | UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10') | [29, 0, 0, 0, 5, 102, 0, 16, 0, 0, 0, 4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0]
+        representation | value                                                                                   | bytes
+        STANDARD       | UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10')                                 | [29, 0, 0, 0, 5, 102, 0, 16, 0, 0, 0, 4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0]
+        JAVA_LEGACY    | new Binary((byte) 4, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[]) | [29, 0, 0, 0, 5, 102, 0, 16, 0, 0, 0, 4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0]
         C_SHARP_LEGACY | new Binary((byte) 4, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[]) | [29, 0, 0, 0, 5, 102, 0, 16, 0, 0, 0, 4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0]
         PYTHON_LEGACY  | new Binary((byte) 4, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[]) | [29, 0, 0, 0, 5, 102, 0, 16, 0, 0, 0, 4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0]
         UNSPECIFIED    | new Binary((byte) 4, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[]) | [29, 0, 0, 0, 5, 102, 0, 16, 0, 0, 0, 4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0]

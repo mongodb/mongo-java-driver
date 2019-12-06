@@ -61,7 +61,7 @@ public class IterableCodec implements Codec<Iterable>, OverridableUuidRepresenta
      */
     public IterableCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap, final Transformer valueTransformer) {
         this(registry, new BsonTypeCodecMap(notNull("bsonTypeClassMap", bsonTypeClassMap), registry), valueTransformer,
-                UuidRepresentation.JAVA_LEGACY);
+                UuidRepresentation.UNSPECIFIED);
     }
 
     private IterableCodec(final CodecRegistry registry, final BsonTypeCodecMap bsonTypeCodecMap, final Transformer valueTransformer,
@@ -138,7 +138,7 @@ public class IterableCodec implements Codec<Iterable>, OverridableUuidRepresenta
                         }
                         break;
                     case 4:
-                        if (uuidRepresentation == UuidRepresentation.JAVA_LEGACY || uuidRepresentation == UuidRepresentation.STANDARD) {
+                        if (uuidRepresentation == UuidRepresentation.STANDARD) {
                             codec = registry.get(UUID.class);
                         }
                         break;
