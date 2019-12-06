@@ -40,7 +40,7 @@ Each `PropertyModel` includes:
     discriminator key and value.
 
 ClassModels are built using the [`ClassModelBuilder`]({{<apiref "org/bson/codecs/pojo/ClassModelBuilder.html">}}) which can be accessed via
- the [`ClassModel.builder(clazz)`]({{<apiref "org/bson/codecs/pojo/ClassModel.html#builder-java.lang.Class-">}}) method. The builder 
+ the [`ClassModel.builder(clazz)`]({{<apiref "org/bson/codecs/pojo/ClassModel.html#builder(java.lang.Class)">}}) method. The builder 
  initially uses reflection to create the required metadata.
 
 POJO `Codec` instances are created by the [`PojoCodecProvider`]({{<apiref "org/bson/codecs/pojo/PojoCodecProvider.html">}}) which is a
@@ -327,8 +327,8 @@ The following Conventions are available from the [`Conventions`]({{<apiref "org/
   * The [`NO_CONVENTIONS`]({{<apiref "org/bson/codecs/pojo/Conventions.html#NO_CONVENTIONS">}}) an empty list.
 
 Custom Conventions can either be set globally via the 
-[`PojoCodecProvider.Builder.conventions(conventions)`]({{<apiref "org/bson/codecs/pojo/PojoCodecProvider.Builder.html#conventions-java.util.List-">}}) 
-method, or via the [`ClassModelBuilder.conventions(conventions)`]({{<apiref "org/bson/codecs/pojo/ClassModelBuilder.html#conventions-java.util.List-">}}) 
+[`PojoCodecProvider.Builder.conventions(conventions)`]({{<apiref "org/bson/codecs/pojo/PojoCodecProvider.Builder.html#conventions(java.util.List)">}}) 
+method, or via the [`ClassModelBuilder.conventions(conventions)`]({{<apiref "org/bson/codecs/pojo/ClassModelBuilder.html#conventions(java.util.List)">}}) 
 method.
 
 {{% note class="note" %}}
@@ -408,7 +408,7 @@ If a POJO contains a field that has an abstract type or has an interface as its 
 subtypes / implementations need to be registered with the `PojoCodecProvider` so that values can be encoded and decoded correctly.
 
 The easiest way to enable a discriminator is to annotate the abstract class with the `Discriminator` annotation. Alternatively, the 
-[`ClassModelBuilder.enableDiscriminator(true)`]({{<apiref "org/bson/codecs/pojo/ClassModelBuilder.html#enableDiscriminator-boolean-">}}) 
+[`ClassModelBuilder.enableDiscriminator(true)`]({{<apiref "org/bson/codecs/pojo/ClassModelBuilder.html#enableDiscriminator(boolean)">}}) 
 method can be used to enable the use of a discriminator. 
 
 The following example creates a `CodecRegistry` with discriminators enabled for a `User` interface and its concrete `FreeUser` and 

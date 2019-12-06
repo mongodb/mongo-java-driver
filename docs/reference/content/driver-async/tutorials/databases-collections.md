@@ -63,7 +63,7 @@ For additional information on connecting to MongoDB, see [Connect to MongoDB]({{
 
 ## Access a Database
 
-Once you have a `MongoClient` instance connected to a MongoDB deployment, use its [`getDatabase()`]({{<apiref "com/mongodb/async/client/MongoClient.html#getDatabase-java.lang.String-">}}) method to access a database.
+Once you have a `MongoClient` instance connected to a MongoDB deployment, use its [`getDatabase()`]({{<apiref "com/mongodb/async/client/MongoClient.html#getDatabase(java.lang.String)">}}) method to access a database.
 
 Specify the name of the database to the `getDatabase()` method. If a database does not exist, MongoDB creates the database when you first store data for that database.
 
@@ -79,7 +79,7 @@ MongoDatabase database = mongoClient.getDatabase("test");
 
 ## Get A List of Databases
 
-You can get a list of the available databases using the `MongoClient` instance's  [`listDatabaseNames`]({{ < apiref "com/mongodb/async/client/MongoClient.html#listDatabaseNames--">}}) method.
+You can get a list of the available databases using the `MongoClient` instance's  [`listDatabaseNames`]({{ < apiref "com/mongodb/async/client/MongoClient.html#listDatabaseNames()">}}) method.
 
 ```java
 mongoClient.listDatabaseNames().forEach(new Block<String>() {
@@ -92,7 +92,7 @@ mongoClient.listDatabaseNames().forEach(new Block<String>() {
 
 ## Drop A Database
 
-You can drop the current database using its [`drop`]({{<apiref "com/mongodb/async/client/MongoDatabase.html#drop-com.mongodb.async.SingleResultCallback-">}}):
+You can drop the current database using its [`drop`]({{<apiref "com/mongodb/async/client/MongoDatabase.html#drop(com.mongodb.async.SingleResultCallback)">}}):
 
 ```java
 mongoClient.getDatabase("databaseToBeDropped").drop(callbackWhenFinished);
@@ -100,7 +100,7 @@ mongoClient.getDatabase("databaseToBeDropped").drop(callbackWhenFinished);
 
 ## Access a Collection
 
-Once you have a `MongoDatabase` instance, use its [`getCollection()`]({{< apiref "com/mongodb/async/client/MongoDatabase.html#getCollection-java.lang.String-">}}) method to access a collection.
+Once you have a `MongoDatabase` instance, use its [`getCollection()`]({{< apiref "com/mongodb/async/client/MongoDatabase.html#getCollection(java.lang.String)">}}) method to access a collection.
 
 Specify the name of the collection to the `getCollection()` method.
 
@@ -120,7 +120,7 @@ You can also explicitly create a collection with various options, such as settin
 
 ## Explicitly Create a Collection
 
-The async driver provides the [`createCollection`]({{< apiref "com/mongodb/async/client/MongoDatabase.html#createCollection-java.lang.String-com.mongodb.async.SingleResultCallback-">}}) method to explicitly create a collection. When you explicitly create a collection, you can specify various collection options, such as a maximum size or the documentation validation rules, with the [`CreateCollectionOptions`]({{<apiref "com/mongodb/client/model/CreateCollectionOptions.html">}}) class. If you are not specifying these options, you do not need to explicitly create the collection since MongoDB creates new collections when you first store data for the collections.
+The async driver provides the [`createCollection`]({{< apiref "com/mongodb/async/client/MongoDatabase.html#createCollection(java.lang.String,com.mongodb.async.SingleResultCallback)">}}) method to explicitly create a collection. When you explicitly create a collection, you can specify various collection options, such as a maximum size or the documentation validation rules, with the [`CreateCollectionOptions`]({{<apiref "com/mongodb/client/model/CreateCollectionOptions.html">}}) class. If you are not specifying these options, you do not need to explicitly create the collection since MongoDB creates new collections when you first store data for the collections.
 
 ### Capped Collection
 
@@ -146,7 +146,7 @@ database.createCollection("contacts",
 
 ## Get A List of Collections
 
-You can get a list of the collections in a database using the [`MongoDatabase.listCollectionNames()`]({{<apiref "com/mongodb/async/client/MongoDatabase.html#listCollectionNames--">}}) method:
+You can get a list of the collections in a database using the [`MongoDatabase.listCollectionNames()`]({{<apiref "com/mongodb/async/client/MongoDatabase.html#listCollectionNames()">}}) method:
 
 ```java
 database.listCollectionNames().forEach(new Block<String>() {
@@ -159,7 +159,7 @@ database.listCollectionNames().forEach(new Block<String>() {
 
 ## Drop a Collection
 
-You can drop a collection by using the [`MongoCollection.drop()`]({{<apiref "com/mongodb/async/client/MongoCollection.html#drop-com.mongodb.async.SingleResultCallback-">}}) method:
+You can drop a collection by using the [`MongoCollection.drop()`]({{<apiref "com/mongodb/async/client/MongoCollection.html#drop(com.mongodb.async.SingleResultCallback)">}}) method:
 
 ```java
 collection.drop(callbackWhenFinished);

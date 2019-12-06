@@ -45,7 +45,7 @@ The streamType connection string query parameter is deprecated as of the 3.10 re
 
 ### Via `MongoClientSettings`
 
-To specify TLS/SSL with [`MongoClientSettings`]({{< apiref "com/mongodb/MongoClientSettings.Builder.html#streamFactoryFactory-com.mongodb.connection.StreamFactoryFactory-">}}),
+To specify TLS/SSL with [`MongoClientSettings`]({{< apiref "com/mongodb/MongoClientSettings.Builder.html#streamFactoryFactory(com.mongodb.connection.StreamFactoryFactory)">}}),
 set the ``sslEnabled`` property to ``true`, as in
 
 ```java

@@ -10,7 +10,7 @@ pre = "<i class='fa'></i>"
 
 ## Run Commands
 
-Not all commands have a specific helper. However, you can run any [MongoDB command]({{<docsref "reference/command">}}) by using the [`runCommand()`]({{< apiref "com/mongodb/async/client/MongoDatabase.html#runCommand-org.bson.conversions.Bson-com.mongodb.ReadPreference-com.mongodb.async.SingleResultCallback-">}}) method.
+Not all commands have a specific helper. However, you can run any [MongoDB command]({{<docsref "reference/command">}}) by using the [`runCommand()`]({{< apiref "com/mongodb/async/client/MongoDatabase.html#runCommand(org.bson.conversions.Bson,com.mongodb.ReadPreference,com.mongodb.async.SingleResultCallback)">}}) method.
 
 ## Prerequisites
 

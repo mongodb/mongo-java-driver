@@ -53,7 +53,7 @@ For additional information on connecting to MongoDB, see [Connect to MongoDB]({{
 
 ## Insert New Document
 
-To insert a single document into the collection, you can use the collection's [`insertOne()`]({{< apiref "com/mongodb/client/MongoCollection.html#insertOne-TDocument-" >}}) method.
+To insert a single document into the collection, you can use the collection's [`insertOne()`]({{< apiref "com/mongodb/client/MongoCollection.html#insertOne(TDocument)" >}}) method.
 
 ```java
 Document document = new Document("name", "Café Con Leche")
@@ -72,7 +72,7 @@ If no top-level `_id` field is specified in the document, the Java driver automa
 
 ## Insert Multiple Documents
 
-To add multiple documents, you can use the collection's [`insertMany()`]({{< apiref "com/mongodb/client/MongoCollection.html#insertMany-java.util.List-" >}}) method, which takes a list of documents to insert.
+To add multiple documents, you can use the collection's [`insertMany()`]({{< apiref "com/mongodb/client/MongoCollection.html#insertMany(java.util.List)" >}}) method, which takes a list of documents to insert.
 
 The following example inserts two documents to the collection:
 
@@ -104,7 +104,7 @@ If no top-level `_id` field is specified in the documents, the Java driver autom
 
 ## Update Existing Documents
 
-To update existing documents in a collection, you can use the collection's [`updateOne()`]({{<apiref "com/mongodb/client/MongoCollection.html#updateOne-org.bson.conversions.Bson-org.bson.conversions.Bson-">}}) or [`updateMany`]({{<apiref "com/mongodb/async/client/MongoCollection.html#updateMany-org.bson.conversions.Bson-org.bson.conversions.Bson-">}}) methods.
+To update existing documents in a collection, you can use the collection's [`updateOne()`]({{<apiref "com/mongodb/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) or [`updateMany`]({{<apiref "com/mongodb/async/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) methods.
 
 ### Filters
 
@@ -124,7 +124,7 @@ The `_id` field is immutable; i.e. you cannot change the value of the `_id` fiel
 
 ### Update a Single Document
 
-The [`updateOne()`]({{<apiref "com/mongodb/client/MongoCollection.html#updateOne-org.bson.conversions.Bson-org.bson.conversions.Bson-">}}) method updates at most a single document, even if the filter condition matches multiple documents in the collection.
+The [`updateOne()`]({{<apiref "com/mongodb/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) method updates at most a single document, even if the filter condition matches multiple documents in the collection.
 
 The following operation on the `restaurants` collection updates a document whose `_id` field equals `ObjectId("57506d62f57802807471dd41")`.
 
@@ -136,9 +136,9 @@ collection.updateOne(
 
 Specifically, the operation uses:
 
-- [`Updates.set`]({{<apiref "com/mongodb/client/model/Updates.html#set-java.lang.String-TItem-">}}) to set the value of the `stars` field to `1` and the `contact.phone` field to `"228-555-9999"`, and
+- [`Updates.set`]({{<apiref "com/mongodb/client/model/Updates.html#set(java.lang.String,TItem)">}}) to set the value of the `stars` field to `1` and the `contact.phone` field to `"228-555-9999"`, and
 
-- [`Updates.currentDate`]({{<apiref "com/mongodb/client/model/Updates.html#currentDate-java.lang.String-">}}) to modify the `lastModified` field to the current date. If the `lastModified` field does not exist, the operator adds the field to the document.  
+- [`Updates.currentDate`]({{<apiref "com/mongodb/client/model/Updates.html#currentDate(java.lang.String)">}}) to modify the `lastModified` field to the current date. If the `lastModified` field does not exist, the operator adds the field to the document.  
 
 {{% note class="tip" %}}
 In some cases where you may need to update many fields in a document, it may be more efficient to replace the document.  See [Replace a Document](#replace-a-document).
@@ -146,7 +146,7 @@ In some cases where you may need to update many fields in a document, it may be 
 
 ### Update Multiple Documents
 
-The [`updateMany`]({{<apiref "com/mongodb/async/client/MongoCollection.html#updateMany-org.bson.conversions.Bson-org.bson.conversions.Bson-">}}) method updates all documents that match the filter condition.
+The [`updateMany`]({{<apiref "com/mongodb/async/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) method updates all documents that match the filter condition.
 
 The following operation on the `restaurants` collection updates all documents whose `stars` field equals `2`.
 
@@ -158,13 +158,13 @@ collection.updateMany(
 
 Specifically, the operation uses:
 
-- [`Updates.set`]({{<apiref "com/mongodb/client/model/Updates.html#set-java.lang.String-TItem-">}}) to set the value of the `stars` field to `0` , and
+- [`Updates.set`]({{<apiref "com/mongodb/client/model/Updates.html#set(java.lang.String,TItem)">}}) to set the value of the `stars` field to `0` , and
 
-- [`Updates.currentDate`]({{<apiref "com/mongodb/client/model/Updates.html#currentDate-java.lang.String-">}}) to modify the `lastModified` field to the current date. If the `lastModified` field does not exist, the operator adds the field to the document.  
+- [`Updates.currentDate`]({{<apiref "com/mongodb/client/model/Updates.html#currentDate(java.lang.String)">}}) to modify the `lastModified` field to the current date. If the `lastModified` field does not exist, the operator adds the field to the document.  
 
 ### Update Options
 
-With the [`updateOne()`]({{<apiref "com/mongodb/client/MongoCollection.html#updateOne-org.bson.conversions.Bson-org.bson.conversions.Bson-">}}) and [`updateMany`]({{<apiref "com/mongodb/async/client/MongoCollection.html#updateMany-org.bson.conversions.Bson-org.bson.conversions.Bson-">}}) methods, you can include an [`UpdateOptions`]({{<apiref "com/mongodb/client/model/UpdateOptions.html">}}) document to specify the [`upsert`]({{<docsref "reference/method/db.collection.update/#upsert-option">}}) option or the [`bypassDocumentationValidation`]({{<docsref "core/document-validation/#bypass-document-validation">}}) option.
+With the [`updateOne()`]({{<apiref "com/mongodb/client/MongoCollection.html#updateOne(org.bson.conversions.Bsonorg.bson.conversions.Bson)">}}) and [`updateMany`]({{<apiref "com/mongodb/async/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) methods, you can include an [`UpdateOptions`]({{<apiref "com/mongodb/client/model/UpdateOptions.html">}}) document to specify the [`upsert`]({{<docsref "reference/method/db.collection.update/#upsert-option">}}) option or the [`bypassDocumentationValidation`]({{<docsref "core/document-validation/#bypass-document-validation">}}) option.
 
 ```java
 collection.updateOne(
@@ -174,7 +174,7 @@ collection.updateOne(
 ```
 ## Replace an Existing Document
 
-To replace an existing document in a collection, you can use the collection's [`replaceOne`]({{< apiref "com/mongodb/client/MongoCollection.html#replaceOne-org.bson.conversions.Bson-TDocument-">}}) method.
+To replace an existing document in a collection, you can use the collection's [`replaceOne`]({{< apiref "com/mongodb/client/MongoCollection.html#replaceOne(org.bson.conversions.Bson,TDocument)">}}) method.
 
 {{% note class="important" %}}
 The `_id` field is immutable; i.e. you cannot replace the `_id` field value.
@@ -186,11 +186,11 @@ You can pass in a filter document to the method to specify which document to rep
 
 To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "org/bson/Document.html" >}}) object.
 
-The [`replaceOne`]({{< apiref "com/mongodb/client/MongoCollection.html#replaceOne-org.bson.conversions.Bson-TDocument-">}}) method replaces at most a single document, even if the filter condition matches multiple documents in the collection.
+The [`replaceOne`]({{< apiref "com/mongodb/client/MongoCollection.html#replaceOne(org.bson.conversions.Bson,TDocument)">}}) method replaces at most a single document, even if the filter condition matches multiple documents in the collection.
 
 ### Replace a Document
 
-To replace a document, pass a new document to the [`replaceOne`]({{< apiref "com/mongodb/client/MongoCollection.html#replaceOne-org.bson.conversions.Bson-TDocument-">}}) method.
+To replace a document, pass a new document to the [`replaceOne`]({{< apiref "com/mongodb/client/MongoCollection.html#replaceOne(org.bson.conversions.Bson,TDocument)">}}) method.
 
 {{% note class="important" %}}
 The replacement document can have different fields from the original document. In the replacement document, you can omit the `_id` field since the `_id` field is immutable; however, if you do include the `_id` field, you cannot specify a different value for the `_id` field.
@@ -210,7 +210,7 @@ See also [Update a Document](#update-a-single-document).
 
 ### Update Options
 
-With the [`replaceOne`]({{< apiref "com/mongodb/client/MongoCollection.html#replaceOne-org.bson.conversions.Bson-TDocument-">}}), you can include an [`UpdateOptions`]({{<apiref "com/mongodb/client/model/UpdateOptions.html">}}) document to specify the [`upsert`]({{<docsref "reference/method/db.collection.update/#upsert-option">}}) option or the [`bypassDocumentationValidation`]({{<docsref "core/document-validation/#bypass-document-validation">}}) option.
+With the [`replaceOne`]({{< apiref "com/mongodb/client/MongoCollection.html#replaceOne(org.bson.conversions.Bson,TDocument)">}}), you can include an [`UpdateOptions`]({{<apiref "com/mongodb/client/model/UpdateOptions.html">}}) document to specify the [`upsert`]({{<docsref "reference/method/db.collection.update/#upsert-option">}}) option or the [`bypassDocumentationValidation`]({{<docsref "core/document-validation/#bypass-document-validation">}}) option.
 
 ```java
 collection.replaceOne(
@@ -224,7 +224,7 @@ collection.replaceOne(
 ## Delete Documents
 
 To delete documents in a collection, you can use the
-[`deleteOne`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteOne-org.bson.conversions.Bson-">}}) and [`deleteMany`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteMany-org.bson.conversions.Bson-">}}) methods.
+[`deleteOne`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteOne(org.bson.conversions.Bson)">}}) and [`deleteMany`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteMany(org.bson.conversions.Bson)">}}) methods.
 
 ### Filters
 
@@ -234,7 +234,7 @@ To specify an empty filter (i.e. match all documents in a collection), use an em
 
 ### Delete a Single Document
 
-The [`deleteOne`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteOne-org.bson.conversions.Bson-">}}) method deletes at most a single document, even if the filter condition matches multiple documents in the collection.
+The [`deleteOne`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteOne(org.bson.conversions.Bson)">}}) method deletes at most a single document, even if the filter condition matches multiple documents in the collection.
 
 The following operation on the `restaurants` collection deletes a document whose `_id` field equals `ObjectId("57506d62f57802807471dd41")`.
 
@@ -244,7 +244,7 @@ collection.deleteOne(eq("_id", new ObjectId("57506d62f57802807471dd41")));
 
 ### Delete Multiple Documents
 
-The [`deleteMany`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteMany-org.bson.conversions.Bson-">}}) method deletes all documents that match the filter condition.
+The [`deleteMany`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteMany(org.bson.conversions.Bson)">}}) method deletes all documents that match the filter condition.
 
 The following operation on the `restaurants` collection deletes all documents whose `stars` field equals `4`.
 
@@ -278,13 +278,13 @@ Applications can configure [write concern]({{<docsref "reference/write-concern">
         new MongoClientURI("mongodb://host1:27017,host2:27017/?w=majority"));
       ```
 
-- In a [`MongoDatabase`]({{<apiref "com/mongodb/client/MongoDatabase.html">}}) via its [`withWriteConcern`]({{<apiref "com/mongodb/client/MongoDatabase.html#withWriteConcern-com.mongodb.WriteConcern-">}}) method, as in the following example:
+- In a [`MongoDatabase`]({{<apiref "com/mongodb/client/MongoDatabase.html">}}) via its [`withWriteConcern`]({{<apiref "com/mongodb/client/MongoDatabase.html#withWriteConcern(com.mongodb.WriteConcern)">}}) method, as in the following example:
 
     ```java
      MongoDatabase database = mongoClient.getDatabase("test").withWriteConcern(WriteConcern.MAJORITY);
     ```
 
-- In a [`MongoCollection`]({{<apiref "com/mongodb/client/MongoCollection.html">}}) via its [`withWriteConcern`]({{<apiref "com/mongodb/client/MongoCollection.html#withWriteConcern-com.mongodb.WriteConcern-">}}) method, as in the following example:
+- In a [`MongoCollection`]({{<apiref "com/mongodb/client/MongoCollection.html">}}) via its [`withWriteConcern`]({{<apiref "com/mongodb/client/MongoCollection.html#withWriteConcern(com.mongodb.WriteConcern)">}}) method, as in the following example:
 
     ```java
      MongoCollection<Document> collection = database.getCollection("restaurants").withWriteConcern(WriteConcern.MAJORITY);

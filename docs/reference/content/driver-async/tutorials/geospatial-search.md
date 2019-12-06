@@ -72,8 +72,8 @@ For additional information on connecting to MongoDB, see [Connect to MongoDB]({{
 
 ## Create the `2dsphere` Index
 
-To create a [`2dsphere` index]({{<docsref "core/2dsphere">}}), use the [`Indexes.geo2dsphere`]({{<apiref "com/mongodb/client/model/Indexes.html#geo2dsphere-java.lang.String...-">}})
-helper to create a specification for the `2dsphere` index and pass to [`MongoCollection.createIndex()`]({{<apiref "com/mongodb/client/MongoCollection.html#createIndex-org.bson.conversions.Bson-">}}) method.
+To create a [`2dsphere` index]({{<docsref "core/2dsphere">}}), use the [`Indexes.geo2dsphere`]({{<apiref "com/mongodb/client/model/Indexes.html#geo2dspherejava.lang.String...)">}})
+helper to create a specification for the `2dsphere` index and pass to [`MongoCollection.createIndex()`]({{<apiref "com/mongodb/client/MongoCollection.html#createIndex(org.bson.conversions.Bson)">}}) method.
 
 The following example creates a `2dsphere` index on the `"contact.location"` field for the `restaurants` collection.
 

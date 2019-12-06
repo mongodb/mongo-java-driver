@@ -83,7 +83,7 @@ For additional information on connecting to MongoDB, see [Connect to MongoDB]({{
 
 ## Query a Collection
 
-To query the collection, you can use the [`find()`]({{< apiref "com/mongodb/async/client/MongoCollection.html#find-org.bson.conversions.Bson-">}}) method.
+To query the collection, you can use the [`find()`]({{< apiref "com/mongodb/async/client/MongoCollection.html#find(org.bson.conversions.Bson)">}}) method.
 
 You can call the method without any arguments to query all documents in a collection:
 
@@ -100,7 +100,7 @@ collection.find(eq("name", "456 Cookies Shop"))
 
 ## Query Filters
 
-To query for documents that match certain conditions, pass a filter document to the [`find()`]({{< apiref "com/mongodb/async/client/MongoCollection.html#find-org.bson.conversions.Bson-">}}) method.
+To query for documents that match certain conditions, pass a filter document to the [`find()`]({{< apiref "com/mongodb/async/client/MongoCollection.html#find(org.bson.conversions.Bson)">}}) method.
 
 ### Empty Filter
 
@@ -111,7 +111,7 @@ collection.find(new Document()).forEach(printBlock, callbackWhenFinished);
 ```
 
 {{% note class="tip"%}}
-For the [`find()`]({{< apiref "com/mongodb/async/client/MongoCollection.html#find--">}}) method, you can also call the method without passing a filter object to match all documents in a collection.
+For the [`find()`]({{< apiref "com/mongodb/async/client/MongoCollection.html#find()">}}) method, you can also call the method without passing a filter object to match all documents in a collection.
 {{% /note %}}
 
 ```java
@@ -147,7 +147,7 @@ See also the  [Query Documents Tutorial]({{<docsref "tutorial/query-documents">}
 
 ## FindIterable
 
-The [`find()`]({{< apiref "com/mongodb/async/client/MongoCollection.html#find--">}}) method returns an instance of the [`FindIterable`]({{< apiref "com/mongodb/async/client/FindIterable.html" >}}) interface. The interface provides various methods that you can chain to the `find()` method to modify the output or behavior of the query, such as [`sort()`]({{<apiref "com/mongodb/async/client/FindIterable.html#sort-org.bson.conversions.Bson-">}})  or [`projection()`]({{<apiref "com/mongodb/async/client/FindIterable.html#projection-org.bson.conversions.Bson-">}}), as well as for iterating the results, such as [`forEach()`]({{<apiref "com/mongodb/async/client/MongoIterable.html#forEach-com.mongodb.Block-com.mongodb.async.SingleResultCallback-">}}).
+The [`find()`]({{< apiref "com/mongodb/async/client/MongoCollection.html#find()">}}) method returns an instance of the [`FindIterable`]({{< apiref "com/mongodb/async/client/FindIterable.html" >}}) interface. The interface provides various methods that you can chain to the `find()` method to modify the output or behavior of the query, such as [`sort()`]({{<apiref "com/mongodb/async/client/FindIterable.html#sort(org.bson.conversions.Bson)">}})  or [`projection()`]({{<apiref "com/mongodb/async/client/FindIterable.html#projection(org.bson.conversions.Bson)">}}), as well as for iterating the results, such as [`forEach()`]({{<apiref "com/mongodb/async/client/MongoIterable.html#forEach(com.mongodb.Block,com.mongodb.async.SingleResultCallback)">}}).
 
 
 ### Projections
@@ -176,12 +176,12 @@ collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery"))
 
 In the projection document, you can also specify a projection expression using a [projection operator]({{<apiref "reference/operator/projection/">}})
 
-For an example on using the [`Projections.metaTextScore`]({{<apiref "com/mongodb/client/model/Projections.html#metaTextScore-java.lang.String-">}}),
+For an example on using the [`Projections.metaTextScore`]({{<apiref "com/mongodb/client/model/Projections.html#metaTextScore(java.lang.String)">}}),
 see the [Text Search tutorial]({{<relref "driver/tutorials/text-search.md">}}).
 
 ### Sorts
 
-To sort documents, pass a [sort specification document]({{<docsref "reference/method/cursor.sort/#cursor.sort">}}) to the [`FindIterable.sort()`]({{<apiref "com/mongodb/async/client/FindIterable.html#sort-org.bson.conversions.Bson-">}}) method.  The Java driver provides [`Sorts`]({{< relref "builders/sorts.md">}}) helpers to facilitate the sort specification document.
+To sort documents, pass a [sort specification document]({{<docsref "reference/method/cursor.sort/#cursor.sort">}}) to the [`FindIterable.sort()`]({{<apiref "com/mongodb/async/client/FindIterable.html#sort(org.bson.conversions.Bson)">}}) method.  The Java driver provides [`Sorts`]({{< relref "builders/sorts.md">}}) helpers to facilitate the sort specification document.
 
 ```java
 collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery")))
@@ -206,13 +206,13 @@ collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery"))
 The [`MongoIterable`]({{< apiref "com/mongodb/async/client/FindIterable.html" >}}) interface provides helper methods to access the results of an operation:
 
 
-- [`first()`]({{< apiref "com/mongodb/async/client/MongoIterable.html#first-com.mongodb.async.SingleResultCallback-" >}})
+- [`first()`]({{< apiref "com/mongodb/async/client/MongoIterable.html#first(com.mongodb.async.SingleResultCallback)" >}})
 
-- [`forEach()`]({{< apiref "com/mongodb/async/client/MongoIterable.html#forEach-com.mongodb.Block-com.mongodb.async.SingleResultCallback-" >}})
+- [`forEach()`]({{< apiref "com/mongodb/async/client/MongoIterable.html#forEach(com.mongodb.Block,com.mongodb.async.SingleResultCallback)" >}})
 
-- [`map()`]({{< apiref "com/mongodb/async/client/MongoIterable.html#map-com.mongodb.Function-" >}})
+- [`map()`]({{< apiref "com/mongodb/async/client/MongoIterable.html#map(com.mongodb.Function)" >}})
 
-- [`into()`]({{< apiref "com/mongodb/async/client/MongoIterable.html#into-A-com.mongodb.async.SingleResultCallback-" >}})
+- [`into()`]({{< apiref "com/mongodb/async/client/MongoIterable.html#into(A,com.mongodb.async.SingleResultCallback)" >}})
 
 
 ## Read Preference
@@ -258,7 +258,7 @@ For read operations on [replica sets]({{<docsref "replication/">}}) or [sharded 
             .withReadPreference(ReadPreference.secondary());
     ```
 
-- In a [`MongoCollection`]({{<apiref "com/mongodb/async/client/MongoCollection.html">}}) via its [`withReadPreference`]({{<apiref "com/mongodb/async/client/MongoCollection.html#withReadPreference-com.mongodb.ReadPreference-">}}) method, as in the following example:
+- In a [`MongoCollection`]({{<apiref "com/mongodb/async/client/MongoCollection.html">}}) via its [`withReadPreference`]({{<apiref "com/mongodb/async/client/MongoCollection.html#withReadPreference(com.mongodb.ReadPreference)">}}) method, as in the following example:
 
     ```java
     MongoCollection<Document> collection = database.getCollection("restaurants")
@@ -317,7 +317,7 @@ For read operations on [replica sets]({{<docsref "replication/">}}) or [sharded 
                                 .withReadConcern(ReadConcern.DEFAULT);
     ```
 
-- In a [`MongoCollection`]({{<apiref "com/mongodb/async/client/MongoCollection.html">}}) via its [`withReadConcern`]({{<apiref "com/mongodb/client/MongoCollection.html#withReadConcern-com.mongodb.ReadConcern-">}}) method, as in the following example:
+- In a [`MongoCollection`]({{<apiref "com/mongodb/async/client/MongoCollection.html">}}) via its [`withReadConcern`]({{<apiref "com/mongodb/client/MongoCollection.html#withReadConcern(com.mongodb.ReadConcern)">}}) method, as in the following example:
 
     ```java
     MongoCollection<Document> collection = database.getCollection("restaurants")
