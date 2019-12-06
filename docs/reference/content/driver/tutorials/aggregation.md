@@ -59,14 +59,14 @@ For additional information on connecting to MongoDB, see [Connect to MongoDB]({{
 
 ## Perform Aggregation
 
-To perform aggregation, pass a list of [aggregation stages]({{< docsref "meta/aggregation-quick-reference" >}}) to the [`MongoCollection.aggregate()`]({{<apiref "com/mongodb/client/MongoCollection.html#aggregate-java.util.List-">}}) method.
+To perform aggregation, pass a list of [aggregation stages]({{< docsref "meta/aggregation-quick-reference" >}}) to the [`MongoCollection.aggregate()`]({{<apiref "com/mongodb/client/MongoCollection.html#aggregate(java.util.List)">}}) method.
 The Java driver provides the [`Aggregates`]({{< apiref "com/mongodb/client/model/Aggregates.html" >}}) helper class that contains builders for aggregation stages.
 
 In the following example, the aggregation pipeline
 
 - First uses a [`$match`]({{< docsref "reference/operator/aggregation/match/" >}}) stage to filter for documents whose `categories` array field contains the element `Bakery`. The example uses [`Aggregates.match`]({{< relref "builders/aggregation.md#match" >}}) to build the `$match` stage.
 
-- Then, uses  a [`$group`]({{< docsref "reference/operator/aggregation/group/" >}}) stage to group the matching documents by the `stars` field, accumulating a count of documents for each distinct value of `stars`. The example uses [`Aggregates.group`]({{< relref "builders/aggregation.md#group" >}}) to build the `$group` stage and [`Accumulators.sum`]({{< apiref "com/mongodb/client/model/Accumulators#sum-java.lang.String-TExpression-" >}}) to build the [accumulator expression]({{< docsref "reference/operator/aggregation/group/#accumulator-operator" >}}).  For the [accumulator expressions]({{< docsref "reference/operator/aggregation-group/" >}}) for use within the [`$group`]({{< docsref "reference/operator/aggregation/group/" >}}) stage, the Java driver provides [`Accumulators`]({{< apiref "com/mongodb/client/model/Accumulators.html">}}) helper class.
+- Then, uses  a [`$group`]({{< docsref "reference/operator/aggregation/group/" >}}) stage to group the matching documents by the `stars` field, accumulating a count of documents for each distinct value of `stars`. The example uses [`Aggregates.group`]({{< relref "builders/aggregation.md#group" >}}) to build the `$group` stage and [`Accumulators.sum`]({{< apiref "com/mongodb/client/model/Accumulators#sum(java.lang.String,TExpression)" >}}) to build the [accumulator expression]({{< docsref "reference/operator/aggregation/group/#accumulator-operator" >}}).  For the [accumulator expressions]({{< docsref "reference/operator/aggregation-group/" >}}) for use within the [`$group`]({{< docsref "reference/operator/aggregation/group/" >}}) stage, the Java driver provides [`Accumulators`]({{< apiref "com/mongodb/client/model/Accumulators.html">}}) helper class.
 ```java
 collection.aggregate(
       Arrays.asList(

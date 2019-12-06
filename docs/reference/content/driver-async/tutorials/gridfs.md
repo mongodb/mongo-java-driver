@@ -98,7 +98,7 @@ For additional information on connecting to MongoDB, see [Connect to MongoDB]({{
 
 GridFS stores files in [two collections]({{<docsref "core/gridfs/#gridfs-collections">}}): a `chunks` collection stores the file chunks, and a  `files` collection stores file metadata. The two collections are in a common bucket and the collection names are prefixed with the bucket name.
 
-The Java Async driver provides the [`GridFSBuckets.create()`]({{< apiref "com/mongodb/async/client/gridfs/GridFSBuckets.html#create-com.mongodb.async.client.MongoDatabase-" >}})  method
+The Java Async driver provides the [`GridFSBuckets.create()`]({{< apiref "com/mongodb/async/client/gridfs/GridFSBuckets.html#create(com.mongodb.async.client.MongoDatabase)" >}})  method
 to create the [`GridFSBucket`]({{< apiref "com/mongodb/async/client/gridfs/GridFSBucket.html" >}}):
 
 ```java
@@ -108,7 +108,7 @@ MongoDatabase myDatabase = mongoClient.getDatabase("mydb");
 GridFSBucket gridFSBucket = GridFSBuckets.create(myDatabase);
 ```
 
-You can specify a bucket name to [`GridFSBuckets.create()`]({{< apiref "com/mongodb/async/client/gridfs/GridFSBuckets.html#create-com.mongodb.async.client.MongoDatabase-" >}}) method.
+You can specify a bucket name to [`GridFSBuckets.create()`]({{< apiref "com/mongodb/async/client/gridfs/GridFSBuckets.html#create(com.mongodb.async.client.MongoDatabase)" >}}) method.
 
 ```java
 // Create a gridFSBucket with a custom bucket name "files"
@@ -125,7 +125,7 @@ To upload data into GridFS, you can upload from an `InputStream` or write data t
 
 ### UploadFromStream
 
-The [`uploadFromStream`]({{< apiref "com/mongodb/async/client/gridfs/GridFSBucket.html#openUploadStream-java.lang.String-com.mongodb.client.gridfs.model.GridFSUploadOptions-" >}}) method
+The [`uploadFromStream`]({{< apiref "com/mongodb/async/client/gridfs/GridFSBucket.html#openUploadStream(java.lang.String,com.mongodb.client.gridfs.model.GridFSUploadOptions)" >}}) method
 reads the contents of an [`AsyncInputStream`]({{< apiref "com/mongodb/async/client/gridfs/AsyncInputStream" >}}) and saves it to the `GridFSBucket`.
 
 You can use the [`GridFSUploadOptions`]({{< apiref "com/mongodb/client/gridfs/model/GridFSUploadOptions.html" >}}) to configure the chunk size or include additional metadata.
@@ -160,14 +160,14 @@ gridFSBucket.uploadFromStream("mongodb-tutorial", streamToUploadFrom, options,
 
 ### OpenUploadStream
 
-For a finer-grained control of the upload, the driver also provides a [`GridFSBucket.openUploadStream`]({{< apiref "com/mongodb/async/client/gridfs/GridFSBucket.html#openUploadStream-java.lang.String-com.mongodb.client.gridfs.model.GridFSUploadOptions-">}}) method, which returns a [`GridFSUploadStream`]({{< apiref "com/mongodb/async/client/gridfs/GridFSUploadStream.html">}}). You can write data to a [`GridFSUploadStream`]({{< apiref "com/mongodb/async/client/gridfs/GridFSUploadStream.html">}}) which extends [`AsyncOutputStream`]({{< apiref "com/mongodb/async/client/gridfs/AsyncOutputStream" >}}).
+For a finer-grained control of the upload, the driver also provides a [`GridFSBucket.openUploadStream`]({{< apiref "com/mongodb/async/client/gridfs/GridFSBucket.html#openUploadStream(java.lang.String,com.mongodb.client.gridfs.model.GridFSUploadOptions)">}}) method, which returns a [`GridFSUploadStream`]({{< apiref "com/mongodb/async/client/gridfs/GridFSUploadStream.html">}}). You can write data to a [`GridFSUploadStream`]({{< apiref "com/mongodb/async/client/gridfs/GridFSUploadStream.html">}}) which extends [`AsyncOutputStream`]({{< apiref "com/mongodb/async/client/gridfs/AsyncOutputStream" >}}).
 
 The [`GridFSUploadStream`]({{< apiref "com/mongodb/async/client/gridfs/GridFSUploadStream.html">}}) buffers data until it reaches the `chunkSizeBytes` and then inserts the chunk into the `chunks` collection.  When the `GridFSUploadStream` is closed, the final chunk is written and the file metadata is inserted into the `files` collection.
 
 
 ## Find Files Stored in GridFS
 
-To find the files stored in the `GridFSBucket` use the [`find`]({{< apiref "com/mongodb/async/client/gridfs/GridFSBucket.html#find--">}}) method.
+To find the files stored in the `GridFSBucket` use the [`find`]({{< apiref "com/mongodb/async/client/gridfs/GridFSBucket.html#find()">}}) method.
 
 The following example prints out the filename of each file stored:
 
@@ -214,7 +214,7 @@ gridFSBucket.find(eq("metadata.contentType", "image/png")).forEach(
 
 ### DownloadToStream
 
-The [`downloadToStream`]({{< apiref "com/mongodb/async/client/gridfs/GridFSBucket.html#downloadToStream-org.bson.types.ObjectId-com.mongodb.async.client.gridfs.AsyncOutputStream-com.mongodb.async.SingleResultCallback-" >}}) method reads the contents from MongoDB and writes the data directly to the provided [`AsyncOutputStream`]({{< apiref "com/mongodb/async/client/gridfs/AsyncOutputStream" >}}).
+The [`downloadToStream`]({{< apiref "com/mongodb/async/client/gridfs/GridFSBucket.html#downloadToStream(org.bson.types.ObjectId,com.mongodb.async.client.gridfs.AsyncOutputStream,com.mongodb.async.SingleResultCallback)" >}}) method reads the contents from MongoDB and writes the data directly to the provided [`AsyncOutputStream`]({{< apiref "com/mongodb/async/client/gridfs/AsyncOutputStream" >}}).
 
 For the `fileId` variable, specify an `ObjectId` value returned from the find operation section in this tutorial.
 
@@ -236,7 +236,7 @@ gridFSBucket.downloadToStream(fileId, channelToOutputStream(streamToDownloadTo),
 streamToDownloadTo.close();
 ```
 
-If the `_id` of the file is unknown but you know the filename, then you can pass the filename to the [`downloadToStream`]({{< apiref "com/mongodb/async/client/gridfs/GridFSBucket.html#downloadToStream-java.lang.String-com.mongodb.async.client.gridfs.AsyncOutputStream-com.mongodb.client.gridfs.model.GridFSDownloadOptions-com.mongodb.async.SingleResultCallback-" >}}) method. By default, it will download the latest version of the file. Use the [`GridFSDownloadOptions`]({{< apiref "com/mongodb/client/gridfs/model/GridFSDownloadOptions.html" >}}) to configure which version to download.
+If the `_id` of the file is unknown but you know the filename, then you can pass the filename to the [`downloadToStream`]({{< apiref "com/mongodb/async/client/gridfs/GridFSBucket.html#downloadToStream(java.lang.String,com.mongodb.async.client.gridfs.AsyncOutputStream,com.mongodb.client.gridfs.model.GridFSDownloadOptionscom.mongodb.async.SingleResultCallback)" >}}) method. By default, it will download the latest version of the file. Use the [`GridFSDownloadOptions`]({{< apiref "com/mongodb/client/gridfs/model/GridFSDownloadOptions.html" >}}) to configure which version to download.
 
 ```java
 Path outputPath = Paths.get("/tmp/mongodb-tutorial-out.pdf");
@@ -260,11 +260,11 @@ streamToDownloadTo.close();
 
 ### OpenDownloadStream
 
-For a finer-grained control of the upload, the driver also provides a [`openDownloadStream`]({{< apiref "com/mongodb/async/client/gridfs/GridFSBucket.html#openDownloadStream-org.bson.types.ObjectId-">}}) method, which returns a [`GridFSDownloadStream`]({{< apiref "com/mongodb/client/gridfs/GridFSDownloadStream.html">}}).
+For a finer-grained control of the upload, the driver also provides a [`openDownloadStream`]({{< apiref "com/mongodb/async/client/gridfs/GridFSBucket.html#openDownloadStream(org.bson.types.ObjectId)">}}) method, which returns a [`GridFSDownloadStream`]({{< apiref "com/mongodb/client/gridfs/GridFSDownloadStream.html">}}).
 
 ## Rename Files
 
-If you should need to rename a file, then use the [`rename`]({{< apiref "com/mongodb/async/client/gridfs/GridFSBucket.html#rename-org.bson.types.ObjectId-java.lang.String-com.mongodb.async.SingleResultCallback-">}}) method.  
+If you should need to rename a file, then use the [`rename`]({{< apiref "com/mongodb/async/client/gridfs/GridFSBucket.html#rename(org.bson.types.ObjectId,java.lang.String,com.mongodb.async.SingleResultCallback)">}}) method.  
 
 The following example renames a file to "mongodbTutorial":
 
@@ -287,7 +287,7 @@ To rename multiple revisions of the same filename, first retrieve the full list 
 
 ## Delete Files
 
-To delete a file from the `GridFSBucket` use the [`delete`]({{< apiref "com/mongodb/async/client/gridfs/GridFSBucket.html#delete-org.bson.types.ObjectId-com.mongodb.async.SingleResultCallback-">}}) method.
+To delete a file from the `GridFSBucket` use the [`delete`]({{< apiref "com/mongodb/async/client/gridfs/GridFSBucket.html#delete(org.bson.types.ObjectId,com.mongodb.async.SingleResultCallback)">}}) method.
 
 The following example deletes a file from the `GridFSBucket`:
 
