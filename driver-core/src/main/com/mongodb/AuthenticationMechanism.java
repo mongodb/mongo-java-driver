@@ -31,14 +31,21 @@ public enum AuthenticationMechanism {
     GSSAPI("GSSAPI"),
 
     /**
-     * The PLAIN mechanism.  See the <a href="http://www.ietf.org/rfc/rfc4616.txt">RFC</a>.
+     * The MONGODB-AWS mechanism.
+     * @since 4.1
+     * @mongodb.server.release 4.4
      */
-    PLAIN("PLAIN"),
+    MONGODB_AWS("MONGODB-AWS"),
 
     /**
      * The MongoDB X.509 mechanism. This mechanism is available only with client certificates over SSL.
      */
     MONGODB_X509("MONGODB-X509"),
+
+    /**
+     * The PLAIN mechanism.  See the <a href="http://www.ietf.org/rfc/rfc4616.txt">RFC</a>.
+     */
+    PLAIN("PLAIN"),
 
     /**
      * The SCRAM-SHA-1 mechanism.  See the <a href="http://tools.ietf.org/html/rfc5802">RFC</a>.
