@@ -16,6 +16,7 @@
 
 package com.mongodb
 
+
 import com.mongodb.client.internal.TestOperationExecutor
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CollationAlternate
@@ -70,7 +71,7 @@ class DBSpecification extends Specification {
 
     def 'should execute CreateCollectionOperation'() {
         given:
-        def mongo = Stub(Mongo)
+        def mongo = Stub(MongoClient)
         mongo.mongoClientOptions >> MongoClientOptions.builder().build()
         def executor = new TestOperationExecutor([1L, 2L, 3L])
         def db = new DB(mongo, 'test', executor)
@@ -135,7 +136,9 @@ class DBSpecification extends Specification {
 
     def 'should execute CreateViewOperation'() {
         given:
-        def mongo = Stub(Mongo)
+        def mongo = Stub(MongoClient) {
+            getCodecRegistry() >> MongoClient.defaultCodecRegistry
+        }
         mongo.mongoClientOptions >> MongoClientOptions.builder().build()
         def executor = new TestOperationExecutor([1L, 2L, 3L])
 

@@ -45,6 +45,7 @@ import com.mongodb.operation.FindAndReplaceOperation
 import com.mongodb.operation.FindAndUpdateOperation
 import com.mongodb.operation.FindOperation
 import com.mongodb.operation.GroupOperation
+import com.mongodb.operation.InsertOperation
 import com.mongodb.operation.MapReduceBatchCursor
 import com.mongodb.operation.MapReduceStatistics
 import com.mongodb.operation.MapReduceToCollectionOperation
@@ -52,13 +53,16 @@ import com.mongodb.operation.MapReduceWithInlineResultsOperation
 import com.mongodb.operation.MixedBulkWriteOperation
 import com.mongodb.operation.ParallelCollectionScanOperation
 import com.mongodb.operation.UpdateOperation
+import org.bson.BsonBinary
 import org.bson.BsonDocument
 import org.bson.BsonDocumentWrapper
 import org.bson.BsonInt32
 import org.bson.BsonJavaScript
 import org.bson.BsonString
+import org.bson.UuidRepresentation
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.BsonValueCodec
+import org.bson.codecs.UuidCodec
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
@@ -66,6 +70,7 @@ import java.util.concurrent.TimeUnit
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static Fixture.getMongoClient
 import static java.util.Arrays.asList
+import static org.bson.codecs.configuration.CodecRegistries.fromCodecs
 import static spock.util.matcher.HamcrestSupport.expect
 
 class DBCollectionSpecification extends Specification {
@@ -80,6 +85,27 @@ class DBCollectionSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+    }
+
+    def 'should use MongoClient CodecRegistry'() {
+        given:
+        def mongoClient = Stub(MongoClient) {
+            getCodecRegistry() >> fromCodecs(new UuidCodec(UuidRepresentation.STANDARD))
+            getReadConcern() >> ReadConcern.DEFAULT
+            getWriteConcern() >> WriteConcern.ACKNOWLEDGED
+            getMongoClientOptions() >> MongoClientOptions.builder().build()
+        }
+        def executor = new TestOperationExecutor([WriteConcernResult.unacknowledged()])
+        def db = new DB(mongoClient, 'myDatabase', executor)
+        def collection = db.getCollection('test')
+        def uuid = UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10')
+
+        when:
+        collection.insert(new BasicDBObject('_id', uuid))
+        def operation = executor.writeOperation as InsertOperation
+
+        then:
+        operation.insertRequests[0].document.getBinary('_id') == new BsonBinary(uuid, UuidRepresentation.STANDARD)
     }
 
     def 'should get and set read concern'() {

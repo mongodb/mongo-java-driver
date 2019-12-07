@@ -16,11 +16,11 @@
 
 package org.bson.codecs;
 
-import org.bson.BsonBinarySubType;
 import org.bson.BsonReader;
 import org.bson.BsonType;
 import org.bson.BsonWriter;
 import org.bson.Transformer;
+import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
@@ -35,11 +35,12 @@ import static org.bson.assertions.Assertions.notNull;
  * @since 3.3
  */
 @SuppressWarnings("rawtypes")
-public class IterableCodec implements Codec<Iterable> {
+public class IterableCodec implements Codec<Iterable>, OverridableUuidRepresentationCodec<Iterable> {
 
     private final CodecRegistry registry;
     private final BsonTypeCodecMap bsonTypeCodecMap;
     private final Transformer valueTransformer;
+    private final UuidRepresentation uuidRepresentation;
 
     /**
      * Construct a new instance with the given {@code CodecRegistry} and {@code BsonTypeClassMap}.
@@ -59,14 +60,27 @@ public class IterableCodec implements Codec<Iterable> {
      * @param valueTransformer the value Transformer
      */
     public IterableCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap, final Transformer valueTransformer) {
+        this(registry, new BsonTypeCodecMap(notNull("bsonTypeClassMap", bsonTypeClassMap), registry), valueTransformer,
+                UuidRepresentation.JAVA_LEGACY);
+    }
+
+    private IterableCodec(final CodecRegistry registry, final BsonTypeCodecMap bsonTypeCodecMap, final Transformer valueTransformer,
+                         final UuidRepresentation uuidRepresentation) {
         this.registry = notNull("registry", registry);
-        this.bsonTypeCodecMap = new BsonTypeCodecMap(notNull("bsonTypeClassMap", bsonTypeClassMap), registry);
+        this.bsonTypeCodecMap = bsonTypeCodecMap;
         this.valueTransformer = valueTransformer != null ? valueTransformer : new Transformer() {
             @Override
             public Object transform(final Object objectToTransform) {
                 return objectToTransform;
             }
         };
+        this.uuidRepresentation = uuidRepresentation;
+    }
+
+
+    @Override
+    public Codec<Iterable> withUuidRepresentation(final UuidRepresentation uuidRepresentation) {
+        return new IterableCodec(registry, bsonTypeCodecMap, valueTransformer, uuidRepresentation);
     }
 
     @Override
@@ -112,9 +126,27 @@ public class IterableCodec implements Codec<Iterable> {
         if (bsonType == BsonType.NULL) {
             reader.readNull();
             return null;
-        } else if (bsonType == BsonType.BINARY && BsonBinarySubType.isUuid(reader.peekBinarySubType()) && reader.peekBinarySize() == 16) {
-            return registry.get(UUID.class).decode(reader, decoderContext);
+        } else {
+            Codec<?> codec = bsonTypeCodecMap.get(bsonType);
+            if (bsonType == BsonType.BINARY && reader.peekBinarySize() == 16) {
+                switch (reader.peekBinarySubType()) {
+                    case 3:
+                        if (uuidRepresentation == UuidRepresentation.JAVA_LEGACY
+                                || uuidRepresentation == UuidRepresentation.C_SHARP_LEGACY
+                                || uuidRepresentation == UuidRepresentation.PYTHON_LEGACY) {
+                            codec = registry.get(UUID.class);
+                        }
+                        break;
+                    case 4:
+                        if (uuidRepresentation == UuidRepresentation.JAVA_LEGACY || uuidRepresentation == UuidRepresentation.STANDARD) {
+                            codec = registry.get(UUID.class);
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+            return valueTransformer.transform(codec.decode(reader, decoderContext));
         }
-        return valueTransformer.transform(bsonTypeCodecMap.get(bsonType).decode(reader, decoderContext));
     }
 }

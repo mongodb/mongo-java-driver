@@ -2447,10 +2447,11 @@ public class DBCollection {
         return retVal;
     }
 
-    DBObjectCodec getDefaultDBObjectCodec() {
-        return new DBObjectCodec(MongoClient.getDefaultCodecRegistry(),
+    Codec<DBObject> getDefaultDBObjectCodec() {
+        return new DBObjectCodec(getDB().getMongoClient().getCodecRegistry(),
                                  DBObjectCodec.getDefaultBsonTypeClassMap(),
-                                 getObjectFactory());
+                                 getObjectFactory())
+                .withUuidRepresentation(getDB().getMongoClient().getMongoClientOptions().getUuidRepresentation());
     }
 
     private <T> T convertOptionsToType(final DBObject options, final String field, final Class<T> clazz) {

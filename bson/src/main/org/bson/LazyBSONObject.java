@@ -177,7 +177,7 @@ public class LazyBSONObject implements BSONObject {
             case BINARY:
                 byte binarySubType = reader.peekBinarySubType();
                 if (BsonBinarySubType.isUuid(binarySubType) && reader.peekBinarySize() == 16) {
-                    return new UuidCodec().decode(reader, DecoderContext.builder().build());
+                    return new UuidCodec(UuidRepresentation.JAVA_LEGACY).decode(reader, DecoderContext.builder().build());
                 }
                 BsonBinary binary = reader.readBinaryData();
                 if (binarySubType == BINARY.getValue() || binarySubType == OLD_BINARY.getValue()) {

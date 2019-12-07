@@ -16,11 +16,11 @@
 
 package org.bson.codecs;
 
-import org.bson.BsonBinarySubType;
 import org.bson.BsonReader;
 import org.bson.BsonType;
 import org.bson.BsonWriter;
 import org.bson.Transformer;
+import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.HashMap;
@@ -37,7 +37,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
  *
  * @since 3.5
  */
-public class MapCodec implements Codec<Map<String, Object>> {
+public class MapCodec implements Codec<Map<String, Object>>, OverridableUuidRepresentationCodec<Map<String, Object>> {
 
     private static final CodecRegistry DEFAULT_REGISTRY = fromProviders(asList(new ValueCodecProvider(), new BsonValueCodecProvider(),
             new DocumentCodecProvider(), new IterableCodecProvider(), new MapCodecProvider()));
@@ -45,6 +45,7 @@ public class MapCodec implements Codec<Map<String, Object>> {
     private final BsonTypeCodecMap bsonTypeCodecMap;
     private final CodecRegistry registry;
     private final Transformer valueTransformer;
+    private final UuidRepresentation uuidRepresentation;
 
     /**
      * Construct a new instance with a default {@code CodecRegistry}
@@ -82,14 +83,26 @@ public class MapCodec implements Codec<Map<String, Object>> {
      * @param valueTransformer the value transformer to use as a final step when decoding the value of any field in the map
      */
     public MapCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap, final Transformer valueTransformer) {
+        this(registry, new BsonTypeCodecMap(notNull("bsonTypeClassMap", bsonTypeClassMap), registry), valueTransformer,
+                UuidRepresentation.JAVA_LEGACY);
+    }
+
+    private MapCodec(final CodecRegistry registry, final BsonTypeCodecMap bsonTypeCodecMap, final Transformer valueTransformer,
+               final UuidRepresentation uuidRepresentation) {
         this.registry = notNull("registry", registry);
-        this.bsonTypeCodecMap = new BsonTypeCodecMap(notNull("bsonTypeClassMap", bsonTypeClassMap), registry);
+        this.bsonTypeCodecMap = bsonTypeCodecMap;
         this.valueTransformer = valueTransformer != null ? valueTransformer : new Transformer() {
             @Override
             public Object transform(final Object value) {
                 return value;
             }
         };
+        this.uuidRepresentation = uuidRepresentation;
+    }
+
+    @Override
+    public Codec<Map<String, Object>> withUuidRepresentation(final UuidRepresentation uuidRepresentation) {
+        return new MapCodec(registry, bsonTypeCodecMap, valueTransformer, uuidRepresentation);
     }
 
     @Override
@@ -129,8 +142,26 @@ public class MapCodec implements Codec<Map<String, Object>> {
             return null;
         } else if (bsonType == BsonType.ARRAY) {
             return decoderContext.decodeWithChildContext(registry.get(List.class), reader);
-        } else if (bsonType == BsonType.BINARY && BsonBinarySubType.isUuid(reader.peekBinarySubType()) && reader.peekBinarySize() == 16) {
-            return decoderContext.decodeWithChildContext(registry.get(UUID.class), reader);
+        } else if (bsonType == BsonType.BINARY && reader.peekBinarySize() == 16) {
+            Codec<?> codec = bsonTypeCodecMap.get(bsonType);
+            switch (reader.peekBinarySubType()) {
+                case 3:
+                    if (uuidRepresentation == UuidRepresentation.JAVA_LEGACY
+                            || uuidRepresentation == UuidRepresentation.C_SHARP_LEGACY
+                            || uuidRepresentation == UuidRepresentation.PYTHON_LEGACY) {
+                        codec = registry.get(UUID.class);
+                    }
+                    break;
+                case 4:
+                    if (uuidRepresentation == UuidRepresentation.JAVA_LEGACY || uuidRepresentation == UuidRepresentation.STANDARD) {
+                        codec = registry.get(UUID.class);
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+            return decoderContext.decodeWithChildContext(codec, reader);
         }
         return valueTransformer.transform(bsonTypeCodecMap.get(bsonType).decode(reader, decoderContext));
     }
