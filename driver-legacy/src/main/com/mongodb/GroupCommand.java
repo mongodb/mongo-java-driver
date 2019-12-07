@@ -21,6 +21,7 @@ import com.mongodb.lang.Nullable;
 import com.mongodb.operation.GroupOperation;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonJavaScript;
+import org.bson.codecs.Codec;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -149,7 +150,7 @@ public class GroupCommand {
         return new BasicDBObject("group", args);
     }
 
-    GroupOperation<DBObject> toOperation(final MongoNamespace namespace, final DBObjectCodec codec, final boolean retryReads) {
+    GroupOperation<DBObject> toOperation(final MongoNamespace namespace, final Codec<DBObject> codec, final boolean retryReads) {
         if (initial == null) {
             throw new IllegalArgumentException("Group command requires an initial document for the aggregate result");
         }

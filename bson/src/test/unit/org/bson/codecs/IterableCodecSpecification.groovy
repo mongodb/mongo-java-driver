@@ -16,13 +16,21 @@
 
 package org.bson.codecs
 
+
 import org.bson.BsonDocument
 import org.bson.BsonDocumentReader
 import org.bson.BsonDocumentWriter
 import org.bson.types.Binary
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import static org.bson.BsonDocument.parse
+import static org.bson.UuidRepresentation.C_SHARP_LEGACY
+import static org.bson.UuidRepresentation.JAVA_LEGACY
+import static org.bson.UuidRepresentation.PYTHON_LEGACY
+import static org.bson.UuidRepresentation.STANDARD
+import static org.bson.UuidRepresentation.UNSPECIFIED
+import static org.bson.codecs.configuration.CodecRegistries.fromCodecs
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
 class IterableCodecSpecification extends Specification {
@@ -122,4 +130,55 @@ class IterableCodecSpecification extends Specification {
         '{"array": [{ "$binary" : "CAcGBQQDAgEQDw4NDAsKCQ==", "$type" : "3" }]}' | [UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10')]
     }
 
+    @SuppressWarnings(['LineLength'])
+    @Unroll
+    def 'should decode binary subtype 3 for UUID'() {
+        given:
+        def reader = new BsonDocumentReader(parse(document))
+        def codec = new IterableCodec(fromCodecs(new UuidCodec(representation), new BinaryCodec()), new BsonTypeClassMap())
+                .withUuidRepresentation(representation)
+
+        when:
+        reader.readStartDocument()
+        reader.readName('array')
+        def iterable = codec.decode(reader, DecoderContext.builder().build())
+        reader.readEndDocument()
+
+        then:
+        value == iterable
+
+        where:
+        representation | value                                                     | document
+        JAVA_LEGACY    | [UUID.fromString('08070605-0403-0201-100f-0e0d0c0b0a09')] | '{"array": [{ "$binary" : "AQIDBAUGBwgJCgsMDQ4PEA==", "$type" : "3" }]}'
+        C_SHARP_LEGACY | [UUID.fromString('04030201-0605-0807-090a-0b0c0d0e0f10')] | '{"array": [{ "$binary" : "AQIDBAUGBwgJCgsMDQ4PEA==", "$type" : "3" }]}'
+        PYTHON_LEGACY  | [UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10')] | '{"array": [{ "$binary" : "AQIDBAUGBwgJCgsMDQ4PEA==", "$type" : "3" }]}'
+        STANDARD       | [new Binary((byte) 3, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[])] | '{"array": [{ "$binary" : "AQIDBAUGBwgJCgsMDQ4PEA==", "$type" : "3" }]}'
+        UNSPECIFIED    | [new Binary((byte) 3, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[])] | '{"array": [{ "$binary" : "AQIDBAUGBwgJCgsMDQ4PEA==", "$type" : "3" }]}'
+    }
+
+    @SuppressWarnings(['LineLength'])
+    @Unroll
+    def 'should decode binary subtype 4 for UUID'() {
+        given:
+        def reader = new BsonDocumentReader(parse(document))
+        def codec = new IterableCodec(fromCodecs(new UuidCodec(representation), new BinaryCodec()), new BsonTypeClassMap())
+                .withUuidRepresentation(representation)
+
+        when:
+        reader.readStartDocument()
+        reader.readName('array')
+        def iterable = codec.decode(reader, DecoderContext.builder().build())
+        reader.readEndDocument()
+
+        then:
+        value == iterable
+
+        where:
+        representation | value                                                     | document
+        STANDARD       | [UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10')] | '{"array": [{ "$binary" : "AQIDBAUGBwgJCgsMDQ4PEA==", "$type" : "4" }]}'
+        JAVA_LEGACY    | [UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10')] | '{"array": [{ "$binary" : "AQIDBAUGBwgJCgsMDQ4PEA==", "$type" : "4" }]}'
+        C_SHARP_LEGACY | [new Binary((byte) 4, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[])] | '{"array": [{ "$binary" : "AQIDBAUGBwgJCgsMDQ4PEA==", "$type" : "4" }]}'
+        PYTHON_LEGACY  | [new Binary((byte) 4, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[])] | '{"array": [{ "$binary" : "AQIDBAUGBwgJCgsMDQ4PEA==", "$type" : "4" }]}'
+        UNSPECIFIED    | [new Binary((byte) 4, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[])] | '{"array": [{ "$binary" : "AQIDBAUGBwgJCgsMDQ4PEA==", "$type" : "4" }]}'
+    }
 }
