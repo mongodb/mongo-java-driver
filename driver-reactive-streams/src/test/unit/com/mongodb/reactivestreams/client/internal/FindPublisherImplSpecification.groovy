@@ -66,6 +66,7 @@ class FindPublisherImplSpecification extends Specification {
                 .min(new BsonDocument('x', new BsonInt32(1)))
                 .max(new BsonDocument('x', new BsonInt32(5)))
                 .hint(new BsonDocument('y', new BsonInt32(1)))
+                .hintString('a_1')
                 .returnKey(true)
                 .showRecordId(true)
 
@@ -85,6 +86,7 @@ class FindPublisherImplSpecification extends Specification {
         1 * wrapped.min(new BsonDocument('x', new BsonInt32(1))) >> wrapped
         1 * wrapped.max(new BsonDocument('x', new BsonInt32(5))) >> wrapped
         1 * wrapped.hint(new BsonDocument('y', new BsonInt32(1))) >> wrapped
+        1 * wrapped.hintString('a_1') >> wrapped
         1 * wrapped.returnKey(true) >> wrapped
         1 * wrapped.showRecordId(true) >> wrapped
 

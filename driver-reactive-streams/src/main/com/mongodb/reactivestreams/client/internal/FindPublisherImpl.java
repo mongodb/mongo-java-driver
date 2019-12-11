@@ -134,6 +134,12 @@ final class FindPublisherImpl<TResult> implements FindPublisher<TResult> {
     }
 
     @Override
+    public FindPublisher<TResult> hintString(final String hint) {
+        wrapped.hintString(hint);
+        return this;
+    }
+
+    @Override
     public FindPublisher<TResult> max(final Bson max) {
         wrapped.max(max);
         return this;
