@@ -23,7 +23,6 @@ import com.mongodb.reactivestreams.client.FindPublisher
 import org.mongodb.scala.model.Collation
 import org.reactivestreams.Publisher
 import org.scalamock.scalatest.proxy.MockFactory
-import org.scalatest.{ FlatSpec, Matchers }
 
 import scala.concurrent.duration.Duration
 
@@ -45,6 +44,8 @@ class FindObservableSpec extends BaseSpec with MockFactory {
     val observable = FindObservable(wrapper)
 
     val filter = Document("a" -> 1)
+    val hint = Document("a" -> 1)
+    val hintString = "a_1"
     val duration = Duration(1, TimeUnit.SECONDS)
     val maxDuration = Duration(10, TimeUnit.SECONDS)
     val modifiers = Document("mod" -> 1)
@@ -60,6 +61,8 @@ class FindObservableSpec extends BaseSpec with MockFactory {
     wrapper.expects(Symbol("cursorType"))(CursorType.NonTailable).once()
     wrapper.expects(Symbol("filter"))(filter).once()
     wrapper.expects(Symbol("limit"))(1).once()
+    wrapper.expects(Symbol("hint"))(hint).once()
+    wrapper.expects(Symbol("hintString"))(hintString).once()
     wrapper.expects(Symbol("maxAwaitTime"))(maxDuration.toMillis, TimeUnit.MILLISECONDS).once()
     wrapper.expects(Symbol("maxTime"))(duration.toMillis, TimeUnit.MILLISECONDS).once()
     wrapper.expects(Symbol("noCursorTimeout"))(true).once()
@@ -73,6 +76,8 @@ class FindObservableSpec extends BaseSpec with MockFactory {
     observable.collation(collation)
     observable.cursorType(CursorType.NonTailable)
     observable.filter(filter)
+    observable.hint(hint)
+    observable.hintString(hintString)
     observable.limit(1)
     observable.maxAwaitTime(maxDuration)
     observable.maxTime(duration)
