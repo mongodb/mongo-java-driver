@@ -46,6 +46,7 @@ import org.bson.BsonInt32
 import org.bson.BsonInt64
 import org.bson.BsonString
 import org.bson.BsonTimestamp
+import org.bson.BsonValue
 import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
@@ -394,22 +395,18 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         collectionHelper.createIndex(index)
 
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
-                .hint(hint)
-                .asExplainableOperationAsync(QUERY_PLANNER)
+                .hint((BsonValue) hint)
+                .asExplainableOperation()
 
         when:
-        def explainPlan = execute(operation, true)
+        def explainPlan = execute(operation, async)
 
         then:
-        if (serverVersionAtLeast(3, 0)) {
-            assertEquals(index, QueryOperationHelper.getKeyPattern(explainPlan))
-        } else {
-            assertEquals(new BsonString('BtreeCursor a_1'), explainPlan.cursor)
-        }
+        assertEquals(index, QueryOperationHelper.getKeyPattern(explainPlan))
 
         where:
-        hint << [new BsonDocument('a', new BsonInt32(1)),
-                 new BsonString('a_1')]
+        [async, hint] << [[true, false], [new BsonDocument('a', new BsonInt32(1)),
+                                          new BsonString('a_1')]].combinations()
     }
 
     @IgnoreIf({ isSharded() })
