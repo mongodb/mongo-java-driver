@@ -22,6 +22,8 @@ export JAVA_HOME="/opt/java/jdk11"
 
 echo "Running tests with ${JDK}"
 ./gradlew -version
-./gradlew -PjdkHome=/opt/java/${JDK} --stacktrace --info \
--Dorg.mongodb.test.uri=${MONGODB_URI} \
--Dtest.single=RetryableWritesProseTest driver-sync:test driver-core:test
+for PACKAGE in driver-sync driver-core ; do
+    ./gradlew -PjdkHome=/opt/java/${JDK} --stacktrace --info \
+              -Dorg.mongodb.test.uri=${MONGODB_URI} \
+              ${PACKAGE}:test --tests RetryableWritesProseTest
+done
