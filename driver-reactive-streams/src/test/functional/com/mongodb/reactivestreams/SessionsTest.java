@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 
-package com.mongodb.client;
+package com.mongodb.reactivestreams;
 
 import com.mongodb.MongoClientSettings;
+import com.mongodb.client.AbstractSessionsTest;
+import com.mongodb.client.MongoClient;
+import com.mongodb.reactivestreams.client.MongoClients;
+import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 
@@ -28,6 +32,6 @@ public class SessionsTest extends AbstractSessionsTest {
 
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return MongoClients.create(settings);
+        return new SyncMongoClient(MongoClients.create(settings));
     }
 }
