@@ -142,7 +142,8 @@ CodecRegistry pojoCodecRegistry = fromRegistries(MongoClient.getDefaultCodecRegi
                 fromProviders(PojoCodecProvider.builder().automatic(true).build()));
 ```
 
-Note: The registries are checked in order until one returns a Codec for the requested class.
+Note: The registries are checked in order until one returns a codec for the requested class. 
+The `DefaultCodecRegistry` should be first in the list, and the `PojoCodecProvider` should always be the last `CodecProvider` since it can provide a codec for almost any class.
 
 ### Using the CodecRegistry
 
