@@ -174,6 +174,15 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
     FindPublisher<TResult> hint(Bson hint);
 
     /**
+     * Sets the hint for which index to use. A null value means no hint is set.
+     *
+     * @param hint the name of the index which should be used for the operation
+     * @return this
+     * @since 1.13
+     */
+    FindPublisher<TResult> hintString(String hint);
+
+    /**
      * Sets the exclusive upper bound for a specific index. A null value means no max is set.
      *
      * @param max the max
