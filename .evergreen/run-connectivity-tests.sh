@@ -22,7 +22,7 @@ export JAVA_HOME="/opt/java/jdk11"
 ./gradlew -version
 
 for MONGODB_URI in $@; do
-    ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --info -Dtest.single=ConnectivityTest --rerun-tasks driver-sync:test
-    ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --info -Dtest.single=ConnectivityTest --rerun-tasks driver-core:test
-    ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --info -Dtest.single=ConnectivityTest --rerun-tasks driver-legacy:test
+    ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --info --rerun-tasks driver-sync:test --tests ConnectivityTest
+    ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --info --rerun-tasks driver-core:test --tests ConnectivityTest
+    ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --info --rerun-tasks driver-legacy:test --tests ConnectivityTest
 done
