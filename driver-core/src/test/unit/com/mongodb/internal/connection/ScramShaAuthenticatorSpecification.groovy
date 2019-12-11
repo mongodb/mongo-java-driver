@@ -360,13 +360,65 @@ class ScramShaAuthenticatorSpecification extends Specification {
         async << [true, false]
     }
 
-    def createConnection(List<String> serverResponses) {
+    def 'should complete authentication when done is set to true prematurely SHA-256'() {
+        given:
+        def serverResponses = createMessages('''
+            S: r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096
+            S: v=6rriTRBi23WpRR/wtup+mMhUZUn/dB5nLTJRsjl95G4=
+        ''').last()
+        def authenticator = new ScramShaAuthenticator(SHA256_CREDENTIAL, { 'rOprNGfwEbeRWgbNEkqO' }, { 'pencil' })
+
+        when:
+        // server sends done=true on first response, client is not complete after processing response
+        authenticate(createConnection(serverResponses, 0), authenticator, async)
+
+        then:
+        def e = thrown(MongoSecurityException)
+        e.getMessage().contains('server completed challenges before client completed responses')
+
+        when:
+        // server sends done=true on second response, client is complete after processing response
+        authenticate(createConnection(serverResponses, 1), authenticator, async)
+
+        then:
+        noExceptionThrown()
+
+        where:
+        async << [true, false]
+    }
+
+    def 'should throw exception when done is set to true prematurely and server response is invalid SHA-256'() {
+        given:
+        def serverResponses = createMessages('''
+            S: r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096
+            S: v=invalidResponse
+        ''').last()
+        def authenticator = new ScramShaAuthenticator(SHA256_CREDENTIAL, { 'rOprNGfwEbeRWgbNEkqO' }, { 'pencil' })
+
+        when:
+        // server sends done=true on second response, client throws exception on invalid server response
+        authenticate(createConnection(serverResponses, 1), authenticator, async)
+
+        then:
+        def e = thrown(MongoSecurityException)
+        e.getCause() instanceof SaslException
+        e.getCause().getMessage() == 'Server signature was invalid.'
+
+        where:
+        async << [true, false]
+    }
+
+    def createConnection(List<String> serverResponses, int responseWhereDoneIsTrue = -1) {
         TestInternalConnection connection = new TestInternalConnection(serverId)
-        serverResponses.each {
+        serverResponses.eachWithIndex { response, index ->
+            def isDone = (index == responseWhereDoneIsTrue).booleanValue()
             connection.enqueueReply(
-                    buildSuccessfulReply("{conversationId: 1, payload: BinData(0, '${encode64(it)}'), done: false, ok: 1}")
-            ) }
-        connection.enqueueReply(buildSuccessfulReply('{conversationId: 1, done: true, ok: 1}'))
+                    buildSuccessfulReply("{conversationId: 1, payload: BinData(0, '${encode64(response)}'), done: ${isDone}, ok: 1}")
+            )
+        }
+        if (responseWhereDoneIsTrue < 0) {
+            connection.enqueueReply(buildSuccessfulReply('{conversationId: 1, done: true, ok: 1}'))
+        }
         connection
     }
 

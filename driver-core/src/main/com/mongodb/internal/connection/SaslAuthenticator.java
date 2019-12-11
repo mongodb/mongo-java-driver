@@ -66,6 +66,14 @@ abstract class SaslAuthenticator extends Authenticator {
 
                         res = sendSaslContinue(conversationId, response, connection);
                     }
+                    if (!saslClient.isComplete()) {
+                        saslClient.evaluateChallenge((res.getBinary("payload")).getData());
+                        if (!saslClient.isComplete()) {
+                            throw new MongoSecurityException(getMongoCredential(),
+                                    "SASL protocol error: server completed challenges before client completed responses "
+                                            + getMongoCredential());
+                        }
+                    }
                 } catch (Exception e) {
                     throw wrapException(e);
                 } finally {
@@ -93,7 +101,7 @@ abstract class SaslAuthenticator extends Authenticator {
                                 if (t != null) {
                                     callback.onResult(null, wrapException(t));
                                 } else if (result.getBoolean("done").getValue()) {
-                                    callback.onResult(null, null);
+                                    verifySaslClientComplete(saslClient, result, callback);
                                 } else {
                                     new Continuator(saslClient, result, connection, callback).start();
                                 }
@@ -118,6 +126,26 @@ abstract class SaslAuthenticator extends Authenticator {
         if (saslClient == null) {
             throw new MongoSecurityException(getMongoCredential(),
                     String.format("This JDK does not support the %s SASL mechanism", getMechanismName()));
+        }
+    }
+
+    private void verifySaslClientComplete(final SaslClient saslClient, final BsonDocument result,
+                                          final SingleResultCallback<Void> callback) {
+        if (saslClient.isComplete()) {
+            callback.onResult(null, null);
+        } else {
+            try {
+                saslClient.evaluateChallenge(result.getBinary("payload").getData());
+                if (saslClient.isComplete()) {
+                    callback.onResult(null, null);
+                } else {
+                    callback.onResult(null, new MongoSecurityException(getMongoCredential(),
+                            "SASL protocol error: server completed challenges before client completed responses "
+                                    + getMongoCredential()));
+                }
+            } catch (SaslException e) {
+                callback.onResult(null, wrapException(e));
+            }
         }
     }
 
@@ -202,7 +230,7 @@ abstract class SaslAuthenticator extends Authenticator {
                 callback.onResult(null, wrapException(t));
                 disposeOfSaslClient(saslClient);
             } else if (result.getBoolean("done").getValue()) {
-                callback.onResult(null, null);
+                verifySaslClientComplete(saslClient, result, callback);
                 disposeOfSaslClient(saslClient);
             } else {
                 continueConversation(result);
