@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.async.client;
+package com.mongodb.client;
 
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -32,10 +32,10 @@ import java.util.List;
 
 import static com.mongodb.JsonTestServerVersionChecker.skipTest;
 
-// See https://github.com/mongodb/specifications/tree/master/source/transactions/tests
+// See https://github.com/mongodb/specifications/tree/master/source/sessions/tests
 @RunWith(Parameterized.class)
-public class MainTransactionsTest extends AbstractUnifiedTest {
-    public MainTransactionsTest(final String filename, final String description, final BsonArray data, final BsonDocument definition,
+public abstract class AbstractSessionsTest extends AbstractUnifiedTest {
+    public AbstractSessionsTest(final String filename, final String description, final BsonArray data, final BsonDocument definition,
                                 final boolean skipTest) {
         super(filename, description, data, definition, skipTest);
     }
@@ -43,8 +43,9 @@ public class MainTransactionsTest extends AbstractUnifiedTest {
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<Object[]>();
-        for (File file : JsonPoweredTestHelper.getTestFiles("/transactions")) {
+        for (File file : JsonPoweredTestHelper.getTestFiles("/sessions")) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
+
             for (BsonValue test : testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
                         testDocument.getArray("data"), test.asDocument(), skipTest(testDocument, test.asDocument())});
@@ -52,4 +53,6 @@ public class MainTransactionsTest extends AbstractUnifiedTest {
         }
         return data;
     }
+
+
 }

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,20 +14,23 @@
  * limitations under the License.
  */
 
-package com.mongodb.client;
+package com.mongodb.reactivestreams.client;
 
 import com.mongodb.MongoClientSettings;
+import com.mongodb.client.AbstractMainTransactionsTest;
+import com.mongodb.client.MongoClient;
+import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 
-public class SessionsTest extends AbstractSessionsTest {
-    public SessionsTest(final String filename, final String description, final BsonArray data, final BsonDocument definition,
-                        final boolean skipTest) {
+public class MainTransactionsTest extends AbstractMainTransactionsTest {
+    public MainTransactionsTest(final String filename, final String description, final BsonArray data, final BsonDocument definition,
+                                final boolean skipTest) {
         super(filename, description, data, definition, skipTest);
     }
 
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return MongoClients.create(settings);
+        return new SyncMongoClient(MongoClients.create(settings));
     }
 }
