@@ -914,6 +914,11 @@ public class DBCollection {
         DBObject hint = options.getHint();
         if (hint != null) {
             operation.hint(wrap(hint));
+        } else {
+            String hintString = options.getHintString();
+            if (hintString != null) {
+                operation.hint(new BsonString(hintString));
+            }
         }
         ReadPreference optionsReadPreference = options.getReadPreference();
         ReadConcern optionsReadConcern = options.getReadConcern();
