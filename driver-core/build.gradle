@@ -27,6 +27,17 @@ ext {
     pomName = 'MongoDB Java Driver Core'
 }
 
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main'
+        }
+        resources {
+            srcDir 'src/resources'
+        }
+    }
+}
+
 clirr {
     excludeFilter = new File("$configDir/clirr-exclude.yml")
     baseline 'org.mongodb:mongodb-driver-core:3.8.0'
