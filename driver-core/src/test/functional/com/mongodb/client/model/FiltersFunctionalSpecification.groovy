@@ -187,6 +187,13 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(and([lt('x', 4), lt('x', 3)])) == [a, b]
     }
 
+    def 'explicit $and when using $not'() {
+        expect:
+        find(and([lt('x', 3), not(lt('x', 1))])) == [a, b]
+        find(and([lt('x', 5), gt('x', 0), not(gt('x', 2))])) == [a, b]
+        find(and([not(lt('x', 2)), lt('x', 4), not(gt('x', 2))])) == [b]
+    }
+
     def 'should render $all'() {
         expect:
         find(all('a', [1, 2])) == [a]

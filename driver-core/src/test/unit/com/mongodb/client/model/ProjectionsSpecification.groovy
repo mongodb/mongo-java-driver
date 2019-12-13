@@ -61,7 +61,8 @@ class ProjectionsSpecification extends Specification {
 
     def 'elemMatch'() {
         expect:
-        toBson(elemMatch('x', and(eq('y', 1), eq('z', 2)))) == parse('{x : {$elemMatch : {y : 1, z : 2}}}')
+        toBson(elemMatch('x', and(eq('y', 1), eq('z', 2)))) ==
+                parse('{x : {$elemMatch : {$and: [{y : 1}, {z : 2}]}}}')
     }
 
     def 'slice'() {

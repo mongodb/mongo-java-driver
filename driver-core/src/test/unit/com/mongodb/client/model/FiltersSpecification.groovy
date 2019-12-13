@@ -153,10 +153,10 @@ class FiltersSpecification extends Specification {
         toBson(and()) == parse('{$and : []}')
     }
 
-    def 'and should render and without using $and'() {
+    def 'and should render using $and'() {
         expect:
-        toBson(and([eq('x', 1), eq('y', 2)])) == parse('{x : 1, y : 2}')
-        toBson(and(eq('x', 1), eq('y', 2))) == parse('{x : 1, y : 2}')
+        toBson(and([eq('x', 1), eq('y', 2)])) == parse('{$and: [{x : 1}, {y : 2}]}')
+        toBson(and(eq('x', 1), eq('y', 2))) == parse('{$and: [{x : 1}, {y : 2}]}')
     }
 
     def 'and should render $and with clashing keys'() {
@@ -164,17 +164,51 @@ class FiltersSpecification extends Specification {
         toBson(and([eq('a', 1), eq('a', 2)])) == parse('{$and: [{a: 1}, {a: 2}]}');
     }
 
-    def 'and should flatten multiple operators for the same key'() {
+    def 'and should not flatten nested'() {
         expect:
-        toBson(and([gt('a', 1), lt('a', 9)])) == parse('{a : {$gt : 1, $lt : 9}}');
+        toBson(and([and([eq('a', 1), eq('b', 2)]), eq('c', 3)])) ==
+                parse('{$and: [{$and: [{a : 1}, {b : 2}]}, {c : 3}]}')
+        toBson(and([and([eq('a', 1), eq('a', 2)]), eq('c', 3)])) ==
+                parse('{$and:[{$and: [{a : 1}, {a : 2}]}, {c : 3}]} }')
+        toBson(and([lt('a', 1), lt('b', 2)])) ==
+                parse('{$and: [{a : {$lt : 1}}, {b : {$lt : 2}}]}')
+        toBson(and([lt('a', 1), lt('a', 2)])) ==
+                parse('{$and : [{a : {$lt : 1}}, {a : {$lt : 2}}]}')
     }
 
-    def 'and should flatten nested'() {
+    def '$and should be explicit when using $not'() {
         expect:
-        toBson(and([and([eq('a', 1), eq('b', 2)]), eq('c', 3)])) == parse('{a : 1, b : 2, c : 3}')
-        toBson(and([and([eq('a', 1), eq('a', 2)]), eq('c', 3)])) == parse('{$and:[{a : 1}, {a : 2}, {c : 3}] }')
-        toBson(and([lt('a', 1), lt('b', 2)])) == parse('{a : {$lt : 1}, b : {$lt : 2} }')
-        toBson(and([lt('a', 1), lt('a', 2)])) == parse('{$and : [{a : {$lt : 1}}, {a : {$lt : 2}}]}')
+        toBson(and(lt('item', 10), not(lt('item', 5)))) ==
+                parse('''{
+                  $and:
+                      [
+                          { item: { $lt: 10 } },
+                          { item: { $not: { $lt: 5 } } }
+                      ]
+                  }
+                ''')
+
+        toBson(and(lt('item', 100), gt('item', 10), not(gt('item', 50)))) ==
+                parse('''{
+                  $and:
+                      [
+                          { item: { $lt: 100 } },
+                          { item: { $gt: 10 } },
+                          { item: { $not: { $gt: 50 } } }
+                      ]
+                  }
+                ''')
+
+        toBson(and(not(lt('item', 10)), lt('item', 100), not(gt('item', 50)))) ==
+                parse('''{
+                  $and:
+                      [
+                          { item: { $not: { $lt: 10 } } },
+                          { item: { $lt: 100 } },
+                          { item: { $not: { $gt: 50 } } }
+                      ]
+                  }
+                ''')
     }
 
     def 'should render $all'() {
@@ -189,7 +223,7 @@ class FiltersSpecification extends Specification {
                 parse('{results : {$elemMatch : {$gte: 80, $lt: 85}}}')
 
         toBson(elemMatch('results', and(eq('product', 'xyz'), gt('score', 8)))) ==
-                parse('{ results : {$elemMatch : {product : "xyz", score : {$gt : 8}}}}')
+                parse('{ results : {$elemMatch : {$and: [{product : "xyz"}, {score : {$gt : 8}}]}}}')
     }
 
     def 'should render $in'() {
