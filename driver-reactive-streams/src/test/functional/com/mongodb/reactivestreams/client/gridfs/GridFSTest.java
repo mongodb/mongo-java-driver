@@ -39,14 +39,16 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.reactivestreams.Publisher;
 import util.Hex;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -54,8 +56,8 @@ import java.util.List;
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.reactivestreams.client.Fixture.ObservableSubscriber;
 import static com.mongodb.reactivestreams.client.Fixture.initializeCollection;
-import static com.mongodb.reactivestreams.client.gridfs.helpers.AsyncStreamHelper.toAsyncInputStream;
-import static com.mongodb.reactivestreams.client.gridfs.helpers.AsyncStreamHelper.toAsyncOutputStream;
+import static com.mongodb.reactivestreams.client.internal.Publishers.publishAndFlatten;
+import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -242,12 +244,16 @@ public class GridFSTest extends DatabaseTestCase {
     private void doDownload(final BsonDocument arguments, final BsonDocument assertion) {
         Throwable error = null;
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        WritableByteChannel channel = Channels.newChannel(outputStream);
 
         try {
-            ObservableSubscriber<Long> subscriber = new ObservableSubscriber<>();
-            gridFSBucket.downloadToStream(arguments.getObjectId("id").getValue(), toAsyncOutputStream(outputStream)).subscribe(subscriber);
-            subscriber.get(30, SECONDS);
+            ObservableSubscriber<ByteBuffer> subscriber = new ObservableSubscriber<ByteBuffer>();
+            gridFSBucket.downloadToPublisher(arguments.getObjectId("id").getValue()).subscribe(subscriber);
+            for (ByteBuffer buffer : subscriber.get(30, SECONDS)) {
+                channel.write(buffer);
+            }
             outputStream.close();
+            channel.close();
         } catch (Throwable e) {
             error = e;
         }
@@ -264,6 +270,7 @@ public class GridFSTest extends DatabaseTestCase {
     private void doDownloadByName(final BsonDocument arguments, final BsonDocument assertion) {
         Throwable error = null;
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        WritableByteChannel channel = Channels.newChannel(outputStream);
 
         try {
             GridFSDownloadOptions options = new GridFSDownloadOptions();
@@ -272,11 +279,13 @@ public class GridFSTest extends DatabaseTestCase {
                 options.revision(revision);
             }
 
-            ObservableSubscriber<Long> subscriber = new ObservableSubscriber<>();
-            gridFSBucket.downloadToStream(arguments.getString("filename").getValue(), toAsyncOutputStream(outputStream),
-                    options).subscribe(subscriber);
-            subscriber.get(30, SECONDS);
+            ObservableSubscriber<ByteBuffer> subscriber = new ObservableSubscriber<ByteBuffer>();
+            gridFSBucket.downloadToPublisher(arguments.getString("filename").getValue(), options).subscribe(subscriber);
+            for (ByteBuffer buffer : subscriber.get(30, SECONDS)) {
+                channel.write(buffer);
+            }
             outputStream.close();
+            channel.close();
         } catch (Throwable e) {
             error = e;
         }
@@ -295,7 +304,6 @@ public class GridFSTest extends DatabaseTestCase {
         BsonDocument arguments = parseHexDocument(rawArguments, "source");
         try {
             String filename = arguments.getString("filename").getValue();
-            InputStream inputStream = new ByteArrayInputStream(arguments.getBinary("source").getData());
             GridFSUploadOptions options = new GridFSUploadOptions();
             BsonDocument rawOptions = arguments.getDocument("options", new BsonDocument());
             if (rawOptions.containsKey("chunkSizeBytes")) {
@@ -305,8 +313,11 @@ public class GridFSTest extends DatabaseTestCase {
                 options.metadata(Document.parse(rawOptions.getDocument("metadata").toJson()));
             }
             GridFSBucket gridFSUploadBucket = gridFSBucket;
-            ObservableSubscriber<ObjectId> subscriber = new ObservableSubscriber<>();
-            gridFSUploadBucket.uploadFromStream(filename, toAsyncInputStream(inputStream), options).subscribe(subscriber);
+            ObservableSubscriber<ObjectId> subscriber = new ObservableSubscriber<ObjectId>();
+
+            gridFSUploadBucket.uploadFromPublisher(filename,
+                    toPublisher(ByteBuffer.wrap(arguments.getBinary("source").getData())), options)
+                    .subscribe(subscriber);
             objectId = subscriber.get(30, SECONDS).get(0);
         } catch (Throwable e) {
             error = e;
@@ -414,5 +425,9 @@ public class GridFSTest extends DatabaseTestCase {
             document.put(hexDocument, new BsonBinary(bytes));
         }
         return document;
+    }
+
+    private static Publisher<ByteBuffer> toPublisher(final ByteBuffer... byteBuffers) {
+        return publishAndFlatten(callback -> callback.onResult(asList(byteBuffers), null));
     }
 }

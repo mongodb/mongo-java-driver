@@ -23,19 +23,17 @@ that can be found with the driver source on github.
 Include the following import statements:
 
 ```scala
-import java.io.File
 import java.nio.ByteBuffer
-import java.nio.channels.AsynchronousFileChannel
 import java.nio.charset.StandardCharsets
-import java.nio.file.{Files, Path, Paths, StandardOpenOption}
-
-import org.bson.types.ObjectId
 
 import org.mongodb.scala._
+import org.mongodb.scala.bson.BsonObjectId
 import org.mongodb.scala.gridfs._
 import org.mongodb.scala.model.Filters
-import org.mongodb.scala.gridfs.helpers.AsynchronousChannelHelper.channelToOutputStream
-import org.mongodb.scala.gridfs.helpers.AsyncStreamHelper.toAsyncInputStream
+
+import tour.Helpers._
+
+import scala.util.Success
 ```
 
 {{% note class="important" %}}
@@ -81,48 +79,24 @@ GridFS will automatically create indexes on the `files` and `chunks` collections
 
 ## Upload to GridFS
 
-To upload data into GridFS, you can upload from an `AsyncInputStream` or write data to a `GridFSUploadStream`.
-
-### UploadFromStream
-
-The [`GridFSBucket.uploadFromStream`]({{< scapiref "org/mongodb/scala/gridfs/GridFSBucket.html#uploadFromStream(id:org.mongodb.scala.bson.BsonValue,filename:String,source:org.mongodb.scala.gridfs.AsyncInputStream,options:org.mongodb.scala.gridfs.GridFSUploadOptions):org.mongodb.scala.Observable[org.mongodb.scala.Completed]" >}}) method reads the contents of an [`AsyncInputStream`]({{< scapiref "org/mongodb/scala/gridfs/AsyncInputStream.html">}}) and saves it to the `GridFSBucket`.  
+The [`GridFSBucket.uploadFromObservable`]({{< scapiref "org/mongodb/scala/gridfs/GridFSBucket.html#uploadFromObservable(id:org.mongodb.scala.bson.BsonValue,filename:String,source:org.mongo.scala.Observable,options:org.mongodb.scala.gridfs.GridFSUploadOptions):org.mongodb.scala.Observable[Void]" >}}) methods read the contents of a `Observable[ByteBuffer]` and save it to the `GridFSBucket`.  
 
 You can use the [`GridFSUploadOptions`]({{< scapiref "org/mongodb/scala/gridfs/index.html#GridFSUploadOptions=com.mongodb.client.gridfs.model.GridFSUploadOptions" >}}) to configure the chunk size or include additional metadata.
 
-The following example uploads an `AsyncInputStream` into `GridFSBucket`:
+The following example uploads the contents of a `Observable[ByteBuffer]` into `GridFSBucket`:
 
 ```scala
 // Get the input stream
-val streamToUploadFrom = toAsyncInputStream(new FileInputStream(new File("/tmp/mongodb-tutorial.pdf")))
+val observableToUploadFrom: Observable[ByteBuffer] = Observable(
+  Seq(ByteBuffer.wrap("MongoDB Tutorial..".getBytes(StandardCharsets.UTF_8)))
+)
 
 // Create some custom options
 val options: GridFSUploadOptions = new GridFSUploadOptions()
     .chunkSizeBytes(358400)
     .metadata(Document("type" -> "presentation"))
 
-val fileId: ObjectId = gridFSBucket.uploadFromStream("mongodb-tutorial", streamToUploadFrom, options).headResult()
-streamToUploadFrom.close().headResult()
-```
-
-### OpenUploadStream
-
-You can write data to a [`GridFSUploadStream`]({{< scapiref "org/mongodb/scala/gridfs/GridFSUploadStream.html">}}). The [`GridFSBucket.openUploadStream`]({{< scapiref "org/mongodb/scala/gridfs/GridFSBucket.html#openUploadStream(id:org.mongodb.scala.bson.BsonValue,filename:String):org.mongodb.scala.gridfs.GridFSUploadStream">}}) method returns a [`GridFSUploadStream`]({{< scapiref "org/mongodb/scala/gridfs/GridFSUploadStream.html">}}).
-
-The `GridFSUploadStream` buffers data until it reaches the `chunkSizeBytes` and then inserts the chunk into the `chunks` collection.  When the `GridFSUploadStream` is closed, the final chunk is written and the file metadata is inserted into the `files` collection.
-
-The following example uploads into a `GridFSBucket` via the returned `GridFSUploadStream`:
-
-```scala
-val options: GridFSUploadOptions = new GridFSUploadOptions()
-    .chunkSizeBytes(358400)
-    .metadata(Document("type" -> "presentation"))
-
-val data = Files.readAllBytes(new File("/tmp/MongoDB-manual-master.pdf").toPath)
-
-val uploadStream: GridFSUploadStream = gridFSBucket.openUploadStream("sampleData")
-uploadStream.write(data).headResult()
-uploadStream.close().headResult()
-println("The fileId of the uploaded file is: " + uploadStream.getObjectId().toHexString())
+val fileId: BsonObjectId = gridFSBucket.uploadFromObservable("mongodb-tutorial", observableToUploadFrom, options).headResult()
 ```
 
 ## Find Files Stored in GridFS
@@ -146,87 +120,26 @@ gridFSBucket
 
 ## Download from GridFS
 
-There are various ways to download data from GridFS.
+The [`downloadToObservable`]({{< scapiref "org/mongodb/scala/gridfs/GridFSBucket.html#downloadToObservable(id:org.mongodb.scala.bson.BsonValue):org.mongodb.scala.gridfs.GridFSDownloadObservable" >}}) methods return a `Observable[ByteBuffer]` that reads the contents from MongoDB.
 
-### DownloadToStream
-
-The [`downloadToStream`]({{< scapiref "org/mongodb/scala/gridfs/GridFSBucket.html#downloadToStream(id:org.mongodb.scala.bson.BsonValue,destination:org.mongodb.scala.gridfs.AsyncOutputStream):org.mongodb.scala.Observable[Long]" >}}) method reads the contents from MongoDB and writes the data directly to the provided `AsyncOutputStream`.
-
-To download a file by its file `_id`, pass the `_id` to the method. The following example downloads a file by its file `_id` into the provided
-`AsyncOutputStream`:
+To download a file by its file `_id`, pass the `_id` to the method. The following example downloads a file by its file `_id`:
 
 ```scala
-val outputPath: Path = Paths.get("/tmp/mongodb-tutorial.pdf")
-var streamToDownloadTo: AsynchronousFileChannel = AsynchronousFileChannel.open(
-  outputPath,
-  StandardOpenOption.CREATE_NEW,
-  StandardOpenOption.WRITE,
-  StandardOpenOption.DELETE_ON_CLOSE
-)
-gridFSBucket.downloadToStream(fileId, channelToOutputStream(streamToDownloadTo)).printHeadResult()
-streamToDownloadTo.close()
+val downloadById = gridFSBucket.downloadToObservable(fileId).results()
 ```
 
-If you don't know the `_id` of the file but know the filename, then you can pass the filename to the [`downloadToStream`]({{< scapiref "org/mongodb/scala/gridfs/GridFSBucket.html#downloadToStream(filename:String,destination:org.mongodb.scala.gridfs.AsyncOutputStream,options:org.mongodb.scala.gridfs.GridFSDownloadOptions):org.mongodb.scala.Observable[Long]" >}}) method. By default, it will download the latest version of the file. Use the [`GridFSDownloadOptions`]({{< scapiref "org/mongodb/scala/gridfs/model/GridFSDownloadOptions.html" >}}) to configure which version to download.
+If you don't know the `_id` of the file but know the filename, then you can pass the filename to the [`downloadToObservable`]({{< scapiref "org/mongodb/scala/gridfs/GridFSBucket.html#downloadToObservable(filename:String,options:org.mongodb.scala.gridfs.GridFSDownloadOptions):org.mongodb.scala.gridfs.GridFSDownloadObservable" >}}) method. By default, it will download the latest version of the file. Use the [`GridFSDownloadOptions`]({{< scapiref "org/mongodb/scala/gridfs/model/GridFSDownloadOptions.html" >}}) to configure which version to download.
 
-The following example downloads the original version of the file named "mongodb-tutorial" into the `OutputStream`:
+The following example downloads the original version of the file named "mongodb-tutorial":
 
 ```scala
-val outputPath: Path = Paths.get("/tmp/mongodb-tutorial.pdf")
-
-streamToDownloadTo = AsynchronousFileChannel.open(
-  outputPath,
-  StandardOpenOption.CREATE_NEW,
-  StandardOpenOption.WRITE,
-  StandardOpenOption.DELETE_ON_CLOSE
-)
 val downloadOptions: GridFSDownloadOptions = new GridFSDownloadOptions().revision(0)
-gridFSBucket
-  .downloadToStream("mongodb-tutorial", channelToOutputStream(streamToDownloadTo), downloadOptions)
-  .printHeadResult()
-streamToDownloadTo.close()
-```
-
-### OpenDownloadStream
-
-The [`openDownloadStream`]({{< scapiref "org/mongodb/scala/gridfs/GridFSBucket.html#openDownloadStream(id:org.bson.types.ObjectId):org.mongodb.scala.gridfs.GridFSDownloadStream">}}) method returns a [`GridFSDownloadStream`]({{< scapiref "org/mongodb/scala/gridfs/GridFSDownloadStream.html">}}) which extends [`AsyncInputStream`]({{< scapiref "org/mongodb/scala/gridfs/AsyncInputStream.html">}}).
-
-The following example reads from the `GridFSBucket` via the returned `AsyncInputStream`:
-
-```scala
-val dstByteBuffer: ByteBuffer = ByteBuffer.allocate(1024 * 1024)
-val downloadStream: GridFSDownloadStream = gridFSBucket.openDownloadStream(fileId)
-downloadStream
-  .read(dstByteBuffer)
-  .map(result => {
-    dstByteBuffer.flip
-    val bytes: Array[Byte] = new Array[Byte](result)
-    dstByteBuffer.get(bytes)
-    println(new String(bytes, StandardCharsets.UTF_8))
-  })
-  .headResult()
-```
-
-You can also pass the filename to the [`openDownloadStream`]({{< scapiref "org/mongodb/scala/gridfs/GridFSBucket.html#openDownloadStream(filename:String,options:org.mongodb.scala.gridfs.GridFSDownloadOptions):org.mongodb.scala.gridfs.GridFSDownloadStream" >}}) method. By default it will download the latest version of the file. Use the [`GridFSDownloadOptions`]({{< scapiref "org/mongodb/scala/gridfs/model/GridFSDownloadOptions.html" >}}) to configure which version to download.
-
-The following example downloads the latest version of the file named "sampleData" into the `OutputStream`:
-
-```scala
-val downloadStreamByName: GridFSDownloadStream = gridFSBucket.openDownloadStream("sampleData")
-downloadStreamByName
-  .read(dstByteBuffer)
-  .map(result => {
-    dstByteBuffer.flip
-    val bytes: Array[Byte] = new Array[Byte](result)
-    dstByteBuffer.get(bytes)
-    println(new String(bytes, StandardCharsets.UTF_8))
-  })
-  .headResult()
+val downloadByName = gridFSBucket.downloadToObservable("mongodb-tutorial", downloadOptions).results()
 ```
 
 ## Rename files
 
-If you should need to rename a file, then use the [`rename`]({{< scapiref "org/mongodb/scala/gridfs/GridFSBucket.html#rename(id:org.mongodb.scala.bson.BsonValue,newFilename:String):org.mongodb.scala.Observable[org.mongodb.scala.Completed]">}}) method.  
+If you should need to rename a file, then use the [`rename`]({{< scapiref "org/mongodb/scala/gridfs/GridFSBucket.html#rename(id:org.mongodb.scala.bson.BsonValue,newFilename:String):org.mongodb.scala.Observable[Void]">}}) method.  
 
 The following example renames a file to "mongodbTutorial":
 
@@ -244,7 +157,7 @@ To rename multiple revisions of the same filename, first retrieve the full list 
 
 ## Delete files
 
-To delete a file from the `GridFSBucket` use the [`delete`]({{< scapiref "org/mongodb/scala/gridfs/GridFSBucket.html#delete(id:org.mongodb.scala.bson.BsonValue):org.mongodb.scala.Observable[org.mongodb.scala.Completed]">}}) method.
+To delete a file from the `GridFSBucket` use the [`delete`]({{< scapiref "org/mongodb/scala/gridfs/GridFSBucket.html#delete(id:org.mongodb.scala.bson.BsonValue):org.mongodb.scala.Observable[Void]">}}) method.
 
 The following example deletes a file from the `GridFSBucket`:
 

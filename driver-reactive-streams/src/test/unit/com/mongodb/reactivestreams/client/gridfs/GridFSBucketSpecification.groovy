@@ -26,6 +26,9 @@ class GridFSBucketSpecification extends Specification {
         def wrapped = (WrappedGridFSBucket.methods*.name).sort()
         def local = (GridFSBucket.methods*.name).sort()
 
+        wrapped.removeAll { it == 'openDownloadStream' || it == 'openUploadStream' }
+        wrapped = wrapped*.replaceAll('Stream', 'Publisher')
+
         expect:
         wrapped == local
     }

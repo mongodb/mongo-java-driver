@@ -380,11 +380,12 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
     val scalaPackageName = "org.mongodb.scala.gridfs"
     val scalaExclusions = Set(
       "package",
-      "ScalaAsyncInputStreamToJava",
-      "ScalaAsyncOutputStreamToJava",
-      "JavaAsyncOutputStreamToScala",
-      "JavaAsyncInputStreamToScala"
+      "AsyncOutputStream",
+      "AsyncInputStream",
+      "GridFSUploadStream",
+      "GridFSDownloadStream"
     )
+
     val packageObjects =
       currentMirror.staticPackage(scalaPackageName).info.decls.filter(!_.isImplicit).map(_.name.toString).toSet
     val local = new Reflections(scalaPackageName, new SubTypesScanner(false))
@@ -394,6 +395,17 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       .filter(f => f.getPackage.getName == scalaPackageName)
       .map(_.getSimpleName)
       .toSet ++ packageObjects -- scalaExclusions
+
+    println(
+      new Reflections(scalaPackageName, new SubTypesScanner(false))
+        .getSubTypesOf(classOf[Object])
+        .asScala
+        .filter(classFilter)
+        .filter(f => f.getPackage.getName == scalaPackageName)
+        .toSet
+    )
+    println("====")
+    println(local)
 
     diff(local, wrapped) shouldBe empty
   }

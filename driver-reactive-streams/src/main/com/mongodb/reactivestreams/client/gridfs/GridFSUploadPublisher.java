@@ -21,13 +21,15 @@ import org.bson.types.ObjectId;
 import org.reactivestreams.Publisher;
 
 /**
- * A GridFS OutputStream for uploading data into GridFS
+ * A GridFS {@code Publisher} for uploading data into GridFS
  *
- * <p>Provides the {@code id} for the file to be uploaded as well as the {@code write} methods of a {@link AsyncOutputStream}</p>
+ * <p>Provides the {@code id} for the file to be uploaded. Cancelling the subscription to this publisher will cause any uploaded data
+ * to be cleaned up and removed.</p>
  *
- * @since 1.3
+ * @param <T> the result type of the publisher
+ * @since 1.13
  */
-public interface GridFSUploadStream extends AsyncOutputStream {
+public interface GridFSUploadPublisher<T> extends Publisher<T> {
 
     /**
      * Gets the {@link ObjectId} for the file to be uploaded
@@ -44,12 +46,5 @@ public interface GridFSUploadStream extends AsyncOutputStream {
      * @return the id for this file
      */
     BsonValue getId();
-
-    /**
-     * Aborts the upload and deletes any data.
-     *
-     * @return a publisher with a single element, signifying the abort and cleanup has finished
-     */
-    Publisher<Void> abort();
 
 }

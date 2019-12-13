@@ -16,11 +16,12 @@
 
 package org.mongodb.scala.gridfs
 
+import java.nio.ByteBuffer
+
 import com.mongodb.reactivestreams.client.gridfs.{ GridFSBucket => JGridFSBucket }
-import org.bson.types.ObjectId
 import org.mongodb.scala.bson.BsonObjectId
 import org.mongodb.scala.bson.collection.immutable.Document
-import org.mongodb.scala.{ BaseSpec, ClientSession, ReadConcern, ReadPreference, WriteConcern }
+import org.mongodb.scala.{ BaseSpec, ClientSession, Observable, ReadConcern, ReadPreference, WriteConcern }
 import org.scalamock.scalatest.proxy.MockFactory
 
 class GridFSBucketSpec extends BaseSpec with MockFactory {
@@ -33,7 +34,7 @@ class GridFSBucketSpec extends BaseSpec with MockFactory {
     val local = classOf[GridFSBucket].getMethods.map(_.getName).toSet
 
     wrapped.foreach((name: String) => {
-      val cleanedName = name.stripPrefix("get")
+      val cleanedName = name.stripPrefix("get").replace("Publisher", "Observable")
       assert(local.contains(name) | local.contains(cleanedName.head.toLower + cleanedName.tail), s"Missing: $name")
     })
   }
@@ -70,8 +71,8 @@ class GridFSBucketSpec extends BaseSpec with MockFactory {
   }
 
   it should "call the underlying delete method" in {
-    val objectId = new ObjectId()
-    val bsonValue = new BsonObjectId(objectId)
+    val bsonValue = BsonObjectId()
+    val objectId = bsonValue.getValue
 
     wrapper.expects(Symbol("delete"))(objectId).once()
     wrapper.expects(Symbol("delete"))(bsonValue).once()
@@ -93,8 +94,8 @@ class GridFSBucketSpec extends BaseSpec with MockFactory {
   }
 
   it should "call the underlying rename method" in {
-    val objectId = new ObjectId()
-    val bsonValue = new BsonObjectId(objectId)
+    val bsonValue = BsonObjectId()
+    val objectId = bsonValue.getValue
     val newName = "newName"
 
     wrapper.expects(Symbol("rename"))(objectId, newName).once()
@@ -122,104 +123,61 @@ class GridFSBucketSpec extends BaseSpec with MockFactory {
     gridFSBucket.find(clientSession, filter)
   }
 
-  it should "create the expected GridFSDownloadStream" in {
-    val filename = "fileName"
+  it should "return the expected GridFSDownloadObservable" in {
+    val fileName = "myFile"
+    val bsonValue = BsonObjectId()
+    val objectId = bsonValue.getValue
     val options = new GridFSDownloadOptions()
-    val objectId = new ObjectId()
-    val bsonValue = new BsonObjectId(objectId)
+    val clientSession = mock[ClientSession]
 
-    wrapper.expects(Symbol("openDownloadStream"))(filename)
-    wrapper.expects(Symbol("openDownloadStream"))(filename, options)
-    wrapper.expects(Symbol("openDownloadStream"))(objectId)
-    wrapper.expects(Symbol("openDownloadStream"))(bsonValue)
-    wrapper.expects(Symbol("openDownloadStream"))(clientSession, filename)
-    wrapper.expects(Symbol("openDownloadStream"))(clientSession, filename, options)
-    wrapper.expects(Symbol("openDownloadStream"))(clientSession, objectId)
-    wrapper.expects(Symbol("openDownloadStream"))(clientSession, bsonValue)
+    wrapper.expects(Symbol("downloadToPublisher"))(objectId).once()
+    wrapper.expects(Symbol("downloadToPublisher"))(bsonValue).once()
+    wrapper.expects(Symbol("downloadToPublisher"))(fileName).once()
+    wrapper.expects(Symbol("downloadToPublisher"))(fileName, options).once()
 
-    gridFSBucket.openDownloadStream(filename)
-    gridFSBucket.openDownloadStream(filename, options)
-    gridFSBucket.openDownloadStream(objectId)
-    gridFSBucket.openDownloadStream(bsonValue)
-    gridFSBucket.openDownloadStream(clientSession, filename)
-    gridFSBucket.openDownloadStream(clientSession, filename, options)
-    gridFSBucket.openDownloadStream(clientSession, objectId)
-    gridFSBucket.openDownloadStream(clientSession, bsonValue)
+    gridFSBucket.downloadToObservable(objectId)
+    gridFSBucket.downloadToObservable(bsonValue)
+    gridFSBucket.downloadToObservable(fileName)
+    gridFSBucket.downloadToObservable(fileName, options)
+
+    wrapper.expects(Symbol("downloadToPublisher"))(clientSession, objectId).once()
+    wrapper.expects(Symbol("downloadToPublisher"))(clientSession, bsonValue).once()
+    wrapper.expects(Symbol("downloadToPublisher"))(clientSession, fileName).once()
+    wrapper.expects(Symbol("downloadToPublisher"))(clientSession, fileName, options).once()
+
+    gridFSBucket.downloadToObservable(clientSession, objectId)
+    gridFSBucket.downloadToObservable(clientSession, bsonValue)
+    gridFSBucket.downloadToObservable(clientSession, fileName)
+    gridFSBucket.downloadToObservable(clientSession, fileName, options)
+
   }
 
-  it should "downloadToStream as expected" in {
-    val filename = "fileName"
-    val options = new GridFSDownloadOptions()
-    val objectId = new ObjectId()
-    val bsonValue = new BsonObjectId(objectId)
-    val outputStream = mock[AsyncOutputStream]
-
-    wrapper.expects(Symbol("downloadToStream"))(filename, *)
-    wrapper.expects(Symbol("downloadToStream"))(filename, *, options)
-    wrapper.expects(Symbol("downloadToStream"))(objectId, *)
-    wrapper.expects(Symbol("downloadToStream"))(bsonValue, *)
-    wrapper.expects(Symbol("downloadToStream"))(clientSession, filename, *)
-    wrapper.expects(Symbol("downloadToStream"))(clientSession, filename, *, options)
-    wrapper.expects(Symbol("downloadToStream"))(clientSession, objectId, *)
-    wrapper.expects(Symbol("downloadToStream"))(clientSession, bsonValue, *)
-
-    gridFSBucket.downloadToStream(filename, outputStream)
-    gridFSBucket.downloadToStream(filename, outputStream, options)
-    gridFSBucket.downloadToStream(objectId, outputStream)
-    gridFSBucket.downloadToStream(bsonValue, outputStream)
-    gridFSBucket.downloadToStream(clientSession, filename, outputStream)
-    gridFSBucket.downloadToStream(clientSession, filename, outputStream, options)
-    gridFSBucket.downloadToStream(clientSession, objectId, outputStream)
-    gridFSBucket.downloadToStream(clientSession, bsonValue, outputStream)
-  }
-
-  it should "create the expected GridFSUploadStream" in {
-    val filename = "fileName"
+  it should "return the expected GridFSUploadObservable" in {
+    val publisher = Observable(Seq(ByteBuffer.wrap("123".getBytes)))
+    val fileName = "myFile"
+    val bsonValue = BsonObjectId()
     val options = new GridFSUploadOptions()
-    val bsonValue = new BsonObjectId()
+    val clientSession = mock[ClientSession]
 
-    wrapper.expects(Symbol("openUploadStream"))(filename)
-    wrapper.expects(Symbol("openUploadStream"))(filename, options)
-    wrapper.expects(Symbol("openUploadStream"))(bsonValue, filename)
-    wrapper.expects(Symbol("openUploadStream"))(bsonValue, filename, options)
-    wrapper.expects(Symbol("openUploadStream"))(clientSession, filename)
-    wrapper.expects(Symbol("openUploadStream"))(clientSession, filename, options)
-    wrapper.expects(Symbol("openUploadStream"))(clientSession, bsonValue, filename)
-    wrapper.expects(Symbol("openUploadStream"))(clientSession, bsonValue, filename, options)
+    wrapper.expects(Symbol("uploadFromPublisher"))(fileName, publisher).once()
+    wrapper.expects(Symbol("uploadFromPublisher"))(fileName, publisher, options).once()
+    wrapper.expects(Symbol("uploadFromPublisher"))(bsonValue, fileName, publisher).once()
+    wrapper.expects(Symbol("uploadFromPublisher"))(bsonValue, fileName, publisher, options).once()
 
-    gridFSBucket.openUploadStream(filename)
-    gridFSBucket.openUploadStream(filename, options)
-    gridFSBucket.openUploadStream(bsonValue, filename)
-    gridFSBucket.openUploadStream(bsonValue, filename, options)
-    gridFSBucket.openUploadStream(clientSession, filename)
-    gridFSBucket.openUploadStream(clientSession, filename, options)
-    gridFSBucket.openUploadStream(clientSession, bsonValue, filename)
-    gridFSBucket.openUploadStream(clientSession, bsonValue, filename, options)
-  }
+    gridFSBucket.uploadFromObservable(fileName, publisher)
+    gridFSBucket.uploadFromObservable(fileName, publisher, options)
+    gridFSBucket.uploadFromObservable(bsonValue, fileName, publisher)
+    gridFSBucket.uploadFromObservable(bsonValue, fileName, publisher, options)
 
-  it should "uploadFromStream as expected" in {
-    val filename = "fileName"
-    val options = new GridFSUploadOptions()
-    val bsonValue = new BsonObjectId()
-    val inputStream = mock[AsyncInputStream]
+    wrapper.expects(Symbol("uploadFromPublisher"))(clientSession, fileName, publisher).once()
+    wrapper.expects(Symbol("uploadFromPublisher"))(clientSession, fileName, publisher, options).once()
+    wrapper.expects(Symbol("uploadFromPublisher"))(clientSession, bsonValue, fileName, publisher).once()
+    wrapper.expects(Symbol("uploadFromPublisher"))(clientSession, bsonValue, fileName, publisher, options).once()
 
-    wrapper.expects(Symbol("uploadFromStream"))(filename, *)
-    wrapper.expects(Symbol("uploadFromStream"))(filename, *, options)
-    wrapper.expects(Symbol("uploadFromStream"))(bsonValue, filename, *)
-    wrapper.expects(Symbol("uploadFromStream"))(bsonValue, filename, *, options)
-    wrapper.expects(Symbol("uploadFromStream"))(clientSession, filename, *)
-    wrapper.expects(Symbol("uploadFromStream"))(clientSession, filename, *, options)
-    wrapper.expects(Symbol("uploadFromStream"))(clientSession, bsonValue, filename, *)
-    wrapper.expects(Symbol("uploadFromStream"))(clientSession, bsonValue, filename, *, options)
-
-    gridFSBucket.uploadFromStream(filename, inputStream)
-    gridFSBucket.uploadFromStream(filename, inputStream, options)
-    gridFSBucket.uploadFromStream(bsonValue, filename, inputStream)
-    gridFSBucket.uploadFromStream(bsonValue, filename, inputStream, options)
-    gridFSBucket.uploadFromStream(clientSession, filename, inputStream)
-    gridFSBucket.uploadFromStream(clientSession, filename, inputStream, options)
-    gridFSBucket.uploadFromStream(clientSession, bsonValue, filename, inputStream)
-    gridFSBucket.uploadFromStream(clientSession, bsonValue, filename, inputStream, options)
+    gridFSBucket.uploadFromObservable(clientSession, fileName, publisher)
+    gridFSBucket.uploadFromObservable(clientSession, fileName, publisher, options)
+    gridFSBucket.uploadFromObservable(clientSession, bsonValue, fileName, publisher)
+    gridFSBucket.uploadFromObservable(clientSession, bsonValue, fileName, publisher, options)
   }
 
 }

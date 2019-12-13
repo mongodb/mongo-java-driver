@@ -17,6 +17,8 @@
 package org.mongodb.scala.gridfs
 
 import java.io.{ ByteArrayInputStream, ByteArrayOutputStream, File, InputStream }
+import java.nio.ByteBuffer
+import java.nio.channels.{ Channels, WritableByteChannel }
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
@@ -25,8 +27,8 @@ import scala.util.Try
 import org.bson.{ BsonArray, BsonBinary, BsonInt32 }
 import org.mongodb.scala._
 import org.mongodb.scala.bson.collection.mutable
-import org.mongodb.scala.bson.{ BsonBoolean, BsonDocument, BsonInt64, BsonObjectId, BsonString }
-import org.mongodb.scala.gridfs.helpers.AsyncStreamHelper
+import org.mongodb.scala.bson.{ BsonDocument, BsonInt64, BsonObjectId, BsonString }
+import org.reactivestreams.Publisher
 import org.scalatest.Inspectors.forEvery
 
 class GridFSSpec extends RequiresMongoDBISpec with FuturesSpec {
@@ -150,17 +152,19 @@ class GridFSSpec extends RequiresMongoDBISpec with FuturesSpec {
   }
 
   private def doDownload(arguments: BsonDocument, assertion: BsonDocument): Unit = {
-    val outputStream: ByteArrayOutputStream = new ByteArrayOutputStream
+    val outputStream = new ByteArrayOutputStream
+    val channel = Channels.newChannel(outputStream)
     val result = Try(
       gridFSBucket
         .map(
-          _.downloadToStream(arguments.getObjectId("id").getValue, AsyncStreamHelper.toAsyncOutputStream(outputStream))
-            .head()
+          _.downloadToObservable(arguments.getObjectId("id").getValue)
         )
         .get
         .futureValue
+        .foreach { byteBuffer: ByteBuffer =>
+          channel.write(byteBuffer)
+        }
     )
-    outputStream.close()
 
     assertion.containsKey("error") match {
       case true =>
@@ -171,25 +175,32 @@ class GridFSSpec extends RequiresMongoDBISpec with FuturesSpec {
           assertion.getDocument("result").getString("$hex").getValue
         )
     }
+
+    channel.close()
+    outputStream.close()
   }
 
   private def doDownloadByName(arguments: BsonDocument, assertion: BsonDocument): Unit = {
-    val outputStream: ByteArrayOutputStream = new ByteArrayOutputStream
+    val outputStream = new ByteArrayOutputStream
+    val channel = Channels.newChannel(outputStream)
     val options: GridFSDownloadOptions = new GridFSDownloadOptions()
     Option(arguments.get("options")).map(opts => options.revision(opts.asDocument().getInt32("revision").getValue))
 
     val result = Try(
       gridFSBucket
         .map(
-          _.downloadToStream(
+          _.downloadToObservable(
             arguments.getString("filename").getValue,
-            AsyncStreamHelper.toAsyncOutputStream(outputStream),
             options
-          ).head()
+          )
         )
         .get
         .futureValue
+        .foreach { byteBuffer: ByteBuffer =>
+          channel.write(byteBuffer)
+        }
     )
+    channel.close()
     outputStream.close()
 
     assertion.containsKey("error") match {
@@ -205,21 +216,19 @@ class GridFSSpec extends RequiresMongoDBISpec with FuturesSpec {
 
   //scalastyle:off method.length
   private def doUpload(rawArguments: BsonDocument, assertion: BsonDocument): Unit = {
-
     val arguments: BsonDocument = parseHexDocument(rawArguments, "source")
 
     val filename: String = arguments.getString("filename").getValue
-    val inputStream: InputStream = new ByteArrayInputStream(arguments.getBinary("source").getData)
+    val source: Observable[ByteBuffer] = Observable(Seq(ByteBuffer.wrap(arguments.getBinary("source").getData)))
     val rawOptions: Document = arguments.getDocument("options", new BsonDocument())
     val options: GridFSUploadOptions = new GridFSUploadOptions()
     rawOptions.get[BsonInt32]("chunkSizeBytes").map(chunkSize => options.chunkSizeBytes(chunkSize.getValue))
     rawOptions.get[BsonDocument]("metadata").map(doc => options.metadata(doc))
-    val disableMD5: Boolean = rawOptions.get[BsonBoolean]("disableMD5").getOrElse(BsonBoolean(false)).getValue
 
     val result = Try(
       gridFSBucket
         .map(
-          bucket => bucket.uploadFromStream(filename, AsyncStreamHelper.toAsyncInputStream(inputStream), options).head()
+          _.uploadFromObservable(filename, source, options).head()
         )
         .get
         .futureValue
@@ -257,7 +266,7 @@ class GridFSSpec extends RequiresMongoDBISpec with FuturesSpec {
               val actualDocuments: Seq[Document] = chunksCollection.map(_.find()).get.futureValue
 
               for ((expected, actual) <- documents zip actualDocuments) {
-                new BsonObjectId(objectId) should equal(actual.get[BsonObjectId]("files_id").get)
+                objectId should equal(actual.get[BsonObjectId]("files_id").get)
                 expected.get("n") should equal(actual.get("n"))
                 expected.get("data") should equal(actual.get("data"))
               }
