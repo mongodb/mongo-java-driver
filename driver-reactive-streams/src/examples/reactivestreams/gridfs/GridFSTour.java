@@ -24,29 +24,23 @@ import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoDatabase;
-import com.mongodb.reactivestreams.client.gridfs.AsyncInputStream;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBucket;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBuckets;
-import com.mongodb.reactivestreams.client.gridfs.GridFSDownloadStream;
-import com.mongodb.reactivestreams.client.gridfs.GridFSUploadStream;
 import org.bson.Document;
 import org.bson.types.ObjectId;
+import org.reactivestreams.Publisher;
 import reactivestreams.helpers.SubscriberHelpers.ConsumerSubscriber;
 import reactivestreams.helpers.SubscriberHelpers.ObservableSubscriber;
 import reactivestreams.helpers.SubscriberHelpers.OperationSubscriber;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
-import java.nio.channels.AsynchronousFileChannel;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 
 import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.reactivestreams.client.gridfs.helpers.AsyncStreamHelper.toAsyncInputStream;
-import static com.mongodb.reactivestreams.client.gridfs.helpers.AsynchronousChannelHelper.channelToOutputStream;
+import static reactivestreams.helpers.PublisherHelpers.toPublisher;
 
 /**
  * The GridFS code example see: https://mongodb.github.io/mongo-java-driver/3.1/driver/reference/gridfs
@@ -79,10 +73,10 @@ public final class GridFSTour {
         GridFSBucket gridFSBucket = GridFSBuckets.create(database);
 
         /*
-         * UploadFromStream Example
+         * UploadFromPublisher Example
          */
-        // Get the input stream
-        final AsyncInputStream streamToUploadFrom = toAsyncInputStream("MongoDB Tutorial..".getBytes(StandardCharsets.UTF_8));
+        // Get the input publisher
+        Publisher<ByteBuffer> publisherToUploadFrom = toPublisher(ByteBuffer.wrap("MongoDB Tutorial..".getBytes(StandardCharsets.UTF_8)));
 
         // Create some custom options
         GridFSUploadOptions options = new GridFSUploadOptions()
@@ -90,24 +84,8 @@ public final class GridFSTour {
                 .metadata(new Document("type", "presentation"));
 
         ObservableSubscriber<ObjectId> uploadSubscriber = new OperationSubscriber<>();
-        gridFSBucket.uploadFromStream("mongodb-tutorial", streamToUploadFrom, options).subscribe(uploadSubscriber);
+        gridFSBucket.uploadFromPublisher("mongodb-tutorial", publisherToUploadFrom, options).subscribe(uploadSubscriber);
         ObjectId fileId = uploadSubscriber.get().get(0);
-
-        /*
-         * OpenUploadStream Example
-         */
-
-        // Get some data to write
-        ByteBuffer data = ByteBuffer.wrap("Data to upload into GridFS".getBytes(StandardCharsets.UTF_8));
-
-        final GridFSUploadStream uploadStream = gridFSBucket.openUploadStream("sampleData");
-        ObservableSubscriber<Integer> writeSubscriber = new OperationSubscriber<>();
-        ObservableSubscriber<Void> closedStreamSubscriber = new OperationSubscriber<>();
-        uploadStream.write(data).subscribe(writeSubscriber);
-        writeSubscriber.await();
-        uploadStream.close().subscribe(closedStreamSubscriber);
-        closedStreamSubscriber.await();
-        System.out.println("The fileId of the uploaded file is: " + uploadStream.getObjectId().toHexString());
 
         /*
          * Find documents
@@ -126,59 +104,21 @@ public final class GridFSTour {
         filesSubscriber.await();
 
         /*
-         * DownloadToStream
+         * DownloadToPublisher
          */
-        Path outputPath = Paths.get("/tmp/mongodb-tutorial.txt");
-        AsynchronousFileChannel streamToDownloadTo = AsynchronousFileChannel.open(outputPath, StandardOpenOption.CREATE_NEW,
-                StandardOpenOption.WRITE, StandardOpenOption.DELETE_ON_CLOSE);
-        ConsumerSubscriber<Long> downloadSubscriber = new ConsumerSubscriber<>(result ->
-                System.out.println("downloaded file sized: " + result));
-        gridFSBucket.downloadToStream(fileId, channelToOutputStream(streamToDownloadTo)).subscribe(downloadSubscriber);
-        downloadSubscriber.await();
-        streamToDownloadTo.close();
+        ObservableSubscriber<ByteBuffer> downloadSubscriber = new OperationSubscriber<>();
+        gridFSBucket.downloadToPublisher(fileId).subscribe(downloadSubscriber);
+        Integer size = downloadSubscriber.get().stream().map(Buffer::limit).reduce(0, Integer::sum);
+        System.out.println("downloaded file sized: " + size);
 
         /*
          * DownloadToStreamByName
          */
-        streamToDownloadTo = AsynchronousFileChannel.open(outputPath, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE,
-                StandardOpenOption.DELETE_ON_CLOSE);
         GridFSDownloadOptions downloadOptions = new GridFSDownloadOptions().revision(0);
-        downloadSubscriber = new ConsumerSubscriber<>(result -> System.out.println("downloaded file sized: " + result));
-        gridFSBucket.downloadToStream("mongodb-tutorial", channelToOutputStream(streamToDownloadTo), downloadOptions)
-                .subscribe(downloadSubscriber);
-        downloadSubscriber.await();
-        streamToDownloadTo.close();
-
-        /*
-         * OpenDownloadStream
-         */
-        final ByteBuffer dstByteBuffer = ByteBuffer.allocate(1024 * 1024);
-        final GridFSDownloadStream downloadStream = gridFSBucket.openDownloadStream(fileId);
-        ObservableSubscriber<Integer> fileDownloadSubscriber = new ConsumerSubscriber<>(fileSize -> {
-            dstByteBuffer.flip();
-            byte[] bytes = new byte[fileSize];
-            dstByteBuffer.get(bytes);
-            System.out.println(" File contents: " + new String(bytes, StandardCharsets.UTF_8));
-            dstByteBuffer.clear();
-        });
-        downloadStream.read(dstByteBuffer).subscribe(fileDownloadSubscriber);
-        fileDownloadSubscriber.await();
-
-        /*
-         * OpenDownloadStreamByName
-         */
-        System.out.println("ByName");
-
-        final GridFSDownloadStream downloadStreamByName = gridFSBucket.openDownloadStream("sampleData");
-        fileDownloadSubscriber = new ConsumerSubscriber<>(fileSize -> {
-            dstByteBuffer.flip();
-            byte[] bytes = new byte[fileSize];
-            dstByteBuffer.get(bytes);
-            System.out.println(" File contents: " + new String(bytes, StandardCharsets.UTF_8));
-            dstByteBuffer.clear();
-        });
-        downloadStreamByName.read(dstByteBuffer).subscribe(fileDownloadSubscriber);
-        fileDownloadSubscriber.await();
+        downloadSubscriber = new OperationSubscriber<>();
+        gridFSBucket.downloadToPublisher("mongodb-tutorial", downloadOptions).subscribe(downloadSubscriber);
+        size = downloadSubscriber.get().stream().map(Buffer::limit).reduce(0, Integer::sum);
+        System.out.println("downloaded file sized: " + size);
 
         /*
          * Rename

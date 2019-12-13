@@ -16,19 +16,17 @@
 
 package org.mongodb.scala.gridfs
 
-import java.nio.ByteBuffer
-
-import com.mongodb.reactivestreams.client.gridfs.{ GridFSUploadStream => JGridFSUploadStream }
+import com.mongodb.reactivestreams.client.gridfs.GridFSDownloadPublisher
 import org.mongodb.scala.BaseSpec
 import org.scalamock.scalatest.proxy.MockFactory
 
-class GridFSUploadStreamSpec extends BaseSpec with MockFactory {
-  val wrapper = mock[JGridFSUploadStream]
-  val gridFSUploadStream = GridFSUploadStream(wrapper)
+class GridFSDownloadObservableSpec extends BaseSpec with MockFactory {
+  val wrapper = mock[GridFSDownloadPublisher]
+  val gridFSDownloadStream = GridFSDownloadObservable(wrapper)
 
-  "GridFSBucket" should "have the same methods as the wrapped GridFSUploadStream" in {
-    val wrapped = classOf[JGridFSUploadStream].getMethods.map(_.getName).toSet
-    val local = classOf[GridFSUploadStream].getMethods.map(_.getName).toSet
+  "GridFSDownloadStream" should "have the same methods as the wrapped GridFSDownloadStream" in {
+    val wrapped = classOf[GridFSDownloadPublisher].getMethods.map(_.getName).toSet
+    val local = classOf[GridFSDownloadObservable].getMethods.map(_.getName).toSet
 
     wrapped.foreach((name: String) => {
       val cleanedName = name.stripPrefix("get")
@@ -37,19 +35,13 @@ class GridFSUploadStreamSpec extends BaseSpec with MockFactory {
   }
 
   it should "call the underlying methods" in {
-    val src = ByteBuffer.allocate(2)
+    val bufferSizeBytes = 1024
 
-    wrapper.expects(Symbol("getObjectId"))().once()
-    wrapper.expects(Symbol("getId"))().once()
-    wrapper.expects(Symbol("abort"))().once()
-    wrapper.expects(Symbol("write"))(src).once()
-    wrapper.expects(Symbol("close"))().once()
+    wrapper.expects(Symbol("bufferSizeBytes"))(bufferSizeBytes).once()
+    wrapper.expects(Symbol("getGridFSFile"))().once()
 
-    gridFSUploadStream.objectId
-    gridFSUploadStream.id
-    gridFSUploadStream.abort()
-    gridFSUploadStream.write(src)
-    gridFSUploadStream.close()
+    gridFSDownloadStream.bufferSizeBytes(bufferSizeBytes)
+    gridFSDownloadStream.gridFSFile()
   }
 
 }

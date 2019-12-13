@@ -219,7 +219,11 @@ public final class Fixture {
         }
 
         public ObservableSubscriber<T> await(final long timeout, final TimeUnit unit) throws Throwable {
-            subscription.request(Integer.MAX_VALUE);
+            return await(Integer.MAX_VALUE, timeout, unit);
+        }
+
+        public ObservableSubscriber<T> await(final int request, final long timeout, final TimeUnit unit) throws Throwable {
+            subscription.request(request);
             if (!latch.await(timeout, unit)) {
                 throw new MongoTimeoutException("Publisher onComplete timed out");
             }

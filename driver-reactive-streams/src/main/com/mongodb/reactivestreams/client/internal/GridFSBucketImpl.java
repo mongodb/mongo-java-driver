@@ -22,21 +22,22 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import com.mongodb.internal.async.client.gridfs.AsyncGridFSBucket;
+import com.mongodb.internal.async.client.gridfs.AsyncGridFSDownloadStream;
+import com.mongodb.internal.async.client.gridfs.AsyncGridFSUploadStream;
 import com.mongodb.reactivestreams.client.ClientSession;
-import com.mongodb.reactivestreams.client.gridfs.AsyncInputStream;
-import com.mongodb.reactivestreams.client.gridfs.AsyncOutputStream;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBucket;
-import com.mongodb.reactivestreams.client.gridfs.GridFSDownloadStream;
+import com.mongodb.reactivestreams.client.gridfs.GridFSDownloadPublisher;
 import com.mongodb.reactivestreams.client.gridfs.GridFSFindPublisher;
-import com.mongodb.reactivestreams.client.gridfs.GridFSUploadStream;
+import com.mongodb.reactivestreams.client.gridfs.GridFSUploadPublisher;
+import org.bson.BsonObjectId;
 import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.reactivestreams.Publisher;
 
+import java.nio.ByteBuffer;
+
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.reactivestreams.client.internal.GridFSAsyncStreamHelper.toCallbackAsyncInputStream;
-import static com.mongodb.reactivestreams.client.internal.GridFSAsyncStreamHelper.toCallbackAsyncOutputStream;
 
 
 /**
@@ -104,187 +105,102 @@ public final class GridFSBucketImpl implements GridFSBucket {
     }
 
     @Override
-    public GridFSUploadStream openUploadStream(final String filename) {
-        return openUploadStream(filename, new GridFSUploadOptions());
+    public GridFSUploadPublisher<ObjectId> uploadFromPublisher(final String filename, final Publisher<ByteBuffer> source) {
+        return uploadFromPublisher(filename, source, new GridFSUploadOptions());
     }
 
     @Override
-    public GridFSUploadStream openUploadStream(final String filename, final GridFSUploadOptions options) {
-        return new GridFSUploadStreamImpl(wrapped.openUploadStream(filename, options));
+    public GridFSUploadPublisher<ObjectId> uploadFromPublisher(final String filename, final Publisher<ByteBuffer> source,
+                                                               final GridFSUploadOptions options) {
+        return executeUploadFromPublisher(wrapped.openUploadStream(new BsonObjectId(), filename, options), source).withObjectId();
     }
 
     @Override
-    public GridFSUploadStream openUploadStream(final BsonValue id, final String filename) {
-        return openUploadStream(id, filename, new GridFSUploadOptions());
+    public GridFSUploadPublisher<Void> uploadFromPublisher(final BsonValue id, final String filename,
+                                                              final Publisher<ByteBuffer> source) {
+        return uploadFromPublisher(id, filename, source, new GridFSUploadOptions());
     }
 
     @Override
-    public GridFSUploadStream openUploadStream(final BsonValue id, final String filename, final GridFSUploadOptions options) {
-        return new GridFSUploadStreamImpl(wrapped.openUploadStream(id, filename, options));
+    public GridFSUploadPublisher<Void> uploadFromPublisher(final BsonValue id, final String filename,
+                                                              final Publisher<ByteBuffer> source, final GridFSUploadOptions options) {
+        return executeUploadFromPublisher(wrapped.openUploadStream(id, filename, options), source);
     }
 
     @Override
-    public GridFSUploadStream openUploadStream(final ClientSession clientSession, final String filename) {
-        return openUploadStream(clientSession, filename, new GridFSUploadOptions());
+    public GridFSUploadPublisher<ObjectId> uploadFromPublisher(final ClientSession clientSession, final String filename,
+                                                               final Publisher<ByteBuffer> source) {
+        return uploadFromPublisher(clientSession, filename, source, new GridFSUploadOptions());
     }
 
     @Override
-    public GridFSUploadStream openUploadStream(final ClientSession clientSession, final String filename,
-                                               final GridFSUploadOptions options) {
-        return new GridFSUploadStreamImpl(wrapped.openUploadStream(clientSession.getWrapped(), filename, options));
+    public GridFSUploadPublisher<ObjectId> uploadFromPublisher(final ClientSession clientSession, final String filename,
+                                                               final Publisher<ByteBuffer> source, final GridFSUploadOptions options) {
+        return executeUploadFromPublisher(wrapped.openUploadStream(clientSession.getWrapped(), new BsonObjectId(), filename, options),
+                source).withObjectId();
     }
 
     @Override
-    public GridFSUploadStream openUploadStream(final ClientSession clientSession, final BsonValue id, final String filename) {
-        return openUploadStream(clientSession, id, filename, new GridFSUploadOptions());
+    public GridFSUploadPublisher<Void> uploadFromPublisher(final ClientSession clientSession, final BsonValue id, final String filename,
+                                                           final Publisher<ByteBuffer> source) {
+        return uploadFromPublisher(clientSession, id, filename, source, new GridFSUploadOptions());
     }
 
     @Override
-    public GridFSUploadStream openUploadStream(final ClientSession clientSession, final BsonValue id, final String filename,
-                                               final GridFSUploadOptions options) {
-        return new GridFSUploadStreamImpl(wrapped.openUploadStream(clientSession.getWrapped(), id, filename, options));
+    public GridFSUploadPublisher<Void> uploadFromPublisher(final ClientSession clientSession, final BsonValue id, final String filename,
+                                                              final Publisher<ByteBuffer> source, final GridFSUploadOptions options) {
+        return executeUploadFromPublisher(wrapped.openUploadStream(clientSession.getWrapped(), id, filename, options), source);
     }
 
     @Override
-    public Publisher<ObjectId> uploadFromStream(final String filename, final AsyncInputStream source) {
-        return uploadFromStream(filename, source, new GridFSUploadOptions());
+    public GridFSDownloadPublisher downloadToPublisher(final ObjectId id) {
+        return executeDownloadToPublisher(wrapped.openDownloadStream(id));
     }
 
     @Override
-    public Publisher<ObjectId> uploadFromStream(final String filename, final AsyncInputStream source, final GridFSUploadOptions options) {
-        return Publishers.publish(
-                callback -> wrapped.uploadFromStream(filename, toCallbackAsyncInputStream(source), options, callback));
+    public GridFSDownloadPublisher downloadToPublisher(final BsonValue id) {
+        return executeDownloadToPublisher(wrapped.openDownloadStream(id));
     }
 
     @Override
-    public Publisher<Void> uploadFromStream(final BsonValue id, final String filename, final AsyncInputStream source) {
-        return uploadFromStream(id, filename, source, new GridFSUploadOptions());
+    public GridFSDownloadPublisher downloadToPublisher(final String filename) {
+        return executeDownloadToPublisher(wrapped.openDownloadStream(filename));
     }
 
     @Override
-    public Publisher<Void> uploadFromStream(final BsonValue id, final String filename, final AsyncInputStream source,
-                                               final GridFSUploadOptions options) {
-        return Publishers.publish(
-                callback -> wrapped.uploadFromStream(id, filename, toCallbackAsyncInputStream(source), options, callback));
+    public GridFSDownloadPublisher downloadToPublisher(final String filename, final GridFSDownloadOptions options) {
+        return executeDownloadToPublisher(wrapped.openDownloadStream(filename, options));
     }
 
     @Override
-    public Publisher<ObjectId> uploadFromStream(final ClientSession clientSession, final String filename, final AsyncInputStream source) {
-        return uploadFromStream(clientSession, filename, source, new GridFSUploadOptions());
+    public GridFSDownloadPublisher downloadToPublisher(final ClientSession clientSession, final ObjectId id) {
+        return executeDownloadToPublisher(wrapped.openDownloadStream(clientSession.getWrapped(), id));
     }
 
     @Override
-    public Publisher<ObjectId> uploadFromStream(final ClientSession clientSession, final String filename, final AsyncInputStream source,
-                                                final GridFSUploadOptions options) {
-        return Publishers.publish(
-                callback -> wrapped.uploadFromStream(clientSession.getWrapped(), filename, toCallbackAsyncInputStream(source),
-                        options, callback));
+    public GridFSDownloadPublisher downloadToPublisher(final ClientSession clientSession, final BsonValue id) {
+        return executeDownloadToPublisher(wrapped.openDownloadStream(clientSession.getWrapped(), id));
     }
 
     @Override
-    public Publisher<Void> uploadFromStream(final ClientSession clientSession, final BsonValue id, final String filename,
-                                               final AsyncInputStream source) {
-        return uploadFromStream(clientSession, id, filename, source, new GridFSUploadOptions());
+    public GridFSDownloadPublisher downloadToPublisher(final ClientSession clientSession, final String filename) {
+        return executeDownloadToPublisher(wrapped.openDownloadStream(clientSession.getWrapped(), filename));
     }
 
     @Override
-    public Publisher<Void> uploadFromStream(final ClientSession clientSession, final BsonValue id, final String filename,
-                                               final AsyncInputStream source, final GridFSUploadOptions options) {
-        return Publishers.publish(
-                callback -> wrapped.uploadFromStream(clientSession.getWrapped(), id, filename,
-                        toCallbackAsyncInputStream(source), options, callback));
+    public GridFSDownloadPublisher downloadToPublisher(final ClientSession clientSession, final String filename,
+                                                       final GridFSDownloadOptions options) {
+        return executeDownloadToPublisher(wrapped.openDownloadStream(clientSession.getWrapped(), filename, options));
     }
 
-    @Override
-    public GridFSDownloadStream openDownloadStream(final ObjectId id) {
-        return new GridFSDownloadStreamImpl(wrapped.openDownloadStream(id));
+    private GridFSDownloadPublisher
+    executeDownloadToPublisher(final AsyncGridFSDownloadStream gridFSDownloadStream) {
+        return new GridFSDownloadPublisherImpl(gridFSDownloadStream);
     }
 
-    @Override
-    public GridFSDownloadStream openDownloadStream(final BsonValue id) {
-        return new GridFSDownloadStreamImpl(wrapped.openDownloadStream(id));
-    }
-
-    @Override
-    public GridFSDownloadStream openDownloadStream(final String filename) {
-        return openDownloadStream(filename, new GridFSDownloadOptions());
-    }
-
-    @Override
-    public GridFSDownloadStream openDownloadStream(final String filename, final GridFSDownloadOptions options) {
-        return new GridFSDownloadStreamImpl(wrapped.openDownloadStream(filename, options));
-    }
-
-    @Override
-    public GridFSDownloadStream openDownloadStream(final ClientSession clientSession, final ObjectId id) {
-        return new GridFSDownloadStreamImpl(wrapped.openDownloadStream(clientSession.getWrapped(), id));
-    }
-
-    @Override
-    public GridFSDownloadStream openDownloadStream(final ClientSession clientSession, final BsonValue id) {
-        return new GridFSDownloadStreamImpl(wrapped.openDownloadStream(clientSession.getWrapped(), id));
-    }
-
-    @Override
-    public GridFSDownloadStream openDownloadStream(final ClientSession clientSession, final String filename) {
-        return openDownloadStream(clientSession, filename, new GridFSDownloadOptions());
-    }
-
-    @Override
-    public GridFSDownloadStream openDownloadStream(final ClientSession clientSession, final String filename,
-                                                   final GridFSDownloadOptions options) {
-        return new GridFSDownloadStreamImpl(wrapped.openDownloadStream(clientSession.getWrapped(), filename, options));
-    }
-
-    @Override
-    public Publisher<Long> downloadToStream(final ObjectId id, final AsyncOutputStream destination) {
-        return Publishers.publish(
-                callback -> wrapped.downloadToStream(id, toCallbackAsyncOutputStream(destination), callback));
-    }
-
-
-    @Override
-    public Publisher<Long> downloadToStream(final BsonValue id, final AsyncOutputStream destination) {
-        return Publishers.publish(
-                callback -> wrapped.downloadToStream(id, toCallbackAsyncOutputStream(destination), callback));
-    }
-
-    @Override
-    public Publisher<Long> downloadToStream(final String filename, final AsyncOutputStream destination) {
-        return downloadToStream(filename, destination, new GridFSDownloadOptions());
-    }
-
-    @Override
-    public Publisher<Long> downloadToStream(final String filename, final AsyncOutputStream destination,
-                                            final GridFSDownloadOptions options) {
-        return Publishers.publish(
-                callback -> wrapped.downloadToStream(filename, toCallbackAsyncOutputStream(destination), options, callback));
-    }
-
-    @Override
-    public Publisher<Long> downloadToStream(final ClientSession clientSession, final ObjectId id, final AsyncOutputStream destination) {
-        return Publishers.publish(
-                callback -> wrapped.downloadToStream(clientSession.getWrapped(), id, toCallbackAsyncOutputStream(destination), callback));
-    }
-
-    @Override
-    public Publisher<Long> downloadToStream(final ClientSession clientSession, final BsonValue id, final AsyncOutputStream destination) {
-        return Publishers.publish(
-                callback -> wrapped.downloadToStream(clientSession.getWrapped(), id, toCallbackAsyncOutputStream(destination), callback));
-    }
-
-    @Override
-    public Publisher<Long> downloadToStream(final ClientSession clientSession, final String filename,
-                                            final AsyncOutputStream destination) {
-        return downloadToStream(clientSession, filename, destination, new GridFSDownloadOptions());
-    }
-
-    @Override
-    public Publisher<Long> downloadToStream(final ClientSession clientSession, final String filename, final AsyncOutputStream destination,
-                                            final GridFSDownloadOptions options) {
-        return Publishers.publish(
-                callback -> wrapped.downloadToStream(clientSession.getWrapped(), filename,
-                        toCallbackAsyncOutputStream(destination), options, callback));
+    private GridFSUploadPublisherImpl
+    executeUploadFromPublisher(final AsyncGridFSUploadStream gridFSUploadStream, final Publisher<ByteBuffer> source) {
+        return new GridFSUploadPublisherImpl(gridFSUploadStream, source);
     }
 
     @Override
