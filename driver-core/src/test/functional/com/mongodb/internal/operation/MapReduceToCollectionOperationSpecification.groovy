@@ -40,6 +40,8 @@ import spock.lang.IgnoreIf
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.serverVersionGreaterThan
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.client.model.Filters.gte
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
@@ -139,6 +141,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         operation.getCollation() == defaultCollation
     }
 
+    @IgnoreIf({ serverVersionGreaterThan('4.2') })
     def 'should return the correct statistics and save the results'() {
         when:
         MapReduceStatistics results = execute(mapReduceOperation, async)
@@ -147,6 +150,22 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         results.emitCount == 3
         results.inputCount == 3
         results.outputCount == 2
+        helper.count() == 2
+        helper.find() as Set == expectedResults
+
+        where:
+        async << [true, false]
+    }
+
+    @IgnoreIf({ serverVersionLessThan('4.3') })
+    def 'should return zero-valued statistics and save the results'() {
+        when:
+        MapReduceStatistics results = execute(mapReduceOperation, async)
+
+        then:
+        results.emitCount == 0
+        results.inputCount == 0
+        results.outputCount == 0
         helper.count() == 2
         helper.find() as Set == expectedResults
 
