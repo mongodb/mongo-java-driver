@@ -125,33 +125,27 @@ class FiltersSpec extends BaseSpec {
     toBson(model.Filters.and()) should equal(Document("""{$and : []}"""))
   }
 
-  it should "and should render and without using $and" in {
+  it should "and should render using $and" in {
     toBson(model.Filters.and(model.Filters.eq("x", 1), model.Filters.eq("y", 2))) should equal(
-      Document("""{x : 1, y : 2}""")
-    )
-  }
-
-  it should "and should render $and with clashing keys" in {
-    toBson(model.Filters.and(model.Filters.eq("a", 1), model.Filters.eq("a", 2))) should equal(
-      Document("""{$and: [{a: 1}, {a: 2}]}""")
+      Document("""{$and: [{x : 1}, {y : 2}]}""")
     )
   }
 
   it should "and should flatten multiple operators for the same key" in {
     toBson(model.Filters.and(model.Filters.gt("a", 1), model.Filters.lt("a", 9))) should equal(
-      Document("""{a : {$gt : 1, $lt : 9}}""")
+      Document("""{$and: [{a : {$gt : 1}}, {a: {$lt : 9}}]}""")
     )
   }
 
   it should "and should flatten nested" in {
     toBson(
       model.Filters.and(model.Filters.and(model.Filters.eq("a", 1), model.Filters.eq("b", 2)), model.Filters.eq("c", 3))
-    ) should equal(Document("""{a : 1, b : 2, c : 3}"""))
+    ) should equal(Document("""{$and: [{$and: [{a : 1}, {b : 2}]}, {c : 3}]}"""))
     toBson(
       model.Filters.and(model.Filters.and(model.Filters.eq("a", 1), model.Filters.eq("a", 2)), model.Filters.eq("c", 3))
-    ) should equal(Document("""{$and:[{a : 1}, {a : 2}, {c : 3}] }"""))
+    ) should equal(Document("""{$and: [{$and:[{a : 1}, {a : 2}]}, {c : 3}] }"""))
     toBson(model.Filters.and(model.Filters.lt("a", 1), model.Filters.lt("b", 2))) should equal(
-      Document("""{a : {$lt : 1}, b : {$lt : 2} }""")
+      Document("""{$and: [{a : {$lt : 1}}, {b : {$lt : 2} }]}""")
     )
     toBson(model.Filters.and(model.Filters.lt("a", 1), model.Filters.lt("a", 2))) should equal(
       Document("""{$and : [{a : {$lt : 1}}, {a : {$lt : 2}}]}""")
@@ -169,7 +163,7 @@ class FiltersSpec extends BaseSpec {
     toBson(
       model.Filters
         .elemMatch("results", model.Filters.and(model.Filters.eq("product", "xyz"), model.Filters.gt("score", 8)))
-    ) should equal(Document("""{ results : {$elemMatch : {product : "xyz", score : {$gt : 8}}}}"""))
+    ) should equal(Document("""{ results : {$elemMatch : {$and: [{product : "xyz"}, {score : {$gt : 8}}]}}}"""))
   }
 
   it should "render $in" in {
