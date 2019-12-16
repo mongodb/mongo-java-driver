@@ -59,7 +59,7 @@ class ProjectionsSpec extends BaseSpec {
 
   it should "elemMatch" in {
     toBson(model.Projections.elemMatch("x", Filters.and(model.Filters.eq("y", 1), model.Filters.eq("z", 2)))) should equal(
-      Document("""{x : {$elemMatch : {y : 1, z : 2}}}""")
+      Document("""{x : {$elemMatch : {$and: [{y : 1}, {z : 2}]}}}""")
     )
   }
 
