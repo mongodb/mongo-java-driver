@@ -30,7 +30,6 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonInt64
 import org.bson.BsonJavaScript
-import org.bson.BsonNull
 import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
@@ -233,12 +232,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         def expectedCommand = new BsonDocument('mapreduce', new BsonString(getCollectionName()))
                 .append('map', mapF)
                 .append('reduce', reduceF)
-                .append('out', BsonDocument.parse('{replace: "outCollection", sharded: false, nonAtomic: false}'))
-                .append('query', BsonNull.VALUE)
-                .append('sort', BsonNull.VALUE)
-                .append('finalize', BsonNull.VALUE)
-                .append('scope', BsonNull.VALUE)
-                .append('verbose', BsonBoolean.FALSE)
+                .append('out', BsonDocument.parse('{replace: "outCollection"}'))
 
         if (includeWriteConcern) {
             expectedCommand.append('writeConcern', WriteConcern.MAJORITY.asDocument())
@@ -260,7 +254,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
                 .bypassDocumentValidation(true)
                 .verbose(true)
 
-        expectedCommand.append('out', BsonDocument.parse('{merge: "outCollection", sharded: false, nonAtomic: false, db: "dbName"}'))
+        expectedCommand.append('out', BsonDocument.parse('{merge: "outCollection", db: "dbName"}'))
                 .append('query', filter)
                 .append('sort', sort)
                 .append('finalize', finalizeF)
