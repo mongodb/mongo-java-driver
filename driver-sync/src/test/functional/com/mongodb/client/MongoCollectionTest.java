@@ -155,8 +155,8 @@ public class MongoCollectionTest extends DatabaseTestCase {
         List<Name> result = collection.mapReduce(mapFunction, reduceFunction, Name.class).into(new ArrayList<Name>());
 
         // then
-        assertEquals(new Name("Pete", 2), result.get(0));
-        assertEquals(new Name("Sam", 1), result.get(1));
+        assertTrue(result.contains(new Name("Pete", 2)));
+        assertTrue(result.contains(new Name("Sam", 1)));
     }
 
     @Test
