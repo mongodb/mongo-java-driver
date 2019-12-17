@@ -27,11 +27,13 @@ import com.mongodb.client.model.ValidationOptions
 import com.mongodb.client.test.CollectionHelper
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
+import org.bson.BsonDouble
 import org.bson.BsonInt32
 import org.bson.BsonInt64
 import org.bson.BsonJavaScript
 import org.bson.BsonString
 import org.bson.Document
+import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
@@ -48,9 +50,9 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
                                                                 new BsonJavaScript('function(){ emit( this.name , 1 ); }'),
                                                                 new BsonJavaScript('function(key, values){ return values.length; }'),
                                                                 mapReduceOutputNamespace.getCollectionName())
-    def expectedResults = [['_id': 'Pete', 'value': 2.0] as Document,
-                           ['_id': 'Sam', 'value': 1.0] as Document]
-    def helper = new CollectionHelper<Document>(new DocumentCodec(), mapReduceOutputNamespace)
+    def expectedResults = [new BsonDocument('_id', new BsonString('Pete')).append('value', new BsonDouble(2.0)),
+                           new BsonDocument('_id', new BsonString('Sam')).append('value', new BsonDouble(1.0))] as Set
+    def helper = new CollectionHelper<BsonDocument>(new BsonDocumentCodec(), mapReduceOutputNamespace)
 
     def setup() {
         CollectionHelper<Document> helper = new CollectionHelper<Document>(new DocumentCodec(), mapReduceInputNamespace)
@@ -146,7 +148,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         results.inputCount == 3
         results.outputCount == 2
         helper.count() == 2
-        helper.find() == expectedResults
+        helper.find() as Set == expectedResults
 
         where:
         async << [true, false]
