@@ -18,4 +18,4 @@ The recommended way to get started using one of the drivers in your project is w
 
 The Reactive Streams implementation for asynchronous stream processing with non-blocking back pressure.
 
-{{< install artifactId="mongodb-driver-reactivestreams" version="4.0.0">}}
+{{< install artifactId="mongodb-driver-reactivestreams" version="4.0.0-beta1">}}
