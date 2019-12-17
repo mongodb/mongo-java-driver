@@ -237,17 +237,17 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         getCollectionHelper().insertDocuments(document)
         def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(
                 namespace,
-                new BsonJavaScript('function(){ emit( this._id, this.str ); }'),
-                new BsonJavaScript('function(key, values){ return key, values; }'),
+                new BsonJavaScript('function(){ emit( this.str, 1 ); }'),
+                new BsonJavaScript('function(key, values){ return Array.sum(values); }'),
                 bsonDocumentCodec)
                 .filter(BsonDocument.parse('{str: "FOO"}'))
                 .collation(caseInsensitiveCollation)
 
         when:
-        def results = executeAndCollectBatchCursorResults(operation, async) as Set
+        def results = executeAndCollectBatchCursorResults(operation, async)
 
         then:
-        results == [Document.parse('{_id: 1.0, value: "foo"}')]
+        results == [new BsonDocument('_id', new BsonString('foo')).append('value', new BsonDouble(1))]
 
         where:
         async << [true, false]
