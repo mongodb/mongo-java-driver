@@ -42,20 +42,21 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
+import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
+import static com.mongodb.internal.operation.WriteConcernHelper.throwOnWriteConcernError;
 import static com.mongodb.operation.CommandOperationHelper.executeCommand;
 import static com.mongodb.operation.CommandOperationHelper.executeCommandAsync;
+import static com.mongodb.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.operation.DocumentHelper.putIfTrue;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
-import static com.mongodb.operation.OperationHelper.LOGGER;
-import static com.mongodb.operation.OperationHelper.validateCollation;
-import static com.mongodb.operation.OperationHelper.releasingCallback;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
-import static com.mongodb.operation.OperationHelper.withConnection;
+import static com.mongodb.operation.OperationHelper.LOGGER;
+import static com.mongodb.operation.OperationHelper.releasingCallback;
+import static com.mongodb.operation.OperationHelper.validateCollation;
 import static com.mongodb.operation.OperationHelper.withAsyncConnection;
-import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
-import static com.mongodb.internal.operation.WriteConcernHelper.throwOnWriteConcernError;
+import static com.mongodb.operation.OperationHelper.withConnection;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -595,20 +596,21 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
 
     private BsonDocument getCommand(final ConnectionDescription description) {
         BsonDocument outputDocument = new BsonDocument(getAction(), new BsonString(getCollectionName()));
-        outputDocument.append("sharded", BsonBoolean.valueOf(isSharded()));
-        outputDocument.append("nonAtomic", BsonBoolean.valueOf(isNonAtomic()));
+        putIfTrue(outputDocument, "sharded", isSharded());
+        putIfTrue(outputDocument, "nonAtomic", isNonAtomic());
         if (getDatabaseName() != null) {
             outputDocument.put("db", new BsonString(getDatabaseName()));
         }
         BsonDocument commandDocument = new BsonDocument("mapreduce", new BsonString(namespace.getCollectionName()))
                                            .append("map", getMapFunction())
                                            .append("reduce", getReduceFunction())
-                                           .append("out", outputDocument)
-                                           .append("query", asValueOrNull(getFilter()))
-                                           .append("sort", asValueOrNull(getSort()))
-                                           .append("finalize", asValueOrNull(getFinalizeFunction()))
-                                           .append("scope", asValueOrNull(getScope()))
-                                           .append("verbose", BsonBoolean.valueOf(isVerbose()));
+                                           .append("out", outputDocument);
+
+        putIfNotNull(commandDocument, "query", getFilter());
+        putIfNotNull(commandDocument, "sort", getSort());
+        putIfNotNull(commandDocument, "finalize", getFinalizeFunction());
+        putIfNotNull(commandDocument, "scope", getScope());
+        putIfTrue(commandDocument, "verbose", isVerbose());
         putIfNotZero(commandDocument, "limit", getLimit());
         putIfNotZero(commandDocument, "maxTimeMS", getMaxTime(MILLISECONDS));
         putIfTrue(commandDocument, "jsMode", isJsMode());

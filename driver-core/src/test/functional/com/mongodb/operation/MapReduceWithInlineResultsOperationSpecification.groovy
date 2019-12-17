@@ -39,7 +39,6 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonInt64
 import org.bson.BsonJavaScript
-import org.bson.BsonNull
 import org.bson.BsonString
 import org.bson.BsonTimestamp
 import org.bson.Document
@@ -158,11 +157,6 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
             .append('map', operation.getMapFunction())
             .append('reduce', operation.getReduceFunction())
             .append('out', new BsonDocument('inline', new BsonInt32(1)))
-            .append('query', new BsonNull())
-            .append('sort', new BsonNull())
-            .append('finalize', new BsonNull())
-            .append('scope', new BsonNull())
-            .append('verbose', BsonBoolean.FALSE)
 
         then:
         testOperation(operation, serverVersion, expectedCommand, async, helper.commandResult)
@@ -273,11 +267,6 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
               "map" : { "$code" : "function(){ }" },
               "reduce" : { "$code" : "function(key, values){ }" },
               "out" : { "inline" : 1 },
-              "query" : null,
-              "sort" : null,
-              "finalize" : null,
-              "scope" : null,
-              "verbose" : false,
               }''')
         appendReadConcernToCommand(sessionContext, commandDocument)
 
@@ -325,11 +314,6 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
               "map" : { "$code" : "function(){ }" },
               "reduce" : { "$code" : "function(key, values){ }" },
               "out" : { "inline" : 1 },
-              "query" : null,
-              "sort" : null,
-              "finalize" : null,
-              "scope" : null,
-              "verbose" : false,
               }''')
         appendReadConcernToCommand(sessionContext, commandDocument)
 
