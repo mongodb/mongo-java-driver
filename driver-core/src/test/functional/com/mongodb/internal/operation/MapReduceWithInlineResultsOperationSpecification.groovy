@@ -35,12 +35,14 @@ import com.mongodb.internal.connection.Connection
 import com.mongodb.internal.session.SessionContext
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
+import org.bson.BsonDouble
 import org.bson.BsonInt32
 import org.bson.BsonInt64
 import org.bson.BsonJavaScript
 import org.bson.BsonString
 import org.bson.BsonTimestamp
 import org.bson.Document
+import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
@@ -51,18 +53,18 @@ import static com.mongodb.internal.operation.OperationReadConcernHelper.appendRe
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class MapReduceWithInlineResultsOperationSpecification extends OperationFunctionalSpecification {
-    private final documentCodec = new DocumentCodec()
-    def mapReduceOperation = new MapReduceWithInlineResultsOperation<Document>(
+    private final bsonDocumentCodec = new BsonDocumentCodec()
+    def mapReduceOperation = new MapReduceWithInlineResultsOperation<BsonDocument>(
             getNamespace(),
             new BsonJavaScript('function(){ emit( this.name , 1 ); }'),
             new BsonJavaScript('function(key, values){ return values.length; }'),
-            documentCodec)
+            bsonDocumentCodec)
 
-    def expectedResults = [['_id': 'Pete', 'value': 2.0] as Document,
-                           ['_id': 'Sam', 'value': 1.0] as Document]
+    def expectedResults = [new BsonDocument('_id', new BsonString('Pete')).append('value', new BsonDouble(2.0)),
+                           new BsonDocument('_id', new BsonString('Sam')).append('value', new BsonDouble(1.0))] as Set
 
     def setup() {
-        CollectionHelper<Document> helper = new CollectionHelper<Document>(documentCodec, getNamespace())
+        CollectionHelper<BsonDocument> helper = new CollectionHelper<BsonDocument>(bsonDocumentCodec, getNamespace())
         Document pete = new Document('name', 'Pete').append('job', 'handyman')
         Document sam = new Document('name', 'Sam').append('job', 'plumber')
         Document pete2 = new Document('name', 'Pete').append('job', 'electrician')
@@ -73,7 +75,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         when:
         def mapF = new BsonJavaScript('function(){ }')
         def reduceF = new BsonJavaScript('function(key, values){ }')
-        def operation = new MapReduceWithInlineResultsOperation<Document>(helper.namespace, mapF, reduceF, documentCodec)
+        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(helper.namespace, mapF, reduceF, bsonDocumentCodec)
 
         then:
         operation.getMapFunction() == mapF
@@ -97,7 +99,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         def finalizeF = new BsonJavaScript('function(key, value){}')
         def mapF = new BsonJavaScript('function(){ }')
         def reduceF = new BsonJavaScript('function(key, values){ }')
-        def operation = new MapReduceWithInlineResultsOperation<Document>(helper.namespace, mapF, reduceF, documentCodec)
+        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(helper.namespace, mapF, reduceF, bsonDocumentCodec)
                 .filter(filter)
                 .finalizeFunction(finalizeF)
                 .scope(scope)
@@ -127,7 +129,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         def operation = mapReduceOperation
 
         when:
-        def results = executeAndCollectBatchCursorResults(operation, async)
+        def results = executeAndCollectBatchCursorResults(operation, async) as Set
 
         then:
         results == expectedResults
@@ -139,7 +141,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
     def 'should use the ReadBindings readPreference to set slaveOK'() {
         when:
         def operation = new MapReduceWithInlineResultsOperation<Document>(helper.namespace, new BsonJavaScript('function(){ }'),
-                new BsonJavaScript('function(key, values){ }'), documentCodec)
+                new BsonJavaScript('function(key, values){ }'), bsonDocumentCodec)
 
         then:
         testOperationSlaveOk(operation, [3, 4, 0], readPreference, async, helper.commandResult)
@@ -151,7 +153,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
     def 'should create the expected command'() {
         when:
         def operation = new MapReduceWithInlineResultsOperation<Document>(helper.namespace, new BsonJavaScript('function(){ }'),
-                new BsonJavaScript('function(key, values){ }'), documentCodec)
+                new BsonJavaScript('function(key, values){ }'), bsonDocumentCodec)
         def expectedCommand = new BsonDocument('mapreduce', new BsonString(helper.namespace.getCollectionName()))
             .append('map', operation.getMapFunction())
             .append('reduce', operation.getReduceFunction())
@@ -198,8 +200,8 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
 
     def 'should throw an exception when using an unsupported ReadConcern'() {
         given:
-        def operation = new MapReduceWithInlineResultsOperation<Document>(helper.namespace, new BsonJavaScript('function(){ }'),
-                new BsonJavaScript('function(key, values){ }'), documentCodec)
+        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(helper.namespace, new BsonJavaScript('function(){ }'),
+                new BsonJavaScript('function(key, values){ }'), bsonDocumentCodec)
 
         when:
         testOperationThrows(operation, [3, 0, 0], readConcern, async)
@@ -214,8 +216,8 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
 
     def 'should throw an exception when using an unsupported Collation'() {
         given:
-        def operation = new MapReduceWithInlineResultsOperation<Document>(helper.namespace, new BsonJavaScript('function(){ }'),
-                new BsonJavaScript('function(key, values){ }'), documentCodec).collation(defaultCollation)
+        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(helper.namespace, new BsonJavaScript('function(){ }'),
+                new BsonJavaScript('function(key, values){ }'), bsonDocumentCodec).collation(defaultCollation)
 
         when:
         testOperationThrows(operation, [3, 2, 0], async)
@@ -233,16 +235,16 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         given:
         def document = Document.parse('{_id: 1, str: "foo"}')
         getCollectionHelper().insertDocuments(document)
-        def operation = new MapReduceWithInlineResultsOperation<Document>(
+        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(
                 namespace,
                 new BsonJavaScript('function(){ emit( this._id, this.str ); }'),
                 new BsonJavaScript('function(key, values){ return key, values; }'),
-                documentCodec)
+                bsonDocumentCodec)
                 .filter(BsonDocument.parse('{str: "FOO"}'))
                 .collation(caseInsensitiveCollation)
 
         when:
-        def results = executeAndCollectBatchCursorResults(operation, async)
+        def results = executeAndCollectBatchCursorResults(operation, async) as Set
 
         then:
         results == [Document.parse('{_id: 1.0, value: "foo"}')]
@@ -269,8 +271,8 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
               }''')
         appendReadConcernToCommand(sessionContext, commandDocument)
 
-        def operation = new MapReduceWithInlineResultsOperation<Document>(helper.namespace, new BsonJavaScript('function(){ }'),
-                new BsonJavaScript('function(key, values){ }'), documentCodec)
+        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(helper.namespace, new BsonJavaScript('function(){ }'),
+                new BsonJavaScript('function(key, values){ }'), bsonDocumentCodec)
 
         when:
         operation.execute(binding)
@@ -316,8 +318,8 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
               }''')
         appendReadConcernToCommand(sessionContext, commandDocument)
 
-        def operation = new MapReduceWithInlineResultsOperation<Document>(helper.namespace, new BsonJavaScript('function(){ }'),
-                new BsonJavaScript('function(key, values){ }'), documentCodec)
+        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(helper.namespace, new BsonJavaScript('function(){ }'),
+                new BsonJavaScript('function(key, values){ }'), bsonDocumentCodec)
 
         when:
         executeAsync(operation, binding)
