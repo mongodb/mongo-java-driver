@@ -151,6 +151,7 @@ public class MapReduceTest extends DatabaseTestCase {
                                                         MapReduceCommand.OutputType.REPLACE,
                                                         new BasicDBObject());
         command.setOutputDB(MR_DATABASE);
+        getClient().getDatabase(MR_DATABASE).createCollection(DEFAULT_COLLECTION);
         MapReduceOutput output = collection.mapReduce(command);
 
 
