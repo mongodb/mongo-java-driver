@@ -1,6 +1,6 @@
 baseurl = "/mongo-java-driver/"
 languageCode = "en-us"
-title = "MongoDB Java Driver"
+title = "MongoDB Java Drivers"
 canonifyurls = false
 disableHugoGeneratorInject = true
 disableKinds = ["section", "taxonomy", "taxonomyTerm", "404"]
