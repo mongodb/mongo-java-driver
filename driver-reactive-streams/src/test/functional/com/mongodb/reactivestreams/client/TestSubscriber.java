@@ -22,6 +22,7 @@ import org.reactivestreams.Subscription;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Supplier;
 
 public class TestSubscriber<T> implements Subscriber<T> {
 
@@ -165,7 +166,7 @@ public class TestSubscriber<T> implements Subscriber<T> {
      * @throws AssertionError if the sequence of items observed does not exactly match {@code items}
      */
     public void assertReceivedOnNext(final List<T> items) {
-        if (getOnNextEvents().size() != items.size()) {
+        if (tryMultipleTimes(2, () -> getOnNextEvents().size() != items.size())) {
             throw new AssertionError("Number of items does not match. Provided: " + items.size() + "  Actual: " + getOnNextEvents().size());
         }
 
@@ -182,6 +183,22 @@ public class TestSubscriber<T> implements Subscriber<T> {
 
             }
         }
+    }
+
+    private boolean tryMultipleTimes(final int noTimes, final Supplier<Boolean> test) {
+        int counter = noTimes;
+        while (counter > 0){
+            if (test.get()) {
+                return true;
+            }
+            counter--;
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                return false;
+            }
+        }
+        return false;
     }
 
     /**

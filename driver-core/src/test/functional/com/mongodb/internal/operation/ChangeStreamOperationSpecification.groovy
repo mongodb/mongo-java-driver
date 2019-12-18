@@ -488,8 +488,13 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         expected = insertDocuments(helper, [5, 6])
         helper.killCursor(helper.getNamespace(), cursor.getWrapped().getServerCursor())
 
+        def results = nextAndClean(cursor, async)
+        if (results.size() < expected.size()) {
+            results.addAll(nextAndClean(cursor, async))
+        }
+
         then:
-        nextAndClean(cursor, async) == expected
+        results == expected
 
         cleanup:
         cursor?.close()
