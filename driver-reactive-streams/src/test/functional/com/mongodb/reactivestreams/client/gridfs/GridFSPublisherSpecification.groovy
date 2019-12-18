@@ -122,7 +122,8 @@ class GridFSPublisherSpecification extends FunctionalSpecification {
         def options = new GridFSUploadOptions().chunkSizeBytes(chunkSize)
 
         when:
-        def fileId = run(MINUTES.toMillis(5), gridFSBucket.&uploadFromPublisher, 'myFile', createPublisher(ByteBuffer.wrap(contentBytes)), options)
+        def fileId = run(MINUTES.toMillis(5), gridFSBucket.&uploadFromPublisher, 'myFile',
+                createPublisher(ByteBuffer.wrap(contentBytes)), options)
 
         then:
         run(filesCollection.&countDocuments) == 1
