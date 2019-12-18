@@ -39,6 +39,7 @@ import java.nio.ByteBuffer
 import java.nio.channels.Channels
 import java.nio.channels.WritableByteChannel
 import java.security.SecureRandom
+
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Updates.unset
 import static com.mongodb.reactivestreams.client.Fixture.ObservableSubscriber
@@ -47,6 +48,7 @@ import static com.mongodb.reactivestreams.client.Fixture.getMongoClient
 import static com.mongodb.reactivestreams.client.MongoClients.getDefaultCodecRegistry
 import static com.mongodb.reactivestreams.client.internal.Publishers.publishAndFlatten
 import static java.util.Arrays.asList
+import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.MINUTES
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs
@@ -120,7 +122,7 @@ class GridFSPublisherSpecification extends FunctionalSpecification {
         def options = new GridFSUploadOptions().chunkSizeBytes(chunkSize)
 
         when:
-        def fileId = run(gridFSBucket.&uploadFromPublisher, 'myFile', createPublisher(ByteBuffer.wrap(contentBytes)), options)
+        def fileId = run(MINUTES.toMillis(5), gridFSBucket.&uploadFromPublisher, 'myFile', createPublisher(ByteBuffer.wrap(contentBytes)), options)
 
         then:
         run(filesCollection.&countDocuments) == 1
@@ -488,15 +490,23 @@ class GridFSPublisherSpecification extends FunctionalSpecification {
         }
     }
 
-    def run(operation, ... args) {
-        def result = runAndCollect(operation, args)
+    def run(Closure<?> operation, ... args) {
+        run(MINUTES.toMillis(1), operation, *args)
+    }
+
+    def runAndCollect(Closure<?> operation, ... args) {
+        runAndCollect(MINUTES.toMillis(1), operation, *args)
+    }
+
+    def run(long timeout, Closure<?> operation, ... args) {
+        def result = runAndCollect(timeout, operation, args)
         result != null && !result.isEmpty() ? result.get(0) : result
     }
 
-    def runAndCollect(operation, ... args) {
+    def runAndCollect(long timeout, Closure<?> operation, ... args) {
         def subscriber = new ObservableSubscriber()
         operation.call(args).subscribe(subscriber)
-        subscriber.get(1, MINUTES)
+        subscriber.get(timeout, MILLISECONDS)
     }
 
     byte[] concatByteBuffers(List<ByteBuffer> buffers) {
