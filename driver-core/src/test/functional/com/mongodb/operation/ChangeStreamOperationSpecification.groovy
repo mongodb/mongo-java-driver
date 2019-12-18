@@ -478,9 +478,13 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         when:
         helper.killCursor(helper.getNamespace(), cursor.getWrapped().getServerCursor())
         expected = insertDocuments(helper, [3, 4])
+        def results = nextAndClean(cursor, async)
+        if (results.size() < expected.size()) {
+            results.addAll(nextAndClean(cursor, async))
+        }
 
         then:
-        nextAndClean(cursor, async) == expected
+        results == expected
 
         then:
         tryNextAndClean(cursor, async) == null
@@ -489,8 +493,13 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         expected = insertDocuments(helper, [5, 6])
         helper.killCursor(helper.getNamespace(), cursor.getWrapped().getServerCursor())
 
+        results = nextAndClean(cursor, async)
+        if (results.size() < expected.size()) {
+            results.addAll(nextAndClean(cursor, async))
+        }
+
         then:
-        nextAndClean(cursor, async) == expected
+        results == expected
 
         cleanup:
         cursor?.close()
