@@ -29,9 +29,11 @@ import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.mongodb.ClusterFixture.isNotAtLeastJava8;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 
@@ -41,7 +43,9 @@ public class ClientSideEncryptionMongocryptdSpawnBypassTest extends DatabaseTest
     private final MongoNamespace keyVaultNamespace = new MongoNamespace("admin.datakeys");
 
     public ClientSideEncryptionMongocryptdSpawnBypassTest() throws IOException {
-        super();
+        assumeFalse(isNotAtLeastJava8());
+        assumeTrue(serverVersionAtLeast(4, 2));
+
         pidFile = new File("bypass-spawning-mongocryptd.pid");
 
         byte[] localMasterKey = new byte[96];
