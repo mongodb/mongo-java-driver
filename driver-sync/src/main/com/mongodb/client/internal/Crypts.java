@@ -35,7 +35,7 @@ public final class Crypts {
         return new Crypt(MongoCrypts.create(createMongoCryptOptions(options.getKmsProviders(),
                 options.getSchemaMap())),
                 new CollectionInfoRetriever(client),
-                new CommandMarker(options.getExtraOptions()),
+                new CommandMarker(options.isBypassAutoEncryption(), options.getExtraOptions()),
                 createKeyRetriever(client, options.getKeyVaultMongoClientSettings(), options.getKeyVaultNamespace()),
                 createKeyManagementService(),
                 options.isBypassAutoEncryption());

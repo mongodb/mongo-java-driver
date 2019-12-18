@@ -33,20 +33,19 @@ import java.io.Closeable;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.capi.MongoCryptOptionsHelper.createMongocryptdSpawnArgs;
 
 @SuppressWarnings("UseOfProcessBuilder")
 class CommandMarker implements Closeable {
-    private MongoClient client;
+    private final MongoClient client;
     private final ProcessBuilder processBuilder;
 
-    CommandMarker(final Map<String, Object> options) {
-        String connectionString;
-
-        if (options.containsKey("mongocryptdURI")) {
-            connectionString = (String) options.get("mongocryptdURI");
-        } else {
-            connectionString = "mongodb://localhost:27020";
+    CommandMarker(final boolean isBypassAutoEncryption, final Map<String, Object> options) {
+        if (isBypassAutoEncryption) {
+            processBuilder = null;
+            client = null;
+            return;
         }
 
         if (!options.containsKey("mongocryptdBypassSpawn") || !((Boolean) options.get("mongocryptdBypassSpawn"))) {
@@ -54,6 +53,14 @@ class CommandMarker implements Closeable {
             startProcess();
         } else {
             processBuilder = null;
+        }
+
+        String connectionString;
+
+        if (options.containsKey("mongocryptdURI")) {
+            connectionString = (String) options.get("mongocryptdURI");
+        } else {
+            connectionString = "mongodb://localhost:27020";
         }
 
         client = MongoClients.create(MongoClientSettings.builder()
@@ -68,6 +75,8 @@ class CommandMarker implements Closeable {
     }
 
     void mark(final String databaseName, final RawBsonDocument command, final SingleResultCallback<RawBsonDocument> callback) {
+        notNull("client", client, callback);
+
         final SingleResultCallback<RawBsonDocument> wrappedCallback = new SingleResultCallback<RawBsonDocument>() {
             @Override
             public void onResult(final RawBsonDocument result, final Throwable t) {
@@ -103,7 +112,9 @@ class CommandMarker implements Closeable {
 
     @Override
     public void close() {
-        client.close();
+        if (client != null) {
+            client.close();
+        }
     }
 
     private void runCommand(final String databaseName, final RawBsonDocument command,
