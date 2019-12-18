@@ -16,6 +16,7 @@
 
 package tour;
 
+import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
@@ -33,7 +34,6 @@ import com.mongodb.client.vault.ClientEncryptions;
 import org.bson.BsonBinary;
 import org.bson.BsonString;
 import org.bson.Document;
-import org.bson.types.Binary;
 
 import java.security.SecureRandom;
 import java.util.HashMap;
@@ -42,7 +42,7 @@ import java.util.Map;
 /**
  * ClientSideEncryption explicit encryption and decryption tour
  */
-public class ClientSideEncryptionExplicitEncryptionAndDecryptionTour {
+public class ClientSideEncryptionExplicitEncryptionOnlyTour {
 
     /**
      * Run this main method to see the output of this quick example.
@@ -61,12 +61,18 @@ public class ClientSideEncryptionExplicitEncryptionAndDecryptionTour {
             }});
         }};
 
+        MongoNamespace keyVaultNamespace = new MongoNamespace("encryption.testKeyVault");
 
-        MongoClientSettings clientSettings = MongoClientSettings.builder().build();
+        MongoClientSettings clientSettings = MongoClientSettings.builder()
+                .autoEncryptionSettings(AutoEncryptionSettings.builder()
+                        .keyVaultNamespace(keyVaultNamespace.getFullName())
+                        .kmsProviders(kmsProviders)
+                        .bypassAutoEncryption(true)
+                        .build())
+                .build();
         MongoClient mongoClient = MongoClients.create(clientSettings);
 
         // Set up the key vault for this example
-        MongoNamespace keyVaultNamespace = new MongoNamespace("encryption.testKeyVault");
         MongoCollection<Document> keyVaultCollection = mongoClient.getDatabase(keyVaultNamespace.getDatabaseName())
                 .getCollection(keyVaultNamespace.getCollectionName());
         keyVaultCollection.drop();
@@ -98,13 +104,10 @@ public class ClientSideEncryptionExplicitEncryptionAndDecryptionTour {
 
         collection.insertOne(new Document("encryptedField", encryptedFieldValue));
 
+        // Automatically decrypts the encrypted field.
         Document doc = collection.find().first();
         System.out.println(doc.toJson());
-
-        // Explicitly decrypt the field
-        BsonString decryptedFieldValue = clientEncryption.decrypt(new BsonBinary(doc.get("encryptedField", Binary.class).getData()))
-                .asString();
-        System.out.println(decryptedFieldValue.getValue());
+        System.out.println(doc.get("encryptedField"));
 
         // release resources
         clientEncryption.close();
