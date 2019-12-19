@@ -24,7 +24,6 @@ import com.mongodb.ServerAddress;
 import com.mongodb.client.internal.MongoClientImpl;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerSettings;
-import com.mongodb.connection.SslSettings;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -93,14 +92,6 @@ public final class Fixture {
                             builder.minHeartbeatFrequency(MIN_HEARTBEAT_FREQUENCY_MS, TimeUnit.MILLISECONDS);
                         }
                     });
-            if (System.getProperty("java.version").startsWith("1.6.")) {
-                builder.applyToSslSettings(new Block<SslSettings.Builder>() {
-                    @Override
-                    public void apply(final SslSettings.Builder builder) {
-                        builder.invalidHostNameAllowed(true);
-                    }
-                });
-            }
             mongoClientSettings = builder.build();
         }
         return mongoClientSettings;

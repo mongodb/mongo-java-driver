@@ -81,14 +81,7 @@ public final class Fixture {
     }
 
     public static synchronized MongoClientURI getMongoClientURI(final MongoClientOptions.Builder builder) {
-        MongoClientURI mongoClientURI = null;
-        String mongoURIString = getMongoClientURIString();
-        if (System.getProperty("java.version").startsWith("1.6.")) {
-            builder.sslInvalidHostNameAllowed(true);
-        }
-
-        mongoClientURI = new MongoClientURI(mongoURIString, builder);
-        return mongoClientURI;
+        return new MongoClientURI(getMongoClientURIString(), builder);
     }
 
     public static MongoClientOptions getOptions() {

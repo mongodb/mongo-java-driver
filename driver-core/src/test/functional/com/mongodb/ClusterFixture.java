@@ -16,9 +16,7 @@
 
 package com.mongodb;
 
-import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.async.FutureResultCallback;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ClusterType;
@@ -32,6 +30,8 @@ import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.TlsChannelStreamFactoryFactory;
 import com.mongodb.connection.netty.NettyStreamFactory;
+import com.mongodb.internal.async.AsyncBatchCursor;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncClusterBinding;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -373,11 +373,7 @@ public final class ClusterFixture {
     }
 
     public static SslSettings getSslSettings(final ConnectionString connectionString) {
-        SslSettings.Builder builder = SslSettings.builder().applyConnectionString(connectionString);
-        if (System.getProperty("java.version").startsWith("1.6.")) {
-            builder.invalidHostNameAllowed(true);
-        }
-        return builder.build();
+        return SslSettings.builder().applyConnectionString(connectionString).build();
     }
 
     public static ServerAddress getPrimary() {

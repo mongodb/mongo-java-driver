@@ -143,8 +143,6 @@ public class SslSettings {
          * Create a new SSLSettings from the settings in this builder.
          *
          * @return a new SSL settings
-         * @throws com.mongodb.MongoInternalException if enabled is true, invalidHostNameAllowed is false, and the {@code "java.version"}
-         * system property starts with 1.6
          */
         public SslSettings build() {
             return new SslSettings(this);
