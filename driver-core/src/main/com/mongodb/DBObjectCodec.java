@@ -134,7 +134,7 @@ public class DBObjectCodec implements CollectibleCodec<DBObject>, OverridableUui
      */
     public DBObjectCodec(final CodecRegistry codecRegistry, final BsonTypeClassMap bsonTypeClassMap, final DBObjectFactory objectFactory) {
         this(codecRegistry, new BsonTypeCodecMap(notNull("bsonTypeClassMap", bsonTypeClassMap), codecRegistry), objectFactory,
-                UuidRepresentation.JAVA_LEGACY);
+                UuidRepresentation.UNSPECIFIED);
     }
 
     private DBObjectCodec(final CodecRegistry codecRegistry, final BsonTypeCodecMap bsonTypeCodecMap, final DBObjectFactory objectFactory,
@@ -365,7 +365,7 @@ public class DBObjectCodec implements CollectibleCodec<DBObject>, OverridableUui
                     }
                     break;
                 case 4:
-                    if (uuidRepresentation == UuidRepresentation.JAVA_LEGACY || uuidRepresentation == UuidRepresentation.STANDARD) {
+                    if (uuidRepresentation == UuidRepresentation.STANDARD) {
                         codec = codecRegistry.get(UUID.class);
                     }
                     break;

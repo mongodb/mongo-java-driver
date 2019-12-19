@@ -50,7 +50,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.getRetryWrites()
         options.getRetryReads()
         options.getCodecRegistry() == MongoClientSettings.defaultCodecRegistry
-        options.getUuidRepresentation() == UuidRepresentation.JAVA_LEGACY
+        options.getUuidRepresentation() == UuidRepresentation.UNSPECIFIED
         options.getMinConnectionsPerHost() == 0
         options.getConnectionsPerHost() == 100
         options.getConnectTimeout() == 10000

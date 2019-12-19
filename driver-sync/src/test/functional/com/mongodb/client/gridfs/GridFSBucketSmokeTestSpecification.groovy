@@ -19,6 +19,7 @@ package com.mongodb.client.gridfs
 import com.mongodb.MongoClientSettings
 import com.mongodb.MongoGridFSException
 import com.mongodb.client.FunctionalSpecification
+import com.mongodb.client.MongoClients
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions
@@ -34,8 +35,10 @@ import org.bson.types.ObjectId
 import spock.lang.Unroll
 
 import static com.mongodb.client.Fixture.getDefaultDatabase
+import static com.mongodb.client.Fixture.getDefaultDatabaseName
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Updates.unset
+import static com.mongodb.internal.async.client.Fixture.getMongoClientBuilderFromConnectionString
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries
 
@@ -511,7 +514,11 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         given:
         def codecRegistry = fromRegistries(fromCodecs(new UuidCodec(UuidRepresentation.STANDARD)),
                 MongoClientSettings.getDefaultCodecRegistry())
-        def database = getDefaultDatabase().withCodecRegistry(codecRegistry)
+        def client = MongoClients.create(getMongoClientBuilderFromConnectionString()
+                .uuidRepresentation(UuidRepresentation.STANDARD)
+                .build())
+
+        def database = client.getDatabase(getDefaultDatabaseName()).withCodecRegistry(codecRegistry)
         def uuid = UUID.randomUUID()
         def fileMeta = new Document('uuid', uuid)
         def gridFSBucket = GridFSBuckets.create(database)
@@ -527,6 +534,9 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
 
         then:
         filesCollection.find(BsonDocument).first().getDocument('metadata').getBinary('uuid').getType() == 4 as byte
+
+        cleanup:
+        client?.close()
     }
 
     @Unroll

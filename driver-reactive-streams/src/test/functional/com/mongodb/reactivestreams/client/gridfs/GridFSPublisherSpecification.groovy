@@ -22,6 +22,7 @@ import com.mongodb.client.gridfs.model.GridFSFile
 import com.mongodb.client.gridfs.model.GridFSUploadOptions
 import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.reactivestreams.client.FunctionalSpecification
+import com.mongodb.reactivestreams.client.MongoClients
 import com.mongodb.reactivestreams.client.MongoCollection
 import com.mongodb.reactivestreams.client.MongoDatabase
 import org.bson.BsonDocument
@@ -42,6 +43,7 @@ import java.security.SecureRandom
 
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Updates.unset
+import static com.mongodb.internal.async.client.Fixture.getMongoClientBuilderFromConnectionString
 import static com.mongodb.reactivestreams.client.Fixture.ObservableSubscriber
 import static com.mongodb.reactivestreams.client.Fixture.getDefaultDatabaseName
 import static com.mongodb.reactivestreams.client.Fixture.getMongoClient
@@ -372,8 +374,12 @@ class GridFSPublisherSpecification extends FunctionalSpecification {
 
     def 'should use the user provided codec registries for encoding / decoding data'() {
         given:
-        def codecRegistry = fromRegistries(fromCodecs(new UuidCodec(UuidRepresentation.STANDARD)), getDefaultCodecRegistry())
-        def database = getMongoClient().getDatabase(getDefaultDatabaseName()).withCodecRegistry(codecRegistry)
+        def client = MongoClients.create(getMongoClientBuilderFromConnectionString()
+                .uuidRepresentation(UuidRepresentation.STANDARD)
+                .codecRegistry(fromRegistries(fromCodecs(new UuidCodec(UuidRepresentation.STANDARD)), getDefaultCodecRegistry()))
+                .build())
+        def database = client.getDatabase(getDefaultDatabaseName())
+
         def uuid = UUID.randomUUID()
         def fileMeta = new Document('uuid', uuid)
         def gridFSBucket = GridFSBuckets.create(database)
@@ -392,6 +398,9 @@ class GridFSPublisherSpecification extends FunctionalSpecification {
 
         then:
         fileAsDocument.getDocument('metadata').getBinary('uuid').getType() == 4 as byte
+
+        cleanup:
+        client?.close()
     }
 
     def 'should handle missing file name data when downloading'() {

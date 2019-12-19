@@ -57,8 +57,14 @@ import static org.bson.UuidRepresentation.STANDARD
 import static org.bson.UuidRepresentation.UNSPECIFIED
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
+import static org.bson.codecs.configuration.CodecRegistries.fromRegistries
 
 class MapCodecSpecification extends Specification {
+
+    static final REGISTRY = fromRegistries(fromCodecs(new UuidCodec(JAVA_LEGACY)),
+            fromProviders(asList(new ValueCodecProvider(), new BsonValueCodecProvider(),
+                    new DocumentCodecProvider(), new IterableCodecProvider(), new MapCodecProvider())))
+
     @Shared
     BsonDocument bsonDoc = new BsonDocument()
     @Shared
@@ -88,7 +94,6 @@ class MapCodecSpecification extends Specification {
             put('undefined', new BsonUndefined())
             put('binary', new Binary((byte) 0x80, [5, 4, 3, 2, 1] as byte[]))
             put('array', asList(1, 1L, true, [1, 2, 3], new Document('a', 1), null))
-            put('uuid', new UUID(1L, 2L))
             put('document', new Document('a', 2))
             put('map', [a:1, b:2])
             put('atomicLong', new AtomicLong(1))
@@ -97,7 +102,7 @@ class MapCodecSpecification extends Specification {
         }
 
         when:
-        new MapCodec().encode(writer, originalDocument, EncoderContext.builder().build())
+        new MapCodec(REGISTRY).encode(writer, originalDocument, EncoderContext.builder().build())
         BsonReader reader
         if (writer instanceof BsonDocumentWriter) {
             reader = new BsonDocumentReader(bsonDoc)
@@ -108,7 +113,7 @@ class MapCodecSpecification extends Specification {
         } else {
             reader = new JsonReader(stringWriter.toString())
         }
-        def decodedDoc = new MapCodec().decode(reader, DecoderContext.builder().build())
+        def decodedDoc = new MapCodec(REGISTRY).decode(reader, DecoderContext.builder().build())
 
         then:
         decodedDoc.get('null') == originalDocument.get('null')
@@ -130,7 +135,6 @@ class MapCodecSpecification extends Specification {
         decodedDoc.get('timestamp') == originalDocument.get('timestamp')
         decodedDoc.get('undefined') == originalDocument.get('undefined')
         decodedDoc.get('binary') == originalDocument.get('binary')
-        decodedDoc.get('uuid') == originalDocument.get('uuid')
         decodedDoc.get('array') == originalDocument.get('array')
         decodedDoc.get('document') == originalDocument.get('document')
         decodedDoc.get('map') == originalDocument.get('map')
@@ -143,6 +147,22 @@ class MapCodecSpecification extends Specification {
                 new BsonDocumentWriter(bsonDoc),
                 new BsonBinaryWriter(new BasicOutputBuffer())
         ]
+    }
+
+    def 'should decode binary subtypes for UUID that are not 16 bytes into Binary'() {
+        given:
+        def reader = new BsonBinaryReader(ByteBuffer.wrap(bytes as byte[]))
+
+        when:
+        def document = new DocumentCodec().decode(reader, DecoderContext.builder().build())
+
+        then:
+        value == document.get('f')
+
+        where:
+        value                                            | bytes
+        new Binary((byte) 0x03, (byte[]) [115, 116, 11]) | [16, 0, 0, 0, 5, 102, 0, 3, 0, 0, 0, 3, 115, 116, 11, 0]
+        new Binary((byte) 0x04, (byte[]) [115, 116, 11]) | [16, 0, 0, 0, 5, 102, 0, 3, 0, 0, 0, 4, 115, 116, 11, 0]
     }
 
     @SuppressWarnings(['LineLength'])
@@ -175,20 +195,22 @@ class MapCodecSpecification extends Specification {
         def reader = new BsonBinaryReader(ByteBuffer.wrap(bytes as byte[]))
 
         when:
-        def map = new MapCodec().withUuidRepresentation(representation)
+        def map = new MapCodec(fromCodecs(new UuidCodec(representation), new BinaryCodec()))
+                .withUuidRepresentation(representation)
                 .decode(reader, DecoderContext.builder().build())
 
         then:
         value == map.get('f')
 
         where:
-        representation | value                                                   | bytes
-        STANDARD       | UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10') | [29, 0, 0, 0, 5, 102, 0, 16, 0, 0, 0, 4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0]
-        JAVA_LEGACY    | UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10') | [29, 0, 0, 0, 5, 102, 0, 16, 0, 0, 0, 4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0]
+        representation | value                                                                                   | bytes
+        STANDARD       | UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10')                                 | [29, 0, 0, 0, 5, 102, 0, 16, 0, 0, 0, 4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0]
+        JAVA_LEGACY    | new Binary((byte) 4, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[]) | [29, 0, 0, 0, 5, 102, 0, 16, 0, 0, 0, 4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0]
         C_SHARP_LEGACY | new Binary((byte) 4, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[]) | [29, 0, 0, 0, 5, 102, 0, 16, 0, 0, 0, 4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0]
         PYTHON_LEGACY  | new Binary((byte) 4, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[]) | [29, 0, 0, 0, 5, 102, 0, 16, 0, 0, 0, 4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0]
         UNSPECIFIED    | new Binary((byte) 4, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[]) | [29, 0, 0, 0, 5, 102, 0, 16, 0, 0, 0, 4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0]
     }
+
 
     def 'should apply transformer to decoded values'() {
         given:

@@ -26,7 +26,7 @@ class OverridableUuidRepresentationUuidCodecSpecification extends Specification{
         def codec = new OverridableUuidRepresentationUuidCodec()
 
         then:
-        codec.getUuidRepresentation() == UuidRepresentation.JAVA_LEGACY
+        codec.getUuidRepresentation() == UuidRepresentation.UNSPECIFIED
 
         when:
         def newCodec = codec.withUuidRepresentation(UuidRepresentation.STANDARD)

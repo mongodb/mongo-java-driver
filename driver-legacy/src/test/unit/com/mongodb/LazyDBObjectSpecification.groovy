@@ -276,7 +276,6 @@ class LazyDBObjectSpecification extends Specification {
          object        : ['abc', '12345'] as BasicDBObject,
          array         : ['foo', 'bar', 'baz', 'x', 'y', 'z'],
          binary        : new Binary('scott'.getBytes()),
-         uuid          : UUID.randomUUID(),
          regex         : compile('^test.*regex.*xyz$', CASE_INSENSITIVE)] as BasicDBObject
     }
 
@@ -308,7 +307,6 @@ class LazyDBObjectSpecification extends Specification {
         assert doc['array'][4] == 'y'
         assert doc['array'][5] == 'z'
         assert doc['binary'] == origDoc['binary'].getData()
-        assert doc['uuid'] == origDoc['uuid']
         assert doc['regex'].pattern() == origDoc['regex'].pattern()
         assert doc['regex'].flags() == origDoc['regex'].flags()
     }

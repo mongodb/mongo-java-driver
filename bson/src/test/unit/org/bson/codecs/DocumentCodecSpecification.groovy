@@ -30,6 +30,7 @@ import org.bson.BsonUndefined
 import org.bson.BsonWriter
 import org.bson.ByteBufNIO
 import org.bson.Document
+import org.bson.codecs.configuration.CodecRegistry
 import org.bson.io.BasicOutputBuffer
 import org.bson.io.ByteBufferBsonInput
 import org.bson.json.JsonReader
@@ -57,8 +58,12 @@ import static org.bson.UuidRepresentation.STANDARD
 import static org.bson.UuidRepresentation.UNSPECIFIED
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
+import static org.bson.codecs.configuration.CodecRegistries.fromRegistries
 
 class DocumentCodecSpecification extends Specification {
+    static final CodecRegistry REGISTRY = fromRegistries(fromCodecs(new UuidCodec(STANDARD)),
+            fromProviders(asList(new ValueCodecProvider(), new BsonValueCodecProvider(), new DocumentCodecProvider())))
+
     @Shared
     BsonDocument bsonDoc = new BsonDocument()
     @Shared
@@ -97,7 +102,8 @@ class DocumentCodecSpecification extends Specification {
         }
 
         when:
-        new DocumentCodec().encode(writer, originalDocument, EncoderContext.builder().build())
+        new DocumentCodec(REGISTRY).withUuidRepresentation(STANDARD)
+                .encode(writer, originalDocument, EncoderContext.builder().build())
         BsonReader reader
         if (writer instanceof BsonDocumentWriter) {
             reader = new BsonDocumentReader(bsonDoc)
@@ -108,7 +114,7 @@ class DocumentCodecSpecification extends Specification {
         } else {
             reader = new JsonReader(stringWriter.toString())
         }
-        def decodedDoc = new DocumentCodec().decode(reader, DecoderContext.builder().build())
+        def decodedDoc = new DocumentCodec(REGISTRY).withUuidRepresentation(STANDARD).decode(reader, DecoderContext.builder().build())
 
         then:
         decodedDoc.get('null') == originalDocument.get('null')
@@ -192,16 +198,17 @@ class DocumentCodecSpecification extends Specification {
         def reader = new BsonBinaryReader(ByteBuffer.wrap(bytes as byte[]))
 
         when:
-        def document = new DocumentCodec().withUuidRepresentation(representation)
+        def document = new DocumentCodec(fromCodecs(new UuidCodec(representation), new BinaryCodec()))
+                .withUuidRepresentation(representation)
                 .decode(reader, DecoderContext.builder().build())
 
         then:
         value == document.get('f')
 
         where:
-        representation | value                                                   | bytes
-        STANDARD       | UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10') | [29, 0, 0, 0, 5, 102, 0, 16, 0, 0, 0, 4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0]
-        JAVA_LEGACY    | UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10') | [29, 0, 0, 0, 5, 102, 0, 16, 0, 0, 0, 4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0]
+        representation | value                                                                                   | bytes
+        STANDARD       | UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10')                                 | [29, 0, 0, 0, 5, 102, 0, 16, 0, 0, 0, 4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0]
+        JAVA_LEGACY    | new Binary((byte) 4, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[]) | [29, 0, 0, 0, 5, 102, 0, 16, 0, 0, 0, 4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0]
         C_SHARP_LEGACY | new Binary((byte) 4, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[]) | [29, 0, 0, 0, 5, 102, 0, 16, 0, 0, 0, 4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0]
         PYTHON_LEGACY  | new Binary((byte) 4, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[]) | [29, 0, 0, 0, 5, 102, 0, 16, 0, 0, 0, 4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0]
         UNSPECIFIED    | new Binary((byte) 4, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[]) | [29, 0, 0, 0, 5, 102, 0, 16, 0, 0, 0, 4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0]
