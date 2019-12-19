@@ -92,6 +92,7 @@ configure(javaProjects) { project ->
     }
 
     afterEvaluate {
+        publishing.publications.mavenJava.artifactId = project.archivesBaseName
         signing {
             sign publishing.publications.mavenJava
         }
@@ -129,6 +130,7 @@ configure(scalaProjects) { project ->
     }
 
     afterEvaluate {
+        publishing.publications.mavenJava.artifactId = project.archivesBaseName
         signing {
             sign publishing.publications.mavenJava
         }
