@@ -19,7 +19,7 @@ configure(deployedProjects) {
 
     def isScala = project.name.contains('scala')
     def hasAllScalaVersions = project.hasProperty('allScalaVersions')
-    def isInvalidScalaProject = isScala && !hasAllScalaVersions
+    def isInvalidScalaProject = false // isScala && !hasAllScalaVersions // TODO JAVA-3564
 
     task publishSnapshots {
         group = 'publishing'
