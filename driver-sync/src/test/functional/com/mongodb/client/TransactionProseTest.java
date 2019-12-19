@@ -20,7 +20,6 @@ import com.mongodb.Block;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoException;
 import com.mongodb.connection.SocketSettings;
-import com.mongodb.connection.SslSettings;
 import org.bson.Document;
 import org.junit.After;
 import org.junit.Before;
@@ -47,14 +46,6 @@ public class TransactionProseTest {
         assumeTrue(canRunTests());
         MongoClientSettings.Builder builder = MongoClientSettings.builder()
                 .applyConnectionString(getMultiMongosConnectionString());
-        if (System.getProperty("java.version").startsWith("1.6.")) {
-            builder.applyToSslSettings(new Block<SslSettings.Builder>() {
-                @Override
-                public void apply(final SslSettings.Builder builder) {
-                    builder.invalidHostNameAllowed(true);
-                }
-            });
-        }
 
         client = MongoClients.create(MongoClientSettings.builder(builder.build())
                 .applyToSocketSettings(new Block<SocketSettings.Builder>() {

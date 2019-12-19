@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.async.client;
 
-import com.mongodb.Block;
 import com.mongodb.ClusterFixture;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
@@ -26,7 +25,6 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.async.FutureResultCallback;
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory;
-import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.connection.TlsChannelStreamFactoryFactory;
 import org.bson.Document;
@@ -63,14 +61,6 @@ public final class Fixture {
     public static com.mongodb.MongoClientSettings.Builder getMongoClientBuilderFromConnectionString() {
         com.mongodb.MongoClientSettings.Builder builder = com.mongodb.MongoClientSettings.builder()
                 .applyConnectionString(getConnectionString());
-        if (System.getProperty("java.version").startsWith("1.6.")) {
-            builder.applyToSslSettings(new Block<SslSettings.Builder>() {
-                @Override
-                public void apply(final SslSettings.Builder builder) {
-                    builder.invalidHostNameAllowed(true);
-                }
-            });
-        }
         builder.streamFactoryFactory(getStreamFactoryFactory());
         return builder;
     }
