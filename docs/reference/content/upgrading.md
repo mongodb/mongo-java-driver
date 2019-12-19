@@ -7,11 +7,42 @@ title = "Upgrade Considerations"
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
-## Upgrading from 3.x
+# Upgrading to the 4.0 Driver
 
-... TODO ...
+## Upgrading from the 3.12 Java driver
 
-## Upgrading from mongo-java-driver-reactivestreams 1.12
+The 4.0 release is a major release as per the definition of semantic versioning included in [semver.org]. As such, users
+that upgrade to this release should expect breaking changes. That said, we have attempted to ensure that the upgrade 
+process is as seamless as possible.  Breaking changes are as follows:
+
+  * Numerous classes and methods have been removed from the driver. All of these API elements are annotated as deprecated in the 
+    3.12 release, so if you compile your application with 3.12 and enable deprecation warnings in the compiler, you will be
+    able to locate all uses of these API elements and follow the recommendations contained in the Javadoc for each API element
+    to remove usage from your application. Most of these API elements are unlikely to be used by normal applications, but one bears
+    mentioning explicitly: the entire callback-baked asynchronous driver has been removed. Applications relying on this driver must either
+    port their application to the Reactive Streams driver, or else must remain on a 3.x driver release.
+  * While the `com.mongodb.MongoClient#getDB` method is deprecated in 3.x drivers, it has not been removed in this release. It will remain 
+    at least until the next major release cycle.
+  * The insert helper methods now return an insert result object instead of void.
+  * The various `toJson` methods on `BsonDocument`, `Document`, and `DBObject` now return "relaxed" JSON instead of "strict" JSON.  This
+    creates more readable JSON documents at the cost of a loss of some BSON type information (e.g., differentiating between 32 and 64 bit
+    integers).
+  * The default BSON representation of `java.util.UUID` values has changed from `JAVA_LEGACY` to `UNSPECIFIED`.  Applications that
+    store or retrieve UUID values must explicitly specify which representation to use, via the `uuidRepresentation` property of
+    `MongoClientSettings` (or `MongoClientOptions` for the legacy driver).
+  * The connection pool no longer enforces any restrictions on the size of the wait queue of threads or asynchronous tasks that
+    require a connection to MongoDB.  It is up to the application to throttle requests sufficiently rather than rely on the driver to
+    throw a `MongoWaitQueueFullException`.
+  * The driver no longer logs via JUL (`java.util.logging`).  The only supported logging framework is SLF4J.
+  * The embedded and Android drivers have been removed.  Applications relying on these drivers must remain on a 3.x driver release.
+  * The `mongo-java-driver` and `mongodb-driver` "uber-jars" are no longer published.  Applications that reference either of these artifacts
+    must switch to either `mongodb-driver-sync` or `mongodb-driver-legacy`, depending on which API is being used. Care should be taken to
+    ensure that neither of the uber-jars are included via a transitive dependency, as that could introduce versioning conflicts.
+  * Java 8 is now the minimum supported version. Applications using older versions of Java must remain on a 3.x driver release.
+  * Several binary compatibility breaks were introduced (in particular, the change to the signature of the insert helper methods), so any
+    classes that link to the driver must be recompiled in order to work with this release.
+        
+## Upgrading from the 1.12 Reactive Streams driver
 
 The main change to the MongoDB Reactive Streams Java Driver 1.12 driver is the removal of the `Success` type.
 
@@ -21,7 +52,7 @@ Breaking changes are as follows:
     Please note that `onNext` will not be called just `onComplete` if the operation is successful or `onError` if there is an error.
   * Removal of deprecated methods
 
-## Upgrading from mongo-scala-driver 2.7
+## Upgrading from the 2.8 Scala driver
 
 As the mongodb-driver-async package was deprecated in 3.x. The 4.0 version of the MongoDB Scala Driver is now built upon the
 mongo-java-driver-reactivestreams 4.0 driver. One major benefit is now the Scala driver is also a reactive streams driver.
@@ -35,11 +66,11 @@ Breaking changes are as follows:
   * Removal of deprecated methods
 
 
-## System Requirements
+# System Requirements
 
 The minimum JVM is Java 8.
 
-## Compatibility
+# Compatibility
 
 The following table specifies the compatibility of the MongoDB Java driver for use with a specific version of MongoDB.
 

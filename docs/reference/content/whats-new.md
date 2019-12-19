@@ -7,7 +7,12 @@ title = "What's New"
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
-## What's new in 3.12
+# What's new in 4.0
+
+This release adds no new features but, as a major release, contains breaking changes that may affect your application. Please consult the 
+[Upgrading Guide]({{<ref "upgrading.md">}}) for an enumeration of the breaking changes.
+
+# What's new in 3.12
 
 This release fully supports all MongoDB releases from versions 2.6 to 4.2. Key new features of the 3.12 Java driver release include:
 
