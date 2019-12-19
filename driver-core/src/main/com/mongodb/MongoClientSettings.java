@@ -612,7 +612,7 @@ public final class MongoClientSettings {
      * subtype of 3.
      *
      * <p>The default is {@link UuidRepresentation#UNSPECIFIED}, If your application stores UUID values in MongoDB, you must set this
-     * value to the desired representation..  New applications should prefer {@link UuidRepresentation#STANDARD}, while existing Java
+     * value to the desired representation.  New applications should prefer {@link UuidRepresentation#STANDARD}, while existing Java
      * applications should prefer {@link UuidRepresentation#JAVA_LEGACY}. Applications wishing to interoperate with existing Python or
      * .NET applications should prefer {@link UuidRepresentation#PYTHON_LEGACY} or {@link UuidRepresentation#C_SHARP_LEGACY},
      * respectively. Applications that do not store UUID values in MongoDB don't need to set this value.

@@ -61,7 +61,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries
 
 class DocumentCodecSpecification extends Specification {
-    static final CodecRegistry REGISTRY = fromRegistries(fromCodecs(new UuidCodec(JAVA_LEGACY)),
+    static final CodecRegistry REGISTRY = fromRegistries(fromCodecs(new UuidCodec(STANDARD)),
             fromProviders(asList(new ValueCodecProvider(), new BsonValueCodecProvider(), new DocumentCodecProvider())))
 
     @Shared
@@ -102,7 +102,7 @@ class DocumentCodecSpecification extends Specification {
         }
 
         when:
-        new DocumentCodec(REGISTRY).withUuidRepresentation(JAVA_LEGACY)
+        new DocumentCodec(REGISTRY).withUuidRepresentation(STANDARD)
                 .encode(writer, originalDocument, EncoderContext.builder().build())
         BsonReader reader
         if (writer instanceof BsonDocumentWriter) {
@@ -114,7 +114,7 @@ class DocumentCodecSpecification extends Specification {
         } else {
             reader = new JsonReader(stringWriter.toString())
         }
-        def decodedDoc = new DocumentCodec(REGISTRY).withUuidRepresentation(JAVA_LEGACY).decode(reader, DecoderContext.builder().build())
+        def decodedDoc = new DocumentCodec(REGISTRY).withUuidRepresentation(STANDARD).decode(reader, DecoderContext.builder().build())
 
         then:
         decodedDoc.get('null') == originalDocument.get('null')
