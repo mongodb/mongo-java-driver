@@ -36,9 +36,9 @@ import spock.lang.Unroll
 
 import static com.mongodb.client.Fixture.getDefaultDatabase
 import static com.mongodb.client.Fixture.getDefaultDatabaseName
+import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Updates.unset
-import static com.mongodb.internal.async.client.Fixture.getMongoClientBuilderFromConnectionString
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries
 
@@ -514,7 +514,7 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         given:
         def codecRegistry = fromRegistries(fromCodecs(new UuidCodec(UuidRepresentation.STANDARD)),
                 MongoClientSettings.getDefaultCodecRegistry())
-        def client = MongoClients.create(getMongoClientBuilderFromConnectionString()
+        def client = MongoClients.create(getMongoClientSettingsBuilder()
                 .uuidRepresentation(UuidRepresentation.STANDARD)
                 .build())
 
