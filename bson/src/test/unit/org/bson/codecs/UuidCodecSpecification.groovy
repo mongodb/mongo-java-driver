@@ -30,24 +30,22 @@ import spock.lang.Specification
 
 import java.nio.ByteBuffer
 
-import static org.bson.UuidRepresentation.JAVA_LEGACY
-
 /**
  *
  */
 class UuidCodecSpecification extends Specification {
 
-    @Shared private UuidCodec uuidCodec;
-    @Shared private BasicOutputBuffer outputBuffer;
+    @Shared private UuidCodec uuidCodec
+    @Shared private BasicOutputBuffer outputBuffer
 
     def setup() {
-        uuidCodec = new UuidCodec();
-        outputBuffer = new BasicOutputBuffer();
+        uuidCodec = new UuidCodec()
+        outputBuffer = new BasicOutputBuffer()
     }
 
-    def 'should default to Java legacy representation'() {
+    def 'should default to unspecified representation'() {
         expect:
-        new UuidCodec().getUuidRepresentation() == JAVA_LEGACY
+        new UuidCodec().getUuidRepresentation() == UuidRepresentation.UNSPECIFIED
     }
 
     def 'should decode different types of UUID'(UuidCodec codec, byte[] list) throws IOException {
@@ -72,7 +70,7 @@ class UuidCodecSpecification extends Specification {
         where:
 
         codec << [
-                new UuidCodec(),
+                new UuidCodec(UuidRepresentation.JAVA_LEGACY),
                 new UuidCodec(UuidRepresentation.STANDARD),
                 new UuidCodec(UuidRepresentation.PYTHON_LEGACY),
                 new UuidCodec(UuidRepresentation.C_SHARP_LEGACY),
@@ -146,7 +144,7 @@ class UuidCodecSpecification extends Specification {
         bsonSubType << [3, 4, 3, 3]
 
         codec << [
-                new UuidCodec(),
+                new UuidCodec(UuidRepresentation.JAVA_LEGACY),
                 new UuidCodec(UuidRepresentation.STANDARD),
                 new UuidCodec(UuidRepresentation.PYTHON_LEGACY),
                 new UuidCodec(UuidRepresentation.C_SHARP_LEGACY),

@@ -195,13 +195,8 @@ public abstract class AbstractUuidRepresentationTest {
             assertEquals(Binary.class, document.get("legacy").getClass());
             assertEquals(new Binary(BsonBinarySubType.UUID_LEGACY, standardEncodedValue), document.get("legacy"));
         } else {
-            if (uuidRepresentation == UuidRepresentation.JAVA_LEGACY) {
-                assertEquals(UUID.class, document.get("standard").getClass());
-                assertEquals(uuid, document.get("standard"));
-            } else {
-                assertEquals(Binary.class, document.get("standard").getClass());
-                assertEquals(new Binary(BsonBinarySubType.UUID_STANDARD, standardEncodedValue), document.get("standard"));
-            }
+            assertEquals(Binary.class, document.get("standard").getClass());
+            assertEquals(new Binary(BsonBinarySubType.UUID_STANDARD, standardEncodedValue), document.get("standard"));
 
             assertEquals(UUID.class, document.get("legacy").getClass());
             assertEquals(uuid, document.get("legacy"));
@@ -241,13 +236,8 @@ public abstract class AbstractUuidRepresentationTest {
             assertEquals(Binary.class, document.get("legacy").getClass());
             assertEquals(new Binary(BsonBinarySubType.UUID_LEGACY, standardEncodedValue), document.get("legacy"));
         } else {
-            if (uuidRepresentation == UuidRepresentation.JAVA_LEGACY) {
-                assertEquals(UUID.class, document.get("standard").getClass());
-                assertEquals(uuid, document.get("standard"));
-            } else {
-                assertEquals(Binary.class, document.get("standard").getClass());
-                assertEquals(new Binary(BsonBinarySubType.UUID_STANDARD, standardEncodedValue), document.get("standard"));
-            }
+            assertEquals(Binary.class, document.get("standard").getClass());
+            assertEquals(new Binary(BsonBinarySubType.UUID_STANDARD, standardEncodedValue), document.get("standard"));
 
             assertEquals(UUID.class, document.get("legacy").getClass());
             assertEquals(uuid, document.get("legacy"));

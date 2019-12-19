@@ -25,7 +25,6 @@ import com.mongodb.client.internal.ChangeStreamIterableImpl
 import com.mongodb.client.internal.ListDatabasesIterableImpl
 import com.mongodb.client.internal.MongoClientImpl
 import com.mongodb.client.internal.MongoDatabaseImpl
-
 import com.mongodb.client.internal.TestOperationExecutor
 import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ClusterDescription
@@ -48,8 +47,8 @@ import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.secondary
 import static com.mongodb.client.internal.TestHelper.execute
-import static org.bson.UuidRepresentation.JAVA_LEGACY
 import static org.bson.UuidRepresentation.STANDARD
+import static org.bson.UuidRepresentation.UNSPECIFIED
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
 
@@ -76,7 +75,7 @@ class MongoClientSpecification extends Specification {
 
         where:
         expectedDatabase << new MongoDatabaseImpl('name', codecRegistry, secondary(),
-                WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, JAVA_LEGACY, new TestOperationExecutor([]))
+                WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, UNSPECIFIED, new TestOperationExecutor([]))
     }
 
     def 'should use ListDatabasesIterableImpl correctly'() {

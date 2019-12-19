@@ -16,7 +16,6 @@
 
 package com.mongodb
 
-
 import com.mongodb.client.internal.TestOperationExecutor
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CollationAlternate

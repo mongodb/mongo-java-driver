@@ -53,7 +53,7 @@ public class UuidCodec implements Codec<UUID> {
      * The constructor for UUIDCodec, default is JAVA_LEGACY
      */
     public UuidCodec() {
-        this.uuidRepresentation = UuidRepresentation.JAVA_LEGACY;
+        this.uuidRepresentation = UuidRepresentation.UNSPECIFIED;
     }
 
     /**

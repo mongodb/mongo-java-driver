@@ -50,6 +50,7 @@ import static com.mongodb.ReadPreference.secondary
 import static com.mongodb.internal.async.client.TestHelper.execute
 import static org.bson.UuidRepresentation.JAVA_LEGACY
 import static org.bson.UuidRepresentation.STANDARD
+import static org.bson.UuidRepresentation.UNSPECIFIED
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
 
@@ -100,13 +101,13 @@ class AsyncMongoDatabaseSpecification extends Specification {
 
         when:
         def database = new AsyncMongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, true, readConcern,
-                JAVA_LEGACY, executor)
+                UNSPECIFIED, executor)
                 .withCodecRegistry(newCodecRegistry)
 
         then:
         database.getCodecRegistry() == newCodecRegistry
         expect database, isTheSameAs(new AsyncMongoDatabaseImpl(name, newCodecRegistry, readPreference, writeConcern,
-                false, true, readConcern, JAVA_LEGACY, executor))
+                false, true, readConcern, UNSPECIFIED, executor))
 
         when:
         database = new AsyncMongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, true, readConcern,

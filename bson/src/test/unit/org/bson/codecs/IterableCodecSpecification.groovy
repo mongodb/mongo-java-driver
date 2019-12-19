@@ -16,7 +16,6 @@
 
 package org.bson.codecs
 
-
 import org.bson.BsonDocument
 import org.bson.BsonDocumentReader
 import org.bson.BsonDocumentWriter
@@ -32,11 +31,12 @@ import static org.bson.UuidRepresentation.STANDARD
 import static org.bson.UuidRepresentation.UNSPECIFIED
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
+import static org.bson.codecs.configuration.CodecRegistries.fromRegistries
 
 class IterableCodecSpecification extends Specification {
 
-    static final REGISTRY = fromProviders(new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider(),
-            new IterableCodecProvider())
+    static final REGISTRY = fromRegistries(fromCodecs(new UuidCodec(JAVA_LEGACY)),
+            fromProviders(new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider(), new IterableCodecProvider()))
 
     def 'should have Iterable encoding class'() {
         given:
@@ -108,28 +108,6 @@ class IterableCodecSpecification extends Specification {
         iterable == ['1', '2', '3']
     }
 
-    def 'should decode binary subtypes for UUID'() {
-        given:
-        def codec = new IterableCodec(REGISTRY, new BsonTypeClassMap(), null)
-        def reader = new BsonDocumentReader(parse(document))
-
-        when:
-        reader.readStartDocument()
-        reader.readName('array')
-        def iterable = codec.decode(reader, DecoderContext.builder().build())
-        reader.readEndDocument()
-
-        then:
-        iterable == value
-
-        where:
-        document                                                                 | value
-        '{"array": [{ "$binary" : "c3QL", "$type" : "3" }]}'                     | [new Binary((byte) 0x03, (byte[]) [115, 116, 11])]
-        '{"array": [{ "$binary" : "c3QL", "$type" : "4" }]}'                     | [new Binary((byte) 0x04, (byte[]) [115, 116, 11])]
-        '{"array": [{ "$binary" : "AQIDBAUGBwgJCgsMDQ4PEA==", "$type" : "3" }]}' | [UUID.fromString('08070605-0403-0201-100f-0e0d0c0b0a09')]
-        '{"array": [{ "$binary" : "CAcGBQQDAgEQDw4NDAsKCQ==", "$type" : "3" }]}' | [UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10')]
-    }
-
     @SuppressWarnings(['LineLength'])
     @Unroll
     def 'should decode binary subtype 3 for UUID'() {
@@ -176,7 +154,7 @@ class IterableCodecSpecification extends Specification {
         where:
         representation | value                                                     | document
         STANDARD       | [UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10')] | '{"array": [{ "$binary" : "AQIDBAUGBwgJCgsMDQ4PEA==", "$type" : "4" }]}'
-        JAVA_LEGACY    | [UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10')] | '{"array": [{ "$binary" : "AQIDBAUGBwgJCgsMDQ4PEA==", "$type" : "4" }]}'
+        JAVA_LEGACY    | [UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10')] | '{"array": [{ "$binary" : "CAcGBQQDAgEQDw4NDAsKCQ==", "$type" : "3" }]}'
         C_SHARP_LEGACY | [new Binary((byte) 4, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[])] | '{"array": [{ "$binary" : "AQIDBAUGBwgJCgsMDQ4PEA==", "$type" : "4" }]}'
         PYTHON_LEGACY  | [new Binary((byte) 4, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[])] | '{"array": [{ "$binary" : "AQIDBAUGBwgJCgsMDQ4PEA==", "$type" : "4" }]}'
         UNSPECIFIED    | [new Binary((byte) 4, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[])] | '{"array": [{ "$binary" : "AQIDBAUGBwgJCgsMDQ4PEA==", "$type" : "4" }]}'

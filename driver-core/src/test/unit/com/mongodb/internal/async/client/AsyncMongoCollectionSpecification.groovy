@@ -106,6 +106,7 @@ import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static org.bson.UuidRepresentation.JAVA_LEGACY
 import static org.bson.UuidRepresentation.STANDARD
+import static org.bson.UuidRepresentation.UNSPECIFIED
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries
 import static spock.util.matcher.HamcrestSupport.expect
@@ -151,12 +152,12 @@ class AsyncMongoCollectionSpecification extends Specification {
 
         when:
         def collection = new AsyncMongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED,
-                true, true, readConcern, JAVA_LEGACY, executor).withCodecRegistry(newCodecRegistry)
+                true, true, readConcern, UNSPECIFIED, executor).withCodecRegistry(newCodecRegistry)
 
         then:
         collection.getCodecRegistry() == newCodecRegistry
         expect collection, isTheSameAs(new AsyncMongoCollectionImpl(namespace, Document, newCodecRegistry, readPreference, ACKNOWLEDGED,
-                true, true, readConcern, JAVA_LEGACY, executor))
+                true, true, readConcern, UNSPECIFIED, executor))
 
         when:
         collection = new AsyncMongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED,

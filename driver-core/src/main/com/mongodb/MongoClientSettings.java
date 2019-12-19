@@ -157,7 +157,7 @@ public final class MongoClientSettings {
         private MongoCredential credential;
         private String applicationName;
         private List<MongoCompressor> compressorList = Collections.emptyList();
-        private UuidRepresentation uuidRepresentation = UuidRepresentation.JAVA_LEGACY;
+        private UuidRepresentation uuidRepresentation = UuidRepresentation.UNSPECIFIED;
 
         private AutoEncryptionSettings autoEncryptionSettings;
 
@@ -611,13 +611,11 @@ public final class MongoClientSettings {
      * Gets the UUID representation to use when encoding instances of {@link java.util.UUID} and when decoding BSON binary values with
      * subtype of 3.
      *
-     * <p>The default is {@link UuidRepresentation#JAVA_LEGACY}, but it will be changing to {@link UuidRepresentation#UNSPECIFIED} in
-     * the next major release.  If your application stores UUID values in MongoDB, consider setting this value to the desired
-     * representation in order to avoid a breaking change when upgrading.  New applications should prefer
-     * {@link UuidRepresentation#STANDARD}, while existing Java applications should prefer {@link UuidRepresentation#JAVA_LEGACY}.
-     * Applications wishing to interoperate with existing Python or .NET applications should prefer
-     * {@link UuidRepresentation#PYTHON_LEGACY} or {@link UuidRepresentation#C_SHARP_LEGACY}, respectively. Applications that do not
-     * store UUID values in MongoDB don't need to set this value.
+     * <p>The default is {@link UuidRepresentation#UNSPECIFIED}, If your application stores UUID values in MongoDB, you must set this
+     * value to the desired representation.  New applications should prefer {@link UuidRepresentation#STANDARD}, while existing Java
+     * applications should prefer {@link UuidRepresentation#JAVA_LEGACY}. Applications wishing to interoperate with existing Python or
+     * .NET applications should prefer {@link UuidRepresentation#PYTHON_LEGACY} or {@link UuidRepresentation#C_SHARP_LEGACY},
+     * respectively. Applications that do not store UUID values in MongoDB don't need to set this value.
      * </p>
      *
      * @return the UUID representation, which may not be null

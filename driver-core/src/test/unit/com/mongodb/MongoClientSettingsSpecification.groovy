@@ -55,7 +55,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.streamFactoryFactory == null
         settings.compressorList == []
         settings.credential == null
-        settings.uuidRepresentation == UuidRepresentation.JAVA_LEGACY
+        settings.uuidRepresentation == UuidRepresentation.UNSPECIFIED
     }
 
     @SuppressWarnings('UnnecessaryObjectReferences')

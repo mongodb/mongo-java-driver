@@ -20,6 +20,7 @@ import category.Slow
 import com.mongodb.MongoGridFSException
 import com.mongodb.client.gridfs.model.GridFSFile
 import com.mongodb.client.gridfs.model.GridFSUploadOptions
+import com.mongodb.internal.async.client.AsyncMongoClients
 import com.mongodb.internal.async.client.AsyncMongoCollection
 import com.mongodb.internal.async.client.AsyncMongoDatabase
 import com.mongodb.internal.async.client.FunctionalSpecification
@@ -27,7 +28,6 @@ import org.bson.BsonDocument
 import org.bson.BsonString
 import org.bson.Document
 import org.bson.UuidRepresentation
-import org.bson.codecs.UuidCodec
 import org.bson.types.ObjectId
 import org.junit.experimental.categories.Category
 import spock.lang.Unroll
@@ -37,15 +37,13 @@ import java.security.SecureRandom
 
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Updates.unset
-import static com.mongodb.internal.async.client.AsyncMongoClients.getDefaultCodecRegistry
 import static com.mongodb.internal.async.client.Fixture.getDefaultDatabaseName
 import static com.mongodb.internal.async.client.Fixture.getMongoClient
+import static com.mongodb.internal.async.client.Fixture.getMongoClientBuilderFromConnectionString
 import static com.mongodb.internal.async.client.TestHelper.run
 import static com.mongodb.internal.async.client.TestHelper.runSlow
 import static com.mongodb.internal.async.client.gridfs.helpers.AsyncStreamHelper.toAsyncInputStream
 import static com.mongodb.internal.async.client.gridfs.helpers.AsyncStreamHelper.toAsyncOutputStream
-import static org.bson.codecs.configuration.CodecRegistries.fromCodecs
-import static org.bson.codecs.configuration.CodecRegistries.fromRegistries
 
 class AsyncGridFSBucketSmokeTestSpecification extends FunctionalSpecification {
     protected AsyncMongoDatabase mongoDatabase;
@@ -485,8 +483,10 @@ class AsyncGridFSBucketSmokeTestSpecification extends FunctionalSpecification {
 
     def 'should use the user provided codec registries for encoding / decoding data'() {
         given:
-        def codecRegistry = fromRegistries(fromCodecs(new UuidCodec(UuidRepresentation.STANDARD)), getDefaultCodecRegistry())
-        def database = getMongoClient().getDatabase(getDefaultDatabaseName()).withCodecRegistry(codecRegistry)
+        def client = AsyncMongoClients.create(getMongoClientBuilderFromConnectionString()
+                .uuidRepresentation(UuidRepresentation.STANDARD)
+                .build())
+        def database = client.getDatabase(getDefaultDatabaseName())
         def uuid = UUID.randomUUID()
         def fileMeta = new Document('uuid', uuid)
         def gridFSBucket = AsyncGridFSBuckets.create(database)
@@ -505,6 +505,9 @@ class AsyncGridFSBucketSmokeTestSpecification extends FunctionalSpecification {
 
         then:
         fileAsDocument.getDocument('metadata').getBinary('uuid').getType() == 4 as byte
+
+        cleanup:
+        client?.close()
     }
 
     @Unroll

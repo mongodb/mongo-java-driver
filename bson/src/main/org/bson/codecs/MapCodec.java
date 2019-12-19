@@ -84,7 +84,7 @@ public class MapCodec implements Codec<Map<String, Object>>, OverridableUuidRepr
      */
     public MapCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap, final Transformer valueTransformer) {
         this(registry, new BsonTypeCodecMap(notNull("bsonTypeClassMap", bsonTypeClassMap), registry), valueTransformer,
-                UuidRepresentation.JAVA_LEGACY);
+                UuidRepresentation.UNSPECIFIED);
     }
 
     private MapCodec(final CodecRegistry registry, final BsonTypeCodecMap bsonTypeCodecMap, final Transformer valueTransformer,
@@ -153,7 +153,7 @@ public class MapCodec implements Codec<Map<String, Object>>, OverridableUuidRepr
                     }
                     break;
                 case 4:
-                    if (uuidRepresentation == UuidRepresentation.JAVA_LEGACY || uuidRepresentation == UuidRepresentation.STANDARD) {
+                    if (uuidRepresentation == UuidRepresentation.STANDARD) {
                         codec = registry.get(UUID.class);
                     }
                     break;
