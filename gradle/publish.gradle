@@ -116,7 +116,7 @@ configure(scalaProjects) { project ->
     publishing {
         publications {
             mavenJava(MavenPublication) {
-                artifactId = project.archivesBaseName
+                artifactId = project.archivesBaseName.contains('bson') ? 'mongo-scala-bson' : 'mongo-scala-driver'
                 from project.components.java
                 artifact sourcesJar
                 if (!scalaVersion.startsWith("2.13")) {
@@ -130,7 +130,6 @@ configure(scalaProjects) { project ->
     }
 
     afterEvaluate {
-        publishing.publications.mavenJava.artifactId = project.archivesBaseName
         signing {
             sign publishing.publications.mavenJava
         }
