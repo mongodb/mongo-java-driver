@@ -16,7 +16,7 @@ The Java driver provides the [`Filters.text()`]({{<apiref "com/mongodb/client/mo
 
 ## Prerequisites
 
-- The example below requires a ``restaurants`` collection in the ``test`` database. To create and populate the collection, follow the directions in [github] (https://github.com/mongodb/docs-assets/tree/drivers).
+- The example below requires a ``restaurants`` collection in the ``test`` database. To create and populate the collection, follow the directions in [github](https://github.com/mongodb/docs-assets/tree/drivers).
 
 - Include the following import statements:
 
@@ -97,13 +97,9 @@ For each matching document, text search assigns a score, representing the releva
 
 ```java
 collection.find(Filters.text("bakery cafe"))
-                              .projection(Projections.metaTextScore("score"))
-                              .sort(Sorts.metaTextScore("score")).forEach(printBlock);
+                       .projection(Projections.metaTextScore("score"))
+                       .sort(Sorts.metaTextScore("score")).forEach(printBlock);
 ```
-
-The example should print the following output:
-
-
 
 ### Specify a Text Search Option
 

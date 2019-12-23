@@ -33,14 +33,13 @@ import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerType
-import com.mongodb.connection.ServerVersion
 import com.mongodb.connection.Stream
 import com.mongodb.connection.StreamFactory
 import com.mongodb.event.CommandFailedEvent
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.event.CommandSucceededEvent
 import com.mongodb.internal.validator.NoOpFieldNameValidator
-import com.mongodb.session.SessionContext
+import com.mongodb.internal.session.SessionContext
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
@@ -48,7 +47,6 @@ import org.bson.ByteBuf
 import org.bson.ByteBufNIO
 import org.bson.codecs.BsonDocumentCodec
 import org.junit.experimental.categories.Category
-import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import java.nio.ByteBuffer
@@ -75,7 +73,7 @@ class InternalStreamConnectionSpecification extends Specification {
     def commandListener = new TestCommandListener()
     def messageSettings = MessageSettings.builder().maxWireVersion(THREE_DOT_SIX_WIRE_VERSION).build()
 
-    def connectionDescription = new ConnectionDescription(connectionId, new ServerVersion(3, 6), 3,
+    def connectionDescription = new ConnectionDescription(connectionId, 3,
             ServerType.STANDALONE, getDefaultMaxWriteBatchSize(), getDefaultMaxDocumentSize(), getDefaultMaxMessageSize(), [])
     def stream = Mock(Stream) {
         openAsync(_) >> { it[0].completed(null) }
@@ -116,7 +114,6 @@ class InternalStreamConnectionSpecification extends Specification {
     }
 
     @Category(Async)
-    @IgnoreIf({ javaVersion < 1.7 })
     def 'should change the connection description when opened asynchronously'() {
         when:
         def connection = getConnection()
@@ -152,7 +149,6 @@ class InternalStreamConnectionSpecification extends Specification {
     }
 
     @Category(Async)
-    @IgnoreIf({ javaVersion < 1.7 })
     def 'should close the stream when initialization throws an exception asynchronously'() {
         given:
         def failedInitializer = Mock(InternalConnectionInitializer) {
@@ -193,7 +189,6 @@ class InternalStreamConnectionSpecification extends Specification {
     }
 
     @Category(Async)
-    @IgnoreIf({ javaVersion < 1.7 })
     def 'should close the stream when writing a message throws an exception asynchronously'() {
         given:
         def (buffers1, messageId1, sndCallbck1, rcvdCallbck1) = helper.isMasterAsync()
@@ -283,7 +278,6 @@ class InternalStreamConnectionSpecification extends Specification {
     }
 
     @Category(Async)
-    @IgnoreIf({ javaVersion < 1.7 })
     def 'should close the stream when reading the message header throws an exception asynchronously'() {
         given:
         int seen = 0
@@ -346,7 +340,6 @@ class InternalStreamConnectionSpecification extends Specification {
     }
 
     @Category(Async)
-    @IgnoreIf({ javaVersion < 1.7 })
     def 'should close the stream when reading the message body throws an exception asynchronously'() {
         given:
         def (buffers1, messageId1, sndCallbck1, rcvdCallbck1) = helper.isMasterAsync()

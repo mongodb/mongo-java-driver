@@ -16,7 +16,6 @@
 
 package com.mongodb;
 
-import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.dns.DefaultDnsResolver;
@@ -120,16 +119,10 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code socketTimeoutMS=ms}: How long a send or receive on a socket can take before timing out.</li>
  * <li>{@code maxIdleTimeMS=ms}: Maximum idle time of a pooled connection. A connection that exceeds this limit will be closed</li>
  * <li>{@code maxLifeTimeMS=ms}: Maximum life time of a pooled connection. A connection that exceeds this limit will be closed</li>
- * <li>{@code streamType=nio2|netty}: The stream type to use for connections. If unspecified, nio2 will be used for asynchronous
- * clients.  Note that this query parameter has been deprecated and applications should use
- * {@link MongoClientSettings.Builder#streamFactoryFactory(StreamFactoryFactory)} instead.</li>
  * </ul>
  * <p>Connection pool configuration:</p>
  * <ul>
  * <li>{@code maxPoolSize=n}: The maximum number of connections in the connection pool.</li>
- * <li>{@code waitQueueMultiple=n} : this multiplier, multiplied with the maxPoolSize setting, gives the maximum number of
- * threads that may be waiting for a connection to become available from the pool.  All further threads will get an
- * exception right away. Note that this configuration option is deprecated and will be removed in the next major release.</li>
  * <li>{@code waitQueueTimeoutMS=ms}: The maximum wait time in milliseconds that a thread may wait for a connection to
  * become available.</li>
  * </ul>
@@ -262,7 +255,6 @@ public class ConnectionString {
 
     private Integer minConnectionPoolSize;
     private Integer maxConnectionPoolSize;
-    private Integer threadsAllowedToBlockForConnectionMultiplier;
     private Integer maxWaitTime;
     private Integer maxConnectionIdleTime;
     private Integer maxConnectionLifeTime;
@@ -270,7 +262,6 @@ public class ConnectionString {
     private Integer socketTimeout;
     private Boolean sslEnabled;
     private Boolean sslInvalidHostnameAllowed;
-    private String streamType;
     private String requiredReplicaSetName;
     private Integer serverSelectionTimeout;
     private Integer localThreshold;
@@ -407,7 +398,6 @@ public class ConnectionString {
     static {
         GENERAL_OPTIONS_KEYS.add("minpoolsize");
         GENERAL_OPTIONS_KEYS.add("maxpoolsize");
-        GENERAL_OPTIONS_KEYS.add("waitqueuemultiple");
         GENERAL_OPTIONS_KEYS.add("waitqueuetimeoutms");
         GENERAL_OPTIONS_KEYS.add("connecttimeoutms");
         GENERAL_OPTIONS_KEYS.add("maxidletimems");
@@ -429,7 +419,6 @@ public class ConnectionString {
 
         GENERAL_OPTIONS_KEYS.add("replicaset");
         GENERAL_OPTIONS_KEYS.add("readconcernlevel");
-        GENERAL_OPTIONS_KEYS.add("streamtype");
 
         GENERAL_OPTIONS_KEYS.add("serverselectiontimeoutms");
         GENERAL_OPTIONS_KEYS.add("localthresholdms");
@@ -451,7 +440,6 @@ public class ConnectionString {
         WRITE_CONCERN_KEYS.add("safe");
         WRITE_CONCERN_KEYS.add("w");
         WRITE_CONCERN_KEYS.add("wtimeoutms");
-        WRITE_CONCERN_KEYS.add("fsync");
         WRITE_CONCERN_KEYS.add("journal");
 
         AUTH_KEYS.add("authmechanism");
@@ -505,8 +493,6 @@ public class ConnectionString {
                 maxConnectionIdleTime = parseInteger(value, "maxidletimems");
             } else if (key.equals("maxlifetimems")) {
                 maxConnectionLifeTime = parseInteger(value, "maxlifetimems");
-            } else if (key.equals("waitqueuemultiple")) {
-                threadsAllowedToBlockForConnectionMultiplier  = parseInteger(value, "waitqueuemultiple");
             } else if (key.equals("waitqueuetimeoutms")) {
                 maxWaitTime = parseInteger(value, "waitqueuetimeoutms");
             } else if (key.equals("connecttimeoutms")) {
@@ -526,10 +512,6 @@ public class ConnectionString {
                 initializeSslEnabled("ssl", value);
             } else if (key.equals("tls")) {
                 initializeSslEnabled("tls", value);
-            } else if (key.equals("streamtype")) {
-                streamType = value;
-                LOGGER.warn("The streamType query parameter is deprecated and support for it will be removed"
-                        + " in the next major release.");
             } else if (key.equals("replicaset")) {
                 requiredReplicaSetName = value;
             } else if (key.equals("readconcernlevel")) {
@@ -615,7 +597,6 @@ public class ConnectionString {
         String w = null;
         Integer wTimeout = null;
         Boolean safe = null;
-        Boolean fsync = null;
         Boolean journal = null;
 
         for (final String key : WRITE_CONCERN_KEYS) {
@@ -630,13 +611,11 @@ public class ConnectionString {
                 w = value;
             } else if (key.equals("wtimeoutms")) {
                 wTimeout = Integer.parseInt(value);
-            } else if (key.equals("fsync")) {
-                fsync = parseBoolean(value, "fsync");
             } else if (key.equals("journal")) {
                 journal = parseBoolean(value, "journal");
             }
         }
-        return buildWriteConcern(safe, w, wTimeout, fsync, journal);
+        return buildWriteConcern(safe, w, wTimeout, journal);
     }
 
     @Nullable
@@ -700,7 +679,14 @@ public class ConnectionString {
             }
 
             if (key.equals("authmechanism")) {
-                mechanism = AuthenticationMechanism.fromMechanismName(value);
+                if (value.equals("MONGODB-CR")) {
+                    if (userName == null) {
+                        throw new IllegalArgumentException("username can not be null");
+                    }
+                    LOGGER.warn("Deprecated MONGDOB-CR authentication mechanism used in connection string");
+                } else {
+                    mechanism = AuthenticationMechanism.fromMechanismName(value);
+                }
             } else if (key.equals("authsource")) {
                 authSource = value;
             } else if (key.equals("gssapiservicename")) {
@@ -738,7 +724,6 @@ public class ConnectionString {
         return credential;
     }
 
-    @SuppressWarnings("deprecation")
     private MongoCredential createMongoCredentialWithMechanism(final AuthenticationMechanism mechanism, final String userName,
                                                                @Nullable final char[] password,
                                                                @Nullable final String authSource,
@@ -772,9 +757,6 @@ public class ConnectionString {
                 break;
             case PLAIN:
                 credential = MongoCredential.createPlainCredential(userName, mechanismAuthSource, password);
-                break;
-            case MONGODB_CR:
-                credential = MongoCredential.createMongoCRCredential(userName, mechanismAuthSource, password);
                 break;
             case MONGODB_X509:
                 if (password != null) {
@@ -885,13 +867,12 @@ public class ConnectionString {
         return null;
     }
 
-    @SuppressWarnings("deprecation")
     @Nullable
     private WriteConcern buildWriteConcern(@Nullable final Boolean safe, @Nullable final String w,
-                                           @Nullable final Integer wTimeout, @Nullable final Boolean fsync,
+                                           @Nullable final Integer wTimeout,
                                            @Nullable final Boolean journal) {
         WriteConcern retVal = null;
-        if (w != null || wTimeout != null || fsync != null || journal != null) {
+        if (w != null || wTimeout != null || journal != null) {
             if (w == null) {
                 retVal = WriteConcern.ACKNOWLEDGED;
             } else {
@@ -906,9 +887,6 @@ public class ConnectionString {
             }
             if (journal != null) {
                 retVal = retVal.withJournal(journal);
-            }
-            if (fsync != null) {
-                retVal = retVal.withFsync(fsync);
             }
             return retVal;
         } else if (safe != null) {
@@ -1108,33 +1086,10 @@ public class ConnectionString {
      * Get the unparsed connection string.
      *
      * @return the connection string
-     * deprecated use {@link #getConnectionString()}
-     */
-    @Deprecated
-    public String getURI() {
-        return getConnectionString();
-    }
-
-    /**
-     * Get the unparsed connection string.
-     *
-     * @return the connection string
      * @since 3.1
      */
     public String getConnectionString() {
         return connectionString;
-    }
-
-
-    /**
-     * Gets the credentials in an immutable list.  The list will be empty if no credentials were specified in the connection string.
-     *
-     * @return the credentials in an immutable list
-     * @deprecated Prefer {@link #getCredential()}
-     */
-    @Deprecated
-    public List<MongoCredential> getCredentialList() {
-        return credential != null ? singletonList(credential) : Collections.<MongoCredential>emptyList();
     }
 
     /**
@@ -1176,25 +1131,10 @@ public class ConnectionString {
     }
 
     /**
-     * Returns true if writes should be retried if they fail due to a network error, and false otherwise
-     *
-     * <p>Starting with the 3.11.0 release, the default value is true</p>
-     *
-     * @return the retryWrites value, or true if unset
-     * @since 3.6
-     * @mongodb.server.release 3.6
-     * @deprecated Prefer {@link #getRetryWritesValue()}
-     */
-    @Deprecated
-    public boolean getRetryWrites() {
-        return retryWrites == null ? true : retryWrites;
-    }
-
-    /**
      * <p>Gets whether writes should be retried if they fail due to a network error</p>
      *
-     * The name of this method differs from others in this class so as not to conflict with the deprecated (and soon to be removed)
-     * {@link #getRetryWrites()} method, which returns a primitive {@code boolean} value, which doesn't allow callers to differentiate
+     * The name of this method differs from others in this class so as not to conflict with the now removed
+     * getRetryWrites() method, which returned a primitive {@code boolean} value, and didn't allow callers to differentiate
      * between a false value and an unset value.
      *
      * @return the retryWrites value, or null if unset
@@ -1232,17 +1172,6 @@ public class ConnectionString {
     @Nullable
     public Integer getMaxConnectionPoolSize() {
         return maxConnectionPoolSize;
-    }
-
-    /**
-     * Gets the multiplier for the number of threads allowed to block waiting for a connection specified in the connection string.
-     * @return the multiplier for the number of threads allowed to block waiting for a connection
-     * @deprecated in the next major release, wait queue size limitations will be removed
-     */
-    @Deprecated
-    @Nullable
-    public Integer getThreadsAllowedToBlockForConnectionMultiplier() {
-        return threadsAllowedToBlockForConnectionMultiplier;
     }
 
     /**
@@ -1297,19 +1226,6 @@ public class ConnectionString {
     @Nullable
     public Boolean getSslEnabled() {
         return sslEnabled;
-    }
-
-    /**
-     * Gets the stream type value specified in the connection string.
-     * @return the stream type value
-     * @since 3.3
-     * @deprecated Use {@link MongoClientSettings.Builder#streamFactoryFactory(StreamFactoryFactory)} to configure the stream type
-     * programmatically
-     */
-    @Deprecated
-    @Nullable
-    public String getStreamType() {
-        return streamType;
     }
 
     /**
@@ -1463,11 +1379,6 @@ public class ConnectionString {
         if (sslEnabled != null ? !sslEnabled.equals(that.sslEnabled) : that.sslEnabled != null) {
             return false;
         }
-        if (threadsAllowedToBlockForConnectionMultiplier != null
-            ? !threadsAllowedToBlockForConnectionMultiplier.equals(that.threadsAllowedToBlockForConnectionMultiplier)
-            : that.threadsAllowedToBlockForConnectionMultiplier != null) {
-            return false;
-        }
         if (writeConcern != null ? !writeConcern.equals(that.writeConcern) : that.writeConcern != null) {
             return false;
         }
@@ -1491,9 +1402,6 @@ public class ConnectionString {
         result = 31 * result + (writeConcern != null ? writeConcern.hashCode() : 0);
         result = 31 * result + (minConnectionPoolSize != null ? minConnectionPoolSize.hashCode() : 0);
         result = 31 * result + (maxConnectionPoolSize != null ? maxConnectionPoolSize.hashCode() : 0);
-        result = 31 * result + (threadsAllowedToBlockForConnectionMultiplier != null
-                                ? threadsAllowedToBlockForConnectionMultiplier.hashCode()
-                                : 0);
         result = 31 * result + (maxWaitTime != null ? maxWaitTime.hashCode() : 0);
         result = 31 * result + (maxConnectionIdleTime != null ? maxConnectionIdleTime.hashCode() : 0);
         result = 31 * result + (maxConnectionLifeTime != null ? maxConnectionLifeTime.hashCode() : 0);

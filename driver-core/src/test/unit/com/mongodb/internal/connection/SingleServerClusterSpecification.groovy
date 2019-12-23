@@ -25,7 +25,7 @@ import com.mongodb.connection.ClusterType
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
 import com.mongodb.event.ClusterListener
-import com.mongodb.selector.WritableServerSelector
+import com.mongodb.internal.selector.WritableServerSelector
 import spock.lang.Specification
 
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
@@ -36,7 +36,6 @@ import static com.mongodb.connection.ServerConnectionState.CONNECTING
 import static com.mongodb.connection.ServerType.STANDALONE
 import static java.util.concurrent.TimeUnit.SECONDS
 
-@SuppressWarnings('deprecation')
 class SingleServerClusterSpecification extends Specification {
     private static final ClusterId CLUSTER_ID = new ClusterId()
     private final ServerAddress firstServer = new ServerAddress('localhost:27017')
@@ -62,7 +61,7 @@ class SingleServerClusterSpecification extends Specification {
         then:
         cluster.getDescription().type == ClusterType.STANDALONE
         cluster.getDescription().connectionMode == SINGLE
-        cluster.getDescription().all == getDescriptions()
+        ClusterDescriptionHelper.getAll(cluster.getDescription()) == getDescriptions()
 
         cleanup:
         cluster?.close()
@@ -111,7 +110,7 @@ class SingleServerClusterSpecification extends Specification {
 
         then:
         cluster.getDescription().type == ClusterType.SHARDED
-        cluster.getDescription().all == [] as Set
+        ClusterDescriptionHelper.getAll(cluster.getDescription()) == [] as Set
 
         cleanup:
         cluster?.close()
@@ -128,7 +127,7 @@ class SingleServerClusterSpecification extends Specification {
 
         then:
         cluster.getDescription().type == REPLICA_SET
-        cluster.getDescription().all == getDescriptions()
+        ClusterDescriptionHelper.getAll(cluster.getDescription()) == getDescriptions()
 
         cleanup:
         cluster?.close()
@@ -145,7 +144,7 @@ class SingleServerClusterSpecification extends Specification {
 
         then:
         cluster.getDescription().type == REPLICA_SET
-        cluster.getDescription().all == [] as Set
+        ClusterDescriptionHelper.getAll(cluster.getDescription()) == [] as Set
 
         cleanup:
         cluster?.close()

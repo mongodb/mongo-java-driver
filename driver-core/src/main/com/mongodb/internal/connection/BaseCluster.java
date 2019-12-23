@@ -20,15 +20,12 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoIncompatibleDriverException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
-import com.mongodb.MongoWaitQueueFullException;
 import com.mongodb.ServerAddress;
-import com.mongodb.async.SingleResultCallback;
-import com.mongodb.connection.Cluster;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ClusterType;
-import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
@@ -48,7 +45,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -74,7 +70,6 @@ abstract class BaseCluster implements Cluster {
     private final ClusterSettings settings;
     private final ClusterListener clusterListener;
     private final Deque<ServerSelectionRequest> waitQueue = new ConcurrentLinkedDeque<ServerSelectionRequest>();
-    private final AtomicInteger waitQueueSize = new AtomicInteger(0);
     private final ClusterClock clusterClock = new ClusterClock();
     private Thread waitQueueHandler;
 
@@ -411,13 +406,6 @@ abstract class BaseCluster implements Cluster {
                                                 curDescription.getShortDescription()));
     }
 
-    private MongoWaitQueueFullException createWaitQueueFullException() {
-        return new MongoWaitQueueFullException(format("Too many operations are already waiting for a server. "
-                                                      + "Max number of operations (maxWaitQueueSize) of %d has "
-                                                      + "been exceeded.",
-                                                      settings.getMaxWaitQueueSize()));
-    }
-
     private static final class ServerSelectionRequest {
         private final ServerSelector originalSelector;
         private final ServerSelector compositeSelector;
@@ -457,19 +445,14 @@ abstract class BaseCluster implements Cluster {
             return;
         }
 
-        if (waitQueueSize.incrementAndGet() > settings.getMaxWaitQueueSize()) {
-            waitQueueSize.decrementAndGet();
-            request.onResult(null, createWaitQueueFullException());
-        } else {
-            waitQueue.add(request);
+        waitQueue.add(request);
 
-            if (waitQueueHandler == null) {
-                waitQueueHandler = new Thread(new WaitQueueHandler(), "cluster-" + clusterId.getValue());
-                waitQueueHandler.setDaemon(true);
-                waitQueueHandler.start();
-            } else {
-                updatePhase();
-            }
+        if (waitQueueHandler == null) {
+            waitQueueHandler = new Thread(new WaitQueueHandler(), "cluster-" + clusterId.getValue());
+            waitQueueHandler.setDaemon(true);
+            waitQueueHandler.start();
+        } else {
+            updatePhase();
         }
     }
 
@@ -490,7 +473,6 @@ abstract class BaseCluster implements Cluster {
                     ServerSelectionRequest nextRequest = iter.next();
                     if (handleServerSelectionRequest(nextRequest, currentPhase, curDescription)) {
                         iter.remove();
-                        waitQueueSize.decrementAndGet();
                     } else {
                         waitTimeNanos = Math.min(nextRequest.getRemainingTime(), Math.min(getMinWaitTimeNanos(), waitTimeNanos));
                     }

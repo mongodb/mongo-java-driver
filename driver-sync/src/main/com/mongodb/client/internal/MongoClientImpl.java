@@ -21,7 +21,6 @@ import com.mongodb.ClientSessionOptions;
 import com.mongodb.Function;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
-import com.mongodb.MongoCredential;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.ReadPreference;
 import com.mongodb.TransactionOptions;
@@ -31,14 +30,14 @@ import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
-import com.mongodb.client.model.changestream.ChangeStreamLevel;
-import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ClusterDescription;
-import com.mongodb.connection.DefaultClusterFactory;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.StreamFactoryFactory;
+import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
+import com.mongodb.internal.connection.Cluster;
+import com.mongodb.internal.connection.DefaultClusterFactory;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.Document;
@@ -52,7 +51,6 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static org.bson.internal.CodecRegistryHelper.createRegistry;
 import static com.mongodb.client.internal.Crypts.createCrypt;
 import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
-import static java.util.Collections.singletonList;
 
 public final class MongoClientImpl implements MongoClient {
 
@@ -68,8 +66,7 @@ public final class MongoClientImpl implements MongoClient {
         this.settings = notNull("settings", settings);
         AutoEncryptionSettings autoEncryptionSettings = settings.getAutoEncryptionSettings();
         this.delegate = new MongoClientDelegate(notNull("cluster", cluster),
-                createRegistry(settings.getCodecRegistry(), settings.getUuidRepresentation()),
-                singletonList(settings.getCredential()), this, operationExecutor,
+                createRegistry(settings.getCodecRegistry(), settings.getUuidRepresentation()), this, operationExecutor,
                 autoEncryptionSettings == null ? null : createCrypt(SimpleMongoClients.create(this), autoEncryptionSettings));
     }
 
@@ -188,9 +185,9 @@ public final class MongoClientImpl implements MongoClient {
     private <TResult> ChangeStreamIterable<TResult> createChangeStreamIterable(@Nullable final ClientSession clientSession,
                                                                                final List<? extends Bson> pipeline,
                                                                                final Class<TResult> resultClass) {
-        return MongoIterables.changeStreamOf(clientSession, "admin", settings.getCodecRegistry(),
-                settings.getReadPreference(), settings.getReadConcern(), delegate.getOperationExecutor(), pipeline, resultClass,
-                ChangeStreamLevel.CLIENT, settings.getRetryReads());
+        return new ChangeStreamIterableImpl<>(clientSession, "admin", settings.getCodecRegistry(), settings.getReadPreference(),
+                settings.getReadConcern(), delegate.getOperationExecutor(),
+                pipeline, resultClass, ChangeStreamLevel.CLIENT, settings.getRetryReads());
     }
 
     public Cluster getCluster() {
@@ -204,12 +201,10 @@ public final class MongoClientImpl implements MongoClient {
     private static Cluster createCluster(final MongoClientSettings settings,
                                          @Nullable final MongoDriverInformation mongoDriverInformation) {
         notNull("settings", settings);
-        List<MongoCredential> credentialList = settings.getCredential() != null ? singletonList(settings.getCredential())
-                : Collections.<MongoCredential>emptyList();
         return new DefaultClusterFactory().createCluster(settings.getClusterSettings(), settings.getServerSettings(),
-                settings.getConnectionPoolSettings(), getStreamFactory(settings, false), getStreamFactory(settings, true), credentialList,
-                getCommandListener(settings.getCommandListeners()), settings.getApplicationName(), mongoDriverInformation,
-                settings.getCompressorList());
+                settings.getConnectionPoolSettings(), getStreamFactory(settings, false), getStreamFactory(settings, true),
+                settings.getCredential(), getCommandListener(settings.getCommandListeners()), settings.getApplicationName(),
+                mongoDriverInformation, settings.getCompressorList());
     }
 
     private static StreamFactory getStreamFactory(final MongoClientSettings settings, final boolean isHeartbeat) {
@@ -223,8 +218,8 @@ public final class MongoClientImpl implements MongoClient {
     }
 
     private <T> ListDatabasesIterable<T> createListDatabasesIterable(@Nullable final ClientSession clientSession, final Class<T> clazz) {
-        return MongoIterables.listDatabasesOf(clientSession, clazz, delegate.getCodecRegistry(),
-                ReadPreference.primary(), delegate.getOperationExecutor(), settings.getRetryReads());
+        return new ListDatabasesIterableImpl<>(clientSession, clazz, delegate.getCodecRegistry(), ReadPreference.primary(),
+                delegate.getOperationExecutor(), settings.getRetryReads());
     }
 
     private MongoIterable<String> createListDatabaseNamesIterable(final @Nullable ClientSession clientSession) {

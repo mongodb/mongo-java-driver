@@ -418,7 +418,6 @@ public final class Aggregates {
      * @param collectionName the collection name
      * @return the $out pipeline stage
      * @mongodb.driver.manual reference/operator/aggregation/out/  $out
-     * @mongodb.server.release 2.6
      */
     public static Bson out(final String collectionName) {
         return new BsonDocument("$out", new BsonString(collectionName));

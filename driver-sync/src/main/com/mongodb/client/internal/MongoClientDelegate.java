@@ -18,7 +18,6 @@ package com.mongodb.client.internal;
 
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientException;
-import com.mongodb.MongoCredential;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoQueryException;
@@ -29,21 +28,21 @@ import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
-import com.mongodb.binding.ClusterBinding;
-import com.mongodb.binding.ReadBinding;
-import com.mongodb.binding.ReadWriteBinding;
-import com.mongodb.binding.WriteBinding;
 import com.mongodb.client.ClientSession;
-import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
+import com.mongodb.internal.binding.ClusterBinding;
+import com.mongodb.internal.binding.ReadBinding;
+import com.mongodb.internal.binding.ReadWriteBinding;
+import com.mongodb.internal.binding.WriteBinding;
+import com.mongodb.internal.connection.Cluster;
+import com.mongodb.internal.operation.ReadOperation;
+import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
-import com.mongodb.operation.ReadOperation;
-import com.mongodb.operation.WriteOperation;
 import com.mongodb.selector.ServerSelector;
 import org.bson.codecs.configuration.CodecRegistry;
 
@@ -55,6 +54,8 @@ import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAny;
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAnyPrimaryOrSecondary;
 
 /**
  * This class is not part of the public API and may be removed or changed at any time.
@@ -62,24 +63,22 @@ import static com.mongodb.assertions.Assertions.notNull;
 public class MongoClientDelegate {
     private final Cluster cluster;
     private final ServerSessionPool serverSessionPool;
-    private final List<MongoCredential> credentialList;
     private final Object originator;
     private final OperationExecutor operationExecutor;
     private final Crypt crypt;
     private final CodecRegistry codecRegistry;
 
-    public MongoClientDelegate(final Cluster cluster, final CodecRegistry codecRegistry, final List<MongoCredential> credentialList,
+    public MongoClientDelegate(final Cluster cluster, final CodecRegistry codecRegistry,
                                final Object originator, @Nullable final Crypt crypt) {
-        this(cluster, codecRegistry, credentialList, originator, null, crypt);
+        this(cluster, codecRegistry, originator, null, crypt);
     }
 
-    MongoClientDelegate(final Cluster cluster, final CodecRegistry codecRegistry, final List<MongoCredential> credentialList,
+    MongoClientDelegate(final Cluster cluster, final CodecRegistry codecRegistry,
                         final Object originator, @Nullable final OperationExecutor operationExecutor,
                         @Nullable final Crypt crypt) {
         this.cluster = cluster;
         this.codecRegistry = codecRegistry;
         this.serverSessionPool = new ServerSessionPool(cluster);
-        this.credentialList = credentialList;
         this.originator = originator;
         this.operationExecutor = operationExecutor == null ? new DelegateOperationExecutor() : operationExecutor;
         this.crypt = crypt;
@@ -95,10 +94,6 @@ public class MongoClientDelegate {
         notNull("readConcern", readConcern);
         notNull("writeConcern", writeConcern);
         notNull("readPreference", readPreference);
-
-        if (credentialList.size() > 1) {
-            return null;
-        }
 
         ClusterDescription connectedClusterDescription = getConnectedClusterDescription();
 
@@ -162,12 +157,11 @@ public class MongoClientDelegate {
         return clusterDescription;
     }
 
-    @SuppressWarnings("deprecation")
     private List<ServerDescription> getServerDescriptionListToConsiderForSessionSupport(final ClusterDescription clusterDescription) {
         if (clusterDescription.getConnectionMode() == ClusterConnectionMode.SINGLE) {
-            return clusterDescription.getAny();
+            return getAny(clusterDescription);
         } else {
-            return clusterDescription.getAnyPrimaryOrSecondary();
+            return getAnyPrimaryOrSecondary(clusterDescription);
         }
     }
 

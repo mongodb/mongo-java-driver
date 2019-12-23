@@ -20,12 +20,12 @@ import com.mongodb.MongoClientException
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
-import com.mongodb.connection.ByteBufferBsonOutput
 import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ServerType
-import com.mongodb.connection.SplittablePayload
+import com.mongodb.internal.bulk.InsertRequest
+import com.mongodb.internal.bulk.WriteRequestWithIndex
 import com.mongodb.internal.validator.NoOpFieldNameValidator
-import com.mongodb.session.SessionContext
+import com.mongodb.internal.session.SessionContext
 import org.bson.BsonArray
 import org.bson.BsonBinary
 import org.bson.BsonBinaryReader
@@ -45,7 +45,7 @@ import spock.lang.Specification
 
 import java.nio.ByteBuffer
 
-import static com.mongodb.connection.SplittablePayload.Type.INSERT
+import static com.mongodb.internal.connection.SplittablePayload.Type.INSERT
 import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_ZERO_WIRE_VERSION
 import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_FOUR_WIRE_VERSION
 import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION
@@ -216,7 +216,8 @@ class CommandMessageSpecification extends Specification {
                         THREE_DOT_FOUR_WIRE_VERSION,
                         new BsonDocument('insert', new BsonString('coll')),
                         new SplittablePayload(INSERT, [new BsonDocument('_id', new BsonInt32(1)),
-                                                       new BsonDocument('_id', new BsonInt32(2))]),
+                                                       new BsonDocument('_id', new BsonInt32(2))]
+                                .withIndex().collect { doc, i -> new WriteRequestWithIndex(new InsertRequest(doc), i) } ),
                 ],
                 [
                         THREE_DOT_FOUR_WIRE_VERSION,
@@ -228,7 +229,8 @@ class CommandMessageSpecification extends Specification {
                         THREE_DOT_SIX_WIRE_VERSION,
                         new BsonDocument('insert', new BsonString('coll')),
                         new SplittablePayload(INSERT, [new BsonDocument('_id', new BsonInt32(1)),
-                                                       new BsonDocument('_id', new BsonInt32(2))]),
+                                                       new BsonDocument('_id', new BsonInt32(2))]
+                                .withIndex().collect { doc, i -> new WriteRequestWithIndex(new InsertRequest(doc), i) } ),
                 ],
                 [
                         THREE_DOT_SIX_WIRE_VERSION,
@@ -244,11 +246,12 @@ class CommandMessageSpecification extends Specification {
         def maxMessageSize = 1024
         def messageSettings = MessageSettings.builder().maxMessageSize(maxMessageSize).maxWireVersion(THREE_DOT_SIX_WIRE_VERSION).build()
         def insertCommand = new BsonDocument('insert', new BsonString(namespace.collectionName))
-        def payload = new SplittablePayload(INSERT, [new BsonDocument('a', new BsonBinary(new byte[922])),
-                                                     new BsonDocument('b', new BsonBinary(new byte[450])),
-                                                     new BsonDocument('c', new BsonBinary(new byte[459])),
-                                                     new BsonDocument('b', new BsonBinary(new byte[450])),
-                                                     new BsonDocument('c', new BsonBinary(new byte[460]))])
+        def payload = new SplittablePayload(INSERT, [new BsonDocument('_id', new BsonInt32(1)).append('a', new BsonBinary(new byte[913])),
+                                                     new BsonDocument('_id', new BsonInt32(2)).append('b', new BsonBinary(new byte[441])),
+                                                     new BsonDocument('_id', new BsonInt32(3)).append('c', new BsonBinary(new byte[450])),
+                                                     new BsonDocument('_id', new BsonInt32(4)).append('b', new BsonBinary(new byte[441])),
+                                                     new BsonDocument('_id', new BsonInt32(5)).append('c', new BsonBinary(new byte[451]))]
+                .withIndex().collect { doc, i -> new WriteRequestWithIndex(new InsertRequest(doc), i) } )
         def message = new CommandMessage(namespace, insertCommand, fieldNameValidator, ReadPreference.primary(), messageSettings,
                 false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE)
         def output = new BasicOutputBuffer()
@@ -330,7 +333,8 @@ class CommandMessageSpecification extends Specification {
         def messageSettings = MessageSettings.builder().maxBatchCount(2).maxWireVersion(THREE_DOT_SIX_WIRE_VERSION).build()
         def payload = new SplittablePayload(INSERT, [new BsonDocument('a', new BsonBinary(new byte[900])),
                                                      new BsonDocument('b', new BsonBinary(new byte[450])),
-                                                     new BsonDocument('c', new BsonBinary(new byte[450]))])
+                                                     new BsonDocument('c', new BsonBinary(new byte[450]))]
+                .withIndex().collect { doc, i -> new WriteRequestWithIndex(new InsertRequest(doc), i) } )
         def message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
                 false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE)
         def output = new BasicOutputBuffer()
@@ -347,7 +351,7 @@ class CommandMessageSpecification extends Specification {
         messageHeader.opCode == OpCode.OP_MSG.value
         messageHeader.requestId < RequestMessage.currentGlobalId
         messageHeader.responseTo == 0
-        messageHeader.messageLength == 1463
+        messageHeader.messageLength == 1497
         byteBuf.getInt() == 0
         payload.getPosition() == 2
         payload.hasAnotherSplit()
@@ -374,7 +378,8 @@ class CommandMessageSpecification extends Specification {
         given:
         def messageSettings = MessageSettings.builder().maxDocumentSize(900)
                 .maxWireVersion(THREE_DOT_SIX_WIRE_VERSION).build()
-        def payload = new SplittablePayload(INSERT, [new BsonDocument('a', new BsonBinary(new byte[900]))])
+        def payload = new SplittablePayload(INSERT, [new BsonDocument('a', new BsonBinary(new byte[900]))]
+                .withIndex().collect { doc, i -> new WriteRequestWithIndex(new InsertRequest(doc), i) })
         def message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
                 false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE)
         def output = new BasicOutputBuffer()

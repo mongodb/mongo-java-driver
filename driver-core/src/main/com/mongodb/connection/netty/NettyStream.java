@@ -109,7 +109,6 @@ final class NettyStream implements Stream {
         initializeChannel(handler, new LinkedList<SocketAddress>(address.getSocketAddresses()));
     }
 
-    @SuppressWarnings("deprecation")
     private void initializeChannel(final AsyncCompletionHandler<Void> handler, final Queue<SocketAddress> socketAddressQueue) {
         if (socketAddressQueue.isEmpty()) {
             handler.failed(new MongoSocketException("Exception opening socket", getAddress()));
@@ -122,7 +121,7 @@ final class NettyStream implements Stream {
 
             bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, settings.getConnectTimeout(MILLISECONDS));
             bootstrap.option(ChannelOption.TCP_NODELAY, true);
-            bootstrap.option(ChannelOption.SO_KEEPALIVE, settings.isKeepAlive());
+            bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
 
             if (settings.getReceiveBufferSize() > 0) {
                 bootstrap.option(ChannelOption.SO_RCVBUF, settings.getReceiveBufferSize());

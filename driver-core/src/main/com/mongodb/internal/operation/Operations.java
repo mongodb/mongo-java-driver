@@ -20,12 +20,6 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
-import com.mongodb.bulk.DeleteRequest;
-import com.mongodb.bulk.IndexRequest;
-import com.mongodb.bulk.InsertRequest;
-import com.mongodb.bulk.UpdateRequest;
-import com.mongodb.bulk.WriteRequest;
-import com.mongodb.client.model.AggregationLevel;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CountOptions;
@@ -37,7 +31,6 @@ import com.mongodb.client.model.DropIndexOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
-import com.mongodb.client.model.FindOptions;
 import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneModel;
@@ -51,25 +44,14 @@ import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
+import com.mongodb.internal.bulk.DeleteRequest;
+import com.mongodb.internal.bulk.IndexRequest;
+import com.mongodb.internal.bulk.InsertRequest;
+import com.mongodb.internal.bulk.UpdateRequest;
+import com.mongodb.internal.bulk.WriteRequest;
+import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.CountStrategy;
-import com.mongodb.operation.AggregateOperation;
-import com.mongodb.operation.AggregateToCollectionOperation;
-import com.mongodb.operation.CountOperation;
-import com.mongodb.operation.CreateIndexesOperation;
-import com.mongodb.operation.DistinctOperation;
-import com.mongodb.operation.DropCollectionOperation;
-import com.mongodb.operation.DropIndexOperation;
-import com.mongodb.operation.FindAndDeleteOperation;
-import com.mongodb.operation.FindAndReplaceOperation;
-import com.mongodb.operation.FindAndUpdateOperation;
-import com.mongodb.operation.FindOperation;
-import com.mongodb.operation.ListCollectionsOperation;
-import com.mongodb.operation.ListDatabasesOperation;
-import com.mongodb.operation.ListIndexesOperation;
-import com.mongodb.operation.MapReduceToCollectionOperation;
-import com.mongodb.operation.MapReduceWithInlineResultsOperation;
-import com.mongodb.operation.MixedBulkWriteOperation;
-import com.mongodb.operation.RenameCollectionOperation;
+import com.mongodb.internal.client.model.FindOptions;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
@@ -144,7 +126,6 @@ final class Operations<TDocument> {
         return createFindOperation(findNamespace, filter, resultClass, options);
     }
 
-    @SuppressWarnings("deprecation")
     private <TResult> FindOperation<TResult> createFindOperation(final MongoNamespace findNamespace, final Bson filter,
                                                                  final Class<TResult> resultClass, final FindOptions options) {
         FindOperation<TResult> operation = new FindOperation<TResult>(findNamespace, codecRegistry.get(resultClass))
@@ -155,7 +136,6 @@ final class Operations<TDocument> {
                 .limit(options.getLimit())
                 .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                 .maxAwaitTime(options.getMaxAwaitTime(MILLISECONDS), MILLISECONDS)
-                .modifiers(toBsonDocumentOrNull(options.getModifiers()))
                 .projection(toBsonDocumentOrNull(options.getProjection()))
                 .sort(toBsonDocumentOrNull(options.getSort()))
                 .cursorType(options.getCursorType())
@@ -167,10 +147,8 @@ final class Operations<TDocument> {
                 .comment(options.getComment())
                 .min(toBsonDocumentOrNull(options.getMin()))
                 .max(toBsonDocumentOrNull(options.getMax()))
-                .maxScan(options.getMaxScan())
                 .returnKey(options.isReturnKey())
-                .showRecordId(options.isShowRecordId())
-                .snapshot(options.isSnapshot());
+                .showRecordId(options.isShowRecordId());
 
         if (options.getHint() != null) {
             operation.hint(toBsonDocument(options.getHint()));
@@ -191,19 +169,16 @@ final class Operations<TDocument> {
 
     }
 
-    @SuppressWarnings("deprecation")
     <TResult> AggregateOperation<TResult> aggregate(final List<? extends Bson> pipeline, final Class<TResult> resultClass,
                                                     final long maxTimeMS, final long maxAwaitTimeMS, final Integer batchSize,
                                                     final Collation collation, final Bson hint, final String comment,
-                                                    final Boolean allowDiskUse, final Boolean useCursor,
-                                                    final AggregationLevel aggregationLevel) {
+                                                    final Boolean allowDiskUse, final AggregationLevel aggregationLevel) {
         return new AggregateOperation<TResult>(namespace, toBsonDocumentList(pipeline), codecRegistry.get(resultClass), aggregationLevel)
                 .retryReads(retryReads)
                 .maxTime(maxTimeMS, MILLISECONDS)
                 .maxAwaitTime(maxAwaitTimeMS, MILLISECONDS)
                 .allowDiskUse(allowDiskUse)
                 .batchSize(batchSize)
-                .useCursor(useCursor)
                 .collation(collation)
                 .hint(hint == null ? null : hint.toBsonDocument(documentClass, codecRegistry))
                 .comment(comment);

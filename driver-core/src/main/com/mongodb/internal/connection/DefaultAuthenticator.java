@@ -19,9 +19,8 @@ package com.mongodb.internal.connection;
 import com.mongodb.AuthenticationMechanism;
 import com.mongodb.MongoException;
 import com.mongodb.MongoSecurityException;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.connection.ServerVersion;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -38,8 +37,6 @@ import static java.lang.String.format;
 
 class DefaultAuthenticator extends Authenticator {
     static final int USER_NOT_FOUND_CODE = 11;
-    private static final ServerVersion FOUR_ZERO = new ServerVersion(4, 0);
-    private static final ServerVersion THREE_ZERO = new ServerVersion(3, 0);
     private static final BsonString DEFAULT_MECHANISM_NAME = new BsonString(SCRAM_SHA_256.getMechanismName());
 
     DefaultAuthenticator(final MongoCredentialWithCache credential) {

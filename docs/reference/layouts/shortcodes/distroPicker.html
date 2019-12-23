@@ -1,3 +1,4 @@
+{{- $toggle := .Get "toggle" | default "Gradle" -}}
 <div class="pull-right">
-  <input type="checkbox" checked="" class="distroPicker" data-toggle="toggle" data-on="Maven" data-off="Gradle" data-offstyle="success">
+  <input type="checkbox" checked="" class="distroPicker" data-toggle="toggle" data-on="Maven" data-off="{{ $toggle }}" data-offstyle="success">
 </div>

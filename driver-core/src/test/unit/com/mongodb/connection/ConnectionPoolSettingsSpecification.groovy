@@ -31,7 +31,6 @@ class ConnectionPoolSettingsSpecification extends Specification {
         expect:
         settings.getMaxWaitTime(MILLISECONDS) == maxWaitTime
         settings.maxSize == maxSize
-        settings.maxWaitQueueSize == maxWaitQueueSize
         settings.getMaxConnectionLifeTime(MILLISECONDS) == maxConnectionLifeTimeMS
         settings.getMaxConnectionIdleTime(MILLISECONDS) == maxConnectionIdleTimeMS
         settings.minSize == minSize
@@ -39,16 +38,15 @@ class ConnectionPoolSettingsSpecification extends Specification {
         settings.getMaintenanceFrequency(MILLISECONDS) == maintenanceFrequencyMS
 
         where:
-        settings                              | maxWaitTime | maxSize | maxWaitQueueSize | maxConnectionLifeTimeMS |
+        settings                              | maxWaitTime | maxSize | maxConnectionLifeTimeMS |
                 maxConnectionIdleTimeMS | minSize | maintenanceInitialDelayMS | maintenanceFrequencyMS
         ConnectionPoolSettings
                 .builder()
-                .build()                       | 120000L    | 100  | 500  |      0 |     0 | 0 | 0 | 60000
+                .build()                       | 120000L    | 100  |     0 |     0 | 0 | 0 | 60000
         ConnectionPoolSettings
                 .builder()
                 .maxWaitTime(5, SECONDS)
                 .maxSize(75)
-                .maxWaitQueueSize(11)
                 .maxConnectionLifeTime(
                 101, SECONDS)
                 .maxConnectionIdleTime(
@@ -58,39 +56,31 @@ class ConnectionPoolSettingsSpecification extends Specification {
                 5, SECONDS)
                 .maintenanceFrequency(
                 1000, SECONDS)
-                .build()                      | 5000 | 75 | 11 | 101000 | 51000 | 1 | 5000 | 1000000
+                .build()                      | 5000 | 75 | 101000 | 51000 | 1 | 5000 | 1000000
         ConnectionPoolSettings
                 .builder(ConnectionPoolSettings.builder()
                     .maxWaitTime(5, SECONDS)
                     .maxSize(75)
-                    .maxWaitQueueSize(11)
                     .maxConnectionLifeTime(101, SECONDS)
                     .maxConnectionIdleTime(51, SECONDS)
                     .minSize(1)
                     .maintenanceInitialDelay(5, SECONDS)
                     .maintenanceFrequency(1000, SECONDS)
                     .build())
-                .build()                      | 5000 | 75 | 11 | 101000 | 51000 | 1 | 5000 | 1000000
+                .build()                      | 5000 | 75 | 101000 | 51000 | 1 | 5000 | 1000000
         ConnectionPoolSettings
                 .builder(ConnectionPoolSettings.builder().build())
                 .maxWaitTime(5, SECONDS)
                 .maxSize(75)
-                .maxWaitQueueSize(11)
                 .maxConnectionLifeTime(101, SECONDS)
                 .maxConnectionIdleTime(51, SECONDS)
                 .minSize(1)
                 .maintenanceInitialDelay(5, SECONDS)
                 .maintenanceFrequency(1000, SECONDS)
-                .build()                      | 5000 | 75 | 11 | 101000 | 51000 | 1 | 5000 | 1000000
+                .build()                      | 5000 | 75 | 101000 | 51000 | 1 | 5000 | 1000000
     }
 
     def 'should throw exception on invalid argument'() {
-        when:
-        ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(-1).build()
-
-        then:
-        thrown(IllegalStateException)
-
         when:
         ConnectionPoolSettings.builder().maxSize(1).maxConnectionLifeTime(-1, SECONDS).build()
 
@@ -143,7 +133,7 @@ class ConnectionPoolSettingsSpecification extends Specification {
     def 'should apply connection string'() {
         when:
         def settings = ConnectionPoolSettings.builder().applyConnectionString(
-                new ConnectionString('mongodb://localhost/?waitQueueTimeoutMS=100&minPoolSize=5&maxPoolSize=10&waitQueueMultiple=7&'
+                new ConnectionString('mongodb://localhost/?waitQueueTimeoutMS=100&minPoolSize=5&maxPoolSize=10&'
                                              + 'maxIdleTimeMS=200&maxLifeTimeMS=300'))
                                              .build()
 
@@ -153,7 +143,6 @@ class ConnectionPoolSettingsSpecification extends Specification {
         settings.getMinSize() == 5
         settings.getMaxConnectionIdleTime(MILLISECONDS) == 200
         settings.getMaxConnectionLifeTime(MILLISECONDS) == 300
-        settings.getMaxWaitQueueSize() == 70
     }
 
     def 'should apply settings'() {
@@ -164,7 +153,6 @@ class ConnectionPoolSettingsSpecification extends Specification {
                 .addConnectionPoolListener(Stub(ConnectionPoolListener))
                 .maxWaitTime(5, SECONDS)
                 .maxSize(75)
-                .maxWaitQueueSize(11)
                 .maxConnectionLifeTime(101, SECONDS)
                 .maxConnectionIdleTime(51, SECONDS)
                 .minSize(1)
@@ -188,10 +176,10 @@ class ConnectionPoolSettingsSpecification extends Specification {
     def 'identical settings should be equal'() {
         expect:
         ConnectionPoolSettings.builder().build() == ConnectionPoolSettings.builder().build()
-        ConnectionPoolSettings.builder().maxWaitTime(5, SECONDS).maxSize(75).maxWaitQueueSize(11).maxConnectionLifeTime(101, SECONDS).
+        ConnectionPoolSettings.builder().maxWaitTime(5, SECONDS).maxSize(75).maxConnectionLifeTime(101, SECONDS).
                 maxConnectionIdleTime(51, SECONDS).minSize(1).maintenanceInitialDelay(5, SECONDS).maintenanceFrequency(1000, SECONDS)
                               .build() ==
-        ConnectionPoolSettings.builder().maxWaitTime(5, SECONDS).maxSize(75).maxWaitQueueSize(11).maxConnectionLifeTime(101, SECONDS).
+        ConnectionPoolSettings.builder().maxWaitTime(5, SECONDS).maxSize(75).maxConnectionLifeTime(101, SECONDS).
                 maxConnectionIdleTime(51, SECONDS).minSize(1).maintenanceInitialDelay(5, SECONDS).maintenanceFrequency(1000, SECONDS)
                               .build()
     }
@@ -204,10 +192,10 @@ class ConnectionPoolSettingsSpecification extends Specification {
     def 'identical settings should have same hash code'() {
         expect:
         ConnectionPoolSettings.builder().build().hashCode() == ConnectionPoolSettings.builder().build().hashCode()
-        ConnectionPoolSettings.builder().maxWaitTime(5, SECONDS).maxSize(75).maxWaitQueueSize(11).maxConnectionLifeTime(101, SECONDS).
+        ConnectionPoolSettings.builder().maxWaitTime(5, SECONDS).maxSize(75).maxConnectionLifeTime(101, SECONDS).
                 maxConnectionIdleTime(51, SECONDS).minSize(1).maintenanceInitialDelay(5, SECONDS).maintenanceFrequency(1000, SECONDS)
                               .build().hashCode() ==
-        ConnectionPoolSettings.builder().maxWaitTime(5, SECONDS).maxSize(75).maxWaitQueueSize(11).maxConnectionLifeTime(101, SECONDS).
+        ConnectionPoolSettings.builder().maxWaitTime(5, SECONDS).maxSize(75).maxConnectionLifeTime(101, SECONDS).
                 maxConnectionIdleTime(51, SECONDS).minSize(1).maintenanceInitialDelay(5, SECONDS).maintenanceFrequency(1000, SECONDS)
                               .build().hashCode()
     }

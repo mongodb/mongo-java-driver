@@ -20,19 +20,17 @@ import com.mongodb.MongoNamespace
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcernResult
-import com.mongodb.async.SingleResultCallback
-import com.mongodb.bulk.DeleteRequest
-import com.mongodb.bulk.InsertRequest
-import com.mongodb.bulk.UpdateRequest
-import com.mongodb.bulk.WriteRequest
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
-import com.mongodb.connection.QueryResult
 import com.mongodb.connection.ServerId
-import com.mongodb.connection.ServerVersion
 import com.mongodb.diagnostics.logging.Logger
+import com.mongodb.internal.bulk.DeleteRequest
+import com.mongodb.internal.bulk.InsertRequest
+import com.mongodb.internal.bulk.UpdateRequest
+import com.mongodb.internal.bulk.WriteRequest
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -52,10 +50,10 @@ class DefaultServerConnectionSpecification extends Specification {
     def callback = errorHandlingCallback(Mock(SingleResultCallback), Mock(Logger))
     @Shared
     def standaloneConnectionDescription = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-            new ServerVersion(3, 0), 3, STANDALONE, 100, 100, 100, [])
+            3, STANDALONE, 100, 100, 100, [])
     @Shared
     def mongosConnectionDescription = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-            new ServerVersion(3, 0), 3, SHARD_ROUTER, 100, 100, 100, [])
+            3, SHARD_ROUTER, 100, 100, 100, [])
 
     def 'should execute insert protocol'() {
         given:
@@ -108,60 +106,6 @@ class DefaultServerConnectionSpecification extends Specification {
         result == WriteConcernResult.unacknowledged()
     }
 
-    def 'should execute command protocol with slaveok'() {
-        given:
-        def command = new BsonDocument('ismaster', new BsonInt32(1))
-        def validator = new NoOpFieldNameValidator()
-        def codec = new BsonDocumentCodec()
-        def executor = Mock(ProtocolExecutor) {
-            1 * execute({
-                compare(new CommandProtocolImpl('test', command, validator, expectedReadPreference, codec), it) },
-                    internalConnection, NoOpSessionContext.INSTANCE) >> {
-                new BsonDocument()
-            }
-        }
-        def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
-
-        when:
-        def result = connection.command('test', command, slaveOk, validator, codec)
-
-        then:
-        result == new BsonDocument()
-
-        where:
-        slaveOk  | expectedReadPreference
-        true     | ReadPreference.secondaryPreferred()
-        false    | ReadPreference.primary()
-    }
-
-    def 'should set slaveOk when executing command protocol on connection in SINGLE connection mode'() {
-        given:
-        def command = new BsonDocument('ismaster', new BsonInt32(1))
-        def validator = new NoOpFieldNameValidator()
-        def codec = new BsonDocumentCodec()
-        def executor = Mock(ProtocolExecutor) {
-            1 * execute({
-                compare(new CommandProtocolImpl('test', command, validator, expectedReadPreference, codec, true, null, null,
-                        ClusterConnectionMode.SINGLE), it) },
-                    internalConnection, NoOpSessionContext.INSTANCE) >> {
-                new BsonDocument()
-            }
-        }
-        def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.SINGLE)
-        internalConnection.description >> connectionDescription
-
-        when:
-        def result = connection.command('test', command, false, validator, codec)
-
-        then:
-        result == new BsonDocument()
-
-        where:
-        connectionDescription           | expectedSlaveOk | expectedReadPreference
-        standaloneConnectionDescription | true            | ReadPreference.secondaryPreferred()
-        mongosConnectionDescription     | false           | ReadPreference.primary()
-    }
-
     def 'should execute query protocol'() {
         given:
         def decoder = new BsonDocumentCodec()
@@ -170,7 +114,7 @@ class DefaultServerConnectionSpecification extends Specification {
         def expectedResult = new QueryResult<>(namespace, [], 0, new ServerAddress())
         def executor = Mock(ProtocolExecutor) {
             1 * execute({
-                compare(new QueryProtocol(namespace, 2, 1, query, fields, decoder)
+                compare(new QueryProtocol(namespace, 2, 10, 5, query, fields, decoder)
                     .slaveOk(slaveOk)
                     .tailableCursor(false)
                     .awaitData(true)
@@ -183,7 +127,7 @@ class DefaultServerConnectionSpecification extends Specification {
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
 
         when:
-        def result = connection.query(namespace, query, fields, 1, 2, slaveOk, false, true, false, true, false, decoder)
+        def result = connection.query(namespace, query, fields, 2, 10, 5, slaveOk, false, true, false, true, false, decoder)
 
         then:
         result == expectedResult
@@ -200,7 +144,7 @@ class DefaultServerConnectionSpecification extends Specification {
         def expectedResult = new QueryResult<>(namespace, [], 0, new ServerAddress())
         def executor = Mock(ProtocolExecutor) {
             1 * execute({
-                compare(new QueryProtocol(namespace, 2, 1, query, fields, decoder)
+                compare(new QueryProtocol(namespace, 2, 10, 5, query, fields, decoder)
                     .slaveOk(expectedSlaveOk)
                     .tailableCursor(false)
                     .awaitData(true)
@@ -214,7 +158,7 @@ class DefaultServerConnectionSpecification extends Specification {
         internalConnection.description >> connectionDescription
 
         when:
-        def result = connection.query(namespace, query, fields, 1, 2, false, false, true, false, true, false, decoder)
+        def result = connection.query(namespace, query, fields, 2, 10, 5, false, false, true, false, true, false, decoder)
 
         then:
         result == expectedResult
@@ -247,12 +191,6 @@ class DefaultServerConnectionSpecification extends Specification {
         given:
         def executor = Mock(ProtocolExecutor)
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
-
-        when:
-        connection.killCursor([5])
-
-        then:
-        1 * executor.execute({ compare(new KillCursorProtocol(null, [5]), it) }, internalConnection)
 
         when:
         connection.killCursor(namespace, [5])
@@ -312,41 +250,12 @@ class DefaultServerConnectionSpecification extends Specification {
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
 
         when:
-        connection.commandAsync('test', command, slaveOk, validator, codec, callback)
+        connection.commandAsync('test', command, validator, ReadPreference.primary(), codec, NoOpSessionContext.INSTANCE, callback)
 
         then:
         1 * executor.executeAsync({
-            compare(new CommandProtocolImpl('test', command, validator, expectedReadPreference, codec), it)
+            compare(new CommandProtocolImpl('test', command, validator, ReadPreference.primary(), codec), it)
         }, internalConnection, NoOpSessionContext.INSTANCE, callback)
-
-        where:
-        slaveOk  | expectedReadPreference
-        true     | ReadPreference.secondaryPreferred()
-        false    | ReadPreference.primary()
-    }
-
-    def 'should set slaveOk when executing command protocol on connection in SINGLE connection mode asynchronously'() {
-        given:
-        def command = new BsonDocument('ismaster', new BsonInt32(1))
-        def validator = new NoOpFieldNameValidator()
-        def codec = new BsonDocumentCodec()
-        def executor = Mock(ProtocolExecutor)
-        def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.SINGLE)
-        internalConnection.description >> connectionDescription
-
-        when:
-        connection.commandAsync('test', command, false, validator, codec, callback)
-
-        then:
-        1 * executor.executeAsync({
-            compare(new CommandProtocolImpl('test', command, validator, expectedReadPreference, codec, true, null, null,
-                    ClusterConnectionMode.SINGLE), it)
-        }, internalConnection, NoOpSessionContext.INSTANCE, callback)
-
-        where:
-        connectionDescription           | expectedSlaveOk  | expectedReadPreference
-        standaloneConnectionDescription | true             | ReadPreference.secondaryPreferred()
-        mongosConnectionDescription     | false            | ReadPreference.primary()
     }
 
     def 'should execute query protocol asynchronously'() {
@@ -358,11 +267,11 @@ class DefaultServerConnectionSpecification extends Specification {
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
 
         when:
-        connection.queryAsync(namespace, query, fields, 1, 2, slaveOk, false, true, false, true, false, decoder, callback)
+        connection.queryAsync(namespace, query, fields, 2, 10, 5, slaveOk, false, true, false, true, false, decoder, callback)
 
         then:
         1 * executor.executeAsync({
-                                      compare(new QueryProtocol(namespace, 2, 1, query, fields, decoder)
+                                      compare(new QueryProtocol(namespace, 2, 10, 5, query, fields, decoder)
                                                .slaveOk(slaveOk)
                                                .tailableCursor(false)
                                                .awaitData(true)
@@ -386,11 +295,11 @@ class DefaultServerConnectionSpecification extends Specification {
         internalConnection.description >> connectionDescription
 
         when:
-        connection.queryAsync(namespace, query, fields, 1, 2, false, false, true, false, true, false, decoder, callback)
+        connection.queryAsync(namespace, query, fields, 2, 10, 5, false, false, true, false, true, false, decoder, callback)
 
         then:
         1 * executor.executeAsync({
-                                      compare(new QueryProtocol(namespace, 2, 1, query, fields, decoder)
+                                      compare(new QueryProtocol(namespace, 2, 10, 5, query, fields, decoder)
                                                .slaveOk(expectedSlaveOk)
                                                .tailableCursor(false)
                                                .awaitData(true)
@@ -423,12 +332,6 @@ class DefaultServerConnectionSpecification extends Specification {
         given:
         def executor = Mock(ProtocolExecutor)
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
-
-        when:
-        connection.killCursorAsync([5], callback)
-
-        then:
-        1 * executor.executeAsync({ compare(new KillCursorProtocol(null, [5]), it) }, internalConnection, callback)
 
         when:
         connection.killCursorAsync(namespace, [5], callback)

@@ -34,10 +34,9 @@ import spock.lang.IgnoreIf
 
 import java.util.concurrent.TimeUnit
 
+import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
-import static com.mongodb.ClusterFixture.isNotAtLeastJava7
-import static com.mongodb.connection.ConnectionFixture.getCredentialListWithCache
 import static com.mongodb.internal.connection.CommandHelper.executeCommand
 
 @IgnoreIf({ System.getProperty('ignoreSlowUnitTests') == 'true' })
@@ -47,11 +46,11 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
     static SocketSettings openSocketSettings = SocketSettings.builder().connectTimeout(1, TimeUnit.MILLISECONDS).build()
     static SocketSettings readSocketSettings = SocketSettings.builder().readTimeout(5, TimeUnit.SECONDS).build()
 
-    @IgnoreIf({ isNotAtLeastJava7() || getSslSettings().isEnabled() })
+    @IgnoreIf({ getSslSettings().isEnabled() })
     def 'should throw a MongoSocketOpenException when the AsynchronousSocket Stream fails to open'() {
         given:
         def connection = new InternalStreamConnectionFactory(
-                new AsynchronousSocketChannelStreamFactory(openSocketSettings, getSslSettings()), getCredentialListWithCache(), null, null,
+                new AsynchronousSocketChannelStreamFactory(openSocketSettings, getSslSettings()), getCredentialWithCache(), null, null,
                 [], null).create(new ServerId(new ClusterId(), new ServerAddress(new InetSocketAddress('192.168.255.255', 27017))))
 
         when:
@@ -61,11 +60,11 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
         thrown(MongoSocketOpenException)
     }
 
-    @IgnoreIf({ isNotAtLeastJava7() || getSslSettings().isEnabled() })
+    @IgnoreIf({ getSslSettings().isEnabled() })
     def 'should throw a MongoSocketReadTimeoutException with the AsynchronousSocket stream'() {
         given:
         def connection = new InternalStreamConnectionFactory(
-                new AsynchronousSocketChannelStreamFactory(readSocketSettings, getSslSettings()), getCredentialListWithCache(), null, null,
+                new AsynchronousSocketChannelStreamFactory(readSocketSettings, getSslSettings()), getCredentialWithCache(), null, null,
                 [], null).create(new ServerId(new ClusterId(), getPrimary()))
         connection.open()
 
@@ -86,7 +85,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
     def 'should throw a MongoSocketOpenException when the Netty Stream fails to open'() {
         given:
         def connection = new InternalStreamConnectionFactory(
-                new NettyStreamFactory(openSocketSettings, getSslSettings()), getCredentialListWithCache(), null, null, [], null
+                new NettyStreamFactory(openSocketSettings, getSslSettings()), getCredentialWithCache(), null, null, [], null
         ).create(new ServerId(new ClusterId(), new ServerAddress(new InetSocketAddress('192.168.255.255', 27017))))
 
         when:
@@ -100,7 +99,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
     def 'should throw a MongoSocketReadTimeoutException with the Netty stream'() {
         given:
         def connection = new InternalStreamConnectionFactory(
-                new NettyStreamFactory(readSocketSettings, getSslSettings()), getCredentialListWithCache(), null, null, [], null
+                new NettyStreamFactory(readSocketSettings, getSslSettings()), getCredentialWithCache(), null, null, [], null
         ).create(new ServerId(new ClusterId(), getPrimary()))
         connection.open()
 

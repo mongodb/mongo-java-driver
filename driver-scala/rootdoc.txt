@@ -1,0 +1,14 @@
+This is the documentation for the MongoDB Scala driver.
+
+== Driver structure ==
+
+The [[http://mongodb.org mongodb]] scala driver.
+
+To get started you need a [[org.mongodb.scala.MongoClient MongoClient]] instance, either from a
+[[http://docs.mongodb.org/manual/reference/connection-string/ connection string]] or via a [[org.mongodb.scala.MongoClientSettings]].
+
+Notable packages include:
+
+    - [[org.mongodb.scala.MongoClient MongoClient]] The MongoClient used to connect and access MongoDB
+    - [[org.mongodb.scala.MongoDatabase MongoDatabase]] Providing access to a specific database
+    - [[org.mongodb.scala.MongoCollection MongoCollection]] Providing access to a specific collection in a database.

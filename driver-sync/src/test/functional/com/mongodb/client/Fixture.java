@@ -24,10 +24,11 @@ import com.mongodb.ServerAddress;
 import com.mongodb.client.internal.MongoClientImpl;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerSettings;
-import com.mongodb.connection.SslSettings;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimaries;
 
 /**
  * Helper class for the acceptance tests.
@@ -91,14 +92,6 @@ public final class Fixture {
                             builder.minHeartbeatFrequency(MIN_HEARTBEAT_FREQUENCY_MS, TimeUnit.MILLISECONDS);
                         }
                     });
-            if (System.getProperty("java.version").startsWith("1.6.")) {
-                builder.applyToSslSettings(new Block<SslSettings.Builder>() {
-                    @Override
-                    public void apply(final SslSettings.Builder builder) {
-                        builder.invalidHostNameAllowed(true);
-                    }
-                });
-            }
             mongoClientSettings = builder.build();
         }
         return mongoClientSettings;
@@ -108,13 +101,12 @@ public final class Fixture {
         return MongoClientSettings.builder(getMongoClientSettings());
     }
 
-    @SuppressWarnings("deprecation")
     public static ServerAddress getPrimary() throws InterruptedException {
         getMongoClient();
-        List<ServerDescription> serverDescriptions = ((MongoClientImpl) mongoClient).getCluster().getDescription().getPrimaries();
+        List<ServerDescription> serverDescriptions = getPrimaries(((MongoClientImpl) mongoClient).getCluster().getDescription());
         while (serverDescriptions.isEmpty()) {
             Thread.sleep(100);
-            serverDescriptions = ((MongoClientImpl) mongoClient).getCluster().getDescription().getPrimaries();
+            serverDescriptions = getPrimaries(((MongoClientImpl) mongoClient).getCluster().getDescription());
         }
         return serverDescriptions.get(0).getAddress();
     }

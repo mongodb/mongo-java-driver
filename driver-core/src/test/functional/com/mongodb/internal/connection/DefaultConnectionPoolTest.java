@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.MongoWaitQueueFullException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ConnectionPoolSettings;
@@ -27,11 +26,9 @@ import org.junit.Test;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
  * These tests are racy, so doing them in Java instead of Groovy to reduce chance of failure.
@@ -57,11 +54,10 @@ public class DefaultConnectionPoolTest {
     public void shouldThrowOnTimeout() throws InterruptedException {
         // given
         provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
-                                             ConnectionPoolSettings.builder()
-                                                                   .maxSize(1)
-                                                                   .maxWaitQueueSize(1)
-                                                                   .maxWaitTime(50, MILLISECONDS)
-                                                                   .build());
+                ConnectionPoolSettings.builder()
+                        .maxSize(1)
+                        .maxWaitTime(50, MILLISECONDS)
+                        .build());
         provider.start();
 
         provider.get();
@@ -77,41 +73,14 @@ public class DefaultConnectionPoolTest {
     }
 
     @Test
-    public void shouldThrowOnWaitQueueFull() throws InterruptedException {
-        // given
-        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
-                                             ConnectionPoolSettings.builder()
-                                                                   .maxSize(1)
-                                                                   .maxWaitQueueSize(1)
-                                                                   .maxWaitTime(500, MILLISECONDS)
-                                                                   .build());
-        provider.start();
-
-        provider.get();
-
-        new Thread(new TimeoutTrackingConnectionGetter(provider)).start();
-        Thread.sleep(100);
-
-        // when
-        try {
-            provider.get();
-            fail();
-        } catch (MongoWaitQueueFullException e) {
-            // then
-            // all good
-        }
-    }
-
-    @Test
     public void shouldExpireConnectionAfterMaxLifeTime() throws InterruptedException {
         // given
         provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
-                                             ConnectionPoolSettings.builder()
-                                                                   .maxSize(1)
-                                                                   .maxWaitQueueSize(1)
-                                                                   .maintenanceInitialDelay(5, MINUTES)
-                                                                   .maxConnectionLifeTime(50, MILLISECONDS)
-                                                                   .build());
+                ConnectionPoolSettings.builder()
+                        .maxSize(1)
+                        .maintenanceInitialDelay(5, MINUTES)
+                        .maxConnectionLifeTime(50, MILLISECONDS)
+                        .build());
         provider.start();
 
         // when
@@ -128,11 +97,10 @@ public class DefaultConnectionPoolTest {
     public void shouldExpireConnectionAfterLifeTimeOnClose() throws InterruptedException {
         // given
         provider = new DefaultConnectionPool(SERVER_ID,
-                                             connectionFactory,
-                                             ConnectionPoolSettings.builder()
-                                                                   .maxSize(1)
-                                                                   .maxWaitQueueSize(1)
-                                                                   .maxConnectionLifeTime(20, MILLISECONDS).build());
+                connectionFactory,
+                ConnectionPoolSettings.builder()
+                        .maxSize(1)
+                        .maxConnectionLifeTime(20, MILLISECONDS).build());
         provider.start();
 
         // when
@@ -148,12 +116,11 @@ public class DefaultConnectionPoolTest {
     public void shouldExpireConnectionAfterMaxIdleTime() throws InterruptedException {
         // given
         provider = new DefaultConnectionPool(SERVER_ID,
-                                             connectionFactory,
-                                             ConnectionPoolSettings.builder()
-                                                                   .maxSize(1)
-                                                                   .maxWaitQueueSize(1)
-                                                                   .maintenanceInitialDelay(5, MINUTES)
-                                                                   .maxConnectionIdleTime(50, MILLISECONDS).build());
+                connectionFactory,
+                ConnectionPoolSettings.builder()
+                        .maxSize(1)
+                        .maintenanceInitialDelay(5, MINUTES)
+                        .maxConnectionIdleTime(50, MILLISECONDS).build());
         provider.start();
 
         // when
@@ -170,12 +137,11 @@ public class DefaultConnectionPoolTest {
     public void shouldCloseConnectionAfterExpiration() throws InterruptedException {
         // given
         provider = new DefaultConnectionPool(SERVER_ID,
-                                             connectionFactory,
-                                             ConnectionPoolSettings.builder()
-                                                                   .maxSize(1)
-                                                                   .maxWaitQueueSize(1)
-                                                                   .maintenanceInitialDelay(5, MINUTES)
-                                                                   .maxConnectionLifeTime(20, MILLISECONDS).build());
+                connectionFactory,
+                ConnectionPoolSettings.builder()
+                        .maxSize(1)
+                        .maintenanceInitialDelay(5, MINUTES)
+                        .maxConnectionLifeTime(20, MILLISECONDS).build());
         provider.start();
 
         // when
@@ -192,12 +158,11 @@ public class DefaultConnectionPoolTest {
     public void shouldCreateNewConnectionAfterExpiration() throws InterruptedException {
         // given
         provider = new DefaultConnectionPool(SERVER_ID,
-                                             connectionFactory,
-                                             ConnectionPoolSettings.builder()
-                                                                   .maxSize(1)
-                                                                   .maxWaitQueueSize(1)
-                                                                   .maintenanceInitialDelay(5, MINUTES)
-                                                                   .maxConnectionLifeTime(20, MILLISECONDS).build());
+                connectionFactory,
+                ConnectionPoolSettings.builder()
+                        .maxSize(1)
+                        .maintenanceInitialDelay(5, MINUTES)
+                        .maxConnectionLifeTime(20, MILLISECONDS).build());
         provider.start();
 
         // when
@@ -215,14 +180,14 @@ public class DefaultConnectionPoolTest {
     public void shouldPruneAfterMaintenanceTaskRuns() throws InterruptedException {
         // given
         provider = new DefaultConnectionPool(SERVER_ID,
-                                             connectionFactory,
-                                             ConnectionPoolSettings.builder()
-                                                                   .maxSize(10)
-                                                                   .maxConnectionLifeTime(1, MILLISECONDS)
-                                                                   .maintenanceInitialDelay(5, MINUTES)
-                                                                   .maxWaitQueueSize(1)
-                                                                   .build());
-        provider.get().close();                                                  provider.start();
+                connectionFactory,
+                ConnectionPoolSettings.builder()
+                        .maxSize(10)
+                        .maxConnectionLifeTime(1, MILLISECONDS)
+                        .maintenanceInitialDelay(5, MINUTES)
+                        .build());
+        provider.get().close();
+        provider.start();
 
 
         // when
@@ -231,49 +196,5 @@ public class DefaultConnectionPoolTest {
 
         // then
         assertTrue(connectionFactory.getCreatedConnections().get(0).isClosed());
-    }
-
-    @Test
-    public void shouldNotCallWaitQueueExitedIfWaitQueueEnteredWasNotCalled() throws InterruptedException {
-        // given
-        QueueEventsConnectionPoolListener listener = new QueueEventsConnectionPoolListener();
-
-        // when
-        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
-                                             ConnectionPoolSettings.builder()
-                                                                   .maxSize(1)
-                                                                   .maxWaitQueueSize(1)
-                                                                   .maxWaitTime(5, SECONDS)
-                                                                   .addConnectionPoolListener(listener)
-                                                                   .build());
-        provider.start();
-
-        // then
-        assertEquals(0, listener.getWaitQueueSize());
-
-        // when
-        InternalConnection connection = provider.get();
-        TimeoutTrackingConnectionGetter timeoutTrackingConnectionGetter = new TimeoutTrackingConnectionGetter(provider);
-        new Thread(timeoutTrackingConnectionGetter).start();
-        Thread.sleep(100);
-
-        // then
-        try {
-            provider.get();
-            fail();
-        } catch (MongoWaitQueueFullException e) {
-            assertEquals(1, listener.getWaitQueueSize());
-        }
-
-        // when
-        connection.close();
-        timeoutTrackingConnectionGetter.getLatch().await();
-        connection = provider.get();
-
-        // then
-        assertEquals(0, listener.getWaitQueueSize());
-
-        // cleanup
-        connection.close();
     }
 }

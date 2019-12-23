@@ -194,7 +194,7 @@ functions:
   "upload test results":
     - command: attach.xunit_results
       params:
-        file: ./src/*/build/test-results/test/TEST-*.xml
+        file: ./src/*/build/test-results/*/TEST-*.xml
 
   "bootstrap mongo-orchestration":
     - command: shell.exec
@@ -216,6 +216,15 @@ functions:
           ${PREPARE_SHELL}
           AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" SAFE_FOR_MULTI_MONGOS="${SAFE_FOR_MULTI_MONGOS}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" AWS_ACCESS_KEY_ID=${aws_access_key_id} AWS_SECRET_ACCESS_KEY=${aws_secret_access_key} .evergreen/run-tests.sh
 
+  "run reactive streams tck tests":
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          .evergreen/run-reactive-streams-tck-tests.sh
+
   "run slow tests":
   - command: shell.exec
     type: test
@@ -224,6 +233,15 @@ functions:
       script: |
         ${PREPARE_SHELL}
         AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" SLOW_TESTS_ONLY=true .evergreen/run-tests.sh
+
+  "run scala tests":
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          SCALA="${SCALA}" AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" SAFE_FOR_MULTI_MONGOS="${SAFE_FOR_MULTI_MONGOS}" TOPOLOGY="${TOPOLOGY}" AWS_ACCESS_KEY_ID=${aws_access_key_id} AWS_SECRET_ACCESS_KEY=${aws_secret_access_key} .evergreen/run-scala-tests.sh
 
   "run socket tests":
     - command: shell.exec
@@ -234,14 +252,14 @@ functions:
           ${PREPARE_SHELL}
           AUTH="${AUTH}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" .evergreen/run-socket-tests.sh
 
-  "run embedded tests":
-  - command: shell.exec
-    type: test
-    params:
-      working_dir: "src"
-      script: |
-        ${PREPARE_SHELL}
-        JDK="${JDK}" .evergreen/run-embedded-tests.sh
+  "run netty tests":
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          STREAM_TYPE=netty AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" .evergreen/run-tests.sh
 
   "run plain auth test":
     - command: shell.exec
@@ -394,6 +412,19 @@ tasks:
         - func: "bootstrap mongo-orchestration"
         - func: "run tests"
 
+    - name: "scala-tests"
+      commands:
+        - func: "bootstrap mongo-orchestration"
+        - func: "run scala tests"
+
+    - name: "reactive-streams-tck-test"
+      commands:
+        - func: "bootstrap mongo-orchestration"
+          vars:
+            VERSION: "4.2"
+            TOPOLOGY: "server"
+        - func: "run reactive streams tck tests"
+
     - name: "plain-auth-test"
       commands:
         - func: "run plain auth test"
@@ -412,9 +443,10 @@ tasks:
         - func: "bootstrap mongo-orchestration"
         - func: "run socket tests"
 
-    - name: "embedded-test"
+    - name: "netty-test"
       commands:
-      - func: "run embedded tests"
+        - func: "bootstrap mongo-orchestration"
+        - func: "run netty tests"
 
     - name: "atlas-test"
       commands:
@@ -432,8 +464,8 @@ tasks:
           name: "gssapi-auth-test"
         - variant: "plain-auth-test"
           name: "plain-auth-test"
-        - variant: ".test-embedded-variant"
-          name: "embedded-test"
+        - variant: ".test-scala-variant"
+          name: "scala-tests"
       commands:
         - func: "publish snapshot"
 
@@ -560,22 +592,26 @@ axes:
         display_name: JDK11
         variables:
           JDK: "jdk11"
-      - id: "jdk9"
-        display_name: JDK9
-        variables:
-           JDK: "jdk9"
       - id: "jdk8"
         display_name: JDK8 
         variables:
            JDK: "jdk8"
-      - id: "jdk7"
-        display_name: JDK7 
+
+  - id: scala
+    display_name: SCALA
+    values:
+      - id: "2.11"
+        display_name: "Scala 2.11"
         variables:
-           JDK: "jdk7"
-      - id: "jdk6"
-        display_name: JDK6
+          SCALA: "2.11.12"
+      - id: "2.12"
+        display_name: "Scala 2.12"
         variables:
-           JDK: "jdk6"
+          SCALA: "2.12.10"
+      - id: "2.13"
+        display_name: "Scala 2.13"
+        variables:
+          SCALA: "2.13.0"
 
   # Choice of MongoDB storage engine
   - id: storage-engine
@@ -596,50 +632,35 @@ buildvariants:
     - name: "static-analysis"
 
 - matrix_name: "tests-zlib-compression"
-  matrix_spec: { compressor : "zlib", auth: "noauth", ssl: "nossl", jdk: "jdk6", version: ["3.6", "4.0", "4.2", "latest"], topology: "standalone", os: "linux" }
+  matrix_spec: { compressor : "zlib", auth: "noauth", ssl: "nossl", jdk: "jdk8", version: ["3.6", "4.0", "4.2", "latest"], topology: "standalone", os: "linux" }
   display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
      - name: "test"
 
 - matrix_name: "tests-snappy-compression"
-  matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: ["3.4", "3.6", "4.0", "4.2", "latest"], topology: "standalone", os: "linux" }
+  matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk8", version: ["3.4", "3.6", "4.0", "4.2", "latest"], topology: "standalone", os: "linux" }
   display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
      - name: "test"
 
 - matrix_name: "tests-zstd-compression"
-  matrix_spec: { compressor : "zstd", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: ["4.2", "latest"], topology: "standalone", os: "linux" }
+  matrix_spec: { compressor : "zstd", auth: "noauth", ssl: "nossl", jdk: "jdk8", version: ["4.2", "latest"], topology: "standalone", os: "linux" }
   display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
-     - name: "test"
+    - name: "test"
 
-- matrix_name: "tests-jdk6-unsecure"
-  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk6", version: "*", topology: "*", os: "linux" }
+- matrix_name: "tests-jdk8-unsecure"
+  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk8", version: "*", topology: "*", os: "linux" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
      - name: "test"
 
-- matrix_name: "tests-jdk6-secure"
-  matrix_spec:  { auth: "auth", ssl: "ssl", jdk: "jdk6", version: "*", topology: "*", os: "linux" }
-  exclude_spec: { auth: "auth", ssl: "ssl", jdk: "jdk6", version: ["4.0", "4.2", "latest"], topology: "*", os: "linux" }
-  display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
-  tags: ["tests-variant"]
-  tasks:
-     - name: "test"
-
-- matrix_name: "tests-jdk-newer-secure"
+- matrix_name: "tests-jdk-secure"
   matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk8", "jdk11"], version: ["4.0", "4.2", "latest"], topology: "*", os: "linux" }
-  display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
-  tags: ["tests-variant"]
-  tasks:
-     - name: "test"
-
-- matrix_name: "tests-jdk7-secure"
-  matrix_spec: { auth: "auth", ssl: "ssl", jdk: "jdk7", version: "3.6", topology: "standalone", os: "linux" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
@@ -659,15 +680,22 @@ buildvariants:
   tasks:
      - name: "socket-test"
 
+- matrix_name: "tests-netty"
+  matrix_spec: { auth: "noauth", ssl: "*", jdk: "jdk8", version: ["4.2"], topology: "standalone", os: "linux" }
+  display_name: "Netty: ${version} ${topology} ${ssl} ${jdk} ${os} "
+  tags: ["tests-variant"]
+  tasks:
+    - name: "test"
+
 - matrix_name: "tests-socket-snappy-compression"
-  matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: ["4.2"], topology: "standalone", os: "linux" }
+  matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk8", version: ["4.2"], topology: "standalone", os: "linux" }
   display_name: "Socket: ${version} ${compressor} ${topology} ${auth} ${jdk} ${os} "
   tags: ["tests-socket-variant"]
   tasks:
      - name: "socket-test"
 
 - matrix_name: "tests-socket-zstd-compression"
-  matrix_spec: { compressor : "zstd", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: ["4.2"], topology: "standalone", os: "linux" }
+  matrix_spec: { compressor : "zstd", auth: "noauth", ssl: "nossl", jdk: "jdk8", version: ["4.2"], topology: "standalone", os: "linux" }
   display_name: "Socket: ${version} ${compressor} ${topology} ${auth} ${jdk} ${os} "
   tags: ["tests-socket-variant"]
   tasks:
@@ -681,20 +709,12 @@ buildvariants:
      - name: "gssapi-auth-test"
 
 - matrix_name: "perf"
-  matrix_spec:  { auth: "noauth", ssl: "nossl", jdk: "jdk9", version: "*", topology: "standalone", os: "linux" }
+  matrix_spec:  { auth: "noauth", ssl: "nossl", jdk: "jdk8", version: "*", topology: "standalone", os: "linux" }
   batchtime: 1440 # run once a day
   display_name: "Perf Tests ${version} "
   tags: ["perf-variant"]
   tasks:
      - name: "perf"
-
-- matrix_name: "tests-embedded"
-  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "*", version: ["4.2"], topology: "standalone", os: "ubuntu" }
-  exclude_spec: { auth: "*", ssl: "*", jdk: "jdk6", version: "*", topology: "*", os: "*" }
-  display_name: "Embedded: ${jdk}"
-  tags: ["test-embedded-variant"]
-  tasks:
-  - name: "embedded-test"
 
 - name: plain-auth-test
   display_name: "PLAIN (LDAP) Auth test"
@@ -707,6 +727,19 @@ buildvariants:
   run_on: *hosts
   tasks:
     - name: "atlas-test"
+
+- name: "reactive-streams-tck-test"
+  display_name: "Reactive Streams TCK tests"
+  run_on: ubuntu1804-test
+  tasks:
+    - name: "reactive-streams-tck-test"
+
+- matrix_name: "scala-tests"
+  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk11", version: ["4.2"], topology: "replicaset", scala: "*", os: "ubuntu" }
+  display_name: "${scala} ${version} ${topology} ${os}"
+  tags: ["test-scala-variant"]
+  tasks:
+    - name: "scala-tests"
 
 - name: publish-snapshot
   display_name: "Publish Snapshot"

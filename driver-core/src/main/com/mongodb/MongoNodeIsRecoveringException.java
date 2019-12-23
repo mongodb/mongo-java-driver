@@ -37,15 +37,4 @@ public class MongoNodeIsRecoveringException extends MongoCommandException {
     public MongoNodeIsRecoveringException(final BsonDocument response, final ServerAddress serverAddress) {
         super(response, serverAddress);
     }
-
-    /**
-     * Construct an instance.
-     *
-     * @param serverAddress the address of the server
-     * @deprecated Prefer {@link #MongoNodeIsRecoveringException(BsonDocument, ServerAddress)}
-     */
-    @Deprecated
-    public MongoNodeIsRecoveringException(final ServerAddress serverAddress) {
-        super(new BsonDocument(), serverAddress);
-    }
 }

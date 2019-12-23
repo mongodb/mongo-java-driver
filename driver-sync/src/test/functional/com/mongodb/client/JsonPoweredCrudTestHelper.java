@@ -25,6 +25,7 @@ import com.mongodb.ReadConcernLevel;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.bulk.BulkWriteError;
+import com.mongodb.bulk.BulkWriteInsert;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.BulkWriteUpsert;
 import com.mongodb.client.gridfs.GridFSBucket;
@@ -54,6 +55,8 @@ import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
+import com.mongodb.client.result.InsertManyResult;
+import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -187,17 +190,13 @@ public class JsonPoweredCrudTestHelper {
         if (bulkWriteResult.wasAcknowledged()) {
             resultDoc.append("deletedCount", new BsonInt32(bulkWriteResult.getDeletedCount()));
 
-            // Determine insertedIds
-            BsonDocument insertedIds = new BsonDocument();
-            for (int i = 0; i < writeModels.size(); i++) {
-                WriteModel<BsonDocument> cur = writeModels.get(i);
-                if (cur instanceof InsertOneModel && writeSuccessful(i, writeErrors)) {
-                    InsertOneModel<BsonDocument> insertOneModel = (InsertOneModel<BsonDocument>) cur;
-                    insertedIds.put(Integer.toString(i), insertOneModel.getDocument().get("_id"));
-                }
+            BsonDocument inserts = new BsonDocument();
+            for (BulkWriteInsert bulkWriteInsert : bulkWriteResult.getInserts()) {
+                inserts.put(String.valueOf(bulkWriteInsert.getIndex()), bulkWriteInsert.getId());
             }
-            resultDoc.append("insertedIds", insertedIds);
-            resultDoc.append("insertedCount", new BsonInt32(insertedIds.size()));
+            resultDoc.append("insertedIds", inserts);
+            resultDoc.append("insertedCount", bulkWriteResult.getInserts() == null
+                    ? new BsonInt32(0) : new BsonInt32(bulkWriteResult.getInserts().size()));
 
             resultDoc.append("matchedCount", new BsonInt32(bulkWriteResult.getMatchedCount()));
             resultDoc.append("modifiedCount", new BsonInt32(bulkWriteResult.getModifiedCount()));
@@ -320,30 +319,6 @@ public class JsonPoweredCrudTestHelper {
         return results;
     }
 
-    @SuppressWarnings("deprecation")
-    BsonDocument getCountResult(final BsonDocument collectionOptions, final BsonDocument arguments,
-                                @Nullable final ClientSession clientSession) {
-        CountOptions options = new CountOptions();
-        if (arguments.containsKey("skip")) {
-            options.skip(arguments.getNumber("skip").intValue());
-        }
-        if (arguments.containsKey("limit")) {
-            options.limit(arguments.getNumber("limit").intValue());
-        }
-        if (arguments.containsKey("collation")) {
-            options.collation(getCollation(arguments.getDocument("collation")));
-        }
-
-        BsonDocument filter = arguments.getDocument("filter", new BsonDocument());
-        int count;
-        if (clientSession == null) {
-            count = (int) getCollection(collectionOptions).count(filter, options);
-        } else {
-            count = (int) getCollection(collectionOptions).count(clientSession, filter, options);
-        }
-        return toResult(count);
-    }
-
     BsonDocument getEstimatedDocumentCountResult(final BsonDocument collectionOptions, final BsonDocument arguments,
                                                  @Nullable final ClientSession clientSession) {
         if (!arguments.isEmpty()) {
@@ -446,13 +421,11 @@ public class JsonPoweredCrudTestHelper {
         return toResult(iterable.into(new BsonArray()));
     }
 
-    @SuppressWarnings("deprecation")
     BsonDocument getFindOneResult(final BsonDocument collectionOptions, final BsonDocument arguments,
                                   @Nullable final ClientSession clientSession) {
         return toResult(createFindIterable(collectionOptions, arguments, clientSession).first());
     }
 
-    @SuppressWarnings("deprecation")
     BsonDocument getFindResult(final BsonDocument collectionOptions, final BsonDocument arguments,
                                @Nullable final ClientSession clientSession) {
         return toResult(createFindIterable(collectionOptions, arguments, clientSession));
@@ -479,12 +452,55 @@ public class JsonPoweredCrudTestHelper {
         if (arguments.containsKey("sort")) {
             iterable.sort(arguments.getDocument("sort"));
         }
-        if (arguments.containsKey("modifiers")) {
-            iterable.modifiers(arguments.getDocument("modifiers"));
+        if (arguments.containsKey("collation")) {
+            iterable.collation(getCollation(arguments.getDocument("collation")));
+        }
+        if (arguments.containsKey("comment")) {
+            iterable.comment(arguments.getString("comment").getValue());
+        }
+        if (arguments.containsKey("hint")) {
+            iterable.hint(arguments.getDocument("hint"));
+        }
+        if (arguments.containsKey("max")) {
+            iterable.max(arguments.getDocument("max"));
+        }
+        if (arguments.containsKey("min")) {
+            iterable.min(arguments.getDocument("min"));
+        }
+        if (arguments.containsKey("maxTimeMS")) {
+            iterable.maxTime(arguments.getNumber("maxTimeMS").intValue(), TimeUnit.MILLISECONDS);
+        }
+        if (arguments.containsKey("showRecordId")) {
+            iterable.showRecordId(arguments.getBoolean("showRecordId").getValue());
+        }
+        if (arguments.containsKey("returnKey")) {
+            iterable.returnKey(arguments.getBoolean("returnKey").getValue());
         }
         if (arguments.containsKey("collation")) {
             iterable.collation(getCollation(arguments.getDocument("collation")));
         }
+        if (arguments.containsKey("comment")) {
+            iterable.comment(arguments.getString("comment").getValue());
+        }
+        if (arguments.containsKey("hint")) {
+            iterable.hint(arguments.getDocument("hint"));
+        }
+        if (arguments.containsKey("max")) {
+            iterable.max(arguments.getDocument("max"));
+        }
+        if (arguments.containsKey("min")) {
+            iterable.min(arguments.getDocument("min"));
+        }
+        if (arguments.containsKey("maxTimeMS")) {
+            iterable.maxTime(arguments.getNumber("maxTimeMS").intValue(), TimeUnit.MILLISECONDS);
+        }
+        if (arguments.containsKey("showRecordId")) {
+            iterable.showRecordId(arguments.getBoolean("showRecordId").getValue());
+        }
+        if (arguments.containsKey("returnKey")) {
+            iterable.returnKey(arguments.getBoolean("returnKey").getValue());
+        }
+
         return iterable;
     }
 
@@ -653,18 +669,20 @@ public class JsonPoweredCrudTestHelper {
         if (arguments.containsKey("bypassDocumentValidation")) {
                 options.bypassDocumentValidation(arguments.getBoolean("bypassDocumentValidation").getValue());
         }
+        InsertOneResult result;
+
         if (clientSession == null) {
-            getCollection(collectionOptions).insertOne(document, options);
+            result = getCollection(collectionOptions).insertOne(document, options);
         } else {
-            getCollection(collectionOptions).insertOne(clientSession, document, options);
+            result = getCollection(collectionOptions).insertOne(clientSession, document, options);
         }
 
-        return toResult(new BsonDocument("insertedId", document.get("_id")));
+        return toResult(new BsonDocument("insertedId", result.getInsertedId()));
     }
 
     BsonDocument getInsertManyResult(final BsonDocument collectionOptions, final BsonDocument arguments,
                                      @Nullable final ClientSession clientSession) {
-        List<BsonDocument> documents = new ArrayList<BsonDocument>();
+        List<BsonDocument> documents = new ArrayList<>();
         for (BsonValue document : arguments.getArray("documents")) {
             documents.add(document.asDocument());
         }
@@ -676,16 +694,15 @@ public class JsonPoweredCrudTestHelper {
                 options.bypassDocumentValidation(arguments.getBoolean("bypassDocumentValidation").getValue());
             }
 
+            InsertManyResult insertManyResult;
             if (clientSession == null) {
-                getCollection(collectionOptions).insertMany(documents, options);
+                insertManyResult = getCollection(collectionOptions).insertMany(documents, options);
             } else {
-                getCollection(collectionOptions).insertMany(clientSession, documents, options);
+                insertManyResult = getCollection(collectionOptions).insertMany(clientSession, documents, options);
             }
 
             BsonDocument insertedIds = new BsonDocument();
-            for (int i = 0; i < documents.size(); i++) {
-                insertedIds.put(Integer.toString(i), documents.get(i).get("_id"));
-            }
+            insertManyResult.getInsertedIds().forEach((i, v) -> insertedIds.put(i.toString(), v));
             return toResult(new BsonDocument("insertedIds", insertedIds));
         } catch (MongoBulkWriteException e) {
             // For transaction tests, the exception is expected to be returned.
@@ -696,7 +713,7 @@ public class JsonPoweredCrudTestHelper {
             // translation code can be reused.
             List<InsertOneModel<BsonDocument>> writeModels = new ArrayList<InsertOneModel<BsonDocument>>();
             for (BsonValue document : arguments.getArray("documents")) {
-                writeModels.add(new InsertOneModel<BsonDocument>(document.asDocument()));
+                writeModels.add(new InsertOneModel<>(document.asDocument()));
             }
             BsonDocument result = toResult(e.getWriteResult(), writeModels, e.getWriteErrors());
             result.put("error", BsonBoolean.TRUE);
@@ -954,9 +971,6 @@ public class JsonPoweredCrudTestHelper {
         }
         if (rawOptions.containsKey("metadata")) {
             options.metadata(Document.parse(rawOptions.getDocument("metadata").toJson()));
-        }
-        if (rawOptions.containsKey("disableMD5")) {
-            gridFSUploadBucket.withDisableMD5(rawOptions.getBoolean("disableMD5").getValue());
         }
 
         return new BsonDocument("objectId", new BsonObjectId(gridFSUploadBucket.uploadFromStream(filename, input, options)));

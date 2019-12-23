@@ -103,7 +103,7 @@ class DnsMultiServerClusterSpecification extends Specification {
         then: 'events are generated, description includes hosts, exception is cleared, and servers are open'
         2 * clusterListener.clusterDescriptionChanged(_)
         clusterDescription.getType() == SHARDED
-        clusterDescription.getAll() == factory.getDescriptions(firstServer, secondServer)
+        ClusterDescriptionHelper.getAll(clusterDescription) == factory.getDescriptions(firstServer, secondServer)
         clusterDescription.getSrvResolutionException() == null
         !firstTestServer.isClosed()
         !secondTestServer.isClosed()
@@ -117,7 +117,7 @@ class DnsMultiServerClusterSpecification extends Specification {
         then: 'events are generated, description is updated, and the removed server is closed'
         2 * clusterListener.clusterDescriptionChanged(_)
         clusterDescription.getType() == SHARDED
-        clusterDescription.getAll() == factory.getDescriptions(secondServer, thirdServer)
+        ClusterDescriptionHelper.getAll(clusterDescription) == factory.getDescriptions(secondServer, thirdServer)
         clusterDescription.getSrvResolutionException() == null
         firstTestServer.isClosed()
         !secondTestServer.isClosed()
@@ -130,7 +130,7 @@ class DnsMultiServerClusterSpecification extends Specification {
         then: 'the exception is ignored'
         0 * clusterListener.clusterDescriptionChanged(_)
         clusterDescription.getType() == SHARDED
-        clusterDescription.getAll() == factory.getDescriptions(secondServer, thirdServer)
+        ClusterDescriptionHelper.getAll(clusterDescription) == factory.getDescriptions(secondServer, thirdServer)
         clusterDescription.getSrvResolutionException() == null
         firstTestServer.isClosed()
         !secondTestServer.isClosed()

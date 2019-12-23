@@ -16,7 +16,6 @@
 
 package com.mongodb.client.model;
 
-import com.mongodb.BasicDBObject;
 import com.mongodb.CursorType;
 import com.mongodb.DBObject;
 import com.mongodb.ReadConcern;
@@ -38,7 +37,6 @@ import static com.mongodb.assertions.Assertions.notNull;
 public final class DBCollectionFindOptions {
     private int batchSize;
     private int limit;
-    private DBObject modifiers = new BasicDBObject();
     private DBObject projection;
     private long maxTimeMS;
     private long maxAwaitTimeMS;
@@ -73,7 +71,6 @@ public final class DBCollectionFindOptions {
         DBCollectionFindOptions copiedOptions = new DBCollectionFindOptions();
         copiedOptions.batchSize(batchSize);
         copiedOptions.limit(limit);
-        copiedOptions.modifiers(modifiers);
         copiedOptions.projection(projection);
         copiedOptions.maxTime(maxTimeMS, TimeUnit.MILLISECONDS);
         copiedOptions.maxAwaitTime(maxAwaitTimeMS, TimeUnit.MILLISECONDS);
@@ -223,32 +220,6 @@ public final class DBCollectionFindOptions {
      */
     public DBCollectionFindOptions batchSize(final int batchSize) {
         this.batchSize = batchSize;
-        return this;
-    }
-
-    /**
-     * Gets the query modifiers to apply to this operation.  The default is not to apply any modifiers.
-     *
-     * @return the query modifiers, which may be null
-     * @mongodb.driver.manual reference/operator/query-modifier/ Query Modifiers
-     * @deprecated use the individual setters instead
-     */
-    @Deprecated
-    public DBObject getModifiers() {
-        return modifiers;
-    }
-
-    /**
-     * Sets the query modifiers to apply to this operation.
-     *
-     * @param modifiers the query modifiers to apply, which may be null.
-     * @return this
-     * @mongodb.driver.manual reference/operator/query-modifier/ Query Modifiers
-     * @deprecated use the individual setters instead
-     */
-    @Deprecated
-    public DBCollectionFindOptions modifiers(@Nullable final DBObject modifiers) {
-        this.modifiers = notNull("modifiers", modifiers);
         return this;
     }
 

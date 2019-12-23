@@ -23,9 +23,7 @@ import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ClusterSettings;
-import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionPoolSettings;
-import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
@@ -42,11 +40,12 @@ import org.junit.Test;
 import java.util.Collections;
 import java.util.List;
 
-import static com.mongodb.ClusterFixture.getCredentialList;
+import static com.mongodb.ClusterFixture.getCredential;
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.getPrimary;
 import static com.mongodb.ClusterFixture.getSecondary;
 import static com.mongodb.ClusterFixture.getSslSettings;
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimaries;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -68,7 +67,7 @@ public class SingleServerClusterTest {
                 clusterSettings,
                 new DefaultClusterableServerFactory(clusterId, clusterSettings, ServerSettings.builder().build(),
                         ConnectionPoolSettings.builder().maxSize(1).build(),
-                        streamFactory, streamFactory, getCredentialList(),
+                        streamFactory, streamFactory, getCredential(),
 
                         null, null, null,
                         Collections.<MongoCompressor>emptyList()));
@@ -99,7 +98,6 @@ public class SingleServerClusterTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
     public void shouldGetServerWithOkDescription() {
         // given
         setUpCluster(getPrimary());
@@ -108,7 +106,7 @@ public class SingleServerClusterTest {
         Server server = cluster.selectServer(new ServerSelector() {
             @Override
             public List<ServerDescription> select(final ClusterDescription clusterDescription) {
-                return clusterDescription.getPrimaries();
+                return getPrimaries(clusterDescription);
             }
         });
 

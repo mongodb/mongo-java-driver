@@ -14,19 +14,18 @@ Perform write operations to insert new documents into a collection, update exist
 
 ## Prerequisites
 
-- The example below requires a ``restaurants`` collection in the ``test`` database. To create and populate the collection, follow the directions in [github] (https://github.com/mongodb/docs-assets/tree/drivers).
+- The example below requires a ``restaurants`` collection in the ``test`` database. To create and populate the collection, follow the directions in [github](https://github.com/mongodb/docs-assets/tree/drivers).
 
 - Include the following import statements:
 
      ```java
      import com.mongodb.*;
      import com.mongodb.client.MongoClients;
-     import com.mongodb.clientMongoClient;
+     import com.mongodb.client.MongoClient;
      import com.mongodb.client.MongoCollection;
      import com.mongodb.client.MongoDatabase;
      import com.mongodb.client.model.Filters;
-     import static com.mongodb.client.model.Filters.*;
-     import static com.mongodb.client.model.Updates.*;
+
      import com.mongodb.client.model.UpdateOptions;
      import com.mongodb.client.result.*;
      import org.bson.Document;
@@ -35,6 +34,9 @@ Perform write operations to insert new documents into a collection, update exist
      import java.util.List;
      import java.util.Arrays;
      import java.util.ArrayList;
+
+     import static com.mongodb.client.model.Filters.*;
+     import static com.mongodb.client.model.Updates.*;
      ```
 
 ## Connect to a MongoDB Deployment
@@ -108,7 +110,7 @@ To update existing documents in a collection, you can use the collection's [`upd
 
 ### Filters
 
-You can pass in a filter document to the methods to specify which documents to update. The filter document specification is the same as for [read operations]({{< relref "driver/tutorials/perform-read-operations.md" >}}). To facilitate creating filter objects, Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper.
+You can pass in a filter document to the methods to specify which documents to update. The filter document specification is the same as for [read operations]({{< relref "driver/tutorials/perform-read-operations.md" >}}). To facilitate creating filter objects, the Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper.
 
 To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "org/bson/Document.html" >}}) object.
 
@@ -146,7 +148,7 @@ In some cases where you may need to update many fields in a document, it may be 
 
 ### Update Multiple Documents
 
-The [`updateMany`]({{<apiref "com/mongodb/async/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) method updates all documents that match the filter condition.
+The [`updateMany`]({{<apiref "com/mongodb/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) method updates all documents that match the filter condition.
 
 The following operation on the `restaurants` collection updates all documents whose `stars` field equals `2`.
 
@@ -164,7 +166,7 @@ Specifically, the operation uses:
 
 ### Update Options
 
-With the [`updateOne()`]({{<apiref "com/mongodb/client/MongoCollection.html#updateOne(org.bson.conversions.Bsonorg.bson.conversions.Bson)">}}) and [`updateMany`]({{<apiref "com/mongodb/async/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) methods, you can include an [`UpdateOptions`]({{<apiref "com/mongodb/client/model/UpdateOptions.html">}}) document to specify the [`upsert`]({{<docsref "reference/method/db.collection.update/#upsert-option">}}) option or the [`bypassDocumentationValidation`]({{<docsref "core/document-validation/#bypass-document-validation">}}) option.
+With the [`updateOne()`]({{<apiref "com/mongodb/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson )">}}) and [`updateMany`]({{<apiref "com/mongodb/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) methods, you can include an [`UpdateOptions`]({{<apiref "com/mongodb/client/model/UpdateOptions.html">}}) document to specify the [`upsert`]({{<docsref "reference/method/db.collection.update/#upsert-option">}}) option or the [`bypassDocumentationValidation`]({{<docsref "core/document-validation/#bypass-document-validation">}}) option.
 
 ```java
 collection.updateOne(
@@ -182,7 +184,7 @@ The `_id` field is immutable; i.e. you cannot replace the `_id` field value.
 
 ### Filters
 
-You can pass in a filter document to the method to specify which document to replace. The filter document specification is the same as for [read operations]({{< relref "driver/tutorials/perform-read-operations.md" >}}). To facilitate creating filter objects, Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper.
+You can pass in a filter document to the method to specify which document to replace. The filter document specification is the same as for [read operations]({{< relref "driver/tutorials/perform-read-operations.md" >}}). To facilitate creating filter objects, the Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper.
 
 To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "org/bson/Document.html" >}}) object.
 
@@ -228,7 +230,7 @@ To delete documents in a collection, you can use the
 
 ### Filters
 
-You can pass in a filter document to the methods to specify which documents to delete. The filter document specification is the same as for [read operations]({{< relref "driver/tutorials/perform-read-operations.md" >}}). To facilitate creating filter objects, Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper.
+You can pass in a filter document to the methods to specify which documents to delete. The filter document specification is the same as for [read operations]({{< relref "driver/tutorials/perform-read-operations.md" >}}). To facilitate creating filter objects, the Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper.
 
 To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "org/bson/Document.html" >}}) object.
 
@@ -262,20 +264,19 @@ Applications can configure [write concern]({{<docsref "reference/write-concern">
 
 - In a [`MongoClient()`]({{< apiref "com/mongodb/MongoClient.html">}})
 
-  - Via [`MongoClientOptions`]({{<apiref "com/mongodb/MongoClientOptions.html">}}), as in the following example:
+  - Via [`MongoClientSettings`]({{<apiref "com/mongodb/MongoClientSettings.html">}}):
 
       ```java
-      MongoClientOptions options = MongoClientOptions.builder().writeConcern(WriteConcern.MAJORITY).build();
-      MongoClient mongoClient = new MongoClient(Arrays.asList(
-            new ServerAddress("host1", 27017),
-            new ServerAddress("host1", 27018)), options);
+      MongoClient mongoClient = MongoClients.create(MongoClientSettings.builder()
+                                                    .applyConnectionString(new ConnectionString("mongodb://host1,host2"))
+                                                    .writeConcern(WriteConcern.MAJORITY)
+                                                    .build());
       ```
 
-  - Via [`MongoClientURI`]({{< apiref "/com/mongodb/MongoClientURI.html">}}), as in the following example:
+  - Via [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString.html">}}), as in the following example:
 
       ```java
-      MongoClient mongoClient = new MongoClient(
-        new MongoClientURI("mongodb://host1:27017,host2:27017/?w=majority"));
+      MongoClient mongoClient = MongoClients.create("mongodb://host1:27017,host2:27017/?w=majority");
       ```
 
 - In a [`MongoDatabase`]({{<apiref "com/mongodb/client/MongoDatabase.html">}}) via its [`withWriteConcern`]({{<apiref "com/mongodb/client/MongoDatabase.html#withWriteConcern(com.mongodb.WriteConcern)">}}) method, as in the following example:
@@ -299,7 +300,7 @@ MongoCollection<Document> collWithWriteConcern = collection
                                                   .withWriteConcern(WriteConcern.MAJORITY);
 ```
 
-You can build `MongoClientOptions`, `MongoDatabase`, or `MongoCollection` to include a combination of write concern, [read concern]({{<docsref "reference/read-concern">}}), and [read preference]({{<docsref "reference/read-preference">}}).
+You can build a `MongoClientSettings`, `MongoDatabase`, or `MongoCollection` to include a combination of write concern, [read concern]({{<docsref "reference/read-concern">}}), and [read preference]({{<docsref "reference/read-preference">}}).
 
 For example, the following sets all three at the collection level:
 

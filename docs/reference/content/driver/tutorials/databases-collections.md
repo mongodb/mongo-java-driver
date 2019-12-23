@@ -173,7 +173,7 @@ By default, a `MongoCollection` is configured with `Codec`s for three classes:
 Applications, however, are free to register `Codec` implementations for other classes by customizing the `CodecRegistry`.  New
 `CodecRegistry` instances are configurable at three levels:
 
-- In a `MongoClient` via `MongoClientOptions`
+- In a `MongoClient` via `MongoClientSettings`
 - In a `MongoDatabase` via its `withCodecRegistry` method
 - In a `MongoCollection` via its `withCodecRegistry` method
 

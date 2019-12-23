@@ -23,7 +23,6 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 
 import java.util.Date;
-import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -38,13 +37,9 @@ public final class GridFSFile {
     private final long length;
     private final int chunkSize;
     private final Date uploadDate;
-    private final String md5;
 
     // Optional values
     private final Document metadata;
-
-    // Deprecated values
-    private final Document extraElements;
 
     /**
      * Creates a new GridFSFile
@@ -54,42 +49,16 @@ public final class GridFSFile {
      * @param length the length, in bytes of the file
      * @param chunkSize the chunkSize, in bytes of the file
      * @param uploadDate the upload date of the file
-     * @param md5 the hash of the files contents
      * @param metadata the optional metadata for the file
-     * @deprecated there is no replacement for this constructor
      */
-    @Deprecated
     public GridFSFile(final BsonValue id, final String filename, final long length, final int chunkSize, final Date uploadDate,
-                      @Nullable final String md5, final Document metadata) {
-        this(id, filename, length, chunkSize, uploadDate, md5, metadata, null);
-    }
-
-    /**
-     * Creates a legacy implementation of the GridFSFile
-     *
-     * <p>For GridFS files created in older versions of the driver.</p>
-     *
-     * @param id the id of the file
-     * @param filename the filename
-     * @param length the length, in bytes of the file
-     * @param chunkSize the chunkSize, in bytes of the file
-     * @param uploadDate the upload date of the file
-     * @param md5 the hash of the files contents
-     * @param metadata the optional metadata for the file
-     * @param extraElements any extra data stored in the document
-     * @deprecated there is no replacement for this constructor
-     */
-    @Deprecated
-    public GridFSFile(final BsonValue id, final String filename, final long length, final int chunkSize, final Date uploadDate,
-                      @Nullable final String md5, @Nullable final Document metadata, @Nullable final Document extraElements) {
+                      @Nullable final Document metadata) {
         this.id = notNull("id", id);
         this.filename = notNull("filename", filename);
         this.length = notNull("length", length);
         this.chunkSize = notNull("chunkSize", chunkSize);
         this.uploadDate = notNull("uploadDate", uploadDate);
-        this.md5 = md5;
         this.metadata = metadata != null && metadata.isEmpty() ? null : metadata;
-        this.extraElements = extraElements;
     }
 
     /**
@@ -152,18 +121,6 @@ public final class GridFSFile {
     }
 
     /**
-     * The hash of the contents of the stored file
-     *
-     * @return the hash of the contents of the stored file or null if hashing the contents was disabled.
-     * @deprecated file hashing is deprecated and may be removed in the future.
-     */
-    @Deprecated
-    @Nullable
-    public String getMD5() {
-        return md5;
-    }
-
-    /**
      * Any additional metadata stored along with the file
      *
      * @return the metadata document or null
@@ -171,49 +128,6 @@ public final class GridFSFile {
     @Nullable
     public Document getMetadata() {
         return metadata;
-    }
-
-    /**
-     * All deprecated top level elements including any contentType or aliases data
-     *
-     * @return the extra elements document or null
-     * @deprecated any extra information should be stored in the metadata document instead.
-     */
-    @Deprecated
-    @Nullable
-    public Document getExtraElements() {
-        return extraElements;
-    }
-
-    /**
-     * The content type of the file
-     *
-     * @return the content type of the file
-     * @deprecated content type information should be stored the metadata document instead.
-     */
-    @Deprecated
-    public String getContentType() {
-        if (extraElements != null && extraElements.containsKey("contentType")) {
-            return extraElements.getString("contentType");
-        } else {
-            throw new MongoGridFSException("No contentType data for this GridFS file");
-        }
-    }
-
-    /**
-     * The aliases for the file
-     *
-     * @return the aliases of the file
-     * @deprecated any aliases should be stored in the metadata document instead.
-     */
-    @Deprecated
-    @SuppressWarnings("unchecked")
-    public List<String> getAliases() {
-        if (extraElements != null && extraElements.containsKey("aliases")) {
-            return (List<String>) extraElements.get("aliases");
-        } else {
-            throw new MongoGridFSException("No aliases data for this GridFS file");
-        }
     }
 
     @Override
@@ -242,13 +156,7 @@ public final class GridFSFile {
         if (!uploadDate.equals(that.uploadDate)) {
             return false;
         }
-        if (md5 != null ? !md5.equals(that.md5) : that.md5 != null) {
-            return false;
-        }
         if (metadata != null ? !metadata.equals(that.metadata) : that.metadata != null) {
-            return false;
-        }
-        if (extraElements != null ? !extraElements.equals(that.extraElements) : that.extraElements != null) {
             return false;
         }
         return true;
@@ -261,9 +169,7 @@ public final class GridFSFile {
         result = 31 * result + (int) (length ^ (length >>> 32));
         result = 31 * result + chunkSize;
         result = 31 * result + uploadDate.hashCode();
-        result = 31 * result + (md5 != null ? md5.hashCode() : 0);
         result = 31 * result + (metadata != null ? metadata.hashCode() : 0);
-        result = 31 * result + (extraElements != null ? extraElements.hashCode() : 0);
         return result;
     }
 
@@ -275,9 +181,7 @@ public final class GridFSFile {
                 + ", length=" + length
                 + ", chunkSize=" + chunkSize
                 + ", uploadDate=" + uploadDate
-                + ", md5='" + md5 + '\''
                 + ", metadata=" + metadata
-                + ", extraElements='" + extraElements + '\''
                 + '}';
     }
 }

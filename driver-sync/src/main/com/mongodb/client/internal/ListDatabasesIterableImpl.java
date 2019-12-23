@@ -19,10 +19,10 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListDatabasesIterable;
+import com.mongodb.internal.operation.BatchCursor;
+import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.lang.Nullable;
-import com.mongodb.operation.BatchCursor;
-import com.mongodb.operation.ReadOperation;
 import org.bson.BsonDocument;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -36,7 +36,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-class ListDatabasesIterableImpl<TResult> extends MongoIterableImpl<TResult> implements ListDatabasesIterable<TResult> {
+public class ListDatabasesIterableImpl<TResult> extends MongoIterableImpl<TResult> implements ListDatabasesIterable<TResult> {
     private final SyncOperations<BsonDocument> operations;
     private final Class<TResult> resultClass;
 
@@ -50,9 +50,9 @@ class ListDatabasesIterableImpl<TResult> extends MongoIterableImpl<TResult> impl
         this(clientSession, resultClass, codecRegistry, readPreference, executor, true);
     }
 
-    ListDatabasesIterableImpl(@Nullable final ClientSession clientSession, final Class<TResult> resultClass,
-                              final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                              final OperationExecutor executor, final boolean retryReads) {
+    public ListDatabasesIterableImpl(@Nullable final ClientSession clientSession, final Class<TResult> resultClass,
+                                     final CodecRegistry codecRegistry, final ReadPreference readPreference,
+                                     final OperationExecutor executor, final boolean retryReads) {
         super(clientSession, executor, ReadConcern.DEFAULT, readPreference, retryReads); // TODO: read concern?
         this.operations = new SyncOperations<BsonDocument>(BsonDocument.class, readPreference, codecRegistry, retryReads);
         this.resultClass = notNull("clazz", resultClass);

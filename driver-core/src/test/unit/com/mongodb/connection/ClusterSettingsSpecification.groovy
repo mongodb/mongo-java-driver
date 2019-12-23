@@ -20,10 +20,9 @@ import com.mongodb.ConnectionString
 import com.mongodb.ServerAddress
 import com.mongodb.UnixServerAddress
 import com.mongodb.event.ClusterListener
+import com.mongodb.internal.selector.LatencyMinimizingServerSelector
+import com.mongodb.internal.selector.WritableServerSelector
 import com.mongodb.selector.CompositeServerSelector
-import com.mongodb.selector.LatencyMinimizingServerSelector
-import com.mongodb.selector.WritableServerSelector
-import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
@@ -45,7 +44,6 @@ class ClusterSettingsSpecification extends Specification {
         settings.requiredReplicaSetName == null
         settings.serverSelector == defaultServerSelector
         settings.getServerSelectionTimeout(TimeUnit.SECONDS) == 30
-        settings.maxWaitQueueSize == 500
         settings.clusterListeners == []
     }
 
@@ -58,7 +56,6 @@ class ClusterSettingsSpecification extends Specification {
         def settings = ClusterSettings.builder()
                                       .hosts(hosts)
                                       .mode(ClusterConnectionMode.MULTIPLE)
-                                      .description('my cluster')
                                       .requiredClusterType(ClusterType.REPLICA_SET)
                                       .requiredReplicaSetName('foo')
                                       .localThreshold(1, TimeUnit.SECONDS)
@@ -66,18 +63,15 @@ class ClusterSettingsSpecification extends Specification {
                                       .serverSelectionTimeout(1, TimeUnit.SECONDS)
                                       .addClusterListener(listenerOne)
                                       .addClusterListener(listenerTwo)
-                                      .maxWaitQueueSize(100)
                                       .build()
 
         then:
         settings.hosts == hosts
-        settings.description == 'my cluster'
         settings.mode == ClusterConnectionMode.MULTIPLE
         settings.requiredClusterType == ClusterType.REPLICA_SET
         settings.requiredReplicaSetName == 'foo'
         settings.serverSelector == new CompositeServerSelector([serverSelector, oneSecondLatencySelector])
         settings.getServerSelectionTimeout(TimeUnit.MILLISECONDS) == 1000
-        settings.maxWaitQueueSize == 100
         settings.clusterListeners == [listenerOne, listenerTwo]
     }
 
@@ -89,7 +83,6 @@ class ClusterSettingsSpecification extends Specification {
         def customSettings = ClusterSettings.builder()
                 .hosts(hosts)
                 .mode(ClusterConnectionMode.MULTIPLE)
-                .description('my cluster')
                 .requiredClusterType(ClusterType.REPLICA_SET)
                 .requiredReplicaSetName('foo')
                 .serverSelector(serverSelector)
@@ -97,7 +90,6 @@ class ClusterSettingsSpecification extends Specification {
                 .serverSelectionTimeout(1, TimeUnit.SECONDS)
                 .addClusterListener(listenerOne)
                 .addClusterListener(listenerTwo)
-                .maxWaitQueueSize(100)
                 .build()
 
         expect:
@@ -149,7 +141,6 @@ class ClusterSettingsSpecification extends Specification {
         settings.hosts == [new ServerAddress('example.com:27018'), new ServerAddress('example.com:27019')]
         settings.requiredClusterType == ClusterType.REPLICA_SET
         settings.requiredReplicaSetName == 'test'
-        settings.maxWaitQueueSize == 500
 
         when:
         settings = ClusterSettings.builder().applyConnectionString(new ConnectionString('mongodb://example.com:27018,example.com:27019'))
@@ -160,39 +151,6 @@ class ClusterSettingsSpecification extends Specification {
         settings.hosts == [new ServerAddress('example.com:27018'), new ServerAddress('example.com:27019')]
         settings.requiredClusterType == ClusterType.UNKNOWN
         settings.requiredReplicaSetName == null
-        settings.maxWaitQueueSize == 500
-
-        when:
-        settings = ClusterSettings.builder().applyConnectionString(new ConnectionString('mongodb://example.com:27018/?' +
-                                                                                        'waitQueueMultiple=3'))
-                                  .build()
-
-        then:
-        settings.maxWaitQueueSize == 300
-
-        when:
-        settings = ClusterSettings.builder().applyConnectionString(new ConnectionString('mongodb://example.com:27018/?' +
-                                                                                        'waitQueueMultiple=3'))
-                                  .build()
-
-        then:
-        settings.maxWaitQueueSize == 300
-
-        when:
-        settings = ClusterSettings.builder().applyConnectionString(new ConnectionString('mongodb://example.com:27018/?' +
-                                                                                        'maxPoolSize=50'))
-                                  .build()
-
-        then:
-        settings.maxWaitQueueSize == 250
-
-        when:
-        settings = ClusterSettings.builder().applyConnectionString(new ConnectionString('mongodb://example.com:27018/?' +
-                                                                                        'waitQueueMultiple=3&maxPoolSize=50'))
-                                  .build()
-
-        then:
-        settings.maxWaitQueueSize == 150
 
         when:
         settings = ClusterSettings.builder().applyConnectionString(new ConnectionString('mongodb://example.com:27018/?' +
@@ -307,7 +265,6 @@ class ClusterSettingsSpecification extends Specification {
                        .requiredReplicaSetName('foo')
                        .serverSelector(serverSelector)
                        .serverSelectionTimeout(1, TimeUnit.SECONDS)
-                       .maxWaitQueueSize(100)
                        .build() ==
         ClusterSettings.builder()
                        .hosts(hosts)
@@ -316,7 +273,6 @@ class ClusterSettingsSpecification extends Specification {
                        .requiredReplicaSetName('foo')
                        .serverSelector(serverSelector)
                        .serverSelectionTimeout(1, TimeUnit.SECONDS)
-                       .maxWaitQueueSize(100)
                        .build()
     }
 
@@ -329,7 +285,6 @@ class ClusterSettingsSpecification extends Specification {
                        .requiredReplicaSetName('foo')
                        .serverSelector(serverSelector)
                        .serverSelectionTimeout(1, TimeUnit.SECONDS)
-                       .maxWaitQueueSize(100)
                        .build() != ClusterSettings.builder().hosts(hosts).build()
     }
 
@@ -343,7 +298,6 @@ class ClusterSettingsSpecification extends Specification {
                        .requiredReplicaSetName('foo')
                        .serverSelector(serverSelector)
                        .serverSelectionTimeout(1, TimeUnit.SECONDS)
-                       .maxWaitQueueSize(100)
                        .build().hashCode() ==
         ClusterSettings.builder()
                        .hosts(hosts)
@@ -352,7 +306,6 @@ class ClusterSettingsSpecification extends Specification {
                        .requiredReplicaSetName('foo')
                        .serverSelector(serverSelector)
                        .serverSelectionTimeout(1, TimeUnit.SECONDS)
-                       .maxWaitQueueSize(100)
                        .build().hashCode()
     }
 
@@ -365,11 +318,9 @@ class ClusterSettingsSpecification extends Specification {
                        .requiredReplicaSetName('foo')
                        .serverSelector(serverSelector)
                        .serverSelectionTimeout(1, TimeUnit.SECONDS)
-                       .maxWaitQueueSize(100)
                        .build().hashCode() != ClusterSettings.builder().hosts(hosts).build().hashCode()
     }
 
-    @IgnoreIf({ javaVersion < 1.7 })
     def 'should replace unknown ServerAddress subclass instances with ServerAddress'() {
         when:
         def settings = ClusterSettings.builder().hosts([new ServerAddress('server1'),

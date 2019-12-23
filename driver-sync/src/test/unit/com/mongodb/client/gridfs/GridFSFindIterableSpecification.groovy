@@ -16,7 +16,7 @@
 
 package com.mongodb.client.gridfs
 
-import com.mongodb.Block
+
 import com.mongodb.CursorType
 import com.mongodb.Function
 import com.mongodb.MongoClientSettings
@@ -27,14 +27,16 @@ import com.mongodb.client.gridfs.model.GridFSFile
 import com.mongodb.client.internal.FindIterableImpl
 import com.mongodb.client.internal.TestOperationExecutor
 import com.mongodb.client.model.Collation
-import com.mongodb.operation.BatchCursor
-import com.mongodb.operation.FindOperation
+import com.mongodb.internal.operation.BatchCursor
+import com.mongodb.internal.operation.FindOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonObjectId
 import org.bson.Document
 import org.bson.types.ObjectId
 import spock.lang.Specification
+
+import java.util.function.Consumer
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
@@ -105,7 +107,6 @@ class GridFSFindIterableSpecification extends Specification {
         when:
         findIterable.filter(new Document('filter', 1))
                 .sort(new BsonDocument('sort', new BsonInt32(1)))
-                .modifiers(new Document('modifier', 1))
                 .iterator()
 
         def operation = executor.getReadOperation() as FindOperation<GridFSFile>
@@ -114,7 +115,6 @@ class GridFSFindIterableSpecification extends Specification {
         expect operation, isTheSameAs(new FindOperation<GridFSFile>(namespace, gridFSFileCodec)
                 .filter(new BsonDocument('filter', new BsonInt32(1)))
                 .sort(new BsonDocument('sort', new BsonInt32(1)))
-                .modifiers(new BsonDocument('modifier', new BsonInt32(1)))
                 .cursorType(CursorType.NonTailable)
                 .slaveOk(true)
                 .retryReads(true)
@@ -124,12 +124,12 @@ class GridFSFindIterableSpecification extends Specification {
     def 'should follow the MongoIterable interface as expected'() {
         given:
         def cannedResults = [
-                new GridFSFile(new BsonObjectId(new ObjectId()), 'File 1', 123L, 255, new Date(1438679434041),
-                        'd41d8cd98f00b204e9800998ecf8427e', null),
-                new GridFSFile(new BsonObjectId(new ObjectId()), 'File 2', 999999L, 255, new Date(1438679434050),
-                        'd41d8cd98f00b204e9800998ecf8427e', null),
-                new GridFSFile(new BsonObjectId(new ObjectId()), 'File 3', 1L, 255, new Date(1438679434090),
-                        'd41d8cd98f00b204e9800998ecf8427e', null),
+                new GridFSFile(new BsonObjectId(new ObjectId()), 'File 1', 123L, 255, new Date(1438679434041)
+                        , null),
+                new GridFSFile(new BsonObjectId(new ObjectId()), 'File 2', 999999L, 255, new Date(1438679434050)
+                        , null),
+                new GridFSFile(new BsonObjectId(new ObjectId()), 'File 3', 1L, 255, new Date(1438679434090)
+                        , null),
         ]
         def cursor = {
             Stub(BatchCursor) {
@@ -162,9 +162,9 @@ class GridFSFindIterableSpecification extends Specification {
 
         when:
         def count = 0
-        mongoIterable.forEach(new Block<GridFSFile>() {
+        mongoIterable.forEach(new Consumer<GridFSFile>() {
             @Override
-            void apply(GridFSFile document) {
+            void accept(GridFSFile document) {
                 count++
             }
         })

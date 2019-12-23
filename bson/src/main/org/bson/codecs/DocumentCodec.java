@@ -94,7 +94,7 @@ public class DocumentCodec implements CollectibleCodec<Document>, OverridableUui
      */
     public DocumentCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap, final Transformer valueTransformer) {
         this(registry, new BsonTypeCodecMap(notNull("bsonTypeClassMap", bsonTypeClassMap), registry),
-                new ObjectIdGenerator(), valueTransformer, UuidRepresentation.JAVA_LEGACY);
+                new ObjectIdGenerator(), valueTransformer, UuidRepresentation.UNSPECIFIED);
     }
 
     private DocumentCodec(final CodecRegistry registry, final BsonTypeCodecMap bsonTypeCodecMap, final IdGenerator idGenerator,
@@ -242,7 +242,7 @@ public class DocumentCodec implements CollectibleCodec<Document>, OverridableUui
                         }
                         break;
                     case 4:
-                        if (uuidRepresentation == UuidRepresentation.JAVA_LEGACY || uuidRepresentation == UuidRepresentation.STANDARD) {
+                        if (uuidRepresentation == UuidRepresentation.STANDARD) {
                             codec = registry.get(UUID.class);
                         }
                         break;

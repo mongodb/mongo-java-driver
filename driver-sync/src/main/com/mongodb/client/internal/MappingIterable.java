@@ -16,13 +16,13 @@
 
 package com.mongodb.client.internal;
 
-import com.mongodb.Block;
 import com.mongodb.Function;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.lang.Nullable;
 
 import java.util.Collection;
+import java.util.function.Consumer;
 
 class MappingIterable<U, V> implements MongoIterable<V> {
 
@@ -55,20 +55,20 @@ class MappingIterable<U, V> implements MongoIterable<V> {
     }
 
     @Override
-    public void forEach(final Block<? super V> block) {
-        iterable.forEach(new Block<U>() {
+    public void forEach(final Consumer<? super V> block) {
+        iterable.forEach(new Consumer<U>() {
             @Override
-            public void apply(final U document) {
-                block.apply(mapper.apply(document));
+            public void accept(final U document) {
+                block.accept(mapper.apply(document));
             }
         });
     }
 
     @Override
     public <A extends Collection<? super V>> A into(final A target) {
-        forEach(new Block<V>() {
+        forEach(new Consumer<V>() {
             @Override
-            public void apply(final V v) {
+            public void accept(final V v) {
                 target.add(v);
             }
         });

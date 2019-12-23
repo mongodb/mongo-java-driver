@@ -77,16 +77,6 @@ public interface GridFSBucket {
     ReadConcern getReadConcern();
 
     /**
-     * Returns true if computing MD5 checksums when uploading files is disabled.
-     *
-     * @return true if computing MD5 checksums when uploading files is disabled.
-     * @since 3.8
-     * @deprecated there is no replacement for this method, as MD5 is being removed
-     */
-    @Deprecated
-    boolean getDisableMD5();
-
-    /**
      *  Create a new GridFSBucket instance with a new chunk size in bytes.
      *
      * @param chunkSizeBytes the new chunk size in bytes.
@@ -120,17 +110,6 @@ public interface GridFSBucket {
      * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     GridFSBucket withReadConcern(ReadConcern readConcern);
-
-    /**
-     * Create a new GridFSBucket instance with the set disable MD5 value.
-     *
-     * @param disableMD5 true if computing MD5 checksums when uploading files should be disabled.
-     * @return a new GridFSBucket instance with the new disable MD5 value.
-     * @since 3.8
-     * @deprecated there is no replacement for this method, as MD5 is being removed
-     */
-    @Deprecated
-    GridFSBucket withDisableMD5(boolean disableMD5);
 
     /**
      * Opens a Stream that the application can write the contents of the file to.
@@ -716,56 +695,4 @@ public interface GridFSBucket {
      * @mongodb.server.release 3.6
      */
     void drop(ClientSession clientSession);
-
-    // Deprecated APIs
-
-    /**
-     * Opens a Stream from which the application can read the contents of the latest version of the stored file specified by the
-     * {@code filename}.
-     *
-     * @param filename the name of the file to be downloaded
-     * @deprecated use {@link #openDownloadStream(String)} instead.
-     * @return the stream
-     */
-    @Deprecated
-    GridFSDownloadStream openDownloadStreamByName(String filename);
-
-    /**
-     * Opens a Stream from which the application can read the contents of the stored file specified by {@code filename} and the revision
-     * in {@code options}.
-     *
-     * @param filename the name of the file to be downloaded
-     * @param options the download options
-     * @deprecated use {@link #openDownloadStream(String, GridFSDownloadOptions)} instead.
-     * @return the stream
-     */
-    @Deprecated
-    @SuppressWarnings("deprecation")
-    GridFSDownloadStream openDownloadStreamByName(String filename, com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions options);
-
-    /**
-     * Downloads the contents of the latest version of the stored file specified by {@code filename} and writes the contents to
-     * the {@code destination} Stream.
-     *
-     * @param filename the name of the file to be downloaded
-     * @param destination the destination stream
-     * @deprecated use {@link #downloadToStream(String, OutputStream)} instead.
-     */
-    @Deprecated
-    void downloadToStreamByName(String filename, OutputStream destination);
-
-    /**
-     * Downloads the contents of the stored file specified by {@code filename} and by the revision in {@code options} and writes the
-     * contents to the {@code destination} Stream.
-     *
-     * @param filename the name of the file to be downloaded
-     * @param destination the destination stream
-     * @param options the download options
-     * @deprecated use {@link #downloadToStream(String, OutputStream, GridFSDownloadOptions)} instead.
-     */
-    @Deprecated
-    @SuppressWarnings("deprecation")
-    void downloadToStreamByName(String filename, OutputStream destination,
-                                com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions options);
-
 }

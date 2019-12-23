@@ -16,6 +16,7 @@
 
 package com.mongodb.client;
 
+import com.mongodb.MongoClientSettings;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
@@ -38,6 +39,11 @@ public class WithTransactionHelperTransactionsTest extends AbstractUnifiedTest {
     public WithTransactionHelperTransactionsTest(final String filename, final String description, final BsonArray data,
                                                  final BsonDocument definition, final boolean skipTest) {
         super(filename, description, data, definition, skipTest);
+    }
+
+    @Override
+    protected MongoClient createMongoClient(final MongoClientSettings settings) {
+        return MongoClients.create(settings);
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")

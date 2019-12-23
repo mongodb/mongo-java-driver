@@ -16,17 +16,13 @@
 
 package com.mongodb
 
-
-import spock.lang.IgnoreIf
 import spock.lang.Specification
 import spock.lang.Unroll
 
 import javax.net.ssl.SSLContext
 
-import static com.mongodb.ClusterFixture.isNotAtLeastJava7
 import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.MongoCredential.createGSSAPICredential
-import static com.mongodb.MongoCredential.createMongoCRCredential
 import static com.mongodb.MongoCredential.createMongoX509Credential
 import static com.mongodb.MongoCredential.createPlainCredential
 import static com.mongodb.MongoCredential.createScramSha1Credential
@@ -106,12 +102,13 @@ class MongoClientURISpecification extends Specification {
         new MongoClientURI('mongodb://localhost/?safe=false')                                | WriteConcern.UNACKNOWLEDGED
         new MongoClientURI('mongodb://localhost/?wTimeout=5')                                | WriteConcern.ACKNOWLEDGED
                                                                                                            .withWTimeout(5, MILLISECONDS)
-        new MongoClientURI('mongodb://localhost/?fsync=true')                                | WriteConcern.ACKNOWLEDGED.withFsync(true)
         new MongoClientURI('mongodb://localhost/?journal=true')                              | WriteConcern.ACKNOWLEDGED.withJournal(true)
-        new MongoClientURI('mongodb://localhost/?w=2&wtimeoutMS=5&fsync=true&journal=true')  | new WriteConcern(2, 5, true, true)
-        new MongoClientURI('mongodb://localhost/?w=majority&wtimeoutMS=5&fsync=true&j=true') | new WriteConcern('majority', 5, true, true)
+        new MongoClientURI('mongodb://localhost/?w=2&wtimeoutMS=5&fsync=true&journal=true')  | new WriteConcern(2, 5).withJournal(true)
+        new MongoClientURI('mongodb://localhost/?w=majority&wtimeoutMS=5&j=true') | new WriteConcern('majority')
+                .withWTimeout(5, MILLISECONDS).withJournal(true)
     }
 
+    @Unroll
     def 'should correctly parse legacy wtimeout write concerns'() {
         expect:
         uri.getOptions().getWriteConcern() == writeConcern;
@@ -121,19 +118,19 @@ class MongoClientURISpecification extends Specification {
         new MongoClientURI('mongodb://localhost')                                          | WriteConcern.ACKNOWLEDGED
         new MongoClientURI('mongodb://localhost/?wTimeout=5')                              | WriteConcern.ACKNOWLEDGED
                                                                                                          .withWTimeout(5, MILLISECONDS)
-        new MongoClientURI('mongodb://localhost/?w=2&wtimeout=5&fsync=true&j=true')        | new WriteConcern(2, 5, true, true)
-        new MongoClientURI('mongodb://localhost/?w=majority&wtimeout=5&fsync=true&j=true') | new WriteConcern('majority', 5, true, true)
+        new MongoClientURI('mongodb://localhost/?w=2&wtimeout=5&j=true')        | new WriteConcern(2, 5).withJournal(true)
+        new MongoClientURI('mongodb://localhost/?w=majority&wtimeout=5&j=true') | new WriteConcern('majority')
+                .withWTimeout(5, MILLISECONDS).withJournal(true)
         new MongoClientURI('mongodb://localhost/?wTimeout=1&wtimeoutMS=5')                 | WriteConcern.ACKNOWLEDGED
                                                                                                          .withWTimeout(5, MILLISECONDS)
     }
 
-    @IgnoreIf({ isNotAtLeastJava7() })
     def 'should correctly parse URI options for #type'() {
         given:
-        def uri = new MongoClientURI('mongodb://localhost/?minPoolSize=5&maxPoolSize=10&waitQueueMultiple=7&waitQueueTimeoutMS=150&'
+        def uri = new MongoClientURI('mongodb://localhost/?minPoolSize=5&maxPoolSize=10&waitQueueTimeoutMS=150&'
                 + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test&'
                 + 'connectTimeoutMS=2500&socketTimeoutMS=5500&'
-                + 'safe=false&w=1&wtimeout=2500&fsync=true&ssl=true&readPreference=secondary&'
+                + 'safe=false&w=1&wtimeout=2500&ssl=true&readPreference=secondary&'
                 + 'sslInvalidHostNameAllowed=true&'
                 + 'serverSelectionTimeoutMS=25000&'
                 + 'localThresholdMS=30&'
@@ -146,12 +143,11 @@ class MongoClientURISpecification extends Specification {
         def options = uri.getOptions()
 
         then:
-        options.getWriteConcern() == new WriteConcern(1, 2500, true)
+        options.getWriteConcern() == new WriteConcern(1, 2500)
         options.getReadPreference() == ReadPreference.secondary()
         options.getConnectionsPerHost() == 10
         options.getMinConnectionsPerHost() == 5
         options.getMaxWaitTime() == 150
-        options.getThreadsAllowedToBlockForConnectionMultiplier() == 7
         options.getMaxConnectionIdleTime() == 200
         options.getMaxConnectionLifeTime() == 300
         options.getSocketTimeout() == 5500
@@ -173,11 +169,9 @@ class MongoClientURISpecification extends Specification {
 
         then:
         options.getConnectionsPerHost() == 100
-        options.getThreadsAllowedToBlockForConnectionMultiplier() == 5
         options.getMaxWaitTime() == 120000
         options.getConnectTimeout() == 10000
         options.getSocketTimeout() == 0
-        options.getDescription() == null
         options.getReadPreference() == ReadPreference.primary()
         options.getRequiredReplicaSetName() == null
         !options.isSslEnabled()
@@ -188,7 +182,6 @@ class MongoClientURISpecification extends Specification {
     def 'should apply default uri to options'() {
         given:
         def optionsBuilder = MongoClientOptions.builder()
-                .description('test')
                 .applicationName('appName')
                 .readPreference(ReadPreference.secondary())
                 .retryWrites(true)
@@ -202,8 +195,6 @@ class MongoClientURISpecification extends Specification {
                 .maxWaitTime(200)
                 .maxConnectionIdleTime(300)
                 .maxConnectionLifeTime(400)
-                .threadsAllowedToBlockForConnectionMultiplier(2)
-                .socketKeepAlive(false)
                 .sslEnabled(true)
                 .sslInvalidHostNameAllowed(true)
                 .sslContext(SSLContext.getDefault())
@@ -219,7 +210,6 @@ class MongoClientURISpecification extends Specification {
         def options = new MongoClientURI('mongodb://localhost', optionsBuilder).getOptions()
 
         then:
-        options.getDescription() == 'test'
         options.getApplicationName() == 'appName'
         options.getReadPreference() == ReadPreference.secondary()
         options.getWriteConcern() == WriteConcern.JOURNALED
@@ -233,8 +223,6 @@ class MongoClientURISpecification extends Specification {
         options.getConnectionsPerHost() == 500
         options.getConnectTimeout() == 100
         options.getSocketTimeout() == 700
-        options.getThreadsAllowedToBlockForConnectionMultiplier() == 2
-        !options.isSocketKeepAlive()
         options.isSslEnabled()
         options.isSslInvalidHostNameAllowed()
         options.getHeartbeatFrequency() == 5
@@ -257,10 +245,10 @@ class MongoClientURISpecification extends Specification {
         uri                                                   | credentialList
         new MongoClientURI('mongodb://jeff:123@localhost')    | createCredential('jeff', 'admin', '123'.toCharArray())
         new MongoClientURI('mongodb://jeff:123@localhost/?' +
-                           'authMechanism=MONGODB-CR')        | createMongoCRCredential('jeff', 'admin', '123'.toCharArray())
+                           'authMechanism=MONGODB-CR')        | createCredential('jeff', 'admin', '123'.toCharArray())
         new MongoClientURI('mongodb://jeff:123@localhost/?' +
                            'authMechanism=MONGODB-CR' +
-                           '&authSource=test')                | createMongoCRCredential('jeff', 'test', '123'.toCharArray())
+                           '&authSource=test')                | createCredential('jeff', 'test', '123'.toCharArray())
         new MongoClientURI('mongodb://jeff:123@localhost/?' +
                            'authMechanism=SCRAM-SHA-1')       | createScramSha1Credential('jeff', 'admin', '123'.toCharArray())
         new MongoClientURI('mongodb://jeff:123@localhost/?' +
@@ -320,7 +308,6 @@ class MongoClientURISpecification extends Specification {
         options.getConnectionsPerHost() == 250
     }
 
-    @IgnoreIf({ isNotAtLeastJava7() })
     def 'should be equal to another MongoClientURI with the same string values'() {
         expect:
         uri1 == uri2
@@ -349,7 +336,7 @@ class MongoClientURISpecification extends Specification {
                                                                                        + 'authMechanism=SCRAM-SHA-1')
         new MongoClientURI('mongodb://localhost/db.coll'
                          + '?minPoolSize=5;'
-                         + 'maxPoolSize=10;waitQueueMultiple=7;'
+                         + 'maxPoolSize=10;'
                          + 'waitQueueTimeoutMS=150;'
                          + 'maxIdleTimeMS=200;'
                          + 'maxLifeTimeMS=300;replicaSet=test;'
@@ -358,7 +345,7 @@ class MongoClientURISpecification extends Specification {
                          + 'safe=false;w=1;wtimeout=2500;'
                          + 'fsync=true;readPreference=primary;'
                          + 'ssl=true')                               |  new MongoClientURI('mongodb://localhost/db.coll?minPoolSize=5;'
-                                                                                         + 'maxPoolSize=10&waitQueueMultiple=7;'
+                                                                                         + 'maxPoolSize=10;'
                                                                                          + 'waitQueueTimeoutMS=150;'
                                                                                          + 'maxIdleTimeMS=200&maxLifeTimeMS=300'
                                                                                          + '&replicaSet=test;connectTimeoutMS=2500;'
@@ -398,14 +385,13 @@ class MongoClientURISpecification extends Specification {
     def 'should be equal to another MongoClientURI with options'() {
         when:
         MongoClientURI uri1 = new MongoClientURI('mongodb://user:pass@host1:1,host2:2,host3:3/bar?'
-                                                        + 'maxPoolSize=10;waitQueueMultiple=5;waitQueueTimeoutMS=150;'
+                                                        + 'maxPoolSize=10;waitQueueTimeoutMS=150;'
                                                         + 'minPoolSize=7;maxIdleTimeMS=1000;maxLifeTimeMS=2000;replicaSet=test;'
                                                         + 'connectTimeoutMS=2500;socketTimeoutMS=5500;autoConnectRetry=true;'
-                                                        + 'slaveOk=true;safe=false;w=1;wtimeout=2600;fsync=true')
+                                                        + 'slaveOk=true;safe=false;w=1;wtimeout=2600')
 
         MongoClientOptions.Builder builder = MongoClientOptions.builder()
                                                                .connectionsPerHost(10)
-                                                               .threadsAllowedToBlockForConnectionMultiplier(5)
                                                                .maxWaitTime(150)
                                                                .minConnectionsPerHost(7)
                                                                .maxConnectionIdleTime(1000)
@@ -414,7 +400,7 @@ class MongoClientURISpecification extends Specification {
                                                                .connectTimeout(2500)
                                                                .socketTimeout(5500)
                                                                .readPreference(secondaryPreferred())
-                                                               .writeConcern(new WriteConcern(1, 2600, true))
+                                                               .writeConcern(new WriteConcern(1, 2600))
 
         MongoClientOptions options = builder.build()
 

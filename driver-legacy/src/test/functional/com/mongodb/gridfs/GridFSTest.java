@@ -339,4 +339,11 @@ public class GridFSTest extends DatabaseTestCase {
         DBObject dbObjectQuery = null;
         gridFS.remove(dbObjectQuery);
     }
+
+    @Test
+    public void testToStringOverride() {
+        GridFSInputFile in = gridFS.createFile();
+        String json = in.toString();
+        assertTrue(json.startsWith("{") && json.endsWith("}"));
+    }
 }

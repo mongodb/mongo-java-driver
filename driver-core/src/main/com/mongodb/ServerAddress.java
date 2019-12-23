@@ -234,16 +234,4 @@ public class ServerAddress implements Serializable {
     public static int defaultPort() {
         return 27017;
     }
-
-    /**
-     * Determines whether this address is the same as a given host.
-     *
-     * @param hostName the address to compare
-     * @return if they are the same
-     * @deprecated use the {@link #equals(Object)} method instead
-     */
-    @Deprecated
-    public boolean sameHost(final String hostName) {
-        return equals(new ServerAddress(hostName));
-    }
 }

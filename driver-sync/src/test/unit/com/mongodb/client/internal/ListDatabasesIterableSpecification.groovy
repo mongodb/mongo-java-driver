@@ -16,10 +16,10 @@
 
 package com.mongodb.client.internal
 
-import com.mongodb.Block
+
 import com.mongodb.Function
-import com.mongodb.operation.BatchCursor
-import com.mongodb.operation.ListDatabasesOperation
+import com.mongodb.internal.operation.BatchCursor
+import com.mongodb.internal.operation.ListDatabasesOperation
 import org.bson.BsonDocument
 import org.bson.Document
 import org.bson.codecs.BsonValueCodecProvider
@@ -27,6 +27,8 @@ import org.bson.codecs.DocumentCodec
 import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.ValueCodecProvider
 import spock.lang.Specification
+
+import java.util.function.Consumer
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
@@ -98,9 +100,9 @@ class ListDatabasesIterableSpecification extends Specification {
 
         when:
         def count = 0
-        mongoIterable.forEach(new Block<Document>() {
+        mongoIterable.forEach(new Consumer<Document>() {
             @Override
-            void apply(Document document) {
+            void accept(Document document) {
                 count++
             }
         })

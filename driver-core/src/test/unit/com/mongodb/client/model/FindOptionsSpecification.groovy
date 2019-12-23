@@ -17,6 +17,7 @@
 package com.mongodb.client.model
 
 import com.mongodb.CursorType
+import com.mongodb.internal.client.model.FindOptions
 import org.bson.BsonDocument
 import org.bson.Document
 import spock.lang.Specification
@@ -42,7 +43,6 @@ class FindOptionsSpecification extends Specification {
         options.getSkip() == 0
         options.getBatchSize() == 0
         options.getCursorType() == CursorType.NonTailable
-        options.getModifiers() == null
         !options.isNoCursorTimeout()
         !options.isOplogReplay()
         !options.isPartial()
@@ -102,14 +102,6 @@ class FindOptionsSpecification extends Specification {
 
         where:
         cursorType << [CursorType.NonTailable, CursorType.TailableAwait, CursorType.Tailable]
-    }
-
-    def 'should set modifiers'() {
-        expect:
-        new FindOptions().modifiers(modifiers).getModifiers() == modifiers
-
-        where:
-        modifiers << [null, BsonDocument.parse('{$comment: "my find"}')]
     }
 
     def 'should set partial'() {

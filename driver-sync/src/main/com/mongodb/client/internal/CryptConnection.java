@@ -20,18 +20,18 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcernResult;
-import com.mongodb.bulk.DeleteRequest;
-import com.mongodb.bulk.InsertRequest;
-import com.mongodb.bulk.UpdateRequest;
-import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.connection.QueryResult;
-import com.mongodb.connection.SplittablePayload;
+import com.mongodb.internal.bulk.DeleteRequest;
+import com.mongodb.internal.bulk.InsertRequest;
+import com.mongodb.internal.bulk.UpdateRequest;
+import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.MessageSettings;
+import com.mongodb.internal.connection.QueryResult;
+import com.mongodb.internal.connection.SplittablePayload;
 import com.mongodb.internal.connection.SplittablePayloadBsonWriter;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
 import com.mongodb.lang.Nullable;
-import com.mongodb.session.SessionContext;
+import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonBinaryWriterSettings;
@@ -160,12 +160,6 @@ class CryptConnection implements Connection {
     // UNSUPPORTED METHODS for encryption/decryption
 
     @Override
-    public <T> T command(final String database, final BsonDocument command, final boolean slaveOk,
-                         final FieldNameValidator fieldNameValidator, final Decoder<T> commandResultDecoder) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public WriteConcernResult insert(final MongoNamespace namespace, final boolean ordered, final InsertRequest insertRequest) {
         throw new UnsupportedOperationException();
     }
@@ -182,14 +176,6 @@ class CryptConnection implements Connection {
 
     @Override
     public <T> QueryResult<T> query(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
-                                    final int numberToReturn, final int skip, final boolean slaveOk, final boolean tailableCursor,
-                                    final boolean awaitData, final boolean noCursorTimeout, final boolean partial,
-                                    final boolean oplogReplay, final Decoder<T> resultDecoder) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <T> QueryResult<T> query(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
                                     final int skip, final int limit, final int batchSize, final boolean slaveOk,
                                     final boolean tailableCursor, final boolean awaitData, final boolean noCursorTimeout,
                                     final boolean partial, final boolean oplogReplay, final Decoder<T> resultDecoder) {
@@ -199,11 +185,6 @@ class CryptConnection implements Connection {
     @Override
     public <T> QueryResult<T> getMore(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
                                       final Decoder<T> resultDecoder) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void killCursor(final List<Long> cursors) {
         throw new UnsupportedOperationException();
     }
 

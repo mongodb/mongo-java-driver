@@ -58,7 +58,6 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
         initializeSocketChannel(handler, new LinkedList<SocketAddress>(serverAddress.getSocketAddresses()));
     }
 
-    @SuppressWarnings("deprecation")
     private void initializeSocketChannel(final AsyncCompletionHandler<Void> handler, final Queue<SocketAddress> socketAddressQueue) {
         if (socketAddressQueue.isEmpty()) {
             handler.failed(new MongoSocketException("Exception opening socket", serverAddress));
@@ -68,7 +67,7 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
             try {
                 AsynchronousSocketChannel attemptConnectionChannel = AsynchronousSocketChannel.open(group);
                 attemptConnectionChannel.setOption(StandardSocketOptions.TCP_NODELAY, true);
-                attemptConnectionChannel.setOption(StandardSocketOptions.SO_KEEPALIVE, settings.isKeepAlive());
+                attemptConnectionChannel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
                 if (settings.getReceiveBufferSize() > 0) {
                     attemptConnectionChannel.setOption(StandardSocketOptions.SO_RCVBUF, settings.getReceiveBufferSize());
                 }

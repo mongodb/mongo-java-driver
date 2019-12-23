@@ -30,13 +30,13 @@ import static org.bson.assertions.Assertions.notNull;
  *
  * <p>Consists of 12 bytes, divided as follows:</p>
  * <table border="1">
- *     <caption>ObjectID layout</caption>
- *     <tr>
- *         <td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td><td>11</td>
- *     </tr>
- *     <tr>
- *         <td colspan="4">time</td><td colspan="5">random value</td><td colspan="3">inc</td>
- *     </tr>
+ * <caption>ObjectID layout</caption>
+ * <tr>
+ * <td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td><td>11</td>
+ * </tr>
+ * <tr>
+ * <td colspan="4">time</td><td colspan="5">random value</td><td colspan="3">inc</td>
+ * </tr>
  * </table>
  *
  * <p>Instances of this class are immutable.</p>
@@ -56,9 +56,9 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
 
     private static final AtomicInteger NEXT_COUNTER = new AtomicInteger(new SecureRandom().nextInt());
 
-    private static final char[] HEX_CHARS = new char[] {
+    private static final char[] HEX_CHARS = new char[]{
             '0', '1', '2', '3', '4', '5', '6', '7',
-            '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+            '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
 
     private final int timestamp;
     private final int counter;
@@ -137,40 +137,10 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
     }
 
     /**
-     * Constructs a new instances using the given date, machine identifier, process identifier, and counter.
-     *
-     * @param date              the date
-     * @param machineIdentifier the machine identifier
-     * @param processIdentifier the process identifier
-     * @param counter           the counter
-     * @throws IllegalArgumentException if the high order byte of machineIdentifier or counter is not zero
-     * @deprecated Use {@link #ObjectId(Date, int)} instead
-     */
-    @Deprecated
-    public ObjectId(final Date date, final int machineIdentifier, final short processIdentifier, final int counter) {
-        this(dateToTimestampSeconds(date), machineIdentifier, processIdentifier, counter);
-    }
-
-    /**
      * Creates an ObjectId using the given time, machine identifier, process identifier, and counter.
      *
-     * @param timestamp         the time in seconds
-     * @param machineIdentifier the machine identifier
-     * @param processIdentifier the process identifier
-     * @param counter           the counter
-     * @throws IllegalArgumentException if the high order byte of machineIdentifier or counter is not zero
-     * @deprecated Use {@link #ObjectId(int, int)} instead
-     */
-    @Deprecated
-    public ObjectId(final int timestamp, final int machineIdentifier, final short processIdentifier, final int counter) {
-        this(timestamp, machineIdentifier, processIdentifier, counter, true);
-    }
-
-    /**
-     * Creates an ObjectId using the given time, machine identifier, process identifier, and counter.
-     *
-     * @param timestamp         the time in seconds
-     * @param counter           the counter
+     * @param timestamp the time in seconds
+     * @param counter   the counter
      * @throws IllegalArgumentException if the high order byte of counter is not zero
      */
     public ObjectId(final int timestamp, final int counter) {
@@ -216,17 +186,6 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
     }
 
     /**
-     * Creates an ObjectId
-     *
-     * @param timestamp                   time in seconds
-     * @param machineAndProcessIdentifier machine and process identifier
-     * @param counter                     incremental value
-     */
-    ObjectId(final int timestamp, final int machineAndProcessIdentifier, final int counter) {
-        this(legacyToBytes(timestamp, machineAndProcessIdentifier, counter));
-    }
-
-    /**
      * Constructs a new instance from the given ByteBuffer
      *
      * @param buffer the ByteBuffer
@@ -243,23 +202,6 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
         randomValue1 = makeInt((byte) 0, buffer.get(), buffer.get(), buffer.get());
         randomValue2 = makeShort(buffer.get(), buffer.get());
         counter = makeInt((byte) 0, buffer.get(), buffer.get(), buffer.get());
-    }
-
-    private static byte[] legacyToBytes(final int timestamp, final int machineAndProcessIdentifier, final int counter) {
-        byte[] bytes = new byte[OBJECT_ID_LENGTH];
-        bytes[0] = int3(timestamp);
-        bytes[1] = int2(timestamp);
-        bytes[2] = int1(timestamp);
-        bytes[3] = int0(timestamp);
-        bytes[4] = int3(machineAndProcessIdentifier);
-        bytes[5] = int2(machineAndProcessIdentifier);
-        bytes[6] = int1(machineAndProcessIdentifier);
-        bytes[7] = int0(machineAndProcessIdentifier);
-        bytes[8] = int3(counter);
-        bytes[9] = int2(counter);
-        bytes[10] = int1(counter);
-        bytes[11] = int0(counter);
-        return bytes;
     }
 
     /**
@@ -388,129 +330,6 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
 
     @Override
     public String toString() {
-        return toHexString();
-    }
-
-    // Deprecated methods
-
-    /**
-     * <p>Creates an ObjectId using time, machine and inc values.  The Java driver used to create all ObjectIds this way, but it does not
-     * match the <a href="http://docs.mongodb.org/manual/reference/object-id/">ObjectId specification</a>, which requires four values, not
-     * three. This major release of the Java driver conforms to the specification, but still supports clients that are relying on the
-     * behavior of the previous major release by providing this explicit factory method that takes three parameters instead of four.</p>
-     *
-     * <p>Ordinary users of the driver will not need this method.  It's only for those that have written there own BSON decoders.</p>
-     *
-     * <p>NOTE: This will not break any application that use ObjectIds.  The 12-byte representation will be round-trippable from old to new
-     * driver releases.</p>
-     *
-     * @param time    time in seconds
-     * @param machine machine ID
-     * @param inc     incremental value
-     * @return a new {@code ObjectId} created from the given values
-     * @since 2.12.0
-     * @deprecated Use {@link #ObjectId(int, int)} instead
-     */
-    @Deprecated
-    public static ObjectId createFromLegacyFormat(final int time, final int machine, final int inc) {
-        return new ObjectId(time, machine, inc);
-    }
-
-    /**
-     * Gets the current value of the auto-incrementing counter.
-     *
-     * @return the current counter value.
-     * @deprecated
-     */
-    @Deprecated
-    public static int getCurrentCounter() {
-        return NEXT_COUNTER.get() & LOW_ORDER_THREE_BYTES;
-    }
-
-    /**
-     * Gets the generated machine identifier.
-     *
-     * @return an int representing the machine identifier
-     * @deprecated
-     */
-    @Deprecated
-    public static int getGeneratedMachineIdentifier() {
-        return RANDOM_VALUE1;
-    }
-
-    /**
-     * Gets the generated process identifier.
-     *
-     * @return the process id
-     * @deprecated
-     */
-    @Deprecated
-    public static int getGeneratedProcessIdentifier() {
-        return RANDOM_VALUE2;
-    }
-
-    /**
-     * Gets the machine identifier.
-     *
-     * @return the machine identifier
-     * @deprecated
-     */
-    @Deprecated
-    public int getMachineIdentifier() {
-        return randomValue1;
-    }
-
-    /**
-     * Gets the process identifier.
-     *
-     * @return the process identifier
-     * @deprecated
-     */
-    @Deprecated
-    public short getProcessIdentifier() {
-        return randomValue2;
-    }
-
-    /**
-     * Gets the counter.
-     *
-     * @return the counter
-     * @deprecated
-     */
-    @Deprecated
-    public int getCounter() {
-        return counter;
-    }
-
-    /**
-     * Gets the time of this ID, in seconds.
-     *
-     * @return the time component of this ID in seconds
-     * @deprecated Use #getTimestamp instead
-     */
-    @Deprecated
-    public int getTimeSecond() {
-        return timestamp;
-    }
-
-    /**
-     * Gets the time of this instance, in milliseconds.
-     *
-     * @return the time component of this ID in milliseconds
-     * @deprecated Use #getDate instead
-     */
-    @Deprecated
-    public long getTime() {
-        return (timestamp & 0xFFFFFFFFL) * 1000L;
-    }
-
-    /**
-     * @return a string representation of the ObjectId in hexadecimal format
-     * @see ObjectId#toHexString()
-     * @deprecated use {@link #toHexString()}
-     */
-    @Deprecated
-    public String toStringMongod() {
         return toHexString();
     }
 

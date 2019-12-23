@@ -25,7 +25,9 @@ import static com.mongodb.assertions.Assertions.notNull;
  * An event signifying the opening of a connection pool.
  *
  * @since 3.5
+ * @deprecated Prefer {@link ConnectionPoolCreatedEvent}
  */
+@Deprecated
 public final class ConnectionPoolOpenedEvent {
     private final ServerId serverId;
     private final ConnectionPoolSettings settings;
@@ -53,7 +55,7 @@ public final class ConnectionPoolOpenedEvent {
     /**
      * Gets the connection pool settings.
      *
-     * @return the connection pool setttings.
+     * @return the connection pool settings.
      */
     public ConnectionPoolSettings getSettings() {
         return settings;
@@ -63,7 +65,7 @@ public final class ConnectionPoolOpenedEvent {
     public String toString() {
         return "ConnectionPoolOpenedEvent{"
                        + "serverId=" + serverId
-                       + "settings=" + settings
+                       + " settings=" + settings
                        + '}';
     }
 }

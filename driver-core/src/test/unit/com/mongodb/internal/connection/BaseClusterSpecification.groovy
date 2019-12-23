@@ -23,19 +23,18 @@ import com.mongodb.MongoException
 import com.mongodb.MongoInternalException
 import com.mongodb.MongoInterruptedException
 import com.mongodb.MongoTimeoutException
-import com.mongodb.MongoWaitQueueFullException
+
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterDescription
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ClusterType
-import com.mongodb.connection.Server
 import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
-import com.mongodb.selector.ReadPreferenceServerSelector
-import com.mongodb.selector.ServerAddressSelector
-import com.mongodb.selector.WritableServerSelector
+import com.mongodb.internal.selector.ReadPreferenceServerSelector
+import com.mongodb.internal.selector.ServerAddressSelector
+import com.mongodb.internal.selector.WritableServerSelector
 import org.junit.experimental.categories.Category
 import spock.lang.Specification
 
@@ -352,27 +351,6 @@ class BaseClusterSpecification extends Specification {
 
         where:
         serverSelectionTimeoutMS << [100, 0]
-    }
-
-    def 'when selecting server asynchronously should send MongoWaitQueueFullException to callback if there are too many waiters'() {
-        given:
-        def cluster = new MultiServerCluster(new ClusterId(),
-                builder().mode(MULTIPLE)
-                        .hosts([firstServer, secondServer, thirdServer])
-                        .serverSelectionTimeout(1, SECONDS)
-                        .maxWaitQueueSize(1)
-                        .build(),
-                factory)
-
-        when:
-        selectServerAsync(cluster, firstServer)
-        selectServerAsyncAndGet(cluster, firstServer)
-
-        then:
-        thrown(MongoWaitQueueFullException)
-
-        cleanup:
-        cluster?.close()
     }
 
     def selectServerAsyncAndGet(BaseCluster cluster, ServerAddress serverAddress) {

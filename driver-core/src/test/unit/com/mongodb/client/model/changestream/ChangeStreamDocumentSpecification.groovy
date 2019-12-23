@@ -42,7 +42,7 @@ class ChangeStreamDocumentSpecification extends Specification {
 
         when:
         def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(operationType, resumeToken, namespaceDocument,
-                destinationNamespaceDocument, fullDocument, documentKey, clusterTime, updateDesc)
+                destinationNamespaceDocument, fullDocument, documentKey, clusterTime, updateDesc, null, null)
 
         then:
         changeStreamDocument.getResumeToken() == resumeToken
@@ -78,24 +78,6 @@ class ChangeStreamDocumentSpecification extends Specification {
         changeStreamDocumentWithTxnInfo.getDatabaseName() == namespace.getDatabaseName()
         changeStreamDocumentWithTxnInfo.getTxnNumber() == txnNumber
         changeStreamDocumentWithTxnInfo.getLsid() == lsid
-
-        when:
-        def changeStreamDocumentFromNamespace = new ChangeStreamDocument<BsonDocument>(resumeToken, namespace, fullDocument,
-                documentKey, clusterTime, operationType, updateDesc)
-
-        then:
-        changeStreamDocumentFromNamespace.getResumeToken() == resumeToken
-        changeStreamDocumentFromNamespace.getFullDocument() == fullDocument
-        changeStreamDocumentFromNamespace.getDocumentKey() == documentKey
-        changeStreamDocumentFromNamespace.getClusterTime() == clusterTime
-        changeStreamDocumentFromNamespace.getNamespace() == namespace
-        changeStreamDocumentFromNamespace.getOperationType() == operationType
-        changeStreamDocumentFromNamespace.getUpdateDescription() == updateDesc
-        changeStreamDocumentFromNamespace.getDatabaseName() == namespace.getDatabaseName()
-        changeStreamDocumentFromNamespace.getNamespaceDocument() == namespaceDocument
-        changeStreamDocumentFromNamespace.getDestinationNamespaceDocument() == null
-        changeStreamDocumentFromNamespace.getTxnNumber() == null
-        changeStreamDocumentFromNamespace.getLsid() == null
     }
 
     def 'should handle null namespace correctly'() {
@@ -107,7 +89,7 @@ class ChangeStreamDocumentSpecification extends Specification {
         def operationType = OperationType.DROP_DATABASE
         def updateDesc = new UpdateDescription(['a', 'b'], BsonDocument.parse('{c: 1}'))
         def changeStreamDocumentNullNamespace = new ChangeStreamDocument<BsonDocument>(operationType, resumeToken, (BsonDocument) null,
-                (BsonDocument) null, fullDocument, documentKey, clusterTime, updateDesc)
+                (BsonDocument) null, fullDocument, documentKey, clusterTime, updateDesc, null, null)
 
         expect:
         changeStreamDocumentNullNamespace.getDatabaseName() == null
@@ -129,9 +111,10 @@ class ChangeStreamDocumentSpecification extends Specification {
         def updateDesc = new UpdateDescription(['a', 'b'], BsonDocument.parse('{c: 1}'))
 
         def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(operationType, resumeToken, namespaceDocument,
-                (BsonDocument) null, fullDocument, documentKey, clusterTime, updateDesc)
+                (BsonDocument) null, fullDocument, documentKey, clusterTime, updateDesc, null, null)
         def changeStreamDocumentEmptyNamespace = new ChangeStreamDocument<BsonDocument>(operationType, resumeToken,
-                namespaceDocumentEmpty, (BsonDocument) null, fullDocument, documentKey, clusterTime, updateDesc)
+                namespaceDocumentEmpty, (BsonDocument) null, fullDocument, documentKey, clusterTime, updateDesc,
+        null, null)
 
         expect:
         changeStreamDocument.getNamespace() == null

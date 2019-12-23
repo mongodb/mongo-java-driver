@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -223,7 +223,10 @@ public final class CommandMonitoringTestHelper {
         if (command.containsKey("readConcern") && (command.getDocument("readConcern").containsKey("afterClusterTime"))) {
             command.getDocument("readConcern").put("afterClusterTime", new BsonInt32(42));
         }
-
+        // Tests expect maxTimeMS to be int32, but Java API requires maxTime to be a long.  This massage seems preferable to casting
+        if (command.containsKey("maxTimeMS")) {
+            command.put("maxTimeMS", new BsonInt32(command.getNumber("maxTimeMS").intValue()));
+        }
         massageActualCommand(command, expectedCommandStartedEvent.getCommand());
 
         return new CommandStartedEvent(event.getRequestId(), event.getConnectionDescription(), event.getDatabaseName(),

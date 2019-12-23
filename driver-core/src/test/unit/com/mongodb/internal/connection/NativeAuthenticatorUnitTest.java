@@ -39,12 +39,11 @@ public class NativeAuthenticatorUnitTest {
     private NativeAuthenticator subject;
     private ConnectionDescription connectionDescription;
 
-    @SuppressWarnings("deprecation")
     @Before
     public void before() {
         connection = new TestInternalConnection(new ServerId(new ClusterId(), new ServerAddress("localhost", 27017)));
         connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()));
-        MongoCredential credential = MongoCredential.createMongoCRCredential("\u53f0\u5317", "database",
+        MongoCredential credential = MongoCredential.createCredential("\u53f0\u5317", "database",
                 "Ta\u0301ibe\u030Ci".toCharArray());
         subject = new NativeAuthenticator(new MongoCredentialWithCache(credential));
     }

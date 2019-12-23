@@ -26,12 +26,10 @@ import com.mongodb.connection.netty.NettyStreamFactoryFactory
 import com.mongodb.event.CommandListener
 import org.bson.UuidRepresentation
 import org.bson.codecs.configuration.CodecRegistry
-import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.ClusterFixture.isNotAtLeastJava7
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static spock.util.matcher.HamcrestSupport.expect
 
@@ -57,7 +55,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.streamFactoryFactory == null
         settings.compressorList == []
         settings.credential == null
-        settings.uuidRepresentation == UuidRepresentation.JAVA_LEGACY
+        settings.uuidRepresentation == UuidRepresentation.UNSPECIFIED
     }
 
     @SuppressWarnings('UnnecessaryObjectReferences')
@@ -149,7 +147,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.getReadConcern() == ReadConcern.LOCAL
         settings.getApplicationName() == 'app1'
         settings.getSocketSettings() == SocketSettings.builder().build()
-        settings.getHeartbeatSocketSettings() == SocketSettings.builder().readTimeout(10000, TimeUnit.MILLISECONDS).keepAlive(true).build()
+        settings.getHeartbeatSocketSettings() == SocketSettings.builder().readTimeout(10000, TimeUnit.MILLISECONDS).build()
         settings.getCommandListeners().get(0) == commandListener
         settings.getCodecRegistry() == codecRegistry
         settings.getCredential() == credential
@@ -264,12 +262,11 @@ class MongoClientSettingsSpecification extends Specification {
         settings.commandListeners[1].is commandListenerTwo
     }
 
-    @IgnoreIf({ isNotAtLeastJava7() })
     def 'should build settings from a connection string'() {
         when:
         ConnectionString connectionString = new ConnectionString('mongodb://user:pass@host1:1,host2:2/'
                 + '?authMechanism=SCRAM-SHA-1&authSource=test'
-                + '&minPoolSize=5&maxPoolSize=10&waitQueueMultiple=7'
+                + '&minPoolSize=5&maxPoolSize=10'
                 + '&waitQueueTimeoutMS=150&maxIdleTimeMS=200&maxLifeTimeMS=300'
                 + '&connectTimeoutMS=2500'
                 + '&socketTimeoutMS=5500'
@@ -296,7 +293,6 @@ class MongoClientSettingsSpecification extends Specification {
                         .mode(ClusterConnectionMode.MULTIPLE)
                         .requiredReplicaSetName('test')
                         .serverSelectionTimeout(25000, TimeUnit.MILLISECONDS)
-                        .maxWaitQueueSize(10 * 7) // maxPoolSize * waitQueueMultiple
                         .localThreshold(30, TimeUnit.MILLISECONDS)
             }
         })
@@ -305,7 +301,6 @@ class MongoClientSettingsSpecification extends Specification {
             void apply(final ConnectionPoolSettings.Builder builder) {
                 builder.minSize(5)
                         .maxSize(10)
-                        .maxWaitQueueSize(10 * 7) // maxPoolSize * waitQueueMultiple
                         .maxWaitTime(150, TimeUnit.MILLISECONDS)
                         .maxConnectionLifeTime(300, TimeUnit.MILLISECONDS)
                         .maxConnectionIdleTime(200, TimeUnit.MILLISECONDS)
@@ -346,7 +341,6 @@ class MongoClientSettingsSpecification extends Specification {
         expect expected, isTheSameAs(settings)
     }
 
-    @IgnoreIf({ isNotAtLeastJava7() })
     def 'should build settings from a connection string with default values'() {
         when:
         def builder = MongoClientSettings.builder()
@@ -364,7 +358,6 @@ class MongoClientSettingsSpecification extends Specification {
             void apply(final ConnectionPoolSettings.Builder builder) {
                 builder.minSize(5)
                         .maxSize(10)
-                        .maxWaitQueueSize(10 * 7) // maxPoolSize * waitQueueMultiple
                         .maxWaitTime(150, TimeUnit.MILLISECONDS)
                         .maxConnectionLifeTime(300, TimeUnit.MILLISECONDS)
                         .maxConnectionIdleTime(200, TimeUnit.MILLISECONDS)

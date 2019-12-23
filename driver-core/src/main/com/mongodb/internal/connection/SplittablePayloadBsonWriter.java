@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.connection.SplittablePayload;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonWriter;
 import org.bson.io.BsonOutput;
@@ -30,11 +29,6 @@ public class SplittablePayloadBsonWriter extends LevelCountingBsonWriter {
     private int maxSplittableDocumentSize;
     private final MessageSettings settings;
     private final int messageStartPosition;
-
-    public SplittablePayloadBsonWriter(final BsonBinaryWriter writer, final BsonOutput bsonOutput,
-                                       final MessageSettings settings, final SplittablePayload payload) {
-        this(writer, bsonOutput, settings, payload, settings.getMaxDocumentSize());
-    }
 
     public SplittablePayloadBsonWriter(final BsonBinaryWriter writer, final BsonOutput bsonOutput,
                                        final MessageSettings settings, final SplittablePayload payload,
@@ -66,7 +60,7 @@ public class SplittablePayloadBsonWriter extends LevelCountingBsonWriter {
 
     @Override
     public void writeEndDocument() {
-        if (getCurrentLevel() == 0 && payload.getPayload().size() > 0) {
+        if (getCurrentLevel() == 0 && payload.hasPayload()) {
             writePayloadArray(writer, bsonOutput, settings, messageStartPosition, payload, maxSplittableDocumentSize);
         }
         super.writeEndDocument();

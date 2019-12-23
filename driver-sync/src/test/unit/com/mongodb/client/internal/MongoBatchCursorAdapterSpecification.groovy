@@ -18,7 +18,7 @@ package com.mongodb.client.internal
 
 import com.mongodb.ServerAddress
 import com.mongodb.ServerCursor
-import com.mongodb.operation.BatchCursor
+import com.mongodb.internal.operation.BatchCursor
 import org.bson.Document
 import spock.lang.Specification
 

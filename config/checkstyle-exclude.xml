@@ -39,6 +39,7 @@
     <suppress checks="Javadoc*" files="com[\\/]mongodb[\\/]internal[\\/]"/>
     <suppress checks="Javadoc*" files="com[\\/]mongodb[\\/]async[\\/]client[\\/]internal[\\/]"/>
     <suppress checks="Javadoc*" files="com[\\/]mongodb[\\/]client[\\/]internal[\\/]"/>
+    <suppress checks="Javadoc*" files="com[\\/]mongodb[\\/]reactivestreams[\\/]client[\\/]internal[\\/]"/>
     <suppress checks="Javadoc*" files="org[\\/]bson[\\/]internal[\\/]"/>
 
     <!--Do not check primer classes -->
@@ -46,6 +47,7 @@
     <suppress checks="Regexp" files=".*primer.*"/>
     <suppress checks="AvoidStarImportCheck" files=".*primer.*"/>
     <suppress checks="VisibilityModifierCheck" files=".*primer.*"/>
+    <suppress checks="Regexp" files="SubscriberHelpers"/>
 
     <!-- Allow printStackTrace in this file -->
     <suppress checks="Regexp" files="CallbackResultHolder"/>

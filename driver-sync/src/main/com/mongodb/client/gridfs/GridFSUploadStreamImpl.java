@@ -17,21 +17,18 @@
 package com.mongodb.client.gridfs;
 
 import com.mongodb.MongoGridFSException;
+import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.lang.Nullable;
-import com.mongodb.client.ClientSession;
 import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.HexUtils.toHex;
 
 final class GridFSUploadStreamImpl extends GridFSUploadStream {
     private final ClientSession clientSession;
@@ -41,7 +38,6 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
     private final String filename;
     private final int chunkSizeBytes;
     private final Document metadata;
-    private final MessageDigest md5;
     private byte[] buffer;
     private long lengthInBytes;
     private int bufferOffset;
@@ -52,24 +48,17 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
 
     GridFSUploadStreamImpl(@Nullable final ClientSession clientSession, final MongoCollection<GridFSFile> filesCollection,
                            final MongoCollection<Document> chunksCollection, final BsonValue fileId, final String filename,
-                           final int chunkSizeBytes, final boolean disableMD5, @Nullable final Document metadata) {
+                           final int chunkSizeBytes, @Nullable final Document metadata) {
         this.clientSession = clientSession;
         this.filesCollection = notNull("files collection", filesCollection);
         this.chunksCollection = notNull("chunks collection", chunksCollection);
         this.fileId = notNull("File Id", fileId);
         this.filename = notNull("filename", filename);
         this.chunkSizeBytes = chunkSizeBytes;
-        this.md5 = createMD5Digest(disableMD5);
         this.metadata = metadata;
         chunkIndex = 0;
         bufferOffset = 0;
         buffer = new byte[chunkSizeBytes];
-    }
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public ObjectId getFileId() {
-        return getObjectId();
     }
 
     @Override
@@ -154,7 +143,7 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
         }
         writeChunk();
         GridFSFile gridFSFile = new GridFSFile(fileId, filename, lengthInBytes, chunkSizeBytes, new Date(),
-                getMD5Digest(), metadata);
+                metadata);
         if (clientSession != null) {
             filesCollection.insertOne(clientSession, gridFSFile);
         } else {
@@ -171,7 +160,6 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
             } else {
                 chunksCollection.insertOne(new Document("files_id", fileId).append("n", chunkIndex).append("data", getData()));
             }
-            updateMD5();
             chunkIndex++;
             bufferOffset = 0;
         }
@@ -191,31 +179,6 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
             if (closed) {
                 throw new MongoGridFSException("The OutputStream has been closed");
             }
-        }
-    }
-
-    @Nullable
-    private MessageDigest createMD5Digest(final boolean disableMD5) {
-        if (disableMD5) {
-            return null;
-        } else {
-            try {
-                return MessageDigest.getInstance("MD5");
-            } catch (NoSuchAlgorithmException e) {
-                throw new MongoGridFSException("No MD5 message digest available. "
-                        + "Use `GridFSBucket.withDisableMD5(true)` to disable creating a MD5 hash.", e);
-            }
-        }
-    }
-
-    @Nullable
-    private String getMD5Digest() {
-        return md5 != null ? toHex(md5.digest()) : null;
-    }
-
-    private void updateMD5() {
-        if (md5 != null) {
-            md5.update(buffer);
         }
     }
 }

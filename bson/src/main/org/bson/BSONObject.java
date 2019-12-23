@@ -73,16 +73,6 @@ public interface BSONObject {
     Object removeField(String key);
 
     /**
-     * Deprecated
-     *
-     * @param key the key to check
-     * @return True if the key is present
-     * @deprecated Please use {@link #containsField(String)} instead
-     */
-    @Deprecated
-    boolean containsKey(String key);
-
-    /**
      * Checks if this object contains a field with the given name.
      *
      * @param s Field name for which to check

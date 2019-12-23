@@ -160,6 +160,8 @@ public final class Filters {
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/in $in
      */
+    @SafeVarargs
+    @SuppressWarnings("varargs")
     public static <TItem> Bson in(final String fieldName, final TItem... values) {
         return in(fieldName, asList(values));
     }
@@ -186,6 +188,8 @@ public final class Filters {
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/nin $nin
      */
+    @SafeVarargs
+    @SuppressWarnings("varargs")
     public static <TItem> Bson nin(final String fieldName, final TItem... values) {
         return nin(fieldName, asList(values));
     }
@@ -431,21 +435,6 @@ public final class Filters {
     }
 
     /**
-     * Creates a filter that matches all documents matching the given search term using the given language.
-     *
-     * @param search   the search term
-     * @param language the language to use for stop words
-     * @return the filter
-     * @mongodb.driver.manual reference/operator/query/text $text
-     * @deprecated use {@link Filters#text(String, TextSearchOptions)}
-     */
-    @Deprecated
-    public static Bson text(final String search, final String language) {
-        notNull("search", search);
-        return text(search, new TextSearchOptions().language(language));
-    }
-
-    /**
      * Creates a filter that matches all documents matching the given the search term with the given text search options.
      *
      * @param search            the search term
@@ -495,6 +484,8 @@ public final class Filters {
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/all $all
      */
+    @SafeVarargs
+    @SuppressWarnings("varargs")
     public static <TItem> Bson all(final String fieldName, final TItem... values) {
         return all(fieldName, asList(values));
     }
@@ -933,7 +924,7 @@ public final class Filters {
         private final String fieldName;
         private final TItem value;
 
-        OperatorFilter(final String operatorName, final String fieldName, final TItem value) {
+        OperatorFilter(final String operatorName, final String fieldName, @Nullable final TItem value) {
             this.operatorName = notNull("operatorName", operatorName);
             this.fieldName = notNull("fieldName", fieldName);
             this.value = value;
@@ -997,65 +988,12 @@ public final class Filters {
 
         @Override
         public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
-            BsonDocument andRenderable = new BsonDocument();
-
-            for (Bson filter : filters) {
-                BsonDocument renderedRenderable = filter.toBsonDocument(documentClass, codecRegistry);
-                for (Map.Entry<String, BsonValue> element : renderedRenderable.entrySet()) {
-                    addClause(andRenderable, element);
-                }
-            }
-
-            if (andRenderable.isEmpty()) {
-                andRenderable.append("$and", new BsonArray());
-            }
-
-            return andRenderable;
-        }
-
-        private void addClause(final BsonDocument document, final Map.Entry<String, BsonValue> clause) {
-            if (clause.getKey().equals("$and")) {
-                for (BsonValue value : clause.getValue().asArray()) {
-                    for (Map.Entry<String, BsonValue> element : value.asDocument().entrySet()) {
-                        addClause(document, element);
-                    }
-                }
-            } else if (document.size() == 1 && document.keySet().iterator().next().equals("$and")) {
-                document.get("$and").asArray().add(new BsonDocument(clause.getKey(), clause.getValue()));
-            } else if (document.containsKey(clause.getKey())) {
-                if (document.get(clause.getKey()).isDocument() && clause.getValue().isDocument()) {
-                    BsonDocument existingClauseValue = document.get(clause.getKey()).asDocument();
-                    BsonDocument clauseValue = clause.getValue().asDocument();
-                    if (keysIntersect(clauseValue, existingClauseValue)) {
-                        promoteRenderableToDollarForm(document, clause);
-                    } else {
-                        existingClauseValue.putAll(clauseValue);
-                    }
-                } else {
-                    promoteRenderableToDollarForm(document, clause);
-                }
-            } else {
-                document.append(clause.getKey(), clause.getValue());
-            }
-        }
-
-        private boolean keysIntersect(final BsonDocument first, final BsonDocument second) {
-            for (String name : first.keySet()) {
-                if (second.containsKey(name)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private void promoteRenderableToDollarForm(final BsonDocument document, final Map.Entry<String, BsonValue> clause) {
             BsonArray clauses = new BsonArray();
-            for (Map.Entry<String, BsonValue> queryElement : document.entrySet()) {
-                clauses.add(new BsonDocument(queryElement.getKey(), queryElement.getValue()));
+            for (Bson filter : filters) {
+                clauses.add(filter.toBsonDocument(documentClass, codecRegistry));
             }
-            clauses.add(new BsonDocument(clause.getKey(), clause.getValue()));
-            document.clear();
-            document.put("$and", clauses);
+
+            return new BsonDocument("$and", clauses);
         }
 
         @Override
@@ -1223,7 +1161,7 @@ public final class Filters {
         private final String fieldName;
         private final TItem value;
 
-        SimpleEncodingFilter(final String fieldName, final TItem value) {
+        SimpleEncodingFilter(final String fieldName, @Nullable final TItem value) {
             this.fieldName = notNull("fieldName", fieldName);
             this.value = value;
         }

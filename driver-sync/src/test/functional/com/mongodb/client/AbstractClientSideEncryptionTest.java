@@ -25,6 +25,7 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.event.CommandEvent;
+import com.mongodb.event.CommandListener;
 import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -47,7 +48,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.mongodb.ClusterFixture.isNotAtLeastJava8;
 import static com.mongodb.JsonTestServerVersionChecker.skipTest;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
@@ -118,8 +118,8 @@ public abstract class AbstractClientSideEncryptionTest {
         assumeTrue("Client side encryption tests disabled",
                 System.getProperty("org.mongodb.test.awsAccessKeyId") != null
                         && !System.getProperty("org.mongodb.test.awsAccessKeyId").isEmpty());
-        assumeFalse("Client side encryption requires Java 8+", isNotAtLeastJava8());
         assumeFalse("runOn requirements not satisfied", skipTest);
+        assumeFalse("Skipping count tests", filename.startsWith("count."));
         assumeFalse(definition.getString("skipReason", new BsonString("")).getValue(), definition.containsKey("skipReason"));
 
         String databaseName = specDocument.getString("database_name").getValue();
@@ -229,7 +229,7 @@ public abstract class AbstractClientSideEncryptionTest {
         helper = new JsonPoweredCrudTestHelper(description, database, database.getCollection("default", BsonDocument.class));
     }
 
-    protected abstract void createMongoClient(AutoEncryptionSettings build, TestCommandListener commandListener);
+    protected abstract void createMongoClient(AutoEncryptionSettings build, CommandListener commandListener);
 
     protected abstract MongoDatabase getDatabase(String databaseName);
 

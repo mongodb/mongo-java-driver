@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.connection.ByteBufferBsonOutput;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
 import org.bson.BsonReader;
@@ -27,6 +26,7 @@ import org.bson.RawBsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DecoderContext;
 import org.bson.io.ByteBufferBsonInput;
+import org.bson.json.JsonMode;
 import org.bson.json.JsonWriter;
 import org.bson.json.JsonWriterSettings;
 
@@ -97,7 +97,7 @@ class ByteBufBsonDocument extends AbstractByteBufBsonDocument {
     @Override
     @SuppressWarnings("deprecation")
     public String toJson() {
-        return toJson(new JsonWriterSettings());
+        return toJson(JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build());
     }
 
     @Override

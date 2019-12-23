@@ -134,7 +134,7 @@ public class DBObjectCodec implements CollectibleCodec<DBObject>, OverridableUui
      */
     public DBObjectCodec(final CodecRegistry codecRegistry, final BsonTypeClassMap bsonTypeClassMap, final DBObjectFactory objectFactory) {
         this(codecRegistry, new BsonTypeCodecMap(notNull("bsonTypeClassMap", bsonTypeClassMap), codecRegistry), objectFactory,
-                UuidRepresentation.JAVA_LEGACY);
+                UuidRepresentation.UNSPECIFIED);
     }
 
     private DBObjectCodec(final CodecRegistry codecRegistry, final BsonTypeCodecMap bsonTypeCodecMap, final DBObjectFactory objectFactory,
@@ -222,8 +222,7 @@ public class DBObjectCodec implements CollectibleCodec<DBObject>, OverridableUui
     }
 
     @SuppressWarnings("unchecked")
-    private void writeValue(final BsonWriter bsonWriter, final EncoderContext encoderContext, final Object initialValue) {
-        Object value = org.bson.BSON.applyEncodingHooks(initialValue);
+    private void writeValue(final BsonWriter bsonWriter, final EncoderContext encoderContext, @Nullable final Object value) {
         if (value == null) {
             bsonWriter.writeNull();
         } else if (value instanceof DBRef) {
@@ -308,7 +307,7 @@ public class DBObjectCodec implements CollectibleCodec<DBObject>, OverridableUui
         bsonWriter.writeEndArray();
     }
 
-    private Object readValue(final BsonReader reader, final DecoderContext decoderContext, @Nullable final String fieldName,
+    @Nullable private Object readValue(final BsonReader reader, final DecoderContext decoderContext, @Nullable final String fieldName,
                              final List<String> path) {
         Object initialRetVal;
         BsonType bsonType = reader.getCurrentBsonType();
@@ -348,7 +347,7 @@ public class DBObjectCodec implements CollectibleCodec<DBObject>, OverridableUui
             path.remove(fieldName);
         }
 
-        return org.bson.BSON.applyDecodingHooks(initialRetVal);
+        return initialRetVal;
     }
 
     private Object readBinary(final BsonReader reader, final DecoderContext decoderContext) {
@@ -366,7 +365,7 @@ public class DBObjectCodec implements CollectibleCodec<DBObject>, OverridableUui
                     }
                     break;
                 case 4:
-                    if (uuidRepresentation == UuidRepresentation.JAVA_LEGACY || uuidRepresentation == UuidRepresentation.STANDARD) {
+                    if (uuidRepresentation == UuidRepresentation.STANDARD) {
                         codec = codecRegistry.get(UUID.class);
                     }
                     break;

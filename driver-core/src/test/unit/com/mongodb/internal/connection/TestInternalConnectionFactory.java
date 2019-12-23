@@ -16,12 +16,12 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerType;
-import com.mongodb.session.SessionContext;
+import com.mongodb.internal.session.SessionContext;
 import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
 

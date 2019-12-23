@@ -23,7 +23,9 @@ import org.bson.assertions.Assertions;
  * An event for removing a connection from the pool.
  *
  * @since 3.5
+ * @deprecated Prefer {@link ConnectionClosedEvent}
  */
+@Deprecated
 public final class ConnectionRemovedEvent {
 
     /**
@@ -64,17 +66,6 @@ public final class ConnectionRemovedEvent {
 
     private final ConnectionId connectionId;
     private final Reason reason;
-
-    /**
-     * Construct an instance
-     *
-     * @param connectionId the connectionId
-     * @deprecated Prefer {@link #ConnectionRemovedEvent(ConnectionId, Reason)}
-     */
-    @Deprecated
-    public ConnectionRemovedEvent(final ConnectionId connectionId) {
-        this(connectionId, Reason.UNKNOWN);
-    }
 
     /**
      * Constructs an instance.

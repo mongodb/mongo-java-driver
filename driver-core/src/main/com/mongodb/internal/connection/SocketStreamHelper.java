@@ -32,12 +32,11 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 final class SocketStreamHelper {
 
-    @SuppressWarnings("deprecation")
     static void initialize(final Socket socket, final InetSocketAddress inetSocketAddress, final SocketSettings settings,
                            final SslSettings sslSettings) throws IOException {
         socket.setTcpNoDelay(true);
         socket.setSoTimeout(settings.getReadTimeout(MILLISECONDS));
-        socket.setKeepAlive(settings.isKeepAlive());
+        socket.setKeepAlive(true);
         if (settings.getReceiveBufferSize() > 0) {
             socket.setReceiveBufferSize(settings.getReceiveBufferSize());
         }

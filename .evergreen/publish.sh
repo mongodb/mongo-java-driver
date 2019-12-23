@@ -25,3 +25,4 @@ export JAVA_HOME="/opt/java/jdk11"
 
 ./gradlew -version
 ./gradlew publishSnapshots
+./gradlew :bson-scala:publishSnapshots :driver-scala:publishSnapshots -PdefaultScalaVersions=2.11.12,2.12.10

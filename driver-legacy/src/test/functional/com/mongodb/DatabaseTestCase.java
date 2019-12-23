@@ -23,6 +23,7 @@ import static com.mongodb.Fixture.getDefaultDatabaseName;
 import static com.mongodb.Fixture.getMongoClient;
 import static com.mongodb.Fixture.getServerSessionPoolInUseCount;
 
+@SuppressWarnings("deprecation") // This is for testing the old API, so it will use deprecated methods
 public class DatabaseTestCase {
     //For ease of use and readability, in this specific case we'll allow protected variables
     //CHECKSTYLE:OFF
@@ -32,7 +33,6 @@ public class DatabaseTestCase {
     //CHECKSTYLE:ON
 
     @Before
-    @SuppressWarnings("deprecation") // This is for testing the old API, so it will use deprecated methods
     public void setUp() {
         database = getMongoClient().getDB(getDefaultDatabaseName());
 

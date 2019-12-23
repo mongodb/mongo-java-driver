@@ -17,19 +17,6 @@
 package com.mongodb
 
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.binding.AsyncConnectionSource
-import com.mongodb.binding.AsyncReadBinding
-import com.mongodb.binding.AsyncReadWriteBinding
-import com.mongodb.binding.AsyncSessionBinding
-import com.mongodb.binding.AsyncSingleConnectionBinding
-import com.mongodb.binding.AsyncWriteBinding
-import com.mongodb.binding.ConnectionSource
-import com.mongodb.binding.ReadBinding
-import com.mongodb.binding.ReadWriteBinding
-import com.mongodb.binding.SessionBinding
-import com.mongodb.binding.SingleConnectionBinding
-import com.mongodb.binding.WriteBinding
-import com.mongodb.bulk.InsertRequest
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CollationAlternate
 import com.mongodb.client.model.CollationCaseFirst
@@ -38,22 +25,35 @@ import com.mongodb.client.model.CollationStrength
 import com.mongodb.client.test.CollectionHelper
 import com.mongodb.client.test.Worker
 import com.mongodb.client.test.WorkerCodec
-import com.mongodb.connection.AsyncConnection
-import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
 import com.mongodb.connection.ServerVersion
-import com.mongodb.connection.SplittablePayload
+import com.mongodb.internal.binding.AsyncConnectionSource
+import com.mongodb.internal.binding.AsyncReadBinding
+import com.mongodb.internal.binding.AsyncReadWriteBinding
+import com.mongodb.internal.binding.AsyncSessionBinding
+import com.mongodb.internal.binding.AsyncSingleConnectionBinding
+import com.mongodb.internal.binding.AsyncWriteBinding
+import com.mongodb.internal.binding.ConnectionSource
+import com.mongodb.internal.binding.ReadBinding
+import com.mongodb.internal.binding.ReadWriteBinding
+import com.mongodb.internal.binding.SessionBinding
+import com.mongodb.internal.binding.SingleConnectionBinding
+import com.mongodb.internal.binding.WriteBinding
+import com.mongodb.internal.bulk.InsertRequest
+import com.mongodb.internal.connection.AsyncConnection
+import com.mongodb.internal.connection.Connection
 import com.mongodb.internal.connection.ServerHelper
+import com.mongodb.internal.connection.SplittablePayload
+import com.mongodb.internal.operation.AsyncReadOperation
+import com.mongodb.internal.operation.AsyncWriteOperation
+import com.mongodb.internal.operation.InsertOperation
+import com.mongodb.internal.operation.ReadOperation
+import com.mongodb.internal.operation.WriteOperation
 import com.mongodb.internal.validator.NoOpFieldNameValidator
-import com.mongodb.operation.AsyncReadOperation
-import com.mongodb.operation.AsyncWriteOperation
-import com.mongodb.operation.InsertOperation
-import com.mongodb.operation.ReadOperation
-import com.mongodb.operation.WriteOperation
-import com.mongodb.session.SessionContext
+import com.mongodb.internal.session.SessionContext
 import org.bson.BsonDocument
 import org.bson.Document
 import org.bson.FieldNameValidator
@@ -71,7 +71,7 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.loopCursor
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
-import static com.mongodb.operation.OperationUnitSpecification.getMaxWireVersionForServerVersion
+import static com.mongodb.internal.operation.OperationUnitSpecification.getMaxWireVersionForServerVersion
 
 class OperationFunctionalSpecification extends Specification {
 
@@ -298,7 +298,7 @@ class OperationFunctionalSpecification extends Specification {
                 assert it[1] == expectedCommand
                 if (it.size() == 9) {
                     SplittablePayload payload = it[7]
-                    payload.setPosition(payload.getPayload().size())
+                    payload.setPosition(payload.size())
                 }
                 result
             }
@@ -377,7 +377,7 @@ class OperationFunctionalSpecification extends Specification {
                 assert it[1] == expectedCommand
                 if (it.size() == 10) {
                     SplittablePayload payload = it[7]
-                    payload.setPosition(payload.getPayload().size())
+                    payload.setPosition(payload.size())
                 }
                 it.last().onResult(result, null)
             }

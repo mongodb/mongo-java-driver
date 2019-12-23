@@ -29,7 +29,7 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoClient;
 ```
 
-To specify compression with [`MongoClientURI`]({{<apiref "com/mongodb/MongoClientURI">}}), specify `compressors` as part of the connection
+To specify compression with [`ConnectionString`]({{<apiref "com/mongodb/ConnectionString">}}), specify `compressors` as part of the connection
 string, as in:
 
 ```java
@@ -62,10 +62,10 @@ to configure multiple compressors.
 
 In all cases the driver will use the first compressor in the list for which the server advertises support. 
 
-### Specify compression via `MongoClientOptions`
+### Specify compression via `MongoClientSettings`
 
 ```java
-import com.mongodb.MongoClientOptions;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCompressor;
 import java.util.Arrays;
 ```

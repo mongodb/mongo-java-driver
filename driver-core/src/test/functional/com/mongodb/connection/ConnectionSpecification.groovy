@@ -16,9 +16,9 @@
 
 package com.mongodb.connection
 
-import com.mongodb.ClusterFixture
+
 import com.mongodb.OperationFunctionalSpecification
-import com.mongodb.operation.CommandReadOperation
+import com.mongodb.internal.operation.CommandReadOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.codecs.BsonDocumentCodec
@@ -54,7 +54,6 @@ class ConnectionSpecification extends OperationFunctionalSpecification {
 
         then:
         connection.description.serverAddress == source.getServerDescription().getAddress()
-        connection.description.serverVersion == ClusterFixture.getServerVersion()
         connection.description.serverType == source.getServerDescription().getType()
         connection.description.maxDocumentSize == source.getServerDescription().getMaxDocumentSize()
         connection.description.maxMessageSize == expectedMaxMessageSize

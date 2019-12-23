@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.bulk.UpdateRequest;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Encoder;
 
@@ -55,10 +56,10 @@ class ReplaceRequest extends WriteRequest {
     }
 
     @Override
-    com.mongodb.bulk.WriteRequest toNew(final DBCollection dbCollection) {
-        return new com.mongodb.bulk.UpdateRequest(new BsonDocumentWrapper<DBObject>(query, codec),
+    com.mongodb.internal.bulk.WriteRequest toNew(final DBCollection dbCollection) {
+        return new UpdateRequest(new BsonDocumentWrapper<DBObject>(query, codec),
                                                        new BsonDocumentWrapper<DBObject>(document, replacementCodec),
-                                                       com.mongodb.bulk.WriteRequest.Type.REPLACE)
+                                                       com.mongodb.internal.bulk.WriteRequest.Type.REPLACE)
                .upsert(isUpsert())
                .collation(getCollation());
     }

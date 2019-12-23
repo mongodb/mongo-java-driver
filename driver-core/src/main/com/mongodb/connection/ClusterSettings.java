@@ -18,13 +18,13 @@ package com.mongodb.connection;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientException;
-import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.event.ClusterListener;
+import com.mongodb.internal.connection.Cluster;
+import com.mongodb.internal.selector.LatencyMinimizingServerSelector;
 import com.mongodb.selector.CompositeServerSelector;
-import com.mongodb.selector.LatencyMinimizingServerSelector;
 import com.mongodb.selector.ServerSelector;
 
 import java.util.ArrayList;
@@ -55,10 +55,8 @@ public final class ClusterSettings {
     private final ClusterType requiredClusterType;
     private final String requiredReplicaSetName;
     private final ServerSelector serverSelector;
-    private final String description;
     private final long localThresholdMS;
     private final long serverSelectionTimeoutMS;
-    private final int maxWaitQueueSize;
     private final List<ClusterListener> clusterListeners;
 
     /**
@@ -93,10 +91,8 @@ public final class ClusterSettings {
         private ClusterType requiredClusterType = ClusterType.UNKNOWN;
         private String requiredReplicaSetName;
         private ServerSelector serverSelector;
-        private String description;
         private long serverSelectionTimeoutMS = MILLISECONDS.convert(30, TimeUnit.SECONDS);
         private long localThresholdMS = MILLISECONDS.convert(15, MILLISECONDS);
-        private int maxWaitQueueSize = 500;
         private List<ClusterListener> clusterListeners = new ArrayList<ClusterListener>();
 
         private Builder() {
@@ -113,7 +109,6 @@ public final class ClusterSettings {
          */
         public Builder applySettings(final ClusterSettings clusterSettings) {
             notNull("clusterSettings", clusterSettings);
-            description = clusterSettings.description;
             srvHost = clusterSettings.srvHost;
             hosts = clusterSettings.hosts;
             mode = clusterSettings.mode;
@@ -121,22 +116,8 @@ public final class ClusterSettings {
             requiredClusterType = clusterSettings.requiredClusterType;
             localThresholdMS = clusterSettings.localThresholdMS;
             serverSelectionTimeoutMS = clusterSettings.serverSelectionTimeoutMS;
-            maxWaitQueueSize = clusterSettings.maxWaitQueueSize;
             clusterListeners = new ArrayList<ClusterListener>(clusterSettings.clusterListeners);
             serverSelector = unpackServerSelector(clusterSettings.serverSelector);
-            return this;
-        }
-
-        /**
-         * Sets the user defined description of the MongoClient.
-         *
-         * @param description the user defined description of the MongoClient
-         * @return this
-         * @deprecated Prefer {@link com.mongodb.MongoClientSettings.Builder#applicationName(String)}
-         */
-        @Deprecated
-        public Builder description(final String description) {
-            this.description = description;
             return this;
         }
 
@@ -254,22 +235,6 @@ public final class ClusterSettings {
         }
 
         /**
-         * <p>This is the maximum number of concurrent operations allowed to wait for a server to become available. All further operations
-         * will get an exception immediately.</p>
-         *
-         * <p>Default is 500.</p>
-         *
-         * @param maxWaitQueueSize the number of threads that are allowed to be waiting for a connection.
-         * @return this
-         * @deprecated in the next major release, wait queue size limitations will be removed
-         */
-        @Deprecated
-        public Builder maxWaitQueueSize(final int maxWaitQueueSize) {
-            this.maxWaitQueueSize = maxWaitQueueSize;
-            return this;
-        }
-
-        /**
          * Adds a cluster listener.
          *
          * @param clusterListener the non-null cluster listener
@@ -308,11 +273,6 @@ public final class ClusterSettings {
             Integer maxConnectionPoolSize = connectionString.getMaxConnectionPoolSize();
             int maxSize = maxConnectionPoolSize != null ? maxConnectionPoolSize : 100;
 
-            Integer threadsAllowedToBlockForConnectionMultiplier = connectionString.getThreadsAllowedToBlockForConnectionMultiplier();
-            int waitQueueMultiple = threadsAllowedToBlockForConnectionMultiplier != null
-                                    ? threadsAllowedToBlockForConnectionMultiplier : 5;
-            maxWaitQueueSize(waitQueueMultiple * maxSize);
-
             Integer serverSelectionTimeout = connectionString.getServerSelectionTimeout();
             if (serverSelectionTimeout != null) {
                 serverSelectionTimeout(serverSelectionTimeout, MILLISECONDS);
@@ -348,17 +308,6 @@ public final class ClusterSettings {
         public ClusterSettings build() {
             return new ClusterSettings(this);
         }
-    }
-
-    /**
-     * Gets the user defined description of the MongoClient.
-     *
-     * @return the user defined description of the MongoClient
-     * @deprecated Prefer {@link MongoClientSettings#getApplicationName()}
-     */
-    @Deprecated
-    public String getDescription() {
-        return description;
     }
 
     /**
@@ -472,20 +421,6 @@ public final class ClusterSettings {
     }
 
     /**
-     * <p>This is the maximum number of threads that may be waiting for a connection to become available from the pool. All further threads
-     * will get an exception immediately.</p>
-     *
-     * <p>Default is 500.</p>
-     *
-     * @return the number of threads that are allowed to be waiting for a connection.
-     * @deprecated in the next major release, wait queue size limitations will be removed
-     */
-    @Deprecated
-    public int getMaxWaitQueueSize() {
-        return maxWaitQueueSize;
-    }
-
-    /**
      * Gets the cluster listeners.  The default value is an empty list.
      *
      * @return the cluster listeners
@@ -506,16 +441,10 @@ public final class ClusterSettings {
 
         ClusterSettings that = (ClusterSettings) o;
 
-        if (maxWaitQueueSize != that.maxWaitQueueSize) {
-            return false;
-        }
         if (serverSelectionTimeoutMS != that.serverSelectionTimeoutMS) {
             return false;
         }
         if (localThresholdMS != that.localThresholdMS) {
-            return false;
-        }
-        if (description != null ? !description.equals(that.description) : that.description != null) {
             return false;
         }
         if (srvHost != null ? !srvHost.equals(that.srvHost) : that.srvHost != null) {
@@ -552,10 +481,8 @@ public final class ClusterSettings {
         result = 31 * result + requiredClusterType.hashCode();
         result = 31 * result + (requiredReplicaSetName != null ? requiredReplicaSetName.hashCode() : 0);
         result = 31 * result + (serverSelector != null ? serverSelector.hashCode() : 0);
-        result = 31 * result + (description != null ? description.hashCode() : 0);
         result = 31 * result + (int) (serverSelectionTimeoutMS ^ (serverSelectionTimeoutMS >>> 32));
         result = 31 * result + (int) (localThresholdMS ^ (localThresholdMS >>> 32));
-        result = 31 * result + maxWaitQueueSize;
         result = 31 * result + clusterListeners.hashCode();
         return result;
     }
@@ -572,8 +499,6 @@ public final class ClusterSettings {
                + ", clusterListeners='" + clusterListeners + '\''
                + ", serverSelectionTimeout='" + serverSelectionTimeoutMS + " ms" + '\''
                + ", localThreshold='" + serverSelectionTimeoutMS + " ms" + '\''
-               + ", maxWaitQueueSize=" + maxWaitQueueSize
-               + ", description='" + description + '\''
                + '}';
     }
 
@@ -589,9 +514,7 @@ public final class ClusterSettings {
                + ", mode=" + mode
                + ", requiredClusterType=" + requiredClusterType
                + ", serverSelectionTimeout='" + serverSelectionTimeoutMS + " ms" + '\''
-               + ", maxWaitQueueSize=" + maxWaitQueueSize
                + (requiredReplicaSetName == null ? "" : ", requiredReplicaSetName='" + requiredReplicaSetName + '\'')
-               + (description == null ? "" : ", description='" + description + '\'')
                + '}';
     }
 
@@ -625,7 +548,6 @@ public final class ClusterSettings {
             }
         }
 
-        description = builder.description;
         srvHost = builder.srvHost;
         hosts = builder.hosts;
         mode = builder.mode != null ? builder.mode : hosts.size() == 1 ? ClusterConnectionMode.SINGLE : ClusterConnectionMode.MULTIPLE;
@@ -634,7 +556,6 @@ public final class ClusterSettings {
         localThresholdMS = builder.localThresholdMS;
         serverSelector = builder.packServerSelector();
         serverSelectionTimeoutMS = builder.serverSelectionTimeoutMS;
-        maxWaitQueueSize = builder.maxWaitQueueSize;
         clusterListeners = unmodifiableList(builder.clusterListeners);
     }
 }

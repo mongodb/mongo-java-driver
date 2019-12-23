@@ -30,16 +30,14 @@ import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcernResult
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.async.SingleResultCallback
-import com.mongodb.bulk.InsertRequest
-import com.mongodb.connection.AsyncConnection
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.connection.ClusterId
-import com.mongodb.connection.Connection
 import com.mongodb.connection.ServerId
 import com.mongodb.event.CommandListener
 import com.mongodb.event.ServerListener
+import com.mongodb.internal.bulk.InsertRequest
 import com.mongodb.internal.validator.NoOpFieldNameValidator
-import com.mongodb.session.SessionContext
+import com.mongodb.internal.session.SessionContext
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.FieldNameValidator
@@ -301,7 +299,7 @@ class DefaultServerSpecification extends Specification {
         def testConnection = (TestConnection) server.getConnection()
 
         when:
-        testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoNotPrimaryException(serverId.address)))
+        testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoNotPrimaryException(new BsonDocument(), serverId.address)))
 
         testConnection.insert(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()))
 
@@ -350,7 +348,7 @@ class DefaultServerSpecification extends Specification {
         def testConnection = (TestConnection) server.getConnection()
 
         when:
-        testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoNodeIsRecoveringException(new ServerAddress())))
+        testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoNodeIsRecoveringException(new BsonDocument(), new ServerAddress())))
 
         testConnection.insert(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()))
 

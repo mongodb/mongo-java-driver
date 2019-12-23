@@ -21,19 +21,19 @@ import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcern
+import com.mongodb.client.internal.ChangeStreamIterableImpl
+import com.mongodb.client.internal.ListDatabasesIterableImpl
 import com.mongodb.client.internal.MongoClientImpl
 import com.mongodb.client.internal.MongoDatabaseImpl
-import com.mongodb.client.internal.MongoIterables
 import com.mongodb.client.internal.TestOperationExecutor
-import com.mongodb.client.model.changestream.ChangeStreamLevel
-import com.mongodb.connection.Cluster
 import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ClusterDescription
 import com.mongodb.connection.ClusterType
 import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
-import com.mongodb.connection.ServerVersion
+import com.mongodb.internal.client.model.changestream.ChangeStreamLevel
+import com.mongodb.internal.connection.Cluster
 import org.bson.BsonDocument
 import org.bson.Document
 import org.bson.codecs.BsonValueCodecProvider
@@ -47,8 +47,8 @@ import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.secondary
 import static com.mongodb.client.internal.TestHelper.execute
-import static org.bson.UuidRepresentation.JAVA_LEGACY
 import static org.bson.UuidRepresentation.STANDARD
+import static org.bson.UuidRepresentation.UNSPECIFIED
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
 
@@ -75,7 +75,7 @@ class MongoClientSpecification extends Specification {
 
         where:
         expectedDatabase << new MongoDatabaseImpl('name', codecRegistry, secondary(),
-                WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, JAVA_LEGACY, new TestOperationExecutor([]))
+                WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, UNSPECIFIED, new TestOperationExecutor([]))
     }
 
     def 'should use ListDatabasesIterableImpl correctly'() {
@@ -89,14 +89,14 @@ class MongoClientSpecification extends Specification {
         def listDatabasesIterable = execute(listDatabasesMethod, session)
 
         then:
-        expect listDatabasesIterable, isTheSameAs(MongoIterables.listDatabasesOf(session, Document, getDefaultCodecRegistry(),
-                primary(), executor, true))
+        expect listDatabasesIterable, isTheSameAs(new ListDatabasesIterableImpl<>(session, Document,
+                getDefaultCodecRegistry(), primary(), executor, true))
 
         when:
         listDatabasesIterable = execute(listDatabasesMethod, session, BsonDocument)
 
         then:
-        expect listDatabasesIterable, isTheSameAs(MongoIterables.listDatabasesOf(session, BsonDocument,
+        expect listDatabasesIterable, isTheSameAs(new ListDatabasesIterableImpl<>(session, BsonDocument,
                 getDefaultCodecRegistry(), primary(), executor, true))
 
         when:
@@ -104,7 +104,7 @@ class MongoClientSpecification extends Specification {
 
         then:
         // listDatabaseNamesIterable is an instance of a MappingIterable, so have to get the mapped iterable inside it
-        expect listDatabaseNamesIterable.getMapped(), isTheSameAs(MongoIterables.listDatabasesOf(session, BsonDocument,
+        expect listDatabaseNamesIterable.getMapped(), isTheSameAs(new ListDatabasesIterableImpl<>(session, BsonDocument,
                 getDefaultCodecRegistry(), primary(), executor, true).nameOnly(true))
 
         cleanup:
@@ -133,22 +133,25 @@ class MongoClientSpecification extends Specification {
         def changeStreamIterable = execute(watchMethod, session)
 
         then:
-        expect changeStreamIterable, isTheSameAs(MongoIterables.changeStreamOf(session, namespace, codecRegistry, readPreference,
-                readConcern, executor, [], Document, ChangeStreamLevel.CLIENT, true), ['codec'])
+        expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl<>(session, namespace, codecRegistry,
+                readPreference, readConcern, executor, [], Document, ChangeStreamLevel.CLIENT, true),
+                ['codec'])
 
         when:
         changeStreamIterable = execute(watchMethod, session, [new Document('$match', 1)])
 
         then:
-        expect changeStreamIterable, isTheSameAs(MongoIterables.changeStreamOf(session, namespace, codecRegistry, readPreference,
-                readConcern, executor, [new Document('$match', 1)], Document, ChangeStreamLevel.CLIENT, true), ['codec'])
+        expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl<>(session, namespace, codecRegistry,
+                readPreference, readConcern, executor, [new Document('$match', 1)], Document, ChangeStreamLevel.CLIENT,
+                true), ['codec'])
 
         when:
         changeStreamIterable = execute(watchMethod, session, [new Document('$match', 1)], BsonDocument)
 
         then:
-        expect changeStreamIterable, isTheSameAs(MongoIterables.changeStreamOf(session, namespace, codecRegistry, readPreference,
-                readConcern, executor, [new Document('$match', 1)], BsonDocument, ChangeStreamLevel.CLIENT, true), ['codec'])
+        expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl<>(session, namespace, codecRegistry,
+                readPreference, readConcern, executor, [new Document('$match', 1)], BsonDocument,
+                ChangeStreamLevel.CLIENT, true), ['codec'])
 
         where:
         session << [null, Stub(ClientSession)]
@@ -179,7 +182,6 @@ class MongoClientSpecification extends Specification {
                          .address(new ServerAddress())
                          .type(ServerType.UNKNOWN)
                          .state(ServerConnectionState.CONNECTING)
-                         .version(new ServerVersion())
                          .build()])
         def cluster = Mock(Cluster) {
             1 * getCurrentDescription() >> {

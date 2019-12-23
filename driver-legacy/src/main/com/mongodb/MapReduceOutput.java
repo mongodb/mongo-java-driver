@@ -16,9 +16,9 @@
 
 package com.mongodb;
 
+import com.mongodb.internal.operation.MapReduceBatchCursor;
+import com.mongodb.internal.operation.MapReduceStatistics;
 import com.mongodb.lang.Nullable;
-import com.mongodb.operation.MapReduceBatchCursor;
-import com.mongodb.operation.MapReduceStatistics;
 
 import java.util.ArrayList;
 import java.util.List;

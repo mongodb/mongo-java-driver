@@ -22,20 +22,22 @@ import com.mongodb.MongoSecurityException
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.binding.AsyncClusterBinding
-import com.mongodb.binding.ClusterBinding
-import com.mongodb.operation.CommandReadOperation
-import com.mongodb.operation.CommandWriteOperation
-import com.mongodb.operation.DropUserOperation
+import com.mongodb.internal.binding.AsyncClusterBinding
+import com.mongodb.internal.binding.ClusterBinding
+import com.mongodb.internal.operation.CommandReadOperation
+import com.mongodb.internal.operation.CommandWriteOperation
+import org.bson.BsonDocument
 import org.bson.BsonDocumentWrapper
+import org.bson.BsonString
 import org.bson.Document
+import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
-import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.createAsyncCluster
 import static com.mongodb.ClusterFixture.createCluster
+import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isAuthenticated
 import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.MongoCredential.createScramSha1Credential
@@ -90,12 +92,13 @@ class ScramSha256AuthenticationSpecification extends Specification {
     }
 
     def dropUser(final String userName) {
-        new DropUserOperation('admin', userName).execute(getBinding())
+        new CommandWriteOperation<>('admin', new BsonDocument('dropUser', new BsonString(userName)),
+            new BsonDocumentCodec()).execute(getBinding())
     }
 
     def 'test authentication and authorization'() {
         given:
-        def cluster = createCluster(credentials)
+        def cluster = createCluster(credential)
 
         when:
         new CommandReadOperation<Document>('admin',
@@ -109,20 +112,12 @@ class ScramSha256AuthenticationSpecification extends Specification {
         cluster.close()
 
         where:
-        credentials << [[sha1Implicit],
-                        [sha1Explicit],
-                        [sha256Implicit],
-                        [sha256Explicit],
-                        [bothImplicit],
-                        [bothExplicitSha1],
-                        [bothExplicitSha256],
-                        [sha1Implicit, sha1Explicit, sha256Implicit, sha256Explicit, bothImplicit, bothExplicitSha1, bothExplicitSha256]
-        ]
+        credential << [sha1Implicit, sha1Explicit, sha256Implicit, sha256Explicit, bothImplicit, bothExplicitSha1, bothExplicitSha256]
     }
 
     def 'test authentication and authorization async'() {
         given:
-        def cluster = createAsyncCluster(credentials)
+        def cluster = createAsyncCluster(credential)
         def callback = new FutureResultCallback()
 
         when:
@@ -139,20 +134,12 @@ class ScramSha256AuthenticationSpecification extends Specification {
         cluster.close()
 
         where:
-        credentials << [[sha1Implicit],
-                        [sha1Explicit],
-                        [sha256Implicit],
-                        [sha256Explicit],
-                        [bothImplicit],
-                        [bothExplicitSha1],
-                        [bothExplicitSha256],
-                        [sha1Implicit, sha1Explicit, sha256Implicit, sha256Explicit, bothImplicit, bothExplicitSha1, bothExplicitSha256]
-        ]
+        credential << [sha1Implicit, sha1Explicit, sha256Implicit, sha256Explicit, bothImplicit, bothExplicitSha1, bothExplicitSha256]
     }
 
     def 'test authentication and authorization failure with wrong mechanism'() {
         given:
-        def cluster = createCluster(credentials)
+        def cluster = createCluster(credential)
 
         when:
         new CommandReadOperation<Document>('admin',
@@ -166,12 +153,12 @@ class ScramSha256AuthenticationSpecification extends Specification {
         cluster.close()
 
         where:
-        credentials << [[sha1AsSha256], [sha256AsSha1], [nonExistentUserImplicit]]
+        credential << [sha1AsSha256, sha256AsSha1, nonExistentUserImplicit]
     }
 
     def 'test authentication and authorization failure with wrong mechanism async'() {
         given:
-        def cluster = createAsyncCluster(credentials)
+        def cluster = createAsyncCluster(credential)
         def callback = new FutureResultCallback()
 
         when:
@@ -187,12 +174,12 @@ class ScramSha256AuthenticationSpecification extends Specification {
         cluster.close()
 
         where:
-        credentials << [[sha1AsSha256], [sha256AsSha1], [nonExistentUserImplicit]]
+        credential << [sha1AsSha256, sha256AsSha1, nonExistentUserImplicit]
     }
 
     def 'test SASL Prep'() {
         given:
-        def cluster = createCluster(credentials)
+        def cluster = createCluster(credential)
 
         when:
         new CommandReadOperation<Document>('admin',
@@ -206,12 +193,12 @@ class ScramSha256AuthenticationSpecification extends Specification {
         cluster.close()
 
         where:
-        credentials << [[userNinePrepped], [userNineUnprepped], [userFourPrepped], [userFourUnprepped]]
+        credential << [userNinePrepped, userNineUnprepped, userFourPrepped, userFourUnprepped]
     }
 
     def 'test SASL Prep async'() {
         given:
-        def cluster = createAsyncCluster(credentials)
+        def cluster = createAsyncCluster(credential)
         def callback = new FutureResultCallback()
 
         when:
@@ -227,6 +214,6 @@ class ScramSha256AuthenticationSpecification extends Specification {
         cluster.close()
 
         where:
-        credentials << [[userNinePrepped], [userNineUnprepped], [userFourPrepped], [userFourUnprepped]]
+        credential << [userNinePrepped, userNineUnprepped, userFourPrepped, userFourUnprepped]
     }
 }

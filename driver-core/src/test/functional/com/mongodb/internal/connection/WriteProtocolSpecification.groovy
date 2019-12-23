@@ -18,22 +18,21 @@ package com.mongodb.internal.connection
 
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
-import com.mongodb.bulk.InsertRequest
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.netty.NettyStreamFactory
+import com.mongodb.internal.bulk.InsertRequest
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
 import org.bson.codecs.BsonDocumentCodec
 import spock.lang.Shared
 
+import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
-import static com.mongodb.connection.ConnectionFixture.getCredentialListWithCache
 import static com.mongodb.internal.connection.ProtocolTestHelper.execute
-
 
 class WriteProtocolSpecification extends OperationFunctionalSpecification {
     @Shared
@@ -41,7 +40,7 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
 
     def setupSpec() {
         connection = new InternalStreamConnectionFactory(new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                getCredentialListWithCache(), null, null, [], null)
+                getCredentialWithCache(), null, null, [], null)
                 .create(new ServerId(new ClusterId(), getPrimary()))
         connection.open();
     }

@@ -18,7 +18,6 @@ package org.bson.json;
 
 
 import org.bson.AbstractBsonReader;
-import org.bson.BSONException;
 import org.bson.BsonBinary;
 import org.bson.BsonBinarySubType;
 import org.bson.BsonContextType;
@@ -67,7 +66,6 @@ public class JsonReader extends AbstractBsonReader {
     private final JsonScanner scanner;
     private JsonToken pushedToken;
     private Object currentValue;
-    private Mark mark;
 
     /**
      * Constructs a new instance with the given string positioned at a JSON object.
@@ -1356,28 +1354,9 @@ public class JsonReader extends AbstractBsonReader {
         return oid;
     }
 
-    @Deprecated
-    @Override
-    public void mark() {
-        if (mark != null) {
-            throw new BSONException("A mark already exists; it needs to be reset before creating a new one");
-        }
-        mark = new Mark();
-    }
-
     @Override
     public BsonReaderMark getMark() {
         return new Mark();
-    }
-
-    @Deprecated
-    @Override
-    public void reset() {
-        if (mark == null) {
-            throw new BSONException("trying to reset a mark before creating it");
-        }
-        mark.reset();
-        mark = null;
     }
 
     @Override

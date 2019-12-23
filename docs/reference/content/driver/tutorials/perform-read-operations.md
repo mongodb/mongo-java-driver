@@ -14,7 +14,7 @@ Find operations retrieve documents from a collection. You can specify a filter t
 
 ## Prerequisites
 
-- The example below requires a ``restaurants`` collection in the ``test`` database. To create and populate the collection, follow the directions in [github] (https://github.com/mongodb/docs-assets/tree/drivers).
+- The example below requires a ``restaurants`` collection in the ``test`` database. To create and populate the collection, follow the directions in [github](https://github.com/mongodb/docs-assets/tree/drivers).
 
 - Include the following import statements:
 
@@ -149,7 +149,7 @@ collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery"))
                 .forEach(printBlock);
 ```
 
-In the projection document, you can also specify a projection expression using a [projection operator]({{<apiref "reference/operator/projection/">}})
+In the projection document, you can also specify a projection expression using a [projection operator]({{<docsref "reference/operator/projection/">}})
 
 For an example on using the [`Projections.metaTextScore`]({{<apiref "com/mongodb/client/model/Projections.html#metaTextScore(java.lang.String)">}}),
 see the [Text Search tutorial]({{<relref "driver/tutorials/text-search.md">}}).
@@ -207,7 +207,7 @@ For read operations on [replica sets]({{<docsref "replication/">}}) or [sharded 
                                                     .build());
       ```
 
-  - Via [`ConnectionString`]({{< apiref "/com/mongodb/ConnectionString.html">}}), as in the following example:
+  - Via [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString.html">}}), as in the following example:
 
       ```java
       MongoClient mongoClient = MongoClients.create("mongodb://host1:27017,host2:27017/?readPreference=secondary");
@@ -241,45 +241,44 @@ For read operations on [replica sets]({{<docsref "replication/">}}) or [sharded 
 
 - In a [`MongoClient()`]({{< apiref "com/mongodb/MongoClient.html">}})
 
-  - Via [`MongoClientURI`]({{< apiref "/com/mongodb/MongoClientURI.html">}}), as in the following example:
+  - Via [`MongoClientSettings`]({{<apiref "com/mongodb/MongoClientSettings.html">}}):
 
-    ```java
-    MongoClient mongoClient = new MongoClient(
-      new MongoClientURI("mongodb://host1:27017,host2:27017/?readConcernLevel=majority"));
-    ```
-  - Via [`MongoClientOptions`]({{<apiref "com/mongodb/MongoClientOptions.html">}}), as in the following example:
+      ```java
+      MongoClient mongoClient = MongoClients.create(MongoClientSettings.builder()
+                                                    .applyConnectionString(new ConnectionString("mongodb://host1,host2"))
+                                                    .readConcern(ReadConcern.MAJORITY)
+                                                    .build());
+      ```
 
-    ```java
-    MongoClientOptions options = MongoClientOptions.builder().readConcern(ReadConcern.DEFAULT).build();
-    MongoClient mongoClient = new MongoClient(Arrays.asList(
-                                  new ServerAddress("host1", 27017),
-                                  new ServerAddress("host1", 27017)), options);
-    ```
+  - Via [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString.html">}}), as in the following example:
 
-- In a [`MongoDatabase`]({{<apiref "com/mongodb/client/MongoDatabase.html">}}) via its [`withReadConcern`]({{<apiref "com/mongodb/client/MongoDatabase.html#withReadConcern(com.mongodb.ReadConcern)">}}) method, as in the following example:
+      ```java
+      MongoClient mongoClient = MongoClients.create("mongodb://host1:27017,host2:27017/?readConcernLevel=majority");
+      ```
+
+- In a [`MongoDatabase`]({{<apiref "com/mongodb/reactivestreams/client/MongoDatabase.html">}}) via its [`withReadConcern`]({{<apiref "com/mongodb/reactivestreams/client/MongoDatabase.html#withReadConcern(com.mongodb.ReadConcern)">}}) method, as in the following example:
 
     ```java
     MongoDatabase database = mongoClient.getDatabase("test")
-                                        .withReadConcern(ReadConcern.DEFAULT);
+                                        .withReadConcern(ReadConcern.MAJORITY);
     ```
 
-- In a [`MongoCollection`]({{<apiref "com/mongodb/client/MongoCollection.html">}}) via its [`withReadConcern`]({{<apiref "com/mongodb/client/MongoCollection.html#withReadConcern(com.mongodb.ReadConcern)">}}) method, as in the following example:
+- In a [`MongoCollection`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html">}}) via its [`withReadConcern`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html#withReadConcern(com.mongodb.ReadConcern)">}}) method, as in the following example:
 
     ```java
     MongoCollection<Document> collection = database.getCollection("restaurants")
-                                              .withReadConcern(ReadConcern.DEFAULT);
+                                              .withReadConcern(ReadConcern.MAJORITY);
     ```
 
 `MongoDatabase` and `MongoCollection` instances are immutable. Calling `.withReadConcern()` on an existing `MongoDatabase` or `MongoCollection` instance returns a new instance and does not affect the instance on which the method is called.
 
-For example, in the following, the `collWithReadConcern` instance has majority read concern whereas the read concern of the `collection` is unaffected.
+For example, in the following, the `collWithReadConcern` instance has an AVAILABLE read concern whereas the read concern of the `collection` is unaffected.
 
 ```java
-MongoCollection<Document> collWithReadConcern = collection
-                                                  .withReadConcern(ReadConcern.MAJORITY);
+MongoCollection<Document> collWithReadConcern = collection.withReadConcern(ReadConcern.AVAILABLE);
 ```
 
-You can build `MongoClientOptions`, `MongoDatabase`, or `MongoCollection` to include a combination of read concern, read preference, and [write concern]({{<docsref "reference/write-concern">}}).
+You can build `MongoClientSettings`, `MongoDatabase`, or `MongoCollection` to include a combination of read concern, read preference, and [write concern]({{<docsref "reference/write-concern">}}).
 
 For example, the following sets all three at the collection level:
 

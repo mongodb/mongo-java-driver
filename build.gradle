@@ -25,9 +25,13 @@ buildscript {
         maven { url "https://plugins.gradle.org/m2/" }
     }
     dependencies {
-        classpath 'org.kordamp.gradle:clirr-gradle-plugin:0.2.5'
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:3.0.3'
-        classpath 'gradle.plugin.com.github.spotbugs:spotbugs-gradle-plugin:1.6.4'
+        classpath "com.github.spotbugs:spotbugs-gradle-plugin:3.0.0"
+        classpath 'biz.aQute.bnd:biz.aQute.bnd.gradle:4.3.1'
+        
+        // Scala plugins
+        classpath "com.adtran:scala-multiversion-plugin:1.0.35"
+        classpath "com.diffplug.spotless:spotless-plugin-gradle:3.24.2"
     }
 }
 
@@ -38,7 +42,7 @@ buildscript {
 ext {
     configDir = new File(rootDir, 'config')
     jnrUnixsocketVersion = '0.18'
-    nettyVersion = '4.1.17.Final'
+    nettyVersion = '4.1.43.Final'
     snappyVersion = '1.1.4'
     zstdVersion = '1.3.8-3'
     mongoCryptVersion = '1.0.0'
@@ -47,11 +51,14 @@ ext {
 
 def configDir = ext.configDir
 def coreProjects = subprojects.findAll { !['util'].contains(it.name) }
-def javaProjects = subprojects
-def javaMainProjects = subprojects.findAll { !['util'].contains(it.name) }
-def javaCodeCheckedProjects = subprojects.findAll { !['util', 'mongo-java-driver', 'driver-benchmarks'].contains(it.name) }
+def javaProjects = subprojects.findAll { !it.name.contains('scala') }
+def scalaProjects = subprojects.findAll { it.name.contains('scala') }
+def javaMainProjects = javaProjects.findAll { !['util'].contains(it.name) }
+def javaCodeCheckedProjects = javaMainProjects.findAll { !['driver-benchmarks'].contains(it.name) }
 
 configure(coreProjects) {
+    apply plugin: 'idea'
+
     evaluationDependsOn(':util')
     group = 'org.mongodb'
     version = '4.0.0-SNAPSHOT'
@@ -67,19 +74,63 @@ configure(coreProjects) {
 configure(javaProjects) {
     apply plugin: 'java-library'
 
-    sourceCompatibility = JavaVersion.VERSION_1_6
-    targetCompatibility = JavaVersion.VERSION_1_6
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 
     sourceSets {
         main {
             java.srcDirs = ['src/main']
         }
     }
+
+    tasks.withType(GenerateModuleMetadata) {
+        enabled = false
+    }
+}
+
+configure(scalaProjects) {
+    apply plugin: 'scala'
+    apply plugin: 'biz.aQute.bnd.builder'
+    apply plugin: 'idea'
+    apply plugin: "com.adtran.scala-multiversion-plugin"
+    apply plugin: "com.diffplug.gradle.spotless"
+
+    group = 'org.mongodb.scala'
+
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+
+    dependencies {
+        compile ('org.scala-lang:scala-library:%scala-version%')
+        compile ('org.scala-lang:scala-reflect:%scala-version%')
+
+        testCompile('junit:junit:4.12')
+        testCompile('org.scalatest:scalatest_%%:3.0.8')
+        testCompile('org.scalamock:scalamock_%%:4.4.0')
+        testCompile('ch.qos.logback:logback-classic:1.1.3')
+        testCompile('org.reflections:reflections:0.9.10')
+    }
+
+    spotless {
+        scala {
+            scalafmt('2.0.0').configFile("$configDir/scalafmt.conf")
+        }
+    }
+    compileScala.dependsOn('spotlessApply')
+    compileTestScala.dependsOn('spotlessApply')
+
+    tasks.withType(ScalaCompile) {
+        scalaCompileOptions.deprecation = false
+    }
+
+
+    tasks.withType(GenerateModuleMetadata) {
+        enabled = false
+    }
 }
 
 configure(javaMainProjects) {
-    apply plugin: 'idea'
-    apply plugin: 'osgi'
+    apply plugin: 'biz.aQute.bnd.builder'
     apply plugin: 'nebula.optional-base'
 
     dependencies {
@@ -93,14 +144,13 @@ configure(javaMainProjects) {
         options.encoding = 'ISO-8859-1'
         options.fork = true
         options.debug = true
-        options.compilerArgs = ['-Xlint:all', '-Xlint:-options', '-Xlint:-deprecation']
+        options.compilerArgs = ['-Xlint:all']
     }
 }
 
 configure(javaCodeCheckedProjects) {
     apply plugin: 'checkstyle'
     apply plugin: "com.github.spotbugs"
-    apply plugin: 'org.kordamp.gradle.clirr'
     apply plugin: 'jacoco'
     apply plugin: 'groovy'
     apply plugin: 'codenarc'
@@ -117,7 +167,7 @@ configure(javaCodeCheckedProjects) {
 
     sourceSets {
         test {
-            groovy.srcDirs = ['src/test/functional', 'src/test/unit']
+            groovy.srcDirs = ['src/test/functional', 'src/test/unit', 'src/test/tck']
         }
     }
 
@@ -129,10 +179,9 @@ configure(javaCodeCheckedProjects) {
         systemProperties(
                 'org.mongodb.test.uri': System.getProperty('org.mongodb.test.uri'),
                 'org.mongodb.test.transaction.uri': System.getProperty('org.mongodb.test.transaction.uri'),
-                'org.mongodb.test.embedded.path': System.getProperty('org.mongodb.test.embedded.path'),
                 'org.mongodb.useSocket': System.getProperty('org.mongodb.useSocket', 'false'),
                 'org.mongodb.disableAsync': System.getProperty('org.mongodb.disableAsync', 'false'),
-                'org.mongodb.async.type': System.getProperty('org.mongodb.async.type', 'nio2'),
+                'org.mongodb.test.async.type': System.getProperty('org.mongodb.test.async.type', 'nio2'),
                 'org.mongodb.test.awsAccessKeyId': System.getProperty('org.mongodb.test.awsAccessKeyId'),
                 'org.mongodb.test.awsSecretAccessKey': System.getProperty('org.mongodb.test.awsSecretAccessKey'),
                 'jna.library.path': System.getProperty('jna.library.path')
@@ -256,8 +305,8 @@ apply from: 'gradle/testColorOutput.gradle'
 //////////////////////////////////////////
 // Root project configuration           //
 //////////////////////////////////////////
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.10.2'
+wrapper {
+    gradleVersion = '6.0.1'
 }
 
 if (!JavaVersion.current().isJava9Compatible()) {

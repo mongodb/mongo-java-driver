@@ -23,9 +23,9 @@ import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.internal.operation.BatchCursor;
+import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.lang.Nullable;
-import com.mongodb.operation.BatchCursor;
-import com.mongodb.operation.ReadOperation;
 
 import java.util.Collection;
 
@@ -116,8 +116,8 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
         return new MappingIterable<TResult, U>(this, mapper);
     }
 
-    @Override
-    public void forEach(final Block<? super TResult> block) {
+    @SuppressWarnings("overloads")
+    private void forEach(final Block<? super TResult> block) {
         MongoCursor<TResult> cursor = iterator();
         try {
             while (cursor.hasNext()) {

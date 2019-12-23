@@ -109,11 +109,14 @@ public abstract class AbstractUnifiedTest {
         this.skipTest = skipTest;
     }
 
+    protected abstract MongoClient createMongoClient(MongoClientSettings settings);
+
     @Before
     public void setUp() {
         assumeFalse(skipTest);
         assumeTrue("Skipping test: " + definition.getString("skipReason", new BsonString("")).getValue(),
                 !definition.containsKey("skipReason"));
+        assumeFalse("Skipping test of count", filename.equals("count.json"));
 
         collectionHelper = new CollectionHelper<Document>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
 
@@ -171,7 +174,7 @@ public abstract class AbstractUnifiedTest {
                 }
             });
         }
-        mongoClient = MongoClients.create(builder.build());
+        mongoClient = createMongoClient(builder.build());
 
         MongoDatabase database = mongoClient.getDatabase(databaseName);
 

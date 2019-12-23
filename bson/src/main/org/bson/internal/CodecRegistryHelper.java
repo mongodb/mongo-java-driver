@@ -25,7 +25,7 @@ public final class CodecRegistryHelper {
 
     public static CodecRegistry createRegistry(final CodecRegistry codecRegistry, final UuidRepresentation uuidRepresentation) {
         CodecRegistry retVal = codecRegistry;
-        if (uuidRepresentation != UuidRepresentation.JAVA_LEGACY) {
+        if (uuidRepresentation != UuidRepresentation.UNSPECIFIED) {
             if (codecRegistry instanceof CodecProvider) {
                 retVal = new OverridableUuidRepresentationCodecRegistry((CodecProvider) codecRegistry, uuidRepresentation);
             } else {

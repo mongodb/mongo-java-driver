@@ -19,8 +19,8 @@ package com.mongodb.client.internal;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.client.MongoCursor;
+import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.lang.Nullable;
-import com.mongodb.operation.BatchCursor;
 
 import java.util.List;
 import java.util.NoSuchElementException;

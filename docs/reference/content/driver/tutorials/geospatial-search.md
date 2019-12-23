@@ -14,7 +14,7 @@ To support geospatial queries, MongoDB provides various geospatial indexes as we
 
 ## Prerequisites
 
-- The example below requires a ``restaurants`` collection in the ``test`` database. To create and populate the collection, follow the directions in [github] (https://github.com/mongodb/docs-assets/tree/drivers).
+- The example below requires a ``restaurants`` collection in the ``test`` database. To create and populate the collection, follow the directions in [github](https://github.com/mongodb/docs-assets/tree/drivers).
 
 - Include the following import statements:
 
@@ -69,7 +69,7 @@ collection.createIndex(Indexes.geo2dsphere("contact.location"));
 
 ## Query for Locations Near a GeoJSON Point
 
-MongoDB provides various [geospatial query operators]({{<apiref "reference/operator/query-geospatial">}}). To facilitate the creation of geospatial queries filters, the Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) class and the ``com.mongodb.client.model.geojson`` package.
+MongoDB provides various [geospatial query operators]({{<docsref "reference/operator/query-geospatial">}}). To facilitate the creation of geospatial queries filters, the Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) class and the ``com.mongodb.client.model.geojson`` package.
 
 The following example returns documents that are at least 1000 meters from and at most 5000 meters from the specified GeoJSON point ``com.mongodb.client.model.geojson.Point``, sorted from nearest to farthest:
 

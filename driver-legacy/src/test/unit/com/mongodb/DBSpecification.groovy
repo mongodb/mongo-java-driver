@@ -16,7 +16,6 @@
 
 package com.mongodb
 
-
 import com.mongodb.client.internal.TestOperationExecutor
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CollationAlternate
@@ -26,10 +25,10 @@ import com.mongodb.client.model.CollationStrength
 import com.mongodb.client.model.DBCreateViewOptions
 import com.mongodb.client.model.ValidationAction
 import com.mongodb.client.model.ValidationLevel
-import com.mongodb.operation.BatchCursor
-import com.mongodb.operation.CreateCollectionOperation
-import com.mongodb.operation.CreateViewOperation
-import com.mongodb.operation.ListCollectionsOperation
+import com.mongodb.internal.operation.BatchCursor
+import com.mongodb.internal.operation.CreateCollectionOperation
+import com.mongodb.internal.operation.CreateViewOperation
+import com.mongodb.internal.operation.ListCollectionsOperation
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonDouble
@@ -76,6 +75,7 @@ class DBSpecification extends Specification {
         def executor = new TestOperationExecutor([1L, 2L, 3L])
         def db = new DB(mongo, 'test', executor)
         db.setReadConcern(ReadConcern.MAJORITY)
+        db.setWriteConcern(WriteConcern.MAJORITY)
 
         when:
         db.createCollection('ctest', new BasicDBObject())
@@ -174,7 +174,7 @@ class DBSpecification extends Specification {
 
     def 'should execute ListCollectionsOperation'() {
         given:
-        def mongo = Stub(Mongo)
+        def mongo = Stub(MongoClient)
         mongo.mongoClientOptions >> MongoClientOptions.builder().build()
         def executor = new TestOperationExecutor([Stub(BatchCursor), Stub(BatchCursor)])
 
@@ -199,7 +199,7 @@ class DBSpecification extends Specification {
 
     def 'should use provided read preference for obedient commands'() {
         given:
-        def mongo = Stub(Mongo)
+        def mongo = Stub(MongoClient)
         mongo.mongoClientOptions >> MongoClientOptions.builder().build()
         def executor = new TestOperationExecutor([new BsonDocument('ok', new BsonDouble(1.0))])
         def database = new DB(mongo, 'test', executor)
@@ -230,7 +230,7 @@ class DBSpecification extends Specification {
 
     def 'should use primary read preference for non obedient commands'() {
         given:
-        def mongo = Stub(Mongo)
+        def mongo = Stub(MongoClient)
         mongo.mongoClientOptions >> MongoClientOptions.builder().build()
         def executor = new TestOperationExecutor([new BsonDocument('ok', new BsonDouble(1.0))])
         def database = new DB(mongo, 'test', executor)

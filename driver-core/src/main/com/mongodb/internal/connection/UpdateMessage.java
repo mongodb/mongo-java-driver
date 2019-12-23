@@ -16,14 +16,14 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.bulk.UpdateRequest;
+import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.validator.CollectibleDocumentFieldNameValidator;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.internal.validator.UpdateFieldNameValidator;
 import org.bson.BsonValue;
 import org.bson.io.BsonOutput;
 
-import static com.mongodb.bulk.WriteRequest.Type.REPLACE;
+import static com.mongodb.internal.bulk.WriteRequest.Type.REPLACE;
 
 /**
  * An OP_UPDATE message.

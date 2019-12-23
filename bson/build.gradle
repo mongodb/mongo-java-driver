@@ -22,18 +22,11 @@ ext {
     pomURL = 'https://bsonspec.org'
 }
 
-clirr {
-    excludeFilter = new File("$configDir/clirr-exclude.yml")
-    baseline 'org.mongodb:bson:3.8.0'
-    failOnErrors = true
-}
-
 jar {
-    manifest {
-        instruction 'Automatic-Module-Name', 'org.mongodb.bson'
-        instruction 'Build-Version', project.gitVersion
-        instruction 'Import-Package',
-                    'javax.xml.bind.*',
-                    'org.slf4j;resolution:=optional'
-    }
+    bnd (
+        '-exportcontents': "*;-noimport:=true",
+         'Automatic-Module-Name': 'org.mongodb.bson',
+         'Build-Version': project.gitVersion,
+         'Import-Package': 'org.slf4j;resolution:=optional'
+    )
 }

@@ -23,11 +23,11 @@ import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Collation;
-import com.mongodb.client.model.FindOptions;
+import com.mongodb.internal.client.model.FindOptions;
+import com.mongodb.internal.operation.BatchCursor;
+import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.lang.Nullable;
-import com.mongodb.operation.BatchCursor;
-import com.mongodb.operation.ReadOperation;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -35,7 +35,6 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-@SuppressWarnings("deprecation")
 class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements FindIterable<TResult> {
 
     private final SyncOperations<TDocument> operations;
@@ -107,13 +106,6 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
     }
 
     @Override
-    @SuppressWarnings("deprecation")
-    public FindIterable<TResult> modifiers(@Nullable final Bson modifiers) {
-        findOptions.modifiers(modifiers);
-        return this;
-    }
-
-    @Override
     public FindIterable<TResult> projection(@Nullable final Bson projection) {
         findOptions.projection(projection);
         return this;
@@ -180,13 +172,6 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
     }
 
     @Override
-    @SuppressWarnings("deprecation")
-    public FindIterable<TResult> maxScan(final long maxScan) {
-        findOptions.maxScan(maxScan);
-        return this;
-    }
-
-    @Override
     public FindIterable<TResult> returnKey(final boolean returnKey) {
         findOptions.returnKey(returnKey);
         return this;
@@ -195,13 +180,6 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
     @Override
     public FindIterable<TResult> showRecordId(final boolean showRecordId) {
         findOptions.showRecordId(showRecordId);
-        return this;
-    }
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public FindIterable<TResult> snapshot(final boolean snapshot) {
-        findOptions.snapshot(snapshot);
         return this;
     }
 

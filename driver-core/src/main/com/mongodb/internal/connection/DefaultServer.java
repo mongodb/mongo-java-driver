@@ -23,10 +23,8 @@ import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketReadTimeoutException;
-import com.mongodb.async.SingleResultCallback;
-import com.mongodb.connection.AsyncConnection;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ClusterConnectionMode;
-import com.mongodb.connection.Connection;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerType;
@@ -37,7 +35,7 @@ import com.mongodb.event.ServerClosedEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerOpeningEvent;
-import com.mongodb.session.SessionContext;
+import com.mongodb.internal.session.SessionContext;
 
 import java.util.List;
 

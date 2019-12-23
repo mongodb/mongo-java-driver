@@ -14,7 +14,7 @@ Not all commands have a specific helper. However you can run any [MongoDB comman
 
 ## Prerequisites
 
-- The example below requires a `restaurants` collection in the `test` database. To create and populate the collection, follow the directions in [github] (https://github.com/mongodb/docs-assets/tree/drivers).
+- The example below requires a `restaurants` collection in the `test` database. To create and populate the collection, follow the directions in [github](https://github.com/mongodb/docs-assets/tree/drivers).
 
 - Include the following import statements:
 

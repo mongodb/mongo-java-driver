@@ -31,7 +31,7 @@ public final class ConnectionPoolClosedEvent {
     /**
      * Constructs a new instance of the event.
      *
-     * @param serverId the server ide
+     * @param serverId the server id
      */
     public ConnectionPoolClosedEvent(final ServerId serverId) {
         this.serverId = notNull("serverId", serverId);

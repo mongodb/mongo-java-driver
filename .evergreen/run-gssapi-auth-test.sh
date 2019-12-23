@@ -33,7 +33,6 @@ EOF
 
 echo "Compiling java driver with jdk11"
 
-# We always compile with the latest version of java
 export JAVA_HOME="/opt/java/jdk11"
 
 echo "Running tests with ${JDK}"
@@ -42,4 +41,4 @@ echo "Running tests with ${JDK}"
 -Dorg.mongodb.test.uri=${MONGODB_URI} \
 -Pgssapi.enabled=true -Psun.security.krb5.debug=true -Pauth.login.config=file://${PROJECT_DIRECTORY}/.evergreen/java.login.drivers.config \
 -Pkrb5.kdc=${KDC} -Pkrb5.realm=${REALM} -Psun.security.krb5.debug=true \
--Dtest.single=GSSAPIAuthenticationSpecification driver-core:test
+driver-core:test --tests GSSAPIAuthenticationSpecification

@@ -35,7 +35,6 @@ import static org.bson.assertions.Assertions.notNull;
 public class BsonBinaryReader extends AbstractBsonReader {
 
     private final BsonInput bsonInput;
-    private Mark mark;
 
     /**
      * Construct an instance.
@@ -150,18 +149,18 @@ public class BsonBinaryReader extends AbstractBsonReader {
 
     @Override
     protected byte doPeekBinarySubType() {
-        mark();
+        Mark mark = new Mark();
         readSize();
         byte type = bsonInput.readByte();
-        reset();
+        mark.reset();
         return type;
     }
 
     @Override
     protected int doPeekBinarySize() {
-        mark();
+        Mark mark = new Mark();
         int size = readSize();
-        reset();
+        mark.reset();
         return size;
     }
 
@@ -390,28 +389,9 @@ public class BsonBinaryReader extends AbstractBsonReader {
         return (Context) super.getContext();
     }
 
-    @Deprecated
-    @Override
-    public void mark() {
-        if (mark != null) {
-            throw new BSONException("A mark already exists; it needs to be reset before creating a new one");
-        }
-        mark = new Mark();
-    }
-
     @Override
     public BsonReaderMark getMark() {
         return new Mark();
-    }
-
-    @Deprecated
-    @Override
-    public void reset() {
-        if (mark == null) {
-            throw new BSONException("trying to reset a mark before creating it");
-        }
-        mark.reset();
-        mark = null;
     }
 
     protected class Mark extends AbstractBsonReader.Mark {

@@ -256,7 +256,6 @@ public final class ProtocolHelper {
         return err != null && err.length() > 0;
     }
 
-    @SuppressWarnings("deprecation")
     private static void throwWriteException(final BsonDocument result, final ServerAddress serverAddress) {
         MongoException specialException = createSpecialException(result, serverAddress, "err");
         if (specialException != null) {

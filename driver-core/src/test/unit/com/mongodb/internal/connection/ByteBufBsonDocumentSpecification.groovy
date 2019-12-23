@@ -286,7 +286,7 @@ class ByteBufBsonDocumentSpecification extends Specification {
 
     def 'toJson should respect JsonWriteSettings'() {
         given:
-        def settings = new JsonWriterSettings(JsonMode.SHELL)
+        def settings = JsonWriterSettings.builder().outputMode(JsonMode.SHELL).build()
 
         expect:
         document.toJson(settings) == byteBufDocument.toJson(settings)

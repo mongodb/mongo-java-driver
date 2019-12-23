@@ -16,7 +16,6 @@
 
 package documentation;
 
-import com.mongodb.Block;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.FindIterable;
@@ -42,6 +41,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
@@ -447,9 +447,9 @@ public final class DocumentationSamples extends DatabaseTestCase {
         findIterable = collection.find(eq("status", "A")).projection(include("item", "status"));
         //End Example 44
 
-        findIterable.forEach(new Block<Document>() {
+        findIterable.forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 assertEquals(new HashSet<String>(asList("_id", "item", "status")), document.keySet());
             }
         });
@@ -459,9 +459,9 @@ public final class DocumentationSamples extends DatabaseTestCase {
                 .projection(fields(include("item", "status"), excludeId()));
         //End Example 45
 
-        findIterable.forEach(new Block<Document>() {
+        findIterable.forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 assertEquals(new HashSet<String>(asList("item", "status")), document.keySet());
             }
         });
@@ -470,9 +470,9 @@ public final class DocumentationSamples extends DatabaseTestCase {
         findIterable = collection.find(eq("status", "A")).projection(exclude("item", "status"));
         //End Example 46
 
-        findIterable.forEach(new Block<Document>() {
+        findIterable.forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 assertEquals(new HashSet<String>(asList("_id", "size", "instock")), document.keySet());
             }
         });
@@ -481,9 +481,9 @@ public final class DocumentationSamples extends DatabaseTestCase {
         findIterable = collection.find(eq("status", "A")).projection(include("item", "status", "size.uom"));
         //End Example 47
 
-        findIterable.forEach(new Block<Document>() {
+        findIterable.forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 assertEquals(new HashSet<String>(asList("_id", "item", "status", "size")), document.keySet());
                 assertEquals(new HashSet<String>(singletonList("uom")), document.get("size", Document.class).keySet());
             }
@@ -493,9 +493,9 @@ public final class DocumentationSamples extends DatabaseTestCase {
         findIterable = collection.find(eq("status", "A")).projection(exclude("size.uom"));
         //End Example 48
 
-        findIterable.forEach(new Block<Document>() {
+        findIterable.forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 assertEquals(new HashSet<String>(asList("_id", "item", "instock", "status", "size")), document.keySet());
                 assertEquals(new HashSet<String>(asList("h", "w")), document.get("size", Document.class).keySet());
             }
@@ -505,9 +505,9 @@ public final class DocumentationSamples extends DatabaseTestCase {
         findIterable = collection.find(eq("status", "A")).projection(include("item", "status", "instock.qty"));
         //End Example 49
 
-        findIterable.forEach(new Block<Document>() {
+        findIterable.forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 assertEquals(new HashSet<String>(asList("_id", "item", "instock", "status")), document.keySet());
 
                 List<Document> instock = (List<Document>) document.get("instock");
@@ -522,9 +522,9 @@ public final class DocumentationSamples extends DatabaseTestCase {
                 .projection(fields(include("item", "status"), slice("instock", -1)));
         //End Example 50
 
-        findIterable.forEach(new Block<Document>() {
+        findIterable.forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 assertEquals(new HashSet<String>(asList("_id", "item", "instock", "status")), document.keySet());
 
                 List<Document> instock = (List<Document>) document.get("instock");
@@ -628,9 +628,9 @@ public final class DocumentationSamples extends DatabaseTestCase {
                 combine(set("size.uom", "cm"), set("status", "P"), currentDate("lastModified")));
         //End Example 52
 
-        collection.find(eq("item", "paper")).forEach(new Block<Document>() {
+        collection.find(eq("item", "paper")).forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 assertEquals("cm", document.get("size", Document.class).getString("uom"));
                 assertEquals("P", document.getString("status"));
                 assertTrue(document.containsKey("lastModified"));
@@ -643,9 +643,9 @@ public final class DocumentationSamples extends DatabaseTestCase {
                 combine(set("size.uom", "in"), set("status", "P"), currentDate("lastModified")));
         //End Example 53
 
-        collection.find(lt("qty", 50)).forEach(new Block<Document>() {
+        collection.find(lt("qty", 50)).forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 assertEquals("in", document.get("size", Document.class).getString("uom"));
                 assertEquals("P", document.getString("status"));
                 assertTrue(document.containsKey("lastModified"));
@@ -657,9 +657,9 @@ public final class DocumentationSamples extends DatabaseTestCase {
                 Document.parse("{ item: 'paper', instock: [ { warehouse: 'A', qty: 60 }, { warehouse: 'B', qty: 40 } ] }"));
         //End Example 54
 
-        collection.find(eq("item", "paper")).projection(excludeId()).forEach(new Block<Document>() {
+        collection.find(eq("item", "paper")).projection(excludeId()).forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 assertEquals(Document.parse("{ item: 'paper', instock: [ { warehouse: 'A', qty: 60 }, { warehouse: 'B', qty: 40 } ] }"),
                         document);
             }

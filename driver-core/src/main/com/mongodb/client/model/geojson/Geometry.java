@@ -70,7 +70,7 @@ public abstract class Geometry {
     @SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
     public String toJson() {
         StringWriter stringWriter = new StringWriter();
-        JsonWriter writer = new JsonWriter(stringWriter, new JsonWriterSettings());
+        JsonWriter writer = new JsonWriter(stringWriter, JsonWriterSettings.builder().build());
         Codec codec = getRegistry().get(getClass());
         codec.encode(writer, this, EncoderContext.builder().build());
         return stringWriter.toString();

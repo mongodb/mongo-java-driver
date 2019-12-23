@@ -16,19 +16,19 @@
 
 package com.mongodb.client.internal
 
-import com.mongodb.Block
+
 import com.mongodb.Function
 import com.mongodb.MongoException
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.WriteConcern
 import com.mongodb.client.ClientSession
-import com.mongodb.client.model.AggregationLevel
+import com.mongodb.internal.client.model.AggregationLevel
 import com.mongodb.client.model.Collation
-import com.mongodb.operation.AggregateOperation
-import com.mongodb.operation.AggregateToCollectionOperation
-import com.mongodb.operation.BatchCursor
-import com.mongodb.operation.FindOperation
+import com.mongodb.internal.operation.AggregateOperation
+import com.mongodb.internal.operation.AggregateToCollectionOperation
+import com.mongodb.internal.operation.BatchCursor
+import com.mongodb.internal.operation.FindOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
@@ -39,6 +39,8 @@ import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.ValueCodecProvider
 import org.bson.codecs.configuration.CodecConfigurationException
 import spock.lang.Specification
+
+import java.util.function.Consumer
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
@@ -60,7 +62,7 @@ class AggregateIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([null, null, null, null, null]);
         def pipeline = [new Document('$match', 1)]
         def aggregationIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
-                                                            readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION,
+                readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION,
                 true)
 
         when: 'default input should be as expected'
@@ -71,14 +73,14 @@ class AggregateIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new AggregateOperation<Document>(namespace,
-                [new BsonDocument('$match', new BsonInt32(1))], new DocumentCodec()).retryReads(true))
+                [new BsonDocument('$match', new BsonInt32(1))], new DocumentCodec())
+                .retryReads(true))
         readPreference == secondary()
 
         when: 'overriding initial options'
         aggregationIterable
                 .maxAwaitTime(99, MILLISECONDS)
                 .maxTime(999, MILLISECONDS)
-                .useCursor(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
                 .comment('this is a comment')
@@ -94,8 +96,7 @@ class AggregateIterableSpecification extends Specification {
                 .hint(new BsonDocument('a', new BsonInt32(1)))
                 .comment('this is a comment')
                 .maxAwaitTime(99, MILLISECONDS)
-                .maxTime(999, MILLISECONDS)
-                .useCursor(true))
+                .maxTime(999, MILLISECONDS))
     }
 
     def 'should build the expected AggregateToCollectionOperation for $out'() {
@@ -107,11 +108,10 @@ class AggregateIterableSpecification extends Specification {
 
         when: 'aggregation includes $out'
         new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                                  pipeline, AggregationLevel.COLLECTION, false)
+                pipeline, AggregationLevel.COLLECTION, false)
                 .batchSize(99)
                 .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
-                .useCursor(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
                 .comment('this is a comment').iterator()
@@ -145,7 +145,6 @@ class AggregateIterableSpecification extends Specification {
                 .batchSize(99)
                 .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
-                .useCursor(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
                 .comment('this is a comment').iterator()
@@ -210,7 +209,6 @@ class AggregateIterableSpecification extends Specification {
                 .batchSize(99)
                 .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
-                .useCursor(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
                 .comment('this is a comment').iterator()
@@ -246,7 +244,6 @@ class AggregateIterableSpecification extends Specification {
                 .batchSize(99)
                 .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
-                .useCursor(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
                 .comment('this is a comment').iterator()
@@ -283,7 +280,6 @@ class AggregateIterableSpecification extends Specification {
                 .batchSize(99)
                 .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
-                .useCursor(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
                 .comment('this is a comment').iterator()
@@ -417,7 +413,7 @@ class AggregateIterableSpecification extends Specification {
 
         when: 'a codec is missing'
         new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                                  pipeline, AggregationLevel.COLLECTION, false).iterator()
+                pipeline, AggregationLevel.COLLECTION, false).iterator()
 
         then:
         thrown(CodecConfigurationException)
@@ -462,9 +458,9 @@ class AggregateIterableSpecification extends Specification {
 
         when:
         def count = 0
-        mongoIterable.forEach(new Block<Document>() {
+        mongoIterable.forEach(new Consumer<Document>() {
             @Override
-            void apply(Document document) {
+            void accept(Document document) {
                 count++
             }
         })

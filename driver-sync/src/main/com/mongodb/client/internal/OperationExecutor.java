@@ -18,16 +18,17 @@ package com.mongodb.client.internal;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
-import com.mongodb.lang.Nullable;
-import com.mongodb.operation.ReadOperation;
-import com.mongodb.operation.WriteOperation;
 import com.mongodb.client.ClientSession;
+import com.mongodb.internal.operation.ReadOperation;
+import com.mongodb.internal.operation.WriteOperation;
+import com.mongodb.lang.Nullable;
 
 /**
  * An interface describing the execution of a read or a write operation.
  *
  * This class is not part of the public API and may be removed or changed at any time.
  */
+@SuppressWarnings("overloads")
 public interface OperationExecutor {
     /**
      * Execute the read operation with the given read preference.

@@ -29,10 +29,6 @@ test {
     exclude 'tour/**'
 }
 
-clirr {
-    enabled = false
-}
-
 dependencies {
     compile project(':bson')
     compile project(':driver-core')
