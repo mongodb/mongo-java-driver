@@ -57,12 +57,23 @@ ext {
             }
         }
     }
+    configureJarManifestAttributes = { project ->
+        { ->
+            manifest.attributes['-exportcontents'] =  "*;-noimport:=true"
+            manifest.attributes['Automatic-Module-Name'] =  project.group + '.' + project.archivesBaseName
+            manifest.attributes['Build-Version'] =  project.gitVersion
+            manifest.attributes['Bundle-Version'] =  project.version
+            manifest.attributes['Bundle-Name'] =  project.archivesBaseName
+            manifest.attributes['Bundle-SymbolicName'] =  project.group + '.' + project.archivesBaseName
+        }
+    }
 }
 
 def scalaProjects = subprojects.findAll { it.name.contains('scala') }
 def javaProjects = subprojects.findAll { !scalaProjects.contains(it) && !['util', 'driver-benchmarks'].contains(it.name) }
 
 configure(javaProjects) { project ->
+    apply plugin: 'biz.aQute.bnd.builder'
     apply plugin: 'maven-publish'
     apply plugin: 'signing'
 
@@ -92,6 +103,7 @@ configure(javaProjects) { project ->
     }
 
     afterEvaluate {
+        jar configureJarManifestAttributes(project)
         publishing.publications.mavenJava.artifactId = project.archivesBaseName
         signing {
             sign publishing.publications.mavenJava
@@ -100,6 +112,7 @@ configure(javaProjects) { project ->
 }
 
 configure(scalaProjects) { project ->
+    apply plugin: 'biz.aQute.bnd.builder'
     apply plugin: 'maven-publish'
     apply plugin: 'signing'
 
@@ -130,6 +143,7 @@ configure(scalaProjects) { project ->
     }
 
     afterEvaluate {
+        jar configureJarManifestAttributes(project)
         signing {
             sign publishing.publications.mavenJava
         }

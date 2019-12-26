@@ -18,8 +18,8 @@ description = "A Reactive Streams implementation of the MongoDB Java driver"
 archivesBaseName = 'mongodb-driver-reactivestreams'
 
 dependencies {
-    compile project(':bson')
-    compile project(':driver-core')
+    compile project(path: ':bson', configuration: 'default')
+    compile project(path: ':driver-core', configuration: 'default')
 
     compile 'org.reactivestreams:reactive-streams:1.0.2'
 
@@ -59,11 +59,8 @@ ext {
     pomName = 'The MongoDB Reactive Streams Driver'
 }
 
-jar {
-    bnd (
-        '-exportcontents': "*;-noimport:=true",
-        'Automatic-Module-Name': 'org.mongodb.driver.reactivestreams',
-        'Build-Version': project.gitVersion,
-        'Import-Package': 'org.bson.*,com.mongodb.*'
-    )
+afterEvaluate {
+    jar.manifest.attributes['Import-Package'] = 'org.bson.*,com.mongodb.*'
+    jar.manifest.attributes['Automatic-Module-Name'] = 'org.mongodb.driver.reactivestreams'
+    jar.manifest.attributes['Bundle-SymbolicName'] = 'org.mongodb.driver-reactivestreams'
 }
