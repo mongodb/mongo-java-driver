@@ -169,6 +169,7 @@ public interface MongoCollection<TDocument> {
      * Counts the number of documents in the collection.
      *
      * <p>
+     * Note: For a fast count of the total documents in a collection see {@link #estimatedDocumentCount()}.<br>
      * Note: When migrating from {@code count()} to {@code countDocuments()} the following query operators must be replaced:
      * </p>
      * <pre>
@@ -193,6 +194,7 @@ public interface MongoCollection<TDocument> {
      * Counts the number of documents in the collection according to the given options.
      *
      * <p>
+     * Note: For a fast count of the total documents in a collection see {@link #estimatedDocumentCount()}.<br>
      * Note: When migrating from {@code count()} to {@code countDocuments()} the following query operators must be replaced:
      * </p>
      * <pre>
@@ -218,6 +220,7 @@ public interface MongoCollection<TDocument> {
      * Counts the number of documents in the collection according to the given options.
      *
      * <p>
+     * Note: For a fast count of the total documents in a collection see {@link #estimatedDocumentCount()}.<br>
      * Note: When migrating from {@code count()} to {@code countDocuments()} the following query operators must be replaced:
      * </p>
      * <pre>
@@ -244,6 +247,7 @@ public interface MongoCollection<TDocument> {
      * Counts the number of documents in the collection.
      *
      * <p>
+     * Note: For a fast count of the total documents in a collection see {@link #estimatedDocumentCount()}.<br>
      * Note: When migrating from {@code count()} to {@code countDocuments()} the following query operators must be replaced:
      * </p>
      * <pre>
@@ -269,6 +273,10 @@ public interface MongoCollection<TDocument> {
     /**
      * Counts the number of documents in the collection according to the given options.
      *
+     * <p>
+     * Note: For a fast count of the total documents in a collection see {@link #estimatedDocumentCount()}.
+     * </p>
+     *
      * @param clientSession the client session with which to associate this operation
      * @param filter the query filter
      * @return a publisher with a single element indicating the number of documents
@@ -281,6 +289,7 @@ public interface MongoCollection<TDocument> {
      * Counts the number of documents in the collection according to the given options.
      *
      * <p>
+     * Note: For a fast count of the total documents in a collection see {@link #estimatedDocumentCount()}.<br>
      * Note: When migrating from {@code count()} to {@code countDocuments()} the following query operators must be replaced:
      * </p>
      * <pre>
