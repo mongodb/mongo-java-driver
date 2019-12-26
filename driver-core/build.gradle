@@ -31,7 +31,7 @@ ext {
 sourceSets.main.resources.srcDirs = ['src/resources']
 
 dependencies {
-    compile project(':bson')
+    compile project(path: ':bson', configuration: 'default')
 
     compile "com.github.jnr:jnr-unixsocket:$jnrUnixsocketVersion", optional
     compile "io.netty:netty-buffer:$nettyVersion", optional
@@ -52,28 +52,25 @@ buildConfig {
     packageName = 'com.mongodb.internal.build'
 }
 
-jar {
-    bnd(
-            '-exportcontents': "*;-noimport:=true",
-            'Automatic-Module-Name': 'org.mongodb.driver.core',
-            'Build-Version': project.gitVersion,
-            'Import-Package': [
-                    'org.bson.*',                       // unfortunate that this is necessary, but if it's left out then it's not included
-                    'javax.crypto.*',
-                    'javax.crypto.spec.*',
-                    'javax.management.*',
-                    'javax.naming.*',
-                    'javax.naming.directory.*',
-                    'javax.net.*',
-                    'javax.net.ssl.*',
-                    'javax.security.sasl.*',
-                    'javax.security.auth.callback.*',
-                    'org.ietf.jgss.*',
-                    'io.netty.*;resolution:=optional',
-                    'org.xerial.snappy.*;resolution:=optional',
-                    'com.github.luben.zstd.*;resolution:=optional',
-                    'org.slf4j;resolution:=optional',
-                    'jnr.unixsocket;resolution:=optional'
-            ].join(',')
-    )
+afterEvaluate {
+    jar.manifest.attributes['Automatic-Module-Name'] = 'org.mongodb.driver.core'
+    jar.manifest.attributes['Bundle-SymbolicName'] = 'org.mongodb.driver-core'
+    jar.manifest.attributes['Import-Package'] = [
+        'org.bson.*', // unfortunate that this is necessary, but if it's left out then it's not included
+        'javax.crypto.*',
+        'javax.crypto.spec.*',
+        'javax.management.*',
+        'javax.naming.*',
+        'javax.naming.directory.*',
+        'javax.net.*',
+        'javax.net.ssl.*',
+        'javax.security.sasl.*',
+        'javax.security.auth.callback.*',
+        'org.ietf.jgss.*',
+        'io.netty.*;resolution:=optional',
+        'org.xerial.snappy.*;resolution:=optional',
+        'com.github.luben.zstd.*;resolution:=optional',
+        'org.slf4j;resolution:=optional',
+        'jnr.unixsocket;resolution:=optional'
+    ].join(',')
 }
