@@ -16,6 +16,15 @@ there are immutable and mutable implementations of documents. The underlying imp
 namespace, which includes type aliases and companion objects.  In general this should suffice but for advanced use cases you may need to 
 use `org.bson` directly.
 
+{{% note class="important" %}}
+
+The server's behavior related to duplicate key names in a document is undefined. When a
+document with duplicate key names is decoded, the driver will assign the last
+value associated with the duplicate key. Storing such a document will cause
+the other values to be lost. 
+
+{{% /note %}}
+
 {{% note %}}
 The scala `Document` classes implement `TraversableLike[(String, BsonValue)]` and the general API mirrors that of a `Map[String, BsonValue]`.
 However, unlike `Map` implementations of `TraversableLike` enables strict type safety as there is no variance in the value type.
