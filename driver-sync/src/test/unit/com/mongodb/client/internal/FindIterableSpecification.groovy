@@ -16,23 +16,27 @@
 
 package com.mongodb.client.internal
 
-import com.mongodb.Block
+
 import com.mongodb.CursorType
 import com.mongodb.Function
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
-import com.mongodb.client.model.Collation
-import com.mongodb.operation.BatchCursor
-import com.mongodb.operation.FindOperation
 import com.mongodb.client.ClientSession
+import com.mongodb.client.model.Collation
+import com.mongodb.internal.operation.BatchCursor
+import com.mongodb.internal.operation.FindOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DocumentCodec
 import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.ValueCodecProvider
+import org.bson.conversions.Bson
 import spock.lang.Specification
+
+import java.util.function.Consumer
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
@@ -50,14 +54,12 @@ class FindIterableSpecification extends Specification {
     def namespace = new MongoNamespace('db', 'coll')
     def collation = Collation.builder().locale('en').build()
 
-    @SuppressWarnings('deprecation')
     def 'should build the expected findOperation'() {
         given:
-        def executor = new TestOperationExecutor([null, null])
+        def executor = new TestOperationExecutor([null, null, null])
         def findIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                executor, new Document('filter', 1))
+                executor, new Document('filter', 1), true)
                 .sort(new Document('sort', 1))
-                .modifiers(new Document('modifier', 1))
                 .projection(new Document('projection', 1))
                 .maxTime(10, SECONDS)
                 .maxAwaitTime(20, SECONDS)
@@ -70,13 +72,11 @@ class FindIterableSpecification extends Specification {
                 .partial(false)
                 .collation(null)
                 .comment('my comment')
-                .hint(new Document('hint', 1))
+                .hintString('a_1')
                 .min(new Document('min', 1))
                 .max(new Document('max', 1))
-                .maxScan(42L)
                 .returnKey(false)
                 .showRecordId(false)
-                .snapshot(false)
 
         when: 'default input should be as expected'
         findIterable.iterator()
@@ -88,7 +88,6 @@ class FindIterableSpecification extends Specification {
         expect operation, isTheSameAs(new FindOperation<Document>(namespace, new DocumentCodec())
                 .filter(new BsonDocument('filter', new BsonInt32(1)))
                 .sort(new BsonDocument('sort', new BsonInt32(1)))
-                .modifiers(new BsonDocument('modifier', new BsonInt32(1)))
                 .projection(new BsonDocument('projection', new BsonInt32(1)))
                 .maxTime(10000, MILLISECONDS)
                 .maxAwaitTime(20000, MILLISECONDS)
@@ -98,20 +97,18 @@ class FindIterableSpecification extends Specification {
                 .cursorType(CursorType.NonTailable)
                 .slaveOk(true)
                 .comment('my comment')
-                .hint(new BsonDocument('hint', new BsonInt32(1)))
+                .hint(new BsonString('a_1'))
                 .min(new BsonDocument('min', new BsonInt32(1)))
                 .max(new BsonDocument('max', new BsonInt32(1)))
-                .maxScan(42L)
                 .returnKey(false)
                 .showRecordId(false)
-                .snapshot(false)
+                .retryReads(true)
         )
         readPreference == secondary()
 
         when: 'overriding initial options'
         findIterable.filter(new Document('filter', 2))
                 .sort(new Document('sort', 2))
-                .modifiers(new Document('modifier', 2))
                 .projection(new Document('projection', 2))
                 .maxTime(9, SECONDS)
                 .maxAwaitTime(18, SECONDS)
@@ -127,10 +124,8 @@ class FindIterableSpecification extends Specification {
                 .hint(new Document('hint', 2))
                 .min(new Document('min', 2))
                 .max(new Document('max', 2))
-                .maxScan(88L)
                 .returnKey(true)
                 .showRecordId(true)
-                .snapshot(true)
                 .iterator()
 
         operation = executor.getReadOperation() as FindOperation<Document>
@@ -139,7 +134,6 @@ class FindIterableSpecification extends Specification {
         expect operation, isTheSameAs(new FindOperation<Document>(namespace, new DocumentCodec())
                 .filter(new BsonDocument('filter', new BsonInt32(2)))
                 .sort(new BsonDocument('sort', new BsonInt32(2)))
-                .modifiers(new BsonDocument('modifier', new BsonInt32(2)))
                 .projection(new BsonDocument('projection', new BsonInt32(2)))
                 .maxTime(9000, MILLISECONDS)
                 .maxAwaitTime(18000, MILLISECONDS)
@@ -156,11 +150,29 @@ class FindIterableSpecification extends Specification {
                 .hint(new BsonDocument('hint', new BsonInt32(2)))
                 .min(new BsonDocument('min', new BsonInt32(2)))
                 .max(new BsonDocument('max', new BsonInt32(2)))
-                .maxScan(88L)
                 .returnKey(true)
                 .showRecordId(true)
-                .snapshot(true)
+                .retryReads(true)
         )
+
+        when: 'passing nulls to nullable methods'
+        new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern,
+                executor, new Document('filter', 1), true)
+                .filter(null as Bson)
+                .collation(null)
+                .projection(null)
+                .sort(null as Bson)
+                .comment(null)
+                .hint(null)
+                .max(null as Bson)
+                .min(null as Bson)
+                .iterator()
+
+        operation = executor.getReadOperation() as FindOperation<Document>
+
+        then: 'should set an empty doc for the filter'
+        expect operation, isTheSameAs(new FindOperation<Document>(namespace, new DocumentCodec())
+                .filter(new BsonDocument()).slaveOk(true).retryReads(true))
     }
 
     def 'should use ClientSession'() {
@@ -192,12 +204,11 @@ class FindIterableSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([null, null])
         def findIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                executor, new Document('filter', 1))
+                executor, new Document('filter', 1), true)
 
         when:
         findIterable.filter(new Document('filter', 1))
                   .sort(new BsonDocument('sort', new BsonInt32(1)))
-                  .modifiers(new Document('modifier', 1))
                   .iterator()
 
         def operation = executor.getReadOperation() as FindOperation<Document>
@@ -206,9 +217,9 @@ class FindIterableSpecification extends Specification {
         expect operation, isTheSameAs(new FindOperation<Document>(namespace, new DocumentCodec())
                 .filter(new BsonDocument('filter', new BsonInt32(1)))
                 .sort(new BsonDocument('sort', new BsonInt32(1)))
-                .modifiers(new BsonDocument('modifier', new BsonInt32(1)))
                 .cursorType(CursorType.NonTailable)
                 .slaveOk(true)
+                .retryReads(true)
         )
     }
 
@@ -244,9 +255,9 @@ class FindIterableSpecification extends Specification {
 
         when:
         def count = 0
-        mongoIterable.forEach(new Block<Document>() {
+        mongoIterable.forEach(new Consumer<Document>() {
             @Override
-            void apply(Document document) {
+            void accept(Document document) {
                 count++
             }
         })

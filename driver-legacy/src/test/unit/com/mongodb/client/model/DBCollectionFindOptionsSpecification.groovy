@@ -40,12 +40,17 @@ class DBCollectionFindOptionsSpecification extends Specification {
         options.getLimit() == 0
         options.getMaxAwaitTime(TimeUnit.MILLISECONDS) == 0
         options.getMaxTime(TimeUnit.MILLISECONDS) == 0
-        options.getModifiers() == new BasicDBObject()
         options.getProjection() == null
         options.getReadConcern() == null
         options.getReadPreference() == null
         options.getSkip() == 0
         options.getSort() == null
+        options.getComment() == null
+        options.getHint() == null
+        options.getMax() == null
+        options.getMin() == null
+        !options.isReturnKey()
+        !options.isShowRecordId()
     }
 
     def 'should set and return the expected values'() {
@@ -54,9 +59,12 @@ class DBCollectionFindOptionsSpecification extends Specification {
         def projection = BasicDBObject.parse('{a: 1, _id: 0}')
         def sort = BasicDBObject.parse('{a: 1}')
         def cursorType = CursorType.TailableAwait
-        def modifiers = BasicDBObject.parse('{$comment: 1}')
         def readConcern = ReadConcern.LOCAL
         def readPreference = ReadPreference.nearest()
+        def comment = 'comment'
+        def hint = BasicDBObject.parse('{x : 1}')
+        def min = BasicDBObject.parse('{y : 1}')
+        def max = BasicDBObject.parse('{y : 100}')
 
         when:
         def options = new DBCollectionFindOptions()
@@ -66,7 +74,6 @@ class DBCollectionFindOptionsSpecification extends Specification {
                 .limit(1)
                 .maxAwaitTime(1, TimeUnit.MILLISECONDS)
                 .maxTime(1, TimeUnit.MILLISECONDS)
-                .modifiers(modifiers)
                 .noCursorTimeout(true)
                 .oplogReplay(true)
                 .partial(true)
@@ -75,6 +82,12 @@ class DBCollectionFindOptionsSpecification extends Specification {
                 .readPreference(readPreference)
                 .skip(1)
                 .sort(sort)
+                .comment(comment)
+                .hint(hint)
+                .max(max)
+                .min(min)
+                .returnKey(true)
+                .showRecordId(true)
 
         then:
         options.getBatchSize() == 1
@@ -83,7 +96,6 @@ class DBCollectionFindOptionsSpecification extends Specification {
         options.getLimit() == 1
         options.getMaxAwaitTime(TimeUnit.MILLISECONDS) == 1
         options.getMaxTime(TimeUnit.MILLISECONDS) == 1
-        options.getModifiers() == modifiers
         options.getProjection() == projection
         options.getReadConcern() == readConcern
         options.getReadPreference() == readPreference
@@ -92,6 +104,12 @@ class DBCollectionFindOptionsSpecification extends Specification {
         options.isNoCursorTimeout()
         options.isOplogReplay()
         options.isPartial()
+        options.getComment() == comment
+        options.getHint() == hint
+        options.getMax() == max
+        options.getMin() == min
+        options.isReturnKey()
+        options.isShowRecordId()
     }
 
     def 'it should copy and return the expected values'() {
@@ -100,9 +118,12 @@ class DBCollectionFindOptionsSpecification extends Specification {
         def projection = BasicDBObject.parse('{a: 1, _id: 0}')
         def sort = BasicDBObject.parse('{a: 1}')
         def cursorType = CursorType.TailableAwait
-        def modifiers = BasicDBObject.parse('{$comment: 1}')
         def readConcern = ReadConcern.LOCAL
         def readPreference = ReadPreference.nearest()
+        def comment = 'comment'
+        def hint = BasicDBObject.parse('{x : 1}')
+        def min = BasicDBObject.parse('{y : 1}')
+        def max = BasicDBObject.parse('{y : 100}')
 
         when:
         def original = new DBCollectionFindOptions()
@@ -112,7 +133,6 @@ class DBCollectionFindOptionsSpecification extends Specification {
                 .limit(1)
                 .maxAwaitTime(1, TimeUnit.MILLISECONDS)
                 .maxTime(1, TimeUnit.MILLISECONDS)
-                .modifiers(modifiers)
                 .noCursorTimeout(true)
                 .oplogReplay(true)
                 .partial(true)
@@ -121,6 +141,12 @@ class DBCollectionFindOptionsSpecification extends Specification {
                 .readPreference(readPreference)
                 .skip(1)
                 .sort(sort)
+                .comment(comment)
+                .hint(hint)
+                .max(max)
+                .min(min)
+                .returnKey(true)
+                .showRecordId(true)
 
         def options = original.copy()
 
@@ -133,7 +159,6 @@ class DBCollectionFindOptionsSpecification extends Specification {
         options.getLimit() == 1
         options.getMaxAwaitTime(TimeUnit.MILLISECONDS) == 1
         options.getMaxTime(TimeUnit.MILLISECONDS) == 1
-        options.getModifiers() == modifiers
         options.getProjection() == projection
         options.getReadConcern() == readConcern
         options.getReadPreference() == readPreference
@@ -142,6 +167,12 @@ class DBCollectionFindOptionsSpecification extends Specification {
         options.isNoCursorTimeout()
         options.isOplogReplay()
         options.isPartial()
+        options.getComment() == comment
+        options.getHint() == hint
+        options.getMax() == max
+        options.getMin() == min
+        options.isReturnKey()
+        options.isShowRecordId()
     }
 
 }

@@ -18,13 +18,16 @@ package com.mongodb.internal.session;
 
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
-import com.mongodb.connection.Cluster;
-import com.mongodb.connection.Connection;
+import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.ConcurrentPool;
 import com.mongodb.internal.connection.ConcurrentPool.Prune;
+import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.NoOpSessionContext;
+import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
-import com.mongodb.selector.ReadPreferenceServerSelector;
+import com.mongodb.selector.ServerSelector;
 import com.mongodb.session.ServerSession;
 import org.bson.BsonArray;
 import org.bson.BsonBinary;
@@ -36,6 +39,7 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.UuidCodec;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -90,7 +94,13 @@ public class ServerSessionPool {
         try {
             closing = true;
             serverSessionPool.close();
-            endClosedSessions();
+
+            List<BsonDocument> identifiers;
+            synchronized (this) {
+                identifiers = new ArrayList<BsonDocument>(closedSessionIdentifiers);
+                closedSessionIdentifiers.clear();
+            }
+            endClosedSessions(identifiers);
         } finally {
             closed = true;
         }
@@ -107,26 +117,48 @@ public class ServerSessionPool {
             return;
         }
 
-        closedSessionIdentifiers.add(serverSession.getIdentifier());
-        if (closedSessionIdentifiers.size() == END_SESSIONS_BATCH_SIZE) {
-            endClosedSessions();
+        List<BsonDocument> identifiers = null;
+        synchronized (this) {
+            closedSessionIdentifiers.add(serverSession.getIdentifier());
+            if (closedSessionIdentifiers.size() == END_SESSIONS_BATCH_SIZE) {
+                identifiers = new ArrayList<BsonDocument>(closedSessionIdentifiers);
+                closedSessionIdentifiers.clear();
+            }
+        }
+        if (identifiers != null) {
+            endClosedSessions(identifiers);
         }
     }
 
-    private void endClosedSessions() {
-        if (closedSessionIdentifiers.isEmpty()) {
+    private void endClosedSessions(final List<BsonDocument> identifiers) {
+        if (identifiers.isEmpty()) {
             return;
         }
 
-        Connection connection = cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.primaryPreferred())).getConnection();
+        final List<ServerDescription> primaryPreferred = new ReadPreferenceServerSelector(ReadPreference.primaryPreferred())
+                .select(cluster.getCurrentDescription());
+        if (primaryPreferred.isEmpty()) {
+            return;
+        }
+
+        Connection connection = cluster.selectServer(new ServerSelector() {
+            @Override
+            public List<ServerDescription> select(final ClusterDescription clusterDescription) {
+                for (ServerDescription cur : clusterDescription.getServerDescriptions()) {
+                    if (cur.getAddress().equals(primaryPreferred.get(0).getAddress())) {
+                        return Collections.singletonList(cur);
+                    }
+                }
+                return Collections.emptyList();
+            }
+        }).getConnection();
         try {
             connection.command("admin",
-                    new BsonDocument("endSessions", new BsonArray(closedSessionIdentifiers)), new NoOpFieldNameValidator(),
+                    new BsonDocument("endSessions", new BsonArray(identifiers)), new NoOpFieldNameValidator(),
                     ReadPreference.primaryPreferred(), new BsonDocumentCodec(), NoOpSessionContext.INSTANCE);
         } catch (MongoException e) {
             // ignore exceptions
         } finally {
-            closedSessionIdentifiers.clear();
             connection.release();
         }
     }
@@ -136,6 +168,9 @@ public class ServerSessionPool {
         // if the server no longer supports sessions, prune the session
         if (logicalSessionTimeoutMinutes == null) {
             return false;
+        }
+        if (serverSession.isMarkedDirty()) {
+            return true;
         }
         long currentTimeMillis = clock.millis();
         final long timeSinceLastUse = currentTimeMillis - serverSession.getLastUsedAtMillis();
@@ -149,6 +184,7 @@ public class ServerSessionPool {
         private long transactionNumber = 0;
         private volatile long lastUsedAtMillis = clock.millis();
         private volatile boolean closed;
+        private volatile boolean dirty = false;
 
         ServerSessionImpl(final BsonBinary identifier) {
             this.identifier = new BsonDocument("id", identifier);
@@ -182,6 +218,16 @@ public class ServerSessionPool {
         @Override
         public boolean isClosed() {
             return closed;
+        }
+
+        @Override
+        public void markDirty() {
+            dirty = true;
+        }
+
+        @Override
+        public boolean isMarkedDirty() {
+            return dirty;
         }
     }
 

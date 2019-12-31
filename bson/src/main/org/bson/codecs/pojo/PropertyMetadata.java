@@ -41,6 +41,7 @@ final class PropertyMetadata<T> {
     private TypeParameterMap typeParameterMap;
     private List<TypeData<?>> typeParameters;
 
+    private String error;
     private Field field;
     private Method getter;
     private Method setter;
@@ -61,6 +62,9 @@ final class PropertyMetadata<T> {
 
     public PropertyMetadata<T> addReadAnnotation(final Annotation annotation) {
         if (readAnnotations.containsKey(annotation.annotationType())) {
+            if (annotation.equals(readAnnotations.get(annotation.annotationType()))) {
+                return this;
+            }
             throw new CodecConfigurationException(format("Read annotation %s for '%s' already exists in %s", annotation.annotationType(),
                     name, declaringClassName));
         }
@@ -74,6 +78,9 @@ final class PropertyMetadata<T> {
 
     public PropertyMetadata<T> addWriteAnnotation(final Annotation annotation) {
         if (writeAnnotations.containsKey(annotation.annotationType())) {
+            if (annotation.equals(writeAnnotations.get(annotation.annotationType()))) {
+                return this;
+            }
             throw new CodecConfigurationException(format("Write annotation %s for '%s' already exists in %s", annotation.annotationType(),
                     name, declaringClassName));
         }
@@ -128,6 +135,14 @@ final class PropertyMetadata<T> {
             this.typeParameters = parentTypeData.getTypeParameters();
         }
         return this;
+    }
+
+    String getError() {
+        return error;
+    }
+
+    void setError(final String error) {
+        this.error = error;
     }
 
     public boolean isSerializable() {

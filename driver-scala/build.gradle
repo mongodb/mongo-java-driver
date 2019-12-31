@@ -1,0 +1,101 @@
+/*
+ * Copyright 2008-present MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+description = "A Scala wrapper / extension to the bson library"
+archivesBaseName = 'mongo-scala-driver'
+
+dependencies {
+    compile project(':bson-scala')
+    compile project(':driver-reactive-streams')
+
+    testCompile project(':util')
+    testCompile project(':driver-sync')
+    testCompile project(':bson').sourceSets.test.output
+    testCompile project(':driver-sync').sourceSets.test.output
+    testCompile project(':driver-core').sourceSets.test.output
+}
+
+
+configurations {
+    integrationTestCompile.extendsFrom testCompile
+    integrationTestRuntime.extendsFrom testRuntime
+}
+
+sourceSets {
+    integrationTest {
+        scala.srcDir file('src/it/scala')
+        scala {
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
+        }
+    }
+}
+
+test {
+    maxParallelForks = 1
+}
+
+tasks.withType(Test) {
+    doFirst {
+        println("Running Test task using scala version: $scalaVersion")
+    }
+}
+
+task integrationTest(type: Test) {
+    delete 'build/test-it'
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    mustRunAfter test
+}
+
+check.dependsOn integrationTest
+
+task aggregatedScalaDoc(type: ScalaDoc) {
+    description('Unified Scaladoc for bson-scala and driver-scala')
+    group('documentation')
+    ext.fromProjects = [
+            project(':bson-scala'),
+            project(':driver-scala')
+    ]
+    destinationDir = file("${project.rootDir}/build/scaladoc")
+    classpath = project.sourceSets.main.compileClasspath
+    source = fromProjects.collect { it.sourceSets.main.allSource }
+
+    scalaDocOptions.additionalParameters = ["-doc-root-content", "${project.rootDir}/driver-scala/rootdoc.txt" as String]
+}
+
+
+idea {
+    module {
+        testSourceDirs += sourceSets.integrationTest.scala.srcDirs
+        testResourceDirs += sourceSets.integrationTest.resources.srcDirs
+        scopes.TEST.plus += [ configurations.integrationTestCompile ]
+    }
+}
+
+
+ext {
+    pomName = 'Mongo Scala Driver'
+}
+
+jar {
+    bnd (
+        '-exportcontents': "*;-noimport:=true",
+        'Automatic-Module-Name': 'org.mongodb.scala.mongo-scala-driver',
+        'Build-Version': project.gitVersion,
+        'Import-Package': 'org.bson.*,com.mongodb.*'
+    )
+}

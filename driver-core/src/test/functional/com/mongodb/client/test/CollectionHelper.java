@@ -20,31 +20,31 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ServerCursor;
 import com.mongodb.WriteConcern;
-import com.mongodb.binding.AsyncReadWriteBinding;
-import com.mongodb.binding.ReadBinding;
-import com.mongodb.binding.WriteBinding;
-import com.mongodb.bulk.DeleteRequest;
-import com.mongodb.bulk.IndexRequest;
-import com.mongodb.bulk.InsertRequest;
-import com.mongodb.bulk.UpdateRequest;
-import com.mongodb.bulk.WriteRequest;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.IndexOptionDefaults;
 import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
-import com.mongodb.operation.AggregateOperation;
-import com.mongodb.operation.BatchCursor;
-import com.mongodb.operation.CommandReadOperation;
-import com.mongodb.operation.CommandWriteOperation;
-import com.mongodb.operation.CountOperation;
-import com.mongodb.operation.CreateCollectionOperation;
-import com.mongodb.operation.CreateIndexesOperation;
-import com.mongodb.operation.DropCollectionOperation;
-import com.mongodb.operation.DropDatabaseOperation;
-import com.mongodb.operation.FindOperation;
-import com.mongodb.operation.InsertOperation;
-import com.mongodb.operation.ListIndexesOperation;
-import com.mongodb.operation.MixedBulkWriteOperation;
+import com.mongodb.internal.binding.AsyncReadWriteBinding;
+import com.mongodb.internal.binding.ReadBinding;
+import com.mongodb.internal.binding.WriteBinding;
+import com.mongodb.internal.bulk.DeleteRequest;
+import com.mongodb.internal.bulk.IndexRequest;
+import com.mongodb.internal.bulk.InsertRequest;
+import com.mongodb.internal.bulk.UpdateRequest;
+import com.mongodb.internal.bulk.WriteRequest;
+import com.mongodb.internal.operation.AggregateOperation;
+import com.mongodb.internal.operation.BatchCursor;
+import com.mongodb.internal.operation.CommandReadOperation;
+import com.mongodb.internal.operation.CommandWriteOperation;
+import com.mongodb.internal.operation.CountOperation;
+import com.mongodb.internal.operation.CreateCollectionOperation;
+import com.mongodb.internal.operation.CreateIndexesOperation;
+import com.mongodb.internal.operation.DropCollectionOperation;
+import com.mongodb.internal.operation.DropDatabaseOperation;
+import com.mongodb.internal.operation.FindOperation;
+import com.mongodb.internal.operation.InsertOperation;
+import com.mongodb.internal.operation.ListIndexesOperation;
+import com.mongodb.internal.operation.MixedBulkWriteOperation;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
@@ -99,11 +99,15 @@ public final class CollectionHelper<T> {
     }
 
     public static void dropDatabase(final String name) {
+        dropDatabase(name, WriteConcern.ACKNOWLEDGED);
+    }
+
+    public static void dropDatabase(final String name, final WriteConcern writeConcern) {
         if (name == null) {
             return;
         }
         try {
-            new DropDatabaseOperation(name, WriteConcern.ACKNOWLEDGED).execute(getBinding());
+            new DropDatabaseOperation(name, writeConcern).execute(getBinding());
         } catch (MongoCommandException e) {
             if (!e.getErrorMessage().contains("ns not found")) {
                 throw e;
@@ -123,17 +127,19 @@ public final class CollectionHelper<T> {
         drop(namespace, writeConcern);
     }
 
+    public void create() {
+        create(namespace.getCollectionName(), new CreateCollectionOptions(), WriteConcern.ACKNOWLEDGED);
+    }
+
     public void create(final String collectionName, final CreateCollectionOptions options) {
         create(collectionName, options, WriteConcern.ACKNOWLEDGED);
     }
 
-    @SuppressWarnings("deprecation")
     public void create(final String collectionName, final CreateCollectionOptions options, final WriteConcern writeConcern) {
         drop(namespace, writeConcern);
         CreateCollectionOperation operation = new CreateCollectionOperation(namespace.getDatabaseName(), collectionName, writeConcern)
                 .capped(options.isCapped())
                 .sizeInBytes(options.getSizeInBytes())
-                .autoIndex(options.isAutoIndex())
                 .maxDocuments(options.getMaxDocuments());
 
         IndexOptionDefaults indexOptionDefaults = options.getIndexOptionDefaults();
@@ -194,11 +200,15 @@ public final class CollectionHelper<T> {
         insertDocuments(new DocumentCodec(registry), asList(documents));
     }
 
-    public <I> void insertDocuments(final Codec<I> iCodec, final I... documents) {
+    @SafeVarargs
+    @SuppressWarnings("varargs")
+    public final <I> void insertDocuments(final Codec<I> iCodec, final I... documents) {
         insertDocuments(iCodec, asList(documents));
     }
 
-    public <I> void insertDocuments(final Codec<I> iCodec, final WriteBinding binding, final I... documents) {
+    @SafeVarargs
+    @SuppressWarnings("varargs")
+    public final <I> void insertDocuments(final Codec<I> iCodec, final WriteBinding binding, final I... documents) {
         insertDocuments(iCodec, binding, asList(documents));
     }
 
@@ -280,12 +290,14 @@ public final class CollectionHelper<T> {
         return results;
     }
 
+    @SuppressWarnings("overloads")
     public List<T> find(final Bson filter, final Bson sort) {
         return find(filter != null ? filter.toBsonDocument(Document.class, registry) : null,
                     sort != null ? sort.toBsonDocument(Document.class, registry) : null,
                     codec);
     }
 
+    @SuppressWarnings("overloads")
     public List<T> find(final Bson filter, final Bson sort, final Bson projection) {
         return find(filter != null ? filter.toBsonDocument(Document.class, registry) : null,
                     sort != null ? sort.toBsonDocument(Document.class, registry) : null,
@@ -293,10 +305,12 @@ public final class CollectionHelper<T> {
                     codec);
     }
 
+    @SuppressWarnings("overloads")
     public <D> List<D> find(final BsonDocument filter, final Decoder<D> decoder) {
         return find(filter, null, decoder);
     }
 
+    @SuppressWarnings("overloads")
     public <D> List<D> find(final BsonDocument filter, final BsonDocument sort, final Decoder<D> decoder) {
         return find(filter, sort, null, decoder);
     }
@@ -343,6 +357,11 @@ public final class CollectionHelper<T> {
         new CreateIndexesOperation(namespace, asList(new IndexRequest(wrap(key))), WriteConcern.ACKNOWLEDGED).execute(getBinding());
     }
 
+    public void createUniqueIndex(final Document key) {
+        new CreateIndexesOperation(namespace, asList(new IndexRequest(wrap(key)).unique(true)), WriteConcern.ACKNOWLEDGED)
+                .execute(getBinding());
+    }
+
     public void createIndex(final Document key, final String defaultLanguage) {
         new CreateIndexesOperation(namespace, asList(new IndexRequest(wrap(key)).defaultLanguage(defaultLanguage)),
                                           WriteConcern.ACKNOWLEDGED).execute(getBinding());
@@ -368,7 +387,30 @@ public final class CollectionHelper<T> {
     }
 
     public void killAllSessions() {
-        new CommandWriteOperation<BsonDocument>("admin", new BsonDocument("killAllSessions", new BsonArray()),
-                new BsonDocumentCodec());
+        try {
+            new CommandWriteOperation<BsonDocument>("admin", new BsonDocument("killAllSessions", new BsonArray()),
+                    new BsonDocumentCodec()).execute(getBinding());
+        } catch (MongoCommandException e) {
+            // ignore exception caused by killing the implicit session that the killAllSessions command itself is running in
+        }
+    }
+
+    public void renameCollection(final MongoNamespace newNamespace) {
+        try {
+            new CommandWriteOperation<BsonDocument>("admin",
+                    new BsonDocument("renameCollection", new BsonString(getNamespace().getFullName()))
+                                .append("to", new BsonString(newNamespace.getFullName())),
+                    new BsonDocumentCodec()).execute(getBinding());
+        } catch (MongoCommandException e) {
+            // do nothing
+        }
+    }
+
+    public void runAdminCommand(final String command) {
+        runAdminCommand(BsonDocument.parse(command));
+    }
+
+    public void runAdminCommand(final BsonDocument command) {
+        new CommandWriteOperation<BsonDocument>("admin", command, new BsonDocumentCodec()).execute(getBinding());
     }
 }

@@ -27,9 +27,10 @@ public enum JsonMode {
     /**
      * Strict mode representations of BSON types conform to the <a href="http://www.json.org">JSON RFC spec</a>.
      *
-     * @deprecated  The format generated with this mode is no longer considered standard for MongoDB tools.
+     * @deprecated  The format generated with this mode is no longer considered standard for MongoDB tools. This value is not currently
+     * scheduled for removal.
      */
-    @Deprecated
+    @Deprecated // NOT CURRENTLY INTENDED FOR REMOVAL
     STRICT,
 
     /**

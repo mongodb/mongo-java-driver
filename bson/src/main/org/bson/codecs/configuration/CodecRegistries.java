@@ -17,6 +17,7 @@
 package org.bson.codecs.configuration;
 
 import org.bson.codecs.Codec;
+import org.bson.internal.ProvidersCodecRegistry;
 
 import java.util.ArrayList;
 import java.util.List;

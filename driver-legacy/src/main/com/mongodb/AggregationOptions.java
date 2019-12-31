@@ -27,43 +27,19 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 /**
  * The options to apply to an aggregate operation.
  *
- * @mongodb.server.release 2.2
  * @mongodb.driver.manual reference/command/aggregate/ aggregate
  * @since 2.12
  */
 public class AggregationOptions {
     private final Integer batchSize;
     private final Boolean allowDiskUse;
-    private final OutputMode outputMode;
     private final long maxTimeMS;
     private final Boolean bypassDocumentValidation;
     private final Collation collation;
 
-    /**
-     * Enumeration to define where the results of the aggregation will be output.
-     * @deprecated There is no replacement for this.  Applications can assume that the driver will use a cursor for server versions
-     * that support it (&gt;= 2.6).  The driver will ignore this as of MongoDB 3.6, which does not support inline results for the aggregate
-     * command.
-     */
-    @Deprecated
-    public enum OutputMode {
-        /**
-         * The output of the aggregate operation is returned inline.
-         */
-        INLINE,
-
-        /**
-         * The output of the aggregate operation is returned using a cursor.
-         *
-         * @mongodb.server.release 2.6
-         */
-        CURSOR
-    }
-
     AggregationOptions(final Builder builder) {
         batchSize = builder.batchSize;
         allowDiskUse = builder.allowDiskUse;
-        outputMode = builder.outputMode;
         maxTimeMS = builder.maxTimeMS;
         bypassDocumentValidation = builder.bypassDocumentValidation;
         collation = builder.collation;
@@ -74,7 +50,6 @@ public class AggregationOptions {
      * RAM.
      *
      * @return true if aggregation stages can write data to temporary files
-     * @mongodb.server.release 2.6
      */
     public Boolean getAllowDiskUse() {
         return allowDiskUse;
@@ -84,24 +59,9 @@ public class AggregationOptions {
      * The size of batches to use when iterating over results.
      *
      * @return the batch size
-     * @mongodb.server.release 2.6
      */
     public Integer getBatchSize() {
         return batchSize;
-    }
-
-    /**
-     * The mode of output for this configuration.
-     *
-     * @return whether the output will be inline or via a cursor, which defaults to {@link OutputMode#CURSOR}
-     * @see OutputMode
-     * @deprecated There is no replacement for this.  Applications can assume that the driver will use a cursor for server versions
-     * that support it (&gt;= 2.6).  The driver will ignore this as of MongoDB 3.6, which does not support inline results for the aggregate
-     * command.
-     */
-    @Deprecated
-    public OutputMode getOutputMode() {
-        return outputMode;
     }
 
     /**
@@ -109,7 +69,6 @@ public class AggregationOptions {
      *
      * @param timeUnit the time unit for the result
      * @return the max time
-     * @mongodb.server.release 2.6
      * @since 2.12
      */
     public long getMaxTime(final TimeUnit timeUnit) {
@@ -143,7 +102,6 @@ public class AggregationOptions {
         return "AggregationOptions{"
                 + "batchSize=" + batchSize
                 + ", allowDiskUse=" + allowDiskUse
-                + ", outputMode=" + outputMode
                 + ", maxTimeMS=" + maxTimeMS
                 + ", bypassDocumentValidation=" + bypassDocumentValidation
                 + ", collation=" + collation
@@ -169,7 +127,6 @@ public class AggregationOptions {
     public static class Builder {
         private Integer batchSize;
         private Boolean allowDiskUse;
-        private OutputMode outputMode = OutputMode.CURSOR;
         private long maxTimeMS;
         private Boolean bypassDocumentValidation;
         private Collation collation;
@@ -182,7 +139,6 @@ public class AggregationOptions {
          *
          * @param size the batch size to apply to the cursor
          * @return {@code this} so calls can be chained
-         * @mongodb.server.release 2.6
          */
         public Builder batchSize(final Integer size) {
             batchSize = size;
@@ -195,26 +151,9 @@ public class AggregationOptions {
          *
          * @param allowDiskUse whether or not aggregation stages can write data to temporary files
          * @return {@code this} so calls can be chained
-         * @mongodb.server.release 2.6
          */
         public Builder allowDiskUse(final Boolean allowDiskUse) {
             this.allowDiskUse = allowDiskUse;
-            return this;
-        }
-
-        /**
-         * The mode of output for this configuration.
-         *
-         * @param mode an {@code OutputMode} that defines how to output the results of the aggregation.
-         * @return {@code this} so calls can be chained
-         * @see OutputMode
-         * @deprecated There is no replacement for this.  Applications can assume that the driver will use a cursor for server versions
-         * that support it (&gt;= 2.6).  The driver will ignore this as of MongoDB 3.6, which does not support inline results for the
-         * aggregate command.
-         */
-        @Deprecated
-        public Builder outputMode(final OutputMode mode) {
-            outputMode = mode;
             return this;
         }
 
@@ -224,7 +163,6 @@ public class AggregationOptions {
          * @param maxTime  the max time
          * @param timeUnit the time unit
          * @return {@code this} so calls can be chained
-         * @mongodb.server.release 2.6
          */
         public Builder maxTime(final long maxTime, final TimeUnit timeUnit) {
             maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);

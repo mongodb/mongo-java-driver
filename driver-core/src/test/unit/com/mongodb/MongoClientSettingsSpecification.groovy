@@ -24,13 +24,12 @@ import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SslSettings
 import com.mongodb.connection.netty.NettyStreamFactoryFactory
 import com.mongodb.event.CommandListener
+import org.bson.UuidRepresentation
 import org.bson.codecs.configuration.CodecRegistry
-import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.ClusterFixture.isNotAtLeastJava7
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static spock.util.matcher.HamcrestSupport.expect
 
@@ -42,7 +41,8 @@ class MongoClientSettingsSpecification extends Specification {
 
         expect:
         settings.getWriteConcern() == WriteConcern.ACKNOWLEDGED
-        !settings.getRetryWrites()
+        settings.getRetryWrites()
+        settings.getRetryReads()
         settings.getReadConcern() == ReadConcern.DEFAULT
         settings.getReadPreference() == ReadPreference.primary()
         settings.getCommandListeners().isEmpty()
@@ -55,7 +55,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.streamFactoryFactory == null
         settings.compressorList == []
         settings.credential == null
-        settings.credential == null
+        settings.uuidRepresentation == UuidRepresentation.UNSPECIFIED
     }
 
     @SuppressWarnings('UnnecessaryObjectReferences')
@@ -102,6 +102,11 @@ class MongoClientSettingsSpecification extends Specification {
         builder.compressorList(null)
         then:
         thrown(IllegalArgumentException)
+
+        when:
+        builder.uuidRepresentation(null)
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'should build with set configuration'() {
@@ -117,6 +122,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .readPreference(ReadPreference.secondary())
                 .writeConcern(WriteConcern.JOURNALED)
                 .retryWrites(true)
+                .retryReads(true)
                 .readConcern(ReadConcern.LOCAL)
                 .applicationName('app1')
                 .addCommandListener(commandListener)
@@ -130,22 +136,25 @@ class MongoClientSettingsSpecification extends Specification {
                 })
                 .streamFactoryFactory(streamFactoryFactory)
                 .compressorList([MongoCompressor.createZlibCompressor()])
+                .uuidRepresentation(UuidRepresentation.STANDARD)
                 .build()
 
         then:
         settings.getReadPreference() == ReadPreference.secondary()
         settings.getWriteConcern() == WriteConcern.JOURNALED
         settings.getRetryWrites()
+        settings.getRetryReads()
         settings.getReadConcern() == ReadConcern.LOCAL
         settings.getApplicationName() == 'app1'
         settings.getSocketSettings() == SocketSettings.builder().build()
-        settings.getHeartbeatSocketSettings() == SocketSettings.builder().readTimeout(10000, TimeUnit.MILLISECONDS).keepAlive(true).build()
+        settings.getHeartbeatSocketSettings() == SocketSettings.builder().readTimeout(10000, TimeUnit.MILLISECONDS).build()
         settings.getCommandListeners().get(0) == commandListener
         settings.getCodecRegistry() == codecRegistry
         settings.getCredential() == credential
         settings.getClusterSettings() == clusterSettings
         settings.getStreamFactoryFactory() == streamFactoryFactory
         settings.getCompressorList() == [MongoCompressor.createZlibCompressor()]
+        settings.getUuidRepresentation() == UuidRepresentation.STANDARD
     }
 
     def 'should be easy to create new settings from existing'() {
@@ -165,6 +174,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .readPreference(ReadPreference.secondary())
                 .writeConcern(WriteConcern.JOURNALED)
                 .retryWrites(true)
+                .retryReads(false)
                 .readConcern(ReadConcern.LOCAL)
                 .applicationName('app1')
                 .addCommandListener(commandListener)
@@ -252,12 +262,11 @@ class MongoClientSettingsSpecification extends Specification {
         settings.commandListeners[1].is commandListenerTwo
     }
 
-    @IgnoreIf({ isNotAtLeastJava7() })
     def 'should build settings from a connection string'() {
         when:
         ConnectionString connectionString = new ConnectionString('mongodb://user:pass@host1:1,host2:2/'
                 + '?authMechanism=SCRAM-SHA-1&authSource=test'
-                + '&minPoolSize=5&maxPoolSize=10&waitQueueMultiple=7'
+                + '&minPoolSize=5&maxPoolSize=10'
                 + '&waitQueueTimeoutMS=150&maxIdleTimeMS=200&maxLifeTimeMS=300'
                 + '&connectTimeoutMS=2500'
                 + '&socketTimeoutMS=5500'
@@ -267,11 +276,13 @@ class MongoClientSettingsSpecification extends Specification {
                 + '&appName=MyApp'
                 + '&replicaSet=test'
                 + '&retryWrites=true'
+                + '&retryReads=true'
                 + '&ssl=true&sslInvalidHostNameAllowed=true'
                 + '&w=majority&wTimeoutMS=2500'
                 + '&readPreference=secondary'
                 + '&readConcernLevel=majority'
                 + '&compressors=zlib&zlibCompressionLevel=5'
+                + '&uuidRepresentation=standard'
         )
         MongoClientSettings settings = MongoClientSettings.builder().applyConnectionString(connectionString).build()
         MongoClientSettings expected = MongoClientSettings.builder()
@@ -282,7 +293,6 @@ class MongoClientSettingsSpecification extends Specification {
                         .mode(ClusterConnectionMode.MULTIPLE)
                         .requiredReplicaSetName('test')
                         .serverSelectionTimeout(25000, TimeUnit.MILLISECONDS)
-                        .maxWaitQueueSize(10 * 7) // maxPoolSize * waitQueueMultiple
                         .localThreshold(30, TimeUnit.MILLISECONDS)
             }
         })
@@ -291,7 +301,6 @@ class MongoClientSettingsSpecification extends Specification {
             void apply(final ConnectionPoolSettings.Builder builder) {
                 builder.minSize(5)
                         .maxSize(10)
-                        .maxWaitQueueSize(10 * 7) // maxPoolSize * waitQueueMultiple
                         .maxWaitTime(150, TimeUnit.MILLISECONDS)
                         .maxConnectionLifeTime(300, TimeUnit.MILLISECONDS)
                         .maxConnectionIdleTime(200, TimeUnit.MILLISECONDS)
@@ -324,10 +333,72 @@ class MongoClientSettingsSpecification extends Specification {
             .credential(MongoCredential.createScramSha1Credential('user', 'test', 'pass'.toCharArray()))
             .compressorList([MongoCompressor.createZlibCompressor().withProperty(MongoCompressor.LEVEL, 5)])
             .retryWrites(true)
+            .retryReads(true)
+            .uuidRepresentation(UuidRepresentation.STANDARD)
             .build()
 
         then:
         expect expected, isTheSameAs(settings)
+    }
+
+    def 'should build settings from a connection string with default values'() {
+        when:
+        def builder = MongoClientSettings.builder()
+                .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
+            @Override
+            void apply(final ClusterSettings.Builder builder) {
+                builder.hosts([new ServerAddress('localhost', 27017)])
+                        .mode(ClusterConnectionMode.SINGLE)
+                        .serverSelectionTimeout(25000, TimeUnit.MILLISECONDS)
+                        .localThreshold(30, TimeUnit.MILLISECONDS)
+            }
+        })
+                .applyToConnectionPoolSettings(new Block<ConnectionPoolSettings.Builder>() {
+            @Override
+            void apply(final ConnectionPoolSettings.Builder builder) {
+                builder.minSize(5)
+                        .maxSize(10)
+                        .maxWaitTime(150, TimeUnit.MILLISECONDS)
+                        .maxConnectionLifeTime(300, TimeUnit.MILLISECONDS)
+                        .maxConnectionIdleTime(200, TimeUnit.MILLISECONDS)
+            }
+        })
+                .applyToServerSettings(new Block<ServerSettings.Builder>() {
+            @Override
+            void apply(final ServerSettings.Builder builder) {
+                builder.heartbeatFrequency(20000, TimeUnit.MILLISECONDS)
+            }
+        })
+                .applyToSocketSettings(new Block<SocketSettings.Builder>() {
+            @Override
+            void apply(final SocketSettings.Builder builder) {
+                builder.connectTimeout(2500, TimeUnit.MILLISECONDS)
+                        .readTimeout(5500, TimeUnit.MILLISECONDS)
+            }
+        })
+                .applyToSslSettings(new Block<SslSettings.Builder>() {
+            @Override
+            void apply(final SslSettings.Builder builder) {
+                builder.enabled(true)
+                        .invalidHostNameAllowed(true)
+            }
+        })
+                .readConcern(ReadConcern.MAJORITY)
+                .readPreference(ReadPreference.secondary())
+                .writeConcern(WriteConcern.MAJORITY.withWTimeout(2500, TimeUnit.MILLISECONDS))
+                .applicationName('MyApp')
+                .credential(MongoCredential.createScramSha1Credential('user', 'test', 'pass'.toCharArray()))
+                .compressorList([MongoCompressor.createZlibCompressor().withProperty(MongoCompressor.LEVEL, 5)])
+                .retryWrites(true)
+                .retryReads(true)
+
+        def expectedSettings = builder.build()
+        def settingsWithDefaultConnectionStringApplied = builder
+                .applyConnectionString(new ConnectionString('mongodb://localhost'))
+                .build()
+
+        then:
+        expect expectedSettings, isTheSameAs(settingsWithDefaultConnectionStringApplied)
     }
 
     def 'should use the socket settings connectionTime out for the heartbeat settings'() {
@@ -348,9 +419,10 @@ class MongoClientSettingsSpecification extends Specification {
         when:
         // A regression test so that if anymore fields are added then the builder(final MongoClientSettings settings) should be updated
         def actual = MongoClientSettings.Builder.declaredFields.grep {  !it.synthetic } *.name.sort()
-        def expected = ['applicationName', 'clusterSettingsBuilder', 'codecRegistry', 'commandListeners', 'compressorList',
-                        'connectionPoolSettingsBuilder', 'credential', 'readConcern', 'readPreference', 'retryWrites',
-                        'serverSettingsBuilder', 'socketSettingsBuilder', 'sslSettingsBuilder', 'streamFactoryFactory', 'writeConcern']
+        def expected = ['applicationName', 'autoEncryptionSettings', 'clusterSettingsBuilder', 'codecRegistry', 'commandListeners',
+                        'compressorList', 'connectionPoolSettingsBuilder', 'credential', 'readConcern', 'readPreference', 'retryReads',
+                        'retryWrites', 'serverSettingsBuilder', 'socketSettingsBuilder', 'sslSettingsBuilder', 'streamFactoryFactory',
+                        'uuidRepresentation', 'writeConcern']
 
         then:
         actual == expected
@@ -362,8 +434,9 @@ class MongoClientSettingsSpecification extends Specification {
         def actual = MongoClientSettings.Builder.declaredMethods.grep {  !it.synthetic } *.name.sort()
         def expected = ['addCommandListener', 'applicationName', 'applyConnectionString', 'applyToClusterSettings',
                         'applyToConnectionPoolSettings', 'applyToServerSettings', 'applyToSocketSettings', 'applyToSslSettings',
-                        'build', 'codecRegistry', 'commandListenerList', 'compressorList', 'credential', 'readConcern', 'readPreference',
-                        'retryWrites', 'streamFactoryFactory', 'writeConcern']
+                        'autoEncryptionSettings', 'build', 'codecRegistry', 'commandListenerList', 'compressorList', 'credential',
+                        'readConcern', 'readPreference', 'retryReads', 'retryWrites', 'streamFactoryFactory', 'uuidRepresentation',
+                        'writeConcern']
         then:
         actual == expected
     }

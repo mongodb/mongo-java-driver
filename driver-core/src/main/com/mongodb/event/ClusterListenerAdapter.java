@@ -22,16 +22,6 @@ package com.mongodb.event;
  *
  * @since 3.3
  */
-public abstract class ClusterListenerAdapter implements ClusterListener {
-    @Override
-    public void clusterOpening(final ClusterOpeningEvent event) {
-    }
-
-    @Override
-    public void clusterClosed(final ClusterClosedEvent event) {
-    }
-
-    @Override
-    public void clusterDescriptionChanged(final ClusterDescriptionChangedEvent event) {
-    }
+@Deprecated
+public class ClusterListenerAdapter implements ClusterListener {
 }

@@ -60,20 +60,20 @@ public class BasicDBObjectTest {
 
     @Test
     public void testToJson() {
-        BasicDBObject document = BasicDBObject.parse("{ '_id' : { '$oid' : '000000000000000000000000' }, 'int' : 1, 'string' : 'abc', "
+        BasicDBObject document = BasicDBObject.parse("{ 'int' : 1, 'string' : 'abc', '_id' : { '$oid' : '000000000000000000000000' }, "
                 + "'dbRef' : { $ref: 'collection', $id: { $oid: '01234567890123456789abcd' }, $db: 'db' } }");
 
-        assertEquals("{ \"_id\" : { \"$oid\" : \"000000000000000000000000\" }, \"int\" : 1, \"string\" : \"abc\", "
-                + "\"dbRef\" : { \"$ref\" : \"collection\", \"$id\" : { \"$oid\" : \"01234567890123456789abcd\" }, \"$db\" : \"db\" } }",
+        assertEquals("{\"int\": 1, \"string\": \"abc\", \"_id\": {\"$oid\": \"000000000000000000000000\"}, "
+                + "\"dbRef\": {\"$ref\": \"collection\", \"$id\": {\"$oid\": \"01234567890123456789abcd\"}, \"$db\": \"db\"}}",
                 document.toJson());
-        assertEquals("{ \"_id\" : ObjectId(\"000000000000000000000000\"), \"int\" : 1, \"string\" : \"abc\", "
-                + "\"dbRef\" : { \"$ref\" : \"collection\", \"$id\" : ObjectId(\"01234567890123456789abcd\"), \"$db\" : \"db\" } }",
+        assertEquals("{\"int\": 1, \"string\": \"abc\", \"_id\": ObjectId(\"000000000000000000000000\"), "
+                + "\"dbRef\": {\"$ref\": \"collection\", \"$id\": ObjectId(\"01234567890123456789abcd\"), \"$db\": \"db\"}}",
                 document.toJson(JsonWriterSettings.builder().outputMode(JsonMode.SHELL).build()));
-        assertEquals("{ \"_id\" : { \"$oid\" : \"000000000000000000000000\" }, \"int\" : 1, \"string\" : \"abc\", "
-                + "\"dbRef\" : { \"$ref\" : \"collection\", \"$id\" : { \"$oid\" : \"01234567890123456789abcd\" }, \"$db\" : \"db\" } }",
+        assertEquals("{\"int\": 1, \"string\": \"abc\", \"_id\": {\"$oid\": \"000000000000000000000000\"}, "
+                + "\"dbRef\": {\"$ref\": \"collection\", \"$id\": {\"$oid\": \"01234567890123456789abcd\"}, \"$db\": \"db\"}}",
                 document.toJson(DECODER));
-        assertEquals("{ \"_id\" : ObjectId(\"000000000000000000000000\"), \"int\" : 1, \"string\" : \"abc\", "
-                + "\"dbRef\" : { \"$ref\" : \"collection\", \"$id\" : ObjectId(\"01234567890123456789abcd\"), \"$db\" : \"db\" } }",
+        assertEquals("{\"int\": 1, \"string\": \"abc\", \"_id\": ObjectId(\"000000000000000000000000\"), "
+                + "\"dbRef\": {\"$ref\": \"collection\", \"$id\": ObjectId(\"01234567890123456789abcd\"), \"$db\": \"db\"}}",
                 document.toJson(JsonWriterSettings.builder().outputMode(JsonMode.SHELL).build(), DECODER));
     }
 
@@ -139,7 +139,6 @@ public class BasicDBObjectTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
     public void testBuilderNested() {
         BasicDBObjectBuilder b = BasicDBObjectBuilder.start();
         b.add("a", 1);
@@ -149,7 +148,6 @@ public class BasicDBObjectTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
     public void testDown1() {
         BasicDBObjectBuilder b = BasicDBObjectBuilder.start();
         b.append("x", 1);

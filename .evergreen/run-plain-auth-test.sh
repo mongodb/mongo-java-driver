@@ -16,9 +16,8 @@ JDK=${JDK:-jdk}
 
 echo "Running PLAIN authentication tests"
 
-# We always compile with the latest version of java
-export JAVA_HOME="/opt/java/jdk9"
+export JAVA_HOME="/opt/java/jdk11"
 
 echo "Running tests with ${JDK}"
 ./gradlew -version
-./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --info -Dtest.single=PlainAuthenticationSpecification driver-core:test
+./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --info driver-core:test --tests PlainAuthenticationSpecification

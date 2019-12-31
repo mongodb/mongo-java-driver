@@ -87,21 +87,19 @@
             "_id": 1
           },
           "skip": 2,
-          "modifiers": {
-            "$comment": "test",
-            "$hint": {
-              "_id": 1
-            },
-            "$max": {
-              "_id": 6
-            },
-            "$maxTimeMS": 6000,
-            "$min": {
-              "_id": 0
-            },
-            "$returnKey": false,
-            "$showDiskLoc": false,
-          }
+          "comment" : "test",
+          "hint": {
+            "_id": 1
+          },
+          "max": {
+            "_id": 6
+          },
+          "maxTimeMS": 6000,
+          "min": {
+            "_id": 0
+          },
+          "returnKey": true,
+          "showRecordId": true,
         }
       },
       "expectations": [
@@ -129,8 +127,8 @@
               "min": {
                 "_id": 0
               },
-              "returnKey": false,
-              "showRecordId": false,
+              "returnKey": true,
+              "showRecordId": true,
             },
             "command_name": "find",
             "database_name": "command-monitoring-tests"
@@ -147,12 +145,10 @@
                 "ns": "command-monitoring-tests.test",
                 "firstBatch": [
                   {
-                    "_id": 4,
-                    "x": 44
+                    "_id": 4
                   },
                   {
-                    "_id": 5,
-                    "x": 55
+                    "_id": 5
                   }
                 ]
               }

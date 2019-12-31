@@ -16,8 +16,6 @@
 
 package org.bson;
 
-import org.bson.codecs.DecoderContext;
-import org.bson.codecs.UuidCodec;
 import org.bson.io.ByteBufferBsonInput;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
@@ -123,12 +121,6 @@ public class LazyBSONObject implements BSONObject {
     }
 
     @Override
-    @Deprecated
-    public boolean containsKey(final String key) {
-        return containsField(key);
-    }
-
-    @Override
     public boolean containsField(final String s) {
         BsonBinaryReader reader = getBsonReader();
         try {
@@ -175,9 +167,6 @@ public class LazyBSONObject implements BSONObject {
                 return reader.readString();
             case BINARY:
                 byte binarySubType = reader.peekBinarySubType();
-                if (BsonBinarySubType.isUuid(binarySubType) && reader.peekBinarySize() == 16) {
-                    return new UuidCodec().decode(reader, DecoderContext.builder().build());
-                }
                 BsonBinary binary = reader.readBinaryData();
                 if (binarySubType == BINARY.getValue() || binarySubType == OLD_BINARY.getValue()) {
                     return binary.getData();

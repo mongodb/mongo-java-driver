@@ -24,19 +24,8 @@ import java.nio.channels.AsynchronousChannelGroup;
  * @see java.nio.channels.AsynchronousSocketChannel
  * @since 3.1
  */
-public class AsynchronousSocketChannelStreamFactoryFactory implements StreamFactoryFactory {
+public final class AsynchronousSocketChannelStreamFactoryFactory implements StreamFactoryFactory {
     private final AsynchronousChannelGroup group;
-
-    /**
-     * Construct an instance with the default {@code BufferProvider} and {@code AsynchronousChannelGroup}.
-     *
-     * @deprecated Use {@link AsynchronousSocketChannelStreamFactoryFactory#builder()} instead to construct the
-     * {@code AsynchronousSocketChannelStreamFactoryFactory}.
-     */
-    @Deprecated
-    public AsynchronousSocketChannelStreamFactoryFactory() {
-        this(builder());
-    }
 
     /**
      * Gets a builder for an instance of {@code AsynchronousSocketChannelStreamFactoryFactory}.

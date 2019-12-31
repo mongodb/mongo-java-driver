@@ -98,6 +98,34 @@ public final class TextSearchOptions {
     }
 
     @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        TextSearchOptions that = (TextSearchOptions) o;
+
+        if (language != null ? !language.equals(that.language) : that.language != null) {
+            return false;
+        }
+        if (caseSensitive != null ? !caseSensitive.equals(that.caseSensitive) : that.caseSensitive != null) {
+            return false;
+        }
+        return diacriticSensitive != null ? diacriticSensitive.equals(that.diacriticSensitive) : that.diacriticSensitive == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = language != null ? language.hashCode() : 0;
+        result = 31 * result + (caseSensitive != null ? caseSensitive.hashCode() : 0);
+        result = 31 * result + (diacriticSensitive != null ? diacriticSensitive.hashCode() : 0);
+        return result;
+    }
+
+    @Override
     public String toString() {
         return "Text Search Options{"
                        + "language='" + language + '\''

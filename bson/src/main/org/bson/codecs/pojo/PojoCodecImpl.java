@@ -75,14 +75,9 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
     private void specialize() {
         if (specialized) {
             codecCache.put(classModel, this);
-                for (PropertyModel<?> propertyModel : classModel.getPropertyModels()) {
-                    try {
-                        addToCache(propertyModel);
-                    } catch (Exception e) {
-                        throw new CodecConfigurationException(format("Could not create a PojoCodec for '%s'."
-                                + " Property '%s' errored with: %s", classModel.getName(), propertyModel.getName(), e.getMessage()), e);
-                    }
-                }
+            for (PropertyModel<?> propertyModel : classModel.getPropertyModels()) {
+                addToCache(propertyModel);
+            }
         }
     }
 
@@ -93,12 +88,11 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
             throw new CodecConfigurationException(format("%s contains generic types that have not been specialised.%n"
                             + "Top level classes with generic types are not supported by the PojoCodec.", classModel.getName()));
         }
+
         if (areEquivalentTypes(value.getClass(), classModel.getType())) {
             writer.writeStartDocument();
-            PropertyModel<?> idPropertyModel = classModel.getIdPropertyModel();
-            if (idPropertyModel != null) {
-                encodeProperty(writer, value, encoderContext, idPropertyModel);
-            }
+
+            encodeIdProperty(writer, value, encoderContext, classModel.getIdPropertyModelHolder());
 
             if (classModel.useDiscriminator()) {
                 writer.writeString(classModel.getDiscriminatorKey(), classModel.getDiscriminator());
@@ -146,17 +140,47 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
         return classModel;
     }
 
+    private <S> void encodeIdProperty(final BsonWriter writer, final T instance, final EncoderContext encoderContext,
+                                      final IdPropertyModelHolder<S> propertyModelHolder) {
+        if (propertyModelHolder.getPropertyModel() != null) {
+            if (propertyModelHolder.getIdGenerator() == null) {
+                encodeProperty(writer, instance, encoderContext, propertyModelHolder.getPropertyModel());
+            } else {
+                S id = propertyModelHolder.getPropertyModel().getPropertyAccessor().get(instance);
+                if (id == null && encoderContext.isEncodingCollectibleDocument()) {
+                    id = propertyModelHolder.getIdGenerator().generate();
+                    try {
+                        propertyModelHolder.getPropertyModel().getPropertyAccessor().set(instance, id);
+                    } catch (Exception e) {
+                        // ignore
+                    }
+                }
+                encodeValue(writer, encoderContext, propertyModelHolder.getPropertyModel(), id);
+            }
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private <S> void encodeProperty(final BsonWriter writer, final T instance, final EncoderContext encoderContext,
                                     final PropertyModel<S> propertyModel) {
-        if (propertyModel.isReadable()) {
+        if (propertyModel != null && propertyModel.isReadable()) {
             S propertyValue = propertyModel.getPropertyAccessor().get(instance);
-            if (propertyModel.shouldSerialize(propertyValue)) {
-                writer.writeName(propertyModel.getReadName());
-                if (propertyValue == null) {
-                    writer.writeNull();
-                } else {
-                    propertyModel.getCachedCodec().encode(writer, propertyValue, encoderContext);
+            encodeValue(writer, encoderContext, propertyModel, propertyValue);
+        }
+    }
+
+    private <S> void encodeValue(final BsonWriter writer,  final EncoderContext encoderContext, final PropertyModel<S> propertyModel,
+                                 final S propertyValue) {
+        if (propertyModel.shouldSerialize(propertyValue)) {
+            writer.writeName(propertyModel.getReadName());
+            if (propertyValue == null) {
+                writer.writeNull();
+            } else {
+                try {
+                    encoderContext.encodeWithChildContext(propertyModel.getCachedCodec(), writer, propertyValue);
+                } catch (CodecConfigurationException e) {
+                    throw new CodecConfigurationException(format("Failed to encode '%s'. Encoding '%s' errored with: %s",
+                            classModel.getName(), propertyModel.getReadName(), e.getMessage()), e);
                 }
             }
         }
@@ -207,8 +231,7 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
     }
 
     private <S> void addToCache(final PropertyModel<S> propertyModel) {
-        Codec<S> codec = propertyModel.getCodec() != null ? propertyModel.getCodec()
-                : specializePojoCodec(propertyModel, propertyCodecRegistry.get(propertyModel.getTypeData()));
+        Codec<S> codec = propertyModel.getCodec() != null ? propertyModel.getCodec() : specializePojoCodec(propertyModel);
         propertyModel.cachedCodec(codec);
     }
 
@@ -223,10 +246,12 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
         return false;
     }
 
+
+
     @SuppressWarnings("unchecked")
-    private <S> Codec<S> specializePojoCodec(final PropertyModel<S> propertyModel, final Codec<S> defaultCodec) {
-        Codec<S> codec = defaultCodec;
-        if (codec != null && codec instanceof PojoCodec) {
+    private <S> Codec<S> specializePojoCodec(final PropertyModel<S> propertyModel) {
+        Codec<S> codec = getCodecFromPropertyRegistry(propertyModel);
+        if (codec instanceof PojoCodec) {
             PojoCodec<S> pojoCodec = (PojoCodec<S>) codec;
             ClassModel<S> specialized = getSpecializedClassModel(pojoCodec.getClassModel(), propertyModel);
             if (codecCache.containsKey(specialized)) {
@@ -236,6 +261,14 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
             }
         }
         return codec;
+    }
+
+    private <S> Codec<S> getCodecFromPropertyRegistry(final PropertyModel<S> propertyModel) {
+        try {
+            return propertyCodecRegistry.get(propertyModel.getTypeData());
+        } catch (CodecConfigurationException e) {
+            return new LazyMissingCodec<S>(propertyModel.getTypeData().getType(), e);
+        }
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -269,7 +302,7 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
         boolean discriminatorEnabled = changeTheDiscriminator ? propertyModel.useDiscriminator() : clazzModel.useDiscriminator();
         return new ClassModel<S>(clazzModel.getType(), clazzModel.getPropertyNameToTypeParameterMap(),
                 clazzModel.getInstanceCreatorFactory(), discriminatorEnabled, clazzModel.getDiscriminatorKey(),
-                clazzModel.getDiscriminator(), concreteIdProperty, concretePropertyModels);
+                clazzModel.getDiscriminator(), IdPropertyModelHolder.create(clazzModel, concreteIdProperty), concretePropertyModels);
     }
 
     @SuppressWarnings("unchecked")
@@ -299,7 +332,7 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
 
         return new PropertyModel<V>(propertyModel.getName(), propertyModel.getReadName(), propertyModel.getWriteName(),
                 specializedPropertyType, null, propertyModel.getPropertySerialization(), propertyModel.useDiscriminator(),
-                propertyModel.getPropertyAccessor());
+                propertyModel.getPropertyAccessor(), propertyModel.getError());
     }
 
     @SuppressWarnings("unchecked")

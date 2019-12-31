@@ -17,11 +17,11 @@
 package com.mongodb.client.gridfs
 
 import com.mongodb.MongoGridFSException
+import com.mongodb.client.ClientSession
 import com.mongodb.client.FindIterable
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoCursor
 import com.mongodb.client.gridfs.model.GridFSFile
-import com.mongodb.client.ClientSession
 import org.bson.BsonObjectId
 import org.bson.Document
 import org.bson.types.Binary
@@ -29,7 +29,7 @@ import org.bson.types.ObjectId
 import spock.lang.Specification
 
 class GridFSDownloadStreamSpecification extends Specification {
-    def fileInfo = new GridFSFile(new BsonObjectId(new ObjectId()), 'filename', 3L, 2, new Date(), 'abc', new Document())
+    def fileInfo = new GridFSFile(new BsonObjectId(new ObjectId()), 'filename', 3L, 2, new Date(), new Document())
 
     def 'should return the file info'() {
         when:
@@ -189,7 +189,7 @@ class GridFSDownloadStreamSpecification extends Specification {
     def 'should skip to the correct point'() {
         given:
         def fileInfo = new GridFSFile(new BsonObjectId(new ObjectId()), 'filename', 4194297L, 32,
-                new Date(), 'abc', new Document())
+                new Date(), new Document())
 
         def firstChunkBytes = 1..32 as byte[]
         def lastChunkBytes = 33 .. 57 as byte[]
@@ -271,7 +271,7 @@ class GridFSDownloadStreamSpecification extends Specification {
 
     def 'should mark and reset to the correct point'() {
         given:
-        def fileInfo = new GridFSFile(new BsonObjectId(new ObjectId()), 'filename', 25L, 25, new Date(), 'abc', new Document())
+        def fileInfo = new GridFSFile(new BsonObjectId(new ObjectId()), 'filename', 25L, 25, new Date(), new Document())
 
         def expected10Bytes = 11 .. 20 as byte[]
         def firstChunkBytes = 1..25 as byte[]
@@ -334,7 +334,7 @@ class GridFSDownloadStreamSpecification extends Specification {
 
     def 'should mark and reset across chunks'() {
         given:
-        def fileInfo = new GridFSFile(new BsonObjectId(new ObjectId()), 'filename', 50L, 25, new Date(), 'abc', new Document())
+        def fileInfo = new GridFSFile(new BsonObjectId(new ObjectId()), 'filename', 50L, 25, new Date(), new Document())
 
         def firstChunkBytes = 1..25 as byte[]
         def secondChunkBytes = 26 .. 50 as byte[]
@@ -413,7 +413,7 @@ class GridFSDownloadStreamSpecification extends Specification {
 
     def 'should validate next chunk when marked and reset at eof'() {
         given:
-        def fileInfo = new GridFSFile(new BsonObjectId(new ObjectId()), 'filename', 25L, 25, new Date(), 'abc', new Document())
+        def fileInfo = new GridFSFile(new BsonObjectId(new ObjectId()), 'filename', 25L, 25, new Date(), new Document())
 
         def chunkBytes = 1..25 as byte[]
         def chunkDocument = new Document('files_id', fileInfo.getId()).append('n', 0).append('data', new Binary(chunkBytes))

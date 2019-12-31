@@ -18,7 +18,9 @@ package com.mongodb;
 
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.internal.dns.DefaultDnsResolver;
 import com.mongodb.lang.Nullable;
+import org.bson.UuidRepresentation;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -26,13 +28,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.internal.dns.DnsResolver.resolveAdditionalQueryParametersFromTxtRecords;
-import static com.mongodb.internal.dns.DnsResolver.resolveHostFromSrvRecords;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -105,11 +106,15 @@ import static java.util.Collections.unmodifiableList;
  * all members of the set.</li>
  * </ul>
  * <p>Connection Configuration:</p>
- * <p>Connection Configuration:</p>
  * <ul>
- * <li>{@code streamType=nio2|netty}: The stream type to use for connections. If unspecified, nio2 will be used.</li>
- * <li>{@code ssl=true|false}: Whether to connect using SSL.</li>
- * <li>{@code sslInvalidHostNameAllowed=true|false}: Whether to allow invalid host names for SSL connections.</li>
+ * <li>{@code ssl=true|false}: Whether to connect using TLS.</li>
+ * <li>{@code tls=true|false}: Whether to connect using TLS. Supersedes the ssl option</li>
+ * <li>{@code tlsInsecure=true|false}: If connecting with TLS, this option enables insecure TLS connections. Currently this has the
+ * same effect of setting tlsAllowInvalidHostnames to true. Other mechanism for relaxing TLS security constraints must be handled in
+ * the application by customizing the {@link javax.net.ssl.SSLContext}</li>
+ * <li>{@code sslInvalidHostNameAllowed=true|false}: Whether to allow invalid host names for TLS connections.</li>
+ * <li>{@code tlsAllowInvalidHostnames=true|false}: Whether to allow invalid host names for TLS connections. Supersedes the
+ * sslInvalidHostNameAllowed option</li>
  * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li>
  * <li>{@code socketTimeoutMS=ms}: How long a send or receive on a socket can take before timing out.</li>
  * <li>{@code maxIdleTimeMS=ms}: Maximum idle time of a pooled connection. A connection that exceeds this limit will be closed</li>
@@ -118,9 +123,6 @@ import static java.util.Collections.unmodifiableList;
  * <p>Connection pool configuration:</p>
  * <ul>
  * <li>{@code maxPoolSize=n}: The maximum number of connections in the connection pool.</li>
- * <li>{@code waitQueueMultiple=n} : this multiplier, multiplied with the maxPoolSize setting, gives the maximum number of
- * threads that may be waiting for a connection to become available from the pool.  All further threads will get an
- * exception right away.</li>
  * <li>{@code waitQueueTimeoutMS=ms}: The maximum wait time in milliseconds that a thread may wait for a connection to
  * become available.</li>
  * </ul>
@@ -146,8 +148,6 @@ import static java.util.Collections.unmodifiableList;
  * {@code "majority"}</li>
  * </ul>
  * </li>
- * <li>{@code retryWrites=true|false}. If true the driver will retry supported write operations if they fail due to a network error.
- *  Defaults to false.</li>
  * <li>{@code wtimeoutMS=ms}
  * <ul>
  * <li>The driver adds { wtimeout : ms } to all write commands. Implies {@code safe=true}.</li>
@@ -213,9 +213,19 @@ import static java.util.Collections.unmodifiableList;
  * <p>Compressor configuration:</p>
  * <ul>
  * <li>{@code compressors=string}: A comma-separated list of compressors to request from the server.  The supported compressors
- * currently are 'zlib' and 'snappy'.</li>
+ * currently are 'zlib', 'snappy' and 'zstd'.</li>
  * <li>{@code zlibCompressionLevel=integer}: Integer value from -1 to 9 representing the zlib compression level. Lower values will make
  * compression faster, while higher values will make compression better.</li>
+ * </ul>
+ * <p>General configuration:</p>
+ * <ul>
+ * <li>{@code retryWrites=true|false}. If true the driver will retry supported write operations if they fail due to a network error.
+ *  Defaults to true.</li>
+ * <li>{@code retryReads=true|false}. If true the driver will retry supported read operations if they fail due to a network error.
+ *  Defaults to true.</li>
+ * <li>{@code uuidRepresentation=unspecified|standard|javaLegacy|csharpLegacy|pythonLegacy}.  See
+ * {@link MongoClientSettings#getUuidRepresentation()} for documentation of semantics of this parameter.  Defaults to "javaLegacy", but
+ * will change to "unspecified" in the next major release.</li>
  * </ul>
  *
  * @mongodb.driver.manual reference/connection-string Connection String Format
@@ -231,6 +241,7 @@ public class ConnectionString {
     private static final Logger LOGGER = Loggers.getLogger("uri");
 
     private final MongoCredential credential;
+    private final boolean isSrvProtocol;
     private final List<String> hosts;
     private final String database;
     private final String collection;
@@ -238,12 +249,12 @@ public class ConnectionString {
 
     private ReadPreference readPreference;
     private WriteConcern writeConcern;
-    private boolean retryWrites;
+    private Boolean retryWrites;
+    private Boolean retryReads;
     private ReadConcern readConcern;
 
     private Integer minConnectionPoolSize;
     private Integer maxConnectionPoolSize;
-    private Integer threadsAllowedToBlockForConnectionMultiplier;
     private Integer maxWaitTime;
     private Integer maxConnectionIdleTime;
     private Integer maxConnectionLifeTime;
@@ -251,13 +262,13 @@ public class ConnectionString {
     private Integer socketTimeout;
     private Boolean sslEnabled;
     private Boolean sslInvalidHostnameAllowed;
-    private String streamType;
     private String requiredReplicaSetName;
     private Integer serverSelectionTimeout;
     private Integer localThreshold;
     private Integer heartbeatFrequency;
     private String applicationName;
     private List<MongoCompressor> compressorList;
+    private UuidRepresentation uuidRepresentation;
 
     /**
      * Creates a ConnectionString from the given string.
@@ -268,8 +279,8 @@ public class ConnectionString {
     public ConnectionString(final String connectionString) {
         this.connectionString = connectionString;
         boolean isMongoDBProtocol = connectionString.startsWith(MONGODB_PREFIX);
-        boolean isSRVProtocol = connectionString.startsWith(MONGODB_SRV_PREFIX);
-        if (!isMongoDBProtocol && !isSRVProtocol) {
+        isSrvProtocol = connectionString.startsWith(MONGODB_SRV_PREFIX);
+        if (!isMongoDBProtocol && !isSrvProtocol) {
             throw new IllegalArgumentException(format("The connection string is invalid. "
                     + "Connection strings must start with either '%s' or '%s", MONGODB_PREFIX, MONGODB_SRV_PREFIX));
         }
@@ -302,7 +313,7 @@ public class ConnectionString {
         char[] password = null;
         idx = userAndHostInformation.lastIndexOf("@");
         if (idx > 0) {
-            userInfo = userAndHostInformation.substring(0, idx);
+            userInfo = userAndHostInformation.substring(0, idx).replace("+", "%2B");
             hostIdentifier = userAndHostInformation.substring(idx + 1);
             int colonCount = countOccurrences(userInfo, ":");
             if (userInfo.contains("@") || colonCount > 1) {
@@ -321,8 +332,16 @@ public class ConnectionString {
         }
 
         // Validate the hosts
-        List<String> unresolvedHosts = unmodifiableList(parseHosts(asList(hostIdentifier.split(",")), isSRVProtocol));
-        this.hosts = isSRVProtocol ? resolveHostFromSrvRecords(unresolvedHosts.get(0)) : unresolvedHosts;
+        List<String> unresolvedHosts = unmodifiableList(parseHosts(asList(hostIdentifier.split(","))));
+        if (isSrvProtocol) {
+            if (unresolvedHosts.size() > 1) {
+                throw new IllegalArgumentException("Only one host allowed when using mongodb+srv protocol");
+            }
+            if (unresolvedHosts.get(0).contains(":")) {
+                throw new IllegalArgumentException("Host for when using mongodb+srv protocol can not contain a port");
+            }
+        }
+        this.hosts = unresolvedHosts;
 
         // Process the authDB section
         String nsPart;
@@ -350,7 +369,8 @@ public class ConnectionString {
             collection = null;
         }
 
-        String txtRecordsQueryParameters = isSRVProtocol ? resolveAdditionalQueryParametersFromTxtRecords(unresolvedHosts.get(0)) : "";
+        String txtRecordsQueryParameters = isSrvProtocol
+                ? new DefaultDnsResolver().resolveAdditionalQueryParametersFromTxtRecords(unresolvedHosts.get(0)) : "";
         String connectionStringQueryParamenters = unprocessedConnectionString;
 
         Map<String, List<String>> connectionStringOptionsMap = parseOptions(connectionStringQueryParamenters);
@@ -360,7 +380,7 @@ public class ConnectionString {
             + "'%s' contains the keys %s", ALLOWED_OPTIONS_IN_TXT_RECORD, unresolvedHosts.get(0), txtRecordsOptionsMap.keySet()));
         }
         Map<String, List<String>> combinedOptionsMaps = combineOptionsMaps(txtRecordsOptionsMap, connectionStringOptionsMap);
-        if (isSRVProtocol && !combinedOptionsMaps.containsKey("ssl")) {
+        if (isSrvProtocol && !combinedOptionsMaps.containsKey("ssl")) {
             combinedOptionsMaps.put("ssl", singletonList("true"));
         }
         translateOptions(combinedOptionsMaps);
@@ -368,7 +388,7 @@ public class ConnectionString {
         warnOnUnsupportedOptions(combinedOptionsMaps);
     }
 
-    private static final Set<String> GENERAL_OPTIONS_KEYS = new HashSet<String>();
+    private static final Set<String> GENERAL_OPTIONS_KEYS = new LinkedHashSet<String>();
     private static final Set<String> AUTH_KEYS = new HashSet<String>();
     private static final Set<String> READ_PREFERENCE_KEYS = new HashSet<String>();
     private static final Set<String> WRITE_CONCERN_KEYS = new HashSet<String>();
@@ -378,15 +398,25 @@ public class ConnectionString {
     static {
         GENERAL_OPTIONS_KEYS.add("minpoolsize");
         GENERAL_OPTIONS_KEYS.add("maxpoolsize");
-        GENERAL_OPTIONS_KEYS.add("waitqueuemultiple");
         GENERAL_OPTIONS_KEYS.add("waitqueuetimeoutms");
         GENERAL_OPTIONS_KEYS.add("connecttimeoutms");
         GENERAL_OPTIONS_KEYS.add("maxidletimems");
         GENERAL_OPTIONS_KEYS.add("maxlifetimems");
         GENERAL_OPTIONS_KEYS.add("sockettimeoutms");
+
+        // Order matters here: Having tls after ssl means than the tls option will supersede the ssl option when both are set
         GENERAL_OPTIONS_KEYS.add("ssl");
-        GENERAL_OPTIONS_KEYS.add("streamtype");
+        GENERAL_OPTIONS_KEYS.add("tls");
+
+        // Order matters here: Having tlsinsecure before sslinvalidhostnameallowed and tlsallowinvalidhostnames means that those options
+        // will supersede this one when both are set.
+        GENERAL_OPTIONS_KEYS.add("tlsinsecure");
+
+        // Order matters here: Having tlsallowinvalidhostnames after sslinvalidhostnameallowed means than the tlsallowinvalidhostnames
+        // option will supersede the sslinvalidhostnameallowed option when both are set
         GENERAL_OPTIONS_KEYS.add("sslinvalidhostnameallowed");
+        GENERAL_OPTIONS_KEYS.add("tlsallowinvalidhostnames");
+
         GENERAL_OPTIONS_KEYS.add("replicaset");
         GENERAL_OPTIONS_KEYS.add("readconcernlevel");
 
@@ -394,8 +424,11 @@ public class ConnectionString {
         GENERAL_OPTIONS_KEYS.add("localthresholdms");
         GENERAL_OPTIONS_KEYS.add("heartbeatfrequencyms");
         GENERAL_OPTIONS_KEYS.add("retrywrites");
+        GENERAL_OPTIONS_KEYS.add("retryreads");
 
         GENERAL_OPTIONS_KEYS.add("appname");
+
+        GENERAL_OPTIONS_KEYS.add("uuidrepresentation");
 
         COMPRESSOR_KEYS.add("compressors");
         COMPRESSOR_KEYS.add("zlibcompressionlevel");
@@ -407,7 +440,6 @@ public class ConnectionString {
         WRITE_CONCERN_KEYS.add("safe");
         WRITE_CONCERN_KEYS.add("w");
         WRITE_CONCERN_KEYS.add("wtimeoutms");
-        WRITE_CONCERN_KEYS.add("fsync");
         WRITE_CONCERN_KEYS.add("journal");
 
         AUTH_KEYS.add("authmechanism");
@@ -438,19 +470,21 @@ public class ConnectionString {
         for (final String key : optionsMap.keySet()) {
             if (!ALL_KEYS.contains(key)) {
                 if (LOGGER.isWarnEnabled()) {
-                    LOGGER.warn(format("Unsupported option '%s' in the connection string '%s'.", key, connectionString));
+                    LOGGER.warn(format("Connection string contains unsupported option '%s'.", key));
                 }
             }
         }
     }
 
     private void translateOptions(final Map<String, List<String>> optionsMap) {
+        boolean tlsInsecureSet = false;
+        boolean tlsAllowInvalidHostnamesSet = false;
+
         for (final String key : GENERAL_OPTIONS_KEYS) {
             String value = getLastValue(optionsMap, key);
             if (value == null) {
                 continue;
             }
-
             if (key.equals("maxpoolsize")) {
                 maxConnectionPoolSize = parseInteger(value, "maxpoolsize");
             } else if (key.equals("minpoolsize")) {
@@ -459,20 +493,25 @@ public class ConnectionString {
                 maxConnectionIdleTime = parseInteger(value, "maxidletimems");
             } else if (key.equals("maxlifetimems")) {
                 maxConnectionLifeTime = parseInteger(value, "maxlifetimems");
-            } else if (key.equals("waitqueuemultiple")) {
-                threadsAllowedToBlockForConnectionMultiplier  = parseInteger(value, "waitqueuemultiple");
             } else if (key.equals("waitqueuetimeoutms")) {
                 maxWaitTime = parseInteger(value, "waitqueuetimeoutms");
             } else if (key.equals("connecttimeoutms")) {
                 connectTimeout = parseInteger(value, "connecttimeoutms");
             } else if (key.equals("sockettimeoutms")) {
                 socketTimeout = parseInteger(value, "sockettimeoutms");
+            } else if (key.equals("tlsallowinvalidhostnames")) {
+                sslInvalidHostnameAllowed = parseBoolean(value, "tlsAllowInvalidHostnames");
+                tlsAllowInvalidHostnamesSet = true;
             } else if (key.equals("sslinvalidhostnameallowed")) {
                 sslInvalidHostnameAllowed = parseBoolean(value, "sslinvalidhostnameallowed");
+                tlsAllowInvalidHostnamesSet = true;
+            } else if (key.equals("tlsinsecure")) {
+                sslInvalidHostnameAllowed = parseBoolean(value, "tlsinsecure");
+                tlsInsecureSet = true;
             } else if (key.equals("ssl")) {
-                sslEnabled = parseBoolean(value, "ssl");
-            } else if (key.equals("streamtype")) {
-                streamType = value;
+                initializeSslEnabled("ssl", value);
+            } else if (key.equals("tls")) {
+                initializeSslEnabled("tls", value);
             } else if (key.equals("replicaset")) {
                 requiredReplicaSetName = value;
             } else if (key.equals("readconcernlevel")) {
@@ -487,12 +526,29 @@ public class ConnectionString {
                 applicationName = value;
             } else if (key.equals("retrywrites")) {
                 retryWrites = parseBoolean(value, "retrywrites");
+            } else if (key.equals("retryreads")) {
+                retryReads = parseBoolean(value, "retryreads");
+            } else if (key.equals("uuidrepresentation")) {
+                uuidRepresentation = createUuidRepresentation(value);
             }
+        }
+
+        if (tlsInsecureSet && tlsAllowInvalidHostnamesSet) {
+            throw new IllegalArgumentException("tlsAllowInvalidHostnames or sslInvalidHostnameAllowed set along with tlsInsecure "
+                    + "is not allowed");
         }
 
         writeConcern = createWriteConcern(optionsMap);
         readPreference = createReadPreference(optionsMap);
         compressorList = createCompressors(optionsMap);
+    }
+
+    private void initializeSslEnabled(final String key, final String value) {
+        Boolean booleanValue = parseBoolean(value, key);
+        if (sslEnabled != null && !sslEnabled.equals(booleanValue)) {
+            throw new IllegalArgumentException("Conflicting tls and ssl parameter values are not allowed");
+        }
+        sslEnabled = booleanValue;
     }
 
     private List<MongoCompressor> createCompressors(final Map<String, List<String>> optionsMap) {
@@ -526,6 +582,8 @@ public class ConnectionString {
                 compressorsList.add(zlibCompressor);
             } else if (cur.equals("snappy")) {
                 compressorsList.add(MongoCompressor.createSnappyCompressor());
+            } else if (cur.equals("zstd")) {
+                compressorsList.add(MongoCompressor.createZstdCompressor());
             } else if (!cur.isEmpty()) {
                 throw new IllegalArgumentException("Unsupported compressor '" + cur + "'");
             }
@@ -536,10 +594,9 @@ public class ConnectionString {
 
     @Nullable
     private WriteConcern createWriteConcern(final Map<String, List<String>> optionsMap) {
-        Boolean safe = null;
         String w = null;
         Integer wTimeout = null;
-        Boolean fsync = null;
+        Boolean safe = null;
         Boolean journal = null;
 
         for (final String key : WRITE_CONCERN_KEYS) {
@@ -554,13 +611,11 @@ public class ConnectionString {
                 w = value;
             } else if (key.equals("wtimeoutms")) {
                 wTimeout = Integer.parseInt(value);
-            } else if (key.equals("fsync")) {
-                fsync = parseBoolean(value, "fsync");
             } else if (key.equals("journal")) {
                 journal = parseBoolean(value, "journal");
             }
         }
-        return buildWriteConcern(safe, w, wTimeout, fsync, journal);
+        return buildWriteConcern(safe, w, wTimeout, journal);
     }
 
     @Nullable
@@ -589,6 +644,25 @@ public class ConnectionString {
         return buildReadPreference(readPreferenceType, tagSetList, maxStalenessSeconds);
     }
 
+    private UuidRepresentation createUuidRepresentation(final String value) {
+        if (value.equalsIgnoreCase("unspecified")) {
+            return UuidRepresentation.UNSPECIFIED;
+        }
+        if (value.equalsIgnoreCase("javaLegacy")) {
+            return UuidRepresentation.JAVA_LEGACY;
+        }
+        if (value.equalsIgnoreCase("csharpLegacy")) {
+            return UuidRepresentation.C_SHARP_LEGACY;
+        }
+        if (value.equalsIgnoreCase("pythonLegacy")) {
+            return UuidRepresentation.PYTHON_LEGACY;
+        }
+        if (value.equalsIgnoreCase("standard")) {
+            return UuidRepresentation.STANDARD;
+        }
+        throw new IllegalArgumentException("Unknown uuid representation: " + value);
+    }
+
     @Nullable
     private MongoCredential createCredentials(final Map<String, List<String>> optionsMap, @Nullable final String userName,
                                               @Nullable final char[] password) {
@@ -605,7 +679,14 @@ public class ConnectionString {
             }
 
             if (key.equals("authmechanism")) {
-                mechanism = AuthenticationMechanism.fromMechanismName(value);
+                if (value.equals("MONGODB-CR")) {
+                    if (userName == null) {
+                        throw new IllegalArgumentException("username can not be null");
+                    }
+                    LOGGER.warn("Deprecated MONGDOB-CR authentication mechanism used in connection string");
+                } else {
+                    mechanism = AuthenticationMechanism.fromMechanismName(value);
+                }
             } else if (key.equals("authsource")) {
                 authSource = value;
             } else if (key.equals("gssapiservicename")) {
@@ -643,7 +724,6 @@ public class ConnectionString {
         return credential;
     }
 
-    @SuppressWarnings("deprecation")
     private MongoCredential createMongoCredentialWithMechanism(final AuthenticationMechanism mechanism, final String userName,
                                                                @Nullable final char[] password,
                                                                @Nullable final String authSource,
@@ -677,9 +757,6 @@ public class ConnectionString {
                 break;
             case PLAIN:
                 credential = MongoCredential.createPlainCredential(userName, mechanismAuthSource, password);
-                break;
-            case MONGODB_CR:
-                credential = MongoCredential.createMongoCRCredential(userName, mechanismAuthSource, password);
                 break;
             case MONGODB_X509:
                 if (password != null) {
@@ -754,7 +831,7 @@ public class ConnectionString {
         // handle legacy slaveok settings
         String slaveok = getLastValue(optionsMap, "slaveok");
         if (slaveok != null && !optionsMap.containsKey("readpreference")) {
-            String readPreference = parseBoolean(slaveok, "slaveok")
+            String readPreference = Boolean.TRUE.equals(parseBoolean(slaveok, "slaveok"))
                                     ? "secondaryPreferred" : "primary";
             optionsMap.put("readpreference", singletonList(readPreference));
             if (LOGGER.isWarnEnabled()) {
@@ -790,13 +867,12 @@ public class ConnectionString {
         return null;
     }
 
-    @SuppressWarnings("deprecation")
     @Nullable
     private WriteConcern buildWriteConcern(@Nullable final Boolean safe, @Nullable final String w,
-                                           @Nullable final Integer wTimeout, @Nullable final Boolean fsync,
+                                           @Nullable final Integer wTimeout,
                                            @Nullable final Boolean journal) {
         WriteConcern retVal = null;
-        if (w != null || wTimeout != null || fsync != null || journal != null) {
+        if (w != null || wTimeout != null || journal != null) {
             if (w == null) {
                 retVal = WriteConcern.ACKNOWLEDGED;
             } else {
@@ -811,9 +887,6 @@ public class ConnectionString {
             }
             if (journal != null) {
                 retVal = retVal.withJournal(journal);
-            }
-            if (fsync != null) {
-                retVal = retVal.withFsync(fsync);
             }
             return retVal;
         } else if (safe != null) {
@@ -841,16 +914,30 @@ public class ConnectionString {
         return new TagSet(tagList);
     }
 
-    private boolean parseBoolean(final String input, final String key) {
-        String trimmedInput = input.trim();
-        boolean isTrue = trimmedInput.length() > 0 && (trimmedInput.equals("1") || trimmedInput.toLowerCase().equals("true")
-                || trimmedInput.toLowerCase().equals("yes"));
+    private static final Set<String> TRUE_VALUES = new HashSet<String>(asList("true", "yes", "1"));
+    private static final Set<String> FALSE_VALUES = new HashSet<String>(asList("false", "no", "0"));
 
-        if ((!input.equals("true") && !input.equals("false")) && LOGGER.isWarnEnabled()) {
-            LOGGER.warn(format("Deprecated boolean value ('%s') in the connection string for '%s', please update to %s=%s",
-                    input, key, key, isTrue));
+    @Nullable
+    private Boolean parseBoolean(final String input, final String key) {
+        String trimmedInput = input.trim().toLowerCase();
+
+        if (TRUE_VALUES.contains(trimmedInput)) {
+            if (!trimmedInput.equals("true")) {
+                LOGGER.warn(format("Deprecated boolean value '%s' in the connection string for '%s'. Replace with 'true'",
+                        trimmedInput, key));
+            }
+            return true;
+        } else if (FALSE_VALUES.contains(trimmedInput)) {
+            if (!trimmedInput.equals("false")) {
+                LOGGER.warn(format("Deprecated boolean value '%s' in the connection string for '%s'. Replace with'false'",
+                        trimmedInput, key));
+            }
+            return false;
+        } else {
+            LOGGER.warn(format("Ignoring unrecognized boolean value '%s' in the connection string for '%s'. "
+                    + "Replace with either 'true' or 'false'", trimmedInput, key));
+            return null;
         }
-        return isTrue;
     }
 
     private int parseInteger(final String input, final String key) {
@@ -862,7 +949,7 @@ public class ConnectionString {
         }
     }
 
-    private List<String> parseHosts(final List<String> rawHosts, final boolean isSRVProtocol) {
+    private List<String> parseHosts(final List<String> rawHosts) {
         if (rawHosts.size() == 0){
             throw new IllegalArgumentException("The connection string must contain at least one host");
         }
@@ -888,19 +975,10 @@ public class ConnectionString {
                             + "Reserved characters such as ':' must be escaped according RFC 2396. "
                             + "Any IPv6 address literal must be enclosed in '[' and ']' according to RFC 2732.", host));
                 } else if (colonCount == 1) {
-                    if (isSRVProtocol) {
-                        throw new IllegalArgumentException("A connection string using the mongodb+srv protocol can not"
-                                + "contain a host name that specifies a port");
-                    }
-
                     validatePort(host, host.substring(host.indexOf(":") + 1));
                 }
             }
             hosts.add(host);
-        }
-        if (isSRVProtocol && hosts.size() > 1) {
-            throw new IllegalArgumentException("The mongodb+srv protocol requires a single host name but this connection string has more "
-                    + "than one: " + connectionString);
         }
         Collections.sort(hosts);
         return hosts;
@@ -966,6 +1044,15 @@ public class ConnectionString {
     }
 
     /**
+     * Returns true if the connection string requires SRV protocol to resolve the host lists from the configured host.
+     *
+     * @return true if SRV protocol is required to resolve hosts.
+     */
+    public boolean isSrvProtocol() {
+        return isSrvProtocol;
+    }
+
+    /**
      * Gets the list of hosts
      *
      * @return the host list
@@ -999,33 +1086,10 @@ public class ConnectionString {
      * Get the unparsed connection string.
      *
      * @return the connection string
-     * deprecated use {@link #getConnectionString()}
-     */
-    @Deprecated
-    public String getURI() {
-        return getConnectionString();
-    }
-
-    /**
-     * Get the unparsed connection string.
-     *
-     * @return the connection string
      * @since 3.1
      */
     public String getConnectionString() {
         return connectionString;
-    }
-
-
-    /**
-     * Gets the credentials in an immutable list.  The list will be empty if no credentials were specified in the connection string.
-     *
-     * @return the credentials in an immutable list
-     * @deprecated Prefer {@link #getCredential()}
-     */
-    @Deprecated
-    public List<MongoCredential> getCredentialList() {
-        return credential != null ? singletonList(credential) : Collections.<MongoCredential>emptyList();
     }
 
     /**
@@ -1067,14 +1131,29 @@ public class ConnectionString {
     }
 
     /**
-     * Returns true if writes should be retried if they fail due to a network error.
+     * <p>Gets whether writes should be retried if they fail due to a network error</p>
      *
-     * @return the retryWrites value
-     * @since 3.6
+     * The name of this method differs from others in this class so as not to conflict with the now removed
+     * getRetryWrites() method, which returned a primitive {@code boolean} value, and didn't allow callers to differentiate
+     * between a false value and an unset value.
+     *
+     * @return the retryWrites value, or null if unset
+     * @since 3.9
      * @mongodb.server.release 3.6
      */
-    public boolean getRetryWrites() {
+    public Boolean getRetryWritesValue() {
         return retryWrites;
+    }
+
+    /**
+     * <p>Gets whether reads should be retried if they fail due to a network error</p>
+     *
+     * @return the retryWrites value
+     * @since 3.11
+     * @mongodb.server.release 3.6
+     */
+    public Boolean getRetryReads() {
+        return retryReads;
     }
 
     /**
@@ -1093,15 +1172,6 @@ public class ConnectionString {
     @Nullable
     public Integer getMaxConnectionPoolSize() {
         return maxConnectionPoolSize;
-    }
-
-    /**
-     * Gets the multiplier for the number of threads allowed to block waiting for a connection specified in the connection string.
-     * @return the multiplier for the number of threads allowed to block waiting for a connection
-     */
-    @Nullable
-    public Integer getThreadsAllowedToBlockForConnectionMultiplier() {
-        return threadsAllowedToBlockForConnectionMultiplier;
     }
 
     /**
@@ -1156,16 +1226,6 @@ public class ConnectionString {
     @Nullable
     public Boolean getSslEnabled() {
         return sslEnabled;
-    }
-
-    /**
-     * Gets the stream type value specified in the connection string.
-     * @return the stream type value
-     * @since 3.3
-     */
-    @Nullable
-    public String getStreamType() {
-        return streamType;
     }
 
     /**
@@ -1243,6 +1303,19 @@ public class ConnectionString {
         return compressorList;
     }
 
+    /**
+     * Gets the UUID representation.
+     *
+     * <p>Default is null.</p>
+     *
+     * @return the UUID representation, which may be null if it was unspecified
+     * @since 3.12
+     */
+    @Nullable
+    public UuidRepresentation getUuidRepresentation() {
+        return uuidRepresentation;
+    }
+
     @Override
     public String toString() {
         return connectionString;
@@ -1306,11 +1379,6 @@ public class ConnectionString {
         if (sslEnabled != null ? !sslEnabled.equals(that.sslEnabled) : that.sslEnabled != null) {
             return false;
         }
-        if (threadsAllowedToBlockForConnectionMultiplier != null
-            ? !threadsAllowedToBlockForConnectionMultiplier.equals(that.threadsAllowedToBlockForConnectionMultiplier)
-            : that.threadsAllowedToBlockForConnectionMultiplier != null) {
-            return false;
-        }
         if (writeConcern != null ? !writeConcern.equals(that.writeConcern) : that.writeConcern != null) {
             return false;
         }
@@ -1334,9 +1402,6 @@ public class ConnectionString {
         result = 31 * result + (writeConcern != null ? writeConcern.hashCode() : 0);
         result = 31 * result + (minConnectionPoolSize != null ? minConnectionPoolSize.hashCode() : 0);
         result = 31 * result + (maxConnectionPoolSize != null ? maxConnectionPoolSize.hashCode() : 0);
-        result = 31 * result + (threadsAllowedToBlockForConnectionMultiplier != null
-                                ? threadsAllowedToBlockForConnectionMultiplier.hashCode()
-                                : 0);
         result = 31 * result + (maxWaitTime != null ? maxWaitTime.hashCode() : 0);
         result = 31 * result + (maxConnectionIdleTime != null ? maxConnectionIdleTime.hashCode() : 0);
         result = 31 * result + (maxConnectionLifeTime != null ? maxConnectionLifeTime.hashCode() : 0);

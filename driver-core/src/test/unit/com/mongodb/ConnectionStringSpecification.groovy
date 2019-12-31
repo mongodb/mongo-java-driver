@@ -16,14 +16,15 @@
 
 package com.mongodb
 
+import org.bson.UuidRepresentation
 import spock.lang.Specification
 import spock.lang.Unroll
 
 import static com.mongodb.MongoCompressor.LEVEL
 import static com.mongodb.MongoCompressor.createZlibCompressor
+import static com.mongodb.MongoCompressor.createZstdCompressor
 import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.MongoCredential.createGSSAPICredential
-import static com.mongodb.MongoCredential.createMongoCRCredential
 import static com.mongodb.MongoCredential.createMongoX509Credential
 import static com.mongodb.MongoCredential.createPlainCredential
 import static com.mongodb.MongoCredential.createScramSha1Credential
@@ -119,22 +120,67 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://localhost/?safe=false')                              | WriteConcern.UNACKNOWLEDGED
         new ConnectionString('mongodb://localhost/?wTimeout=5')                              | WriteConcern.ACKNOWLEDGED
                                                                                                            .withWTimeout(5, MILLISECONDS)
-        new ConnectionString('mongodb://localhost/?fsync=true')                              | WriteConcern.ACKNOWLEDGED.withFsync(true)
         new ConnectionString('mongodb://localhost/?journal=true')                            | WriteConcern.ACKNOWLEDGED.withJournal(true)
-        new ConnectionString('mongodb://localhost/?w=2&wtimeout=5&fsync=true&journal=true')  | new WriteConcern(2, 5, true, true)
-        new ConnectionString('mongodb://localhost/?w=majority&wtimeout=5&fsync=true&j=true') | new WriteConcern('majority', 5, true, true)
+        new ConnectionString('mongodb://localhost/?w=2&wtimeout=5&journal=true')  | new WriteConcern(2, 5).withJournal(true)
+        new ConnectionString('mongodb://localhost/?w=majority&wtimeout=5&j=true') | new WriteConcern('majority')
+                .withWTimeout(5, MILLISECONDS).withJournal(true)
+    }
+
+    def 'should correctly parse different UUID representations'() {
+        expect:
+        uri.getUuidRepresentation() == uuidRepresentation
+
+        where:
+        uri                                                                           | uuidRepresentation
+        new ConnectionString('mongodb://localhost')                                   | null
+        new ConnectionString('mongodb://localhost/?uuidRepresentation=unspecified')   | UuidRepresentation.UNSPECIFIED
+        new ConnectionString('mongodb://localhost/?uuidRepresentation=javaLegacy')    | UuidRepresentation.JAVA_LEGACY
+        new ConnectionString('mongodb://localhost/?uuidRepresentation=csharpLegacy')  | UuidRepresentation.C_SHARP_LEGACY
+        new ConnectionString('mongodb://localhost/?uuidRepresentation=pythonLegacy')  | UuidRepresentation.PYTHON_LEGACY
+        new ConnectionString('mongodb://localhost/?uuidRepresentation=standard')      | UuidRepresentation.STANDARD
     }
 
     @Unroll
-    def 'should correct parse retryWrites'() {
+    def 'should correctly parse retryWrites'() {
         expect:
-        uri.getRetryWrites() == retryWrites
+        uri.getRetryWritesValue() == retryWritesValue
 
         where:
-        uri                                                             | retryWrites
-        new ConnectionString('mongodb://localhost/')                    | false
-        new ConnectionString('mongodb://localhost/?retryWrites=false')  | false
-        new ConnectionString('mongodb://localhost/?retryWrites=true')   | true
+        uri                                                                           | retryWritesValue
+        new ConnectionString('mongodb://localhost/')                   | null
+        new ConnectionString('mongodb://localhost/?retryWrites=false') | false
+        new ConnectionString('mongodb://localhost/?retryWrites=true')  | true
+        new ConnectionString('mongodb://localhost/?retryWrites=foos')  | null
+    }
+
+    @Unroll
+    def 'should parse range of boolean values'() {
+        expect:
+        uri.getSslEnabled() == value
+
+        where:
+        uri                                                                   | value
+        new ConnectionString('mongodb://localhost/?tls=true')  | true
+        new ConnectionString('mongodb://localhost/?tls=yes')   | true
+        new ConnectionString('mongodb://localhost/?tls=1')     | true
+        new ConnectionString('mongodb://localhost/?tls=false') | false
+        new ConnectionString('mongodb://localhost/?tls=no')    | false
+        new ConnectionString('mongodb://localhost/?tls=0')     | false
+        new ConnectionString('mongodb://localhost/?tls=foo')   | null
+        new ConnectionString('mongodb://localhost')            | null
+    }
+
+    @Unroll
+    def 'should correct parse retryReads'() {
+        expect:
+        uri.getRetryReads() == retryReads
+
+        where:
+        uri                                                                           | retryReads
+        new ConnectionString('mongodb://localhost/')                    | null
+        new ConnectionString('mongodb://localhost/?retryReads=false')   | false
+        new ConnectionString('mongodb://localhost/?retryReads=true')    | true
+        new ConnectionString('mongodb://localhost/?retryReads=foos')    | null
     }
 
     @Unroll
@@ -142,13 +188,12 @@ class ConnectionStringSpecification extends Specification {
         expect:
         connectionString.getMinConnectionPoolSize() == 5
         connectionString.getMaxConnectionPoolSize() == 10;
-        connectionString.getThreadsAllowedToBlockForConnectionMultiplier() == 7;
         connectionString.getMaxWaitTime() == 150;
         connectionString.getMaxConnectionIdleTime() == 200
         connectionString.getMaxConnectionLifeTime() == 300
         connectionString.getConnectTimeout() == 2500;
         connectionString.getSocketTimeout() == 5500;
-        connectionString.getWriteConcern() == new WriteConcern(1, 2500, true);
+        connectionString.getWriteConcern() == new WriteConcern(1, 2500);
         connectionString.getReadPreference() == primary() ;
         connectionString.getRequiredReplicaSetName() == 'test'
         connectionString.getSslEnabled()
@@ -156,34 +201,33 @@ class ConnectionStringSpecification extends Specification {
         connectionString.getServerSelectionTimeout() == 25000
         connectionString.getLocalThreshold() == 30
         connectionString.getHeartbeatFrequency() == 20000
-        connectionString.getStreamType() == 'netty'
         connectionString.getApplicationName() == 'app1'
 
         where:
         connectionString <<
-                [new ConnectionString('mongodb://localhost/?minPoolSize=5&maxPoolSize=10&waitQueueMultiple=7&waitQueueTimeoutMS=150&'
+                [new ConnectionString('mongodb://localhost/?minPoolSize=5&maxPoolSize=10&waitQueueTimeoutMS=150&'
                                             + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test&'
                                             + 'connectTimeoutMS=2500&socketTimeoutMS=5500&'
-                                            + 'safe=false&w=1&wtimeout=2500&fsync=true&readPreference=primary&ssl=true&streamType=netty&'
+                                            + 'safe=false&w=1&wtimeout=2500&readPreference=primary&ssl=true&'
                                             + 'sslInvalidHostNameAllowed=true&'
                                             + 'serverSelectionTimeoutMS=25000&'
                                             + 'localThresholdMS=30&'
                                             + 'heartbeatFrequencyMS=20000&'
                                             + 'appName=app1'),
-                 new ConnectionString('mongodb://localhost/?minPoolSize=5;maxPoolSize=10;waitQueueMultiple=7;waitQueueTimeoutMS=150;'
+                 new ConnectionString('mongodb://localhost/?minPoolSize=5;maxPoolSize=10;waitQueueTimeoutMS=150;'
                                             + 'maxIdleTimeMS=200;maxLifeTimeMS=300;replicaSet=test;'
                                             + 'connectTimeoutMS=2500;socketTimeoutMS=5500;'
-                                            + 'safe=false;w=1;wtimeout=2500;fsync=true;readPreference=primary;ssl=true;streamType=netty;'
+                                            + 'safe=false;w=1;wtimeout=2500;readPreference=primary;ssl=true;'
                                             + 'sslInvalidHostNameAllowed=true;'
                                             + 'serverSelectionTimeoutMS=25000;'
                                             + 'localThresholdMS=30;'
                                             + 'heartbeatFrequencyMS=20000;'
                                             + 'appName=app1'),
-                 new ConnectionString('mongodb://localhost/test?minPoolSize=5;maxPoolSize=10&waitQueueMultiple=7;waitQueueTimeoutMS=150;'
+                 new ConnectionString('mongodb://localhost/test?minPoolSize=5;maxPoolSize=10;waitQueueTimeoutMS=150;'
                                             + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test;'
                                             + 'connectTimeoutMS=2500;'
                                             + 'socketTimeoutMS=5500&'
-                                            + 'safe=false&w=1;wtimeout=2500;fsync=true&readPreference=primary;ssl=true&streamType=netty;'
+                                            + 'safe=false&w=1;wtimeout=2500;readPreference=primary;ssl=true;'
                                             + 'sslInvalidHostNameAllowed=true;'
                                             + 'serverSelectionTimeoutMS=25000&'
                                             + 'localThresholdMS=30;'
@@ -191,6 +235,134 @@ class ConnectionStringSpecification extends Specification {
                                             + 'appName=app1')]
         //for documentation, i.e. the Unroll description for each type
         type << ['amp', 'semi', 'mixed']
+    }
+
+    def 'should parse options to enable TLS'() {
+        when:
+        def connectionString = new ConnectionString('mongodb://localhost/?ssl=false')
+
+        then:
+        connectionString.getSslEnabled() == false
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?ssl=true')
+
+        then:
+        connectionString.getSslEnabled()
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?ssl=foo')
+
+        then:
+        connectionString.getSslEnabled() == null
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?tls=false')
+
+        then:
+        connectionString.getSslEnabled() == false
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?tls=true')
+
+        then:
+        connectionString.getSslEnabled()
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?tls=foo')
+
+        then:
+        connectionString.getSslEnabled() == null
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?tls=true&ssl=false')
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?tls=false&ssl=true')
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def 'should parse options to enable TLS invalid host names'() {
+        when:
+        def connectionString = new ConnectionString('mongodb://localhost/?ssl=true&sslInvalidHostNameAllowed=false')
+
+        then:
+        connectionString.getSslInvalidHostnameAllowed() == false
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?ssl=true&sslInvalidHostNameAllowed=true')
+
+        then:
+        connectionString.getSslInvalidHostnameAllowed()
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?ssl=true&sslInvalidHostNameAllowed=foo')
+
+        then:
+        connectionString.getSslInvalidHostnameAllowed() == null
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?tls=true&tlsAllowInvalidHostnames=false')
+
+        then:
+        connectionString.getSslInvalidHostnameAllowed() == false
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?tls=true&tlsAllowInvalidHostnames=true')
+
+        then:
+        connectionString.getSslInvalidHostnameAllowed()
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?tls=true&tlsAllowInvalidHostnames=foo')
+
+        then:
+        connectionString.getSslInvalidHostnameAllowed() == null
+
+        when:
+        connectionString = new ConnectionString(
+                'mongodb://localhost/?tls=true&tlsAllowInvalidHostnames=false&sslInvalidHostNameAllowed=true')
+
+        then:
+        connectionString.getSslInvalidHostnameAllowed() == false
+
+        when:
+        connectionString = new ConnectionString(
+                'mongodb://localhost/?tls=true&tlsAllowInvalidHostnames=true&sslInvalidHostNameAllowed=false')
+
+        then:
+        connectionString.getSslInvalidHostnameAllowed()
+    }
+
+    def 'should parse options to enable unsecured TLS'() {
+        when:
+        def connectionString = new ConnectionString('mongodb://localhost/?tls=true&tlsInsecure=true')
+
+        then:
+        connectionString.getSslInvalidHostnameAllowed()
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?tls=true&tlsInsecure=false')
+
+        then:
+        connectionString.getSslInvalidHostnameAllowed() == false
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?tls=true&tlsAllowInvalidHostnames=false')
+
+        then:
+        connectionString.getSslInvalidHostnameAllowed() == false
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?tls=true&tlsAllowInvalidHostnames=true')
+
+        then:
+        connectionString.getSslInvalidHostnameAllowed()
     }
 
     @Unroll
@@ -236,7 +408,6 @@ class ConnectionStringSpecification extends Specification {
 
         then:
         connectionString.getMaxConnectionPoolSize() == null;
-        connectionString.getThreadsAllowedToBlockForConnectionMultiplier() == null;
         connectionString.getMaxWaitTime() == null;
         connectionString.getConnectTimeout() == null;
         connectionString.getSocketTimeout() == null;
@@ -245,16 +416,17 @@ class ConnectionStringSpecification extends Specification {
         connectionString.getReadPreference() == null;
         connectionString.getRequiredReplicaSetName() == null
         connectionString.getSslEnabled() == null
-        connectionString.getStreamType() == null
+        connectionString.getSslInvalidHostnameAllowed() == null
         connectionString.getApplicationName() == null
         connectionString.getCompressorList() == []
+        connectionString.getRetryWritesValue() == null
+        connectionString.getRetryReads() == null
     }
 
     @Unroll
     def 'should support all credential types'() {
         expect:
         uri.credential == credential
-        uri.credentialList == [credential]
 
         where:
         uri                                                   | credential
@@ -262,10 +434,10 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://jeff:123@localhost/?' +
                            '&authSource=test')                | createCredential('jeff', 'test', '123'.toCharArray())
         new ConnectionString('mongodb://jeff:123@localhost/?' +
-                           'authMechanism=MONGODB-CR')        | createMongoCRCredential('jeff', 'admin', '123'.toCharArray())
+                           'authMechanism=MONGODB-CR')        | createCredential('jeff', 'admin', '123'.toCharArray())
         new ConnectionString('mongodb://jeff:123@localhost/?' +
                            'authMechanism=MONGODB-CR' +
-                           '&authSource=test')                | createMongoCRCredential('jeff', 'test', '123'.toCharArray())
+                           '&authSource=test')                | createCredential('jeff', 'test', '123'.toCharArray())
         new ConnectionString('mongodb://jeff:123@localhost/?' +
                              'authMechanism=SCRAM-SHA-1')     | createScramSha1Credential('jeff', 'admin', '123'.toCharArray())
         new ConnectionString('mongodb://jeff:123@localhost/?' +
@@ -311,24 +483,12 @@ class ConnectionStringSpecification extends Specification {
 
     def 'should ignore authSource if there is no credential'() {
         expect:
-        new ConnectionString('mongodb://localhost/?authSource=test').credentialList == []
+        new ConnectionString('mongodb://localhost/?authSource=test').credential == null
     }
 
     def 'should ignore authMechanismProperties if there is no credential'() {
         expect:
-        new ConnectionString('mongodb://localhost/?&authMechanismProperties=SERVICE_REALM:AWESOME').credentialList == []
-    }
-
-    @Unroll
-    def 'should create immutable credential list'() {
-        when:
-        uri.credentialList.add(createGSSAPICredential('user'))
-
-        then:
-        thrown(UnsupportedOperationException)
-
-        where:
-        uri << [new ConnectionString('mongodb://jeff:123@localhost'), new ConnectionString('mongodb://localhost')]
+        new ConnectionString('mongodb://localhost/?&authMechanismProperties=SERVICE_REALM:AWESOME').credential == null
     }
 
     def 'should support thrown an IllegalArgumentException when given invalid authMechanismProperties'() {
@@ -369,6 +529,7 @@ class ConnectionStringSpecification extends Specification {
                                    '?readPreference=secondaryPreferred') | secondaryPreferred()
         new ConnectionString('mongodb://localhost/?slaveOk=true')        | secondaryPreferred()
         new ConnectionString('mongodb://localhost/?slaveOk=false')       | primary()
+        new ConnectionString('mongodb://localhost/?slaveOk=foo')         | primary()
         new ConnectionString('mongodb://localhost/' +
                                    '?readPreference=secondaryPreferred' +
                                    '&readPreferenceTags=dc:ny,rack:1' +
@@ -413,6 +574,7 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://localhost/?compressors=zlib') | createZlibCompressor()
         new ConnectionString('mongodb://localhost/?compressors=zlib' +
                 '&zlibCompressionLevel=5')                                           | createZlibCompressor().withProperty(LEVEL, 5)
+        new ConnectionString('mongodb://localhost/?compressors=zstd') | createZstdCompressor()
     }
 
     def 'should be equal to another instance with the same string values'() {
@@ -443,7 +605,7 @@ class ConnectionStringSpecification extends Specification {
                                                                                            + 'authMechanism=SCRAM-SHA-1')
         new ConnectionString('mongodb://localhost/db.coll'
                              + '?minPoolSize=5;'
-                             + 'maxPoolSize=10;waitQueueMultiple=7;'
+                             + 'maxPoolSize=10;'
                              + 'waitQueueTimeoutMS=150;'
                              + 'maxIdleTimeMS=200;'
                              + 'maxLifeTimeMS=300;replicaSet=test;'
@@ -452,7 +614,7 @@ class ConnectionStringSpecification extends Specification {
                              + 'safe=false;w=1;wtimeout=2500;'
                              + 'fsync=true;readPreference=primary;'
                              + 'ssl=true')                           |  new ConnectionString('mongodb://localhost/db.coll?minPoolSize=5;'
-                                                                                             + 'maxPoolSize=10&waitQueueMultiple=7;'
+                                                                                             + 'maxPoolSize=10;'
                                                                                              + 'waitQueueTimeoutMS=150;'
                                                                                              + 'maxIdleTimeMS=200&maxLifeTimeMS=300'
                                                                                              + '&replicaSet=test;connectTimeoutMS=2500;'
@@ -489,11 +651,20 @@ class ConnectionStringSpecification extends Specification {
                                                                                           + 'authMechanism=GSSAPI')
     }
 
+    def 'should recognize SRV protocol'() {
+        when:
+        def connectionString = new ConnectionString('mongodb+srv://test5.test.build.10gen.cc')
+
+        then:
+        connectionString.isSrvProtocol()
+        connectionString.hosts == ['test5.test.build.10gen.cc']
+    }
+
+
     // these next two tests are functionally part of the initial-dns-seedlist-discovery specification tests, but since those
     // tests require that the driver connects to an actual replica set, it isn't possible to create specification tests
     // with URIs containing user names, since connection to a replica set that doesn't have that user defined would fail.
     // So to ensure there is proper test coverage of an authSource property specified in a TXT record, adding those tests here.
-
     def 'should use authSource from TXT record'() {
         given:
         def uri = new ConnectionString('mongodb+srv://bob:pwd@test5.test.build.10gen.cc/')

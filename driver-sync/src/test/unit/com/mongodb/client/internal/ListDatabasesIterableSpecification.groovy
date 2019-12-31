@@ -16,10 +16,10 @@
 
 package com.mongodb.client.internal
 
-import com.mongodb.Block
+
 import com.mongodb.Function
-import com.mongodb.operation.BatchCursor
-import com.mongodb.operation.ListDatabasesOperation
+import com.mongodb.internal.operation.BatchCursor
+import com.mongodb.internal.operation.ListDatabasesOperation
 import org.bson.BsonDocument
 import org.bson.Document
 import org.bson.codecs.BsonValueCodecProvider
@@ -27,6 +27,8 @@ import org.bson.codecs.DocumentCodec
 import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.ValueCodecProvider
 import spock.lang.Specification
+
+import java.util.function.Consumer
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
@@ -53,7 +55,8 @@ class ListDatabasesIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new ListDatabasesOperation<Document>(new DocumentCodec()).maxTime(1000, MILLISECONDS))
+        expect operation, isTheSameAs(new ListDatabasesOperation<Document>(new DocumentCodec()).maxTime(1000, MILLISECONDS)
+                .retryReads(true))
         readPreference == secondary()
 
         when: 'overriding initial options'
@@ -63,7 +66,7 @@ class ListDatabasesIterableSpecification extends Specification {
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new ListDatabasesOperation<Document>(new DocumentCodec()).maxTime(999, MILLISECONDS)
-                .filter(BsonDocument.parse('{a: 1}')).nameOnly(true))
+                .filter(BsonDocument.parse('{a: 1}')).nameOnly(true).retryReads(true))
     }
 
     def 'should follow the MongoIterable interface as expected'() {
@@ -97,9 +100,9 @@ class ListDatabasesIterableSpecification extends Specification {
 
         when:
         def count = 0
-        mongoIterable.forEach(new Block<Document>() {
+        mongoIterable.forEach(new Consumer<Document>() {
             @Override
-            void apply(Document document) {
+            void accept(Document document) {
                 count++
             }
         })

@@ -19,12 +19,12 @@ package com.mongodb.client.internal;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListIndexesIterable;
+import com.mongodb.internal.operation.BatchCursor;
+import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.lang.Nullable;
-import com.mongodb.operation.BatchCursor;
-import com.mongodb.operation.ReadOperation;
-import com.mongodb.client.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.codecs.configuration.CodecRegistry;
 
@@ -33,15 +33,21 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-final class ListIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> implements ListIndexesIterable<TResult> {
+class ListIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> implements ListIndexesIterable<TResult> {
     private final SyncOperations<BsonDocument> operations;
     private final Class<TResult> resultClass;
     private long maxTimeMS;
 
     ListIndexesIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TResult> resultClass,
                             final CodecRegistry codecRegistry, final ReadPreference readPreference, final OperationExecutor executor) {
-        super(clientSession, executor, ReadConcern.DEFAULT, readPreference);
-        this.operations = new SyncOperations<BsonDocument>(namespace, BsonDocument.class, readPreference, codecRegistry);
+        this(clientSession, namespace, resultClass, codecRegistry, readPreference, executor, true);
+    }
+
+    ListIndexesIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TResult> resultClass,
+                            final CodecRegistry codecRegistry, final ReadPreference readPreference, final OperationExecutor executor,
+                            final boolean retryReads) {
+        super(clientSession, executor, ReadConcern.DEFAULT, readPreference, retryReads);
+        this.operations = new SyncOperations<BsonDocument>(namespace, BsonDocument.class, readPreference, codecRegistry, retryReads);
         this.resultClass = notNull("resultClass", resultClass);
     }
 

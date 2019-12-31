@@ -1,4 +1,12 @@
 {
+  "runOn": [
+    {
+      "minServerVersion": "3.6",
+      "topology": [
+        "replicaset"
+      ]
+    }
+  ],
   "data": [
     {
       "_id": 1,
@@ -9,11 +17,11 @@
       "x": 22
     }
   ],
-  "minServerVersion": "3.6",
   "tests": [
     {
       "description": "FindOneAndReplace is committed on first attempt",
       "failPoint": {
+        "configureFailPoint": "onPrimaryTransactionalWrite",
         "mode": {
           "times": 1
         }
@@ -53,6 +61,7 @@
     {
       "description": "FindOneAndReplace is not committed on first attempt",
       "failPoint": {
+        "configureFailPoint": "onPrimaryTransactionalWrite",
         "mode": {
           "times": 1
         },
@@ -95,6 +104,7 @@
     {
       "description": "FindOneAndReplace is never committed",
       "failPoint": {
+        "configureFailPoint": "onPrimaryTransactionalWrite",
         "mode": {
           "times": 2
         },

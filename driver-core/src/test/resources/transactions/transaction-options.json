@@ -1,4 +1,18 @@
 {
+  "runOn": [
+    {
+      "minServerVersion": "4.0",
+      "topology": [
+        "replicaset"
+      ]
+    },
+    {
+      "minServerVersion": "4.1.8",
+      "topology": [
+        "sharded"
+      ]
+    }
+  ],
   "database_name": "transaction-tests",
   "collection_name": "test",
   "data": [],
@@ -8,17 +22,16 @@
       "operations": [
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 1
@@ -26,23 +39,20 @@
         },
         {
           "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 2
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 2
@@ -50,9 +60,7 @@
         },
         {
           "name": "abortTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         }
       ],
       "expectations": [
@@ -73,7 +81,8 @@
               "startTransaction": true,
               "autocommit": false,
               "readConcern": null,
-              "writeConcern": null
+              "writeConcern": null,
+              "maxTimeMS": null
             },
             "command_name": "insert",
             "database_name": "transaction-tests"
@@ -90,7 +99,8 @@
               "startTransaction": null,
               "autocommit": false,
               "readConcern": null,
-              "writeConcern": null
+              "writeConcern": null,
+              "maxTimeMS": null
             },
             "command_name": "commitTransaction",
             "database_name": "admin"
@@ -115,7 +125,8 @@
               "readConcern": {
                 "afterClusterTime": 42
               },
-              "writeConcern": null
+              "writeConcern": null,
+              "maxTimeMS": null
             },
             "command_name": "insert",
             "database_name": "transaction-tests"
@@ -132,7 +143,8 @@
               "startTransaction": null,
               "autocommit": false,
               "readConcern": null,
-              "writeConcern": null
+              "writeConcern": null,
+              "maxTimeMS": null
             },
             "command_name": "abortTransaction",
             "database_name": "admin"
@@ -158,17 +170,16 @@
       "operations": [
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 1
@@ -176,23 +187,20 @@
         },
         {
           "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 2
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 2
@@ -200,9 +208,7 @@
         },
         {
           "name": "abortTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         }
       ],
       "expectations": [
@@ -225,7 +231,8 @@
               "readConcern": {
                 "level": "local"
               },
-              "writeConcern": null
+              "writeConcern": null,
+              "maxTimeMS": null
             },
             "command_name": "insert",
             "database_name": "transaction-tests"
@@ -244,7 +251,8 @@
               "readConcern": null,
               "writeConcern": {
                 "w": 1
-              }
+              },
+              "maxTimeMS": null
             },
             "command_name": "commitTransaction",
             "database_name": "admin"
@@ -270,7 +278,8 @@
                 "level": "local",
                 "afterClusterTime": 42
               },
-              "writeConcern": null
+              "writeConcern": null,
+              "maxTimeMS": null
             },
             "command_name": "insert",
             "database_name": "transaction-tests"
@@ -289,7 +298,8 @@
               "readConcern": null,
               "writeConcern": {
                 "w": 1
-              }
+              },
+              "maxTimeMS": null
             },
             "command_name": "abortTransaction",
             "database_name": "admin"
@@ -312,28 +322,28 @@
         "session0": {
           "defaultTransactionOptions": {
             "readConcern": {
-              "level": "snapshot"
+              "level": "majority"
             },
             "writeConcern": {
               "w": 1
-            }
+            },
+            "maxCommitTimeMS": 60000
           }
         }
       },
       "operations": [
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 1
@@ -341,23 +351,20 @@
         },
         {
           "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 2
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 2
@@ -365,9 +372,7 @@
         },
         {
           "name": "abortTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         }
       ],
       "expectations": [
@@ -388,7 +393,7 @@
               "startTransaction": true,
               "autocommit": false,
               "readConcern": {
-                "level": "snapshot"
+                "level": "majority"
               },
               "writeConcern": null
             },
@@ -409,7 +414,8 @@
               "readConcern": null,
               "writeConcern": {
                 "w": 1
-              }
+              },
+              "maxTimeMS": 60000
             },
             "command_name": "commitTransaction",
             "database_name": "admin"
@@ -432,7 +438,7 @@
               "startTransaction": true,
               "autocommit": false,
               "readConcern": {
-                "level": "snapshot",
+                "level": "majority",
                 "afterClusterTime": 42
               },
               "writeConcern": null
@@ -481,36 +487,39 @@
         "session0": {
           "defaultTransactionOptions": {
             "readConcern": {
-              "level": "majority"
+              "level": "snapshot"
             },
             "writeConcern": {
               "w": 1
-            }
+            },
+            "maxCommitTimeMS": 30000
           }
         }
       },
       "operations": [
         {
           "name": "startTransaction",
+          "object": "session0",
           "arguments": {
-            "session": "session0",
             "options": {
               "readConcern": {
-                "level": "snapshot"
+                "level": "majority"
               },
               "writeConcern": {
                 "w": "majority"
-              }
+              },
+              "maxCommitTimeMS": 60000
             }
           }
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 1
@@ -518,17 +527,15 @@
         },
         {
           "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "startTransaction",
+          "object": "session0",
           "arguments": {
-            "session": "session0",
             "options": {
               "readConcern": {
-                "level": "snapshot"
+                "level": "majority"
               },
               "writeConcern": {
                 "w": "majority"
@@ -538,11 +545,12 @@
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 2
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 2
@@ -550,9 +558,7 @@
         },
         {
           "name": "abortTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         }
       ],
       "expectations": [
@@ -573,9 +579,10 @@
               "startTransaction": true,
               "autocommit": false,
               "readConcern": {
-                "level": "snapshot"
+                "level": "majority"
               },
-              "writeConcern": null
+              "writeConcern": null,
+              "maxTimeMS": null
             },
             "command_name": "insert",
             "database_name": "transaction-tests"
@@ -594,7 +601,8 @@
               "readConcern": null,
               "writeConcern": {
                 "w": "majority"
-              }
+              },
+              "maxTimeMS": 60000
             },
             "command_name": "commitTransaction",
             "database_name": "admin"
@@ -617,10 +625,11 @@
               "startTransaction": true,
               "autocommit": false,
               "readConcern": {
-                "level": "snapshot",
+                "level": "majority",
                 "afterClusterTime": 42
               },
-              "writeConcern": null
+              "writeConcern": null,
+              "maxTimeMS": null
             },
             "command_name": "insert",
             "database_name": "transaction-tests"
@@ -639,7 +648,8 @@
               "readConcern": null,
               "writeConcern": {
                 "w": "majority"
-              }
+              },
+              "maxTimeMS": null
             },
             "command_name": "abortTransaction",
             "database_name": "admin"
@@ -666,28 +676,28 @@
         "session0": {
           "defaultTransactionOptions": {
             "readConcern": {
-              "level": "snapshot"
+              "level": "majority"
             },
             "writeConcern": {
               "w": "majority"
-            }
+            },
+            "maxCommitTimeMS": 60000
           }
         }
       },
       "operations": [
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 1
@@ -695,23 +705,20 @@
         },
         {
           "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 2
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 2
@@ -719,9 +726,7 @@
         },
         {
           "name": "abortTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         }
       ],
       "expectations": [
@@ -742,9 +747,10 @@
               "startTransaction": true,
               "autocommit": false,
               "readConcern": {
-                "level": "snapshot"
+                "level": "majority"
               },
-              "writeConcern": null
+              "writeConcern": null,
+              "maxTimeMS": null
             },
             "command_name": "insert",
             "database_name": "transaction-tests"
@@ -763,7 +769,8 @@
               "readConcern": null,
               "writeConcern": {
                 "w": "majority"
-              }
+              },
+              "maxTimeMS": 60000
             },
             "command_name": "commitTransaction",
             "database_name": "admin"
@@ -786,10 +793,11 @@
               "startTransaction": true,
               "autocommit": false,
               "readConcern": {
-                "level": "snapshot",
+                "level": "majority",
                 "afterClusterTime": 42
               },
-              "writeConcern": null
+              "writeConcern": null,
+              "maxTimeMS": null
             },
             "command_name": "insert",
             "database_name": "transaction-tests"
@@ -808,7 +816,8 @@
               "readConcern": null,
               "writeConcern": {
                 "w": "majority"
-              }
+              },
+              "maxTimeMS": null
             },
             "command_name": "abortTransaction",
             "database_name": "admin"
@@ -842,17 +851,16 @@
       "operations": [
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 1
@@ -860,23 +868,20 @@
         },
         {
           "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 2
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 2
@@ -884,9 +889,7 @@
         },
         {
           "name": "abortTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         }
       ],
       "expectations": [
@@ -991,174 +994,6 @@
       }
     },
     {
-      "description": "readConcern local in startTransaction options",
-      "sessionOptions": {
-        "session0": {
-          "defaultTransactionOptions": {
-            "readConcern": {
-              "level": "majority"
-            }
-          }
-        }
-      },
-      "operations": [
-        {
-          "name": "startTransaction",
-          "arguments": {
-            "session": "session0",
-            "options": {
-              "readConcern": {
-                "level": "snapshot"
-              }
-            }
-          }
-        },
-        {
-          "name": "insertOne",
-          "arguments": {
-            "document": {
-              "_id": 1
-            },
-            "session": "session0"
-          },
-          "result": {
-            "insertedId": 1
-          }
-        },
-        {
-          "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          }
-        },
-        {
-          "name": "startTransaction",
-          "arguments": {
-            "session": "session0",
-            "options": {
-              "readConcern": {
-                "level": "snapshot"
-              }
-            }
-          }
-        },
-        {
-          "name": "insertOne",
-          "arguments": {
-            "document": {
-              "_id": 2
-            },
-            "session": "session0"
-          },
-          "result": {
-            "insertedId": 2
-          }
-        },
-        {
-          "name": "abortTransaction",
-          "arguments": {
-            "session": "session0"
-          }
-        }
-      ],
-      "expectations": [
-        {
-          "command_started_event": {
-            "command": {
-              "insert": "test",
-              "documents": [
-                {
-                  "_id": 1
-                }
-              ],
-              "ordered": true,
-              "lsid": "session0",
-              "txnNumber": {
-                "$numberLong": "1"
-              },
-              "startTransaction": true,
-              "autocommit": false,
-              "readConcern": {
-                "level": "snapshot"
-              },
-              "writeConcern": null
-            },
-            "command_name": "insert",
-            "database_name": "transaction-tests"
-          }
-        },
-        {
-          "command_started_event": {
-            "command": {
-              "commitTransaction": 1,
-              "lsid": "session0",
-              "txnNumber": {
-                "$numberLong": "1"
-              },
-              "startTransaction": null,
-              "autocommit": false,
-              "readConcern": null,
-              "writeConcern": null
-            },
-            "command_name": "commitTransaction",
-            "database_name": "admin"
-          }
-        },
-        {
-          "command_started_event": {
-            "command": {
-              "insert": "test",
-              "documents": [
-                {
-                  "_id": 2
-                }
-              ],
-              "ordered": true,
-              "lsid": "session0",
-              "txnNumber": {
-                "$numberLong": "2"
-              },
-              "startTransaction": true,
-              "autocommit": false,
-              "readConcern": {
-                "level": "snapshot",
-                "afterClusterTime": 42
-              },
-              "writeConcern": null
-            },
-            "command_name": "insert",
-            "database_name": "transaction-tests"
-          }
-        },
-        {
-          "command_started_event": {
-            "command": {
-              "abortTransaction": 1,
-              "lsid": "session0",
-              "txnNumber": {
-                "$numberLong": "2"
-              },
-              "startTransaction": null,
-              "autocommit": false,
-              "readConcern": null,
-              "writeConcern": null
-            },
-            "command_name": "abortTransaction",
-            "database_name": "admin"
-          }
-        }
-      ],
-      "outcome": {
-        "collection": {
-          "data": [
-            {
-              "_id": 1
-            }
-          ]
-        }
-      }
-    },
-    {
       "description": "client writeConcern ignored for bulk",
       "clientOptions": {
         "w": "majority"
@@ -1166,8 +1001,8 @@
       "operations": [
         {
           "name": "startTransaction",
+          "object": "session0",
           "arguments": {
-            "session": "session0",
             "options": {
               "writeConcern": {
                 "w": 1
@@ -1177,6 +1012,7 @@
         },
         {
           "name": "bulkWrite",
+          "object": "collection",
           "arguments": {
             "requests": [
               {
@@ -1192,6 +1028,7 @@
           },
           "result": {
             "deletedCount": 0,
+            "insertedCount": 1,
             "insertedIds": {
               "0": 1
             },
@@ -1203,9 +1040,7 @@
         },
         {
           "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         }
       ],
       "expectations": [
@@ -1269,29 +1104,29 @@
       "operations": [
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 1
           }
         },
         {
-          "name": "count",
+          "name": "find",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "filter": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "errorContains": "read preference in a transaction must be primary"
@@ -1299,9 +1134,7 @@
         },
         {
           "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         }
       ],
       "expectations": [
@@ -1373,29 +1206,29 @@
       "operations": [
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 1
           }
         },
         {
-          "name": "count",
+          "name": "find",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "filter": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "errorContains": "read preference in a transaction must be primary"
@@ -1403,9 +1236,7 @@
         },
         {
           "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         }
       ],
       "expectations": [
@@ -1477,8 +1308,8 @@
       "operations": [
         {
           "name": "startTransaction",
+          "object": "session0",
           "arguments": {
-            "session": "session0",
             "options": {
               "readPreference": {
                 "mode": "Secondary"
@@ -1488,23 +1319,25 @@
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 1
           }
         },
         {
-          "name": "count",
+          "name": "find",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "filter": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "errorContains": "read preference in a transaction must be primary"
@@ -1512,9 +1345,7 @@
         },
         {
           "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         }
       ],
       "expectations": [

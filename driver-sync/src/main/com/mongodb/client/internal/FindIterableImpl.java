@@ -20,14 +20,14 @@ import com.mongodb.CursorType;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.client.ClientSession;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Collation;
-import com.mongodb.client.model.FindOptions;
+import com.mongodb.internal.client.model.FindOptions;
+import com.mongodb.internal.operation.BatchCursor;
+import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.lang.Nullable;
-import com.mongodb.operation.BatchCursor;
-import com.mongodb.operation.ReadOperation;
-import com.mongodb.client.ClientSession;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -35,8 +35,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-@SuppressWarnings("deprecation")
-final class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements FindIterable<TResult> {
+class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements FindIterable<TResult> {
 
     private final SyncOperations<TDocument> operations;
 
@@ -48,8 +47,14 @@ final class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResu
     FindIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
                      final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
                      final ReadConcern readConcern, final OperationExecutor executor, final Bson filter) {
-        super(clientSession, executor, readConcern, readPreference);
-        this.operations = new SyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry);
+        this(clientSession, namespace, documentClass, resultClass, codecRegistry, readPreference, readConcern, executor, filter, true);
+    }
+
+    FindIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
+                     final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
+                     final ReadConcern readConcern, final OperationExecutor executor, final Bson filter, final boolean retryReads) {
+        super(clientSession, executor, readConcern, readPreference, retryReads);
+        this.operations = new SyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry, retryReads);
         this.resultClass = notNull("resultClass", resultClass);
         this.filter = notNull("filter", filter);
         this.findOptions = new FindOptions();
@@ -97,12 +102,6 @@ final class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResu
     @Override
     public FindIterable<TResult> collation(@Nullable final Collation collation) {
         findOptions.collation(collation);
-        return this;
-    }
-
-    @Override
-    public FindIterable<TResult> modifiers(@Nullable final Bson modifiers) {
-        findOptions.modifiers(modifiers);
         return this;
     }
 
@@ -155,6 +154,12 @@ final class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResu
     }
 
     @Override
+    public FindIterable<TResult> hintString(@Nullable final String hint) {
+        findOptions.hintString(hint);
+        return this;
+    }
+
+    @Override
     public FindIterable<TResult> max(@Nullable final Bson max) {
         findOptions.max(max);
         return this;
@@ -167,13 +172,6 @@ final class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResu
     }
 
     @Override
-    @Deprecated
-    public FindIterable<TResult> maxScan(final long maxScan) {
-        findOptions.maxScan(maxScan);
-        return this;
-    }
-
-    @Override
     public FindIterable<TResult> returnKey(final boolean returnKey) {
         findOptions.returnKey(returnKey);
         return this;
@@ -182,13 +180,6 @@ final class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResu
     @Override
     public FindIterable<TResult> showRecordId(final boolean showRecordId) {
         findOptions.showRecordId(showRecordId);
-        return this;
-    }
-
-    @Override
-    @Deprecated
-    public FindIterable<TResult> snapshot(final boolean snapshot) {
-        findOptions.snapshot(snapshot);
         return this;
     }
 

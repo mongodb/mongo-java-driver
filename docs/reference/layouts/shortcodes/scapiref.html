@@ -1,0 +1,1 @@
+{{ .Page.Site.BaseURL}}{{ .Page.Site.Data.mongodb.scalaApiUrl }}{{ with (.Get 0) }}{{ . }}{{ if ne (in . ".html") true}}.html{{ end }}{{ end }}

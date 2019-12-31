@@ -16,29 +16,11 @@
 
 package com.mongodb;
 
-import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.FutureResultCallback;
-import com.mongodb.async.SingleResultCallback;
-import com.mongodb.binding.AsyncClusterBinding;
-import com.mongodb.binding.AsyncConnectionSource;
-import com.mongodb.binding.AsyncReadBinding;
-import com.mongodb.binding.AsyncReadWriteBinding;
-import com.mongodb.binding.AsyncSessionBinding;
-import com.mongodb.binding.AsyncSingleConnectionBinding;
-import com.mongodb.binding.AsyncWriteBinding;
-import com.mongodb.binding.ClusterBinding;
-import com.mongodb.binding.ReadWriteBinding;
-import com.mongodb.binding.ReferenceCounted;
-import com.mongodb.binding.SessionBinding;
-import com.mongodb.binding.SingleConnectionBinding;
-import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
-import com.mongodb.connection.Cluster;
-import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ConnectionPoolSettings;
-import com.mongodb.connection.DefaultClusterFactory;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.ServerVersion;
@@ -46,16 +28,35 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactory;
+import com.mongodb.connection.TlsChannelStreamFactoryFactory;
 import com.mongodb.connection.netty.NettyStreamFactory;
-import com.mongodb.operation.AsyncReadOperation;
-import com.mongodb.operation.AsyncWriteOperation;
-import com.mongodb.operation.BatchCursor;
-import com.mongodb.operation.CommandReadOperation;
-import com.mongodb.operation.CommandWriteOperation;
-import com.mongodb.operation.DropDatabaseOperation;
-import com.mongodb.operation.ReadOperation;
-import com.mongodb.operation.WriteOperation;
-import com.mongodb.selector.ServerSelector;
+import com.mongodb.internal.async.AsyncBatchCursor;
+import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.binding.AsyncClusterBinding;
+import com.mongodb.internal.binding.AsyncConnectionSource;
+import com.mongodb.internal.binding.AsyncReadBinding;
+import com.mongodb.internal.binding.AsyncReadWriteBinding;
+import com.mongodb.internal.binding.AsyncSessionBinding;
+import com.mongodb.internal.binding.AsyncSingleConnectionBinding;
+import com.mongodb.internal.binding.AsyncWriteBinding;
+import com.mongodb.internal.binding.ClusterBinding;
+import com.mongodb.internal.binding.ReadWriteBinding;
+import com.mongodb.internal.binding.ReferenceCounted;
+import com.mongodb.internal.binding.SessionBinding;
+import com.mongodb.internal.binding.SingleConnectionBinding;
+import com.mongodb.internal.connection.AsyncConnection;
+import com.mongodb.internal.connection.Cluster;
+import com.mongodb.internal.connection.DefaultClusterFactory;
+import com.mongodb.internal.connection.MongoCredentialWithCache;
+import com.mongodb.internal.operation.AsyncReadOperation;
+import com.mongodb.internal.operation.AsyncWriteOperation;
+import com.mongodb.internal.operation.BatchCursor;
+import com.mongodb.internal.operation.CommandReadOperation;
+import com.mongodb.internal.operation.CommandWriteOperation;
+import com.mongodb.internal.operation.DropDatabaseOperation;
+import com.mongodb.internal.operation.ReadOperation;
+import com.mongodb.internal.operation.WriteOperation;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
@@ -65,6 +66,7 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DocumentCodec;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,6 +75,8 @@ import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static com.mongodb.connection.ClusterType.REPLICA_SET;
 import static com.mongodb.connection.ClusterType.SHARDED;
 import static com.mongodb.connection.ClusterType.STANDALONE;
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimaries;
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getSecondaries;
 import static java.lang.String.format;
 import static java.lang.Thread.sleep;
 import static java.util.Arrays.asList;
@@ -88,6 +92,7 @@ import static org.junit.Assume.assumeTrue;
 public final class ClusterFixture {
     public static final String DEFAULT_URI = "mongodb://localhost:27017";
     public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
+    public static final String MONGODB_TRANSACTION_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.transaction.uri";
     private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
     private static final int COMMAND_NOT_FOUND_ERROR_CODE = 59;
     public static final long TIMEOUT = 60L;
@@ -97,6 +102,8 @@ public final class ClusterFixture {
     private static Cluster asyncCluster;
     private static Map<ReadPreference, ReadWriteBinding> bindingMap = new HashMap<ReadPreference, ReadWriteBinding>();
     private static Map<ReadPreference, AsyncReadWriteBinding> asyncBindingMap = new HashMap<ReadPreference, AsyncReadWriteBinding>();
+
+    private static ServerVersion serverVersion;
 
     static {
         Runtime.getRuntime().addShutdownHook(new ShutdownHook());
@@ -114,13 +121,20 @@ public final class ClusterFixture {
     }
 
     public static ServerVersion getServerVersion() {
-        return getCluster().selectServer(new ServerSelector() {
-            @Override
-            @SuppressWarnings("deprecation")
-            public List<ServerDescription> select(final ClusterDescription clusterDescription) {
-                return clusterDescription.getAny();
-            }
-        }).getDescription().getVersion();
+        if (serverVersion == null) {
+            serverVersion = getVersion(new CommandReadOperation<BsonDocument>("admin",
+                    new BsonDocument("buildInfo", new BsonInt32(1)), new BsonDocumentCodec())
+                    .execute(new ClusterBinding(getCluster(), ReadPreference.nearest(), ReadConcern.DEFAULT)));
+        }
+        return serverVersion;
+    }
+
+    private static ServerVersion getVersion(final BsonDocument buildInfoResult) {
+        List<BsonValue> versionArray = buildInfoResult.getArray("versionArray").subList(0, 3);
+
+        return new ServerVersion(asList(versionArray.get(0).asInt32().getValue(),
+                versionArray.get(1).asInt32().getValue(),
+                versionArray.get(2).asInt32().getValue()));
     }
 
     public static boolean serverVersionAtLeast(final List<Integer> versionArray) {
@@ -131,6 +145,14 @@ public final class ClusterFixture {
         return serverVersionAtLeast(asList(majorVersion, minorVersion, 0));
     }
 
+    public static boolean serverVersionLessThan(final List<Integer> versionArray) {
+        return getServerVersion().compareTo(new ServerVersion(versionArray)) < 0;
+    }
+
+    public static boolean serverVersionLessThan(final int majorVersion, final int minorVersion) {
+        return serverVersionLessThan(asList(majorVersion, minorVersion, 0));
+    }
+
     public static boolean serverVersionLessThan(final String versionString) {
         return getServerVersion().compareTo(new ServerVersion(getVersionList(versionString).subList(0, 3))) < 0;
     }
@@ -139,7 +161,7 @@ public final class ClusterFixture {
         return getServerVersion().compareTo(new ServerVersion(getVersionList(versionString).subList(0, 3))) > 0;
     }
 
-    private static List<Integer> getVersionList(final String versionString) {
+    public static List<Integer> getVersionList(final String versionString) {
         List<Integer> versionList = new ArrayList<Integer>();
         for (String s : versionString.split("\\.")) {
             versionList.add(Integer.valueOf(s));
@@ -162,18 +184,6 @@ public final class ClusterFixture {
         return storageEngine != null && !storageEngine.get("name").equals("inMemory");
     }
 
-    public static boolean isNotAtLeastJava7() {
-        return javaVersionStartsWith("1.6");
-    }
-
-    public static boolean isNotAtLeastJava8() {
-        return isNotAtLeastJava7() || javaVersionStartsWith("1.7");
-    }
-
-    private static boolean javaVersionStartsWith(final String versionPrefix) {
-        return System.getProperty("java.version").startsWith(versionPrefix + ".");
-    }
-
     static class ShutdownHook extends Thread {
         @Override
         public void run() {
@@ -184,15 +194,18 @@ public final class ClusterFixture {
         }
     }
 
+    public static synchronized ConnectionString getMultiMongosConnectionString() {
+        return getConnectionStringFromSystemProperty(MONGODB_TRANSACTION_URI_SYSTEM_PROPERTY_NAME);
+    }
+
     public static synchronized ConnectionString getConnectionString() {
         if (connectionString != null) {
             return connectionString;
         }
 
-        String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
-        if (mongoURIProperty != null && !mongoURIProperty.isEmpty()) {
-            connectionString = new ConnectionString(mongoURIProperty);
-            return connectionString;
+        ConnectionString mongoURIProperty = getConnectionStringFromSystemProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
+        if (mongoURIProperty != null) {
+            return mongoURIProperty;
         }
 
         // Figure out what the connection string should be
@@ -216,6 +229,15 @@ public final class ClusterFixture {
                 cluster.close();
             }
         }
+    }
+
+    @Nullable
+    private static ConnectionString getConnectionStringFromSystemProperty(final String property) {
+        String mongoURIProperty = System.getProperty(property);
+        if (mongoURIProperty != null && !mongoURIProperty.isEmpty()) {
+            return new ConnectionString(mongoURIProperty);
+        }
+        return null;
     }
 
     public static ReadWriteBinding getBinding(final Cluster cluster) {
@@ -294,24 +316,49 @@ public final class ClusterFixture {
         return createCluster(getConnectionString(), streamFactory);
     }
 
-    @SuppressWarnings("deprecation")
+
+    public static Cluster createCluster(final MongoCredential credential) {
+        return createCluster(credential, getStreamFactory());
+    }
+
+    public static Cluster createAsyncCluster(final MongoCredential credential) {
+        return createCluster(credential, getAsyncStreamFactory());
+    }
+
+    private static Cluster createCluster(final MongoCredential credential, final StreamFactory streamFactory) {
+        return new DefaultClusterFactory().createCluster(ClusterSettings.builder().hosts(asList(getPrimary())).build(),
+                ServerSettings.builder().build(),
+                ConnectionPoolSettings.builder().maxSize(1).build(),
+                streamFactory, streamFactory, credential, null, null, null,
+                Collections.<MongoCompressor>emptyList());
+    }
+
     private static Cluster createCluster(final ConnectionString connectionString, final StreamFactory streamFactory) {
         return new DefaultClusterFactory().createCluster(ClusterSettings.builder().applyConnectionString(connectionString).build(),
                 ServerSettings.builder().build(),
                 ConnectionPoolSettings.builder().applyConnectionString(connectionString).build(),
                 streamFactory,
                 new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings(connectionString)),
-                connectionString.getCredentialList(), null, null, null,
+                connectionString.getCredential(),
+                null, null, null,
                 connectionString.getCompressorList());
     }
 
-    public static StreamFactory getAsyncStreamFactory() {
-        String streamType = System.getProperty("org.mongodb.async.type", "nio2");
+    public static StreamFactory getStreamFactory() {
+        return new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings());
+    }
 
-        if (streamType.equals("netty") || getSslSettings().isEnabled()) {
+    public static StreamFactory getAsyncStreamFactory() {
+        String streamType = System.getProperty("org.mongodb.test.async.type", "nio2");
+
+        if (streamType.equals("netty")) {
             return new NettyStreamFactory(getSocketSettings(), getSslSettings());
         } else if (streamType.equals("nio2")) {
-            return new AsynchronousSocketChannelStreamFactory(getSocketSettings(), getSslSettings());
+            if (getSslSettings().isEnabled()) {
+                return new TlsChannelStreamFactoryFactory().create(getSocketSettings(), getSslSettings());
+            } else {
+                return new AsynchronousSocketChannelStreamFactory(getSocketSettings(), getSslSettings());
+            }
         } else {
             throw new IllegalArgumentException("Unsupported stream type " + streamType);
         }
@@ -326,44 +373,43 @@ public final class ClusterFixture {
     }
 
     public static SslSettings getSslSettings(final ConnectionString connectionString) {
-        SslSettings.Builder builder = SslSettings.builder().applyConnectionString(connectionString);
-        if (System.getProperty("java.version").startsWith("1.6.")) {
-            builder.invalidHostNameAllowed(true);
-        }
-        return builder.build();
+        return SslSettings.builder().applyConnectionString(connectionString).build();
     }
 
-    @SuppressWarnings("deprecation")
     public static ServerAddress getPrimary() {
-        List<ServerDescription> serverDescriptions = getCluster().getDescription().getPrimaries();
+        List<ServerDescription> serverDescriptions = getPrimaries(getCluster().getDescription());
         while (serverDescriptions.isEmpty()) {
             try {
                 sleep(100);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            serverDescriptions = getCluster().getDescription().getPrimaries();
+            serverDescriptions = getPrimaries(getCluster().getDescription());
         }
         return serverDescriptions.get(0).getAddress();
     }
 
-    @SuppressWarnings("deprecation")
     public static ServerAddress getSecondary() {
-        List<ServerDescription> serverDescriptions = getCluster().getDescription().getSecondaries();
+        List<ServerDescription> serverDescriptions = getSecondaries(getCluster().getDescription());
         while (serverDescriptions.isEmpty()) {
             try {
                 sleep(100);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            serverDescriptions = getCluster().getDescription().getSecondaries();
+            serverDescriptions = getSecondaries(getCluster().getDescription());
         }
         return serverDescriptions.get(0).getAddress();
     }
 
-    @SuppressWarnings("deprecation")
-    public static List<MongoCredential> getCredentialList() {
-        return getConnectionString().getCredentialList();
+    @Nullable
+    public static MongoCredential getCredential() {
+        return getConnectionString().getCredential();
+    }
+
+    @Nullable
+    public static MongoCredentialWithCache getCredentialWithCache() {
+        return getConnectionString().getCredential() == null ? null : new MongoCredentialWithCache(getConnectionString().getCredential());
     }
 
     public static boolean isDiscoverableReplicaSet() {
@@ -384,36 +430,11 @@ public final class ClusterFixture {
     }
 
     public static void enableMaxTimeFailPoint() {
-        assumeThat(isSharded(), is(false));
-        boolean failsPointsSupported = true;
-        try {
-            new CommandWriteOperation<BsonDocument>("admin",
-                    new BsonDocument("configureFailPoint", new BsonString("maxTimeAlwaysTimeOut"))
-                            .append("mode", new BsonString("alwaysOn")),
-                    new BsonDocumentCodec())
-                    .execute(getBinding());
-        } catch (MongoCommandException e) {
-            if (e.getErrorCode() == COMMAND_NOT_FOUND_ERROR_CODE) {
-                failsPointsSupported = false;
-            }
-        }
-        assumeTrue("configureFailPoint is not enabled", failsPointsSupported);
+        configureFailPoint(BsonDocument.parse("{configureFailPoint: 'maxTimeAlwaysTimeOut', mode: 'alwaysOn'}"));
     }
 
     public static void disableMaxTimeFailPoint() {
-        assumeThat(isSharded(), is(false));
-        if (!isSharded()) {
-            try {
-                new CommandWriteOperation<BsonDocument>("admin",
-                        new BsonDocument("configureFailPoint",
-                                new BsonString("maxTimeAlwaysTimeOut"))
-                                .append("mode", new BsonString("off")),
-                        new BsonDocumentCodec())
-                        .execute(getBinding());
-            } catch (MongoCommandException e) {
-                // ignore
-            }
-        }
+        disableFailPoint("maxTimeAlwaysTimeOut");
     }
 
     public static void enableOnPrimaryTransactionalWriteFailPoint(final BsonValue failPointData) {
@@ -426,63 +447,79 @@ public final class ClusterFixture {
         } else {
             command.append("mode", failPointData);
         }
-        boolean failsPointsSupported = true;
-        try {
-            new CommandWriteOperation<BsonDocument>("admin", command, new BsonDocumentCodec()).execute(getBinding());
-        } catch (MongoCommandException e) {
-            if (e.getErrorCode() == COMMAND_NOT_FOUND_ERROR_CODE) {
-                failsPointsSupported = false;
-            }
-        }
-        assumeTrue("configureFailPoint is not enabled", failsPointsSupported);
+        configureFailPoint(command);
     }
 
     public static void disableOnPrimaryTransactionalWriteFailPoint() {
+        disableFailPoint("onPrimaryTransactionalWrite");
+    }
+
+    public static void configureFailPoint(final BsonDocument failPointDocument) {
         assumeThat(isSharded(), is(false));
+        boolean failsPointsSupported = true;
         if (!isSharded()) {
             try {
-                new CommandWriteOperation<BsonDocument>("admin",
-                        new BsonDocument("configureFailPoint",
-                                new BsonString("onPrimaryTransactionalWrite"))
-                                .append("mode", new BsonString("off")),
-                        new BsonDocumentCodec())
+                new CommandWriteOperation<BsonDocument>("admin", failPointDocument, new BsonDocumentCodec())
                         .execute(getBinding());
+            } catch (MongoCommandException e) {
+                if (e.getErrorCode() == COMMAND_NOT_FOUND_ERROR_CODE) {
+                    failsPointsSupported = false;
+                }
+            }
+            assumeTrue("configureFailPoint is not enabled", failsPointsSupported);
+        }
+    }
+
+    public static void disableFailPoint(final String failPoint) {
+        if (!isSharded()) {
+            BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString(failPoint))
+                    .append("mode", new BsonString("off"));
+            try {
+                new CommandWriteOperation<BsonDocument>("admin", failPointDocument, new BsonDocumentCodec()).execute(getBinding());
             } catch (MongoCommandException e) {
                 // ignore
             }
         }
     }
 
+    @SuppressWarnings("overloads")
     public static <T> T executeSync(final WriteOperation<T> op) {
         return executeSync(op, getBinding());
     }
 
+    @SuppressWarnings("overloads")
     public static <T> T executeSync(final WriteOperation<T> op, final ReadWriteBinding binding) {
         return op.execute(binding);
     }
 
+    @SuppressWarnings("overloads")
     public static <T> T executeSync(final ReadOperation<T> op) {
         return executeSync(op, getBinding());
     }
 
+    @SuppressWarnings("overloads")
     public static <T> T executeSync(final ReadOperation<T> op, final ReadWriteBinding binding) {
         return op.execute(binding);
     }
 
+    @SuppressWarnings("overloads")
     public static <T> T executeAsync(final AsyncWriteOperation<T> op) throws Throwable {
         return executeAsync(op, getAsyncBinding());
     }
 
+    @SuppressWarnings("overloads")
     public static <T> T executeAsync(final AsyncWriteOperation<T> op, final AsyncWriteBinding binding) throws Throwable {
         final FutureResultCallback<T> futureResultCallback = new FutureResultCallback<T>();
         op.executeAsync(binding, futureResultCallback);
         return futureResultCallback.get(TIMEOUT, SECONDS);
     }
 
+    @SuppressWarnings("overloads")
     public static <T> T executeAsync(final AsyncReadOperation<T> op) throws Throwable {
         return executeAsync(op, getAsyncBinding());
     }
 
+    @SuppressWarnings("overloads")
     public static <T> T executeAsync(final AsyncReadOperation<T> op, final AsyncReadBinding binding) throws Throwable {
         final FutureResultCallback<T> futureResultCallback = new FutureResultCallback<T>();
         op.executeAsync(binding, futureResultCallback);

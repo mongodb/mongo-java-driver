@@ -1,0 +1,69 @@
+/*
+ * Copyright 2008-present MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+description = "A Reactive Streams implementation of the MongoDB Java driver"
+archivesBaseName = 'mongodb-driver-reactivestreams'
+
+dependencies {
+    compile project(':bson')
+    compile project(':driver-core')
+
+    compile 'org.reactivestreams:reactive-streams:1.0.2'
+
+    testCompile project(':bson').sourceSets.test.output
+    testCompile project(':driver-sync')
+    testCompile project(':driver-sync').sourceSets.test.output
+    testCompile project(':driver-core').sourceSets.test.output
+    testCompile 'org.reactivestreams:reactive-streams-tck:1.0.2'
+}
+
+sourceSets {
+    test.groovy.srcDirs += ['src/examples']
+}
+
+test {
+    exclude 'tour/**'
+}
+
+// Reactive Streams TCK uses TestNG, and Gradle can't run TestNG and JUnit in the same run.
+task tckTest(type: Test) {
+    useTestNG()
+    scanForTestClasses = false
+
+    classpath = sourceSets.test.runtimeClasspath
+    testClassesDirs = sourceSets.test.output.classesDirs
+
+    binResultsDir = file("$buildDir/$name-results/binary")
+    reports {
+        html.destination = file("$buildDir/reports/$name")
+        junitXml.destination = binResultsDir.parentFile
+    }
+
+    maxParallelForks = 1
+}
+
+ext {
+    pomName = 'The MongoDB Reactive Streams Driver'
+}
+
+jar {
+    bnd (
+        '-exportcontents': "*;-noimport:=true",
+        'Automatic-Module-Name': 'org.mongodb.driver.reactivestreams',
+        'Build-Version': project.gitVersion,
+        'Import-Package': 'org.bson.*,com.mongodb.*'
+    )
+}

@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import category.Slow;
+import com.mongodb.client.model.DBCollectionCountOptions;
 import org.bson.BSONObject;
 import org.bson.BsonBinarySubType;
 import org.bson.BsonBinaryWriter;
@@ -39,10 +40,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -109,10 +108,8 @@ public class DBCollectionTest extends DatabaseTestCase {
         assertNull(collection.getDBDecoderFactory());
         assertNull(collection.getDBEncoderFactory());
         assertEquals(BasicDBObject.class, collection.getObjectClass());
-        assertNull(collection.getHintFields());
         assertEquals(ReadPreference.primary(), collection.getReadPreference());
         assertEquals(WriteConcern.ACKNOWLEDGED, collection.getWriteConcern());
-        assertEquals(0, collection.getOptions());
     }
 
     @Test
@@ -340,8 +337,10 @@ public class DBCollectionTest extends DatabaseTestCase {
         }
         assertEquals(10, collection.getCount());
         assertEquals(5, collection.getCount(new BasicDBObject("_id", new BasicDBObject("$lt", 5))));
-        assertEquals(4, collection.getCount(new BasicDBObject("_id", new BasicDBObject("$lt", 5)), null, 100, 1));
-        assertEquals(4, collection.getCount(new BasicDBObject("_id", new BasicDBObject("$lt", 5)), null, 4, 0));
+        assertEquals(4, collection.getCount(new BasicDBObject("_id", new BasicDBObject("$lt", 5)),
+                new DBCollectionCountOptions().limit(100).skip(1)));
+        assertEquals(4, collection.getCount(new BasicDBObject("_id", new BasicDBObject("$lt", 5)),
+                new DBCollectionCountOptions().limit(4)));
     }
 
     @Test
@@ -547,56 +546,6 @@ public class DBCollectionTest extends DatabaseTestCase {
 
 
     @Test
-    public void testReflectionObject() {
-        collection.setObjectClass(Tweet.class);
-        Tweet insertedTweet = new Tweet(1, "Lorem", new Date(12));
-        collection.insert(insertedTweet);
-
-        assertThat(collection.count(), is(1L));
-
-        DBObject document = collection.findOne();
-        assertThat(document, instanceOf(Tweet.class));
-        Tweet tweet = (Tweet) document;
-
-        assertThat(tweet.getUserId(), is(1L));
-        assertThat(tweet.getMessage(), is("Lorem"));
-        assertThat(tweet.getDate(), is(new Date(12)));
-
-        insertedTweet.setMessage("Lorem 2");
-
-        DBObject replacedTweet = collection.findAndModify(new BasicDBObject(), insertedTweet);
-        assertThat(replacedTweet, instanceOf(Tweet.class));
-        tweet = (Tweet) replacedTweet;
-
-        assertThat(tweet.getUserId(), is(1L));
-        assertThat(tweet.getMessage(), is("Lorem"));
-        assertThat(tweet.getDate(), is(new Date(12)));
-
-        DBObject removedTweet = collection.findAndRemove(new BasicDBObject());
-        assertThat(removedTweet, instanceOf(Tweet.class));
-        tweet = (Tweet) removedTweet;
-
-        assertThat(tweet.getUserId(), is(1L));
-        assertThat(tweet.getMessage(), is("Lorem 2"));
-        assertThat(tweet.getDate(), is(new Date(12)));
-    }
-
-    @Test
-    public void testReflectionObjectAtLevel2() {
-        collection.insert(new BasicDBObject("t", new Tweet(1, "Lorem", new Date(12))));
-        collection.setInternalClass("t", Tweet.class);
-
-        DBObject document = collection.findOne();
-        assertThat(document.get("t"), instanceOf(Tweet.class));
-
-        Tweet tweet = (Tweet) document.get("t");
-
-        assertThat(tweet.getUserId(), is(1L));
-        assertThat(tweet.getMessage(), is("Lorem"));
-        assertThat(tweet.getDate(), is(new Date(12)));
-    }
-
-    @Test
     public void shouldAcceptDocumentsWithAllValidValueTypes() {
         BasicDBObject doc = new BasicDBObject();
         doc.append("_id", new ObjectId());
@@ -720,9 +669,7 @@ public class DBCollectionTest extends DatabaseTestCase {
         assertEquals(1, result.getInsertedCount());
         assertEquals(4, result.getMatchedCount());
         assertEquals(3, result.getRemovedCount());
-        if (result.isModifiedCountAvailable()) {
-            assertEquals(4, result.getModifiedCount());
-        }
+        assertEquals(4, result.getModifiedCount());
         assertEquals(Arrays.asList(new BulkWriteUpsert(1, upsertOneId),
                                    new BulkWriteUpsert(2, upsertTwoId)),
                      result.getUpserts());
@@ -963,33 +910,6 @@ public class DBCollectionTest extends DatabaseTestCase {
         } catch (BulkWriteException e) {
             assertNotNull(e.getWriteConcernError());  // unclear what else we can reliably assert here
         }
-    }
-
-    @Test
-    @Category(Slow.class)
-    public void testParallelScan() throws UnknownHostException {
-        assumeThat(isSharded(), is(false));
-
-        Set<Integer> ids = new HashSet<Integer>();
-        List<BasicDBObject> documents = new ArrayList<BasicDBObject>(2000);
-
-        for (int i = 0; i < 2000; i++) {
-            ids.add(i);
-            documents.add(new BasicDBObject("_id", i));
-        }
-
-        collection.insert(documents);
-
-        List<Cursor> cursors = collection.parallelScan(ParallelScanOptions.builder().numCursors(3).batchSize(1000).build());
-        assertTrue(cursors.size() <= 3);
-        for (Cursor cursor : cursors) {
-            while (cursor.hasNext()) {
-                Integer id = (Integer) cursor.next().get("_id");
-                assertTrue(ids.remove(id));
-            }
-        }
-
-        assertTrue(ids.isEmpty());
     }
 
 
@@ -1347,7 +1267,6 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
     public void testBypassDocumentValidationForAggregateDollarOut() {
         //given
         DBObject options = new BasicDBObject("validator", QueryBuilder.start("level").greaterThanEquals(10).get());
@@ -1357,7 +1276,8 @@ public class DBCollectionTest extends DatabaseTestCase {
         c.insert(new BasicDBObject("level", 9));
 
         try {
-            c.aggregate(Collections.<DBObject>singletonList(new BasicDBObject("$out", cOut.getName())));
+            c.aggregate(Collections.<DBObject>singletonList(new BasicDBObject("$out", cOut.getName())),
+                    AggregationOptions.builder().build());
             if (serverVersionAtLeast(3, 2)) {
                 fail();
             }
@@ -1452,47 +1372,6 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     public static class MyDBObject extends BasicDBObject {
         private static final long serialVersionUID = 3352369936048544621L;
-    }
-
-    // used via reflection
-    @SuppressWarnings("UnusedDeclaration")
-    public static class Tweet extends ReflectionDBObject {
-        private long userId;
-        private String message;
-        private Date date;
-
-        public Tweet(final long userId, final String message, final Date date) {
-            this.userId = userId;
-            this.message = message;
-            this.date = date;
-        }
-
-        public Tweet() {
-        }
-
-        public long getUserId() {
-            return userId;
-        }
-
-        public void setUserId(final long userId) {
-            this.userId = userId;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-
-        public void setMessage(final String message) {
-            this.message = message;
-        }
-
-        public Date getDate() {
-            return date;
-        }
-
-        public void setDate(final Date date) {
-            this.date = date;
-        }
     }
 
     public static class MyEncoder implements DBEncoder {

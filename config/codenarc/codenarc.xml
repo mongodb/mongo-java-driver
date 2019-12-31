@@ -72,10 +72,15 @@
         <exclude name="DuplicateStringLiteral"/>
         <exclude name="DuplicateMapLiteral"/>
     </ruleset-ref>
-    <ruleset-ref path='rulesets/exceptions.xml'/>
+    <ruleset-ref path='rulesets/exceptions.xml'>
+        <rule-config name='ThrowException'>
+            <property name='doNotApplyToFileNames' value='BsonCodecSpecification.groovy'/>
+        </rule-config>
+    </ruleset-ref>
     <ruleset-ref path='rulesets/formatting.xml'>
         <rule-config name='LineLength'>
             <property name='length' value='140'/>
+            <property name='doNotApplyToFileNames' value='ClientSideEncryptionProseTestSpecification.groovy'/>
         </rule-config>
         <!-- this check is failing '})' when it shouldn't -->
         <exclude name='SpaceAfterClosingBrace'/>
@@ -108,6 +113,9 @@
             <property name='doNotApplyToFilesMatching' value='.*Specification.groovy'/>
         </rule-config>
         <rule-config name='ParameterCount'>
+            <property name='doNotApplyToFilesMatching' value='.*Specification.groovy'/>
+        </rule-config>
+        <rule-config name='NestedBlockDepth'>
             <property name='doNotApplyToFilesMatching' value='.*Specification.groovy'/>
         </rule-config>
         <exclude name='CrapMetric'/>

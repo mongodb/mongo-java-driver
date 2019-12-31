@@ -7,13 +7,151 @@ title = "What's New"
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
+# What's new in 4.0
+
+This release adds no new features but, as a major release, contains breaking changes that may affect your application. Please consult the 
+[Upgrading Guide]({{<ref "upgrading.md">}}) for an enumeration of the breaking changes.
+
+# What's new in 3.12
+
+This release fully supports all MongoDB releases from versions 2.6 to 4.2. Key new features of the 3.12 Java driver release include:
+
+### Security improvements
+
+Client-side field level encryption is supported. Automatic encryption and decryption is available for users of
+[MongoDB Enterprise Advanced](https://www.mongodb.com/products/mongodb-enterprise-advanced), while explicit encryption and decryption is
+available for users of MongoDB Community.
+
+See [Client-side Encryption]({{<ref "driver/tutorials/client-side-encryption.md">}}) for further details.
+
+### Improved interoperability when using the native UUID type
+
+The driver now supports setting the BSON binary representation of `java.util.UUID` instances via a new `UuidRepresentation` property on
+`MongoClientSettings`.  The default representation has not changed, but it will in the upcoming 4.0 major release of the driver. 
+Applications that store UUID values in MongoDB can use this setting to easily control the representation in MongoDB without having to
+register a `Codec<Uuid>` in the `CodecRegistry`.  
+
+See [`MongoClientSettings.getUuidRepresentation`]({{<apiref "com/mongodb/MongoClientSettings.html#getUuidRepresentation()">}}) for details. 
+
+## What's new in 3.11
+
+This release fully supports all MongoDB releases from versions 2.6 to 4.2. Key new features of the 3.11 Java driver release include:
+
+### Improved transactions support
+
+* The transactions API supports MongoDB 4.2 distributed transactions for use with sharded clusters. Distributed transactions use the same
+API as replica set transactions.
+* The sessions API supports the
+  [`ClientSession.withTransaction()`]({{<apiref "com/mongodb/client/ClientSession.html#withTransaction(com.mongodb.client.TransactionBody) ">}})
+  method to conveniently run a transaction with automatic retries and at-most-once semantics.
+* The transactions API supports the
+ [`maxCommitTime`]({{<apiref "com/mongodb/TransactionOptions.html#getMaxCommitTime(java.util.concurrent.TimeUnit)">}}) option to control the
+ maximum amount of time to wait for a transaction to commit.
+
+### Reliability improvements
+
+* Most read operations are by default
+  [automatically retried](https://github.com/mongodb/specifications/blob/master/source/retryable-reads/retryable-reads.rst). Supported read
+  operations that fail with a retryable error are retried automatically and transparently.
+* [Retryable writes](https://docs.mongodb.com/manual/core/retryable-writes/) are now enabled by default. Supported write
+  operations that fail with a retryable error are retried automatically and transparently, with at-most-once update semantics.
+* DNS [SRV](https://en.wikipedia.org/wiki/SRV_record) records are periodically polled in order to update the mongos proxy list without
+  having to change client configuration or even restart the client application. This feature is particularly useful when used with a sharded
+  cluster on [MongoDB Atlas](https://www.mongodb.com/cloud/atlas), which dynamically updates SRV records whenever you resize your Atlas
+  sharded cluster.
+* Connections to the replica set primary are no longer closed after a step-down, allowing in progress read operations to complete.
+
+### Security improvements
+
+Client-side encryption is supported. Automatic encryption and decryption is available for users of
+[MongoDB Enterprise Advanced](https://www.mongodb.com/products/mongodb-enterprise-advanced), while explicit encryption and decryption is
+available for users of MongoDB Community.
+
+See [Client-side Encryption]({{<ref "driver/tutorials/client-side-encryption.md">}}) for further details.
+
+### General improvements
+
+* New [`aggregate`]({{<apiref "com/mongodb/client/MongoDatabase.html##aggregate(java.util.List)">}}) helper methods support running
+database-level aggregations.
+* Aggregate helper methods now support the `$merge` pipeline stage, and
+[`Aggregates.merge()`]({{<apiref "com/mongodb/client/model/Aggregates.html#merge(java.lang.String)">}}) builder methods support creation of
+the new pipeline stage.
+* [Zstandard](https://facebook.github.io/zstd/) for wire protocol compression is supported in addition to Snappy and Zlib.
+* Change stream helpers now support the `startAfter` option.
+* Index creation helpers now support wildcard indexes.
+
+### Full list of changes
+
+* [New Features](https://jira.mongodb.org/issues/?jql=project%20%3D%20JAVA%20AND%20issuetype%20%3D%20%22New%20Feature%22%20AND%20resolution%20%3D%20Fixed%20AND%20fixVersion%20%3D%204.0.0%20ORDER%20BY%20component%20DESC%2C%20key%20ASC)
+* [Improvements](https://jira.mongodb.org/issues/?jql=project%20%3D%20JAVA%20AND%20issuetype%20%3D%20Improvement%20AND%20resolution%20%3D%20Fixed%20AND%20fixVersion%20%3D%204.0.0%20ORDER%20BY%20component%20DESC%2C%20key%20ASC)
+* [Bug Fixes](https://jira.mongodb.org/issues/?jql=project%20%3D%20JAVA%20AND%20issuetype%20%3D%20Bug%20AND%20resolution%20%3D%20Fixed%20AND%20fixVersion%20%3D%204.0.0%20ORDER%20BY%20component%20DESC%2C%20key%20ASC)
+
+## What's new in 3.10
+
+Key new features of the 3.10 Java driver release:
+
+### Native asynchronous TLS/SSL support
+
+Previously, any use of our asynchronous drivers with TLS/SSl required the use of Netty.  In 3.10, the driver supports asynchronous
+TLS/SSL natively, so no third-party dependency is required. To accomplish this, the driver contains code vendored from
+[https://github.com/marianobarrios/tls-channel](https://github.com/marianobarrios/tls-channel).
+
+### Operational improvements
+
+When connecting with the `mongodb+srv` protocol, the driver now polls DNS for changes to the SRV records when connected to a sharded 
+cluster.  See 
+[Polling SRV Records for Mongos Discovery](https://github.com/mongodb/specifications/blob/master/source/polling-srv-records-for-mongos-discovery/polling-srv-records-for-mongos-discovery.rst) 
+for more details.
+
+When retryable writes are enabled, the driver now outputs log messages at DEBUG level when a retryable write is attempted.  See
+[JAVA-2964](https://jira.mongodb.org/browse/JAVA-2964) for more details.
+
+### Codec Improvements
+
+The driver now mutates the id property of a POJO, when inserting a document via a POJO with a `null` id property of type `ObjectId`. See
+[JAVA-2674](https://jira.mongodb.org/browse/JAVA-2674) for more details.
+
+### JNDI
+
+The driver now offers a JNDI `ObjectFactory` implementation for creating instances of `com.mongodb.client.MongoClient`, the interface
+introduced in version 3.7 of the driver. See [JAVA-2883](https://jira.mongodb.org/browse/JAVA-2883) for more details.
+
+### Full list of changes
+
+* [New Features](https://jira.mongodb.org/issues/?jql=project%20%3D%20JAVA%20AND%20issuetype%20%3D%20%22New%20Feature%22%20AND%20fixVersion%20%3D%203.10.0%20ORDER%20BY%20component%20DESC%2C%20key%20ASC)
+* [Improvements](https://jira.mongodb.org/issues/?jql=project%20%3D%20JAVA%20AND%20issuetype%20%3D%20Improvement%20AND%20fixVersion%20%3D%203.10.0%20ORDER%20BY%20component%20DESC%2C%20key%20ASC)
+* [Bug Fixes](https://jira.mongodb.org/issues/?jql=project%20%3D%20JAVA%20AND%20issuetype%20%3D%20Bug%20AND%20fixVersion%20%3D%203.10.0%20ORDER%20BY%20component%20DESC%2C%20key%20ASC)
+
+## What's new in 3.9
+
+Key new features of the 3.9 Java driver release:
+
+### Android support
+
+The `mongodb-driver-embedded-android` module supports interaction with a MongoDB server running on an Android device.
+See [MongoDB Mobile](https://www.mongodb.com/products/mobile) for more details.
+
+### Deprecations
+
+Numerous classes and methods have been deprecated in the 3.9 release in preparation for a major 4.0 release.  See the 
+[Upgrading Guide]({{<ref "upgrading.md">}}) for more information.
+
 ## What's New in 3.8
 
 Key new features of the 3.8 Java driver release:
 
 ### Transactions
 
-The Java driver now provides support for executing CRUD operations within a transaction (requires MongoDB 4.0).
+The Java driver now provides support for executing CRUD operations within a transaction (requires MongoDB 4.0).  See the 
+[Transactions and MongoDB Drivers](https://docs.mongodb.com/master/core/transactions/#transactions-and-mongodb-drivers) section
+of the documentation and select the `Java (Sync)` tab.
+
+### Change Stream enhancements
+
+The Java driver now provides support for opening a change stream against an entire database, via new 
+[`MongoDatabase.watch`]({{<apiref "com/mongodb/client/MongoDatabase.html">}}) methods, or an 
+entire deployment, via new [`MongoClient.watch`]({{<apiref "com/mongodb/client/MongoClient.html">}}) methods. See 
+[Change Streams]({{<ref "driver/tutorials/change-streams.md">}}) for further details.
 
 ### SCRAM-256 Authentication Mechanism
 
@@ -67,7 +205,7 @@ Connecting to Unix domain sockets is done via the [`ConnectionString`]({{< apire
 
 ### PojoCodec improvements
 
-The 3.7 release brings support for `Map<String, Object>` to the `PojoCodec`.
+The 3.7 release brings support for `Map<String, Object>` to the POJO `Codec`.
 
 ### JSR-310 Instant, LocalDate & LocalDateTime support
 
@@ -127,7 +265,7 @@ Key new features of the 3.6 Java driver release:
 The 3.6 release adds support for [change streams](http://dochub.mongodb.org/core/changestreams).
 
 * [Change Stream Quick Start]({{<ref "driver/tutorials/change-streams.md">}}) 
-* [Change Stream Quick Start (Async)]({{<ref "driver-async/tutorials/change-streams.md">}})
+* [Change Stream Quick Start (Async)]({{<ref "driver-reactive/tutorials/change-streams.md">}})
 
 ### Retryable writes
 
@@ -139,7 +277,7 @@ The 3.6 release adds support for retryable writes using the `retryWrites` option
 The 3.6 release adds support for compression of messages to and from appropriately configured MongoDB servers:
 
 * [Compression Tutorial]({{<ref "driver/tutorials/compression.md">}})
-* [Compression Tutorial (Async)]({{<ref "driver-async/tutorials/compression.md">}})
+* [Compression Tutorial (Async)]({{<ref "driver-reactive/tutorials/compression.md">}})
 
 ### Causal consistency
               
@@ -151,9 +289,9 @@ The 3.6 release adds support for [causally consistency](http://dochub.mongodb.or
 The 3.6 release adds support for application-configured control over server selection, using the `serverSelector` option in
 [`MongoClientOptions`]({{<apiref "com/mongodb/MongoClientOptions">}}).
 
-### PojoCodec improvements
+### POJO Codec improvements
 
-The 3.6 release brings new improvements to the `PojoCodec`:
+The 3.6 release brings new improvements to the POJO `Codec`:
 
   * Improved sub-class and discriminator support.
   * Support for custom Collection and Map implementations.
@@ -175,7 +313,7 @@ The 3.5 release adds support for [POJO](https://en.wikipedia.org/wiki/Plain_old_
 used by the synchronous and asynchronous drivers.  See the POJO Quick start pages for details.
 
 * [POJO Quick Start]({{<ref "driver/getting-started/quick-start-pojo.md">}}) 
-* [POJO Quick Start (Async)]({{<ref "driver-async/getting-started/quick-start-pojo.md">}})
+* [POJO Quick Start (Async)]({{<ref "driver-reactive/getting-started/quick-start-pojo.md">}})
 * [POJO Reference]({{<ref "bson/pojos.md">}}) 
 
 ### Improved JSON support
@@ -192,14 +330,14 @@ See the [JSON reference]({{<ref "bson/extended-json.md">}}) for details.
 The 3.5 release adds support for monitoring connection pool-related events.
 
 * [Connection pool monitoring in the driver]({{<ref "driver/reference/monitoring.md">}})
-* [Connection pool monitoring in the async driver]({{<ref "driver-async/reference/monitoring.md">}})
+* [Connection pool monitoring in the async driver]({{<ref "driver-reactive/reference/monitoring.md">}})
 
 ### SSLContext configuration
 
 The 3.5 release supports overriding the default `javax.net.ssl.SSLContext` used for SSL connections to MongoDB.
 
 * [SSL configuration in the driver]({{<ref "driver/tutorials/ssl.md">}})
-* [SSL configuration in the async driver]({{<ref "driver-async/tutorials/ssl.md">}})
+* [SSL configuration in the async driver]({{<ref "driver-reactive/tutorials/ssl.md">}})
 
 ### KeepAlive configuration deprecated
 

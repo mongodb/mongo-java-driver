@@ -69,17 +69,25 @@ public final class Conventions {
      */
     public static final Convention USE_GETTERS_FOR_SETTERS = new ConventionUseGettersAsSettersImpl();
 
+
+    /**
+     * A convention that sets the IdGenerator if the id property is either a {@link org.bson.types.ObjectId} or
+     * {@link org.bson.BsonObjectId}.
+     *
+     * @since 3.10
+     */
+    public static final Convention OBJECT_ID_GENERATORS = new ConventionObjectIdGeneratorsImpl();
+
     /**
      * The default conventions list
      */
     public static final List<Convention> DEFAULT_CONVENTIONS =
-            unmodifiableList(asList(CLASS_AND_PROPERTY_CONVENTION, ANNOTATION_CONVENTION));
+            unmodifiableList(asList(CLASS_AND_PROPERTY_CONVENTION, ANNOTATION_CONVENTION, OBJECT_ID_GENERATORS));
 
     /**
      * An empty conventions list
      */
     public static final List<Convention> NO_CONVENTIONS = Collections.emptyList();
-
 
     private Conventions() {
     }

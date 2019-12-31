@@ -33,6 +33,8 @@ import org.bson.codecs.pojo.entities.GenericTreeModel;
 import org.bson.codecs.pojo.entities.InterfaceBasedModel;
 import org.bson.codecs.pojo.entities.InterfaceModelImpl;
 import org.bson.codecs.pojo.entities.InterfaceUpperBoundsModelAbstractImpl;
+import org.bson.codecs.pojo.entities.InterfaceWithDefaultMethodModelImpl;
+import org.bson.codecs.pojo.entities.InterfaceWithOverrideDefaultMethodModelImpl;
 import org.bson.codecs.pojo.entities.MultipleBoundsModel;
 import org.bson.codecs.pojo.entities.MultipleLevelGenericModel;
 import org.bson.codecs.pojo.entities.NestedFieldReusingClassTypeParameter;
@@ -45,12 +47,14 @@ import org.bson.codecs.pojo.entities.NestedMultipleLevelGenericModel;
 import org.bson.codecs.pojo.entities.NestedReusedGenericsModel;
 import org.bson.codecs.pojo.entities.NestedSelfReferentialGenericHolderModel;
 import org.bson.codecs.pojo.entities.NestedSelfReferentialGenericModel;
+import org.bson.codecs.pojo.entities.NestedSimpleIdModel;
 import org.bson.codecs.pojo.entities.PrimitivesModel;
 import org.bson.codecs.pojo.entities.PropertyReusingClassTypeParameter;
 import org.bson.codecs.pojo.entities.PropertySelectionModel;
 import org.bson.codecs.pojo.entities.PropertyWithMultipleTypeParamsModel;
 import org.bson.codecs.pojo.entities.ReusedGenericsModel;
 import org.bson.codecs.pojo.entities.SelfReferentialGenericModel;
+import org.bson.codecs.pojo.entities.ShapeHolderCircleModel;
 import org.bson.codecs.pojo.entities.ShapeHolderModel;
 import org.bson.codecs.pojo.entities.ShapeModelAbstract;
 import org.bson.codecs.pojo.entities.ShapeModelCircle;
@@ -58,11 +62,16 @@ import org.bson.codecs.pojo.entities.ShapeModelRectangle;
 import org.bson.codecs.pojo.entities.SimpleEnum;
 import org.bson.codecs.pojo.entities.SimpleEnumModel;
 import org.bson.codecs.pojo.entities.SimpleGenericsModel;
+import org.bson.codecs.pojo.entities.SimpleIdImmutableModel;
+import org.bson.codecs.pojo.entities.SimpleIdModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.SimpleNestedPojoModel;
+import org.bson.codecs.pojo.entities.TreeWithIdModel;
 import org.bson.codecs.pojo.entities.UpperBoundsConcreteModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationBsonPropertyIdModel;
+import org.bson.codecs.pojo.entities.conventions.BsonIgnoreDuplicatePropertyMultipleTypes;
 import org.bson.codecs.pojo.entities.conventions.BsonIgnoreInvalidMapModel;
+import org.bson.codecs.pojo.entities.conventions.BsonIgnoreSyntheticProperty;
 import org.bson.codecs.pojo.entities.conventions.CollectionDiscriminatorAbstractClassesModel;
 import org.bson.codecs.pojo.entities.conventions.CollectionDiscriminatorInterfacesModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorAllFinalFieldsModel;
@@ -75,12 +84,14 @@ import org.bson.codecs.pojo.entities.conventions.CreatorInSuperClassModelImpl;
 import org.bson.codecs.pojo.entities.conventions.CreatorMethodModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorNoArgsConstructorModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorNoArgsMethodModel;
+import org.bson.codecs.pojo.entities.DuplicateAnnotationAllowedModel;
 import org.bson.codecs.pojo.entities.conventions.InterfaceModel;
 import org.bson.codecs.pojo.entities.conventions.InterfaceModelImplA;
 import org.bson.codecs.pojo.entities.conventions.InterfaceModelImplB;
 import org.bson.codecs.pojo.entities.conventions.Subclass1Model;
 import org.bson.codecs.pojo.entities.conventions.Subclass2Model;
 import org.bson.codecs.pojo.entities.conventions.SuperClassModel;
+import org.bson.types.ObjectId;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -136,6 +147,16 @@ public final class PojoRoundTripTest extends PojoTestCase {
         data.add(new TestData("Interfaced based model", new InterfaceModelImpl("a", "b"),
                 getPojoCodecProviderBuilder(InterfaceModelImpl.class),
                 "{'propertyA': 'a', 'propertyB': 'b'}"));
+
+        data.add(new TestData("Interfaced based model with default method", new InterfaceWithDefaultMethodModelImpl("a",
+                "c"),
+                getPojoCodecProviderBuilder(InterfaceWithDefaultMethodModelImpl.class),
+                "{'propertyA': 'a', 'propertyC': 'c'}"));
+
+        data.add(new TestData("Interfaced based model with override default method",
+                new InterfaceWithOverrideDefaultMethodModelImpl("a", "c-override"),
+                getPojoCodecProviderBuilder(InterfaceWithOverrideDefaultMethodModelImpl.class),
+                "{'propertyA': 'a', 'propertyC': 'c-override'}"));
 
         data.add(new TestData("Interfaced based model with bound", new InterfaceUpperBoundsModelAbstractImpl("someName",
                 new InterfaceModelImpl("a", "b")),
@@ -379,6 +400,51 @@ public final class PojoRoundTripTest extends PojoTestCase {
         data.add(new TestData("AnnotationBsonPropertyIdModel", new AnnotationBsonPropertyIdModel(99L),
                 getPojoCodecProviderBuilder(AnnotationBsonPropertyIdModel.class),
                 "{'id': {'$numberLong': '99' }}"));
+
+        data.add(new TestData("Shape model - circle",
+                new ShapeHolderCircleModel(getShapeModelCircle()),
+                getPojoCodecProviderBuilder(ShapeModelCircle.class, ShapeHolderCircleModel.class),
+                "{'shape': {'_t': 'org.bson.codecs.pojo.entities.ShapeModelCircle', 'color': 'orange', 'radius': 4.2}}"));
+
+        data.add(new TestData("BsonIgnore synthentic property",
+                new BsonIgnoreSyntheticProperty("string value"),
+                getPojoCodecProviderBuilder(BsonIgnoreSyntheticProperty.class).conventions(Conventions.DEFAULT_CONVENTIONS),
+                "{stringField: 'string value'}"));
+
+        data.add(new TestData("SimpleIdModel with existing id",
+                new SimpleIdModel(new ObjectId("123412341234123412341234"), 42, "myString"),
+                getPojoCodecProviderBuilder(SimpleIdModel.class).conventions(Conventions.DEFAULT_CONVENTIONS),
+                "{'_id': {'$oid': '123412341234123412341234'}, 'integerField': 42, 'stringField': 'myString'}"));
+
+
+        data.add(new TestData("SimpleIdImmutableModel with existing id",
+                new SimpleIdImmutableModel(new ObjectId("123412341234123412341234"), 42, "myString"),
+                getPojoCodecProviderBuilder(SimpleIdImmutableModel.class).conventions(Conventions.DEFAULT_CONVENTIONS),
+                "{'_id': {'$oid': '123412341234123412341234'}, 'integerField': 42, 'stringField': 'myString'}"));
+
+        data.add(new TestData("NestedSimpleIdModel",
+                new NestedSimpleIdModel(new SimpleIdModel(42, "myString")),
+                getPojoCodecProviderBuilder(NestedSimpleIdModel.class, SimpleIdModel.class).conventions(Conventions.DEFAULT_CONVENTIONS),
+                "{'nestedSimpleIdModel': {'integerField': 42, 'stringField': 'myString'}}"));
+
+        data.add(new TestData("TreeWithIdModel",
+                new TreeWithIdModel(new ObjectId("123412341234123412341234"), "top",
+                        new TreeWithIdModel("left-1", new TreeWithIdModel("left-2"), null), new TreeWithIdModel("right-1")),
+                getPojoCodecProviderBuilder(TreeWithIdModel.class).conventions(Conventions.DEFAULT_CONVENTIONS),
+                "{'_id': {'$oid': '123412341234123412341234'}, 'level': 'top',"
+                        + "'left': {'level': 'left-1', 'left': {'level': 'left-2'}},"
+                        + "'right': {'level': 'right-1'}}"));
+
+        data.add(new TestData("DuplicateAnnotationAllowedModel",
+                new DuplicateAnnotationAllowedModel("abc"),
+                getPojoCodecProviderBuilder(DuplicateAnnotationAllowedModel.class).conventions(Conventions.DEFAULT_CONVENTIONS),
+                "{'_id': 'abc'}"));
+
+        data.add(new TestData("BsonIgnore duplicate property with multiple types",
+                new BsonIgnoreDuplicatePropertyMultipleTypes("string value"),
+                getPojoCodecProviderBuilder(BsonIgnoreDuplicatePropertyMultipleTypes.class).conventions(Conventions.DEFAULT_CONVENTIONS),
+                "{stringField: 'string value'}"));
+
         return data;
     }
 

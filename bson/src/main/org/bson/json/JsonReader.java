@@ -18,7 +18,6 @@ package org.bson.json;
 
 
 import org.bson.AbstractBsonReader;
-import org.bson.BSONException;
 import org.bson.BsonBinary;
 import org.bson.BsonBinarySubType;
 import org.bson.BsonContextType;
@@ -35,6 +34,7 @@ import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
 
+import java.io.Reader;
 import java.text.DateFormat;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
@@ -66,16 +66,33 @@ public class JsonReader extends AbstractBsonReader {
     private final JsonScanner scanner;
     private JsonToken pushedToken;
     private Object currentValue;
-    private Mark mark;
 
     /**
-     * Constructs a new instance with the given JSON string.
+     * Constructs a new instance with the given string positioned at a JSON object.
      *
-     * @param json     A string representation of a JSON.
+     * @param json     A string representation of a JSON object.
      */
     public JsonReader(final String json) {
+        this(new JsonScanner(json));
+    }
+
+    /**
+     * Constructs a new instance with the given {@code Reader} positioned at a JSON object.
+     *
+     * <p>
+     * The application is responsible for closing the {@code Reader}.
+     * </p>
+     *
+     * @param reader A reader representation of a JSON object.
+     * @since 3.11
+     */
+    public JsonReader(final Reader reader) {
+        this(new JsonScanner(reader));
+    }
+
+    private JsonReader(final JsonScanner scanner) {
         super();
-        scanner = new JsonScanner(json);
+        this.scanner = scanner;
         setContext(new Context(null, BsonContextType.TOP_LEVEL));
     }
 
@@ -947,42 +964,46 @@ public class JsonReader extends AbstractBsonReader {
 
         Mark mark = new Mark();
 
-        verifyToken(JsonTokenType.COLON);
+        try {
+            verifyToken(JsonTokenType.COLON);
 
-        if (firstKey.equals("$binary")) {
-            JsonToken nextToken = popToken();
-            if (nextToken.getType() == JsonTokenType.BEGIN_OBJECT) {
-                JsonToken nameToken = popToken();
-                String firstNestedKey = nameToken.getValue(String.class);
-                byte[] data;
-                byte type;
-                if (firstNestedKey.equals("base64")) {
-                    verifyToken(JsonTokenType.COLON);
-                    data = Base64.decode(readStringFromExtendedJson());
-                    verifyToken(JsonTokenType.COMMA);
-                    verifyString("subType");
-                    verifyToken(JsonTokenType.COLON);
-                    type = readBinarySubtypeFromExtendedJson();
-                } else if (firstNestedKey.equals("subType")) {
-                    verifyToken(JsonTokenType.COLON);
-                    type = readBinarySubtypeFromExtendedJson();
-                    verifyToken(JsonTokenType.COMMA);
-                    verifyString("base64");
-                    verifyToken(JsonTokenType.COLON);
-                    data = Base64.decode(readStringFromExtendedJson());
+            if (firstKey.equals("$binary")) {
+                JsonToken nextToken = popToken();
+                if (nextToken.getType() == JsonTokenType.BEGIN_OBJECT) {
+                    JsonToken nameToken = popToken();
+                    String firstNestedKey = nameToken.getValue(String.class);
+                    byte[] data;
+                    byte type;
+                    if (firstNestedKey.equals("base64")) {
+                        verifyToken(JsonTokenType.COLON);
+                        data = Base64.decode(readStringFromExtendedJson());
+                        verifyToken(JsonTokenType.COMMA);
+                        verifyString("subType");
+                        verifyToken(JsonTokenType.COLON);
+                        type = readBinarySubtypeFromExtendedJson();
+                    } else if (firstNestedKey.equals("subType")) {
+                        verifyToken(JsonTokenType.COLON);
+                        type = readBinarySubtypeFromExtendedJson();
+                        verifyToken(JsonTokenType.COMMA);
+                        verifyString("base64");
+                        verifyToken(JsonTokenType.COLON);
+                        data = Base64.decode(readStringFromExtendedJson());
+                    } else {
+                        throw new JsonParseException("Unexpected key for $binary: " + firstNestedKey);
+                    }
+                    verifyToken(JsonTokenType.END_OBJECT);
+                    verifyToken(JsonTokenType.END_OBJECT);
+                    return new BsonBinary(type, data);
                 } else {
-                    throw new JsonParseException("Unexpected key for $binary: " + firstNestedKey);
+                    mark.reset();
+                    return visitLegacyBinaryExtendedJson(firstKey);
                 }
-                verifyToken(JsonTokenType.END_OBJECT);
-                verifyToken(JsonTokenType.END_OBJECT);
-                return new BsonBinary(type, data);
             } else {
                 mark.reset();
                 return visitLegacyBinaryExtendedJson(firstKey);
             }
-        } else {
-            mark.reset();
-            return visitLegacyBinaryExtendedJson(firstKey);
+        } finally {
+            mark.discard();
         }
     }
 
@@ -1018,6 +1039,8 @@ public class JsonReader extends AbstractBsonReader {
         } catch (NumberFormatException e) {
             mark.reset();
             return null;
+        } finally {
+            mark.discard();
         }
     }
 
@@ -1142,6 +1165,8 @@ public class JsonReader extends AbstractBsonReader {
         } catch (JsonParseException e) {
             extendedJsonMark.reset();
             return null;
+        } finally {
+            extendedJsonMark.discard();
         }
     }
 
@@ -1329,27 +1354,9 @@ public class JsonReader extends AbstractBsonReader {
         return oid;
     }
 
-    @Deprecated
-    @Override
-    public void mark() {
-        if (mark != null) {
-            throw new BSONException("A mark already exists; it needs to be reset before creating a new one");
-        }
-        mark = new Mark();
-    }
-
     @Override
     public BsonReaderMark getMark() {
         return new Mark();
-    }
-
-    @Override
-    public void reset() {
-        if (mark == null) {
-            throw new BSONException("trying to reset a mark before creating it");
-        }
-        mark.reset();
-        mark = null;
     }
 
     @Override
@@ -1360,21 +1367,25 @@ public class JsonReader extends AbstractBsonReader {
     protected class Mark extends AbstractBsonReader.Mark {
         private final JsonToken pushedToken;
         private final Object currentValue;
-        private final int position;
+        private final int markPos;
 
         protected Mark() {
             super();
             pushedToken = JsonReader.this.pushedToken;
             currentValue = JsonReader.this.currentValue;
-            position = JsonReader.this.scanner.getBufferPosition();
+            markPos = JsonReader.this.scanner.mark();
         }
 
         public void reset() {
             super.reset();
             JsonReader.this.pushedToken = pushedToken;
             JsonReader.this.currentValue = currentValue;
-            JsonReader.this.scanner.setBufferPosition(position);
+            JsonReader.this.scanner.reset(markPos);
             JsonReader.this.setContext(new Context(getParentContext(), getContextType()));
+        }
+
+        public void discard() {
+            JsonReader.this.scanner.discard(markPos);
         }
     }
 

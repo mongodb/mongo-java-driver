@@ -17,9 +17,10 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
-import com.mongodb.async.AsyncBatchCursor;
+import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.Collation;
@@ -30,7 +31,6 @@ import com.mongodb.client.model.DropIndexOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
-import com.mongodb.client.model.FindOptions;
 import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneOptions;
@@ -39,10 +39,9 @@ import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
-import com.mongodb.operation.AsyncReadOperation;
-import com.mongodb.operation.AsyncWriteOperation;
-import com.mongodb.operation.MapReduceAsyncBatchCursor;
-import com.mongodb.operation.MapReduceStatistics;
+import com.mongodb.internal.client.model.AggregationLevel;
+import com.mongodb.internal.client.model.CountStrategy;
+import com.mongodb.internal.client.model.FindOptions;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -52,25 +51,47 @@ import java.util.List;
  * This class is NOT part of the public API. It may change at any time without notification.
  */
 public final class AsyncOperations<TDocument> {
-    private final Operations<TDocument> operations;
+    private Operations<TDocument> operations;
 
     public AsyncOperations(final Class<TDocument> documentClass, final ReadPreference readPreference,
                            final CodecRegistry codecRegistry) {
-        this(null, documentClass, readPreference, codecRegistry, WriteConcern.ACKNOWLEDGED, false);
+        this(null, documentClass, readPreference, codecRegistry, ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED, false, true);
+    }
+
+    public AsyncOperations(final Class<TDocument> documentClass, final ReadPreference readPreference,
+                           final CodecRegistry codecRegistry, final boolean retryReads) {
+        this(null, documentClass, readPreference, codecRegistry, ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED, false, retryReads);
     }
 
     public AsyncOperations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
                            final CodecRegistry codecRegistry) {
-        this(namespace, documentClass, readPreference, codecRegistry, WriteConcern.ACKNOWLEDGED, false);
+        this(namespace, documentClass, readPreference, codecRegistry, ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED, false, true);
     }
 
     public AsyncOperations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
-                           final CodecRegistry codecRegistry, final WriteConcern writeConcern, final boolean retryWrites) {
-        this.operations = new Operations<TDocument>(namespace, documentClass, readPreference, codecRegistry, writeConcern, retryWrites);
+                           final CodecRegistry codecRegistry, final boolean retryReads) {
+        this(namespace, documentClass, readPreference, codecRegistry, ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED, false, retryReads);
     }
 
-    public AsyncReadOperation<Long> count(final Bson filter, final CountOptions options) {
-        return operations.count(filter, options);
+    public AsyncOperations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
+                           final CodecRegistry codecRegistry, final WriteConcern writeConcern) {
+        this(namespace, documentClass, readPreference, codecRegistry, ReadConcern.DEFAULT, writeConcern, false, true);
+    }
+
+    public AsyncOperations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
+                           final CodecRegistry codecRegistry, final ReadConcern readConcern, final WriteConcern writeConcern) {
+        this(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern, false, true);
+    }
+
+    public AsyncOperations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
+                           final CodecRegistry codecRegistry, final ReadConcern readConcern, final WriteConcern writeConcern,
+                           final boolean retryWrites, final boolean retryReads) {
+        this.operations = new Operations<TDocument>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
+                retryWrites, retryReads);
+    }
+
+    public AsyncReadOperation<Long> count(final Bson filter, final CountOptions options, final CountStrategy countStrategy) {
+        return operations.count(filter, options, countStrategy);
     }
 
     public <TResult> AsyncReadOperation<AsyncBatchCursor<TResult>> findFirst(final Bson filter, final Class<TResult> resultClass,
@@ -99,15 +120,18 @@ public final class AsyncOperations<TDocument> {
                                                                              final long maxTimeMS, final long maxAwaitTimeMS,
                                                                              final Integer batchSize, final Collation collation,
                                                                              final Bson hint, final String comment,
-                                                                             final Boolean allowDiskUse, final Boolean useCursor) {
+                                                                             final Boolean allowDiskUse,
+                                                                             final AggregationLevel aggregationLevel) {
         return operations.aggregate(pipeline, resultClass, maxTimeMS, maxAwaitTimeMS, batchSize, collation, hint, comment, allowDiskUse,
-                useCursor);
+                aggregationLevel);
     }
 
     public AsyncWriteOperation<Void> aggregateToCollection(final List<? extends Bson> pipeline, final long maxTimeMS,
                                                            final Boolean allowDiskUse, final Boolean bypassDocumentValidation,
-                                                           final Collation collation, final Bson hint, final String comment) {
-        return operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint, comment);
+                                                           final Collation collation, final Bson hint, final String comment,
+                                                           final AggregationLevel aggregationLevel) {
+        return operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint, comment,
+                aggregationLevel);
     }
 
     public AsyncWriteOperation<MapReduceStatistics> mapReduceToCollection(final String databaseName, final String collectionName,
@@ -146,6 +170,11 @@ public final class AsyncOperations<TDocument> {
         return operations.findOneAndUpdate(filter, update, options);
     }
 
+    public AsyncWriteOperation<TDocument> findOneAndUpdate(final Bson filter, final List<? extends Bson> update,
+                                                           final FindOneAndUpdateOptions options) {
+        return operations.findOneAndUpdate(filter, update, options);
+    }
+
     public AsyncWriteOperation<BulkWriteResult> insertOne(final TDocument document, final InsertOneOptions options) {
         return operations.insertOne(document, options);
     }
@@ -167,7 +196,17 @@ public final class AsyncOperations<TDocument> {
         return operations.updateOne(filter, update, updateOptions);
     }
 
+    public AsyncWriteOperation<BulkWriteResult> updateOne(final Bson filter, final List<? extends Bson> update,
+                                                          final UpdateOptions updateOptions) {
+        return operations.updateOne(filter, update, updateOptions);
+    }
+
     public AsyncWriteOperation<BulkWriteResult> updateMany(final Bson filter, final Bson update, final UpdateOptions updateOptions) {
+        return operations.updateMany(filter, update, updateOptions);
+    }
+
+    public AsyncWriteOperation<BulkWriteResult> updateMany(final Bson filter, final List<? extends Bson> update,
+                                                           final UpdateOptions updateOptions) {
         return operations.updateMany(filter, update, updateOptions);
     }
 
@@ -206,8 +245,9 @@ public final class AsyncOperations<TDocument> {
 
     public <TResult> AsyncReadOperation<AsyncBatchCursor<TResult>> listCollections(final String databaseName,
                                                                                    final Class<TResult> resultClass, final Bson filter,
+                                                                                   final boolean collectionNamesOnly,
                                                                                    final Integer batchSize, final long maxTimeMS) {
-        return operations.listCollections(databaseName, resultClass, filter, batchSize, maxTimeMS);
+        return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, batchSize, maxTimeMS);
     }
 
     public <TResult> AsyncReadOperation<AsyncBatchCursor<TResult>> listDatabases(final Class<TResult> resultClass, final Bson filter,

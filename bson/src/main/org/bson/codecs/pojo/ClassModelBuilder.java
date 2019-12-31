@@ -45,6 +45,7 @@ import static org.bson.codecs.pojo.PojoBuilderHelper.stateNotNull;
 public class ClassModelBuilder<T> {
     static final String ID_PROPERTY_NAME = "_id";
     private final List<PropertyModelBuilder<?>> propertyModelBuilders = new ArrayList<PropertyModelBuilder<?>>();
+    private IdGenerator<?> idGenerator;
     private InstanceCreatorFactory<T> instanceCreatorFactory;
     private Class<T> type;
     private Map<String, TypeParameterMap> propertyNameToTypeParameterMap = emptyMap();
@@ -57,6 +58,26 @@ public class ClassModelBuilder<T> {
 
     ClassModelBuilder(final Class<T> type) {
         configureClassModelBuilder(this, notNull("type", type));
+    }
+
+    /**
+     * Sets the IdGenerator for the ClassModel
+     *
+     * @param idGenerator the IdGenerator
+     * @return this
+     * @since 3.10
+     */
+    public ClassModelBuilder<T> idGenerator(final IdGenerator<?> idGenerator) {
+        this.idGenerator = idGenerator;
+        return this;
+    }
+
+    /**
+     * @return the IdGenerator for the ClassModel, or null if not set
+     * @since 3.10
+     */
+    public IdGenerator<?> getIdGenerator() {
+        return idGenerator;
     }
 
     /**
@@ -271,10 +292,8 @@ public class ClassModelBuilder<T> {
             }
         }
         validatePropertyModels(type.getSimpleName(), propertyModels);
-
-
         return new ClassModel<T>(type, propertyNameToTypeParameterMap, instanceCreatorFactory, discriminatorEnabled, discriminatorKey,
-                discriminator, idPropertyModel, unmodifiableList(propertyModels));
+                discriminator, IdPropertyModelHolder.create(type, idPropertyModel, idGenerator), unmodifiableList(propertyModels));
     }
 
     @Override
@@ -302,6 +321,9 @@ public class ClassModelBuilder<T> {
         Map<String, Integer> propertyWriteNameMap = new HashMap<String, Integer>();
 
         for (PropertyModel<?> propertyModel : propertyModels) {
+            if (propertyModel.hasError()) {
+                throw new CodecConfigurationException(propertyModel.getError());
+            }
             checkForDuplicates("property", propertyModel.getName(), propertyNameMap, declaringClass);
             if (propertyModel.isReadable()) {
                 checkForDuplicates("read property", propertyModel.getReadName(), propertyReadNameMap, declaringClass);

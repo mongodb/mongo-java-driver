@@ -67,7 +67,7 @@ public final class Sorts {
     }
 
     /**
-     * Create a sort specification for an ascending sort on the given fields.
+     * Create a sort specification for a descending sort on the given fields.
      *
      * @param fieldNames the field names, which must contain at least one
      * @return the sort specification
@@ -78,7 +78,7 @@ public final class Sorts {
     }
 
     /**
-     * Create a sort specification for an ascending sort on the given fields.
+     * Create a sort specification for a descending sort on the given fields.
      *
      * @param fieldNames the field names, which must contain at least one
      * @return the sort specification
@@ -146,6 +146,25 @@ public final class Sorts {
                 }
             }
             return combinedDocument;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            CompoundSort that = (CompoundSort) o;
+
+            return sorts != null ? sorts.equals(that.sorts) : that.sorts == null;
+        }
+
+        @Override
+        public int hashCode() {
+            return sorts != null ? sorts.hashCode() : 0;
         }
 
         @Override

@@ -17,12 +17,10 @@
 package org.bson.codecs.jsr310
 
 import org.bson.codecs.configuration.CodecRegistry
-import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 class Jsr310CodecProviderSpecification extends Specification {
 
-    @IgnoreIf({ javaVersion < 1.8 })
     def 'should provide a codec for all JSR-310 classes'() {
         given:
         def codecRegistry = Stub(CodecRegistry)
@@ -38,15 +36,5 @@ class Jsr310CodecProviderSpecification extends Specification {
             java.time.LocalDateTime,
             java.time.LocalTime,
         ]
-    }
-
-    @IgnoreIf({ javaVersion > 1.7 })
-    def 'should not error when used on pre java 8'() {
-        given:
-        def codecRegistry = Stub(CodecRegistry)
-        def provider = new Jsr310CodecProvider()
-
-        expect:
-        provider.get(Integer, codecRegistry) == null
     }
 }

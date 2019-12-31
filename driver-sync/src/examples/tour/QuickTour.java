@@ -16,24 +16,18 @@
 
 package tour;
 
-import com.mongodb.Block;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.BulkWriteOptions;
-import com.mongodb.client.model.DeleteOneModel;
-import com.mongodb.client.model.InsertOneModel;
-import com.mongodb.client.model.ReplaceOneModel;
-import com.mongodb.client.model.UpdateOneModel;
-import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static com.mongodb.client.model.Accumulators.sum;
 import static com.mongodb.client.model.Aggregates.group;
@@ -54,7 +48,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
 /**
- * The QuickTour code example see: https://mongodb.github.io/mongo-java-driver/3.0/getting-started
+ * The QuickTour code example
  */
 public class QuickTour {
     /**
@@ -100,7 +94,7 @@ public class QuickTour {
             documents.add(new Document("i", i));
         }
         collection.insertMany(documents);
-        System.out.println("total # of documents after inserting 100 small ones (should be 101) " + collection.count());
+        System.out.println("total # of documents after inserting 100 small ones (should be 101) " + collection.countDocuments());
 
         // find first
         myDoc = collection.find().first();
@@ -151,9 +145,9 @@ public class QuickTour {
         System.out.println(myDoc.toJson());
 
         // now use a range query to get a larger subset
-        Block<Document> printBlock = new Block<Document>() {
+        Consumer<Document> printBlock = new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 System.out.println(document.toJson());
             }
         };
@@ -193,23 +187,8 @@ public class QuickTour {
         DeleteResult deleteResult = collection.deleteMany(gte("i", 100));
         System.out.println(deleteResult.getDeletedCount());
 
-        collection.drop();
-
-        // ordered bulk writes
-        List<WriteModel<Document>> writes = new ArrayList<WriteModel<Document>>();
-        writes.add(new InsertOneModel<Document>(new Document("_id", 4)));
-        writes.add(new InsertOneModel<Document>(new Document("_id", 5)));
-        writes.add(new InsertOneModel<Document>(new Document("_id", 6)));
-        writes.add(new UpdateOneModel<Document>(new Document("_id", 1), new Document("$set", new Document("x", 2))));
-        writes.add(new DeleteOneModel<Document>(new Document("_id", 2)));
-        writes.add(new ReplaceOneModel<Document>(new Document("_id", 3), new Document("_id", 3).append("x", 4)));
-
-        collection.bulkWrite(writes);
-
-        collection.drop();
-
-        collection.bulkWrite(writes, new BulkWriteOptions().ordered(false));
-        //collection.find().forEach(printBlock);
+        // Create Index
+        collection.createIndex(new Document("i", 1));
 
         // Clean up
         database.drop();

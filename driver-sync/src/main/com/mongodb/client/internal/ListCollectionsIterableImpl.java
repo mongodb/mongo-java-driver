@@ -18,12 +18,12 @@ package com.mongodb.client.internal;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListCollectionsIterable;
+import com.mongodb.internal.operation.BatchCursor;
+import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.lang.Nullable;
-import com.mongodb.operation.BatchCursor;
-import com.mongodb.operation.ReadOperation;
-import com.mongodb.client.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -33,18 +33,27 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-final class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> implements ListCollectionsIterable<TResult> {
+class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> implements ListCollectionsIterable<TResult> {
     private final SyncOperations<BsonDocument> operations;
     private final String databaseName;
     private final Class<TResult> resultClass;
 
     private Bson filter;
+    private final boolean collectionNamesOnly;
     private long maxTimeMS;
 
-    ListCollectionsIterableImpl(@Nullable final ClientSession clientSession, final String databaseName, final Class<TResult> resultClass,
-                                final CodecRegistry codecRegistry, final ReadPreference readPreference, final OperationExecutor executor) {
-        super(clientSession, executor, ReadConcern.DEFAULT, readPreference); // TODO: read concern?
-        this.operations = new SyncOperations<BsonDocument>(BsonDocument.class, readPreference, codecRegistry);
+    ListCollectionsIterableImpl(@Nullable final ClientSession clientSession, final String databaseName, final boolean collectionNamesOnly,
+                                final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
+                                final OperationExecutor executor) {
+        this(clientSession, databaseName, collectionNamesOnly, resultClass, codecRegistry, readPreference, executor, true);
+    }
+
+    ListCollectionsIterableImpl(@Nullable final ClientSession clientSession, final String databaseName, final boolean collectionNamesOnly,
+                                final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
+                                final OperationExecutor executor, final boolean retryReads) {
+        super(clientSession, executor, ReadConcern.DEFAULT, readPreference, retryReads); // TODO: read concern?
+        this.collectionNamesOnly = collectionNamesOnly;
+        this.operations = new SyncOperations<BsonDocument>(BsonDocument.class, readPreference, codecRegistry, retryReads);
         this.databaseName = notNull("databaseName", databaseName);
         this.resultClass = notNull("resultClass", resultClass);
     }
@@ -71,6 +80,6 @@ final class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResu
 
     @Override
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
-        return operations.listCollections(databaseName, resultClass, filter, getBatchSize(), maxTimeMS);
+        return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, getBatchSize(), maxTimeMS);
     }
 }

@@ -33,7 +33,7 @@
 
     <!-- Deliberately ignoring return value of CountDownLatch.await -->
     <Match>
-        <Class name="com.mongodb.connection.BaseCluster"/>
+        <Class name="com.mongodb.internal.connection.BaseCluster"/>
         <Bug pattern="RV_RETURN_VALUE_IGNORED"/>
     </Match>
 
@@ -99,7 +99,6 @@
         <Bug pattern="DE_MIGHT_IGNORE"/>
     </Match>
 
-
     <!-- Test exclusions -->
     <!-- All bugs in test classes, except for JUnit-specific bugs -->
     <Match>
@@ -128,7 +127,7 @@
     </Match>
 
     <Match>
-        <Class name="~com.mongodb.connection.AbstractByteBufBsonDocument.*"/>
+        <Class name="~com.mongodb.internal.connection.AbstractByteBufBsonDocument.*"/>
         <Bug pattern="NP_BOOLEAN_RETURN_NULL"/>
     </Match>
 
@@ -138,8 +137,30 @@
     </Match>
 
     <Match>
-        <Class name="~com.mongodb.async.client.ClientSession.*"/>
+        <Class name="~com.mongodb.reactivestreams.client.ClientSession.*"/>
         <Bug pattern="NM_SAME_SIMPLE_NAME_AS_INTERFACE"/>
+    </Match>
+
+    <Match>
+        <Class name="~com.mongodb.internal.async.client.ClientSession.*"/>
+        <Bug pattern="NM_SAME_SIMPLE_NAME_AS_INTERFACE"/>
+    </Match>
+
+    <Match>
+        <Class name="~com.mongodb.async.client.internal.AsyncCryptConnection.*"/>
+        <Bug pattern="RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"/>
+    </Match>
+
+    <!-- Spotbugs assumes that SSLSocket#getSSLParameters never returns null, when that is not the case for all JDKs -->
+    <Match>
+        <Class name="com.mongodb.internal.connection.SocketStreamHelper"/>
+        <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
+    </Match>
+
+    <Match>
+        <Class name="com.mongodb.client.internal.CryptConnection"/>
+        <Method name="retain"/>
+        <Bug pattern="RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"/>
     </Match>
 
 </FindBugsFilter>

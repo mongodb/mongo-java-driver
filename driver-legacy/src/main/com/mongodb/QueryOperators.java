@@ -62,18 +62,6 @@ public class QueryOperators {
     public static final String SEARCH = "$search";
     public static final String LANGUAGE = "$language";
 
-    // meta query operators (to be implemented in QueryBuilder)
-    public static final String RETURN_KEY = "$returnKey";
-    public static final String MAX_SCAN = "$maxScan";
-    public static final String ORDER_BY = "$orderby";
-    public static final String EXPLAIN = "$explain";
-    public static final String SNAPSHOT = "$snapshot";
-    public static final String MIN = "$min";
-    public static final String MAX = "$max";
-    public static final String SHOW_DISK_LOC = "$showDiskLoc";
-    public static final String HINT = "$hint";
-    public static final String COMMENT = "$comment";
-
     private QueryOperators() {
     }
 }

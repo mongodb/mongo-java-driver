@@ -24,6 +24,14 @@ package org.bson;
  * @since 3.0
  */
 public enum UuidRepresentation {
+
+    /**
+     * An unspecified representation of UUID.  Essentially, this is the null representation value.
+     *
+     * @since 3.12
+     */
+    UNSPECIFIED,
+
     /**
      * The canonical representation of UUID
      *

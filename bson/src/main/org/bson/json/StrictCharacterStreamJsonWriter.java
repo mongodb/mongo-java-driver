@@ -98,7 +98,6 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
     @Override
     public void writeBoolean(final String name, final boolean value) {
         notNull("name", name);
-        notNull("value", value);
         writeName(name);
         writeBoolean(value);
     }
@@ -136,7 +135,7 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
     @Override
     public void writeName(final String name) {
         notNull("name", name);
-        checkPreconditions(State.NAME);
+        checkState(State.NAME);
 
         if (context.hasElements) {
             write(",");
@@ -144,18 +143,18 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
         if (settings.isIndent()) {
             write(settings.getNewLineCharacters());
             write(context.indentation);
-        } else {
+        } else if (context.hasElements){
             write(" ");
         }
         writeStringHelper(name);
-        write(" : ");
+        write(": ");
 
         state = State.VALUE;
     }
 
     @Override
     public void writeBoolean(final boolean value) {
-        checkPreconditions(State.VALUE);
+        checkState(State.VALUE);
         preWriteValue();
         write(value ? "true" : "false");
         setNextState();
@@ -164,7 +163,7 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
     @Override
     public void writeNumber(final String value) {
         notNull("value", value);
-        checkPreconditions(State.VALUE);
+        checkState(State.VALUE);
         preWriteValue();
         write(value);
         setNextState();
@@ -173,7 +172,7 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
     @Override
     public void writeString(final String value) {
         notNull("value", value);
-        checkPreconditions(State.VALUE);
+        checkState(State.VALUE);
         preWriteValue();
         writeStringHelper(value);
         setNextState();
@@ -182,7 +181,7 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
     @Override
     public void writeRaw(final String value) {
         notNull("value", value);
-        checkPreconditions(State.VALUE);
+        checkState(State.VALUE);
         preWriteValue();
         write(value);
         setNextState();
@@ -190,7 +189,7 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
 
     @Override
     public void writeNull() {
-        checkPreconditions(State.VALUE);
+        checkState(State.VALUE);
         preWriteValue();
         write("null");
         setNextState();
@@ -198,7 +197,9 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
 
     @Override
     public void writeStartObject() {
-        checkPreconditions(State.INITIAL, State.VALUE);
+        if (state != State.INITIAL && state != State.VALUE) {
+            throw new BsonInvalidOperationException("Invalid state " + state);
+        }
         preWriteValue();
         write("{");
         context = new StrictJsonContext(context, JsonContextType.DOCUMENT, settings.getIndentCharacters());
@@ -215,13 +216,11 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
 
     @Override
     public void writeEndObject() {
-        checkPreconditions(State.NAME);
+        checkState(State.NAME);
 
         if (settings.isIndent() && context.hasElements) {
             write(settings.getNewLineCharacters());
             write(context.parentContext.indentation);
-        } else {
-            write(" ");
         }
         write("}");
         context = context.parentContext;
@@ -234,12 +233,16 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
 
     @Override
     public void writeEndArray() {
-        checkPreconditions(State.VALUE);
+        checkState(State.VALUE);
 
         if (context.contextType != JsonContextType.ARRAY) {
             throw new BsonInvalidOperationException("Can't end an array if not in an array");
         }
 
+        if (settings.isIndent() && context.hasElements) {
+            write(settings.getNewLineCharacters());
+            write(context.parentContext.indentation);
+        }
         write("]");
         context = context.parentContext;
         if (context.contextType == JsonContextType.TOP_LEVEL) {
@@ -251,11 +254,11 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
 
     /**
      * Return true if the output has been truncated due to exceeding the length specified in
-     * {@link StrictCharacterStreamJsonWriterSettings#maxLength}.
+     * {@link StrictCharacterStreamJsonWriterSettings#getMaxLength()}.
      *
      * @return true if the output has been truncated
      * @since 3.7
-     * @see StrictCharacterStreamJsonWriterSettings#maxLength
+     * @see StrictCharacterStreamJsonWriterSettings#getMaxLength()
      */
     public boolean isTruncated() {
         return isTruncated;
@@ -276,7 +279,13 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
     private void preWriteValue() {
         if (context.contextType == JsonContextType.ARRAY) {
             if (context.hasElements) {
-                write(", ");
+                write(",");
+            }
+            if (settings.isIndent()) {
+                write(settings.getNewLineCharacters());
+                write(context.indentation);
+            } else if (context.hasElements) {
+                write(" ");
             }
         }
         context.hasElements = true;
@@ -381,20 +390,10 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
         }
     }
 
-    private void checkPreconditions(final State... validStates) {
-        if (!checkState(validStates)) {
+    private void checkState(final State requiredState) {
+        if (state != requiredState) {
             throw new BsonInvalidOperationException("Invalid state " + state);
         }
-    }
-
-    private boolean checkState(final State... validStates) {
-        for (State cur : validStates) {
-            if (cur == state) {
-                return true;
-            }
-        }
-        return false;
-
     }
 
     private void throwBSONException(final IOException e) {

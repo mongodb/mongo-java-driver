@@ -1,5 +1,6 @@
 /*
  * Copyright 2008-present MongoDB, Inc.
+ * Copyright (c) 2008-2014 Atlassian Pty Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +61,25 @@ public final class Assertions {
         if (!condition) {
             throw new IllegalArgumentException("state should be: " + name);
         }
+    }
+
+    /**
+     * Throw IllegalArgumentException if the condition if false, otherwise return the value.  This is useful when arguments must be checked
+     * within an expression, as when using {@code this} to call another constructor, which must be the first line of the calling
+     * constructor.
+     *
+     * @param <T>       the value type
+     * @param name      the name of the state that is being checked
+     * @param value     the value of the argument
+     * @param condition the condition about the parameter to check
+     * @return          the value
+     * @throws java.lang.IllegalArgumentException if the condition is false
+     */
+    public static <T> T isTrueArgument(final String name, final T value, final boolean condition) {
+        if (!condition) {
+            throw new IllegalArgumentException("state should be: " + name);
+        }
+        return value;
     }
 
     /**

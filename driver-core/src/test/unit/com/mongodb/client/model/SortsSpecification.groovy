@@ -16,21 +16,17 @@
 
 package com.mongodb.client.model
 
-import org.bson.BsonDocument
-import org.bson.codecs.BsonValueCodecProvider
-import org.bson.codecs.ValueCodecProvider
-import org.bson.conversions.Bson
+
 import spock.lang.Specification
 
+import static com.mongodb.client.model.BsonHelper.toBson
 import static com.mongodb.client.model.Sorts.ascending
 import static com.mongodb.client.model.Sorts.descending
 import static com.mongodb.client.model.Sorts.metaTextScore
 import static com.mongodb.client.model.Sorts.orderBy
 import static org.bson.BsonDocument.parse
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
 class SortsSpecification extends Specification {
-    def registry = fromProviders([new BsonValueCodecProvider(), new ValueCodecProvider()])
 
     def 'ascending'() {
         expect:
@@ -61,18 +57,38 @@ class SortsSpecification extends Specification {
 
     def 'should create string representation for simple sorts'() {
         expect:
-        ascending('x', 'y').toString() == '{ "x" : 1, "y" : 1 }'
-        descending('x', 'y').toString() == '{ "x" : -1, "y" : -1 }'
-        metaTextScore('x').toString() == '{ "x" : { "$meta" : "textScore" } }'
+        ascending('x', 'y').toString() == '{"x": 1, "y": 1}'
+        descending('x', 'y').toString() == '{"x": -1, "y": -1}'
+        metaTextScore('x').toString() == '{"x": {"$meta": "textScore"}}'
     }
 
     def 'should create string representation for compound sorts'() {
         expect:
         orderBy(ascending('x', 'y'), descending('a', 'b')).toString() ==
-                'Compound Sort{sorts=[{ "x" : 1, "y" : 1 }, { "a" : -1, "b" : -1 }]}'
+                'Compound Sort{sorts=[{"x": 1, "y": 1}, {"a": -1, "b": -1}]}'
     }
 
-    def toBson(Bson bson) {
-        bson.toBsonDocument(BsonDocument, registry)
+    def 'should test equals for CompoundSort'() {
+        expect:
+        orderBy([ascending('x'), descending('y')])
+                .equals(orderBy([ascending('x'), descending('y')]))
+        orderBy(ascending('x'), descending('y'))
+                .equals(orderBy(ascending('x'), descending('y')))
+        orderBy(ascending('x'), descending('y'), descending('x'))
+                .equals(orderBy(ascending('x'), descending('y'), descending('x')))
+        orderBy(ascending('x', 'y'), descending('a', 'b'))
+                .equals(orderBy(ascending('x', 'y'), descending('a', 'b')))
+    }
+
+    def 'should test hashCode for CompoundSort'() {
+        expect:
+        orderBy([ascending('x'), descending('y')]).hashCode() ==
+                orderBy([ascending('x'), descending('y')]).hashCode()
+        orderBy(ascending('x'), descending('y')).hashCode() ==
+                orderBy(ascending('x'), descending('y')).hashCode()
+        orderBy(ascending('x'), descending('y'), descending('x')).hashCode() ==
+                orderBy(ascending('x'), descending('y'), descending('x')).hashCode()
+        orderBy(ascending('x', 'y'), descending('a', 'b')).hashCode() ==
+                orderBy(ascending('x', 'y'), descending('a', 'b')).hashCode()
     }
 }

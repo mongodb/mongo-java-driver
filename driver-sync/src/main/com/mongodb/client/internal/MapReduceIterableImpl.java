@@ -20,19 +20,19 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
-import com.mongodb.binding.ReadBinding;
+import com.mongodb.client.ClientSession;
 import com.mongodb.client.MapReduceIterable;
 import com.mongodb.client.model.Collation;
-import com.mongodb.client.model.FindOptions;
 import com.mongodb.client.model.MapReduceAction;
+import com.mongodb.internal.binding.ReadBinding;
+import com.mongodb.internal.client.model.FindOptions;
+import com.mongodb.internal.operation.BatchCursor;
+import com.mongodb.internal.operation.MapReduceBatchCursor;
+import com.mongodb.internal.operation.MapReduceStatistics;
+import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.SyncOperations;
+import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.lang.Nullable;
-import com.mongodb.operation.BatchCursor;
-import com.mongodb.operation.MapReduceBatchCursor;
-import com.mongodb.operation.MapReduceStatistics;
-import com.mongodb.operation.ReadOperation;
-import com.mongodb.operation.WriteOperation;
-import com.mongodb.client.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -70,8 +70,9 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
                           final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
                           final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
                           final String mapFunction, final String reduceFunction) {
-        super(clientSession, executor, readConcern, readPreference);
-        this.operations = new SyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry, writeConcern, false);
+        super(clientSession, executor, readConcern, readPreference, false);
+        this.operations = new SyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
+                false, false);
         this.namespace = notNull("namespace", namespace);
         this.resultClass = notNull("resultClass", resultClass);
         this.mapFunction = notNull("mapFunction", mapFunction);

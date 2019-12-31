@@ -16,20 +16,17 @@
 
 package com.mongodb.client.model.changestream
 
-import com.mongodb.MongoNamespace
 import org.bson.BsonDocument
 import org.bson.BsonDocumentReader
 import org.bson.BsonDocumentWriter
-import org.bson.BsonInt32
+import org.bson.BsonInt64
 import org.bson.BsonReader
 import org.bson.BsonTimestamp
 import org.bson.Document
-import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.ValueCodecProvider
-import org.bson.codecs.pojo.PojoCodecProvider
 import spock.lang.Specification
 
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
@@ -38,8 +35,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
 
     def 'should round trip ChangeStreamDocument successfully'() {
         given:
-        def codecRegistry = fromProviders([new DocumentCodecProvider(), new BsonValueCodecProvider(), new ValueCodecProvider(),
-                                           PojoCodecProvider.builder().automatic(true).build()])
+        def codecRegistry = fromProviders([new DocumentCodecProvider(), new ValueCodecProvider()])
         def codec = new ChangeStreamDocumentCodec(clazz, codecRegistry)
 
         when:
@@ -57,33 +53,279 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
 
         where:
         changeStreamDocument << [
-                new ChangeStreamDocument<Document>(
+                new ChangeStreamDocument<Document>(OperationType.INSERT,
                         BsonDocument.parse('{token: true}'),
-                        new MongoNamespace('databaseName.collectionName'),
-                        Document.parse('{key: "value for fullDocument"}'),
-                        new BsonDocument('_id', new BsonInt32(1)),
-                        new BsonTimestamp(1234, 2),
-                        OperationType.INSERT,
-                        null
-                ),
-                new ChangeStreamDocument<BsonDocument>(
-                        BsonDocument.parse('{token: true}'),
-                        new MongoNamespace('databaseName.collectionName'),
-                        BsonDocument.parse('{key: "value for fullDocument"}'),
-                        new BsonDocument('_id', new BsonInt32(2)),
+                        BsonDocument.parse('{db: "engineering", coll: "users"}'),
                         null,
-                        OperationType.UPDATE,
-                        new UpdateDescription(['a', 'b'], BsonDocument.parse('{c: 1}'))
-                )
+                        Document.parse('{_id: 1, userName: "alice123", name: "Alice"}'),
+                        BsonDocument.parse('{userName: "alice123", _id: 1}'),
+                        new BsonTimestamp(1234, 2)
+                        ,
+                        null, null, null
+                ),
+                new ChangeStreamDocument<Document>(OperationType.UPDATE,
+                        BsonDocument.parse('{token: true}'),
+                        BsonDocument.parse('{db: "engineering", coll: "users"}'),
+                        null,
+                        null,
+                        BsonDocument.parse('{_id: 1}'),
+                        new BsonTimestamp(1234, 2)
+                        ,
+                        new UpdateDescription(['phoneNumber'], BsonDocument.parse('{email: "alice@10gen.com"}')),
+                        null, null
+                ),
+                new ChangeStreamDocument<Document>(OperationType.UPDATE,
+                        BsonDocument.parse('{token: true}'),
+                        BsonDocument.parse('{db: "engineering", coll: "users"}'),
+                        null,
+                        Document.parse('{_id: 1, userName: "alice123", name: "Alice"}'),
+                        BsonDocument.parse('{_id: 1}'),
+                        new BsonTimestamp(1234, 2)
+                        ,
+                        new UpdateDescription(['phoneNumber'], BsonDocument.parse('{email: "alice@10gen.com"}')),
+                        null, null
+                ),
+                new ChangeStreamDocument<Document>(OperationType.REPLACE,
+                        BsonDocument.parse('{token: true}'),
+                        BsonDocument.parse('{db: "engineering", coll: "users"}'),
+                        null,
+                        Document.parse('{_id: 1, userName: "alice123", name: "Alice"}'),
+                        BsonDocument.parse('{_id: 1}'),
+                        new BsonTimestamp(1234, 2)
+                        ,
+                        null, null, null
+                ),
+                new ChangeStreamDocument<Document>(OperationType.DELETE,
+                        BsonDocument.parse('{token: true}'),
+                        BsonDocument.parse('{db: "engineering", coll: "users"}'),
+                        null,
+                        null,
+                        BsonDocument.parse('{_id: 1}'),
+                        new BsonTimestamp(1234, 2)
+                        ,
+                        null, null, null
+                ),
+                new ChangeStreamDocument<Document>(OperationType.DROP,
+                        BsonDocument.parse('{token: true}'),
+                        BsonDocument.parse('{db: "engineering", coll: "users"}'),
+                        null,
+                        null,
+                        null,
+                        new BsonTimestamp(1234, 2)
+                        ,
+                        null, null, null
+                ),
+                new ChangeStreamDocument<Document>(OperationType.RENAME,
+                        BsonDocument.parse('{token: true}'),
+                        BsonDocument.parse('{db: "engineering", coll: "users"}'),
+                        BsonDocument.parse('{db: "engineering", coll: "people"}'),
+                        null,
+                        null,
+                        new BsonTimestamp(1234, 2)
+                        ,
+                        null, null, null
+                ),
+                new ChangeStreamDocument<Document>(OperationType.DROP_DATABASE,
+                        BsonDocument.parse('{token: true}'),
+                        BsonDocument.parse('{db: "engineering"}'),
+                        null,
+                        null,
+                        null,
+                        new BsonTimestamp(1234, 2)
+                        ,
+                        null, null, null
+                ),
+                new ChangeStreamDocument<Document>(OperationType.INVALIDATE,
+                        BsonDocument.parse('{token: true}'),
+                        null,
+                        null,
+                        null,
+                        null,
+                        new BsonTimestamp(1234, 2)
+                        ,
+                        null, null, null
+                ),
+                new ChangeStreamDocument<Document>(OperationType.INSERT,
+                        BsonDocument.parse('{token: true}'),
+                        BsonDocument.parse('{db: "engineering", coll: "users"}'),
+                        null,
+                        Document.parse('{_id: 1, userName: "alice123", name: "Alice"}'),
+                        BsonDocument.parse('{userName: "alice123", _id: 1}'),
+                        new BsonTimestamp(1234, 2),
+                        null,
+                        new BsonInt64(1),
+                        BsonDocument.parse('{id: 1, uid: 2}')
+                ),
         ]
-        clazz << [Document, BsonDocument]
+        clazz << [Document, Document, Document, Document, Document, Document, Document, Document, Document, Document
+        ]
         json << [
-            '''{_id: {token: true}, ns: {db: "databaseName", coll: "collectionName"}, documentKey : {_id : 1},
-                fullDocument: {key: "value for fullDocument"}, clusterTime: { "$timestamp" : { "t" : 1234, "i" : 2 } }
-                operationType: "insert"}''',
-            '''{_id: {token: true}, ns: {db: "databaseName", coll: "collectionName"}, documentKey : {_id : 2},
-                fullDocument: {key: "value for fullDocument"},
-                operationType: "update", updateDescription: {removedFields: ["a", "b"], updatedFields: {c: 1}}}''',
+                '''
+{
+   _id: { token : true },
+   operationType: 'insert',
+   clusterTime: { "$timestamp" : { "t" : 1234, "i" : 2 } },
+   ns: {
+      db: 'engineering',
+      coll: 'users'
+   },
+   documentKey: {
+      userName: 'alice123',
+      _id: 1
+   },
+   fullDocument: {
+      _id: 1,
+      userName: 'alice123',
+      name: 'Alice'
+   }
+}
+''',
+                '''
+{
+   _id: { token : true },
+   operationType: 'update',
+   clusterTime: { "$timestamp" : { "t" : 1234, "i" : 2 } },
+   ns: {
+      db: 'engineering',
+      coll: 'users'
+   },
+   documentKey: {
+      _id: 1
+   },
+   updateDescription: {
+      updatedFields: {
+         email: 'alice@10gen.com'
+      },
+      removedFields: ['phoneNumber']
+   }
+}
+''',
+                '''
+{
+   _id: { token : true },
+   operationType: 'update',
+   clusterTime: { "$timestamp" : { "t" : 1234, "i" : 2 } },
+   ns: {
+      db: 'engineering',
+      coll: 'users'
+   },
+   documentKey: {
+      _id: 1
+   },
+   updateDescription: {
+      updatedFields: {
+         email: 'alice@10gen.com'
+      },
+      removedFields: ['phoneNumber']
+   },
+   fullDocument: {
+      _id: 1,
+      name: 'Alice',
+      userName: 'alice123'
+   }
+}
+''',
+                '''
+{
+   _id: { token : true },
+   operationType: 'replace',
+   clusterTime: { "$timestamp" : { "t" : 1234, "i" : 2 } },
+   ns: {
+      db: 'engineering',
+      coll: 'users'
+   },
+   documentKey: {
+      _id: 1
+   },
+   fullDocument: {
+      _id: 1,
+      userName: 'alice123',
+      name: 'Alice'
+   }
+}
+''',
+                '''
+{
+   _id: { token : true },
+   operationType: 'delete',
+   clusterTime: { "$timestamp" : { "t" : 1234, "i" : 2 } },
+   ns: {
+      db: 'engineering',
+      coll: 'users'
+   },
+   documentKey: {
+      _id: 1
+   }
+}
+''',
+                '''
+{
+   _id: { token : true },
+   operationType: 'drop',
+   clusterTime: { "$timestamp" : { "t" : 1234, "i" : 2 } },
+   ns: {
+      db: 'engineering',
+      coll: 'users'
+   }
+}
+''',
+                '''
+{
+   _id: { token : true },
+   operationType: 'rename',
+   clusterTime: { "$timestamp" : { "t" : 1234, "i" : 2 } },
+   ns: {
+      db: 'engineering',
+      coll: 'users'
+   },
+   to: {
+      db: 'engineering',
+      coll: 'people'
+   }
+}
+''',
+                '''
+{
+   _id: { token : true },
+   operationType: 'dropDatabase',
+   clusterTime: { "$timestamp" : { "t" : 1234, "i" : 2 } },
+   ns: {
+      db: 'engineering'
+   }
+}
+''',
+                '''
+{
+   _id: { token : true },
+   operationType: 'invalidate',
+   clusterTime: { "$timestamp" : { "t" : 1234, "i" : 2 } }
+}
+''',
+                '''
+{
+   _id: { token : true },
+   operationType: 'insert',
+   clusterTime: { "$timestamp" : { "t" : 1234, "i" : 2 } },
+   ns: {
+      db: 'engineering',
+      coll: 'users'
+   },
+   documentKey: {
+      userName: 'alice123',
+      _id: 1
+   },
+   fullDocument: {
+      _id: 1,
+      userName: 'alice123',
+      name: 'Alice'
+   },
+   txnNumber: NumberLong('1'),
+   lsid: {
+      id: 1,
+      uid: 2
+   }
+}
+''',
         ]
     }
 }

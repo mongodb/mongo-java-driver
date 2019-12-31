@@ -136,14 +136,20 @@ Before you can use a POJO with the driver, you need to configure the [`CodecRegi
 to handle the translation to and from [`bson`]({{< relref "bson/index.md" >}}) for your POJOs. The simplest way to do that is to use the 
 [`PojoCodecProvider.builder()`]({{< apiref "org/bson/codecs/pojo/PojoCodecProvider.html">}}) to create and configure a `CodecProvider`.
 
-The following example will combine the default codec registry, with the `PojoCodecProvider` configured to automatically create `PojoCodecs`:
+The following example will combine the default codec registry, with the `PojoCodecProvider` configured to automatically create POJO 
+`Codec`s:
+
 ```java
-CodecRegistry pojoCodecRegistry = fromRegistries(MongoClient.getDefaultCodecRegistry(),
+CodecRegistry pojoCodecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
                 fromProviders(PojoCodecProvider.builder().automatic(true).build()));
 ```
 
-Note: The registries are checked in order until one returns a codec for the requested class. 
+{{% note %}}
+
+The registries are checked in order until one returns a codec for the requested class. 
 The `DefaultCodecRegistry` should be first in the list, and the `PojoCodecProvider` should always be the last `CodecProvider` since it can provide a codec for almost any class.
+
+{{% /note %}}
 
 ### Using the CodecRegistry
 
@@ -172,8 +178,8 @@ collection = collection.withCodecRegistry(pojoCodecRegistry);
 
 ## Inserting a POJO into MongoDB
 
-The codec registry will automatically try to create a `PojoCodec` for unknown classes. This allows you to use POJOs out of the 
-box without any extra configuration. See the [Bson POJO page]({{< ref "bson/pojos.md" >}}) for information on configuring `PojoCodecs`.
+The codec registry will automatically try to create a POJO `Codec` for unknown classes. This allows you to use POJOs out of the 
+box without any extra configuration. See the [Bson POJO page]({{< ref "bson/pojos.md" >}}) for information on configuring POJO `Codec`s.
 
 Before you can insert a POJO into MongoDB, you need a `MongoCollection` instance configured with the Pojo's type:
 
@@ -183,7 +189,7 @@ MongoCollection<Person> collection = database.getCollection("people", Person.cla
 
 ### Insert a Person
 
-To insert a Person into the collection, you can use the collection's [`insertOne()`]({{< apiref "com/mongodb/client/MongoCollection.html#insertOne-TDocument-" >}}) method.
+To insert a Person into the collection, you can use the collection's [`insertOne()`]({{< apiref "com/mongodb/client/MongoCollection.html#insertOne(TDocument)" >}}) method.
 
 ```java
 Person ada = new Person("Ada Byron", 20, new Address("St James Square", "London", "W1"));
@@ -193,7 +199,7 @@ collection.insertOne(ada);
 
 ### Insert Many Persons
 
-To add multiple Person instances, you can use the collection's [`insertMany()`]({{< apiref "com/mongodb/client/MongoCollection.html#insertMany-java.util.List-" >}}) method 
+To add multiple Person instances, you can use the collection's [`insertMany()`]({{< apiref "com/mongodb/client/MongoCollection.html#insertMany(java.util.List)" >}}) method 
 which takes a list of `Person`.
 
 The following example will add multiple Person instances into the collection:
@@ -210,7 +216,7 @@ collection.insertMany(people);
 
 ## Query the Collection
 
-To query the collection, you can use the collection's [`find()`]({{< apiref "com/mongodb/client/MongoCollection.html#find--">}}) method. 
+To query the collection, you can use the collection's [`find()`]({{< apiref "com/mongodb/client/MongoCollection.html#find()">}}) method. 
 
 The following example prints all the Person instances in the collection:
 ```java
@@ -224,7 +230,7 @@ Block<Person> printBlock = new Block<Person>() {
 collection.find().forEach(printBlock);
 ```
 
-The example uses the [`forEach`]({{ <apiref "com/mongodb/client/MongoIterable.html#forEach-com.mongodb.Block-">}}) method on the ``FindIterable`` 
+The example uses the [`forEach`]({{ <apiref "com/mongodb/client/MongoIterable.html#forEach(com.mongodb.Block)">}}) method on the ``FindIterable`` 
 object to apply a block to each Person and outputs the following:
 
 ```bash
@@ -236,8 +242,8 @@ Person{id='591dbc2550852fa685b3ad1a', name='Timothy Berners-Lee', age=61, addres
 
 ## Specify a Query Filter
 
-To query for Person instance that match certain conditions, pass a filter object to the [`find()`]({{< apiref "com/mongodb/client/MongoCollection.html#find--">}}) method. 
-To facilitate creating filter objects, Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper.
+To query for Person instance that match certain conditions, pass a filter object to the [`find()`]({{< apiref "com/mongodb/client/MongoCollection.html#find()">}}) method. 
+To facilitate creating filter objects, the Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html ">}}) helper.
 
 {{% note class="important" %}}
 When querying POJOs you *must* query against the document field name and not the Pojo's property name. 
@@ -247,7 +253,7 @@ By default they are the same but it is possible to change how POJO property name
 
 ### Get A Single Person That Matches a Filter
 
-For example, to find the first `Person` in the database that lives in `Wimborne` pass an [`eq`]({{<apiref  "com/mongodb/client/model/Filters.html#eq-java.lang.String-TItem-">}}) 
+For example, to find the first `Person` in the database that lives in `Wimborne` pass an [`eq`]({{<apiref  "com/mongodb/client/model/Filters.html#eq(java.lang.String,TItem)">}}) 
 filter object to specify the equality condition:
 
 ```java
@@ -271,11 +277,11 @@ collection.find(gt("age", 30)).forEach(printBlock);
 
 ## Update Documents
 
-To update documents in a collection, you can use the collection's [`updateOne`]({{<apiref "com/mongodb/client/MongoCollection.html#updateOne-org.bson.conversions.Bson-org.bson.conversions.Bson-">}})  and  [`updateMany`]({{<apiref "com/mongodb/async/client/MongoCollection.html#updateMany-org.bson.conversions.Bson-org.bson.conversions.Bson-">}}) methods.
+To update documents in a collection, you can use the collection's [`updateOne`]({{<apiref "com/mongodb/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)">}})  and  [`updateMany`]({{<apiref "com/mongodb/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) methods.
 
 Pass to the methods:
 
-- A filter object to determine the document or documents to update. To facilitate creating filter objects, Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper. To specify an empty filter (i.e. match all Persons in a collection), use an empty [`Document`]({{< apiref "org/bson/Document.html" >}}) object.
+- A filter object to determine the document or documents to update. To facilitate creating filter objects, the Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper. To specify an empty filter (i.e. match all Persons in a collection), use an empty [`Document`]({{< apiref "org/bson/Document.html" >}}) object.
 
 - An update document that specifies the modifications. For a list of the available operators, see [update operators]({{<docsref "reference/operator/update-field">}}).
 
@@ -283,7 +289,7 @@ The update methods return an [`UpdateResult`]({{<apiref "com/mongodb/client/resu
 
 ### Update a Single Person
 
-To update at most a single `Person`, use the [`updateOne`]({{<apiref "com/mongodb/client/MongoCollection.html#updateOne-org.bson.conversions.Bson-org.bson.conversions.Bson-">}}) method.
+To update at most a single `Person`, use the [`updateOne`]({{<apiref "com/mongodb/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) method.
 
 The following example updates `Ada Byron` setting their age to `23` and name to `Ada Lovelace`:
 
@@ -293,7 +299,7 @@ collection.updateOne(eq("name", "Ada Byron"), combine(set("age", 23), set("name"
 
 ### Update Multiple Persons
 
-To update all Persons that match a filter, use the [`updateMany`]({{<apiref "com/mongodb/async/client/MongoCollection.html#updateMany-org.bson.conversions.Bson-org.bson.conversions.Bson-">}}) method.
+To update all Persons that match a filter, use the [`updateMany`]({{<apiref "com/mongodb/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) method.
 
 The following example sets the zip field to `null` for all documents that have a `zip` value:
 
@@ -305,7 +311,7 @@ System.out.println(updateResult.getModifiedCount());
 
 ### Replace a Single Person
 
-An alternative method to change an existing `Person`, would be to use the [`replaceOne`]({{<apiref "com/mongodb/client/MongoCollection.html#replaceOne-org.bson.conversions.Bson-TDocument-">}}) method.
+An alternative method to change an existing `Person`, would be to use the [`replaceOne`]({{<apiref "com/mongodb/client/MongoCollection.html#replaceOne(org.bson.conversions.Bson,TDocument)">}}) method.
 
 The following example replaces the `Ada Lovelace` back to the original document:
 
@@ -315,16 +321,16 @@ collection.replaceOne(eq("name", "Ada Lovelace"), ada);
 
 ## Delete Documents
 
-To delete documents from a collection, you can use the collection's [`deleteOne`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteOne-org.bson.conversions.Bson-">}}) and [`deleteMany`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteMany-org.bson.conversions.Bson-">}}) methods.
+To delete documents from a collection, you can use the collection's [`deleteOne`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteOne(org.bson.conversions.Bson)">}}) and [`deleteMany`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteMany(org.bson.conversions.Bson)">}}) methods.
 
-Pass to the methods a filter object to determine the document or documents to delete. To facilitate creating filter objects, Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper. To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "org/bson/Document.html" >}}) object.
+Pass to the methods a filter object to determine the document or documents to delete. To facilitate creating filter objects, the Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper. To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "org/bson/Document.html" >}}) object.
 
 The delete methods return a [`DeleteResult`]({{< apiref "com/mongodb/client/result/DeleteResult.html">}})
 which provides information about the operation including the number of documents deleted.
 
 ### Delete a Single Person That Matches a Filter
 
-To delete at most a single `Person` that matches a filter, use the [`deleteOne`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteOne-org.bson.conversions.Bson-">}}) method:
+To delete at most a single `Person` that matches a filter, use the [`deleteOne`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteOne(org.bson.conversions.Bson)">}}) method:
 
 The following example deletes at most one `Person` who lives in `Wimborne`:
 
@@ -334,7 +340,7 @@ collection.deleteOne(eq("address.city", "Wimborne"));
 
 ### Delete All Persons That Match a Filter
 
-To delete multiple Persons matching a filter use the [`deleteMany`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteMany-org.bson.conversions.Bson-">}}) method.
+To delete multiple Persons matching a filter use the [`deleteMany`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteMany(org.bson.conversions.Bson)">}}) method.
 
 The following example deletes all Persons that live in `London`:
 

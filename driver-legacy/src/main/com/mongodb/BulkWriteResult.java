@@ -21,7 +21,6 @@ import java.util.List;
 /**
  * The result of a successful bulk write operation.
  *
- * @mongodb.server.release 2.6
  * @mongodb.driver.manual reference/command/delete/#delete-command-output Delete Result
  * @mongodb.driver.manual reference/command/update/#delete-command-output Delete Result
  * @mongodb.driver.manual reference/command/insert/#delete-command-output Delete Result
@@ -67,28 +66,12 @@ public abstract class BulkWriteResult {
     public abstract int getRemovedCount();
 
     /**
-     * Returns true if the server was able to provide a count of modified documents.  If this method returns false (which can happen if the
-     * server is not at least version 2.6) then the {@code getModifiedCount} method will throw {@code UnsupportedOperationException}.
-     *
-     * @return true if modifiedCount is available
-     * @throws java.lang.UnsupportedOperationException if the write was unacknowledged.
-     * @see WriteConcern#UNACKNOWLEDGED
-     * @see #getModifiedCount()
-     */
-    public abstract boolean isModifiedCountAvailable();
-
-    /**
      * <p>Returns the number of documents modified by the write operation.  This only applies to updates or replacements, and will only
      * count documents that were actually changed; for example, if you set the value of some field , and the field already has that value,
      * that will not count as a modification.</p>
      *
-     * <p>If the server is not able to provide a count of modified documents (which can happen if the server is not at least version 2.6),
-     * then this method will throw an {@code UnsupportedOperationException} </p>
-     *
      * @return the number of documents modified by the write operation
-     * @throws java.lang.UnsupportedOperationException if the write was unacknowledged or if no modified count is available
      * @see WriteConcern#UNACKNOWLEDGED
-     * @see #isModifiedCountAvailable()
      */
     public abstract int getModifiedCount();
 

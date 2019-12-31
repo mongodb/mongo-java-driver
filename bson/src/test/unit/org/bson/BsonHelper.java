@@ -34,7 +34,7 @@ public final class BsonHelper {
     private static final Date DATE = new Date();
     private static final ObjectId OBJECT_ID = new ObjectId();
 
-    private static List<BsonValue> getBsonValues() {
+    public static List<BsonValue> getBsonValues() {
         return asList(
                 new BsonNull(),
                 new BsonInt32(42),

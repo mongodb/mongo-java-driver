@@ -28,39 +28,13 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 3.0
  */
 public class CreateCollectionOptions {
-    private boolean autoIndex = true;
     private long maxDocuments;
     private boolean capped;
     private long sizeInBytes;
-    private Boolean usePowerOf2Sizes;
     private Bson storageEngineOptions;
     private IndexOptionDefaults indexOptionDefaults = new IndexOptionDefaults();
     private ValidationOptions validationOptions = new ValidationOptions();
     private Collation collation;
-
-    /**
-     * Gets if auto-index is enabled
-     *
-     * @return true if auto-index is enabled
-     * @deprecated this option was deprecated in MongoDB 3.2 and removed in MongodB 4.0
-     */
-    @Deprecated
-    public boolean isAutoIndex() {
-        return autoIndex;
-    }
-
-    /**
-     * Gets if auto-index is to be enabled on the collection
-     *
-     * @param autoIndex true if auto-index is enabled
-     * @return this
-     * @deprecated this option was deprecated in MongoDB 3.2 and removed in MongodB 4.0
-     */
-    @Deprecated
-    public CreateCollectionOptions autoIndex(final boolean autoIndex) {
-        this.autoIndex = autoIndex;
-        return this;
-    }
 
     /**
      * Gets the maximum number of documents allowed in a capped collection.
@@ -120,35 +94,6 @@ public class CreateCollectionOptions {
      */
     public CreateCollectionOptions sizeInBytes(final long sizeInBytes) {
         this.sizeInBytes = sizeInBytes;
-        return this;
-    }
-
-    /**
-     * Gets whether the usePowerOf2Sizes allocation strategy is turned on for this collection.
-     *
-     * @return true if the usePowerOf2Sizes allocation strategy is turned on for this collection
-     * @mongodb.driver.manual reference/command/collMod/#usePowerOf2Sizes usePowerOf2Sizes
-     * @mongodb.server.release 2.6
-     * @deprecated As of MongoDB 3.0, power of 2 sizes is ignored by the MongoDB server
-     */
-    @Deprecated
-    @Nullable
-    public Boolean isUsePowerOf2Sizes() {
-        return usePowerOf2Sizes;
-    }
-
-    /**
-     * Sets whether the usePowerOf2Sizes allocation strategy is turned on for this collection.
-     *
-     * @param usePowerOf2Sizes true if the usePowerOf2Sizes allocation strategy is turned on for this collection
-     * @return this
-     * @mongodb.driver.manual reference/command/collMod/#usePowerOf2Sizes usePowerOf2Sizes
-     * @mongodb.server.release 2.6
-     * @deprecated As of MongoDB 3.0, power of 2 sizes is ignored by the MongoDB server
-     */
-    @Deprecated
-    public CreateCollectionOptions usePowerOf2Sizes(@Nullable final Boolean usePowerOf2Sizes) {
-        this.usePowerOf2Sizes = usePowerOf2Sizes;
         return this;
     }
 
@@ -252,11 +197,9 @@ public class CreateCollectionOptions {
     @Override
     public String toString() {
         return "CreateCollectionOptions{"
-                + "autoIndex=" + autoIndex
                 + ", maxDocuments=" + maxDocuments
                 + ", capped=" + capped
                 + ", sizeInBytes=" + sizeInBytes
-                + ", usePowerOf2Sizes=" + usePowerOf2Sizes
                 + ", storageEngineOptions=" + storageEngineOptions
                 + ", indexOptionDefaults=" + indexOptionDefaults
                 + ", validationOptions=" + validationOptions

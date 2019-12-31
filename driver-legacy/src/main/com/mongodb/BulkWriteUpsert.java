@@ -23,7 +23,6 @@ package com.mongodb;
  * @since 2.12
  * @see BulkWriteRequestBuilder#upsert()
  *
- * @mongodb.server.release 2.6
  * @mongodb.driver.manual reference/command/update/#update.upserted Bulk Upsert
  */
 public class BulkWriteUpsert {

@@ -173,7 +173,7 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
         if (markChunkIndex != chunkIndex) {
             chunkIndex = markChunkIndex;
             buffer = null;
-            cursor = null;
+            discardCursor();
         }
     }
 

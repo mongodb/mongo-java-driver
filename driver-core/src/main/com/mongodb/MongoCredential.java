@@ -25,7 +25,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.mongodb.AuthenticationMechanism.GSSAPI;
-import static com.mongodb.AuthenticationMechanism.MONGODB_CR;
 import static com.mongodb.AuthenticationMechanism.MONGODB_X509;
 import static com.mongodb.AuthenticationMechanism.PLAIN;
 import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_1;
@@ -48,17 +47,8 @@ public final class MongoCredential {
     private final Map<String, Object> mechanismProperties;
 
     /**
-     * The MongoDB Challenge Response mechanism.
-     * @mongodb.driver.manual core/authentication/#mongodb-cr-authentication MONGODB-CR
-     * @deprecated This mechanism was replaced by {@link #SCRAM_SHA_1_MECHANISM} in MongoDB 3.0, and is now deprecated
-     */
-    @Deprecated
-    public static final String MONGODB_CR_MECHANISM = AuthenticationMechanism.MONGODB_CR.getMechanismName();
-
-    /**
      * The GSSAPI mechanism.  See the <a href="http://tools.ietf.org/html/rfc4752">RFC</a>.
      *
-     * @mongodb.server.release 2.4
      * @mongodb.driver.manual core/authentication/#kerberos-authentication GSSAPI
      */
     public static final String GSSAPI_MECHANISM = AuthenticationMechanism.GSSAPI.getMechanismName();
@@ -67,7 +57,6 @@ public final class MongoCredential {
      * The PLAIN mechanism.  See the <a href="http://www.ietf.org/rfc/rfc4616.txt">RFC</a>.
      *
      * @since 2.12
-     * @mongodb.server.release 2.6
      * @mongodb.driver.manual core/authentication/#ldap-proxy-authority-authentication PLAIN
      */
     public static final String PLAIN_MECHANISM = AuthenticationMechanism.PLAIN.getMechanismName();
@@ -76,7 +65,6 @@ public final class MongoCredential {
      * The MongoDB X.509
      *
      * @since 2.12
-     * @mongodb.server.release 2.6
      * @mongodb.driver.manual core/authentication/#x-509-certificate-authentication X-509
      */
     public static final String MONGODB_X509_MECHANISM = AuthenticationMechanism.MONGODB_X509.getMechanismName();
@@ -207,33 +195,12 @@ public final class MongoCredential {
     }
 
     /**
-     * Creates a MongoCredential instance for the MongoDB Challenge Response protocol. Use this method only if you want to ensure that
-     * the driver uses the MONGODB_CR mechanism regardless of whether the server you are connecting to supports a more secure
-     * authentication mechanism.  Otherwise use the {@link #createCredential(String, String, char[])} method to allow the driver to
-     * negotiate the best mechanism based on the server version.
-     *
-     * @param userName the user name
-     * @param database the database where the user is defined
-     * @param password the user's password
-     * @return the credential
-     * @see #createCredential(String, String, char[])
-     * @mongodb.driver.manual core/authentication/#mongodb-cr-authentication MONGODB-CR
-     * @deprecated MONGODB-CR was replaced by SCRAM-SHA-1 in MongoDB 3.0, and is now deprecated. Use
-     * the {@link #createCredential(String, String, char[])} factory method instead.
-     */
-    @Deprecated
-    public static MongoCredential createMongoCRCredential(final String userName, final String database, final char[] password) {
-        return new MongoCredential(MONGODB_CR, userName, database, password);
-    }
-
-    /**
      * Creates a MongoCredential instance for the MongoDB X.509 protocol.
      *
      * @param userName the user name
      * @return the credential
      *
      * @since 2.12
-     * @mongodb.server.release 2.6
      * @mongodb.driver.manual core/authentication/#x-509-certificate-authentication X-509
      */
     public static MongoCredential createMongoX509Credential(final String userName) {
@@ -265,7 +232,6 @@ public final class MongoCredential {
      * @return the credential
      *
      * @since 2.12
-     * @mongodb.server.release 2.6
      * @mongodb.driver.manual core/authentication/#ldap-proxy-authority-authentication PLAIN
      */
     public static MongoCredential createPlainCredential(final String userName, final String source, final char[] password) {
@@ -368,9 +334,8 @@ public final class MongoCredential {
         this.mechanismProperties = new HashMap<String, Object>(mechanismProperties);
     }
 
-    @SuppressWarnings("deprecation")
     private boolean mechanismRequiresPassword(@Nullable final AuthenticationMechanism mechanism) {
-        return mechanism == PLAIN || mechanism == MONGODB_CR || mechanism == SCRAM_SHA_1 || mechanism == SCRAM_SHA_256;
+        return mechanism == PLAIN || mechanism == SCRAM_SHA_1 || mechanism == SCRAM_SHA_256;
 
     }
 
@@ -512,7 +477,7 @@ public final class MongoCredential {
                 + ", userName='" + userName + '\''
                 + ", source='" + source + '\''
                 + ", password=<hidden>"
-                + ", mechanismProperties=" + mechanismProperties
+                + ", mechanismProperties=<hidden>"
                 + '}';
     }
 }

@@ -22,6 +22,7 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.bson.io.BasicOutputBuffer;
+import org.bson.json.JsonMode;
 import org.bson.json.JsonReader;
 import org.bson.json.JsonWriter;
 import org.bson.json.JsonWriterSettings;
@@ -813,7 +814,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, C
     }
 
     /**
-     * Gets a JSON representation of this document using the {@link org.bson.json.JsonMode#STRICT} output mode, and otherwise the default
+     * Gets a JSON representation of this document using the {@link org.bson.json.JsonMode#RELAXED} output mode, and otherwise the default
      * settings of {@link JsonWriterSettings.Builder}.
      *
      * @return a JSON representation of this document
@@ -822,7 +823,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, C
      */
     @SuppressWarnings("deprecation")
     public String toJson() {
-        return toJson(new JsonWriterSettings());
+        return toJson(JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build());
     }
 
     /**

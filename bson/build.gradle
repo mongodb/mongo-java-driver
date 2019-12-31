@@ -14,33 +14,19 @@
  * limitations under the License.
  */
 
-apply plugin: 'osgi'
-apply plugin: 'java'
-apply plugin: 'org.kordamp.gradle.clirr'
-
-def configDir = new File(rootDir, 'config')
 archivesBaseName = 'bson'
+description = 'The BSON library'
 
-clirr {
-    excludeFilter = new File("$configDir/clirr-exclude.yml")
-    baseline 'org.mongodb:bson:3.4.0'
-    failOnErrors = true
+ext {
+    pomName = 'BSON'
+    pomURL = 'https://bsonspec.org'
 }
 
 jar {
-    manifest {
-        instruction 'Automatic-Module-Name', 'org.mongodb.bson'
-        instruction 'Build-Version', getGitVersion()
-        instruction 'Import-Package',
-                    'javax.xml.bind.*',
-                    'org.slf4j;resolution:=optional'
-    }
-}
-
-modifyPom {
-    project {
-        name 'BSON'
-        description 'The BSON library'
-        url 'http://bsonspec.org'
-    }
+    bnd (
+        '-exportcontents': "*;-noimport:=true",
+         'Automatic-Module-Name': 'org.mongodb.bson',
+         'Build-Version': project.gitVersion,
+         'Import-Package': 'org.slf4j;resolution:=optional'
+    )
 }

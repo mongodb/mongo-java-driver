@@ -32,7 +32,6 @@ import java.time.ZoneOffset;
  *
  * <p>Encodes and decodes {@code LocalTime} objects to and from {@code DateTime}. Data is stored to millisecond accuracy.</p>
  * <p>Converts the {@code LocalTime} values to and from EpochDay at {@link ZoneOffset#UTC}.</p>
- * <p>Note: Requires Java 8 or greater.</p>
  *
  * @mongodb.driver.manual reference/bson-types
  * @since 3.7

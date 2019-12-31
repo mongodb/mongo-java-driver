@@ -27,6 +27,7 @@ import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.DropIndexOptions;
+import com.mongodb.client.model.EstimatedDocumentCountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
@@ -39,7 +40,10 @@ import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.InsertManyResult;
+import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
+import com.mongodb.lang.Nullable;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -153,59 +157,181 @@ public interface MongoCollection<TDocument> {
     /**
      * Counts the number of documents in the collection.
      *
+     * <p>
+     * Note: For a fast count of the total documents in a collection see {@link #estimatedDocumentCount()}.
+     * When migrating from {@code count()} to {@code countDocuments()} the following query operators must be replaced:
+     * </p>
+     * <pre>
+     *
+     *  +-------------+--------------------------------+
+     *  | Operator    | Replacement                    |
+     *  +=============+================================+
+     *  | $where      |  $expr                         |
+     *  +-------------+--------------------------------+
+     *  | $near       |  $geoWithin with $center       |
+     *  +-------------+--------------------------------+
+     *  | $nearSphere |  $geoWithin with $centerSphere |
+     *  +-------------+--------------------------------+
+     * </pre>
+     *
      * @return the number of documents in the collection
+     * @since 3.8
      */
-    long count();
+    long countDocuments();
 
     /**
      * Counts the number of documents in the collection according to the given options.
      *
+     * <p>
+     * Note: For a fast count of the total documents in a collection see {@link #estimatedDocumentCount()}.
+     * When migrating from {@code count()} to {@code countDocuments()} the following query operators must be replaced:
+     * </p>
+     * <pre>
+     *
+     *  +-------------+--------------------------------+
+     *  | Operator    | Replacement                    |
+     *  +=============+================================+
+     *  | $where      |  $expr                         |
+     *  +-------------+--------------------------------+
+     *  | $near       |  $geoWithin with $center       |
+     *  +-------------+--------------------------------+
+     *  | $nearSphere |  $geoWithin with $centerSphere |
+     *  +-------------+--------------------------------+
+     * </pre>
+     *
      * @param filter the query filter
      * @return the number of documents in the collection
+     * @since 3.8
      */
-    long count(Bson filter);
+    long countDocuments(Bson filter);
 
     /**
      * Counts the number of documents in the collection according to the given options.
+     *
+     * <p>
+     * Note: For a fast count of the total documents in a collection see {@link #estimatedDocumentCount()}.
+     * When migrating from {@code count()} to {@code countDocuments()} the following query operators must be replaced:
+     * </p>
+     * <pre>
+     *
+     *  +-------------+--------------------------------+
+     *  | Operator    | Replacement                    |
+     *  +=============+================================+
+     *  | $where      |  $expr                         |
+     *  +-------------+--------------------------------+
+     *  | $near       |  $geoWithin with $center       |
+     *  +-------------+--------------------------------+
+     *  | $nearSphere |  $geoWithin with $centerSphere |
+     *  +-------------+--------------------------------+
+     * </pre>
      *
      * @param filter  the query filter
      * @param options the options describing the count
      * @return the number of documents in the collection
+     * @since 3.8
      */
-    long count(Bson filter, CountOptions options);
+    long countDocuments(Bson filter, CountOptions options);
 
     /**
      * Counts the number of documents in the collection.
      *
+     * <p>
+     * Note: For a fast count of the total documents in a collection see {@link #estimatedDocumentCount()}.
+     * When migrating from {@code count()} to {@code countDocuments()} the following query operators must be replaced:
+     * </p>
+     * <pre>
+     *
+     *  +-------------+--------------------------------+
+     *  | Operator    | Replacement                    |
+     *  +=============+================================+
+     *  | $where      |  $expr                         |
+     *  +-------------+--------------------------------+
+     *  | $near       |  $geoWithin with $center       |
+     *  +-------------+--------------------------------+
+     *  | $nearSphere |  $geoWithin with $centerSphere |
+     *  +-------------+--------------------------------+
+     * </pre>
+     *
      * @param clientSession the client session with which to associate this operation
      * @return the number of documents in the collection
-     * @since 3.6
+     * @since 3.8
      * @mongodb.server.release 3.6
      */
-    long count(ClientSession clientSession);
+    long countDocuments(ClientSession clientSession);
 
     /**
      * Counts the number of documents in the collection according to the given options.
      *
+     * <p>
+     * Note: For a fast count of the total documents in a collection see {@link #estimatedDocumentCount()}.
+     * When migrating from {@code count()} to {@code countDocuments()} the following query operators must be replaced:
+     * </p>
+     * <pre>
+     *
+     *  +-------------+--------------------------------+
+     *  | Operator    | Replacement                    |
+     *  +=============+================================+
+     *  | $where      |  $expr                         |
+     *  +-------------+--------------------------------+
+     *  | $near       |  $geoWithin with $center       |
+     *  +-------------+--------------------------------+
+     *  | $nearSphere |  $geoWithin with $centerSphere |
+     *  +-------------+--------------------------------+
+     * </pre>
+     *
      * @param clientSession the client session with which to associate this operation
      * @param filter the query filter
      * @return the number of documents in the collection
-     * @since 3.6
+     * @since 3.8
      * @mongodb.server.release 3.6
      */
-    long count(ClientSession clientSession, Bson filter);
+    long countDocuments(ClientSession clientSession, Bson filter);
 
     /**
      * Counts the number of documents in the collection according to the given options.
+     *
+     * <p>
+     * Note: For a fast count of the total documents in a collection see {@link #estimatedDocumentCount()}.
+     * When migrating from {@code count()} to {@code countDocuments()} the following query operators must be replaced:
+     * </p>
+     * <pre>
+     *
+     *  +-------------+--------------------------------+
+     *  | Operator    | Replacement                    |
+     *  +=============+================================+
+     *  | $where      |  $expr                         |
+     *  +-------------+--------------------------------+
+     *  | $near       |  $geoWithin with $center       |
+     *  +-------------+--------------------------------+
+     *  | $nearSphere |  $geoWithin with $centerSphere |
+     *  +-------------+--------------------------------+
+     * </pre>
      *
      * @param clientSession the client session with which to associate this operation
      * @param filter  the query filter
      * @param options the options describing the count
      * @return the number of documents in the collection
-     * @since 3.6
+     * @since 3.8
      * @mongodb.server.release 3.6
      */
-    long count(ClientSession clientSession, Bson filter, CountOptions options);
+    long countDocuments(ClientSession clientSession, Bson filter, CountOptions options);
+
+    /**
+     * Gets an estimate of the count of documents in a collection using collection metadata.
+     *
+     * @return the number of documents in the collection
+     * @since 3.8
+     */
+    long estimatedDocumentCount();
+
+    /**
+     * Gets an estimate of the count of documents in a collection using collection metadata.
+     *
+     * @param options the options describing the count
+     * @return the number of documents in the collection
+     * @since 3.8
+     */
+    long estimatedDocumentCount(EstimatedDocumentCountOptions options);
 
     /**
      * Gets the distinct values of the specified field name.
@@ -604,11 +730,13 @@ public interface MongoCollection<TDocument> {
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param document the document to insert
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the insert command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @return the insert one result
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      */
-    void insertOne(TDocument document);
+    InsertOneResult insertOne(TDocument document);
 
     /**
      * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
@@ -616,13 +744,14 @@ public interface MongoCollection<TDocument> {
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param document the document to insert
      * @param options  the options to apply to the operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the insert command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
-     * @throws com.mongodb.MongoCommandException      if the write failed due to document validation reasons
+     * @return the insert one result
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.2
      */
-    void insertOne(TDocument document, InsertOneOptions options);
+    InsertOneResult insertOne(TDocument document, InsertOneOptions options);
 
     /**
      * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
@@ -630,13 +759,15 @@ public interface MongoCollection<TDocument> {
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param document      the document to insert
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the insert command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @return the insert one result
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
      */
-    void insertOne(ClientSession clientSession, TDocument document);
+    InsertOneResult insertOne(ClientSession clientSession, TDocument document);
 
     /**
      * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
@@ -645,25 +776,28 @@ public interface MongoCollection<TDocument> {
      * @param clientSession the client session with which to associate this operation
      * @param document      the document to insert
      * @param options       the options to apply to the operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the insert command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
-     * @throws com.mongodb.MongoCommandException      if the write failed due to document validation reasons
+     * @return the insert one result
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
      */
-    void insertOne(ClientSession clientSession, TDocument document, InsertOneOptions options);
+    InsertOneResult insertOne(ClientSession clientSession, TDocument document, InsertOneOptions options);
 
     /**
      * Inserts one or more documents.  A call to this method is equivalent to a call to the {@code bulkWrite} method
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param documents the documents to insert
+     * @return the insert many result
      * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
+     * @throws com.mongodb.MongoCommandException   if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException          if the write failed due some other failure
      * @see com.mongodb.client.MongoCollection#bulkWrite
      */
-    void insertMany(List<? extends TDocument> documents);
+    InsertManyResult insertMany(List<? extends TDocument> documents);
 
     /**
      * Inserts one or more documents.  A call to this method is equivalent to a call to the {@code bulkWrite} method
@@ -671,11 +805,12 @@ public interface MongoCollection<TDocument> {
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param documents the documents to insert
      * @param options   the options to apply to the operation
-     * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
-     * @throws com.mongodb.WriteConcernException if the write failed due being unable to fulfil the write concern
-     * @throws com.mongodb.MongoException        if the write failed due some other failure
+     * @return the insert many result
+     * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
+     * @throws com.mongodb.MongoCommandException   if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException          if the write failed due some other failure
      */
-    void insertMany(List<? extends TDocument> documents, InsertManyOptions options);
+    InsertManyResult insertMany(List<? extends TDocument> documents, InsertManyOptions options);
 
     /**
      * Inserts one or more documents.  A call to this method is equivalent to a call to the {@code bulkWrite} method
@@ -683,13 +818,15 @@ public interface MongoCollection<TDocument> {
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param documents the documents to insert
+     * @return the insert many result
      * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
+     * @throws com.mongodb.MongoCommandException   if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException          if the write failed due some other failure
      * @see com.mongodb.client.MongoCollection#bulkWrite
      * @since 3.6
      * @mongodb.server.release 3.6
      */
-    void insertMany(ClientSession clientSession, List<? extends TDocument> documents);
+    InsertManyResult insertMany(ClientSession clientSession, List<? extends TDocument> documents);
 
     /**
      * Inserts one or more documents.  A call to this method is equivalent to a call to the {@code bulkWrite} method
@@ -698,13 +835,14 @@ public interface MongoCollection<TDocument> {
      * @param clientSession the client session with which to associate this operation
      * @param documents the documents to insert
      * @param options   the options to apply to the operation
-     * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
-     * @throws com.mongodb.WriteConcernException if the write failed due being unable to fulfil the write concern
-     * @throws com.mongodb.MongoException        if the write failed due some other failure
+     * @return the insert many result
+     * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
+     * @throws com.mongodb.MongoCommandException   if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException          if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
      */
-    void insertMany(ClientSession clientSession, List<? extends TDocument> documents, InsertManyOptions options);
+    InsertManyResult insertMany(ClientSession clientSession, List<? extends TDocument> documents, InsertManyOptions options);
 
     /**
      * Removes at most one document from the collection that matches the given filter.  If no documents match, the collection is not
@@ -713,8 +851,9 @@ public interface MongoCollection<TDocument> {
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param filter the query filter to apply the the delete operation
      * @return the result of the remove one operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the delete command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      */
     DeleteResult deleteOne(Bson filter);
@@ -727,8 +866,9 @@ public interface MongoCollection<TDocument> {
      * @param filter the query filter to apply the the delete operation
      * @param options  the options to apply to the delete operation
      * @return the result of the remove one operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the delete command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.4
      */
@@ -742,8 +882,9 @@ public interface MongoCollection<TDocument> {
      * @param clientSession the client session with which to associate this operation
      * @param filter the query filter to apply the the delete operation
      * @return the result of the remove one operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the delete command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
@@ -759,8 +900,9 @@ public interface MongoCollection<TDocument> {
      * @param filter the query filter to apply the the delete operation
      * @param options  the options to apply to the delete operation
      * @return the result of the remove one operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the delete command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
@@ -772,8 +914,9 @@ public interface MongoCollection<TDocument> {
      *
      * @param filter the query filter to apply the the delete operation
      * @return the result of the remove many operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the delete command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      */
     DeleteResult deleteMany(Bson filter);
@@ -784,8 +927,9 @@ public interface MongoCollection<TDocument> {
      * @param filter the query filter to apply the the delete operation
      * @param options  the options to apply to the delete operation
      * @return the result of the remove many operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the delete command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.4
      */
@@ -797,8 +941,9 @@ public interface MongoCollection<TDocument> {
      * @param clientSession the client session with which to associate this operation
      * @param filter the query filter to apply the the delete operation
      * @return the result of the remove many operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the delete command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
@@ -812,8 +957,9 @@ public interface MongoCollection<TDocument> {
      * @param filter the query filter to apply the the delete operation
      * @param options  the options to apply to the delete operation
      * @return the result of the remove many operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the delete command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
@@ -823,46 +969,39 @@ public interface MongoCollection<TDocument> {
     /**
      * Replace a document in the collection according to the specified arguments.
      *
+     * <p>Use this method to replace a document using the specified replacement argument. To update the document with update operators, use
+     * the corresponding {@link #updateOne(Bson, Bson)} method.</p>
+     *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param filter      the query filter to apply the the replace operation
      * @param replacement the replacement document
      * @return the result of the replace one operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the replace command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
+     * @mongodb.driver.manual reference/command/update   Update Command Behaviors
      */
     UpdateResult replaceOne(Bson filter, TDocument replacement);
 
     /**
      * Replace a document in the collection according to the specified arguments.
      *
-     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
-     * @param filter        the query filter to apply the the replace operation
-     * @param replacement   the replacement document
-     * @param updateOptions the options to apply to the replace operation
-     * @return the result of the replace one operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the replace command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
-     * @throws com.mongodb.MongoException             if the write failed due some other failure
-     * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
-     * @deprecated use {@link #replaceOne(Bson, Object, ReplaceOptions)} instead
-     */
-    @Deprecated
-    UpdateResult replaceOne(Bson filter, TDocument replacement, UpdateOptions updateOptions);
-
-    /**
-     * Replace a document in the collection according to the specified arguments.
+     * <p>Use this method to replace a document using the specified replacement argument. To update the document with update operators, use
+     * the corresponding {@link #updateOne(Bson, Bson, UpdateOptions)} method.</p>
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param filter        the query filter to apply the the replace operation
      * @param replacement   the replacement document
      * @param replaceOptions the options to apply to the replace operation
      * @return the result of the replace one operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the replace command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
+     * @mongodb.driver.manual reference/command/update   Update Command Behaviors
      * @since 3.7
      */
     UpdateResult replaceOne(Bson filter, TDocument replacement, ReplaceOptions replaceOptions);
@@ -870,42 +1009,30 @@ public interface MongoCollection<TDocument> {
     /**
      * Replace a document in the collection according to the specified arguments.
      *
+     * <p>Use this method to replace a document using the specified replacement argument. To update the document with update operators, use
+     * the corresponding {@link #updateOne(ClientSession, Bson, Bson)} method.</p>
+     *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param filter      the query filter to apply the the replace operation
      * @param replacement the replacement document
      * @return the result of the replace one operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the replace command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
+     * @mongodb.driver.manual reference/command/update   Update Command Behaviors
      */
     UpdateResult replaceOne(ClientSession clientSession, Bson filter, TDocument replacement);
 
     /**
      * Replace a document in the collection according to the specified arguments.
      *
-     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
-     * @param clientSession the client session with which to associate this operation
-     * @param filter        the query filter to apply the the replace operation
-     * @param replacement   the replacement document
-     * @param updateOptions the options to apply to the replace operation
-     * @return the result of the replace one operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the replace command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
-     * @throws com.mongodb.MongoException             if the write failed due some other failure
-     * @since 3.6
-     * @mongodb.server.release 3.6
-     * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
-     * @deprecated use {@link #replaceOne(ClientSession, Bson, Object, ReplaceOptions)} instead
-     */
-    @Deprecated
-    UpdateResult replaceOne(ClientSession clientSession, Bson filter, TDocument replacement, UpdateOptions updateOptions);
-
-    /**
-     * Replace a document in the collection according to the specified arguments.
+     * <p>Use this method to replace a document using the specified replacement argument. To update the document with update operators, use
+     * the corresponding {@link #updateOne(ClientSession, Bson, Bson, UpdateOptions)} method.</p>
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
@@ -913,45 +1040,148 @@ public interface MongoCollection<TDocument> {
      * @param replacement   the replacement document
      * @param replaceOptions the options to apply to the replace operation
      * @return the result of the replace one operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the replace command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.7
      * @mongodb.server.release 3.6
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
+     * @mongodb.driver.manual reference/command/update   Update Command Behaviors
      */
     UpdateResult replaceOne(ClientSession clientSession, Bson filter, TDocument replacement, ReplaceOptions replaceOptions);
 
     /**
      * Update a single document in the collection according to the specified arguments.
      *
+     * <p>Use this method to only update the corresponding fields in the document according to the update operators used in the update
+     * document. To replace the entire document with a new document, use the corresponding {@link #replaceOne(Bson, Object)} method.</p>
+     *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param filter a document describing the query filter, which may not be null.
-     * @param update a document describing the update, which may not be null. The update to apply must include only update operators.
+     * @param update a document describing the update, which may not be null. The update to apply must include at least one update operator.
      * @return the result of the update one operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
+     * @mongodb.driver.manual reference/command/update   Update Command Behaviors
+     * @see com.mongodb.client.MongoCollection#replaceOne(Bson, Object)
      */
     UpdateResult updateOne(Bson filter, Bson update);
 
     /**
      * Update a single document in the collection according to the specified arguments.
      *
+     * <p>Use this method to only update the corresponding fields in the document according to the update operators used in the update
+     * document. To replace the entire document with a new document, use the corresponding {@link #replaceOne(Bson, Object, ReplaceOptions)}
+     * method.</p>
+     *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param filter        a document describing the query filter, which may not be null.
-     * @param update        a document describing the update, which may not be null. The update to apply must include only update operators.
+     * @param update        a document describing the update, which may not be null. The update to apply must include at least one update
+     *                      operator.
+     * @param updateOptions the options to apply to the update operation
+     * @return the result of the update one operation
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             if the write failed due some other failure
+     * @mongodb.driver.manual tutorial/modify-documents/ Updates
+     * @mongodb.driver.manual reference/operator/update/ Update Operators
+     * @mongodb.driver.manual reference/command/update   Update Command Behaviors
+     * @see com.mongodb.client.MongoCollection#replaceOne(Bson, Object, ReplaceOptions)
+     */
+    UpdateResult updateOne(Bson filter, Bson update, UpdateOptions updateOptions);
+
+    /**
+     * Update a single document in the collection according to the specified arguments.
+     *
+     * <p>Use this method to only update the corresponding fields in the document according to the update operators used in the update
+     * document. To replace the entire document with a new document, use the corresponding {@link #replaceOne(ClientSession, Bson, Object)}
+     * method.</p>
+     *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
+     * @param clientSession the client session with which to associate this operation
+     * @param filter a document describing the query filter, which may not be null.
+     * @param update a document describing the update, which may not be null. The update to apply must include at least one update operator.
+     * @return the result of the update one operation
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             if the write failed due some other failure
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     * @mongodb.driver.manual tutorial/modify-documents/ Updates
+     * @mongodb.driver.manual reference/operator/update/ Update Operators
+     * @mongodb.driver.manual reference/command/update   Update Command Behaviors
+     * @see com.mongodb.client.MongoCollection#replaceOne(ClientSession, Bson, Object)
+     */
+    UpdateResult updateOne(ClientSession clientSession, Bson filter, Bson update);
+
+    /**
+     * Update a single document in the collection according to the specified arguments.
+     *
+     * <p>Use this method to only update the corresponding fields in the document according to the update operators used in the update
+     * document. To replace the entire document with a new document, use the corresponding {@link #replaceOne(ClientSession, Bson, Object,
+     * ReplaceOptions)} method.</p>
+     *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
+     * @param clientSession the client session with which to associate this operation
+     * @param filter        a document describing the query filter, which may not be null.
+     * @param update        a document describing the update, which may not be null. The update to apply must include at least one update
+     *                     operator.
+     * @param updateOptions the options to apply to the update operation
+     * @return the result of the update one operation
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             if the write failed due some other failure
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     * @mongodb.driver.manual tutorial/modify-documents/ Updates
+     * @mongodb.driver.manual reference/operator/update/ Update Operators
+     * @mongodb.driver.manual reference/command/update   Update Command Behaviors
+     * @see com.mongodb.client.MongoCollection#replaceOne(ClientSession, Bson, Object, ReplaceOptions)
+     */
+    UpdateResult updateOne(ClientSession clientSession, Bson filter, Bson update, UpdateOptions updateOptions);
+
+    /**
+     * Update a single document in the collection according to the specified arguments.
+     *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
+     * @param filter a document describing the query filter, which may not be null.
+     * @param update a pipeline describing the update, which may not be null.
+     * @return the result of the update one operation
+     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoException             if the write failed due some other failure
+     * @since 3.11
+     * @mongodb.server.release 4.2
+     * @mongodb.driver.manual tutorial/modify-documents/ Updates
+     * @mongodb.driver.manual reference/operator/update/ Update Operators
+     */
+    UpdateResult updateOne(Bson filter, List<? extends Bson> update);
+
+    /**
+     * Update a single document in the collection according to the specified arguments.
+     *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
+     * @param filter        a document describing the query filter, which may not be null.
+     * @param update        a pipeline describing the update, which may not be null.
      * @param updateOptions the options to apply to the update operation
      * @return the result of the update one operation
      * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
      * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
      * @throws com.mongodb.MongoException             if the write failed due some other failure
+     * @since 3.11
+     * @mongodb.server.release 4.2
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
-    UpdateResult updateOne(Bson filter, Bson update, UpdateOptions updateOptions);
+    UpdateResult updateOne(Bson filter, List<? extends Bson> update, UpdateOptions updateOptions);
 
     /**
      * Update a single document in the collection according to the specified arguments.
@@ -959,17 +1189,17 @@ public interface MongoCollection<TDocument> {
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param filter a document describing the query filter, which may not be null.
-     * @param update a document describing the update, which may not be null. The update to apply must include only update operators.
+     * @param update a pipeline describing the update, which may not be null.
      * @return the result of the update one operation
      * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
      * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
      * @throws com.mongodb.MongoException             if the write failed due some other failure
-     * @since 3.6
-     * @mongodb.server.release 3.6
+     * @since 3.11
+     * @mongodb.server.release 4.2
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
-    UpdateResult updateOne(ClientSession clientSession, Bson filter, Bson update);
+    UpdateResult updateOne(ClientSession clientSession, Bson filter, List<? extends Bson> update);
 
     /**
      * Update a single document in the collection according to the specified arguments.
@@ -977,18 +1207,18 @@ public interface MongoCollection<TDocument> {
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param filter        a document describing the query filter, which may not be null.
-     * @param update        a document describing the update, which may not be null. The update to apply must include only update operators.
+     * @param update        a pipeline describing the update, which may not be null.
      * @param updateOptions the options to apply to the update operation
      * @return the result of the update one operation
      * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
      * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
      * @throws com.mongodb.MongoException             if the write failed due some other failure
-     * @since 3.6
-     * @mongodb.server.release 3.6
+     * @since 3.11
+     * @mongodb.server.release 4.2
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
-    UpdateResult updateOne(ClientSession clientSession, Bson filter, Bson update, UpdateOptions updateOptions);
+    UpdateResult updateOne(ClientSession clientSession, Bson filter, List<? extends Bson> update, UpdateOptions updateOptions);
 
     /**
      * Update all documents in the collection according to the specified arguments.
@@ -996,8 +1226,9 @@ public interface MongoCollection<TDocument> {
      * @param filter a document describing the query filter, which may not be null.
      * @param update a document describing the update, which may not be null. The update to apply must include only update operators.
      * @return the result of the update many operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
@@ -1011,8 +1242,9 @@ public interface MongoCollection<TDocument> {
      * @param update        a document describing the update, which may not be null. The update to apply must include only update operators.
      * @param updateOptions the options to apply to the update operation
      * @return the result of the update many operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
@@ -1026,8 +1258,9 @@ public interface MongoCollection<TDocument> {
      * @param filter a document describing the query filter, which may not be null.
      * @param update a document describing the update, which may not be null. The update to apply must include only update operators.
      * @return the result of the update many operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
@@ -1044,8 +1277,9 @@ public interface MongoCollection<TDocument> {
      * @param update        a document describing the update, which may not be null. The update to apply must include only update operators.
      * @param updateOptions the options to apply to the update operation
      * @return the result of the update many operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
@@ -1055,12 +1289,81 @@ public interface MongoCollection<TDocument> {
     UpdateResult updateMany(ClientSession clientSession, Bson filter, Bson update, UpdateOptions updateOptions);
 
     /**
+     * Update all documents in the collection according to the specified arguments.
+     *
+     * @param filter a document describing the query filter, which may not be null.
+     * @param update a pipeline describing the update, which may not be null.
+     * @return the result of the update many operation
+     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoException             if the write failed due some other failure
+     * @since 3.11
+     * @mongodb.server.release 4.2
+     * @mongodb.driver.manual tutorial/modify-documents/ Updates
+     * @mongodb.driver.manual reference/operator/update/ Update Operators
+     */
+    UpdateResult updateMany(Bson filter, List<? extends Bson> update);
+
+    /**
+     * Update all documents in the collection according to the specified arguments.
+     *
+     * @param filter        a document describing the query filter, which may not be null.
+     * @param update        a pipeline describing the update, which may not be null.
+     * @param updateOptions the options to apply to the update operation
+     * @return the result of the update many operation
+     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoException             if the write failed due some other failure
+     * @since 3.11
+     * @mongodb.server.release 4.2
+     * @mongodb.driver.manual tutorial/modify-documents/ Updates
+     * @mongodb.driver.manual reference/operator/update/ Update Operators
+     */
+    UpdateResult updateMany(Bson filter, List<? extends Bson> update, UpdateOptions updateOptions);
+
+    /**
+     * Update all documents in the collection according to the specified arguments.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param filter a document describing the query filter, which may not be null.
+     * @param update a pipeline describing the update, which may not be null.
+     * @return the result of the update many operation
+     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoException             if the write failed due some other failure
+     * @since 3.11
+     * @mongodb.server.release 4.2
+     * @mongodb.driver.manual tutorial/modify-documents/ Updates
+     * @mongodb.driver.manual reference/operator/update/ Update Operators
+     */
+    UpdateResult updateMany(ClientSession clientSession, Bson filter, List<? extends Bson> update);
+
+    /**
+     * Update all documents in the collection according to the specified arguments.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param filter        a document describing the query filter, which may not be null.
+     * @param update        a pipeline describing the update, which may not be null.
+     * @param updateOptions the options to apply to the update operation
+     * @return the result of the update many operation
+     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoException             if the write failed due some other failure
+     * @since 3.11
+     * @mongodb.server.release 4.2
+     * @mongodb.driver.manual tutorial/modify-documents/ Updates
+     * @mongodb.driver.manual reference/operator/update/ Update Operators
+     */
+    UpdateResult updateMany(ClientSession clientSession, Bson filter, List<? extends Bson> update, UpdateOptions updateOptions);
+
+    /**
      * Atomically find a document and remove it.
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param filter the query filter to find the document with
      * @return the document that was removed.  If no documents matched the query filter, then null will be returned
      */
+    @Nullable
     TDocument findOneAndDelete(Bson filter);
 
     /**
@@ -1071,6 +1374,7 @@ public interface MongoCollection<TDocument> {
      * @param options the options to apply to the operation
      * @return the document that was removed.  If no documents matched the query filter, then null will be returned
      */
+    @Nullable
     TDocument findOneAndDelete(Bson filter, FindOneAndDeleteOptions options);
 
     /**
@@ -1083,6 +1387,7 @@ public interface MongoCollection<TDocument> {
      * @since 3.6
      * @mongodb.server.release 3.6
      */
+    @Nullable
     TDocument findOneAndDelete(ClientSession clientSession, Bson filter);
 
     /**
@@ -1096,23 +1401,32 @@ public interface MongoCollection<TDocument> {
      * @since 3.6
      * @mongodb.server.release 3.6
      */
+    @Nullable
     TDocument findOneAndDelete(ClientSession clientSession, Bson filter, FindOneAndDeleteOptions options);
 
     /**
      * Atomically find a document and replace it.
      *
+     * <p>Use this method to replace a document using the specified replacement argument. To update the document with update operators, use
+     * the corresponding {@link #findOneAndUpdate(Bson, Bson)} method.</p>
+     *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param filter      the query filter to apply the the replace operation
      * @param replacement the replacement document
      * @return the document that was replaced.  Depending on the value of the {@code returnOriginal} property, this will either be the
      * document as it was before the update or as it is after the update.  If no documents matched the query filter, then null will be
      * returned
+     * @mongodb.driver.manual reference/command/update   Update Command Behaviors
      */
+    @Nullable
     TDocument findOneAndReplace(Bson filter, TDocument replacement);
 
     /**
      * Atomically find a document and replace it.
      *
+     * <p>Use this method to replace a document using the specified replacement argument. To update the document with update operators, use
+     * the corresponding {@link #findOneAndUpdate(Bson, Bson, FindOneAndUpdateOptions)} method.</p>
+     *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param filter      the query filter to apply the the replace operation
      * @param replacement the replacement document
@@ -1120,12 +1434,17 @@ public interface MongoCollection<TDocument> {
      * @return the document that was replaced.  Depending on the value of the {@code returnOriginal} property, this will either be the
      * document as it was before the update or as it is after the update.  If no documents matched the query filter, then null will be
      * returned
+     * @mongodb.driver.manual reference/command/update   Update Command Behaviors
      */
+    @Nullable
     TDocument findOneAndReplace(Bson filter, TDocument replacement, FindOneAndReplaceOptions options);
 
     /**
      * Atomically find a document and replace it.
      *
+     * <p>Use this method to replace a document using the specified replacement argument. To update the document with update operators, use
+     * the corresponding {@link #findOneAndUpdate(ClientSession, Bson, Bson)} method.</p>
+     *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param filter      the query filter to apply the the replace operation
@@ -1133,13 +1452,18 @@ public interface MongoCollection<TDocument> {
      * @return the document that was replaced.  Depending on the value of the {@code returnOriginal} property, this will either be the
      * document as it was before the update or as it is after the update.  If no documents matched the query filter, then null will be
      * returned
+     * @mongodb.driver.manual reference/command/update   Update Command Behaviors
      * @since 3.6
      * @mongodb.server.release 3.6
      */
+    @Nullable
     TDocument findOneAndReplace(ClientSession clientSession, Bson filter, TDocument replacement);
 
     /**
      * Atomically find a document and replace it.
+     *
+     * <p>Use this method to replace a document using the specified replacement argument. To update the document with update operators, use
+     * the corresponding {@link #findOneAndUpdate(ClientSession, Bson, Bson, FindOneAndUpdateOptions)} method.</p>
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
@@ -1149,34 +1473,126 @@ public interface MongoCollection<TDocument> {
      * @return the document that was replaced.  Depending on the value of the {@code returnOriginal} property, this will either be the
      * document as it was before the update or as it is after the update.  If no documents matched the query filter, then null will be
      * returned
+     * @mongodb.driver.manual reference/command/update   Update Command Behaviors
      * @since 3.6
      * @mongodb.server.release 3.6
      */
+    @Nullable
     TDocument findOneAndReplace(ClientSession clientSession, Bson filter, TDocument replacement, FindOneAndReplaceOptions options);
 
     /**
      * Atomically find a document and update it.
      *
+     * <p>Use this method to only update the corresponding fields in the document according to the update operators used in the update
+     * document. To replace the entire document with a new document, use the corresponding {@link #findOneAndReplace(Bson, Object)} method.
+     * </p>
+     *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param filter a document describing the query filter, which may not be null.
-     * @param update a document describing the update, which may not be null. The update to apply must include only update operators.
+     * @param update a document describing the update, which may not be null. The update to apply must include at least one update operator.
      * @return the document that was updated before the update was applied.  If no documents matched the query filter, then null will be
      * returned
+     * @mongodb.driver.manual reference/command/update   Update Command Behaviors
+     * @see com.mongodb.client.MongoCollection#findOneAndReplace(Bson, Object)
      */
+    @Nullable
     TDocument findOneAndUpdate(Bson filter, Bson update);
 
     /**
      * Atomically find a document and update it.
      *
+     * <p>Use this method to only update the corresponding fields in the document according to the update operators used in the update
+     * document. To replace the entire document with a new document, use the corresponding {@link #findOneAndReplace(Bson, Object,
+     * FindOneAndReplaceOptions)} method.</p>
+     *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param filter  a document describing the query filter, which may not be null.
-     * @param update  a document describing the update, which may not be null. The update to apply must include only update operators.
+     * @param update  a document describing the update, which may not be null. The update to apply must include at least one update
+     *               operator.
      * @param options the options to apply to the operation
      * @return the document that was updated.  Depending on the value of the {@code returnOriginal} property, this will either be the
      * document as it was before the update or as it is after the update.  If no documents matched the query filter, then null will be
      * returned
+     * @mongodb.driver.manual reference/command/update   Update Command Behaviors
+     * @see com.mongodb.client.MongoCollection#findOneAndReplace(Bson, Object, FindOneAndReplaceOptions)
      */
+    @Nullable
     TDocument findOneAndUpdate(Bson filter, Bson update, FindOneAndUpdateOptions options);
+
+    /**
+     * Atomically find a document and update it.
+     *
+     * <p>Use this method to only update the corresponding fields in the document according to the update operators used in the update
+     * document. To replace the entire document with a new document, use the corresponding {@link #findOneAndReplace(ClientSession, Bson,
+     * Object)} method.</p>
+     *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
+     * @param clientSession the client session with which to associate this operation
+     * @param filter a document describing the query filter, which may not be null.
+     * @param update a document describing the update, which may not be null. The update to apply must include at least one update operator.
+     * @return the document that was updated before the update was applied.  If no documents matched the query filter, then null will be
+     * returned
+     * @mongodb.driver.manual reference/command/update   Update Command Behaviors
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     * @see com.mongodb.client.MongoCollection#findOneAndReplace(ClientSession, Bson, Object)
+     */
+    @Nullable
+    TDocument findOneAndUpdate(ClientSession clientSession, Bson filter, Bson update);
+
+    /**
+     * Atomically find a document and update it.
+     *
+     * <p>Use this method to only update the corresponding fields in the document according to the update operators used in the update
+     * document. To replace the entire document with a new document, use the corresponding {@link #findOneAndReplace(ClientSession, Bson,
+     * Object, FindOneAndReplaceOptions)} method.</p>
+     *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
+     * @param clientSession the client session with which to associate this operation
+     * @param filter  a document describing the query filter, which may not be null.
+     * @param update  a document describing the update, which may not be null. The update to apply must include at least one update
+     *               operator.
+     * @param options the options to apply to the operation
+     * @return the document that was updated.  Depending on the value of the {@code returnOriginal} property, this will either be the
+     * document as it was before the update or as it is after the update.  If no documents matched the query filter, then null will be
+     * returned
+     * @mongodb.driver.manual reference/command/update   Update Command Behaviors
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     * @see com.mongodb.client.MongoCollection#findOneAndReplace(ClientSession, Bson, Object, FindOneAndReplaceOptions)
+     */
+    @Nullable
+    TDocument findOneAndUpdate(ClientSession clientSession, Bson filter, Bson update, FindOneAndUpdateOptions options);
+
+    /**
+     * Atomically find a document and update it.
+     *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
+     * @param filter a document describing the query filter, which may not be null.
+     * @param update a pipeline describing the update, which may not be null.
+     * @return the document that was updated before the update was applied.  If no documents matched the query filter, then null will be
+     * returned
+     * @since 3.11
+     * @mongodb.server.release 4.2
+     */
+    @Nullable
+    TDocument findOneAndUpdate(Bson filter, List<? extends Bson> update);
+
+    /**
+     * Atomically find a document and update it.
+     *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
+     * @param filter  a document describing the query filter, which may not be null.
+     * @param update  a pipeline describing the update, which may not be null.
+     * @param options the options to apply to the operation
+     * @return the document that was updated.  Depending on the value of the {@code returnOriginal} property, this will either be the
+     * document as it was before the update or as it is after the update.  If no documents matched the query filter, then null will be
+     * returned
+     * @since 3.11
+     * @mongodb.server.release 4.2
+     */
+    @Nullable
+    TDocument findOneAndUpdate(Bson filter, List<? extends Bson> update, FindOneAndUpdateOptions options);
 
     /**
      * Atomically find a document and update it.
@@ -1184,13 +1600,14 @@ public interface MongoCollection<TDocument> {
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param filter a document describing the query filter, which may not be null.
-     * @param update a document describing the update, which may not be null. The update to apply must include only update operators.
+     * @param update a pipeline describing the update, which may not be null.
      * @return the document that was updated before the update was applied.  If no documents matched the query filter, then null will be
      * returned
-     * @since 3.6
-     * @mongodb.server.release 3.6
+     * @since 3.11
+     * @mongodb.server.release 4.2
      */
-    TDocument findOneAndUpdate(ClientSession clientSession, Bson filter, Bson update);
+    @Nullable
+    TDocument findOneAndUpdate(ClientSession clientSession, Bson filter, List<? extends Bson> update);
 
     /**
      * Atomically find a document and update it.
@@ -1198,15 +1615,16 @@ public interface MongoCollection<TDocument> {
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param filter  a document describing the query filter, which may not be null.
-     * @param update  a document describing the update, which may not be null. The update to apply must include only update operators.
+     * @param update  a pipeline describing the update, which may not be null.
      * @param options the options to apply to the operation
      * @return the document that was updated.  Depending on the value of the {@code returnOriginal} property, this will either be the
      * document as it was before the update or as it is after the update.  If no documents matched the query filter, then null will be
      * returned
-     * @since 3.6
-     * @mongodb.server.release 3.6
+     * @since 3.11
+     * @mongodb.server.release 4.2
      */
-    TDocument findOneAndUpdate(ClientSession clientSession, Bson filter, Bson update, FindOneAndUpdateOptions options);
+    @Nullable
+    TDocument findOneAndUpdate(ClientSession clientSession, Bson filter, List<? extends Bson> update, FindOneAndUpdateOptions options);
 
     /**
      * Drops this collection from the Database.
@@ -1275,7 +1693,6 @@ public interface MongoCollection<TDocument> {
      * @param indexes the list of indexes
      * @return the list of index names
      * @mongodb.driver.manual reference/command/createIndexes Create indexes
-     * @mongodb.server.release 2.6
      */
     List<String> createIndexes(List<IndexModel> indexes);
 

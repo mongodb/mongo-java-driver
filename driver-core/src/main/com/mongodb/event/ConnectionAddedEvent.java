@@ -23,8 +23,10 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * An event for adding a new connection to the pool.
  *
+ * @deprecated Prefer {@link ConnectionCreatedEvent}
  * @since 3.5
  */
+@Deprecated
 public final class ConnectionAddedEvent {
     private final ConnectionId connectionId;
 

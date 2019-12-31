@@ -32,7 +32,7 @@ import static java.nio.ByteOrder.LITTLE_ENDIAN;
  * A BSON output stream that stores the output in a single, un-pooled byte array.
  */
 public class BasicOutputBuffer extends OutputBuffer {
-    private byte[] buffer = new byte[1024];
+    private byte[] buffer;
     private int position;
 
     /**

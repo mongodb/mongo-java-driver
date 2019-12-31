@@ -18,6 +18,8 @@ package org.bson.codecs.pojo;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.diagnostics.Logger;
+import org.bson.diagnostics.Loggers;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static org.bson.assertions.Assertions.notNull;
 
@@ -36,6 +39,7 @@ import static org.bson.assertions.Assertions.notNull;
  * @since 3.5
  */
 public final class PojoCodecProvider implements CodecProvider {
+    static final Logger LOGGER = Loggers.getLogger("codecs.pojo");
     private final boolean automatic;
     private final Map<Class<?>, ClassModel<?>> classModels;
     private final Set<String> packages;
@@ -76,14 +80,15 @@ public final class PojoCodecProvider implements CodecProvider {
         } else if (automatic || (clazz.getPackage() != null && packages.contains(clazz.getPackage().getName()))) {
             try {
                 classModel = createClassModel(clazz, conventions);
-            } catch (IllegalStateException e) {
+                if (clazz.isInterface() || !classModel.getPropertyModels().isEmpty()) {
+                    discriminatorLookup.addClassModel(classModel);
+                    return new AutomaticPojoCodec<T>(new PojoCodecImpl<T>(classModel, registry, propertyCodecProviders,
+                            discriminatorLookup));
+                }
+            } catch (Exception e) {
+                LOGGER.warn(format("Cannot use '%s' with the PojoCodec.", clazz.getSimpleName()), e);
                 return null;
             }
-            if (!clazz.isInterface() && classModel.getPropertyModels().isEmpty()) {
-                return null;
-            }
-            discriminatorLookup.addClassModel(classModel);
-            return new AutomaticPojoCodec<T>(new PojoCodecImpl<T>(classModel, registry, propertyCodecProviders, discriminatorLookup));
         }
         return null;
     }
@@ -118,12 +123,12 @@ public final class PojoCodecProvider implements CodecProvider {
         }
 
         /**
-         * Sets whether the provider should automatically try to create a {@link ClassModel} for any class that is requested.
+         * Sets whether the provider should automatically try to wrap a {@link ClassModel} for any class that is requested.
          *
          * <p>Note: As Java Beans are convention based, when using automatic settings the provider should be the last provider in the
          * registry.</p>
          *
-         * @param automatic whether to automatically create {@code ClassModels} or not.
+         * @param automatic whether to automatically wrap {@code ClassModels} or not.
          * @return this
          */
         public Builder automatic(final boolean automatic) {

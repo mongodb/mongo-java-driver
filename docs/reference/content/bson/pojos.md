@@ -9,8 +9,8 @@ title = "POJOs"
 
 ## POJOs - Plain Old Java Objects
 
-The 3.5 release of the driver adds POJO support via the [`PojoCodec`]({{<apiref "org/bson/codecs/pojo/PojoCodec.html">}}), which allows for 
-direct serialization of POJOs and Java Beans to and from BSON. Internally, each `PojoCodec` utilizes a
+The 3.5 release of the driver adds POJO support via the [`PojoCodecProvider`]({{<apiref "org/bson/codecs/pojo/PojoCodecProvider.html">}}), 
+which allows for direct serialization of POJOs and Java Beans to and from BSON. Internally, the `Codec` for each POJO utilizes a
 [`ClassModel`]({{<apiref "org/bson/codecs/pojo/ClassModel.html">}}) instance to store metadata about how the POJO should be serialized.
 
 A `ClassModel` for a POJO includes:
@@ -19,11 +19,12 @@ A `ClassModel` for a POJO includes:
   * A new instance factory. Handling the creation of new instances of the POJO. By default it requires the POJO to have an empty constructor.
   * Property information, a list of [`PropertyModel`]({{<apiref "org/bson/codecs/pojo/PropertyModel.html">}}) instances that contain all the 
     property metadata. By default this includes; any public getter methods with any corresponding setter methods and any public fields.
-  * An optional IdProperty. By default the `_id` or `id` property in the POJO.
+  * An optional IdProperty (see `BsonId` annotation). By default the `_id` or `id` property in the POJO.
   * Type data for the POJO and its fields to work around type erasure.
   * An optional discriminator value. The discriminator is the value used to represent the POJO class being stored.
   * An optional discriminator key. The document key name for the discriminator.
   * The use discriminator flag. This determines if the discriminator should be serialized. By default it is off.
+  * An optional IdGenerator used to generate the `id` value, when inserting the POJO. (New in 3.10)
   
 Each `PropertyModel` includes:
 
@@ -39,10 +40,10 @@ Each `PropertyModel` includes:
     discriminator key and value.
 
 ClassModels are built using the [`ClassModelBuilder`]({{<apiref "org/bson/codecs/pojo/ClassModelBuilder.html">}}) which can be accessed via
- the [`ClassModel.builder(clazz)`]({{<apiref "org/bson/codecs/pojo/ClassModel.html#builder-java.lang.Class-">}}) method. The builder 
+ the [`ClassModel.builder(clazz)`]({{<apiref "org/bson/codecs/pojo/ClassModel.html#builder(java.lang.Class)">}}) method. The builder 
  initially uses reflection to create the required metadata.
 
-`PojoCodec` instances are created by the [`PojoCodecProvider`]({{<apiref "org/bson/codecs/pojo/PojoCodecProvider.html">}}) which is a
+POJO `Codec` instances are created by the [`PojoCodecProvider`]({{<apiref "org/bson/codecs/pojo/PojoCodecProvider.html">}}) which is a
 `CodecProvider`. CodecProviders are used by the `CodecRegistry` to find the correct `Codec` for any given class.
 
 {{% note class="important" %}}
@@ -57,8 +58,7 @@ encoded and decoded.
 ## POJO support
 
 Automatic POJO support can be provided by setting `PojoCodecProvider.Builder#automatic(true)`, once built the `PojoCodecProvider` will 
-automatically create a `PojoCodec` for any class that contains at least one serializable or deserializable 
-property.
+automatically create a POJO `Codec` for any class that contains at least one serializable or deserializable property.
 
 The entry point for customisable POJO support is the `PojoCodecProvider`. New instances can be created via the
 [`PojoCodecProvider.builder()`]({{<apiref "org/bson/codecs/pojo/PojoCodecProvider.html#builder">}}) method. The `builder` allows users to 
@@ -69,8 +69,8 @@ register any combination of:
   * `ClassModel` instances which allow fine grained control over how a POJO is encoded and decoded.
   
 The `builder` also allows the user to register default [Conventions](#conventions) for any POJOs that are automatically mapped, either 
-the individual POJO classes or POJOs found from registered packages. The `PojoCodecProvider` will lookup PojoCodecs and return the first 
-that matches the POJO class:
+the individual POJO classes or POJOs found from registered packages. The `PojoCodecProvider` will lookup POJO `Codec` instances and return 
+the first that matches the POJO class:
   
   * Registered ClassModels
   * Registered POJO classes
@@ -85,23 +85,24 @@ import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 
 // Create a CodecRegistry containing the PojoCodecProvider instance.
 CodecProvider pojoCodecProvider = PojoCodecProvider.builder().register("org.example.pojos").build();
-CodecRegistry pojoCodecRegistry = fromRegistries(defaultCodecRegistry, fromProviders(pojoCodecProvider));
+CodecRegistry pojoCodecRegistry = fromRegistries(getDefaultCodecRegistry(), fromProviders(pojoCodecProvider));
 ```
 
 {{% note class="tip" %}}
 In general only one instance of a `PojoCodecProvider` should be created. 
 
-This is because each `PojoCodecProvider` instance contains a look up table for discriminator names. If multiple PojoCodecProviders are 
+This is because each `PojoCodecProvider` instance contains a look up table for discriminator names. If multiple `PojoCodecProvider`s are 
 used, care should be taken to ensure that each provider contains a holistic view of POJO classes, otherwise discriminator lookups can fail. 
 Alternatively, using the full class name as the discriminator value will ensure successful POJO lookups. 
 {{% /note %}}
 
 ## Default configuration
 
-By default the `PojoCodec` will not store `null` values or a discriminator when converting a POJO to BSON. 
+By default the POJO `Codec` will not store `null` values or a discriminator when converting a POJO to BSON. 
 
 Take the following `Person` class:
 
@@ -193,8 +194,8 @@ public final class Tree extends GenericTree<Integer, String> {
 The `Tree` POJO is serializable because it doesn't have any unknown type parameters. The `left`, `right` and `genericClass` properties are 
 all serializable because they are bound to the concrete types `Integer`, `String` and `Long`. 
 
-On their own, instances of `GenericTree` or `GenericClass` are not serializable by the `PojoCodec`. This is because the runtime type parameter
-information is erased by the JVM, and the type parameters cannot be specialized accurately.
+On their own, instances of `GenericTree` or `GenericClass` are not serializable by the POJO `Codec`. This is because the runtime type 
+parameter information is erased by the JVM, and the type parameters cannot be specialized accurately.
 
 The 3.6 release of the driver further improves generic support with the addition of PropertyCodecProviders. The `PropertyCodecProvider` API 
 allows type-safe support of container types by providing concrete type parameters for the generic types as declared in the POJO.
@@ -271,8 +272,8 @@ public class Person {
 
 ### Enum support
 
-Enums are fully supported. The `PojoCodec` uses the name of the enum constant as the property value. This is then converted back into an Enum 
-value by the codec using the static `Enum.valueOf` method.
+Enums are fully supported. The POJO `Codec` uses the name of the enum constant as the property value. This is then converted back into an
+Enum value by the codec using the static `Enum.valueOf` method.
 
 Take the following example:
 
@@ -287,7 +288,7 @@ public enum Membership {
 public class Person {
     private String firstName;
     private String lastName;
-    private Member membership = Member.UNREGISTERED;
+    private Membership membership = Membership.UNREGISTERED;
 
     public Person() { }
 
@@ -317,15 +318,17 @@ The following Conventions are available from the [`Conventions`]({{<apiref "org/
         the PropertyModels. If the `idProperty` isn't set and there is a property named `_id` or `id` then it will be marked as the `idProperty`.
   * The [`SET_PRIVATE_FIELDS_CONVENTION`]({{<apiref "org/bson/codecs/pojo/Conventions.html#SET_PRIVATE_FIELDS_CONVENTION">}}).  Enables 
         private fields to be set directly using reflection, without the need of a setter method. Note this convention is not enabled by default.
-  * The [`USE_GETTERS_FOR_SETTERS`]({{<apiref "org/bson/codecs/pojo/Conventions.html#USE_GETTERS_FOR_SETTERS">}}). Allows getters to be used
+  * The [`USE_GETTERS_FOR_SETTERS`]({{<apiref "org/bson/codecs/pojo/Conventions.html#USE_GETTERS_FOR_SETTERS">}}) convention. Allows getters to be used
         for Map and Collection properties without setters, the collection/map is then mutated. Note this convention is not enabled by default.
+  * The [`OBJECT_ID_GENERATORS`]({{<apiref "org/bson/codecs/pojo/Conventions.html#OBJECT_ID_GENERATORS">}}) convention. Adds an `IdGenerator` that
+        generates new `ObjectId` for ClassModels that have an `ObjectId` value for the `id` property.
   * The [`DEFAULT_CONVENTIONS`]({{<apiref "org/bson/codecs/pojo/Conventions.html#DEFAULT_CONVENTIONS">}}), a list containing the 
-    `ANNOTATION_CONVENTION` and the `CLASS_AND_PROPERTY_CONVENTION`.
+    `ANNOTATION_CONVENTION`, the `CLASS_AND_PROPERTY_CONVENTION` and the `OBJECT_ID_GENERATORS` convention.
   * The [`NO_CONVENTIONS`]({{<apiref "org/bson/codecs/pojo/Conventions.html#NO_CONVENTIONS">}}) an empty list.
 
 Custom Conventions can either be set globally via the 
-[`PojoCodecProvider.Builder.conventions(conventions)`]({{<apiref "org/bson/codecs/pojo/PojoCodecProvider.Builder.html#conventions-java.util.List-">}}) 
-method, or via the [`ClassModelBuilder.conventions(conventions)`]({{<apiref "org/bson/codecs/pojo/ClassModelBuilder.html#conventions-java.util.List-">}}) 
+[`PojoCodecProvider.Builder.conventions(conventions)`]({{<apiref "org/bson/codecs/pojo/PojoCodecProvider.Builder.html#conventions(java.util.List)">}}) 
+method, or via the [`ClassModelBuilder.conventions(conventions)`]({{<apiref "org/bson/codecs/pojo/ClassModelBuilder.html#conventions(java.util.List)">}}) 
 method.
 
 {{% note class="note" %}}
@@ -363,13 +366,20 @@ import org.bson.codecs.pojo.annotations.*;
 
 @BsonDiscriminator
 public final class Person {
+
+    @BsonId
     public String personId;
     public String firstName;
+
+    @BsonProperty("surname")
     public String lastName;
-    
+
+    @BsonIgnore
+    public String password;
+
     @BsonProperty(useDiscriminator = true)
     public Address addr;
-    
+
     public Person(){
     }
 
@@ -379,7 +389,7 @@ public final class Person {
 The `Person` POJO Will produce BSON similar to:
 
 ```json
-{ "_id": "1234567890", "_t": "Person", "firstName": "Alan", "lastName": "Turing",
+{ "_id": "1234567890", "_t": "Person", "firstName": "Alan", "surname": "Turing",
   "address": { "_t": "Address", "address": "The Mansion", "street": "Sherwood Drive", 
                "town": "Bletchley", "postcode": "MK3 6EB" } }
 ```
@@ -398,7 +408,7 @@ If a POJO contains a field that has an abstract type or has an interface as its 
 subtypes / implementations need to be registered with the `PojoCodecProvider` so that values can be encoded and decoded correctly.
 
 The easiest way to enable a discriminator is to annotate the abstract class with the `Discriminator` annotation. Alternatively, the 
-[`ClassModelBuilder.enableDiscriminator(true)`]({{<apiref "org/bson/codecs/pojo/ClassModelBuilder.html#enableDiscriminator-boolean-">}}) 
+[`ClassModelBuilder.enableDiscriminator(true)`]({{<apiref "org/bson/codecs/pojo/ClassModelBuilder.html#enableDiscriminator(boolean)">}}) 
 method can be used to enable the use of a discriminator. 
 
 The following example creates a `CodecRegistry` with discriminators enabled for a `User` interface and its concrete `FreeUser` and 
@@ -411,12 +421,12 @@ ClassModel<SubscriberUser> subscriberUserModel = ClassModel.builder(SubscriberUs
 
 PojoCodecProvider pojoCodecProvider = PojoCodecProvider.builder().register(userModel, freeUserModel, subscriberUserModel).build();
 
-CodecRegistry pojoCodecRegistry = fromRegistries(defaultCodecRegistry, fromProviders(pojoCodecProvider));
+CodecRegistry pojoCodecRegistry = fromRegistries(getDefaultCodecRegistry(), fromProviders(pojoCodecProvider));
 ```
 
 ### Supporting POJOs without no args constructors
 
-By default PojoCodecs work with POJOs that have an empty, no arguments, constructor. POJOs with alternative constructors are supported 
+By default a POJO `Codec` works with POJOs that have an empty, no arguments, constructor. POJOs with alternative constructors are supported 
 via the `ANNOTATION_CONVENTION` and the `@BsonCreator` annotation. Any parameters for the creator constructor should be annotated with the 
 `@BsonProperty` annotation. Below is an example of a `Person` POJO that contains final fields that are set via the annotated constructor:
 
@@ -441,7 +451,7 @@ public final class Person {
         this.addr = address;
     }
 
-    @Id
+    @BsonId
     public String getPersonId() {
         return pid;
     }

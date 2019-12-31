@@ -44,12 +44,26 @@ public final class ConnectionId {
      * Construct an instance with the given server id.
      *
      * @param serverId the server id
+     * @since 3.8
      */
-    ConnectionId(final ServerId serverId) {
+    public ConnectionId(final ServerId serverId) {
         this(serverId, INCREMENTING_ID.incrementAndGet(), null);
     }
 
-    private ConnectionId(final ServerId serverId, final int localValue, final Integer serverValue) {
+    /**
+     * Construct an instance with the given serverId, localValue, and serverValue.
+     *
+     * <p>
+     *     Useful for testing, but generally prefer {@link #withServerValue(int)}
+     * </p>
+     *
+     * @param serverId the server id
+     * @param localValue the local value
+     * @param serverValue the server value, which may be null
+     * @see #withServerValue(int)
+     * @since 3.11
+     */
+    public ConnectionId(final ServerId serverId, final int localValue, final Integer serverValue) {
         this.serverId = notNull("serverId", serverId);
         this.localValue = localValue;
         this.serverValue = serverValue;
@@ -60,7 +74,14 @@ public final class ConnectionId {
         }
     }
 
-    ConnectionId withServerValue(final int serverValue) {
+    /**
+     * Creates a new connectionId with the set server value
+     *
+     * @param serverValue the server value
+     * @return the new connection id
+     * @since 3.8
+     */
+    public ConnectionId withServerValue(final int serverValue) {
         isTrue("server value is null", this.serverValue == null);
         return new ConnectionId(serverId, localValue, serverValue);
     }

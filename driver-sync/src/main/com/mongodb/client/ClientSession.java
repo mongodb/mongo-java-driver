@@ -16,7 +16,9 @@
 
 package com.mongodb.client;
 
+import com.mongodb.ServerAddress;
 import com.mongodb.TransactionOptions;
+import com.mongodb.lang.Nullable;
 
 /**
  * A client session that supports transactions.
@@ -24,6 +26,25 @@ import com.mongodb.TransactionOptions;
  * @since 3.8
  */
 public interface ClientSession extends com.mongodb.session.ClientSession {
+    /**
+     * Returns the server address of the pinned mongos on this session.
+     *
+     * @return the server address of the pinned mongos.
+     * @mongodb.server.release 4.2
+     * @since 3.11
+     */
+    @Nullable
+    ServerAddress getPinnedServerAddress();
+
+    /**
+     * Pin the server address of the mongos on this session.
+     *
+     * @param address the server address to pin to this session
+     * @mongodb.server.release 4.2
+     * @since 3.11
+     */
+    void setPinnedServerAddress(@Nullable ServerAddress address);
+
     /**
      * Returns true if there is an active transaction on this session, and false otherwise
      *
@@ -80,4 +101,27 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
      * @mongodb.server.release 4.0
      */
     void abortTransaction();
+
+    /**
+     * Execute the given function within a transaction.
+     *
+     * @param <T> the return type of the transaction body
+     * @param transactionBody the body of the transaction
+     * @return the return value of the transaction body
+     * @mongodb.server.release 4.0
+     * @since 3.11
+     */
+    <T> T withTransaction(TransactionBody<T> transactionBody);
+
+    /**
+     * Execute the given function within a transaction.
+     *
+     * @param <T> the return type of the transaction body
+     * @param transactionBody the body of the transaction
+     * @param options         the transaction options
+     * @return the return value of the transaction body
+     * @mongodb.server.release 4.0
+     * @since 3.11
+     */
+    <T> T withTransaction(TransactionBody<T> transactionBody, TransactionOptions options);
 }

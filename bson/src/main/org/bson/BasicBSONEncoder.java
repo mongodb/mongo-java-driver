@@ -37,8 +37,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Pattern;
 
-import static org.bson.BSON.regexFlags;
-
 /**
  * This is meant to be pooled or cached. There is some per instance memory for string conversion, etc...
  */
@@ -133,9 +131,9 @@ public class BasicBSONEncoder implements BSONEncoder {
      * Encodes any Object type
      *
      * @param name         the field name
-     * @param initialValue the value to write
+     * @param value the value to write
      */
-    protected void _putObjectField(final String name, final Object initialValue) {
+    protected void _putObjectField(final String name, final Object value) {
         if ("_transientFields".equals(name)) {
             return;
         }
@@ -143,20 +141,18 @@ public class BasicBSONEncoder implements BSONEncoder {
             throw new IllegalArgumentException("Document field names can't have a NULL character. (Bad Key: '" + name + "')");
         }
 
-        if ("$where".equals(name) && initialValue instanceof String) {
-            putCode(name, new Code((String) initialValue));
+        if ("$where".equals(name) && value instanceof String) {
+            putCode(name, new Code((String) value));
         }
-
-        Object value = BSON.applyEncodingHooks(initialValue);
 
         if (value == null) {
             putNull(name);
         } else if (value instanceof Date) {
             putDate(name, (Date) value);
-        } else if (value instanceof Number) {
-            putNumber(name, (Number) value);
         } else if (value instanceof Decimal128) {
             putDecimal128(name, (Decimal128) value);
+        } else if (value instanceof Number) {
+            putNumber(name, (Number) value);
         } else if (value instanceof Character) {
             putString(name, value.toString());
         } else if (value instanceof String) {
@@ -386,7 +382,7 @@ public class BasicBSONEncoder implements BSONEncoder {
      */
     protected void putPattern(final String name, final Pattern value) {
         putName(name);
-        bsonWriter.writeRegularExpression(new BsonRegularExpression(value.pattern(), regexFlags(value.flags())));
+        bsonWriter.writeRegularExpression(new BsonRegularExpression(value.pattern(), org.bson.BSON.regexFlags(value.flags())));
     }
 
     /**

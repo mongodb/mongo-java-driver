@@ -16,13 +16,13 @@
 
 package com.mongodb.client.internal;
 
-import com.mongodb.Block;
 import com.mongodb.Function;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.lang.Nullable;
 
 import java.util.Collection;
+import java.util.function.Consumer;
 
 class MappingIterable<U, V> implements MongoIterable<V> {
 
@@ -34,40 +34,41 @@ class MappingIterable<U, V> implements MongoIterable<V> {
         this.mapper = mapper;
     }
 
-    MongoIterable<U> getMapped() {
-        return iterable;
-    }
-
     @Override
     public MongoCursor<V> iterator() {
         return new MongoMappingCursor<U, V>(iterable.iterator(), mapper);
     }
 
+    @Override
+    public MongoCursor<V> cursor() {
+        return iterator();
+    }
+
     @Nullable
     @Override
     public V first() {
-        MongoCursor<V> iterator = iterator();
-        if (!iterator.hasNext()) {
+        U first = iterable.first();
+        if (first == null) {
             return null;
         }
-        return iterator.next();
+        return mapper.apply(first);
     }
 
     @Override
-    public void forEach(final Block<? super V> block) {
-        iterable.forEach(new Block<U>() {
+    public void forEach(final Consumer<? super V> block) {
+        iterable.forEach(new Consumer<U>() {
             @Override
-            public void apply(final U document) {
-                block.apply(mapper.apply(document));
+            public void accept(final U document) {
+                block.accept(mapper.apply(document));
             }
         });
     }
 
     @Override
     public <A extends Collection<? super V>> A into(final A target) {
-        forEach(new Block<V>() {
+        forEach(new Consumer<V>() {
             @Override
-            public void apply(final V v) {
+            public void accept(final V v) {
                 target.add(v);
             }
         });
@@ -83,5 +84,9 @@ class MappingIterable<U, V> implements MongoIterable<V> {
     @Override
     public <W> MongoIterable<W> map(final Function<V, W> newMap) {
         return new MappingIterable<V, W>(this, newMap);
+    }
+
+    MongoIterable<U> getMapped() {
+        return iterable;
     }
 }

@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-apply plugin: 'osgi'
-apply plugin: 'org.kordamp.gradle.clirr'
 
-def configDir = new File(rootDir, 'config')
+plugins {
+    id 'de.fuerstenau.buildconfig' version '1.1.8'
+}
+
 archivesBaseName = 'mongodb-driver-core'
+description = '''The Java operations layer for the MongoDB Java Driver.
+ Third parties can wrap this layer to provide custom higher-level APIs'''
 
-clirr {
-    excludeFilter = new File("$configDir/clirr-exclude.yml")
-    baseline 'org.mongodb:mongodb-driver-core:3.4.0'
-    failOnErrors = false
+ext {
+    pomName = 'MongoDB Java Driver Core'
 }
 
 dependencies {
@@ -34,15 +35,26 @@ dependencies {
     compile "io.netty:netty-transport:$nettyVersion", optional
     compile "io.netty:netty-handler:$nettyVersion", optional
     compile "org.xerial.snappy:snappy-java:$snappyVersion", optional
+    compile "com.github.luben:zstd-jni:$zstdVersion", optional
+    compile "org.mongodb:mongodb-crypt:$mongoCryptVersion", optional
 
     testCompile project(':bson').sourceSets.test.output
 }
 
+buildConfig {
+    appName = 'mongo-java-driver'
+    version = project.gitVersion
+
+    clsName = 'MongoDriverVersion'
+    packageName = 'com.mongodb.internal.build'
+}
+
 jar {
-    manifest {
-        instruction 'Automatic-Module-Name', 'org.mongodb.driver.core'
-        instruction 'Build-Version', getGitVersion()
-        instruction 'Import-Package',
+    bnd(
+            '-exportcontents': "*;-noimport:=true",
+            'Automatic-Module-Name': 'org.mongodb.driver.core',
+            'Build-Version': project.gitVersion,
+            'Import-Package': [
                     'org.bson.*',                       // unfortunate that this is necessary, but if it's left out then it's not included
                     'javax.crypto.*',
                     'javax.crypto.spec.*',
@@ -56,16 +68,9 @@ jar {
                     'org.ietf.jgss.*',
                     'io.netty.*;resolution:=optional',
                     'org.xerial.snappy.*;resolution:=optional',
+                    'com.github.luben.zstd.*;resolution:=optional',
                     'org.slf4j;resolution:=optional',
                     'jnr.unixsocket;resolution:=optional'
-    }
-}
-
-modifyPom {
-    project {
-        name 'MongoDB Java Driver Core'
-        description 'The Java operations layer for the MongoDB Java Driver. Third parties can \' +\n' +
-                    '                                                   \'wrap this layer to provide custom higher-level APIs'
-        url 'http://www.mongodb.org'
-    }
+            ].join(',')
+    )
 }

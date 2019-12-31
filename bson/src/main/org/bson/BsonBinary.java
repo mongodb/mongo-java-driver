@@ -16,7 +16,11 @@
 
 package org.bson;
 
+import org.bson.assertions.Assertions;
+import org.bson.internal.UuidHelper;
+
 import java.util.Arrays;
+import java.util.UUID;
 
 /**
  * A representation of the BSON Binary type.  Note that for performance reasons instances of this class are not immutable,
@@ -73,6 +77,75 @@ public class BsonBinary extends BsonValue {
         }
         this.type = type;
         this.data = data;
+    }
+
+    /**
+     * Construct a Type 4 BsonBinary from the given UUID.
+     *
+     * @param uuid the UUID
+     * @since 3.9
+     */
+    public BsonBinary(final UUID uuid) {
+        this(uuid, UuidRepresentation.STANDARD);
+    }
+
+    /**
+     * Construct a new instance from the given UUID and UuidRepresentation
+     *
+     * @param uuid the UUID
+     * @param uuidRepresentation the UUID representation
+     * @since 3.9
+     */
+    public BsonBinary(final UUID uuid, final UuidRepresentation uuidRepresentation) {
+        if (uuid == null) {
+            throw new IllegalArgumentException("uuid may not be null");
+        }
+        if (uuidRepresentation == null) {
+            throw new IllegalArgumentException("uuidRepresentation may not be null");
+        }
+        this.data = UuidHelper.encodeUuidToBinary(uuid, uuidRepresentation);
+        this.type = uuidRepresentation == UuidRepresentation.STANDARD
+                ? BsonBinarySubType.UUID_STANDARD.getValue()
+                : BsonBinarySubType.UUID_LEGACY.getValue();
+    }
+
+    /**
+     * Returns the binary as a UUID. The binary type must be 4.
+     *
+     * @return the uuid
+     * @since 3.9
+     */
+    public UUID asUuid() {
+        if (!BsonBinarySubType.isUuid(type)) {
+            throw new BsonInvalidOperationException("type must be a UUID subtype.");
+        }
+
+        if (type != BsonBinarySubType.UUID_STANDARD.getValue()) {
+            throw new BsonInvalidOperationException("uuidRepresentation must be set to return the correct UUID.");
+        }
+
+        return UuidHelper.decodeBinaryToUuid(this.data.clone(), this.type, UuidRepresentation.STANDARD);
+    }
+
+    /**
+     * Returns the binary as a UUID.
+     *
+     * @param uuidRepresentation the UUID representation
+     * @return the uuid
+     * @since 3.9
+     */
+    public UUID asUuid(final UuidRepresentation uuidRepresentation) {
+        Assertions.notNull("uuidRepresentation", uuidRepresentation);
+
+        final byte uuidType = uuidRepresentation == UuidRepresentation.STANDARD
+                ? BsonBinarySubType.UUID_STANDARD.getValue()
+                : BsonBinarySubType.UUID_LEGACY.getValue();
+
+        if (type != uuidType) {
+            throw new BsonInvalidOperationException("uuidRepresentation does not match current uuidRepresentation.");
+        }
+
+        return UuidHelper.decodeBinaryToUuid(data.clone(), type, uuidRepresentation);
     }
 
     @Override

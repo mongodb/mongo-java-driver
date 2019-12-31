@@ -2,9 +2,9 @@
 
 Release notes are available [here](https://github.com/mongodb/mongo-java-driver/releases).
 
-## API Documentation:
+## Documentation
 
-Javadoc for all major and minor releases is available [here](http://api.mongodb.com/java/).
+Reference and API documentation is available [here](http://mongodb.github.io/mongo-java-driver/).
 
 ## Support / Feedback
 
@@ -41,9 +41,9 @@ called out in the release notes.
 Minor 3.x increments (such as 3.1, 3.2, etc) will occur when non-trivial new functionality is added or significant enhancements or bug
 fixes occur that may have behavioral changes that may affect some edge cases (such as dependence on behavior resulting from a bug). An
 example of an enhancement is a method or class added to support new functionality added to the MongoDB server.   Minor releases will
-almost always be binary compatible with prior minor releases from the same major release branch, exept as noted below.
+almost always be binary compatible with prior minor releases from the same major release branch, except as noted below.
 
-Patch 3.x.y increments (such as 3.0.0 -> 3.0.1, 3.1.1 -> 3.1.2, etc) will occur for bug fixes only and will always be binary compitible
+Patch 3.x.y increments (such as 3.0.0 -> 3.0.1, 3.1.1 -> 3.1.2, etc) will occur for bug fixes only and will always be binary compatible
 with prior patch releases of the same minor release branch.
 
 #### @Beta
@@ -65,28 +65,17 @@ time.
 ## Binaries
 
 Binaries and dependency information for Maven, Gradle, Ivy and others can be found at
-[http://search.maven.org](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.mongodb%22%20AND%20a%3A%22mongo-java-driver%22).
+[http://search.maven.org](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.mongodb%22%20AND%20a%3A%22mongodb-driver-sync%22).
 
 Example for Maven:
 
 ```xml
 <dependency>
     <groupId>org.mongodb</groupId>
-    <artifactId>mongodb-driver</artifactId>
+    <artifactId>mongodb-driver-sync</artifactId>
     <version>x.y.z</version>
 </dependency>
 ```
-
-For an all-in-one jar (which embeds the core driver and bson):
-
-```xml
-<dependency>
-    <groupId>org.mongodb</groupId>
-    <artifactId>mongo-java-driver</artifactId>
-    <version>x.y.z</version>
-</dependency>
-```
-
 Snapshot builds are also published regulary via Sonatype.
 
 Example for Maven:
@@ -100,11 +89,9 @@ Example for Maven:
     </repositories>
 ```
 
-For binaries containing the asynchronous API, see the [driver-async README](driver-async/#binaries).
-
 ## Build
 
-To build and test the driver:
+Java 9+ is required to build and compile the source. To build and test the driver:
 
 ```
 $ git clone https://github.com/mongodb/mongo-java-driver.git
@@ -121,6 +108,21 @@ $ mongod --dbpath ./data/db --logpath ./data/mongod.log --port 27017 --logappend
 If you encounter `"Too many open files"` errors when running the tests then you will need to increase 
 the number of available file descriptors prior to starting mongod as described in [https://docs.mongodb.com/manual/reference/ulimit/](https://docs.mongodb.com/manual/reference/ulimit/)
 
+## IntelliJ IDEA
+
+A couple of manual configuration steps are required to run the code in IntelliJ:
+
+- Java 9+ is required to build and compile the source.
+
+- **Error:** `java: cannot find symbol: class SNIHostName location: package javax.net.ssl`<br>
+ **Fix:** Settings > Build, Execution, Deployment > Compiler > Java Compiler - untick "Use '--release' option for cross-compilation (Java 9 and later)"
+
+- **Error:** `java: package com.mongodb.internal.build does not exist`<br>
+ **Fixes:** Any of the following: <br>
+ - Run the `compileBuildConfig` task: eg: `./gradlew compileBuildConfig` or via Gradle > driver-core > Tasks > other > compileBuildConfig
+ - Set `compileBuildConfig` to execute Before Build. via Gradle > Tasks > other > right click compileBuildConfig - click on "Execute Before Build" 
+ - Delegate all build actions to Gradle: Settings > Build, Execution, Deployment > Build Tools > Gradle > Runner - tick "Delegate IDE build/run actions to gradle"
+
 ### Build status:
 
 [![Build Status](https://travis-ci.org/mongodb/mongo-java-driver.svg?branch=master)](https://travis-ci.org/mongodb/mongo-java-driver)
@@ -129,18 +131,11 @@ the number of available file descriptors prior to starting mongod as described i
 
 * Jeff Yemin           jeff.yemin@mongodb.com
 * Ross Lawley          ross@mongodb.com
-
-## Contributors:
-* Trisha Gee           trisha.gee@gmail.com
-* Uladzmir Mihura      trnl.me@gmail.com
-* Justin Lee           justin.lee@mongodb.com
-* Craig Wilson         craig.wilson@mongodb.com
+* John Stewart         john.stewart@mongodb.com
 
 Additional contributors can be found [here](https://github.com/mongodb/mongo-java-driver/graphs/contributors).
 
 ## Supporters
-
-YourKit is supporting this open source project with its [YourKit Java Profiler](http://www.yourkit.com/java/profiler/index.jsp).
 
 JetBrains is supporting this open source project with:
 

@@ -19,12 +19,14 @@ package com.mongodb.client.gridfs
 import com.mongodb.MongoClientSettings
 import com.mongodb.MongoGridFSException
 import com.mongodb.client.FunctionalSpecification
+import com.mongodb.client.MongoClients
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions
 import com.mongodb.client.gridfs.model.GridFSFile
 import com.mongodb.client.gridfs.model.GridFSUploadOptions
 import org.bson.BsonDocument
+import org.bson.BsonObjectId
 import org.bson.BsonString
 import org.bson.Document
 import org.bson.UuidRepresentation
@@ -32,15 +34,14 @@ import org.bson.codecs.UuidCodec
 import org.bson.types.ObjectId
 import spock.lang.Unroll
 
-import java.security.MessageDigest
-
 import static com.mongodb.client.Fixture.getDefaultDatabase
+import static com.mongodb.client.Fixture.getDefaultDatabaseName
+import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Updates.unset
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries
 
-@SuppressWarnings('deprecation')
 class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
     protected MongoDatabase mongoDatabase;
     protected MongoCollection<GridFSFile> filesCollection;
@@ -71,73 +72,22 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         def content = multiChunk ? multiChunkString : singleChunkString
         def contentBytes = content as byte[]
         def expectedLength = contentBytes.length as Long
-        def expectedMD5 = md5Disabled ? null : MessageDigest.getInstance('MD5').digest(contentBytes).encodeHex().toString()
-        def bucket = gridFSBucket.withDisableMD5(md5Disabled)
         ObjectId fileId
         byte[] gridFSContentBytes
 
         when:
         if (direct) {
-            fileId = bucket.uploadFromStream('myFile', new ByteArrayInputStream(contentBytes))
+            fileId = gridFSBucket.uploadFromStream('myFile', new ByteArrayInputStream(contentBytes))
         } else {
-            def outputStream = bucket.openUploadStream('myFile')
+            def outputStream = gridFSBucket.openUploadStream('myFile')
             outputStream.write(contentBytes)
             outputStream.close()
             fileId = outputStream.getObjectId()
         }
 
         then:
-        filesCollection.count() == 1
-        chunksCollection.count() == chunkCount
-
-        when:
-        def file = filesCollection.find().first()
-
-        then:
-        file.getObjectId() == fileId
-        file.getChunkSize() == bucket.getChunkSizeBytes()
-        file.getLength() == expectedLength
-        file.getMD5() == expectedMD5
-        file.getMetadata() == null
-
-        when:
-        if (direct) {
-            gridFSContentBytes = bucket.openDownloadStream(fileId).getBytes()
-        } else {
-            def outputStream = new ByteArrayOutputStream(expectedLength as int)
-            bucket.downloadToStream(fileId, outputStream)
-            outputStream.close()
-            gridFSContentBytes = outputStream.toByteArray()
-        }
-
-        then:
-        gridFSContentBytes == contentBytes
-
-        where:
-        description                     | multiChunk | chunkCount | direct | md5Disabled
-        'a small file directly'         | false      | 1          | true   | false
-        'a small file to stream'        | false      | 1          | false  | false
-        'a large file directly'         | true       | 5          | true   | false
-        'a large file to stream'        | true       | 5          | false  | false
-        'a small file directly no md5'  | false      | 1          | true   | true
-        'a small file to stream no md5' | false      | 1          | false  | true
-    }
-
-    def 'should round trip with a batchSize of 1'() {
-        given:
-        def content = multiChunkString
-        def contentBytes = content as byte[]
-        def expectedLength = contentBytes.length as Long
-        def expectedMD5 = MessageDigest.getInstance('MD5').digest(contentBytes).encodeHex().toString()
-        ObjectId fileId
-        byte[] gridFSContentBytes
-
-        when:
-        fileId = gridFSBucket.uploadFromStream('myFile', new ByteArrayInputStream(contentBytes));
-
-        then:
-        filesCollection.count() == 1
-        chunksCollection.count() == 5
+        filesCollection.countDocuments() == 1
+        chunksCollection.countDocuments() == chunkCount
 
         when:
         def file = filesCollection.find().first()
@@ -146,7 +96,51 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         file.getObjectId() == fileId
         file.getChunkSize() == gridFSBucket.getChunkSizeBytes()
         file.getLength() == expectedLength
-        file.getMD5() == expectedMD5
+        file.getMetadata() == null
+
+        when:
+        if (direct) {
+            gridFSContentBytes = gridFSBucket.openDownloadStream(fileId).getBytes()
+        } else {
+            def outputStream = new ByteArrayOutputStream(expectedLength as int)
+            gridFSBucket.downloadToStream(fileId, outputStream)
+            outputStream.close()
+            gridFSContentBytes = outputStream.toByteArray()
+        }
+
+        then:
+        gridFSContentBytes == contentBytes
+
+        where:
+        description                     | multiChunk | chunkCount | direct
+        'a small file directly'         | false      | 1          | true
+        'a small file to stream'        | false      | 1          | false
+        'a large file directly'         | true       | 5          | true
+        'a large file to stream'        | true       | 5          | false
+    }
+
+    def 'should round trip with a batchSize of 1'() {
+        given:
+        def content = multiChunkString
+        def contentBytes = content as byte[]
+        def expectedLength = contentBytes.length as Long
+        ObjectId fileId
+        byte[] gridFSContentBytes
+
+        when:
+        fileId = gridFSBucket.uploadFromStream('myFile', new ByteArrayInputStream(contentBytes));
+
+        then:
+        filesCollection.countDocuments() == 1
+        chunksCollection.countDocuments() == 5
+
+        when:
+        def file = filesCollection.find().first()
+
+        then:
+        file.getObjectId() == fileId
+        file.getChunkSize() == gridFSBucket.getChunkSizeBytes()
+        file.getLength() == expectedLength
         file.getMetadata() == null
 
         when:
@@ -180,8 +174,8 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         gridFSBucket.delete(fileId)
 
         then:
-        filesCollection.count() == 0
-        chunksCollection.count() == 0
+        filesCollection.countDocuments() == 0
+        chunksCollection.countDocuments() == 0
     }
 
     def 'should use custom uploadOptions when uploading' () {
@@ -195,32 +189,30 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         def contentBytes = content as byte[]
         def expectedLength = contentBytes.length as Long
         def expectedNoChunks = Math.ceil((expectedLength as double) / chunkSize) as int
-        def expectedMD5 = MessageDigest.getInstance('MD5').digest(contentBytes).encodeHex().toString()
-        ObjectId fileId
+        def fileId
         byte[] gridFSContentBytes
 
         when:
         if (direct) {
-            fileId = gridFSBucket.uploadFromStream('myFile', new ByteArrayInputStream(contentBytes), options);
+            fileId = new BsonObjectId(gridFSBucket.uploadFromStream('myFile', new ByteArrayInputStream(contentBytes), options))
         } else {
             def outputStream = gridFSBucket.openUploadStream('myFile', options)
             outputStream.write(contentBytes)
             outputStream.close()
-            fileId = outputStream.getFileId()
+            fileId = outputStream.getId()
         }
 
         then:
-        filesCollection.count() == 1
-        chunksCollection.count() == expectedNoChunks
+        filesCollection.countDocuments() == 1
+        chunksCollection.countDocuments() == expectedNoChunks
 
         when:
         def fileInfo = filesCollection.find().first()
 
         then:
-        fileInfo.getId().getValue() == fileId
+        fileInfo.getId() == fileId
         fileInfo.getChunkSize() == options.getChunkSizeBytes()
         fileInfo.getLength() == expectedLength
-        fileInfo.getMD5() == expectedMD5
         fileInfo.getMetadata() == options.getMetadata()
 
         when:
@@ -340,15 +332,15 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         def fileId = gridFSBucket.uploadFromStream(filename, new ByteArrayInputStream('Hello GridFS' as byte[]))
 
         then:
-        filesCollection.count() == 1
-        chunksCollection.count() == 1
+        filesCollection.countDocuments() == 1
+        chunksCollection.countDocuments() == 1
 
         when:
         gridFSBucket.delete(fileId)
 
         then:
-        filesCollection.count() == 0
-        chunksCollection.count() == 0
+        filesCollection.countDocuments() == 0
+        chunksCollection.countDocuments() == 0
     }
 
     def 'should thrown when deleting nonexistent file'() {
@@ -367,8 +359,8 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         filesCollection.drop()
 
         then:
-        filesCollection.count() == 0
-        chunksCollection.count() == 1
+        filesCollection.countDocuments() == 0
+        chunksCollection.countDocuments() == 1
 
         when:
         gridFSBucket.delete(fileId)
@@ -377,8 +369,8 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         thrown(MongoGridFSException)
 
         then:
-        filesCollection.count() == 0
-        chunksCollection.count() == 0
+        filesCollection.countDocuments() == 0
+        chunksCollection.countDocuments() == 0
     }
 
     def 'should rename a file'() {
@@ -390,15 +382,15 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         def fileId = gridFSBucket.uploadFromStream(filename, new ByteArrayInputStream('Hello GridFS' as byte[]))
 
         then:
-        filesCollection.count() == 1
-        chunksCollection.count() == 1
+        filesCollection.countDocuments() == 1
+        chunksCollection.countDocuments() == 1
 
         when:
         gridFSBucket.rename(fileId, 'newFileName')
 
         then:
-        filesCollection.count() == 1
-        chunksCollection.count() == 1
+        filesCollection.countDocuments() == 1
+        chunksCollection.countDocuments() == 1
 
         when:
         gridFSBucket.openDownloadStream(newFileName)
@@ -476,8 +468,8 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
                 new GridFSUploadOptions().chunkSizeBytes(500));
 
         then:
-        filesCollection.count() == 1
-        chunksCollection.count() == 2
+        filesCollection.countDocuments() == 1
+        chunksCollection.countDocuments() == 2
 
         when:
         def gridFSDownloadStream = gridFSBucket.openDownloadStream(fileId)
@@ -522,7 +514,11 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         given:
         def codecRegistry = fromRegistries(fromCodecs(new UuidCodec(UuidRepresentation.STANDARD)),
                 MongoClientSettings.getDefaultCodecRegistry())
-        def database = getDefaultDatabase().withCodecRegistry(codecRegistry)
+        def client = MongoClients.create(getMongoClientSettingsBuilder()
+                .uuidRepresentation(UuidRepresentation.STANDARD)
+                .build())
+
+        def database = client.getDatabase(getDefaultDatabaseName()).withCodecRegistry(codecRegistry)
         def uuid = UUID.randomUUID()
         def fileMeta = new Document('uuid', uuid)
         def gridFSBucket = GridFSBuckets.create(database)
@@ -538,31 +534,9 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
 
         then:
         filesCollection.find(BsonDocument).first().getDocument('metadata').getBinary('uuid').getType() == 4 as byte
-    }
 
-    @SuppressWarnings('deprecation')
-    def 'should be able to open by name using the deprecated methods'() {
-        given:
-        def content = 'Hello GridFS'
-        def contentBytes = content as byte[]
-        def filename = 'myFile'
-        gridFSBucket.uploadFromStream(filename, new ByteArrayInputStream(contentBytes))
-        byte[] gridFSContentBytes
-
-        when: 'Direct to a stream'
-        gridFSContentBytes = gridFSBucket.openDownloadStreamByName(filename).getBytes()
-
-        then:
-        gridFSContentBytes == contentBytes
-
-        when: 'To supplied stream'
-        def outputStream = new ByteArrayOutputStream(contentBytes.length)
-        gridFSBucket.downloadToStreamByName(filename, outputStream)
-        outputStream.close()
-        gridFSContentBytes = outputStream.toByteArray()
-
-        then:
-        gridFSContentBytes == contentBytes
+        cleanup:
+        client?.close()
     }
 
     @Unroll
@@ -584,7 +558,7 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         }
 
         then:
-        filesCollection.count() == 1
+        filesCollection.countDocuments() == 1
 
         when:
         // Remove filename

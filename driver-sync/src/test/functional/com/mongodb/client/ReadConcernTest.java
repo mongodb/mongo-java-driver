@@ -18,11 +18,10 @@ package com.mongodb.client;
 
 import com.mongodb.Block;
 import com.mongodb.ReadConcern;
-import com.mongodb.ReadPreference;
 import com.mongodb.connection.SocketSettings;
-import com.mongodb.connection.TestCommandListener;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
+import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.junit.After;
@@ -33,7 +32,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
@@ -70,7 +68,7 @@ public class ReadConcernTest {
     @Test
     public void shouldIncludeReadConcernInCommand() {
         mongoClient.getDatabase(getDefaultDatabaseName()).getCollection("test")
-                .withReadConcern(ReadConcern.LOCAL).count();
+                .withReadConcern(ReadConcern.LOCAL).estimatedDocumentCount();
 
         List<CommandEvent> events = commandListener.getCommandStartedEvents();
 
@@ -80,12 +78,8 @@ public class ReadConcernTest {
         if (serverVersionAtLeast(3, 6)) {
             commandDocument.put("$db", new BsonString(getDefaultDatabaseName()));
         }
-        if (isStandalone() && serverVersionAtLeast(3, 6)) {
-            commandDocument.put("$readPreference", ReadPreference.primaryPreferred().toDocument());
-        }
         assertEventsEquality(Arrays.<CommandEvent>asList(new CommandStartedEvent(1, null, getDefaultDatabaseName(),
-                        "count", commandDocument)), events,
-                commandListener.getSessions());
+                        "count", commandDocument)), events);
     }
 
     private boolean canRunTests() {

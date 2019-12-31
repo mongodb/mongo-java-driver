@@ -21,6 +21,7 @@ import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
+import org.bson.BsonTimestamp;
 
 import java.util.concurrent.TimeUnit;
 
@@ -35,6 +36,15 @@ import java.util.concurrent.TimeUnit;
  * @since 3.6
  */
 public interface ChangeStreamIterable<TResult> extends MongoIterable<ChangeStreamDocument<TResult>> {
+
+    /**
+     * Returns a cursor used for iterating over elements of type {@code ChangeStreamDocument<TResult>}. The cursor has
+     * a covariant return type to additionally provide a method to access the resume token in change stream batches.
+     *
+     * @return the change stream cursor
+     * @since 3.11
+     */
+    MongoChangeStreamCursor<ChangeStreamDocument<TResult>> cursor();
 
     /**
      * Sets the fullDocument value.
@@ -88,4 +98,35 @@ public interface ChangeStreamIterable<TResult> extends MongoIterable<ChangeStrea
      * @return the new Mongo Iterable
      */
     <TDocument> MongoIterable<TDocument> withDocumentClass(Class<TDocument> clazz);
+
+    /**
+     * The change stream will only provide changes that occurred at or after the specified timestamp.
+     *
+     * <p>Any command run against the server will return an operation time that can be used here.</p>
+     * <p>The default value is an operation time obtained from the server before the change stream was created.</p>
+     *
+     * @param startAtOperationTime the start at operation time
+     * @since 3.8
+     * @return this
+     * @mongodb.server.release 4.0
+     * @mongodb.driver.manual reference/method/db.runCommand/
+     */
+    ChangeStreamIterable<TResult> startAtOperationTime(BsonTimestamp startAtOperationTime);
+
+    /**
+     * Similar to {@code resumeAfter}, this option takes a resume token and starts a
+     * new change stream returning the first notification after the token.
+     *
+     * <p>This will allow users to watch collections that have been dropped and recreated
+     * or newly renamed collections without missing any notifications.</p>
+     *
+     * <p>Note: The server will report an error if both {@code startAfter} and {@code resumeAfter} are specified.</p>
+     *
+     * @param startAfter the startAfter resumeToken
+     * @return this
+     * @since 3.11
+     * @mongodb.server.release 4.2
+     * @mongodb.driver.manual changeStreams/#change-stream-start-after
+     */
+    ChangeStreamIterable<TResult> startAfter(BsonDocument startAfter);
 }

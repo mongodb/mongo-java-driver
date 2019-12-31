@@ -18,9 +18,17 @@ package com.mongodb.gridfs;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
+import com.mongodb.DBObjectCodecProvider;
 import com.mongodb.MongoException;
 import org.bson.BSONObject;
+import org.bson.codecs.BsonValueCodecProvider;
+import org.bson.codecs.EncoderContext;
+import org.bson.codecs.ValueCodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.json.JsonWriter;
+import org.bson.json.JsonWriterSettings;
 
+import java.io.StringWriter;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -29,6 +37,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static java.util.Arrays.asList;
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 /**
  * The abstract class representing a GridFS file.
@@ -37,14 +46,16 @@ import static java.util.Arrays.asList;
  */
 public abstract class GridFSFile implements DBObject {
 
+    private static final CodecRegistry DEFAULT_REGISTRY =
+            fromProviders(asList(new ValueCodecProvider(), new BsonValueCodecProvider(), new DBObjectCodecProvider()));
+
     private static final Set<String> VALID_FIELDS = Collections.unmodifiableSet(new HashSet<String>(asList("_id",
-                                                                                                           "filename",
-                                                                                                           "contentType",
-                                                                                                           "length",
-                                                                                                           "chunkSize",
-                                                                                                           "uploadDate",
-                                                                                                           "aliases",
-                                                                                                           "md5")));
+            "filename",
+            "contentType",
+            "length",
+            "chunkSize",
+            "uploadDate",
+            "aliases")));
 
     final DBObject extra = new BasicDBObject();
 
@@ -55,7 +66,6 @@ public abstract class GridFSFile implements DBObject {
     long length;
     long chunkSize;
     Date uploadDate;
-    String md5;
 
     /**
      * Saves the file entry to the files collection
@@ -67,35 +77,6 @@ public abstract class GridFSFile implements DBObject {
             throw new MongoException("need fs");
         }
         fs.getFilesCollection().save(this);
-    }
-
-    /**
-     * Verifies that the MD5 matches between the database and the local file. This should be called after transferring a file.
-     *
-     * @throws MongoException if there's a failure
-     */
-    public void validate() {
-        if (fs == null) {
-            throw new MongoException("no fs");
-        }
-        if (md5 == null) {
-            throw new MongoException("no md5 stored");
-        }
-
-        DBObject cmd = new BasicDBObject("filemd5", id);
-        cmd.put("root", fs.getBucketName());
-        DBObject res = fs.getDB().command(cmd);
-        if (res != null && res.containsField("md5")) {
-            String m = res.get("md5").toString();
-            if (m.equals(md5)) {
-                return;
-            }
-            throw new MongoException("md5 differ.  mine [" + md5 + "] theirs [" + m + "]");
-        }
-
-        // no md5 from the server
-        throw new MongoException("no md5 returned from server: " + res);
-
     }
 
     /**
@@ -191,15 +172,6 @@ public abstract class GridFSFile implements DBObject {
         extra.put("metadata", metadata);
     }
 
-    /**
-     * Gets the observed MD5 during transfer
-     *
-     * @return md5
-     */
-    public String getMD5() {
-        return md5;
-    }
-
     @Override
     public Object put(final String key, final Object v) {
         if (key == null) {
@@ -216,8 +188,6 @@ public abstract class GridFSFile implements DBObject {
             chunkSize = ((Number) v).longValue();
         } else if (key.equals("uploadDate")) {
             uploadDate = (Date) v;
-        } else if (key.equals("md5")) {
-            md5 = (String) v;
         } else {
             extra.put(key, v);
         }
@@ -240,16 +210,8 @@ public abstract class GridFSFile implements DBObject {
             return chunkSize;
         } else if (key.equals("uploadDate")) {
             return uploadDate;
-        } else if (key.equals("md5")) {
-            return md5;
         }
         return extra.get(key);
-    }
-
-    @Override
-    @Deprecated
-    public boolean containsKey(final String key) {
-        return containsField(key);
     }
 
     @Override
@@ -276,9 +238,11 @@ public abstract class GridFSFile implements DBObject {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public String toString() {
-        return com.mongodb.util.JSON.serialize(this);
+        JsonWriter writer = new JsonWriter(new StringWriter(), JsonWriterSettings.builder().build());
+        DEFAULT_REGISTRY.get(GridFSFile.class).encode(writer, this,
+                EncoderContext.builder().isEncodingCollectibleDocument(true).build());
+        return writer.getWriter().toString();
     }
 
     /**

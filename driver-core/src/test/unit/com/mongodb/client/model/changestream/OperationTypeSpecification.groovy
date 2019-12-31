@@ -25,12 +25,16 @@ class OperationTypeSpecification extends Specification {
         operationType.getValue() == expectedString
 
         where:
-        operationType            | expectedString
-        OperationType.DELETE     | 'delete'
-        OperationType.INSERT     | 'insert'
-        OperationType.INVALIDATE | 'invalidate'
-        OperationType.REPLACE    | 'replace'
-        OperationType.UPDATE     | 'update'
+        operationType               | expectedString
+        OperationType.DELETE        | 'delete'
+        OperationType.DROP          | 'drop'
+        OperationType.DROP_DATABASE | 'dropDatabase'
+        OperationType.INSERT        | 'insert'
+        OperationType.INVALIDATE    | 'invalidate'
+        OperationType.OTHER         | 'other'
+        OperationType.RENAME        | 'rename'
+        OperationType.REPLACE       | 'replace'
+        OperationType.UPDATE        | 'update'
     }
 
     def 'should support valid string representations'() {
@@ -38,22 +42,22 @@ class OperationTypeSpecification extends Specification {
         OperationType.fromString(stringValue) == operationType
 
         where:
-        operationType            | stringValue
-        OperationType.DELETE     | 'delete'
-        OperationType.INSERT     | 'insert'
-        OperationType.INVALIDATE | 'invalidate'
-        OperationType.REPLACE    | 'replace'
-        OperationType.UPDATE     | 'update'
+        operationType               | stringValue
+        OperationType.DELETE        | 'delete'
+        OperationType.DROP          | 'drop'
+        OperationType.DROP_DATABASE | 'dropDatabase'
+        OperationType.INSERT        | 'insert'
+        OperationType.INVALIDATE    | 'invalidate'
+        OperationType.OTHER         | 'other'
+        OperationType.REPLACE       | 'replace'
+        OperationType.UPDATE        | 'update'
     }
 
-    def 'should throw an illegal argument exception for invalid values'() {
-        when:
-        OperationType.fromString(stringValue)
-
-        then:
-        thrown(IllegalArgumentException)
+    def 'should return UNKNOWN for new / unknown values'() {
+        expect:
+        OperationType.fromString(stringValue) == OperationType.OTHER
 
         where:
-        stringValue << [null, 'info']
+        stringValue << [null, 'info', 'reIndex']
     }
 }

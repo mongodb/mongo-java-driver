@@ -16,12 +16,14 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -266,6 +268,7 @@ public final class Aggregates {
     /**
      * Creates a $lookup pipeline stage, joining the current collection with the one specified in from using the given pipeline
      *
+     * @param <TExpression> the Variable value expression type
      * @param from          the name of the collection in the same database to perform the join with.
      * @param let           the variables to use in the pipeline field stages.
      * @param pipeline      the pipeline to run on the joined collection.
@@ -275,9 +278,9 @@ public final class Aggregates {
      * @mongodb.server.release 3.6
      * @since 3.7
      */
-    public static Bson lookup(final String from, @Nullable final List<Variable<?>> let, final List<? extends Bson> pipeline,
-                              final String as) {
-       return new LookupStage(from, let, pipeline, as);
+    public static <TExpression> Bson lookup(final String from, @Nullable final List<Variable<TExpression>> let,
+                                            final List<? extends Bson> pipeline, final String as) {
+       return new LookupStage<TExpression>(from, let, pipeline, as);
     }
 
     /**
@@ -350,13 +353,13 @@ public final class Aggregates {
      * Creates a $group pipeline stage for the specified filter
      *
      * @param <TExpression>     the expression type
-     * @param id                the id expression for the group
+     * @param id                the id expression for the group, which may be null
      * @param fieldAccumulators zero or more field accumulator pairs
      * @return the $group pipeline stage
      * @mongodb.driver.manual reference/operator/aggregation/group/ $group
      * @mongodb.driver.manual meta/aggregation-quick-reference/#aggregation-expressions Expressions
      */
-    public static <TExpression> Bson group(final TExpression id, final BsonField... fieldAccumulators) {
+    public static <TExpression> Bson group(@Nullable final TExpression id, final BsonField... fieldAccumulators) {
         return group(id, asList(fieldAccumulators));
     }
 
@@ -364,13 +367,13 @@ public final class Aggregates {
      * Creates a $group pipeline stage for the specified filter
      *
      * @param <TExpression>     the expression type
-     * @param id                the id expression for the group
+     * @param id                the id expression for the group, which may be null
      * @param fieldAccumulators zero or more field accumulator pairs
      * @return the $group pipeline stage
      * @mongodb.driver.manual reference/operator/aggregation/group/ $group
      * @mongodb.driver.manual meta/aggregation-quick-reference/#aggregation-expressions Expressions
      */
-    public static <TExpression> Bson group(final TExpression id, final List<BsonField> fieldAccumulators) {
+    public static <TExpression> Bson group(@Nullable final TExpression id, final List<BsonField> fieldAccumulators) {
         return new GroupStage<TExpression>(id, fieldAccumulators);
     }
 
@@ -410,15 +413,69 @@ public final class Aggregates {
     }
 
     /**
-     * Creates a $out pipeline stage for the specified filter
+     * Creates a $out pipeline stage that writes into the specified collection
      *
      * @param collectionName the collection name
      * @return the $out pipeline stage
      * @mongodb.driver.manual reference/operator/aggregation/out/  $out
-     * @mongodb.server.release 2.6
      */
     public static Bson out(final String collectionName) {
         return new BsonDocument("$out", new BsonString(collectionName));
+    }
+
+    /**
+     * Creates a $merge pipeline stage that merges into the specified collection
+     *
+     * @param collectionName the name of the collection to merge into
+     * @return the $merge pipeline stage
+     * @since 3.11
+     * @mongodb.driver.manual reference/operator/aggregation/merge/  $merge
+     * @mongodb.server.release 4.2
+     */
+    public static Bson merge(final String collectionName) {
+        return merge(collectionName, new MergeOptions());
+    }
+
+    /**
+     * Creates a $merge pipeline stage that merges into the specified namespace
+     *
+     * @param namespace the namespace to merge into
+     * @return the $merge pipeline stage
+     * @since 3.11
+     * @mongodb.driver.manual reference/operator/aggregation/merge/  $merge
+     * @mongodb.server.release 4.2
+     */
+    public static Bson merge(final MongoNamespace namespace) {
+        return merge(namespace, new MergeOptions());
+    }
+
+    /**
+     * Creates a $merge pipeline stage that merges into the specified collection using the specified options.
+     *
+     * @param collectionName the name of the collection to merge into
+     * @param options the merge options
+     * @return the $merge pipeline stage
+     * @since 3.11
+     * @mongodb.driver.manual reference/operator/aggregation/merge/  $merge
+     * @mongodb.server.release 4.2
+     */
+    public static Bson merge(final String collectionName, final MergeOptions options) {
+        return new MergeStage(new BsonString(collectionName), options);
+    }
+
+    /**
+     * Creates a $merge pipeline stage that merges into the specified namespace using the specified options.
+     *
+     * @param namespace the namespace to merge into
+     * @param options the merge options
+     * @return the $merge pipeline stage
+     * @since 3.11
+     * @mongodb.driver.manual reference/operator/aggregation/merge/  $merge
+     * @mongodb.server.release 4.2
+     */
+    public static Bson merge(final MongoNamespace namespace, final MergeOptions options) {
+        return new MergeStage(new BsonDocument("db", new BsonString(namespace.getDatabaseName()))
+                .append("coll", new BsonString(namespace.getCollectionName())), options);
     }
 
     /**
@@ -432,7 +489,26 @@ public final class Aggregates {
      * @since 3.4
      */
     public static <TExpression> Bson replaceRoot(final TExpression value) {
-        return new ReplaceRootStage<TExpression>(value);
+        return new ReplaceStage<TExpression>(value);
+    }
+
+    /**
+     * Creates a $replaceRoot pipeline stage
+     *
+     * <p>With $replaceWith, you can promote an embedded document to the top-level.
+     * You can also specify a new document as the replacement.</p>
+     *
+     * <p>The $replaceWith is an alias for {@link #replaceRoot(Object)}.</p>
+     *
+     * @param <TExpression> the new root type
+     * @param value         the new root value
+     * @return the $replaceRoot pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/replaceWith/ $replaceWith
+     * @mongodb.server.release 4.2
+     * @since 3.11
+     */
+    public static <TExpression> Bson replaceWith(final TExpression value) {
+        return new ReplaceStage<TExpression>(value, true);
     }
 
     /**
@@ -473,6 +549,30 @@ public final class Aggregates {
         @Override
         public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
             return new BsonDocument(name, value.toBsonDocument(documentClass, codecRegistry));
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            SimplePipelineStage that = (SimplePipelineStage) o;
+
+            if (name != null ? !name.equals(that.name) : that.name != null) {
+                return false;
+            }
+            return value != null ? value.equals(that.value) : that.value == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = name != null ? name.hashCode() : 0;
+            result = 31 * result + (value != null ? value.hashCode() : 0);
+            return result;
         }
 
         @Override
@@ -525,6 +625,34 @@ public final class Aggregates {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            BucketStage<?, ?> that = (BucketStage<?, ?>) o;
+
+            if (groupBy != null ? !groupBy.equals(that.groupBy) : that.groupBy != null) {
+                return false;
+            }
+            if (boundaries != null ? !boundaries.equals(that.boundaries) : that.boundaries != null) {
+                return false;
+            }
+            return options.equals(that.options);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = groupBy != null ? groupBy.hashCode() : 0;
+            result = 31 * result + (boundaries != null ? boundaries.hashCode() : 0);
+            result = 31 * result + options.hashCode();
+            return result;
+        }
+
+        @Override
         public String toString() {
             return "Stage{"
                 + "name='$bucket'"
@@ -573,6 +701,34 @@ public final class Aggregates {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            BucketAutoStage<?> that = (BucketAutoStage<?>) o;
+
+            if (buckets != that.buckets) {
+                return false;
+            }
+            if (groupBy != null ? !groupBy.equals(that.groupBy) : that.groupBy != null) {
+                return false;
+            }
+            return options.equals(that.options);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = groupBy != null ? groupBy.hashCode() : 0;
+            result = 31 * result + buckets;
+            result = 31 * result + options.hashCode();
+            return result;
+        }
+
+        @Override
         public String toString() {
             return "Stage{"
                 + "name='$bucketAuto'"
@@ -583,13 +739,13 @@ public final class Aggregates {
         }
     }
 
-    private static final class LookupStage implements Bson {
+    private static final class LookupStage<TExpression> implements Bson {
         private final String from;
-        private final List<Variable<?>> let;
+        private final List<Variable<TExpression>> let;
         private final List<? extends Bson> pipeline;
         private final String as;
 
-        private LookupStage(final String from, @Nullable final List<Variable<?>> let, final List<? extends Bson> pipeline,
+        private LookupStage(final String from, @Nullable final List<Variable<TExpression>> let, final List<? extends Bson> pipeline,
                             final String as) {
             this.from = from;
             this.let = let;
@@ -633,6 +789,38 @@ public final class Aggregates {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            LookupStage<?> that = (LookupStage<?>) o;
+
+            if (from != null ? !from.equals(that.from) : that.from != null) {
+                return false;
+            }
+            if (let != null ? !let.equals(that.let) : that.let != null) {
+                return false;
+            }
+            if (pipeline != null ? !pipeline.equals(that.pipeline) : that.pipeline != null) {
+                return false;
+            }
+            return as != null ? as.equals(that.as) : that.as == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = from != null ? from.hashCode() : 0;
+            result = 31 * result + (let != null ? let.hashCode() : 0);
+            result = 31 * result + (pipeline != null ? pipeline.hashCode() : 0);
+            result = 31 * result + (as != null ? as.hashCode() : 0);
+            return result;
+        }
+
+        @Override
         public String toString() {
             return "Stage{"
                     + "name='$lookup'"
@@ -643,9 +831,6 @@ public final class Aggregates {
                     + '}';
         }
     }
-
-
-
 
     private static final class GraphLookupStage<TExpression> implements Bson {
         private final String from;
@@ -700,6 +885,46 @@ public final class Aggregates {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            GraphLookupStage<?> that = (GraphLookupStage<?>) o;
+
+            if (from != null ? !from.equals(that.from) : that.from != null) {
+                return false;
+            }
+            if (startWith != null ? !startWith.equals(that.startWith) : that.startWith != null) {
+                return false;
+            }
+            if (connectFromField != null ? !connectFromField.equals(that.connectFromField) : that.connectFromField != null) {
+                return false;
+            }
+            if (connectToField != null ? !connectToField.equals(that.connectToField) : that.connectToField != null) {
+                return false;
+            }
+            if (as != null ? !as.equals(that.as) : that.as != null) {
+                return false;
+            }
+            return options != null ? options.equals(that.options) : that.options == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = from != null ? from.hashCode() : 0;
+            result = 31 * result + (startWith != null ? startWith.hashCode() : 0);
+            result = 31 * result + (connectFromField != null ? connectFromField.hashCode() : 0);
+            result = 31 * result + (connectToField != null ? connectToField.hashCode() : 0);
+            result = 31 * result + (as != null ? as.hashCode() : 0);
+            result = 31 * result + (options != null ? options.hashCode() : 0);
+            return result;
+        }
+
+        @Override
         public String toString() {
             return "Stage{"
                 + "name='$graphLookup'"
@@ -745,6 +970,30 @@ public final class Aggregates {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            GroupStage<?> that = (GroupStage<?>) o;
+
+            if (id != null ? !id.equals(that.id) : that.id != null) {
+                return false;
+            }
+            return fieldAccumulators != null ? fieldAccumulators.equals(that.fieldAccumulators) : that.fieldAccumulators == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = id != null ? id.hashCode() : 0;
+            result = 31 * result + (fieldAccumulators != null ? fieldAccumulators.hashCode() : 0);
+            return result;
+        }
+
+        @Override
         public String toString() {
             return "Stage{"
                            + "name='$group'"
@@ -773,6 +1022,25 @@ public final class Aggregates {
             writer.writeEndDocument();
 
             return writer.getDocument();
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            SortByCountStage<?> that = (SortByCountStage<?>) o;
+
+            return filter != null ? filter.equals(that.filter) : that.filter == null;
+        }
+
+        @Override
+        public int hashCode() {
+            return filter != null ? filter.hashCode() : 0;
         }
 
         @Override
@@ -812,6 +1080,25 @@ public final class Aggregates {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            FacetStage that = (FacetStage) o;
+
+            return facets != null ? facets.equals(that.facets) : that.facets == null;
+        }
+
+        @Override
+        public int hashCode() {
+            return facets != null ? facets.hashCode() : 0;
+        }
+
+        @Override
         public String toString() {
             return "Stage{"
                 + "name='$facet', "
@@ -844,6 +1131,25 @@ public final class Aggregates {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            AddFieldsStage that = (AddFieldsStage) o;
+
+            return fields != null ? fields.equals(that.fields) : that.fields == null;
+        }
+
+        @Override
+        public int hashCode() {
+            return fields != null ? fields.hashCode() : 0;
+        }
+
+        @Override
         public String toString() {
             return "Stage{"
                 + "name='$addFields', "
@@ -852,25 +1158,56 @@ public final class Aggregates {
         }
     }
 
-    private static class ReplaceRootStage<TExpression> implements Bson {
+    private static class ReplaceStage<TExpression> implements Bson {
         private final TExpression value;
+        private final boolean replaceWith;
 
-        ReplaceRootStage(final TExpression value) {
+        ReplaceStage(final TExpression value) {
+            this(value, false);
+        }
+
+        ReplaceStage(final TExpression value, final boolean replaceWith) {
             this.value = value;
+            this.replaceWith = replaceWith;
         }
 
         @Override
         public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
             BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
             writer.writeStartDocument();
-            writer.writeName("$replaceRoot");
-            writer.writeStartDocument();
-            writer.writeName("newRoot");
-            BuildersHelper.encodeValue(writer, value, codecRegistry);
-            writer.writeEndDocument();
+
+            if (replaceWith) {
+                writer.writeName("$replaceWith");
+                BuildersHelper.encodeValue(writer, value, codecRegistry);
+            } else {
+                writer.writeName("$replaceRoot");
+                writer.writeStartDocument();
+                writer.writeName("newRoot");
+                BuildersHelper.encodeValue(writer, value, codecRegistry);
+                writer.writeEndDocument();
+            }
             writer.writeEndDocument();
 
             return writer.getDocument();
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            ReplaceStage<?> that = (ReplaceStage<?>) o;
+
+            return value != null ? value.equals(that.value) : that.value == null;
+        }
+
+        @Override
+        public int hashCode() {
+            return value != null ? value.hashCode() : 0;
         }
 
         @Override
@@ -879,6 +1216,136 @@ public final class Aggregates {
                 + "name='$replaceRoot', "
                 + "value=" + value
                 + '}';
+        }
+    }
+
+    private static class MergeStage implements Bson {
+        private final BsonValue intoValue;
+        private final MergeOptions options;
+
+        MergeStage(final BsonValue intoValue, final MergeOptions options) {
+            this.intoValue = intoValue;
+            this.options = options;
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+            BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+            writer.writeStartDocument();
+            writer.writeStartDocument("$merge");
+            writer.writeName("into");
+            if (intoValue.isString()) {
+                writer.writeString(intoValue.asString().getValue());
+            } else {
+                writer.writeStartDocument();
+                writer.writeString("db", intoValue.asDocument().getString("db").getValue());
+                writer.writeString("coll", intoValue.asDocument().getString("coll").getValue());
+                writer.writeEndDocument();
+            }
+            if (options.getUniqueIdentifier() != null) {
+                if (options.getUniqueIdentifier().size() == 1) {
+                    writer.writeString("on", options.getUniqueIdentifier().get(0));
+                } else {
+                    writer.writeStartArray("on");
+                    for (String cur : options.getUniqueIdentifier()) {
+                        writer.writeString(cur);
+                    }
+                    writer.writeEndArray();
+                }
+            }
+            if (options.getVariables() != null) {
+                writer.writeStartDocument("let");
+
+                for (Variable<?> variable : options.getVariables()) {
+                    writer.writeName(variable.getName());
+                    BuildersHelper.encodeValue(writer, variable.getValue(), codecRegistry);
+                }
+
+                writer.writeEndDocument();
+            }
+
+            if (options.getWhenMatched() != null) {
+                writer.writeName("whenMatched");
+                switch (options.getWhenMatched()) {
+                    case REPLACE:
+                        writer.writeString("replace");
+                        break;
+                    case KEEP_EXISTING:
+                        writer.writeString("keepExisting");
+                        break;
+                    case MERGE:
+                        writer.writeString("merge");
+                        break;
+                    case PIPELINE:
+                        writer.writeStartArray();
+                        for (Bson curStage : options.getWhenMatchedPipeline()) {
+                            BuildersHelper.encodeValue(writer, curStage, codecRegistry);
+                        }
+                        writer.writeEndArray();
+                        break;
+                    case FAIL:
+                        writer.writeString("fail");
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("Unexpected value: " + options.getWhenMatched());
+                }
+            }
+            if (options.getWhenNotMatched() != null) {
+                writer.writeName("whenNotMatched");
+                switch (options.getWhenNotMatched()) {
+                    case INSERT:
+                        writer.writeString("insert");
+                        break;
+                    case DISCARD:
+                        writer.writeString("discard");
+                        break;
+                    case FAIL:
+                        writer.writeString("fail");
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("Unexpected value: " + options.getWhenNotMatched());
+                }
+            }
+            writer.writeEndDocument();
+            writer.writeEndDocument();
+            return writer.getDocument();
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            MergeStage that = (MergeStage) o;
+
+            if (!intoValue.equals(that.intoValue)) {
+                return false;
+            }
+            if (!options.equals(that.options)) {
+                return false;
+            }
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = intoValue.hashCode();
+            result = 31 * result + options.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "Stage{"
+                    + "name='$merge', "
+                    + ", into=" + intoValue
+                    + ", options=" + options
+                    + '}';
         }
     }
 

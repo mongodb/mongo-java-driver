@@ -17,27 +17,37 @@
 package com.mongodb.client.internal;
 
 import com.mongodb.ClientSessionOptions;
+import com.mongodb.MongoClientException;
+import com.mongodb.MongoException;
+import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.ReadConcern;
 import com.mongodb.TransactionOptions;
+import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
+import com.mongodb.client.TransactionBody;
+import com.mongodb.internal.operation.AbortTransactionOperation;
+import com.mongodb.internal.operation.CommitTransactionOperation;
 import com.mongodb.internal.session.BaseClientSessionImpl;
 import com.mongodb.internal.session.ServerSessionPool;
-import com.mongodb.operation.AbortTransactionOperation;
-import com.mongodb.operation.CommitTransactionOperation;
 
+import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
+import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
 
     private enum TransactionState {
-        NONE, IN, DONE, ABORTED
+        NONE, IN, COMMITTED, ABORTED
     }
+
+    private static final int MAX_RETRY_TIME_LIMIT_MS = 120000;
 
     private final MongoClientDelegate delegate;
     private TransactionState transactionState = TransactionState.NONE;
-    private boolean messageSent;
+    private boolean messageSentInCurrentTransaction;
     private boolean commitInProgress;
     private TransactionOptions transactionOptions;
 
@@ -49,19 +59,26 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
 
     @Override
     public boolean hasActiveTransaction() {
-        return transactionState == TransactionState.IN || (transactionState == TransactionState.DONE && commitInProgress);
+        return transactionState == TransactionState.IN || (transactionState == TransactionState.COMMITTED && commitInProgress);
     }
 
     @Override
     public boolean notifyMessageSent() {
-        boolean firstMessage = !messageSent;
-        messageSent = true;
-        return firstMessage;
+        if (hasActiveTransaction()) {
+            boolean firstMessageInCurrentTransaction = !messageSentInCurrentTransaction;
+            messageSentInCurrentTransaction = true;
+            return firstMessageInCurrentTransaction;
+        } else {
+            if (transactionState == TransactionState.COMMITTED || transactionState == TransactionState.ABORTED) {
+                cleanupTransaction(TransactionState.NONE);
+            }
+            return false;
+        }
     }
 
     @Override
     public TransactionOptions getTransactionOptions() {
-        isTrue("in transaction", transactionState == TransactionState.IN || transactionState == TransactionState.DONE);
+        isTrue("in transaction", transactionState == TransactionState.IN || transactionState == TransactionState.COMMITTED);
         return transactionOptions;
     }
 
@@ -76,13 +93,21 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         if (transactionState == TransactionState.IN) {
             throw new IllegalStateException("Transaction already in progress");
         }
-        if (transactionState == TransactionState.DONE) {
+        if (transactionState == TransactionState.COMMITTED) {
             cleanupTransaction(TransactionState.IN);
         } else {
             transactionState = TransactionState.IN;
         }
         getServerSession().advanceTransactionNumber();
         this.transactionOptions = TransactionOptions.merge(transactionOptions, getOptions().getDefaultTransactionOptions());
+        WriteConcern writeConcern = this.transactionOptions.getWriteConcern();
+        if (writeConcern == null) {
+            throw new MongoInternalException("Invariant violated.  Transaction options write concern can not be null");
+        }
+        if (!writeConcern.isAcknowledged()) {
+            throw new MongoClientException("Transactions do not support unacknowledged write concern");
+        }
+        setPinnedServerAddress(null);
     }
 
     @Override
@@ -93,19 +118,26 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         if (transactionState == TransactionState.NONE) {
             throw new IllegalStateException("There is no transaction started");
         }
+
         try {
-            if (messageSent) {
+            if (messageSentInCurrentTransaction) {
                 ReadConcern readConcern = transactionOptions.getReadConcern();
                 if (readConcern == null) {
                     throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
                 }
                 commitInProgress = true;
-                delegate.getOperationExecutor().execute(new CommitTransactionOperation(transactionOptions.getWriteConcern()),
+                delegate.getOperationExecutor().execute(new CommitTransactionOperation(transactionOptions.getWriteConcern(),
+                        transactionState == TransactionState.COMMITTED)
+                                .recoveryToken(getRecoveryToken())
+                                .maxCommitTime(transactionOptions.getMaxCommitTime(MILLISECONDS), MILLISECONDS),
                         readConcern, this);
             }
+        } catch (MongoException e) {
+            unpinServerAddressOnError(e);
+            throw e;
         } finally {
+            transactionState = TransactionState.COMMITTED;
             commitInProgress = false;
-            transactionState = TransactionState.DONE;
         }
     }
 
@@ -114,25 +146,102 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         if (transactionState == TransactionState.ABORTED) {
             throw new IllegalStateException("Cannot call abortTransaction twice");
         }
-        if (transactionState == TransactionState.DONE) {
+        if (transactionState == TransactionState.COMMITTED) {
             throw new IllegalStateException("Cannot call abortTransaction after calling commitTransaction");
         }
         if (transactionState == TransactionState.NONE) {
             throw new IllegalStateException("There is no transaction started");
         }
         try {
-            if (messageSent) {
+            if (messageSentInCurrentTransaction) {
                 ReadConcern readConcern = transactionOptions.getReadConcern();
                 if (readConcern == null) {
                     throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
                 }
-                delegate.getOperationExecutor().execute(new AbortTransactionOperation(transactionOptions.getWriteConcern()),
+                delegate.getOperationExecutor().execute(new AbortTransactionOperation(transactionOptions.getWriteConcern())
+                                .recoveryToken(getRecoveryToken()),
                         readConcern, this);
             }
         } catch (Exception e) {
-            // ignore errors
+            if (e instanceof MongoException) {
+                unpinServerAddressOnError((MongoException) e);
+            }
         } finally {
             cleanupTransaction(TransactionState.ABORTED);
+        }
+    }
+
+    private void unpinServerAddressOnError(final MongoException e) {
+        if (e.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL) || e.hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
+            setPinnedServerAddress(null);
+        }
+    }
+
+    @Override
+    public <T> T withTransaction(final TransactionBody<T> transactionBody) {
+        return withTransaction(transactionBody, TransactionOptions.builder().build());
+    }
+
+    @Override
+    public <T> T withTransaction(final TransactionBody<T> transactionBody, final TransactionOptions options) {
+        notNull("transactionBody", transactionBody);
+        long startTime = ClientSessionClock.INSTANCE.now();
+        outer:
+        while (true) {
+            T retVal;
+            try {
+                startTransaction(options);
+                retVal = transactionBody.execute();
+            } catch (RuntimeException e) {
+                if (transactionState == TransactionState.IN) {
+                    abortTransaction();
+                }
+                if (e instanceof MongoException) {
+                    if (((MongoException) e).hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)
+                            && ClientSessionClock.INSTANCE.now() - startTime < MAX_RETRY_TIME_LIMIT_MS) {
+                        continue;
+                    }
+                }
+                throw e;
+            }
+            if (transactionState == TransactionState.IN) {
+                while (true) {
+                    try {
+                        commitTransaction();
+                        break;
+                    } catch (MongoException e) {
+                        unpinServerAddressOnError(e);
+                        if (ClientSessionClock.INSTANCE.now() - startTime < MAX_RETRY_TIME_LIMIT_MS) {
+                            applyMajorityWriteConcernToTransactionOptions();
+
+                            if (!(e instanceof MongoExecutionTimeoutException)
+                                    && e.hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
+                                continue;
+                            } else if (e.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)) {
+                                continue outer;
+                            }
+                        }
+                        throw e;
+                    }
+                }
+            }
+            return retVal;
+        }
+    }
+
+    // Apply majority write concern if the commit is to be retried.
+    private void applyMajorityWriteConcernToTransactionOptions() {
+        if (transactionOptions != null) {
+            WriteConcern writeConcern = transactionOptions.getWriteConcern();
+            if (writeConcern != null) {
+                transactionOptions = TransactionOptions.merge(TransactionOptions.builder()
+                        .writeConcern(writeConcern.withW("majority")).build(), transactionOptions);
+            } else {
+                transactionOptions = TransactionOptions.merge(TransactionOptions.builder()
+                        .writeConcern(WriteConcern.MAJORITY).build(), transactionOptions);
+            }
+        } else {
+            transactionOptions = TransactionOptions.builder().writeConcern(WriteConcern.MAJORITY).build();
         }
     }
 
@@ -148,7 +257,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
     }
 
     private void cleanupTransaction(final TransactionState nextState) {
-        messageSent = false;
+        messageSentInCurrentTransaction = false;
         transactionOptions = null;
         transactionState = nextState;
     }

@@ -22,16 +22,6 @@ package com.mongodb.event;
  *
  * @since 3.5
  */
-public abstract class ServerMonitorListenerAdapter implements ServerMonitorListener {
-    @Override
-    public void serverHearbeatStarted(final ServerHeartbeatStartedEvent event) {
-    }
-
-    @Override
-    public void serverHeartbeatSucceeded(final ServerHeartbeatSucceededEvent event) {
-    }
-
-    @Override
-    public void serverHeartbeatFailed(final ServerHeartbeatFailedEvent event) {
-    }
+@Deprecated
+public class ServerMonitorListenerAdapter implements ServerMonitorListener {
 }

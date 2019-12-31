@@ -34,7 +34,9 @@ public interface Logger {
      * @return True if this Logger is enabled for the TRACE level, false otherwise.
      * @since 1.4
      */
-    boolean isTraceEnabled();
+    default boolean isTraceEnabled() {
+        return false;
+    }
 
     /**
      * Log a message at the TRACE level.
@@ -42,7 +44,8 @@ public interface Logger {
      * @param msg the message string to be logged
      * @since 1.4
      */
-    void trace(String msg);
+    default void trace(String msg) {
+    }
 
     /**
      * Log an exception (throwable) at the TRACE level with an accompanying message.
@@ -51,22 +54,25 @@ public interface Logger {
      * @param t   the exception (throwable) to log
      * @since 1.4
      */
-    void trace(String msg, Throwable t);
+    default void trace(String msg, Throwable t) {
+    }
 
     /**
      * Is the logger instance enabled for the DEBUG level?
      *
      * @return True if this Logger is enabled for the DEBUG level, false otherwise.
      */
-    boolean isDebugEnabled();
-
+    default boolean isDebugEnabled() {
+        return false;
+    }
 
     /**
      * Log a message at the DEBUG level.
      *
      * @param msg the message string to be logged
      */
-    void debug(String msg);
+    default void debug(String msg) {
+    }
 
 
     /**
@@ -75,22 +81,25 @@ public interface Logger {
      * @param msg the message accompanying the exception
      * @param t   the exception (throwable) to log
      */
-    void debug(String msg, Throwable t);
+    default void debug(String msg, Throwable t) {
+    }
 
     /**
      * Is the logger instance enabled for the INFO level?
      *
      * @return True if this Logger is enabled for the INFO level, false otherwise.
      */
-    boolean isInfoEnabled();
-
+    default boolean isInfoEnabled() {
+        return false;
+    }
 
     /**
      * Log a message at the INFO level.
      *
      * @param msg the message string to be logged
      */
-    void info(String msg);
+    default void info(String msg) {
+    }
 
     /**
      * Log an exception (throwable) at the INFO level with an accompanying message.
@@ -98,21 +107,25 @@ public interface Logger {
      * @param msg the message accompanying the exception
      * @param t   the exception (throwable) to log
      */
-    void info(String msg, Throwable t);
+    default void info(String msg, Throwable t) {
+    }
 
     /**
      * Is the logger instance enabled for the WARN level?
      *
      * @return True if this Logger is enabled for the WARN level, false otherwise.
      */
-    boolean isWarnEnabled();
+    default boolean isWarnEnabled() {
+        return false;
+    }
 
     /**
      * Log a message at the WARN level.
      *
      * @param msg the message string to be logged
      */
-    void warn(String msg);
+    default void warn(String msg) {
+    }
 
     /**
      * Log an exception (throwable) at the WARN level with an accompanying message.
@@ -120,21 +133,25 @@ public interface Logger {
      * @param msg the message accompanying the exception
      * @param t   the exception (throwable) to log
      */
-    void warn(String msg, Throwable t);
+    default void warn(String msg, Throwable t) {
+    }
 
     /**
      * Is the logger instance enabled for the ERROR level?
      *
      * @return True if this Logger is enabled for the ERROR level, false otherwise.
      */
-    boolean isErrorEnabled();
+    default boolean isErrorEnabled() {
+        return false;
+    }
 
     /**
      * Log a message at the ERROR level.
      *
      * @param msg the message string to be logged
      */
-    void error(String msg);
+    default void error(String msg) {
+    }
 
     /**
      * Log an exception (throwable) at the ERROR level with an accompanying message.
@@ -142,5 +159,6 @@ public interface Logger {
      * @param msg the message accompanying the exception
      * @param t   the exception (throwable) to log
      */
-    void error(String msg, Throwable t);
+    default void error(String msg, Throwable t) {
+    }
 }

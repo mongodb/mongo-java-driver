@@ -19,14 +19,12 @@ package org.bson.codecs.jsr310
 import org.bson.BsonDocument
 import org.bson.codecs.Codec
 import org.bson.codecs.configuration.CodecConfigurationException
-import spock.lang.IgnoreIf
 
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneOffset
 
-@IgnoreIf({ javaVersion < 1.8 })
 class LocalDateTimeCodecSpecification extends JsrSpecification {
 
     def 'should round trip LocalDateTime successfully'() {

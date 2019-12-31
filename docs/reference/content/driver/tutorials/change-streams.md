@@ -8,7 +8,7 @@ title = "Change Streams"
   pre = "<i class='fa'></i>"
 +++
 
-## Change Streams - Draft
+## Change Streams
 
 MongoDB 3.6 introduces a new [`$changeStream`](http://dochub.mongodb.org/core/changestreams) aggregation pipeline
 operator.
@@ -19,7 +19,7 @@ to resume if it encounters a potentially recoverable error.
 
 ## Prerequisites
 
-- The example below requires a ``restaurants`` collection in the ``test`` database. To create and populate the collection, follow the directions in [github] (https://github.com/mongodb/docs-assets/tree/drivers).
+- The example below requires a ``restaurants`` collection in the ``test`` database. To create and populate the collection, follow the directions in [github](https://github.com/mongodb/docs-assets/tree/drivers).
 
 - Include the following import statements:
 
@@ -27,12 +27,14 @@ to resume if it encounters a potentially recoverable error.
 import com.mongodb.Block;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoClient;
-import com.mongodb.ConnectionString;
+
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+
+import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
-import org.bson.Document;
 ```
 
 - Include the following code which the examples in the tutorials will use to print the results of the change stream:
@@ -54,7 +56,7 @@ For example, include the following code to connect to a replicaSet MongoDB deplo
 It also defines `database` to refer to the `test` database and `collection` to refer to the `restaurants` collection.
 
 ```java
-MongoClient mongoClient = MongoClients.create(new ConnectionString("mongodb://localhost:27017,localhost:27018,localhost:27019"));
+MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017,localhost:27018,localhost:27019");
 MongoDatabase database = mongoClient.getDatabase("test");
 MongoCollection<Document> collection = database.getCollection("restaurants");
 ```
@@ -63,12 +65,36 @@ For additional information on connecting to MongoDB, see [Connect to MongoDB]({{
 
 ## Watch the collection
 
-To create a change stream use the the [`MongoCollection.watch()`]({{<apiref "com/mongodb/client/MongoCollection.html#watch">}}) method.
+To create a change stream use one of the [`MongoCollection.watch()`]({{<apiref "com/mongodb/client/MongoCollection.html#watch">}}) methods.
 
 In the following example, the change stream prints out all changes it observes.
 
 ```java
 collection.watch().forEach(printBlock);
+```
+
+## Watch the database
+
+New in the 3.8 driver and MongoDB 4.0, applications can open a single change stream to watch all non-system collections of a database. To
+create such a change stream use one of the [`MongoDatabase.watch()`]({{<apiref "com/mongodb/client/MongoDatabase.html#watch">}}) methods.
+
+In the following example, the change stream prints out all the changes it observes on the given database.
+
+```java
+database.watch().forEach(printBlock);
+```
+
+## Watch all databases
+
+New in the 3.8 driver and MongoDB 4.0, applications can open a single change stream to watch all non-system collections of all databases 
+in a MongoDB deployment. To create such a change stream use one of the 
+[`MongoClient.watch()`]({{<apiref "com/mongodb/client/MongoClient.html#watch">}}) methods.
+
+In the following example, the change stream prints out all the changes it observes on the deployment to which the `MongoClient` is
+connected
+
+```java
+mongoClient.watch().forEach(printBlock);
 ```
 
 ## Filtering content

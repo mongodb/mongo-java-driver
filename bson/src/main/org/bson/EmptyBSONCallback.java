@@ -150,12 +150,6 @@ public class EmptyBSONCallback implements BSONCallback {
     }
 
     @Override
-    @Deprecated
-    public void gotBinaryArray(final String name, final byte[] data) {
-        throw new UnsupportedOperationException("Operation is not supported");
-    }
-
-    @Override
     public void gotBinary(final String name, final byte type, final byte[] data) {
         throw new UnsupportedOperationException("Operation is not supported");
     }

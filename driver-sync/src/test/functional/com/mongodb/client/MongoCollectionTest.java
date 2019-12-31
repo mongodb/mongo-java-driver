@@ -20,7 +20,10 @@ import com.mongodb.DBRef;
 import com.mongodb.Function;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.result.InsertManyResult;
+import org.bson.BsonValue;
 import org.bson.Document;
+import org.bson.RawBsonDocument;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.DocumentCodecProvider;
@@ -31,7 +34,9 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -39,6 +44,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class MongoCollectionTest extends DatabaseTestCase {
 
@@ -61,6 +67,20 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
         assertNotNull(newDoc);
         assertEquals(doc, newDoc);
+    }
+
+    @Test
+    public void testFindOneAndUpdateEmpty() {
+        boolean exceptionFound = false;
+        collection.insertOne(new Document().append("_id", "fakeId").append("one", 1).append("foo", "bar"));
+
+        try {
+            collection.findOneAndUpdate(new Document(), new Document());
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().equals("Invalid BSON document for an update. The document may not be empty."));
+            exceptionFound = true;
+        }
+        assertTrue(exceptionFound);
     }
 
     @Test
@@ -135,8 +155,8 @@ public class MongoCollectionTest extends DatabaseTestCase {
         List<Name> result = collection.mapReduce(mapFunction, reduceFunction, Name.class).into(new ArrayList<Name>());
 
         // then
-        assertEquals(new Name("Pete", 2), result.get(0));
-        assertEquals(new Name("Sam", 1), result.get(1));
+        assertTrue(result.contains(new Name("Pete", 2)));
+        assertTrue(result.contains(new Name("Sam", 1)));
     }
 
     @Test
@@ -155,6 +175,21 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
         // then
         assertEquals(documents, result);
+    }
+
+    @Test
+    public void bulkInsertRawBsonDocuments() {
+        // given
+        List<RawBsonDocument> docs = asList(RawBsonDocument.parse("{a: 1}"), RawBsonDocument.parse("{a: 2}"));
+
+        // when
+        InsertManyResult result = collection.withDocumentClass(RawBsonDocument.class).insertMany(docs);
+
+        // then
+        Map<Integer, BsonValue> expectedResult = new HashMap<>();
+        expectedResult.put(0, null);
+        expectedResult.put(1, null);
+        assertEquals(expectedResult, result.getInsertedIds());
     }
 
     // This is really a test that the default registry created in MongoClient and passed down to MongoCollection has been constructed

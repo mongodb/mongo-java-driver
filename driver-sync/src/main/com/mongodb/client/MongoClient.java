@@ -19,7 +19,14 @@ package com.mongodb.client;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoNamespace;
 import com.mongodb.annotations.Immutable;
+import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ClusterSettings;
+import com.mongodb.event.ClusterListener;
 import org.bson.Document;
+import org.bson.conversions.Bson;
+
+import java.io.Closeable;
+import java.util.List;
 
 /**
  * A client-side representation of a MongoDB cluster.  Instances can represent either a standalone MongoDB instance, a replica set,
@@ -35,7 +42,7 @@ import org.bson.Document;
  * @since 3.7
  */
 @Immutable
-public interface MongoClient {
+public interface MongoClient extends Closeable {
 
     /**
      * Gets a {@link MongoDatabase} instance for the given database name.
@@ -129,4 +136,117 @@ public interface MongoClient {
      * @mongodb.server.release 3.6
      */
     <TResult> ListDatabasesIterable<TResult> listDatabases(ClientSession clientSession, Class<TResult> resultClass);
+
+    /**
+     * Creates a change stream for this client.
+     *
+     * @return the change stream iterable
+     * @mongodb.driver.dochub core/changestreams Change Streams
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     */
+    ChangeStreamIterable<Document> watch();
+
+    /**
+     * Creates a change stream for this client.
+     *
+     * @param resultClass the class to decode each document into
+     * @param <TResult>   the target document type of the iterable.
+     * @return the change stream iterable
+     * @mongodb.driver.dochub core/changestreams Change Streams
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     */
+    <TResult> ChangeStreamIterable<TResult> watch(Class<TResult> resultClass);
+
+    /**
+     * Creates a change stream for this client.
+     *
+     * @param pipeline the aggregation pipeline to apply to the change stream.
+     * @return the change stream iterable
+     * @mongodb.driver.dochub core/changestreams Change Streams
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     */
+    ChangeStreamIterable<Document> watch(List<? extends Bson> pipeline);
+
+    /**
+     * Creates a change stream for this client.
+     *
+     * @param pipeline    the aggregation pipeline to apply to the change stream
+     * @param resultClass the class to decode each document into
+     * @param <TResult>   the target document type of the iterable.
+     * @return the change stream iterable
+     * @mongodb.driver.dochub core/changestreams Change Streams
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     */
+    <TResult> ChangeStreamIterable<TResult> watch(List<? extends Bson> pipeline, Class<TResult> resultClass);
+
+    /**
+     * Creates a change stream for this client.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @return the change stream iterable
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     * @mongodb.driver.dochub core/changestreams Change Streams
+     */
+    ChangeStreamIterable<Document> watch(ClientSession clientSession);
+
+    /**
+     * Creates a change stream for this client.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param resultClass the class to decode each document into
+     * @param <TResult>   the target document type of the iterable.
+     * @return the change stream iterable
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     * @mongodb.driver.dochub core/changestreams Change Streams
+     */
+    <TResult> ChangeStreamIterable<TResult> watch(ClientSession clientSession, Class<TResult> resultClass);
+
+    /**
+     * Creates a change stream for this client.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param pipeline the aggregation pipeline to apply to the change stream.
+     * @return the change stream iterable
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     * @mongodb.driver.dochub core/changestreams Change Streams
+     */
+    ChangeStreamIterable<Document> watch(ClientSession clientSession, List<? extends Bson> pipeline);
+
+    /**
+     * Creates a change stream for this client.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param pipeline    the aggregation pipeline to apply to the change stream
+     * @param resultClass the class to decode each document into
+     * @param <TResult>   the target document type of the iterable.
+     * @return the change stream iterable
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     * @mongodb.driver.dochub core/changestreams Change Streams
+     */
+    <TResult> ChangeStreamIterable<TResult> watch(ClientSession clientSession, List<? extends Bson> pipeline, Class<TResult> resultClass);
+
+    /**
+     * Gets the current cluster description.
+     *
+     * <p>
+     * This method will not block, meaning that it may return a {@link ClusterDescription} whose {@code clusterType} is unknown
+     * and whose {@link com.mongodb.connection.ServerDescription}s are all in the connecting state.  If the application requires
+     * notifications after the driver has connected to a member of the cluster, it should register a {@link ClusterListener} via
+     * the {@link ClusterSettings} in {@link com.mongodb.MongoClientSettings}.
+     * </p>
+     *
+     * @return the current cluster description
+     * @see ClusterSettings.Builder#addClusterListener(ClusterListener)
+     * @see com.mongodb.MongoClientSettings.Builder#applyToClusterSettings(com.mongodb.Block)
+     * @since 3.11
+     */
+    ClusterDescription getClusterDescription();
 }

@@ -86,6 +86,7 @@ abstract class CodecTestCase {
         replacements.put(BsonType.DOUBLE, clazz);
         replacements.put(BsonType.INT32, clazz);
         replacements.put(BsonType.INT64, clazz);
+        replacements.put(BsonType.DECIMAL128, clazz);
         return new DocumentCodecProvider(new BsonTypeClassMap(replacements));
     }
 

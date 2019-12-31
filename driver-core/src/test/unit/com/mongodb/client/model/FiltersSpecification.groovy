@@ -19,7 +19,6 @@ package com.mongodb.client.model
 import com.mongodb.client.model.geojson.Point
 import com.mongodb.client.model.geojson.Polygon
 import com.mongodb.client.model.geojson.Position
-import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider
 import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -27,11 +26,6 @@ import org.bson.BsonInt64
 import org.bson.BsonString
 import org.bson.BsonType
 import org.bson.Document
-import org.bson.codecs.BsonValueCodecProvider
-import org.bson.codecs.DocumentCodecProvider
-import org.bson.codecs.IterableCodecProvider
-import org.bson.codecs.ValueCodecProvider
-import org.bson.conversions.Bson
 import spock.lang.Specification
 
 import java.util.regex.Pattern
@@ -39,6 +33,7 @@ import java.util.regex.Pattern
 import static Filters.and
 import static Filters.exists
 import static Filters.or
+import static com.mongodb.client.model.BsonHelper.toBson
 import static com.mongodb.client.model.Filters.all
 import static com.mongodb.client.model.Filters.bitsAllClear
 import static com.mongodb.client.model.Filters.bitsAllSet
@@ -70,14 +65,9 @@ import static com.mongodb.client.model.Filters.size
 import static com.mongodb.client.model.Filters.text
 import static com.mongodb.client.model.Filters.type
 import static com.mongodb.client.model.Filters.where
-import static java.util.Arrays.asList
 import static org.bson.BsonDocument.parse
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
 class FiltersSpecification extends Specification {
-    def registry = fromProviders([new BsonValueCodecProvider(), new ValueCodecProvider(), new GeoJsonCodecProvider(),
-                                  new DocumentCodecProvider(),
-                                  new IterableCodecProvider()])
 
     def 'eq should render without $eq'() {
         expect:
@@ -106,7 +96,11 @@ class FiltersSpecification extends Specification {
         toBson(not(or(eq('x', 1), eq('x', 2)))) == parse('{$not: {$or: [{x: 1}, {x: 2}]}}')
         toBson(not(or(Filters.in('x', 1, 2), eq('x', 3)))) == parse('{$not: {$or: [{x: {$in: [1, 2]}}, {x: 3}]}}')
 
-        toBson(not(new BsonDocument('$in', new BsonArray(asList(new BsonInt32(1)))))) == parse('{$not: {$in: [1]}}')
+        toBson(not(parse('{$in: [1]}'))) == parse('{$not: {$in: [1]}}')
+
+        toBson(not(eq('x', parse('{a: 1, b: 1}')))) == parse('{x: {$not: {$eq: {"a": 1, "b": 1}}}}')
+        toBson(not(eq('x', parse('{$ref: "1", $id: "1"}')))) == parse('{x: {$not: {$eq: {"$ref": "1", "$id": "1"}}}}')
+        toBson(not(eq('x', parse('{$ref: "1", $id: "1", $db: "db"}')))) == parse('{x: {$not: {$eq: {"$ref": "1", "$id": "1", $db: "db"}}}}')
     }
 
     def 'should render $nor'() {
@@ -159,10 +153,10 @@ class FiltersSpecification extends Specification {
         toBson(and()) == parse('{$and : []}')
     }
 
-    def 'and should render and without using $and'() {
+    def 'and should render using $and'() {
         expect:
-        toBson(and([eq('x', 1), eq('y', 2)])) == parse('{x : 1, y : 2}')
-        toBson(and(eq('x', 1), eq('y', 2))) == parse('{x : 1, y : 2}')
+        toBson(and([eq('x', 1), eq('y', 2)])) == parse('{$and: [{x : 1}, {y : 2}]}')
+        toBson(and(eq('x', 1), eq('y', 2))) == parse('{$and: [{x : 1}, {y : 2}]}')
     }
 
     def 'and should render $and with clashing keys'() {
@@ -170,17 +164,51 @@ class FiltersSpecification extends Specification {
         toBson(and([eq('a', 1), eq('a', 2)])) == parse('{$and: [{a: 1}, {a: 2}]}');
     }
 
-    def 'and should flatten multiple operators for the same key'() {
+    def 'and should not flatten nested'() {
         expect:
-        toBson(and([gt('a', 1), lt('a', 9)])) == parse('{a : {$gt : 1, $lt : 9}}');
+        toBson(and([and([eq('a', 1), eq('b', 2)]), eq('c', 3)])) ==
+                parse('{$and: [{$and: [{a : 1}, {b : 2}]}, {c : 3}]}')
+        toBson(and([and([eq('a', 1), eq('a', 2)]), eq('c', 3)])) ==
+                parse('{$and:[{$and: [{a : 1}, {a : 2}]}, {c : 3}]} }')
+        toBson(and([lt('a', 1), lt('b', 2)])) ==
+                parse('{$and: [{a : {$lt : 1}}, {b : {$lt : 2}}]}')
+        toBson(and([lt('a', 1), lt('a', 2)])) ==
+                parse('{$and : [{a : {$lt : 1}}, {a : {$lt : 2}}]}')
     }
 
-    def 'and should flatten nested'() {
+    def '$and should be explicit when using $not'() {
         expect:
-        toBson(and([and([eq('a', 1), eq('b', 2)]), eq('c', 3)])) == parse('{a : 1, b : 2, c : 3}')
-        toBson(and([and([eq('a', 1), eq('a', 2)]), eq('c', 3)])) == parse('{$and:[{a : 1}, {a : 2}, {c : 3}] }')
-        toBson(and([lt('a', 1), lt('b', 2)])) == parse('{a : {$lt : 1}, b : {$lt : 2} }')
-        toBson(and([lt('a', 1), lt('a', 2)])) == parse('{$and : [{a : {$lt : 1}}, {a : {$lt : 2}}]}')
+        toBson(and(lt('item', 10), not(lt('item', 5)))) ==
+                parse('''{
+                  $and:
+                      [
+                          { item: { $lt: 10 } },
+                          { item: { $not: { $lt: 5 } } }
+                      ]
+                  }
+                ''')
+
+        toBson(and(lt('item', 100), gt('item', 10), not(gt('item', 50)))) ==
+                parse('''{
+                  $and:
+                      [
+                          { item: { $lt: 100 } },
+                          { item: { $gt: 10 } },
+                          { item: { $not: { $gt: 50 } } }
+                      ]
+                  }
+                ''')
+
+        toBson(and(not(lt('item', 10)), lt('item', 100), not(gt('item', 50)))) ==
+                parse('''{
+                  $and:
+                      [
+                          { item: { $not: { $lt: 10 } } },
+                          { item: { $lt: 100 } },
+                          { item: { $not: { $gt: 50 } } }
+                      ]
+                  }
+                ''')
     }
 
     def 'should render $all'() {
@@ -195,7 +223,7 @@ class FiltersSpecification extends Specification {
                 parse('{results : {$elemMatch : {$gte: 80, $lt: 85}}}')
 
         toBson(elemMatch('results', and(eq('product', 'xyz'), gt('score', 8)))) ==
-                parse('{ results : {$elemMatch : {product : "xyz", score : {$gt : 8}}}}')
+                parse('{ results : {$elemMatch : {$and: [{product : "xyz"}, {score : {$gt : 8}}]}}}')
     }
 
     def 'should render $in'() {
@@ -246,11 +274,9 @@ class FiltersSpecification extends Specification {
         toBson(type('a', 'number')) == parse('{a : {$type : "number"} }')
     }
 
-    @SuppressWarnings('deprecation')
     def 'should render $text'() {
         expect:
         toBson(text('mongoDB for GIANT ideas')) == parse('{$text: {$search: "mongoDB for GIANT ideas"} }')
-        toBson(text('mongoDB for GIANT ideas', 'english')) == parse('{$text: {$search: "mongoDB for GIANT ideas", $language : "english"}}')
         toBson(text('mongoDB for GIANT ideas', new TextSearchOptions().language('english'))) == parse('''
             {$text : {$search : "mongoDB for GIANT ideas", $language : "english"} }'''
         )
@@ -688,7 +714,149 @@ class FiltersSpecification extends Specification {
         all('x', [1, 2, 3]).toString() == 'Operator Filter{fieldName=\'x\', operator=\'$all\', value=[1, 2, 3]}'
     }
 
-    def toBson(Bson bson) {
-        bson.toBsonDocument(BsonDocument, registry)
+    def 'should test equals for SimpleFilter'() {
+        expect:
+        regex('x', 'acme.*corp').equals(regex('x', 'acme.*corp'))
+    }
+
+    def 'should test hashCode for SimpleFilter'() {
+        expect:
+        regex('x', 'acme.*corp').hashCode() == regex('x', 'acme.*corp').hashCode()
+    }
+
+    def 'should test equals for OperatorFilter'() {
+        expect:
+        ne('x', 1).equals(ne('x', 1))
+        exists('x').equals(exists('x', true))
+        exists('x', false).equals(exists('x', false))
+        type('a', BsonType.ARRAY).equals(type('a', BsonType.ARRAY))
+        !type('a', 'number').equals(type('a', BsonType.ARRAY))
+    }
+
+    def 'should test hashCode for OperatorFilter'() {
+        expect:
+        ne('x', 1).hashCode() == ne('x', 1).hashCode()
+        exists('x').hashCode() == exists('x', true).hashCode()
+        exists('x', false).hashCode() == exists('x', false).hashCode()
+        type('a', BsonType.ARRAY).hashCode() == type('a', BsonType.ARRAY).hashCode()
+        type('a', 'number').hashCode() != type('a', BsonType.ARRAY).hashCode()
+    }
+
+    def 'should test equals for AndFilter'() {
+        expect:
+        and([]).equals(and())
+        and([eq('x', 1), eq('y', 2)])
+                .equals(and(eq('x', 1), eq('y', 2)))
+    }
+
+    def 'should test hashCode for AndFilter'() {
+        expect:
+        and([]).hashCode() == and().hashCode()
+        and([eq('x', 1), eq('y', 2)]).hashCode() ==
+                and(eq('x', 1), eq('y', 2)).hashCode()
+    }
+
+    def 'should test equals for OrNorFilter'() {
+        expect:
+        or([]).equals(or())
+        nor(eq('x', 1), eq('x', 2)).equals(nor(eq('x', 1), eq('x', 2)))
+        !nor(eq('x', 1), eq('x', 2)).equals(or(eq('x', 1), eq('x', 2)))
+    }
+
+    def 'should test hashCode for OrNorFilter'() {
+        expect:
+        or([]).hashCode() == or().hashCode()
+        nor(eq('x', 1), eq('x', 2)).hashCode() == nor(eq('x', 1), eq('x', 2)).hashCode()
+        nor(eq('x', 1), eq('x', 2)).hashCode() != or(eq('x', 1), eq('x', 2)).hashCode()
+    }
+
+    def 'should test equals for IterableOperatorFilter'() {
+        expect:
+        Filters.in('a', [1, 2, 3]).equals(Filters.in('a', 1, 2, 3))
+        !nin('a', [1, 2, 3]).equals(nin('a', 1, 2))
+        !all('a', [1, 2, 3]).equals(nin('a', 1, 2, 3))
+        all('a', []).equals(all('a'))
+    }
+
+    def 'should test hashCode for IterableOperatorFilter'() {
+        expect:
+        Filters.in('a', [1, 2, 3]).hashCode() == Filters.in('a', 1, 2, 3).hashCode()
+        nin('a', [1, 2, 3]).hashCode() != nin('a', 1, 2).hashCode()
+        all('a', [1, 2, 3]).hashCode() != nin('a', 1, 2, 3).hashCode()
+        all('a', []).hashCode() == all('a').hashCode()
+    }
+
+    def 'should test equals for SimpleEncodingFilter'() {
+        expect:
+        eq('x', 1).equals(eq('x', 1))
+        !eq('x', 1).equals(ne('x', 1))
+        !eq('x', 1).equals(eq('x', 2))
+        !eq('y', 1).equals(eq('x', 1))
+        !eq('x', 1).equals(parse('{x : 1}'))
+        expr(new BsonDocument('$gt', new BsonArray([new BsonString('$spent'), new BsonString('$budget')])))
+                .equals(expr(new BsonDocument('$gt', new BsonArray([new BsonString('$spent'), new BsonString('$budget')]))))
+    }
+
+    def 'should test hashCode for SimpleEncodingFilter'() {
+        expect:
+        eq('x', 1).hashCode() == eq('x', 1).hashCode()
+        eq('x', 1).hashCode() != ne('x', 1).hashCode()
+        eq('x', 1).hashCode() != eq('x', 2).hashCode()
+        eq('y', 1).hashCode() != eq('x', 1).hashCode()
+        eq('x', 1).hashCode() != parse('{x : 1}').hashCode()
+        expr(new BsonDocument('$gt', new BsonArray([new BsonString('$spent'), new BsonString('$budget')]))).hashCode() ==
+                expr(new BsonDocument('$gt', new BsonArray([new BsonString('$spent'), new BsonString('$budget')]))).hashCode()
+    }
+
+    def 'should test equals for NotFilter'() {
+        expect:
+        not(eq('x', 1)).equals(not(eq('x', 1)))
+    }
+
+    def 'should test hashCode for NotFilter'() {
+        expect:
+        not(eq('x', 1)).hashCode() == not(eq('x', 1)).hashCode()
+    }
+
+    def 'should test equals for GeometryOperatorFilter'() {
+        def polygon = new Polygon([new Position([40.0d, 18.0d]),
+                                   new Position([40.0d, 19.0d]),
+                                   new Position([41.0d, 19.0d]),
+                                   new Position([40.0d, 18.0d])])
+        expect:
+        geoWithin('loc', polygon).equals(geoWithin('loc', polygon))
+        !geoWithinBox('loc', 1d, 2d, 3d, 4d)
+                .equals(geoWithinBox('loc', 1d, 2d, 3d, 5d))
+
+        geoWithinPolygon('loc', [[0d, 0d], [3d, 6d], [6d, 0d]])
+                .equals(geoWithinPolygon('loc', [[0d, 0d], [3d, 6d], [6d, 0d]]))
+    }
+
+    def 'should test hashCode for GeometryOperatorFilter'() {
+        def polygon = new Polygon([new Position([40.0d, 18.0d]),
+                                   new Position([40.0d, 19.0d]),
+                                   new Position([41.0d, 19.0d]),
+                                   new Position([40.0d, 18.0d])])
+        expect:
+        geoWithin('loc', polygon).hashCode() == geoWithin('loc', polygon).hashCode()
+        geoWithinBox('loc', 1d, 2d, 3d, 4d).hashCode() !=
+                geoWithinBox('loc', 1d, 2d, 3d, 5d).hashCode()
+
+        geoWithinPolygon('loc', [[0d, 0d], [3d, 6d], [6d, 0d]]).hashCode() ==
+                geoWithinPolygon('loc', [[0d, 0d], [3d, 6d], [6d, 0d]]).hashCode()
+    }
+
+    def 'should test equals for TextFilter'() {
+        expect:
+        text('mongoDB for GIANT ideas').equals(text('mongoDB for GIANT ideas'))
+        text('mongoDB for GIANT ideas', new TextSearchOptions().language('english'))
+                .equals(text('mongoDB for GIANT ideas', new TextSearchOptions().language('english')))
+    }
+
+    def 'should test hashCode for TextFilter'() {
+        expect:
+        text('mongoDB for GIANT ideas').hashCode() == text('mongoDB for GIANT ideas').hashCode()
+        text('mongoDB for GIANT ideas', new TextSearchOptions().language('english')).hashCode() ==
+                text('mongoDB for GIANT ideas', new TextSearchOptions().language('english')).hashCode()
     }
 }

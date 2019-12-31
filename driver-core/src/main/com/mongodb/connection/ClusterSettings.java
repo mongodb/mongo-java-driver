@@ -17,12 +17,14 @@
 package com.mongodb.connection;
 
 import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientException;
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.event.ClusterListener;
+import com.mongodb.internal.connection.Cluster;
+import com.mongodb.internal.selector.LatencyMinimizingServerSelector;
 import com.mongodb.selector.CompositeServerSelector;
-import com.mongodb.selector.LatencyMinimizingServerSelector;
 import com.mongodb.selector.ServerSelector;
 
 import java.util.ArrayList;
@@ -34,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.ServerAddressHelper.createServerAddress;
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
@@ -46,15 +49,14 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  */
 @Immutable
 public final class ClusterSettings {
+    private final String srvHost;
     private final List<ServerAddress> hosts;
     private final ClusterConnectionMode mode;
     private final ClusterType requiredClusterType;
     private final String requiredReplicaSetName;
     private final ServerSelector serverSelector;
-    private final String description;
     private final long localThresholdMS;
     private final long serverSelectionTimeoutMS;
-    private final int maxWaitQueueSize;
     private final List<ClusterListener> clusterListeners;
 
     /**
@@ -82,15 +84,15 @@ public final class ClusterSettings {
      */
     @NotThreadSafe
     public static final class Builder {
-        private List<ServerAddress> hosts = singletonList(new ServerAddress());
+        private static final List<ServerAddress> DEFAULT_HOSTS = singletonList(new ServerAddress());
+        private String srvHost;
+        private List<ServerAddress> hosts = DEFAULT_HOSTS;
         private ClusterConnectionMode mode;
         private ClusterType requiredClusterType = ClusterType.UNKNOWN;
         private String requiredReplicaSetName;
         private ServerSelector serverSelector;
-        private String description;
         private long serverSelectionTimeoutMS = MILLISECONDS.convert(30, TimeUnit.SECONDS);
         private long localThresholdMS = MILLISECONDS.convert(15, MILLISECONDS);
-        private int maxWaitQueueSize = 500;
         private List<ClusterListener> clusterListeners = new ArrayList<ClusterListener>();
 
         private Builder() {
@@ -107,27 +109,29 @@ public final class ClusterSettings {
          */
         public Builder applySettings(final ClusterSettings clusterSettings) {
             notNull("clusterSettings", clusterSettings);
-            description = clusterSettings.description;
+            srvHost = clusterSettings.srvHost;
             hosts = clusterSettings.hosts;
             mode = clusterSettings.mode;
             requiredReplicaSetName = clusterSettings.requiredReplicaSetName;
             requiredClusterType = clusterSettings.requiredClusterType;
             localThresholdMS = clusterSettings.localThresholdMS;
             serverSelectionTimeoutMS = clusterSettings.serverSelectionTimeoutMS;
-            maxWaitQueueSize = clusterSettings.maxWaitQueueSize;
             clusterListeners = new ArrayList<ClusterListener>(clusterSettings.clusterListeners);
             serverSelector = unpackServerSelector(clusterSettings.serverSelector);
             return this;
         }
 
         /**
-         * Sets the user defined description of the MongoClient.
+         * Sets the host name to use in order to look up an SRV DNS record to find the MongoDB hosts.
          *
-         * @param description the user defined description of the MongoClient
+         * @param srvHost the SRV host name
          * @return this
          */
-        public Builder description(final String description) {
-            this.description = description;
+        public Builder srvHost(final String srvHost) {
+            if (this.hosts != DEFAULT_HOSTS) {
+                throw new IllegalArgumentException("Can not set both hosts and srvHost");
+            }
+            this.srvHost = srvHost;
             return this;
         }
 
@@ -141,6 +145,9 @@ public final class ClusterSettings {
             notNull("hosts", hosts);
             if (hosts.isEmpty()) {
                 throw new IllegalArgumentException("hosts list may not be empty");
+            }
+            if (srvHost != null) {
+                throw new IllegalArgumentException("srvHost must be null");
             }
             Set<ServerAddress> hostsSet = new LinkedHashSet<ServerAddress>(hosts.size());
             for (ServerAddress serverAddress : hosts) {
@@ -228,20 +235,6 @@ public final class ClusterSettings {
         }
 
         /**
-         * <p>This is the maximum number of concurrent operations allowed to wait for a server to become available. All further operations
-         * will get an exception immediately.</p>
-         *
-         * <p>Default is 500.</p>
-         *
-         * @param maxWaitQueueSize the number of threads that are allowed to be waiting for a connection.
-         * @return this
-         */
-        public Builder maxWaitQueueSize(final int maxWaitQueueSize) {
-            this.maxWaitQueueSize = maxWaitQueueSize;
-            return this;
-        }
-
-        /**
          * Adds a cluster listener.
          *
          * @param clusterListener the non-null cluster listener
@@ -261,7 +254,11 @@ public final class ClusterSettings {
          * @return this
          */
         public Builder applyConnectionString(final ConnectionString connectionString) {
-            if (connectionString.getHosts().size() == 1 && connectionString.getRequiredReplicaSetName() == null) {
+            if (connectionString.isSrvProtocol()) {
+                mode(ClusterConnectionMode.MULTIPLE);
+                srvHost(connectionString.getHosts().get(0));
+            }
+            else if (connectionString.getHosts().size() == 1 && connectionString.getRequiredReplicaSetName() == null) {
                 mode(ClusterConnectionMode.SINGLE)
                 .hosts(singletonList(createServerAddress(connectionString.getHosts().get(0))));
             } else {
@@ -275,11 +272,6 @@ public final class ClusterSettings {
 
             Integer maxConnectionPoolSize = connectionString.getMaxConnectionPoolSize();
             int maxSize = maxConnectionPoolSize != null ? maxConnectionPoolSize : 100;
-
-            Integer threadsAllowedToBlockForConnectionMultiplier = connectionString.getThreadsAllowedToBlockForConnectionMultiplier();
-            int waitQueueMultiple = threadsAllowedToBlockForConnectionMultiplier != null
-                                    ? threadsAllowedToBlockForConnectionMultiplier : 5;
-            maxWaitQueueSize(waitQueueMultiple * maxSize);
 
             Integer serverSelectionTimeout = connectionString.getServerSelectionTimeout();
             if (serverSelectionTimeout != null) {
@@ -319,12 +311,12 @@ public final class ClusterSettings {
     }
 
     /**
-     * Gets the user defined description of the MongoClient.
-     *
-     * @return the user defined description of the MongoClient
+     * Gets the host name from which to lookup SRV record for the seed list
+     * @return the SRV host, or null if none specified
+     * @since 3.10
      */
-    public String getDescription() {
-        return description;
+    public String getSrvHost() {
+        return srvHost;
     }
 
     /**
@@ -429,18 +421,6 @@ public final class ClusterSettings {
     }
 
     /**
-     * <p>This is the maximum number of threads that may be waiting for a connection to become available from the pool. All further threads
-     * will get an exception immediately.</p>
-     *
-     * <p>Default is 500.</p>
-     *
-     * @return the number of threads that are allowed to be waiting for a connection.
-     */
-    public int getMaxWaitQueueSize() {
-        return maxWaitQueueSize;
-    }
-
-    /**
      * Gets the cluster listeners.  The default value is an empty list.
      *
      * @return the cluster listeners
@@ -461,16 +441,13 @@ public final class ClusterSettings {
 
         ClusterSettings that = (ClusterSettings) o;
 
-        if (maxWaitQueueSize != that.maxWaitQueueSize) {
-            return false;
-        }
         if (serverSelectionTimeoutMS != that.serverSelectionTimeoutMS) {
             return false;
         }
         if (localThresholdMS != that.localThresholdMS) {
             return false;
         }
-        if (description != null ? !description.equals(that.description) : that.description != null) {
+        if (srvHost != null ? !srvHost.equals(that.srvHost) : that.srvHost != null) {
             return false;
         }
         if (!hosts.equals(that.hosts)) {
@@ -499,14 +476,13 @@ public final class ClusterSettings {
     @Override
     public int hashCode() {
         int result = hosts.hashCode();
+        result = 31 * result + (srvHost != null ? srvHost.hashCode() : 0);
         result = 31 * result + mode.hashCode();
         result = 31 * result + requiredClusterType.hashCode();
         result = 31 * result + (requiredReplicaSetName != null ? requiredReplicaSetName.hashCode() : 0);
         result = 31 * result + (serverSelector != null ? serverSelector.hashCode() : 0);
-        result = 31 * result + (description != null ? description.hashCode() : 0);
         result = 31 * result + (int) (serverSelectionTimeoutMS ^ (serverSelectionTimeoutMS >>> 32));
         result = 31 * result + (int) (localThresholdMS ^ (localThresholdMS >>> 32));
-        result = 31 * result + maxWaitQueueSize;
         result = 31 * result + clusterListeners.hashCode();
         return result;
     }
@@ -514,7 +490,8 @@ public final class ClusterSettings {
     @Override
     public String toString() {
         return "{"
-               + "hosts=" + hosts
+               + (hosts.isEmpty() ? "" : "hosts=" + hosts)
+               + (srvHost == null ? "" : ", srvHost=" + srvHost)
                + ", mode=" + mode
                + ", requiredClusterType=" + requiredClusterType
                + ", requiredReplicaSetName='" + requiredReplicaSetName + '\''
@@ -522,8 +499,6 @@ public final class ClusterSettings {
                + ", clusterListeners='" + clusterListeners + '\''
                + ", serverSelectionTimeout='" + serverSelectionTimeoutMS + " ms" + '\''
                + ", localThreshold='" + serverSelectionTimeoutMS + " ms" + '\''
-               + ", maxWaitQueueSize=" + maxWaitQueueSize
-               + ", description='" + description + '\''
                + '}';
     }
 
@@ -534,17 +509,28 @@ public final class ClusterSettings {
      */
     public String getShortDescription() {
         return "{"
-               + "hosts=" + hosts
+                + (hosts.isEmpty() ? "" : "hosts=" + hosts)
+                + (srvHost == null ? "" : ", srvHost=" + srvHost)
                + ", mode=" + mode
                + ", requiredClusterType=" + requiredClusterType
                + ", serverSelectionTimeout='" + serverSelectionTimeoutMS + " ms" + '\''
-               + ", maxWaitQueueSize=" + maxWaitQueueSize
                + (requiredReplicaSetName == null ? "" : ", requiredReplicaSetName='" + requiredReplicaSetName + '\'')
-               + (description == null ? "" : ", description='" + description + '\'')
                + '}';
     }
 
     private ClusterSettings(final Builder builder) {
+        // TODO: Unit test this
+        if (builder.srvHost != null) {
+            if (builder.srvHost.contains(":")) {
+                throw new IllegalArgumentException("The srvHost can not contain a host name that specifies a port");
+            }
+
+            if (builder.hosts.get(0).getHost().split("\\.").length < 3) {
+                throw new MongoClientException(format("An SRV host name '%s' was provided that does not contain at least three parts. "
+                        + "It must contain a hostname, domain name and a top level domain.", builder.hosts.get(0).getHost()));
+            }
+        }
+
         if (builder.hosts.size() > 1 && builder.requiredClusterType == ClusterType.STANDALONE) {
             throw new IllegalArgumentException("Multiple hosts cannot be specified when using ClusterType.STANDALONE.");
         }
@@ -562,7 +548,7 @@ public final class ClusterSettings {
             }
         }
 
-        description = builder.description;
+        srvHost = builder.srvHost;
         hosts = builder.hosts;
         mode = builder.mode != null ? builder.mode : hosts.size() == 1 ? ClusterConnectionMode.SINGLE : ClusterConnectionMode.MULTIPLE;
         requiredReplicaSetName = builder.requiredReplicaSetName;
@@ -570,7 +556,6 @@ public final class ClusterSettings {
         localThresholdMS = builder.localThresholdMS;
         serverSelector = builder.packServerSelector();
         serverSelectionTimeoutMS = builder.serverSelectionTimeoutMS;
-        maxWaitQueueSize = builder.maxWaitQueueSize;
         clusterListeners = unmodifiableList(builder.clusterListeners);
     }
 }

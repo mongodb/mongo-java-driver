@@ -16,7 +16,7 @@
 
 package com.mongodb;
 
-import org.bson.BSON;
+import com.mongodb.lang.Nullable;
 import org.bson.BSONObject;
 import org.bson.BsonBinary;
 import org.bson.BsonBinarySubType;
@@ -27,6 +27,7 @@ import org.bson.BsonReader;
 import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
+import org.bson.UuidRepresentation;
 import org.bson.codecs.BsonTypeClassMap;
 import org.bson.codecs.BsonTypeCodecMap;
 import org.bson.codecs.BsonValueCodecProvider;
@@ -36,6 +37,7 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.IdGenerator;
 import org.bson.codecs.ObjectIdGenerator;
+import org.bson.codecs.OverridableUuidRepresentationCodec;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.BSONTimestamp;
@@ -62,8 +64,8 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
  *
  * @since 3.0
  */
-@SuppressWarnings("rawtypes")
-public class DBObjectCodec implements CollectibleCodec<DBObject> {
+@SuppressWarnings({"rawtypes", "deprecation"})
+public class DBObjectCodec implements CollectibleCodec<DBObject>, OverridableUuidRepresentationCodec<DBObject> {
     private static final BsonTypeClassMap DEFAULT_BSON_TYPE_CLASS_MAP = createDefaultBsonTypeClassMap();
     private static final CodecRegistry DEFAULT_REGISTRY =
             fromProviders(asList(new ValueCodecProvider(), new BsonValueCodecProvider(), new DBObjectCodecProvider()));
@@ -74,8 +76,9 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
     private final BsonTypeCodecMap bsonTypeCodecMap;
     private final DBObjectFactory objectFactory;
     private final IdGenerator idGenerator = new ObjectIdGenerator();
+    private final UuidRepresentation uuidRepresentation;
 
-    static BsonTypeClassMap createDefaultBsonTypeClassMap() {
+    private static BsonTypeClassMap createDefaultBsonTypeClassMap() {
         Map<BsonType, Class<?>> replacements = new HashMap<BsonType, Class<?>>();
         replacements.put(BsonType.REGULAR_EXPRESSION, Pattern.class);
         replacements.put(BsonType.SYMBOL, String.class);
@@ -130,9 +133,16 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
      * @param objectFactory the non-null object factory used to create empty DBObject instances when decoding
      */
     public DBObjectCodec(final CodecRegistry codecRegistry, final BsonTypeClassMap bsonTypeClassMap, final DBObjectFactory objectFactory) {
+        this(codecRegistry, new BsonTypeCodecMap(notNull("bsonTypeClassMap", bsonTypeClassMap), codecRegistry), objectFactory,
+                UuidRepresentation.UNSPECIFIED);
+    }
+
+    private DBObjectCodec(final CodecRegistry codecRegistry, final BsonTypeCodecMap bsonTypeCodecMap, final DBObjectFactory objectFactory,
+                         final UuidRepresentation uuidRepresentation) {
         this.objectFactory = notNull("objectFactory", objectFactory);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
-        this.bsonTypeCodecMap = new BsonTypeCodecMap(notNull("bsonTypeClassMap", bsonTypeClassMap), codecRegistry);
+        this.uuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
+        this.bsonTypeCodecMap = bsonTypeCodecMap;
     }
 
     @Override
@@ -195,10 +205,15 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
         return document;
     }
 
+    @Override
+    public Codec<DBObject> withUuidRepresentation(final UuidRepresentation uuidRepresentation) {
+        return new DBObjectCodec(codecRegistry, bsonTypeCodecMap, objectFactory, uuidRepresentation);
+    }
+
     private void beforeFields(final BsonWriter bsonWriter, final EncoderContext encoderContext, final DBObject document) {
         if (encoderContext.isEncodingCollectibleDocument() && document.containsField(ID_FIELD_NAME)) {
             bsonWriter.writeName(ID_FIELD_NAME);
-            writeValue(bsonWriter, null, document.get(ID_FIELD_NAME));
+            writeValue(bsonWriter, encoderContext, document.get(ID_FIELD_NAME));
         }
     }
 
@@ -207,48 +222,47 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
     }
 
     @SuppressWarnings("unchecked")
-    private void writeValue(final BsonWriter bsonWriter, final EncoderContext encoderContext, final Object initialValue) {
-        Object value = BSON.applyEncodingHooks(initialValue);
+    private void writeValue(final BsonWriter bsonWriter, final EncoderContext encoderContext, @Nullable final Object value) {
         if (value == null) {
             bsonWriter.writeNull();
         } else if (value instanceof DBRef) {
-            encodeDBRef(bsonWriter, (DBRef) value);
+            encodeDBRef(bsonWriter, (DBRef) value, encoderContext);
         } else if (value instanceof Map) {
-            encodeMap(bsonWriter, (Map<String, Object>) value);
+            encodeMap(bsonWriter, (Map<String, Object>) value, encoderContext);
         } else if (value instanceof Iterable) {
-            encodeIterable(bsonWriter, (Iterable) value);
+            encodeIterable(bsonWriter, (Iterable) value, encoderContext);
         } else if (value instanceof BSONObject) {
-            encodeBsonObject(bsonWriter, ((BSONObject) value));
+            encodeBsonObject(bsonWriter, (BSONObject) value, encoderContext);
         } else if (value instanceof CodeWScope) {
-            encodeCodeWScope(bsonWriter, (CodeWScope) value);
+            encodeCodeWScope(bsonWriter, (CodeWScope) value, encoderContext);
         } else if (value instanceof byte[]) {
             encodeByteArray(bsonWriter, (byte[]) value);
         } else if (value.getClass().isArray()) {
-            encodeArray(bsonWriter, value);
+            encodeArray(bsonWriter, value, encoderContext);
         } else if (value instanceof Symbol) {
             bsonWriter.writeSymbol(((Symbol) value).getSymbol());
         } else {
             Codec codec = codecRegistry.get(value.getClass());
-            codec.encode(bsonWriter, value, encoderContext);
+            encoderContext.encodeWithChildContext(codec, bsonWriter, value);
         }
     }
 
-    private void encodeMap(final BsonWriter bsonWriter, final Map<String, Object> document) {
+    private void encodeMap(final BsonWriter bsonWriter, final Map<String, Object> document, final EncoderContext encoderContext) {
         bsonWriter.writeStartDocument();
 
         for (final Map.Entry<String, Object> entry : document.entrySet()) {
             bsonWriter.writeName(entry.getKey());
-            writeValue(bsonWriter, null, entry.getValue());
+            writeValue(bsonWriter, encoderContext.getChildContext(), entry.getValue());
         }
         bsonWriter.writeEndDocument();
     }
 
-    private void encodeBsonObject(final BsonWriter bsonWriter, final BSONObject document) {
+    private void encodeBsonObject(final BsonWriter bsonWriter, final BSONObject document, final EncoderContext encoderContext) {
         bsonWriter.writeStartDocument();
 
         for (String key : document.keySet()) {
             bsonWriter.writeName(key);
-            writeValue(bsonWriter, null, document.get(key));
+            writeValue(bsonWriter, encoderContext.getChildContext(), document.get(key));
         }
         bsonWriter.writeEndDocument();
     }
@@ -257,44 +271,43 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
         bsonWriter.writeBinaryData(new BsonBinary(value));
     }
 
-    private void encodeArray(final BsonWriter bsonWriter, final Object value) {
+    private void encodeArray(final BsonWriter bsonWriter, final Object value, final EncoderContext encoderContext) {
         bsonWriter.writeStartArray();
 
         int size = Array.getLength(value);
         for (int i = 0; i < size; i++) {
-            writeValue(bsonWriter, null, Array.get(value, i));
+            writeValue(bsonWriter, encoderContext.getChildContext(), Array.get(value, i));
         }
 
         bsonWriter.writeEndArray();
     }
 
-    private void encodeDBRef(final BsonWriter bsonWriter, final DBRef dbRef) {
+    private void encodeDBRef(final BsonWriter bsonWriter, final DBRef dbRef, final EncoderContext encoderContext) {
         bsonWriter.writeStartDocument();
 
         bsonWriter.writeString("$ref", dbRef.getCollectionName());
         bsonWriter.writeName("$id");
-        writeValue(bsonWriter, null, dbRef.getId());
+        writeValue(bsonWriter, encoderContext.getChildContext(), dbRef.getId());
         if (dbRef.getDatabaseName() != null) {
             bsonWriter.writeString("$db", dbRef.getDatabaseName());
         }
         bsonWriter.writeEndDocument();
     }
 
-    @SuppressWarnings("unchecked")
-    private void encodeCodeWScope(final BsonWriter bsonWriter, final CodeWScope value) {
+    private void encodeCodeWScope(final BsonWriter bsonWriter, final CodeWScope value, final EncoderContext encoderContext) {
         bsonWriter.writeJavaScriptWithScope(value.getCode());
-        encodeBsonObject(bsonWriter, value.getScope());
+        encodeBsonObject(bsonWriter, value.getScope(), encoderContext.getChildContext());
     }
 
-    private void encodeIterable(final BsonWriter bsonWriter, final Iterable iterable) {
+    private void encodeIterable(final BsonWriter bsonWriter, final Iterable iterable, final EncoderContext encoderContext) {
         bsonWriter.writeStartArray();
         for (final Object cur : iterable) {
-            writeValue(bsonWriter, null, cur);
+            writeValue(bsonWriter, encoderContext.getChildContext(), cur);
         }
         bsonWriter.writeEndArray();
     }
 
-    private Object readValue(final BsonReader reader, final DecoderContext decoderContext, final String fieldName,
+    @Nullable private Object readValue(final BsonReader reader, final DecoderContext decoderContext, @Nullable final String fieldName,
                              final List<String> path) {
         Object initialRetVal;
         BsonType bsonType = reader.getCurrentBsonType();
@@ -334,19 +347,37 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
             path.remove(fieldName);
         }
 
-        return BSON.applyDecodingHooks(initialRetVal);
+        return initialRetVal;
     }
 
     private Object readBinary(final BsonReader reader, final DecoderContext decoderContext) {
         byte bsonBinarySubType = reader.peekBinarySubType();
+        Codec<?> codec;
 
         if (BsonBinarySubType.isUuid(bsonBinarySubType) && reader.peekBinarySize() == 16) {
-            return codecRegistry.get(UUID.class).decode(reader, decoderContext);
+            codec = codecRegistry.get(Binary.class);
+            switch (bsonBinarySubType) {
+                case 3:
+                    if (uuidRepresentation == UuidRepresentation.JAVA_LEGACY
+                            || uuidRepresentation == UuidRepresentation.C_SHARP_LEGACY
+                            || uuidRepresentation == UuidRepresentation.PYTHON_LEGACY) {
+                        codec = codecRegistry.get(UUID.class);
+                    }
+                    break;
+                case 4:
+                    if (uuidRepresentation == UuidRepresentation.STANDARD) {
+                        codec = codecRegistry.get(UUID.class);
+                    }
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unknown UUID binary subtype " + bsonBinarySubType);
+            }
         } else if (bsonBinarySubType == BINARY.getValue() || bsonBinarySubType == OLD_BINARY.getValue()) {
-            return codecRegistry.get(byte[].class).decode(reader, decoderContext);
+            codec = codecRegistry.get(byte[].class);
         } else {
-            return codecRegistry.get(Binary.class).decode(reader, decoderContext);
+            codec =  codecRegistry.get(Binary.class);
         }
+        return codec.decode(reader, decoderContext);
     }
 
     private List readArray(final BsonReader reader, final DecoderContext decoderContext, final List<String> path) {

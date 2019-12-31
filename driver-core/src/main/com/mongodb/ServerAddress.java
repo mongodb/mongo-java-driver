@@ -23,6 +23,8 @@ import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Represents the location of a Mongo server - i.e. server name and port number
@@ -189,6 +191,27 @@ public class ServerAddress implements Serializable {
         }
     }
 
+    /**
+     * Gets all underlying socket addresses
+     *
+     * @return array of socket addresses
+     *
+     * @since 3.9
+     */
+    public List<InetSocketAddress> getSocketAddresses() {
+        try {
+            InetAddress[] inetAddresses = InetAddress.getAllByName(host);
+            List<InetSocketAddress> inetSocketAddressList = new ArrayList<InetSocketAddress>();
+            for (InetAddress inetAddress : inetAddresses) {
+                inetSocketAddressList.add(new InetSocketAddress(inetAddress, port));
+            }
+
+            return inetSocketAddressList;
+        } catch (UnknownHostException e) {
+            throw new MongoSocketException(e.getMessage(), this, e);
+        }
+    }
+
     @Override
     public String toString() {
         return host + ":" + port;
@@ -210,17 +233,5 @@ public class ServerAddress implements Serializable {
      */
     public static int defaultPort() {
         return 27017;
-    }
-
-    /**
-     * Determines whether this address is the same as a given host.
-     *
-     * @param hostName the address to compare
-     * @return if they are the same
-     * @deprecated use the {@link #equals(Object)} method instead
-     */
-    @Deprecated
-    public boolean sameHost(final String hostName) {
-        return equals(new ServerAddress(hostName));
     }
 }

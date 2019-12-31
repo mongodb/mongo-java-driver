@@ -21,8 +21,11 @@
         "http://www.puppycrawl.com/dtds/suppressions_1_1.dtd">
 
 <suppressions>
+
+    <suppress checks="VisibilityModifier" files="com[\\/]mongodb[\\/]internal[\\/]connection[\\/]tlschannel[\\/]"/>
+
     <suppress checks="MethodLength" files="QuickTour"/>
-    <suppress checks="Regexp" files="QuickTour"/>
+    <suppress checks="Regexp" files="Tour"/>
 
     <suppress checks="MethodLength" files="PojoRoundTripTest"/>
 
@@ -34,7 +37,9 @@
     <suppress checks="JavadocPackage" files="org[\\/]bson[\\/]types[\\/][^\\/]*\.java"/>
 
     <suppress checks="Javadoc*" files="com[\\/]mongodb[\\/]internal[\\/]"/>
+    <suppress checks="Javadoc*" files="com[\\/]mongodb[\\/]async[\\/]client[\\/]internal[\\/]"/>
     <suppress checks="Javadoc*" files="com[\\/]mongodb[\\/]client[\\/]internal[\\/]"/>
+    <suppress checks="Javadoc*" files="com[\\/]mongodb[\\/]reactivestreams[\\/]client[\\/]internal[\\/]"/>
     <suppress checks="Javadoc*" files="org[\\/]bson[\\/]internal[\\/]"/>
 
     <!--Do not check primer classes -->
@@ -42,6 +47,10 @@
     <suppress checks="Regexp" files=".*primer.*"/>
     <suppress checks="AvoidStarImportCheck" files=".*primer.*"/>
     <suppress checks="VisibilityModifierCheck" files=".*primer.*"/>
+    <suppress checks="Regexp" files="SubscriberHelpers"/>
+
+    <!-- Allow printStackTrace in this file -->
+    <suppress checks="Regexp" files="CallbackResultHolder"/>
 
     <!--Do not check documentation tests classes -->
     <suppress checks="Javadoc*" files=".*documentation.*"/>
@@ -56,6 +65,7 @@
 
     <!--DBCollection is insanely long, and we should not compromise every class length for this one-->
     <suppress checks="FileLength" files="DBCollection"/>
+    <suppress checks="FileLength" files="MongoCollection"/>
 
     <suppress checks="ParameterNumber" files="Connection"/>
     <suppress checks="ParameterNumber" files="DefaultServer"/>
@@ -109,8 +119,9 @@
     <suppress checks="HideUtilityClassConstructor" files="ClassAncestry"/>
     <suppress checks="HideUtilityClassConstructor" files="CLI"/>
     <suppress checks="HideUtilityClassConstructor" files="JSON"/>
-    <suppress checks="HideUtilityClassConstructor" files="QuickTour"/>
+    <suppress checks="HideUtilityClassConstructor" files="Tour"/>
     <suppress checks="HideUtilityClassConstructor" files="Util"/>
+    <suppress checks="HideUtilityClassConstructor" files="DatabaseTestCase"/>
 
     <suppress checks="ParameterNumber" files="BulkWriteBatch"/>
 

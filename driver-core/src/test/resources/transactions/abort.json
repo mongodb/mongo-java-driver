@@ -1,4 +1,18 @@
 {
+  "runOn": [
+    {
+      "minServerVersion": "4.0",
+      "topology": [
+        "replicaset"
+      ]
+    },
+    {
+      "minServerVersion": "4.1.8",
+      "topology": [
+        "sharded"
+      ]
+    }
+  ],
   "database_name": "transaction-tests",
   "collection_name": "test",
   "data": [],
@@ -8,17 +22,16 @@
       "operations": [
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 1
@@ -26,23 +39,20 @@
         },
         {
           "name": "abortTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 1
@@ -50,9 +60,7 @@
         },
         {
           "name": "abortTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         }
       ],
       "expectations": [
@@ -148,17 +156,16 @@
       "operations": [
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 1
@@ -217,17 +224,16 @@
       "operations": [
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 1
@@ -235,15 +241,11 @@
         },
         {
           "name": "abortTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "abortTransaction",
-          "arguments": {
-            "session": "session0"
-          },
+          "object": "session0",
           "result": {
             "errorContains": "cannot call abortTransaction twice"
           }
@@ -301,9 +303,7 @@
       "operations": [
         {
           "name": "abortTransaction",
-          "arguments": {
-            "session": "session0"
-          },
+          "object": "session0",
           "result": {
             "errorContains": "no transaction started"
           }
@@ -321,21 +321,15 @@
       "operations": [
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "abortTransaction",
-          "arguments": {
-            "session": "session0"
-          },
+          "object": "session0",
           "result": {
             "errorContains": "Cannot call abortTransaction after calling commitTransaction"
           }
@@ -353,17 +347,16 @@
       "operations": [
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 1
@@ -371,15 +364,11 @@
         },
         {
           "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "abortTransaction",
-          "arguments": {
-            "session": "session0"
-          },
+          "object": "session0",
           "result": {
             "errorContains": "Cannot call abortTransaction after calling commitTransaction"
           }
@@ -441,17 +430,16 @@
       "operations": [
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 1
@@ -459,33 +447,43 @@
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
-            "errorCodeName": "DuplicateKey"
+            "errorLabelsOmit": [
+              "TransientTransactionError",
+              "UnknownTransactionCommitResult"
+            ],
+            "errorContains": "E11000"
           }
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
-            "errorCodeName": "NoSuchTransaction"
+            "errorCodeName": "NoSuchTransaction",
+            "errorLabelsContain": [
+              "TransientTransactionError"
+            ],
+            "errorLabelsOmit": [
+              "UnknownTransactionCommitResult"
+            ]
           }
         },
         {
           "name": "abortTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         }
       ],
       "expectations": [
@@ -586,8 +584,8 @@
       "operations": [
         {
           "name": "startTransaction",
+          "object": "session0",
           "arguments": {
-            "session": "session0",
             "options": {
               "writeConcern": {
                 "w": 10
@@ -597,11 +595,12 @@
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 1
@@ -609,9 +608,7 @@
         },
         {
           "name": "abortTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         }
       ],
       "outcome": {

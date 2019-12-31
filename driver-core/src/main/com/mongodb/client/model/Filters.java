@@ -34,13 +34,16 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.client.model.BuildersHelper.encodeValue;
 import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableSet;
 
 /**
  * A factory for query filters. A convenient way to use this class is to statically import all of its methods, which allows usage like:
@@ -58,14 +61,14 @@ public final class Filters {
      * Creates a filter that matches all documents where the value of _id field equals the specified value. Note that this doesn't
      * actually generate a $eq operator, as the query language doesn't require it.
      *
-     * @param value     the value
+     * @param value     the value, which may be null
      * @param <TItem>   the value type
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/eq $eq
      *
      * @since 3.4
      */
-    public static <TItem> Bson eq(final TItem value) {
+    public static <TItem> Bson eq(@Nullable final TItem value) {
         return eq("_id", value);
     }
 
@@ -74,12 +77,12 @@ public final class Filters {
      * actually generate a $eq operator, as the query language doesn't require it.
      *
      * @param fieldName the field name
-     * @param value     the value
+     * @param value     the value, which may be null
      * @param <TItem>   the value type
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/eq $eq
      */
-    public static <TItem> Bson eq(final String fieldName, final TItem value) {
+    public static <TItem> Bson eq(final String fieldName, @Nullable final TItem value) {
         return new SimpleEncodingFilter<TItem>(fieldName, value);
     }
 
@@ -87,12 +90,12 @@ public final class Filters {
      * Creates a filter that matches all documents where the value of the field name does not equal the specified value.
      *
      * @param fieldName the field name
-     * @param value     the value
+     * @param value     the value, which may be null
      * @param <TItem>   the value type
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/ne $ne
      */
-    public static <TItem> Bson ne(final String fieldName, final TItem value) {
+    public static <TItem> Bson ne(final String fieldName, @Nullable final TItem value) {
         return new OperatorFilter<TItem>("$ne", fieldName, value);
     }
 
@@ -157,6 +160,8 @@ public final class Filters {
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/in $in
      */
+    @SafeVarargs
+    @SuppressWarnings("varargs")
     public static <TItem> Bson in(final String fieldName, final TItem... values) {
         return in(fieldName, asList(values));
     }
@@ -183,6 +188,8 @@ public final class Filters {
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/nin $nin
      */
+    @SafeVarargs
+    @SuppressWarnings("varargs")
     public static <TItem> Bson nin(final String fieldName, final TItem... values) {
         return nin(fieldName, asList(values));
     }
@@ -428,21 +435,6 @@ public final class Filters {
     }
 
     /**
-     * Creates a filter that matches all documents matching the given search term using the given language.
-     *
-     * @param search   the search term
-     * @param language the language to use for stop words
-     * @return the filter
-     * @mongodb.driver.manual reference/operator/query/text $text
-     * @deprecated use {@link Filters#text(String, TextSearchOptions)}
-     */
-    @Deprecated
-    public static Bson text(final String search, final String language) {
-        notNull("search", search);
-        return text(search, new TextSearchOptions().language(language));
-    }
-
-    /**
      * Creates a filter that matches all documents matching the given the search term with the given text search options.
      *
      * @param search            the search term
@@ -492,6 +484,8 @@ public final class Filters {
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/all $all
      */
+    @SafeVarargs
+    @SuppressWarnings("varargs")
     public static <TItem> Bson all(final String fieldName, final TItem... values) {
         return all(fieldName, asList(values));
     }
@@ -746,14 +740,15 @@ public final class Filters {
      *
      * @param fieldName   the field name
      * @param geometry    the bounding GeoJSON geometry object
-     * @param maxDistance the maximum distance from the point, in meters
-     * @param minDistance the minimum distance from the point, in meters
+     * @param maxDistance the maximum distance from the point, in meters. It may be null.
+     * @param minDistance the minimum distance from the point, in meters. It may be null.
      * @return the filter
      * @since 3.1
      * @mongodb.driver.manual reference/operator/query/near/ $near
      * @mongodb.server.release 2.4
      */
-    public static Bson near(final String fieldName, final Point geometry, final Double maxDistance, final Double minDistance) {
+    public static Bson near(final String fieldName, final Point geometry, @Nullable final Double maxDistance,
+                            @Nullable final Double minDistance) {
         return new GeometryOperatorFilter<Point>("$near", fieldName, geometry, maxDistance, minDistance);
     }
 
@@ -762,14 +757,15 @@ public final class Filters {
      *
      * @param fieldName   the field name
      * @param geometry    the bounding GeoJSON geometry object
-     * @param maxDistance the maximum distance from the point, in meters
-     * @param minDistance the minimum distance from the point, in meters
+     * @param maxDistance the maximum distance from the point, in meters. It may be null.
+     * @param minDistance the minimum distance from the point, in meters. It may be null.
      * @return the filter
      * @since 3.1
      * @mongodb.driver.manual reference/operator/query/near/ $near
      * @mongodb.server.release 2.4
      */
-    public static Bson near(final String fieldName, final Bson geometry, final Double maxDistance, final Double minDistance) {
+    public static Bson near(final String fieldName, final Bson geometry, @Nullable final Double maxDistance,
+                            @Nullable final Double minDistance) {
         return new GeometryOperatorFilter<Bson>("$near", fieldName, geometry, maxDistance, minDistance);
     }
 
@@ -779,14 +775,15 @@ public final class Filters {
      * @param fieldName   the field name
      * @param x           the x coordinate
      * @param y           the y coordinate
-     * @param maxDistance the maximum distance from the point, in radians
-     * @param minDistance the minimum distance from the point, in radians
+     * @param maxDistance the maximum distance from the point, in radians. It may be null.
+     * @param minDistance the minimum distance from the point, in radians. It may be null.
      * @return the filter
      * @since 3.1
      * @mongodb.driver.manual reference/operator/query/near/ $near
      * @mongodb.server.release 2.4
      */
-    public static Bson near(final String fieldName, final double x, final double y, final Double maxDistance, final Double minDistance) {
+    public static Bson near(final String fieldName, final double x, final double y, @Nullable final Double maxDistance,
+                            @Nullable final Double minDistance) {
         return createNearFilterDocument(fieldName, x, y, maxDistance, minDistance, "$near");
     }
 
@@ -796,14 +793,15 @@ public final class Filters {
      *
      * @param fieldName   the field name
      * @param geometry    the bounding GeoJSON geometry object
-     * @param maxDistance the maximum distance from the point, in meters
-     * @param minDistance the minimum distance from the point, in meters
+     * @param maxDistance the maximum distance from the point, in meters. It may be null.
+     * @param minDistance the minimum distance from the point, in meters. It may be null.
      * @return the filter
      * @since 3.1
      * @mongodb.driver.manual reference/operator/query/near/ $near
      * @mongodb.server.release 2.4
      */
-    public static Bson nearSphere(final String fieldName, final Point geometry, final Double maxDistance, final Double minDistance) {
+    public static Bson nearSphere(final String fieldName, final Point geometry, @Nullable final Double maxDistance,
+                                  @Nullable final Double minDistance) {
         return new GeometryOperatorFilter<Point>("$nearSphere", fieldName, geometry, maxDistance, minDistance);
     }
 
@@ -813,14 +811,15 @@ public final class Filters {
      *
      * @param fieldName   the field name
      * @param geometry    the bounding GeoJSON geometry object
-     * @param maxDistance the maximum distance from the point, in meters
-     * @param minDistance the minimum distance from the point, in meters
+     * @param maxDistance the maximum distance from the point, in meters. It may be null.
+     * @param minDistance the minimum distance from the point, in meters. It may be null.
      * @return the filter
      * @since 3.1
      * @mongodb.driver.manual reference/operator/query/near/ $near
      * @mongodb.server.release 2.4
      */
-    public static Bson nearSphere(final String fieldName, final Bson geometry, final Double maxDistance, final Double minDistance) {
+    public static Bson nearSphere(final String fieldName, final Bson geometry, @Nullable final Double maxDistance,
+                                  @Nullable final Double minDistance) {
         return new GeometryOperatorFilter<Bson>("$nearSphere", fieldName, geometry, maxDistance, minDistance);
     }
 
@@ -831,15 +830,15 @@ public final class Filters {
      * @param fieldName   the field name
      * @param x           the x coordinate
      * @param y           the y coordinate
-     * @param maxDistance the maximum distance from the point, in radians
-     * @param minDistance the minimum distance from the point, in radians
+     * @param maxDistance the maximum distance from the point, in radians. It may be null.
+     * @param minDistance the minimum distance from the point, in radians. It may be null.
      * @return the filter
      * @since 3.1
      * @mongodb.driver.manual reference/operator/query/near/ $near
      * @mongodb.server.release 2.4
      */
-    public static Bson nearSphere(final String fieldName, final double x, final double y, final Double maxDistance,
-                                  final Double minDistance) {
+    public static Bson nearSphere(final String fieldName, final double x, final double y, @Nullable final Double maxDistance,
+                                  @Nullable final Double minDistance) {
         return createNearFilterDocument(fieldName, x, y, maxDistance, minDistance, "$nearSphere");
     }
 
@@ -891,6 +890,30 @@ public final class Filters {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            SimpleFilter that = (SimpleFilter) o;
+
+            if (!fieldName.equals(that.fieldName)) {
+                return false;
+            }
+            return value.equals(that.value);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = fieldName.hashCode();
+            result = 31 * result + value.hashCode();
+            return result;
+        }
+
+        @Override
         public String toString() {
             return operatorFilterToString(fieldName, "$eq", value);
         }
@@ -901,7 +924,7 @@ public final class Filters {
         private final String fieldName;
         private final TItem value;
 
-        OperatorFilter(final String operatorName, final String fieldName, final TItem value) {
+        OperatorFilter(final String operatorName, final String fieldName, @Nullable final TItem value) {
             this.operatorName = notNull("operatorName", operatorName);
             this.fieldName = notNull("fieldName", fieldName);
             this.value = value;
@@ -923,6 +946,34 @@ public final class Filters {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            OperatorFilter<?> that = (OperatorFilter<?>) o;
+
+            if (!operatorName.equals(that.operatorName)) {
+                return false;
+            }
+            if (!fieldName.equals(that.fieldName)) {
+                return false;
+            }
+            return value != null ? value.equals(that.value) : that.value == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = operatorName.hashCode();
+            result = 31 * result + fieldName.hashCode();
+            result = 31 * result + (value != null ? value.hashCode() : 0);
+            return result;
+        }
+
+        @Override
         public String toString() {
             return operatorFilterToString(fieldName, operatorName, value);
         }
@@ -937,65 +988,31 @@ public final class Filters {
 
         @Override
         public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
-            BsonDocument andRenderable = new BsonDocument();
-
-            for (Bson filter : filters) {
-                BsonDocument renderedRenderable = filter.toBsonDocument(documentClass, codecRegistry);
-                for (Map.Entry<String, BsonValue> element : renderedRenderable.entrySet()) {
-                    addClause(andRenderable, element);
-                }
-            }
-
-            if (andRenderable.isEmpty()) {
-                andRenderable.append("$and", new BsonArray());
-            }
-
-            return andRenderable;
-        }
-
-        private void addClause(final BsonDocument document, final Map.Entry<String, BsonValue> clause) {
-            if (clause.getKey().equals("$and")) {
-                for (BsonValue value : clause.getValue().asArray()) {
-                    for (Map.Entry<String, BsonValue> element : value.asDocument().entrySet()) {
-                        addClause(document, element);
-                    }
-                }
-            } else if (document.size() == 1 && document.keySet().iterator().next().equals("$and")) {
-                document.get("$and").asArray().add(new BsonDocument(clause.getKey(), clause.getValue()));
-            } else if (document.containsKey(clause.getKey())) {
-                if (document.get(clause.getKey()).isDocument() && clause.getValue().isDocument()) {
-                    BsonDocument existingClauseValue = document.get(clause.getKey()).asDocument();
-                    BsonDocument clauseValue = clause.getValue().asDocument();
-                    if (keysIntersect(clauseValue, existingClauseValue)) {
-                        promoteRenderableToDollarForm(document, clause);
-                    } else {
-                        existingClauseValue.putAll(clauseValue);
-                    }
-                } else {
-                    promoteRenderableToDollarForm(document, clause);
-                }
-            } else {
-                document.append(clause.getKey(), clause.getValue());
-            }
-        }
-
-        private boolean keysIntersect(final BsonDocument first, final BsonDocument second) {
-            for (String name : first.keySet()) {
-                if (second.containsKey(name)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private void promoteRenderableToDollarForm(final BsonDocument document, final Map.Entry<String, BsonValue> clause) {
             BsonArray clauses = new BsonArray();
-            for (Map.Entry<String, BsonValue> queryElement : document.entrySet()) {
-                clauses.add(new BsonDocument(queryElement.getKey(), queryElement.getValue()));
+            for (Bson filter : filters) {
+                clauses.add(filter.toBsonDocument(documentClass, codecRegistry));
             }
-            clauses.add(new BsonDocument(clause.getKey(), clause.getValue()));
-            document.clear();
-            document.put("$and", clauses);
+
+            return new BsonDocument("$and", clauses);
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            AndFilter andFilter = (AndFilter) o;
+
+            return filters.equals(andFilter.filters);
+        }
+
+        @Override
+        public int hashCode() {
+            return filters.hashCode();
         }
 
         @Override
@@ -1043,6 +1060,30 @@ public final class Filters {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            OrNorFilter that = (OrNorFilter) o;
+
+            if (operator != that.operator) {
+                return false;
+            }
+            return filters.equals(that.filters);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = operator.hashCode();
+            result = 31 * result + filters.hashCode();
+            return result;
+        }
+
+        @Override
         public String toString() {
             return operator.toStringName + " Filter{"
                            + "filters=" + filters
@@ -1083,6 +1124,34 @@ public final class Filters {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            IterableOperatorFilter<?> that = (IterableOperatorFilter<?>) o;
+
+            if (!fieldName.equals(that.fieldName)) {
+                return false;
+            }
+            if (!operatorName.equals(that.operatorName)) {
+                return false;
+            }
+            return values.equals(that.values);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = fieldName.hashCode();
+            result = 31 * result + operatorName.hashCode();
+            result = 31 * result + values.hashCode();
+            return result;
+        }
+
+        @Override
         public String toString() {
             return operatorFilterToString(fieldName, operatorName, values);
         }
@@ -1092,7 +1161,7 @@ public final class Filters {
         private final String fieldName;
         private final TItem value;
 
-        SimpleEncodingFilter(final String fieldName, final TItem value) {
+        SimpleEncodingFilter(final String fieldName, @Nullable final TItem value) {
             this.fieldName = notNull("fieldName", fieldName);
             this.value = value;
         }
@@ -1110,6 +1179,30 @@ public final class Filters {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            SimpleEncodingFilter<?> that = (SimpleEncodingFilter<?>) o;
+
+            if (!fieldName.equals(that.fieldName)) {
+                return false;
+            }
+            return value != null ? value.equals(that.value) : that.value == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = fieldName.hashCode();
+            result = 31 * result + (value != null ? value.hashCode() : 0);
+            return result;
+        }
+
+        @Override
         public String toString() {
             return "Filter{"
                            + "fieldName='" + fieldName + '\''
@@ -1119,6 +1212,8 @@ public final class Filters {
     }
 
     private static class NotFilter implements Bson {
+        private static final Set<String> DBREF_KEYS = unmodifiableSet(new HashSet<String>(asList("$ref", "$id")));
+        private static final Set<String> DBREF_KEYS_WITH_DB =  unmodifiableSet(new HashSet<String>(asList("$ref", "$id", "$db")));
         private final Bson filter;
 
         NotFilter(final Bson filter) {
@@ -1140,13 +1235,47 @@ public final class Filters {
             }
         }
 
+        private boolean containsOperator(final BsonDocument value) {
+            Set<String> keys = value.keySet();
+            if (keys.equals(DBREF_KEYS) || keys.equals(DBREF_KEYS_WITH_DB)) {
+                return false;
+            }
+
+            for (String key : keys) {
+                if (key.startsWith("$")) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private BsonDocument createFilter(final String fieldName, final BsonValue value) {
             if (fieldName.startsWith("$")) {
                 return new BsonDocument("$not", new BsonDocument(fieldName, value));
-            } else if (value.isDocument() || value.isRegularExpression()) {
+            } else if ((value.isDocument() && containsOperator(value.asDocument())) || value.isRegularExpression()) {
                 return new BsonDocument(fieldName, new BsonDocument("$not", value));
             }
             return new BsonDocument(fieldName, new BsonDocument("$not", new BsonDocument("$eq", value)));
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            NotFilter notFilter = (NotFilter) o;
+
+            return filter.equals(notFilter.filter);
+        }
+
+        @Override
+        public int hashCode() {
+            return filter.hashCode();
         }
 
         @Override
@@ -1201,6 +1330,42 @@ public final class Filters {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            GeometryOperatorFilter<?> that = (GeometryOperatorFilter<?>) o;
+
+            if (operatorName != null ? !operatorName.equals(that.operatorName) : that.operatorName != null) {
+                return false;
+            }
+            if (!fieldName.equals(that.fieldName)) {
+                return false;
+            }
+            if (!geometry.equals(that.geometry)) {
+                return false;
+            }
+            if (maxDistance != null ? !maxDistance.equals(that.maxDistance) : that.maxDistance != null) {
+                return false;
+            }
+            return minDistance != null ? minDistance.equals(that.minDistance) : that.minDistance == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = operatorName != null ? operatorName.hashCode() : 0;
+            result = 31 * result + fieldName.hashCode();
+            result = 31 * result + geometry.hashCode();
+            result = 31 * result + (maxDistance != null ? maxDistance.hashCode() : 0);
+            result = 31 * result + (minDistance != null ? minDistance.hashCode() : 0);
+            return result;
+        }
+
+        @Override
         public String toString() {
             return "Geometry Operator Filter{"
                            + "fieldName='" + fieldName + '\''
@@ -1240,6 +1405,30 @@ public final class Filters {
                 searchDocument.put("$diacriticSensitive", BsonBoolean.valueOf(diacriticSensitive));
             }
             return new BsonDocument("$text", searchDocument);
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            TextFilter that = (TextFilter) o;
+
+            if (search != null ? !search.equals(that.search) : that.search != null) {
+                return false;
+            }
+            return textSearchOptions != null ? textSearchOptions.equals(that.textSearchOptions) : that.textSearchOptions == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = search != null ? search.hashCode() : 0;
+            result = 31 * result + (textSearchOptions != null ? textSearchOptions.hashCode() : 0);
+            return result;
         }
 
         @Override

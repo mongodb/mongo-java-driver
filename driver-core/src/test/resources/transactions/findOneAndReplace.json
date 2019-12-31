@@ -1,4 +1,18 @@
 {
+  "runOn": [
+    {
+      "minServerVersion": "4.0",
+      "topology": [
+        "replicaset"
+      ]
+    },
+    {
+      "minServerVersion": "4.1.8",
+      "topology": [
+        "sharded"
+      ]
+    }
+  ],
   "database_name": "transaction-tests",
   "collection_name": "test",
   "data": [
@@ -18,21 +32,20 @@
       "operations": [
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "findOneAndReplace",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "filter": {
               "_id": 3
             },
             "replacement": {
               "x": 1
             },
-            "returnDocument": "Before",
-            "session": "session0"
+            "returnDocument": "Before"
           },
           "result": {
             "_id": 3
@@ -40,7 +53,9 @@
         },
         {
           "name": "findOneAndReplace",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "filter": {
               "_id": 4
             },
@@ -48,8 +63,7 @@
               "x": 1
             },
             "upsert": true,
-            "returnDocument": "After",
-            "session": "session0"
+            "returnDocument": "After"
           },
           "result": {
             "_id": 4,
@@ -58,9 +72,7 @@
         },
         {
           "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         }
       ],
       "expectations": [
@@ -153,12 +165,12 @@
       }
     },
     {
-      "description": "operation writeConcern ignored for findOneAndReplace",
+      "description": "collection writeConcern ignored for findOneAndReplace",
       "operations": [
         {
           "name": "startTransaction",
+          "object": "session0",
           "arguments": {
-            "session": "session0",
             "options": {
               "writeConcern": {
                 "w": "majority"
@@ -168,18 +180,21 @@
         },
         {
           "name": "findOneAndReplace",
+          "object": "collection",
+          "collectionOptions": {
+            "writeConcern": {
+              "w": "majority"
+            }
+          },
           "arguments": {
+            "session": "session0",
             "filter": {
               "_id": 3
             },
             "replacement": {
               "x": 1
             },
-            "returnDocument": "Before",
-            "session": "session0",
-            "writeConcern": {
-              "w": "majority"
-            }
+            "returnDocument": "Before"
           },
           "result": {
             "_id": 3
@@ -187,9 +202,7 @@
         },
         {
           "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         }
       ],
       "expectations": [

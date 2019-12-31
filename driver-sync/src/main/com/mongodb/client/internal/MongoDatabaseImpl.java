@@ -17,10 +17,14 @@
 package com.mongodb.client.internal;
 
 import com.mongodb.Function;
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.ChangeStreamIterable;
+import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListCollectionsIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -29,22 +33,26 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateViewOptions;
 import com.mongodb.client.model.IndexOptionDefaults;
 import com.mongodb.client.model.ValidationOptions;
+import com.mongodb.internal.client.model.AggregationLevel;
+import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
+import com.mongodb.internal.operation.CommandReadOperation;
+import com.mongodb.internal.operation.CreateCollectionOperation;
+import com.mongodb.internal.operation.CreateViewOperation;
+import com.mongodb.internal.operation.DropDatabaseOperation;
 import com.mongodb.lang.Nullable;
-import com.mongodb.operation.CommandReadOperation;
-import com.mongodb.operation.CreateCollectionOperation;
-import com.mongodb.operation.CreateViewOperation;
-import com.mongodb.operation.DropDatabaseOperation;
-import com.mongodb.client.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.Document;
+import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
 import static com.mongodb.assertions.Assertions.notNull;
+import static org.bson.internal.CodecRegistryHelper.createRegistry;
 
 /**
  * This class is not part of the public API and may be removed or changed at any time.
@@ -55,19 +63,23 @@ public class MongoDatabaseImpl implements MongoDatabase {
     private final CodecRegistry codecRegistry;
     private final WriteConcern writeConcern;
     private final boolean retryWrites;
+    private final boolean retryReads;
     private final ReadConcern readConcern;
     private final OperationExecutor executor;
+    private UuidRepresentation uuidRepresentation;
 
     public MongoDatabaseImpl(final String name, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                             final WriteConcern writeConcern, final boolean retryWrites, final ReadConcern readConcern,
-                             final OperationExecutor executor) {
+                             final WriteConcern writeConcern, final boolean retryWrites, final boolean retryReads,
+                             final ReadConcern readConcern, final UuidRepresentation uuidRepresentation, final OperationExecutor executor) {
         checkDatabaseNameValidity(name);
         this.name = notNull("name", name);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.readPreference = notNull("readPreference", readPreference);
         this.writeConcern = notNull("writeConcern", writeConcern);
         this.retryWrites = retryWrites;
+        this.retryReads = retryReads;
         this.readConcern = notNull("readConcern", readConcern);
+        this.uuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
         this.executor = notNull("executor", executor);
     }
 
@@ -98,22 +110,26 @@ public class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public MongoDatabase withCodecRegistry(final CodecRegistry codecRegistry) {
-        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, readConcern, executor);
+        return new MongoDatabaseImpl(name, createRegistry(codecRegistry, uuidRepresentation), readPreference, writeConcern, retryWrites,
+                retryReads, readConcern, uuidRepresentation, executor);
     }
 
     @Override
     public MongoDatabase withReadPreference(final ReadPreference readPreference) {
-        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, readConcern, executor);
+        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern,
+                uuidRepresentation, executor);
     }
 
     @Override
     public MongoDatabase withWriteConcern(final WriteConcern writeConcern) {
-        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, readConcern, executor);
+        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern,
+                uuidRepresentation, executor);
     }
 
     @Override
     public MongoDatabase withReadConcern(final ReadConcern readConcern) {
-        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, readConcern, executor);
+        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern,
+                uuidRepresentation, executor);
     }
 
     @Override
@@ -123,8 +139,8 @@ public class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public <TDocument> MongoCollection<TDocument> getCollection(final String collectionName, final Class<TDocument> documentClass) {
-        return new MongoCollectionImpl<TDocument>(new MongoNamespace(name, collectionName), documentClass, codecRegistry, readPreference,
-                writeConcern, retryWrites, readConcern, executor);
+        return new MongoCollectionImpl<>(new MongoNamespace(name, collectionName), documentClass, codecRegistry, readPreference,
+                writeConcern, retryWrites, retryReads, readConcern, uuidRepresentation, executor);
     }
 
     @Override
@@ -172,6 +188,9 @@ public class MongoDatabaseImpl implements MongoDatabase {
     private <TResult> TResult executeCommand(@Nullable final ClientSession clientSession, final Bson command,
                                              final ReadPreference readPreference, final Class<TResult> resultClass) {
         notNull("readPreference", readPreference);
+        if (clientSession != null && clientSession.hasActiveTransaction() && !readPreference.equals(ReadPreference.primary())) {
+            throw new MongoClientException("Read preference in a transaction must be primary");
+        }
         return executor.execute(new CommandReadOperation<TResult>(getName(), toBsonDocument(command), codecRegistry.get(resultClass)),
                 readPreference, readConcern, clientSession);
     }
@@ -203,7 +222,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
     }
 
     private MongoIterable<String> createListCollectionNamesIterable(@Nullable final ClientSession clientSession) {
-        return createListCollectionsIterable(clientSession, BsonDocument.class)
+        return createListCollectionsIterable(clientSession, BsonDocument.class, true)
                 .map(new Function<BsonDocument, String>() {
                     @Override
                     public String apply(final BsonDocument result) {
@@ -219,7 +238,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public <TResult> ListCollectionsIterable<TResult> listCollections(final Class<TResult> resultClass) {
-        return createListCollectionsIterable(null, resultClass);
+        return createListCollectionsIterable(null, resultClass, false);
     }
 
     @Override
@@ -230,13 +249,14 @@ public class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public <TResult> ListCollectionsIterable<TResult> listCollections(final ClientSession clientSession, final Class<TResult> resultClass) {
         notNull("clientSession", clientSession);
-        return createListCollectionsIterable(clientSession, resultClass);
+        return createListCollectionsIterable(clientSession, resultClass, false);
     }
 
     private <TResult> ListCollectionsIterable<TResult> createListCollectionsIterable(@Nullable final ClientSession clientSession,
-                                                                                     final Class<TResult> resultClass) {
-        return new ListCollectionsIterableImpl<TResult>(clientSession, name, resultClass, codecRegistry, ReadPreference.primary(),
-                executor);
+                                                                                     final Class<TResult> resultClass,
+                                                                                     final boolean collectionNamesOnly) {
+        return new ListCollectionsIterableImpl<>(clientSession, name, collectionNamesOnly, resultClass, codecRegistry,
+                ReadPreference.primary(), executor, retryReads);
     }
 
     @Override
@@ -261,16 +281,13 @@ public class MongoDatabaseImpl implements MongoDatabase {
         executeCreateCollection(clientSession, collectionName, createCollectionOptions);
     }
 
-    @SuppressWarnings("deprecation")
     private void executeCreateCollection(@Nullable final ClientSession clientSession, final String collectionName,
                                          final CreateCollectionOptions createCollectionOptions) {
         CreateCollectionOperation operation = new CreateCollectionOperation(name, collectionName, writeConcern)
                 .collation(createCollectionOptions.getCollation())
                 .capped(createCollectionOptions.isCapped())
                 .sizeInBytes(createCollectionOptions.getSizeInBytes())
-                .autoIndex(createCollectionOptions.isAutoIndex())
                 .maxDocuments(createCollectionOptions.getMaxDocuments())
-                .usePowerOf2Sizes(createCollectionOptions.isUsePowerOf2Sizes())
                 .storageEngineOptions(toBsonDocument(createCollectionOptions.getStorageEngineOptions()));
 
         IndexOptionDefaults indexOptionDefaults = createCollectionOptions.getIndexOptionDefaults();
@@ -314,6 +331,84 @@ public class MongoDatabaseImpl implements MongoDatabase {
                            final List<? extends Bson> pipeline, final CreateViewOptions createViewOptions) {
         notNull("clientSession", clientSession);
         executeCreateView(clientSession, viewName, viewOn, pipeline, createViewOptions);
+    }
+
+    @Override
+    public ChangeStreamIterable<Document> watch() {
+        return watch(Collections.<Bson>emptyList());
+    }
+
+    @Override
+    public <TResult> ChangeStreamIterable<TResult> watch(final Class<TResult> resultClass) {
+        return watch(Collections.<Bson>emptyList(), resultClass);
+    }
+
+    @Override
+    public ChangeStreamIterable<Document> watch(final List<? extends Bson> pipeline) {
+        return watch(pipeline, Document.class);
+    }
+
+    @Override
+    public <TResult> ChangeStreamIterable<TResult> watch(final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
+        return createChangeStreamIterable(null, pipeline, resultClass);
+    }
+
+    @Override
+    public ChangeStreamIterable<Document> watch(final ClientSession clientSession) {
+        return watch(clientSession, Collections.<Bson>emptyList(), Document.class);
+    }
+
+    @Override
+    public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final Class<TResult> resultClass) {
+        return watch(clientSession, Collections.<Bson>emptyList(), resultClass);
+    }
+
+    @Override
+    public ChangeStreamIterable<Document> watch(final ClientSession clientSession, final List<? extends Bson> pipeline) {
+        return watch(clientSession, pipeline, Document.class);
+    }
+
+    @Override
+    public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final List<? extends Bson> pipeline,
+                                                         final Class<TResult> resultClass) {
+        notNull("clientSession", clientSession);
+        return createChangeStreamIterable(clientSession, pipeline, resultClass);
+    }
+
+    @Override
+    public AggregateIterable<Document> aggregate(final List<? extends Bson> pipeline) {
+        return aggregate(pipeline, Document.class);
+    }
+
+    @Override
+    public <TResult> AggregateIterable<TResult> aggregate(final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
+        return createAggregateIterable(null, pipeline, resultClass);
+    }
+
+    @Override
+    public AggregateIterable<Document> aggregate(final ClientSession clientSession, final List<? extends Bson> pipeline) {
+        return aggregate(clientSession, pipeline, Document.class);
+    }
+
+    @Override
+    public <TResult> AggregateIterable<TResult> aggregate(final ClientSession clientSession, final List<? extends Bson> pipeline,
+                                                          final Class<TResult> resultClass) {
+        notNull("clientSession", clientSession);
+        return createAggregateIterable(clientSession, pipeline, resultClass);
+    }
+
+    private <TResult> AggregateIterable<TResult> createAggregateIterable(@Nullable final ClientSession clientSession,
+                                                                         final List<? extends Bson> pipeline,
+                                                                         final Class<TResult> resultClass) {
+        return new AggregateIterableImpl<>(clientSession, name, Document.class, resultClass, codecRegistry,
+                readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.DATABASE, retryReads);
+    }
+
+    private <TResult> ChangeStreamIterable<TResult> createChangeStreamIterable(@Nullable final ClientSession clientSession,
+                                                                               final List<? extends Bson> pipeline,
+                                                                               final Class<TResult> resultClass) {
+        return new ChangeStreamIterableImpl<>(clientSession, name, codecRegistry, readPreference, readConcern, executor,
+                pipeline, resultClass, ChangeStreamLevel.DATABASE, retryReads);
     }
 
     private void executeCreateView(@Nullable final ClientSession clientSession, final String viewName, final String viewOn,

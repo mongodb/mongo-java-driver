@@ -21,10 +21,11 @@ import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerSettings;
+import com.mongodb.internal.selector.LatencyMinimizingServerSelector;
+import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -48,7 +49,7 @@ public class CompositeServerSelectorTest {
     private ServerDescription third;
 
     @Before
-    public void setUp() throws UnknownHostException {
+    public void setUp() {
         first = ServerDescription.builder()
                                  .state(CONNECTED)
                                  .address(new ServerAddress())

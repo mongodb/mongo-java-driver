@@ -135,6 +135,38 @@ public class PushOptions {
     }
 
     @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        PushOptions that = (PushOptions) o;
+
+        if (position != null ? !position.equals(that.position) : that.position != null) {
+            return false;
+        }
+        if (slice != null ? !slice.equals(that.slice) : that.slice != null) {
+            return false;
+        }
+        if (sort != null ? !sort.equals(that.sort) : that.sort != null) {
+            return false;
+        }
+        return sortDocument != null ? sortDocument.equals(that.sortDocument) : that.sortDocument == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = position != null ? position.hashCode() : 0;
+        result = 31 * result + (slice != null ? slice.hashCode() : 0);
+        result = 31 * result + (sort != null ? sort.hashCode() : 0);
+        result = 31 * result + (sortDocument != null ? sortDocument.hashCode() : 0);
+        return result;
+    }
+
+    @Override
     public String toString() {
         return "Push Options{"
                        + "position=" + position

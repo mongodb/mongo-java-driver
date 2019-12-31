@@ -1,4 +1,18 @@
 {
+  "runOn": [
+    {
+      "minServerVersion": "4.0",
+      "topology": [
+        "replicaset"
+      ]
+    },
+    {
+      "minServerVersion": "4.1.8",
+      "topology": [
+        "sharded"
+      ]
+    }
+  ],
   "database_name": "transaction-tests",
   "collection_name": "test",
   "data": [],
@@ -8,17 +22,16 @@
       "operations": [
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 1
@@ -26,23 +39,20 @@
         },
         {
           "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 2
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 2
@@ -50,9 +60,7 @@
         },
         {
           "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         }
       ],
       "expectations": [
@@ -155,35 +163,28 @@
       "operations": [
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 1
@@ -191,9 +192,7 @@
         },
         {
           "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         }
       ],
       "expectations": [
@@ -252,17 +251,16 @@
       "operations": [
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 1
@@ -270,21 +268,15 @@
         },
         {
           "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         }
       ],
       "expectations": [
@@ -337,7 +329,10 @@
               },
               "startTransaction": null,
               "autocommit": false,
-              "writeConcern": null
+              "writeConcern": {
+                "w": "majority",
+                "wtimeout": 10000
+              }
             },
             "command_name": "commitTransaction",
             "database_name": "admin"
@@ -353,7 +348,10 @@
               },
               "startTransaction": null,
               "autocommit": false,
-              "writeConcern": null
+              "writeConcern": {
+                "w": "majority",
+                "wtimeout": 10000
+              }
             },
             "command_name": "commitTransaction",
             "database_name": "admin"
@@ -375,8 +373,8 @@
       "operations": [
         {
           "name": "startTransaction",
+          "object": "session0",
           "arguments": {
-            "session": "session0",
             "options": {
               "writeConcern": {
                 "w": 10
@@ -386,11 +384,12 @@
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 1
@@ -398,11 +397,12 @@
         },
         {
           "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          },
+          "object": "session0",
           "result": {
-            "errorCodeName": "CannotSatisfyWriteConcern"
+            "errorLabelsOmit": [
+              "TransientTransactionError",
+              "UnknownTransactionCommitResult"
+            ]
           }
         }
       ],
@@ -421,9 +421,7 @@
       "operations": [
         {
           "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          },
+          "object": "session0",
           "result": {
             "errorContains": "no transaction started"
           }
@@ -441,21 +439,15 @@
       "operations": [
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "abortTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          },
+          "object": "session0",
           "result": {
             "errorContains": "Cannot call commitTransaction after calling abortTransaction"
           }
@@ -473,17 +465,16 @@
       "operations": [
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 1
@@ -491,15 +482,11 @@
         },
         {
           "name": "abortTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          },
+          "object": "session0",
           "result": {
             "errorContains": "Cannot call commitTransaction after calling abortTransaction"
           }
@@ -545,10 +532,392 @@
             "database_name": "admin"
           }
         }
+      ]
+    },
+    {
+      "description": "multiple commits after empty transaction",
+      "operations": [
+        {
+          "name": "startTransaction",
+          "object": "session0"
+        },
+        {
+          "name": "insertOne",
+          "object": "collection",
+          "arguments": {
+            "session": "session0",
+            "document": {
+              "_id": 1
+            }
+          },
+          "result": {
+            "insertedId": 1
+          }
+        },
+        {
+          "name": "abortTransaction",
+          "object": "session0"
+        },
+        {
+          "name": "startTransaction",
+          "object": "session0"
+        },
+        {
+          "name": "commitTransaction",
+          "object": "session0"
+        },
+        {
+          "name": "commitTransaction",
+          "object": "session0"
+        },
+        {
+          "name": "startTransaction",
+          "object": "session0"
+        },
+        {
+          "name": "insertOne",
+          "object": "collection",
+          "arguments": {
+            "session": "session0",
+            "document": {
+              "_id": 1
+            }
+          },
+          "result": {
+            "insertedId": 1
+          }
+        },
+        {
+          "name": "abortTransaction",
+          "object": "session0"
+        }
+      ],
+      "expectations": [
+        {
+          "command_started_event": {
+            "command": {
+              "insert": "test",
+              "documents": [
+                {
+                  "_id": 1
+                }
+              ],
+              "ordered": true,
+              "readConcern": null,
+              "lsid": "session0",
+              "txnNumber": {
+                "$numberLong": "1"
+              },
+              "startTransaction": true,
+              "autocommit": false,
+              "writeConcern": null
+            },
+            "command_name": "insert",
+            "database_name": "transaction-tests"
+          }
+        },
+        {
+          "command_started_event": {
+            "command": {
+              "abortTransaction": 1,
+              "lsid": "session0",
+              "txnNumber": {
+                "$numberLong": "1"
+              },
+              "startTransaction": null,
+              "autocommit": false,
+              "writeConcern": null
+            },
+            "command_name": "abortTransaction",
+            "database_name": "admin"
+          }
+        },
+        {
+          "command_started_event": {
+            "command": {
+              "insert": "test",
+              "documents": [
+                {
+                  "_id": 1
+                }
+              ],
+              "ordered": true,
+              "readConcern": {
+                "afterClusterTime": 42
+              },
+              "lsid": "session0",
+              "txnNumber": {
+                "$numberLong": "3"
+              },
+              "startTransaction": true,
+              "autocommit": false,
+              "writeConcern": null
+            },
+            "command_name": "insert",
+            "database_name": "transaction-tests"
+          }
+        },
+        {
+          "command_started_event": {
+            "command": {
+              "abortTransaction": 1,
+              "lsid": "session0",
+              "txnNumber": {
+                "$numberLong": "3"
+              },
+              "startTransaction": null,
+              "autocommit": false,
+              "writeConcern": null
+            },
+            "command_name": "abortTransaction",
+            "database_name": "admin"
+          }
+        }
       ],
       "outcome": {
         "collection": {
           "data": []
+        }
+      }
+    },
+    {
+      "description": "reset session state commit",
+      "clientOptions": {
+        "retryWrites": false
+      },
+      "operations": [
+        {
+          "name": "startTransaction",
+          "object": "session0"
+        },
+        {
+          "name": "insertOne",
+          "object": "collection",
+          "arguments": {
+            "session": "session0",
+            "document": {
+              "_id": 1
+            }
+          },
+          "result": {
+            "insertedId": 1
+          }
+        },
+        {
+          "name": "commitTransaction",
+          "object": "session0"
+        },
+        {
+          "name": "insertOne",
+          "object": "collection",
+          "arguments": {
+            "session": "session0",
+            "document": {
+              "_id": 2
+            }
+          },
+          "result": {
+            "insertedId": 2
+          }
+        },
+        {
+          "name": "commitTransaction",
+          "object": "session0",
+          "result": {
+            "errorContains": "no transaction started"
+          }
+        }
+      ],
+      "expectations": [
+        {
+          "command_started_event": {
+            "command": {
+              "insert": "test",
+              "documents": [
+                {
+                  "_id": 1
+                }
+              ],
+              "ordered": true,
+              "readConcern": null,
+              "lsid": "session0",
+              "txnNumber": {
+                "$numberLong": "1"
+              },
+              "startTransaction": true,
+              "autocommit": false,
+              "writeConcern": null
+            },
+            "command_name": "insert",
+            "database_name": "transaction-tests"
+          }
+        },
+        {
+          "command_started_event": {
+            "command": {
+              "commitTransaction": 1,
+              "lsid": "session0",
+              "txnNumber": {
+                "$numberLong": "1"
+              },
+              "startTransaction": null,
+              "autocommit": false,
+              "writeConcern": null
+            },
+            "command_name": "commitTransaction",
+            "database_name": "admin"
+          }
+        },
+        {
+          "command_started_event": {
+            "command": {
+              "insert": "test",
+              "documents": [
+                {
+                  "_id": 2
+                }
+              ],
+              "ordered": true,
+              "readConcern": null,
+              "lsid": "session0",
+              "txnNumber": null,
+              "startTransaction": null,
+              "autocommit": null
+            },
+            "command_name": "insert",
+            "database_name": "transaction-tests"
+          }
+        }
+      ],
+      "outcome": {
+        "collection": {
+          "data": [
+            {
+              "_id": 1
+            },
+            {
+              "_id": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "description": "reset session state abort",
+      "clientOptions": {
+        "retryWrites": false
+      },
+      "operations": [
+        {
+          "name": "startTransaction",
+          "object": "session0"
+        },
+        {
+          "name": "insertOne",
+          "object": "collection",
+          "arguments": {
+            "session": "session0",
+            "document": {
+              "_id": 1
+            }
+          },
+          "result": {
+            "insertedId": 1
+          }
+        },
+        {
+          "name": "abortTransaction",
+          "object": "session0"
+        },
+        {
+          "name": "insertOne",
+          "object": "collection",
+          "arguments": {
+            "session": "session0",
+            "document": {
+              "_id": 2
+            }
+          },
+          "result": {
+            "insertedId": 2
+          }
+        },
+        {
+          "name": "abortTransaction",
+          "object": "session0",
+          "result": {
+            "errorContains": "no transaction started"
+          }
+        }
+      ],
+      "expectations": [
+        {
+          "command_started_event": {
+            "command": {
+              "insert": "test",
+              "documents": [
+                {
+                  "_id": 1
+                }
+              ],
+              "ordered": true,
+              "readConcern": null,
+              "lsid": "session0",
+              "txnNumber": {
+                "$numberLong": "1"
+              },
+              "startTransaction": true,
+              "autocommit": false,
+              "writeConcern": null
+            },
+            "command_name": "insert",
+            "database_name": "transaction-tests"
+          }
+        },
+        {
+          "command_started_event": {
+            "command": {
+              "abortTransaction": 1,
+              "lsid": "session0",
+              "txnNumber": {
+                "$numberLong": "1"
+              },
+              "startTransaction": null,
+              "autocommit": false,
+              "writeConcern": null
+            },
+            "command_name": "abortTransaction",
+            "database_name": "admin"
+          }
+        },
+        {
+          "command_started_event": {
+            "command": {
+              "insert": "test",
+              "documents": [
+                {
+                  "_id": 2
+                }
+              ],
+              "ordered": true,
+              "readConcern": null,
+              "lsid": "session0",
+              "txnNumber": null,
+              "startTransaction": null,
+              "autocommit": null
+            },
+            "command_name": "insert",
+            "database_name": "transaction-tests"
+          }
+        }
+      ],
+      "outcome": {
+        "collection": {
+          "data": [
+            {
+              "_id": 2
+            }
+          ]
         }
       }
     }

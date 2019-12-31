@@ -17,7 +17,7 @@
 package com.mongodb.management;
 
 /**
- * <p>A standard MXBean interface for a Mongo connection pool, for use on Java 6 and above virtual machines.</p>
+ * <p>A standard MXBean interface for a Mongo connection pool.</p>
  *
  * <p>This interface is NOT part of the public API.  Be prepared for non-binary compatible changes in minor releases.</p>
  *
@@ -66,11 +66,4 @@ public interface ConnectionPoolStatisticsMBean {
      * @return count of in-use connections
      */
     int getCheckedOutCount();
-
-    /**
-     * Gets the size of the wait queue for a connection from this pool. *
-     *
-     * @return size of the wait queue
-     */
-    int getWaitQueueSize();
 }

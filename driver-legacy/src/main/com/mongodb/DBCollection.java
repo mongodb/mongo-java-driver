@@ -17,10 +17,6 @@
 package com.mongodb;
 
 import com.mongodb.annotations.ThreadSafe;
-import com.mongodb.bulk.DeleteRequest;
-import com.mongodb.bulk.IndexRequest;
-import com.mongodb.bulk.InsertRequest;
-import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.client.internal.MongoBatchCursorAdapter;
 import com.mongodb.client.internal.MongoIterableImpl;
 import com.mongodb.client.internal.OperationExecutor;
@@ -31,32 +27,36 @@ import com.mongodb.client.model.DBCollectionFindOptions;
 import com.mongodb.client.model.DBCollectionRemoveOptions;
 import com.mongodb.client.model.DBCollectionUpdateOptions;
 import com.mongodb.connection.BufferProvider;
+import com.mongodb.internal.bulk.DeleteRequest;
+import com.mongodb.internal.bulk.IndexRequest;
+import com.mongodb.internal.bulk.InsertRequest;
+import com.mongodb.internal.bulk.UpdateRequest;
+import com.mongodb.internal.bulk.WriteRequest.Type;
+import com.mongodb.internal.operation.AggregateOperation;
+import com.mongodb.internal.operation.AggregateToCollectionOperation;
+import com.mongodb.internal.operation.BaseWriteOperation;
+import com.mongodb.internal.operation.BatchCursor;
+import com.mongodb.internal.operation.CountOperation;
+import com.mongodb.internal.operation.CreateIndexesOperation;
+import com.mongodb.internal.operation.DeleteOperation;
+import com.mongodb.internal.operation.DistinctOperation;
+import com.mongodb.internal.operation.DropCollectionOperation;
+import com.mongodb.internal.operation.DropIndexOperation;
+import com.mongodb.internal.operation.FindAndDeleteOperation;
+import com.mongodb.internal.operation.FindAndReplaceOperation;
+import com.mongodb.internal.operation.FindAndUpdateOperation;
+import com.mongodb.internal.operation.InsertOperation;
+import com.mongodb.internal.operation.ListIndexesOperation;
+import com.mongodb.internal.operation.MapReduceBatchCursor;
+import com.mongodb.internal.operation.MapReduceStatistics;
+import com.mongodb.internal.operation.MapReduceToCollectionOperation;
+import com.mongodb.internal.operation.MapReduceWithInlineResultsOperation;
+import com.mongodb.internal.operation.MixedBulkWriteOperation;
+import com.mongodb.internal.operation.ReadOperation;
+import com.mongodb.internal.operation.RenameCollectionOperation;
+import com.mongodb.internal.operation.UpdateOperation;
+import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.lang.Nullable;
-import com.mongodb.operation.AggregateOperation;
-import com.mongodb.operation.AggregateToCollectionOperation;
-import com.mongodb.operation.BaseWriteOperation;
-import com.mongodb.operation.BatchCursor;
-import com.mongodb.operation.CountOperation;
-import com.mongodb.operation.CreateIndexesOperation;
-import com.mongodb.operation.DeleteOperation;
-import com.mongodb.operation.DistinctOperation;
-import com.mongodb.operation.DropCollectionOperation;
-import com.mongodb.operation.DropIndexOperation;
-import com.mongodb.operation.FindAndDeleteOperation;
-import com.mongodb.operation.FindAndReplaceOperation;
-import com.mongodb.operation.FindAndUpdateOperation;
-import com.mongodb.operation.InsertOperation;
-import com.mongodb.operation.ListIndexesOperation;
-import com.mongodb.operation.MapReduceBatchCursor;
-import com.mongodb.operation.MapReduceStatistics;
-import com.mongodb.operation.MapReduceToCollectionOperation;
-import com.mongodb.operation.MapReduceWithInlineResultsOperation;
-import com.mongodb.operation.MixedBulkWriteOperation;
-import com.mongodb.operation.ParallelCollectionScanOperation;
-import com.mongodb.operation.ReadOperation;
-import com.mongodb.operation.RenameCollectionOperation;
-import com.mongodb.operation.UpdateOperation;
-import com.mongodb.operation.WriteOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
 import org.bson.BsonDocumentWrapper;
@@ -83,6 +83,7 @@ import static com.mongodb.MongoNamespace.checkCollectionNameValidity;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.primaryPreferred;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -117,7 +118,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * System.out.println(myDoc); }
  * </pre>
  *
- * See {@link Mongo#getDB(String)} for further information about the effective deprecation of this class.
+ * See {@link MongoClient#getDB(String)} for further information about the effective deprecation of this class.
  *
  * @mongodb.driver.manual reference/glossary/#term-collection Collection
  */
@@ -128,12 +129,11 @@ public class DBCollection {
     private final String name;
     private final DB database;
     private final OperationExecutor executor;
-    private final Bytes.OptionHolder optionHolder;
     private final boolean retryWrites;
+    private final boolean retryReads;
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
     private volatile ReadConcern readConcern;
-    private List<DBObject> hintFields;
     private DBEncoderFactory encoderFactory;
     private DBDecoderFactory decoderFactory;
     private DBCollectionObjectFactory objectFactory;
@@ -150,10 +150,10 @@ public class DBCollection {
         this.name = name;
         this.database = database;
         this.executor = executor;
-        this.optionHolder = new Bytes.OptionHolder(database.getOptionHolder());
         this.objectFactory = new DBCollectionObjectFactory();
         this.objectCodec = new CompoundDBObjectCodec(getDefaultDBObjectCodec());
-        this.retryWrites = database.getMongo().getMongoClientOptions().getRetryWrites();
+        this.retryWrites = database.getMongoClient().getMongoClientOptions().getRetryWrites();
+        this.retryReads = database.getMongoClient().getMongoClientOptions().getRetryReads();
     }
 
     /**
@@ -166,14 +166,6 @@ public class DBCollection {
         this(name, database, database.getExecutor());
     }
 
-    private static BasicDBList toDBList(final BatchCursor<DBObject> source) {
-        BasicDBList dbList = new BasicDBList();
-        while (source.hasNext()) {
-            dbList.addAll(source.next());
-        }
-        return dbList;
-    }
-
     /**
      * Insert a document into a collection. If the collection does not exists on the server, then it will be created. If the new document
      * does not contain an '_id' field, it will be added.
@@ -183,6 +175,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
@@ -198,6 +191,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
@@ -212,9 +206,8 @@ public class DBCollection {
      * @param documents    {@code DBObject}'s to be inserted
      * @param writeConcern {@code WriteConcern} to be used during operation
      * @return the result of the operation
-     * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
-     * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
-     * @throws MongoException if the operation failed for some other reason
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
     public WriteResult insert(final WriteConcern writeConcern, final DBObject... documents) {
@@ -230,6 +223,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
@@ -245,6 +239,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
@@ -261,6 +256,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
@@ -278,6 +274,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
@@ -295,6 +292,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
@@ -316,6 +314,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
@@ -380,6 +379,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert or update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/modify-documents/#modify-a-document-with-save-method Save
      */
@@ -403,6 +403,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert or update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/modify-documents/#modify-a-document-with-save-method Save
      */
@@ -420,7 +421,7 @@ public class DBCollection {
         DBObject filter = new BasicDBObject(ID_FIELD_NAME, id);
 
         UpdateRequest replaceRequest = new UpdateRequest(wrap(filter), wrap(obj, objectCodec),
-                                                         com.mongodb.bulk.WriteRequest.Type.REPLACE).upsert(true);
+                                                         Type.REPLACE).upsert(true);
 
         return executeWriteOperation(new UpdateOperation(getNamespace(), false, writeConcern, retryWrites,
                 singletonList(replaceRequest)));
@@ -439,6 +440,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/modify-documents/ Modify Documents
      */
@@ -461,6 +463,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/modify-documents/ Modify Documents
      */
@@ -483,6 +486,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/modify-documents/ Modify
      * @since 2.14
@@ -505,6 +509,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/modify-documents/ Modify Documents
      */
@@ -520,6 +525,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/modify-documents/ Modify Documents
      */
@@ -535,6 +541,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/modify-documents/ Modify Documents
      */
@@ -551,6 +558,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/modify-documents/ Modify
      * @since 3.4
@@ -560,9 +568,8 @@ public class DBCollection {
         notNull("update", update);
         notNull("options", options);
         WriteConcern writeConcern = options.getWriteConcern() != null ? options.getWriteConcern() : getWriteConcern();
-        com.mongodb.bulk.WriteRequest.Type updateType = !update.keySet().isEmpty() && update.keySet().iterator().next().startsWith("$")
-                                                                ? com.mongodb.bulk.WriteRequest.Type.UPDATE
-                                                                : com.mongodb.bulk.WriteRequest.Type.REPLACE;
+        Type updateType = (!update.keySet().isEmpty() && update.keySet().iterator().next().startsWith("$"))
+                ? UPDATE : Type.REPLACE;
         UpdateRequest updateRequest = new UpdateRequest(wrap(query), wrap(update, options.getEncoder()), updateType)
                                               .upsert(options.isUpsert()).multi(options.isMulti())
                                               .collation(options.getCollation())
@@ -578,6 +585,7 @@ public class DBCollection {
      *              in the collection.
      * @return the result of the operation
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the delete command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/remove-documents/ Remove Documents
      */
@@ -593,6 +601,7 @@ public class DBCollection {
      * @param writeConcern {@code WriteConcern} to be used during operation
      * @return the result of the operation
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the delete command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/remove-documents/ Remove Documents
      */
@@ -609,6 +618,7 @@ public class DBCollection {
      * @param encoder      {@code DBEncoder} to be used
      * @return the result of the operation
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the delete command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/remove-documents/ Remove Documents
      */
@@ -624,6 +634,7 @@ public class DBCollection {
      * @param options the options to apply to the delete operation
      * @return the result of the operation
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the delete command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/remove-documents/ Remove Documents
      * @since 3.4
@@ -635,45 +646,6 @@ public class DBCollection {
         DeleteRequest deleteRequest = new DeleteRequest(wrap(query, options.getEncoder())).collation(options.getCollation());
         return executeWriteOperation(new DeleteOperation(getNamespace(), false, writeConcern, retryWrites,
                 singletonList(deleteRequest)));
-    }
-
-    /**
-     * Select documents in collection and get a cursor to the selected documents.
-     *
-     * @param query      the selection criteria using query operators. Omit the query parameter or pass an empty document to return all
-     *                   documents in the collection.
-     * @param projection specifies which fields MongoDB will return from the documents in the result set.
-     * @param numToSkip  number of documents to skip
-     * @param batchSize  see {@link DBCursor#batchSize(int)} for more information
-     * @param options    query options to be used
-     * @return A cursor to the documents that match the query criteria
-     * @mongodb.driver.manual tutorial/query-documents/ Querying
-     * @deprecated use {@link com.mongodb.DBCursor#skip(int)}, {@link com.mongodb.DBCursor#batchSize(int)} and {@link
-     * com.mongodb.DBCursor#setOptions(int)} on the {@code DBCursor} returned from {@link com.mongodb.DBCollection#find(DBObject,
-     * DBObject)}
-     */
-    @Deprecated
-    public DBCursor find(final DBObject query, final DBObject projection, final int numToSkip, final int batchSize,
-                         final int options) {
-        return new DBCursor(this, query, projection, getReadPreference()).batchSize(batchSize).skip(numToSkip).setOptions(options);
-    }
-
-    /**
-     * Select documents in collection and get a cursor to the selected documents.
-     *
-     * @param query      the selection criteria using query operators. Omit the query parameter or pass an empty document to return all
-     *                   documents in the collection.
-     * @param projection specifies which fields MongoDB will return from the documents in the result set.
-     * @param numToSkip  number of documents to skip
-     * @param batchSize  see {@link DBCursor#batchSize(int)} for more information
-     * @return A cursor to the documents that match the query criteria
-     * @mongodb.driver.manual tutorial/query-documents/ Querying
-     * @deprecated use {@link com.mongodb.DBCursor#skip(int)} and {@link com.mongodb.DBCursor#batchSize(int)} on the {@code DBCursor}
-     * returned from {@link com.mongodb.DBCollection#find(DBObject, DBObject)}
-     */
-    @Deprecated
-    public DBCursor find(final DBObject query, final DBObject projection, final int numToSkip, final int batchSize) {
-        return new DBCursor(this, query, projection, getReadPreference()).batchSize(batchSize).skip(numToSkip);
     }
 
     /**
@@ -857,7 +829,7 @@ public class DBCollection {
     }
 
     /**
-     * Same as {@link #getCount(DBObject)}
+     * Get the count of documents in collection that would match a criteria.
      *
      * @param query specifies the selection criteria
      * @return the number of documents that matches selection criteria
@@ -878,7 +850,7 @@ public class DBCollection {
      * @mongodb.driver.manual reference/command/count/ Count
      */
     public long count(@Nullable final DBObject query, final ReadPreference readPreference) {
-        return getCount(query, null, readPreference);
+        return getCount(query, new DBCollectionCountOptions().readPreference(readPreference));
     }
 
     /**
@@ -907,18 +879,6 @@ public class DBCollection {
     }
 
     /**
-     * Get the count of documents in collection.
-     *
-     * @param readPreference {@link ReadPreference} to be used for this operation
-     * @return the number of documents in collection
-     * @throws MongoException if the operation failed
-     * @mongodb.driver.manual reference/command/count/ Count
-     */
-    public long getCount(final ReadPreference readPreference) {
-        return getCount(new BasicDBObject(), null, readPreference);
-    }
-
-    /**
      * Get the count of documents in collection that would match a criteria.
      *
      * @param query specifies the selection criteria
@@ -928,65 +888,6 @@ public class DBCollection {
      */
     public long getCount(@Nullable final DBObject query) {
         return getCount(query, new DBCollectionCountOptions());
-    }
-
-    /**
-     * Get the count of documents in collection that would match a criteria.
-     *
-     * @param query      specifies the selection criteria
-     * @param projection this is ignored
-     * @return the number of documents that matches selection criteria
-     * @throws MongoException if the operation failed
-     * @mongodb.driver.manual reference/command/count/ Count
-     */
-    public long getCount(@Nullable final DBObject query, final DBObject projection) {
-        return getCount(query, projection, 0, 0);
-    }
-
-    /**
-     * Get the count of documents in collection that would match a criteria.
-     *
-     * @param query          specifies the selection criteria
-     * @param projection     this is ignored
-     * @param readPreference {@link ReadPreference} to be used for this operation
-     * @return the number of documents that matches selection criteria
-     * @throws MongoException if the operation failed
-     * @mongodb.driver.manual reference/command/count/ Count
-     */
-    public long getCount(@Nullable final DBObject query, @Nullable final DBObject projection, final ReadPreference readPreference) {
-        return getCount(query, projection, 0, 0, readPreference);
-    }
-
-    /**
-     * Get the count of documents in collection that would match a criteria.
-     *
-     * @param query      specifies the selection criteria
-     * @param projection this is ignored
-     * @param limit      limit the count to this value
-     * @param skip       number of documents to skip
-     * @return the number of documents that matches selection criteria
-     * @throws MongoException if the operation failed
-     * @mongodb.driver.manual reference/command/count/ Count
-     */
-    public long getCount(@Nullable final DBObject query, @Nullable final DBObject projection, final long limit, final long skip) {
-        return getCount(query, projection, limit, skip, getReadPreference());
-    }
-
-    /**
-     * Get the count of documents in collection that would match a criteria.
-     *
-     * @param query          specifies the selection criteria
-     * @param projection     this is ignored
-     * @param limit          limit the count to this value
-     * @param skip           number of documents to skip
-     * @param readPreference {@link ReadPreference} to be used for this operation
-     * @return the number of documents that matches selection criteria
-     * @throws MongoException if the operation failed
-     * @mongodb.driver.manual reference/command/count/ Count
-     */
-    public long getCount(@Nullable final DBObject query, @Nullable final DBObject projection, final long limit, final long skip,
-                         final ReadPreference readPreference) {
-        return getCount(query, new DBCollectionCountOptions().limit(limit).skip(skip).readPreference(readPreference));
     }
 
     /**
@@ -1005,7 +906,8 @@ public class DBCollection {
                                        .skip(options.getSkip())
                                        .limit(options.getLimit())
                                        .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                                       .collation(options.getCollation());
+                                       .collation(options.getCollation())
+                                       .retryReads(retryReads);
         if (query != null) {
             operation.filter(wrap(query));
         }
@@ -1054,81 +956,6 @@ public class DBCollection {
         } catch (MongoWriteConcernException e) {
             throw createWriteConcernException(e);
         }
-    }
-
-    /**
-     * Group documents in a collection by the specified key and performs simple aggregation functions such as computing counts and sums.
-     * This is analogous to a {@code SELECT ... GROUP BY} statement in SQL.
-     *
-     * @param key     specifies one or more document fields to group
-     * @param cond    specifies the selection criteria to determine which documents in the collection to process
-     * @param initial initializes the aggregation result document
-     * @param reduce  specifies an $reduce function, that operates on the documents during the grouping operation
-     * @return a document with the grouped records as well as the command meta-data
-     * @mongodb.driver.manual reference/command/group/ Group Command
-     */
-    public DBObject group(final DBObject key, final DBObject cond, final DBObject initial, final String reduce) {
-        return group(key, cond, initial, reduce, null);
-    }
-
-    /**
-     * Group documents in a collection by the specified key and performs simple aggregation functions such as computing counts and sums.
-     * This is analogous to a {@code SELECT ... GROUP BY} statement in SQL.
-     *
-     * @param key      specifies one or more document fields to group
-     * @param cond     specifies the selection criteria to determine which documents in the collection to process
-     * @param initial  initializes the aggregation result document
-     * @param reduce   specifies an $reduce Javascript function, that operates on the documents during the grouping operation
-     * @param finalize specifies a Javascript function that runs each item in the result set before final value will be returned
-     * @return a document with the grouped records as well as the command meta-data
-     * @mongodb.driver.manual reference/command/group/ Group Command
-     */
-    public DBObject group(final DBObject key, final DBObject cond, final DBObject initial, final String reduce,
-                          @Nullable final String finalize) {
-        return group(key, cond, initial, reduce, finalize, getReadPreference());
-    }
-
-    /**
-     * Group documents in a collection by the specified key and performs simple aggregation functions such as computing counts and sums.
-     * This is analogous to a {@code SELECT ... GROUP BY} statement in SQL.
-     *
-     * @param key            specifies one or more document fields to group
-     * @param cond           specifies the selection criteria to determine which documents in the collection to process
-     * @param initial        initializes the aggregation result document
-     * @param reduce         specifies an $reduce Javascript function, that operates on the documents during the grouping operation
-     * @param finalize       specifies a Javascript function that runs each item in the result set before final value will be returned
-     * @param readPreference {@link ReadPreference} to be used for this operation
-     * @return a document with the grouped records as well as the command meta-data
-     * @mongodb.driver.manual reference/command/group/ Group Command
-     */
-    public DBObject group(final DBObject key, final DBObject cond, final DBObject initial, final String reduce,
-                          @Nullable final String finalize, final ReadPreference readPreference) {
-        return group(new GroupCommand(this, key, cond, initial, reduce, finalize), readPreference);
-    }
-
-    /**
-     * Group documents in a collection by the specified key and performs simple aggregation functions such as computing counts and sums.
-     * This is analogous to a {@code SELECT ... GROUP BY} statement in SQL.
-     *
-     * @param cmd the group command
-     * @return a document with the grouped records as well as the command meta-data
-     * @mongodb.driver.manual reference/command/group/ Group Command
-     */
-    public DBObject group(final GroupCommand cmd) {
-        return group(cmd, getReadPreference());
-    }
-
-    /**
-     * Group documents in a collection by the specified key and performs simple aggregation functions such as computing counts and sums.
-     * This is analogous to a {@code SELECT ... GROUP BY} statement in SQL.
-     *
-     * @param cmd            the group command
-     * @param readPreference {@link ReadPreference} to be used for this operation
-     * @return a document with the grouped records as well as the command meta-data
-     * @mongodb.driver.manual reference/command/group/ Group Command
-     */
-    public DBObject group(final GroupCommand cmd, final ReadPreference readPreference) {
-        return toDBList(executor.execute(cmd.toOperation(getNamespace(), getDefaultDBObjectCodec()), readPreference, getReadConcern()));
     }
 
     /**
@@ -1193,12 +1020,14 @@ public class DBCollection {
         notNull("fieldName", fieldName);
         return new MongoIterableImpl<BsonValue>(null, executor,
                                                   options.getReadConcern() != null ? options.getReadConcern() : getReadConcern(),
-                                                  options.getReadPreference() != null ? options.getReadPreference() : getReadPreference()) {
+                                                  options.getReadPreference() != null ? options.getReadPreference() : getReadPreference(),
+                                                  retryReads) {
             @Override
             public ReadOperation<BatchCursor<BsonValue>> asReadOperation() {
                 return new DistinctOperation<BsonValue>(getNamespace(), fieldName, new BsonValueCodec())
                                .filter(wrapAllowNull(options.getFilter()))
-                               .collation(options.getCollation());
+                               .collation(options.getCollation())
+                               .retryReads(retryReads);
             }
         }.map(new Function<BsonValue, Object>() {
             @Override
@@ -1360,65 +1189,6 @@ public class DBCollection {
     /**
      * Method implements aggregation framework.
      *
-     * @param firstOp       requisite first operation to be performed in the aggregation pipeline
-     * @param additionalOps additional operations to be performed in the aggregation pipeline
-     * @return the aggregation operation's result set
-     * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
-     * @mongodb.server.release 2.2
-     * @deprecated Use {@link #aggregate(List, AggregationOptions)} instead
-     */
-    @Deprecated
-    @SuppressWarnings("unchecked")
-    public AggregationOutput aggregate(final DBObject firstOp, final DBObject... additionalOps) {
-        List<DBObject> pipeline = new ArrayList<DBObject>();
-        pipeline.add(firstOp);
-        Collections.addAll(pipeline, additionalOps);
-        return aggregate(pipeline);
-    }
-
-    /**
-     * Method implements aggregation framework.
-     *
-     * @param pipeline operations to be performed in the aggregation pipeline
-     * @return the aggregation's result set
-     * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
-     * @mongodb.server.release 2.2
-     * @deprecated Use {@link #aggregate(List, AggregationOptions)} instead
-     */
-    @Deprecated
-    public AggregationOutput aggregate(final List<? extends DBObject> pipeline) {
-        return aggregate(pipeline, getReadPreference());
-    }
-
-    /**
-     * Method implements aggregation framework.
-     *
-     * @param pipeline       operations to be performed in the aggregation pipeline
-     * @param readPreference the read preference specifying where to run the query
-     * @return the aggregation's result set
-     * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
-     * @mongodb.server.release 2.2
-     * @deprecated Use {@link #aggregate(List, AggregationOptions, ReadPreference)} )} instead
-     */
-    @Deprecated
-    @SuppressWarnings("unchecked")
-    public AggregationOutput aggregate(final List<? extends DBObject> pipeline, final ReadPreference readPreference) {
-        Cursor cursor = aggregate(pipeline, AggregationOptions.builder().build(), readPreference, false);
-
-        if (cursor == null) {
-            return new AggregationOutput(Collections.<DBObject>emptyList());
-        } else {
-            List<DBObject> results = new ArrayList<DBObject>();
-            while (cursor.hasNext()) {
-                results.add(cursor.next());
-            }
-            return new AggregationOutput(results);
-        }
-    }
-
-    /**
-     * Method implements aggregation framework.
-     *
      * @param pipeline operations to be performed in the aggregation pipeline
      * @param options  options to apply to the aggregation
      * @return the aggregation operation's result set
@@ -1441,36 +1211,23 @@ public class DBCollection {
      */
     public Cursor aggregate(final List<? extends DBObject> pipeline, final AggregationOptions options,
                             final ReadPreference readPreference) {
-        Cursor cursor = aggregate(pipeline, options, readPreference, true);
-        if (cursor == null) {
-            throw new MongoInternalException("cursor can not be null in this context");
-        }
-        return cursor;
-    }
-
-    @SuppressWarnings("deprecation")
-    @Nullable
-    private Cursor aggregate(final List<? extends DBObject> pipeline, final AggregationOptions options, final ReadPreference readPreference,
-                             final boolean returnCursorForOutCollection) {
+        Cursor result;
         notNull("options", options);
         List<BsonDocument> stages = preparePipeline(pipeline);
 
         BsonValue outCollection = stages.get(stages.size() - 1).get("$out");
 
         if (outCollection != null) {
-            AggregateToCollectionOperation operation = new AggregateToCollectionOperation(getNamespace(), stages, getWriteConcern())
+            AggregateToCollectionOperation operation = new AggregateToCollectionOperation(getNamespace(), stages,
+                    getReadConcern(), getWriteConcern())
                                                        .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                                                        .allowDiskUse(options.getAllowDiskUse())
                                                        .bypassDocumentValidation(options.getBypassDocumentValidation())
                                                        .collation(options.getCollation());
             try {
                 executor.execute(operation, getReadConcern());
-                if (returnCursorForOutCollection) {
-                    return new DBCursor(database.getCollection(outCollection.asString().getValue()), new BasicDBObject(),
-                            new DBCollectionFindOptions().readPreference(primary()).collation(options.getCollation()));
-                } else {
-                    return null;
-                }
+                result = new DBCursor(database.getCollection(outCollection.asString().getValue()), new BasicDBObject(),
+                        new DBCollectionFindOptions().readPreference(primary()).collation(options.getCollation()));
             } catch (MongoWriteConcernException e) {
                 throw createWriteConcernException(e);
             }
@@ -1479,11 +1236,12 @@ public class DBCollection {
                     .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                     .allowDiskUse(options.getAllowDiskUse())
                     .batchSize(options.getBatchSize())
-                    .useCursor(options.getOutputMode() == com.mongodb.AggregationOptions.OutputMode.CURSOR)
-                    .collation(options.getCollation());
-            BatchCursor<DBObject> cursor = executor.execute(operation, readPreference, getReadConcern());
-            return new MongoCursorAdapter(new MongoBatchCursorAdapter<DBObject>(cursor));
+                    .collation(options.getCollation())
+                    .retryReads(retryReads);
+            BatchCursor<DBObject> cursor1 = executor.execute(operation, readPreference, getReadConcern());
+            result = new MongoCursorAdapter(new MongoBatchCursorAdapter<DBObject>(cursor1));
         }
+        return result;
     }
 
     /**
@@ -1494,14 +1252,14 @@ public class DBCollection {
      * @return the command result.  The explain output may change from release to release, so best to simply log this.
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
      * @mongodb.driver.manual reference/operator/meta/explain/ Explain query
-     * @mongodb.server.release 2.6
      */
     public CommandResult explainAggregate(final List<? extends DBObject> pipeline, final AggregationOptions options) {
         AggregateOperation<BsonDocument> operation = new AggregateOperation<BsonDocument>(getNamespace(), preparePipeline(pipeline),
                                                                                           new BsonDocumentCodec())
                                                          .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                                                          .allowDiskUse(options.getAllowDiskUse())
-                                                         .collation(options.getCollation());
+                                                         .collation(options.getCollation())
+                                                         .retryReads(retryReads);
         return new CommandResult(executor.execute(operation.asExplainableOperation(ExplainVerbosity.QUERY_PLANNER), primaryPreferred(),
                 getReadConcern()));
     }
@@ -1514,35 +1272,6 @@ public class DBCollection {
         }
 
         return stages;
-    }
-
-    /**
-     * <p>Return a list of cursors over the collection that can be used to scan it in parallel.</p>
-     *
-     * <p>Note: As of MongoDB 2.6, this method will work against a mongod, but not a mongos. </p>
-     *
-     * @param options the parallel scan options
-     * @return a list of cursors, whose size may be less than the number requested
-     * @mongodb.driver.manual reference/command/parallelCollectionScan/ Parallel Collection Scan
-     * @mongodb.server.release 2.6
-     * @since 2.12
-     */
-    public List<Cursor> parallelScan(final ParallelScanOptions options) {
-        List<Cursor> cursors = new ArrayList<Cursor>();
-        ParallelCollectionScanOperation<DBObject> operation = new ParallelCollectionScanOperation<DBObject>(getNamespace(),
-                                                                                                            options.getNumCursors(),
-                                                                                                            objectCodec)
-                                                                  .batchSize(options.getBatchSize());
-        ReadPreference readPreferenceFromOptions = options.getReadPreference();
-        List<BatchCursor<DBObject>> mongoCursors = executor.execute(operation,
-                                                                    readPreferenceFromOptions != null ? readPreferenceFromOptions
-                                                                                                        : getReadPreference(),
-                getReadConcern());
-
-        for (BatchCursor<DBObject> mongoCursor : mongoCursors) {
-            cursors.add(new MongoCursorAdapter(new MongoBatchCursorAdapter<DBObject>(mongoCursor)));
-        }
-        return cursors;
     }
 
     /**
@@ -1653,27 +1382,6 @@ public class DBCollection {
     }
 
     /**
-     * Get hint fields for this collection (used to optimize queries).
-     *
-     * @return a list of {@code DBObject} to be used as hints.
-     * @mongodb.driver.manual reference/operator/meta/hint/ $hint
-     */
-    @Nullable
-    public List<DBObject> getHintFields() {
-        return hintFields;
-    }
-
-    /**
-     * Override MongoDB's default index selection and query optimization process.
-     *
-     * @param indexes list of indexes to "hint" or force MongoDB to use when performing the query.
-     * @mongodb.driver.manual reference/operator/meta/hint/ $hint
-     */
-    public void setHintFields(final List<? extends DBObject> indexes) {
-        this.hintFields = new ArrayList<DBObject>(indexes);
-    }
-
-    /**
      * Atomically modify and return a single document. By default, the returned document does not include the modifications made on the
      * update.
      *
@@ -1682,6 +1390,7 @@ public class DBCollection {
      * @param update the modifications to apply
      * @return pre-modification document
      * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      */
@@ -1698,6 +1407,7 @@ public class DBCollection {
      * @param update the modifications to apply
      * @return the document as it was before the modifications
      * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      */
@@ -1712,6 +1422,7 @@ public class DBCollection {
      * @param query specifies the selection criteria for the modification
      * @return the document as it was before the modifications
      * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      */
@@ -1734,6 +1445,7 @@ public class DBCollection {
      * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
      * after the changes were made
      * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      */
@@ -1759,6 +1471,7 @@ public class DBCollection {
      * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
      * after the changes were made
      * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @since 2.14
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
@@ -1781,12 +1494,12 @@ public class DBCollection {
      * @param returnNew   when true, returns the modified document rather than the original
      * @param update      the modifications to apply
      * @param upsert      when true, operation creates a new document if the query returns no documents
-     * @param maxTime     the maximum time that the server will allow this operation to execute before killing it. A non-zero value requires
-     *                    a server version &gt;= 2.6
+     * @param maxTime     the maximum time that the server will allow this operation to execute before killing it.
      * @param maxTimeUnit the unit that maxTime is specified in
      * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
      * after the changes were made
      * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      * @since 2.12.0
@@ -1811,13 +1524,13 @@ public class DBCollection {
      * @param returnNew   when true, returns the modified document rather than the original
      * @param update      performs an update of the selected document
      * @param upsert      when true, operation creates a new document if the query returns no documents
-     * @param maxTime     the maximum time that the server will allow this operation to execute before killing it. A non-zero value requires
-     *                    a server version &gt;= 2.6
+     * @param maxTime     the maximum time that the server will allow this operation to execute before killing it
      * @param maxTimeUnit the unit that maxTime is specified in
      * @param writeConcern the write concern to apply to this operation
      * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
      * after the changes were made
      * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      * @since 2.14.0
@@ -1851,12 +1564,12 @@ public class DBCollection {
      * @param update      performs an update of the selected document
      * @param upsert      when true, operation creates a new document if the query returns no documents
      * @param bypassDocumentValidation whether to bypass document validation.
-     * @param maxTime     the maximum time that the server will allow this operation to execute before killing it. A non-zero value requires
-     *                    a server version &gt;= 2.6
+     * @param maxTime     the maximum time that the server will allow this operation to execute before killing it
      * @param maxTimeUnit the unit that maxTime is specified in
      * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
      * after the changes were made
      * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      * @since 2.14.0
@@ -1883,13 +1596,13 @@ public class DBCollection {
      * @param update      performs an update of the selected document
      * @param upsert      when true, operation creates a new document if the query returns no documents
      * @param bypassDocumentValidation whether to bypass document validation.
-     * @param maxTime     the maximum time that the server will allow this operation to execute before killing it. A non-zero value requires
-     *                    a server version &gt;= 2.6
+     * @param maxTime     the maximum time that the server will allow this operation to execute before killing it
      * @param maxTimeUnit the unit that maxTime is specified in
      * @param writeConcern the write concern to apply to this operation
      * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
      * after the changes were made
      * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      * @since 2.14.0
@@ -1921,6 +1634,7 @@ public class DBCollection {
      * @return the document as it was before the modifications, unless {@code oprtions.returnNew} is true, in which case it returns the
      * document after the changes were made
      * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      * @since 3.4
@@ -2062,57 +1776,9 @@ public class DBCollection {
     }
 
     /**
-     * Makes this query ok to run on a slave node
-     *
-     * @deprecated Replaced with {@link ReadPreference#secondaryPreferred()}
-     */
-    @Deprecated
-    public void slaveOk() {
-        addOption(Bytes.QUERYOPTION_SLAVEOK);
-    }
-
-    /**
-     * Adds the given flag to the default query options.
-     *
-     * @param option value to be added
-     * @mongodb.driver.manual reference/method/cursor.addOption/#flags Query Flags
-     */
-    public void addOption(final int option) {
-        optionHolder.add(option);
-    }
-
-    /**
-     * Resets the default query options
-     *
-     * @mongodb.driver.manual reference/method/cursor.addOption/#flags Query Flags
-     */
-    public void resetOptions() {
-        optionHolder.reset();
-    }
-
-    /**
-     * Gets the default query options
-     *
-     * @return bit vector of query options
-     * @mongodb.driver.manual reference/method/cursor.addOption/#flags Query Flags
-     */
-    public int getOptions() {
-        return optionHolder.get();
-    }
-
-    /**
-     * Sets the default query options, overwriting previous value.
-     *
-     * @param options bit vector of query options
-     * @mongodb.driver.manual reference/method/cursor.addOption/#flags Query Flags
-     */
-    public void setOptions(final int options) {
-        optionHolder.set(options);
-    }
-
-    /**
      * Drops (deletes) this collection from the database. Use with care.
      *
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/drop/ Drop Command
      */
@@ -2125,7 +1791,7 @@ public class DBCollection {
     }
 
     /**
-     * Get the decoder factory for this collection.  A null return value means that the default from MongoOptions is being used.
+     * Get the decoder factory for this collection.  A null return value means that the default from MongoClientOptions is being used.
      *
      * @return the factory
      */
@@ -2134,7 +1800,7 @@ public class DBCollection {
     }
 
     /**
-     * Set a custom decoder factory for this collection.  Set to null to use the default from MongoOptions.
+     * Set a custom decoder factory for this collection.  Set to null to use the default from MongoClientOptions.
      *
      * @param factory the factory to set.
      */
@@ -2150,7 +1816,7 @@ public class DBCollection {
     }
 
     /**
-     * Get the encoder factory for this collection.  A null return value means that the default from MongoOptions is being used.
+     * Get the encoder factory for this collection.  A null return value means that the default from MongoClientOptions is being used.
      *
      * @return the factory
      */
@@ -2159,7 +1825,7 @@ public class DBCollection {
     }
 
     /**
-     * Set a custom encoder factory for this collection.  Set to null to use the default from MongoOptions.
+     * Set a custom encoder factory for this collection.  Set to null to use the default from MongoClientOptions.
      *
      * @param factory the factory to set.
      */
@@ -2182,10 +1848,10 @@ public class DBCollection {
      * @mongodb.driver.manual core/indexes/ Indexes
      */
     public List<DBObject> getIndexInfo() {
-        return new MongoIterableImpl<DBObject>(null, executor, ReadConcern.DEFAULT, primary()) {
+        return new MongoIterableImpl<DBObject>(null, executor, ReadConcern.DEFAULT, primary(), retryReads) {
             @Override
             public ReadOperation<BatchCursor<DBObject>> asReadOperation() {
-                return new ListIndexesOperation<DBObject>(getNamespace(), getDefaultDBObjectCodec());
+                return new ListIndexesOperation<DBObject>(getNamespace(), getDefaultDBObjectCodec()).retryReads(retryReads);
             }
         }.into(new ArrayList<DBObject>());
     }
@@ -2290,16 +1956,6 @@ public class DBCollection {
         setObjectFactory(objectFactory.update(aClass, asList(path.split("\\."))));
     }
 
-    /**
-     * Gets the internal class for the given path in the document hierarchy
-     *
-     * @param path the path to map the given Class to
-     * @return the class for a given path in the hierarchy
-     */
-    protected Class<? extends DBObject> getInternalClass(final String path) {
-        return objectFactory.getClassForPath(asList(path.split("\\.")));
-    }
-
     @Override
     public String toString() {
         return "DBCollection{database=" + database + ", name='" + name + '\'' + '}';
@@ -2367,18 +2023,19 @@ public class DBCollection {
         }
     }
 
-    private List<com.mongodb.bulk.WriteRequest> translateWriteRequestsToNew(final List<WriteRequest> writeRequests) {
-        List<com.mongodb.bulk.WriteRequest> retVal = new ArrayList<com.mongodb.bulk.WriteRequest>(writeRequests.size());
+    private List<com.mongodb.internal.bulk.WriteRequest> translateWriteRequestsToNew(final List<WriteRequest> writeRequests) {
+        List<com.mongodb.internal.bulk.WriteRequest> retVal = new ArrayList<com.mongodb.internal.bulk.WriteRequest>(writeRequests.size());
         for (WriteRequest cur : writeRequests) {
             retVal.add(cur.toNew(this));
         }
         return retVal;
     }
 
-    DBObjectCodec getDefaultDBObjectCodec() {
-        return new DBObjectCodec(MongoClient.getDefaultCodecRegistry(),
+    Codec<DBObject> getDefaultDBObjectCodec() {
+        return new DBObjectCodec(getDB().getMongoClient().getCodecRegistry(),
                                  DBObjectCodec.getDefaultBsonTypeClassMap(),
-                                 getObjectFactory());
+                                 getObjectFactory())
+                .withUuidRepresentation(getDB().getMongoClient().getMongoClientOptions().getUuidRepresentation());
     }
 
     private <T> T convertOptionsToType(final DBObject options, final String field, final Class<T> clazz) {

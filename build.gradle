@@ -14,29 +14,24 @@
  * limitations under the License.
  */
 
-import static org.gradle.util.CollectionUtils.single
-
 apply plugin: 'eclipse'
 apply plugin: 'idea'
 
-def configDir = new File(rootDir, 'config')
-ext.jnrUnixsocketVersion = '0.18'
-ext.nettyVersion = '4.1.17.Final'
-ext.snappyVersion = '1.1.4'
-
 buildscript {
     repositories {
-        maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
-        jcenter()
-        mavenCentral()
-        maven { url "https://plugins.gradle.org/m2/" }
         mavenLocal()
+        mavenCentral()
+        jcenter()
+        maven { url "https://plugins.gradle.org/m2/" }
     }
     dependencies {
-        classpath 'org.kordamp.gradle:clirr-gradle-plugin:0.2.2'
-        classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:1.12.+'
-        classpath 'com.bmuschko:gradle-nexus-plugin:2.2'
-        classpath "gradle.plugin.com.github.spotbugs:spotbugs-gradle-plugin:1.6.1"
+        classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:3.0.3'
+        classpath "com.github.spotbugs:spotbugs-gradle-plugin:3.0.0"
+        classpath 'biz.aQute.bnd:biz.aQute.bnd.gradle:4.3.1'
+        
+        // Scala plugins
+        classpath "com.adtran:scala-multiversion-plugin:1.0.35"
+        classpath "com.diffplug.spotless:spotless-plugin-gradle:3.24.2"
     }
 }
 
@@ -44,27 +39,103 @@ buildscript {
 // Common behavior                      //
 //////////////////////////////////////////
 
-configure(subprojects.findAll { it.name != 'util' }) {
-    apply plugin: 'java'
-    apply plugin: 'optional-base'
+ext {
+    configDir = new File(rootDir, 'config')
+    jnrUnixsocketVersion = '0.18'
+    nettyVersion = '4.1.43.Final'
+    snappyVersion = '1.1.4'
+    zstdVersion = '1.3.8-3'
+    mongoCryptVersion = '1.0.0'
+    gitVersion = getGitVersion()
+}
+
+def configDir = ext.configDir
+def coreProjects = subprojects.findAll { !['util'].contains(it.name) }
+def javaProjects = subprojects.findAll { !it.name.contains('scala') }
+def scalaProjects = subprojects.findAll { it.name.contains('scala') }
+def javaMainProjects = javaProjects.findAll { !['util'].contains(it.name) }
+def javaCodeCheckedProjects = javaMainProjects.findAll { !['driver-benchmarks'].contains(it.name) }
+
+configure(coreProjects) {
+    apply plugin: 'idea'
 
     evaluationDependsOn(':util')
-
     group = 'org.mongodb'
-    version = '3.8.0-SNAPSHOT'
-    sourceCompatibility = JavaVersion.VERSION_1_6
-    targetCompatibility = JavaVersion.VERSION_1_6
+    version = '4.0.0-SNAPSHOT'
 
     repositories {
-        mavenCentral()
-        maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
         mavenLocal()
+        google()
+        mavenCentral()
+        jcenter()
     }
+}
+
+configure(javaProjects) {
+    apply plugin: 'java-library'
+
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+
+    sourceSets {
+        main {
+            java.srcDirs = ['src/main']
+        }
+    }
+
+    tasks.withType(GenerateModuleMetadata) {
+        enabled = false
+    }
+}
+
+configure(scalaProjects) {
+    apply plugin: 'scala'
+    apply plugin: 'biz.aQute.bnd.builder'
+    apply plugin: 'idea'
+    apply plugin: "com.adtran.scala-multiversion-plugin"
+    apply plugin: "com.diffplug.gradle.spotless"
+
+    group = 'org.mongodb.scala'
+
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+
+    dependencies {
+        compile ('org.scala-lang:scala-library:%scala-version%')
+        compile ('org.scala-lang:scala-reflect:%scala-version%')
+
+        testCompile('junit:junit:4.12')
+        testCompile('org.scalatest:scalatest_%%:3.0.8')
+        testCompile('org.scalamock:scalamock_%%:4.4.0')
+        testCompile('ch.qos.logback:logback-classic:1.1.3')
+        testCompile('org.reflections:reflections:0.9.10')
+    }
+
+    spotless {
+        scala {
+            scalafmt('2.0.0').configFile("$configDir/scalafmt.conf")
+        }
+    }
+    compileScala.dependsOn('spotlessApply')
+    compileTestScala.dependsOn('spotlessApply')
+
+    tasks.withType(ScalaCompile) {
+        scalaCompileOptions.deprecation = false
+    }
+
+
+    tasks.withType(GenerateModuleMetadata) {
+        enabled = false
+    }
+}
+
+configure(javaMainProjects) {
+    apply plugin: 'biz.aQute.bnd.builder'
+    apply plugin: 'nebula.optional-base'
 
     dependencies {
         compileOnly 'com.google.code.findbugs:jsr305:1.3.9'
         compile 'org.slf4j:slf4j-api:1.7.6', optional
-
         testCompile 'com.google.code.findbugs:jsr305:1.3.9'
     }
 
@@ -73,64 +144,11 @@ configure(subprojects.findAll { it.name != 'util' }) {
         options.encoding = 'ISO-8859-1'
         options.fork = true
         options.debug = true
-        options.compilerArgs = ['-Xlint:all', '-Xlint:-options']
-
-        onlyIf { JavaVersion.current().isJava7Compatible() }
-    }
-
-    project.ext.buildingWith = { propertyName ->
-        project.hasProperty(propertyName) && project.property(propertyName).toBoolean()
-    }
-
-    tasks.withType(Checkstyle) {
-        reports {
-            xml.enabled true
-            html.enabled true
-        }
-    }
-
-    /*
-        For security we allow the signing-related project properties to be passed in as environment variables, which
-        Gradle enables if they are prefixed with "ORG_GRADLE_PROJECT_".  But since environment variables can not contain
-        the '.' character and the signing-related properties contain '.', here we map signing-related project properties with '_'
-        to ones with '.' that are expected by the signing plugin.
-     */
-    gradle.taskGraph.whenReady { taskGraph ->
-        if (taskGraph.allTasks.any { it instanceof Sign }) {
-            if (project.hasProperty("signing_keyId")) {
-                allprojects { ext."signing.keyId" = project.property("signing_keyId") }
-            }
-            if (project.hasProperty("signing_secretKeyRingFile")) {
-                allprojects { ext."signing.secretKeyRingFile" = project.property("signing_secretKeyRingFile") }
-            }
-            if (project.hasProperty("signing_password")) {
-                allprojects { ext."signing.password" = project.property("signing_password") }
-            }
-        }
-    }
-
-    javadoc {
-        exclude "**/com/mongodb/**/internal/**"
-        exclude "**/org/bson/**/internal/**"
-        dependsOn project(':util').compileJava //We need taglets to be compiled
-        options { options -> setJavaDocOptions(options) }
+        options.compilerArgs = ['-Xlint:all']
     }
 }
 
-def getGitVersion() {
-    def outputAsString
-    new ByteArrayOutputStream().withStream { os ->
-        def result = exec {
-            executable 'git'
-            args 'describe', '--tags', '--always', '--dirty'
-            standardOutput = os
-        }
-        outputAsString = os.toString().substring(1).trim()
-    }
-    return outputAsString
-}
-
-configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driver' }) {
+configure(javaCodeCheckedProjects) {
     apply plugin: 'checkstyle'
     apply plugin: "com.github.spotbugs"
     apply plugin: 'jacoco'
@@ -138,7 +156,7 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
     apply plugin: 'codenarc'
 
     dependencies {
-        testCompile 'org.codehaus.groovy:groovy-all:2.4.12'
+        testCompile 'org.codehaus.groovy:groovy-all:2.4.15'
         testCompile 'org.spockframework:spock-core:1.1-groovy-2.4'
         testCompile 'cglib:cglib-nodep:2.2.2'
         testCompile 'org.objenesis:objenesis:1.3'
@@ -148,11 +166,8 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
     }
 
     sourceSets {
-        main {
-            java.srcDirs = ['src/main']
-        }
         test {
-            groovy.srcDirs = ['src/test/functional', 'src/test/unit']
+            groovy.srcDirs = ['src/test/functional', 'src/test/unit', 'src/test/tck']
         }
     }
 
@@ -163,20 +178,34 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
 
         systemProperties(
                 'org.mongodb.test.uri': System.getProperty('org.mongodb.test.uri'),
+                'org.mongodb.test.transaction.uri': System.getProperty('org.mongodb.test.transaction.uri'),
                 'org.mongodb.useSocket': System.getProperty('org.mongodb.useSocket', 'false'),
                 'org.mongodb.disableAsync': System.getProperty('org.mongodb.disableAsync', 'false'),
-                'org.mongodb.async.type': System.getProperty('org.mongodb.async.type', 'nio2'),
+                'org.mongodb.test.async.type': System.getProperty('org.mongodb.test.async.type', 'nio2'),
+                'org.mongodb.test.awsAccessKeyId': System.getProperty('org.mongodb.test.awsAccessKeyId'),
+                'org.mongodb.test.awsSecretAccessKey': System.getProperty('org.mongodb.test.awsSecretAccessKey'),
+                'jna.library.path': System.getProperty('jna.library.path')
         )
 
+        project.ext.buildingWith = { propertyName ->
+            project.hasProperty(propertyName) && project.property(propertyName).toBoolean()
+        }
+
         if (project.buildingWith('ssl.enabled')) {
-            systemProperties(
-                    'javax.net.ssl.keyStoreType': project.property('ssl.keyStoreType'),
-                    'javax.net.ssl.keyStore': project.property('ssl.keyStore'),
-                    'javax.net.ssl.keyStorePassword': project.property('ssl.keyStorePassword'),
-                    'javax.net.ssl.trustStoreType': project.property('ssl.trustStoreType'),
-                    'javax.net.ssl.trustStore': project.property('ssl.trustStore'),
-                    'javax.net.ssl.trustStorePassword': project.property('ssl.trustStorePassword')
-            )
+            if (project.hasProperty('ssl.keyStoreType')) {
+                systemProperties(
+                        'javax.net.ssl.keyStoreType': project.property('ssl.keyStoreType'),
+                        'javax.net.ssl.keyStore': project.property('ssl.keyStore'),
+                        'javax.net.ssl.keyStorePassword': project.property('ssl.keyStorePassword'),
+                )
+            }
+            if (project.hasProperty('ssl.trustStoreType')) {
+                systemProperties(
+                        'javax.net.ssl.trustStoreType': project.property('ssl.trustStoreType'),
+                        'javax.net.ssl.trustStore': project.property('ssl.trustStore'),
+                        'javax.net.ssl.trustStorePassword': project.property('ssl.trustStorePassword')
+                )
+            }
         }
 
         if (project.buildingWith('gssapi.enabled')) {
@@ -190,15 +219,7 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
         }
 
         useJUnit {
-            if (!project.buildingWith('rs.enabled')) {
-                excludeCategories 'category.ReplicaSet'
-            }
-            if (project.buildingWith('quicktest')) {
-                excludeCategories 'category.SlowUnit'
-            }
-            if (project.buildingWith('travistest')) {
-                excludeCategories 'category.SlowUnit', 'category.Slow'
-            }
+            excludeCategories 'category.Slow'
         }
 
         jacoco { enabled = false }
@@ -206,9 +227,9 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
         testLogging { exceptionFormat = 'full' }
     }
 
-    task testSlowUnit(type: Test) {
+    task testSlowOnly(type: Test) {
         useJUnit {
-            includeCategories 'category.SlowUnit'
+            includeCategories 'category.Slow'
         }
     }
 
@@ -221,6 +242,12 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
     task testCoverage(dependsOn: test)
 
     /* Code quality */
+    tasks.withType(Checkstyle) {
+        reports {
+            xml.enabled true
+            html.enabled true
+        }
+    }
 
     checkstyle {
         toolVersion = "7.4"
@@ -231,7 +258,7 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
     spotbugs {
         excludeFilter = new File(configDir, 'findbugs-exclude.xml')
         sourceSets = [sourceSets.main]
-        toolVersion = '3.1.3'
+        toolVersion = '3.1.7'
     }
 
     codenarc {
@@ -260,71 +287,32 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
     }
 }
 
-task docs(type: Javadoc) {
-    destinationDir = new File(projectDir, 'build/docs')
-    options { options -> setJavaDocOptions(options) }
-    subprojects.grep({ it.name != 'util' }).each { proj ->
-        proj.tasks.withType(Javadoc).each { javadocTask ->
-            source += javadocTask.source
-            classpath += javadocTask.classpath
-            excludes += javadocTask.excludes
-            includes += javadocTask.includes
-            dependsOn +=javadocTask.dependsOn
-        }
+def getGitVersion() {
+    def describeStdOut = new ByteArrayOutputStream()
+    exec {
+        commandLine 'git', 'describe', '--tags', '--always', '--dirty'
+        standardOutput = describeStdOut
     }
+    describeStdOut.toString().substring(1).trim()
 }
 
-def setJavaDocOptions(MinimalJavadocOptions options) {
-    options.author = true
-    options.version = true
-    options.links 'https://docs.oracle.com/javase/9/docs/api/'
-    options.tagletPath single(project(':util').sourceSets.main.output.classesDirs)
-    options.taglets 'ManualTaglet'
-    options.taglets 'DochubTaglet'
-    options.taglets 'ServerReleaseTaglet'
-    options.encoding = 'UTF-8'
-    options.charSet 'UTF-8'
-    options.docEncoding 'UTF-8'
-    options.addBooleanOption("html4", true)
-    options.addBooleanOption("-allow-script-in-comments", true)
-    options.header = '''
-            <script type="text/javascript">
-            <!-- Set the location hash in the classFrame -->
-            try {
-              locationHash = top.location.hash;
-              if (window.name == "classFrame" && locationHash != "") {
-                window.location.hash = locationHash;
-              }
-            } catch (error) {}
-            <!-- GA Tracking code -->
-            if (window.name == "" || window.name == "classFrame") {
-                var _elqQ = _elqQ || [];
-                _elqQ.push(["elqSetSiteId", "413370795"]);
-                _elqQ.push(["elqTrackPageView"]);
-                (function () {
-                function async_load() { var s = document.createElement("script"); s.type = "text/javascript"; s.async = true; s.src = "//img03.en25.com/i/elqCfg.min.js"; var x = document.getElementsByTagName("script")[0]; x.parentNode.insertBefore(s, x); }
-                if (window.addEventListener) window.addEventListener("DOMContentLoaded", async_load, false);
-                else if (window.attachEvent) window.attachEvent("onload", async_load);
-                })();
-            }
-            </script>
-        '''
-}
+apply from: 'gradle/publish.gradle'
+apply from: 'gradle/deploy.gradle'
+apply from: 'gradle/javadoc.gradle'
+apply from: 'gradle/testColorOutput.gradle'
+
 
 //////////////////////////////////////////
 // Root project configuration           //
 //////////////////////////////////////////
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.5.1'
+wrapper {
+    gradleVersion = '6.0.1'
 }
 
-gradle.buildFinished { BuildResult result ->
-    if (result.failure && !JavaVersion.current().isJava9Compatible()) {
-        gradle.rootProject.logger.error("\nWARNING:\nJDK ${JavaVersion.VERSION_1_9} is required to build the driver: " +
-                "you are using JDK ${JavaVersion.current()}.")
-    }
+if (!JavaVersion.current().isJava9Compatible()) {
+    throw new GradleException("""
+        | ERROR:
+        | JDK ${JavaVersion.VERSION_1_9.getMajorVersion()} is required to build the driver: You are using JDK ${JavaVersion.current().getMajorVersion()}.
+        |""".stripMargin()
+    )
 }
-
-apply from: 'gradle/deploy.gradle'
-apply from: 'gradle/TestColorOutput.gradle'
-

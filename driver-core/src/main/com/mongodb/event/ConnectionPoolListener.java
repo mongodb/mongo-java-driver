@@ -25,58 +25,125 @@ import java.util.EventListener;
  */
 public interface ConnectionPoolListener extends EventListener {
     /**
-     * Invoked when a connection pool is opened.
+     * Invoked when a connection pool is opened. The default implementation does nothing.
      *
      * @param event the event
+     * @deprecated Prefer {@link #connectionPoolCreated} Implementations should NOT implement this method at all, instead relying on
+     * the default no-op implementation. If an application implements both this method and connectionPoolCreated, the application risks
+     * double-counting events.
      */
-    void connectionPoolOpened(ConnectionPoolOpenedEvent event);
+    @Deprecated
+    default void connectionPoolOpened(ConnectionPoolOpenedEvent event) {
+    }
 
     /**
-     * Invoked when a connection pool is closed.
+     * Invoked when a connection pool is created. The default implementation does nothing.
      *
      * @param event the event
+     * @since 4.0
      */
-    void connectionPoolClosed(ConnectionPoolClosedEvent event);
+    default void connectionPoolCreated(ConnectionPoolCreatedEvent event) {
+    }
 
     /**
-     * Invoked when a connection is checked out of a pool.
+     * Invoked when a connection pool is cleared. The default implementation does nothing.
      *
      * @param event the event
+     * @since 4.0
      */
-    void connectionCheckedOut(ConnectionCheckedOutEvent event);
+    default void connectionPoolCleared(ConnectionPoolClearedEvent event) {
+    }
 
     /**
-     * Invoked when a connection is checked in to a pool.
+     * Invoked when a connection pool is closed. The default implementation does nothing.
      *
      * @param event the event
      */
-    void connectionCheckedIn(ConnectionCheckedInEvent event);
+    default void connectionPoolClosed(ConnectionPoolClosedEvent event) {
+    }
 
     /**
-     * Invoked when a connection pool's wait queue is entered.
+     * Invoked when attempting to check out a connection from a pool. The default implementation does nothing.
      *
      * @param event the event
+     * @since 4.0
      */
-    void waitQueueEntered(ConnectionPoolWaitQueueEnteredEvent event);
+    default void connectionCheckOutStarted(ConnectionCheckOutStartedEvent event) {
+    }
 
     /**
-     * Invoked when a connection pools wait queue is exited.
+     * Invoked when a connection is checked out of a pool. The default implementation does nothing.
      *
      * @param event the event
      */
-    void waitQueueExited(ConnectionPoolWaitQueueExitedEvent event);
+    default void connectionCheckedOut(ConnectionCheckedOutEvent event) {
+    }
 
     /**
-     * Invoked when a connection is added to a pool.
+     * Invoked when an attempt to check out a connection from a pool fails. The default implementation does nothing.
      *
      * @param event the event
+     * @since 4.0
      */
-    void connectionAdded(ConnectionAddedEvent event);
+    default void connectionCheckOutFailed(ConnectionCheckOutFailedEvent event) {
+    }
 
     /**
-     * Invoked when a connection is removed from a pool.
+     * Invoked when a connection is checked in to a pool. The default implementation does nothing.
      *
      * @param event the event
      */
-    void connectionRemoved(ConnectionRemovedEvent event);
+    default void connectionCheckedIn(ConnectionCheckedInEvent event) {
+    }
+
+    /**
+     * Invoked when a connection is added to a pool. The default implementation does nothing.
+     *
+     * @param event the event
+     * @deprecated Prefer {@link #connectionCreated} Implementations should NOT implement this method at all, instead relying on
+     * the default no-op implementation. If an application implements both this method and connectionCreated, the application risks
+     * double-counting events.
+     */
+    @Deprecated
+    default void connectionAdded(ConnectionAddedEvent event) {
+    }
+
+    /**
+     * Invoked when a connection is created. The default implementation does nothing.
+     *
+     * @param event the event
+     * @since 4.0
+     */
+    default void connectionCreated(ConnectionCreatedEvent event) {
+    }
+
+    /**
+     * Invoked when a connection is ready for use. The default implementation does nothing.
+     *
+     * @param event the event
+     * @since 4.0
+     */
+    default void connectionReady(ConnectionReadyEvent event) {
+    }
+
+    /**
+     * Invoked when a connection is removed from a pool. The default implementation does nothing.
+     *
+     * @param event the event
+     * @deprecated Prefer {@link #connectionClosed} Implementations should NOT implement this method at all, instead relying on
+     * the default no-op implementation. If an application implements both this method and connectionClosed, the application risks
+     * double-counting events.
+     */
+    @Deprecated
+    default void connectionRemoved(ConnectionRemovedEvent event) {
+    }
+
+    /**
+     * Invoked when a connection is removed from a pool. The default implementation does nothing.
+     *
+     * @param event the event
+     * @since 4.0
+     */
+    default void connectionClosed(ConnectionClosedEvent event) {
+    }
 }

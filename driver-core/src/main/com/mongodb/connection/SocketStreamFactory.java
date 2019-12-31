@@ -20,6 +20,8 @@ import com.mongodb.MongoClientException;
 import com.mongodb.ServerAddress;
 import com.mongodb.UnixServerAddress;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
+import com.mongodb.internal.connection.SocketStream;
+import com.mongodb.internal.connection.UnixSocketChannelStream;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
@@ -75,7 +77,7 @@ public class SocketStreamFactory implements StreamFactory {
             } else if (sslSettings.isEnabled()) {
                 stream = new SocketStream(serverAddress, settings, sslSettings, getSslContext().getSocketFactory(), bufferProvider);
             } else {
-                stream = new SocketChannelStream(serverAddress, settings, sslSettings, bufferProvider);
+                stream = new SocketStream(serverAddress, settings, sslSettings, SocketFactory.getDefault(), bufferProvider);
             }
         }
         return stream;

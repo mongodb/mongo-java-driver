@@ -19,9 +19,12 @@ package org.bson.codecs.pojo;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationBsonPropertyIdModel;
+import org.bson.codecs.pojo.entities.conventions.AnnotationCollision;
 import org.bson.codecs.pojo.entities.conventions.AnnotationDefaultsModel;
-import org.bson.codecs.pojo.entities.conventions.AnnotationModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationNameCollision;
+import org.bson.codecs.pojo.entities.conventions.AnnotationWithObjectIdModel;
+import org.bson.codecs.pojo.entities.conventions.AnnotationWriteCollision;
+import org.bson.codecs.pojo.entities.conventions.BsonIgnoreDuplicatePropertyMultipleTypes;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidConstructorModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidMethodModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidMethodReturnTypeModel;
@@ -38,6 +41,7 @@ import static junit.framework.TestCase.assertTrue;
 import static org.bson.codecs.pojo.Conventions.ANNOTATION_CONVENTION;
 import static org.bson.codecs.pojo.Conventions.CLASS_AND_PROPERTY_CONVENTION;
 import static org.bson.codecs.pojo.Conventions.DEFAULT_CONVENTIONS;
+import static org.bson.codecs.pojo.Conventions.NO_CONVENTIONS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -46,7 +50,7 @@ public final class ConventionsTest {
 
     @Test
     public void testDefaultConventions() {
-        ClassModel<AnnotationModel> classModel = ClassModel.builder(AnnotationModel.class)
+        ClassModel<AnnotationWithObjectIdModel> classModel = ClassModel.builder(AnnotationWithObjectIdModel.class)
                 .conventions(DEFAULT_CONVENTIONS).build();
 
         assertTrue(classModel.useDiscriminator());
@@ -58,6 +62,7 @@ public final class ConventionsTest {
         assertNotNull(idPropertyModel);
         assertEquals("customId", idPropertyModel.getName());
         assertEquals("_id", idPropertyModel.getWriteName());
+        assertEquals(classModel.getIdPropertyModelHolder().getIdGenerator(), IdGenerators.OBJECT_ID_GENERATOR);
 
         PropertyModel<?> childPropertyModel = classModel.getPropertyModel("child");
         assertNotNull(childPropertyModel);
@@ -137,6 +142,16 @@ public final class ConventionsTest {
     }
 
     @Test(expected = CodecConfigurationException.class)
+    public void testAnnotationCollision() {
+        ClassModel.builder(AnnotationCollision.class).conventions(DEFAULT_CONVENTIONS).build();
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testAnnotationWriteCollision() {
+        ClassModel.builder(AnnotationWriteCollision.class).conventions(DEFAULT_CONVENTIONS).build();
+    }
+
+    @Test(expected = CodecConfigurationException.class)
     public void testAnnotationNameCollision() {
         ClassModel.builder(AnnotationNameCollision.class)
                 .conventions(singletonList(ANNOTATION_CONVENTION)).build();
@@ -188,6 +203,12 @@ public final class ConventionsTest {
     public void testCreatorInvalidTypeMethodModel() {
         ClassModel.builder(CreatorInvalidTypeMethodModel.class)
                 .conventions(singletonList(ANNOTATION_CONVENTION)).build();
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testBsonIgnoreDuplicatePropertyMultipleTypesModel() {
+        ClassModel.builder(BsonIgnoreDuplicatePropertyMultipleTypes.class)
+                .conventions(NO_CONVENTIONS).build();
     }
 
     private class PropertyAccessorTest<T> implements PropertyAccessor<T> {

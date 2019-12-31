@@ -79,6 +79,16 @@ public class DocumentTest {
                      document);
     }
 
+    // Test to ensure that toJson does not reorder _id field
+    @Test
+    public void toJsonShouldNotReorderIdField() {
+        // given
+        Document d = new Document().append("x", 1)
+                .append("y", Collections.singletonList("one"))
+                .append("_id", "1");
+        assertEquals("{\"x\": 1, \"y\": [\"one\"], \"_id\": \"1\"}", d.toJson());
+    }
+
     // Test in Java to make sure none of the casts result in compiler warnings or class cast exceptions
     @Test
     public void shouldGetWithDefaultValue() {
@@ -118,7 +128,7 @@ public class DocumentTest {
             // noop
         }
 
-        assertEquals("{ \"database\" : { \"name\" : \"MongoDB\" } }", customDocument.toJson(customDocumentCodec));
+        assertEquals("{\"database\": {\"name\": \"MongoDB\"}}", customDocument.toJson(customDocumentCodec));
     }
 
     public class Name {

@@ -94,23 +94,4 @@ class ServerAddressSpecification extends Specification {
         then:
         thrown(MongoException);
     }
-
-    @Unroll
-    @SuppressWarnings('deprecated')
-    def 'sameHost should parse hosts correctly'() {
-        expect:
-        new ServerAddress(host).sameHost(host)
-
-        where:
-        host << [
-            '10.0.0.1:1000',
-            '10.0.0.1',
-            'somewhere',
-            'SOMEWHERE',
-            'somewhere:1000',
-            '[2010:836B:4179::836B:4179]',
-            '[2010:836B:4179::836B:4179]:1000',
-            '2010:836B:4179::836B:4179'
-        ]
-    }
 }

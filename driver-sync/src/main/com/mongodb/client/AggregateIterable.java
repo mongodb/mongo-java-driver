@@ -32,10 +32,11 @@ import java.util.concurrent.TimeUnit;
 public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
 
     /**
-     * Aggregates documents according to the specified aggregation pipeline, which must end with a $out stage.
+     * Aggregates documents according to the specified aggregation pipeline, which must end with a $out or $merge stage.
      *
-     * @throws IllegalStateException if the pipeline does not end with a $out stage
+     * @throws IllegalStateException if the pipeline does not end with a $out or $merge stage
      * @mongodb.driver.manual reference/operator/aggregation/out/ $out stage
+     * @mongodb.driver.manual reference/operator/aggregation/merge/ $merge stage
      * @since 3.4
      */
     void toCollection();
@@ -46,7 +47,6 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
      * @param allowDiskUse true if writing to temporary files is enabled
      * @return this
      * @mongodb.driver.manual reference/command/aggregate/ Aggregation
-     * @mongodb.server.release 2.6
      */
     AggregateIterable<TResult> allowDiskUse(@Nullable Boolean allowDiskUse);
 
@@ -70,20 +70,6 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
     AggregateIterable<TResult> maxTime(long maxTime, TimeUnit timeUnit);
 
     /**
-     * Sets whether the server should use a cursor to return results.
-     *
-     * @param useCursor whether the server should use a cursor to return results
-     * @return this
-     * @mongodb.driver.manual reference/command/aggregate/ Aggregation
-     * @mongodb.server.release 2.6
-     * @deprecated There is no replacement for this.  Applications can assume that the driver will use a cursor for server versions
-     * that support it (&gt;= 2.6).  The driver will ignore this as of MongoDB 3.6, which does not support inline results for the aggregate
-     * command.
-     */
-    @Deprecated
-    AggregateIterable<TResult> useCursor(@Nullable Boolean useCursor);
-
-    /**
      * The maximum amount of time for the server to wait on new documents to satisfy a {@code $changeStream} aggregation.
      *
      * A zero value will be ignored.
@@ -99,7 +85,7 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
     /**
      * Sets the bypass document level validation flag.
      *
-     * <p>Note: This only applies when an $out stage is specified</p>.
+     * <p>Note: This only applies when an $out or $merge stage is specified</p>.
      *
      * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
      * @return this

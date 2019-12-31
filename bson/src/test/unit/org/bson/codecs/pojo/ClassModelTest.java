@@ -17,9 +17,15 @@
 package org.bson.codecs.pojo;
 
 import org.bson.codecs.pojo.entities.CollectionNestedPojoModel;
+import org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
+import org.bson.codecs.pojo.entities.InterfaceBasedModel;
 import org.bson.codecs.pojo.entities.NestedGenericHolderMapModel;
 import org.bson.codecs.pojo.entities.PropertySelectionModel;
+import org.bson.codecs.pojo.entities.ShapeHolderCircleModel;
+import org.bson.codecs.pojo.entities.ShapeHolderModel;
+import org.bson.codecs.pojo.entities.ShapeModelAbstract;
+import org.bson.codecs.pojo.entities.ShapeModelCircle;
 import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationInheritedModel;
@@ -91,6 +97,15 @@ public final class ClassModelTest {
     }
 
     @Test
+    @SuppressWarnings("rawtypes")
+    public void testWildcardModel() {
+        TypeData<InterfaceBasedModel> model = TypeData.builder(InterfaceBasedModel.class).build();
+        TypeData<List> wildcard = TypeData.builder(List.class).addTypeParameter(model).build();
+        ClassModel<?> classModel = ClassModel.builder(ConcreteAndNestedAbstractInterfaceModel.class).build();
+        assertEquals(wildcard, classModel.getPropertyModel("wildcardList").getTypeData());
+    }
+
+    @Test
     public void testPropertySelection() {
         ClassModel<PropertySelectionModel> classModel = ClassModel.builder(PropertySelectionModel.class).build();
 
@@ -157,6 +172,17 @@ public final class ClassModelTest {
 
         propertyModel = classModel.getPropertyModel("child");
         assertTrue(propertyModel.useDiscriminator());
+    }
+
+    @Test
+    public void testOverridePropertyWithSubclass() {
+        ClassModel<?> classModel = ClassModel.builder(ShapeHolderModel.class).build();
+        assertEquals(1, classModel.getPropertyModels().size());
+        assertEquals(ShapeModelAbstract.class, classModel.getPropertyModels().get(0).getTypeData().getType());
+
+        ClassModel<?> overriddenImplementationClassModel = ClassModel.builder(ShapeHolderCircleModel.class).build();
+        assertEquals(1, classModel.getPropertyModels().size());
+        assertEquals(ShapeModelCircle.class, overriddenImplementationClassModel.getPropertyModels().get(0).getTypeData().getType());
     }
 
 }

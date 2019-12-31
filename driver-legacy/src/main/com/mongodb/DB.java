@@ -24,18 +24,16 @@ import com.mongodb.client.model.DBCreateViewOptions;
 import com.mongodb.client.model.ValidationAction;
 import com.mongodb.client.model.ValidationLevel;
 import com.mongodb.connection.BufferProvider;
+import com.mongodb.internal.operation.BatchCursor;
+import com.mongodb.internal.operation.CommandReadOperation;
+import com.mongodb.internal.operation.CreateCollectionOperation;
+import com.mongodb.internal.operation.CreateViewOperation;
+import com.mongodb.internal.operation.DropDatabaseOperation;
+import com.mongodb.internal.operation.ListCollectionsOperation;
+import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.lang.Nullable;
-import com.mongodb.operation.BatchCursor;
-import com.mongodb.operation.CommandReadOperation;
-import com.mongodb.operation.CommandWriteOperation;
-import com.mongodb.operation.CreateCollectionOperation;
-import com.mongodb.operation.CreateViewOperation;
-import com.mongodb.operation.DropDatabaseOperation;
-import com.mongodb.operation.ListCollectionsOperation;
-import com.mongodb.operation.ReadOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
-import org.bson.BsonInt32;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
 
@@ -48,11 +46,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.mongodb.DBCollection.createWriteConcernException;
-import static com.mongodb.MongoCredential.createCredential;
 import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
-import static java.util.Arrays.asList;
 
 /**
  * A thread-safe client view of a logical database in a MongoDB cluster. A DB instance can be achieved from a {@link MongoClient} instance
@@ -64,49 +60,40 @@ import static java.util.Arrays.asList;
  * }
  * </pre>
  *
- * See {@link Mongo#getDB(String)} for further information about the effective deprecation of this class.
+ * See {@link MongoClient#getDB(String)} for further information about the effective deprecation of this class.
  *
  * @mongodb.driver.manual reference/glossary/#term-database Database
  * @see MongoClient
  */
 @ThreadSafe
+@SuppressWarnings("deprecation")
 public class DB {
-    private final Mongo mongo;
+    private final MongoClient mongo;
     private final String name;
     private final OperationExecutor executor;
     private final ConcurrentHashMap<String, DBCollection> collectionCache;
-    private final Bytes.OptionHolder optionHolder;
     private final Codec<DBObject> commandCodec;
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
     private volatile ReadConcern readConcern;
 
-    DB(final Mongo mongo, final String name, final OperationExecutor executor) {
+    DB(final MongoClient mongo, final String name, final OperationExecutor executor) {
         checkDatabaseNameValidity(name);
         this.mongo = mongo;
         this.name = name;
         this.executor = executor;
         this.collectionCache = new ConcurrentHashMap<String, DBCollection>();
-        this.optionHolder = new Bytes.OptionHolder(mongo.getOptionHolder());
         this.commandCodec = MongoClient.getCommandCodec();
     }
 
     /**
-     * Constructs a new instance of the {@code DB}.
+     * Gets the MongoClient instance
      *
-     * @param mongo the mongo instance
-     * @param name  the database name - must not be empty and cannot contain spaces
+     * @return the MongoClient instance that this database was constructed from
+     * @throws IllegalStateException if this DB was not created from a MongoClient instance
+     * @since 3.9
      */
-    public DB(final Mongo mongo, final String name) {
-        this(mongo, name, mongo.createOperationExecutor());
-    }
-
-    /**
-     * Gets the Mongo instance
-     *
-     * @return the mongo instance that this database was created from.
-     */
-    public Mongo getMongo() {
+    public MongoClient getMongoClient() {
         return mongo;
     }
 
@@ -177,20 +164,6 @@ public class DB {
     }
 
     /**
-     * <p>Gets a collection with a given name. If the collection does not exist, a new collection is created.</p>
-     *
-     * <p>This class is NOT part of the public API.  Be prepared for non-binary compatible changes in minor releases.</p>
-     *
-     * @param name the name of the collection
-     * @return the collection
-     * @throws IllegalArgumentException if the name is invalid
-     * @see MongoNamespace#checkCollectionNameValidity(String)
-     */
-    protected DBCollection doGetCollection(final String name) {
-        return getCollection(name);
-    }
-
-    /**
      * Gets a collection with a given name.
      *
      * @param name the name of the collection to return
@@ -230,16 +203,6 @@ public class DB {
     }
 
     /**
-     * Returns a collection matching a given string.
-     *
-     * @param collectionName the name of the collection
-     * @return the collection
-     */
-    public DBCollection getCollectionFromString(final String collectionName) {
-        return getCollection(collectionName);
-    }
-
-    /**
      * Returns the name of this database.
      *
      * @return the name
@@ -257,10 +220,12 @@ public class DB {
      */
     public Set<String> getCollectionNames() {
         List<String> collectionNames =
-                new MongoIterableImpl<DBObject>(null, executor, ReadConcern.DEFAULT, primary()) {
+                new MongoIterableImpl<DBObject>(null, executor, ReadConcern.DEFAULT, primary(),
+                        mongo.getMongoClientOptions().getRetryReads()) {
                     @Override
                     public ReadOperation<BatchCursor<DBObject>> asReadOperation() {
-                        return new ListCollectionsOperation<DBObject>(name, commandCodec);
+                        return new ListCollectionsOperation<DBObject>(name, commandCodec)
+                                .nameOnly(true);
                     }
                 }.map(new Function<DBObject, String>() {
                             @Override
@@ -354,7 +319,6 @@ public class DB {
     }
 
 
-    @SuppressWarnings("deprecation")
     private CreateCollectionOperation getCreateCollectionOperation(final String collectionName, final DBObject options) {
         if (options.get("size") != null && !(options.get("size") instanceof Number)) {
             throw new IllegalArgumentException("'size' should be Number");
@@ -388,7 +352,6 @@ public class DB {
         boolean autoIndex = true;
         long sizeInBytes = 0;
         long maxDocuments = 0;
-        Boolean usePowerOfTwoSizes = null;
         BsonDocument storageEngineOptions = null;
         BsonDocument indexOptionDefaults = null;
         BsonDocument validator = null;
@@ -406,9 +369,6 @@ public class DB {
         }
         if (options.get("max") != null) {
             maxDocuments = ((Number) options.get("max")).longValue();
-        }
-        if (options.get("usePowerOfTwoSizes") != null) {
-            usePowerOfTwoSizes = (Boolean) options.get("usePowerOfTwoSizes");
         }
         if (options.get("storageEngine") != null) {
             storageEngineOptions = wrap((DBObject) options.get("storageEngine"));
@@ -432,7 +392,6 @@ public class DB {
                    .sizeInBytes(sizeInBytes)
                    .autoIndex(autoIndex)
                    .maxDocuments(maxDocuments)
-                   .usePowerOf2Sizes(usePowerOfTwoSizes)
                    .storageEngineOptions(storageEngineOptions)
                    .indexOptionDefaults(indexOptionDefaults)
                    .validator(validator)
@@ -554,181 +513,9 @@ public class DB {
         return false;
     }
 
-    /**
-     * Evaluates JavaScript functions on the database server. This is useful if you need to touch a lot of data lightly, in which case
-     * network transfer could be a bottleneck.
-     *
-     * @param code {@code String} representation of JavaScript function
-     * @param args arguments to pass to the JavaScript function
-     * @return result of the command execution
-     * @throws MongoException if the operation failed
-     * @mongodb.driver.manual reference/method/db.eval/ db.eval()
-     */
-    public CommandResult doEval(final String code, final Object... args) {
-        DBObject commandDocument = new BasicDBObject("$eval", code).append("args", asList(args));
-        return executeCommand(wrap(commandDocument));
-    }
-
-    /**
-     * Calls {@link DB#doEval(java.lang.String, java.lang.Object[]) }. If the command is successful, the "retval" field is extracted and
-     * returned. Otherwise an exception is thrown.
-     *
-     * @param code {@code String} representation of JavaScript function
-     * @param args arguments to pass to the JavaScript function
-     * @return result of the execution
-     * @throws MongoException if the operation failed
-     * @mongodb.driver.manual reference/method/db.eval/ db.eval()
-     */
-    public Object eval(final String code, final Object... args) {
-        CommandResult result = doEval(code, args);
-        result.throwOnError();
-        return result.get("retval");
-    }
-
-    /**
-     * Helper method for calling a 'dbStats' command. It returns storage statistics for a given database.
-     *
-     * @return result of the execution
-     * @throws MongoException if the operation failed
-     * @mongodb.driver.manual reference/command/dbStats/ Database Stats
-     */
-    public CommandResult getStats() {
-        BsonDocument commandDocument = new BsonDocument("dbStats", new BsonInt32(1)).append("scale", new BsonInt32(1));
-        return executeCommand(commandDocument);
-    }
-
-    /**
-     * Adds or updates a user for this database
-     *
-     * <p>Never create or modify users over an insecure network without the use of TLS.</p>
-     * @param userName the user name
-     * @param password the password
-     * @return the result of executing this operation
-     * @throws MongoException if the operation failed
-     * @mongodb.driver.manual administration/security-access-control/  Access Control
-     * @mongodb.driver.manual reference/command/createUser createUser
-     * @mongodb.driver.manual reference/command/updateUser updateUser
-     * @deprecated Use {@code DB.command} to call either the createUser or updateUser command
-     */
-    @Deprecated
-    public WriteResult addUser(final String userName, final char[] password) {
-        return addUser(userName, password, false);
-    }
-
-    /**
-     * Adds or updates a user for this database
-     *
-     * <p>Never create or modify users over an insecure network without the use of TLS.</p>
-     * @param userName the user name
-     * @param password the password
-     * @param readOnly if true, user will only be able to read
-     * @return the result of executing this operation
-     * @throws MongoException if the operation failed
-     * @mongodb.driver.manual administration/security-access-control/  Access Control
-     * @mongodb.driver.manual reference/command/createUser createUser
-     * @mongodb.driver.manual reference/command/updateUser updateUser
-     * @deprecated Use {@code DB.command} to call either the createUser or updateUser command
-     */
-    @Deprecated
-    public WriteResult addUser(final String userName, final char[] password, final boolean readOnly) {
-        MongoCredential credential = createCredential(userName, getName(), password);
-        boolean userExists = false;
-        try {
-            userExists = executor.execute(new com.mongodb.operation.UserExistsOperation(getName(), userName), primary(), getReadConcern());
-        } catch (MongoCommandException e) {
-            if (e.getCode() != 13) {
-                throw e;
-            }
-        }
-        try {
-            if (userExists) {
-                executor.execute(new com.mongodb.operation.UpdateUserOperation(credential, readOnly, getWriteConcern()), getReadConcern());
-                return new WriteResult(1, true, null);
-            } else {
-                executor.execute(new com.mongodb.operation.CreateUserOperation(credential, readOnly, getWriteConcern()), getReadConcern());
-                return new WriteResult(1, false, null);
-            }
-        } catch (MongoWriteConcernException e) {
-            throw createWriteConcernException(e);
-        }
-    }
-
-    /**
-     * Removes the specified user from the database.
-     *
-     * @param userName user to be removed
-     * @return the result of executing this operation
-     * @throws MongoException if the operation failed
-     * @mongodb.driver.manual administration/security-access-control/  Access Control
-     * @deprecated Use {@code DB.command} to call the dropUser command
-     */
-    @Deprecated
-    public WriteResult removeUser(final String userName) {
-        try {
-            executor.execute(new com.mongodb.operation.DropUserOperation(getName(), userName, getWriteConcern()), getReadConcern());
-            return new WriteResult(1, true, null);
-        } catch (MongoWriteConcernException e) {
-            throw createWriteConcernException(e);
-        }
-    }
-
-    /**
-     * Makes it possible to execute "read" queries on a slave node
-     *
-     * @see ReadPreference#secondaryPreferred()
-     * @deprecated Replaced with {@code ReadPreference.secondaryPreferred()}
-     */
-    @Deprecated
-    public void slaveOk() {
-        addOption(Bytes.QUERYOPTION_SLAVEOK);
-    }
-
-    /**
-     * Adds the given flag to the default query options.
-     *
-     * @param option value to be added
-     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
-     */
-    public void addOption(final int option) {
-        optionHolder.add(option);
-    }
-
-    /**
-     * Sets the query options, overwriting previous value.
-     *
-     * @param options bit vector of query options
-     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
-     */
-    public void setOptions(final int options) {
-        optionHolder.set(options);
-    }
-
-    /**
-     * Resets the query options.
-     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
-     */
-    public void resetOptions() {
-        optionHolder.reset();
-    }
-
-    /**
-     * Gets the query options
-     *
-     * @return bit vector of query options
-     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
-     */
-    public int getOptions() {
-        return optionHolder.get();
-    }
-
     @Override
     public String toString() {
         return "DB{name='" + name + '\'' + '}';
-    }
-
-    CommandResult executeCommand(final BsonDocument commandDocument) {
-        return new CommandResult(executor.execute(new CommandWriteOperation<BsonDocument>(getName(), commandDocument,
-                                                                                          new BsonDocumentCodec()), getReadConcern()));
     }
 
     CommandResult executeCommand(final BsonDocument commandDocument, final ReadPreference readPreference) {
@@ -741,12 +528,8 @@ public class DB {
         return executor;
     }
 
-    Bytes.OptionHolder getOptionHolder() {
-        return optionHolder;
-    }
-
     BufferProvider getBufferPool() {
-        return getMongo().getBufferProvider();
+        return getMongoClient().getBufferProvider();
     }
 
     private BsonDocument wrap(final DBObject document) {

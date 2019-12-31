@@ -23,6 +23,7 @@ import org.bson.codecs.Encoder;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
+import org.bson.json.JsonMode;
 import org.bson.json.JsonReader;
 import org.bson.json.JsonWriter;
 import org.bson.json.JsonWriterSettings;
@@ -32,10 +33,14 @@ import java.io.Serializable;
 import java.io.StringWriter;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static java.lang.String.format;
+import static org.bson.assertions.Assertions.isTrue;
 import static org.bson.assertions.Assertions.notNull;
 
 /**
@@ -159,6 +164,76 @@ public class Document implements Map<String, Object>, Serializable, Bson {
     }
 
     /**
+     * Gets the value in an embedded document, casting it to the given {@code Class<T>}.  The list of keys represents a path to the
+     * embedded value, drilling down into an embedded document for each key. This is useful to avoid having casts in
+     * client code, though the effect is the same.
+     *
+     * The generic type of the keys list is {@code ?} to be consistent with the corresponding {@code get} methods, but in practice
+     * the actual type of the argument should be {@code List<String>}. So to get the embedded value of a key list that is of type String,
+     * you would write {@code String name = doc.getEmbedded(List.of("employee", "manager", "name"), String.class)} instead of
+     * {@code String name = (String) doc.get("employee", Document.class).get("manager", Document.class).get("name") }.
+     *
+     * @param keys  the list of keys
+     * @param clazz the non-null class to cast the value to
+     * @param <T>   the type of the class
+     * @return the value of the given embedded key, or null if the instance does not contain this embedded key.
+     * @throws ClassCastException if the value of the given embedded key is not of type T
+     * @since 3.10
+     */
+    public <T> T getEmbedded(final List<?> keys, final Class<T> clazz) {
+        notNull("keys", keys);
+        isTrue("keys", !keys.isEmpty());
+        notNull("clazz", clazz);
+        return getEmbeddedValue(keys, clazz, null);
+    }
+
+    /**
+     * Gets the value in an embedded document, casting it to the given {@code Class<T>} or returning the default value if null.
+     * The list of keys represents a path to the embedded value, drilling down into an embedded document for each key.
+     * This is useful to avoid having casts in client code, though the effect is the same.
+     *
+     * The generic type of the keys list is {@code ?} to be consistent with the corresponding {@code get} methods, but in practice
+     * the actual type of the argument should be {@code List<String>}. So to get the embedded value of a key list that is of type String,
+     * you would write {@code String name = doc.getEmbedded(List.of("employee", "manager", "name"), "John Smith")} instead of
+     * {@code String name = doc.get("employee", Document.class).get("manager", Document.class).get("name", "John Smith") }.
+     *
+     * @param keys  the list of keys
+     * @param defaultValue what to return if the value is null
+     * @param <T>   the type of the class
+     * @return the value of the given key, or null if the instance does not contain this key.
+     * @throws ClassCastException if the value of the given key is not of type T
+     * @since 3.10
+     */
+    public <T> T getEmbedded(final List<?> keys, final T defaultValue) {
+        notNull("keys", keys);
+        isTrue("keys", !keys.isEmpty());
+        notNull("defaultValue", defaultValue);
+        return getEmbeddedValue(keys, null, defaultValue);
+    }
+
+
+    // Gets the embedded value of the given list of keys, casting it to {@code Class<T>} or returning the default value if null.
+    // Throws ClassCastException if any of the intermediate embedded values is not a Document.
+    @SuppressWarnings("unchecked")
+    private <T> T getEmbeddedValue(final List<?> keys, final Class<T> clazz, final T defaultValue) {
+        Object value = this;
+        Iterator<?> keyIterator = keys.iterator();
+        while (keyIterator.hasNext()) {
+            Object key = keyIterator.next();
+            value = ((Document) value).get(key);
+            if (!(value instanceof Document)) {
+                if (value == null) {
+                    return defaultValue;
+                } else if (keyIterator.hasNext()) {
+                    throw new ClassCastException(format("At key %s, the value is not a Document (%s)",
+                            key, value.getClass().getName()));
+                }
+            }
+        }
+        return clazz != null ? clazz.cast(value) : (T) value;
+    }
+
+    /**
      * Gets the value of the given key as an Integer.
      *
      * @param key the key
@@ -260,7 +335,59 @@ public class Document implements Map<String, Object>, Serializable, Bson {
     }
 
     /**
-     * Gets a JSON representation of this document using the {@link org.bson.json.JsonMode#STRICT} output mode, and otherwise the default
+     * Gets the list value of the given key, casting the list elements to the given {@code Class<T>}.  This is useful to avoid having
+     * casts in client code, though the effect is the same.
+     *
+     * @param key   the key
+     * @param clazz the non-null class to cast the list value to
+     * @param <T>   the type of the class
+     * @return the list value of the given key, or null if the instance does not contain this key.
+     * @throws ClassCastException if the elements in the list value of the given key is not of type T or the value is not a list
+     * @since 3.10
+     */
+    public <T> List<T> getList(final Object key, final Class<T> clazz) {
+        notNull("clazz", clazz);
+        return constructValuesList(key, clazz, null);
+    }
+
+    /**
+     * Gets the list value of the given key, casting the list elements to {@code Class<T>} or returning the default list value if null.
+     * This is useful to avoid having casts in client code, though the effect is the same.
+     *
+     * @param key   the key
+     * @param clazz the non-null class to cast the list value to
+     * @param defaultValue what to return if the value is null
+     * @param <T>   the type of the class
+     * @return the list value of the given key, or the default list value if the instance does not contain this key.
+     * @throws ClassCastException if the value of the given key is not of type T
+     * @since 3.10
+     */
+    public <T> List<T> getList(final Object key, final Class<T> clazz, final List<T> defaultValue) {
+        notNull("defaultValue", defaultValue);
+        notNull("clazz", clazz);
+        return constructValuesList(key, clazz, defaultValue);
+    }
+
+
+    // Construct the list of values for the specified key, or return the default value if the value is null.
+    // A ClassCastException will be thrown if an element in the list is not of type T.
+    @SuppressWarnings("unchecked")
+    private <T> List<T> constructValuesList(final Object key, final Class<T> clazz, final List<T> defaultValue) {
+        List<?> value = get(key, List.class);
+        if (value == null) {
+            return defaultValue;
+        }
+
+        for (Object item : value) {
+            if (!clazz.isAssignableFrom(item.getClass())) {
+                throw new ClassCastException(format("List element cannot be cast to %s", clazz.getName()));
+            }
+        }
+        return (List<T>) value;
+    }
+
+    /**
+     * Gets a JSON representation of this document using the {@link org.bson.json.JsonMode#RELAXED} output mode, and otherwise the default
      * settings of {@link JsonWriterSettings.Builder} and {@link DocumentCodec}.
      *
      * @return a JSON representation of this document
@@ -270,7 +397,7 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      */
     @SuppressWarnings("deprecation")
     public String toJson() {
-        return toJson(new JsonWriterSettings());
+        return toJson(JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build());
     }
 
     /**
@@ -297,7 +424,7 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      */
     @SuppressWarnings("deprecation")
     public String toJson(final Encoder<Document> encoder) {
-        return toJson(new JsonWriterSettings(), encoder);
+        return toJson(JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build(), encoder);
     }
 
     /**
@@ -310,7 +437,7 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      */
     public String toJson(final JsonWriterSettings writerSettings, final Encoder<Document> encoder) {
         JsonWriter writer = new JsonWriter(new StringWriter(), writerSettings);
-        encoder.encode(writer, this, EncoderContext.builder().isEncodingCollectibleDocument(true).build());
+        encoder.encode(writer, this, EncoderContext.builder().build());
         return writer.getWriter().toString();
     }
 

@@ -58,6 +58,30 @@ public final class BsonField {
     }
 
     @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        BsonField bsonField = (BsonField) o;
+
+        if (!name.equals(bsonField.name)) {
+            return false;
+        }
+        return value.equals(bsonField.value);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + value.hashCode();
+        return result;
+    }
+
+    @Override
     public String toString() {
         return "BsonField{"
                + "name='" + name + '\''

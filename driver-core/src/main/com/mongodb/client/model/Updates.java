@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
 import org.bson.BsonInt32;
@@ -68,12 +69,12 @@ public final class Updates {
      * Creates an update that sets the value of the field with the given name to the given value.
      *
      * @param fieldName the non-null field name
-     * @param value     the value
+     * @param value     the value, which may be null
      * @param <TItem>   the value type
      * @return the update
      * @mongodb.driver.manual reference/operator/update/set/ $set
      */
-    public static <TItem> Bson set(final String fieldName, final TItem value) {
+    public static <TItem> Bson set(final String fieldName, @Nullable final TItem value) {
         return new SimpleUpdate<TItem>(fieldName, value, "$set");
     }
 
@@ -89,17 +90,30 @@ public final class Updates {
     }
 
     /**
+     * Creates an update that sets the values for the document, but only if the update is an upsert that results in an insert of a document.
+     *
+     * @param value     the value
+     * @return the update
+     * @mongodb.driver.manual reference/operator/update/setOnInsert/ $setOnInsert
+     * @since 3.10.0
+     * @see UpdateOptions#upsert(boolean)
+     */
+    public static Bson setOnInsert(final Bson value) {
+        return new SimpleBsonKeyValue("$setOnInsert", value);
+    }
+
+    /**
      * Creates an update that sets the value of the field with the given name to the given value, but only if the update is an upsert that
      * results in an insert of a document.
      *
      * @param fieldName the non-null field name
-     * @param value     the value
+     * @param value     the value, which may be null
      * @param <TItem>   the value type
      * @return the update
      * @mongodb.driver.manual reference/operator/update/setOnInsert/ $setOnInsert
      * @see UpdateOptions#upsert(boolean)
      */
-    public static <TItem> Bson setOnInsert(final String fieldName, final TItem value) {
+    public static <TItem> Bson setOnInsert(final String fieldName, @Nullable final TItem value) {
         return new SimpleUpdate<TItem>(fieldName, value, "$setOnInsert");
     }
 
@@ -200,12 +214,12 @@ public final class Updates {
      * already present, in which case it does nothing
      *
      * @param fieldName the non-null field name
-     * @param value     the value
+     * @param value     the value, which may be null
      * @param <TItem>   the value type
      * @return the update
      * @mongodb.driver.manual reference/operator/update/addToSet/ $addToSet
      */
-    public static <TItem> Bson addToSet(final String fieldName, final TItem value) {
+    public static <TItem> Bson addToSet(final String fieldName, @Nullable final TItem value) {
         return new SimpleUpdate<TItem>(fieldName, value, "$addToSet");
     }
 
@@ -227,12 +241,12 @@ public final class Updates {
      * Creates an update that adds the given value to the array value of the field with the given name.
      *
      * @param fieldName the non-null field name
-     * @param value     the value
+     * @param value     the value, which may be null
      * @param <TItem>   the value type
      * @return the update
      * @mongodb.driver.manual reference/operator/update/push/ $push
      */
-    public static <TItem> Bson push(final String fieldName, final TItem value) {
+    public static <TItem> Bson push(final String fieldName, @Nullable final TItem value) {
         return new SimpleUpdate<TItem>(fieldName, value, "$push");
     }
 
@@ -268,12 +282,12 @@ public final class Updates {
      * Creates an update that removes all instances of the given value from the array value of the field with the given name.
      *
      * @param fieldName the non-null field name
-     * @param value     the value
+     * @param value     the value, which may be null
      * @param <TItem>   the value type
      * @return the update
      * @mongodb.driver.manual reference/operator/update/pull/ $pull
      */
-    public static <TItem> Bson pull(final String fieldName, final TItem value) {
+    public static <TItem> Bson pull(final String fieldName, @Nullable final TItem value) {
         return new SimpleUpdate<TItem>(fieldName, value, "$pull");
     }
 
@@ -421,6 +435,59 @@ public final class Updates {
         return new BsonDocument("$bit", new BsonDocument(fieldName, new BsonDocument(bitwiseOperator, value)));
     }
 
+    private static class SimpleBsonKeyValue implements Bson {
+        private final String fieldName;
+        private final Bson value;
+
+        SimpleBsonKeyValue(final String fieldName, final Bson value) {
+            this.fieldName = notNull("fieldName", fieldName);
+            this.value = notNull("value", value);
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
+            BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+            writer.writeStartDocument();
+            writer.writeName(fieldName);
+            encodeValue(writer, value, codecRegistry);
+            writer.writeEndDocument();
+
+            return writer.getDocument();
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            SimpleBsonKeyValue that = (SimpleBsonKeyValue) o;
+
+            if (!fieldName.equals(that.fieldName)) {
+                return false;
+            }
+            return value.equals(that.value);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = fieldName.hashCode();
+            result = 31 * result + value.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "SimpleBsonKeyValue{"
+                    + "fieldName='" + fieldName + '\''
+                    + ", value=" + value
+                    + '}';
+        }
+    }
+
     private static class SimpleUpdate<TItem> implements Bson {
         private final String fieldName;
         private final TItem value;
@@ -447,6 +514,34 @@ public final class Updates {
             writer.writeEndDocument();
 
             return writer.getDocument();
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            SimpleUpdate<?> that = (SimpleUpdate<?>) o;
+
+            if (!fieldName.equals(that.fieldName)) {
+                return false;
+            }
+            if (value != null ? !value.equals(that.value) : that.value != null) {
+                return false;
+            }
+            return operator != null ? operator.equals(that.operator) : that.operator == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = fieldName.hashCode();
+            result = 31 * result + (value != null ? value.hashCode() : 0);
+            result = 31 * result + (operator != null ? operator.hashCode() : 0);
+            return result;
         }
 
         @Override
@@ -508,6 +603,34 @@ public final class Updates {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            WithEachUpdate<?> that = (WithEachUpdate<?>) o;
+
+            if (!fieldName.equals(that.fieldName)) {
+                return false;
+            }
+            if (!values.equals(that.values)) {
+                return false;
+            }
+            return operator != null ? operator.equals(that.operator) : that.operator == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = fieldName.hashCode();
+            result = 31 * result + values.hashCode();
+            result = 31 * result + (operator != null ? operator.hashCode() : 0);
+            return result;
+        }
+
+        @Override
         public String toString() {
             return "Each Update{"
                            + "fieldName='" + fieldName + '\''
@@ -551,6 +674,30 @@ public final class Updates {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            if (!super.equals(o)) {
+                return false;
+            }
+
+            PushUpdate<?> that = (PushUpdate<?>) o;
+
+            return options.equals(that.options);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = super.hashCode();
+            result = 31 * result + options.hashCode();
+            return result;
+        }
+
+        @Override
         protected String additionalFieldsToString() {
             return ", options=" + options;
         }
@@ -586,6 +733,30 @@ public final class Updates {
             writer.writeEndDocument();
 
             return writer.getDocument();
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            PullAllUpdate<?> that = (PullAllUpdate<?>) o;
+
+            if (!fieldName.equals(that.fieldName)) {
+                return false;
+            }
+            return values.equals(that.values);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = fieldName.hashCode();
+            result = 31 * result + values.hashCode();
+            return result;
         }
 
         @Override
@@ -626,6 +797,25 @@ public final class Updates {
             }
 
             return document;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            CompositeUpdate that = (CompositeUpdate) o;
+
+            return updates != null ? updates.equals(that.updates) : that.updates == null;
+        }
+
+        @Override
+        public int hashCode() {
+            return updates != null ? updates.hashCode() : 0;
         }
 
         @Override

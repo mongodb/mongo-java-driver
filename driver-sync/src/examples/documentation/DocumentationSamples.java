@@ -16,13 +16,17 @@
 
 package documentation;
 
-import com.mongodb.Block;
+import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.Field;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.Indexes;
+import com.mongodb.client.model.Variable;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
 import org.bson.BsonDocument;
@@ -33,19 +37,30 @@ import org.junit.After;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClient;
+import static com.mongodb.client.model.Accumulators.sum;
+import static com.mongodb.client.model.Aggregates.addFields;
+import static com.mongodb.client.model.Aggregates.group;
+import static com.mongodb.client.model.Aggregates.lookup;
+import static com.mongodb.client.model.Aggregates.match;
+import static com.mongodb.client.model.Aggregates.project;
+import static com.mongodb.client.model.Aggregates.sort;
+import static com.mongodb.client.model.Aggregates.unwind;
 import static com.mongodb.client.model.Filters.all;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.elemMatch;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.exists;
+import static com.mongodb.client.model.Filters.expr;
 import static com.mongodb.client.model.Filters.gt;
 import static com.mongodb.client.model.Filters.in;
 import static com.mongodb.client.model.Filters.lt;
@@ -54,11 +69,13 @@ import static com.mongodb.client.model.Filters.or;
 import static com.mongodb.client.model.Filters.regex;
 import static com.mongodb.client.model.Filters.size;
 import static com.mongodb.client.model.Filters.type;
+import static com.mongodb.client.model.Projections.computed;
 import static com.mongodb.client.model.Projections.exclude;
 import static com.mongodb.client.model.Projections.excludeId;
 import static com.mongodb.client.model.Projections.fields;
 import static com.mongodb.client.model.Projections.include;
 import static com.mongodb.client.model.Projections.slice;
+import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.Updates.combine;
 import static com.mongodb.client.model.Updates.currentDate;
 import static com.mongodb.client.model.Updates.set;
@@ -132,7 +149,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         collection.insertMany(asList(journal, mat, mousePad));
         // End Example 3
 
-        assertEquals(4, collection.count());
+        assertEquals(4, collection.countDocuments());
     }
 
     @Test
@@ -147,7 +164,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         ));
         // End Example 6
 
-        assertEquals(5, collection.count());
+        assertEquals(5, collection.countDocuments());
 
         // Start Example 7
         FindIterable<Document> findIterable = collection.find(new Document());
@@ -207,7 +224,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         ));
         // End Example 14
 
-        assertEquals(5, collection.count());
+        assertEquals(5, collection.countDocuments());
 
         // Start Example 15
         FindIterable<Document> findIterable = collection.find(eq("size", Document.parse("{ h: 14, w: 21, uom: 'cm' }")));
@@ -257,7 +274,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         ));
         //End Example 20
 
-        assertEquals(5, collection.count());
+        assertEquals(5, collection.countDocuments());
 
         //Start Example 21
         FindIterable<Document> findIterable = collection.find(eq("tags", asList("red", "blank")));
@@ -321,7 +338,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         ));
         //End Example 29
 
-        assertEquals(5, collection.count());
+        assertEquals(5, collection.countDocuments());
 
         //Start Example 30
         FindIterable<Document> findIterable = collection.find(eq("instock", Document.parse("{ warehouse: 'A', qty: 5 }")));
@@ -382,7 +399,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         ));
         //End Example 38
 
-        assertEquals(2, collection.count());
+        assertEquals(2, collection.countDocuments());
 
         //Start Example 39
         FindIterable<Document> findIterable = collection.find(eq("item", null));
@@ -418,7 +435,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         ));
         //End Example 42
 
-        assertEquals(5, collection.count());
+        assertEquals(5, collection.countDocuments());
 
         //Start Example 43
         FindIterable<Document> findIterable = collection.find(eq("status", "A"));
@@ -430,9 +447,9 @@ public final class DocumentationSamples extends DatabaseTestCase {
         findIterable = collection.find(eq("status", "A")).projection(include("item", "status"));
         //End Example 44
 
-        findIterable.forEach(new Block<Document>() {
+        findIterable.forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 assertEquals(new HashSet<String>(asList("_id", "item", "status")), document.keySet());
             }
         });
@@ -442,9 +459,9 @@ public final class DocumentationSamples extends DatabaseTestCase {
                 .projection(fields(include("item", "status"), excludeId()));
         //End Example 45
 
-        findIterable.forEach(new Block<Document>() {
+        findIterable.forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 assertEquals(new HashSet<String>(asList("item", "status")), document.keySet());
             }
         });
@@ -453,9 +470,9 @@ public final class DocumentationSamples extends DatabaseTestCase {
         findIterable = collection.find(eq("status", "A")).projection(exclude("item", "status"));
         //End Example 46
 
-        findIterable.forEach(new Block<Document>() {
+        findIterable.forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 assertEquals(new HashSet<String>(asList("_id", "size", "instock")), document.keySet());
             }
         });
@@ -464,9 +481,9 @@ public final class DocumentationSamples extends DatabaseTestCase {
         findIterable = collection.find(eq("status", "A")).projection(include("item", "status", "size.uom"));
         //End Example 47
 
-        findIterable.forEach(new Block<Document>() {
+        findIterable.forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 assertEquals(new HashSet<String>(asList("_id", "item", "status", "size")), document.keySet());
                 assertEquals(new HashSet<String>(singletonList("uom")), document.get("size", Document.class).keySet());
             }
@@ -476,9 +493,9 @@ public final class DocumentationSamples extends DatabaseTestCase {
         findIterable = collection.find(eq("status", "A")).projection(exclude("size.uom"));
         //End Example 48
 
-        findIterable.forEach(new Block<Document>() {
+        findIterable.forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 assertEquals(new HashSet<String>(asList("_id", "item", "instock", "status", "size")), document.keySet());
                 assertEquals(new HashSet<String>(asList("h", "w")), document.get("size", Document.class).keySet());
             }
@@ -488,9 +505,9 @@ public final class DocumentationSamples extends DatabaseTestCase {
         findIterable = collection.find(eq("status", "A")).projection(include("item", "status", "instock.qty"));
         //End Example 49
 
-        findIterable.forEach(new Block<Document>() {
+        findIterable.forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 assertEquals(new HashSet<String>(asList("_id", "item", "instock", "status")), document.keySet());
 
                 List<Document> instock = (List<Document>) document.get("instock");
@@ -505,9 +522,9 @@ public final class DocumentationSamples extends DatabaseTestCase {
                 .projection(fields(include("item", "status"), slice("instock", -1)));
         //End Example 50
 
-        findIterable.forEach(new Block<Document>() {
+        findIterable.forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 assertEquals(new HashSet<String>(asList("_id", "item", "instock", "status")), document.keySet());
 
                 List<Document> instock = (List<Document>) document.get("instock");
@@ -516,6 +533,76 @@ public final class DocumentationSamples extends DatabaseTestCase {
         });
     }
 
+    @Test
+    public void testAggregate() {
+
+        assumeTrue(serverVersionAtLeast(3, 6));
+
+        MongoCollection<Document> salesCollection = database.getCollection("sales");
+
+        // Start Aggregation Example 1
+        AggregateIterable<Document> aggregateIterable = salesCollection.aggregate(asList(
+                match(eq("items.fruit", "banana")),
+                sort(ascending("date"))
+        ));
+        // End Aggregation Example 1
+
+        aggregateIterable.into(new ArrayList<Document>());
+
+        // Start Aggregation Example 2
+        aggregateIterable = salesCollection.aggregate(asList(
+                unwind("$items"),
+                match(eq("items.fruit", "banana")),
+                group(new Document("day", new Document("$dayOfWeek", "$date")),
+                        sum("count", "$items.quantity")),
+                project(fields(
+                        computed("dayOfWeek", "$_id.day"),
+                        computed("numberSold", "$count"),
+                        excludeId())),
+                sort(Indexes.ascending("numberSold"))));
+        // End Aggregation Example 2
+
+        aggregateIterable.into(new ArrayList<Document>());
+
+        // Start Aggregation Example 3
+        aggregateIterable = salesCollection.aggregate(asList(
+                unwind("$items"),
+                group(new Document("day", new Document("$dayOfWeek", "$date")),
+                        sum("items_old", "$items.quantity"),
+                        sum("revenue", new Document("$multiply", asList("$items.quantity", "$items.price")))),
+                project(fields(
+                        computed("day", "$_id.day"),
+                        include("revenue", "items_sold"),
+                        computed("discount",
+                                new Document("$cond",
+                                        new Document("if", new Document("$lte", Arrays.<Object>asList("$revenue", 250)))
+                                                .append("then", 25)
+                                                .append("else", 0)))))));
+        // End Aggregation Example 3
+
+        aggregateIterable.into(new ArrayList<Document>());
+
+        MongoCollection<Document> airAlliancesCollection = database.getCollection("air_alliances");
+
+        // Start Aggregation Example 4
+        aggregateIterable = airAlliancesCollection.aggregate(asList(
+                lookup("air_airlines",
+                        singletonList(new Variable<String>("constituents", "$airlines")),
+                        singletonList(match(expr(new Document("$in", asList("$name", "$$constituents"))))),
+                        "airlines"),
+                project(fields(
+                        excludeId(),
+                        include("name"),
+                        computed("airlines",
+                                new Document("$filter",
+                                        new Document("input", "$airlines")
+                                                .append("as", "airline")
+                                                .append("cond", new Document("$eq", asList("$$airline.country", "Canada")))))))));
+
+        // End Aggregation Example 4
+
+        aggregateIterable.into(new ArrayList<Document>());
+    }
 
     @Test
     public void testUpdates() {
@@ -534,16 +621,16 @@ public final class DocumentationSamples extends DatabaseTestCase {
         ));
         //End Example 51
 
-        assertEquals(10, collection.count());
+        assertEquals(10, collection.countDocuments());
 
         //Start Example 52
         collection.updateOne(eq("item", "paper"),
                 combine(set("size.uom", "cm"), set("status", "P"), currentDate("lastModified")));
         //End Example 52
 
-        collection.find(eq("item", "paper")).forEach(new Block<Document>() {
+        collection.find(eq("item", "paper")).forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 assertEquals("cm", document.get("size", Document.class).getString("uom"));
                 assertEquals("P", document.getString("status"));
                 assertTrue(document.containsKey("lastModified"));
@@ -556,9 +643,9 @@ public final class DocumentationSamples extends DatabaseTestCase {
                 combine(set("size.uom", "in"), set("status", "P"), currentDate("lastModified")));
         //End Example 53
 
-        collection.find(lt("qty", 50)).forEach(new Block<Document>() {
+        collection.find(lt("qty", 50)).forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 assertEquals("in", document.get("size", Document.class).getString("uom"));
                 assertEquals("P", document.getString("status"));
                 assertTrue(document.containsKey("lastModified"));
@@ -570,9 +657,9 @@ public final class DocumentationSamples extends DatabaseTestCase {
                 Document.parse("{ item: 'paper', instock: [ { warehouse: 'A', qty: 60 }, { warehouse: 'B', qty: 40 } ] }"));
         //End Example 54
 
-        collection.find(eq("item", "paper")).projection(excludeId()).forEach(new Block<Document>() {
+        collection.find(eq("item", "paper")).projection(excludeId()).forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 assertEquals(Document.parse("{ item: 'paper', instock: [ { warehouse: 'A', qty: 60 }, { warehouse: 'B', qty: 40 } ] }"),
                         document);
             }
@@ -593,25 +680,25 @@ public final class DocumentationSamples extends DatabaseTestCase {
         ));
         //End Example 55
 
-        assertEquals(5, collection.count());
+        assertEquals(5, collection.countDocuments());
 
         //Start Example 57
         collection.deleteMany(eq("status", "A"));
         //End Example 57
 
-        assertEquals(2, collection.count());
+        assertEquals(2, collection.countDocuments());
 
         //Start Example 58
         collection.deleteOne(eq("status", "D"));
         //End Example 58
 
-        assertEquals(1, collection.count());
+        assertEquals(1, collection.countDocuments());
 
         //Start Example 56
         collection.deleteMany(new Document());
         //End Example 56
 
-        assertEquals(0, collection.count());
+        assertEquals(0, collection.countDocuments());
     }
 
     @Test
@@ -625,13 +712,13 @@ public final class DocumentationSamples extends DatabaseTestCase {
             @Override
             public void run() {
                 while (!stop.get()) {
-                    collection.insertMany(asList(new Document("_id", 1), new Document()));
+                    collection.insertMany(asList(new Document("username", "alice"), new Document()));
                     try {
                         Thread.sleep(10);
                     } catch (InterruptedException e) {
                         // ignore
                     }
-                    collection.deleteOne(new Document("_id", 1));
+                    collection.deleteOne(new Document("username", "alice"));
                 }
             }
         }).start();
@@ -660,8 +747,8 @@ public final class DocumentationSamples extends DatabaseTestCase {
         cursor.close();
 
         // Start Changestream Example 4
-        List<Bson> pipeline = singletonList(Aggregates.match(
-                or(Document.parse("{'fullDocument.username': 'alice'}"), in("operationType", singletonList("delete")))));
+        List<Bson> pipeline = asList(match(Document.parse("{'fullDocument.username': 'alice'}")),
+                addFields(new Field<String>("newField", "this is an added field!")));
         cursor = inventory.watch(pipeline).iterator();
         next = cursor.next();
         // End Changestream Example 4
@@ -669,6 +756,35 @@ public final class DocumentationSamples extends DatabaseTestCase {
         cursor.close();
 
         stop.set(true);
+    }
+
+    @Test
+    public void testRunCommand() {
+        // Start runCommand Example 1
+        database.runCommand(new Document("buildInfo", 1));
+        // End runCommand Example 1
+
+        database.getCollection("restaurants").drop();
+        database.createCollection("restaurants");
+
+        // Start runCommand Example 2
+        database.runCommand(new Document("collStats", "restaurants"));
+        // End runCommand Example 2
+    }
+
+    @Test
+    public void testCreateIndexes() {
+
+        assumeTrue(serverVersionAtLeast(3, 2));
+
+        // Start Index Example 1
+        collection.createIndex(Indexes.ascending("score"));
+        // End Index Example 1
+
+        // Start Index Example 2
+        collection.createIndex(Indexes.ascending("cuisine", "name"),
+                new IndexOptions().partialFilterExpression(Filters.gt("rating", 5)));
+        // End Index Example 2
     }
 
     @After

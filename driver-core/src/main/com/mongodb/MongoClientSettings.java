@@ -28,6 +28,8 @@ import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.event.CommandListener;
 import com.mongodb.lang.Nullable;
+import org.bson.UuidRepresentation;
+import org.bson.codecs.BsonCodecProvider;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.IterableCodecProvider;
@@ -65,11 +67,13 @@ public final class MongoClientSettings {
                     new MapCodecProvider(new DocumentToDBRefTransformer()),
                     new GeoJsonCodecProvider(),
                     new GridFSFileCodecProvider(),
-                    new Jsr310CodecProvider()));
+                    new Jsr310CodecProvider(),
+                    new BsonCodecProvider()));
 
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;
     private final boolean retryWrites;
+    private final boolean retryReads;
     private final ReadConcern readConcern;
     private final MongoCredential credential;
     private final StreamFactoryFactory streamFactoryFactory;
@@ -84,6 +88,9 @@ public final class MongoClientSettings {
     private final SslSettings sslSettings;
     private final String applicationName;
     private final List<MongoCompressor> compressorList;
+    private final UuidRepresentation uuidRepresentation;
+
+    private final AutoEncryptionSettings autoEncryptionSettings;
 
     /**
      * Gets the default codec registry.  It includes the following providers:
@@ -99,6 +106,7 @@ public final class MongoClientSettings {
      * <li>{@link com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider}</li>
      * <li>{@link com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider}</li>
      * <li>{@link org.bson.codecs.jsr310.Jsr310CodecProvider}</li>
+     * <li>{@link org.bson.codecs.BsonCodecProvider}</li>
      * </ul>
      *
      * @return the default codec registry
@@ -134,7 +142,8 @@ public final class MongoClientSettings {
     public static final class Builder {
         private ReadPreference readPreference = ReadPreference.primary();
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
-        private boolean retryWrites;
+        private boolean retryWrites = true;
+        private boolean retryReads = true;
         private ReadConcern readConcern = ReadConcern.DEFAULT;
         private CodecRegistry codecRegistry = MongoClientSettings.getDefaultCodecRegistry();
         private StreamFactoryFactory streamFactoryFactory;
@@ -148,6 +157,9 @@ public final class MongoClientSettings {
         private MongoCredential credential;
         private String applicationName;
         private List<MongoCompressor> compressorList = Collections.emptyList();
+        private UuidRepresentation uuidRepresentation = UuidRepresentation.UNSPECIFIED;
+
+        private AutoEncryptionSettings autoEncryptionSettings;
 
         private Builder() {
         }
@@ -161,9 +173,12 @@ public final class MongoClientSettings {
             readPreference = settings.getReadPreference();
             writeConcern = settings.getWriteConcern();
             retryWrites = settings.getRetryWrites();
+            retryReads = settings.getRetryReads();
             readConcern = settings.getReadConcern();
             credential = settings.getCredential();
+            uuidRepresentation = settings.getUuidRepresentation();
             streamFactoryFactory = settings.getStreamFactoryFactory();
+            autoEncryptionSettings = settings.getAutoEncryptionSettings();
             clusterSettingsBuilder.applySettings(settings.getClusterSettings());
             serverSettingsBuilder.applySettings(settings.getServerSettings());
             socketSettingsBuilder.applySettings(settings.getSocketSettings());
@@ -195,7 +210,13 @@ public final class MongoClientSettings {
             if (connectionString.getReadPreference() != null) {
                 readPreference = connectionString.getReadPreference();
             }
-            retryWrites = connectionString.getRetryWrites();
+            if (connectionString.getRetryWritesValue() != null) {
+                retryWrites = connectionString.getRetryWritesValue();
+            }
+            if (connectionString.getUuidRepresentation() != null) {
+                uuidRepresentation = connectionString.getUuidRepresentation();
+            }
+
             serverSettingsBuilder.applyConnectionString(connectionString);
             socketSettingsBuilder.applyConnectionString(connectionString);
             sslSettingsBuilder.applyConnectionString(connectionString);
@@ -292,6 +313,8 @@ public final class MongoClientSettings {
         /**
          * Sets whether writes should be retried if they fail due to a network error.
          *
+         * <p>Starting with the 3.11.0 release, the default value is true</p>
+         *
          * @param retryWrites sets if writes should be retried if they fail due to a network error.
          * @return this
          * @see #getRetryWrites()
@@ -299,6 +322,20 @@ public final class MongoClientSettings {
          */
         public Builder retryWrites(final boolean retryWrites) {
             this.retryWrites = retryWrites;
+            return this;
+        }
+
+        /**
+         * Sets whether reads should be retried if they fail due to a network error.
+         *
+         * @param retryReads sets if reads should be retried if they fail due to a network error.
+         * @return this
+         * @see #getRetryReads()
+         * @since 3.11
+         * @mongodb.server.release 3.6
+         */
+        public Builder retryReads(final boolean retryReads) {
+            this.retryReads = retryReads;
             return this;
         }
 
@@ -408,6 +445,34 @@ public final class MongoClientSettings {
         }
 
         /**
+         * Sets the UUID representation to use when encoding instances of {@link java.util.UUID} and when decoding BSON binary values with
+         * subtype of 3.
+         *
+         * <p>See {@link #getUuidRepresentation()} for recommendations on settings this value</p>
+         *
+         * @param uuidRepresentation the UUID representation, which may not be null
+         * @return this
+         * @since 3.12
+         */
+        public Builder uuidRepresentation(final UuidRepresentation uuidRepresentation) {
+            this.uuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
+            return this;
+        }
+
+        /**
+         * Sets the auto-encryption settings
+         *
+         * @param autoEncryptionSettings the auto-encryption settings
+         * @return this
+         * @since 3.11
+         * @see #getAutoEncryptionSettings()
+         */
+        public Builder autoEncryptionSettings(final AutoEncryptionSettings autoEncryptionSettings) {
+            this.autoEncryptionSettings = autoEncryptionSettings;
+            return this;
+        }
+
+        /**
          * Build an instance of {@code MongoClientSettings}.
          *
          * @return the settings from this builder
@@ -452,13 +517,26 @@ public final class MongoClientSettings {
     }
 
     /**
-     * Returns true if writes should be retried if they fail due to a network error.
+     * Returns true if writes should be retried if they fail due to a network error or other retryable error.
+     *
+     * <p>Starting with the 3.11.0 release, the default value is true</p>
      *
      * @return the retryWrites value
      * @mongodb.server.release 3.6
      */
     public boolean getRetryWrites() {
         return retryWrites;
+    }
+
+    /**
+     * Returns true if reads should be retried if they fail due to a network error or other retryable error. The default value is true.
+     *
+     * @return the retryReads value
+     * @since 3.11
+     * @mongodb.server.release 3.6
+     */
+    public boolean getRetryReads() {
+        return retryReads;
     }
 
     /**
@@ -530,6 +608,55 @@ public final class MongoClientSettings {
     }
 
     /**
+     * Gets the UUID representation to use when encoding instances of {@link java.util.UUID} and when decoding BSON binary values with
+     * subtype of 3.
+     *
+     * <p>The default is {@link UuidRepresentation#UNSPECIFIED}, If your application stores UUID values in MongoDB, you must set this
+     * value to the desired representation.  New applications should prefer {@link UuidRepresentation#STANDARD}, while existing Java
+     * applications should prefer {@link UuidRepresentation#JAVA_LEGACY}. Applications wishing to interoperate with existing Python or
+     * .NET applications should prefer {@link UuidRepresentation#PYTHON_LEGACY} or {@link UuidRepresentation#C_SHARP_LEGACY},
+     * respectively. Applications that do not store UUID values in MongoDB don't need to set this value.
+     * </p>
+     *
+     * @return the UUID representation, which may not be null
+     * @since 3.12
+     */
+    public UuidRepresentation getUuidRepresentation() {
+        return uuidRepresentation;
+    }
+
+    /**
+     * Gets the auto-encryption settings.
+     * <p>
+     * Client side encryption enables an application to specify what fields in a collection must be
+     * encrypted, and the driver automatically encrypts commands and decrypts results.
+     * </p>
+     * <p>
+     * Automatic encryption is an enterprise only feature that only applies to operations on a collection. Automatic encryption is not
+     * supported for operations on a database or view and will result in error. To bypass automatic encryption,
+     * set bypassAutoEncryption=true in ClientSideEncryptionOptions.
+     * </p>
+     * <p>
+     * Explicit encryption/decryption and automatic decryption is a community feature, enabled with the new
+     * {@code com.mongodb.client.vault .ClientEncryption} type. A MongoClient configured with bypassAutoEncryption=true will still
+     * automatically decrypt.
+     * </p>
+     * <p>
+     * Automatic encryption requires the authenticated user to have the listCollections privilege action.
+     * </p>
+     * <p>
+     * Note: support for client side encryption is in beta.  Backwards-breaking changes may be made before the final release.
+     * </p>
+     *
+     * @return the auto-encryption settings, which may be null
+     * @since 3.11
+     */
+    @Nullable
+    public AutoEncryptionSettings getAutoEncryptionSettings() {
+        return autoEncryptionSettings;
+    }
+
+    /**
      * Gets the cluster settings.
      *
      * @return the cluster settings
@@ -571,8 +698,7 @@ public final class MongoClientSettings {
 
     /**
      * Gets the settings for the connection provider in a settings object.  This settings object wraps the values for minConnectionPoolSize,
-     * maxConnectionPoolSize, maxWaitTime, maxConnectionIdleTime and maxConnectionLifeTime, and uses maxConnectionPoolSize and
-     * threadsAllowedToBlockForConnectionMultiplier to calculate maxWaitQueueSize.
+     * maxConnectionPoolSize, maxWaitTime, maxConnectionIdleTime and maxConnectionLifeTime.
      *
      * @return a ConnectionPoolSettings populated with the settings from this {@code MongoClientSettings} instance that relate to the
      * connection provider.
@@ -597,6 +723,7 @@ public final class MongoClientSettings {
         readPreference = builder.readPreference;
         writeConcern = builder.writeConcern;
         retryWrites = builder.retryWrites;
+        retryReads = builder.retryReads;
         readConcern = builder.readConcern;
         credential = builder.credential;
         streamFactoryFactory = builder.streamFactoryFactory;
@@ -609,6 +736,8 @@ public final class MongoClientSettings {
         connectionPoolSettings = builder.connectionPoolSettingsBuilder.build();
         sslSettings = builder.sslSettingsBuilder.build();
         compressorList = builder.compressorList;
+        uuidRepresentation = builder.uuidRepresentation;
+        autoEncryptionSettings = builder.autoEncryptionSettings;
 
         SocketSettings.Builder heartbeatSocketSettingsBuilder = SocketSettings.builder()
                 .readTimeout(socketSettings.getConnectTimeout(MILLISECONDS), MILLISECONDS)

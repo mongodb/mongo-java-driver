@@ -17,7 +17,6 @@
 package com.mongodb.internal.session;
 
 import com.mongodb.session.ClientSession;
-import com.mongodb.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 
@@ -78,5 +77,25 @@ public abstract class ClientSessionContext implements SessionContext {
     @Override
     public void advanceClusterTime(final BsonDocument clusterTime) {
         clientSession.advanceClusterTime(clusterTime);
+    }
+
+    @Override
+    public void setRecoveryToken(final BsonDocument recoveryToken) {
+        clientSession.setRecoveryToken(recoveryToken);
+    }
+
+    @Override
+    public void unpinServerAddress() {
+        clientSession.setPinnedServerAddress(null);
+    }
+
+    @Override
+    public void markSessionDirty() {
+        clientSession.getServerSession().markDirty();
+    }
+
+    @Override
+    public boolean isSessionMarkedDirty() {
+        return clientSession.getServerSession().isMarkedDirty();
     }
 }

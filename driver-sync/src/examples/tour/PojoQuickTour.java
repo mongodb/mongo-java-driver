@@ -16,7 +16,6 @@
 
 package tour;
 
-import com.mongodb.Block;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
@@ -28,6 +27,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gt;
@@ -39,7 +39,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 /**
- * The POJO QuickTour code example see: https://mongodb.github.io/mongo-java-driver/3.5/getting-started-pojo
+ * The POJO QuickTour code example
  */
 public class PojoQuickTour {
     /**
@@ -72,7 +72,11 @@ public class PojoQuickTour {
 
         // make a document and insert it
         Person ada = new Person("Ada Byron", 20, new Address("St James Square", "London", "W1"));
+        System.out.println("Original Person Model: " + ada);
         collection.insertOne(ada);
+
+        // Person will now have an ObjectId
+        System.out.println("Mutated Person Model: " + ada);
 
         // get it (since it's the only one in there since we dropped the rest earlier on)
         Person somebody = collection.find().first();
@@ -86,13 +90,13 @@ public class PojoQuickTour {
         );
 
         collection.insertMany(people);
-        System.out.println("total # of people " + collection.count());
+        System.out.println("total # of people " + collection.countDocuments());
 
         System.out.println("");
         // lets get all the documents in the collection and print them out
-        Block<Person> printBlock = new Block<Person>() {
+        Consumer<Person> printBlock = new Consumer<Person>() {
             @Override
-            public void apply(final Person person) {
+            public void accept(final Person person) {
                 System.out.println(person);
             }
         };

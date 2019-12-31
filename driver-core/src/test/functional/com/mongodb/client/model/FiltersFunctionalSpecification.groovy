@@ -94,7 +94,31 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(not(regex('y', 'a.*'))) == [b, c]
 
         when:
-        find(not(and(eq('x', 1), eq('x', 1)))) == [b, c]
+        def dbref = Document.parse('{$ref: "1", $id: "1"}')
+        def dbrefDoc = new Document('_id', 4).append('dbref', dbref)
+        getCollectionHelper().insertDocuments(dbrefDoc)
+
+        then:
+        find(not(eq('dbref', dbref))) == [a, b, c]
+
+        when:
+        getCollectionHelper().deleteOne(dbrefDoc)
+        dbref.put('$db', '1')
+        dbrefDoc.put('dbref', dbref)
+        getCollectionHelper().insertDocuments(dbrefDoc)
+
+        then:
+        find(not(eq('dbref', dbref))) == [a, b, c]
+
+        when:
+        def subDoc = Document.parse('{x: 1, b: 1}')
+        getCollectionHelper().insertDocuments(new Document('subDoc', subDoc))
+
+        then:
+        find(not(eq('subDoc', subDoc))) == [a, b, c, dbrefDoc]
+
+        when:
+        find(not(and(eq('x', 1), eq('x', 1))))
 
         then:
         thrown MongoQueryException
@@ -161,6 +185,13 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(and([and([eq('x', 3), eq('x', 3)]), eq('z', true)])) == [c]
         find(and([gt('x', 1), gt('y', 'a')])) == [b, c]
         find(and([lt('x', 4), lt('x', 3)])) == [a, b]
+    }
+
+    def 'explicit $and when using $not'() {
+        expect:
+        find(and([lt('x', 3), not(lt('x', 1))])) == [a, b]
+        find(and([lt('x', 5), gt('x', 0), not(gt('x', 2))])) == [a, b]
+        find(and([not(lt('x', 2)), lt('x', 4), not(gt('x', 2))])) == [b]
     }
 
     def 'should render $all'() {
@@ -263,7 +294,6 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
 
         then:
         find(text('GIANT')) == [textDocument]
-        find(text('GIANT', 'english')) == [textDocument]
         find(text('GIANT', new TextSearchOptions().language('english'))) == [textDocument]
     }
 

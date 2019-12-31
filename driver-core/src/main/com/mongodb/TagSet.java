@@ -20,6 +20,7 @@ import com.mongodb.annotations.Immutable;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -73,7 +74,14 @@ public final class TagSet implements Iterable<Tag> {
                 throw new IllegalArgumentException("Duplicate tag names not allowed in a tag set: " + tag.getName());
             }
         }
-        this.wrapped = Collections.unmodifiableList(new ArrayList<Tag>(tagList));
+        ArrayList<Tag> copy = new ArrayList<Tag>(tagList);
+        Collections.sort(copy, new Comparator<Tag>() {
+            @Override
+            public int compare(final Tag o1, final Tag o2) {
+                return o1.getName().compareTo(o2.getName());
+            }
+        });
+        this.wrapped = Collections.unmodifiableList(copy);
     }
 
     @Override
@@ -82,10 +90,10 @@ public final class TagSet implements Iterable<Tag> {
     }
 
     /**
-     * Returns <tt>true</tt> if this tag set contains all of the elements of the specified tag set.
+     * Returns {@code true} if this tag set contains all of the elements of the specified tag set.
      *
      * @param tagSet tag set to be checked for containment in this tag set
-     * @return <tt>true</tt> if this tag set contains all of the elements of the specified tag set
+     * @return {@code true} if this tag set contains all of the elements of the specified tag set
      */
     public boolean containsAll(final TagSet tagSet) {
         return wrapped.containsAll(tagSet.wrapped);

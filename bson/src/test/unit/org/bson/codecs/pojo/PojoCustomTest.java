@@ -26,27 +26,34 @@ import org.bson.codecs.LongCodec;
 import org.bson.codecs.MapCodec;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.pojo.entities.AbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.AsymmetricalCreatorModel;
 import org.bson.codecs.pojo.entities.AsymmetricalIgnoreModel;
 import org.bson.codecs.pojo.entities.AsymmetricalModel;
+import org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.ConcreteCollectionsModel;
+import org.bson.codecs.pojo.entities.ConcreteStandAloneAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.ConstructorNotPublicModel;
 import org.bson.codecs.pojo.entities.ConventionModel;
 import org.bson.codecs.pojo.entities.ConverterModel;
 import org.bson.codecs.pojo.entities.CustomPropertyCodecOptionalModel;
 import org.bson.codecs.pojo.entities.GenericTreeModel;
+import org.bson.codecs.pojo.entities.InterfaceBasedModel;
 import org.bson.codecs.pojo.entities.InvalidCollectionModel;
 import org.bson.codecs.pojo.entities.InvalidGetterAndSetterModel;
 import org.bson.codecs.pojo.entities.InvalidMapModel;
 import org.bson.codecs.pojo.entities.InvalidMapPropertyCodecProvider;
 import org.bson.codecs.pojo.entities.InvalidSetterArgsModel;
 import org.bson.codecs.pojo.entities.MapStringObjectModel;
+import org.bson.codecs.pojo.entities.NestedSimpleIdModel;
 import org.bson.codecs.pojo.entities.Optional;
 import org.bson.codecs.pojo.entities.OptionalPropertyCodecProvider;
 import org.bson.codecs.pojo.entities.PrimitivesModel;
 import org.bson.codecs.pojo.entities.PrivateSetterFieldModel;
 import org.bson.codecs.pojo.entities.SimpleEnum;
 import org.bson.codecs.pojo.entities.SimpleEnumModel;
+import org.bson.codecs.pojo.entities.SimpleIdImmutableModel;
+import org.bson.codecs.pojo.entities.SimpleIdModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.SimpleNestedPojoModel;
 import org.bson.codecs.pojo.entities.UpperBoundsModel;
@@ -74,6 +81,7 @@ import java.util.Map;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
@@ -81,6 +89,8 @@ import static org.bson.codecs.pojo.Conventions.DEFAULT_CONVENTIONS;
 import static org.bson.codecs.pojo.Conventions.NO_CONVENTIONS;
 import static org.bson.codecs.pojo.Conventions.SET_PRIVATE_FIELDS_CONVENTION;
 import static org.bson.codecs.pojo.Conventions.USE_GETTERS_FOR_SETTERS;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public final class PojoCustomTest extends PojoTestCase {
@@ -177,6 +187,58 @@ public final class PojoCustomTest extends PojoTestCase {
     }
 
     @Test
+    public void testIdGeneratorMutable() {
+        SimpleIdModel simpleIdModel = new SimpleIdModel(42, "myString");
+        assertNull(simpleIdModel.getId());
+        ClassModelBuilder<SimpleIdModel> builder = ClassModel.builder(SimpleIdModel.class).idGenerator(new ObjectIdGenerator());
+
+        roundTrip(getPojoCodecProviderBuilder(builder), simpleIdModel, "{'integerField': 42, 'stringField': 'myString'}");
+        assertNull(simpleIdModel.getId());
+
+        encodesTo(getPojoCodecProviderBuilder(builder), simpleIdModel,
+                "{'_id': {'$oid': '123412341234123412341234'}, 'integerField': 42, 'stringField': 'myString'}", true);
+        assertEquals(new ObjectId("123412341234123412341234"), simpleIdModel.getId());
+    }
+
+    @Test
+    public void testIdGeneratorImmutable() {
+        SimpleIdImmutableModel simpleIdModelNoId = new SimpleIdImmutableModel(42, "myString");
+        SimpleIdImmutableModel simpleIdModelWithId = new SimpleIdImmutableModel(new ObjectId("123412341234123412341234"), 42, "myString");
+        ClassModelBuilder<SimpleIdImmutableModel> builder = ClassModel.builder(SimpleIdImmutableModel.class)
+                .idGenerator(new ObjectIdGenerator());
+        String json = "{'_id': {'$oid': '123412341234123412341234'}, 'integerField': 42, 'stringField': 'myString'}";
+
+        encodesTo(getPojoCodecProviderBuilder(builder), simpleIdModelNoId, json, true);
+        decodesTo(getPojoCodecProviderBuilder(builder), json, simpleIdModelWithId);
+    }
+
+    @Test
+    public void testIdGeneratorNonObjectId() {
+        NestedSimpleIdModel nestedSimpleIdModel = new NestedSimpleIdModel(new SimpleIdModel(42, "myString"));
+        assertNull(nestedSimpleIdModel.getId());
+        ClassModelBuilder<NestedSimpleIdModel> builder = ClassModel.builder(NestedSimpleIdModel.class)
+                .idGenerator(new IdGenerator<String>() {
+                    @Override
+                    public String generate() {
+                        return "a";
+                    }
+
+                    @Override
+                    public Class<String> getType() {
+                        return String.class;
+                    }
+                });
+
+        roundTrip(getPojoCodecProviderBuilder(builder, ClassModel.builder(SimpleIdModel.class)), nestedSimpleIdModel,
+                "{'nestedSimpleIdModel': {'integerField': 42, 'stringField': 'myString'}}");
+        assertNull(nestedSimpleIdModel.getId());
+
+        encodesTo(getPojoCodecProviderBuilder(builder, ClassModel.builder(SimpleIdModel.class)), nestedSimpleIdModel,
+                "{'_id': 'a', 'nestedSimpleIdModel': {'integerField': 42, 'stringField': 'myString'}}", true);
+        assertEquals("a", nestedSimpleIdModel.getId());
+    }
+
+    @Test
     public void testSetPrivateFieldConvention() {
         PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(PrivateSetterFieldModel.class);
         ArrayList<Convention> conventions = new ArrayList<Convention>(DEFAULT_CONVENTIONS);
@@ -184,7 +246,7 @@ public final class PojoCustomTest extends PojoTestCase {
         builder.conventions(conventions);
 
         roundTrip(builder, new PrivateSetterFieldModel(1, "2", asList("a", "b")),
-                "{'integerField': 1, 'stringField': '2', listField: ['a', 'b']}");
+                "{'someMethod': 'some method', 'integerField': 1, 'stringField': '2', listField: ['a', 'b']}");
     }
 
     @Test
@@ -194,6 +256,23 @@ public final class PojoCustomTest extends PojoTestCase {
 
         roundTrip(builder, new CollectionsGetterMutableModel(asList(1, 2)), "{listField: [1, 2]}");
         roundTrip(builder, new MapGetterMutableModel(Collections.singletonMap("a", 3)), "{mapField: {a: 3}}");
+    }
+
+    @Test
+    public void testWithWildcardListField() {
+        ClassModel<InterfaceBasedModel> interfaceBasedModelClassModel =
+                ClassModel.builder(InterfaceBasedModel.class).enableDiscriminator(true).build();
+        PojoCodecProvider.Builder builder = PojoCodecProvider.builder().automatic(true)
+                .register(interfaceBasedModelClassModel)
+                .register(AbstractInterfaceModel.class, ConcreteStandAloneAbstractInterfaceModel.class,
+                        ConcreteAndNestedAbstractInterfaceModel.class);
+
+        roundTrip(builder,
+                new ConcreteAndNestedAbstractInterfaceModel("A",
+                        singletonList(new ConcreteStandAloneAbstractInterfaceModel("B"))),
+                "{'_t': 'org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel', 'name': 'A', "
+                        + "  'wildcardList': [{'_t': 'org.bson.codecs.pojo.entities.ConcreteStandAloneAbstractInterfaceModel', "
+                        + "'name': 'B'}]}");
     }
 
     @Test(expected = CodecConfigurationException.class)
@@ -411,8 +490,7 @@ public final class PojoCustomTest extends PojoTestCase {
         try {
             decodingShouldFail(getCodec(InvalidMapModel.class), "{'invalidMap': {'1': 1, '2': 2}}");
         } catch (CodecConfigurationException e) {
-            assertTrue(e.getMessage().startsWith("Could not create a PojoCodec for 'InvalidMapModel'."
-                    + " Property 'invalidMap' errored with:"));
+            assertTrue(e.getMessage().startsWith("Failed to decode 'InvalidMapModel'. Decoding 'invalidMap' errored with:"));
             throw e;
         }
     }
@@ -423,8 +501,7 @@ public final class PojoCustomTest extends PojoTestCase {
             encodesTo(getPojoCodecProviderBuilder(InvalidCollectionModel.class), new InvalidCollectionModel(asList(1, 2, 3)),
                 "{collectionField: [1, 2, 3]}");
         } catch (CodecConfigurationException e) {
-            assertTrue(e.getMessage().startsWith("Could not create a PojoCodec for 'InvalidCollectionModel'."
-                    + " Property 'collectionField' errored with:"));
+            assertTrue(e.getMessage().startsWith("Failed to encode 'InvalidCollectionModel'. Encoding 'collectionField' errored with:"));
             throw e;
         }
     }
@@ -475,7 +552,7 @@ public final class PojoCustomTest extends PojoTestCase {
     @Test(expected = CodecConfigurationException.class)
     public void testCannotEncodeUnspecializedClasses() {
         CodecRegistry registry = fromProviders(getPojoCodecProviderBuilder(GenericTreeModel.class).build());
-        encode(registry.get(GenericTreeModel.class), getGenericTreeModel());
+        encode(registry.get(GenericTreeModel.class), getGenericTreeModel(), false);
     }
 
     @Test(expected = CodecConfigurationException.class)
@@ -539,6 +616,18 @@ public final class PojoCustomTest extends PojoTestCase {
         @Override
         public Class<Object> getEncoderClass() {
             return Object.class;
+        }
+    }
+
+    class ObjectIdGenerator implements IdGenerator<ObjectId> {
+        @Override
+        public ObjectId generate() {
+            return new ObjectId("123412341234123412341234");
+        }
+
+        @Override
+        public Class<ObjectId> getType() {
+            return ObjectId.class;
         }
     }
 }

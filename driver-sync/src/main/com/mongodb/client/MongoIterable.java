@@ -16,7 +16,6 @@
 
 package com.mongodb.client;
 
-import com.mongodb.Block;
 import com.mongodb.Function;
 import com.mongodb.lang.Nullable;
 
@@ -34,6 +33,14 @@ public interface MongoIterable<TResult> extends Iterable<TResult> {
     MongoCursor<TResult> iterator();
 
     /**
+     * Returns a cursor used for iterating over elements of type {@code TResult}. The cursor is primarily used for change streams.
+     *
+     * @return a cursor
+     * @since 3.11
+     */
+    MongoCursor<TResult> cursor();
+
+    /**
      * Helper to return the first item in the iterator or null.
      *
      * @return T the first item or null.
@@ -49,15 +56,6 @@ public interface MongoIterable<TResult> extends Iterable<TResult> {
      * @return an iterable which maps T to U
      */
     <U> MongoIterable<U> map(Function<TResult, U> mapper);
-
-    /**
-     * Iterates over all documents in the view, applying the given block to each.
-     *
-     * <p>Similar to {@code map} but the function is fully encapsulated with no returned result.</p>
-     *
-     * @param block the block to apply to each document of type T.
-     */
-    void forEach(Block<? super TResult> block);
 
     /**
      * Iterates over all the documents, adding each to the given target.

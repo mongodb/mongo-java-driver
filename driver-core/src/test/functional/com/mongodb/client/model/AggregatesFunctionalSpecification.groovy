@@ -16,14 +16,14 @@
 
 package com.mongodb.client.model
 
+import com.mongodb.MongoCommandException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
+import org.bson.BsonDocument
 import org.bson.BsonString
 import org.bson.Document
 import org.bson.conversions.Bson
 import spock.lang.IgnoreIf
-
-import java.security.SecureRandom
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.model.Accumulators.addToSet
@@ -46,19 +46,19 @@ import static com.mongodb.client.model.Aggregates.group
 import static com.mongodb.client.model.Aggregates.limit
 import static com.mongodb.client.model.Aggregates.lookup
 import static com.mongodb.client.model.Aggregates.match
+import static com.mongodb.client.model.Aggregates.merge
 import static com.mongodb.client.model.Aggregates.out
 import static com.mongodb.client.model.Aggregates.project
 import static com.mongodb.client.model.Aggregates.replaceRoot
+import static com.mongodb.client.model.Aggregates.replaceWith
 import static com.mongodb.client.model.Aggregates.sample
 import static com.mongodb.client.model.Aggregates.skip
 import static com.mongodb.client.model.Aggregates.sort
 import static com.mongodb.client.model.Aggregates.sortByCount
 import static com.mongodb.client.model.Aggregates.unwind
-import static com.mongodb.client.model.Filters.and
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Filters.exists
 import static com.mongodb.client.model.Filters.expr
-import static com.mongodb.client.model.Filters.gte
 import static com.mongodb.client.model.Projections.computed
 import static com.mongodb.client.model.Projections.exclude
 import static com.mongodb.client.model.Projections.excludeId
@@ -198,6 +198,92 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         aggregate([out(outCollectionName)])
 
         then:
+        getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).find() == [a, b, c]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(4, 2) })
+    def '$merge'() {
+        given:
+        def outCollectionName = getCollectionName() + '.out'
+        getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName))
+                .createUniqueIndex(new Document('x', 1))
+        getCollectionHelper(new MongoNamespace('db1', outCollectionName)).create()
+
+        when:
+        aggregate([merge(outCollectionName)])
+
+        then:
+        getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).find() == [a, b, c]
+
+        when:
+        aggregate([merge(new MongoNamespace('db1', outCollectionName))])
+
+        then:
+        getCollectionHelper(new MongoNamespace('db1', outCollectionName)).find() == [a, b, c]
+
+        when:
+        aggregate([merge(outCollectionName, new MergeOptions()
+                .uniqueIdentifier('x')
+                .whenMatched(MergeOptions.WhenMatched.REPLACE)
+                .whenNotMatched(MergeOptions.WhenNotMatched.FAIL))])
+
+        then:
+        getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).find() == [a, b, c]
+
+        when:
+        aggregate([merge(outCollectionName, new MergeOptions()
+                .uniqueIdentifier('x')
+                .whenMatched(MergeOptions.WhenMatched.KEEP_EXISTING))])
+
+        then:
+        getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).find() == [a, b, c]
+
+        when:
+        aggregate([merge(outCollectionName, new MergeOptions()
+                .uniqueIdentifier('x')
+                .whenMatched(MergeOptions.WhenMatched.MERGE))])
+
+        then:
+        getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).find() == [a, b, c]
+
+        when:
+        aggregate([merge(outCollectionName, new MergeOptions()
+                .uniqueIdentifier('x')
+                .whenMatched(MergeOptions.WhenMatched.FAIL))])
+
+        then:
+        thrown(MongoCommandException)
+
+        when:
+        aggregate([merge(outCollectionName, new MergeOptions()
+                .uniqueIdentifier('x')
+                .whenMatched(MergeOptions.WhenMatched.REPLACE)
+                .whenNotMatched(MergeOptions.WhenNotMatched.DISCARD))])
+
+        then:
+        getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).find() == [a, b, c]
+
+        when:
+        aggregate([merge(outCollectionName, new MergeOptions()
+                .uniqueIdentifier('x')
+                .whenMatched(MergeOptions.WhenMatched.REPLACE)
+                .whenNotMatched(MergeOptions.WhenNotMatched.INSERT))])
+
+        then:
+        getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).find() == [a, b, c]
+
+        when:
+        aggregate([merge(outCollectionName, new MergeOptions()
+                .uniqueIdentifier('x')
+                .whenMatched(MergeOptions.WhenMatched.PIPELINE)
+                .variables([new Variable<Integer>('b', 1)])
+                .whenMatchedPipeline([addFields([new Field<String>('b', '$$b')])])
+                .whenNotMatched(MergeOptions.WhenNotMatched.FAIL))])
+
+        then:
+        a.append('b', 1)
+        b.append('b', 1)
+        c.append('b', 1)
         getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).find() == [a, b, c]
     }
 
@@ -637,11 +723,12 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
 
         helper.drop()
 
-        def random = new SecureRandom()
-        def total = random.nextInt(2000)
+        def total = 3
+        def documents = []
         (1..total).each {
-            helper.insertDocuments(new Document('price', random.nextDouble() * 5000D + 5.01D))
+            documents.add(new BsonDocument())
         }
+        helper.insertDocuments(documents)
 
         when:
         def results = helper.aggregate([count()])
@@ -674,7 +761,6 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper.drop()
 
         helper.insertDocuments(Document.parse('{_id: 0, x: 1}'))
-        helper.insertDocuments(Document.parse('{_id: 1, x: 2}'))
         helper.insertDocuments(Document.parse('{_id: 2, x: 1}'))
         helper.insertDocuments(Document.parse('{_id: 3, x: 0}'))
 
@@ -682,14 +768,12 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
 
         then:
         results == [Document.parse('{_id: 1, count: 2}'),
-                    Document.parse('{_id: 0, count: 1}'),
-                    Document.parse('{_id: 2, count: 1}')]
+                    Document.parse('{_id: 0, count: 1}')]
 
         when:
         helper.drop()
 
         helper.insertDocuments(Document.parse('{_id: 0, x: 1.4}'))
-        helper.insertDocuments(Document.parse('{_id: 1, x: 2.3}'))
         helper.insertDocuments(Document.parse('{_id: 2, x: 1.1}'))
         helper.insertDocuments(Document.parse('{_id: 3, x: 0.5}'))
 
@@ -697,8 +781,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
 
         then:
         results == [Document.parse('{_id: 1, count: 2}'),
-                    Document.parse('{_id: 0, count: 1}'),
-                    Document.parse('{_id: 2, count: 1}')]
+                    Document.parse('{_id: 0, count: 1}')]
 
         cleanup:
         helper?.drop()
@@ -804,6 +887,37 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper.drop()
         helper.insertDocuments(Document.parse('{_id: 0, a1: {b: 1, _id: 7}, a2: 2}'))
         results = helper.aggregate([replaceRoot('$a1')])
+
+        then:
+        results == [Document.parse('{b: 1, _id: 7}')]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(4, 2) })
+    def '$replaceWith'() {
+        given:
+        def helper = getCollectionHelper()
+        def results = []
+
+        when:
+        helper.drop()
+        helper.insertDocuments(Document.parse('{_id: 0, a1: {b: 1}, a2: 2}'))
+        results = helper.aggregate([replaceWith('$a1')])
+
+        then:
+        results == [Document.parse('{b: 1}')]
+
+        when:
+        helper.drop()
+        helper.insertDocuments(Document.parse('{_id: 0, a1: {b: {c1: 4, c2: 5}}, a2: 2}'))
+        results = helper.aggregate([replaceWith('$a1.b')])
+
+        then:
+        results == [Document.parse('{c1: 4, c2: 5}')]
+
+        when:
+        helper.drop()
+        helper.insertDocuments(Document.parse('{_id: 0, a1: {b: 1, _id: 7}, a2: 2}'))
+        results = helper.aggregate([replaceWith('$a1')])
 
         then:
         results == [Document.parse('{b: 1, _id: 7}')]

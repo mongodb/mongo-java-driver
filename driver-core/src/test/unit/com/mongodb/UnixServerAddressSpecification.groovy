@@ -16,10 +16,9 @@
 
 package com.mongodb
 
-import spock.lang.IgnoreIf
+
 import spock.lang.Specification
 
-@IgnoreIf({ javaVersion < 1.7 })
 class UnixServerAddressSpecification extends Specification {
 
     def 'should return the path for the host'() {

@@ -9,6 +9,7 @@
 
 # Build artifacts
 build
+target
 out
 mongo*.jar
 
@@ -33,8 +34,18 @@ codereview.rc
 
 # local settings
 **/gradle.properties
+local.properties
 
 # doc settings
 docs/reference/public
 docs/landing/public
 docs/hugo*
+
+# jenv
+.java-version
+
+# mongocryptd
+**/mongocryptd.pid
+
+# shell scripts
+*.sh

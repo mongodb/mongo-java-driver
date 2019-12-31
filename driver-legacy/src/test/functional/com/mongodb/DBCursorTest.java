@@ -30,17 +30,14 @@ import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
-import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
-import static org.junit.Assume.assumeTrue;
 
 public class DBCursorTest extends DatabaseTestCase {
     private static final int NUMBER_OF_DOCUMENTS = 10;
@@ -228,14 +225,6 @@ public class DBCursorTest extends DatabaseTestCase {
     }
 
     @Test
-    public void testGetServerAddress() {
-        DBCursor cursor = collection.find().limit(2);
-        assertEquals(null, cursor.getServerAddress());
-        cursor.hasNext();
-        assertTrue(getClient().getServerAddressList().contains(cursor.getServerAddress()));
-    }
-
-    @Test
     public void getNumSeen() {
         DBCursor cursor = collection.find();
         assertEquals(0, cursor.numSeen());
@@ -309,33 +298,31 @@ public class DBCursorTest extends DatabaseTestCase {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
-    public void testMaxScan() {
-        countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                     .addSpecial("$maxScan", 4), 4);
-        countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()).maxScan(4), 4);
-    }
-
-    @Test
     public void testMax() {
+        collection.createIndex(new BasicDBObject("x", 1));
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                     .addSpecial("$max", new BasicDBObject("x", 4)), 4);
+                      .max(new BasicDBObject("x", 4))
+                      .hint(new BasicDBObject("x", 1)), 4);
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                     .max(new BasicDBObject("x", 4)), 4);
+                     .max(new BasicDBObject("x", 4))
+                     .hint(new BasicDBObject("x", 1)), 4);
     }
 
     @Test
     public void testMin() {
+        collection.createIndex(new BasicDBObject("x", 1));
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                     .addSpecial("$min", new BasicDBObject("x", 4)), 6);
+                      .min(new BasicDBObject("x", 4))
+                      .hint(new BasicDBObject("x", 1)), 6);
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                     .min(new BasicDBObject("x", 4)), 6);
+                     .min(new BasicDBObject("x", 4))
+                     .hint(new BasicDBObject("x", 1)), 6);
     }
 
     @Test
     public void testReturnKey() {
         DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                          .addSpecial("$returnKey", true);
+                          .returnKey();
         try {
             while (cursor.hasNext()) {
                 Assert.assertNull(cursor.next()
@@ -350,45 +337,6 @@ public class DBCursorTest extends DatabaseTestCase {
             while (cursor.hasNext()) {
                 Assert.assertNull(cursor.next()
                                         .get("_id"));
-            }
-        } finally {
-            cursor.close();
-        }
-    }
-
-    @Test
-    public void testShowDiskLoc() {
-        String fieldName = serverVersionAtLeast(3, 2) ? "$recordId" : "$diskLoc";
-        DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                          .addSpecial("$showDiskLoc", true);
-        try {
-            while (cursor.hasNext()) {
-                DBObject next = cursor.next();
-                assertNotNull(next.toString(), next.get(fieldName));
-            }
-        } finally {
-            cursor.close();
-        }
-        cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                 .showDiskLoc();
-        try {
-            while (cursor.hasNext()) {
-                DBObject next = cursor.next();
-                assertNotNull(next.toString(), next.get(fieldName));
-            }
-        } finally {
-            cursor.close();
-        }
-    }
-
-    @Test
-    public void testSnapshot() {
-        assumeTrue(serverVersionLessThan("3.7"));
-        DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                          .addSpecial("$snapshot", true);
-        try {
-            while (cursor.hasNext()) {
-                cursor.next();
             }
         } finally {
             cursor.close();
@@ -540,12 +488,6 @@ public class DBCursorTest extends DatabaseTestCase {
         } finally {
             disableMaxTimeFailPoint();
         }
-    }
-
-    @Test(expected = UnsupportedOperationException.class)
-    public void exhaustOptionShouldThrowUnsupportedOperationException() {
-        DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
-        cursor.addOption(Bytes.QUERYOPTION_EXHAUST);
     }
 
     @Test

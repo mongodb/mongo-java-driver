@@ -16,10 +16,6 @@
 
 package com.mongodb
 
-import com.mongodb.bulk.DeleteRequest
-import com.mongodb.bulk.IndexRequest
-import com.mongodb.bulk.InsertRequest
-import com.mongodb.bulk.UpdateRequest
 import com.mongodb.client.internal.TestOperationExecutor
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CollationAlternate
@@ -32,40 +28,47 @@ import com.mongodb.client.model.DBCollectionFindAndModifyOptions
 import com.mongodb.client.model.DBCollectionFindOptions
 import com.mongodb.client.model.DBCollectionRemoveOptions
 import com.mongodb.client.model.DBCollectionUpdateOptions
-import com.mongodb.operation.AggregateOperation
-import com.mongodb.operation.AggregateToCollectionOperation
-import com.mongodb.operation.BatchCursor
-import com.mongodb.operation.CommandReadOperation
-import com.mongodb.operation.CountOperation
-import com.mongodb.operation.CreateIndexesOperation
-import com.mongodb.operation.DeleteOperation
-import com.mongodb.operation.DistinctOperation
-import com.mongodb.operation.FindAndDeleteOperation
-import com.mongodb.operation.FindAndReplaceOperation
-import com.mongodb.operation.FindAndUpdateOperation
-import com.mongodb.operation.FindOperation
-import com.mongodb.operation.GroupOperation
-import com.mongodb.operation.MapReduceBatchCursor
-import com.mongodb.operation.MapReduceStatistics
-import com.mongodb.operation.MapReduceToCollectionOperation
-import com.mongodb.operation.MapReduceWithInlineResultsOperation
-import com.mongodb.operation.MixedBulkWriteOperation
-import com.mongodb.operation.ParallelCollectionScanOperation
-import com.mongodb.operation.UpdateOperation
+import com.mongodb.internal.bulk.DeleteRequest
+import com.mongodb.internal.bulk.IndexRequest
+import com.mongodb.internal.bulk.InsertRequest
+import com.mongodb.internal.bulk.UpdateRequest
+import com.mongodb.internal.operation.AggregateOperation
+import com.mongodb.internal.operation.AggregateToCollectionOperation
+import com.mongodb.internal.operation.BatchCursor
+import com.mongodb.internal.operation.CommandReadOperation
+import com.mongodb.internal.operation.CountOperation
+import com.mongodb.internal.operation.CreateIndexesOperation
+import com.mongodb.internal.operation.DeleteOperation
+import com.mongodb.internal.operation.DistinctOperation
+import com.mongodb.internal.operation.FindAndDeleteOperation
+import com.mongodb.internal.operation.FindAndReplaceOperation
+import com.mongodb.internal.operation.FindAndUpdateOperation
+import com.mongodb.internal.operation.FindOperation
+import com.mongodb.internal.operation.InsertOperation
+import com.mongodb.internal.operation.MapReduceBatchCursor
+import com.mongodb.internal.operation.MapReduceStatistics
+import com.mongodb.internal.operation.MapReduceToCollectionOperation
+import com.mongodb.internal.operation.MapReduceWithInlineResultsOperation
+import com.mongodb.internal.operation.MixedBulkWriteOperation
+import com.mongodb.internal.operation.UpdateOperation
+import org.bson.BsonBinary
 import org.bson.BsonDocument
 import org.bson.BsonDocumentWrapper
 import org.bson.BsonInt32
 import org.bson.BsonJavaScript
 import org.bson.BsonString
+import org.bson.UuidRepresentation
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.BsonValueCodec
+import org.bson.codecs.UuidCodec
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.CustomMatchers.isTheSameAs
 import static Fixture.getMongoClient
+import static com.mongodb.CustomMatchers.isTheSameAs
 import static java.util.Arrays.asList
+import static org.bson.codecs.configuration.CodecRegistries.fromCodecs
 import static spock.util.matcher.HamcrestSupport.expect
 
 class DBCollectionSpecification extends Specification {
@@ -80,6 +83,27 @@ class DBCollectionSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+    }
+
+    def 'should use MongoClient CodecRegistry'() {
+        given:
+        def mongoClient = Stub(MongoClient) {
+            getCodecRegistry() >> fromCodecs(new UuidCodec(UuidRepresentation.STANDARD))
+            getReadConcern() >> ReadConcern.DEFAULT
+            getWriteConcern() >> WriteConcern.ACKNOWLEDGED
+            getMongoClientOptions() >> MongoClientOptions.builder().build()
+        }
+        def executor = new TestOperationExecutor([WriteConcernResult.unacknowledged()])
+        def db = new DB(mongoClient, 'myDatabase', executor)
+        def collection = db.getCollection('test')
+        def uuid = UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10')
+
+        when:
+        collection.insert(new BasicDBObject('_id', uuid))
+        def operation = executor.writeOperation as InsertOperation
+
+        then:
+        operation.insertRequests[0].document.getBinary('_id') == new BsonBinary(uuid, UuidRepresentation.STANDARD)
     }
 
     def 'should get and set read concern'() {
@@ -269,7 +293,7 @@ class DBCollectionSpecification extends Specification {
         then:
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
                 .filter(new BsonDocument())
-                .modifiers(new BsonDocument()))
+                .retryReads(true))
 
         when: // Inherits from DB
         db.setReadConcern(ReadConcern.MAJORITY)
@@ -278,7 +302,7 @@ class DBCollectionSpecification extends Specification {
         then:
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
                 .filter(new BsonDocument())
-                .modifiers(new BsonDocument()))
+                .retryReads(true))
 
         when:
         collection.setReadConcern(ReadConcern.LOCAL)
@@ -287,8 +311,8 @@ class DBCollectionSpecification extends Specification {
         then:
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
                 .filter(new BsonDocument())
-                .modifiers(new BsonDocument())
-                .collation(collation))
+                .collation(collation)
+                .retryReads(true))
     }
 
     def 'findOne should create the correct FindOperation'() {
@@ -309,8 +333,8 @@ class DBCollectionSpecification extends Specification {
         then:
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
                 .filter(new BsonDocument())
-                .modifiers(new BsonDocument())
-                .limit(-1))
+                .limit(-1)
+                .retryReads(true))
 
         when: // Inherits from DB
         db.setReadConcern(ReadConcern.MAJORITY)
@@ -319,8 +343,8 @@ class DBCollectionSpecification extends Specification {
         then:
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
                 .filter(new BsonDocument())
-                .modifiers(new BsonDocument())
-                .limit(-1))
+                .limit(-1)
+                .retryReads(true))
 
         when:
         collection.setReadConcern(ReadConcern.LOCAL)
@@ -329,9 +353,9 @@ class DBCollectionSpecification extends Specification {
         then:
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
                 .filter(new BsonDocument())
-                .modifiers(new BsonDocument())
                 .limit(-1)
-                .collation(collation))
+                .collation(collation)
+                .retryReads(true))
     }
 
     def 'findAndRemove should create the correct FindAndDeleteOperation'() {
@@ -340,7 +364,7 @@ class DBCollectionSpecification extends Specification {
         def cannedResult = BasicDBObject.parse('{value: {}}')
         def executor = new TestOperationExecutor([cannedResult, cannedResult, cannedResult])
         def db = new DB(getMongoClient(), 'myDatabase', executor)
-        def retryWrites = db.getMongo().getMongoClientOptions().getRetryWrites()
+        def retryWrites = db.getMongoClient().getMongoClientOptions().getRetryWrites()
         def collection = db.getCollection('test')
 
         when:
@@ -360,7 +384,7 @@ class DBCollectionSpecification extends Specification {
         def cannedResult = BasicDBObject.parse('{value: {}}')
         def executor = new TestOperationExecutor([cannedResult, cannedResult, cannedResult])
         def db = new DB(getMongoClient(), 'myDatabase', executor)
-        def retryWrites = db.getMongo().getMongoClientOptions().getRetryWrites()
+        def retryWrites = db.getMongoClient().getMongoClientOptions().getRetryWrites()
         def collection = db.getCollection('test')
 
         when:
@@ -396,7 +420,7 @@ class DBCollectionSpecification extends Specification {
         def cannedResult = BasicDBObject.parse('{value: {}}')
         def executor = new TestOperationExecutor([cannedResult, cannedResult, cannedResult])
         def db = new DB(getMongoClient(), 'myDatabase', executor)
-        def retryWrites = db.getMongo().getMongoClientOptions().getRetryWrites()
+        def retryWrites = db.getMongoClient().getMongoClientOptions().getRetryWrites()
         def collection = db.getCollection('test')
 
         when:
@@ -428,7 +452,8 @@ class DBCollectionSpecification extends Specification {
         collection.count()
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace()).filter(new BsonDocument()))
+        expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace())
+                .filter(new BsonDocument()).retryReads(true))
 
         when: // Inherits from DB
         db.setReadConcern(ReadConcern.MAJORITY)
@@ -437,7 +462,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace())
-                .filter(new BsonDocument()))
+                .filter(new BsonDocument()).retryReads(true))
         executor.getReadConcern() == ReadConcern.MAJORITY
 
         when:
@@ -446,7 +471,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace())
-                .filter(new BsonDocument())
+                .filter(new BsonDocument()).retryReads(true)
                 .collation(collation))
         executor.getReadConcern() == ReadConcern.LOCAL
     }
@@ -473,7 +498,7 @@ class DBCollectionSpecification extends Specification {
         then:
         distinctFieldValues == [1, 2]
         expect executor.getReadOperation(), isTheSameAs(new DistinctOperation(collection.getNamespace(), 'field1', new BsonValueCodec())
-                                                                .filter(new BsonDocument()))
+                                                                .filter(new BsonDocument()).retryReads(true))
         executor.getReadConcern() == ReadConcern.DEFAULT
 
         when: // Inherits from DB
@@ -482,7 +507,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new DistinctOperation(collection.getNamespace(), 'field1', new BsonValueCodec())
-                .filter(new BsonDocument()))
+                .filter(new BsonDocument()).retryReads(true))
         executor.getReadConcern() == ReadConcern.MAJORITY
 
         when:
@@ -491,39 +516,8 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new DistinctOperation(collection.getNamespace(), 'field1', new BsonValueCodec())
-                .collation(collation))
+                .collation(collation).retryReads(true))
         executor.getReadConcern() == ReadConcern.LOCAL
-    }
-
-    def 'group should create the correct GroupOperation'() {
-        given:
-        def cursor = Stub(BatchCursor) {
-            next() >> []
-            hasNext() >> false
-        }
-        def executor = new TestOperationExecutor([cursor, cursor, cursor])
-        def key = BasicDBObject.parse('{name: 1}')
-        def reduce = 'function ( curr, result ) { }'
-        def db = new DB(getMongoClient(), 'myDatabase', executor)
-        def collection = db.getCollection('test')
-
-        when:
-        collection.group(key, new BasicDBObject(), new BasicDBObject(), reduce)
-
-        then:
-        expect executor.getReadOperation(), isTheSameAs(new GroupOperation<DBObject>(collection.getNamespace(), new BsonJavaScript(reduce),
-                new BsonDocument(), collection.getDefaultDBObjectCodec()).key(BsonDocument.parse('{name: 1}'))
-                .filter(new BsonDocument()))
-
-        when: // Can set collation
-        def groupCommand = new GroupCommand(collection, key, new BasicDBObject(), new BasicDBObject(), reduce, null, collation)
-        collection.group(groupCommand)
-
-        then:
-        expect executor.getReadOperation(), isTheSameAs(new GroupOperation<DBObject>(collection.getNamespace(), new BsonJavaScript(reduce),
-                new BsonDocument(), collection.getDefaultDBObjectCodec()).key(BsonDocument.parse('{name: 1}')).collation(collation)
-                .filter(new BsonDocument())
-        )
     }
 
     def 'mapReduce should create the correct MapReduceInlineResultsOperation'() {
@@ -634,20 +628,20 @@ class DBCollectionSpecification extends Specification {
         def bsonPipeline = [BsonDocument.parse('{$match: {}}')]
 
         when:
-        collection.aggregate(pipeline)
+        collection.aggregate(pipeline, AggregationOptions.builder().build())
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
-                collection.getDefaultDBObjectCodec()).useCursor(true))
+                collection.getDefaultDBObjectCodec()).retryReads(true))
         executor.getReadConcern() == ReadConcern.DEFAULT
 
         when: // Inherits from DB
         db.setReadConcern(ReadConcern.MAJORITY)
-        collection.aggregate(pipeline)
+        collection.aggregate(pipeline, AggregationOptions.builder().build())
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
-                collection.getDefaultDBObjectCodec()).useCursor(true))
+                collection.getDefaultDBObjectCodec()).retryReads(true))
         executor.getReadConcern() == ReadConcern.MAJORITY
 
         when:
@@ -656,7 +650,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
-                collection.getDefaultDBObjectCodec()).useCursor(true).collation(collation))
+                collection.getDefaultDBObjectCodec()).collation(collation).retryReads(true))
         executor.getReadConcern() == ReadConcern.LOCAL
     }
 
@@ -669,25 +663,25 @@ class DBCollectionSpecification extends Specification {
         def bsonPipeline = [BsonDocument.parse('{$match: {}}'), BsonDocument.parse('{$out: "myColl"}')]
 
         when:
-        collection.aggregate(pipeline)
+        collection.aggregate(pipeline, AggregationOptions.builder().build())
 
         then:
         expect executor.getWriteOperation(), isTheSameAs(new AggregateToCollectionOperation(collection.getNamespace(),
-                bsonPipeline, collection.getWriteConcern()))
+                bsonPipeline, collection.getReadConcern(), collection.getWriteConcern()))
 
         when: // Inherits from DB
-        collection.aggregate(pipeline)
+        collection.aggregate(pipeline, AggregationOptions.builder().build())
 
         then:
         expect executor.getWriteOperation(), isTheSameAs(new AggregateToCollectionOperation(collection.getNamespace(),
-                bsonPipeline, collection.getWriteConcern()))
+                bsonPipeline, collection.getReadConcern(), collection.getWriteConcern()))
 
         when:
         collection.aggregate(pipeline, AggregationOptions.builder().collation(collation).build())
 
         then:
         expect executor.getWriteOperation(), isTheSameAs(new AggregateToCollectionOperation(collection.getNamespace(),
-                bsonPipeline, collection.getWriteConcern()).collation(collation))
+                bsonPipeline, collection.getReadConcern(), collection.getWriteConcern()).collation(collation))
     }
 
     def 'explainAggregate should create the correct AggregateOperation'() {
@@ -705,7 +699,8 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
-                collection.getDefaultDBObjectCodec()).collation(collation).asExplainableOperation(ExplainVerbosity.QUERY_PLANNER))
+                collection.getDefaultDBObjectCodec()).retryReads(true).collation(collation)
+                .asExplainableOperation(ExplainVerbosity.QUERY_PLANNER))
 
         when: // Inherits from DB
         db.setReadConcern(ReadConcern.MAJORITY)
@@ -713,7 +708,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
-                collection.getDefaultDBObjectCodec()).collation(collation)
+                collection.getDefaultDBObjectCodec()).retryReads(true).collation(collation)
                 .asExplainableOperation(ExplainVerbosity.QUERY_PLANNER))
 
         when:
@@ -722,28 +717,8 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
-                collection.getDefaultDBObjectCodec()).useCursor(false).collation(collation)
+                collection.getDefaultDBObjectCodec()).retryReads(true).collation(collation)
                 .asExplainableOperation(ExplainVerbosity.QUERY_PLANNER))
-    }
-
-    def 'parallel should create the correct ParallelCollectionScanOperation'() {
-        given:
-        def executor = new TestOperationExecutor([[Stub(BatchCursor) {
-            hasNext() >> {
-                false
-            }
-        }]])
-        def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
-        collection.setReadConcern(ReadConcern.MAJORITY)
-
-        when:
-        def cursors = collection.parallelScan(ParallelScanOptions.builder().build())
-
-        then:
-        cursors.size() == 1
-        expect executor.getReadOperation(), isTheSameAs(new ParallelCollectionScanOperation(collection.getNamespace(), 1,
-                                                                                            collection.getObjectCodec()))
-        executor.getReadConcern() == ReadConcern.MAJORITY
     }
 
     def 'update should create the correct UpdateOperation'() {
@@ -751,14 +726,14 @@ class DBCollectionSpecification extends Specification {
         def result = Stub(WriteConcernResult)
         def executor = new TestOperationExecutor([result, result, result])
         def db = new DB(getMongoClient(), 'myDatabase', executor)
-        def retryWrites = db.getMongo().getMongoClientOptions().getRetryWrites()
+        def retryWrites = db.getMongoClient().getMongoClientOptions().getRetryWrites()
         def collection = db.getCollection('test')
         def query = '{a: 1}'
         def update = '{$set: {a: 2}}'
 
         when:
         def updateRequest = new UpdateRequest(BsonDocument.parse(query), BsonDocument.parse(update),
-                com.mongodb.bulk.WriteRequest.Type.UPDATE).multi(false)
+                com.mongodb.internal.bulk.WriteRequest.Type.UPDATE).multi(false)
         collection.update(BasicDBObject.parse(query), BasicDBObject.parse(update))
 
         then:
@@ -795,7 +770,7 @@ class DBCollectionSpecification extends Specification {
         def result = Stub(WriteConcernResult)
         def executor = new TestOperationExecutor([result, result, result])
         def db = new DB(getMongoClient(), 'myDatabase', executor)
-        def retryWrites = db.getMongo().getMongoClientOptions().getRetryWrites()
+        def retryWrites = db.getMongoClient().getMongoClientOptions().getRetryWrites()
         def collection = db.getCollection('test')
         def query = '{a: 1}'
 
@@ -836,7 +811,7 @@ class DBCollectionSpecification extends Specification {
         def insertedDocument = new BasicDBObject('_id', 1)
         def insertRequest = new InsertRequest(new BsonDocumentWrapper(insertedDocument, collection.getDefaultDBObjectCodec()))
         def updateRequest = new UpdateRequest(BsonDocument.parse(query), BsonDocument.parse(update),
-                com.mongodb.bulk.WriteRequest.Type.UPDATE).multi(false).collation(collation)
+                com.mongodb.internal.bulk.WriteRequest.Type.UPDATE).multi(false).collation(collation)
                 .arrayFilters(bsonDocumentWrapperArrayFilters)
         def deleteRequest = new DeleteRequest(BsonDocument.parse(query)).multi(false).collation(frenchCollation)
         def writeRequests = asList(insertRequest, updateRequest, deleteRequest)

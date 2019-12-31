@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,6 @@
 package com.mongodb.client;
 
 import com.mongodb.ClusterFixture;
-import com.mongodb.ReadPreference;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandStartedEvent;
@@ -42,12 +41,13 @@ import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
-import static com.mongodb.ClusterFixture.isSharded;
+import static com.mongodb.client.CrudTestHelper.replaceTypeAssertionWithActual;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -73,20 +73,24 @@ public final class CommandMonitoringTestHelper {
             String eventType = curExpectedEventDocument.keySet().iterator().next();
             BsonDocument eventDescriptionDocument = curExpectedEventDocument.getDocument(eventType);
             CommandEvent commandEvent;
-            String commandName = eventDescriptionDocument.getString("command_name").getValue();
+            String commandName = eventDescriptionDocument.getString("command_name", new BsonString("")).getValue();
             if (eventType.equals("command_started_event")) {
                 BsonDocument commandDocument = eventDescriptionDocument.getDocument("command");
                 String actualDatabaseName = databaseName;
-                if (commandName.equals("commitTransaction") || commandName.equals("abortTransaction")) {
+                // If the spec test supplies a $db field in the command, then use that database.
+                if (commandDocument.containsKey("$db")) {
+                    actualDatabaseName = commandDocument.getString("$db").getValue();
+                }
+                else if (commandName.equals("commitTransaction") || commandName.equals("abortTransaction")) {
                     actualDatabaseName = "admin";
+                } else if (commandName.equals("")) {
+                    commandName = commandDocument.keySet().iterator().next();
                 }
                 // Not clear whether these global fields should be included, but also not clear how to efficiently exclude them
                 if (ClusterFixture.serverVersionAtLeast(3, 6)) {
                     commandDocument.put("$db", new BsonString(actualDatabaseName));
                     if (operation != null && operation.containsKey("read_preference")) {
                         commandDocument.put("$readPreference", operation.getDocument("read_preference"));
-                    } else if (!isDiscoverableReplicaSet() && !isSharded() && !isWriteCommand(commandName)) {
-                        commandDocument.put("$readPreference", ReadPreference.primaryPreferred().toDocument());
                     }
                 }
                 commandEvent = new CommandStartedEvent(1, null, actualDatabaseName, commandName,
@@ -114,31 +118,31 @@ public final class CommandMonitoringTestHelper {
     }
 
     public static void assertEventsEquality(final List<CommandEvent> expectedEvents, final List<CommandEvent> events,
-                                            @Nullable final List<BsonDocument> expectedSessionIdentifiers) {
+                                            @Nullable final Map<String, BsonDocument> lsidMap) {
         assertEquals(expectedEvents.size(), events.size());
-        if (expectedSessionIdentifiers != null) {
-            assertEquals(events.size(), expectedSessionIdentifiers.size());
-        }
 
         for (int i = 0; i < events.size(); i++) {
             CommandEvent actual = events.get(i);
             CommandEvent expected = expectedEvents.get(i);
-            BsonDocument sessionIdentifier = null;
-            if (expectedSessionIdentifiers != null) {
-                sessionIdentifier = expectedSessionIdentifiers.get(i);
-            }
 
             assertEquals(expected.getClass(), actual.getClass());
             assertEquals(expected.getCommandName().toLowerCase(), actual.getCommandName().toLowerCase());
 
             if (actual.getClass().equals(CommandStartedEvent.class)) {
-                CommandStartedEvent actualCommandStartedEvent = massageActualCommandStartedEvent((CommandStartedEvent) actual,
-                        sessionIdentifier);
                 CommandStartedEvent expectedCommandStartedEvent = massageExpectedCommandStartedEvent((CommandStartedEvent) expected,
-                        sessionIdentifier);
+                        (CommandStartedEvent) actual, lsidMap);
+                CommandStartedEvent actualCommandStartedEvent = massageActualCommandStartedEvent((CommandStartedEvent) actual,
+                        lsidMap, expectedCommandStartedEvent);
 
                 assertEquals(expectedCommandStartedEvent.getDatabaseName(), actualCommandStartedEvent.getDatabaseName());
                 assertEquals(expectedCommandStartedEvent.getCommand(), actualCommandStartedEvent.getCommand());
+                if (((CommandStartedEvent) expected).getCommand().containsKey("recoveryToken")) {
+                    if (((CommandStartedEvent) expected).getCommand().get("recoveryToken").isNull()) {
+                        assertFalse(((CommandStartedEvent) actual).getCommand().containsKey("recoveryToken"));
+                    } else {
+                        assertTrue(((CommandStartedEvent) actual).getCommand().containsKey("recoveryToken"));
+                    }
+                }
 
             } else if (actual.getClass().equals(CommandSucceededEvent.class)) {
                 CommandSucceededEvent actualCommandSucceededEvent = massageActualCommandSucceededEvent((CommandSucceededEvent) actual);
@@ -193,9 +197,12 @@ public final class CommandMonitoringTestHelper {
             if (response.containsKey("writeErrors")) {
                 for (BsonValue bsonValue : response.getArray("writeErrors")) {
                     BsonDocument cur = bsonValue.asDocument();
-                    cur.put("code", new BsonInt32(42));
-                    cur.put("errmsg", new BsonString(""));
-                    cur.remove("codeName");
+                    BsonDocument newWriteErrorDocument =
+                            new BsonDocument().append("index", cur.get("index"))
+                                    .append("code", new BsonInt32(42))
+                                    .append("errmsg", new BsonString(""));
+                    cur.clear();
+                    cur.putAll(newWriteErrorDocument);
                 }
             }
             if (actual.getCommandName().equals("update")) {
@@ -207,32 +214,48 @@ public final class CommandMonitoringTestHelper {
     }
 
     private static CommandStartedEvent massageActualCommandStartedEvent(final CommandStartedEvent event,
-                                                                        @Nullable final BsonDocument sessionIdentifier) {
+                                                                        @Nullable final Map<String, BsonDocument> lsidMap,
+                                                                        final CommandStartedEvent expectedCommandStartedEvent) {
         BsonDocument command = getWritableCloneOfCommand(event.getCommand());
 
         massageCommand(event, command);
 
-        if (sessionIdentifier == null) {
-            command.remove("lsid");
-        }
         if (command.containsKey("readConcern") && (command.getDocument("readConcern").containsKey("afterClusterTime"))) {
             command.getDocument("readConcern").put("afterClusterTime", new BsonInt32(42));
         }
+        // Tests expect maxTimeMS to be int32, but Java API requires maxTime to be a long.  This massage seems preferable to casting
+        if (command.containsKey("maxTimeMS")) {
+            command.put("maxTimeMS", new BsonInt32(command.getNumber("maxTimeMS").intValue()));
+        }
+        massageActualCommand(command, expectedCommandStartedEvent.getCommand());
 
         return new CommandStartedEvent(event.getRequestId(), event.getConnectionDescription(), event.getDatabaseName(),
                 event.getCommandName(), command);
     }
 
+    private static void massageActualCommand(final BsonDocument command, final BsonDocument expectedCommand) {
+        String[] keySet = command.keySet().toArray(new String[command.keySet().size()]);
+        for (String key : keySet) {
+            if (!expectedCommand.containsKey(key)) {
+                command.remove(key);
+            } else if (command.isDocument(key) && expectedCommand.isDocument(key)) {
+                massageActualCommand(command.getDocument(key), expectedCommand.getDocument(key));
+            }
+        }
+
+    }
+
     private static CommandStartedEvent massageExpectedCommandStartedEvent(final CommandStartedEvent event,
-                                                                          @Nullable final BsonDocument sessionIdentifier) {
+                                                                          final CommandStartedEvent actualEvent,
+                                                                          @Nullable final Map<String, BsonDocument> lsidMap) {
         BsonDocument command = getWritableCloneOfCommand(event.getCommand());
 
         massageCommand(event, command);
 
-        if (sessionIdentifier == null) {
+        if (lsidMap == null) {
             command.remove("lsid");
-        } else {
-            command.put("lsid", sessionIdentifier);
+        } else if (command.containsKey("lsid")) {
+            command.put("lsid", lsidMap.get(command.getString("lsid").getValue()));
         }
 
         if (command.containsKey("txnNumber") && command.isNull("txnNumber")) {
@@ -247,6 +270,9 @@ public final class CommandMonitoringTestHelper {
         if (command.containsKey("autocommit") && command.isNull("autocommit")) {
             command.remove("autocommit");
         }
+        if (command.containsKey("maxTimeMS") && command.isNull("maxTimeMS")) {
+            command.remove("maxTimeMS");
+        }
         if (command.containsKey("writeConcern") && command.isNull("writeConcern")) {
             command.remove("writeConcern");
         }
@@ -255,6 +281,20 @@ public final class CommandMonitoringTestHelper {
                 command.remove("readConcern");
             }
         }
+        if (command.containsKey("recoveryToken")) {
+            command.remove("recoveryToken");
+        }
+        if (command.containsKey("query")) {
+            command.remove("query");
+        }
+        if (command.containsKey("filter") && command.getDocument("filter").isEmpty()) {
+            command.remove("filter");
+        }
+        if (command.containsKey("mapReduce")) {
+            command.remove("mapReduce");
+        }
+
+        replaceTypeAssertionWithActual(command, actualEvent.getCommand());
 
         return new CommandStartedEvent(event.getRequestId(), event.getConnectionDescription(), event.getDatabaseName(),
                 event.getCommandName(), command);

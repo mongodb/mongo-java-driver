@@ -18,28 +18,25 @@ package com.mongodb.management;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ConnectionPoolSettings;
-import com.mongodb.event.ConnectionAddedEvent;
 import com.mongodb.event.ConnectionCheckedInEvent;
 import com.mongodb.event.ConnectionCheckedOutEvent;
-import com.mongodb.event.ConnectionPoolListenerAdapter;
-import com.mongodb.event.ConnectionPoolOpenedEvent;
-import com.mongodb.event.ConnectionPoolWaitQueueEnteredEvent;
-import com.mongodb.event.ConnectionPoolWaitQueueExitedEvent;
-import com.mongodb.event.ConnectionRemovedEvent;
+import com.mongodb.event.ConnectionClosedEvent;
+import com.mongodb.event.ConnectionCreatedEvent;
+import com.mongodb.event.ConnectionPoolCreatedEvent;
+import com.mongodb.event.ConnectionPoolListener;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * An MBean implementation for connection pool statistics.
  */
-final class ConnectionPoolStatistics extends ConnectionPoolListenerAdapter implements ConnectionPoolStatisticsMBean {
+final class ConnectionPoolStatistics implements ConnectionPoolListener, ConnectionPoolStatisticsMBean {
     private final ServerAddress serverAddress;
     private final ConnectionPoolSettings settings;
     private final AtomicInteger size = new AtomicInteger();
     private final AtomicInteger checkedOutCount = new AtomicInteger();
-    private final AtomicInteger waitQueueSize = new AtomicInteger();
 
-    ConnectionPoolStatistics(final ConnectionPoolOpenedEvent event) {
+    ConnectionPoolStatistics(final ConnectionPoolCreatedEvent event) {
         serverAddress = event.getServerId().getAddress();
         settings = event.getSettings();
     }
@@ -75,11 +72,6 @@ final class ConnectionPoolStatistics extends ConnectionPoolListenerAdapter imple
     }
 
     @Override
-    public int getWaitQueueSize() {
-        return waitQueueSize.get();
-    }
-
-    @Override
     public void connectionCheckedOut(final ConnectionCheckedOutEvent event) {
         checkedOutCount.incrementAndGet();
     }
@@ -90,22 +82,13 @@ final class ConnectionPoolStatistics extends ConnectionPoolListenerAdapter imple
     }
 
     @Override
-    public void connectionAdded(final ConnectionAddedEvent event) {
+    public void connectionCreated(final ConnectionCreatedEvent event) {
         size.incrementAndGet();
     }
 
     @Override
-    public void connectionRemoved(final ConnectionRemovedEvent event) {
+    public void connectionClosed(final ConnectionClosedEvent event) {
         size.decrementAndGet();
     }
 
-    @Override
-    public void waitQueueEntered(final ConnectionPoolWaitQueueEnteredEvent event) {
-        waitQueueSize.incrementAndGet();
-    }
-
-    @Override
-    public void waitQueueExited(final ConnectionPoolWaitQueueExitedEvent event) {
-        waitQueueSize.decrementAndGet();
-    }
 }

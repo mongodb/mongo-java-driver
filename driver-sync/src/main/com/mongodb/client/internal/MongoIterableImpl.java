@@ -23,9 +23,9 @@ import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.internal.operation.BatchCursor;
+import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.lang.Nullable;
-import com.mongodb.operation.BatchCursor;
-import com.mongodb.operation.ReadOperation;
 
 import java.util.Collection;
 
@@ -41,14 +41,16 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
     private final ReadConcern readConcern;
     private final OperationExecutor executor;
     private final ReadPreference readPreference;
+    private final boolean retryReads;
     private Integer batchSize;
 
     public MongoIterableImpl(@Nullable final ClientSession clientSession, final OperationExecutor executor, final ReadConcern readConcern,
-                             final ReadPreference readPreference) {
+                             final ReadPreference readPreference, final boolean retryReads) {
         this.clientSession = clientSession;
         this.executor = notNull("executor", executor);
         this.readConcern = notNull("readConcern", readConcern);
         this.readPreference = notNull("readPreference", readPreference);
+        this.retryReads = notNull("retryReads", retryReads);
     }
 
     public abstract ReadOperation<BatchCursor<TResult>> asReadOperation();
@@ -70,6 +72,10 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
         return readConcern;
     }
 
+    protected boolean getRetryReads() {
+        return retryReads;
+    }
+
     @Nullable
     public Integer getBatchSize() {
         return batchSize;
@@ -84,6 +90,11 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
     @Override
     public MongoCursor<TResult> iterator() {
         return new MongoBatchCursorAdapter<TResult>(execute());
+    }
+
+    @Override
+    public MongoCursor<TResult> cursor() {
+        return iterator();
     }
 
     @Nullable
@@ -105,8 +116,8 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
         return new MappingIterable<TResult, U>(this, mapper);
     }
 
-    @Override
-    public void forEach(final Block<? super TResult> block) {
+    @SuppressWarnings("overloads")
+    private void forEach(final Block<? super TResult> block) {
         MongoCursor<TResult> cursor = iterator();
         try {
             while (cursor.hasNext()) {

@@ -1,5 +1,6 @@
 /*
  * Copyright 2008-present MongoDB, Inc.
+ * Copyright (c) 2008-2014 Atlassian Pty Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +17,7 @@
 
 package com.mongodb.assertions;
 
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 
 /**
  * <p>Design by contract assertions.</p> <p>This class is not part of the public API and may be removed or changed at any time.</p>

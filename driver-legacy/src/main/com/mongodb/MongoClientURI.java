@@ -89,8 +89,14 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * <p>Connection Configuration:</p>
  * <ul>
- * <li>{@code ssl=true|false}: Whether to connect using SSL.</li>
- * <li>{@code sslInvalidHostNameAllowed=true|false}: Whether to allow invalid host names for SSL connections.</li>
+ * <li>{@code ssl=true|false}: Whether to connect using TLS.</li>
+ * <li>{@code tls=true|false}: Whether to connect using TLS. Supersedes the ssl option</li>
+ * <li>{@code tlsInsecure=true|false}: If connecting with TLS, this option enables insecure TLS connections. Currently this has the
+ * same effect of setting tlsAllowInvalidHostnames to true. Other mechanism for relaxing TLS security constraints must be handled in
+ * the application by customizing the {@link javax.net.ssl.SSLContext}</li>
+ * <li>{@code sslInvalidHostNameAllowed=true|false}: Whether to allow invalid host names for TLS connections.</li>
+ * <li>{@code tlsAllowInvalidHostnames=true|false}: Whether to allow invalid host names for TLS connections. Supersedes the
+ * sslInvalidHostNameAllowed option</li>
  * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li>
  * <li>{@code socketTimeoutMS=ms}: How long a send or receive on a socket can take before timing out.</li>
  * <li>{@code maxIdleTimeMS=ms}: Maximum idle time of a pooled connection. A connection that exceeds this limit will be closed</li>
@@ -100,11 +106,6 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <p>Connection pool configuration:</p>
  * <ul>
  * <li>{@code maxPoolSize=n}: The maximum number of connections in the connection pool.</li>
- * <li>{@code waitQueueMultiple=n} : this multiplier, multiplied with the maxPoolSize setting, gives the maximum number of
- * threads that may be waiting for a connection to become available from the pool.  All further threads will get an
- * exception right away.</li>
- * <li>{@code waitQueueTimeoutMS=ms}: The maximum wait time in milliseconds that a thread may wait for a connection to
- * become available.</li>
  * </ul>
  *
  * <p>Write concern configuration:</p>
@@ -136,6 +137,8 @@ import static com.mongodb.assertions.Assertions.notNull;
  *      </ul>
  *  </li>
  *  <li>{@code retryWrites=true|false}. If true the driver will retry supported write operations if they fail due to a network error.
+ *  Defaults to false.</li>
+ *  <li>{@code retryReads=true|false}. If true the driver will retry supported read operations if they fail due to a network error.
  *  Defaults to false.</li>
  * </ul>
  *
@@ -195,13 +198,20 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <p>Compressor configuration:</p>
  * <ul>
  * <li>{@code compressors=string}: A comma-separated list of compressors to request from the server.  The supported compressors
- * currently are 'zlib' and 'snappy'.</li>
+ * currently are 'zlib', 'snappy' and 'zstd'.</li>
  * <li>{@code zlibCompressionLevel=integer}: Integer value from -1 to 9 representing the zlib compression level. Lower values will make
  * compression faster, while higher values will make compression better.</li>
  * </ul>
- *
- * <p>Note: This class is a replacement for {@code MongoURI}, to be used with {@code MongoClient}.  The main difference in
- * behavior is that the default write concern is {@code WriteConcern.ACKNOWLEDGED}.</p>
+ * <p>General configuration:</p>
+ * <ul>
+ * <li>{@code retryWrites=true|false}. If true the driver will retry supported write operations if they fail due to a network error.
+ *  Defaults to true.</li>
+ * <li>{@code retryReads=true|false}. If true the driver will retry supported read operations if they fail due to a network error.
+ *  Defaults to true.</li>
+ * <li>{@code uuidRepresentation=unspecified|standard|javaLegacy|csharpLegacy|pythonLegacy}.  See
+ * {@link MongoClientOptions#getUuidRepresentation()} for documentation of semantics of this parameter.  Defaults to "javaLegacy", but
+ * will change to "unspecified" in the next major release.</li>
+ * </ul>
  *
  * @mongodb.driver.manual reference/connection-string Connection String URI Format
  * @see MongoClientOptions for the default values for all options
@@ -212,7 +222,7 @@ public class MongoClientURI {
     private final MongoClientOptions.Builder builder;
 
     /**
-     * Creates a MongoURI from the given string.
+     * Creates a MongoClientURI from the given string.
      *
      * @param uri the URI
      */
@@ -221,8 +231,8 @@ public class MongoClientURI {
     }
 
     /**
-     * Creates a MongoURI from the given URI string, and MongoClientOptions.Builder.  The builder can be configured with default options,
-     * which may be overridden by options specified in the URI string.
+     * Creates a MongoClientURI from the given URI string, and MongoClientOptions.Builder.  The builder can be configured with default
+     * options, which may be overridden by options specified in the URI string.
      *
      * <p>
      * The {@code MongoClientURI} takes ownership of the {@code MongoClientOptions.Builder} instance that is passed to this constructor,
@@ -236,6 +246,10 @@ public class MongoClientURI {
     public MongoClientURI(final String uri, final MongoClientOptions.Builder builder) {
         this.builder = notNull("builder", builder);
         proxied = new ConnectionString(uri);
+    }
+
+    ConnectionString getProxied() {
+        return proxied;
     }
 
     // ---------------------------------
@@ -327,9 +341,13 @@ public class MongoClientURI {
         if (writeConcern != null) {
             builder.writeConcern(writeConcern);
         }
-        if (proxied.getRetryWrites()) {
-            builder.retryWrites(proxied.getRetryWrites());
+        if (proxied.getRetryWritesValue() != null) {
+            builder.retryWrites(proxied.getRetryWritesValue());
         }
+        if (proxied.getRetryReads() != null) {
+            builder.retryReads(proxied.getRetryReads());
+        }
+
         Integer maxConnectionPoolSize = proxied.getMaxConnectionPoolSize();
         if (maxConnectionPoolSize != null) {
             builder.connectionsPerHost(maxConnectionPoolSize);
@@ -341,10 +359,6 @@ public class MongoClientURI {
         Integer maxWaitTime = proxied.getMaxWaitTime();
         if (maxWaitTime != null) {
             builder.maxWaitTime(maxWaitTime);
-        }
-        Integer threadsAllowedToBlockForConnectionMultiplier = proxied.getThreadsAllowedToBlockForConnectionMultiplier();
-        if (threadsAllowedToBlockForConnectionMultiplier != null) {
-            builder.threadsAllowedToBlockForConnectionMultiplier(threadsAllowedToBlockForConnectionMultiplier);
         }
         Integer maxConnectionIdleTime = proxied.getMaxConnectionIdleTime();
         if (maxConnectionIdleTime != null) {
@@ -390,8 +404,9 @@ public class MongoClientURI {
         if (applicationName != null) {
             builder.applicationName(applicationName);
         }
-        builder.compressorList(proxied.getCompressorList());
-
+        if (!proxied.getCompressorList().isEmpty()) {
+            builder.compressorList(proxied.getCompressorList());
+        }
         return builder.build();
     }
 

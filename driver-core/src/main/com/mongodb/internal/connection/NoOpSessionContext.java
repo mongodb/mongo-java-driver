@@ -17,7 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.ReadConcern;
-import com.mongodb.session.SessionContext;
+import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 
@@ -65,7 +65,7 @@ public class NoOpSessionContext implements SessionContext {
 
     @Override
     public boolean notifyMessageSent() {
-        throw new UnsupportedOperationException();
+        return false;
     }
 
     @Override
@@ -94,5 +94,25 @@ public class NoOpSessionContext implements SessionContext {
     @Override
     public ReadConcern getReadConcern() {
         return ReadConcern.DEFAULT;
+    }
+
+    @Override
+    public void setRecoveryToken(final BsonDocument recoveryToken) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void unpinServerAddress() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void markSessionDirty() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isSessionMarkedDirty() {
+        return false;
     }
 }

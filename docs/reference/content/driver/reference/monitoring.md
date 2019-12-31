@@ -4,7 +4,7 @@ title = "Monitoring"
 [menu.main]
   parent = "Sync Reference"
  identifier = "Sync Monitoring"
-  weight = 100
+  weight = 20
   pre = "<i class='fa'></i>"
 +++
 
@@ -30,20 +30,17 @@ application has multiple `MongoClient` instances connected to the same MongoDB s
 - `minSize`: the minimum allowed size of the pool, including idle and in-use members
 - `maxSize`: the maximum allowed size of the pool, including idle and in-use members
 - `size`: the current size of the pool, including idle and and in-use members
-- `waitQueueSize`: the current size of the wait queue for a connection from this pool
 - `checkedOutCount`: the current count of connections that are currently in use
 
 
 JMX connection pool monitoring is disabled by default. To enable it add a `com.mongodb.management.JMXConnectionPoolListener` instance via 
-`MongoClientOptions`:
+`MongoClientSettings`:
 
 ```java
-MongoClientOptions options =
-        MongoClientOptions.builder()
-                .addConnectionPoolListener(new JMXConnectionPoolListener())
-                .build();
-
-
+MongoClientSettings settings =
+        MongoClientSettings.builder()
+        .applyToConnectionPoolSettings(builder -> builder.addConnectionPoolListener(new JMXConnectionPoolListener()))
+        .build();
 ```
 
 # Command Monitoring
@@ -97,7 +94,7 @@ public class TestCommandListener implements CommandListener {
 ```
 
 
-and an instance of `MongoClientOptions` configured with an instance of `TestCommandListener`:
+and an instance of `MongoClientSettings` configured with an instance of `TestCommandListener`:
 
 ```java
 MongoClientSettings settings = MongoClientSettings.builder()
@@ -174,7 +171,7 @@ public class TestClusterListener implements ClusterListener {
 }
 ```
 
-and an instance of `MongoClientOptions` configured with an instance of `TestClusterListener`:
+and an instance of `MongoClientSettings` configured with an instance of `TestClusterListener`:
 
 ```java
 List<ServerAddress> seedList = ...
@@ -225,16 +222,6 @@ public class TestConnectionPoolListener implements ConnectionPoolListener {
     }
 
     @Override
-    public void waitQueueEntered(final ConnectionPoolWaitQueueEnteredEvent event) {
-        System.out.println(event);
-    }
-
-    @Override
-    public void waitQueueExited(final ConnectionPoolWaitQueueExitedEvent event) {
-        System.out.println(event);
-    }
-
-    @Override
     public void connectionAdded(final ConnectionAddedEvent event) {
         System.out.println(event);
     }
@@ -246,7 +233,7 @@ public class TestConnectionPoolListener implements ConnectionPoolListener {
 }
 ```
 
-and an instance of `MongoClientOptions` configured with an instance of `TestConnectionPoolListener`:
+and an instance of `MongoClientSettings` configured with an instance of `TestConnectionPoolListener`:
 
 ```java
 List<ServerAddress> seedList = ...

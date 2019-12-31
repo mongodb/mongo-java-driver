@@ -1,4 +1,18 @@
 {
+  "runOn": [
+    {
+      "minServerVersion": "4.0",
+      "topology": [
+        "replicaset"
+      ]
+    },
+    {
+      "minServerVersion": "4.1.8",
+      "topology": [
+        "sharded"
+      ]
+    }
+  ],
   "database_name": "transaction-tests",
   "collection_name": "test",
   "data": [],
@@ -8,17 +22,16 @@
       "operations": [
         {
           "name": "startTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         },
         {
           "name": "insertOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "document": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "insertedId": 1
@@ -26,11 +39,12 @@
         },
         {
           "name": "deleteOne",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "filter": {
               "_id": 1
-            },
-            "session": "session0"
+            }
           },
           "result": {
             "deletedCount": 1
@@ -38,7 +52,9 @@
         },
         {
           "name": "bulkWrite",
+          "object": "collection",
           "arguments": {
+            "session": "session0",
             "requests": [
               {
                 "name": "insertOne",
@@ -178,11 +194,11 @@
                   }
                 }
               }
-            ],
-            "session": "session0"
+            ]
           },
           "result": {
             "deletedCount": 4,
+            "insertedCount": 6,
             "insertedIds": {
               "0": 1,
               "3": 3,
@@ -201,9 +217,7 @@
         },
         {
           "name": "commitTransaction",
-          "arguments": {
-            "session": "session0"
-          }
+          "object": "session0"
         }
       ],
       "expectations": [
@@ -290,9 +304,7 @@
                     "$set": {
                       "x": 1
                     }
-                  },
-                  "multi": false,
-                  "upsert": false
+                  }
                 },
                 {
                   "q": {
@@ -303,7 +315,6 @@
                       "x": 2
                     }
                   },
-                  "multi": false,
                   "upsert": true
                 }
               ],
@@ -365,9 +376,7 @@
                   },
                   "u": {
                     "y": 1
-                  },
-                  "multi": false,
-                  "upsert": false
+                  }
                 },
                 {
                   "q": {
@@ -375,9 +384,7 @@
                   },
                   "u": {
                     "y": 2
-                  },
-                  "multi": false,
-                  "upsert": false
+                  }
                 }
               ],
               "ordered": true,
@@ -440,8 +447,7 @@
                       "z": 1
                     }
                   },
-                  "multi": true,
-                  "upsert": false
+                  "multi": true
                 }
               ],
               "ordered": true,

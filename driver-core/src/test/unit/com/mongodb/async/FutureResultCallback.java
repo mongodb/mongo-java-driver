@@ -18,12 +18,11 @@ package com.mongodb.async;
 
 import com.mongodb.MongoException;
 import com.mongodb.MongoTimeoutException;
+import com.mongodb.internal.async.SingleResultCallback;
 
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * A SingleResultCallback Future implementation.
@@ -59,22 +58,28 @@ public class FutureResultCallback<T> implements SingleResultCallback<T>, Future<
     }
 
     @Override
-    public T get() throws InterruptedException {
-        latch.await();
-        if (result.hasError()) {
-            throw MongoException.fromThrowable(result.getError());
-        } else {
-            return result.getResult();
-        }
+    public T get() {
+        return get(5, TimeUnit.MINUTES);
     }
 
     @Override
-    public T get(final long timeout, final TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-        if (!latch.await(timeout, unit)) {
-            throw new MongoTimeoutException("Callback timed out");
+    public T get(final long timeout, final TimeUnit unit) {
+        try {
+            if (!latch.await(timeout, unit)) {
+                throw new MongoTimeoutException("Callback timed out");
+            }
+        } catch (InterruptedException e) {
+            throw new MongoException("Latch interrupted");
         }
+
         if (result.hasError()) {
-            throw (RuntimeException) result.getError();
+            if (result.getError() instanceof RuntimeException) {
+                throw (RuntimeException) result.getError();
+            } else if (result.getError() instanceof Error) {
+                throw (Error) result.getError();
+            } else {
+                throw new RuntimeException("Wrapping unexpected Throwable", result.getError());
+            }
         } else {
             return result.getResult();
         }

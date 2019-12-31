@@ -27,7 +27,7 @@ public final class Loggers {
     /**
      * The prefix for all logger names.
      */
-    public static final String PREFIX = "org.bson";
+    private static final String PREFIX = "org.bson";
 
     private static final boolean USE_SLF4J = shouldUseSLF4J();
 
@@ -49,7 +49,7 @@ public final class Loggers {
         if (USE_SLF4J) {
             return new SLF4JLogger(name);
         } else {
-            return new JULLogger(name);
+            return new NoOpLogger(name);
         }
     }
 
@@ -58,6 +58,8 @@ public final class Loggers {
             Class.forName("org.slf4j.Logger");
             return true;
         } catch (ClassNotFoundException e) {
+            java.util.logging.Logger.getLogger("org.bson")
+                    .warning(String.format("SLF4J not found on the classpath. Logging is disabled for the '%s' component", PREFIX));
             return false;
         }
     }

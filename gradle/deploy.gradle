@@ -14,57 +14,65 @@
  * limitations under the License.
  */
 
-/**
- * Configures the nexus plugin - see: https://github.com/bmuschko/gradle-nexus-plugin
- *
- * Ensure you have configured ~/.gradle/gradle.properties for both the nexus and signing plugins
- */
-configure(subprojects - [project(':util'), project(':driver-legacy')]) {
-    apply plugin: 'com.bmuschko.nexus'
+def deployedProjects = subprojects.findAll { !['util'].contains(it.name) }
+configure(deployedProjects) {
 
-    modifyPom {
-        project {
+    def isScala = project.name.contains('scala')
+    def hasAllScalaVersions = project.hasProperty('allScalaVersions')
+    def isInvalidScalaProject = false // isScala && !hasAllScalaVersions // TODO JAVA-3564
 
-            url 'https://github.com/mongodb/mongo-java-driver'
+    task publishSnapshots {
+        group = 'publishing'
+        description = 'Publishes snapshots to Sonatype'
 
-            scm {
-                url 'https://github.com/mongodb/mongo-java-driver'
-                connection 'scm:https://github.com/mongodb/mongo-java-driver.git'
-                developerConnection 'scm:git@github.com:mongodb/mongo-java-driver.git'
-            }
-
-            licenses {
-                license {
-                    name 'The Apache Software License, Version 2.0'
-                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    distribution 'repo'
+        if ( version.endsWith('-SNAPSHOT')) {
+            if (isInvalidScalaProject) {
+                doFirst {
+                    def cause = """
+                    | Not publishing all Scala versions:
+                    | =================================
+                    |
+                    | You must set the -PallScalaVersions flag when publishing
+                    |""".stripMargin()
+                        throw new GradleException(cause)
                 }
-            }
-
-            developers {
-                developer {
-                    name 'Various'
-                    organization = 'MongoDB'
-                }
+            } else {
+                dependsOn tasks.withType(PublishToMavenRepository)
             }
         }
     }
 
-    modifyPom { pom ->
-        pom.dependencies.findAll {
-            dep -> ['io.netty', 'org.slf4j', 'org.xerial.snappy', 'com.github.jnr'].contains(dep.groupId)
-        }.each {
-            it.optional = true
-        }
-        // no need to publish test dependencies
-        pom.dependencies.removeAll { it.scope == "test" }
-    }
+    task publishArchives {
+        group = 'publishing'
+        description = 'Publishes a release and uploads to Sonatype / Maven Central'
 
-    task uploadSnapshotArchives(dependsOn: uploadArchives) {
-        if (!version.endsWith("-SNAPSHOT")) {
-            enabled = false;
-            dependsOn = [];
+        def gitVersionMatch = project.gitVersion == version
+
+        doFirst { 
+            if (!gitVersionMatch) {
+                def cause = """
+                | Version mismatch:
+                | =================
+                |
+                | $version != $gitVersion 
+                |
+                | The project version does not match the git tag.
+                |""".stripMargin()
+                throw new GradleException(cause)
+            } else if (isInvalidScalaProject) {
+                def cause = """
+                    | Not publishing all Scala versions:
+                    | =================================
+                    |
+                    | You must set the -PallScalaVersions flag when publishing
+                    |""".stripMargin()
+                throw new GradleException(cause)
+            } else {
+                println("Publishing: ${project.name} : ${project.gitVersion}")
+            }
+        }
+        if (gitVersionMatch && !isInvalidScalaProject) {
+            dependsOn tasks.withType(PublishToMavenRepository)
         }
     }
-
 }
