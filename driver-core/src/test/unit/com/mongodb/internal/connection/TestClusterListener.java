@@ -61,4 +61,8 @@ class TestClusterListener implements ClusterListener {
     public List<ClusterDescriptionChangedEvent> getClusterDescriptionChangedEvents() {
         return clusterDescriptionChangedEvents;
     }
+
+    public void clearClusterDescriptionChangedEvents() {
+        clusterDescriptionChangedEvents.clear();
+    }
 }
