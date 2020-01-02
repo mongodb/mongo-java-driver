@@ -65,11 +65,15 @@ public class ServerDiscoveryAndMonitoringMonitoringTest extends AbstractServerDi
     @Test
     public void shouldPassAllOutcomes() {
         for (BsonValue phase : getDefinition().getArray("phases")) {
-            for (BsonValue response : phase.asDocument().getArray("responses")) {
-                applyResponse(response.asArray());
+            try {
+                for (BsonValue response : phase.asDocument().getArray("responses")) {
+                    applyResponse(response.asArray());
+                }
+                BsonDocument outcome = phase.asDocument().getDocument("outcome");
+                assertEvents(outcome.getArray("events"));
+            } finally {
+                clusterListener.clearClusterDescriptionChangedEvents();
             }
-            BsonDocument outcome = phase.asDocument().getDocument("outcome");
-            assertEvents(outcome.getArray("events"));
         }
     }
 
