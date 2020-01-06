@@ -17,6 +17,7 @@
 package com.mongodb.reactivestreams.client;
 
 import com.mongodb.ClusterFixture;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoTimeoutException;
@@ -48,12 +49,20 @@ public final class Fixture {
 
     public static synchronized MongoClient getMongoClient() {
         if (mongoClient == null) {
-            mongoClient = MongoClients.create(ClusterFixture.getConnectionString());
+            mongoClient = MongoClients.create(getMongoClientSettings());
             serverVersion = getServerVersion();
             clusterType = getClusterType();
             Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         }
         return mongoClient;
+    }
+
+    public static MongoClientSettings getMongoClientSettings() {
+        return getMongoClientSettingsBuilder().build();
+    }
+
+    public static MongoClientSettings.Builder getMongoClientSettingsBuilder() {
+        return MongoClientSettings.builder().applyConnectionString(ClusterFixture.getConnectionString());
     }
 
     public static String getDefaultDatabaseName() {

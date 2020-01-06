@@ -38,23 +38,27 @@ class CommandMarker implements Closeable {
     private AsyncMongoClient client;
     private final ProcessBuilder processBuilder;
 
-    CommandMarker(final Map<String, Object> options) {
-        String connectionString;
+    CommandMarker(final boolean isBypassAutoEncryption, final Map<String, Object> options) {
 
-        if (options.containsKey("mongocryptdURI")) {
-            connectionString = (String) options.get("mongocryptdURI");
-        } else {
-            connectionString = "mongodb://localhost:27020";
-        }
-
-        if (!options.containsKey("mongocryptdBypassSpawn") || !((Boolean) options.get("mongocryptdBypassSpawn"))) {
-            processBuilder = new ProcessBuilder(createMongocryptdSpawnArgs(options));
-            startProcess();
-        } else {
+        if (isBypassAutoEncryption) {
             processBuilder = null;
-        }
+            client = null;
+        } else {
+            if (!options.containsKey("mongocryptdBypassSpawn") || !((Boolean) options.get("mongocryptdBypassSpawn"))) {
+                processBuilder = new ProcessBuilder(createMongocryptdSpawnArgs(options));
+                startProcess();
+            } else {
+                processBuilder = null;
+            }
 
-        client = AsyncMongoClients.create(MongoClientSettings.builder()
+            String connectionString;
+            if (options.containsKey("mongocryptdURI")) {
+                connectionString = (String) options.get("mongocryptdURI");
+            } else {
+                connectionString = "mongodb://localhost:27020";
+            }
+
+            client = AsyncMongoClients.create(MongoClientSettings.builder()
                 .applyConnectionString(new ConnectionString(connectionString))
                 .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
                     @Override
@@ -63,45 +67,53 @@ class CommandMarker implements Closeable {
                     }
                 })
                 .build());
+
+        }
     }
 
     void mark(final String databaseName, final RawBsonDocument command, final SingleResultCallback<RawBsonDocument> callback) {
-        final SingleResultCallback<RawBsonDocument> wrappedCallback = new SingleResultCallback<RawBsonDocument>() {
-            @Override
-            public void onResult(final RawBsonDocument result, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, new MongoClientException("Exception in encryption library: " + t.getMessage(), t));
-                } else {
-                    callback.onResult(result, null);
+        if (client != null) {
+            final SingleResultCallback<RawBsonDocument> wrappedCallback = new SingleResultCallback<RawBsonDocument>() {
+                @Override
+                public void onResult(final RawBsonDocument result, final Throwable t) {
+                    if (t != null) {
+                        callback.onResult(null, new MongoClientException("Exception in encryption library: " + t.getMessage(), t));
+                    } else {
+                        callback.onResult(result, null);
+                    }
                 }
-            }
-        };
-        runCommand(databaseName, command, new SingleResultCallback<RawBsonDocument>() {
-            @Override
-            public void onResult(final RawBsonDocument result, final Throwable t) {
-                if (t == null) {
-                    wrappedCallback.onResult(result, null);
-                } else if (t instanceof MongoTimeoutException && processBuilder != null) {
-                    startProcessAndContinue(new SingleResultCallback<Void>() {
-                        @Override
-                        public void onResult(final Void result, final Throwable t) {
-                            if (t != null) {
-                                callback.onResult(null, t);
-                            } else {
-                                runCommand(databaseName, command, wrappedCallback);
+            };
+            runCommand(databaseName, command, new SingleResultCallback<RawBsonDocument>() {
+                @Override
+                public void onResult(final RawBsonDocument result, final Throwable t) {
+                    if (t == null) {
+                        wrappedCallback.onResult(result, null);
+                    } else if (t instanceof MongoTimeoutException && processBuilder != null) {
+                        startProcessAndContinue(new SingleResultCallback<Void>() {
+                            @Override
+                            public void onResult(final Void result, final Throwable t) {
+                                if (t != null) {
+                                    callback.onResult(null, t);
+                                } else {
+                                    runCommand(databaseName, command, wrappedCallback);
+                                }
                             }
-                        }
-                    });
-                } else {
-                    wrappedCallback.onResult(null, t);
+                        });
+                    } else {
+                        wrappedCallback.onResult(null, t);
+                    }
                 }
-            }
-        });
+            });
+        } else {
+            callback.onResult(command, null);
+        }
     }
 
     @Override
     public void close() {
-        client.close();
+        if (client != null) {
+            client.close();
+        }
     }
 
     private void runCommand(final String databaseName, final RawBsonDocument command,

@@ -16,7 +16,7 @@
 
 package org.mongodb.scala
 
-import com.mongodb.ConnectionString
+import com.mongodb.MongoClientSettings
 import com.mongodb.connection.ServerVersion
 import org.mongodb.scala.bson.BsonString
 import org.scalatest._
@@ -54,6 +54,13 @@ trait RequiresMongoDBISpec extends FlatSpec with Matchers with BeforeAndAfterAll
   def collectionName: String = _currentTestName.getOrElse(suiteName).filter(_.isLetterOrDigit)
 
   val mongoClientURI: String = Properties.propOrElse(MONGODB_URI_SYSTEM_PROPERTY_NAME, DEFAULT_URI)
+
+  val connectionString: ConnectionString = ConnectionString(mongoClientURI)
+
+  def mongoClientSettingsBuilder: MongoClientSettings.Builder =
+    MongoClientSettings.builder().applyConnectionString(connectionString)
+
+  val mongoClientSettings: MongoClientSettings = mongoClientSettingsBuilder.build()
 
   def mongoClient(): MongoClient = MongoClient(mongoClientURI)
 

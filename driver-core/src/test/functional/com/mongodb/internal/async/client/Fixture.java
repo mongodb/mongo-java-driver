@@ -54,6 +54,10 @@ public final class Fixture {
         return mongoClient;
     }
 
+    public static MongoClientSettings.Builder getMongoClientSettingsBuilder() {
+        return getMongoClientBuilderFromConnectionString();
+    }
+
     public static MongoClientSettings getMongoClientSettings() {
         return getMongoClientBuilderFromConnectionString().build();
     }
