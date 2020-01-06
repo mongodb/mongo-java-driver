@@ -33,6 +33,9 @@ clirr {
     failOnErrors = false
 }
 
+// Add native-image.properties
+sourceSets.main.resources.srcDirs = ['src/resources']
+
 dependencies {
     compile project(':bson')
 
