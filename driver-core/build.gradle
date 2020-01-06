@@ -27,6 +27,9 @@ ext {
     pomName = 'MongoDB Java Driver Core'
 }
 
+// Add native-image.properties
+sourceSets.main.resources.srcDirs = ['src/resources']
+
 dependencies {
     compile project(':bson')
 
