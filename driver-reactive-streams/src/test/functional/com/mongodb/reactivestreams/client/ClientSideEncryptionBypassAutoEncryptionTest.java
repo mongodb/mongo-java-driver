@@ -51,8 +51,6 @@ public class ClientSideEncryptionBypassAutoEncryptionTest {
     public void setUp() throws Throwable {
         assumeTrue(serverVersionAtLeast(4, 1));
 
-        MongoClient mongoClient = Fixture.getMongoClient();
-
         final byte[] localMasterKey = new byte[96];
         new SecureRandom().nextBytes(localMasterKey);
 

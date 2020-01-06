@@ -162,4 +162,91 @@ import tour.Helpers._
       .build()
 ```
 
-**Coming soon:** An example using the community version and demonstrating explicit encryption/decryption.
+#### Explicit Encryption and Decryption
+Explicit encryption and decryption is a **MongoDB community** feature and does not use the `mongocryptd` process. Explicit encryption is 
+provided by the `ClientEncryption` class. 
+The full code snippet can be found in [`ClientSideEncryptionExplicitEncryptionAndDecryptionTour.scala`]({{< srcref "driver-scala/src/it/scala/tour/ClientSideEncryptionAutoEncryptionSettingsTour.scala">}}):
+
+```
+// This would have to be the same master key as was used to create the encryption key
+val localMasterKey = new Array[Byte](96)
+new SecureRandom().nextBytes(localMasterKey)
+
+val kmsProviders = Map("local" -> Map[String, AnyRef]("key" -> localMasterKey).asJava).asJava
+
+val keyVaultNamespace = new MongoNamespace("encryption.testKeyVault")
+
+val clientSettings = MongoClientSettings.builder().build()
+val mongoClient = MongoClient(clientSettings)
+
+// Set up the key vault for this example
+val keyVaultCollection = mongoClient.getDatabase(keyVaultNamespace.getDatabaseName)
+  .getCollection(keyVaultNamespace.getCollectionName)
+keyVaultCollection.drop().headResult()
+
+// Ensure that two data keys cannot share the same keyAltName.
+keyVaultCollection.createIndex(Indexes.ascending("keyAltNames"), new IndexOptions().unique(true)
+  .partialFilterExpression(Filters.exists("keyAltNames")))
+
+val collection = mongoClient.getDatabase("test").getCollection("coll")
+collection.drop().headResult()
+
+// Create the ClientEncryption instance
+val clientEncryptionSettings = ClientEncryptionSettings
+  .builder()
+  .keyVaultMongoClientSettings(
+    MongoClientSettings.builder()
+       .applyConnectionString(ConnectionString("mongodb://localhost")).build()
+  )
+  .keyVaultNamespace(keyVaultNamespace.getFullName)
+  .kmsProviders(kmsProviders)
+  .build()
+
+val clientEncryption = ClientEncryptions.create(clientEncryptionSettings)
+
+val dataKeyId = clientEncryption.createDataKey("local", DataKeyOptions()).headResult()
+
+// Explicitly encrypt a field
+val encryptedFieldValue = clientEncryption.encrypt(BsonString("123456789"),
+  EncryptOptions("AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic").keyId(dataKeyId))
+    .headResult()
+
+collection.insertOne(Document("encryptedField" -> encryptedFieldValue)).headResult()
+
+val doc = collection.find.first().headResult()
+println(doc.toJson())
+
+// Explicitly decrypt the field
+println(
+    clientEncryption.decrypt(doc.get[BsonBinary]("encryptedField").get).headResult()
+)
+```
+
+#### Explicit Encryption and Auto Decryption
+
+Although automatic encryption requires MongoDB 4.2 enterprise or a MongoDB 4.2 Atlas cluster, automatic decryption is supported for all 
+users. To configure automatic decryption without automatic encryption set `bypassAutoEncryption(true)`. The full code snippet can be found in [`ClientSideEncryptionExplicitEncryptionOnlyTour.scala`]({{< srcref "driver-scala/src/it/scala/tour/ClientSideEncryptionExplicitEncryptionOnlyTour.scala">}}):
+
+```
+...
+val clientSettings = MongoClientSettings.builder()
+    .autoEncryptionSettings(AutoEncryptionSettings.builder()
+            .keyVaultNamespace(keyVaultNamespace.getFullName)
+            .kmsProviders(kmsProviders)
+            .bypassAutoEncryption(true)
+            .build())
+    .build()
+val mongoClient = MongoClients.create(clientSettings)
+
+...
+
+// Explicitly encrypt a field
+val encryptedFieldValue = clientEncryption.encrypt(BsonString("123456789"),
+  EncryptOptions("AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic").keyId(dataKeyId))
+    .headResult()
+
+collection.insertOne(Document("encryptedField" -> encryptedFieldValue)).headResult()
+
+val doc = collection.find.first().headResult()
+println(doc.toJson())
+```

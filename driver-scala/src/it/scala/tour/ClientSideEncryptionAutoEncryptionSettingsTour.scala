@@ -38,7 +38,9 @@ object ClientSideEncryptionAutoEncryptionSettingsTour {
    *
    * @param args ignored args
    */
-  def main(args: Array[String]): Unit = { // This would have to be the same master key as was used to create the encryption key
+  def main(args: Array[String]): Unit = {
+
+    // This would have to be the same master key as was used to create the encryption key
     val localMasterKey = new Array[Byte](96)
     new SecureRandom().nextBytes(localMasterKey)
 
