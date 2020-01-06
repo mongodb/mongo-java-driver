@@ -36,7 +36,7 @@ There is a separate jar file containing`libmongocrypt` bindings.
 `libmongocrypt` requires the `mongocryptd` daemon / process to be running. A specific daemon / process uri can be configured in the 
 `AutoEncryptionSettings` class by setting `mongocryptdURI` in the `extraOptions`.
 
-More information about mongocryptd will soon be available from the official documentation.
+For more information about mongocryptd see the [official documentation](https://docs.mongodb.com/manual/core/security-client-side-encryption/).
 
 
 ### Examples
@@ -157,4 +157,92 @@ AutoEncryptionSettings autoEncryptionSettings = AutoEncryptionSettings.builder()
         }}).build();
 ```
 
-**Coming soon:** An example using the community version and demonstrating explicit encryption/decryption.
+#### Explicit Encryption and Decryption
+Explicit encryption and decryption is a **MongoDB community** feature and does not use the `mongocryptd` process. Explicit encryption is 
+provided by the `ClientEncryption` class. 
+The full code snippet can be found in [`ClientSideEncryptionExplicitEncryptionAndDecryptionTour.java`]({{< srcref "driver-sync/src/examples/tour/ClientSideEncryptionExplicitEncryptionAndDecryptionTour.java">}}):
+
+```
+// This would have to be the same master key as was used to create the encryption key
+final byte[] localMasterKey = new byte[96];
+new SecureRandom().nextBytes(localMasterKey);
+
+Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{
+    put("local", new HashMap<String, Object>() {{
+        put("key", localMasterKey);
+    }});
+}};
+
+MongoClientSettings clientSettings = MongoClientSettings.builder().build();
+MongoClient mongoClient = MongoClients.create(clientSettings);
+
+// Set up the key vault for this example
+MongoNamespace keyVaultNamespace = new MongoNamespace("encryption.testKeyVault");
+MongoCollection<Document> keyVaultCollection = mongoClient
+    .getDatabase(keyVaultNamespace.getDatabaseName())
+    .getCollection(keyVaultNamespace.getCollectionName());
+keyVaultCollection.drop();
+
+// Ensure that two data keys cannot share the same keyAltName.
+keyVaultCollection.createIndex(Indexes.ascending("keyAltNames"),
+        new IndexOptions().unique(true)
+           .partialFilterExpression(Filters.exists("keyAltNames")));
+
+MongoCollection<Document> collection = mongoClient.getDatabase("test").getCollection("coll");
+collection.drop(); // Clear old data
+
+// Create the ClientEncryption instance
+ClientEncryptionSettings clientEncryptionSettings = ClientEncryptionSettings.builder()
+        .keyVaultMongoClientSettings(MongoClientSettings.builder()
+                .applyConnectionString(new ConnectionString("mongodb://localhost"))
+                .build())
+        .keyVaultNamespace(keyVaultNamespace.getFullName())
+        .kmsProviders(kmsProviders)
+        .build();
+
+ClientEncryption clientEncryption = ClientEncryptions.create(clientEncryptionSettings);
+
+BsonBinary dataKeyId = clientEncryption.createDataKey("local", new DataKeyOptions());
+
+// Explicitly encrypt a field
+BsonBinary encryptedFieldValue = clientEncryption.encrypt(new BsonString("123456789"),
+        new EncryptOptions("AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic").keyId(dataKeyId));
+
+collection.insertOne(new Document("encryptedField", encryptedFieldValue));
+
+Document doc = collection.find().first();
+System.out.println(doc.toJson());
+
+// Explicitly decrypt the field
+System.out.println(
+    clientEncryption.decrypt(new BsonBinary(doc.get("encryptedField", Binary.class).getData()))
+);
+```
+
+#### Explicit Encryption and Auto Decryption
+
+Although automatic encryption requires MongoDB 4.2 enterprise or a MongoDB 4.2 Atlas cluster, automatic decryption is supported for all 
+users. To configure automatic decryption without automatic encryption set `bypassAutoEncryption(true)`. The full code snippet can be found in [`ClientSideEncryptionExplicitEncryptionOnlyTour.java`]({{< srcref "driver-sync/src/examples/tour/ClientSideEncryptionExplicitEncryptionOnlyTour.java">}}):
+
+```
+...
+MongoClientSettings clientSettings = MongoClientSettings.builder()
+    .autoEncryptionSettings(AutoEncryptionSettings.builder()
+            .keyVaultNamespace(keyVaultNamespace.getFullName())
+            .kmsProviders(kmsProviders)
+            .bypassAutoEncryption(true)
+            .build())
+    .build();
+MongoClient mongoClient = MongoClients.create(clientSettings);
+
+...
+
+// Explicitly encrypt a field
+BsonBinary encryptedFieldValue = clientEncryption.encrypt(new BsonString("123456789"),
+        new EncryptOptions("AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic").keyId(dataKeyId));
+
+collection.insertOne(new Document("encryptedField", encryptedFieldValue));
+
+// Automatically decrypts the encrypted field.
+System.out.println(collection.find().first().toJson());
+```
