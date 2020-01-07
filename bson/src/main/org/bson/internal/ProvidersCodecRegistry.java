@@ -25,7 +25,7 @@ import java.util.List;
 
 import static org.bson.assertions.Assertions.isTrueArgument;
 
-public final class ProvidersCodecRegistry implements CodecRegistry, CodecProvider, CycleDetectingCodecRegistry {
+public final class ProvidersCodecRegistry implements CodecRegistry, CycleDetectingCodecRegistry {
     private final List<CodecProvider> codecProviders;
     private final CodecCache codecCache = new CodecCache();
 
@@ -50,7 +50,7 @@ public final class ProvidersCodecRegistry implements CodecRegistry, CodecProvide
         return null;
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings({"rawtypes" })
     public <T> Codec<T> get(final ChildCodecRegistry<T> context) {
         if (!codecCache.containsKey(context.getCodecClass())) {
             for (CodecProvider provider : codecProviders) {

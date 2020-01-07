@@ -19,7 +19,6 @@ package org.bson.codecs.configuration;
 import org.bson.codecs.Codec;
 import org.bson.internal.ProvidersCodecRegistry;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -124,28 +123,7 @@ public final class CodecRegistries {
      * @return a {@code CodecRegistry} that combines the list of {@code CodecRegistry} instances into a single one
      */
     public static CodecRegistry fromRegistries(final List<? extends CodecRegistry> registries) {
-        List<CodecProvider> providers = new ArrayList<CodecProvider>();
-        for (CodecRegistry registry : registries) {
-            providers.add(providerFromRegistry(registry));
-        }
-        return new ProvidersCodecRegistry(providers);
-    }
-
-    private static CodecProvider providerFromRegistry(final CodecRegistry innerRegistry) {
-        if (innerRegistry instanceof CodecProvider) {
-            return (CodecProvider) innerRegistry;
-        } else {
-            return new CodecProvider() {
-                @Override
-                public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry outerRregistry) {
-                    try {
-                        return innerRegistry.get(clazz);
-                    } catch (CodecConfigurationException e) {
-                        return null;
-                    }
-                }
-            };
-        }
+        return new ProvidersCodecRegistry(registries);
     }
 
     private CodecRegistries() {

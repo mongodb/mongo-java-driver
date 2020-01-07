@@ -26,9 +26,11 @@ import org.bson.codecs.Codec;
  * {@code Object.equals}. It is not necessary to do so, and the simplest course of action is to rely on Object's implementation, but the
  * implementer may wish to implement a "value comparison" in place of the default "reference comparison."</p>
  *
+ * <p>As of the 4.0 release, this class extends the {@code CodecProvider} interface.  This capability was introduced to enable nesting
+ * registries inside another registry.</p>
  * @since 3.0
  */
-public interface CodecRegistry {
+public interface CodecRegistry extends CodecProvider {
     /**
      * Gets a {@code Codec} for the given Class.
      *

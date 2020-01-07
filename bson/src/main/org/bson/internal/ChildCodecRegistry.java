@@ -53,6 +53,11 @@ class ChildCodecRegistry<T> implements CodecRegistry {
         }
     }
 
+    @Override
+    public <U> Codec<U> get(final Class<U> clazz, final CodecRegistry registry) {
+        return this.registry.get(clazz, registry);
+    }
+
     @SuppressWarnings("rawtypes")
     private <U> Boolean hasCycles(final Class<U> theClass) {
         ChildCodecRegistry current = this;

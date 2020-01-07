@@ -17,23 +17,16 @@
 package org.bson.internal;
 
 import org.bson.UuidRepresentation;
-import org.bson.codecs.configuration.CodecConfigurationException;
-import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 
 public final class CodecRegistryHelper {
 
     public static CodecRegistry createRegistry(final CodecRegistry codecRegistry, final UuidRepresentation uuidRepresentation) {
-        CodecRegistry retVal = codecRegistry;
-        if (uuidRepresentation != UuidRepresentation.UNSPECIFIED) {
-            if (codecRegistry instanceof CodecProvider) {
-                retVal = new OverridableUuidRepresentationCodecRegistry((CodecProvider) codecRegistry, uuidRepresentation);
-            } else {
-                throw new CodecConfigurationException("Changing the default UuidRepresentation requires a CodecRegistry that also "
-                        +    "implements the CodecProvider interface");
-            }
+        if (uuidRepresentation == UuidRepresentation.UNSPECIFIED) {
+            return codecRegistry;
+        } else {
+            return new OverridableUuidRepresentationCodecRegistry(codecRegistry, uuidRepresentation);
         }
-        return retVal;
     }
 
     private CodecRegistryHelper() {

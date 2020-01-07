@@ -20,6 +20,7 @@ import org.bson.UuidRepresentation;
 import org.bson.codecs.Codec;
 import org.bson.codecs.OverridableUuidRepresentationCodec;
 import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
 
 import static org.bson.assertions.Assertions.notNull;
 
@@ -47,8 +48,19 @@ public class OverridableUuidRepresentationCodecRegistry implements CycleDetectin
         return get(new ChildCodecRegistry<T>(this, clazz));
     }
 
+
     @Override
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({"unchecked"})
+    public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+        Codec<T> codec = wrapped.get(clazz, registry);
+        if (codec instanceof OverridableUuidRepresentationCodec) {
+            return ((OverridableUuidRepresentationCodec<T>) codec).withUuidRepresentation(uuidRepresentation);
+        }
+        return codec;
+    }
+
+    @Override
+    @SuppressWarnings({"unchecked"})
     public <T> Codec<T> get(final ChildCodecRegistry<T> context) {
         if (!codecCache.containsKey(context.getCodecClass())) {
             Codec<T> codec = wrapped.get(context.getCodecClass(), context);
