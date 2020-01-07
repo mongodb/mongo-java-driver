@@ -42,8 +42,6 @@ import static com.mongodb.internal.async.client.Fixture.getMongoClient
 import static com.mongodb.internal.async.client.Fixture.getMongoClientBuilderFromConnectionString
 import static com.mongodb.internal.async.client.TestHelper.run
 import static com.mongodb.internal.async.client.TestHelper.runSlow
-import static com.mongodb.internal.async.client.gridfs.helpers.AsyncStreamHelper.toAsyncInputStream
-import static com.mongodb.internal.async.client.gridfs.helpers.AsyncStreamHelper.toAsyncOutputStream
 
 class AsyncGridFSBucketSmokeTestSpecification extends FunctionalSpecification {
     protected AsyncMongoDatabase mongoDatabase;
@@ -76,17 +74,12 @@ class AsyncGridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         def contentBytes = content as byte[]
         def expectedLength = contentBytes.length
         def bucket = gridFSBucket
-        ObjectId fileId
 
         when:
-        if (direct) {
-            fileId = run(bucket.&uploadFromStream, 'myFile', toAsyncInputStream(content.getBytes()));
-        } else {
-            def outputStream = bucket.openUploadStream('myFile')
-            run(outputStream.&write, ByteBuffer.wrap(contentBytes))
-            run(outputStream.&close)
-            fileId = outputStream.getObjectId()
-        }
+        def outputStream = bucket.openUploadStream('myFile')
+        run(outputStream.&write, ByteBuffer.wrap(contentBytes))
+        run(outputStream.&close)
+        def fileId = outputStream.getObjectId()
 
         then:
         run(filesCollection.&countDocuments) == 1
@@ -103,23 +96,15 @@ class AsyncGridFSBucketSmokeTestSpecification extends FunctionalSpecification {
 
         when:
         def byteBuffer = ByteBuffer.allocate(fileInfo.getLength() as int)
-        if (direct) {
-            run(bucket.openDownloadStream(fileId).&read, byteBuffer)
-        } else {
-            def outputStream = toAsyncOutputStream(byteBuffer)
-            run(bucket.&downloadToStream, fileId, outputStream)
-            run(outputStream.&close)
-        }
+        run(bucket.openDownloadStream(fileId).&read, byteBuffer)
 
         then:
         byteBuffer.array() == contentBytes
 
         where:
-        description                     | multiChunk | chunkCount | direct
-        'a small file directly'         | false      | 1          | true
-        'a small file to stream'        | false      | 1          | false
-        'a large file directly'         | true       | 5          | true
-        'a large file to stream'        | true       | 5          | false
+        description                     | multiChunk | chunkCount
+        'a small file directly'         | false      | 1
+        'a large file directly'         | true       | 5
     }
 
     @Category(Slow)
@@ -130,22 +115,25 @@ class AsyncGridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         def contentBytes = new byte[contentSize];
         new SecureRandom().nextBytes(contentBytes);
         def options = new GridFSUploadOptions().chunkSizeBytes(chunkSize)
-        ObjectId fileId
 
         when:
-        fileId = runSlow(gridFSBucket.&uploadFromStream, 'myFile', toAsyncInputStream(contentBytes), options);
+        def outputStream = gridFSBucket.openUploadStream('myFile', options)
+        run(outputStream.&write, ByteBuffer.wrap(contentBytes))
+        run(outputStream.&close)
+        def fileId = outputStream.getObjectId()
 
         then:
         run(filesCollection.&countDocuments) == 1
         run(chunksCollection.&countDocuments) == contentSize / chunkSize
 
         when:
-        def outStream = new ByteArrayOutputStream();
-        def asyncOutputStream = toAsyncOutputStream(outStream);
-        runSlow(gridFSBucket.&downloadToStream, fileId, asyncOutputStream)
+        def downloadStream = gridFSBucket.openDownloadStream(fileId)
+        def fileInfo = run(downloadStream.&getGridFSFile)
+        def byteBuffer = ByteBuffer.allocate(fileInfo.getLength() as int)
+        runSlow(downloadStream.&read, byteBuffer)
 
         then:
-        outStream.toByteArray() == contentBytes
+        byteBuffer.array() == contentBytes
     }
 
     @Category(Slow)
@@ -156,41 +144,46 @@ class AsyncGridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         def contentBytes = new byte[contentSize];
         new SecureRandom().nextBytes(contentBytes);
         def options = new GridFSUploadOptions().chunkSizeBytes(chunkSize)
-        ObjectId fileId
 
         when:
-        fileId = runSlow(gridFSBucket.&uploadFromStream, 'myFile', toAsyncInputStream(contentBytes), options);
+        def uploadStream = gridFSBucket.openUploadStream('myFile', options)
+        runSlow(uploadStream.&write, ByteBuffer.wrap(contentBytes))
+        run(uploadStream.&close)
+        def fileId = uploadStream.getObjectId()
 
         then:
         run(filesCollection.&countDocuments) == 1
         run(chunksCollection.&countDocuments) == contentSize / chunkSize
 
         when:
-        def outStream = new ByteArrayOutputStream();
-        def asyncOutputStream = toAsyncOutputStream(outStream);
-        runSlow(gridFSBucket.&downloadToStream, fileId, asyncOutputStream)
+        def downloadStream = gridFSBucket.openDownloadStream(fileId)
+        def fileInfo = run(downloadStream.&getGridFSFile)
+        def byteBuffer = ByteBuffer.allocate(fileInfo.getLength() as int)
+        runSlow(downloadStream.&read, byteBuffer)
 
         then:
-        outStream.toByteArray() == contentBytes
+        byteBuffer.array() == contentBytes
     }
 
     def 'should handle custom ids'() {
         def content = multiChunkString
         def contentBytes = content as byte[]
         def fileId = new BsonString('myFile')
-        def outStream = new ByteArrayOutputStream();
-        def asyncOutputStream = toAsyncOutputStream(outStream);
         def byteBuffer = ByteBuffer.allocate(contentBytes.length)
 
         when:
-        run(gridFSBucket.&uploadFromStream, fileId, 'myFile', toAsyncInputStream(contentBytes));
-        run(gridFSBucket.&downloadToStream, fileId, asyncOutputStream)
+        def uploadStream = gridFSBucket.openUploadStream(fileId, 'myFile')
+        run(uploadStream.&write, ByteBuffer.wrap(contentBytes))
+        run(uploadStream.&close)
+
+        run(gridFSBucket.openDownloadStream(fileId).&read, byteBuffer)
 
         then:
-        outStream.toByteArray() == contentBytes
+        byteBuffer.array() == contentBytes
 
         when:
         run(gridFSBucket.&rename, fileId, 'newName')
+        byteBuffer = ByteBuffer.allocate(contentBytes.length)
         run(gridFSBucket.openDownloadStream('newName').&read, byteBuffer)
 
         then:
@@ -209,9 +202,13 @@ class AsyncGridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         def contentSize = 1024 * 1024
         def contentBytes = new byte[contentSize]
         new SecureRandom().nextBytes(contentBytes)
+        def fileId = new BsonString('myFile')
 
         when:
-        def fileId = run(gridFSBucket.&uploadFromStream, 'myFile', toAsyncInputStream(contentBytes));
+        def uploadStream = gridFSBucket.openUploadStream(fileId, 'myFile')
+        run(uploadStream.&write, ByteBuffer.wrap(contentBytes))
+        run(uploadStream.&close)
+
         run(chunksCollection.&deleteMany, eq('files_id', fileId))
         run(gridFSBucket.openDownloadStream(fileId).&read, ByteBuffer.allocate(contentSize))
 
@@ -225,9 +222,12 @@ class AsyncGridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         new SecureRandom().nextBytes(contentBytes);
         def bufferSize = 2000
         def options = new GridFSUploadOptions().chunkSizeBytes(4000)
+        def fileId = new BsonString('myFile')
 
         when:
-        def fileId = run(gridFSBucket.&uploadFromStream, 'myFile', toAsyncInputStream(contentBytes), options);
+        def uploadStream = gridFSBucket.openUploadStream(fileId, 'myFile', options)
+        run(uploadStream.&write, ByteBuffer.wrap(contentBytes))
+        run(uploadStream.&close)
 
         then:
         run(filesCollection.&countDocuments) == 1
@@ -300,7 +300,10 @@ class AsyncGridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         ObjectId fileId
 
         when:
-        fileId = run(gridFSBucket.&uploadFromStream, 'myFile', toAsyncInputStream(content.getBytes()));
+        def uploadStream = gridFSBucket.openUploadStream('myFile')
+        run(uploadStream.&write, ByteBuffer.wrap(contentBytes))
+        run(uploadStream.&close)
+        fileId = uploadStream.getObjectId()
 
         then:
         run(filesCollection.&countDocuments) == 1
@@ -334,17 +337,13 @@ class AsyncGridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         def contentBytes = content as byte[]
         def expectedLength = contentBytes.length as Long
         def expectedNoChunks = Math.ceil((expectedLength as double) / chunkSize) as int
-        ObjectId fileId
 
         when:
-        if (direct) {
-            fileId = run(gridFSBucket.&uploadFromStream, 'myFile', toAsyncInputStream(content.getBytes()), options);
-        } else {
-            def outputStream = gridFSBucket.openUploadStream('myFile', options)
-            run(outputStream.&write, ByteBuffer.wrap(contentBytes))
-            run(outputStream.&close)
-            fileId = outputStream.getObjectId()
-        }
+        def uploadStream = gridFSBucket.openUploadStream('myFile', options)
+        run(uploadStream.&write, ByteBuffer.wrap(contentBytes))
+        run(uploadStream.&close)
+        def fileId = uploadStream.getObjectId()
+
 
         then:
         run(filesCollection.&countDocuments) == 1
@@ -361,19 +360,10 @@ class AsyncGridFSBucketSmokeTestSpecification extends FunctionalSpecification {
 
         when:
         def byteBuffer = ByteBuffer.allocate(fileInfo.getLength() as int)
-        if (direct) {
-            run(gridFSBucket.openDownloadStream(fileId).&read, byteBuffer)
-        } else {
-            def outputStream = toAsyncOutputStream(byteBuffer)
-            run(gridFSBucket.&downloadToStream, fileId, outputStream)
-            run(outputStream.&close)
-        }
+        run(gridFSBucket.openDownloadStream(fileId).&read, byteBuffer)
 
         then:
         byteBuffer.array() == contentBytes
-
-        where:
-        direct << [true, false]
     }
 
     def 'should be able to open by name'() {
@@ -381,43 +371,28 @@ class AsyncGridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         def content = 'Hello GridFS'
         def contentBytes = content as byte[]
         def filename = 'myFile'
-        def objectId = run(gridFSBucket.&uploadFromStream, filename, toAsyncInputStream(content.getBytes()))
-        def fileInfo = run(gridFSBucket.find(new Document('_id', objectId)).&first)
+        def uploadStream = gridFSBucket.openUploadStream('myFile')
+        run(uploadStream.&write, ByteBuffer.wrap(contentBytes))
+        run(uploadStream.&close)
+        def fileId = uploadStream.getObjectId()
+        def fileInfo = run(gridFSBucket.find(new Document('_id', fileId)).&first)
 
         when:
         def byteBuffer = ByteBuffer.allocate(fileInfo.getLength() as int)
-        if (direct) {
-            run(gridFSBucket.openDownloadStream(filename).&read, byteBuffer)
-        } else {
-            def outputStream = toAsyncOutputStream(byteBuffer)
-            run(gridFSBucket.&downloadToStream, filename, outputStream)
-            run(outputStream.&close)
-        }
+        run(gridFSBucket.openDownloadStream(filename).&read, byteBuffer)
 
         then:
         byteBuffer.array() == contentBytes
-
-        where:
-        direct << [true, false]
     }
 
     def 'should be able to handle missing file'() {
         when:
         def filename = 'myFile'
         def byteBuffer = ByteBuffer.allocate(10)
-        if (direct) {
-            run(gridFSBucket.openDownloadStream(filename).&read, byteBuffer)
-        } else {
-            def outputStream = toAsyncOutputStream(byteBuffer)
-            run(gridFSBucket.&downloadToStream, filename, outputStream)
-            run(outputStream.&close)
-        }
+        run(gridFSBucket.openDownloadStream(filename).&read, byteBuffer)
 
         then:
         thrown(MongoGridFSException)
-
-        where:
-        direct << [true, false]
     }
 
     def 'should abort and cleanup'() {
@@ -428,9 +403,9 @@ class AsyncGridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         run(filesCollection.&countDocuments) == 0
 
         when:
-        def outputStream = gridFSBucket.openUploadStream('myFile')
-        run(outputStream.&write, ByteBuffer.wrap(contentBytes))
-        run(outputStream.&abort)
+        def uploadStream = gridFSBucket.openUploadStream('myFile')
+        run(uploadStream.&write, ByteBuffer.wrap(contentBytes))
+        run(uploadStream.&abort)
 
         then:
         run(filesCollection.&countDocuments) == 0
@@ -447,7 +422,9 @@ class AsyncGridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         !run(chunksCollection.listIndexes().&into, [])*.get('key').contains(chunksIndexKey)
 
         when:
-        run(gridFSBucket.&uploadFromStream, 'myFile', toAsyncInputStream(multiChunkString.getBytes()))
+        def uploadStream = gridFSBucket.openUploadStream('myFile',)
+        run(uploadStream.&write, ByteBuffer.wrap(multiChunkString.getBytes()))
+        run(uploadStream.&close)
 
         then:
         run(filesCollection.listIndexes().&into, [])*.get('key').contains(Document.parse('{ filename: 1, uploadDate: 1 }'))
@@ -464,21 +441,13 @@ class AsyncGridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         run(chunksCollection.listIndexes().&into, []).size() == 0
 
         when:
-        if (direct) {
-            run(gridFSBucket.&uploadFromStream, 'myFile', toAsyncInputStream(contentBytes));
-        } else {
-            def outputStream = gridFSBucket.openUploadStream('myFile')
-            run(outputStream.&write, ByteBuffer.wrap(contentBytes))
-            run(outputStream.&close)
-        }
-
+        def outputStream = gridFSBucket.openUploadStream('myFile')
+        run(outputStream.&write, ByteBuffer.wrap(contentBytes))
+        run(outputStream.&close)
 
         then:
         run(filesCollection.listIndexes().&into, []).size() == 1
         run(chunksCollection.listIndexes().&into, []).size() == 1
-
-        where:
-        direct << [true, false]
     }
 
     def 'should use the user provided codec registries for encoding / decoding data'() {
@@ -490,11 +459,13 @@ class AsyncGridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         def uuid = UUID.randomUUID()
         def fileMeta = new Document('uuid', uuid)
         def gridFSBucket = AsyncGridFSBuckets.create(database)
+        def options = new GridFSUploadOptions().metadata(fileMeta)
 
         when:
-        def fileId = run(gridFSBucket.&uploadFromStream, 'myFile', toAsyncInputStream(multiChunkString.getBytes()),
-                new GridFSUploadOptions().metadata(fileMeta))
-
+        def uploadStream = gridFSBucket.openUploadStream('myFile', options)
+        run(uploadStream.&write, ByteBuffer.wrap(multiChunkString.getBytes()))
+        run(uploadStream.&close)
+        def fileId = uploadStream.getObjectId()
         def file = run(gridFSBucket.find(new Document('_id', fileId)).&first)
 
         then:
@@ -510,22 +481,17 @@ class AsyncGridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         client?.close()
     }
 
-    @Unroll
-    def 'should handle missing file name data when downloading #description'() {
+    def 'should handle missing file name data when downloading'() {
         given:
         def content = multiChunkString
         def contentBytes = content as byte[]
         ObjectId fileId
 
         when:
-        if (direct) {
-            fileId = run(gridFSBucket.&uploadFromStream, 'myFile', toAsyncInputStream(content.getBytes()));
-        } else {
-            def outputStream = gridFSBucket.openUploadStream('myFile')
-            run(outputStream.&write, ByteBuffer.wrap(contentBytes))
-            run(outputStream.&close)
-            fileId = outputStream.getObjectId()
-        }
+        def uploadStream = gridFSBucket.openUploadStream('myFile')
+        run(uploadStream.&write, ByteBuffer.wrap(contentBytes))
+        run(uploadStream.&close)
+        fileId = uploadStream.getObjectId()
 
         then:
         run(filesCollection.&countDocuments) == 1
@@ -535,21 +501,10 @@ class AsyncGridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         run(filesCollection.&updateOne, eq('_id', fileId), unset('filename'))
 
         def byteBuffer = ByteBuffer.allocate(contentBytes.length)
-        if (direct) {
-            run(gridFSBucket.openDownloadStream(fileId).&read, byteBuffer)
-        } else {
-            def outputStream = toAsyncOutputStream(byteBuffer)
-            run(gridFSBucket.&downloadToStream, fileId, outputStream)
-            run(outputStream.&close)
-        }
+        run(gridFSBucket.openDownloadStream(fileId).&read, byteBuffer)
 
         then:
         byteBuffer.array() == contentBytes
-
-        where:
-        description | direct
-        'directly'  | true
-        'a stream'  | false
     }
 }
 
