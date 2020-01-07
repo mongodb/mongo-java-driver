@@ -123,8 +123,17 @@ public final class ClusterSettings {
         /**
          * Sets the host name to use in order to look up an SRV DNS record to find the MongoDB hosts.
          *
+         * <p>
+         * Note that when setting srvHost via {@code ClusterSettings.Builder}, the driver will NOT process any associated TXT records
+         * associated with the host.  In order to enable the processing of TXT records while still using {@code MongoClientSettings},
+         * specify the SRV host via connection string and apply the connection string to the settings, e.g.
+         * {@code MongoClientSettings.builder().applyConnectionString(new ConnectionString("mongodb+srv://host1.acme.com")) }.
+         * </p>
+         *
          * @param srvHost the SRV host name
          * @return this
+         * @see com.mongodb.MongoClientSettings.Builder#applyConnectionString(ConnectionString)
+         * @see ClusterSettings.Builder#applyConnectionString(ConnectionString)
          */
         public Builder srvHost(final String srvHost) {
             if (this.hosts != DEFAULT_HOSTS) {
