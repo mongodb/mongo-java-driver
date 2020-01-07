@@ -17,7 +17,6 @@
 package com.mongodb.connection;
 
 import com.mongodb.ConnectionString;
-import com.mongodb.MongoClientException;
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
@@ -519,24 +518,19 @@ public final class ClusterSettings {
     }
 
     private ClusterSettings(final Builder builder) {
-        // TODO: Unit test this
         if (builder.srvHost != null) {
             if (builder.srvHost.contains(":")) {
                 throw new IllegalArgumentException("The srvHost can not contain a host name that specifies a port");
             }
 
-            if (builder.hosts.get(0).getHost().split("\\.").length < 3) {
-                throw new MongoClientException(format("An SRV host name '%s' was provided that does not contain at least three parts. "
+            if (builder.srvHost.split("\\.").length < 3) {
+                throw new IllegalArgumentException(format("An SRV host name '%s' was provided that does not contain at least three parts. "
                         + "It must contain a hostname, domain name and a top level domain.", builder.hosts.get(0).getHost()));
             }
         }
 
         if (builder.hosts.size() > 1 && builder.requiredClusterType == ClusterType.STANDALONE) {
             throw new IllegalArgumentException("Multiple hosts cannot be specified when using ClusterType.STANDALONE.");
-        }
-
-        if (builder.mode != null && builder.mode == ClusterConnectionMode.SINGLE && builder.hosts.size() > 1) {
-            throw new IllegalArgumentException("Can not directly connect to more than one server");
         }
 
         if (builder.requiredReplicaSetName != null) {
@@ -550,7 +544,18 @@ public final class ClusterSettings {
 
         srvHost = builder.srvHost;
         hosts = builder.hosts;
-        mode = builder.mode != null ? builder.mode : hosts.size() == 1 ? ClusterConnectionMode.SINGLE : ClusterConnectionMode.MULTIPLE;
+        if (srvHost != null) {
+            if (builder.mode == ClusterConnectionMode.SINGLE) {
+                throw new IllegalArgumentException("An SRV host name was provided but the connection mode is not MULTIPLE");
+            }
+            mode = ClusterConnectionMode.MULTIPLE;
+        } else {
+            if (builder.mode == ClusterConnectionMode.SINGLE && builder.hosts.size() > 1) {
+                throw new IllegalArgumentException("Can not directly connect to more than one server");
+            }
+
+            mode = builder.mode != null ? builder.mode : hosts.size() == 1 ? ClusterConnectionMode.SINGLE : ClusterConnectionMode.MULTIPLE;
+        }
         requiredReplicaSetName = builder.requiredReplicaSetName;
         requiredClusterType = builder.requiredClusterType;
         localThresholdMS = builder.localThresholdMS;
