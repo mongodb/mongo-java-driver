@@ -43,11 +43,12 @@ class GridFSBucketImplSpecification extends Specification {
 
     def 'should have the same methods as the wrapped GridFSBucket'() {
         given:
-        def wrapped = (WrappedGridFSBucket.methods*.name).sort()
+        def wrapped = (WrappedGridFSBucket.methods*.name)
         def local = (GridFSBucket.methods*.name).sort()
 
-        wrapped.removeAll { it == 'openDownloadStream' || it == 'openUploadStream' }
-        wrapped = wrapped*.replaceAll('Stream', 'Publisher')
+        wrapped = wrapped*.replaceAll('openUploadStream', 'uploadFromPublisher')
+        wrapped = wrapped*.replaceAll('openDownloadStream', 'downloadToPublisher')
+        wrapped = wrapped.sort()
 
         expect:
         wrapped == local

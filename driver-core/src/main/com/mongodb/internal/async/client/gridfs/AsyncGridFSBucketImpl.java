@@ -42,10 +42,6 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
-import java.io.IOException;
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
-
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static java.lang.String.format;
@@ -55,7 +51,6 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 final class AsyncGridFSBucketImpl implements AsyncGridFSBucket {
     private static final Logger LOGGER = Loggers.getLogger("client.gridfs");
     private static final int DEFAULT_CHUNKSIZE_BYTES = 255 * 1024;
-    private static final int DEFAULT_BUFFER_SIZE = 1024 * 1024 * 4;
     private final String bucketName;
     private final int chunkSizeBytes;
     private final AsyncMongoCollection<GridFSFile> filesCollection;
@@ -183,93 +178,6 @@ final class AsyncGridFSBucketImpl implements AsyncGridFSBucket {
     }
 
     @Override
-    public void uploadFromStream(final String filename, final AsyncInputStream source, final SingleResultCallback<ObjectId> callback) {
-        uploadFromStream(filename, source, new GridFSUploadOptions(), callback);
-    }
-
-    @Override
-    public void uploadFromStream(final String filename, final AsyncInputStream source, final GridFSUploadOptions options,
-                                 final SingleResultCallback<ObjectId> callback) {
-        final BsonObjectId id = new BsonObjectId();
-        uploadFromStream(id, filename, source, options, new SingleResultCallback<Void>() {
-            @Override
-            public void onResult(final Void result, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    callback.onResult(id.getValue(), null);
-                }
-            }
-        });
-    }
-
-    @Override
-    public void uploadFromStream(final BsonValue id, final String filename, final AsyncInputStream source,
-                                 final SingleResultCallback<Void> callback) {
-        uploadFromStream(id, filename, source, new GridFSUploadOptions(), callback);
-    }
-
-    @Override
-    public void uploadFromStream(final BsonValue id, final String filename, final AsyncInputStream source,
-                                 final GridFSUploadOptions options, final SingleResultCallback<Void> callback) {
-        executeUploadFromStream(null, id, filename, source, options, callback);
-    }
-
-    @Override
-    public void uploadFromStream(final AsyncClientSession clientSession, final String filename, final AsyncInputStream source,
-                                 final SingleResultCallback<ObjectId> callback) {
-        uploadFromStream(clientSession, filename, source, new GridFSUploadOptions(), callback);
-    }
-
-    @Override
-    public void uploadFromStream(final AsyncClientSession clientSession, final String filename, final AsyncInputStream source,
-                                 final GridFSUploadOptions options, final SingleResultCallback<ObjectId> callback) {
-        final BsonObjectId id = new BsonObjectId();
-        uploadFromStream(clientSession, id, filename, source, options, new SingleResultCallback<Void>() {
-            @Override
-            public void onResult(final Void result, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    callback.onResult(id.getValue(), null);
-                }
-            }
-        });
-    }
-
-    @Override
-    public void uploadFromStream(final AsyncClientSession clientSession, final BsonValue id, final String filename,
-                                 final AsyncInputStream source, final SingleResultCallback<Void> callback) {
-        uploadFromStream(clientSession, id, filename, source, new GridFSUploadOptions(), callback);
-    }
-
-    @Override
-    public void uploadFromStream(final AsyncClientSession clientSession, final BsonValue id, final String filename,
-                                 final AsyncInputStream source, final GridFSUploadOptions options,
-                                 final SingleResultCallback<Void> callback) {
-        notNull("clientSession", clientSession);
-        executeUploadFromStream(clientSession, id, filename, source, options, callback);
-    }
-
-    private void executeUploadFromStream(@Nullable final AsyncClientSession clientSession, final BsonValue id, final String filename,
-                                         final AsyncInputStream source, final GridFSUploadOptions options,
-                                         final SingleResultCallback<Void> callback) {
-        notNull("filename", filename);
-        notNull("source", source);
-        notNull("options", options);
-        notNull("callback", callback);
-        Integer chunkSizeBytes = options.getChunkSizeBytes();
-        int chunkSize = chunkSizeBytes == null ? this.chunkSizeBytes : chunkSizeBytes;
-        AsyncGridFSUploadStream uploadStream;
-        if (clientSession != null){
-            uploadStream = openUploadStream(clientSession, id, filename, options);
-        } else {
-            uploadStream = openUploadStream(id, filename, options);
-        }
-        readAndWriteInputStream(source, uploadStream, ByteBuffer.allocate(chunkSize), errorHandlingCallback(callback, LOGGER));
-    }
-
-    @Override
     public AsyncGridFSDownloadStream openDownloadStream(final ObjectId id) {
         notNull("id", id);
         return createGridFSDownloadStream(null, find(new Document("_id", id)));
@@ -317,54 +225,6 @@ final class AsyncGridFSBucketImpl implements AsyncGridFSBucket {
     private AsyncGridFSDownloadStream createGridFSDownloadStream(@Nullable final AsyncClientSession clientSession,
                                                                  final AsyncGridFSFindIterable gridFSFindIterable) {
         return new AsyncGridFSDownloadStreamImpl(clientSession, gridFSFindIterable, chunksCollection);
-    }
-
-    @Override
-    public void downloadToStream(final String filename, final AsyncOutputStream destination, final SingleResultCallback<Long> callback) {
-        downloadToStream(filename, destination, new GridFSDownloadOptions(), callback);
-    }
-
-    @Override
-    public void downloadToStream(final String filename, final AsyncOutputStream destination,
-                                 final GridFSDownloadOptions options, final SingleResultCallback<Long> callback) {
-        downloadToAsyncOutputStream(openDownloadStream(filename, options), destination, errorHandlingCallback(callback, LOGGER));
-    }
-
-
-    @Override
-    public void downloadToStream(final ObjectId id, final AsyncOutputStream destination, final SingleResultCallback<Long> callback) {
-        downloadToAsyncOutputStream(openDownloadStream(id), destination, errorHandlingCallback(callback, LOGGER));
-    }
-
-    @Override
-    public void downloadToStream(final BsonValue id, final AsyncOutputStream destination, final SingleResultCallback<Long> callback) {
-        downloadToAsyncOutputStream(openDownloadStream(id), destination, errorHandlingCallback(callback, LOGGER));
-    }
-
-    @Override
-    public void downloadToStream(final AsyncClientSession clientSession, final ObjectId id, final AsyncOutputStream destination,
-                                 final SingleResultCallback<Long> callback) {
-        downloadToAsyncOutputStream(openDownloadStream(clientSession, id), destination, errorHandlingCallback(callback, LOGGER));
-    }
-
-    @Override
-    public void downloadToStream(final AsyncClientSession clientSession, final BsonValue id, final AsyncOutputStream destination,
-                                 final SingleResultCallback<Long> callback) {
-        downloadToAsyncOutputStream(openDownloadStream(clientSession, id), destination, errorHandlingCallback(callback, LOGGER));
-    }
-
-    @Override
-    public void downloadToStream(final AsyncClientSession clientSession, final String filename, final AsyncOutputStream destination,
-                                 final SingleResultCallback<Long> callback) {
-        downloadToStream(clientSession, filename, destination, new GridFSDownloadOptions(), callback);
-    }
-
-    @Override
-    public void downloadToStream(final AsyncClientSession clientSession, final String filename, final AsyncOutputStream destination,
-                                 final GridFSDownloadOptions options, final SingleResultCallback<Long> callback) {
-        notNull("clientSession", clientSession);
-        downloadToAsyncOutputStream(openDownloadStream(clientSession, filename, options), destination,
-                errorHandlingCallback(callback, LOGGER));
     }
 
     @Override
@@ -417,30 +277,24 @@ final class AsyncGridFSBucketImpl implements AsyncGridFSBucket {
        notNull("id", id);
        notNull("callback", callback);
        final SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-       SingleResultCallback<DeleteResult> deleteFileCallback = new SingleResultCallback<DeleteResult>() {
-           @Override
-           public void onResult(final DeleteResult filesResult, final Throwable t) {
-               if (t != null) {
-                   errHandlingCallback.onResult(null, t);
-               } else {
-                   SingleResultCallback<DeleteResult> deleteChunksCallback = new SingleResultCallback<DeleteResult>() {
-                       @Override
-                       public void onResult(final DeleteResult chunksResult, final Throwable t) {
-                           if (t != null) {
-                               errHandlingCallback.onResult(null, t);
-                           } else if (filesResult.wasAcknowledged() && filesResult.getDeletedCount() == 0) {
-                               errHandlingCallback.onResult(null,
-                                       new MongoGridFSException(format("No file found with the ObjectId: %s", id)));
-                           } else {
-                               errHandlingCallback.onResult(null, null);
-                           }
-                       }
-                   };
-                   if (clientSession != null) {
-                       chunksCollection.deleteMany(clientSession, new BsonDocument("files_id", id), deleteChunksCallback);
+       SingleResultCallback<DeleteResult> deleteFileCallback = (filesResult, t) -> {
+           if (t != null) {
+               errHandlingCallback.onResult(null, t);
+           } else {
+               SingleResultCallback<DeleteResult> deleteChunksCallback = (chunksResult, t1) -> {
+                   if (t1 != null) {
+                       errHandlingCallback.onResult(null, t1);
+                   } else if (filesResult.wasAcknowledged() && filesResult.getDeletedCount() == 0) {
+                       errHandlingCallback.onResult(null,
+                               new MongoGridFSException(format("No file found with the ObjectId: %s", id)));
                    } else {
-                       chunksCollection.deleteMany(new BsonDocument("files_id", id), deleteChunksCallback);
+                       errHandlingCallback.onResult(null, null);
                    }
+               };
+               if (clientSession != null) {
+                   chunksCollection.deleteMany(clientSession, new BsonDocument("files_id", id), deleteChunksCallback);
+               } else {
+                   chunksCollection.deleteMany(new BsonDocument("files_id", id), deleteChunksCallback);
                }
            }
        };
@@ -482,16 +336,13 @@ final class AsyncGridFSBucketImpl implements AsyncGridFSBucket {
         notNull("callback", callback);
 
         final SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-        SingleResultCallback<UpdateResult> resultCallback = new SingleResultCallback<UpdateResult>() {
-            @Override
-            public void onResult(final UpdateResult result, final Throwable t) {
-                if (t != null) {
-                    errHandlingCallback.onResult(null, t);
-                } else if (result.wasAcknowledged() && result.getMatchedCount() == 0) {
-                    errHandlingCallback.onResult(null, new MongoGridFSException(format("No file found with the ObjectId: %s", id)));
-                } else {
-                    errHandlingCallback.onResult(null, null);
-                }
+        SingleResultCallback<UpdateResult> resultCallback = (result, t) -> {
+            if (t != null) {
+                errHandlingCallback.onResult(null, t);
+            } else if (result.wasAcknowledged() && result.getMatchedCount() == 0) {
+                errHandlingCallback.onResult(null, new MongoGridFSException(format("No file found with the ObjectId: %s", id)));
+            } else {
+                errHandlingCallback.onResult(null, null);
             }
         };
 
@@ -518,17 +369,14 @@ final class AsyncGridFSBucketImpl implements AsyncGridFSBucket {
     private void executeDrop(@Nullable final AsyncClientSession clientSession, final SingleResultCallback<Void> callback) {
         notNull("callback", callback);
         final SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-        SingleResultCallback<Void> dropFileCallback = new SingleResultCallback<Void>() {
-            @Override
-            public void onResult(final Void result, final Throwable t) {
-                if (t != null) {
-                    errHandlingCallback.onResult(null, t);
+        SingleResultCallback<Void> dropFileCallback = (result, t) -> {
+            if (t != null) {
+                errHandlingCallback.onResult(null, t);
+            } else {
+                if (clientSession != null) {
+                    chunksCollection.drop(clientSession, errHandlingCallback);
                 } else {
-                    if (clientSession != null) {
-                        chunksCollection.drop(clientSession, errHandlingCallback);
-                    } else {
-                        chunksCollection.drop(errHandlingCallback);
-                    }
+                    chunksCollection.drop(errHandlingCallback);
                 }
             }
         };
@@ -583,90 +431,6 @@ final class AsyncGridFSBucketImpl implements AsyncGridFSBucket {
 
     private static AsyncMongoCollection<Document> getChunksCollection(final AsyncMongoDatabase database, final String bucketName) {
         return database.getCollection(bucketName + ".chunks").withCodecRegistry(AsyncMongoClients.getDefaultCodecRegistry());
-    }
-
-    private void downloadToAsyncOutputStream(final AsyncGridFSDownloadStream downloadStream, final AsyncOutputStream destination,
-                                             final SingleResultCallback<Long> callback) {
-        notNull("downloadStream", downloadStream);
-        downloadStream.getGridFSFile(new SingleResultCallback<GridFSFile>() {
-            @Override
-            public void onResult(final GridFSFile result, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    int bufferSize = DEFAULT_BUFFER_SIZE > result.getLength() ? (int) result.getLength() : DEFAULT_BUFFER_SIZE;
-                    readAndWriteOutputStream(destination, downloadStream, ByteBuffer.allocate(bufferSize), 0, callback);
-                }
-            }
-        });
-    }
-
-    private void readAndWriteInputStream(final AsyncInputStream source,
-                                         final AsyncGridFSUploadStream uploadStream, final ByteBuffer buffer,
-                                         final SingleResultCallback<Void> callback) {
-        ((Buffer) buffer).clear();
-        source.read(buffer, new SingleResultCallback<Integer>() {
-            @Override
-            public void onResult(final Integer result, final Throwable t) {
-                if (t != null) {
-                    if (t instanceof IOException) {
-                        uploadStream.abort(new SingleResultCallback<Void>() {
-                            @Override
-                            public void onResult(final Void result, final Throwable abortException) {
-                                if (abortException != null) {
-                                    callback.onResult(null, abortException);
-                                } else {
-                                    callback.onResult(null, new MongoGridFSException("IOException when reading from the InputStream", t));
-                                }
-                            }
-                        });
-                    } else {
-                        callback.onResult(null, t);
-                    }
-                } else if (result > 0) {
-                    ((Buffer) buffer).flip();
-                    uploadStream.write(buffer, new SingleResultCallback<Integer>() {
-                        @Override
-                        public void onResult(final Integer result, final Throwable t) {
-                            if (t != null) {
-                                callback.onResult(null, t);
-                            } else {
-                                readAndWriteInputStream(source, uploadStream, buffer, callback);
-                            }
-                        }
-                    });
-                } else {
-                    uploadStream.close(callback);
-                }
-            }
-        });
-    }
-
-    private void readAndWriteOutputStream(final AsyncOutputStream destination, final AsyncGridFSDownloadStream downloadStream,
-                                          final ByteBuffer buffer, final long amountRead, final SingleResultCallback<Long> callback) {
-        ((Buffer) buffer).clear();
-        downloadStream.read(buffer, new SingleResultCallback<Integer>() {
-            @Override
-            public void onResult(final Integer readResult, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else if (readResult > 0) {
-                    ((Buffer) buffer).flip();
-                    destination.write(buffer, new SingleResultCallback<Integer>() {
-                        @Override
-                        public void onResult(final Integer writeResult, final Throwable t) {
-                            if (t != null) {
-                                callback.onResult(null, t);
-                            } else {
-                                readAndWriteOutputStream(destination, downloadStream, buffer, amountRead + writeResult, callback);
-                            }
-                        }
-                    });
-                } else {
-                    callback.onResult(amountRead, null);
-                }
-            }
-        });
     }
 
 }

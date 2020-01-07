@@ -19,6 +19,7 @@ package com.mongodb.internal.async.client.gridfs;
 import com.mongodb.MongoGridFSException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
+import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertManyResult;
@@ -43,19 +44,19 @@ import org.junit.runners.Parameterized;
 import util.Hex;
 import util.JsonPoweredTestHelper;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
-import static com.mongodb.internal.async.client.gridfs.helpers.AsyncStreamHelper.toAsyncInputStream;
-import static com.mongodb.internal.async.client.gridfs.helpers.AsyncStreamHelper.toAsyncOutputStream;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -264,16 +265,11 @@ public class GridFSTest extends DatabaseTestCase {
 
     private void doDownload(final BsonDocument arguments, final BsonDocument assertion) {
         Throwable error = null;
-        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         try {
-            new MongoOperation<Long>() {
-                @Override
-                public void execute() {
-                    gridFSBucket.downloadToStream(arguments.getObjectId("id").getValue(), toAsyncOutputStream(outputStream), getCallback());
-                }
-            }.get();
-            outputStream.close();
+            final AsyncGridFSDownloadStream downloadStream = gridFSBucket.openDownloadStream(arguments.getObjectId("id").getValue());
+            readGridFSFile(outputStream, downloadStream);
         } catch (Throwable e) {
             error = e;
         }
@@ -287,6 +283,34 @@ public class GridFSTest extends DatabaseTestCase {
         }
     }
 
+    private void readGridFSFile(final ByteArrayOutputStream outputStream, final AsyncGridFSDownloadStream downloadStream) throws Exception {
+        WritableByteChannel channel = Channels.newChannel(outputStream);
+        GridFSFile gridFSFile = new MongoOperation<GridFSFile>() {
+            @Override
+            public void execute() {
+                downloadStream.getGridFSFile(getCallback());
+            }
+        }.get();
+
+        final ByteBuffer byteBuffer = ByteBuffer.allocate((int) gridFSFile.getLength());
+        new MongoOperation<Integer>() {
+            @Override
+            public void execute() {
+                downloadStream.read(byteBuffer, getCallback());
+            }
+        }.get();
+        ((Buffer) byteBuffer).flip();
+        channel.write(byteBuffer);
+        channel.close();
+        outputStream.close();
+        new MongoOperation<Void>() {
+            @Override
+            public void execute() {
+                downloadStream.close(getCallback());
+            }
+        }.get();
+    }
+
     private void doDownloadByName(final BsonDocument arguments, final BsonDocument assertion) {
         Throwable error = null;
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -298,15 +322,9 @@ public class GridFSTest extends DatabaseTestCase {
                 options.revision(revision);
             }
 
-            new MongoOperation<Long>() {
-                @Override
-                public void execute() {
-                    gridFSBucket.downloadToStream(arguments.getString("filename").getValue(), toAsyncOutputStream(outputStream),
-                            options, getCallback());
-                }
-            }.get();
-
-            outputStream.close();
+            final AsyncGridFSDownloadStream downloadStream =
+                    gridFSBucket.openDownloadStream(arguments.getString("filename").getValue(), options);
+            readGridFSFile(outputStream, downloadStream);
         } catch (Throwable e) {
             error = e;
         }
@@ -324,9 +342,8 @@ public class GridFSTest extends DatabaseTestCase {
         ObjectId objectId = null;
         BsonDocument arguments = parseHexDocument(rawArguments, "source");
         try {
-            final String filename = arguments.getString("filename").getValue();
-            final InputStream inputStream = new ByteArrayInputStream(arguments.getBinary("source").getData());
-            final GridFSUploadOptions options = new GridFSUploadOptions();
+            String filename = arguments.getString("filename").getValue();
+            GridFSUploadOptions options = new GridFSUploadOptions();
             AsyncGridFSBucket bucket = gridFSBucket;
             BsonDocument rawOptions = arguments.getDocument("options", new BsonDocument());
             if (rawOptions.containsKey("chunkSizeBytes")) {
@@ -335,14 +352,20 @@ public class GridFSTest extends DatabaseTestCase {
             if (rawOptions.containsKey("metadata")) {
                 options.metadata(Document.parse(rawOptions.getDocument("metadata").toJson()));
             }
-            final AsyncGridFSBucket gridFSUploadBucket = bucket;
-
-            objectId = new MongoOperation<ObjectId>() {
+            final AsyncGridFSUploadStream uploadStream = bucket.openUploadStream(filename, options);
+            new MongoOperation<Integer>() {
                 @Override
                 public void execute() {
-                    gridFSUploadBucket.uploadFromStream(filename, toAsyncInputStream(inputStream), options, getCallback());
+                    uploadStream.write(ByteBuffer.wrap(arguments.getBinary("source").getData()), getCallback());
                 }
             }.get();
+            new MongoOperation<Void>() {
+                @Override
+                public void execute() {
+                    uploadStream.close(getCallback());
+                }
+            }.get();
+            objectId = uploadStream.getObjectId();
         } catch (Throwable e) {
             error = e;
         }
