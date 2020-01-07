@@ -27,7 +27,6 @@ import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
 
-// TODO: add SRV tests
 class ClusterSettingsSpecification extends Specification {
     def hosts = [new ServerAddress('localhost'), new ServerAddress('localhost', 30000)]
     def serverSelector = new WritableServerSelector()
@@ -95,6 +94,48 @@ class ClusterSettingsSpecification extends Specification {
         expect:
         ClusterSettings.builder().applySettings(customSettings).build() == customSettings
         ClusterSettings.builder(customSettings).applySettings(defaultSettings).build() == defaultSettings
+    }
+
+    def 'when hosts contains more than one element and mode is SINGLE, should throw IllegalArgumentException'() {
+        when:
+        def builder = ClusterSettings.builder()
+        builder.hosts([new ServerAddress('host1'), new ServerAddress('host2')])
+        builder.mode(ClusterConnectionMode.SINGLE)
+        builder.build()
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def 'when srvHost is specified, should set mode to MULTIPLE'() {
+        when:
+        def builder = ClusterSettings.builder()
+        builder.srvHost('foo.bar.com')
+        def settings = builder.build()
+
+        then:
+        settings.getSrvHost() == 'foo.bar.com'
+        settings.getMode() == ClusterConnectionMode.MULTIPLE
+    }
+
+    def 'when srvHost contains a colon, should throw IllegalArgumentException'() {
+        when:
+        def builder = ClusterSettings.builder()
+        builder.srvHost('foo.bar.com:27017')
+        builder.build()
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def 'when srvHost contains less than three parts (host, domain, top-level domain, should throw IllegalArgumentException'() {
+        when:
+        def builder = ClusterSettings.builder()
+        builder.srvHost('foo.bar')
+        builder.build()
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'should allow configure serverSelectors correctly'() {
