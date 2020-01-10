@@ -157,6 +157,23 @@ functions:
         content_type: ${content_type|text/plain}
         display_name: "orchestration.log"
 
+  "upload working dir logs":
+    - command: shell.exec
+      params:
+        script: |
+          ${PREPARE_SHELL}
+          find ${PROJECT_DIRECTORY} -name \*.log | xargs tar czf working-dir-logs.tar.gz
+    - command: s3.put
+      params:
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: working-dir-logs.tar.gz
+        remote_file: ${UPLOAD_BUCKET}/${build_variant}/${revision}/${version_id}/${build_id}/logs/${task_id}-${execution}-working-dir-logs.tar.gz
+        bucket: mciuploads
+        permissions: public-read
+        content_type: ${content_type|application/x-gzip}
+        display_name: "working-dir-logs.tar.gz"
+
   "upload working dir":
     - command: archive.targz_pack
       params:
@@ -394,6 +411,7 @@ post:
   # Removed, causing timeouts
   # - func: "upload working dir"
   - func: "upload mo artifacts"
+  - func: "upload working dir logs"
   - func: "upload test results"
   - func: "cleanup"
 
