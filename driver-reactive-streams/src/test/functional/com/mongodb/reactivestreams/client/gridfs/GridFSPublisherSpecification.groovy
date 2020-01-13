@@ -119,8 +119,8 @@ class GridFSPublisherSpecification extends FunctionalSpecification {
         given:
         def contentSize = 1024 * 500
         def chunkSize = 10
-        def contentBytes = new byte[contentSize];
-        new SecureRandom().nextBytes(contentBytes);
+        def contentBytes = new byte[contentSize]
+        new SecureRandom().nextBytes(contentBytes)
         def options = new GridFSUploadOptions().chunkSizeBytes(chunkSize)
 
         when:
@@ -165,6 +165,32 @@ class GridFSPublisherSpecification extends FunctionalSpecification {
         then:
         data.array() == concatByteBuffers([ByteBuffer.wrap(contentBytes), ByteBuffer.wrap(contentBytes),
                                            ByteBuffer.wrap(contentBytes)])
+    }
+
+    def 'should upload from the source publisher when it contains multiple parts and the total size is smaller than chunksize'() {
+        given:
+        def contentBytes = singleChunkString.getBytes()
+
+        when:
+        def publisher = gridFSBucket.uploadFromPublisher('myFile',
+                createPublisher(ByteBuffer.wrap(contentBytes), ByteBuffer.wrap(contentBytes)))
+
+        def subscriber = new ObservableSubscriber()
+        publisher.subscribe(subscriber)
+        def fileId = subscriber.await(1, 60, SECONDS).getReceived().get(0)
+
+        then:
+        run(filesCollection.&countDocuments) == 1
+        run(chunksCollection.&countDocuments) == 1
+
+        when:
+        subscriber = new ObservableSubscriber()
+        publisher = gridFSBucket.downloadToPublisher(fileId as ObjectId)
+        publisher.subscribe(subscriber)
+        def data = subscriber.await(1, 30, SECONDS).getReceived().get(0)
+
+        then:
+        data.array() == concatByteBuffers([ByteBuffer.wrap(contentBytes), ByteBuffer.wrap(contentBytes)])
     }
 
     def 'should round trip with data larger than the internal bufferSize'() {
