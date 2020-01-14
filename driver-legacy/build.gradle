@@ -30,11 +30,11 @@ test {
 }
 
 dependencies {
-    compile project(':bson')
-    compile project(':driver-core')
-    compile project(':driver-sync')
+    api project(':bson')
+    api project(':driver-core')
+    api project(':driver-sync')
 
-    testCompile project(':bson').sourceSets.test.output
-    testCompile project(':driver-core').sourceSets.test.output
-    testCompile project(':driver-sync').sourceSets.test.output
+    testImplementation project(':bson').sourceSets.test.output
+    testImplementation project(':driver-core').sourceSets.test.output
+    testImplementation project(':driver-sync').sourceSets.test.output
 }

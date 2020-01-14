@@ -33,26 +33,25 @@ task docs(type: Javadoc) {
 
 def utilProject = project(':util')
 allprojects {
-    afterEvaluate { project ->
-        tasks.withType(Javadoc) {
-            dependsOn utilProject.compileJava //We need taglets to be compiled
-            exclude "**/com/mongodb/**/benchmark/**"
-            exclude "**/com/mongodb/**/internal/**"
-            exclude "**/org/bson/**/internal/**"
-            options {
-                author = true
-                version = true
-                links 'https://docs.oracle.com/en/java/javase/11/docs/api/'
-                tagletPath single(utilProject.sourceSets.main.output.classesDirs)
-                taglets 'ManualTaglet'
-                taglets 'DochubTaglet'
-                taglets 'ServerReleaseTaglet'
-                encoding = 'UTF-8'
-                charSet 'UTF-8'
-                docEncoding 'UTF-8'
-                addBooleanOption("html5", true)
-                addBooleanOption("-allow-script-in-comments", true)
-                header = '''
+    tasks.withType(Javadoc) {
+        dependsOn utilProject.compileJava //We need taglets to be compiled
+        exclude "**/com/mongodb/**/benchmark/**"
+        exclude "**/com/mongodb/**/internal/**"
+        exclude "**/org/bson/**/internal/**"
+        options {
+            author = true
+            version = true
+            links 'https://docs.oracle.com/en/java/javase/11/docs/api/'
+            tagletPath single(utilProject.sourceSets.main.output.classesDirs)
+            taglets 'ManualTaglet'
+            taglets 'DochubTaglet'
+            taglets 'ServerReleaseTaglet'
+            encoding = 'UTF-8'
+            charSet 'UTF-8'
+            docEncoding 'UTF-8'
+            addBooleanOption("html5", true)
+            addBooleanOption("-allow-script-in-comments", true)
+            header = '''
                     | <script type="text/javascript">
                     | function setLocationHash() {
                     |   try {
@@ -90,7 +89,6 @@ allprojects {
                     | setSearchUrlPrefix();
                     |
                     | </script>'''.stripMargin()
-            }
         }
     }
 }

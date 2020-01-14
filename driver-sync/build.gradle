@@ -21,11 +21,11 @@ ext {
 }
 
 dependencies {
-    compile project(path: ':bson', configuration: 'default')
-    compile project(path: ':driver-core', configuration: 'default')
+    api project(path: ':bson', configuration: 'default')
+    api project(path: ':driver-core', configuration: 'default')
 
-    testCompile project(':bson').sourceSets.test.output
-    testCompile project(':driver-core').sourceSets.test.output
+    testImplementation project(':bson').sourceSets.test.output
+    testImplementation project(':driver-core').sourceSets.test.output
 }
 
 sourceSets {
