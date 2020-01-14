@@ -26,16 +26,16 @@ dependencies {
 
     compile 'org.reactivestreams:reactive-streams:1.0.2'
 
-    testCompile project(':util')
-    testCompile project(':driver-sync')
-    testCompile project(':bson').sourceSets.test.output
-    testCompile project(':driver-sync').sourceSets.test.output
-    testCompile project(':driver-core').sourceSets.test.output
+    testImplementation project(':util')
+    testImplementation project(':driver-sync')
+    testImplementation project(':bson').sourceSets.test.output
+    testImplementation project(':driver-sync').sourceSets.test.output
+    testImplementation project(':driver-core').sourceSets.test.output
 }
 
 
 configurations {
-    integrationTestCompile.extendsFrom testCompile
+    integrationTestCompile.extendsFrom testImplementation
     integrationTestRuntime.extendsFrom testRuntime
 }
 

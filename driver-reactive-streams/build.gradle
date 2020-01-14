@@ -18,16 +18,16 @@ description = "A Reactive Streams implementation of the MongoDB Java driver"
 archivesBaseName = 'mongodb-driver-reactivestreams'
 
 dependencies {
-    compile project(path: ':bson', configuration: 'default')
-    compile project(path: ':driver-core', configuration: 'default')
+    api project(path: ':bson', configuration: 'default')
+    api project(path: ':driver-core', configuration: 'default')
 
-    compile 'org.reactivestreams:reactive-streams:1.0.2'
+    api 'org.reactivestreams:reactive-streams:1.0.2'
 
-    testCompile project(':bson').sourceSets.test.output
-    testCompile project(':driver-sync')
-    testCompile project(':driver-sync').sourceSets.test.output
-    testCompile project(':driver-core').sourceSets.test.output
-    testCompile 'org.reactivestreams:reactive-streams-tck:1.0.2'
+    testImplementation project(':bson').sourceSets.test.output
+    testImplementation project(':driver-sync')
+    testImplementation project(':driver-sync').sourceSets.test.output
+    testImplementation project(':driver-core').sourceSets.test.output
+    testImplementation 'org.reactivestreams:reactive-streams-tck:1.0.2'
 }
 
 sourceSets {

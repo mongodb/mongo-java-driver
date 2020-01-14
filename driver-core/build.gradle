@@ -31,17 +31,17 @@ ext {
 sourceSets.main.resources.srcDirs = ['src/resources']
 
 dependencies {
-    compile project(path: ':bson', configuration: 'default')
+    api project(path: ':bson', configuration: 'default')
 
-    compile "com.github.jnr:jnr-unixsocket:$jnrUnixsocketVersion", optional
-    compile "io.netty:netty-buffer:$nettyVersion", optional
-    compile "io.netty:netty-transport:$nettyVersion", optional
-    compile "io.netty:netty-handler:$nettyVersion", optional
-    compile "org.xerial.snappy:snappy-java:$snappyVersion", optional
-    compile "com.github.luben:zstd-jni:$zstdVersion", optional
-    compile "org.mongodb:mongodb-crypt:$mongoCryptVersion", optional
+    implementation "com.github.jnr:jnr-unixsocket:$jnrUnixsocketVersion", optional
+    api "io.netty:netty-buffer:$nettyVersion", optional
+    api "io.netty:netty-transport:$nettyVersion", optional
+    implementation "io.netty:netty-handler:$nettyVersion", optional
+    implementation "org.xerial.snappy:snappy-java:$snappyVersion", optional
+    implementation "com.github.luben:zstd-jni:$zstdVersion", optional
+    implementation "org.mongodb:mongodb-crypt:$mongoCryptVersion", optional
 
-    testCompile project(':bson').sourceSets.test.output
+    testImplementation project(':bson').sourceSets.test.output
 }
 
 buildConfig {
