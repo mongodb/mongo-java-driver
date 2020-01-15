@@ -22,4 +22,4 @@ ext {
     pomURL = 'https://bsonspec.org'
 }
 
-jar.manifest.attributes['Import-Package'] = 'org.slf4j;resolution:=optional'
+jar.manifest.attributes['Import-Package'] = 'org.slf4j.*;resolution:=optional'
