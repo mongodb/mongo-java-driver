@@ -368,6 +368,6 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         FutureResultCallback futureResultCallback = new FutureResultCallback()
         List opArgs = (args != null) ? args : []
         Fixture.getMongoClient().&startSession.call(*opArgs + futureResultCallback)
-        futureResultCallback.get(30, TimeUnit.SECONDS)
+        futureResultCallback.get()
     }
 }

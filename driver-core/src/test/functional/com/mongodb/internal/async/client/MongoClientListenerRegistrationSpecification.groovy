@@ -24,8 +24,6 @@ import com.mongodb.event.ServerListener
 import com.mongodb.event.ServerMonitorListener
 import org.bson.Document
 
-import static java.util.concurrent.TimeUnit.SECONDS
-
 class MongoClientListenerRegistrationSpecification extends FunctionalSpecification {
 
     def 'should register event listeners'() {
@@ -80,7 +78,7 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
         def futureResultCallback = new FutureResultCallback()
         def opArgs = (args != null) ? args : []
         operation.call(*opArgs + futureResultCallback)
-        futureResultCallback.get(60, SECONDS)
+        futureResultCallback.get()
     }
 
 }

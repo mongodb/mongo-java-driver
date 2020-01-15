@@ -24,6 +24,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.ClusterFixture.TIMEOUT;
+
 /**
  * A SingleResultCallback Future implementation.
  *
@@ -59,7 +61,7 @@ public class FutureResultCallback<T> implements SingleResultCallback<T>, Future<
 
     @Override
     public T get() {
-        return get(5, TimeUnit.MINUTES);
+        return get(TIMEOUT, TimeUnit.SECONDS);
     }
 
     @Override

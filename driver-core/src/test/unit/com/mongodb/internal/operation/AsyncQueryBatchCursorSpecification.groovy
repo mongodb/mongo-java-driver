@@ -38,7 +38,6 @@ import spock.lang.Specification
 
 import static OperationUnitSpecification.getMaxWireVersionForServerVersion
 import static com.mongodb.ReadPreference.primary
-import static java.util.concurrent.TimeUnit.SECONDS
 
 class AsyncQueryBatchCursorSpecification extends Specification {
 
@@ -580,13 +579,13 @@ class AsyncQueryBatchCursorSpecification extends Specification {
     List<Document> nextBatch(AsyncQueryBatchCursor cursor) {
         def futureResultCallback = new FutureResultCallback()
         cursor.next(futureResultCallback)
-        futureResultCallback.get(1, SECONDS)
+        futureResultCallback.get()
     }
 
     List<Document> tryNextBatch(AsyncQueryBatchCursor cursor) {
         def futureResultCallback = new FutureResultCallback()
         cursor.tryNext(futureResultCallback)
-        futureResultCallback.get(1, SECONDS)
+        futureResultCallback.get()
     }
 
     private static final MongoNamespace NAMESPACE = new MongoNamespace('db', 'coll')

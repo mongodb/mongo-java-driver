@@ -30,7 +30,6 @@ import org.junit.experimental.categories.Category
 import spock.lang.Specification
 
 import static com.mongodb.ReadPreference.primary
-import static java.util.concurrent.TimeUnit.SECONDS
 
 class UsageTrackingConnectionSpecification extends Specification {
     private static final ServerId SERVER_ID = new ServerId(new ClusterId(), new ServerAddress())
@@ -68,7 +67,7 @@ class UsageTrackingConnectionSpecification extends Specification {
 
         when:
         connection.openAsync(futureResultCallback)
-        futureResultCallback.get(60, SECONDS)
+        futureResultCallback.get()
 
         then:
         connection.openedAt <= System.currentTimeMillis()
@@ -99,7 +98,7 @@ class UsageTrackingConnectionSpecification extends Specification {
 
         when:
         connection.openAsync(futureResultCallback)
-        futureResultCallback.get(60, SECONDS)
+        futureResultCallback.get()
 
         then:
         connection.lastUsedAt <= System.currentTimeMillis()
@@ -129,7 +128,7 @@ class UsageTrackingConnectionSpecification extends Specification {
 
         when:
         connection.sendMessageAsync(Arrays.asList(), 1, futureResultCallback)
-        futureResultCallback.get(60, SECONDS)
+        futureResultCallback.get()
 
         then:
         connection.lastUsedAt >= openedLastUsedAt
@@ -158,7 +157,7 @@ class UsageTrackingConnectionSpecification extends Specification {
 
         when:
         connection.receiveMessageAsync(1, futureResultCallback)
-        futureResultCallback.get(60, SECONDS)
+        futureResultCallback.get()
 
         then:
         connection.lastUsedAt >= openedLastUsedAt
@@ -194,7 +193,7 @@ class UsageTrackingConnectionSpecification extends Specification {
                 new BsonDocument('ping', new BsonInt32(1)), new NoOpFieldNameValidator(), primary(),
                 MessageSettings.builder().build()),
                 new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, futureResultCallback)
-        futureResultCallback.get(60, SECONDS)
+        futureResultCallback.get()
 
         then:
         connection.lastUsedAt >= openedLastUsedAt

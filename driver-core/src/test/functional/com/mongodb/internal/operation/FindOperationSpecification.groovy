@@ -262,7 +262,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
             if (async) {
                 def futureResultCallback = new FutureResultCallback()
                 cursor.next(futureResultCallback)
-                futureResultCallback.get(5, SECONDS)
+                futureResultCallback.get()
             } else {
                 cursor.next()
             }
@@ -271,7 +271,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
             if (async) {
                 def futureResultCallback = new FutureResultCallback()
                 cursor.next(futureResultCallback)
-                futureResultCallback.get(5, SECONDS) != null
+                futureResultCallback.get() != null
             } else {
                 cursor.hasNext()
             }

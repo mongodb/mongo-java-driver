@@ -50,7 +50,6 @@ import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.internal.event.EventListenerHelper.NO_OP_SERVER_LISTENER
-import static java.util.concurrent.TimeUnit.SECONDS
 
 class DefaultServerSpecification extends Specification {
     private static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator()
@@ -312,7 +311,7 @@ class DefaultServerSpecification extends Specification {
         def futureResultCallback = new FutureResultCallback()
         testConnection.insertAsync(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
                 futureResultCallback);
-        futureResultCallback.get(60, SECONDS)
+        futureResultCallback.get()
 
         then:
         thrown(MongoNotPrimaryException)
@@ -323,7 +322,7 @@ class DefaultServerSpecification extends Specification {
         futureResultCallback = new FutureResultCallback()
         testConnection.insertAsync(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
                 futureResultCallback);
-        futureResultCallback.get(60, SECONDS)
+        futureResultCallback.get()
 
         then:
         thrown(MongoNotPrimaryException)
@@ -389,7 +388,7 @@ class DefaultServerSpecification extends Specification {
         def futureResultCallback = new FutureResultCallback<WriteConcernResult>()
         testConnection.insertAsync(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
                 futureResultCallback)
-        futureResultCallback.get(60, SECONDS)
+        futureResultCallback.get()
 
         then:
         thrown(MongoSocketException)
@@ -428,7 +427,7 @@ class DefaultServerSpecification extends Specification {
         def futureResultCallback = new FutureResultCallback<WriteConcernResult>()
         testConnection.insertAsync(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
                 futureResultCallback)
-        futureResultCallback.get(60, SECONDS)
+        futureResultCallback.get()
 
         then:
         thrown(MongoSocketReadTimeoutException)

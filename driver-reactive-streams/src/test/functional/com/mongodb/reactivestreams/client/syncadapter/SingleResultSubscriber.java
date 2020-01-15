@@ -25,6 +25,8 @@ import org.reactivestreams.Subscription;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.ClusterFixture.TIMEOUT;
+
 class SingleResultSubscriber<T> implements Subscriber<T> {
     private volatile T result;
     private volatile Throwable exception;
@@ -33,7 +35,7 @@ class SingleResultSubscriber<T> implements Subscriber<T> {
     @Nullable
     T get() {
         try {
-            if (!latch.await(30, TimeUnit.SECONDS)) {
+            if (!latch.await(TIMEOUT, TimeUnit.SECONDS)) {
                 throw new MongoTimeoutException("Timeout waiting for single result");
             }
             if (exception != null) {

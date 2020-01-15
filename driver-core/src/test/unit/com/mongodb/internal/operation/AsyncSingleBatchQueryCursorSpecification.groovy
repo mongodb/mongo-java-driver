@@ -24,8 +24,6 @@ import com.mongodb.internal.connection.QueryResult
 import org.bson.Document
 import spock.lang.Specification
 
-import static java.util.concurrent.TimeUnit.SECONDS
-
 class AsyncSingleBatchQueryCursorSpecification extends Specification {
 
     def 'should work as expected'() {
@@ -83,12 +81,12 @@ class AsyncSingleBatchQueryCursorSpecification extends Specification {
     List<Document> nextBatch(AsyncSingleBatchQueryCursor cursor) {
         def futureResultCallback = new FutureResultCallback()
         cursor.next(futureResultCallback)
-        futureResultCallback.get(60, SECONDS)
+        futureResultCallback.get()
     }
     List<Document> tryNextBatch(AsyncSingleBatchQueryCursor cursor) {
         def futureResultCallback = new FutureResultCallback()
         cursor.tryNext(futureResultCallback)
-        futureResultCallback.get(60, SECONDS)
+        futureResultCallback.get()
     }
 
 

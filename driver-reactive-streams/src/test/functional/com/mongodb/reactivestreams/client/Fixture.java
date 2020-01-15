@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.ClusterFixture.TIMEOUT;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
@@ -150,7 +151,7 @@ public final class Fixture {
                 .runCommand(command)
                 .subscribe(subscriber);
         try {
-            return subscriber.get(20, SECONDS).get(0);
+            return subscriber.get(TIMEOUT, SECONDS).get(0);
         } catch (Throwable t) {
             if (t instanceof RuntimeException) {
                 throw (RuntimeException) t;
