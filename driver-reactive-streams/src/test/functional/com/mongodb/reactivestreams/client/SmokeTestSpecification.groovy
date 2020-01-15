@@ -27,6 +27,7 @@ import org.bson.RawBsonDocument
 import spock.lang.IgnoreIf
 
 import static Fixture.getMongoClient
+import static com.mongodb.ClusterFixture.TIMEOUT
 import static com.mongodb.ClusterFixture.getConnectionString
 import static com.mongodb.reactivestreams.client.Fixture.isReplicaSet
 import static com.mongodb.reactivestreams.client.Fixture.serverVersionAtLeast
@@ -230,7 +231,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
 
         when:
         subscriber.getSubscription().request(1)
-        subscriber.await(10, SECONDS)
+        subscriber.await(TIMEOUT, SECONDS)
 
         then:
         subscriber.isCompleted()
@@ -251,7 +252,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         LOGGER.debug(log)
         def subscriber = new Fixture.ObservableSubscriber()
         operation.call(args).subscribe(subscriber)
-        subscriber.get(30, SECONDS)
+        subscriber.get(TIMEOUT, SECONDS)
     }
 
 }

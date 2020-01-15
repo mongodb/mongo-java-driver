@@ -160,7 +160,7 @@ class GridFSPublisherSpecification extends FunctionalSpecification {
         subscriber = new ObservableSubscriber()
         publisher = gridFSBucket.downloadToPublisher(fileId as ObjectId).bufferSizeBytes(contentBytes.length * 3)
         publisher.subscribe(subscriber)
-        def data = subscriber.await(1, 30, SECONDS).getReceived().get(0)
+        def data = subscriber.await(1, 60, SECONDS).getReceived().get(0)
 
         then:
         data.array() == concatByteBuffers([ByteBuffer.wrap(contentBytes), ByteBuffer.wrap(contentBytes),
@@ -474,7 +474,7 @@ class GridFSPublisherSpecification extends FunctionalSpecification {
 
         def subscriber = new ObservableSubscriber()
         publisher.subscribe(subscriber)
-        subscriber.await(0, 10, SECONDS)
+        subscriber.await(0, 60, SECONDS)
 
         then:
         thrown(IllegalArgumentException)
@@ -483,7 +483,7 @@ class GridFSPublisherSpecification extends FunctionalSpecification {
         subscriber = new ObservableSubscriber()
         publisher = gridFSBucket.downloadToPublisher(new ObjectId())
         publisher.subscribe(subscriber)
-        subscriber.await(0, 30, SECONDS).getReceived().get(0)
+        subscriber.await(0, 60, SECONDS).getReceived().get(0)
 
         then:
         thrown(IllegalArgumentException)

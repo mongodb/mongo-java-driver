@@ -367,7 +367,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
     List<Document> nextBatch() {
         def futureResultCallback = new FutureResultCallback()
         cursor.next(futureResultCallback)
-        futureResultCallback.get(60, SECONDS)
+        futureResultCallback.get()
     }
 
     private QueryResult<Document> executeQuery() {
@@ -403,14 +403,14 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
             connection.commandAsync(getDatabaseName(), findCommand, NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(),
                     CommandResultDocumentCodec.create(new DocumentCodec(), 'firstBatch'),
                     connectionSource.sessionContext, futureResultCallback)
-            def response = futureResultCallback.get(60, SECONDS)
+            def response = futureResultCallback.get()
             cursorDocumentToQueryResult(response.getDocument('cursor'), connection.getDescription().getServerAddress())
         } else {
             def futureResultCallback = new FutureResultCallback<QueryResult<Document>>();
             connection.queryAsync(getNamespace(), filter, null, 0, limit, batchSize,
                                   true, tailable, awaitData, false, false, false,
                                   new DocumentCodec(), futureResultCallback);
-            futureResultCallback.get(60, SECONDS);
+            futureResultCallback.get();
         }
     }
 

@@ -32,7 +32,6 @@ import org.bson.Document;
 import static com.mongodb.ClusterFixture.getSslSettings;
 import static com.mongodb.connection.ClusterType.SHARDED;
 import static java.lang.Thread.sleep;
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * Helper class for asynchronous tests.
@@ -94,7 +93,7 @@ public final class Fixture {
         try {
             FutureResultCallback<Document> futureResultCallback = new FutureResultCallback<Document>();
             database.runCommand(new Document("drop", namespace.getCollectionName()), futureResultCallback);
-            futureResultCallback.get(60, SECONDS);
+            futureResultCallback.get();
         } catch (MongoCommandException e) {
             if (!e.getErrorMessage().startsWith("ns not found")) {
                 throw e;
@@ -118,7 +117,7 @@ public final class Fixture {
             FutureResultCallback<Document> futureResultCallback = new FutureResultCallback<Document>();
             getMongoClient().getDatabase(name)
                             .runCommand(new Document("dropDatabase", 1), futureResultCallback);
-            futureResultCallback.get(60, SECONDS);
+            futureResultCallback.get();
         } catch (MongoCommandException e) {
             if (!e.getErrorMessage().startsWith("ns not found")) {
                 throw e;

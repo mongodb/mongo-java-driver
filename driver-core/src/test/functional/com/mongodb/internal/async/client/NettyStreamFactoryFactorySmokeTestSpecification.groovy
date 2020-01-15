@@ -23,7 +23,6 @@ import io.netty.channel.socket.oio.OioSocketChannel
 import org.bson.Document
 
 import static Fixture.getMongoClientBuilderFromConnectionString
-import static java.util.concurrent.TimeUnit.SECONDS
 
 class NettyStreamFactoryFactorySmokeTestSpecification extends FunctionalSpecification {
 
@@ -57,6 +56,6 @@ class NettyStreamFactoryFactorySmokeTestSpecification extends FunctionalSpecific
         def futureResultCallback = new FutureResultCallback()
         def opArgs = (args != null) ? args : []
         operation.call(*opArgs + futureResultCallback)
-        futureResultCallback.get(60, SECONDS)
+        futureResultCallback.get()
     }
 }

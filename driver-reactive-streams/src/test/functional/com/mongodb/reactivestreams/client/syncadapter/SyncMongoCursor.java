@@ -31,6 +31,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.ClusterFixture.TIMEOUT;
+
 class SyncMongoCursor<T> implements MongoCursor<T> {
     private static final Object COMPLETED = new Object();
 
@@ -64,7 +66,7 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
             }
         });
         try {
-            if (!latch.await(30, TimeUnit.SECONDS)) {
+            if (!latch.await(TIMEOUT, TimeUnit.SECONDS)) {
                 throw new MongoTimeoutException("Timeout waiting for subscription");
             }
         } catch (InterruptedException e) {
@@ -84,7 +86,7 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
             return true;
         }
         try {
-            Object first = results.pollFirst(30, TimeUnit.SECONDS);
+            Object first = results.pollFirst(TIMEOUT, TimeUnit.SECONDS);
             if (first == null) {
                 throw new MongoTimeoutException("Time out waiting for result from cursor");
             } else if (first instanceof Throwable) {
