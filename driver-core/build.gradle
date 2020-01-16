@@ -65,19 +65,17 @@ jar {
         instruction 'Import-Package',
                     'org.bson.*',                       // unfortunate that this is necessary, but if it's left out then it's not included
                     'javax.crypto.*',
-                    'javax.crypto.spec.*',
                     'javax.management.*',
                     'javax.naming.*',
-                    'javax.naming.directory.*',
                     'javax.net.*',
-                    'javax.net.ssl.*',
                     'javax.security.sasl.*',
                     'javax.security.auth.callback.*',
                     'org.ietf.jgss.*',
                     'io.netty.*;resolution:=optional',
                     'org.xerial.snappy.*;resolution:=optional',
                     'com.github.luben.zstd.*;resolution:=optional',
-                    'org.slf4j;resolution:=optional',
-                    'jnr.unixsocket;resolution:=optional'
+                    'org.slf4j.*;resolution:=optional',
+                    'jnr.unixsocket.*;resolution:=optional',
+                    """com.mongodb.crypt.capi.*;resolution:=optional;version='$mongoCryptVersion'"""
     }
 }
