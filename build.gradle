@@ -172,7 +172,7 @@ configure(javaCodeCheckedProjects) {
 
     /* Testing */
     tasks.withType(Test) {
-        maxHeapSize = "3g"
+        maxHeapSize = "4g"
         maxParallelForks = 1
 
         systemProperties(
