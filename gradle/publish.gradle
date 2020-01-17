@@ -146,7 +146,6 @@ configure(scalaProjects) { project ->
 
     afterEvaluate {
         jar configureJarManifestAttributes(project)
-        publishing.publications.mavenJava.artifactId = project.archivesBaseName
         publishing.publications.mavenJava.pom configurePom(project)
         signing {
             sign publishing.publications.mavenJava
