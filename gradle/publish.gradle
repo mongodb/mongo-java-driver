@@ -95,7 +95,6 @@ configure(javaProjects) { project ->
                 artifact sourcesJar
                 artifact javadocJar
 
-                pom configurePom(project)
             }
         }
 
@@ -105,6 +104,7 @@ configure(javaProjects) { project ->
     afterEvaluate {
         jar configureJarManifestAttributes(project)
         publishing.publications.mavenJava.artifactId = project.archivesBaseName
+        publishing.publications.mavenJava.pom configurePom(project)
         signing {
             sign publishing.publications.mavenJava
         }
@@ -135,7 +135,6 @@ configure(scalaProjects) { project ->
                 if (!scalaVersion.startsWith("2.13")) {
                     artifact scaladocJar  // https://github.com/gradle/gradle/issues/9855
                 }
-                pom configurePom(project)
             }
         }
 
@@ -144,6 +143,8 @@ configure(scalaProjects) { project ->
 
     afterEvaluate {
         jar configureJarManifestAttributes(project)
+        publishing.publications.mavenJava.artifactId = project.archivesBaseName
+        publishing.publications.mavenJava.pom configurePom(project)
         signing {
             sign publishing.publications.mavenJava
         }
