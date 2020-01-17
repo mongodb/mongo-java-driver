@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2019-12-10T10:27:02.4">
+<meta name="date" content="2020-01-17T17:06:15.36">
 <link rel="shortcut icon" href="/mongo-java-driver/3.12/img/favicon.png">
 
     <title>Client Side Encryption</title><link rel="stylesheet" href="/mongo-java-driver/3.12/lib/bootstrap.css" type="text/css" />
@@ -314,7 +314,7 @@ See the <a href="/mongo-java-driver/3.12/driver/getting-started/installation/">i
 <p><code>libmongocrypt</code> requires the <code>mongocryptd</code> daemon / process to be running. A specific daemon / process uri can be configured in the
 <code>AutoEncryptionSettings</code> class by setting <code>mongocryptdURI</code> in the <code>extraOptions</code>.</p>
 
-<p>More information about mongocryptd will soon be available from the official documentation.</p>
+<p>For more information about mongocryptd see the <a href="https://docs.mongodb.com/manual/core/security-client-side-encryption/">official documentation</a>.</p>
 
 <h3 id="examples">Examples</h3>
 
@@ -437,7 +437,99 @@ AutoEncryptionSettings autoEncryptionSettings = AutoEncryptionSettings.builder()
         }}).build();
 </code></pre>
 
-<p><strong>Coming soon:</strong> An example using the community version and demonstrating explicit encryption/decryption.</p>
+<h4 id="explicit-encryption-and-decryption">Explicit Encryption and Decryption</h4>
+
+<p>Explicit encryption and decryption is a <strong>MongoDB community</strong> feature and does not use the <code>mongocryptd</code> process. Explicit encryption is
+provided by the <code>ClientEncryption</code> class.
+The full code snippet can be found in <a href="https://github.com/mongodb/mongo-java-driver/blob/master/driver-sync/src/examples/tour/ClientSideEncryptionExplicitEncryptionAndDecryptionTour.java
+"><code>ClientSideEncryptionExplicitEncryptionAndDecryptionTour.java</code></a>:</p>
+
+<pre><code>// This would have to be the same master key as was used to create the encryption key
+final byte[] localMasterKey = new byte[96];
+new SecureRandom().nextBytes(localMasterKey);
+
+Map&lt;String, Map&lt;String, Object&gt;&gt; kmsProviders = new HashMap&lt;String, Map&lt;String, Object&gt;&gt;() {{
+    put(&quot;local&quot;, new HashMap&lt;String, Object&gt;() {{
+        put(&quot;key&quot;, localMasterKey);
+    }});
+}};
+
+MongoClientSettings clientSettings = MongoClientSettings.builder().build();
+MongoClient mongoClient = MongoClients.create(clientSettings);
+
+// Set up the key vault for this example
+MongoNamespace keyVaultNamespace = new MongoNamespace(&quot;encryption.testKeyVault&quot;);
+MongoCollection&lt;Document&gt; keyVaultCollection = mongoClient
+    .getDatabase(keyVaultNamespace.getDatabaseName())
+    .getCollection(keyVaultNamespace.getCollectionName());
+keyVaultCollection.drop();
+
+// Ensure that two data keys cannot share the same keyAltName.
+keyVaultCollection.createIndex(Indexes.ascending(&quot;keyAltNames&quot;),
+        new IndexOptions().unique(true)
+           .partialFilterExpression(Filters.exists(&quot;keyAltNames&quot;)));
+
+MongoCollection&lt;Document&gt; collection = mongoClient.getDatabase(&quot;test&quot;).getCollection(&quot;coll&quot;);
+collection.drop(); // Clear old data
+
+// Create the ClientEncryption instance
+ClientEncryptionSettings clientEncryptionSettings = ClientEncryptionSettings.builder()
+        .keyVaultMongoClientSettings(MongoClientSettings.builder()
+                .applyConnectionString(new ConnectionString(&quot;mongodb://localhost&quot;))
+                .build())
+        .keyVaultNamespace(keyVaultNamespace.getFullName())
+        .kmsProviders(kmsProviders)
+        .build();
+
+ClientEncryption clientEncryption = ClientEncryptions.create(clientEncryptionSettings);
+
+BsonBinary dataKeyId = clientEncryption.createDataKey(&quot;local&quot;, new DataKeyOptions());
+
+// Explicitly encrypt a field
+BsonBinary encryptedFieldValue = clientEncryption.encrypt(new BsonString(&quot;123456789&quot;),
+        new EncryptOptions(&quot;AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic&quot;).keyId(dataKeyId));
+
+collection.insertOne(new Document(&quot;encryptedField&quot;, encryptedFieldValue));
+
+Document doc = collection.find().first();
+System.out.println(doc.toJson());
+
+// Explicitly decrypt the field
+BsonString decryptedFieldValue = clientEncryption.decrypt(
+    new BsonBinary(doc.get(&quot;encryptedField&quot;, Binary.class).getData())).asString();
+System.out.println(decryptedFieldValue.getValue());
+</code></pre>
+
+<h4 id="explicit-encryption-and-auto-decryption">Explicit Encryption and Auto Decryption</h4>
+
+<p>Although automatic encryption requires MongoDB 4.2 enterprise or a MongoDB 4.2 Atlas cluster, automatic decryption is supported for all
+users. To configure automatic decryption without automatic encryption set <code>bypassAutoEncryption(true)</code>. The full code snippet can be found in <a href="https://github.com/mongodb/mongo-java-driver/blob/master/driver-sync/src/examples/tour/ClientSideEncryptionExplicitEncryptionOnlyTour.java
+"><code>ClientSideEncryptionExplicitEncryptionOnlyTour.java</code></a>:</p>
+
+<pre><code>...
+MongoClientSettings clientSettings = MongoClientSettings.builder()
+    .autoEncryptionSettings(AutoEncryptionSettings.builder()
+            .keyVaultNamespace(keyVaultNamespace.getFullName())
+            .kmsProviders(kmsProviders)
+            .bypassAutoEncryption(true)
+            .build())
+    .build();
+MongoClient mongoClient = MongoClients.create(clientSettings);
+
+...
+
+// Explicitly encrypt a field
+BsonBinary encryptedFieldValue = clientEncryption.encrypt(new BsonString(&quot;123456789&quot;),
+        new EncryptOptions(&quot;AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic&quot;).keyId(dataKeyId));
+
+collection.insertOne(new Document(&quot;encryptedField&quot;, encryptedFieldValue));
+
+// Automatically decrypts the encrypted field.
+Document doc = collection.find().first();
+System.out.println(doc.toJson());
+System.out.println(doc.get(&quot;encryptedField&quot;));
+
+</code></pre>
 <div id="btnv"><div class="pull-left">
   <a class="navigation prev" href="/mongo-java-driver/3.12/driver/tutorials/perform-read-operations/">
       <i class="fa fa-long-arrow-left"> </i> Read Operations
@@ -456,7 +548,11 @@ AutoEncryptionSettings autoEncryptionSettings = AutoEncryptionSettings.builder()
 <ul>
 <li><a href="#libmongocrypt">libmongocrypt</a></li>
 <li><a href="#mongocryptd-configuration">mongocryptd configuration</a></li>
-<li><a href="#examples">Examples</a></li>
+<li><a href="#examples">Examples</a>
+<ul>
+<li><a href="#explicit-encryption-and-decryption">Explicit Encryption and Decryption</a></li>
+<li><a href="#explicit-encryption-and-auto-decryption">Explicit Encryption and Auto Decryption</a></li>
+</ul></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -484,52 +580,31 @@ AutoEncryptionSettings autoEncryptionSettings = AutoEncryptionSettings.builder()
 <script type="text/javascript" src="/mongo-java-driver/3.12/js/navbar.js"></script>
 <script type="text/javascript" src="/mongo-java-driver/3.12/lib/highlight/highlight.pack.js"></script>
 <script type="text/javascript" src="/mongo-java-driver/3.12/js/scripts.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.12/lib/delighted.js"></script>
 <script type="text/javascript" src="/mongo-java-driver/3.12/lib/bootstrap-toggle/bootstrap-toggle.min.js"></script>
 <script type="text/javascript" src="/mongo-java-driver/3.12/js/java.js"></script>
 
 
-<script>
-/* eslint-disable */
-// Delighted
-!function(e,t,r,n,a){if(!e[a]){for(var i=e[a]=[],s=0;s<r.length;s++){var c=r[s];i[c]=i[c]||function(e){return function(){var t=Array.prototype.slice.call(arguments);i.push([e,t])}}(c)}i.SNIPPET_VERSION="1.0.1";var o=t.createElement("script");o.type="text/javascript",o.async=!0,o.src="https://d2yyd1h5u9mauk.cloudfront.net/integrations/web/v1/library/"+n+"/"+a+".js";var l=t.getElementsByTagName("script")[0];l.parentNode.insertBefore(o,l)}}(window,document,["survey","reset","config","init","set","get","event","identify","track","page","screen","group","alias"],"Dk30CC86ba0nATlK","delighted");
-
-// Segment
-!function(){var analytics=window.analytics=window.analytics||[];if(!analytics.initialize)if(analytics.invoked)window.console&&console.error&&console.error("Segment snippet included twice.");else{analytics.invoked=!0;analytics.methods=["trackSubmit","trackClick","trackLink","trackForm","pageview","identify","reset","group","track","ready","alias","debug","page","once","off","on"];analytics.factory=function(t){return function(){var e=Array.prototype.slice.call(arguments);e.unshift(t);analytics.push(e);return analytics}};for(var t=0;t<analytics.methods.length;t++){var e=analytics.methods[t];analytics[e]=analytics.factory(e)}analytics.load=function(t,e){var n=document.createElement("script");n.type="text/javascript";n.async=!0;n.src="https://cdn.segment.com/analytics.js/v1/"+t+"/analytics.min.js";var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(n,a);analytics._loadOptions=e};analytics.SNIPPET_VERSION="4.1.0";
-        analytics.load("aGhVvyxnPWlyP71vVl9ZjGWxAtoVGLXX");
-    }}();
-
-delighted.survey({
-    minTimeOnPage: 180,
-    sampleFactor: 0.1
-});
-
-// Update Segment
-analytics.page({
-    path: location.pathname,
-    url: location.href
-});
-</script>
-
 <noscript><iframe src="//www.googletagmanager.com/ns.html?id=UA-7301842-14"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+                  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push(
-{'gtm.start': new Date().getTime(),event:'gtm.js'}
-);var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','UA-7301842-14');</script>
+   {'gtm.start': new Date().getTime(),event:'gtm.js'}
+ );var f=d.getElementsByTagName(s)[0],
+       j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+         '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+ })(window,document,'script','dataLayer','UA-7301842-14');</script>
 
 
 <script type="text/javascript">
-var _elqQ = _elqQ || [];
-_elqQ.push(['elqSetSiteId', '413370795']);
-_elqQ.push(['elqTrackPageView']);
-(function () {
-function async_load()
-{ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = '//img03.en25.com/i/elqCfg.min.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x); }
-if (window.addEventListener) window.addEventListener('DOMContentLoaded', async_load, false);
-else if (window.attachEvent) window.attachEvent('onload', async_load);
-})();
+ var _elqQ = _elqQ || [];
+ _elqQ.push(['elqSetSiteId', '413370795']);
+ _elqQ.push(['elqTrackPageView']);
+ (function () {
+   function async_load()
+   { var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = '//img03.en25.com/i/elqCfg.min.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x); }
+   if (window.addEventListener) window.addEventListener('DOMContentLoaded', async_load, false);
+   else if (window.attachEvent) window.attachEvent('onload', async_load);
+ })();
 </script>
 </body>
 </html>
