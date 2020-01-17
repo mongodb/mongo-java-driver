@@ -11,7 +11,7 @@ title = "Upgrade Considerations"
 
 ## Upgrading from the 3.12 Java driver
 
-The 4.0 release is a major release as per the definition of semantic versioning included in [semver.org]. As such, users
+The 4.0 release is a major release as per the definition of [semantic versioning](https://semver.org). As such, users
 that upgrade to this release should expect breaking changes. That said, we have attempted to ensure that the upgrade 
 process is as seamless as possible.  Breaking changes are as follows:
 
