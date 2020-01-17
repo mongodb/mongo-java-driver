@@ -918,8 +918,8 @@ Field Updates This section describes update operators that apply to the value of
       <pubDate>Thu, 19 Mar 2015 12:53:39 -0400</pubDate>
       
       <guid>/mongo-java-driver/4.0/upgrading/</guid>
-      <description>Upgrading to the 4.0 Driver Upgrading from the 3.12 Java driver The 4.0 release is a major release as per the definition of semantic versioning included in [semver.org]. As such, users that upgrade to this release should expect breaking changes. That said, we have attempted to ensure that the upgrade process is as seamless as possible. Breaking changes are as follows:
- Numerous classes and methods have been removed from the driver.</description>
+      <description>Upgrading to the 4.0 Driver Upgrading from the 3.12 Java driver The 4.0 release is a major release as per the definition of semantic versioning. As such, users that upgrade to this release should expect breaking changes. That said, we have attempted to ensure that the upgrade process is as seamless as possible. Breaking changes are as follows:
+ Numerous classes and methods have been removed from the driver. All of these API elements are annotated as deprecated in the 3.</description>
     </item>
     
     <item>
