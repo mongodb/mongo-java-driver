@@ -123,7 +123,12 @@ configure(scalaProjects) { project ->
 
     task scaladocJar(type: Jar) {
         from scaladoc
-        classifier = 'scaladoc'
+        classifier = 'javadoc'
+
+        // Workaround for gradle 2.13 scaladoc issue: https://github.com/gradle/gradle/issues/9855
+        if (project.scalaVersion.startsWith("2.13")) {
+            project.scaladoc.scalaClasspath += files("$rootDir/gradle/scala/lib/scala-ant-2.13.1.jar")
+        }
     }
 
     publishing {
@@ -132,9 +137,7 @@ configure(scalaProjects) { project ->
                 artifactId = project.archivesBaseName.contains('bson') ? 'mongo-scala-bson' : 'mongo-scala-driver'
                 from project.components.java
                 artifact sourcesJar
-                if (!scalaVersion.startsWith("2.13")) {
-                    artifact scaladocJar  // https://github.com/gradle/gradle/issues/9855
-                }
+                artifact scaladocJar
             }
         }
 
