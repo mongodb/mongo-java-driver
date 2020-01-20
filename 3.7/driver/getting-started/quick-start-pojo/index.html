@@ -394,7 +394,7 @@ to handle the translation to and from <a href="/mongo-java-driver/3.7/bson/"><co
 
 <p>The following example will combine the default codec registry, with the <code>PojoCodecProvider</code> configured to automatically create <code>PojoCodecs</code>:</p>
 
-<pre><code class="language-java">CodecRegistry pojoCodecRegistry = fromRegistries(MongoClient.getDefaultCodecRegistry(),
+<pre><code class="language-java">CodecRegistry pojoCodecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
                 fromProviders(PojoCodecProvider.builder().automatic(true).build()));
 </code></pre>
 
