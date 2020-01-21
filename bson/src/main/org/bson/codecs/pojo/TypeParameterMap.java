@@ -25,7 +25,7 @@ import static java.util.Collections.unmodifiableMap;
 /**
  * Maps the index of a class's generic parameter type index to a property's.
  */
-final class TypeParameterMap {
+public final class TypeParameterMap {
     private final Map<Integer, Either<Integer, TypeParameterMap>> propertyToClassParamIndexMap;
 
     /**
@@ -33,7 +33,7 @@ final class TypeParameterMap {
      *
      * @return the builder
      */
-    static Builder builder() {
+    public static Builder builder() {
         return new Builder();
     }
 
@@ -44,18 +44,21 @@ final class TypeParameterMap {
      *
      * @return a mapping of property type parameter index to the class type parameter index.
      */
-    Map<Integer, Either<Integer, TypeParameterMap>> getPropertyToClassParamIndexMap() {
+    public Map<Integer, Either<Integer, TypeParameterMap>> getPropertyToClassParamIndexMap() {
         return propertyToClassParamIndexMap;
     }
 
-    boolean hasTypeParameters() {
+    /**
+     * @return true if there are type parameters defined
+     */
+    public boolean hasTypeParameters() {
         return !propertyToClassParamIndexMap.isEmpty();
     }
 
     /**
      * A builder for mapping field type parameter indices to the class type parameter indices
      */
-    static final class Builder {
+    public static final class Builder {
         private final Map<Integer, Either<Integer, TypeParameterMap>> propertyToClassParamIndexMap = new HashMap<>();
 
         private Builder() {
@@ -67,7 +70,7 @@ final class TypeParameterMap {
          * @param classTypeParameterIndex the class's type parameter index that represents the whole field
          * @return this
          */
-        Builder addIndex(final int classTypeParameterIndex) {
+        public Builder addIndex(final int classTypeParameterIndex) {
             propertyToClassParamIndexMap.put(-1, Either.left(classTypeParameterIndex));
             return this;
         }
@@ -79,7 +82,7 @@ final class TypeParameterMap {
          * @param classTypeParameterIndex the class's type parameter index
          * @return this
          */
-        Builder addIndex(final int propertyTypeParameterIndex, final int classTypeParameterIndex) {
+        public Builder addIndex(final int propertyTypeParameterIndex, final int classTypeParameterIndex) {
             propertyToClassParamIndexMap.put(propertyTypeParameterIndex, Either.left(classTypeParameterIndex));
             return this;
         }
@@ -100,7 +103,7 @@ final class TypeParameterMap {
         /**
          * @return the TypeParameterMap
          */
-        TypeParameterMap build() {
+        public TypeParameterMap build() {
             if (propertyToClassParamIndexMap.size() > 1 && propertyToClassParamIndexMap.containsKey(-1)) {
                 throw new IllegalStateException("You cannot have a generic field that also has type parameters.");
             }

@@ -20,10 +20,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-final class PojoSpecializationHelper {
+public final class PojoSpecializationHelper {
 
     @SuppressWarnings("unchecked")
-    static <V> TypeData<V> specializeTypeData(final TypeData<V> typeData, final List<TypeData<?>> typeParameters,
+    public static <V> TypeData<V> specializeTypeData(final TypeData<V> typeData, final List<TypeData<?>> typeParameters,
                                               final TypeParameterMap typeParameterMap) {
         if (!typeParameterMap.hasTypeParameters() || typeParameters.isEmpty()) {
             return typeData;

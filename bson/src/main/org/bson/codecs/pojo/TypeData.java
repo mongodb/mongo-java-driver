@@ -32,8 +32,12 @@ import static java.lang.String.format;
 import static org.bson.assertions.Assertions.notNull;
 import static org.bson.codecs.pojo.PropertyReflectionUtils.isGetter;
 
-
-final class TypeData<T> implements TypeWithTypeParameters<T> {
+/**
+ * Holds type information about a type element
+ *
+ * @param <T> the underlying type being represented
+ */
+public final class TypeData<T> implements TypeWithTypeParameters<T> {
     private final Class<T> type;
     private final List<TypeData<?>> typeParameters;
 
@@ -48,6 +52,12 @@ final class TypeData<T> implements TypeWithTypeParameters<T> {
         return new Builder<T>(notNull("type", type));
     }
 
+    /**
+     * Creates a TypeData reflecting the type of the given method.
+     *
+     * @param method the method to analyze
+     * @return the new TypeData information
+     */
     public static TypeData<?> newInstance(final Method method) {
         if (isGetter(method)) {
             return newInstance(method.getGenericReturnType(), method.getReturnType());
@@ -56,10 +66,24 @@ final class TypeData<T> implements TypeWithTypeParameters<T> {
         }
     }
 
+    /**
+     * Creates a TypeData reflecting the type of the given field.
+     *
+     * @param field the field to analyze
+     * @return the new TypeData information
+     */
     public static TypeData<?> newInstance(final Field field) {
         return newInstance(field.getGenericType(), field.getType());
     }
 
+    /**
+     * Creates a TypeData reflecting the given generic type and class.
+     *
+     * @param genericType the type to analyze
+     * @param clazz the class to analyze
+     * @param <T> the type of the new TypeData instance
+     * @return the new TypeData information
+     */
     public static <T> TypeData<T> newInstance(final Type genericType, final Class<T> clazz) {
         TypeData.Builder<T> builder = TypeData.builder(clazz);
         if (genericType instanceof ParameterizedType) {
