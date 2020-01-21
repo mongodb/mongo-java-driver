@@ -155,10 +155,12 @@ MongoClientOptions.builder()
         .build();
 ```
 
-## JVM System Properties for TLS/SSL
+## Certificates
+
+### Certificate authority
 
 A typical application will need to set several JVM system properties to
-ensure that the client is able to validate the TLS/SSL certificate
+ensure that the client is able to *validate* the TLS/SSL certificate
 presented by the server:
 
 -  `javax.net.ssl.trustStore`:
@@ -176,8 +178,11 @@ command line program provided as part of the JDK. For example:
 keytool -importcert -trustcacerts -file <path to certificate authority file>
             -keystore <path to trust store> -storepass <password>
 ```
+
+### Client certificates
+
 A typical application will also need to set several JVM system
-properties to ensure that the client presents an TLS/SSL certificate to the
+properties to ensure that the client *presents* an TLS/SSL [client certificate](https://docs.mongodb.com/manual/tutorial/configure-ssl/#set-up-mongod-and-mongos-with-client-certificate-validation) to the
 MongoDB server:
 
 - `javax.net.ssl.keyStore`
@@ -189,7 +194,14 @@ MongoDB server:
 The key store is typically created with the
 [`keytool`](http://docs.oracle.com/javase/8/docs/technotes/tools/unix/keytool.html)
 or the [`openssl`](https://www.openssl.org/docs/apps/openssl.html)
-command line program.
+command line program. For example:
+
+```sh
+openssl pkcs12 -export -out mongodb.pkcs12 -in client.pem
+```
+
+Once this keyStore file is created, it can be set in the JVM at launch with `-Djavax.net.ssl.keyStore=c:\<PATH>\mongodb.pkcs12`.
+                                                                             
 
 For more information on configuring a Java application for TLS/SSL, please
 refer to the [`JSSE Reference Guide`](http://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/JSS
