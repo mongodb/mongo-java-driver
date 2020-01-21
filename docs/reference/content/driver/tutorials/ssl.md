@@ -204,8 +204,7 @@ Once this keyStore file is created, it can be set in the JVM at launch with `-Dj
                                                                              
 
 For more information on configuring a Java application for TLS/SSL, please
-refer to the [`JSSE Reference Guide`](http://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/JSS
-ERefGuide.html).
+refer to the [`JSSE Reference Guide`](http://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/JSSERefGuide.html).
 
 
 ### Forcing TLS 1.2
