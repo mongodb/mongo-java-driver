@@ -38,6 +38,7 @@ import java.util.concurrent.ConcurrentMap;
 import static java.lang.String.format;
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
+import static org.bson.codecs.pojo.PojoSpecializationHelper.specializeTypeData;
 
 
 final class PojoCodecImpl<T> extends PojoCodec<T> {
@@ -293,7 +294,7 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
             String propertyName = model.getName();
             TypeParameterMap typeParameterMap = clazzModel.getPropertyNameToTypeParameterMap().get(propertyName);
             if (typeParameterMap.hasTypeParameters()) {
-                PropertyModel<?> concretePropertyModel = getSpecializedPropertyModel(model, typeParameterMap, propertyTypeParameters);
+                PropertyModel<?> concretePropertyModel = getSpecializedPropertyModel(model, propertyTypeParameters, typeParameterMap);
                 concretePropertyModels.set(i, concretePropertyModel);
                 if (concreteIdProperty != null && concreteIdProperty.getName().equals(propertyName)) {
                     concreteIdProperty = concretePropertyModel;
@@ -308,26 +309,10 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
     }
 
     @SuppressWarnings("unchecked")
-    private <V> PropertyModel<V> getSpecializedPropertyModel(final PropertyModel<V> propertyModel, final TypeParameterMap typeParameterMap,
-                                                             final List<TypeData<?>> propertyTypeParameters) {
-        TypeData<V> specializedPropertyType;
-        Map<Integer, Integer> propertyToClassParamIndexMap = typeParameterMap.getPropertyToClassParamIndexMap();
-        Integer classTypeParamRepresentsWholeProperty = propertyToClassParamIndexMap.get(-1);
-        if (classTypeParamRepresentsWholeProperty != null) {
-            specializedPropertyType = (TypeData<V>) propertyTypeParameters.get(classTypeParamRepresentsWholeProperty);
-        } else {
-            TypeData.Builder<V> builder = TypeData.builder(propertyModel.getTypeData().getType());
-            List<TypeData<?>> typeParameters = new ArrayList<TypeData<?>>(propertyModel.getTypeData().getTypeParameters());
-            for (int i = 0; i < typeParameters.size(); i++) {
-                for (Map.Entry<Integer, Integer> mapping : propertyToClassParamIndexMap.entrySet()) {
-                    if (mapping.getKey().equals(i)) {
-                        typeParameters.set(i, propertyTypeParameters.get(mapping.getValue()));
-                    }
-                }
-            }
-            builder.addTypeParameters(typeParameters);
-            specializedPropertyType = builder.build();
-        }
+    private <V> PropertyModel<V> getSpecializedPropertyModel(final PropertyModel<V> propertyModel,
+                                                             final List<TypeData<?>> propertyTypeParameters,
+                                                             final TypeParameterMap typeParameterMap) {
+        TypeData<V> specializedPropertyType = specializeTypeData(propertyModel.getTypeData(), propertyTypeParameters, typeParameterMap);
         if (propertyModel.getTypeData().equals(specializedPropertyType)) {
             return propertyModel;
         }

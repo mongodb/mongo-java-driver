@@ -36,6 +36,7 @@ import static java.lang.reflect.Modifier.isPublic;
 import static java.util.Arrays.asList;
 import static java.util.Collections.reverse;
 import static org.bson.assertions.Assertions.notNull;
+import static org.bson.codecs.pojo.PojoSpecializationHelper.specializeTypeData;
 import static org.bson.codecs.pojo.PropertyReflectionUtils.getPropertyMethods;
 import static org.bson.codecs.pojo.PropertyReflectionUtils.isGetter;
 import static org.bson.codecs.pojo.PropertyReflectionUtils.toPropertyName;
@@ -225,7 +226,8 @@ final class PojoBuilderHelper {
                 .setError(propertyMetadata.getError());
 
         if (propertyMetadata.getTypeParameters() != null) {
-            specializePropertyModelBuilder(propertyModelBuilder, propertyMetadata);
+            propertyModelBuilder.typeData(specializeTypeData(propertyModelBuilder.getTypeData(), propertyMetadata.getTypeParameters(),
+                    propertyMetadata.getTypeParameterMap()));
         }
 
         return propertyModelBuilder;
@@ -243,36 +245,13 @@ final class PojoBuilderHelper {
                     classParamIndex = genericTypeNames.indexOf(pt.getActualTypeArguments()[i].toString());
                     if (classParamIndex != -1) {
                         builder.addIndex(i, classParamIndex);
+                    } else {
+                        builder.addIndex(i, getTypeParameterMap(genericTypeNames, pt.getActualTypeArguments()[i]));
                     }
                 }
             }
         }
         return builder.build();
-    }
-    @SuppressWarnings("unchecked")
-    private static <V> void specializePropertyModelBuilder(final PropertyModelBuilder<V> propertyModelBuilder,
-                                                           final PropertyMetadata<V> propertyMetadata) {
-        if (propertyMetadata.getTypeParameterMap().hasTypeParameters() && !propertyMetadata.getTypeParameters().isEmpty()) {
-            TypeData<V> specializedFieldType;
-            Map<Integer, Integer> fieldToClassParamIndexMap = propertyMetadata.getTypeParameterMap().getPropertyToClassParamIndexMap();
-            Integer classTypeParamRepresentsWholeField = fieldToClassParamIndexMap.get(-1);
-            if (classTypeParamRepresentsWholeField != null) {
-                specializedFieldType = (TypeData<V>) propertyMetadata.getTypeParameters().get(classTypeParamRepresentsWholeField);
-            } else {
-                TypeData.Builder<V> builder = TypeData.builder(propertyModelBuilder.getTypeData().getType());
-                List<TypeData<?>> typeParameters = new ArrayList<TypeData<?>>(propertyModelBuilder.getTypeData().getTypeParameters());
-                for (int i = 0; i < typeParameters.size(); i++) {
-                    for (Map.Entry<Integer, Integer> mapping : fieldToClassParamIndexMap.entrySet()) {
-                        if (mapping.getKey().equals(i)) {
-                            typeParameters.set(i, propertyMetadata.getTypeParameters().get(mapping.getValue()));
-                        }
-                    }
-                }
-                builder.addTypeParameters(typeParameters);
-                specializedFieldType = builder.build();
-            }
-            propertyModelBuilder.typeData(specializedFieldType);
-        }
     }
 
     static <V> V stateNotNull(final String property, final V value) {

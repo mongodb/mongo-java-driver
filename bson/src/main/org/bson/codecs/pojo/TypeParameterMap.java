@@ -26,7 +26,7 @@ import static java.util.Collections.unmodifiableMap;
  * Maps the index of a class's generic parameter type index to a property's.
  */
 final class TypeParameterMap {
-    private final Map<Integer, Integer> propertyToClassParamIndexMap;
+    private final Map<Integer, Either<Integer, TypeParameterMap>> propertyToClassParamIndexMap;
 
     /**
      * Creates a new builder for the TypeParameterMap
@@ -44,7 +44,7 @@ final class TypeParameterMap {
      *
      * @return a mapping of property type parameter index to the class type parameter index.
      */
-    Map<Integer, Integer> getPropertyToClassParamIndexMap() {
+    Map<Integer, Either<Integer, TypeParameterMap>> getPropertyToClassParamIndexMap() {
         return propertyToClassParamIndexMap;
     }
 
@@ -56,7 +56,7 @@ final class TypeParameterMap {
      * A builder for mapping field type parameter indices to the class type parameter indices
      */
     static final class Builder {
-        private final Map<Integer, Integer> propertyToClassParamIndexMap = new HashMap<Integer, Integer>();
+        private final Map<Integer, Either<Integer, TypeParameterMap>> propertyToClassParamIndexMap = new HashMap<>();
 
         private Builder() {
         }
@@ -68,7 +68,7 @@ final class TypeParameterMap {
          * @return this
          */
         Builder addIndex(final int classTypeParameterIndex) {
-            propertyToClassParamIndexMap.put(-1, classTypeParameterIndex);
+            propertyToClassParamIndexMap.put(-1, Either.left(classTypeParameterIndex));
             return this;
         }
 
@@ -80,7 +80,20 @@ final class TypeParameterMap {
          * @return this
          */
         Builder addIndex(final int propertyTypeParameterIndex, final int classTypeParameterIndex) {
-            propertyToClassParamIndexMap.put(propertyTypeParameterIndex, classTypeParameterIndex);
+            propertyToClassParamIndexMap.put(propertyTypeParameterIndex, Either.left(classTypeParameterIndex));
+            return this;
+        }
+
+
+        /**
+         * Adds a mapping that represents the property
+         *
+         * @param propertyTypeParameterIndex the property's type parameter index
+         * @param typeParameterMap the sub class's type parameter map
+         * @return this
+         */
+        Builder addIndex(final int propertyTypeParameterIndex, final TypeParameterMap typeParameterMap) {
+            propertyToClassParamIndexMap.put(propertyTypeParameterIndex, Either.right(typeParameterMap));
             return this;
         }
 
@@ -125,7 +138,7 @@ final class TypeParameterMap {
         return getPropertyToClassParamIndexMap().hashCode();
     }
 
-    private TypeParameterMap(final Map<Integer, Integer> propertyToClassParamIndexMap) {
+    private TypeParameterMap(final Map<Integer, Either<Integer, TypeParameterMap>> propertyToClassParamIndexMap) {
         this.propertyToClassParamIndexMap = unmodifiableMap(propertyToClassParamIndexMap);
     }
 }

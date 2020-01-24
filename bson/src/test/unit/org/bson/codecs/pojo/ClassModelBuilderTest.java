@@ -58,7 +58,8 @@ public final class ClassModelBuilderTest {
         fieldNameToTypeParameterMap.put("myIntegerField", TypeParameterMap.builder().build());
         fieldNameToTypeParameterMap.put("myGenericField", TypeParameterMap.builder().addIndex(0).build());
         fieldNameToTypeParameterMap.put("myListField", TypeParameterMap.builder().addIndex(0, 1).build());
-        fieldNameToTypeParameterMap.put("myMapField", TypeParameterMap.builder().addIndex(1, 2).build());
+        fieldNameToTypeParameterMap.put("myMapField", TypeParameterMap.builder().addIndex(0, TypeParameterMap.builder().build())
+                .addIndex(1, 2).build());
 
         assertEquals(fieldNameToTypeParameterMap, builder.getPropertyNameToTypeParameterMap());
         assertEquals(3, builder.getConventions().size());
