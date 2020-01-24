@@ -168,4 +168,21 @@ final class PropertyMetadata<T> {
     private boolean isPublicAndNotStaticOrTransient(final int modifiers) {
         return isPublic(modifiers) && notStaticOrTransient(modifiers);
     }
+
+    @Override
+    public String toString() {
+        return "PropertyMetadata{"
+                + "name='" + name + '\''
+                + ", declaringClassName='" + declaringClassName + '\''
+                + ", typeData=" + typeData
+                + ", readAnnotations=" + readAnnotations
+                + ", writeAnnotations=" + writeAnnotations
+                + ", typeParameterMap=" + typeParameterMap
+                + ", typeParameters=" + typeParameters
+                + ", error='" + error + '\''
+                + ", field=" + field
+                + ", getter=" + getter
+                + ", setter=" + setter
+                + '}';
+    }
 }

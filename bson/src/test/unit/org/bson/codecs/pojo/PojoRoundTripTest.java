@@ -35,6 +35,12 @@ import org.bson.codecs.pojo.entities.InterfaceModelImpl;
 import org.bson.codecs.pojo.entities.InterfaceUpperBoundsModelAbstractImpl;
 import org.bson.codecs.pojo.entities.InterfaceWithDefaultMethodModelImpl;
 import org.bson.codecs.pojo.entities.InterfaceWithOverrideDefaultMethodModelImpl;
+import org.bson.codecs.pojo.entities.ListGenericExtendedModel;
+import org.bson.codecs.pojo.entities.ListListGenericExtendedModel;
+import org.bson.codecs.pojo.entities.ListMapGenericExtendedModel;
+import org.bson.codecs.pojo.entities.MapGenericExtendedModel;
+import org.bson.codecs.pojo.entities.MapListGenericExtendedModel;
+import org.bson.codecs.pojo.entities.MapMapGenericExtendedModel;
 import org.bson.codecs.pojo.entities.MultipleBoundsModel;
 import org.bson.codecs.pojo.entities.MultipleLevelGenericModel;
 import org.bson.codecs.pojo.entities.NestedFieldReusingClassTypeParameter;
@@ -100,7 +106,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -444,6 +452,61 @@ public final class PojoRoundTripTest extends PojoTestCase {
                 new BsonIgnoreDuplicatePropertyMultipleTypes("string value"),
                 getPojoCodecProviderBuilder(BsonIgnoreDuplicatePropertyMultipleTypes.class).conventions(Conventions.DEFAULT_CONVENTIONS),
                 "{stringField: 'string value'}"));
+
+        data.add(new TestData("Can handle concrete generic list types",
+                new ListGenericExtendedModel(asList(1, 2, 3)),
+                getPojoCodecProviderBuilder(ListGenericExtendedModel.class),
+                "{values: [1, 2, 3]}"));
+
+        data.add(new TestData("Can handle concrete nested generic list types",
+                new ListListGenericExtendedModel(asList(asList(1, 2, 3), asList(4, 5, 6))),
+                getPojoCodecProviderBuilder(ListListGenericExtendedModel.class),
+                "{values: [[1, 2, 3], [4, 5, 6]]}"));
+
+
+        data.add(new TestData("Can handle concrete generic map types",
+                new MapGenericExtendedModel(new HashMap<String, Integer>() {{
+                    put("a", 1);
+                    put("b", 2);
+                }}),
+                getPojoCodecProviderBuilder(MapGenericExtendedModel.class),
+                "{values: {a: 1, b: 2}}"));
+
+        data.add(new TestData("Can handle concrete nested generic map types",
+                new MapMapGenericExtendedModel(new HashMap<String, Map<String, Integer>>() {{
+                        put("a", new HashMap<String, Integer>() {{
+                            put("aa", 1);
+                            put("ab", 2);
+                        }});
+                    put("b", new HashMap<String, Integer>() {{
+                        put("ba", 1);
+                        put("bb", 2);
+                    }});
+                    }}
+                ),
+                getPojoCodecProviderBuilder(MapMapGenericExtendedModel.class),
+                "{values: {a: {aa: 1, ab: 2}, b: {ba: 1, bb: 2}}}"));
+
+        data.add(new TestData("Can handle concrete lists with generic map types",
+                new ListMapGenericExtendedModel(asList(new HashMap<String, Integer>() {{
+                    put("a", 1);
+                    put("b", 2);
+                }}, new HashMap<String, Integer>() {{
+                    put("c", 3);
+                    put("d", 4);
+                }})),
+                getPojoCodecProviderBuilder(ListMapGenericExtendedModel.class),
+                "{values: [{a: 1, b: 2}, {c: 3, d: 4}]}"));
+
+
+        data.add(new TestData("Can handle concrete maps with generic list types",
+                new MapListGenericExtendedModel(new HashMap<String, List<Integer>>() {{
+                    put("a", asList(1, 2, 3));
+                    put("b", asList(4, 5, 6));
+                }}),
+                getPojoCodecProviderBuilder(MapListGenericExtendedModel.class),
+                "{values: {a: [1, 2, 3], b: [4, 5, 6]}}"));
+
 
         return data;
     }
