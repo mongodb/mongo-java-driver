@@ -35,17 +35,17 @@ public final class TypeParameterMapTest {
     @Test
     public void testClassParamMapsToField() {
         TypeParameterMap typeParameterMap = TypeParameterMap.builder().addIndex(1).build();
-        Map<Integer, Integer> expected = new HashMap<Integer, Integer>();
-        expected.put(-1, 1);
+        Map<Integer, Either<Integer, TypeParameterMap>> expected = new HashMap<>();
+        expected.put(-1, Either.left(1));
         assertEquals(expected, typeParameterMap.getPropertyToClassParamIndexMap());
     }
 
     @Test
     public void testMapsClassAndFieldIndices() {
         TypeParameterMap typeParameterMap = TypeParameterMap.builder().addIndex(1, 2).addIndex(2, 2).build();
-        Map<Integer, Integer> expected = new HashMap<Integer, Integer>();
-        expected.put(1, 2);
-        expected.put(2, 2);
+        Map<Integer, Either<Integer, TypeParameterMap>> expected = new HashMap<>();
+        expected.put(1, Either.left(2));
+        expected.put(2, Either.left(2));
         assertEquals(expected, typeParameterMap.getPropertyToClassParamIndexMap());
     }
 
