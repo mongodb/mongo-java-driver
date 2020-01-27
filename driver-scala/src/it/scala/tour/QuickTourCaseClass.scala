@@ -45,7 +45,7 @@ object QuickTourCaseClass {
 
     // Create a codec for the Person case class
     import org.mongodb.scala.bson.codecs.Macros._
-    import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
+    import org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
     import org.bson.codecs.configuration.CodecRegistries.{ fromProviders, fromRegistries }
     val codecRegistry = fromRegistries(fromProviders(classOf[Person]), DEFAULT_CODEC_REGISTRY)
 

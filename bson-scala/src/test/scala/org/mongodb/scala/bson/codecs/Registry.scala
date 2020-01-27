@@ -14,25 +14,19 @@
  * limitations under the License.
  */
 
-package org.mongodb.scala.bson
+package org.mongodb.scala.bson.codecs
 
-package object codecs {
+import org.bson.codecs.{ BsonValueCodecProvider, ValueCodecProvider }
+import org.bson.codecs.configuration.CodecRegistries.fromProviders
+import org.bson.codecs.configuration.CodecRegistry
 
-  /**
-   * Type alias to the `BsonTypeClassMap`
-   */
-  type BsonTypeClassMap = org.bson.codecs.BsonTypeClassMap
+object Registry {
 
-  /**
-   * Companion to return the default `BsonTypeClassMap`
-   */
-  object BsonTypeClassMap {
-    def apply(): BsonTypeClassMap = new BsonTypeClassMap()
-  }
-
-  /**
-   * Type alias to the `BsonTypeCodecMap`
-   */
-  type BsonTypeCodecMap = org.bson.codecs.BsonTypeCodecMap
+  val DEFAULT_CODEC_REGISTRY: CodecRegistry = fromProviders(
+    DocumentCodecProvider(),
+    IterableCodecProvider(),
+    new ValueCodecProvider(),
+    new BsonValueCodecProvider()
+  )
 
 }

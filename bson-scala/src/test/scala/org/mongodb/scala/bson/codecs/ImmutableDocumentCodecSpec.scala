@@ -27,6 +27,7 @@ import org.bson.codecs.{ DecoderContext, EncoderContext }
 import org.bson.io.{ BasicOutputBuffer, ByteBufferBsonInput }
 import org.bson.types.ObjectId
 
+import org.mongodb.scala.bson.codecs.Registry.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.bson.collection.immutable.Document
 import org.scalatest.{ FlatSpec, Matchers }
 
