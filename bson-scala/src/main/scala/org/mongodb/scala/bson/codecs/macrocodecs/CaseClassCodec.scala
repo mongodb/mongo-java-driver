@@ -25,9 +25,9 @@ import org.mongodb.scala.bson.annotations.BsonProperty
 
 private[codecs] object CaseClassCodec {
 
-  def createCodecDefaultCodecRegistryEncodeNone[T: c.WeakTypeTag](c: whitebox.Context)(): c.Expr[Codec[T]] = {
+  def createCodecBasicCodecRegistryEncodeNone[T: c.WeakTypeTag](c: whitebox.Context)(): c.Expr[Codec[T]] = {
     import c.universe._
-    createCodecDefaultCodecRegistry[T](c)(c.Expr[Boolean](q"true"))
+    createCodecBasicCodecRegistry[T](c)(c.Expr[Boolean](q"true"))
   }
 
   def createCodecEncodeNone[T: c.WeakTypeTag](
@@ -37,9 +37,9 @@ private[codecs] object CaseClassCodec {
     createCodec[T](c)(codecRegistry, c.Expr[Boolean](q"true"))
   }
 
-  def createCodecDefaultCodecRegistryIgnoreNone[T: c.WeakTypeTag](c: whitebox.Context)(): c.Expr[Codec[T]] = {
+  def createCodecBasicCodecRegistryIgnoreNone[T: c.WeakTypeTag](c: whitebox.Context)(): c.Expr[Codec[T]] = {
     import c.universe._
-    createCodecDefaultCodecRegistry[T](c)(c.Expr[Boolean](q"false"))
+    createCodecBasicCodecRegistry[T](c)(c.Expr[Boolean](q"false"))
   }
 
   def createCodecIgnoreNone[T: c.WeakTypeTag](
@@ -49,15 +49,21 @@ private[codecs] object CaseClassCodec {
     createCodec[T](c)(codecRegistry, c.Expr[Boolean](q"false"))
   }
 
-  def createCodecDefaultCodecRegistry[T: c.WeakTypeTag](
+  def createCodecBasicCodecRegistry[T: c.WeakTypeTag](
       c: whitebox.Context
   )(encodeNone: c.Expr[Boolean]): c.Expr[Codec[T]] = {
     import c.universe._
     createCodec[T](c)(
       c.Expr[CodecRegistry](
         q"""
-         import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
-         DEFAULT_CODEC_REGISTRY
+         import org.bson.codecs.{ BsonValueCodecProvider, ValueCodecProvider }
+         import org.bson.codecs.configuration.CodecRegistries.fromProviders
+         fromProviders(
+              DocumentCodecProvider(),
+              IterableCodecProvider(),
+              new ValueCodecProvider(),
+              new BsonValueCodecProvider()
+            )
       """
       ),
       encodeNone

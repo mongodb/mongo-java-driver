@@ -94,7 +94,7 @@ object Macros {
    * @return the Codec for the case class
    */
   @compileTimeOnly("Creating a Codec utilises Macros and must be run at compile time.")
-  def createCodec[T](): Codec[T] = macro CaseClassCodec.createCodecDefaultCodecRegistryEncodeNone[T]
+  def createCodec[T](): Codec[T] = macro CaseClassCodec.createCodecBasicCodecRegistryEncodeNone[T]
 
   /**
    * Creates a Codec for a case class
@@ -114,7 +114,7 @@ object Macros {
    * @since 2.1
    */
   @compileTimeOnly("Creating a Codec utilises Macros and must be run at compile time.")
-  def createCodecIgnoreNone[T](): Codec[T] = macro CaseClassCodec.createCodecDefaultCodecRegistryIgnoreNone[T]
+  def createCodecIgnoreNone[T](): Codec[T] = macro CaseClassCodec.createCodecBasicCodecRegistryIgnoreNone[T]
 
   /**
    * Creates a Codec for a case class
