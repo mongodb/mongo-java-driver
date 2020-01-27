@@ -32,7 +32,8 @@ import scala.concurrent.Future
  */
 trait ObservableImplicits {
 
-  implicit class BoxedPublisher[T](publisher: Publisher[T]) extends Observable[T] {
+  implicit class BoxedPublisher[T](pub: => Publisher[T]) extends Observable[T] {
+    val publisher = pub
     private def sub(observer: Observer[_ >: T]): Unit = publisher.subscribe(observer)
 
     /**
@@ -44,7 +45,8 @@ trait ObservableImplicits {
     override def subscribe(s: Subscriber[_ >: T]): Unit = sub(BoxedSubscriber(s))
   }
 
-  implicit class BoxedSubscriber[T](subscriber: Subscriber[_ >: T]) extends Observer[T] {
+  implicit class BoxedSubscriber[T](sub: => Subscriber[_ >: T]) extends Observer[T] {
+    val subscriber = sub
 
     override def onSubscribe(subscription: Subscription): Unit = subscriber.onSubscribe(subscription)
 
@@ -55,7 +57,7 @@ trait ObservableImplicits {
     override def onNext(result: T): Unit = subscriber.onNext(result)
   }
 
-  implicit class BoxedSubscription(subscription: JSubscription) extends Subscription {
+  implicit class BoxedSubscription(subscription: => JSubscription) extends Subscription {
     val cancelled = new AtomicBoolean(false)
     override def request(n: Long): Unit = subscription.request(n)
 
@@ -68,11 +70,13 @@ trait ObservableImplicits {
 
   }
 
-  implicit class ToObservableString(publisher: Publisher[java.lang.String]) extends Observable[String] {
+  implicit class ToObservableString(pub: => Publisher[java.lang.String]) extends Observable[String] {
+    val publisher = pub
     override def subscribe(observer: Observer[_ >: String]): Unit = publisher.toObservable().subscribe(observer)
   }
 
-  implicit class ToSingleObservablePublisher[T](publisher: Publisher[T]) extends SingleObservable[T] {
+  implicit class ToSingleObservablePublisher[T](pub: => Publisher[T]) extends SingleObservable[T] {
+    val publisher = pub
 
     /**
      * Converts the [[Observable]] to a single result [[Observable]].
@@ -125,27 +129,32 @@ trait ObservableImplicits {
     }
   }
 
-  implicit class ToSingleObservableInt(publisher: Publisher[java.lang.Integer]) extends SingleObservable[Int] {
+  implicit class ToSingleObservableInt(pub: => Publisher[java.lang.Integer]) extends SingleObservable[Int] {
+    val publisher = pub
     override def subscribe(observer: Observer[_ >: Int]): Unit =
       publisher.toObservable().map(_.intValue()).toSingle().subscribe(observer)
   }
 
-  implicit class ToSingleObservableLong(publisher: Publisher[java.lang.Long]) extends SingleObservable[Long] {
+  implicit class ToSingleObservableLong(pub: => Publisher[java.lang.Long]) extends SingleObservable[Long] {
+    val publisher = pub
     override def subscribe(observer: Observer[_ >: Long]): Unit =
       publisher.toObservable().map(_.longValue()).toSingle().subscribe(observer)
   }
 
-  implicit class ToSingleObservableObjectId(publisher: Publisher[org.bson.types.ObjectId])
+  implicit class ToSingleObservableObjectId(pub: => Publisher[org.bson.types.ObjectId])
       extends SingleObservable[ObjectId] {
+    val publisher = pub
     override def subscribe(observer: Observer[_ >: ObjectId]): Unit = publisher.toSingle().subscribe(observer)
   }
 
-  implicit class ToSingleObservableGridFS(publisher: Publisher[com.mongodb.client.gridfs.model.GridFSFile])
+  implicit class ToSingleObservableGridFS(pub: => Publisher[com.mongodb.client.gridfs.model.GridFSFile])
       extends SingleObservable[GridFSFile] {
+    val publisher = pub
     override def subscribe(observer: Observer[_ >: GridFSFile]): Unit = publisher.toSingle().subscribe(observer)
   }
 
-  implicit class ToSingleObservableVoid(publisher: Publisher[Void]) extends SingleObservable[Void] {
+  implicit class ToSingleObservableVoid(pub: => Publisher[Void]) extends SingleObservable[Void] {
+    val publisher = pub
     override def subscribe(observer: Observer[_ >: Void]): Unit =
       publisher
         .toSingle()
@@ -161,7 +170,8 @@ trait ObservableImplicits {
         })
   }
 
-  implicit class ObservableFuture[T](observable: Observable[T]) {
+  implicit class ObservableFuture[T](obs: => Observable[T]) {
+    val observable = obs
 
     /**
      * Collects the [[Observable]] results and converts to a [[scala.concurrent.Future]].
@@ -176,7 +186,8 @@ trait ObservableImplicits {
 
   }
 
-  implicit class SingleObservableFuture[T](observable: SingleObservable[T]) {
+  implicit class SingleObservableFuture[T](obs: => SingleObservable[T]) {
+    val observable = obs
 
     /**
      * Collects the [[Observable]] results and converts to a [[scala.concurrent.Future]].
