@@ -401,7 +401,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
     }
 
     private BsonArray tagsListToBsonArray() {
-        BsonArray bsonArray = new BsonArray();
+        BsonArray bsonArray = new BsonArray(tagSetList.size());
         for (TagSet tagSet : tagSetList) {
             bsonArray.add(toDocument(tagSet));
         }

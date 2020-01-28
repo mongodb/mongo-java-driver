@@ -140,7 +140,7 @@ class KillCursorProtocol implements LegacyProtocol<Void> {
     }
 
     private BsonDocument asCommandDocument() {
-        BsonArray array = new BsonArray();
+        BsonArray array = new BsonArray(cursors.size());
         for (long cursor : cursors) {
             array.add(new BsonInt64(cursor));
         }
@@ -149,7 +149,7 @@ class KillCursorProtocol implements LegacyProtocol<Void> {
     }
 
     private BsonDocument asCommandResponseDocument() {
-        BsonArray cursorIdArray = new BsonArray();
+        BsonArray cursorIdArray = new BsonArray(cursors.size());
         for (long cursorId : cursors) {
             cursorIdArray.add(new BsonInt64(cursorId));
         }
