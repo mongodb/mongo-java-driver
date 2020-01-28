@@ -162,7 +162,7 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
             isMasterCommandDocument.append("client", clientMetadataDocument);
         }
         if (!requestedCompressors.isEmpty()) {
-            BsonArray compressors = new BsonArray();
+            BsonArray compressors = new BsonArray(this.requestedCompressors.size());
             for (MongoCompressor cur : this.requestedCompressors) {
                 compressors.add(new BsonString(cur.getName()));
             }

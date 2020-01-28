@@ -243,7 +243,7 @@ public class BsonArray extends BsonValue implements List<BsonValue>, Cloneable {
 
     @Override
     public BsonArray clone() {
-        BsonArray to = new BsonArray();
+        BsonArray to = new BsonArray(this.size());
         for (BsonValue cur : this) {
             switch (cur.getBsonType()) {
                 case DOCUMENT:
