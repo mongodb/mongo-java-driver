@@ -60,10 +60,10 @@ class ScramShaAuthenticatorSpecification extends Specification {
         def authenticator = new ScramShaAuthenticator(credential, { 'fyko+d2lbbFgONRv9qkxdawL' }, { preppedPassword })
 
         then:
-        validateAuthentication(payloads, authenticator, async)
+        validateAuthentication(payloads, authenticator, async, emptyExchange)
 
         where:
-        async << [true, false]
+        [async, emptyExchange] << [[true, false], [true, false]].combinations()
     }
 
     def 'should successfully authenticate with sha256 as per RFC spec'() {
@@ -83,10 +83,10 @@ class ScramShaAuthenticatorSpecification extends Specification {
         def authenticator = new ScramShaAuthenticator(credential, { 'rOprNGfwEbeRWgbNEkqO' }, { preppedPassword })
 
         then:
-        validateAuthentication(payloads, authenticator, async)
+        validateAuthentication(payloads, authenticator, async, emptyExchange)
 
         where:
-        async << [true, false]
+        [async, emptyExchange] << [[true, false], [true, false]].combinations()
     }
 
 
@@ -107,10 +107,10 @@ class ScramShaAuthenticatorSpecification extends Specification {
         def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword })
 
         then:
-        validateAuthentication(payloads, authenticator, async)
+        validateAuthentication(payloads, authenticator, async, emptyExchange)
 
         where:
-        async << [true, false]
+        [async, emptyExchange] << [[true, false], [true, false]].combinations()
     }
 
     def 'should successfully authenticate with SHA-1 ASCII user'() {
@@ -130,10 +130,10 @@ class ScramShaAuthenticatorSpecification extends Specification {
         def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword })
 
         then:
-        validateAuthentication(payloads, authenticator, async)
+        validateAuthentication(payloads, authenticator, async, emptyExchange)
 
         where:
-        async << [true, false]
+        [async, emptyExchange] << [[true, false], [true, false]].combinations()
     }
 
     def 'should successfully authenticate with SHA-1 ASCII pass'() {
@@ -153,10 +153,10 @@ class ScramShaAuthenticatorSpecification extends Specification {
         def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword })
 
         then:
-        validateAuthentication(payloads, authenticator, async)
+        validateAuthentication(payloads, authenticator, async, emptyExchange)
 
         where:
-        async << [true, false]
+        [async, emptyExchange] << [[true, false], [true, false]].combinations()
     }
 
     def 'should successfully authenticate with SHA-256 ASCII'(){
@@ -176,10 +176,10 @@ class ScramShaAuthenticatorSpecification extends Specification {
         def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword })
 
         then:
-        validateAuthentication(payloads, authenticator, async)
+        validateAuthentication(payloads, authenticator, async, emptyExchange)
 
         where:
-        async << [true, false]
+        [async, emptyExchange] << [[true, false], [true, false]].combinations()
     }
 
     def 'should successfully authenticate with SHA-256 ASCII user'(){
@@ -199,10 +199,10 @@ class ScramShaAuthenticatorSpecification extends Specification {
         def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword })
 
         then:
-        validateAuthentication(payloads, authenticator, async)
+        validateAuthentication(payloads, authenticator, async, emptyExchange)
 
         where:
-        async << [true, false]
+        [async, emptyExchange] << [[true, false], [true, false]].combinations()
     }
 
     def 'should successfully authenticate with SHA-256 ASCII pass'(){
@@ -222,10 +222,10 @@ class ScramShaAuthenticatorSpecification extends Specification {
         def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword })
 
         then:
-        validateAuthentication(payloads, authenticator, async)
+        validateAuthentication(payloads, authenticator, async, emptyExchange)
 
         where:
-        async << [true, false]
+        [async, emptyExchange] << [[true, false], [true, false]].combinations()
     }
 
     def 'should successfully authenticate with SHA-256 SASLprep normal'(){
@@ -245,10 +245,10 @@ class ScramShaAuthenticatorSpecification extends Specification {
         def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword })
 
         then:
-        validateAuthentication(payloads, authenticator, async)
+        validateAuthentication(payloads, authenticator, async, emptyExchange)
 
         where:
-        async << [true, false]
+        [async, emptyExchange] << [[true, false], [true, false]].combinations()
     }
 
     def 'should successfully authenticate with SHA-256 SASLprep non-normal'(){
@@ -268,10 +268,10 @@ class ScramShaAuthenticatorSpecification extends Specification {
         def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword })
 
         then:
-        validateAuthentication(payloads, authenticator, async)
+        validateAuthentication(payloads, authenticator, async, emptyExchange)
 
         where:
-        async << [true, false]
+        [async, emptyExchange] << [[true, false], [true, false]].combinations()
     }
 
     def 'should throw if invalid r value from server'() {
@@ -291,7 +291,7 @@ class ScramShaAuthenticatorSpecification extends Specification {
 
     def 'should throw if iteration count is below the minimium allowed count'() {
         when:
-        def serverResponses = createMessages('S: r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=QSXCR+Q6sek8bf92,i=4095').first()
+        def serverResponses = createMessages('S: r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=QSXCR+Q6sek8bf92,i=4095').last()
         def authenticator = new ScramShaAuthenticator(credential, { 'rOprNGfwEbeRWgbNEkqO' }, { 'pencil' })
         authenticate(createConnection(serverResponses), authenticator, async)
 
@@ -347,7 +347,7 @@ class ScramShaAuthenticatorSpecification extends Specification {
             S: r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096
             S: v=6rriTRBi23WpRR/wtup+mMhUZUn/dB5nLTJRsjl95G4=
             S: z=ExtraStep
-        ''').last()
+        ''', true).last()
         def authenticator = new ScramShaAuthenticator(SHA256_CREDENTIAL, { 'rOprNGfwEbeRWgbNEkqO' }, { 'pencil' })
         authenticate(createConnection(serverResponses), authenticator, async)
 
@@ -427,15 +427,17 @@ class ScramShaAuthenticatorSpecification extends Specification {
         assert(clientMessages.size() == sent.size())
         sent.indices.each {
             def sentMessage = sent.get(it)
-            def messageStart = it == 0 ? "saslStart: 1, mechanism:'$mechanism'" : 'saslContinue: 1, conversationId: 1'
+            def messageStart = it == 0 ? "saslStart: 1, mechanism:'$mechanism', options: {skipEmptyExchange: true}"
+                    : 'saslContinue: 1, conversationId: 1'
             def expectedMessage = BsonDocument.parse("{$messageStart, payload: BinData(0, '${encode64(clientMessages.get(it))}')}")
             assertEquals(expectedMessage, sentMessage)
         }
     }
 
-    def validateAuthentication(String payloads, ScramShaAuthenticator authenticator, boolean async) {
-        def (clientMessages, serverResponses) = createMessages(payloads)
-        def connection = createConnection(serverResponses)
+    def validateAuthentication(String payloads, ScramShaAuthenticator authenticator, boolean async,
+                               boolean emptyExchange) {
+        def (clientMessages, serverResponses) = createMessages(payloads, emptyExchange)
+        def connection = createConnection(serverResponses, emptyExchange ? -1 : 1)
         authenticate(connection, authenticator, async)
         validateClientMessages(connection, clientMessages, authenticator.getMechanismName())
     }
@@ -455,7 +457,7 @@ class ScramShaAuthenticatorSpecification extends Specification {
         Base64.encode(string.getBytes(Charset.forName('UTF-8')))
     }
 
-    def createMessages(String messages) {
+    def createMessages(String messages, boolean emptyExchange = true) {
         def (clientMessages, serverResponses) = [[], []]
         def payloads = messages.stripMargin().readLines()*.trim().findAll { it.length() > 0 }
         payloads.each {
@@ -470,7 +472,9 @@ class ScramShaAuthenticatorSpecification extends Specification {
                 throw new IllegalArgumentException("Invalid message: $message")
             }
         }
-        clientMessages += serverResponses.last()
+        if (emptyExchange) {
+            clientMessages += ''
+        }
         [clientMessages, serverResponses]
     }
 }
