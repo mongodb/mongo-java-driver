@@ -52,6 +52,18 @@ public class BsonArray extends BsonValue implements List<BsonValue>, Cloneable {
         this(new ArrayList<BsonValue>(), false);
     }
 
+    /**
+     * Construct an empty BsonArray with the specified initial capacity.
+     *
+     * @param  initialCapacity  the initial capacity of the BsonArray
+     * @throws IllegalArgumentException if the specified initial capacity
+     *         is negative
+     * @since 4.3
+     */
+    public BsonArray(final int initialCapacity) {
+        this(new ArrayList<BsonValue>(initialCapacity), false);
+    }
+
     @SuppressWarnings("unchecked")
     BsonArray(final List<? extends BsonValue> values, final boolean copy) {
         if (copy) {
