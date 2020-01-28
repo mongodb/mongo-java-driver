@@ -20,6 +20,8 @@ import com.mongodb.AuthenticationMechanism;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 import com.mongodb.internal.authentication.SaslPrep;
+import org.bson.BsonBoolean;
+import org.bson.BsonDocument;
 import org.bson.internal.Base64;
 
 import javax.crypto.Mac;
@@ -71,6 +73,12 @@ class ScramShaAuthenticator extends SaslAuthenticator {
         }
         return authMechanism.getMechanismName();
     }
+
+    @Override
+    protected void appendSaslStartOptions(final BsonDocument saslStartCommand) {
+        saslStartCommand.append("options", new BsonDocument("skipEmptyExchange", new BsonBoolean(true)));
+    }
+
 
     @Override
     protected SaslClient createSaslClient(final ServerAddress serverAddress) {
@@ -132,7 +140,7 @@ class ScramShaAuthenticator extends SaslAuthenticator {
             if (!MessageDigest.isEqual(decodeBase64(map.get("v")), serverSignature)) {
                 throw new SaslException("Server signature was invalid.");
             }
-            return challenge;
+            return new byte[0];
         }
 
         public boolean isComplete() {
