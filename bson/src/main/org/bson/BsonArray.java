@@ -59,7 +59,7 @@ public class BsonArray extends BsonValue implements List<BsonValue>, Cloneable {
      * @throws IllegalArgumentException if the specified initial capacity
      *         is negative
      */
-    public BsonArray(int initialCapacity) {
+    public BsonArray(final int initialCapacity) {
         this(new ArrayList<BsonValue>(initialCapacity), false);
     }
 
