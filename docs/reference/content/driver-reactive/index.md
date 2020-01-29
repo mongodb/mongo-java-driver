@@ -19,7 +19,7 @@ the [Quick Start Guide]({{< relref "driver-reactive/getting-started/quick-start.
 
 ## Tutorials
 
-For tutorials for some frequently used operations, see the [Tutorials section]({{<relref "driver-reactive/tutorials/index.md">}}).
+For tutorials for some frequently used operations, see the [Tutorials section]({{<relref "driver-reactive/tutorials/index.md" >}}).
 
 
 ### Previous Releases

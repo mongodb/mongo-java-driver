@@ -40,7 +40,7 @@ For more information on connecting to running MongoDB deployments, see
 
 ## Access a Database
 
-Once you have a `MongoClient` instance connected to a MongoDB deployment, use its [`getDatabase()`]({{<apiref "com/mongodb/MongoClient.html#getDatabase(java.lang.String)">}}) method to access a database.
+Once you have a `MongoClient` instance connected to a MongoDB deployment, use its [`getDatabase()`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClient.html#getDatabase(java.lang.String)" >}}) method to access a database.
 
 Specify the name of the database to the `getDatabase()` method. If a database does not exist, MongoDB creates the database when you first store data for that database.
 
@@ -56,7 +56,7 @@ MongoDatabase database = mongoClient.getDatabase("test");
 
 ## Access a Collection
 
-Once you have a `MongoDatabase` instance, use its [`getCollection()`]({{< apiref "com/mongodb/client/MongoDatabase.html#getCollection(java.lang.String)">}})
+Once you have a `MongoDatabase` instance, use its [`getCollection()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoDatabase.html#getCollection(java.lang.String)" >}})
 method to access a collection.
 
 Specify the name of the collection to the `getCollection()` method.
@@ -77,11 +77,11 @@ You can also explicitly create a collection with various options, such as settin
 
 ## Explicitly Create a Collection
 
-The MongoDB driver provides the [`createCollection()`]({{<apiref "com/mongodb/client/MongoDatabase.html#createCollection(java.lang.String,com.mongodb.client.model.CreateCollectionOptions)">}}) method to explicitly create a collection. When you explicitly create a collection, you can specify various collection options, such as a maximum size or the documentation validation rules, with the [`CreateCollectionOptions`]({{<apiref "com/mongodb/client/model/CreateCollectionOptions.html">}}) class. If you are not specifying these options, you do not need to explicitly create the collection since MongoDB creates new collections when you first store data for the collections.
+The MongoDB driver provides the [`createCollection()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoDatabase.html#createCollection(java.lang.String,com.mongodb.client.model.CreateCollectionOptions)" >}}) method to explicitly create a collection. When you explicitly create a collection, you can specify various collection options, such as a maximum size or the documentation validation rules, with the [`CreateCollectionOptions`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/CreateCollectionOptions.html" >}}) class. If you are not specifying these options, you do not need to explicitly create the collection since MongoDB creates new collections when you first store data for the collections.
 
 ### Capped Collection
 
-For example, the following operation creates a [capped collection]({{<docsref "core/capped-collections">}}) sized to 1 megabyte:
+For example, the following operation creates a [capped collection]({{<docsref "core/capped-collections" >}}) sized to 1 megabyte:
 
 ```java
 database.createCollection("cappedCollection",
@@ -90,7 +90,7 @@ database.createCollection("cappedCollection",
 
 ### Document Validation
 
-MongoDB provides the capability to [validate documents]({{<docsref "core/document-validation">}}) during updates and insertions. Validation rules are specified on a per-collection basis using the [`ValidationOptions`]({{< apiref "com/mongodb/client/model/ValidationOptions.html">}}), which takes a filter document that specifies the validation rules or expressions.
+MongoDB provides the capability to [validate documents]({{<docsref "core/document-validation" >}}) during updates and insertions. Validation rules are specified on a per-collection basis using the [`ValidationOptions`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/ValidationOptions.html" >}}), which takes a filter document that specifies the validation rules or expressions.
 
 ```java
 ValidationOptions collOptions = new ValidationOptions().validator(
@@ -101,7 +101,7 @@ database.createCollection("contacts",
 
 ## Get A List of Collections
 
-You can get a list of the collections in a database using the [`MongoDatabase.listCollectionNames()`]({{<apiref "com/mongodb/client/MongoDatabase.html#listCollectionNames()">}}) method:
+You can get a list of the collections in a database using the [`MongoDatabase.listCollectionNames()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoDatabase.html#listCollectionNames()" >}}) method:
 
 ```java
 for (String name : database.listCollectionNames()) {
@@ -111,7 +111,7 @@ for (String name : database.listCollectionNames()) {
 
 ## Drop a Collection
 
-You can drop a collection by using the [`MongoCollection.drop()`]({{<apiref "com/mongodb/client/MongoCollection.html#drop()">}}) method:
+You can drop a collection by using the [`MongoCollection.drop()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#drop()" >}}) method:
 
 ```java
 MongoCollection<Document> collection = database.getCollection("contacts");
@@ -121,19 +121,19 @@ collection.drop();
 ## Immutability
 
 `MongoDatabase` and `MongoCollection` instances are immutable. To create new instances from existing instances that
-have different property values, such as [read concern]({{<docsref "reference/read-concern">}}), [read preference]({{<docsref "reference/read-preference">}}), and [write concern]({{<docsref "reference/write-concern">}}), the `MongoDatabase` and `MongoCollection` class provides various methods:
+have different property values, such as [read concern]({{<docsref "reference/read-concern" >}}), [read preference]({{<docsref "reference/read-preference" >}}), and [write concern]({{<docsref "reference/write-concern" >}}), the `MongoDatabase` and `MongoCollection` class provides various methods:
 
-- [`MongoDatabase.withReadConcern`]({{<apiref "com/mongodb/client/MongoDatabase.html#withReadConcern(com.mongodb.ReadConcern)">}})
+- [`MongoDatabase.withReadConcern`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoDatabase.html#withReadConcern(com.mongodb.ReadConcern)" >}})
 
-- [`MongoDatabase.withReadPreference`]({{<apiref "com/mongodb/client/MongoDatabase.html#withReadPreference(com.mongodb.ReadPreference)">}})
+- [`MongoDatabase.withReadPreference`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoDatabase.html#withReadPreference(com.mongodb.ReadPreference)" >}})
 
-- [`MongoDatabase.withWriteConcern`]({{<apiref "com/mongodb/client/MongoDatabase.html#withWriteConcern(com.mongodb.WriteConcern)">}})
+- [`MongoDatabase.withWriteConcern`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoDatabase.html#withWriteConcern(com.mongodb.WriteConcern)" >}})
 
-- [`MongoCollection.withReadConcern`]({{<apiref "com/mongodb/client/MongoCollection.html#withReadConcern(com.mongodb.ReadConcern)">}})
+- [`MongoCollection.withReadConcern`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#withReadConcern(com.mongodb.ReadConcern)" >}})
 
-- [`MongoCollection.withReadPreference`]({{<apiref "com/mongodb/client/MongoCollection.html#withReadPreference(com.mongodb.ReadPreference)">}})
+- [`MongoCollection.withReadPreference`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#withReadPreference(com.mongodb.ReadPreference)" >}})
 
-- [`MongoCollection.withWriteConcern`]({{<apiref "com/mongodb/client/MongoCollection.html#withWriteConcern(com.mongodb.WriteConcern)">}})
+- [`MongoCollection.withWriteConcern`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#withWriteConcern(com.mongodb.WriteConcern)" >}})
 
 For details, see [Read Operations]({{< relref  "driver/tutorials/perform-read-operations.md" >}}) and [Write Operations]({{< relref  "driver/tutorials/perform-write-operations.md" >}}).
 
@@ -205,7 +205,7 @@ MongoCollection<Document> collection = database.getCollection("mycoll")
 {{% note %}}
 Starting with the 3.12 release of the driver, you can also change the encoding of `UUID` instances via the `uuidRepresentation` property of
 `MongoClientSettings`.  See 
-[`MongoClientSettings.getUuidRepresentation`]({{<apiref "com/mongodb/MongoClientSettings.html#getUuidRepresentation()">}}) for
+[`MongoClientSettings.getUuidRepresentation`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientSettings.html#getUuidRepresentation()" >}}) for
 details.
 {{% /note %}}
 

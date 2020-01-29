@@ -41,11 +41,11 @@ val database: MongoDatabase = mongoClient.getDatabase("test")
 val collection: MongoCollection[Document] = database.getCollection("restaurants")
 ```
 
-For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md">}}).
+For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md" >}}).
 
 ## Query a Collection
 
-To query the collection, you can use the collection's [`find()`]({{< scapiref "org/mongodb/scala/MongoCollection.html#find[C]()(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,TResult],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.FindObservable[C]">}}) method.
+To query the collection, you can use the collection's [`find()`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoCollection.html#find[C]()(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,TResult],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.FindObservable[C]" >}}) method.
 
 You can call the method without any arguments to query all documents in a collection:
 
@@ -62,17 +62,17 @@ collection.find(equal("name", "456 Cookies Shop"))
 
 ## Query Filters
 
-To query for documents that match certain conditions, pass a filter document to the [`find()`]({{< scapiref "org/mongodb/scala/MongoCollection.html#find[C]()(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,TResult],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.FindObservable[C]">}}) method.
+To query for documents that match certain conditions, pass a filter document to the [`find()`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoCollection.html#find[C]()(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,TResult],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.FindObservable[C]" >}}) method.
 
 ### Empty Filter
 
-To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< scapiref "org/mongodb/scala/bson/index.html#Document:org.mongodb.scala.bson.collection.immutable.Document.type" >}}) object.
+To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/bson/index.html#Document:org.mongodb.scala.bson.collection.immutable.Document.type" >}}) object.
 
 ```scala
 collection.find(Document()).printResults()
 ```
 {{% note class="tip"%}}
-For the [`find()`]({{< scapiref "org/mongodb/scala/MongoCollection.html#find[C]()(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,TResult],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.FindObservable[C]">}}) method, you can also call the method without passing a filter object to match all documents in a collection.
+For the [`find()`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoCollection.html#find[C]()(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,TResult],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.FindObservable[C]" >}}) method, you can also call the method without passing a filter object to match all documents in a collection.
 {{% /note %}}
 
 ```scala
@@ -81,7 +81,7 @@ collection.find().printResults()
 
 ### `Filters` Helper
 
-To facilitate the creation of filter documents, the Scala driver provides the [`Filters`]({{< scapiref "org/mongodb/scala/model/Filters$.html">}}) class that provides filter condition helper methods.
+To facilitate the creation of filter documents, the Scala driver provides the [`Filters`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/model/Filters$.html" >}}) class that provides filter condition helper methods.
 
 Consider the following `find` operation which includes a filter `Document` which specifies that:
 
@@ -95,23 +95,23 @@ collection.find(
     .printResults()
 ```
 
-The following example specifies the same filter condition using the [`Filters`]({{< scapiref "org/mongodb/scala/model/Filters$.html">}}) helper methods:
+The following example specifies the same filter condition using the [`Filters`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/model/Filters$.html" >}}) helper methods:
 
 ```scala
 collection.find(and(gte("stars", 2), lt("stars", 5), equal("categories", "Bakery")))
           .printResults()
 ```
 
-For a list of MongoDB query filter operators, refer to the [MongoDB Manual]({{<docsref "reference/operator/query">}}). For the associated `Filters` helpers, see [`Filters`]({{< scapiref "org/mongodb/scala/model/Filters$.html">}}).
-See also the  [Query Documents Tutorial]({{<docsref "tutorial/query-documents">}}) for an overview of querying in MongoDB, including specifying filter conditions on arrays and embedded documents.
+For a list of MongoDB query filter operators, refer to the [MongoDB Manual]({{<docsref "reference/operator/query" >}}). For the associated `Filters` helpers, see [`Filters`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/model/Filters$.html" >}}).
+See also the  [Query Documents Tutorial]({{<docsref "tutorial/query-documents" >}}) for an overview of querying in MongoDB, including specifying filter conditions on arrays and embedded documents.
 
 ## FindObservable
 
-The [`find()`]({{< scapiref "org/mongodb/scala/MongoCollection.html#find[C]()(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,TResult],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.FindObservable[C]">}}) method returns an instance of the [`FindObservable`]({{< scapiref "org/mongodb/scala/FindObservable.html" >}}) class. The class provides various methods that you can chain to the `find()` method to modify the output or behavior of the query, such as [`sort()`]({{<scapiref "org/mongodb/scala/FindObservable.html#sort(sort:org.mongodb.scala.bson.conversions.Bson):org.mongodb.scala.FindObservable[TResult]">}})  or [`projection()`]({{<scapiref "org/mongodb/scala/FindObservable.html#projection(projection:org.mongodb.scala.bson.conversions.Bson):org.mongodb.scala.FindObservable[TResult]">}}), as well as for iterating the results via the `subscribe` method.
+The [`find()`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoCollection.html#find[C]()(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,TResult],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.FindObservable[C]" >}}) method returns an instance of the [`FindObservable`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/FindObservable.html" >}}) class. The class provides various methods that you can chain to the `find()` method to modify the output or behavior of the query, such as [`sort()`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/FindObservable.html#sort(sort:org.mongodb.scala.bson.conversions.Bson):org.mongodb.scala.FindObservable[TResult]" >}})  or [`projection()`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/FindObservable.html#projection(projection:org.mongodb.scala.bson.conversions.Bson):org.mongodb.scala.FindObservable[TResult]" >}}), as well as for iterating the results via the `subscribe` method.
 
 ### Projections
 
-By default, queries in MongoDB return all fields in matching documents. To specify the fields to return in the matching documents, you can specify a [projection document]({{<docsref "tutorial/project-fields-from-query-results/#projection-document">}}).
+By default, queries in MongoDB return all fields in matching documents. To specify the fields to return in the matching documents, you can specify a [projection document]({{<docsref "tutorial/project-fields-from-query-results/#projection-document" >}}).
 
 Consider the following `find` operation which includes a projection `Document` which specifies that the matching documents return only the `name` field, `stars` field, and the `categories` field.
 
@@ -122,7 +122,7 @@ collection.find(and(gte("stars", 2), lt("stars", 5), equal("categories", "Bakery
 ```
 
 To facilitate the creation of projection documents, the Scala driver provides the
-[`Projections`]({{<scapiref "org/mongodb/scala/model/Projections$.html">}}) class.
+[`Projections`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/model/Projections$.html" >}}) class.
 
 ```scala
 collection.find(and(gte("stars", 2), lt("stars", 5), equal("categories", "Bakery")))
@@ -130,14 +130,14 @@ collection.find(and(gte("stars", 2), lt("stars", 5), equal("categories", "Bakery
           .printResults()
 ```
 
-In the projection document, you can also specify a projection expression using a [projection operator]({{<docsref "reference/operator/projection/">}})
+In the projection document, you can also specify a projection expression using a [projection operator]({{<docsref "reference/operator/projection/" >}})
 
-For an example on using the [`Projections.metaTextScore`]({{<scapiref "org/mongodb/scala/model/Projections$.html#metaTextScore(fieldName:String):org.mongodb.scala.bson.conversions.Bson">}}),
-see the [Text Search tutorial]({{<relref "driver-scala/tutorials/text-search.md">}}).
+For an example on using the [`Projections.metaTextScore`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/model/Projections$.html#metaTextScore(fieldName:String):org.mongodb.scala.bson.conversions.Bson" >}}),
+see the [Text Search tutorial]({{<relref "driver-scala/tutorials/text-search.md" >}}).
 
 ### Sorts
 
-To sort documents, pass a [sort specification document]({{<docsref "reference/method/cursor.sort/#cursor.sort">}}) to the [`FindObservable.sort()`]({{<scapiref "org/mongodb/scala/FindObservable.html#sort(sort:org.mongodb.scala.bson.conversions.Bson):org.mongodb.scala.FindObservable[TResult]">}}) method.  The Scala driver provides [`Sorts`]({{< relref "builders/sorts.md">}}) helpers to facilitate the sort specification document.
+To sort documents, pass a [sort specification document]({{<docsref "reference/method/cursor.sort/#cursor.sort" >}}) to the [`FindObservable.sort()`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/FindObservable.html#sort(sort:org.mongodb.scala.bson.conversions.Bson):org.mongodb.scala.FindObservable[TResult]" >}}) method.  The Scala driver provides [`Sorts`]({{< relref "builders/sorts.md" >}}) helpers to facilitate the sort specification document.
 
 ```scala
 collection.find(and(gte("stars", 2), lt("stars", 5), equal("categories", "Bakery")))
@@ -147,7 +147,7 @@ collection.find(and(gte("stars", 2), lt("stars", 5), equal("categories", "Bakery
 
 ### Sort with Projections
 
-The [`FindObservable`]({{< scapiref "org/mongodb/scala/FindObservable.html" >}}) methods themselves return `FindObservable` objects, and as such, you can append multiple `FindObservable` methods to the `find()` method.
+The [`FindObservable`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/FindObservable.html" >}}) methods themselves return `FindObservable` objects, and as such, you can append multiple `FindObservable` methods to the `find()` method.
 
 ```scala
 collection.find(and(gte("stars", 2), lt("stars", 5), equal("categories", "Bakery")))
@@ -158,11 +158,11 @@ collection.find(and(gte("stars", 2), lt("stars", 5), equal("categories", "Bakery
 
 ## Read Preference
 
-For read operations on [replica sets]({{<docsref "replication/">}}) or [sharded clusters]({{<docsref "sharding/">}}), applications can configure the [read preference]({{<docsref "reference/read-preference">}}) at three levels:
+For read operations on [replica sets]({{<docsref "replication/" >}}) or [sharded clusters]({{<docsref "sharding/" >}}), applications can configure the [read preference]({{<docsref "reference/read-preference" >}}) at three levels:
 
-- In a [`MongoClient()`]({{< scapiref "org/mongodb/scala/MongoClient$.html">}})
+- In a [`MongoClient()`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoClient$.html" >}})
 
-  - Via [`MongoClientSettings`]({{<scapiref "org/mongodb/scala/MongoClientSettings$.html">}}):
+  - Via [`MongoClientSettings`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoClientSettings$.html" >}}):
 
       ```scala
       val mongoClient = MongoClient(MongoClientSettings.builder()
@@ -171,20 +171,20 @@ For read operations on [replica sets]({{<docsref "replication/">}}) or [sharded 
                                          .build())
       ```
 
-  - Via [`ConnectionString`]({{< scapiref "org/mongodb/scala/ConnectionString$.html">}}), as in the following example:
+  - Via [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ConnectionString$.html" >}}), as in the following example:
 
       ```scala
       val mongoClient = MongoClient("mongodb://host1:27017,host2:27017/?readPreference=secondary")
       ```
 
-- In a [`MongoDatabase`]({{<scapiref "org/mongodb/scala/MongoDatabase.html">}}) via its [`withReadPreference`]({{<scapiref "org/mongodb/scala/MongoDatabase.html#withReadPreference(readPreference:org.mongodb.scala.ReadPreference):org.mongodb.scala.MongoDatabase">}}) method.
+- In a [`MongoDatabase`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoDatabase.html" >}}) via its [`withReadPreference`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoDatabase.html#withReadPreference(readPreference:org.mongodb.scala.ReadPreference):org.mongodb.scala.MongoDatabase" >}}) method.
 
     ```scala
     val database = mongoClient.getDatabase("test")
                               .withReadPreference(ReadPreference.secondary())
     ```
 
-- In a [`MongoCollection`]({{<scapiref "org/mongodb/scala/MongoCollection.html">}}) via its [`withReadPreference`]({{<scapiref "org/mongodb/scala/MongoCollection.html#withReadPreference(readPreference:org.mongodb.scala.ReadPreference):org.mongodb.scala.MongoCollection[TResult]">}}) method:
+- In a [`MongoCollection`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoCollection.html" >}}) via its [`withReadPreference`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoCollection.html#withReadPreference(readPreference:org.mongodb.scala.ReadPreference):org.mongodb.scala.MongoCollection[TResult]" >}}) method:
 
     ```scala
     val collection = database.getCollection("restaurants")
@@ -201,11 +201,11 @@ val collectionWithReadPref = collection.withReadPreference(ReadPreference.primar
 
 ## Read Concern
 
-For read operations on [replica sets]({{<docsref "replication/">}}) or [sharded clusters]({{<docsref "sharding/">}}), applications can configure the [read concern]({{<docsref "reference/read-concern">}}) at three levels:
+For read operations on [replica sets]({{<docsref "replication/" >}}) or [sharded clusters]({{<docsref "sharding/" >}}), applications can configure the [read concern]({{<docsref "reference/read-concern" >}}) at three levels:
 
-- In a [`MongoClient()`]({{< scapiref "org/mongodb/scala/MongoClient$.html">}})
+- In a [`MongoClient()`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoClient$.html" >}})
 
-  - Via [`MongoClientSettings`]({{<scapiref "org/mongodb/scala/MongoClientSettings$.html">}}):
+  - Via [`MongoClientSettings`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoClientSettings$.html" >}}):
 
       ```scala
       val mongoClient = MongoClient(MongoClientSettings.builder()
@@ -214,20 +214,20 @@ For read operations on [replica sets]({{<docsref "replication/">}}) or [sharded 
                                      .build())
       ```
 
-  - Via [`ConnectionString`]({{< scapiref "org/mongodb/scala/ConnectionString$.html">}}), as in the following example:
+  - Via [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ConnectionString$.html" >}}), as in the following example:
 
       ```scala
       val mongoClient = MongoClient("mongodb://host1:27017,host2:27017/?readConcernLevel=majority")
       ```
 
-- In a [`MongoDatabase`]({{<scapiref "org/mongodb/scala/MongoDatabase.html">}}) via its [`withReadConcern`]({{<scapiref "org/mongodb/scala/MongoDatabase.html#withReadConcern(readConcern:org.mongodb.scala.ReadConcern):org.mongodb.scala.MongoDatabase">}}) method, as in the following example:
+- In a [`MongoDatabase`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoDatabase.html" >}}) via its [`withReadConcern`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoDatabase.html#withReadConcern(readConcern:org.mongodb.scala.ReadConcern):org.mongodb.scala.MongoDatabase" >}}) method, as in the following example:
 
     ```scala
     val database = mongoClient.getDatabase("test")
                               .withReadConcern(ReadConcern.MAJORITY)
     ```
 
-- In a [`MongoCollection`]({{<scapiref "org/mongodb/scala/MongoCollection.html">}}) via its [`withReadConcern`]({{<scapiref "org/mongodb/scala/MongoCollection.html#withReadConcern-com.mongodb.ReadConcern-">}}) method, as in the following example:
+- In a [`MongoCollection`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoCollection.html" >}}) via its [`withReadConcern`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoCollection.html#withReadConcern-com.mongodb.ReadConcern-" >}}) method, as in the following example:
 
     ```scala
     val collection = database.getCollection("restaurants")
@@ -242,7 +242,7 @@ For example, in the following, the `collWithReadConcern` instance has an AVAILAB
 val collWithReadConcern = collection.withReadConcern(ReadConcern.AVAILABLE)
 ```
 
-You can build `MongoClientSettings`, `MongoDatabase`, or `MongoCollection` to include a combination of read concern, read preference, and [write concern]({{<docsref "reference/write-concern">}}).
+You can build `MongoClientSettings`, `MongoDatabase`, or `MongoCollection` to include a combination of read concern, read preference, and [write concern]({{<docsref "reference/write-concern" >}}).
 
 For example, the following sets all three at the collection level:
 

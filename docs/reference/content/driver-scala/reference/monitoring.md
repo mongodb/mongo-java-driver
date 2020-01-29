@@ -15,7 +15,7 @@ The driver uses [JMX](http://docs.oracle.com/javase/8/docs/technotes/guides/jmx/
 application or end user to monitor various aspects of the driver.
 
 The driver creates MXBean instances of a single type:
-[ConnectionPoolStatisticsMBean]({{< apiref "com/mongodb/management/ConnectionPoolStatisticsMBean" >}}).
+[ConnectionPoolStatisticsMBean]({{< apiref "mongodb-driver-core" "com/mongodb/management/ConnectionPoolStatisticsMBean" >}}).
  The driver registers one `ConnectionPoolStatisticsMBean` instance per each server it connects to. For example, in the case of a replica
  set, the driver creates an instance per each non-hidden member of the replica set.
 
@@ -51,7 +51,7 @@ The driver implements the
 allowing an application to be notified when a command starts and when it either succeeds or fails.
 
 An application registers command listeners with a `MongoClient` by configuring `MongoClientSettings` with instances of classes
-that implement the [`CommandListener`]({{< apiref "com/mongodb/event/CommandListener" >}}) interface. Consider the following, somewhat
+that implement the [`CommandListener`]({{< apiref "mongodb-driver-core" "com/mongodb/event/CommandListener" >}}) interface. Consider the following, somewhat
 simplistic, implementation of the `CommandListener` interface:
  
 ```scala
@@ -101,9 +101,9 @@ The driver implements the
 allowing an application to be notified when the driver detects changes to the topology of the MongoDB cluster to which it is connected.
 
 An application registers listeners with a `MongoClient` by configuring  `MongoClientSettings` with instances of classes that
-implement any of the [`ClusterListener`]({{< apiref "com/mongodb/event/ClusterListener" >}}),
- [`ServerListener`]({{< apiref "com/mongodb/event/ServerListener" >}}),
-or [`ServerMonitorListener`]({{< apiref "com/mongodb/event/ServerMonitorListener" >}}) interfaces.
+implement any of the [`ClusterListener`]({{< apiref "mongodb-driver-core" "com/mongodb/event/ClusterListener" >}}),
+ [`ServerListener`]({{< apiref "mongodb-driver-core" "com/mongodb/event/ServerListener" >}}),
+or [`ServerMonitorListener`]({{< apiref "mongodb-driver-core" "com/mongodb/event/ServerMonitorListener" >}}) interfaces.
 
 Consider the following, somewhat simplistic, example of a cluster listener:
 
@@ -169,7 +169,7 @@ and when that MongoClient is closed.  In addition, it will print a message when 
 The driver supports monitoring of connection pool-related events.
 
 An application registers listeners with a `MongoClient` by configuring `MongoClientSettings` with instances of classes that
-implement the [`ConnectionPoolListener`]({{< apiref "com/mongodb/event/ConnectionPoolListener" >}}) interface.
+implement the [`ConnectionPoolListener`]({{< apiref "mongodb-driver-core" "com/mongodb/event/ConnectionPoolListener" >}}) interface.
 
 Consider the following, simplistic, example of a connection pool listener:
 

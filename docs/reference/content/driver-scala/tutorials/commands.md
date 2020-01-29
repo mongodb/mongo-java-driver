@@ -10,7 +10,7 @@ pre = "<i class='fa'></i>"
 
 ## Run Commands
 
-Not all commands have a specific helper. However you can run any [MongoDB command]({{<docsref "reference/command">}}) by using the MongoDatabase's [`runCommand()`]({{<scapiref "org/mongodb/scala/MongoDatabase.html#runCommand-org.bson.conversions.Bson-com.mongodb.ReadPreference-">}}) method.
+Not all commands have a specific helper. However you can run any [MongoDB command]({{<docsref "reference/command" >}}) by using the MongoDatabase's [`runCommand()`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoDatabase.html#runCommand-org.bson.conversions.Bson-com.mongodb.ReadPreference-" >}}) method.
 
 ## Prerequisites
 
@@ -37,14 +37,14 @@ val mongoClient: MongoClient = MongoClient()
 val database: MongoDatabase = mongoClient.getDatabase("test")
 ```
 
-For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md">}}).
+For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md" >}}).
 
 ## Run `buildInfo` and `collStats` Commands
 
-To run a command, construct a [`Document`]({{< scapiref "org/mongodb/scala/bson/index.html#Document:org.mongodb.scala.bson.collection.immutable.Document.type" >}})
+To run a command, construct a [`Document`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/bson/index.html#Document:org.mongodb.scala.bson.collection.immutable.Document.type" >}})
 object that specifies the command and pass it to the `runCommand()` method.
 
-The following runs the [`buildInfo`]({{<docsref "reference/command/buildInfo">}}) command and the [`collStats`]({{<docsref "reference/command/collStats">}}) command:
+The following runs the [`buildInfo`]({{<docsref "reference/command/buildInfo" >}}) command and the [`collStats`]({{<docsref "reference/command/collStats" >}}) command:
 
 ```scala
 database.runCommand(Document("buildInfo" -> 1)).printResults()
@@ -52,4 +52,4 @@ database.runCommand(Document("buildInfo" -> 1)).printResults()
 database.runCommand(Document("collStats" -> "restaurants")).printResults()
 ```
 
-For a list of available MongoDB commands, see [MongoDB commands]({{<docsref "reference/command">}}).
+For a list of available MongoDB commands, see [MongoDB commands]({{<docsref "reference/command" >}}).

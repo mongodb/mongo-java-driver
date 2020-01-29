@@ -10,7 +10,7 @@ pre = "<i class='fa'></i>"
 
 ## Aggregation Framework
 
-The [aggregation pipeline]({{<docsref "core/aggregation-pipeline">}}) is a framework for data aggregation, modeled on the concept of data processing pipelines.
+The [aggregation pipeline]({{<docsref "core/aggregation-pipeline" >}}) is a framework for data aggregation, modeled on the concept of data processing pipelines.
 
 ## Prerequisites
 
@@ -55,18 +55,18 @@ MongoDatabase database = mongoClient.getDatabase("test");
 MongoCollection<Document> collection = database.getCollection("restaurants");
 ```
 
-For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md">}}).
+For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md" >}}).
 
 ## Perform Aggregation
 
-To perform aggregation, pass a list of [aggregation stages]({{< docsref "meta/aggregation-quick-reference" >}}) to the [`MongoCollection.aggregate()`]({{<apiref "com/mongodb/client/MongoCollection.html#aggregate(java.util.List)">}}) method.
-The Java driver provides the [`Aggregates`]({{< apiref "com/mongodb/client/model/Aggregates.html" >}}) helper class that contains builders for aggregation stages.
+To perform aggregation, pass a list of [aggregation stages]({{< docsref "meta/aggregation-quick-reference" >}}) to the [`MongoCollection.aggregate()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#aggregate(java.util.List)" >}}) method.
+The Java driver provides the [`Aggregates`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Aggregates.html" >}}) helper class that contains builders for aggregation stages.
 
 In the following example, the aggregation pipeline
 
 - First uses a [`$match`]({{< docsref "reference/operator/aggregation/match/" >}}) stage to filter for documents whose `categories` array field contains the element `Bakery`. The example uses [`Aggregates.match`]({{< relref "builders/aggregation.md#match" >}}) to build the `$match` stage.
 
-- Then, uses  a [`$group`]({{< docsref "reference/operator/aggregation/group/" >}}) stage to group the matching documents by the `stars` field, accumulating a count of documents for each distinct value of `stars`. The example uses [`Aggregates.group`]({{< relref "builders/aggregation.md#group" >}}) to build the `$group` stage and [`Accumulators.sum`]({{< apiref "com/mongodb/client/model/Accumulators#sum(java.lang.String,TExpression)" >}}) to build the [accumulator expression]({{< docsref "reference/operator/aggregation/group/#accumulator-operator" >}}).  For the [accumulator expressions]({{< docsref "reference/operator/aggregation-group/" >}}) for use within the [`$group`]({{< docsref "reference/operator/aggregation/group/" >}}) stage, the Java driver provides [`Accumulators`]({{< apiref "com/mongodb/client/model/Accumulators.html">}}) helper class.
+- Then, uses  a [`$group`]({{< docsref "reference/operator/aggregation/group/" >}}) stage to group the matching documents by the `stars` field, accumulating a count of documents for each distinct value of `stars`. The example uses [`Aggregates.group`]({{< relref "builders/aggregation.md#group" >}}) to build the `$group` stage and [`Accumulators.sum`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Accumulators#sum(java.lang.String,TExpression)" >}}) to build the [accumulator expression]({{< docsref "reference/operator/aggregation/group/#accumulator-operator" >}}).  For the [accumulator expressions]({{< docsref "reference/operator/aggregation-group/" >}}) for use within the [`$group`]({{< docsref "reference/operator/aggregation/group/" >}}) stage, the Java driver provides [`Accumulators`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Accumulators.html" >}}) helper class.
 ```java
 collection.aggregate(
       Arrays.asList(
@@ -78,10 +78,10 @@ collection.aggregate(
 
 ### Use Aggregation Expressions
 
-For [$group accumulator expressions]({{< docsref "reference/operator/aggregation-group/" >}}), the Java driver provides [`Accumulators`]({{< apiref "com/mongodb/client/model/Accumulators.html">}}) helper class. For other [aggregation expressions]({{< docsref "meta/aggregation-quick-reference/#aggregation-expressions" >}}), manually build the expression `Document`.
+For [$group accumulator expressions]({{< docsref "reference/operator/aggregation-group/" >}}), the Java driver provides [`Accumulators`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Accumulators.html" >}}) helper class. For other [aggregation expressions]({{< docsref "meta/aggregation-quick-reference/#aggregation-expressions" >}}), manually build the expression `Document`.
 
 In the following example, the aggregation pipeline uses a [`$project`]({{< docsref "reference/operator/aggregation/project/" >}}) stage to return only the `name` field and the calculated field `firstCategory` whose value is the first element in the `categories` array. The example uses [`Aggregates.project`]({{< relref "builders/aggregation.md#project" >}}) and various
-[`Projections`]({{<apiref "com/mongodb/client/model/Projections.html">}}) methods to build the `$project` stage.
+[`Projections`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Projections.html" >}}) methods to build the `$project` stage.
 
 
 ```java

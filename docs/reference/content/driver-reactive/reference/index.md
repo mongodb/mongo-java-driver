@@ -16,5 +16,5 @@ The reference documentation for the Java driver focuses on high-level documentat
 
 - [Monitoring]({{< relref "driver-reactive/reference/monitoring.md" >}})
 
-See also [Javadoc-generated API]({{< apiref "" >}}).
+See also [Javadoc-generated API]({{< apiref "mongodb-driver-reactivestreams" "index.html" >}}).
 

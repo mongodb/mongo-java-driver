@@ -9,10 +9,10 @@ title = "Codec and CodecRegistry"
 
 ## Codec and CodecRegistry
 
-In the last section we saw how to use the [`BsonReader`]({{< apiref "org/bson/BsonReader" >}}) and 
-[`BsonWriter`]({{< apiref "org/bson/BsonWriter" >}}) API to read and write BSON documents.  But writing code at that 
+In the last section we saw how to use the [`BsonReader`]({{< apiref "bson" "org/bson/BsonReader" >}}) and 
+[`BsonWriter`]({{< apiref "bson" "org/bson/BsonWriter" >}}) API to read and write BSON documents.  But writing code at that 
 low a level is tedious and error-prone, so in practice these algorithms are packaged in implementations of the 
-[`Codec`]({{< apiref "org/bson/codecs/Codec" >}}) interface.
+[`Codec`]({{< apiref "bson" "org/bson/codecs/Codec" >}}) interface.
 
 ### Codec
 
@@ -49,9 +49,9 @@ rely on a set of simpler `Codec` implementations for the basic BSON value types.
 
 ### CodecRegistry
 
-A [`CodecRegistry`]({{< apiref "org/bson/codecs/configuration/CodecRegistry" >}}) contains a set of `Codec` instances that are accessed 
+A [`CodecRegistry`]({{< apiref "bson" "org/bson/codecs/configuration/CodecRegistry" >}}) contains a set of `Codec` instances that are accessed 
 according to the Java classes that they encode from and decode to. Instances of `CodecRegistry` are generally created via static factory 
-methods on the [`CodecRegistries`]({{< apiref "org/bson/codecs/configuration/CodecRegistries" >}}) class.  Consider the simplest of these 
+methods on the [`CodecRegistries`]({{< apiref "bson" "org/bson/codecs/configuration/CodecRegistries" >}}) class.  Consider the simplest of these 
 methods, one that takes a list of `Codec`s:
 
 ```java
@@ -74,7 +74,7 @@ construction  of the `Document` `Codec` until after the `CodecRegistry` has been
     
 ### CodecProvider
  
-A [`CodecProvider`]({{< apiref "org/bson/codecs/configuration/CodecProvider" >}}) is a factory for `Codec` instances.  Unlike 
+A [`CodecProvider`]({{< apiref "bson" "org/bson/codecs/configuration/CodecProvider" >}}) is a factory for `Codec` instances.  Unlike 
 `CodecRegistry`, its `get` method takes not only a Class, but also a `CodecRegistry`, allowing a `CodecProvider` implementation to 
 construct `Codec` instances that require a `CodecRegistry` to look up `Codec` instances for the values contained within it.  Consider a 
 `CodecProvider` for the `Document` class:
@@ -105,7 +105,7 @@ abstracted via the `BsonTypeClassMap` class.
     
 ### BsonTypeClassMap
     
-The [`BsonTypeClassMap`]({{< apiref "org/bson/codecs/BsonTypeClassMap" >}}) class simply maps each value in the `BsonType` 
+The [`BsonTypeClassMap`]({{< apiref "bson" "org/bson/codecs/BsonTypeClassMap" >}}) class simply maps each value in the `BsonType` 
 enumeration to a Java class.  It contains a sensible set of default mappings that can easily be changed by passing an a `Map<BsonType, 
 Class<?>>` instance to the constructor with any replacement mappings to apply.  Consider the case where an application wants to decode 
 all BSON DateTime values to an `Instant` instead of the default `Date`:

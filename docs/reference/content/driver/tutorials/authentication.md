@@ -10,8 +10,8 @@ title = "Authentication"
 
 ## Authentication
 
-The Java driver supports all [MongoDB authentication mechanisms]({{<docsref "core/authentication/">}}), including those only available in the
-[MongoDB Enterprise Edition]({{<docsref "administration/install-enterprise/">}}).
+The Java driver supports all [MongoDB authentication mechanisms]({{<docsref "core/authentication/" >}}), including those only available in the
+[MongoDB Enterprise Edition]({{<docsref "administration/install-enterprise/" >}}).
 
 ## `MongoCredential`
 
@@ -35,23 +35,23 @@ import com.mongodb.MongoClientURI;
 ```
 
 An authentication credential is represented as an instance of the
-[`MongoCredential`]({{<apiref "com/mongodb/MongoCredential.html">}}) class. The [`MongoCredential`]({{<apiref "com/mongodb/MongoCredential.html">}}) class includes static
+[`MongoCredential`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoCredential.html" >}}) class. The [`MongoCredential`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoCredential.html" >}}) class includes static
 factory methods for each of the supported authentication mechanisms.
 
-You can also use a [`MongoClientURI`]({{< apiref "/com/mongodb/MongoClientURI.html">}}) and pass it to a 
-[`MongoClient()`]({{< apiref "com/mongodb/MongoClient.html">}}) constructor that takes a `MongoClientURI` parameter.
+You can also use a [`MongoClientURI`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientURI.html" >}}) and pass it to a 
+[`MongoClient()`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClient.html" >}}) constructor that takes a `MongoClientURI` parameter.
 
 ## Default Authentication Mechanism
 
-In MongoDB 3.0, MongoDB changed the default authentication mechanism from [`MONGODB-CR`]({{<docsref "core/security-mongodb-cr">}}) to
-[`SCRAM-SHA-1`]({{<docsref "core/security-scram">}}). In MongoDB 4.0 support for the deprecated
-[`MONGODB-CR`]({{<docsref "core/security-mongodb-cr">}}) mechanism was removed and
-[`SCRAM-SHA-256`]({{<docsref "core/security-scram">}}) support was added.
+In MongoDB 3.0, MongoDB changed the default authentication mechanism from [`MONGODB-CR`]({{<docsref "core/security-mongodb-cr" >}}) to
+[`SCRAM-SHA-1`]({{<docsref "core/security-scram" >}}). In MongoDB 4.0 support for the deprecated
+[`MONGODB-CR`]({{<docsref "core/security-mongodb-cr" >}}) mechanism was removed and
+[`SCRAM-SHA-256`]({{<docsref "core/security-scram" >}}) support was added.
 
 
 To create a credential that will authenticate using the default
 authentication mechanism regardless of server version, create a
-credential using the [`createCredential`]({{<apiref "com/mongodb/MongoCredential.html#createCredential(java.lang.String,java.lang.String,char[])">}})
+credential using the [`createCredential`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoCredential.html#createCredential(java.lang.String,java.lang.String,char[])" >}})
 static factory method:
 
 ```java
@@ -93,7 +93,7 @@ MongoClient mongoClient = new MongoClient(uri);
 ```
 
 For challenge and response mechanisms, using the default authentication mechanism is the recommended approach as it will make upgrading
-from MongoDB 2.6 to MongoDB 3.0 seamless, even after [upgrading the authentication schema]({{<docsref "release-notes/3.0-scram/">}}).
+from MongoDB 2.6 to MongoDB 3.0 seamless, even after [upgrading the authentication schema]({{<docsref "release-notes/3.0-scram/" >}}).
 For MongoDB 4.0 users it is also recommended as the supported authentication mechanisms are checked and the correct hashing algorithm is
 used.
 
@@ -110,8 +110,8 @@ which uses the `SHA-256` hashing function.
 
 Requires MongoDB 4.0 and `featureCompatibilityVersion` to be set to 4.0.
 
-To explicitly create a credential of type [`SCRAM-SHA-256`]({{<docsref "core/security-scram/">}}), use the
-[`createScramSha256Credential`]({{<apiref "com/mongodb/MongoCredential.html#createScramSha256Credential(java.lang.String,java.lang.String,char[])">}})
+To explicitly create a credential of type [`SCRAM-SHA-256`]({{<docsref "core/security-scram/" >}}), use the
+[`createScramSha256Credential`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoCredential.html#createScramSha256Credential(java.lang.String,java.lang.String,char[])" >}})
 method:
 
 ```java
@@ -155,8 +155,8 @@ MongoClient mongoClient = new MongoClient(uri);
 
 ### SCRAM-SHA-1
 
-To explicitly create a credential of type [`SCRAM-SHA-1`]({{<docsref "core/security-scram/">}}), use the 
-[`createScramSha1Credential`]({{<apiref "com/mongodb/MongoCredential.html#createScramSha1Credential(java.lang.String,java.lang.String,char[])">}}) 
+To explicitly create a credential of type [`SCRAM-SHA-1`]({{<docsref "core/security-scram/" >}}), use the 
+[`createScramSha1Credential`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoCredential.html#createScramSha1Credential(java.lang.String,java.lang.String,char[])" >}}) 
 method:
 
 ```java
@@ -203,11 +203,11 @@ MongoClient mongoClient = new MongoClient(uri);
 Starting in version 4.0, MongoDB removes support for the deprecated MongoDB Challenge-Response (`MONGODB-CR`) authentication mechanism.
 
 If your deployment has user credentials stored in `MONGODB-CR` schema, you must upgrade to `SCRAM` before you upgrade to version 4.0.
-For information on upgrading to `SCRAM`, see Upgrade to [SCRAM]({{<docsref "release-notes/3.0-scram/">}}).
+For information on upgrading to `SCRAM`, see Upgrade to [SCRAM]({{<docsref "release-notes/3.0-scram/" >}}).
 {{% /note %}}
 
 
-To explicitly create a credential of type [`MONGODB-CR`]({{<docsref "core/security-mongodb-cr">}}) use the [`createMongCRCredential`]({{<apiref "com/mongodb/MongoCredential.html#createMongoCRCredential(java.lang.String,java.lang.String,char[])">}})
+To explicitly create a credential of type [`MONGODB-CR`]({{<docsref "core/security-mongodb-cr" >}}) use the [`createMongCRCredential`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoCredential.html#createMongoCRCredential(java.lang.String,java.lang.String,char[])" >}})
 static factory method:
 
 ```java
@@ -249,13 +249,13 @@ MongoClient mongoClient = new MongoClient(uri);
 ```
 
 {{% note %}}
-After the [authentication schema upgrade]({{<docsref "release-notes/3.0-scram/">}}) from MONGODB-CR to SCRAM,
+After the [authentication schema upgrade]({{<docsref "release-notes/3.0-scram/" >}}) from MONGODB-CR to SCRAM,
 MONGODB-CR credentials will fail to authenticate.
 {{% /note %}}
 
 ## X.509
 
-With [X.509]({{<docsref "core/security-x.509">}}) mechanism, MongoDB uses the
+With [X.509]({{<docsref "core/security-x.509" >}}) mechanism, MongoDB uses the
 X.509 certificate presented during SSL negotiation to
 authenticate a user whose name is derived from the distinguished name
 of the X.509 certificate.
@@ -263,7 +263,7 @@ of the X.509 certificate.
 X.509 authentication requires the use of SSL connections with
 certificate validation and is available in MongoDB 2.6 and later. To
 create a credential of this type use the
-[`createMongoX509Credential`]({{<apiref "com/mongodb/MongoCredential.html#createMongoX509Credential(java.lang.String)">}}) static factory method:
+[`createMongoX509Credential`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoCredential.html#createMongoX509Credential(java.lang.String)" >}}) static factory method:
 
 ```java
 String user;     // The X.509 certificate derived user name, e.g. "CN=user,OU=OrgUnit,O=myOrg,..."
@@ -302,7 +302,7 @@ MongoClientURI uri = new MongoClientURI("mongodb://subjectName@host1/?authMechan
 MongoClient mongoClient = new MongoClient(uri);
 ```
 
-See the MongoDB server [x.509 tutorial]({{<docsref "tutorial/configure-x509-client-authentication/#add-x-509-certificate-subject-as-a-user">}})
+See the MongoDB server [x.509 tutorial]({{<docsref "tutorial/configure-x509-client-authentication/#add-x-509-certificate-subject-as-a-user" >}})
 for more information about determining the subject
 name from the certificate.
 
@@ -310,8 +310,8 @@ name from the certificate.
 
 [MongoDB Enterprise](http://www.mongodb.com/products/mongodb-enterprise) supports proxy
 authentication through Kerberos service. To create a credential of type
-[Kerberos (GSSAPI)]({{<docsref "core/authentication/#kerberos-authentication">}}), use the
-[`createGSSAPICredential`]({{<apiref "com/mongodb/MongoCredential.html#createGSSAPICredential(java.lang.String)">}})
+[Kerberos (GSSAPI)]({{<docsref "core/authentication/#kerberos-authentication" >}}), use the
+[`createGSSAPICredential`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoCredential.html#createGSSAPICredential(java.lang.String)" >}})
 static factory method:
 
 ```java
@@ -365,17 +365,17 @@ java.security.krb5.realm=MYREALM.ME
 java.security.krb5.kdc=mykdc.myrealm.me
 ```
 
-Depending on the Kerberos setup, additional property specifications may be required, either via the application code or, in some cases, the [withMechanismProperty()]({{<apiref "com/mongodb/MongoCredential.html#withMechanismProperty(java.lang.String,T)">}}) method of the `MongoCredential` instance:
+Depending on the Kerberos setup, additional property specifications may be required, either via the application code or, in some cases, the [withMechanismProperty()]({{< apiref "mongodb-driver-core" "com/mongodb/MongoCredential.html#withMechanismProperty(java.lang.String,T)" >}}) method of the `MongoCredential` instance:
 
-- **[`SERVICE_NAME`]({{< apiref "com/mongodb/MongoCredential.html#SERVICE_NAME_KEY" >}})**
-
-
-- **[`CANONICALIZE_HOST_NAME`]({{< apiref "com/mongodb/MongoCredential.html#CANONICALIZE_HOST_NAME_KEY" >}})**
+- **[`SERVICE_NAME`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoCredential.html#SERVICE_NAME_KEY" >}})**
 
 
-- **[`JAVA_SUBJECT`]({{< apiref "com/mongodb/MongoCredential.html#JAVA_SUBJECT_KEY" >}})**
+- **[`CANONICALIZE_HOST_NAME`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoCredential.html#CANONICALIZE_HOST_NAME_KEY" >}})**
 
-- **[`JAVA_SASL_CLIENT_PROPERTIES`]({{< apiref "com/mongodb/MongoCredential.html#JAVA_SASL_CLIENT_PROPERTIES_KEY" >}})**
+
+- **[`JAVA_SUBJECT`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoCredential.html#JAVA_SUBJECT_KEY" >}})**
+
+- **[`JAVA_SASL_CLIENT_PROPERTIES`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoCredential.html#JAVA_SASL_CLIENT_PROPERTIES_KEY" >}})**
 
 For example, to specify the `SERVICE_NAME` property via the `MongoCredential` object:
 
@@ -404,8 +404,8 @@ interoperability with Windows Active Directory and in particular the ability to 
 ## LDAP (PLAIN)
 
 [MongoDB Enterprise](http://www.mongodb.com/products/mongodb-enterprise) supports proxy authentication through a Lightweight Directory
-Access Protocol (LDAP) service. To create a credential of type [LDAP]({{<docsref "core/authentication/#ldap-proxy-authority-authentication">}}) use the
-[`createPlainCredential`]({{<apiref "com/mongodb/MongoCredential.html#createPlainCredential(java.lang.String,java.lang.String,char[])">}}) static factory method:
+Access Protocol (LDAP) service. To create a credential of type [LDAP]({{<docsref "core/authentication/#ldap-proxy-authority-authentication" >}}) use the
+[`createPlainCredential`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoCredential.html#createPlainCredential(java.lang.String,java.lang.String,char[])" >}}) static factory method:
 
 ```java
 String user;          // The LDAP user name

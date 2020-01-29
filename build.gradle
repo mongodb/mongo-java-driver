@@ -123,6 +123,11 @@ configure(scalaProjects) {
         scalaCompileOptions.deprecation = false
     }
 
+    if (project.scalaVersion.startsWith("2.13")) {
+        scaladoc {
+            scalaClasspath += files("$rootDir/gradle/scala/lib/scala-ant-2.13.1.jar")
+        }
+    }
 
     tasks.withType(GenerateModuleMetadata) {
         enabled = false

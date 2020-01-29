@@ -75,13 +75,17 @@ task aggregatedScalaDoc(type: ScalaDoc) {
             project(':bson-scala'),
             project(':driver-scala')
     ]
-    destinationDir = file("${project.rootDir}/build/scaladoc")
+    destinationDir = file("${rootProject.buildDir.path}/docs/${project.archivesBaseName}")
     classpath = project.sourceSets.main.compileClasspath
     source = fromProjects.collect { it.sourceSets.main.allSource }
 
     scalaDocOptions.additionalParameters = ["-doc-root-content", "${project.rootDir}/driver-scala/rootdoc.txt" as String]
-}
 
+    // Workaround for gradle 2.13 scaladoc issue: https://github.com/gradle/gradle/issues/9855
+    if (project.scalaVersion.startsWith("2.13")) {
+        scalaClasspath += files("$rootDir/gradle/scala/lib/scala-ant-2.13.1.jar")
+    }
+}
 
 idea {
     module {

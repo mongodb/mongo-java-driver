@@ -11,11 +11,11 @@ pre = "<i class='fa'></i>"
 
 ## GridFS
 
-[GridFS]({{< docsref "core/gridfs">}}) is a specification for storing and retrieving files that exceed the BSON document size limit of 16MB. Instead of storing a file in a single document, GridFS divides a file into parts, or chunks, and stores each of those chunks as a separate document.
+[GridFS]({{< docsref "core/gridfs" >}}) is a specification for storing and retrieving files that exceed the BSON document size limit of 16MB. Instead of storing a file in a single document, GridFS divides a file into parts, or chunks, and stores each of those chunks as a separate document.
 
 When you query a GridFS store for a file, the Java driver will reassemble the chunks as needed.
 
-The following code snippets come from the [`GridFSTour.java`]({{< srcref "driver-sync/src/examples/gridfs/GridFSTour.java">}}) example code
+The following code snippets come from the [`GridFSTour.java`]({{< srcref "driver-sync/src/examples/gridfs/GridFSTour.java" >}}) example code
 that can be found with the driver source on github.
 
 ## Prerequisites
@@ -47,14 +47,14 @@ For example, include the following code to connect to a standalone MongoDB deplo
 MongoClient mongoClient = MongoClients.create();
 ```
 
-For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md">}}).
+For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md" >}}).
 
 ## Create a GridFS Bucket
 
-GridFS stores files in [two collections]({{<docsref "core/gridfs/#gridfs-collections">}}): a `chunks` collection stores the file chunks, and a  `files` collection stores file metadata. The two collections are in a common bucket and the collection names are prefixed with the bucket name.
+GridFS stores files in [two collections]({{<docsref "core/gridfs/#gridfs-collections" >}}): a `chunks` collection stores the file chunks, and a  `files` collection stores file metadata. The two collections are in a common bucket and the collection names are prefixed with the bucket name.
 
-The Java driver provides the [`GridFSBuckets.create()`]({{< apiref "com/mongodb/client/gridfs/GridFSBuckets.html#create(com.mongodb.client.MongoDatabase)" >}}) method
-to create the [`GridFSBucket`]({{< apiref "com/mongodb/client/gridfs/GridFSBucket" >}}).
+The Java driver provides the [`GridFSBuckets.create()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/gridfs/GridFSBuckets.html#create(com.mongodb.client.MongoDatabase)" >}}) method
+to create the [`GridFSBucket`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/gridfs/GridFSBucket" >}}).
 
 ```java
 MongoDatabase myDatabase = mongoClient.getDatabase("mydb");
@@ -63,7 +63,7 @@ MongoDatabase myDatabase = mongoClient.getDatabase("mydb");
 GridFSBucket gridFSBucket = GridFSBuckets.create(myDatabase);
 ```
 
-You can specify a bucket name to [`GridFSBuckets.create()`]({{< apiref "com/mongodb/client/gridfs/GridFSBuckets.html#create(com.mongodb.client.MongoDatabase,java.lang.String)">}}) method.
+You can specify a bucket name to [`GridFSBuckets.create()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/gridfs/GridFSBuckets.html#create(com.mongodb.client.MongoDatabase,java.lang.String)" >}}) method.
 
 ```java
 // Create a gridFSBucket with a custom bucket name "files"
@@ -80,9 +80,9 @@ To upload data into GridFS, you can upload from an `InputStream` or write data t
 
 ### UploadFromStream
 
-The [`GridFSBucket.uploadFromStream`]({{< apiref "com/mongodb/client/gridfs/GridFSBucket.html#openUploadStream(java.lang.String,com.mongodb.client.gridfs.model.GridFSUploadOptions)" >}}) method reads the contents of an [`InputStream`](http://docs.oracle.com/javase/8/docs/api/index.html?java/io/InputStream.html) and saves it to the `GridFSBucket`.  
+The [`GridFSBucket.uploadFromStream`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/gridfs/GridFSBucket.html#openUploadStream(java.lang.String,com.mongodb.client.gridfs.model.GridFSUploadOptions)" >}}) method reads the contents of an [`InputStream`](http://docs.oracle.com/javase/8/docs/api/index.html?java/io/InputStream.html) and saves it to the `GridFSBucket`.  
 
-You can use the [`GridFSUploadOptions`]({{< apiref "com/mongodb/client/gridfs/model/GridFSUploadOptions" >}}) to configure the chunk size or include additional metadata.
+You can use the [`GridFSUploadOptions`]({{< apiref "mongodb-driver-core" "com/mongodb/client/gridfs/model/GridFSUploadOptions" >}}) to configure the chunk size or include additional metadata.
 
 The following example uploads an `InputStream` into `GridFSBucket`:
 
@@ -104,10 +104,10 @@ try {
 
 ### OpenUploadStream
 
-You can write data to a [`GridFSUploadStream`]({{< apiref "com/mongodb/client/gridfs/GridFSUploadStream.html">}}) which extends
+You can write data to a [`GridFSUploadStream`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/gridfs/GridFSUploadStream.html" >}}) which extends
  [`OutputStream`](http://docs.oracle.com/javase/8/docs/api/index.html?java/io/OutputStream.html). The 
- [`GridFSBucket.openUploadStream `]({{< apiref "com/mongodb/client/gridfs/GridFSBucket.html#openUploadStream(java.lang.String,com.mongodb.client.gridfs.model.GridFSUploadOptions)">}}) 
- method returns a [`GridFSUploadStream`]({{< apiref "com/mongodb/client/gridfs/GridFSUploadStream.html">}}).
+ [`GridFSBucket.openUploadStream `]({{< apiref "mongodb-driver-sync" "com/mongodb/client/gridfs/GridFSBucket.html#openUploadStream(java.lang.String,com.mongodb.client.gridfs.model.GridFSUploadOptions)" >}}) 
+ method returns a [`GridFSUploadStream`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/gridfs/GridFSUploadStream.html" >}}).
 
 The `GridFSUploadStream` buffers data until it reaches the `chunkSizeBytes` and then inserts the chunk into the `chunks` collection.  When the `GridFSUploadStream` is closed, the final chunk is written and the file metadata is inserted into the `files` collection.
 
@@ -133,7 +133,7 @@ try {
 
 ## Find Files Stored in GridFS
 
-To find the files stored in the `GridFSBucket` use the [`find`]({{< apiref "com/mongodb/client/gridfs/GridFSBucket.html#find()">}}) method.
+To find the files stored in the `GridFSBucket` use the [`find`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/gridfs/GridFSBucket.html#find()" >}}) method.
 
 The following example prints out the filename of each file stored:
 
@@ -163,7 +163,7 @@ There are various ways to download data from GridFS.
 
 ### DownloadToStream
 
-The [`downloadToStream`]({{< apiref "com/mongodb/client/gridfs/GridFSBucket.html#downloadToStream(org.bson.types.ObjectId,java.io.OutputStream)" >}}) method reads the contents from MongoDB and writes the data directly to the provided [`OutputStream`](http://docs.oracle.com/javase/8/docs/api/index.html?java/io/OutputStream.html).
+The [`downloadToStream`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/gridfs/GridFSBucket.html#downloadToStream(org.bson.types.ObjectId,java.io.OutputStream)" >}}) method reads the contents from MongoDB and writes the data directly to the provided [`OutputStream`](http://docs.oracle.com/javase/8/docs/api/index.html?java/io/OutputStream.html).
 
 To download a file by its file `_id`, pass the `_id` to the method. The
 following example downloads a file by its file `_id` into the provided
@@ -183,7 +183,7 @@ try {
 
 ```
 
-If you don't know the `_id` of the file but know the filename, then you can pass the filename to the [`downloadToStream`]({{< apiref "com/mongodb/client/gridfs/GridFSBucket.html#downloadToStream(java.lang.String,java.io.OutputStream,com.mongodb.client.gridfs.model.GridFSDownloadOptions)" >}}) method. By default, it will download the latest version of the file. Use the [`GridFSDownloadOptions`]({{< apiref "com/mongodb/client/gridfs/model/GridFSDownloadOptions.html" >}}) to configure which version to download.
+If you don't know the `_id` of the file but know the filename, then you can pass the filename to the [`downloadToStream`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/gridfs/GridFSBucket.html#downloadToStream(java.lang.String,java.io.OutputStream,com.mongodb.client.gridfs.model.GridFSDownloadOptions)" >}}) method. By default, it will download the latest version of the file. Use the [`GridFSDownloadOptions`]({{< apiref "mongodb-driver-core" "com/mongodb/client/gridfs/model/GridFSDownloadOptions.html" >}}) to configure which version to download.
 
 The following example downloads the original version of the file named "mongodb-tutorial" into the `OutputStream`:
 
@@ -202,7 +202,7 @@ try {
 ### OpenDownloadStream
 
  
-The [`openDownloadStream`]({{< apiref "com/mongodb/client/gridfs/GridFSBucket.html#openDownloadStream(org.bson.types.ObjectId)">}}) method returns a [`GridFSDownloadStream`]({{< apiref "com/mongodb/client/gridfs/GridFSDownloadStream.html">}}) which extends [`InputStream`](http://docs.oracle.com/javase/8/docs/api/index.html?java/io/InputStream.html).
+The [`openDownloadStream`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/gridfs/GridFSBucket.html#openDownloadStream(org.bson.types.ObjectId)" >}}) method returns a [`GridFSDownloadStream`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/gridfs/GridFSDownloadStream.html" >}}) which extends [`InputStream`](http://docs.oracle.com/javase/8/docs/api/index.html?java/io/InputStream.html).
 
 The following example reads from the `GridFSBucket` via the returned `InputStream`:
 
@@ -218,7 +218,7 @@ downloadStream.close();
 System.out.println(new String(bytesToWriteTo, StandardCharsets.UTF_8));
 ```
 
-You can also pass the filename to the [`openDownloadStream`]({{< apiref "com/mongodb/client/gridfs/GridFSBucket.html#openDownloadStream(java.lang.String,com.mongodb.client.gridfs.model.GridFSDownloadOptions)" >}}) method. By default it will download the latest version of the file. Use the [`GridFSDownloadOptions`]({{< apiref "com/mongodb/client/gridfs/model/GridFSDownloadOptions.html" >}}) to configure which version to download.
+You can also pass the filename to the [`openDownloadStream`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/gridfs/GridFSBucket.html#openDownloadStream(java.lang.String,com.mongodb.client.gridfs.model.GridFSDownloadOptions)" >}}) method. By default it will download the latest version of the file. Use the [`GridFSDownloadOptions`]({{< apiref "mongodb-driver-core" "com/mongodb/client/gridfs/model/GridFSDownloadOptions.html" >}}) to configure which version to download.
 
 The following example downloads the latest version of the file named "sampleData" into the `OutputStream`:
 
@@ -234,7 +234,7 @@ System.out.println(new String(bytesToWriteTo, StandardCharsets.UTF_8));
 
 ## Rename files
 
-If you should need to rename a file, then use the [`rename`]({{< apiref "com/mongodb/client/gridfs/GridFSBucket.html#rename(org.bson.types.ObjectId,java.lang.String)">}}) method.  
+If you should need to rename a file, then use the [`rename`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/gridfs/GridFSBucket.html#rename(org.bson.types.ObjectId,java.lang.String)" >}}) method.  
 
 The following example renames a file to "mongodbTutorial":
 
@@ -252,7 +252,7 @@ To rename multiple revisions of the same filename, first retrieve the full list 
 
 ## Delete files
 
-To delete a file from the `GridFSBucket` use the [`delete`]({{< apiref "com/mongodb/client/gridfs/GridFSBucket.html#delete(org.bson.types.ObjectId)">}}) method.
+To delete a file from the `GridFSBucket` use the [`delete`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/gridfs/GridFSBucket.html#delete(org.bson.types.ObjectId)" >}}) method.
 
 The following example deletes a file from the `GridFSBucket`:
 

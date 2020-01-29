@@ -12,8 +12,8 @@ title = "TLS/SSL"
 
 The Java driver supports TLS/SSL connections to MongoDB servers using
 the underlying support for TLS/SSL provided by the JDK. 
-You can configure the driver to use TLS/SSL either with [`ConnectionString`]({{<scapiref "org/mongodb/scala/ConnectionString$.html">}}) or with
-[`MongoClientSettings`]({{<scapiref "org/mongodb/scala/MongoClientSettings$.html">}}).
+You can configure the driver to use TLS/SSL either with [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ConnectionString$.html" >}}) or with
+[`MongoClientSettings`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoClientSettings$.html" >}}).
 
 ## MongoClient API (since 3.7)
 
@@ -23,7 +23,7 @@ You can configure the driver to use TLS/SSL either with [`ConnectionString`]({{<
 import org.mongodb.scala._
 ```
 
-To specify TLS/SSL with [`ConnectionString`]({{<scapiref "org/mongodb/scala/ConnectionString$.html">}}), specify `ssl=true` as part of the connection
+To specify TLS/SSL with [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ConnectionString$.html" >}}), specify `ssl=true` as part of the connection
 string, as in:
 
 ```scala
@@ -32,7 +32,7 @@ val mongoClient: MongoClient = MongoClient("mongodb://localhost/?ssl=true")
 
 ### Specify TLS/SSL via `MongoClientSettings`
 
-To specify TLS/SSL with with [`MongoClientSettings`]({{<scapiref "org/mongodb/scala/MongoClientSettings$.html">}}), set the `enabled` property to 
+To specify TLS/SSL with with [`MongoClientSettings`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoClientSettings$.html" >}}), set the `enabled` property to 
 `true`, as in:
 
 ```scala
@@ -49,7 +49,7 @@ import javax.net.ssl.SSLContext
 ```
 
 To specify the [`javax.net.ssl.SSLContext`](https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLContext.html) with 
-[`MongoClientSettings`]({{<scapiref "org/mongodb/scala/MongoClientSettings$.html">}}), set the `sslContext` property, as in:
+[`MongoClientSettings`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoClientSettings$.html" >}}), set the `sslContext` property, as in:
 
 ```scala
 val sslContext: SSLContext = ???
@@ -66,10 +66,10 @@ val client = MongoClients.create(settings)
 
 By default, the driver ensures that the hostname included in the
 server's SSL certificate(s) matches the hostname(s) provided when
-constructing a [`MongoClient()`]({{< scapiref "org/mongodb/scala/MongoClient$.html">}}).
+constructing a [`MongoClient()`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoClient$.html" >}}).
 
 If your application needs to disable hostname verification, you must explicitly indicate
-this in `MongoClientSettings`]({{<scapiref "org/mongodb/scala/MongoClientSettings$.html">}}) 
+this in `MongoClientSettings`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoClientSettings$.html" >}}) 
 
 ```scala
 val settings = MongoClientSettings.builder()

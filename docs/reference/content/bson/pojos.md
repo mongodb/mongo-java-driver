@@ -9,15 +9,15 @@ title = "POJOs"
 
 ## POJOs - Plain Old Java Objects
 
-The 3.5 release of the driver adds POJO support via the [`PojoCodecProvider`]({{<apiref "org/bson/codecs/pojo/PojoCodecProvider.html">}}), 
+The 3.5 release of the driver adds POJO support via the [`PojoCodecProvider`]({{< apiref "bson" "org/bson/codecs/pojo/PojoCodecProvider.html" >}}), 
 which allows for direct serialization of POJOs and Java Beans to and from BSON. Internally, the `Codec` for each POJO utilizes a
-[`ClassModel`]({{<apiref "org/bson/codecs/pojo/ClassModel.html">}}) instance to store metadata about how the POJO should be serialized.
+[`ClassModel`]({{< apiref "bson" "org/bson/codecs/pojo/ClassModel.html" >}}) instance to store metadata about how the POJO should be serialized.
 
 A `ClassModel` for a POJO includes:
 
   * The class of the POJO.
   * A new instance factory. Handling the creation of new instances of the POJO. By default it requires the POJO to have an empty constructor.
-  * Property information, a list of [`PropertyModel`]({{<apiref "org/bson/codecs/pojo/PropertyModel.html">}}) instances that contain all the 
+  * Property information, a list of [`PropertyModel`]({{< apiref "bson" "org/bson/codecs/pojo/PropertyModel.html" >}}) instances that contain all the 
     property metadata. By default this includes; any public getter methods with any corresponding setter methods and any public fields.
   * An optional IdProperty (see `BsonId` annotation). By default the `_id` or `id` property in the POJO.
   * Type data for the POJO and its fields to work around type erasure.
@@ -39,16 +39,16 @@ Each `PropertyModel` includes:
     `ClassModel` for the field's type and turns on the use discriminator flag. The corresponding `ClassModel` must be configured with a 
     discriminator key and value.
 
-ClassModels are built using the [`ClassModelBuilder`]({{<apiref "org/bson/codecs/pojo/ClassModelBuilder.html">}}) which can be accessed via
- the [`ClassModel.builder(clazz)`]({{<apiref "org/bson/codecs/pojo/ClassModel.html#builder(java.lang.Class)">}}) method. The builder 
+ClassModels are built using the [`ClassModelBuilder`]({{< apiref "bson" "org/bson/codecs/pojo/ClassModelBuilder.html" >}}) which can be accessed via
+ the [`ClassModel.builder(clazz)`]({{< apiref "bson" "org/bson/codecs/pojo/ClassModel.html#builder(java.lang.Class)" >}}) method. The builder 
  initially uses reflection to create the required metadata.
 
-POJO `Codec` instances are created by the [`PojoCodecProvider`]({{<apiref "org/bson/codecs/pojo/PojoCodecProvider.html">}}) which is a
+POJO `Codec` instances are created by the [`PojoCodecProvider`]({{< apiref "bson" "org/bson/codecs/pojo/PojoCodecProvider.html" >}}) which is a
 `CodecProvider`. CodecProviders are used by the `CodecRegistry` to find the correct `Codec` for any given class.
 
 {{% note class="important" %}}
 By default all POJOs **must** include a public or protected, empty, no arguments, constructor. The 
-[`BsonCreator`]({{<apiref "org/bson/codecs/pojo/annotations/BsonCreator.html">}}) annotation can be used to support constructors or 
+[`BsonCreator`]({{< apiref "bson" "org/bson/codecs/pojo/annotations/BsonCreator.html" >}}) annotation can be used to support constructors or 
 public static methods to create new instances of a POJO.
 
 All properties in a POJO must have a [`Codec`]({{< relref "codecs.md" >}}) registered in the `CodecRegistry` so that their values can be 
@@ -61,7 +61,7 @@ Automatic POJO support can be provided by setting `PojoCodecProvider.Builder#aut
 automatically create a POJO `Codec` for any class that contains at least one serializable or deserializable property.
 
 The entry point for customisable POJO support is the `PojoCodecProvider`. New instances can be created via the
-[`PojoCodecProvider.builder()`]({{<apiref "org/bson/codecs/pojo/PojoCodecProvider.html#builder">}}) method. The `builder` allows users to 
+[`PojoCodecProvider.builder()`]({{< apiref "bson" "org/bson/codecs/pojo/PojoCodecProvider.html#builder" >}}) method. The `builder` allows users to 
 register any combination of:
 
   * Individual POJO classes.
@@ -306,29 +306,29 @@ Enum in the `CodecRegistry`.
 
 ### Conventions
 
-The [`Convention`]({{<apiref "org/bson/codecs/pojo/Convention.html">}}) interface provides a mechanism for `ClassModelBuilder`
+The [`Convention`]({{< apiref "bson" "org/bson/codecs/pojo/Convention.html" >}}) interface provides a mechanism for `ClassModelBuilder`
 instances to be configured during the build stage and the creation of the `ClassModel`.
 
-The following Conventions are available from the [`Conventions`]({{<apiref "org/bson/codecs/pojo/Conventions.html">}}) class:
+The following Conventions are available from the [`Conventions`]({{< apiref "bson" "org/bson/codecs/pojo/Conventions.html" >}}) class:
 
-  * The [`ANNOTATION_CONVENTION`]({{<apiref "org/bson/codecs/pojo/Conventions.html#ANNOTATION_CONVENTION">}}). Applies all the 
+  * The [`ANNOTATION_CONVENTION`]({{< apiref "bson" "org/bson/codecs/pojo/Conventions.html#ANNOTATION_CONVENTION" >}}). Applies all the 
     default annotations.
-  * The [`CLASS_AND_PROPERTY_CONVENTION`]({{<apiref "org/bson/codecs/pojo/Conventions.html#CLASS_AND_PROPERTY_CONVENTION">}}). Sets the 
+  * The [`CLASS_AND_PROPERTY_CONVENTION`]({{< apiref "bson" "org/bson/codecs/pojo/Conventions.html#CLASS_AND_PROPERTY_CONVENTION" >}}). Sets the 
         discriminator key if not set to `_t` and the discriminator value if not set to the ClassModels simple type name. Also, configures 
         the PropertyModels. If the `idProperty` isn't set and there is a property named `_id` or `id` then it will be marked as the `idProperty`.
-  * The [`SET_PRIVATE_FIELDS_CONVENTION`]({{<apiref "org/bson/codecs/pojo/Conventions.html#SET_PRIVATE_FIELDS_CONVENTION">}}).  Enables 
+  * The [`SET_PRIVATE_FIELDS_CONVENTION`]({{< apiref "bson" "org/bson/codecs/pojo/Conventions.html#SET_PRIVATE_FIELDS_CONVENTION" >}}).  Enables 
         private fields to be set directly using reflection, without the need of a setter method. Note this convention is not enabled by default.
-  * The [`USE_GETTERS_FOR_SETTERS`]({{<apiref "org/bson/codecs/pojo/Conventions.html#USE_GETTERS_FOR_SETTERS">}}) convention. Allows getters to be used
+  * The [`USE_GETTERS_FOR_SETTERS`]({{< apiref "bson" "org/bson/codecs/pojo/Conventions.html#USE_GETTERS_FOR_SETTERS" >}}) convention. Allows getters to be used
         for Map and Collection properties without setters, the collection/map is then mutated. Note this convention is not enabled by default.
-  * The [`OBJECT_ID_GENERATORS`]({{<apiref "org/bson/codecs/pojo/Conventions.html#OBJECT_ID_GENERATORS">}}) convention. Adds an `IdGenerator` that
+  * The [`OBJECT_ID_GENERATORS`]({{< apiref "bson" "org/bson/codecs/pojo/Conventions.html#OBJECT_ID_GENERATORS" >}}) convention. Adds an `IdGenerator` that
         generates new `ObjectId` for ClassModels that have an `ObjectId` value for the `id` property.
-  * The [`DEFAULT_CONVENTIONS`]({{<apiref "org/bson/codecs/pojo/Conventions.html#DEFAULT_CONVENTIONS">}}), a list containing the 
+  * The [`DEFAULT_CONVENTIONS`]({{< apiref "bson" "org/bson/codecs/pojo/Conventions.html#DEFAULT_CONVENTIONS" >}}), a list containing the 
     `ANNOTATION_CONVENTION`, the `CLASS_AND_PROPERTY_CONVENTION` and the `OBJECT_ID_GENERATORS` convention.
-  * The [`NO_CONVENTIONS`]({{<apiref "org/bson/codecs/pojo/Conventions.html#NO_CONVENTIONS">}}) an empty list.
+  * The [`NO_CONVENTIONS`]({{< apiref "bson" "org/bson/codecs/pojo/Conventions.html#NO_CONVENTIONS" >}}) an empty list.
 
 Custom Conventions can either be set globally via the 
-[`PojoCodecProvider.Builder.conventions(conventions)`]({{<apiref "org/bson/codecs/pojo/PojoCodecProvider.Builder.html#conventions(java.util.List)">}}) 
-method, or via the [`ClassModelBuilder.conventions(conventions)`]({{<apiref "org/bson/codecs/pojo/ClassModelBuilder.html#conventions(java.util.List)">}}) 
+[`PojoCodecProvider.Builder.conventions(conventions)`]({{< apiref "bson" "org/bson/codecs/pojo/PojoCodecProvider.Builder.html#conventions(java.util.List)" >}}) 
+method, or via the [`ClassModelBuilder.conventions(conventions)`]({{< apiref "bson" "org/bson/codecs/pojo/ClassModelBuilder.html#conventions(java.util.List)" >}}) 
 method.
 
 {{% note class="note" %}}
@@ -344,16 +344,16 @@ in their intent.
 Annotations require the `ANNOTATION_CONVENTION` and provide an easy way to configure how POJOs are serialized. 
 
 The following annotations are available from the 
-[`org.bson.codecs.pojo.annotations`]({{<apiref "org/bson/codecs/pojo/annotations/package-summary.html">}}) package:
+[`org.bson.codecs.pojo.annotations`]({{< apiref "bson" "org/bson/codecs/pojo/annotations/package-summary.html" >}}) package:
 
-  * [`BsonCreator`]({{<apiref "org/bson/codecs/pojo/annotations/BsonCreator.html">}}), marks a public constructor or a public static method as
+  * [`BsonCreator`]({{< apiref "bson" "org/bson/codecs/pojo/annotations/BsonCreator.html" >}}), marks a public constructor or a public static method as
     the creator for new instances of the class. Can be combined with the `BsonProperty` annotation to link the parameters with properties.
-  * [`BsonDiscriminator`]({{<apiref "org/bson/codecs/pojo/annotations/BsonDiscriminator.html">}}), enables using a discriminator. 
+  * [`BsonDiscriminator`]({{< apiref "bson" "org/bson/codecs/pojo/annotations/BsonDiscriminator.html" >}}), enables using a discriminator. 
     Also allows for setting a custom discriminator key and value.
-  * [`BsonId`]({{<apiref "org/bson/codecs/pojo/annotations/BsonId.html">}}), marks a property to be serialized as the `_id` property.
-  * [`BsonIgnore`]({{<apiref "org/bson/codecs/pojo/annotations/BsonIgnore.html">}}), marks a property to be ignored. Can be used to 
+  * [`BsonId`]({{< apiref "bson" "org/bson/codecs/pojo/annotations/BsonId.html" >}}), marks a property to be serialized as the `_id` property.
+  * [`BsonIgnore`]({{< apiref "bson" "org/bson/codecs/pojo/annotations/BsonIgnore.html" >}}), marks a property to be ignored. Can be used to 
     configure if a property is serialized and / or deserialized.
-  * [`BsonProperty`]({{<apiref "org/bson/codecs/pojo/annotations/BsonProperty.html">}}). Allows for an alternative document key 
+  * [`BsonProperty`]({{< apiref "bson" "org/bson/codecs/pojo/annotations/BsonProperty.html" >}}). Allows for an alternative document key 
     name when converting the POJO field to BSON. Also, allows a field to turn on using a discriminator when storing a POJO value.
 
 Annotations can be applied to read and / or write contexts by configuring the getter / setter methods. Any annotations applied to a field 
@@ -408,7 +408,7 @@ If a POJO contains a field that has an abstract type or has an interface as its 
 subtypes / implementations need to be registered with the `PojoCodecProvider` so that values can be encoded and decoded correctly.
 
 The easiest way to enable a discriminator is to annotate the abstract class with the `Discriminator` annotation. Alternatively, the 
-[`ClassModelBuilder.enableDiscriminator(true)`]({{<apiref "org/bson/codecs/pojo/ClassModelBuilder.html#enableDiscriminator(boolean)">}}) 
+[`ClassModelBuilder.enableDiscriminator(true)`]({{< apiref "bson" "org/bson/codecs/pojo/ClassModelBuilder.html#enableDiscriminator(boolean)" >}}) 
 method can be used to enable the use of a discriminator. 
 
 The following example creates a `CodecRegistry` with discriminators enabled for a `User` interface and its concrete `FreeUser` and 
@@ -473,8 +473,8 @@ public final class Person {
 ### Changing what is serialized
 
 By default `null` values aren't serialized. This is controlled by the default implementation of the 
-[`FieldSerialization`]({{<apiref "org/bson/codecs/pojo/FieldSerialization.html">}}) interface. Custom implementations can be set on 
+[`FieldSerialization`]({{< apiref "bson" "org/bson/codecs/pojo/FieldSerialization.html" >}}) interface. Custom implementations can be set on 
 the `PropertyModelBuilder` which is available from the `ClassModelBuilder`.
 
-The [`BsonIgnore`]({{<apiref "org/bson/codecs/pojo/annotations/BsonIgnore.html">}}) can be used along with the `DEFAULT_CONVENTIONS` to mark
+The [`BsonIgnore`]({{< apiref "bson" "org/bson/codecs/pojo/annotations/BsonIgnore.html" >}}) can be used along with the `DEFAULT_CONVENTIONS` to mark
 a property to be ignored when serializing and or deserializing.

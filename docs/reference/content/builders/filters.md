@@ -9,7 +9,7 @@ title = "Filters"
 
 ## Filters
 
-The [`Filters`]({{< apiref "com/mongodb/client/model/Filters" >}}) class provides static factory methods for all the MongoDB query 
+The [`Filters`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Filters" >}}) class provides static factory methods for all the MongoDB query 
 operators.  Each method returns an instance of the [`Bson`]({{< relref "bson/documents.md#bson" >}}) type, which can in turn be passed to
 any method that expects a query filter.
 
@@ -223,13 +223,13 @@ indexes support $nearSphere.
 
 To make it easier to construct GeoJSON-based filters, the driver also include a full GeoJSON class hierarchy:
 
-- [`Point`]({{< apiref "com/mongodb/client/model/geojson/Point" >}}): A representation of a GeoJSON Point.
-- [`MultiPoint`]({{< apiref "com/mongodb/client/model/geojson/MultiPoint" >}}): A representation of a GeoJSON MultiPoint.
-- [`LineString`]({{< apiref "com/mongodb/client/model/geojson/LineString" >}}): A representation of a GeoJSON LineString.
-- [`MultiLineString`]({{< apiref "com/mongodb/client/model/geojson/MultiLineString" >}}): A representation of a GeoJSON MultiLineString.
-- [`Polygon`]({{< apiref "com/mongodb/client/model/geojson/Polygon" >}}): A representation of a GeoJSON Polygon.
-- [`MultiPolygon`]({{< apiref "com/mongodb/client/model/geojson/MultiPolygon" >}}): A representation of a GeoJSON MultiPolygon.
-- [`GeometryCollection`]({{< apiref "com/mongodb/client/model/geojson/GeometryCollection" >}}): A representation of a GeoJSON 
+- [`Point`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/geojson/Point" >}}): A representation of a GeoJSON Point.
+- [`MultiPoint`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/geojson/MultiPoint" >}}): A representation of a GeoJSON MultiPoint.
+- [`LineString`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/geojson/LineString" >}}): A representation of a GeoJSON LineString.
+- [`MultiLineString`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/geojson/MultiLineString" >}}): A representation of a GeoJSON MultiLineString.
+- [`Polygon`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/geojson/Polygon" >}}): A representation of a GeoJSON Polygon.
+- [`MultiPolygon`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/geojson/MultiPolygon" >}}): A representation of a GeoJSON MultiPolygon.
+- [`GeometryCollection`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/geojson/GeometryCollection" >}}): A representation of a GeoJSON 
 GeometryCollection.
 
 

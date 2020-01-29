@@ -18,17 +18,23 @@ import static org.gradle.util.CollectionUtils.single
 
 
 def javaMainProjects = subprojects.findAll { !['util'].contains(it.name) }
-task docs(type: Javadoc) {
-    destinationDir = new File(rootDir, 'build/docs')
-    javaMainProjects.each { proj ->
-        proj.tasks.withType(Javadoc).each { javadocTask ->
-            source += javadocTask.source
-            classpath += javadocTask.classpath
-            excludes += javadocTask.excludes
-            includes += javadocTask.includes
-            dependsOn +=javadocTask.dependsOn
-        }
+
+task docs {
+    dependsOn subprojects.collect { it.tasks.withType(Javadoc) }
+    dependsOn subprojects.collect { it.tasks.withType(ScalaDoc) }
+}
+
+def buildDocsUrl(String version, String packageName) {
+    def docVersion = version.split('-').head()
+    def (major, minor, patch) = docVersion.split('\\.')
+
+    docVersion = "${major}.${minor}"
+    if (version.contains("-SNAPSHOT") && patch == 0) {
+        // If a snapshot of the next minor version, set the version to the previous released version
+        docVersion = minor > 0 ? "${major}.${minor - 1}" : '4.0'
     }
+
+    ["http://mongodb.github.io/mongo-java-driver/${docVersion}/apidocs/${packageName}/", "${rootProject.buildDir.path}/docs/${packageName}"]
 }
 
 def utilProject = project(':util')
@@ -89,6 +95,19 @@ allprojects {
                     | setSearchUrlPrefix();
                     |
                     | </script>'''.stripMargin()
+        }
+
+        afterEvaluate {
+            destinationDir = new File(rootDir, "build/docs/${project.archivesBaseName}")
+            def version = project.version as String
+            if (project.name != 'bson') {
+                options.linksOffline(*buildDocsUrl(version, 'bson'))
+                if (project.name != 'driver-core') options.linksOffline(*buildDocsUrl(version, 'mongodb-driver-core'))
+                if (project.name == 'driver-legacy') {
+                    dependsOn javaMainProjects.find({ it.name == 'driver-sync' }).javadoc
+                    options.linksOffline(*buildDocsUrl(version, 'mongodb-driver-sync'))
+                }
+            }
         }
     }
 }

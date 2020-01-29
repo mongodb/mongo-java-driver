@@ -16,5 +16,5 @@ The reference documentation for the Java driver focuses on high-level documentat
 
 - [Monitoring]({{< relref "driver-scala/reference/monitoring.md" >}})
 
-See also [Scaladoc-generated API]({{< apiref "" >}}).
+See also [ScalaDoc-generated API]({{< apiref "mongo-scala-driver" "index.html" >}}).
 

@@ -76,7 +76,7 @@ This code snippet will print out MongoDB shell-compatible JSON, which can then b
 
 Often applications have specific requirements on the structure of JSON that is generated from documents stored in MongoDB, where none of
 the modes described above will suffice.   For those situations a `JsonWriterSettings` instance can be customized with an application-provided 
-[`Converter`]({{< apiref "org/bson/json/Converter" >}}) for each BSON type.
+[`Converter`]({{< apiref "bson" "org/bson/json/Converter" >}}) for each BSON type.
   
 Consider a situation where an application wants to output the hex string representation of an ObjectId as a simple JSON string.  Simply 
 register a custom `Converter` with `JsonWriterSettings` for the ObjectId type:

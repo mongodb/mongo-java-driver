@@ -47,7 +47,7 @@ More information about mongocryptd will soon be available from the official docu
 The following is a sample app that assumes the **key** and **schema** have already been created in MongoDB. The example uses a local key,
 however using AWS Key Management Service is also an option. The data in the `encryptedField` field is automatically encrypted on the
 insert and decrypted when using find on the client side. The following code snippet comes from the 
-[`ClientSideEncryptionSimpleTour.java`]({{< srcref "driver-reactive/src/examples/reactivestreams/tour/ClientSideEncryptionSimpleTour.java">}}) example code
+[`ClientSideEncryptionSimpleTour.java`]({{< srcref "driver-reactive/src/examples/reactivestreams/tour/ClientSideEncryptionSimpleTour.java" >}}) example code
 that can be found with the driver source on github:
 
 ```java
@@ -111,7 +111,7 @@ Auto encryption is an **enterprise** only feature.
 
 The following example shows how to configure the `AutoEncryptionSettings` instance to create a new key and setting the json schema map.
 The full code snippet can be found in 
-[`ClientSideEncryptionAutoEncryptionSettingsTour.java`]({{< srcref "driver-reactive/src/examples/reactivestreams/tour/ClientSideEncryptionAutoEncryptionSettingsTour.java">}}):
+[`ClientSideEncryptionAutoEncryptionSettingsTour.java`]({{< srcref "driver-reactive/src/examples/reactivestreams/tour/ClientSideEncryptionAutoEncryptionSettingsTour.java" >}}):
 
 ```java
 import com.mongodb.ClientEncryptionSettings;
@@ -170,7 +170,7 @@ AutoEncryptionSettings autoEncryptionSettings = AutoEncryptionSettings.builder()
 #### Explicit Encryption and Decryption
 Explicit encryption and decryption is a **MongoDB community** feature and does not use the `mongocryptd` process. Explicit encryption is 
 provided by the `ClientEncryption` class. 
-The full code snippet can be found in [`ClientSideEncryptionExplicitEncryptionAndDecryptionTour.java`]({{< srcref "driver-reactive-streams/src/examples/reactivestreams/tour/ClientSideEncryptionAutoEncryptionSettingsTour.java">}}):
+The full code snippet can be found in [`ClientSideEncryptionExplicitEncryptionAndDecryptionTour.java`]({{< srcref "driver-reactive-streams/src/examples/reactivestreams/tour/ClientSideEncryptionAutoEncryptionSettingsTour.java" >}}):
 
 ```
 // This would have to be the same master key as was used to create the encryption key
@@ -246,7 +246,7 @@ System.out.println(
 #### Explicit Encryption and Auto Decryption
 
 Although automatic encryption requires MongoDB 4.2 enterprise or a MongoDB 4.2 Atlas cluster, automatic decryption is supported for all 
-users. To configure automatic decryption without automatic encryption set `bypassAutoEncryption(true)`. The full code snippet can be found in [`ClientSideEncryptionExplicitEncryptionOnlyTour.java`]({{< srcref "driver-reactive-streams/src/examples/reactivestreams/tour/ClientSideEncryptionExplicitEncryptionOnlyTour.java">}}):
+users. To configure automatic decryption without automatic encryption set `bypassAutoEncryption(true)`. The full code snippet can be found in [`ClientSideEncryptionExplicitEncryptionOnlyTour.java`]({{< srcref "driver-reactive-streams/src/examples/reactivestreams/tour/ClientSideEncryptionExplicitEncryptionOnlyTour.java" >}}):
 
 ```
 ...

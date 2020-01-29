@@ -53,11 +53,11 @@ MongoDatabase database = mongoClient.getDatabase("test");
 MongoCollection<Document> collection = database.getCollection("restaurants");
 ```
 
-For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md">}}).
+For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md" >}}).
 
 ## Insert New Document
 
-To insert a single document into the collection, you can use the collection's [`insertOne()`]({{< apiref "com/mongodb/reactivestreams/client/MongoCollection.html#insertOne(TDocument)" >}}) method.
+To insert a single document into the collection, you can use the collection's [`insertOne()`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoCollection.html#insertOne(TDocument)" >}}) method.
 
 ```java
 Document document = new Document("name", "Café Con Leche")
@@ -76,7 +76,7 @@ If no top-level `_id` field is specified in the document, the Java driver automa
 
 ## Insert Multiple Documents
 
-To add multiple documents, you can use the collection's [`insertMany()`]({{< apiref "com/mongodb/reactivestreams/client/MongoCollection.html#insertMany(java.util.List)" >}}) method, which takes a list of documents to insert.
+To add multiple documents, you can use the collection's [`insertMany()`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoCollection.html#insertMany(java.util.List)" >}}) method, which takes a list of documents to insert.
 
 The following example inserts two documents to the collection:
 
@@ -108,19 +108,19 @@ If no top-level `_id` field is specified in the documents, the Java driver autom
 
 ## Update Existing Documents
 
-To update existing documents in a collection, you can use the collection's [`updateOne()`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) or [`updateMany`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) methods.
+To update existing documents in a collection, you can use the collection's [`updateOne()`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)" >}}) or [`updateMany`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)" >}}) methods.
 
 ### Filters
 
-You can pass in a filter document to the methods to specify which documents to update. The filter document specification is the same as for [read operations]({{< relref "driver-reactive/tutorials/perform-read-operations.md" >}}). To facilitate creating filter objects, the Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper.
+You can pass in a filter document to the methods to specify which documents to update. The filter document specification is the same as for [read operations]({{< relref "driver-reactive/tutorials/perform-read-operations.md" >}}). To facilitate creating filter objects, the Java driver provides the [`Filters`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Filters.html" >}}) helper.
 
-To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "org/bson/Document.html" >}}) object.
+To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "bson" "org/bson/Document.html" >}}) object.
 
 ### Update Operators
 
-To change a field in a document, MongoDB provides [update operators]({{<docsref "reference/operator/update">}}).  To specify the modification to perform using the update operators, use an updates document.
+To change a field in a document, MongoDB provides [update operators]({{<docsref "reference/operator/update" >}}).  To specify the modification to perform using the update operators, use an updates document.
 
-To facilitate the creation of updates documents, the Java driver provides the [`Updates`]({{< apiref "com/mongodb/client/model/Updates.html">}}) class.
+To facilitate the creation of updates documents, the Java driver provides the [`Updates`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Updates.html" >}}) class.
 
 {{% note class="important" %}}
 The `_id` field is immutable; i.e. you cannot change the value of the `_id` field.
@@ -128,7 +128,7 @@ The `_id` field is immutable; i.e. you cannot change the value of the `_id` fiel
 
 ### Update a Single Document
 
-The [`updateOne()`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) method updates at most a single document, even if the filter condition matches multiple documents in the collection.
+The [`updateOne()`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)" >}}) method updates at most a single document, even if the filter condition matches multiple documents in the collection.
 
 The following operation on the `restaurants` collection updates a document whose `_id` field equals `ObjectId("57506d62f57802807471dd41")`.
 
@@ -141,9 +141,9 @@ collection.updateOne(
 
 Specifically, the operation uses:
 
-- [`Updates.set`]({{<apiref "com/mongodb/client/model/Updates.html#set(java.lang.String,TItem)">}}) to set the value of the `stars` field to `1` and the `contact.phone` field to `"228-555-9999"`, and
+- [`Updates.set`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Updates.html#set(java.lang.String,TItem)" >}}) to set the value of the `stars` field to `1` and the `contact.phone` field to `"228-555-9999"`, and
 
-- [`Updates.currentDate`]({{<apiref "com/mongodb/client/model/Updates.html#currentDate(java.lang.String)">}}) to modify the `lastModified` field to the current date. If the `lastModified` field does not exist, the operator adds the field to the document.  
+- [`Updates.currentDate`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Updates.html#currentDate(java.lang.String)" >}}) to modify the `lastModified` field to the current date. If the `lastModified` field does not exist, the operator adds the field to the document.  
 
 {{% note class="tip" %}}
 In some cases where you may need to update many fields in a document, it may be more efficient to replace the document.  See [Replace a Document](#replace-a-document).
@@ -151,7 +151,7 @@ In some cases where you may need to update many fields in a document, it may be 
 
 ### Update Multiple Documents
 
-The [`updateMany`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) method updates all documents that match the filter condition.
+The [`updateMany`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)" >}}) method updates all documents that match the filter condition.
 
 The following operation on the `restaurants` collection updates all documents whose `stars` field equals `2`.
 
@@ -164,13 +164,13 @@ collection.updateMany(
 
 Specifically, the operation uses:
 
-- [`Updates.set`]({{<apiref "com/mongodb/client/model/Updates.html#set(java.lang.String,TItem)">}}) to set the value of the `stars` field to `0` , and
+- [`Updates.set`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Updates.html#set(java.lang.String,TItem)" >}}) to set the value of the `stars` field to `0` , and
 
-- [`Updates.currentDate`]({{<apiref "com/mongodb/client/model/Updates.html#currentDate(java.lang.String)">}}) to modify the `lastModified` field to the current date. If the `lastModified` field does not exist, the operator adds the field to the document.  
+- [`Updates.currentDate`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Updates.html#currentDate(java.lang.String)" >}}) to modify the `lastModified` field to the current date. If the `lastModified` field does not exist, the operator adds the field to the document.  
 
 ### Update Options
 
-With the [`updateOne()`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) and [`updateMany`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) methods, you can include an [`UpdateOptions`]({{<apiref "com/mongodb/client/model/UpdateOptions.html">}}) document to specify the [`upsert`]({{<docsref "reference/method/db.collection.update/#upsert(option">}}) option or the [`bypassDocumentationValidation`]({{<docsref "core/document-validation/#bypass-document-validation">}}) option.
+With the [`updateOne()`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)" >}}) and [`updateMany`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)" >}}) methods, you can include an [`UpdateOptions`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/UpdateOptions.html" >}}) document to specify the [`upsert`]({{<docsref "reference/method/db.collection.update/#upsert(option" >}}) option or the [`bypassDocumentationValidation`]({{<docsref "core/document-validation/#bypass-document-validation" >}}) option.
 
 ```java
 collection.updateOne(
@@ -181,7 +181,7 @@ collection.updateOne(
 ```
 ## Replace an Existing Document
 
-To replace an existing document in a collection, you can use the collection's [`replaceOne`]({{< apiref "com/mongodb/reactivestreams/client/MongoCollection.html#replaceOne(org.bson.conversions.Bson,TDocument)">}}) method.
+To replace an existing document in a collection, you can use the collection's [`replaceOne`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoCollection.html#replaceOne(org.bson.conversions.Bson,TDocument)" >}}) method.
 
 {{% note class="important" %}}
 The `_id` field is immutable; i.e. you cannot replace the `_id` field value.
@@ -189,15 +189,15 @@ The `_id` field is immutable; i.e. you cannot replace the `_id` field value.
 
 ### Filters
 
-You can pass in a filter document to the method to specify which document to replace. The filter document specification is the same as for [read operations]({{< relref "driver-reactive/tutorials/perform-read-operations.md" >}}). To facilitate creating filter objects, the Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper.
+You can pass in a filter document to the method to specify which document to replace. The filter document specification is the same as for [read operations]({{< relref "driver-reactive/tutorials/perform-read-operations.md" >}}). To facilitate creating filter objects, the Java driver provides the [`Filters`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Filters.html" >}}) helper.
 
-To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "org/bson/Document.html" >}}) object.
+To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "bson" "org/bson/Document.html" >}}) object.
 
-The [`replaceOne`]({{< apiref "com/mongodb/reactivestreams/client/MongoCollection.html#replaceOne(org.bson.conversions.Bson,TDocument)">}}) method replaces at most a single document, even if the filter condition matches multiple documents in the collection.
+The [`replaceOne`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoCollection.html#replaceOne(org.bson.conversions.Bson,TDocument)" >}}) method replaces at most a single document, even if the filter condition matches multiple documents in the collection.
 
 ### Replace a Document
 
-To replace a document, pass a new document to the [`replaceOne`]({{< apiref "com/mongodb/reactivestreams/client/MongoCollection.html#replaceOne(org.bson.conversions.Bson,TDocument)">}}) method.
+To replace a document, pass a new document to the [`replaceOne`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoCollection.html#replaceOne(org.bson.conversions.Bson,TDocument)" >}}) method.
 
 {{% note class="important" %}}
 The replacement document can have different fields from the original document. In the replacement document, you can omit the `_id` field since the `_id` field is immutable; however, if you do include the `_id` field, you cannot specify a different value for the `_id` field.
@@ -218,7 +218,7 @@ See also [Update a Document](#update-a-single-document).
 
 ### Update Options
 
-With the [`replaceOne`]({{< apiref "com/mongodb/reactivestreams/client/MongoCollection.html#replaceOne(org.bson.conversions.Bson,TDocument)">}}), you can include an [`UpdateOptions`]({{<apiref "com/mongodb/client/model/UpdateOptions.html">}}) document to specify the [`upsert`]({{<docsref "reference/method/db.collection.update/#upsert(option">}}) option or the [`bypassDocumentationValidation`]({{<docsref "core/document-validation/#bypass-document-validation">}}) option.
+With the [`replaceOne`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoCollection.html#replaceOne(org.bson.conversions.Bson,TDocument)" >}}), you can include an [`UpdateOptions`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/UpdateOptions.html" >}}) document to specify the [`upsert`]({{<docsref "reference/method/db.collection.update/#upsert(option" >}}) option or the [`bypassDocumentationValidation`]({{<docsref "core/document-validation/#bypass-document-validation" >}}) option.
 
 ```java
 collection.replaceOne(
@@ -233,17 +233,17 @@ collection.replaceOne(
 ## Delete Documents
 
 To delete documents in a collection, you can use the
-[`deleteOne`]({{< apiref "com/mongodb/reactivestreams/client/MongoCollection.html#deleteOne(org.bson.conversions.Bson)">}}) and [`deleteMany`]({{< apiref "com/mongodb/reactivestreams/client/MongoCollection.html#deleteMany(org.bson.conversions.Bson)">}}) methods.
+[`deleteOne`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoCollection.html#deleteOne(org.bson.conversions.Bson)" >}}) and [`deleteMany`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoCollection.html#deleteMany(org.bson.conversions.Bson)" >}}) methods.
 
 ### Filters
 
-You can pass in a filter document to the methods to specify which documents to delete. The filter document specification is the same as for [read operations]({{< relref "driver-reactive/tutorials/perform-read-operations.md" >}}). To facilitate creating filter objects, the Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper.
+You can pass in a filter document to the methods to specify which documents to delete. The filter document specification is the same as for [read operations]({{< relref "driver-reactive/tutorials/perform-read-operations.md" >}}). To facilitate creating filter objects, the Java driver provides the [`Filters`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Filters.html" >}}) helper.
 
-To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "org/bson/Document.html" >}}) object.
+To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "bson" "org/bson/Document.html" >}}) object.
 
 ### Delete a Single Document
 
-The [`deleteOne`]({{< apiref "com/mongodb/reactivestreams/client/MongoCollection.html#deleteOne(org.bson.conversions.Bson)">}}) method deletes at most a single document, even if the filter condition matches multiple documents in the collection.
+The [`deleteOne`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoCollection.html#deleteOne(org.bson.conversions.Bson)" >}}) method deletes at most a single document, even if the filter condition matches multiple documents in the collection.
 
 The following operation on the `restaurants` collection deletes a document whose `_id` field equals `ObjectId("57506d62f57802807471dd41")`.
 
@@ -253,7 +253,7 @@ collection.deleteOne(eq("_id", new ObjectId("57506d62f57802807471dd41"))).subscr
 
 ### Delete Multiple Documents
 
-The [`deleteMany`]({{< apiref "com/mongodb/reactivestreams/client/MongoCollection.html#deleteMany(org.bson.conversions.Bson)">}}) method deletes all documents that match the filter condition.
+The [`deleteMany`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoCollection.html#deleteMany(org.bson.conversions.Bson)" >}}) method deletes all documents that match the filter condition.
 
 The following operation on the `restaurants` collection deletes all documents whose `stars` field equals `4`.
 
@@ -265,13 +265,13 @@ See also [Drop a Collection]({{< relref  "driver/tutorials/databases-collections
 
 ## Write Concern
 
-[Write concern]({{<docsref "reference/write-concern">}}) describes the level of acknowledgement requested from MongoDB for write operations.
+[Write concern]({{<docsref "reference/write-concern" >}}) describes the level of acknowledgement requested from MongoDB for write operations.
 
-Applications can configure [write concern]({{<docsref "reference/write-concern">}}) at three levels:
+Applications can configure [write concern]({{<docsref "reference/write-concern" >}}) at three levels:
 
-- In a [`MongoClient()`]({{< apiref "com/mongodb/reactivestreams/client/MongoClient.html">}})
+- In a [`MongoClient()`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoClient.html" >}})
 
-  - Via [`MongoClientSettings`]({{<apiref "com/mongodb/MongoClientSettings.html">}}):
+  - Via [`MongoClientSettings`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientSettings.html" >}}):
 
       ```java
       MongoClient mongoClient = MongoClients.create(MongoClientSettings.builder()
@@ -280,19 +280,19 @@ Applications can configure [write concern]({{<docsref "reference/write-concern">
                                                     .build());
       ```
 
-  - Via [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString.html">}}), as in the following example:
+  - Via [`ConnectionString`]({{< apiref "mongodb-driver-core" "com/mongodb/ConnectionString.html" >}}), as in the following example:
 
       ```java
       MongoClient mongoClient = MongoClients.create("mongodb://host1:27017,host2:27017/?w=majority");
       ```
 
-- In a [`MongoDatabase`]({{<apiref "com/mongodb/reactivestreams/client/MongoDatabase.html">}}) via its [`withWriteConcern`]({{<apiref "com/mongodb/reactivestreams/client/MongoDatabase.html#withWriteConcern(com.mongodb.WriteConcern)">}}) method, as in the following example:
+- In a [`MongoDatabase`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoDatabase.html" >}}) via its [`withWriteConcern`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoDatabase.html#withWriteConcern(com.mongodb.WriteConcern)" >}}) method, as in the following example:
 
     ```java
      MongoDatabase database = mongoClient.getDatabase("test").withWriteConcern(WriteConcern.MAJORITY);
     ```
 
-- In a [`MongoCollection`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html">}}) via its [`withWriteConcern`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html#withWriteConcern(com.mongodb.WriteConcern)">}}) method, as in the following example:
+- In a [`MongoCollection`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoCollection.html" >}}) via its [`withWriteConcern`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoCollection.html#withWriteConcern(com.mongodb.WriteConcern)" >}}) method, as in the following example:
 
     ```java
      MongoCollection<Document> collection = database.getCollection("restaurants").withWriteConcern(WriteConcern.MAJORITY);
@@ -307,7 +307,7 @@ MongoCollection<Document> collWithWriteConcern = collection
                                                   .withWriteConcern(WriteConcern.MAJORITY);
 ```
 
-You can build `MongoClientSettings`, `MongoDatabase`, or `MongoCollection` to include a combination of write concern, [read concern]({{<docsref "reference/read-concern">}}), and [read preference]({{<docsref "reference/read-preference">}}).
+You can build `MongoClientSettings`, `MongoDatabase`, or `MongoCollection` to include a combination of write concern, [read concern]({{<docsref "reference/read-concern" >}}), and [read preference]({{<docsref "reference/read-preference" >}}).
 
 For example, the following sets all three at the collection level:
 

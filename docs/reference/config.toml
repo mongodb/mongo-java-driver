@@ -9,14 +9,6 @@ disableKinds = ["section", "taxonomy", "taxonomyTerm", "404"]
 [blackfriday]
   plainIdAnchors = true
 
-# Update versions in mongodb.toml as well
-[[menu.main]]
-    name = "API Documentation"
-    pre = "<i class='fa fa-file-text-o'></i>"
-    weight = 90
-    identifier = "apiDocs"
-    url = "/javadoc"
-
 [[menu.main]]
     name = "Source Code"
     pre = "<i class='fa fa-github'></i>"

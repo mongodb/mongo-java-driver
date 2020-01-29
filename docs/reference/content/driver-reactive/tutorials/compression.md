@@ -19,7 +19,7 @@ release.
 * [Zstandard](https://github.com/facebook/zstd/): Zstandard compression can be used when connecting to MongoDB servers starting with the 4.2 release.
 
 The driver will negotiate which, if any, compression algorithm is used based on capabilities advertised by the server in
-the [ismaster]({{<docsref "reference/command/isMaster/">}}) command response. 
+the [ismaster]({{<docsref "reference/command/isMaster/" >}}) command response. 
 
 ### Specify compression via `ConnectionString`
 
@@ -29,7 +29,7 @@ import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoClient;
 ```
 
-To specify compression with [`ConnectionString`]({{<apiref "com/mongodb/ConnectionString">}}), specify `compressors` as part of the connection
+To specify compression with [`ConnectionString`]({{< apiref "mongodb-driver-core" "com/mongodb/ConnectionString" >}}), specify `compressors` as part of the connection
 string, as in:
 
 ```java
@@ -70,7 +70,7 @@ import com.mongodb.MongoCompressor;
 import java.util.Arrays;
 ```
 
-To specify compression with [`MongoClientSettings`]({{<apiref "com/mongodb/MongoClientSettings">}}), set the `compressors` property 
+To specify compression with [`MongoClientSettings`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientSettings" >}}), set the `compressors` property 
 to a list of `MongoCompressor` instances:
 
 ```java

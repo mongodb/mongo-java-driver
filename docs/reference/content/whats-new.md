@@ -10,7 +10,7 @@ title = "What's New"
 # What's new in 4.0
 
 This release adds no new features but, as a major release, contains breaking changes that may affect your application. Please consult the 
-[Upgrading Guide]({{<ref "upgrading.md">}}) for an enumeration of the breaking changes.
+[Upgrading Guide]({{<ref "upgrading.md" >}}) for an enumeration of the breaking changes.
 
 # What's new in 3.12
 
@@ -22,7 +22,7 @@ Client-side field level encryption is supported. Automatic encryption and decryp
 [MongoDB Enterprise Advanced](https://www.mongodb.com/products/mongodb-enterprise-advanced), while explicit encryption and decryption is
 available for users of MongoDB Community.
 
-See [Client-side Encryption]({{<ref "driver/tutorials/client-side-encryption.md">}}) for further details.
+See [Client-side Encryption]({{<ref "driver/tutorials/client-side-encryption.md" >}}) for further details.
 
 ### Improved interoperability when using the native UUID type
 
@@ -31,7 +31,7 @@ The driver now supports setting the BSON binary representation of `java.util.UUI
 Applications that store UUID values in MongoDB can use this setting to easily control the representation in MongoDB without having to
 register a `Codec<Uuid>` in the `CodecRegistry`.  
 
-See [`MongoClientSettings.getUuidRepresentation`]({{<apiref "com/mongodb/MongoClientSettings.html#getUuidRepresentation()">}}) for details. 
+See [`MongoClientSettings.getUuidRepresentation`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientSettings.html#getUuidRepresentation()" >}}) for details. 
 
 ## What's new in 3.11
 
@@ -42,10 +42,10 @@ This release fully supports all MongoDB releases from versions 2.6 to 4.2. Key n
 * The transactions API supports MongoDB 4.2 distributed transactions for use with sharded clusters. Distributed transactions use the same
 API as replica set transactions.
 * The sessions API supports the
-  [`ClientSession.withTransaction()`]({{<apiref "com/mongodb/client/ClientSession.html#withTransaction(com.mongodb.client.TransactionBody) ">}})
+  [`ClientSession.withTransaction()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/ClientSession.html#withTransaction(com.mongodb.client.TransactionBody) " >}})
   method to conveniently run a transaction with automatic retries and at-most-once semantics.
 * The transactions API supports the
- [`maxCommitTime`]({{<apiref "com/mongodb/TransactionOptions.html#getMaxCommitTime(java.util.concurrent.TimeUnit)">}}) option to control the
+ [`maxCommitTime`]({{< apiref "mongodb-driver-core" "com/mongodb/TransactionOptions.html#getMaxCommitTime(java.util.concurrent.TimeUnit)" >}}) option to control the
  maximum amount of time to wait for a transaction to commit.
 
 ### Reliability improvements
@@ -67,14 +67,14 @@ Client-side encryption is supported. Automatic encryption and decryption is avai
 [MongoDB Enterprise Advanced](https://www.mongodb.com/products/mongodb-enterprise-advanced), while explicit encryption and decryption is
 available for users of MongoDB Community.
 
-See [Client-side Encryption]({{<ref "driver/tutorials/client-side-encryption.md">}}) for further details.
+See [Client-side Encryption]({{<ref "driver/tutorials/client-side-encryption.md" >}}) for further details.
 
 ### General improvements
 
-* New [`aggregate`]({{<apiref "com/mongodb/client/MongoDatabase.html##aggregate(java.util.List)">}}) helper methods support running
+* New [`aggregate`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoDatabase.html##aggregate(java.util.List)" >}}) helper methods support running
 database-level aggregations.
 * Aggregate helper methods now support the `$merge` pipeline stage, and
-[`Aggregates.merge()`]({{<apiref "com/mongodb/client/model/Aggregates.html#merge(java.lang.String)">}}) builder methods support creation of
+[`Aggregates.merge()`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Aggregates.html#merge(java.lang.String)" >}}) builder methods support creation of
 the new pipeline stage.
 * [Zstandard](https://facebook.github.io/zstd/) for wire protocol compression is supported in addition to Snappy and Zlib.
 * Change stream helpers now support the `startAfter` option.
@@ -134,7 +134,7 @@ See [MongoDB Mobile](https://www.mongodb.com/products/mobile) for more details.
 ### Deprecations
 
 Numerous classes and methods have been deprecated in the 3.9 release in preparation for a major 4.0 release.  See the 
-[Upgrading Guide]({{<ref "upgrading.md">}}) for more information.
+[Upgrading Guide]({{<ref "upgrading.md" >}}) for more information.
 
 ## What's New in 3.8
 
@@ -149,9 +149,9 @@ of the documentation and select the `Java (Sync)` tab.
 ### Change Stream enhancements
 
 The Java driver now provides support for opening a change stream against an entire database, via new 
-[`MongoDatabase.watch`]({{<apiref "com/mongodb/client/MongoDatabase.html">}}) methods, or an 
-entire deployment, via new [`MongoClient.watch`]({{<apiref "com/mongodb/client/MongoClient.html">}}) methods. See 
-[Change Streams]({{<ref "driver/tutorials/change-streams.md">}}) for further details.
+[`MongoDatabase.watch`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoDatabase.html" >}}) methods, or an 
+entire deployment, via new [`MongoClient.watch`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoClient.html" >}}) methods. See 
+[Change Streams]({{<ref "driver/tutorials/change-streams.md" >}}) for further details.
 
 ### SCRAM-256 Authentication Mechanism
 
@@ -168,7 +168,7 @@ Key new features of the 3.7 Java driver release:
 
 The Java driver now provides a set of JAR files that are compliant with the Java 9 
 [module specification](http://cr.openjdk.java.net/~mr/jigsaw/spec/), and `Automatic-Module-Name` declarations have been added 
-to the manifests of those JAR files. See the [Installation Guide]({{<ref "driver/getting-started/installation.md">}}) 
+to the manifests of those JAR files. See the [Installation Guide]({{<ref "driver/getting-started/installation.md" >}}) 
 for information on which JAR files are now Java 9-compliant modules as well as what each of their module names is.  
 
 Note that it was not possible to modularize all the existing JAR files due to the fact that, for some of them, packages are split amongst 
@@ -194,14 +194,14 @@ The new entry point also moves the driver further in the direction of effective 
 only via the `mongo-java-driver` and `mongodb-driver` uber-jars, which are not Java 9 modules. At this point there are no plans to offer 
 the legacy API as a Java 9 module.
 
-See [Connect To MongoDB]({{<ref "driver/tutorials/connect-to-mongodb.md">}}) for details on the new `com.mongodb.client.MongoClients`
+See [Connect To MongoDB]({{<ref "driver/tutorials/connect-to-mongodb.md" >}}) for details on the new `com.mongodb.client.MongoClients`
 and how it compares to the existing `com.mongodb.MongoClient` class.   
 
 ### Unix domain socket support
 
 The 3.7 driver adds support for Unix domain sockets via the [`jnr.unixsocket`](http://https://github.com/jnr/jnr-unixsocket) library.
-Connecting to Unix domain sockets is done via the [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString" >}}) or via
-[`UnixServerAddress`]({{<apiref "com/mongodb/UnixServerAddress.html">}}).
+Connecting to Unix domain sockets is done via the [`ConnectionString`]({{< apiref "mongodb-driver-core" "com/mongodb/ConnectionString" >}}) or via
+[`UnixServerAddress`]({{< apiref "mongodb-driver-core" "com/mongodb/UnixServerAddress.html" >}}).
 
 ### PojoCodec improvements
 
@@ -239,7 +239,7 @@ Execution of command with request id 4 completed successfully in 22.44 ms on con
  
 ### Improved support for "raw" documents
 
-When working with "raw" BSON for improved performance via the [`RawBsonDocument`]({{<apiref "org/bson/RawBsonDocument">}}), the efficiency
+When working with "raw" BSON for improved performance via the [`RawBsonDocument`]({{< apiref "bson" "org/bson/RawBsonDocument" >}}), the efficiency
 of accessing embedded documents and arrays has been drastically improved by returning raw slices of the containing document or array.  For
 instance
 
@@ -264,30 +264,30 @@ Key new features of the 3.6 Java driver release:
 
 The 3.6 release adds support for [change streams](http://dochub.mongodb.org/core/changestreams).
 
-* [Change Stream Quick Start]({{<ref "driver/tutorials/change-streams.md">}}) 
-* [Change Stream Quick Start (Async)]({{<ref "driver-reactive/tutorials/change-streams.md">}})
+* [Change Stream Quick Start]({{<ref "driver/tutorials/change-streams.md" >}}) 
+* [Change Stream Quick Start (Async)]({{<ref "driver-reactive/tutorials/change-streams.md" >}})
 
 ### Retryable writes
 
 The 3.6 release adds support for retryable writes using the `retryWrites` option in 
-[`MongoClientOptions`]({{<apiref "com/mongodb/MongoClientOptions">}}).
+[`MongoClientOptions`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientOptions" >}}).
 
 ### Compression
 
 The 3.6 release adds support for compression of messages to and from appropriately configured MongoDB servers:
 
-* [Compression Tutorial]({{<ref "driver/tutorials/compression.md">}})
-* [Compression Tutorial (Async)]({{<ref "driver-reactive/tutorials/compression.md">}})
+* [Compression Tutorial]({{<ref "driver/tutorials/compression.md" >}})
+* [Compression Tutorial (Async)]({{<ref "driver-reactive/tutorials/compression.md" >}})
 
 ### Causal consistency
               
 The 3.6 release adds support for [causally consistency](http://dochub.mongodb.org/core/causal-consistency) via the new
-[`ClientSession`]({{<apiref "com/mongodb/session/ClientSession">}}) API. 
+[`ClientSession`]({{< apiref "mongodb-driver-core" "com/mongodb/session/ClientSession" >}}) API. 
 
 ### Application-configured server selection
 
 The 3.6 release adds support for application-configured control over server selection, using the `serverSelector` option in
-[`MongoClientOptions`]({{<apiref "com/mongodb/MongoClientOptions">}}).
+[`MongoClientOptions`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientOptions" >}}).
 
 ### POJO Codec improvements
 
@@ -296,9 +296,9 @@ The 3.6 release brings new improvements to the POJO `Codec`:
   * Improved sub-class and discriminator support.
   * Support for custom Collection and Map implementations.
   * Improvements to the `BsonCreator` annotation, which now supports `@BsonId` and `@BsonProperty` with values that represent the read name of the property.
-  * A new [`PropertyCodecProvider`]({{<apiref "org/bson/codecs/pojo/PropertyCodecProvider">}}) API, allowing for easy and type-safe handling of container types.
-  * Added the [`SET_PRIVATE_FIELDS_CONVENTION`]({{<apiref "org/bson/codecs/pojo/Conventions.html#SET_PRIVATE_FIELDS_CONVENTION">}}) convention.
-  * Added the [`USE_GETTERS_FOR_SETTERS`]({{<apiref "org/bson/codecs/pojo/Conventions.html#USE_GETTERS_FOR_SETTERS">}}) convention.
+  * A new [`PropertyCodecProvider`]({{< apiref "bson" "org/bson/codecs/pojo/PropertyCodecProvider" >}}) API, allowing for easy and type-safe handling of container types.
+  * Added the [`SET_PRIVATE_FIELDS_CONVENTION`]({{< apiref "bson" "org/bson/codecs/pojo/Conventions.html#SET_PRIVATE_FIELDS_CONVENTION" >}}) convention.
+  * Added the [`USE_GETTERS_FOR_SETTERS`]({{< apiref "bson" "org/bson/codecs/pojo/Conventions.html#USE_GETTERS_FOR_SETTERS" >}}) convention.
 
 The MongoDB Java drivers team would like to thank both [Joseph Florencio](https://github.com/jflorencio) and [Qi Liu](https://github.com/visualage)
 for their excellent contributions to the PojoCodec.
@@ -312,9 +312,9 @@ Key new features of the 3.5 Java driver release:
 The 3.5 release adds support for [POJO](https://en.wikipedia.org/wiki/Plain_old_Java_object) serialization at the BSON layer, and can be
 used by the synchronous and asynchronous drivers.  See the POJO Quick start pages for details.
 
-* [POJO Quick Start]({{<ref "driver/getting-started/quick-start-pojo.md">}}) 
-* [POJO Quick Start (Async)]({{<ref "driver-reactive/getting-started/quick-start-pojo.md">}})
-* [POJO Reference]({{<ref "bson/pojos.md">}}) 
+* [POJO Quick Start]({{<ref "driver/getting-started/quick-start-pojo.md" >}}) 
+* [POJO Quick Start (Async)]({{<ref "driver-reactive/getting-started/quick-start-pojo.md" >}})
+* [POJO Reference]({{<ref "bson/pojos.md" >}}) 
 
 ### Improved JSON support
 
@@ -323,21 +323,21 @@ The 3.5 release improves support for JSON parsing and generation.
 * Implements the new [Extended JSON specification](https://github.com/mongodb/specifications/blob/master/source/extended-json.rst)
 * Implements custom JSON converters to give applications full control over JSON generation for each BSON type
 
-See the [JSON reference]({{<ref "bson/extended-json.md">}}) for details. 
+See the [JSON reference]({{<ref "bson/extended-json.md" >}}) for details. 
 
 ### Connection pool monitoring
 
 The 3.5 release adds support for monitoring connection pool-related events.
 
-* [Connection pool monitoring in the driver]({{<ref "driver/reference/monitoring.md">}})
-* [Connection pool monitoring in the async driver]({{<ref "driver-reactive/reference/monitoring.md">}})
+* [Connection pool monitoring in the driver]({{<ref "driver/reference/monitoring.md" >}})
+* [Connection pool monitoring in the async driver]({{<ref "driver-reactive/reference/monitoring.md" >}})
 
 ### SSLContext configuration
 
 The 3.5 release supports overriding the default `javax.net.ssl.SSLContext` used for SSL connections to MongoDB.
 
-* [SSL configuration in the driver]({{<ref "driver/tutorials/ssl.md">}})
-* [SSL configuration in the async driver]({{<ref "driver-reactive/tutorials/ssl.md">}})
+* [SSL configuration in the driver]({{<ref "driver/tutorials/ssl.md" >}})
+* [SSL configuration in the async driver]({{<ref "driver-reactive/tutorials/ssl.md" >}})
 
 ### KeepAlive configuration deprecated
 
@@ -345,7 +345,7 @@ The 3.5 release deprecated socket keep-alive settings, also socket keep-alive ch
 It is *strongly recommended* that system keep-alive settings should be configured with shorter timeouts. 
 
 See the 
-['does TCP keep-alive time affect MongoDB deployments?']({{<docsref "/faq/diagnostics/#does-tcp-keepalive-time-affect-mongodb-deployments">}}) 
+['does TCP keep-alive time affect MongoDB deployments?']({{<docsref "/faq/diagnostics/#does-tcp-keepalive-time-affect-mongodb-deployments" >}}) 
 documentation for more information.
 
 
@@ -359,25 +359,25 @@ The 3.4 release includes full support for the MongoDB 3.4 server release.  Key n
 import org.bson.types.Decimal128;
 ```
 
-The [Decimal128]({{<docsref "release-notes/3.4/#decimal-type">}}) format supports numbers with up to 34 decimal digits
+The [Decimal128]({{<docsref "release-notes/3.4/#decimal-type" >}}) format supports numbers with up to 34 decimal digits
 (i.e. significant digits) and an exponent range of −6143 to +6144.
 
 To create a `Decimal128` number, you can use
 
-- [`Decimal128.parse()`] ({{<apiref "org/bson/types/Decimal128.html">}}) with a string:
+- [`Decimal128.parse()`] ({{< apiref "bson" "org/bson/types/Decimal128.html" >}}) with a string:
 
       ```java
       Decimal128.parse("9.9900");
       ```
 
-- [`new Decimal128()`] ({{<apiref "org/bson/types/Decimal128.html">}}) with a long:
+- [`new Decimal128()`] ({{< apiref "bson" "org/bson/types/Decimal128.html" >}}) with a long:
 
 
       ```java
       new Decimal128(10L);
       ```
 
-- [`new Decimal128()`] ({{<apiref "org/bson/types/Decimal128.html">}}) with a `java.math.BigDecimal`:
+- [`new Decimal128()`] ({{< apiref "bson" "org/bson/types/Decimal128.html" >}}) with a `java.math.BigDecimal`:
 
       ```java
       new Decimal128(new BigDecimal("4.350000"));
@@ -389,10 +389,10 @@ To create a `Decimal128` number, you can use
 import com.mongodb.client.model.Collation;
 ```
 
-[Collation]({{<docsref "reference/collation/">}}) allows users to specify language-specific rules for string
+[Collation]({{<docsref "reference/collation/" >}}) allows users to specify language-specific rules for string
 comparison. 
-Use the [`Collation.builder()`] ({{<apiref "com/mongodb/client/model/Collation.html">}}) 
-to create the `Collation` object. For example, the following example creates a `Collation` object with Primary level of comparison and [locale]({{<docsref "reference/collation-locales-defaults/#supported-languages-and-locales">}}) ``fr``.
+Use the [`Collation.builder()`] ({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Collation.html" >}}) 
+to create the `Collation` object. For example, the following example creates a `Collation` object with Primary level of comparison and [locale]({{<docsref "reference/collation-locales-defaults/#supported-languages-and-locales" >}}) ``fr``.
 
 ```java
 Collation.builder().collationStrength(CollationStrength.PRIMARY).locale("fr").build()));
@@ -402,7 +402,7 @@ You can specify collation at the collection level, at an index level, or at a co
 
 #### Collection Level
 
-To specify collation at the collection level, pass a `Collation` object as an option to the `createCollection()` method. To specify options to the `createCollection` method, use the [`CreateCollectionOptions`]({{<apiref "com/mongodb/client/model/CreateCollectionOptions.html">}}) class. 
+To specify collation at the collection level, pass a `Collation` object as an option to the `createCollection()` method. To specify options to the `createCollection` method, use the [`CreateCollectionOptions`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/CreateCollectionOptions.html" >}}) class. 
 
 ```java
 database.createCollection("myColl", new CreateCollectionOptions().collation(
@@ -413,7 +413,7 @@ database.createCollection("myColl", new CreateCollectionOptions().collation(
 
 #### Index Level
 
-To specify collation for an index, pass a `Collation` object as an option to the `createIndex()` method. To specify index options, use the [IndexOptions]({{<apiref "com/mongodb/client/model/IndexOptions.html">}}) class. 
+To specify collation for an index, pass a `Collation` object as an option to the `createIndex()` method. To specify index options, use the [IndexOptions]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/IndexOptions.html" >}}) class. 
 
 ```java
 IndexOptions collationIndexOptions = new IndexOptions().name("collation-fr")
@@ -492,7 +492,7 @@ collection.bulkWrite(Arrays.asList(
   
 
 For more information on collation, including the supported locales, refer to the
-[manual]({{<docsref "reference/collation/">}}).
+[manual]({{<docsref "reference/collation/" >}}).
 
 ### Other MongoDB 3.4 features
 
@@ -500,15 +500,15 @@ For more information on collation, including the supported locales, refer to the
 [maximum staleness for secondary reads](https://github.com/mongodb/specifications/blob/master/source/max-staleness/max-staleness.rst)
 * Support for the
 [MongoDB handshake protocol](https://github.com/mongodb/specifications/blob/master/source/mongodb-handshake/handshake.rst).
-* Builders for [eight new aggregation pipeline stages]({{<docsref "release-notes/3.4/#aggregation">}})
-* Helpers for creating [read-only views]({{<docsref "release-notes/3.4/#views">}})
+* Builders for [eight new aggregation pipeline stages]({{<docsref "release-notes/3.4/#aggregation" >}})
+* Helpers for creating [read-only views]({{<docsref "release-notes/3.4/#views" >}})
 * Support for the [linearizable read concern](https://docs.mongodb.com/master/release-notes/3.4/#linearizable-read-concern)
 
 ### Support for JNDI
 
-The synchronous driver now includes a [JNDI]({{<ref "driver/tutorials/jndi.md">}}) ObjectFactory implementation.
+The synchronous driver now includes a [JNDI]({{<ref "driver/tutorials/jndi.md" >}}) ObjectFactory implementation.
 
 
 ## Upgrading
 
-See the [upgrading guide]({{<ref "upgrading.md">}}) on how to upgrade to 3.5.
+See the [upgrading guide]({{<ref "upgrading.md" >}}) on how to upgrade to 3.5.

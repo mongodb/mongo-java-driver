@@ -9,7 +9,7 @@ title = "Updates"
 
 ## Updates
 
-The [`Updates`]({{< apiref "com/mongodb/client/model/Updates" >}}) class provides static factory methods for all the MongoDB update 
+The [`Updates`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Updates" >}}) class provides static factory methods for all the MongoDB update 
 operators.  Each method returns an instance of the [`Bson`]({{< relref "bson/documents.md#bson" >}}) type, which can in turn be passed to
 any method that expects an update.
 

@@ -19,7 +19,7 @@ the [Quick Start Guide]({{< relref "driver-scala/getting-started/quick-start.md"
 
 ## Tutorials
 
-For tutorials for some frequently used operations, see the [Tutorials section]({{<relref "driver-scala/tutorials/index.md">}}).
+For tutorials for some frequently used operations, see the [Tutorials section]({{<relref "driver-scala/tutorials/index.md" >}}).
 
 
 ### Previous Releases

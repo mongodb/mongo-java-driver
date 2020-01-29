@@ -25,7 +25,7 @@ To get started, see the [Installation Guide]({{< relref "driver/getting-started/
 
 ## Tutorials
 
-For tutorials for some frequently used operations, see the [Tutorials section]({{<relref "driver/tutorials/index.md">}}).
+For tutorials for some frequently used operations, see the [Tutorials section]({{<relref "driver/tutorials/index.md" >}}).
 
 ### Previous Releases
 

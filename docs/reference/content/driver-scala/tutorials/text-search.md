@@ -10,9 +10,9 @@ pre = "<i class='fa'></i>"
 
 ## Text Search
 
-MongoDB supports query operations that perform a [text search]({{<docsref "text-search">}}) of string content. To perform text search, MongoDB uses a [text index]({{<docsref "core/index-text">}}) and the [`$text` query operator]({{<docsref "reference/operator/query/text">}}).
+MongoDB supports query operations that perform a [text search]({{<docsref "text-search" >}}) of string content. To perform text search, MongoDB uses a [text index]({{<docsref "core/index-text" >}}) and the [`$text` query operator]({{<docsref "reference/operator/query/text" >}}).
 
-The Scala driver provides the [`Filters.text()`]({{<scapiref "org/mongodb/scala/model/Filters$.html#text(search:String):org.mongodb.scala.bson.conversions.Bson">}}) helper to facilitate the creation of text search query filters.
+The Scala driver provides the [`Filters.text()`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/model/Filters$.html#text(search:String):org.mongodb.scala.bson.conversions.Bson" >}}) helper to facilitate the creation of text search query filters.
 
 ## Prerequisites
 
@@ -40,12 +40,12 @@ val mongoClient: MongoClient = MongoClient()
 val database: MongoDatabase = mongoClient.getDatabase("test")
 ```
 
-For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md">}}).
+For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md" >}}).
 
 ## Create the `text` Index
 
-To create a [text index]({{<docsref "core/index-text">}}), use the [`Indexes.text`]({{< relref "builders/indexes.md#text-index">}})
-static helper to create a specification for a text index and pass to [`MongoCollection.createIndex()`]({{<scapiref "org/mongodb/scala/MongoCollection.html#createIndex-org.bson.conversions.Bson-">}}) method.
+To create a [text index]({{<docsref "core/index-text" >}}), use the [`Indexes.text`]({{< relref "builders/indexes.md#text-index" >}})
+static helper to create a specification for a text index and pass to [`MongoCollection.createIndex()`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoCollection.html#createIndex-org.bson.conversions.Bson-" >}}) method.
 
 The following example creates a text index on the `name` field for the `restaurants` collection.
 
@@ -56,7 +56,7 @@ collection.createIndex(Indexes.text("name")).printResults()
 
 ## Perform Text Search
 
-To perform text search, use the [`Filters.text()`]({{<scapiref "org/mongodb/scala/model/Filters$.html#text(search:String,textSearchOptions:org.mongodb.scala.model.TextSearchOptions):org.mongodb.scala.bson.conversions.Bson">}}) helper to specify the text search query filter.
+To perform text search, use the [`Filters.text()`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/model/Filters$.html#text(search:String,textSearchOptions:org.mongodb.scala.model.TextSearchOptions):org.mongodb.scala.bson.conversions.Bson" >}}) helper to specify the text search query filter.
 
 For example, the following code performs a text search on the `name` field for the word `"bakery"` or `"coffee"`.
 
@@ -70,11 +70,11 @@ The example should print the following output:
 Text search matches: [2]
 ```
 
-For more information on the text search, see [`$text` operator]({{<docsref "reference/operator/query/text">}}).
+For more information on the text search, see [`$text` operator]({{<docsref "reference/operator/query/text" >}}).
 
 ### Text Score
 
-For each matching document, text search assigns a score, representing the relevance of a document to the specified text search query filter. To return and sort by score, use the [`$meta`]({{<docsref "reference/operator/query/text/#sort-by-text-search-score">}}) operator in the projection document and the sort expression.
+For each matching document, text search assigns a score, representing the relevance of a document to the specified text search query filter. To return and sort by score, use the [`$meta`]({{<docsref "reference/operator/query/text/#sort-by-text-search-score" >}}) operator in the projection document and the sort expression.
 
 
 ```scala
@@ -86,9 +86,9 @@ collection.find(Filters.text("bakery cafe"))
 
 ### Specify a Text Search Option
 
-The  [`Filters.text()`]({{<scapiref "org/mongodb/scala/model/Filters$.html#text(search:String,textSearchOptions:org.mongodb.scala.model.TextSearchOptions):org.mongodb.scala.bson.conversions.Bson">}}) helper can accept various [text search options]({{<docsref "reference/operator/query/text">}}). The Scala driver provides [`TextSearchOptions`]({{<scapiref "org/mongodb/scala/model/package$$TextSearchOptions$.html">}}) class to specify these options.
+The  [`Filters.text()`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/model/Filters$.html#text(search:String,textSearchOptions:org.mongodb.scala.model.TextSearchOptions):org.mongodb.scala.bson.conversions.Bson" >}}) helper can accept various [text search options]({{<docsref "reference/operator/query/text" >}}). The Scala driver provides [`TextSearchOptions`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/model/package$$TextSearchOptions$.html" >}}) class to specify these options.
 
-For example, the following text search specifies the [text search language]({{<docsref "reference/text-search-languages">}}) option when performing text search for the word `cafe`:
+For example, the following text search specifies the [text search language]({{<docsref "reference/text-search-languages" >}}) option when performing text search for the word `cafe`:
 
 ```scala
 collection.countDocuments(Filters.text("cafe", TextSearchOptions().language("english")))
@@ -103,8 +103,8 @@ Text search matches (english): [1]
 
 For more information about text search see the following sections in the MongoDB Server Manual:
 
-- [`$text` query operator]({{< docsref "reference/operator/query/text">}})
+- [`$text` query operator]({{< docsref "reference/operator/query/text" >}})
 
 - [`text` index]({{< docsref "core/index-text" >}})
 
-- [Text Search Languages]({{<docsref "reference/text-search-languages">}})
+- [Text Search Languages]({{<docsref "reference/text-search-languages" >}})

@@ -12,7 +12,7 @@ title = "Documents"
 
 The scala driver includes two scala specific representations for BSON documents. Following convention from the scala collections library,
 there are immutable and mutable implementations of documents. The underlying implementations of the scala Document use the type safe 
-[`BsonDocument`]({{< apiref "org/bson/BsonDocument" >}}) class. The scala bson classes are available from the `org.mongodb.scala.bson` 
+[`BsonDocument`]({{< apiref "bson" "org/bson/BsonDocument" >}}) class. The scala bson classes are available from the `org.mongodb.scala.bson` 
 namespace, which includes type aliases and companion objects.  In general this should suffice but for advanced use cases you may need to 
 use `org.bson` directly.
 
@@ -30,7 +30,7 @@ The scala `Document` classes implement `TraversableLike[(String, BsonValue)]` an
 However, unlike `Map` implementations of `TraversableLike` enables strict type safety as there is no variance in the value type.
 {{% /note %}}
 
-[`BsonValue`]({{< scapiref "org/mongodb/scala/bson/index" >}}) is the type safe representation of a Bson type from the `org.bson` library, it represents specific value types. The most commonly used value types are: 
+[`BsonValue`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/bson/index" >}}) is the type safe representation of a Bson type from the `org.bson` library, it represents specific value types. The most commonly used value types are: 
    
 | BSON type | Scala type                        |
 |-----------|-----------------------------------|
@@ -85,8 +85,8 @@ doc1 ++= Document("AR" -> BsonString("Arkansas"),
 
 For many of the `BsonValue` types there are obvious direct mappings from a Scala type. For example, a `String` maps to `BsonString`, an `Int`
 maps to `BsonInt32` and a `Long` maps to a `BsonInt64`.  For convenience these types can be used directly with `Documents` and they are 
-converted by the contract traits in the [`BsonMagnets`]({{< scapiref "org/mongodb/scala/bson/BsonMagnets$" >}}) object. As long as there is
-an implicit [`BsonTransformer`]({{< scapiref "org/mongodb/scala/bson/BsonTransformer" >}}) in scope for any given type, then that type can be 
+converted by the contract traits in the [`BsonMagnets`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/bson/BsonMagnets$" >}}) object. As long as there is
+an implicit [`BsonTransformer`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/bson/BsonTransformer" >}}) in scope for any given type, then that type can be 
 converted into a `BsonValue`.
 
 The following `BsonTransformers` are in scope by default:
@@ -132,9 +132,9 @@ Source: [The Magnet Pattern](http://spray.io/blog/2012-12-13-the-magnet-pattern/
 
 In the API where we would normally expect a single value or a key value pair or many key value pairs eg: (`BsonValue`, `(String, BsonValue)` 
 or `Iterable[(String, BsonValue)]`) we require anything that can become those types via _"`CanBeX`"_ traits that handle the implicit 
-conversions necessary to conform to the correct types. These traits are [`CanBeBsonValue`]({{< scapiref "org/mongodb/scala/bson/BsonMagnets$$CanBeBsonValue" >}}), 
-[`CanBeBsonElement`]({{< scapiref "org/mongodb/scala/bson/BsonMagnets$$CanBeBsonElement" >}}) and
-[`CanBeBsonElements`]({{< scapiref "org/mongodb/scala/bson/BsonMagnets$$CanBeBsonElements" >}}). 
+conversions necessary to conform to the correct types. These traits are [`CanBeBsonValue`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/bson/BsonMagnets$$CanBeBsonValue" >}}), 
+[`CanBeBsonElement`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/bson/BsonMagnets$$CanBeBsonElement" >}}) and
+[`CanBeBsonElements`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/bson/BsonMagnets$$CanBeBsonElements" >}}). 
 
 
 One such example is adding a key value pair to a Document or a list of values:
