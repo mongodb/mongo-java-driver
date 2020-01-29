@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-01-17T17:20:28.15">
+<meta name="date" content="2020-01-29T14:56:32.41">
 <link rel="shortcut icon" href="/mongo-java-driver/4.0/img/favicon.png">
 
     <title>Codec and CodecRegistry</title><link rel="stylesheet" href="/mongo-java-driver/4.0/lib/bootstrap.css" type="text/css" />
@@ -291,7 +291,7 @@
   </li><li class="toctree-l1">
     <a href="/mongo-java-driver/4.0/upgrading/"><i class='fa fa-level-up'></i>Upgrade Considerations</a>
   </li><li class="toctree-l1">
-    <a href="/mongo-java-driver/4.0/javadoc"><i class='fa fa-file-text-o'></i>API Documentation</a>
+    <a href="/mongo-java-driver/4.0/apidocs/"><i class='fa fa-file-text-o'></i>API Documentation</a>
   </li><li class="toctree-l1">
     <a href="https://github.com/mongodb/mongo-java-driver/tree/master"><i class='fa fa-github'></i>Source Code</a>
   </li><li class="toctree-l1">
@@ -317,12 +317,12 @@
 
 <h2 id="codec-and-codecregistry">Codec and CodecRegistry</h2>
 
-<p>In the last section we saw how to use the <a href="/mongo-java-driver/4.0/javadoc/org/bson/BsonReader.html
+<p>In the last section we saw how to use the <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/BsonReader.html
 "><code>BsonReader</code></a> and
-<a href="/mongo-java-driver/4.0/javadoc/org/bson/BsonWriter.html
+<a href="/mongo-java-driver/4.0apidocs/bson/org/bson/BsonWriter.html
 "><code>BsonWriter</code></a> API to read and write BSON documents.  But writing code at that
 low a level is tedious and error-prone, so in practice these algorithms are packaged in implementations of the
-<a href="/mongo-java-driver/4.0/javadoc/org/bson/codecs/Codec.html
+<a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/Codec.html
 "><code>Codec</code></a> interface.</p>
 
 <h3 id="codec">Codec</h3>
@@ -359,10 +359,10 @@ rely on a set of simpler <code>Codec</code> implementations for the basic BSON v
 
 <h3 id="codecregistry">CodecRegistry</h3>
 
-<p>A <a href="/mongo-java-driver/4.0/javadoc/org/bson/codecs/configuration/CodecRegistry.html
+<p>A <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/configuration/CodecRegistry.html
 "><code>CodecRegistry</code></a> contains a set of <code>Codec</code> instances that are accessed
 according to the Java classes that they encode from and decode to. Instances of <code>CodecRegistry</code> are generally created via static factory
-methods on the <a href="/mongo-java-driver/4.0/javadoc/org/bson/codecs/configuration/CodecRegistries.html
+methods on the <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/configuration/CodecRegistries.html
 "><code>CodecRegistries</code></a> class.  Consider the simplest of these
 methods, one that takes a list of <code>Codec</code>s:</p>
 
@@ -384,7 +384,7 @@ construction  of the <code>Document</code> <code>Codec</code> until after the <c
 
 <h3 id="codecprovider">CodecProvider</h3>
 
-<p>A <a href="/mongo-java-driver/4.0/javadoc/org/bson/codecs/configuration/CodecProvider.html
+<p>A <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/configuration/CodecProvider.html
 "><code>CodecProvider</code></a> is a factory for <code>Codec</code> instances.  Unlike
 <code>CodecRegistry</code>, its <code>get</code> method takes not only a Class, but also a <code>CodecRegistry</code>, allowing a <code>CodecProvider</code> implementation to
 construct <code>Codec</code> instances that require a <code>CodecRegistry</code> to look up <code>Codec</code> instances for the values contained within it.  Consider a
@@ -415,7 +415,7 @@ abstracted via the <code>BsonTypeClassMap</code> class.</p>
 
 <h3 id="bsontypeclassmap">BsonTypeClassMap</h3>
 
-<p>The <a href="/mongo-java-driver/4.0/javadoc/org/bson/codecs/BsonTypeClassMap.html
+<p>The <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/BsonTypeClassMap.html
 "><code>BsonTypeClassMap</code></a> class simply maps each value in the <code>BsonType</code>
 enumeration to a Java class.  It contains a sensible set of default mappings that can easily be changed by passing an a <code>Map&lt;BsonType, 
 Class&lt;?&gt;&gt;</code> instance to the constructor with any replacement mappings to apply.  Consider the case where an application wants to decode

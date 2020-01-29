@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-01-17T17:20:27.99">
+<meta name="date" content="2020-01-29T14:56:32.25">
 <link rel="shortcut icon" href="/mongo-java-driver/4.0/img/favicon.png">
 
     <title>Write Operations</title><link rel="stylesheet" href="/mongo-java-driver/4.0/lib/bootstrap.css" type="text/css" />
@@ -291,7 +291,7 @@
   </li><li class="toctree-l1">
     <a href="/mongo-java-driver/4.0/upgrading/"><i class='fa fa-level-up'></i>Upgrade Considerations</a>
   </li><li class="toctree-l1">
-    <a href="/mongo-java-driver/4.0/javadoc"><i class='fa fa-file-text-o'></i>API Documentation</a>
+    <a href="/mongo-java-driver/4.0/apidocs/"><i class='fa fa-file-text-o'></i>API Documentation</a>
   </li><li class="toctree-l1">
     <a href="https://github.com/mongodb/mongo-java-driver/tree/master"><i class='fa fa-github'></i>Source Code</a>
   </li><li class="toctree-l1">
@@ -357,7 +357,7 @@ val collection: MongoCollection[Document] = database.getCollection(&quot;restaur
 
 <h2 id="insert-new-document">Insert New Document</h2>
 
-<p>To insert a single document into the collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCollection.html#insertOne(document:TResult,options:org.mongodb.scala.model.InsertOneOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.Completed]
+<p>To insert a single document into the collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#insertOne(document:TResult,options:org.mongodb.scala.model.InsertOneOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.Completed]
 "><code>insertOne()</code></a> method.</p>
 
 <pre><code class="language-scala">val document = Document(&quot;name&quot; -&gt; &quot;Café Con Leche&quot; , 
@@ -378,7 +378,7 @@ collection.insertOne(document).printResults()
 
 <h2 id="insert-multiple-documents">Insert Multiple Documents</h2>
 
-<p>To add multiple documents, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCollection.html#insertMany(documents:Seq[_&lt;:TResult]):org.mongodb.scala.SingleObservable[org.mongodb.scala.Completed]
+<p>To add multiple documents, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#insertMany(documents:Seq[_&lt;:TResult]):org.mongodb.scala.SingleObservable[org.mongodb.scala.Completed]
 "><code>insertMany()</code></a> method, which takes a list of documents to insert.</p>
 
 <p>The following example inserts two documents to the collection:</p>
@@ -407,16 +407,16 @@ collection.insertMany(Seq(doc1, doc2)).printResults()
 
 <h2 id="update-existing-documents">Update Existing Documents</h2>
 
-<p>To update existing documents in a collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCollection.html#updateOne(filter:org.mongodb.scala.bson.conversions.Bson,update:Seq[org.mongodb.scala.bson.conversions.Bson],options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]
-"><code>updateOne()</code></a> or <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCollection.html#updateMany(filter:org.mongodb.scala.bson.conversions.Bson,update:org.mongodb.scala.bson.conversions.Bson,options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]
+<p>To update existing documents in a collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#updateOne(filter:org.mongodb.scala.bson.conversions.Bson,update:Seq[org.mongodb.scala.bson.conversions.Bson],options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]
+"><code>updateOne()</code></a> or <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#updateMany(filter:org.mongodb.scala.bson.conversions.Bson,update:org.mongodb.scala.bson.conversions.Bson,options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]
 "><code>updateMany</code></a> methods.</p>
 
 <h3 id="filters">Filters</h3>
 
-<p>You can pass in a filter document to the methods to specify which documents to update. The filter document specification is the same as for <a href="/mongo-java-driver/4.0/driver-scala/tutorials/perform-read-operations/">read operations</a>. To facilitate creating filter objects, the Scala driver provides the <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/model/Filters$.html
+<p>You can pass in a filter document to the methods to specify which documents to update. The filter document specification is the same as for <a href="/mongo-java-driver/4.0/driver-scala/tutorials/perform-read-operations/">read operations</a>. To facilitate creating filter objects, the Scala driver provides the <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/model/Filters$.html
 "><code>Filters</code></a> helper.</p>
 
-<p>To specify an empty filter (i.e. match all documents in a collection), use an empty <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/bson/index.html#Document:org.mongodb.scala.bson.collection.immutable.Document.type
+<p>To specify an empty filter (i.e. match all documents in a collection), use an empty <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/bson/index.html#Document:org.mongodb.scala.bson.collection.immutable.Document.type
 "><code>Document</code></a> object.</p>
 
 <h3 id="update-operators">Update Operators</h3>
@@ -424,7 +424,7 @@ collection.insertMany(Seq(doc1, doc2)).printResults()
 <p>To change a field in a document, MongoDB provides <a href="http://docs.mongodb.org/manual/reference/operator/update
 ">update operators</a>.  To specify the modification to perform using the update operators, use an updates document.</p>
 
-<p>To facilitate the creation of updates documents, the Scala driver provides the <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/model/Updates$.html
+<p>To facilitate the creation of updates documents, the Scala driver provides the <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/model/Updates$.html
 "><code>Updates</code></a> class.</p>
 
 <div class="admonition important">
@@ -436,7 +436,7 @@ collection.insertMany(Seq(doc1, doc2)).printResults()
 
 <h3 id="update-a-single-document">Update a Single Document</h3>
 
-<p>The <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCollection.html#updateOne(filter:org.mongodb.scala.bson.conversions.Bson,update:Seq[org.mongodb.scala.bson.conversions.Bson],options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]
+<p>The <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#updateOne(filter:org.mongodb.scala.bson.conversions.Bson,update:Seq[org.mongodb.scala.bson.conversions.Bson],options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]
 "><code>updateOne()</code></a> method updates at most a single document, even if the filter condition matches multiple documents in the collection.</p>
 
 <p>The following operation on the <code>restaurants</code> collection updates a document whose <code>_id</code> field equals <code>BsonObjectId(&quot;57506d62f57802807471dd41&quot;)</code>.</p>
@@ -450,10 +450,10 @@ collection.insertMany(Seq(doc1, doc2)).printResults()
 <p>Specifically, the operation uses:</p>
 
 <ul>
-<li><p><a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/model/Updates$.html#set[TItem](fieldName:String,value:TItem):org.mongodb.scala.bson.conversions.Bson
+<li><p><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/model/Updates$.html#set[TItem](fieldName:String,value:TItem):org.mongodb.scala.bson.conversions.Bson
 "><code>Updates.set</code></a> to set the value of the <code>stars</code> field to <code>1</code> and the <code>contact.phone</code> field to <code>&quot;228-555-9999&quot;</code>, and</p></li>
 
-<li><p><a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/model/Updates$.html#currentDate(fieldName:String):org.mongodb.scala.bson.conversions.Bson
+<li><p><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/model/Updates$.html#currentDate(fieldName:String):org.mongodb.scala.bson.conversions.Bson
 "><code>Updates.currentDate</code></a> to modify the <code>lastModified</code> field to the current date. If the <code>lastModified</code> field does not exist, the operator adds the field to the document.</p></li>
 </ul>
 
@@ -466,7 +466,7 @@ collection.insertMany(Seq(doc1, doc2)).printResults()
 
 <h3 id="update-multiple-documents">Update Multiple Documents</h3>
 
-<p>The <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCollection.html#updateMany(filter:org.mongodb.scala.bson.conversions.Bson,update:Seq[org.mongodb.scala.bson.conversions.Bson],options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]
+<p>The <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#updateMany(filter:org.mongodb.scala.bson.conversions.Bson,update:Seq[org.mongodb.scala.bson.conversions.Bson],options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]
 "><code>updateMany</code></a> method updates all documents that match the filter condition.</p>
 
 <p>The following operation on the <code>restaurants</code> collection updates all documents whose <code>stars</code> field equals <code>2</code>.</p>
@@ -480,18 +480,18 @@ collection.insertMany(Seq(doc1, doc2)).printResults()
 <p>Specifically, the operation uses:</p>
 
 <ul>
-<li><p><a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/model/Updates$.html#set[TItem](fieldName:String,value:TItem):org.mongodb.scala.bson.conversions.Bson
+<li><p><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/model/Updates$.html#set[TItem](fieldName:String,value:TItem):org.mongodb.scala.bson.conversions.Bson
 "><code>Updates.set</code></a> to set the value of the <code>stars</code> field to <code>0</code> , and</p></li>
 
-<li><p><a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/model/Updates$.html#currentDate(fieldName:String):org.mongodb.scala.bson.conversions.Bson
+<li><p><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/model/Updates$.html#currentDate(fieldName:String):org.mongodb.scala.bson.conversions.Bson
 "><code>Updates.currentDate</code></a> to modify the <code>lastModified</code> field to the current date. If the <code>lastModified</code> field does not exist, the operator adds the field to the document.</p></li>
 </ul>
 
 <h3 id="update-options">Update Options</h3>
 
-<p>With the <a href="/mongo-java-driver/4.0/scaladoc/corg/mongodb/scala/MongoCollection.html#updateOne(filter:org.mongodb.scala.bson.conversions.Bson,update:Seq[org.mongodb.scala.bson.conversions.Bson],options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]
-"><code>updateOne()</code></a> and <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCollection.html#updateOne(filter:org.mongodb.scala.bson.conversions.Bson,update:Seq[org.mongodb.scala.bson.conversions.Bson],options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]
-"><code>updateMany</code></a> methods, you can include an <a href="/mongo-java-driver/4.0/javadoc/org/mongodb/scala/model/index.html#UpdateOptions=com.mongodb.client.model.UpdateOptions
+<p>With the <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/
+"><code>updateOne()</code></a> and <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#updateOne(filter:org.mongodb.scala.bson.conversions.Bson,update:Seq[org.mongodb.scala.bson.conversions.Bson],options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]
+"><code>updateMany</code></a> methods, you can include an <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/model/index.html#UpdateOptions=com.mongodb.client.model.UpdateOptions
 "><code>UpdateOptions</code></a> document to specify the <a href="http://docs.mongodb.org/manual/reference/method/db.collection.update/#upsert-option
 "><code>upsert</code></a> option or the <a href="http://docs.mongodb.org/manual/core/document-validation/#bypass-document-validation
 "><code>bypassDocumentationValidation</code></a> option.</p>
@@ -505,7 +505,7 @@ collection.insertMany(Seq(doc1, doc2)).printResults()
 
 <h2 id="replace-an-existing-document">Replace an Existing Document</h2>
 
-<p>To replace an existing document in a collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCollection.html#replaceOne(filter:org.mongodb.scala.bson.conversions.Bson,replacement:TResult,options:org.mongodb.scala.model.ReplaceOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]
+<p>To replace an existing document in a collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#replaceOne(filter:org.mongodb.scala.bson.conversions.Bson,replacement:TResult,options:org.mongodb.scala.model.ReplaceOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]
 "><code>replaceOne</code></a> method.</p>
 
 <div class="admonition important">
@@ -517,18 +517,18 @@ collection.insertMany(Seq(doc1, doc2)).printResults()
 
 <h3 id="filters-1">Filters</h3>
 
-<p>You can pass in a filter document to the method to specify which document to replace. The filter document specification is the same as for <a href="/mongo-java-driver/4.0/driver-scala/tutorials/perform-read-operations/">read operations</a>. To facilitate creating filter objects, the Scala driver provides the <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/model/Filters$.html
+<p>You can pass in a filter document to the method to specify which document to replace. The filter document specification is the same as for <a href="/mongo-java-driver/4.0/driver-scala/tutorials/perform-read-operations/">read operations</a>. To facilitate creating filter objects, the Scala driver provides the <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/model/Filters$.html
 "><code>Filters</code></a> helper.</p>
 
-<p>To specify an empty filter (i.e. match all documents in a collection), use an empty <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/bson/index.html#Document:org.mongodb.scala.bson.collection.immutable.Document.type
+<p>To specify an empty filter (i.e. match all documents in a collection), use an empty <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/bson/index.html#Document:org.mongodb.scala.bson.collection.immutable.Document.type
 "><code>Document</code></a> object.</p>
 
-<p>The <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCollection.html#replaceOne(filter:org.mongodb.scala.bson.conversions.Bson,replacement:TResult,options:org.mongodb.scala.model.ReplaceOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]
+<p>The <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#replaceOne(filter:org.mongodb.scala.bson.conversions.Bson,replacement:TResult,options:org.mongodb.scala.model.ReplaceOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]
 "><code>replaceOne</code></a> method replaces at most a single document, even if the filter condition matches multiple documents in the collection.</p>
 
 <h3 id="replace-a-document">Replace a Document</h3>
 
-<p>To replace a document, pass a new document to the <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCollection.html#replaceOne(filter:org.mongodb.scala.bson.conversions.Bson,replacement:TResult,options:org.mongodb.scala.model.ReplaceOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]/org/mongodb/scala/MongoCollection.html#replaceOne(filter:org.mongodb.scala.bson.conversions.Bson,replacement:TResult,options:org.mongodb.scala.model.ReplaceOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]
+<p>To replace a document, pass a new document to the <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#replaceOne(filter:org.mongodb.scala.bson.conversions.Bson,replacement:TResult,options:org.mongodb.scala.model.ReplaceOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]/org/mongodb/scala/MongoCollection.html#replaceOne(filter:org.mongodb.scala.bson.conversions.Bson,replacement:TResult,options:org.mongodb.scala.model.ReplaceOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]
 "><code>replaceOne</code></a> method.</p>
 
 <div class="admonition important">
@@ -551,8 +551,8 @@ collection.insertMany(Seq(doc1, doc2)).printResults()
 
 <h3 id="update-options-1">Update Options</h3>
 
-<p>With the <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCollection.html#updateOne(filter:org.mongodb.scala.bson.conversions.Bson,update:Seq[org.mongodb.scala.bson.conversions.Bson],options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]
-"><code>replaceOne</code></a>, you can include an <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/model/index.html#UpdateOptions=com.mongodb.client.model.UpdateOptions
+<p>With the <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#updateOne(filter:org.mongodb.scala.bson.conversions.Bson,update:Seq[org.mongodb.scala.bson.conversions.Bson],options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]
+"><code>replaceOne</code></a>, you can include an <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/model/index.html#UpdateOptions=com.mongodb.client.model.UpdateOptions
 "><code>UpdateOptions</code></a> document to specify the <a href="http://docs.mongodb.org/manual/reference/method/db.collection.update/#upsert-option
 "><code>upsert</code></a> option or the <a href="http://docs.mongodb.org/manual/core/document-validation/#bypass-document-validation
 "><code>bypassDocumentationValidation</code></a> option.</p>
@@ -568,21 +568,21 @@ collection.insertMany(Seq(doc1, doc2)).printResults()
 <h2 id="delete-documents">Delete Documents</h2>
 
 <p>To delete documents in a collection, you can use the
-<a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCollection.html#deleteOne(filter:org.mongodb.scala.bson.conversions.Bson,options:org.mongodb.scala.model.DeleteOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.DeleteResult]
-"><code>deleteOne</code></a> and <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCollection.html#deleteMany(filter:org.mongodb.scala.bson.conversions.Bson,options:org.mongodb.scala.model.DeleteOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.DeleteResult]
+<a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#deleteOne(filter:org.mongodb.scala.bson.conversions.Bson,options:org.mongodb.scala.model.DeleteOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.DeleteResult]
+"><code>deleteOne</code></a> and <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#deleteMany(filter:org.mongodb.scala.bson.conversions.Bson,options:org.mongodb.scala.model.DeleteOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.DeleteResult]
 "><code>deleteMany</code></a> methods.</p>
 
 <h3 id="filters-2">Filters</h3>
 
-<p>You can pass in a filter document to the methods to specify which documents to delete. The filter document specification is the same as for <a href="/mongo-java-driver/4.0/driver-scala/tutorials/perform-read-operations/">read operations</a>. To facilitate creating filter objects, the Scala driver provides the <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/model/Filters$.html
+<p>You can pass in a filter document to the methods to specify which documents to delete. The filter document specification is the same as for <a href="/mongo-java-driver/4.0/driver-scala/tutorials/perform-read-operations/">read operations</a>. To facilitate creating filter objects, the Scala driver provides the <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/model/Filters$.html
 "><code>Filters</code></a> helper.</p>
 
-<p>To specify an empty filter (i.e. match all documents in a collection), use an empty <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/bson/index.html#Document:org.mongodb.scala.bson.collection.immutable.Document.type
+<p>To specify an empty filter (i.e. match all documents in a collection), use an empty <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/bson/index.html#Document:org.mongodb.scala.bson.collection.immutable.Document.type
 "><code>Document</code></a> object.</p>
 
 <h3 id="delete-a-single-document">Delete a Single Document</h3>
 
-<p>The <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCollection.html#deleteOne(filter:org.mongodb.scala.bson.conversions.Bson,options:org.mongodb.scala.model.DeleteOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.DeleteResult]
+<p>The <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#deleteOne(filter:org.mongodb.scala.bson.conversions.Bson,options:org.mongodb.scala.model.DeleteOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.DeleteResult]
 "><code>deleteOne</code></a> method deletes at most a single document, even if the filter condition matches multiple documents in the collection.</p>
 
 <p>The following operation on the <code>restaurants</code> collection deletes a document whose <code>_id</code> field equals <code>ObjectId(&quot;57506d62f57802807471dd41&quot;)</code>.</p>
@@ -592,7 +592,7 @@ collection.insertMany(Seq(doc1, doc2)).printResults()
 
 <h3 id="delete-multiple-documents">Delete Multiple Documents</h3>
 
-<p>The <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCollection.html?search=UpdateOptio#deleteMany(filter:org.mongodb.scala.bson.conversions.Bson,options:org.mongodb.scala.model.DeleteOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.DeleteResult]
+<p>The <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html?search=UpdateOptio#deleteMany(filter:org.mongodb.scala.bson.conversions.Bson,options:org.mongodb.scala.model.DeleteOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.DeleteResult]
 "><code>deleteMany</code></a> method deletes all documents that match the filter condition.</p>
 
 <p>The following operation on the <code>restaurants</code> collection deletes all documents whose <code>stars</code> field equals <code>4</code>.</p>
@@ -611,11 +611,11 @@ collection.insertMany(Seq(doc1, doc2)).printResults()
 ">write concern</a> at three levels:</p>
 
 <ul>
-<li><p>In a <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoClient$.html
+<li><p>In a <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoClient$.html
 "><code>MongoClient()</code></a></p>
 
 <ul>
-<li>Via <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoClientSettings$.html
+<li>Via <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoClientSettings$.html
 "><code>MongoClientSettings</code></a>:</li>
 </ul>
 
@@ -626,22 +626,22 @@ collection.insertMany(Seq(doc1, doc2)).printResults()
 </code></pre>
 
 <ul>
-<li>Via <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/ConnectionString$.html
+<li>Via <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/ConnectionString$.html
 "><code>ConnectionString</code></a>, as in the following example:</li>
 </ul>
 
 <pre><code class="language-scala">  val mongoClientt = MongoClient(&quot;mongodb://host1:27017,host2:27017/?w=majority&quot;)
 </code></pre></li>
 
-<li><p>In a <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoDatabase.html
-"><code>MongoDatabase</code></a> via its <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoDatabase.html#withWriteConcern(writeConcern:org.mongodb.scala.WriteConcern):org.mongodb.scala.MongoDatabase
+<li><p>In a <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoDatabase.html
+"><code>MongoDatabase</code></a> via its <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoDatabase.html#withWriteConcern(writeConcern:org.mongodb.scala.WriteConcern):org.mongodb.scala.MongoDatabase
 "><code>withWriteConcern</code></a> method, as in the following example:</p>
 
 <pre><code class="language-scala"> val database = mongoClient.getDatabase(&quot;test&quot;).withWriteConcern(WriteConcern.MAJORITY)
 </code></pre></li>
 
-<li><p>In a <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCollection.html
-"><code>MongoCollection</code></a> via its <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCollection.html#withWriteConcern(writeConcern:org.mongodb.scala.WriteConcern):org.mongodb.scala.MongoCollection[TResult]
+<li><p>In a <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html
+"><code>MongoCollection</code></a> via its <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#withWriteConcern(writeConcern:org.mongodb.scala.WriteConcern):org.mongodb.scala.MongoCollection[TResult]
 "><code>withWriteConcern</code></a> method, as in the following example:</p>
 
 <pre><code class="language-scala"> val collection = database.getCollection(&quot;restaurants&quot;).withWriteConcern(WriteConcern.MAJORITY)

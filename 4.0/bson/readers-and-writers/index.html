@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-01-17T17:20:28.19">
+<meta name="date" content="2020-01-29T14:56:32.45">
 <link rel="shortcut icon" href="/mongo-java-driver/4.0/img/favicon.png">
 
     <title>Readers and Writers</title><link rel="stylesheet" href="/mongo-java-driver/4.0/lib/bootstrap.css" type="text/css" />
@@ -291,7 +291,7 @@
   </li><li class="toctree-l1">
     <a href="/mongo-java-driver/4.0/upgrading/"><i class='fa fa-level-up'></i>Upgrade Considerations</a>
   </li><li class="toctree-l1">
-    <a href="/mongo-java-driver/4.0/javadoc"><i class='fa fa-file-text-o'></i>API Documentation</a>
+    <a href="/mongo-java-driver/4.0/apidocs/"><i class='fa fa-file-text-o'></i>API Documentation</a>
   </li><li class="toctree-l1">
     <a href="https://github.com/mongodb/mongo-java-driver/tree/master"><i class='fa fa-github'></i>Source Code</a>
   </li><li class="toctree-l1">
@@ -319,9 +319,9 @@
 
 <p>The various implementations of the <code>Bson</code> interface discussed in the previous section all represent BSON documents using an underlying
 Java <code>Map</code> instance. However, they are not directly responsible for reading and writing their representations from and to BSON.  Instead,
-this process is delegated to <a href="/mongo-java-driver/4.0/javadoc/org/bson/BsonWriter.html
+this process is delegated to <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/BsonWriter.html
 "><code>BsonWriter</code></a> and
-<a href="/mongo-java-driver/4.0/javadoc/org/bson/BsonReader.html
+<a href="/mongo-java-driver/4.0apidocs/bson/org/bson/BsonReader.html
 "><code>BsonReader</code></a>, interfaces that expose methods for iterative, stream-based processing of
 BSON documents.</p>
 
@@ -358,9 +358,9 @@ writer.writeEndDocument();
 iteratively, have an implicit hierarchical structure.  The BsonWriter validates that the events create only properly structured BSON
 documents.  Otherwise, it throws a <code>BsonSerializationException</code>.</p>
 
-<p>The two most important classes to extend <code>BsonWriter</code> are <a href="/mongo-java-driver/4.0/javadoc/org/bson/BsonBinaryWriter.html
+<p>The two most important classes to extend <code>BsonWriter</code> are <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/BsonBinaryWriter.html
 "><code>BsonBinaryWriter</code></a> and
-<a href="/mongo-java-driver/4.0/javadoc/org/bson/json/JsonWriter.html
+<a href="/mongo-java-driver/4.0apidocs/bson/org/bson/json/JsonWriter.html
 "><code>JsonWriter</code></a>.  <code>BsonBinaryWriter</code> writes the BSON
 document as a stream of bytes in accordance with the <a href="http://www.bsonspec.org">BSON</a> specification, while <code>JsonWriter</code> writes the BSON
 document as a stream of characters in accordance with
@@ -437,9 +437,9 @@ reader.readEndArray();
 <p>The only significant difference between reading an array and reading a document is that, since the elements of an array do not have names,
 there is no field name to read, only a series of values.</p>
 
-<p>The two most important classes to extend <code>BsonReader</code> are <a href="/mongo-java-driver/4.0/javadoc/org/bson/BsonBinaryReader.html
+<p>The two most important classes to extend <code>BsonReader</code> are <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/BsonBinaryReader.html
 "><code>BsonBinaryReader</code></a> and
-<a href="/mongo-java-driver/4.0/javadoc/org/bson/json/JsonReader.html
+<a href="/mongo-java-driver/4.0apidocs/bson/org/bson/json/JsonReader.html
 "><code>JsonReader</code></a>. <code>BsonBinaryReader</code> reads the BSON
 document as a stream of bytes in accordance with the <a href="http://www.bsonspec.org">BSON</a> specification, while <code>JsonReader</code> reads the BSON
 document as a stream of characters in accordance with

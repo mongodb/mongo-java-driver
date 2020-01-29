@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-01-17T17:20:28.04">
+<meta name="date" content="2020-01-29T14:56:32.3">
 <link rel="shortcut icon" href="/mongo-java-driver/4.0/img/favicon.png">
 
     <title>Databases and Collections</title><link rel="stylesheet" href="/mongo-java-driver/4.0/lib/bootstrap.css" type="text/css" />
@@ -291,7 +291,7 @@
   </li><li class="toctree-l1">
     <a href="/mongo-java-driver/4.0/upgrading/"><i class='fa fa-level-up'></i>Upgrade Considerations</a>
   </li><li class="toctree-l1">
-    <a href="/mongo-java-driver/4.0/javadoc"><i class='fa fa-file-text-o'></i>API Documentation</a>
+    <a href="/mongo-java-driver/4.0/apidocs/"><i class='fa fa-file-text-o'></i>API Documentation</a>
   </li><li class="toctree-l1">
     <a href="https://github.com/mongodb/mongo-java-driver/tree/master"><i class='fa fa-github'></i>Source Code</a>
   </li><li class="toctree-l1">
@@ -348,7 +348,7 @@ import com.mongodb.client.model.ValidationOptions;
 
 <h2 id="access-a-database">Access a Database</h2>
 
-<p>Once you have a <code>MongoClient</code> instance connected to a MongoDB deployment, use its <a href="/mongo-java-driver/4.0/javadoc/com/mongodb/MongoClient.html#getDatabase(java.lang.String)
+<p>Once you have a <code>MongoClient</code> instance connected to a MongoDB deployment, use its <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/MongoClient.html#getDatabase(java.lang.String)
 "><code>getDatabase()</code></a> method to access a database.</p>
 
 <p>Specify the name of the database to the <code>getDatabase()</code> method. If a database does not exist, MongoDB creates the database when you first store data for that database.</p>
@@ -367,7 +367,7 @@ import com.mongodb.client.model.ValidationOptions;
 
 <h2 id="access-a-collection">Access a Collection</h2>
 
-<p>Once you have a <code>MongoDatabase</code> instance, use its <a href="/mongo-java-driver/4.0/javadoc/com/mongodb/client/MongoDatabase.html#getCollection(java.lang.String)
+<p>Once you have a <code>MongoDatabase</code> instance, use its <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/MongoDatabase.html#getCollection(java.lang.String)
 "><code>getCollection()</code></a>
 method to access a collection.</p>
 
@@ -391,8 +391,8 @@ method to access a collection.</p>
 
 <h2 id="explicitly-create-a-collection">Explicitly Create a Collection</h2>
 
-<p>The MongoDB driver provides the <a href="/mongo-java-driver/4.0/javadoc/com/mongodb/client/MongoDatabase.html#createCollection(java.lang.String,com.mongodb.client.model.CreateCollectionOptions)
-"><code>createCollection()</code></a> method to explicitly create a collection. When you explicitly create a collection, you can specify various collection options, such as a maximum size or the documentation validation rules, with the <a href="/mongo-java-driver/4.0/javadoc/com/mongodb/client/model/CreateCollectionOptions.html
+<p>The MongoDB driver provides the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/MongoDatabase.html#createCollection(java.lang.String,com.mongodb.client.model.CreateCollectionOptions)
+"><code>createCollection()</code></a> method to explicitly create a collection. When you explicitly create a collection, you can specify various collection options, such as a maximum size or the documentation validation rules, with the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/CreateCollectionOptions.html
 "><code>CreateCollectionOptions</code></a> class. If you are not specifying these options, you do not need to explicitly create the collection since MongoDB creates new collections when you first store data for the collections.</p>
 
 <h3 id="capped-collection">Capped Collection</h3>
@@ -407,7 +407,7 @@ method to access a collection.</p>
 <h3 id="document-validation">Document Validation</h3>
 
 <p>MongoDB provides the capability to <a href="http://docs.mongodb.org/manual/core/document-validation
-">validate documents</a> during updates and insertions. Validation rules are specified on a per-collection basis using the <a href="/mongo-java-driver/4.0/javadoc/com/mongodb/client/model/ValidationOptions.html
+">validate documents</a> during updates and insertions. Validation rules are specified on a per-collection basis using the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/ValidationOptions.html
 "><code>ValidationOptions</code></a>, which takes a filter document that specifies the validation rules or expressions.</p>
 
 <pre><code class="language-java">ValidationOptions collOptions = new ValidationOptions().validator(
@@ -418,7 +418,7 @@ database.createCollection(&quot;contacts&quot;,
 
 <h2 id="get-a-list-of-collections">Get A List of Collections</h2>
 
-<p>You can get a list of the collections in a database using the <a href="/mongo-java-driver/4.0/javadoc/com/mongodb/client/MongoDatabase.html#listCollectionNames()
+<p>You can get a list of the collections in a database using the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/MongoDatabase.html#listCollectionNames()
 "><code>MongoDatabase.listCollectionNames()</code></a> method:</p>
 
 <pre><code class="language-java">for (String name : database.listCollectionNames()) {
@@ -428,7 +428,7 @@ database.createCollection(&quot;contacts&quot;,
 
 <h2 id="drop-a-collection">Drop a Collection</h2>
 
-<p>You can drop a collection by using the <a href="/mongo-java-driver/4.0/javadoc/com/mongodb/client/MongoCollection.html#drop()
+<p>You can drop a collection by using the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/MongoCollection.html#drop()
 "><code>MongoCollection.drop()</code></a> method:</p>
 
 <pre><code class="language-java">MongoCollection&lt;Document&gt; collection = database.getCollection(&quot;contacts&quot;);
@@ -444,22 +444,22 @@ have different property values, such as <a href="http://docs.mongodb.org/manual/
 ">write concern</a>, the <code>MongoDatabase</code> and <code>MongoCollection</code> class provides various methods:</p>
 
 <ul>
-<li><p><a href="/mongo-java-driver/4.0/javadoc/com/mongodb/client/MongoDatabase.html#withReadConcern(com.mongodb.ReadConcern)
+<li><p><a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/MongoDatabase.html#withReadConcern(com.mongodb.ReadConcern)
 "><code>MongoDatabase.withReadConcern</code></a></p></li>
 
-<li><p><a href="/mongo-java-driver/4.0/javadoc/com/mongodb/client/MongoDatabase.html#withReadPreference(com.mongodb.ReadPreference)
+<li><p><a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/MongoDatabase.html#withReadPreference(com.mongodb.ReadPreference)
 "><code>MongoDatabase.withReadPreference</code></a></p></li>
 
-<li><p><a href="/mongo-java-driver/4.0/javadoc/com/mongodb/client/MongoDatabase.html#withWriteConcern(com.mongodb.WriteConcern)
+<li><p><a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/MongoDatabase.html#withWriteConcern(com.mongodb.WriteConcern)
 "><code>MongoDatabase.withWriteConcern</code></a></p></li>
 
-<li><p><a href="/mongo-java-driver/4.0/javadoc/com/mongodb/client/MongoCollection.html#withReadConcern(com.mongodb.ReadConcern)
+<li><p><a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/MongoCollection.html#withReadConcern(com.mongodb.ReadConcern)
 "><code>MongoCollection.withReadConcern</code></a></p></li>
 
-<li><p><a href="/mongo-java-driver/4.0/javadoc/com/mongodb/client/MongoCollection.html#withReadPreference(com.mongodb.ReadPreference)
+<li><p><a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/MongoCollection.html#withReadPreference(com.mongodb.ReadPreference)
 "><code>MongoCollection.withReadPreference</code></a></p></li>
 
-<li><p><a href="/mongo-java-driver/4.0/javadoc/com/mongodb/client/MongoCollection.html#withWriteConcern(com.mongodb.WriteConcern)
+<li><p><a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/MongoCollection.html#withWriteConcern(com.mongodb.WriteConcern)
 "><code>MongoCollection.withWriteConcern</code></a></p></li>
 </ul>
 
@@ -538,7 +538,7 @@ MongoCollection&lt;Document&gt; collection = database.getCollection(&quot;mycoll
 <h5 class="admonition-title">Note</h5>
 <p>Starting with the 3.12 release of the driver, you can also change the encoding of <code>UUID</code> instances via the <code>uuidRepresentation</code> property of
 <code>MongoClientSettings</code>.  See
-<a href="/mongo-java-driver/4.0/javadoc/com/mongodb/MongoClientSettings.html#getUuidRepresentation()"><code>MongoClientSettings.getUuidRepresentation</code></a> for
+<a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/MongoClientSettings.html#getUuidRepresentation()"><code>MongoClientSettings.getUuidRepresentation</code></a> for
 details.</p>
 
 </div>

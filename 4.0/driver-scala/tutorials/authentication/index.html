@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-01-17T17:20:28.07">
+<meta name="date" content="2020-01-29T14:56:32.33">
 <link rel="shortcut icon" href="/mongo-java-driver/4.0/img/favicon.png">
 
     <title>Authentication</title><link rel="stylesheet" href="/mongo-java-driver/4.0/lib/bootstrap.css" type="text/css" />
@@ -291,7 +291,7 @@
   </li><li class="toctree-l1">
     <a href="/mongo-java-driver/4.0/upgrading/"><i class='fa fa-level-up'></i>Upgrade Considerations</a>
   </li><li class="toctree-l1">
-    <a href="/mongo-java-driver/4.0/javadoc"><i class='fa fa-file-text-o'></i>API Documentation</a>
+    <a href="/mongo-java-driver/4.0/apidocs/"><i class='fa fa-file-text-o'></i>API Documentation</a>
   </li><li class="toctree-l1">
     <a href="https://github.com/mongodb/mongo-java-driver/tree/master"><i class='fa fa-github'></i>Source Code</a>
   </li><li class="toctree-l1">
@@ -329,8 +329,8 @@ import scala.collection.JavaConverters._
 </code></pre>
 
 <p>An authentication credential is represented as an instance of the
-<a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCredential$.html
-"><code>MongoCredential</code></a> class. The <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCredential$.html
+<a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCredential$.html
+"><code>MongoCredential</code></a> class. The <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCredential$.html
 "><code>MongoCredential</code></a> class includes static
 helper methods for each of the supported authentication mechanisms.</p>
 
@@ -347,7 +347,7 @@ helper methods for each of the supported authentication mechanisms.</p>
 
 <p>To create a credential that will authenticate using the default
 authentication mechanism regardless of server version, create a
-credential using the <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCredential$.html#createCredential(userName:String,database:String,password:Array[Char]):com.mongodb.MongoCredential
+credential using the <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCredential$.html#createCredential(userName:String,database:String,password:Array[Char]):com.mongodb.MongoCredential
 "><code>createCredential</code></a>
 helper method:</p>
 
@@ -390,7 +390,7 @@ which uses the <code>SHA-256</code> hashing function.</p>
 
 <p>To explicitly create a credential of type <a href="http://docs.mongodb.org/manual/core/security-scram/
 "><code>SCRAM-SHA-256</code></a>, use the
-<a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCredential$.html#createScramSha256Credential(userName:String,source:String,password:Array[Char]):com.mongodb.MongoCredential
+<a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCredential$.html#createScramSha256Credential(userName:String,source:String,password:Array[Char]):com.mongodb.MongoCredential
 "><code>createScramSha256Credential</code></a>
 method:</p>
 
@@ -416,7 +416,7 @@ val mongoClient: MongoClient = MongoClient(
 
 <p>To explicitly create a credential of type <a href="http://docs.mongodb.org/manual/core/security-scram/
 "><code>SCRAM-SHA-1</code></a>, use the
-<a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCredential$.html#createScramSha1Credential(userName:String,source:String,password:Array[Char]):com.mongodb.MongoCredential
+<a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCredential$.html#createScramSha1Credential(userName:String,source:String,password:Array[Char]):com.mongodb.MongoCredential
 "><code>createScramSha1Credential</code></a>
 method:</p>
 
@@ -451,7 +451,7 @@ For information on upgrading to <code>SCRAM</code>, see Upgrade to <a href="http
 
 
 <p>To explicitly create a credential of type <a href="http://docs.mongodb.org/manual/core/security-mongodb-cr
-"><code>MONGODB-CR</code></a> use the <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCredential$.html#createMongoCRCredential(userName:String,database:String,password:Array[Char]):com.mongodb.MongoCredential
+"><code>MONGODB-CR</code></a> use the <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCredential$.html#createMongoCRCredential(userName:String,database:String,password:Array[Char]):com.mongodb.MongoCredential
 "><code>createMongCRCredential</code></a>
 helper method:</p>
 
@@ -492,7 +492,7 @@ of the X.509 certificate.</p>
 <p>X.509 authentication requires the use of SSL connections with
 certificate validation and is available in MongoDB 2.6 and later. To
 create a credential of this type use the
-<a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCredential$.html#createMongoX509Credential():com.mongodb.MongoCredential
+<a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCredential$.html#createMongoX509Credential():com.mongodb.MongoCredential
 "><code>createMongoX509Credential</code></a> helper method:</p>
 
 <pre><code class="language-scala">val user: String = ???     // The X.509 certificate derived user name, e.g. &quot;CN=user,OU=OrgUnit,O=myOrg,...&quot;
@@ -522,7 +522,7 @@ name from the certificate.</p>
 authentication through Kerberos service. To create a credential of type
 <a href="http://docs.mongodb.org/manual/core/authentication/#kerberos-authentication
 ">Kerberos (GSSAPI)</a>, use the
-<a href="/mongo-java-driver/4.0/javadoc/org/mongodb/scala/MongoCredential$.html#createGSSAPICredential(userName:String):com.mongodb.MongoCredential
+<a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCredential$.html#createGSSAPICredential(userName:String):com.mongodb.MongoCredential
 "><code>createGSSAPICredential</code></a>
 helper method:</p>
 
@@ -559,20 +559,20 @@ Java libraries can acquire a Kerberos ticket:</p>
 java.security.krb5.kdc=mykdc.myrealm.me
 </code></pre>
 
-<p>Depending on the Kerberos setup, additional property specifications may be required, either via the application code or, in some cases, the <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCredential$.html#withMechanismProperty-java.lang.String-T-:String
+<p>Depending on the Kerberos setup, additional property specifications may be required, either via the application code or, in some cases, the <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCredential$.html#withMechanismProperty-java.lang.String-T-:String
 ">withMechanismProperty()</a> method of the <code>MongoCredential</code> instance:</p>
 
 <ul>
-<li><p><strong><a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCredential$.html#SERVICE_NAME_KEY:String
+<li><p><strong><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCredential$.html#SERVICE_NAME_KEY:String
 "><code>SERVICE_NAME</code></a></strong></p></li>
 
-<li><p><strong><a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCredential$.html#CANONICALIZE_HOST_NAME_KEY:String
+<li><p><strong><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCredential$.html#CANONICALIZE_HOST_NAME_KEY:String
 "><code>CANONICALIZE_HOST_NAME</code></a></strong></p></li>
 
-<li><p><strong><a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCredential$.html#JAVA_SUBJECT_KEY:String
+<li><p><strong><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCredential$.html#JAVA_SUBJECT_KEY:String
 "><code>JAVA_SUBJECT</code></a></strong></p></li>
 
-<li><p><strong><a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCredential$.html#JAVA_SASL_CLIENT_PROPERTIES_KEY:String
+<li><p><strong><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCredential$.html#JAVA_SASL_CLIENT_PROPERTIES_KEY:String
 "><code>JAVA_SASL_CLIENT_PROPERTIES</code></a></strong></p></li>
 </ul>
 
@@ -605,7 +605,7 @@ interoperability with Windows Active Directory and in particular the ability to 
 
 <p><a href="http://www.mongodb.com/products/mongodb-enterprise">MongoDB Enterprise</a> supports proxy authentication through a Lightweight Directory Access Protocol (LDAP) service. To create a credential of type <a href="http://docs.mongodb.org/manual/core/authentication/#ldap-proxy-authority-authentication
 ">LDAP</a> use the
-<a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCredential$.html#createPlainCredential(userName:String,source:String,password:Array[Char]):com.mongodb.MongoCredential
+<a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCredential$.html#createPlainCredential(userName:String,source:String,password:Array[Char]):com.mongodb.MongoCredential
 "><code>createPlainCredential</code></a> helper method:</p>
 
 <pre><code class="language-scala">val user: String = ???            // The LDAP user name

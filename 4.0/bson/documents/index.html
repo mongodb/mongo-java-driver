@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-01-17T17:20:28.15">
+<meta name="date" content="2020-01-29T14:56:32.42">
 <link rel="shortcut icon" href="/mongo-java-driver/4.0/img/favicon.png">
 
     <title>Documents</title><link rel="stylesheet" href="/mongo-java-driver/4.0/lib/bootstrap.css" type="text/css" />
@@ -291,7 +291,7 @@
   </li><li class="toctree-l1">
     <a href="/mongo-java-driver/4.0/upgrading/"><i class='fa fa-level-up'></i>Upgrade Considerations</a>
   </li><li class="toctree-l1">
-    <a href="/mongo-java-driver/4.0/javadoc"><i class='fa fa-file-text-o'></i>API Documentation</a>
+    <a href="/mongo-java-driver/4.0/apidocs/"><i class='fa fa-file-text-o'></i>API Documentation</a>
   </li><li class="toctree-l1">
     <a href="https://github.com/mongodb/mongo-java-driver/tree/master"><i class='fa fa-github'></i>Source Code</a>
   </li><li class="toctree-l1">
@@ -331,7 +331,7 @@ the other values to be lost.</p>
 
 <h3 id="bsondocument">BsonDocument</h3>
 
-<p>Although generally not needed by users of the high-level driver API, the <a href="/mongo-java-driver/4.0/javadoc/org/bson/BsonDocument.html
+<p>Although generally not needed by users of the high-level driver API, the <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/BsonDocument.html
 "><code>BsonDocument</code></a> class is
 central to the way that documents are managed internally by the driver.  The <code>BsonDocument</code> class can represent dynamically structured
 documents of any complexity with a type-safe API.  For instance, the document</p>
@@ -350,12 +350,12 @@ documents of any complexity with a type-safe API.  For instance, the document</p
 
 <p>The type safety comes from <code>BsonDocument</code> implementing <code>Map&lt;String, BsonValue&gt;</code>, so even built-in types like <code>int</code>, <code>String</code> and <code>List</code> must
 be wrapped in a sub-class of <code>BsonValue</code>.  For a complete list of <code>BsonValue</code> sub-types, please consult the
-<a href="/mongo-java-driver/4.0/javadoc/org/bson/BsonValue.html
+<a href="/mongo-java-driver/4.0apidocs/bson/org/bson/BsonValue.html
 "><code>BsonValue</code></a> API documentation.</p>
 
 <h3 id="document">Document</h3>
 
-<p>Most applications will use the <a href="/mongo-java-driver/4.0/javadoc/org/bson/Document.html
+<p>Most applications will use the <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/Document.html
 "><code>Document</code></a> class instead.  Like <code>BsonDocument</code>, the
 <code>Document</code> class can represent dynamically structured documents of any complexity; however, the typing is much looser, as <code>Document</code>
 implements <code>Map&lt;String, Object&gt;</code>. As a result, the same document as above can be constructed using the Document class as follows:</p>
@@ -440,21 +440,21 @@ reference .</p>
 <h3 id="dbobject">DBObject</h3>
 
 <p>Although not recommended for new applications, those upgrading from the 2.x driver series may continue to use the
-<a href="/mongo-java-driver/4.0/javadoc/com/mongodb/DBObject.html
+<a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/DBObject.html
 "><code>DBObject</code></a> interface to represent BSON documents.  <code>DBObject</code> is similar to Document in that it
 represents BSON values as <code>Object</code>, but it has a few shortcomings that were impossible to overcome:</p>
 
 <ul>
 <li>it is an interface rather than a class, so it&rsquo;s API can not be extended without breaking binary compatibility</li>
 <li>it doesn&rsquo;t actually implement <code>Map&lt;String, Object&gt;</code></li>
-<li>because it is an interface, a separate concrete class called <a href="/mongo-java-driver/4.0/javadoc/com/mongodb/BasicDBObject.html
+<li>because it is an interface, a separate concrete class called <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/BasicDBObject.html
 "><code>BasicDBObject</code></a> which
 implements that interface, is required</li>
 </ul>
 
 <h3 id="bson">Bson</h3>
 
-<p>To tie these all together, the driver contains a small but powerful interface called <a href="/mongo-java-driver/4.0/javadoc/org/bson/conversions/Bson.html
+<p>To tie these all together, the driver contains a small but powerful interface called <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/conversions/Bson.html
 "><code>Bson</code></a>.
 Any class that represents a BSON document, whether included in the driver itself or from a third party, can implement this interface and
 can then be used any place in the high-level API where a BSON document is required. The three classes discussed above all implement this

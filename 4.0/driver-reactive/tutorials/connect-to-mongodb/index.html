@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-01-17T17:20:28.09">
+<meta name="date" content="2020-01-29T14:56:32.35">
 <link rel="shortcut icon" href="/mongo-java-driver/4.0/img/favicon.png">
 
     <title>Connect to MongoDB</title><link rel="stylesheet" href="/mongo-java-driver/4.0/lib/bootstrap.css" type="text/css" />
@@ -291,7 +291,7 @@
   </li><li class="toctree-l1">
     <a href="/mongo-java-driver/4.0/upgrading/"><i class='fa fa-level-up'></i>Upgrade Considerations</a>
   </li><li class="toctree-l1">
-    <a href="/mongo-java-driver/4.0/javadoc"><i class='fa fa-file-text-o'></i>API Documentation</a>
+    <a href="/mongo-java-driver/4.0/apidocs/"><i class='fa fa-file-text-o'></i>API Documentation</a>
   </li><li class="toctree-l1">
     <a href="https://github.com/mongodb/mongo-java-driver/tree/master"><i class='fa fa-github'></i>Source Code</a>
   </li><li class="toctree-l1">
@@ -317,14 +317,14 @@
 
 <h2 id="connect-to-mongodb">Connect to MongoDB</h2>
 
-<p>Use <a href="/mongo-java-driver/4.0/javadoc/com/mongodb/reactivestreams/client/MongoClients.html
+<p>Use <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoClients.html
 "><code>MongoClients.create()</code></a> to make a connection to a running MongoDB instance.</p>
 
 <div class="admonition important">
 <h5 class="admonition-title">important</h5>
 <p>The following examples are not meant to provide an exhaustive list
 of ways to instantiate <code>MongoClient</code>. For a complete list of MongoClients factory methods, see the
-<a href="/mongo-java-driver/4.0/javadoc/com/mongodb/reactivestreams/client/MongoClients.html"><code>MongoClients API documentation</code></a>.</p>
+<a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoClients.html"><code>MongoClients API documentation</code></a>.</p>
 
 </div>
 
@@ -362,7 +362,7 @@ import java.util.Arrays;
 
 <h2 id="mongoclient"><code>MongoClient</code></h2>
 
-<p>A <a href="/mongo-java-driver/4.0/javadoc/com/mongodb/reactivestreams/client/MongoClient.html
+<p>A <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoClient.html
 "><code>MongoClient</code></a> instance represents a pool of connections
 to the database; you will only need one instance of class <code>MongoClient</code> even with multiple concurrent operations.</p>
 
@@ -420,7 +420,7 @@ instance running on the specified host on port <code>27017</code>:</li>
 
 
 <ul>
-<li><p>You can specify the members using a <a href="/mongo-java-driver/4.0/javadoc/com/mongodb/ConnectionString.html
+<li><p>You can specify the members using a <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/ConnectionString.html
 "><code>ConnectionString</code></a>:</p>
 
 <ul>
@@ -439,7 +439,7 @@ instance running on the specified host on port <code>27017</code>:</li>
 </code></pre>
 
 <ul>
-<li>You can specify a list of the all the replica set members&rsquo; <a href="/mongo-java-driver/4.0/javadoc/com/mongodb/ServerAddress.html
+<li>You can specify a list of the all the replica set members&rsquo; <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/ServerAddress.html
 "><code>ServerAddress</code></a>:</li>
 </ul>
 
@@ -462,7 +462,7 @@ or instances to a <code>MongoClients</code> create method.</p>
 <p>To connect to a single <code>mongos</code> instance:</p>
 
 <ul>
-<li>You can specify the hostname and the port in a <a href="/mongo-java-driver/4.0/javadoc/com/mongodb/ConnectionString.html
+<li>You can specify the hostname and the port in a <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/ConnectionString.html
 "><code>ConnectionString</code></a></li>
 </ul>
 
@@ -477,13 +477,13 @@ or instances to a <code>MongoClients</code> create method.</p>
 <p>To connect to multiple <code>mongos</code> instances:</p>
 
 <ul>
-<li><p>You can specify the <a href="/mongo-java-driver/4.0/javadoc/com/mongodb/ConnectionString.html
+<li><p>You can specify the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/ConnectionString.html
 "><code>ConnectionString</code></a> with their hostnames and ports:</p>
 
 <pre><code class="language-java">MongoClient mongoClient = MongoClients.create(&quot;mongodb://host1:27017,host2:27017&quot;);
 </code></pre></li>
 
-<li><p>You can specify a list of the <code>mongos</code> instances&rsquo; <a href="{{ &lt;apiref &quot;com/mongodb/ServerAddress.html&quot;&gt;}}"><code>ServerAddress</code></a>:</p></li>
+<li><p>You can specify a list of the <code>mongos</code> instances&rsquo; <a href="{{ &lt; apiref &quot;mongodb-driver-core&quot; &quot;com/mongodb/ServerAddress.html&quot; &gt;}}"><code>ServerAddress</code></a>:</p></li>
 </ul>
 
 <pre><code class="language-java">    MongoClient mongoClient = MongoClients.create(

@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-01-17T17:20:28.26">
+<meta name="date" content="2020-01-29T14:56:32.52">
 <link rel="shortcut icon" href="/mongo-java-driver/4.0/img/favicon.png">
 
     <title>Monitoring</title><link rel="stylesheet" href="/mongo-java-driver/4.0/lib/bootstrap.css" type="text/css" />
@@ -291,7 +291,7 @@
   </li><li class="toctree-l1">
     <a href="/mongo-java-driver/4.0/upgrading/"><i class='fa fa-level-up'></i>Upgrade Considerations</a>
   </li><li class="toctree-l1">
-    <a href="/mongo-java-driver/4.0/javadoc"><i class='fa fa-file-text-o'></i>API Documentation</a>
+    <a href="/mongo-java-driver/4.0/apidocs/"><i class='fa fa-file-text-o'></i>API Documentation</a>
   </li><li class="toctree-l1">
     <a href="https://github.com/mongodb/mongo-java-driver/tree/master"><i class='fa fa-github'></i>Source Code</a>
   </li><li class="toctree-l1">
@@ -322,7 +322,7 @@
 application or end user to monitor various aspects of the driver.</p>
 
 <p>The driver creates MXBean instances of a single type:
-<a href="/mongo-java-driver/4.0/javadoc/com/mongodb/management/ConnectionPoolStatisticsMBean.html
+<a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/management/ConnectionPoolStatisticsMBean.html
 ">ConnectionPoolStatisticsMBean</a>.
  The driver registers one <code>ConnectionPoolStatisticsMBean</code> instance per each server it connects to. For example, in the case of a replica
  set, the driver creates an instance per each non-hidden member of the replica set.</p>
@@ -358,7 +358,7 @@ application has multiple <code>MongoClient</code> instances connected to the sam
 allowing an application to be notified when a command starts and when it either succeeds or fails.</p>
 
 <p>An application registers command listeners with a <code>MongoClient</code> by configuring <code>MongoClientOptions</code> with instances of classes
-that implement the <a href="/mongo-java-driver/4.0/javadoc/com/mongodb/event/CommandListener.html
+that implement the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/event/CommandListener.html
 "><code>CommandListener</code></a> interface. Consider the following, somewhat
 simplistic, implementation of the <code>CommandListener</code> interface:</p>
 
@@ -420,11 +420,11 @@ another message upon either successful completion or failure of each command.</p
 allowing an application to be notified when the driver detects changes to the topology of the MongoDB cluster to which it is connected.</p>
 
 <p>An application registers listeners with a <code>MongoClient</code> by configuring  <code>MongoClientOptions</code> with instances of classes that
-implement any of the <a href="/mongo-java-driver/4.0/javadoc/com/mongodb/event/ClusterListener.html
+implement any of the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/event/ClusterListener.html
 "><code>ClusterListener</code></a>,
- <a href="/mongo-java-driver/4.0/javadoc/com/mongodb/event/ServerListener.html
+ <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/event/ServerListener.html
 "><code>ServerListener</code></a>,
-or <a href="/mongo-java-driver/4.0/javadoc/com/mongodb/event/ServerMonitorListener.html
+or <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/event/ServerMonitorListener.html
 "><code>ServerMonitorListener</code></a> interfaces.</p>
 
 <p>Consider the following, somewhat simplistic, example of a cluster listener:</p>
@@ -504,7 +504,7 @@ and when that MongoClient is closed.  In addition, it will print a message when 
 <p>The driver supports monitoring of connection pool-related events.</p>
 
 <p>An application registers listeners with a <code>MongoClient</code> by configuring <code>MongoClientOptions</code> with instances of classes that
-implement the <a href="/mongo-java-driver/4.0/javadoc/com/mongodb/event/ConnectionPoolListener.html
+implement the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/event/ConnectionPoolListener.html
 "><code>ConnectionPoolListener</code></a> interface.</p>
 
 <p>Consider the following, simplistic, example of a connection pool listener:</p>

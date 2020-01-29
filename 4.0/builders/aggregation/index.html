@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-01-17T17:20:28.14">
+<meta name="date" content="2020-01-29T14:56:32.4">
 <link rel="shortcut icon" href="/mongo-java-driver/4.0/img/favicon.png">
 
     <title>Aggregates</title><link rel="stylesheet" href="/mongo-java-driver/4.0/lib/bootstrap.css" type="text/css" />
@@ -291,7 +291,7 @@
   </li><li class="toctree-l1">
     <a href="/mongo-java-driver/4.0/upgrading/"><i class='fa fa-level-up'></i>Upgrade Considerations</a>
   </li><li class="toctree-l1">
-    <a href="/mongo-java-driver/4.0/javadoc"><i class='fa fa-file-text-o'></i>API Documentation</a>
+    <a href="/mongo-java-driver/4.0/apidocs/"><i class='fa fa-file-text-o'></i>API Documentation</a>
   </li><li class="toctree-l1">
     <a href="https://github.com/mongodb/mongo-java-driver/tree/master"><i class='fa fa-github'></i>Source Code</a>
   </li><li class="toctree-l1">
@@ -317,7 +317,7 @@
 
 <h2 id="aggregates">Aggregates</h2>
 
-<p>The <a href="/mongo-java-driver/4.0/javadoc/com/mongodb/client/model/Aggregates.html
+<p>The <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/Aggregates.html
 "><code>Aggregates</code></a> class provides static factory methods that build <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/
 ">aggregation
 pipeline operators</a>.  Each method returns an instance of the
@@ -335,7 +335,7 @@ pipeline operators</a>.  Each method returns an instance of the
 <p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/match/
 "><code>$match</code></a> pipeline stage passes all documents matching the
 specified filter to the next stage.  Though the filter can be an instance of any class that implements <code>Bson</code>, it&rsquo;s convenient to
-combine with use of the <a href="/mongo-java-driver/4.0/javadoc/com/mongodb/client/model/Filters.html
+combine with use of the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/Filters.html
 "><code>Filters</code></a> class.  In the example below, it&rsquo;s assumed that the
 <code>eq</code> method of the <code>Filters</code> class has been statically imported.</p>
 
@@ -349,7 +349,7 @@ combine with use of the <a href="/mongo-java-driver/4.0/javadoc/com/mongodb/clie
 <p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/project/
 "><code>$project</code></a> pipeline stage passes the projected fields of all
 documents to the next stage.  Though the projection can be an instance of any class that implements <code>Bson</code>, it&rsquo;s convenient to combine
-with use of the <a href="/mongo-java-driver/4.0/javadoc/com/mongodb/client/model/Projections.html
+with use of the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/Projections.html
 "><code>Projections</code></a> class.  In the example below, it&rsquo;s assumed that the
 <code>include</code>, <code>excludeId</code>, and <code>fields</code> methods of the <code>Projections</code> class have been statically imported.</p>
 
@@ -381,7 +381,7 @@ This example creates a pipeline stage that randomly selects 5 documents from the
 <p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/sort/
 "><code>$sort</code></a> pipeline stage passes all documents to the next stage,
 sorted by the specified sort criteria. Though the sort criteria can be an instance of any class that implements <code>Bson</code>, it&rsquo;s convenient to
-combine with use of the <a href="/mongo-java-driver/4.0/javadoc/com/mongodb/client/model/Sorts.html
+combine with use of the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/Sorts.html
 "><code>Sorts</code></a> class.  In the example below, it&rsquo;s assumed that the
 <code>descending</code>, <code>ascending</code>, and <code>orderBy</code> methods of the <code>Sorts</code> class have been statically imported.</p>
 
@@ -479,7 +479,7 @@ expression on which to group, and zero or more
 <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/group/#accumulator-operator
 ">accumulators</a> which are evaluated for each
 grouping.  To simplify the expression of accumulators, the driver includes an
-<a href="/mongo-java-driver/4.0/javadoc/com/mongodb/client/model/Accumulators.html
+<a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/Accumulators.html
 "><code>Accumulators</code></a> class with static factory methods for each of the supported
 accumulators. In the example below, it&rsquo;s assumed that the <code>sum</code> and <code>avg</code> methods of the <code>Accumulators</code> class have been statically
 imported.</p>

@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-01-17T17:20:27.98">
+<meta name="date" content="2020-01-29T14:56:32.24">
 <link rel="shortcut icon" href="/mongo-java-driver/4.0/img/favicon.png">
 
     <title>Read Operations</title><link rel="stylesheet" href="/mongo-java-driver/4.0/lib/bootstrap.css" type="text/css" />
@@ -291,7 +291,7 @@
   </li><li class="toctree-l1">
     <a href="/mongo-java-driver/4.0/upgrading/"><i class='fa fa-level-up'></i>Upgrade Considerations</a>
   </li><li class="toctree-l1">
-    <a href="/mongo-java-driver/4.0/javadoc"><i class='fa fa-file-text-o'></i>API Documentation</a>
+    <a href="/mongo-java-driver/4.0/apidocs/"><i class='fa fa-file-text-o'></i>API Documentation</a>
   </li><li class="toctree-l1">
     <a href="https://github.com/mongodb/mongo-java-driver/tree/master"><i class='fa fa-github'></i>Source Code</a>
   </li><li class="toctree-l1">
@@ -355,7 +355,7 @@ val collection: MongoCollection[Document] = database.getCollection(&quot;restaur
 
 <h2 id="query-a-collection">Query a Collection</h2>
 
-<p>To query the collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCollection.html#find[C]()(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,TResult],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.FindObservable[C]
+<p>To query the collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#find[C]()(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,TResult],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.FindObservable[C]
 "><code>find()</code></a> method.</p>
 
 <p>You can call the method without any arguments to query all documents in a collection:</p>
@@ -371,12 +371,12 @@ val collection: MongoCollection[Document] = database.getCollection(&quot;restaur
 
 <h2 id="query-filters">Query Filters</h2>
 
-<p>To query for documents that match certain conditions, pass a filter document to the <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCollection.html#find[C]()(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,TResult],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.FindObservable[C]
+<p>To query for documents that match certain conditions, pass a filter document to the <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#find[C]()(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,TResult],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.FindObservable[C]
 "><code>find()</code></a> method.</p>
 
 <h3 id="empty-filter">Empty Filter</h3>
 
-<p>To specify an empty filter (i.e. match all documents in a collection), use an empty <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/bson/index.html#Document:org.mongodb.scala.bson.collection.immutable.Document.type
+<p>To specify an empty filter (i.e. match all documents in a collection), use an empty <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/bson/index.html#Document:org.mongodb.scala.bson.collection.immutable.Document.type
 "><code>Document</code></a> object.</p>
 
 <pre><code class="language-scala">collection.find(Document()).printResults()
@@ -384,7 +384,7 @@ val collection: MongoCollection[Document] = database.getCollection(&quot;restaur
 
 <div class="admonition tip">
 <h5 class="admonition-title">tip</h5>
-<p>For the <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCollection.html#find[C]()(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,TResult],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.FindObservable[C]"><code>find()</code></a> method, you can also call the method without passing a filter object to match all documents in a collection.</p>
+<p>For the <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#find[C]()(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,TResult],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.FindObservable[C]"><code>find()</code></a> method, you can also call the method without passing a filter object to match all documents in a collection.</p>
 
 </div>
 
@@ -394,7 +394,7 @@ val collection: MongoCollection[Document] = database.getCollection(&quot;restaur
 
 <h3 id="filters-helper"><code>Filters</code> Helper</h3>
 
-<p>To facilitate the creation of filter documents, the Scala driver provides the <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/model/Filters$.html
+<p>To facilitate the creation of filter documents, the Scala driver provides the <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/model/Filters$.html
 "><code>Filters</code></a> class that provides filter condition helper methods.</p>
 
 <p>Consider the following <code>find</code> operation which includes a filter <code>Document</code> which specifies that:</p>
@@ -410,7 +410,7 @@ val collection: MongoCollection[Document] = database.getCollection(&quot;restaur
     .printResults()
 </code></pre>
 
-<p>The following example specifies the same filter condition using the <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/model/Filters$.html
+<p>The following example specifies the same filter condition using the <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/model/Filters$.html
 "><code>Filters</code></a> helper methods:</p>
 
 <pre><code class="language-scala">collection.find(and(gte(&quot;stars&quot;, 2), lt(&quot;stars&quot;, 5), equal(&quot;categories&quot;, &quot;Bakery&quot;)))
@@ -418,17 +418,17 @@ val collection: MongoCollection[Document] = database.getCollection(&quot;restaur
 </code></pre>
 
 <p>For a list of MongoDB query filter operators, refer to the <a href="http://docs.mongodb.org/manual/reference/operator/query
-">MongoDB Manual</a>. For the associated <code>Filters</code> helpers, see <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/model/Filters$.html
+">MongoDB Manual</a>. For the associated <code>Filters</code> helpers, see <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/model/Filters$.html
 "><code>Filters</code></a>.
 See also the  <a href="http://docs.mongodb.org/manual/tutorial/query-documents
 ">Query Documents Tutorial</a> for an overview of querying in MongoDB, including specifying filter conditions on arrays and embedded documents.</p>
 
 <h2 id="findobservable">FindObservable</h2>
 
-<p>The <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCollection.html#find[C]()(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,TResult],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.FindObservable[C]
-"><code>find()</code></a> method returns an instance of the <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/FindObservable.html
-"><code>FindObservable</code></a> class. The class provides various methods that you can chain to the <code>find()</code> method to modify the output or behavior of the query, such as <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/FindObservable.html#sort(sort:org.mongodb.scala.bson.conversions.Bson):org.mongodb.scala.FindObservable[TResult]
-"><code>sort()</code></a>  or <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/FindObservable.html#projection(projection:org.mongodb.scala.bson.conversions.Bson):org.mongodb.scala.FindObservable[TResult]
+<p>The <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#find[C]()(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,TResult],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.FindObservable[C]
+"><code>find()</code></a> method returns an instance of the <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/FindObservable.html
+"><code>FindObservable</code></a> class. The class provides various methods that you can chain to the <code>find()</code> method to modify the output or behavior of the query, such as <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/FindObservable.html#sort(sort:org.mongodb.scala.bson.conversions.Bson):org.mongodb.scala.FindObservable[TResult]
+"><code>sort()</code></a>  or <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/FindObservable.html#projection(projection:org.mongodb.scala.bson.conversions.Bson):org.mongodb.scala.FindObservable[TResult]
 "><code>projection()</code></a>, as well as for iterating the results via the <code>subscribe</code> method.</p>
 
 <h3 id="projections">Projections</h3>
@@ -444,7 +444,7 @@ See also the  <a href="http://docs.mongodb.org/manual/tutorial/query-documents
 </code></pre>
 
 <p>To facilitate the creation of projection documents, the Scala driver provides the
-<a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/model/Projections$.html
+<a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/model/Projections$.html
 "><code>Projections</code></a> class.</p>
 
 <pre><code class="language-scala">collection.find(and(gte(&quot;stars&quot;, 2), lt(&quot;stars&quot;, 5), equal(&quot;categories&quot;, &quot;Bakery&quot;)))
@@ -455,14 +455,14 @@ See also the  <a href="http://docs.mongodb.org/manual/tutorial/query-documents
 <p>In the projection document, you can also specify a projection expression using a <a href="http://docs.mongodb.org/manual/reference/operator/projection/
 ">projection operator</a></p>
 
-<p>For an example on using the <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/model/Projections$.html#metaTextScore(fieldName:String):org.mongodb.scala.bson.conversions.Bson
+<p>For an example on using the <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/model/Projections$.html#metaTextScore(fieldName:String):org.mongodb.scala.bson.conversions.Bson
 "><code>Projections.metaTextScore</code></a>,
 see the <a href="/mongo-java-driver/4.0/driver-scala/tutorials/text-search/">Text Search tutorial</a>.</p>
 
 <h3 id="sorts">Sorts</h3>
 
 <p>To sort documents, pass a <a href="http://docs.mongodb.org/manual/reference/method/cursor.sort/#cursor.sort
-">sort specification document</a> to the <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/FindObservable.html#sort(sort:org.mongodb.scala.bson.conversions.Bson):org.mongodb.scala.FindObservable[TResult]
+">sort specification document</a> to the <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/FindObservable.html#sort(sort:org.mongodb.scala.bson.conversions.Bson):org.mongodb.scala.FindObservable[TResult]
 "><code>FindObservable.sort()</code></a> method.  The Scala driver provides <a href="/mongo-java-driver/4.0/builders/sorts/"><code>Sorts</code></a> helpers to facilitate the sort specification document.</p>
 
 <pre><code class="language-scala">collection.find(and(gte(&quot;stars&quot;, 2), lt(&quot;stars&quot;, 5), equal(&quot;categories&quot;, &quot;Bakery&quot;)))
@@ -472,7 +472,7 @@ see the <a href="/mongo-java-driver/4.0/driver-scala/tutorials/text-search/">Tex
 
 <h3 id="sort-with-projections">Sort with Projections</h3>
 
-<p>The <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/FindObservable.html
+<p>The <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/FindObservable.html
 "><code>FindObservable</code></a> methods themselves return <code>FindObservable</code> objects, and as such, you can append multiple <code>FindObservable</code> methods to the <code>find()</code> method.</p>
 
 <pre><code class="language-scala">collection.find(and(gte(&quot;stars&quot;, 2), lt(&quot;stars&quot;, 5), equal(&quot;categories&quot;, &quot;Bakery&quot;)))
@@ -489,11 +489,11 @@ see the <a href="/mongo-java-driver/4.0/driver-scala/tutorials/text-search/">Tex
 ">read preference</a> at three levels:</p>
 
 <ul>
-<li><p>In a <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoClient$.html
+<li><p>In a <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoClient$.html
 "><code>MongoClient()</code></a></p>
 
 <ul>
-<li>Via <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoClientSettings$.html
+<li>Via <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoClientSettings$.html
 "><code>MongoClientSettings</code></a>:</li>
 </ul>
 
@@ -504,23 +504,23 @@ see the <a href="/mongo-java-driver/4.0/driver-scala/tutorials/text-search/">Tex
 </code></pre>
 
 <ul>
-<li>Via <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/ConnectionString$.html
+<li>Via <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/ConnectionString$.html
 "><code>ConnectionString</code></a>, as in the following example:</li>
 </ul>
 
 <pre><code class="language-scala">  val mongoClient = MongoClient(&quot;mongodb://host1:27017,host2:27017/?readPreference=secondary&quot;)
 </code></pre></li>
 
-<li><p>In a <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoDatabase.html
-"><code>MongoDatabase</code></a> via its <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoDatabase.html#withReadPreference(readPreference:org.mongodb.scala.ReadPreference):org.mongodb.scala.MongoDatabase
+<li><p>In a <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoDatabase.html
+"><code>MongoDatabase</code></a> via its <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoDatabase.html#withReadPreference(readPreference:org.mongodb.scala.ReadPreference):org.mongodb.scala.MongoDatabase
 "><code>withReadPreference</code></a> method.</p>
 
 <pre><code class="language-scala">val database = mongoClient.getDatabase(&quot;test&quot;)
                           .withReadPreference(ReadPreference.secondary())
 </code></pre></li>
 
-<li><p>In a <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCollection.html
-"><code>MongoCollection</code></a> via its <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCollection.html#withReadPreference(readPreference:org.mongodb.scala.ReadPreference):org.mongodb.scala.MongoCollection[TResult]
+<li><p>In a <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html
+"><code>MongoCollection</code></a> via its <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#withReadPreference(readPreference:org.mongodb.scala.ReadPreference):org.mongodb.scala.MongoCollection[TResult]
 "><code>withReadPreference</code></a> method:</p>
 
 <pre><code class="language-scala">val collection = database.getCollection(&quot;restaurants&quot;)
@@ -543,11 +543,11 @@ see the <a href="/mongo-java-driver/4.0/driver-scala/tutorials/text-search/">Tex
 ">read concern</a> at three levels:</p>
 
 <ul>
-<li><p>In a <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoClient$.html
+<li><p>In a <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoClient$.html
 "><code>MongoClient()</code></a></p>
 
 <ul>
-<li>Via <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoClientSettings$.html
+<li>Via <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoClientSettings$.html
 "><code>MongoClientSettings</code></a>:</li>
 </ul>
 
@@ -558,23 +558,23 @@ see the <a href="/mongo-java-driver/4.0/driver-scala/tutorials/text-search/">Tex
 </code></pre>
 
 <ul>
-<li>Via <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/ConnectionString$.html
+<li>Via <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/ConnectionString$.html
 "><code>ConnectionString</code></a>, as in the following example:</li>
 </ul>
 
 <pre><code class="language-scala">  val mongoClient = MongoClient(&quot;mongodb://host1:27017,host2:27017/?readConcernLevel=majority&quot;)
 </code></pre></li>
 
-<li><p>In a <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoDatabase.html
-"><code>MongoDatabase</code></a> via its <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoDatabase.html#withReadConcern(readConcern:org.mongodb.scala.ReadConcern):org.mongodb.scala.MongoDatabase
+<li><p>In a <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoDatabase.html
+"><code>MongoDatabase</code></a> via its <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoDatabase.html#withReadConcern(readConcern:org.mongodb.scala.ReadConcern):org.mongodb.scala.MongoDatabase
 "><code>withReadConcern</code></a> method, as in the following example:</p>
 
 <pre><code class="language-scala">val database = mongoClient.getDatabase(&quot;test&quot;)
                           .withReadConcern(ReadConcern.MAJORITY)
 </code></pre></li>
 
-<li><p>In a <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCollection.html
-"><code>MongoCollection</code></a> via its <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCollection.html#withReadConcern-com.mongodb.ReadConcern-
+<li><p>In a <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html
+"><code>MongoCollection</code></a> via its <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#withReadConcern-com.mongodb.ReadConcern-
 "><code>withReadConcern</code></a> method, as in the following example:</p>
 
 <pre><code class="language-scala">val collection = database.getCollection(&quot;restaurants&quot;)

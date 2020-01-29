@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-01-17T17:20:28.05">
+<meta name="date" content="2020-01-29T14:56:32.31">
 <link rel="shortcut icon" href="/mongo-java-driver/4.0/img/favicon.png">
 
     <title>Run Commands</title><link rel="stylesheet" href="/mongo-java-driver/4.0/lib/bootstrap.css" type="text/css" />
@@ -291,7 +291,7 @@
   </li><li class="toctree-l1">
     <a href="/mongo-java-driver/4.0/upgrading/"><i class='fa fa-level-up'></i>Upgrade Considerations</a>
   </li><li class="toctree-l1">
-    <a href="/mongo-java-driver/4.0/javadoc"><i class='fa fa-file-text-o'></i>API Documentation</a>
+    <a href="/mongo-java-driver/4.0/apidocs/"><i class='fa fa-file-text-o'></i>API Documentation</a>
   </li><li class="toctree-l1">
     <a href="https://github.com/mongodb/mongo-java-driver/tree/master"><i class='fa fa-github'></i>Source Code</a>
   </li><li class="toctree-l1">
@@ -318,7 +318,7 @@
 <h2 id="run-commands">Run Commands</h2>
 
 <p>Not all commands have a specific helper. However you can run any <a href="http://docs.mongodb.org/manual/reference/command
-">MongoDB command</a> by using the MongoDatabase&rsquo;s <a href="/mongo-java-driver/4.0/javadoc/com/mongodb/client/MongoDatabase.html#runCommand(org.bson.conversions.Bson,com.mongodb.ReadPreference)
+">MongoDB command</a> by using the MongoDatabase&rsquo;s <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/MongoDatabase.html#runCommand(org.bson.conversions.Bson,com.mongodb.ReadPreference)
 "><code>runCommand()</code></a> method.</p>
 
 <h2 id="prerequisites">Prerequisites</h2>
@@ -349,7 +349,7 @@ MongoDatabase database = mongoClient.getDatabase(&quot;test&quot;);
 
 <h2 id="run-buildinfo-and-collstats-commands">Run <code>buildInfo</code> and <code>collStats</code> Commands</h2>
 
-<p>To run a command, construct a <a href="/mongo-java-driver/4.0/javadoc/org/bson/Document.html
+<p>To run a command, construct a <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/Document.html
 "><code>Document</code></a>
 object that specifies the command and pass it to the <code>runCommand()</code> method.</p>
 

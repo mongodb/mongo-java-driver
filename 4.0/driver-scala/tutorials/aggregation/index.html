@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-01-17T17:20:28.01">
+<meta name="date" content="2020-01-29T14:56:32.27">
 <link rel="shortcut icon" href="/mongo-java-driver/4.0/img/favicon.png">
 
     <title>Aggregation</title><link rel="stylesheet" href="/mongo-java-driver/4.0/lib/bootstrap.css" type="text/css" />
@@ -291,7 +291,7 @@
   </li><li class="toctree-l1">
     <a href="/mongo-java-driver/4.0/upgrading/"><i class='fa fa-level-up'></i>Upgrade Considerations</a>
   </li><li class="toctree-l1">
-    <a href="/mongo-java-driver/4.0/javadoc"><i class='fa fa-file-text-o'></i>API Documentation</a>
+    <a href="/mongo-java-driver/4.0/apidocs/"><i class='fa fa-file-text-o'></i>API Documentation</a>
   </li><li class="toctree-l1">
     <a href="https://github.com/mongodb/mongo-java-driver/tree/master"><i class='fa fa-github'></i>Source Code</a>
   </li><li class="toctree-l1">
@@ -359,9 +359,9 @@ val collection: MongoCollection[Document] = database.getCollection(&quot;restaur
 <h2 id="perform-aggregation">Perform Aggregation</h2>
 
 <p>To perform aggregation, pass a list of <a href="http://docs.mongodb.org/manual/meta/aggregation-quick-reference
-">aggregation stages</a> to the <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/MongoCollection.html#aggregate[C](pipeline:Seq[org.mongodb.scala.bson.conversions.Bson])(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,TResult],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.AggregateObservable[C]
+">aggregation stages</a> to the <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#aggregate[C](pipeline:Seq[org.mongodb.scala.bson.conversions.Bson])(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,TResult],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.AggregateObservable[C]
 "><code>MongoCollection.aggregate()</code></a> method.
-The Scala driver provides the <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/model/Aggregates$.html
+The Scala driver provides the <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/model/Aggregates$.html
 "><code>Aggregates</code></a> helper class that contains builders for aggregation stages.</p>
 
 <p>In the following example, the aggregation pipeline</p>
@@ -371,11 +371,11 @@ The Scala driver provides the <a href="/mongo-java-driver/4.0/scaladoc/org/mongo
 "><code>$match</code></a> stage to filter for documents whose <code>categories</code> array field contains the element <code>Bakery</code>. The example uses <a href="/mongo-java-driver/4.0/builders/aggregation/#match"><code>Aggregates.filter</code></a> to build the <code>$match</code> stage.</p></li>
 
 <li><p>Then, uses  a <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/group/
-"><code>$group</code></a> stage to group the matching documents by the <code>stars</code> field, accumulating a count of documents for each distinct value of <code>stars</code>. The example uses <a href="/mongo-java-driver/4.0/builders/aggregation/#group"><code>Aggregates.group</code></a> to build the <code>$group</code> stage and <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/model/Accumulators$.html#sum[TExpression](fieldName:String,expression:TExpression):org.mongodb.scala.model.BsonField
+"><code>$group</code></a> stage to group the matching documents by the <code>stars</code> field, accumulating a count of documents for each distinct value of <code>stars</code>. The example uses <a href="/mongo-java-driver/4.0/builders/aggregation/#group"><code>Aggregates.group</code></a> to build the <code>$group</code> stage and <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/model/Accumulators$.html#sum[TExpression](fieldName:String,expression:TExpression):org.mongodb.scala.model.BsonField
 "><code>Accumulators.sum</code></a> to build the <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/group/#accumulator-operator
 ">accumulator expression</a>.  For the <a href="http://docs.mongodb.org/manual/reference/operator/aggregation-group/
 ">accumulator expressions</a> for use within the <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/group/
-"><code>$group</code></a> stage, the Scala driver provides <a href="/mongo-java-driver/4.0/javadoc/com/mongodb/client/model/Accumulators.html
+"><code>$group</code></a> stage, the Scala driver provides <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/Accumulators.html
 "><code>Accumulators</code></a> helper class.</p>
 
 <pre><code class="language-scala">collection.aggregate(Seq(
@@ -388,13 +388,13 @@ Aggregates.group(&quot;$stars&quot;, Accumulators.sum(&quot;count&quot;, 1))
 <h3 id="use-aggregation-expressions">Use Aggregation Expressions</h3>
 
 <p>For <a href="http://docs.mongodb.org/manual/reference/operator/aggregation-group/
-">$group accumulator expressions</a>, the Scala driver provides <a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/model/Accumulators$.html
+">$group accumulator expressions</a>, the Scala driver provides <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/model/Accumulators$.html
 "><code>Accumulators</code></a> helper class. For other <a href="http://docs.mongodb.org/manual/meta/aggregation-quick-reference/#aggregation-expressions
 ">aggregation expressions</a>, manually build the expression <code>Document</code>.</p>
 
 <p>In the following example, the aggregation pipeline uses a <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/project/
 "><code>$project</code></a> stage to return only the <code>name</code> field and the calculated field <code>firstCategory</code> whose value is the first element in the <code>categories</code> array. The example uses <a href="/mongo-java-driver/4.0/builders/aggregation/#project"><code>Aggregates.project</code></a> and various
-<a href="/mongo-java-driver/4.0/scaladoc/org/mongodb/scala/model/Projections$.html
+<a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/model/Projections$.html
 "><code>Projections</code></a> methods to build the <code>$project</code> stage.</p>
 
 <pre><code class="language-scala">collection.aggregate(
