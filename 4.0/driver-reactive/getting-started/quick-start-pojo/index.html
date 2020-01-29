@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-01-29T14:56:32.2">
+<meta name="date" content="2020-01-29T15:02:32.19">
 <link rel="shortcut icon" href="/mongo-java-driver/4.0/img/favicon.png">
 
     <title>Quick Start - POJOs</title><link rel="stylesheet" href="/mongo-java-driver/4.0/lib/bootstrap.css" type="text/css" />
@@ -458,7 +458,7 @@ public final class Address {
 
 <p>Before you can use a POJO with the driver, you need to configure the <a href="/mongo-java-driver/4.0/bson/codecs/"><code>CodecRegistry</code> </a> to include a codecs
 to handle the translation to and from <a href="/mongo-java-driver/4.0/bson/"><code>bson</code></a> for your POJOs. The simplest way to do that is to use the
-<a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/PojoCodecProvider.html
+<a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/PojoCodecProvider.html
 "><code>PojoCodecProvider.builder()</code></a> to create and configure a <code>CodecProvider</code>.</p>
 
 <p>The following example will combine the default codec registry, with the <code>PojoCodecProvider</code> configured to automatically create POJO
@@ -516,7 +516,7 @@ box without any extra configuration. See the <a href="/mongo-java-driver/4.0/bso
 
 <h3 id="insert-a-person">Insert a Person</h3>
 
-<p>To insert a Person into the collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#insertOne(TDocument)
+<p>To insert a Person into the collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#insertOne(TDocument)
 "><code>insertOne()</code></a> method.</p>
 
 <pre><code class="language-java">Person ada = new Person(&quot;Ada Byron&quot;, 20, new Address(&quot;St James Square&quot;, &quot;London&quot;, &quot;W1&quot;));
@@ -526,7 +526,7 @@ collection.insertOne(ada).subscribe(new OperationSubscriber&lt;InsertOneResult&g
 
 <h3 id="insert-many-persons">Insert Many Persons</h3>
 
-<p>To add multiple Person instances, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#insertMany(java.util.List)
+<p>To add multiple Person instances, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#insertMany(java.util.List)
 "><code>insertMany()</code></a> method
 which takes a list of <code>Person</code>.</p>
 
@@ -543,7 +543,7 @@ collection.insertMany(people).subscribe(new OperationSubscriber&lt;InsertManyRes
 
 <h2 id="query-the-collection">Query the Collection</h2>
 
-<p>To query the collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#find()
+<p>To query the collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#find()
 "><code>find()</code></a> method.</p>
 
 <p>The following example prints all the Person instances in the collection:</p>
@@ -561,9 +561,9 @@ Person{id='591dbc2550852fa685b3ad1a', name='Timothy Berners-Lee', age=61, addres
 
 <h2 id="specify-a-query-filter">Specify a Query Filter</h2>
 
-<p>To query for Person instance that match certain conditions, pass a filter object to the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#find()
+<p>To query for Person instance that match certain conditions, pass a filter object to the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#find()
 "><code>find()</code></a> method.
-To facilitate creating filter objects, the Java driver provides the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/Filters.html
+To facilitate creating filter objects, the Java driver provides the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/model/Filters.html
 "><code>Filters</code></a> helper.</p>
 
 <div class="admonition important">
@@ -576,7 +576,7 @@ By default they are the same but it is possible to change how POJO property name
 
 <h3 id="get-a-single-person-that-matches-a-filter">Get A Single Person That Matches a Filter</h3>
 
-<p>For example, to find the first <code>Person</code> in the database that lives in <code>Wimborne</code> pass an <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/Filters.html#eq(java.lang.String,TItem)
+<p>For example, to find the first <code>Person</code> in the database that lives in <code>Wimborne</code> pass an <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/model/Filters.html#eq(java.lang.String,TItem)
 "><code>eq</code></a>
 filter object to specify the equality condition:</p>
 
@@ -598,27 +598,27 @@ filter object to specify the equality condition:</p>
 
 <h2 id="update-documents">Update Documents</h2>
 
-<p>To update documents in a collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)
-"><code>updateOne</code></a> and <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)
+<p>To update documents in a collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)
+"><code>updateOne</code></a> and <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)
 "><code>updateMany</code></a> methods.</p>
 
 <p>Pass to the methods:</p>
 
 <ul>
-<li><p>A filter object to determine the document or documents to update. To facilitate creating filter objects, the Java driver provides the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/Filters.html
-"><code>Filters</code></a> helper. To specify an empty filter (i.e. match all Persons in a collection), use an empty <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/Document.html
+<li><p>A filter object to determine the document or documents to update. To facilitate creating filter objects, the Java driver provides the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/model/Filters.html
+"><code>Filters</code></a> helper. To specify an empty filter (i.e. match all Persons in a collection), use an empty <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/Document.html
 "><code>Document</code></a> object.</p></li>
 
 <li><p>An update document that specifies the modifications. For a list of the available operators, see <a href="http://docs.mongodb.org/manual/reference/operator/update-field
 ">update operators</a>.</p></li>
 </ul>
 
-<p>The update methods return an <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/result/UpdateResult.html
+<p>The update methods return an <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/result/UpdateResult.html
 "><code>UpdateResult</code></a> which provides information about the operation including the number of documents modified by the update.</p>
 
 <h3 id="update-a-single-person">Update a Single Person</h3>
 
-<p>To update at most a single <code>Person</code>, use the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)
+<p>To update at most a single <code>Person</code>, use the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)
 "><code>updateOne</code></a> method.</p>
 
 <p>The following example updates <code>Ada Byron</code> setting their age to <code>23</code> and name to <code>Ada Lovelace</code>:</p>
@@ -629,7 +629,7 @@ filter object to specify the equality condition:</p>
 
 <h3 id="update-multiple-persons">Update Multiple Persons</h3>
 
-<p>To update all Persons that match a filter, use the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)
+<p>To update all Persons that match a filter, use the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)
 "><code>updateMany</code></a> method.</p>
 
 <p>The following example sets the zip field to <code>null</code> for all documents that have a <code>zip</code> value:</p>
@@ -640,7 +640,7 @@ filter object to specify the equality condition:</p>
 
 <h3 id="replace-a-single-person">Replace a Single Person</h3>
 
-<p>An alternative method to change an existing <code>Person</code>, would be to use the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#replaceOne(org.bson.conversions.Bson,TDocument)
+<p>An alternative method to change an existing <code>Person</code>, would be to use the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#replaceOne(org.bson.conversions.Bson,TDocument)
 "><code>replaceOne</code></a> method.</p>
 
 <p>The following example replaces the <code>Ada Lovelace</code> back to the original document:</p>
@@ -650,21 +650,21 @@ filter object to specify the equality condition:</p>
 
 <h2 id="delete-documents">Delete Documents</h2>
 
-<p>To delete documents from a collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#deleteOne(org.bson.conversions.Bson)
-"><code>deleteOne</code></a> and <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#deleteMany(org.bson.conversions.Bson)
+<p>To delete documents from a collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#deleteOne(org.bson.conversions.Bson)
+"><code>deleteOne</code></a> and <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#deleteMany(org.bson.conversions.Bson)
 "><code>deleteMany</code></a> methods.</p>
 
-<p>Pass to the methods a filter object to determine the document or documents to delete. To facilitate creating filter objects, the Java driver provides the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/Filters.html
-"><code>Filters</code></a> helper. To specify an empty filter (i.e. match all documents in a collection), use an empty <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/Document.html
+<p>Pass to the methods a filter object to determine the document or documents to delete. To facilitate creating filter objects, the Java driver provides the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/model/Filters.html
+"><code>Filters</code></a> helper. To specify an empty filter (i.e. match all documents in a collection), use an empty <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/Document.html
 "><code>Document</code></a> object.</p>
 
-<p>The delete methods return a <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/result/DeleteResult.html
+<p>The delete methods return a <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/result/DeleteResult.html
 "><code>DeleteResult</code></a>
 which provides information about the operation including the number of documents deleted.</p>
 
 <h3 id="delete-a-single-person-that-matches-a-filter">Delete a Single Person That Matches a Filter</h3>
 
-<p>To delete at most a single <code>Person</code> that matches a filter, use the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#deleteOne(org.bson.conversions.Bson)
+<p>To delete at most a single <code>Person</code> that matches a filter, use the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#deleteOne(org.bson.conversions.Bson)
 "><code>deleteOne</code></a> method:</p>
 
 <p>The following example deletes at most one <code>Person</code> who lives in <code>Wimborne</code>:</p>
@@ -674,7 +674,7 @@ which provides information about the operation including the number of documents
 
 <h3 id="delete-all-persons-that-match-a-filter">Delete All Persons That Match a Filter</h3>
 
-<p>To delete multiple Persons matching a filter use the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#deleteMany(org.bson.conversions.Bson)
+<p>To delete multiple Persons matching a filter use the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#deleteMany(org.bson.conversions.Bson)
 "><code>deleteMany</code></a> method.</p>
 
 <p>The following example deletes all Persons that live in <code>London</code>:</p>

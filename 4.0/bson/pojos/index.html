@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-01-29T14:56:32.2">
+<meta name="date" content="2020-01-29T15:02:32.21">
 <link rel="shortcut icon" href="/mongo-java-driver/4.0/img/favicon.png">
 
     <title>POJOs</title><link rel="stylesheet" href="/mongo-java-driver/4.0/lib/bootstrap.css" type="text/css" />
@@ -317,10 +317,10 @@
 
 <h2 id="pojos-plain-old-java-objects">POJOs - Plain Old Java Objects</h2>
 
-<p>The 3.5 release of the driver adds POJO support via the <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/PojoCodecProvider.html
+<p>The 3.5 release of the driver adds POJO support via the <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/PojoCodecProvider.html
 "><code>PojoCodecProvider</code></a>,
 which allows for direct serialization of POJOs and Java Beans to and from BSON. Internally, the <code>Codec</code> for each POJO utilizes a
-<a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/ClassModel.html
+<a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/ClassModel.html
 "><code>ClassModel</code></a> instance to store metadata about how the POJO should be serialized.</p>
 
 <p>A <code>ClassModel</code> for a POJO includes:</p>
@@ -328,7 +328,7 @@ which allows for direct serialization of POJOs and Java Beans to and from BSON. 
 <ul>
 <li>The class of the POJO.</li>
 <li>A new instance factory. Handling the creation of new instances of the POJO. By default it requires the POJO to have an empty constructor.</li>
-<li>Property information, a list of <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/PropertyModel.html
+<li>Property information, a list of <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/PropertyModel.html
 "><code>PropertyModel</code></a> instances that contain all the
 property metadata. By default this includes; any public getter methods with any corresponding setter methods and any public fields.</li>
 <li>An optional IdProperty (see <code>BsonId</code> annotation). By default the <code>_id</code> or <code>id</code> property in the POJO.</li>
@@ -355,20 +355,20 @@ property metadata. By default this includes; any public getter methods with any 
 discriminator key and value.</li>
 </ul>
 
-<p>ClassModels are built using the <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/ClassModelBuilder.html
+<p>ClassModels are built using the <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/ClassModelBuilder.html
 "><code>ClassModelBuilder</code></a> which can be accessed via
- the <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/ClassModel.html#builder(java.lang.Class)
+ the <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/ClassModel.html#builder(java.lang.Class)
 "><code>ClassModel.builder(clazz)</code></a> method. The builder
  initially uses reflection to create the required metadata.</p>
 
-<p>POJO <code>Codec</code> instances are created by the <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/PojoCodecProvider.html
+<p>POJO <code>Codec</code> instances are created by the <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/PojoCodecProvider.html
 "><code>PojoCodecProvider</code></a> which is a
 <code>CodecProvider</code>. CodecProviders are used by the <code>CodecRegistry</code> to find the correct <code>Codec</code> for any given class.</p>
 
 <div class="admonition important">
 <h5 class="admonition-title">important</h5>
 <p>By default all POJOs <strong>must</strong> include a public or protected, empty, no arguments, constructor. The
-<a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/annotations/BsonCreator.html"><code>BsonCreator</code></a> annotation can be used to support constructors or
+<a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/annotations/BsonCreator.html"><code>BsonCreator</code></a> annotation can be used to support constructors or
 public static methods to create new instances of a POJO.</p>
 
 <p>All properties in a POJO must have a <a href="/mongo-java-driver/4.0/bson/codecs/"><code>Codec</code></a> registered in the <code>CodecRegistry</code> so that their values can be
@@ -383,7 +383,7 @@ encoded and decoded.</p>
 automatically create a POJO <code>Codec</code> for any class that contains at least one serializable or deserializable property.</p>
 
 <p>The entry point for customisable POJO support is the <code>PojoCodecProvider</code>. New instances can be created via the
-<a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/PojoCodecProvider.html#builder
+<a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/PojoCodecProvider.html#builder
 "><code>PojoCodecProvider.builder()</code></a> method. The <code>builder</code> allows users to
 register any combination of:</p>
 
@@ -632,41 +632,41 @@ Enum in the <code>CodecRegistry</code>.</p>
 
 <h3 id="conventions">Conventions</h3>
 
-<p>The <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/Convention.html
+<p>The <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/Convention.html
 "><code>Convention</code></a> interface provides a mechanism for <code>ClassModelBuilder</code>
 instances to be configured during the build stage and the creation of the <code>ClassModel</code>.</p>
 
-<p>The following Conventions are available from the <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/Conventions.html
+<p>The following Conventions are available from the <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/Conventions.html
 "><code>Conventions</code></a> class:</p>
 
 <ul>
-<li>The <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/Conventions.html#ANNOTATION_CONVENTION
+<li>The <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/Conventions.html#ANNOTATION_CONVENTION
 "><code>ANNOTATION_CONVENTION</code></a>. Applies all the
 default annotations.</li>
-<li>The <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/Conventions.html#CLASS_AND_PROPERTY_CONVENTION
+<li>The <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/Conventions.html#CLASS_AND_PROPERTY_CONVENTION
 "><code>CLASS_AND_PROPERTY_CONVENTION</code></a>. Sets the
     discriminator key if not set to <code>_t</code> and the discriminator value if not set to the ClassModels simple type name. Also, configures
     the PropertyModels. If the <code>idProperty</code> isn&rsquo;t set and there is a property named <code>_id</code> or <code>id</code> then it will be marked as the <code>idProperty</code>.</li>
-<li>The <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/Conventions.html#SET_PRIVATE_FIELDS_CONVENTION
+<li>The <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/Conventions.html#SET_PRIVATE_FIELDS_CONVENTION
 "><code>SET_PRIVATE_FIELDS_CONVENTION</code></a>.  Enables
     private fields to be set directly using reflection, without the need of a setter method. Note this convention is not enabled by default.</li>
-<li>The <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/Conventions.html#USE_GETTERS_FOR_SETTERS
+<li>The <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/Conventions.html#USE_GETTERS_FOR_SETTERS
 "><code>USE_GETTERS_FOR_SETTERS</code></a> convention. Allows getters to be used
     for Map and Collection properties without setters, the collection/map is then mutated. Note this convention is not enabled by default.</li>
-<li>The <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/Conventions.html#OBJECT_ID_GENERATORS
+<li>The <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/Conventions.html#OBJECT_ID_GENERATORS
 "><code>OBJECT_ID_GENERATORS</code></a> convention. Adds an <code>IdGenerator</code> that
     generates new <code>ObjectId</code> for ClassModels that have an <code>ObjectId</code> value for the <code>id</code> property.</li>
-<li>The <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/Conventions.html#DEFAULT_CONVENTIONS
+<li>The <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/Conventions.html#DEFAULT_CONVENTIONS
 "><code>DEFAULT_CONVENTIONS</code></a>, a list containing the
 <code>ANNOTATION_CONVENTION</code>, the <code>CLASS_AND_PROPERTY_CONVENTION</code> and the <code>OBJECT_ID_GENERATORS</code> convention.</li>
-<li>The <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/Conventions.html#NO_CONVENTIONS
+<li>The <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/Conventions.html#NO_CONVENTIONS
 "><code>NO_CONVENTIONS</code></a> an empty list.</li>
 </ul>
 
 <p>Custom Conventions can either be set globally via the
-<a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/PojoCodecProvider.Builder.html#conventions(java.util.List)
+<a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/PojoCodecProvider.Builder.html#conventions(java.util.List)
 "><code>PojoCodecProvider.Builder.conventions(conventions)</code></a>
-method, or via the <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/ClassModelBuilder.html#conventions(java.util.List)
+method, or via the <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/ClassModelBuilder.html#conventions(java.util.List)
 "><code>ClassModelBuilder.conventions(conventions)</code></a>
 method.</p>
 
@@ -685,22 +685,22 @@ in their intent.</p>
 <p>Annotations require the <code>ANNOTATION_CONVENTION</code> and provide an easy way to configure how POJOs are serialized.</p>
 
 <p>The following annotations are available from the
-<a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/annotations/package-summary.html
+<a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/annotations/package-summary.html
 "><code>org.bson.codecs.pojo.annotations</code></a> package:</p>
 
 <ul>
-<li><a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/annotations/BsonCreator.html
+<li><a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/annotations/BsonCreator.html
 "><code>BsonCreator</code></a>, marks a public constructor or a public static method as
 the creator for new instances of the class. Can be combined with the <code>BsonProperty</code> annotation to link the parameters with properties.</li>
-<li><a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/annotations/BsonDiscriminator.html
+<li><a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/annotations/BsonDiscriminator.html
 "><code>BsonDiscriminator</code></a>, enables using a discriminator.
 Also allows for setting a custom discriminator key and value.</li>
-<li><a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/annotations/BsonId.html
+<li><a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/annotations/BsonId.html
 "><code>BsonId</code></a>, marks a property to be serialized as the <code>_id</code> property.</li>
-<li><a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/annotations/BsonIgnore.html
+<li><a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/annotations/BsonIgnore.html
 "><code>BsonIgnore</code></a>, marks a property to be ignored. Can be used to
 configure if a property is serialized and / or deserialized.</li>
-<li><a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/annotations/BsonProperty.html
+<li><a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/annotations/BsonProperty.html
 "><code>BsonProperty</code></a>. Allows for an alternative document key
 name when converting the POJO field to BSON. Also, allows a field to turn on using a discriminator when storing a POJO value.</li>
 </ul>
@@ -754,7 +754,7 @@ public final class Person {
 subtypes / implementations need to be registered with the <code>PojoCodecProvider</code> so that values can be encoded and decoded correctly.</p>
 
 <p>The easiest way to enable a discriminator is to annotate the abstract class with the <code>Discriminator</code> annotation. Alternatively, the
-<a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/ClassModelBuilder.html#enableDiscriminator(boolean)
+<a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/ClassModelBuilder.html#enableDiscriminator(boolean)
 "><code>ClassModelBuilder.enableDiscriminator(true)</code></a>
 method can be used to enable the use of a discriminator.</p>
 
@@ -818,11 +818,11 @@ public final class Person {
 <h3 id="changing-what-is-serialized">Changing what is serialized</h3>
 
 <p>By default <code>null</code> values aren&rsquo;t serialized. This is controlled by the default implementation of the
-<a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/FieldSerialization.html
+<a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/FieldSerialization.html
 "><code>FieldSerialization</code></a> interface. Custom implementations can be set on
 the <code>PropertyModelBuilder</code> which is available from the <code>ClassModelBuilder</code>.</p>
 
-<p>The <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/annotations/BsonIgnore.html
+<p>The <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/annotations/BsonIgnore.html
 "><code>BsonIgnore</code></a> can be used along with the <code>DEFAULT_CONVENTIONS</code> to mark
 a property to be ignored when serializing and or deserializing.</p>
 <div id="btnv"><div class="pull-left">

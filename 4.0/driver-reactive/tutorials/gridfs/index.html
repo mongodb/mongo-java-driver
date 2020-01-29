@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-01-29T14:56:32.21">
+<meta name="date" content="2020-01-29T15:02:32.21">
 <link rel="shortcut icon" href="/mongo-java-driver/4.0/img/favicon.png">
 
     <title>GridFS</title><link rel="stylesheet" href="/mongo-java-driver/4.0/lib/bootstrap.css" type="text/css" />
@@ -373,9 +373,9 @@ import static reactivestreams.helpers.PublisherHelpers.toPublisher;
 <p>GridFS stores files in <a href="http://docs.mongodb.org/manual/core/gridfs/#gridfs-collections
 ">two collections</a>: a <code>chunks</code> collection stores the file chunks, and a  <code>files</code> collection stores file metadata. The two collections are in a common bucket and the collection names are prefixed with the bucket name.</p>
 
-<p>The Java driver provides the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/gridfs/GridFSBuckets.html#create(com.mongodb.client.MongoDatabase)
+<p>The Java driver provides the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/gridfs/GridFSBuckets.html#create(com.mongodb.client.MongoDatabase)
 "><code>GridFSBuckets.create()</code></a> method
-to create the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/gridfs/GridFSBucket.html
+to create the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/gridfs/GridFSBucket.html
 "><code>GridFSBucket</code></a>.</p>
 
 <pre><code class="language-java">MongoDatabase myDatabase = mongoClient.getDatabase(&quot;mydb&quot;);
@@ -384,7 +384,7 @@ to create the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestre
 GridFSBucket gridFSBucket = GridFSBuckets.create(myDatabase);
 </code></pre>
 
-<p>You can specify a bucket name to <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/gridfs/GridFSBuckets.html#create(com.mongodb.client.MongoDatabase,java.lang.String)
+<p>You can specify a bucket name to <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/gridfs/GridFSBuckets.html#create(com.mongodb.client.MongoDatabase,java.lang.String)
 "><code>GridFSBuckets.create()</code></a> method.</p>
 
 <pre><code class="language-java">// Create a gridFSBucket with a custom bucket name &quot;files&quot;
@@ -400,10 +400,10 @@ GridFSBucket gridFSFilesBucket = GridFSBuckets.create(myDatabase, &quot;files&qu
 
 <h2 id="upload-to-gridfs">Upload to GridFS</h2>
 
-<p>The <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/gridfs/GridFSBucket.html#uploadFromPublisher(java.lang.String,org.reactivestreams.Publisher,com.mongodb.client.gridfs.model.GridFSUploadOptions)
+<p>The <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/gridfs/GridFSBucket.html#uploadFromPublisher(java.lang.String,org.reactivestreams.Publisher,com.mongodb.client.gridfs.model.GridFSUploadOptions)
 "><code>GridFSBucket.uploadFromPublisher</code></a> methods read the contents of <code>Publisher&lt;ByteBuffer&gt;</code> and save it to the <code>GridFSBucket</code>.</p>
 
-<p>You can use the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/gridfs/model/GridFSUploadOptions.html
+<p>You can use the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/gridfs/model/GridFSUploadOptions.html
 "><code>GridFSUploadOptions</code></a> to configure the chunk size or include additional metadata.</p>
 
 <p>The following example uploads the contents of a <code>Publisher&lt;ByteBuffer&gt;</code> into <code>GridFSBucket</code>:</p>
@@ -423,7 +423,7 @@ ObjectId fileId = uploadSubscriber.get().get(0);
 
 <h2 id="find-files-stored-in-gridfs">Find Files Stored in GridFS</h2>
 
-<p>To find the files stored in the <code>GridFSBucket</code> use the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/gridfs/GridFSBucket.html#find()
+<p>To find the files stored in the <code>GridFSBucket</code> use the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/gridfs/GridFSBucket.html#find()
 "><code>find</code></a> method.</p>
 
 <p>The following example prints out the filename of each file stored:</p>
@@ -443,7 +443,7 @@ filesSubscriber.await();
 
 <h2 id="download-from-gridfs">Download from GridFS</h2>
 
-<p>The <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/gridfs/GridFSBucket.html#downloadToPublisher(org.bson.types.ObjectId)
+<p>The <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/gridfs/GridFSBucket.html#downloadToPublisher(org.bson.types.ObjectId)
 "><code>downloadToPublisher</code></a> methods return a <code>Publisher&lt;ByteBuffer&gt;</code> that reads the contents from MongoDB.</p>
 
 <p>To download a file by its file <code>_id</code>, pass the <code>_id</code> to the method. The following example downloads a file by its file <code>_id</code>:</p>
@@ -453,8 +453,8 @@ ObservableSubscriber&lt;ByteBuffer&gt; downloadSubscriber = new OperationSubscri
 gridFSBucket.downloadToPublisher(fileId).subscribe(downloadSubscriber);
 </code></pre>
 
-<p>If you don&rsquo;t know the <code>_id</code> of the file but know the filename, then you can pass the filename to the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/gridfs/GridFSBucket.html#downloadToPublisher(java.lang.String,com.mongodb.client.gridfs.model.GridFSDownloadOptions)
-"><code>downloadToPublisher</code></a> method. By default, it will download the latest version of the file. Use the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/gridfs/model/GridFSDownloadOptions.html
+<p>If you don&rsquo;t know the <code>_id</code> of the file but know the filename, then you can pass the filename to the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/gridfs/GridFSBucket.html#downloadToPublisher(java.lang.String,com.mongodb.client.gridfs.model.GridFSDownloadOptions)
+"><code>downloadToPublisher</code></a> method. By default, it will download the latest version of the file. Use the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/gridfs/model/GridFSDownloadOptions.html
 "><code>GridFSDownloadOptions</code></a> to configure which version to download.</p>
 
 <p>The following example downloads the original version of the file named &ldquo;mongodb-tutorial&rdquo;:</p>
@@ -466,7 +466,7 @@ gridFSBucket.downloadToPublisher(&quot;mongodb-tutorial&quot;, downloadOptions).
 
 <h2 id="rename-files">Rename files</h2>
 
-<p>If you should need to rename a file, then use the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/gridfs/GridFSBucket.html#rename(org.bson.types.ObjectId,java.lang.String)
+<p>If you should need to rename a file, then use the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/gridfs/GridFSBucket.html#rename(org.bson.types.ObjectId,java.lang.String)
 "><code>rename</code></a> method.</p>
 
 <p>The following example renames a file to &ldquo;mongodbTutorial&rdquo;:</p>
@@ -487,7 +487,7 @@ gridFSBucket.rename(fileId, &quot;mongodbTutorial&quot;).subscribe(new Observabl
 
 <h2 id="delete-files">Delete files</h2>
 
-<p>To delete a file from the <code>GridFSBucket</code> use the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/gridfs/GridFSBucket.html#delete(org.bson.types.ObjectId)
+<p>To delete a file from the <code>GridFSBucket</code> use the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/gridfs/GridFSBucket.html#delete(org.bson.types.ObjectId)
 "><code>delete</code></a> method.</p>
 
 <p>The following example deletes a file from the <code>GridFSBucket</code>:</p>

@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-01-29T14:56:32.39">
+<meta name="date" content="2020-01-29T15:02:32.39">
 <link rel="shortcut icon" href="/mongo-java-driver/4.0/img/favicon.png">
 
     <title>Observables</title><link rel="stylesheet" href="/mongo-java-driver/4.0/lib/bootstrap.css" type="text/css" />
@@ -319,9 +319,9 @@
 
 <p>The MongoDB Scala Driver is an asynchronous and non blocking driver. Using the <code>Observable</code> model asynchronous events become simple, composable operations, freed from the complexity of nested callbacks.</p>
 
-<p>For asynchronous operations there are three interfaces <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/Observable.html
-"><code>Observable</code></a>, <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/Subscription.html
-"><code>Subscription</code></a> and <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/Observer.html
+<p>For asynchronous operations there are three interfaces <a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/Observable.html
+"><code>Observable</code></a>, <a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/Subscription.html
+"><code>Subscription</code></a> and <a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/Observer.html
 "><code>Observer</code></a>.</p>
 
 <div class="admonition note">
@@ -342,7 +342,7 @@
 
 <h2 id="observable">Observable</h2>
 
-<p>The <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/Observable.html
+<p>The <a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/Observable.html
 "><code>Observable</code></a> is an extended <code>Publisher</code> implementation and in general represents a MongoDB operation which emits its results to the <code>Observer</code> based on demand requested by the <code>Subscription</code> to the <code>Observable</code>.</p>
 
 <div class="admonition important">
@@ -355,18 +355,18 @@ An <code>Observable</code> can be subscribed to multiple times, with each subscr
 
 <h3 id="singleobservable">SingleObservable</h3>
 
-<p>The <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/SingleObservable.html
+<p>The <a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/SingleObservable.html
 "><code>SingleObservable</code></a> trait is a <code>Publisher</code> implementation that will only return a single item.
 It can be used in the same way as ordinary <code>Observables</code>.</p>
 
 <h2 id="subscription">Subscription</h2>
 
-<p>A <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/Subscription.html
+<p>A <a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/Subscription.html
 "><code>Subscription</code></a> represents a one-to-one lifecycle of an <code>Observer</code> subscribing to an <code>Observable</code>.  A <code>Subscription</code> to an <code>Observable</code> can only be used by a single <code>Observer</code>.  The purpose of a <code>Subscription</code> is to control demand and to allow unsubscribing from the <code>Observable</code>.</p>
 
 <h2 id="observer">Observer</h2>
 
-<p>An <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/Observer.html
+<p>An <a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/Observer.html
 "><code>Observer</code></a> provides the mechanism for receiving push-based notifications from the
 <code>Observable</code>.  Demand for these events is signalled by its <code>Subscription</code>.</p>
 
@@ -439,60 +439,60 @@ simpler:</p>
 <p>The full list of Monadic operators available are:</p>
 
 <ul>
-<li><em><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#andThen[U](pf:PartialFunction[scala.util.Try[T],U]):org.mongodb.scala.Observable[T]
+<li><em><a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#andThen[U](pf:PartialFunction[scala.util.Try[T],U]):org.mongodb.scala.Observable[T]
 "><code>andThen</code></a></em>:
 Allows the chaining of Observables.</li>
-<li><em><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#collect[S]():org.mongodb.scala.Observable[Seq[T]]
+<li><em><a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#collect[S]():org.mongodb.scala.Observable[Seq[T]]
 "><code>collect</code></a></em> :
 Collects all the results into a sequence.</li>
-<li><em><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#fallbackTo[U&gt;:T](that:org.mongodb.scala.Observable[U]):org.mongodb.scala.Observable[U]
+<li><em><a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#fallbackTo[U&gt;:T](that:org.mongodb.scala.Observable[U]):org.mongodb.scala.Observable[U]
 "><code>fallbackTo</code></a></em> :
 Allows falling back to an alternative <code>Observable</code> if there is a failure</li>
-<li><em><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#filter(predicate:T=&gt;Boolean):org.mongodb.scala.Observable[T]
+<li><em><a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#filter(predicate:T=&gt;Boolean):org.mongodb.scala.Observable[T]
 "><code>filter</code></a></em> :
 Filters results of the <code>Observable</code>.</li>
-<li><em><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#flatMap[S](mapFunction:T=&gt;org.mongodb.scala.Observable[S]):org.mongodb.scala.Observable[S]
+<li><em><a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#flatMap[S](mapFunction:T=&gt;org.mongodb.scala.Observable[S]):org.mongodb.scala.Observable[S]
 "><code>flatMap</code></a></em> :
 Create a new <code>Observable</code> by applying a function to each result of the <code>Observable</code>.</li>
-<li><em><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#foldLeft[S](initialValue:S)(accumulator:(S,T)=&gt;S):org.mongodb.scala.Observable[S]
+<li><em><a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#foldLeft[S](initialValue:S)(accumulator:(S,T)=&gt;S):org.mongodb.scala.Observable[S]
 "><code>foldLeft</code></a></em> :
 Creates a new Observable that contains the single result of the applied accumulator function.</li>
-<li><em><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#foreach[U](doOnEach:T=&gt;U):Unit
+<li><em><a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#foreach[U](doOnEach:T=&gt;U):Unit
 "><code>foreach</code></a></em> :
 Applies a function applied to each emitted result.</li>
-<li><em><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#head():scala.concurrent.Future[T]
+<li><em><a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#head():scala.concurrent.Future[T]
 "><code>head</code></a></em> :
 Returns the head of the <code>Observable</code> in a <code>Future</code>.</li>
-<li><em><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#map[S](mapFunction:T=&gt;S):org.mongodb.scala.Observable[S]
+<li><em><a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#map[S](mapFunction:T=&gt;S):org.mongodb.scala.Observable[S]
 "><code>map</code></a></em> :
 Creates a new Observable by applying a function to each emitted result of the Observable.</li>
-<li><em><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#observeOn[S](context:ExecutionContext):org.mongodb.scala.Observable[S]
+<li><em><a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#observeOn[S](context:ExecutionContext):org.mongodb.scala.Observable[S]
 "><code>observeOn</code></a></em> :
 Creates a new Observable that uses a specific <code>ExecutionContext</code> for future operations.</li>
-<li><em><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#recover[U&gt;:T](pf:PartialFunction[Throwable,U]):org.mongodb.scala.Observable[U]
+<li><em><a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#recover[U&gt;:T](pf:PartialFunction[Throwable,U]):org.mongodb.scala.Observable[U]
 "><code>recover</code></a></em> :
 Creates a new <code>Observable</code> that will handle any matching throwable that this <code>Observable</code> might contain by assigning it a value of
 another <code>Observable</code>.</li>
-<li><em><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#recoverWith[U&gt;:T](pf:PartialFunction[Throwable,org.mongodb.scala.Observable[U]]):org.mongodb.scala.Observable[U]
+<li><em><a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#recoverWith[U&gt;:T](pf:PartialFunction[Throwable,org.mongodb.scala.Observable[U]]):org.mongodb.scala.Observable[U]
 "><code>recoverWith</code></a></em> :
 Creates a new Observable that will handle any matching throwable that this Observable might contain.</li>
-<li><em><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#toFuture():scala.concurrent.Future[Seq[T]]
+<li><em><a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#toFuture():scala.concurrent.Future[Seq[T]]
 "><code>toFuture</code></a></em> :
 Collects the <code>Observable</code> results and converts to a <code>Future</code>.</li>
-<li><em><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#transform[S](mapFunction:T=&gt;S,errorMapFunction:Throwable=&gt;Throwable):org.mongodb.scala.Observable[S]
+<li><em><a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#transform[S](mapFunction:T=&gt;S,errorMapFunction:Throwable=&gt;Throwable):org.mongodb.scala.Observable[S]
 "><code>transform</code></a></em> :
 Creates a new <code>Observable</code> by applying the resultFunction function to each emitted result.</li>
-<li><em><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#withFilter(p:T=&gt;Boolean):org.mongodb.scala.Observable[T]
+<li><em><a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#withFilter(p:T=&gt;Boolean):org.mongodb.scala.Observable[T]
 "><code>withFilter</code></a></em> :
 Provides for-comprehensions support to Observables.</li>
-<li><em><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#zip[U](that:org.mongodb.scala.Observable[U]):org.mongodb.scala.Observable[(T,U)]
+<li><em><a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#zip[U](that:org.mongodb.scala.Observable[U]):org.mongodb.scala.Observable[(T,U)]
 "><code>zip</code></a></em> :
 Zips the values of this and that <code>Observable</code>, and creates a new <code>Observable</code> holding the tuple of their results.</li>
 </ul>
 
 <h3 id="singleobservable-1">SingleObservable</h3>
 
-<p>As we know that a <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/SingleObservable.html
+<p>As we know that a <a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/SingleObservable.html
 "><code>SingleObservable[T]</code></a> will only return a single item the <code>toFuture()</code> method will return a <code>Future[T]</code> in the same way as the <code>head</code> method does.
 There is also an implicit converter that converts a <code>Publisher</code> to a <code>SingleObservable</code></p>
 <div id="btnv"><div class="pull-left">

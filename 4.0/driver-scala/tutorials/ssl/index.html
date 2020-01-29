@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-01-29T14:56:32.34">
+<meta name="date" content="2020-01-29T15:02:32.35">
 <link rel="shortcut icon" href="/mongo-java-driver/4.0/img/favicon.png">
 
     <title>TLS/SSL</title><link rel="stylesheet" href="/mongo-java-driver/4.0/lib/bootstrap.css" type="text/css" />
@@ -319,9 +319,9 @@
 
 <p>The Java driver supports TLS/SSL connections to MongoDB servers using
 the underlying support for TLS/SSL provided by the JDK.
-You can configure the driver to use TLS/SSL either with <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/ConnectionString$.html
+You can configure the driver to use TLS/SSL either with <a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/ConnectionString$.html
 "><code>ConnectionString</code></a> or with
-<a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoClientSettings$.html
+<a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/MongoClientSettings$.html
 "><code>MongoClientSettings</code></a>.</p>
 
 <h2 id="mongoclient-api-since-3-7">MongoClient API (since 3.7)</h2>
@@ -331,7 +331,7 @@ You can configure the driver to use TLS/SSL either with <a href="/mongo-java-dri
 <pre><code class="language-scala">import org.mongodb.scala._
 </code></pre>
 
-<p>To specify TLS/SSL with <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/ConnectionString$.html
+<p>To specify TLS/SSL with <a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/ConnectionString$.html
 "><code>ConnectionString</code></a>, specify <code>ssl=true</code> as part of the connection
 string, as in:</p>
 
@@ -340,7 +340,7 @@ string, as in:</p>
 
 <h3 id="specify-tls-ssl-via-mongoclientsettings">Specify TLS/SSL via <code>MongoClientSettings</code></h3>
 
-<p>To specify TLS/SSL with with <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoClientSettings$.html
+<p>To specify TLS/SSL with with <a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/MongoClientSettings$.html
 "><code>MongoClientSettings</code></a>, set the <code>enabled</code> property to
 <code>true</code>, as in:</p>
 
@@ -356,7 +356,7 @@ val client = MongoClients.create(settings)
 </code></pre>
 
 <p>To specify the <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLContext.html"><code>javax.net.ssl.SSLContext</code></a> with
-<a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoClientSettings$.html
+<a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/MongoClientSettings$.html
 "><code>MongoClientSettings</code></a>, set the <code>sslContext</code> property, as in:</p>
 
 <pre><code class="language-scala">val sslContext: SSLContext = ???
@@ -373,11 +373,11 @@ val client = MongoClients.create(settings)
 
 <p>By default, the driver ensures that the hostname included in the
 server&rsquo;s SSL certificate(s) matches the hostname(s) provided when
-constructing a <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoClient$.html
+constructing a <a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/MongoClient$.html
 "><code>MongoClient()</code></a>.</p>
 
 <p>If your application needs to disable hostname verification, you must explicitly indicate
-this in <code>MongoClientSettings</code>](/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoClientSettings$.html
+this in <code>MongoClientSettings</code>](/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/MongoClientSettings$.html
 )</p>
 
 <pre><code class="language-scala">val settings = MongoClientSettings.builder()

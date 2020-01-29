@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-01-29T14:56:32.17">
+<meta name="date" content="2020-01-29T15:02:32.17">
 <link rel="shortcut icon" href="/mongo-java-driver/4.0/img/favicon.png">
 
     <title>Change Streams</title><link rel="stylesheet" href="/mongo-java-driver/4.0/lib/bootstrap.css" type="text/css" />
@@ -368,7 +368,7 @@ MongoCollection&lt;Document&gt; collection = database.getCollection(&quot;restau
 
 <h2 id="watch-the-collection">Watch the collection</h2>
 
-<p>To create a change stream use one of the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/MongoCollection.html#watch
+<p>To create a change stream use one of the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-sync/com/mongodb/client/MongoCollection.html#watch
 "><code>MongoCollection.watch()</code></a> methods.</p>
 
 <p>In the following example, the change stream prints out all changes it observes.</p>
@@ -379,7 +379,7 @@ MongoCollection&lt;Document&gt; collection = database.getCollection(&quot;restau
 <h2 id="watch-the-database">Watch the database</h2>
 
 <p>New in the 3.8 driver and MongoDB 4.0, applications can open a single change stream to watch all non-system collections of a database. To
-create such a change stream use one of the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/MongoDatabase.html#watch
+create such a change stream use one of the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-sync/com/mongodb/client/MongoDatabase.html#watch
 "><code>MongoDatabase.watch()</code></a> methods.</p>
 
 <p>In the following example, the change stream prints out all the changes it observes on the given database.</p>
@@ -391,7 +391,7 @@ create such a change stream use one of the <a href="/mongo-java-driver/4.0apidoc
 
 <p>New in the 3.8 driver and MongoDB 4.0, applications can open a single change stream to watch all non-system collections of all databases
 in a MongoDB deployment. To create such a change stream use one of the
-<a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/MongoClient.html#watch
+<a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-sync/com/mongodb/client/MongoClient.html#watch
 "><code>MongoClient.watch()</code></a> methods.</p>
 
 <p>In the following example, the change stream prints out all the changes it observes on the deployment to which the <code>MongoClient</code> is
@@ -414,7 +414,7 @@ the data returned by the <code>$changeStream</code> operator. Note: not all aggr
 "><code>$match</code></a> stage to filter for documents where the <code>operationType</code>
 is either an <code>insert</code>, <code>update</code>, <code>replace</code> or <code>delete</code>.</p></li>
 
-<li><p>Then, it sets the <code>fullDocument</code> to <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/FullDocument.html#UPDATE_LOOKUP
+<li><p>Then, it sets the <code>fullDocument</code> to <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/model/FullDocument.html#UPDATE_LOOKUP
 "><code>FullDocument.UPDATE_LOOKUP</code></a>,
 so that the document after the update is included in the results.</p></li>
 </ul>

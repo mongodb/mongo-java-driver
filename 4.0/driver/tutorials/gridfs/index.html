@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-01-29T14:56:32.22">
+<meta name="date" content="2020-01-29T15:02:32.23">
 <link rel="shortcut icon" href="/mongo-java-driver/4.0/img/favicon.png">
 
     <title>GridFS</title><link rel="stylesheet" href="/mongo-java-driver/4.0/lib/bootstrap.css" type="text/css" />
@@ -360,9 +360,9 @@ import static com.mongodb.client.model.Filters.eq;
 <p>GridFS stores files in <a href="http://docs.mongodb.org/manual/core/gridfs/#gridfs-collections
 ">two collections</a>: a <code>chunks</code> collection stores the file chunks, and a  <code>files</code> collection stores file metadata. The two collections are in a common bucket and the collection names are prefixed with the bucket name.</p>
 
-<p>The Java driver provides the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSBuckets.html#create(com.mongodb.client.MongoDatabase)
+<p>The Java driver provides the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSBuckets.html#create(com.mongodb.client.MongoDatabase)
 "><code>GridFSBuckets.create()</code></a> method
-to create the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSBucket.html
+to create the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSBucket.html
 "><code>GridFSBucket</code></a>.</p>
 
 <pre><code class="language-java">MongoDatabase myDatabase = mongoClient.getDatabase(&quot;mydb&quot;);
@@ -371,7 +371,7 @@ to create the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mon
 GridFSBucket gridFSBucket = GridFSBuckets.create(myDatabase);
 </code></pre>
 
-<p>You can specify a bucket name to <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSBuckets.html#create(com.mongodb.client.MongoDatabase,java.lang.String)
+<p>You can specify a bucket name to <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSBuckets.html#create(com.mongodb.client.MongoDatabase,java.lang.String)
 "><code>GridFSBuckets.create()</code></a> method.</p>
 
 <pre><code class="language-java">// Create a gridFSBucket with a custom bucket name &quot;files&quot;
@@ -391,10 +391,10 @@ GridFSBucket gridFSFilesBucket = GridFSBuckets.create(myDatabase, &quot;files&qu
 
 <h3 id="uploadfromstream">UploadFromStream</h3>
 
-<p>The <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSBucket.html#openUploadStream(java.lang.String,com.mongodb.client.gridfs.model.GridFSUploadOptions)
+<p>The <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSBucket.html#openUploadStream(java.lang.String,com.mongodb.client.gridfs.model.GridFSUploadOptions)
 "><code>GridFSBucket.uploadFromStream</code></a> method reads the contents of an <a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/io/InputStream.html"><code>InputStream</code></a> and saves it to the <code>GridFSBucket</code>.</p>
 
-<p>You can use the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/gridfs/model/GridFSUploadOptions.html
+<p>You can use the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/gridfs/model/GridFSUploadOptions.html
 "><code>GridFSUploadOptions</code></a> to configure the chunk size or include additional metadata.</p>
 
 <p>The following example uploads an <code>InputStream</code> into <code>GridFSBucket</code>:</p>
@@ -416,12 +416,12 @@ try {
 
 <h3 id="openuploadstream">OpenUploadStream</h3>
 
-<p>You can write data to a <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSUploadStream.html
+<p>You can write data to a <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSUploadStream.html
 "><code>GridFSUploadStream</code></a> which extends
  <a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/io/OutputStream.html"><code>OutputStream</code></a>. The
- <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSBucket.html#openUploadStream(java.lang.String,com.mongodb.client.gridfs.model.GridFSUploadOptions)
+ <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSBucket.html#openUploadStream(java.lang.String,com.mongodb.client.gridfs.model.GridFSUploadOptions)
 "><code>GridFSBucket.openUploadStream</code></a>
- method returns a <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSUploadStream.html
+ method returns a <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSUploadStream.html
 "><code>GridFSUploadStream</code></a>.</p>
 
 <p>The <code>GridFSUploadStream</code> buffers data until it reaches the <code>chunkSizeBytes</code> and then inserts the chunk into the <code>chunks</code> collection.  When the <code>GridFSUploadStream</code> is closed, the final chunk is written and the file metadata is inserted into the <code>files</code> collection.</p>
@@ -447,7 +447,7 @@ try {
 
 <h2 id="find-files-stored-in-gridfs">Find Files Stored in GridFS</h2>
 
-<p>To find the files stored in the <code>GridFSBucket</code> use the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSBucket.html#find()
+<p>To find the files stored in the <code>GridFSBucket</code> use the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSBucket.html#find()
 "><code>find</code></a> method.</p>
 
 <p>The following example prints out the filename of each file stored:</p>
@@ -476,7 +476,7 @@ try {
 
 <h3 id="downloadtostream">DownloadToStream</h3>
 
-<p>The <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSBucket.html#downloadToStream(org.bson.types.ObjectId,java.io.OutputStream)
+<p>The <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSBucket.html#downloadToStream(org.bson.types.ObjectId,java.io.OutputStream)
 "><code>downloadToStream</code></a> method reads the contents from MongoDB and writes the data directly to the provided <a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/io/OutputStream.html"><code>OutputStream</code></a>.</p>
 
 <p>To download a file by its file <code>_id</code>, pass the <code>_id</code> to the method. The
@@ -496,8 +496,8 @@ try {
 
 </code></pre>
 
-<p>If you don&rsquo;t know the <code>_id</code> of the file but know the filename, then you can pass the filename to the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSBucket.html#downloadToStream(java.lang.String,java.io.OutputStream,com.mongodb.client.gridfs.model.GridFSDownloadOptions)
-"><code>downloadToStream</code></a> method. By default, it will download the latest version of the file. Use the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/gridfs/model/GridFSDownloadOptions.html
+<p>If you don&rsquo;t know the <code>_id</code> of the file but know the filename, then you can pass the filename to the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSBucket.html#downloadToStream(java.lang.String,java.io.OutputStream,com.mongodb.client.gridfs.model.GridFSDownloadOptions)
+"><code>downloadToStream</code></a> method. By default, it will download the latest version of the file. Use the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/gridfs/model/GridFSDownloadOptions.html
 "><code>GridFSDownloadOptions</code></a> to configure which version to download.</p>
 
 <p>The following example downloads the original version of the file named &ldquo;mongodb-tutorial&rdquo; into the <code>OutputStream</code>:</p>
@@ -515,8 +515,8 @@ try {
 
 <h3 id="opendownloadstream">OpenDownloadStream</h3>
 
-<p>The <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSBucket.html#openDownloadStream(org.bson.types.ObjectId)
-"><code>openDownloadStream</code></a> method returns a <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSDownloadStream.html
+<p>The <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSBucket.html#openDownloadStream(org.bson.types.ObjectId)
+"><code>openDownloadStream</code></a> method returns a <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSDownloadStream.html
 "><code>GridFSDownloadStream</code></a> which extends <a href="http://docs.oracle.com/javase/8/docs/api/index.html?java/io/InputStream.html"><code>InputStream</code></a>.</p>
 
 <p>The following example reads from the <code>GridFSBucket</code> via the returned <code>InputStream</code>:</p>
@@ -532,8 +532,8 @@ downloadStream.close();
 System.out.println(new String(bytesToWriteTo, StandardCharsets.UTF_8));
 </code></pre>
 
-<p>You can also pass the filename to the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSBucket.html#openDownloadStream(java.lang.String,com.mongodb.client.gridfs.model.GridFSDownloadOptions)
-"><code>openDownloadStream</code></a> method. By default it will download the latest version of the file. Use the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/gridfs/model/GridFSDownloadOptions.html
+<p>You can also pass the filename to the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSBucket.html#openDownloadStream(java.lang.String,com.mongodb.client.gridfs.model.GridFSDownloadOptions)
+"><code>openDownloadStream</code></a> method. By default it will download the latest version of the file. Use the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/gridfs/model/GridFSDownloadOptions.html
 "><code>GridFSDownloadOptions</code></a> to configure which version to download.</p>
 
 <p>The following example downloads the latest version of the file named &ldquo;sampleData&rdquo; into the <code>OutputStream</code>:</p>
@@ -549,7 +549,7 @@ System.out.println(new String(bytesToWriteTo, StandardCharsets.UTF_8));
 
 <h2 id="rename-files">Rename files</h2>
 
-<p>If you should need to rename a file, then use the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSBucket.html#rename(org.bson.types.ObjectId,java.lang.String)
+<p>If you should need to rename a file, then use the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSBucket.html#rename(org.bson.types.ObjectId,java.lang.String)
 "><code>rename</code></a> method.</p>
 
 <p>The following example renames a file to &ldquo;mongodbTutorial&rdquo;:</p>
@@ -570,7 +570,7 @@ gridFSBucket.rename(fileId, &quot;mongodbTutorial&quot;);
 
 <h2 id="delete-files">Delete files</h2>
 
-<p>To delete a file from the <code>GridFSBucket</code> use the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSBucket.html#delete(org.bson.types.ObjectId)
+<p>To delete a file from the <code>GridFSBucket</code> use the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-sync/com/mongodb/client/gridfs/GridFSBucket.html#delete(org.bson.types.ObjectId)
 "><code>delete</code></a> method.</p>
 
 <p>The following example deletes a file from the <code>GridFSBucket</code>:</p>

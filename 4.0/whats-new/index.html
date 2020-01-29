@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-01-29T14:56:32.26">
+<meta name="date" content="2020-01-29T15:02:32.27">
 <link rel="shortcut icon" href="/mongo-java-driver/4.0/img/favicon.png">
 
     <title>What&#39;s New</title><link rel="stylesheet" href="/mongo-java-driver/4.0/lib/bootstrap.css" type="text/css" />
@@ -339,7 +339,7 @@ available for users of MongoDB Community.</p>
 Applications that store UUID values in MongoDB can use this setting to easily control the representation in MongoDB without having to
 register a <code>Codec&lt;Uuid&gt;</code> in the <code>CodecRegistry</code>.</p>
 
-<p>See <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/MongoClientSettings.html#getUuidRepresentation()
+<p>See <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/MongoClientSettings.html#getUuidRepresentation()
 "><code>MongoClientSettings.getUuidRepresentation</code></a> for details.</p>
 
 <h2 id="what-s-new-in-3-11">What&rsquo;s new in 3.11</h2>
@@ -352,11 +352,11 @@ register a <code>Codec&lt;Uuid&gt;</code> in the <code>CodecRegistry</code>.</p>
 <li>The transactions API supports MongoDB 4.2 distributed transactions for use with sharded clusters. Distributed transactions use the same
 API as replica set transactions.</li>
 <li>The sessions API supports the
-<a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/ClientSession.html#withTransaction(com.mongodb.client.TransactionBody) 
+<a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-sync/com/mongodb/client/ClientSession.html#withTransaction(com.mongodb.client.TransactionBody) 
 "><code>ClientSession.withTransaction()</code></a>
 method to conveniently run a transaction with automatic retries and at-most-once semantics.</li>
 <li>The transactions API supports the
-<a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/TransactionOptions.html#getMaxCommitTime(java.util.concurrent.TimeUnit)
+<a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/TransactionOptions.html#getMaxCommitTime(java.util.concurrent.TimeUnit)
 "><code>maxCommitTime</code></a> option to control the
 maximum amount of time to wait for a transaction to commit.</li>
 </ul>
@@ -387,11 +387,11 @@ available for users of MongoDB Community.</p>
 <h3 id="general-improvements">General improvements</h3>
 
 <ul>
-<li>New <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/MongoDatabase.html##aggregate(java.util.List)
+<li>New <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-sync/com/mongodb/client/MongoDatabase.html##aggregate(java.util.List)
 "><code>aggregate</code></a> helper methods support running
 database-level aggregations.</li>
 <li>Aggregate helper methods now support the <code>$merge</code> pipeline stage, and
-<a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/Aggregates.html#merge(java.lang.String)
+<a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/model/Aggregates.html#merge(java.lang.String)
 "><code>Aggregates.merge()</code></a> builder methods support creation of
 the new pipeline stage.</li>
 <li><a href="https://facebook.github.io/zstd/">Zstandard</a> for wire protocol compression is supported in addition to Snappy and Zlib.</li>
@@ -472,9 +472,9 @@ of the documentation and select the <code>Java (Sync)</code> tab.</p>
 <h3 id="change-stream-enhancements">Change Stream enhancements</h3>
 
 <p>The Java driver now provides support for opening a change stream against an entire database, via new
-<a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/MongoDatabase.html
+<a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-sync/com/mongodb/client/MongoDatabase.html
 "><code>MongoDatabase.watch</code></a> methods, or an
-entire deployment, via new <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/MongoClient.html
+entire deployment, via new <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-sync/com/mongodb/client/MongoClient.html
 "><code>MongoClient.watch</code></a> methods. See
 <a href="/mongo-java-driver/4.0/driver/tutorials/change-streams/">Change Streams</a> for further details.</p>
 
@@ -524,9 +524,9 @@ and how it compares to the existing <code>com.mongodb.MongoClient</code> class.<
 <h3 id="unix-domain-socket-support">Unix domain socket support</h3>
 
 <p>The 3.7 driver adds support for Unix domain sockets via the <a href="http://https://github.com/jnr/jnr-unixsocket"><code>jnr.unixsocket</code></a> library.
-Connecting to Unix domain sockets is done via the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/ConnectionString.html
+Connecting to Unix domain sockets is done via the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/ConnectionString.html
 "><code>ConnectionString</code></a> or via
-<a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/UnixServerAddress.html
+<a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/UnixServerAddress.html
 "><code>UnixServerAddress</code></a>.</p>
 
 <h3 id="pojocodec-improvements">PojoCodec improvements</h3>
@@ -566,7 +566,7 @@ Execution of command with request id 4 completed successfully in 22.44 ms on con
 
 <h3 id="improved-support-for-raw-documents">Improved support for &ldquo;raw&rdquo; documents</h3>
 
-<p>When working with &ldquo;raw&rdquo; BSON for improved performance via the <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/RawBsonDocument.html
+<p>When working with &ldquo;raw&rdquo; BSON for improved performance via the <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/RawBsonDocument.html
 "><code>RawBsonDocument</code></a>, the efficiency
 of accessing embedded documents and arrays has been drastically improved by returning raw slices of the containing document or array.  For
 instance</p>
@@ -599,7 +599,7 @@ BsonDocument embeddedDoc2 = (BsonDocument) embeddedArray.get(0);
 <h3 id="retryable-writes">Retryable writes</h3>
 
 <p>The 3.6 release adds support for retryable writes using the <code>retryWrites</code> option in
-<a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/MongoClientOptions.html
+<a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/MongoClientOptions.html
 "><code>MongoClientOptions</code></a>.</p>
 
 <h3 id="compression">Compression</h3>
@@ -614,13 +614,13 @@ BsonDocument embeddedDoc2 = (BsonDocument) embeddedArray.get(0);
 <h3 id="causal-consistency">Causal consistency</h3>
 
 <p>The 3.6 release adds support for <a href="http://dochub.mongodb.org/core/causal-consistency">causally consistency</a> via the new
-<a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/session/ClientSession.html
+<a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/session/ClientSession.html
 "><code>ClientSession</code></a> API.</p>
 
 <h3 id="application-configured-server-selection">Application-configured server selection</h3>
 
 <p>The 3.6 release adds support for application-configured control over server selection, using the <code>serverSelector</code> option in
-<a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/MongoClientOptions.html
+<a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/MongoClientOptions.html
 "><code>MongoClientOptions</code></a>.</p>
 
 <h3 id="pojo-codec-improvements">POJO Codec improvements</h3>
@@ -631,11 +631,11 @@ BsonDocument embeddedDoc2 = (BsonDocument) embeddedArray.get(0);
 <li>Improved sub-class and discriminator support.</li>
 <li>Support for custom Collection and Map implementations.</li>
 <li>Improvements to the <code>BsonCreator</code> annotation, which now supports <code>@BsonId</code> and <code>@BsonProperty</code> with values that represent the read name of the property.</li>
-<li>A new <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/PropertyCodecProvider.html
+<li>A new <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/PropertyCodecProvider.html
 "><code>PropertyCodecProvider</code></a> API, allowing for easy and type-safe handling of container types.</li>
-<li>Added the <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/Conventions.html#SET_PRIVATE_FIELDS_CONVENTION
+<li>Added the <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/Conventions.html#SET_PRIVATE_FIELDS_CONVENTION
 "><code>SET_PRIVATE_FIELDS_CONVENTION</code></a> convention.</li>
-<li>Added the <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/codecs/pojo/Conventions.html#USE_GETTERS_FOR_SETTERS
+<li>Added the <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/pojo/Conventions.html#USE_GETTERS_FOR_SETTERS
 "><code>USE_GETTERS_FOR_SETTERS</code></a> convention.</li>
 </ul>
 
@@ -712,19 +712,19 @@ documentation for more information.</p>
 <p>To create a <code>Decimal128</code> number, you can use</p>
 
 <ul>
-<li><p><a href="/mongo-java-driver/4.0apidocs/bson/org/bson/types/Decimal128.html
+<li><p><a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/types/Decimal128.html
 "><code>Decimal128.parse()</code></a> with a string:</p>
 
 <pre><code class="language-java">  Decimal128.parse(&quot;9.9900&quot;);
 </code></pre></li>
 
-<li><p><a href="/mongo-java-driver/4.0apidocs/bson/org/bson/types/Decimal128.html
+<li><p><a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/types/Decimal128.html
 "><code>new Decimal128()</code></a> with a long:</p>
 
 <pre><code class="language-java">  new Decimal128(10L);
 </code></pre></li>
 
-<li><p><a href="/mongo-java-driver/4.0apidocs/bson/org/bson/types/Decimal128.html
+<li><p><a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/types/Decimal128.html
 "><code>new Decimal128()</code></a> with a <code>java.math.BigDecimal</code>:</p>
 
 <pre><code class="language-java">  new Decimal128(new BigDecimal(&quot;4.350000&quot;));
@@ -739,7 +739,7 @@ documentation for more information.</p>
 <p><a href="http://docs.mongodb.org/manual/reference/collation/
 ">Collation</a> allows users to specify language-specific rules for string
 comparison.
-Use the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/Collation.html
+Use the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/model/Collation.html
 "><code>Collation.builder()</code></a>
 to create the <code>Collation</code> object. For example, the following example creates a <code>Collation</code> object with Primary level of comparison and <a href="http://docs.mongodb.org/manual/reference/collation-locales-defaults/#supported-languages-and-locales
 ">locale</a> <code>fr</code>.</p>
@@ -751,7 +751,7 @@ to create the <code>Collation</code> object. For example, the following example 
 
 <h4 id="collection-level">Collection Level</h4>
 
-<p>To specify collation at the collection level, pass a <code>Collation</code> object as an option to the <code>createCollection()</code> method. To specify options to the <code>createCollection</code> method, use the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/CreateCollectionOptions.html
+<p>To specify collation at the collection level, pass a <code>Collation</code> object as an option to the <code>createCollection()</code> method. To specify options to the <code>createCollection</code> method, use the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/model/CreateCollectionOptions.html
 "><code>CreateCollectionOptions</code></a> class.</p>
 
 <pre><code class="language-java">database.createCollection(&quot;myColl&quot;, new CreateCollectionOptions().collation(
@@ -762,7 +762,7 @@ to create the <code>Collation</code> object. For example, the following example 
 
 <h4 id="index-level">Index Level</h4>
 
-<p>To specify collation for an index, pass a <code>Collation</code> object as an option to the <code>createIndex()</code> method. To specify index options, use the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/IndexOptions.html
+<p>To specify collation for an index, pass a <code>Collation</code> object as an option to the <code>createIndex()</code> method. To specify index options, use the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/model/IndexOptions.html
 ">IndexOptions</a> class.</p>
 
 <pre><code class="language-java">IndexOptions collationIndexOptions = new IndexOptions().name(&quot;collation-fr&quot;)

@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-01-29T14:56:32.29">
+<meta name="date" content="2020-01-29T15:02:32.3">
 <link rel="shortcut icon" href="/mongo-java-driver/4.0/img/favicon.png">
 
     <title>Databases and Collections</title><link rel="stylesheet" href="/mongo-java-driver/4.0/lib/bootstrap.css" type="text/css" />
@@ -350,7 +350,7 @@ import org.mongodb.scala.model.Filters._
 
 <h2 id="access-a-database">Access a Database</h2>
 
-<p>Once you have a <code>MongoClient</code> instance connected to a MongoDB deployment, use its <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoClient.html#getDatabase(name:String):org.mongodb.scala.MongoDatabase
+<p>Once you have a <code>MongoClient</code> instance connected to a MongoDB deployment, use its <a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/MongoClient.html#getDatabase(name:String):org.mongodb.scala.MongoDatabase
 "><code>getDatabase()</code></a> method to access a database.</p>
 
 <p>Specify the name of the database to the <code>getDatabase()</code> method. If a database does not exist, MongoDB creates the database when you first store data for that database.</p>
@@ -369,7 +369,7 @@ import org.mongodb.scala.model.Filters._
 
 <h2 id="access-a-collection">Access a Collection</h2>
 
-<p>Once you have a <code>MongoDatabase</code> instance, use its <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoDatabase.html#getCollection[TResult](collectionName:String)(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[TResult,org.mongodb.scala.Document],implicitct:scala.reflect.ClassTag[TResult]):org.mongodb.scala.MongoCollection[TResult]
+<p>Once you have a <code>MongoDatabase</code> instance, use its <a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/MongoDatabase.html#getCollection[TResult](collectionName:String)(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[TResult,org.mongodb.scala.Document],implicitct:scala.reflect.ClassTag[TResult]):org.mongodb.scala.MongoCollection[TResult]
 "><code>getCollection()</code></a>
 method to access a collection.</p>
 
@@ -393,8 +393,8 @@ method to access a collection.</p>
 
 <h2 id="explicitly-create-a-collection">Explicitly Create a Collection</h2>
 
-<p>The MongoDB driver provides the <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoDatabase.html#createCollection-java.lang.String-com.mongodb.client.model.CreateCollectionOptions-
-"><code>createCollection()</code></a> method to explicitly create a collection. When you explicitly create a collection, you can specify various collection options, such as a maximum size or the documentation validation rules, with the <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/model/package$$CreateCollectionOptions$.html
+<p>The MongoDB driver provides the <a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/MongoDatabase.html#createCollection-java.lang.String-com.mongodb.client.model.CreateCollectionOptions-
+"><code>createCollection()</code></a> method to explicitly create a collection. When you explicitly create a collection, you can specify various collection options, such as a maximum size or the documentation validation rules, with the <a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/model/package$$CreateCollectionOptions$.html
 "><code>CreateCollectionOptions</code></a> class. If you are not specifying these options, you do not need to explicitly create the collection since MongoDB creates new collections when you first store data for the collections.</p>
 
 <h3 id="capped-collection">Capped Collection</h3>
@@ -409,7 +409,7 @@ method to access a collection.</p>
 <h3 id="document-validation">Document Validation</h3>
 
 <p>MongoDB provides the capability to <a href="http://docs.mongodb.org/manual/core/document-validation
-">validate documents</a> during updates and insertions. Validation rules are specified on a per-collection basis using the <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/model/package$$ValidationOptions$.html
+">validate documents</a> during updates and insertions. Validation rules are specified on a per-collection basis using the <a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/model/package$$ValidationOptions$.html
 "><code>ValidationOptions</code></a>, which takes a filter document that specifies the validation rules or expressions.</p>
 
 <pre><code class="language-scala">ValidationOptions collOptions = ValidationOptions().validator(
@@ -421,7 +421,7 @@ database.createCollection(&quot;contacts&quot;, CreateCollectionOptions().valida
 
 <h2 id="get-a-list-of-collections">Get A List of Collections</h2>
 
-<p>You can get a list of the collections in a database using the <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoDatabase.html#listCollectionNames--
+<p>You can get a list of the collections in a database using the <a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/MongoDatabase.html#listCollectionNames--
 "><code>MongoDatabase.listCollectionNames()</code></a> method:</p>
 
 <pre><code class="language-scala">database.listCollectionNames().printResults()
@@ -429,7 +429,7 @@ database.createCollection(&quot;contacts&quot;, CreateCollectionOptions().valida
 
 <h2 id="drop-a-collection">Drop a Collection</h2>
 
-<p>You can drop a collection by using the <a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#drop--
+<p>You can drop a collection by using the <a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#drop--
 "><code>MongoCollection.drop()</code></a> method:</p>
 
 <pre><code class="language-scala">val collection: MongoCollection[Document] = database.getCollection(&quot;contacts&quot;)
@@ -445,22 +445,22 @@ have different property values, such as <a href="http://docs.mongodb.org/manual/
 ">write concern</a>, the <code>MongoDatabase</code> and <code>MongoCollection</code> class provides various methods:</p>
 
 <ul>
-<li><p><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoDatabase.html#withReadConcern(readConcern:org.mongodb.scala.ReadConcern):org.mongodb.scala.MongoDatabase
+<li><p><a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/MongoDatabase.html#withReadConcern(readConcern:org.mongodb.scala.ReadConcern):org.mongodb.scala.MongoDatabase
 "><code>MongoDatabase.withReadConcern</code></a></p></li>
 
-<li><p><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoDatabase.html#withReadPreference(readPreference:org.mongodb.scala.ReadPreference):org.mongodb.scala.MongoDatabase
+<li><p><a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/MongoDatabase.html#withReadPreference(readPreference:org.mongodb.scala.ReadPreference):org.mongodb.scala.MongoDatabase
 "><code>MongoDatabase.withReadPreference</code></a></p></li>
 
-<li><p><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoDatabase.html#withWriteConcern(writeConcern:org.mongodb.scala.WriteConcern):org.mongodb.scala.MongoDatabase
+<li><p><a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/MongoDatabase.html#withWriteConcern(writeConcern:org.mongodb.scala.WriteConcern):org.mongodb.scala.MongoDatabase
 "><code>MongoDatabase.withWriteConcern</code></a></p></li>
 
-<li><p><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#withReadPreference(readPreference:org.mongodb.scala.ReadPreference):org.mongodb.scala.MongoCollection[TResult]
+<li><p><a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#withReadPreference(readPreference:org.mongodb.scala.ReadPreference):org.mongodb.scala.MongoCollection[TResult]
 "><code>MongoCollection.withReadConcern</code></a></p></li>
 
-<li><p><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#withReadPreference(readPreference:org.mongodb.scala.ReadPreference):org.mongodb.scala.MongoCollection[TResult]
+<li><p><a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#withReadPreference(readPreference:org.mongodb.scala.ReadPreference):org.mongodb.scala.MongoCollection[TResult]
 "><code>MongoCollection.withReadPreference</code></a></p></li>
 
-<li><p><a href="/mongo-java-driver/4.0apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#withWriteConcern(writeConcern:org.mongodb.scala.WriteConcern):org.mongodb.scala.MongoCollection[TResult]
+<li><p><a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#withWriteConcern(writeConcern:org.mongodb.scala.WriteConcern):org.mongodb.scala.MongoCollection[TResult]
 "><code>MongoCollection.withWriteConcern</code></a></p></li>
 </ul>
 

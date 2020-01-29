@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-01-29T14:56:32.25">
+<meta name="date" content="2020-01-29T15:02:32.26">
 <link rel="shortcut icon" href="/mongo-java-driver/4.0/img/favicon.png">
 
     <title>Write Operations</title><link rel="stylesheet" href="/mongo-java-driver/4.0/lib/bootstrap.css" type="text/css" />
@@ -367,7 +367,7 @@ MongoCollection&lt;Document&gt; collection = database.getCollection(&quot;restau
 
 <h2 id="insert-new-document">Insert New Document</h2>
 
-<p>To insert a single document into the collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#insertOne(TDocument)
+<p>To insert a single document into the collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#insertOne(TDocument)
 "><code>insertOne()</code></a> method.</p>
 
 <pre><code class="language-java">Document document = new Document(&quot;name&quot;, &quot;Café Con Leche&quot;)
@@ -389,7 +389,7 @@ collection.insertOne(document).subscribe(new ObservableSubscriber&lt;Void&gt;())
 
 <h2 id="insert-multiple-documents">Insert Multiple Documents</h2>
 
-<p>To add multiple documents, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#insertMany(java.util.List)
+<p>To add multiple documents, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#insertMany(java.util.List)
 "><code>insertMany()</code></a> method, which takes a list of documents to insert.</p>
 
 <p>The following example inserts two documents to the collection:</p>
@@ -425,16 +425,16 @@ collection.insertMany(documents).subscribe(new ObservableSubscriber&lt;Void&gt;(
 
 <h2 id="update-existing-documents">Update Existing Documents</h2>
 
-<p>To update existing documents in a collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)
-"><code>updateOne()</code></a> or <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)
+<p>To update existing documents in a collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)
+"><code>updateOne()</code></a> or <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)
 "><code>updateMany</code></a> methods.</p>
 
 <h3 id="filters">Filters</h3>
 
-<p>You can pass in a filter document to the methods to specify which documents to update. The filter document specification is the same as for <a href="/mongo-java-driver/4.0/driver-reactive/tutorials/perform-read-operations/">read operations</a>. To facilitate creating filter objects, the Java driver provides the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/Filters.html
+<p>You can pass in a filter document to the methods to specify which documents to update. The filter document specification is the same as for <a href="/mongo-java-driver/4.0/driver-reactive/tutorials/perform-read-operations/">read operations</a>. To facilitate creating filter objects, the Java driver provides the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/model/Filters.html
 "><code>Filters</code></a> helper.</p>
 
-<p>To specify an empty filter (i.e. match all documents in a collection), use an empty <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/Document.html
+<p>To specify an empty filter (i.e. match all documents in a collection), use an empty <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/Document.html
 "><code>Document</code></a> object.</p>
 
 <h3 id="update-operators">Update Operators</h3>
@@ -442,7 +442,7 @@ collection.insertMany(documents).subscribe(new ObservableSubscriber&lt;Void&gt;(
 <p>To change a field in a document, MongoDB provides <a href="http://docs.mongodb.org/manual/reference/operator/update
 ">update operators</a>.  To specify the modification to perform using the update operators, use an updates document.</p>
 
-<p>To facilitate the creation of updates documents, the Java driver provides the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/Updates.html
+<p>To facilitate the creation of updates documents, the Java driver provides the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/model/Updates.html
 "><code>Updates</code></a> class.</p>
 
 <div class="admonition important">
@@ -454,7 +454,7 @@ collection.insertMany(documents).subscribe(new ObservableSubscriber&lt;Void&gt;(
 
 <h3 id="update-a-single-document">Update a Single Document</h3>
 
-<p>The <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)
+<p>The <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)
 "><code>updateOne()</code></a> method updates at most a single document, even if the filter condition matches multiple documents in the collection.</p>
 
 <p>The following operation on the <code>restaurants</code> collection updates a document whose <code>_id</code> field equals <code>ObjectId(&quot;57506d62f57802807471dd41&quot;)</code>.</p>
@@ -468,10 +468,10 @@ collection.insertMany(documents).subscribe(new ObservableSubscriber&lt;Void&gt;(
 <p>Specifically, the operation uses:</p>
 
 <ul>
-<li><p><a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/Updates.html#set(java.lang.String,TItem)
+<li><p><a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/model/Updates.html#set(java.lang.String,TItem)
 "><code>Updates.set</code></a> to set the value of the <code>stars</code> field to <code>1</code> and the <code>contact.phone</code> field to <code>&quot;228-555-9999&quot;</code>, and</p></li>
 
-<li><p><a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/Updates.html#currentDate(java.lang.String)
+<li><p><a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/model/Updates.html#currentDate(java.lang.String)
 "><code>Updates.currentDate</code></a> to modify the <code>lastModified</code> field to the current date. If the <code>lastModified</code> field does not exist, the operator adds the field to the document.</p></li>
 </ul>
 
@@ -484,7 +484,7 @@ collection.insertMany(documents).subscribe(new ObservableSubscriber&lt;Void&gt;(
 
 <h3 id="update-multiple-documents">Update Multiple Documents</h3>
 
-<p>The <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)
+<p>The <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)
 "><code>updateMany</code></a> method updates all documents that match the filter condition.</p>
 
 <p>The following operation on the <code>restaurants</code> collection updates all documents whose <code>stars</code> field equals <code>2</code>.</p>
@@ -498,18 +498,18 @@ collection.insertMany(documents).subscribe(new ObservableSubscriber&lt;Void&gt;(
 <p>Specifically, the operation uses:</p>
 
 <ul>
-<li><p><a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/Updates.html#set(java.lang.String,TItem)
+<li><p><a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/model/Updates.html#set(java.lang.String,TItem)
 "><code>Updates.set</code></a> to set the value of the <code>stars</code> field to <code>0</code> , and</p></li>
 
-<li><p><a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/Updates.html#currentDate(java.lang.String)
+<li><p><a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/model/Updates.html#currentDate(java.lang.String)
 "><code>Updates.currentDate</code></a> to modify the <code>lastModified</code> field to the current date. If the <code>lastModified</code> field does not exist, the operator adds the field to the document.</p></li>
 </ul>
 
 <h3 id="update-options">Update Options</h3>
 
-<p>With the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)
-"><code>updateOne()</code></a> and <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)
-"><code>updateMany</code></a> methods, you can include an <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/UpdateOptions.html
+<p>With the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)
+"><code>updateOne()</code></a> and <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)
+"><code>updateMany</code></a> methods, you can include an <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/model/UpdateOptions.html
 "><code>UpdateOptions</code></a> document to specify the <a href="http://docs.mongodb.org/manual/reference/method/db.collection.update/#upsert(option
 "><code>upsert</code></a> option or the <a href="http://docs.mongodb.org/manual/core/document-validation/#bypass-document-validation
 "><code>bypassDocumentationValidation</code></a> option.</p>
@@ -523,7 +523,7 @@ collection.insertMany(documents).subscribe(new ObservableSubscriber&lt;Void&gt;(
 
 <h2 id="replace-an-existing-document">Replace an Existing Document</h2>
 
-<p>To replace an existing document in a collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#replaceOne(org.bson.conversions.Bson,TDocument)
+<p>To replace an existing document in a collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#replaceOne(org.bson.conversions.Bson,TDocument)
 "><code>replaceOne</code></a> method.</p>
 
 <div class="admonition important">
@@ -535,18 +535,18 @@ collection.insertMany(documents).subscribe(new ObservableSubscriber&lt;Void&gt;(
 
 <h3 id="filters-1">Filters</h3>
 
-<p>You can pass in a filter document to the method to specify which document to replace. The filter document specification is the same as for <a href="/mongo-java-driver/4.0/driver-reactive/tutorials/perform-read-operations/">read operations</a>. To facilitate creating filter objects, the Java driver provides the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/Filters.html
+<p>You can pass in a filter document to the method to specify which document to replace. The filter document specification is the same as for <a href="/mongo-java-driver/4.0/driver-reactive/tutorials/perform-read-operations/">read operations</a>. To facilitate creating filter objects, the Java driver provides the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/model/Filters.html
 "><code>Filters</code></a> helper.</p>
 
-<p>To specify an empty filter (i.e. match all documents in a collection), use an empty <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/Document.html
+<p>To specify an empty filter (i.e. match all documents in a collection), use an empty <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/Document.html
 "><code>Document</code></a> object.</p>
 
-<p>The <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#replaceOne(org.bson.conversions.Bson,TDocument)
+<p>The <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#replaceOne(org.bson.conversions.Bson,TDocument)
 "><code>replaceOne</code></a> method replaces at most a single document, even if the filter condition matches multiple documents in the collection.</p>
 
 <h3 id="replace-a-document">Replace a Document</h3>
 
-<p>To replace a document, pass a new document to the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#replaceOne(org.bson.conversions.Bson,TDocument)
+<p>To replace a document, pass a new document to the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#replaceOne(org.bson.conversions.Bson,TDocument)
 "><code>replaceOne</code></a> method.</p>
 
 <div class="admonition important">
@@ -570,8 +570,8 @@ collection.insertMany(documents).subscribe(new ObservableSubscriber&lt;Void&gt;(
 
 <h3 id="update-options-1">Update Options</h3>
 
-<p>With the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#replaceOne(org.bson.conversions.Bson,TDocument)
-"><code>replaceOne</code></a>, you can include an <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/UpdateOptions.html
+<p>With the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#replaceOne(org.bson.conversions.Bson,TDocument)
+"><code>replaceOne</code></a>, you can include an <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/model/UpdateOptions.html
 "><code>UpdateOptions</code></a> document to specify the <a href="http://docs.mongodb.org/manual/reference/method/db.collection.update/#upsert(option
 "><code>upsert</code></a> option or the <a href="http://docs.mongodb.org/manual/core/document-validation/#bypass-document-validation
 "><code>bypassDocumentationValidation</code></a> option.</p>
@@ -588,21 +588,21 @@ collection.insertMany(documents).subscribe(new ObservableSubscriber&lt;Void&gt;(
 <h2 id="delete-documents">Delete Documents</h2>
 
 <p>To delete documents in a collection, you can use the
-<a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#deleteOne(org.bson.conversions.Bson)
-"><code>deleteOne</code></a> and <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#deleteMany(org.bson.conversions.Bson)
+<a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#deleteOne(org.bson.conversions.Bson)
+"><code>deleteOne</code></a> and <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#deleteMany(org.bson.conversions.Bson)
 "><code>deleteMany</code></a> methods.</p>
 
 <h3 id="filters-2">Filters</h3>
 
-<p>You can pass in a filter document to the methods to specify which documents to delete. The filter document specification is the same as for <a href="/mongo-java-driver/4.0/driver-reactive/tutorials/perform-read-operations/">read operations</a>. To facilitate creating filter objects, the Java driver provides the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/Filters.html
+<p>You can pass in a filter document to the methods to specify which documents to delete. The filter document specification is the same as for <a href="/mongo-java-driver/4.0/driver-reactive/tutorials/perform-read-operations/">read operations</a>. To facilitate creating filter objects, the Java driver provides the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/model/Filters.html
 "><code>Filters</code></a> helper.</p>
 
-<p>To specify an empty filter (i.e. match all documents in a collection), use an empty <a href="/mongo-java-driver/4.0apidocs/bson/org/bson/Document.html
+<p>To specify an empty filter (i.e. match all documents in a collection), use an empty <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/Document.html
 "><code>Document</code></a> object.</p>
 
 <h3 id="delete-a-single-document">Delete a Single Document</h3>
 
-<p>The <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#deleteOne(org.bson.conversions.Bson)
+<p>The <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#deleteOne(org.bson.conversions.Bson)
 "><code>deleteOne</code></a> method deletes at most a single document, even if the filter condition matches multiple documents in the collection.</p>
 
 <p>The following operation on the <code>restaurants</code> collection deletes a document whose <code>_id</code> field equals <code>ObjectId(&quot;57506d62f57802807471dd41&quot;)</code>.</p>
@@ -612,7 +612,7 @@ collection.insertMany(documents).subscribe(new ObservableSubscriber&lt;Void&gt;(
 
 <h3 id="delete-multiple-documents">Delete Multiple Documents</h3>
 
-<p>The <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#deleteMany(org.bson.conversions.Bson)
+<p>The <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#deleteMany(org.bson.conversions.Bson)
 "><code>deleteMany</code></a> method deletes all documents that match the filter condition.</p>
 
 <p>The following operation on the <code>restaurants</code> collection deletes all documents whose <code>stars</code> field equals <code>4</code>.</p>
@@ -631,11 +631,11 @@ collection.insertMany(documents).subscribe(new ObservableSubscriber&lt;Void&gt;(
 ">write concern</a> at three levels:</p>
 
 <ul>
-<li><p>In a <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoClient.html
+<li><p>In a <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoClient.html
 "><code>MongoClient()</code></a></p>
 
 <ul>
-<li>Via <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/MongoClientSettings.html
+<li>Via <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/MongoClientSettings.html
 "><code>MongoClientSettings</code></a>:</li>
 </ul>
 
@@ -646,22 +646,22 @@ collection.insertMany(documents).subscribe(new ObservableSubscriber&lt;Void&gt;(
 </code></pre>
 
 <ul>
-<li>Via <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/ConnectionString.html
+<li>Via <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/ConnectionString.html
 "><code>ConnectionString</code></a>, as in the following example:</li>
 </ul>
 
 <pre><code class="language-java">  MongoClient mongoClient = MongoClients.create(&quot;mongodb://host1:27017,host2:27017/?w=majority&quot;);
 </code></pre></li>
 
-<li><p>In a <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoDatabase.html
-"><code>MongoDatabase</code></a> via its <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoDatabase.html#withWriteConcern(com.mongodb.WriteConcern)
+<li><p>In a <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoDatabase.html
+"><code>MongoDatabase</code></a> via its <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoDatabase.html#withWriteConcern(com.mongodb.WriteConcern)
 "><code>withWriteConcern</code></a> method, as in the following example:</p>
 
 <pre><code class="language-java"> MongoDatabase database = mongoClient.getDatabase(&quot;test&quot;).withWriteConcern(WriteConcern.MAJORITY);
 </code></pre></li>
 
-<li><p>In a <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html
-"><code>MongoCollection</code></a> via its <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#withWriteConcern(com.mongodb.WriteConcern)
+<li><p>In a <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html
+"><code>MongoCollection</code></a> via its <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#withWriteConcern(com.mongodb.WriteConcern)
 "><code>withWriteConcern</code></a> method, as in the following example:</p>
 
 <pre><code class="language-java"> MongoCollection&lt;Document&gt; collection = database.getCollection(&quot;restaurants&quot;).withWriteConcern(WriteConcern.MAJORITY);

@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-01-29T14:56:32.42">
+<meta name="date" content="2020-01-29T15:02:32.42">
 <link rel="shortcut icon" href="/mongo-java-driver/4.0/img/favicon.png">
 
     <title>Extended JSON</title><link rel="stylesheet" href="/mongo-java-driver/4.0/lib/bootstrap.css" type="text/css" />
@@ -385,7 +385,7 @@ System.out.println(doc.toJson(new JsonWriterSettings(JsonMode.SHELL)));
 
 <p>Often applications have specific requirements on the structure of JSON that is generated from documents stored in MongoDB, where none of
 the modes described above will suffice.   For those situations a <code>JsonWriterSettings</code> instance can be customized with an application-provided
-<a href="/mongo-java-driver/4.0apidocs/bson/org/bson/json/Converter.html
+<a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/json/Converter.html
 "><code>Converter</code></a> for each BSON type.</p>
 
 <p>Consider a situation where an application wants to output the hex string representation of an ObjectId as a simple JSON string.  Simply

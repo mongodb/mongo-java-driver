@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-01-29T14:56:32.23">
+<meta name="date" content="2020-01-29T15:02:32.24">
 <link rel="shortcut icon" href="/mongo-java-driver/4.0/img/favicon.png">
 
     <title>Geospatial Search</title><link rel="stylesheet" href="/mongo-java-driver/4.0/lib/bootstrap.css" type="text/css" />
@@ -365,9 +365,9 @@ MongoDatabase database = mongoClient.getDatabase(&quot;test&quot;);
 <h2 id="create-the-2dsphere-index">Create the <code>2dsphere</code> Index</h2>
 
 <p>To create a <a href="http://docs.mongodb.org/manual/core/2dsphere
-"><code>2dsphere</code> index</a>, use the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/Indexes.html#geo2dsphere(java.lang.String...)
+"><code>2dsphere</code> index</a>, use the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/model/Indexes.html#geo2dsphere(java.lang.String...)
 "><code>Indexes.geo2dsphere</code></a>
-helper to create a specification for the <code>2dsphere</code> index and pass to <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-sync/com/mongodb/client/MongoCollection.html#createIndex(org.bson.conversions.Bson)
+helper to create a specification for the <code>2dsphere</code> index and pass to <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-sync/com/mongodb/client/MongoCollection.html#createIndex(org.bson.conversions.Bson)
 "><code>MongoCollection.createIndex()</code></a> method.</p>
 
 <p>The following example creates a <code>2dsphere</code> index on the <code>&quot;contact.location&quot;</code> field for the <code>restaurants</code> collection.</p>
@@ -379,7 +379,7 @@ collection.createIndex(Indexes.geo2dsphere(&quot;contact.location&quot;));
 <h2 id="query-for-locations-near-a-geojson-point">Query for Locations Near a GeoJSON Point</h2>
 
 <p>MongoDB provides various <a href="http://docs.mongodb.org/manual/reference/operator/query-geospatial
-">geospatial query operators</a>. To facilitate the creation of geospatial queries filters, the Java driver provides the <a href="/mongo-java-driver/4.0apidocs/mongodb-driver-core/com/mongodb/client/model/Filters.html
+">geospatial query operators</a>. To facilitate the creation of geospatial queries filters, the Java driver provides the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/model/Filters.html
 "><code>Filters</code></a> class and the <code>com.mongodb.client.model.geojson</code> package.</p>
 
 <p>The following example returns documents that are at least 1000 meters from and at most 5000 meters from the specified GeoJSON point <code>com.mongodb.client.model.geojson.Point</code>, sorted from nearest to farthest:</p>
