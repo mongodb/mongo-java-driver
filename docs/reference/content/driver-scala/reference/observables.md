@@ -12,7 +12,7 @@ title = "Observables"
 
 The MongoDB Scala Driver is an asynchronous and non blocking driver. Using the `Observable` model asynchronous events become simple, composable operations, freed from the complexity of nested callbacks.  
 
-For asynchronous operations there are three interfaces [`Observable`]({{< scapiref "org/mongodb/scala/Observable.html" >}}), [`Subscription`]({{< scapiref "org/mongodb/scala/Subscription.html" >}}) and [`Observer`]({{< scapiref "org/mongodb/scala/Observer.html" >}}).
+For asynchronous operations there are three interfaces [`Observable`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/Observable.html" >}}), [`Subscription`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/Subscription.html" >}}) and [`Observer`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/Observer.html" >}}).
 
 {{% note %}}
 The MongoDB Scala driver is now built upon the MongoDB Reactive Streams driver and is an implementation of the 
@@ -26,7 +26,7 @@ Class naming convention:
 {{% /note %}}
 
 ## Observable
-The [`Observable`]({{< scapiref "org/mongodb/scala/Observable.html" >}}) is an extended `Publisher` implementation and in general represents a MongoDB operation which emits its results to the `Observer` based on demand requested by the `Subscription` to the `Observable`. 
+The [`Observable`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/Observable.html" >}}) is an extended `Publisher` implementation and in general represents a MongoDB operation which emits its results to the `Observer` based on demand requested by the `Subscription` to the `Observable`. 
 
 {{% note class="important" %}}
 Observables can be thought of as partial functions and like partial functions nothing happens until they are called. 
@@ -34,16 +34,16 @@ An `Observable` can be subscribed to multiple times, with each subscription pote
 {{% /note %}}
 
 ### SingleObservable
-The [`SingleObservable`]({{< scapiref "org/mongodb/scala/SingleObservable.html" >}}) trait is a `Publisher` implementation that will only return a single item.
+The [`SingleObservable`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/SingleObservable.html" >}}) trait is a `Publisher` implementation that will only return a single item.
 It can be used in the same way as ordinary `Observables`.
 
 ## Subscription
 
-A [`Subscription`]({{< scapiref "org/mongodb/scala/Subscription.html" >}}) represents a one-to-one lifecycle of an `Observer` subscribing to an `Observable`.  A `Subscription` to an `Observable` can only be used by a single `Observer`.  The purpose of a `Subscription` is to control demand and to allow unsubscribing from the `Observable`.
+A [`Subscription`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/Subscription.html" >}}) represents a one-to-one lifecycle of an `Observer` subscribing to an `Observable`.  A `Subscription` to an `Observable` can only be used by a single `Observer`.  The purpose of a `Subscription` is to control demand and to allow unsubscribing from the `Observable`.
 
 ## Observer
 
-An [`Observer`]({{< scapiref "org/mongodb/scala/Observer.html" >}}) provides the mechanism for receiving push-based notifications from the
+An [`Observer`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/Observer.html" >}}) provides the mechanism for receiving push-based notifications from the
 `Observable`.  Demand for these events is signalled by its `Subscription`.
 
 On subscription to an `Observable[TResult]` the `Observer` will be passed the `Subscription` via the 
@@ -118,41 +118,41 @@ GenerateHtmlObservable().andThen({
 
 The full list of Monadic operators available are:
 
- - *[`andThen`]({{< scapiref "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#andThen[U](pf:PartialFunction[scala.util.Try[T],U]):org.mongodb.scala.Observable[T]">}})*: 
+ - *[`andThen`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#andThen[U](pf:PartialFunction[scala.util.Try[T],U]):org.mongodb.scala.Observable[T]" >}})*: 
     Allows the chaining of Observables. 
- - *[`collect`]({{< scapiref "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#collect[S]():org.mongodb.scala.Observable[Seq[T]]">}})* :
+ - *[`collect`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#collect[S]():org.mongodb.scala.Observable[Seq[T]]" >}})* :
     Collects all the results into a sequence.
- - *[`fallbackTo`]({{< scapiref "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#fallbackTo[U>:T](that:org.mongodb.scala.Observable[U]):org.mongodb.scala.Observable[U]">}})* :
+ - *[`fallbackTo`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#fallbackTo[U>:T](that:org.mongodb.scala.Observable[U]):org.mongodb.scala.Observable[U]" >}})* :
     Allows falling back to an alternative `Observable` if there is a failure
- - *[`filter`]({{< scapiref "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#filter(predicate:T=>Boolean):org.mongodb.scala.Observable[T]">}})* :
+ - *[`filter`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#filter(predicate:T=>Boolean):org.mongodb.scala.Observable[T]" >}})* :
     Filters results of the `Observable`.
- - *[`flatMap`]({{< scapiref "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#flatMap[S](mapFunction:T=>org.mongodb.scala.Observable[S]):org.mongodb.scala.Observable[S]">}})* :
+ - *[`flatMap`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#flatMap[S](mapFunction:T=>org.mongodb.scala.Observable[S]):org.mongodb.scala.Observable[S]" >}})* :
     Create a new `Observable` by applying a function to each result of the `Observable`.
- - *[`foldLeft`]({{< scapiref "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#foldLeft[S](initialValue:S)(accumulator:(S,T)=>S):org.mongodb.scala.Observable[S]">}})* :
+ - *[`foldLeft`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#foldLeft[S](initialValue:S)(accumulator:(S,T)=>S):org.mongodb.scala.Observable[S]" >}})* :
     Creates a new Observable that contains the single result of the applied accumulator function.
- - *[`foreach`]({{< scapiref "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#foreach[U](doOnEach:T=>U):Unit">}})* :
+ - *[`foreach`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#foreach[U](doOnEach:T=>U):Unit" >}})* :
     Applies a function applied to each emitted result.
- - *[`head`]({{< scapiref "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#head():scala.concurrent.Future[T]">}})* :
+ - *[`head`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#head():scala.concurrent.Future[T]" >}})* :
     Returns the head of the `Observable` in a `Future`.
- - *[`map`]({{< scapiref "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#map[S](mapFunction:T=>S):org.mongodb.scala.Observable[S]">}})* :
+ - *[`map`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#map[S](mapFunction:T=>S):org.mongodb.scala.Observable[S]" >}})* :
     Creates a new Observable by applying a function to each emitted result of the Observable.
- - *[`observeOn`]({{< scapiref "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#observeOn[S](context:ExecutionContext):org.mongodb.scala.Observable[S]">}})* :
+ - *[`observeOn`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#observeOn[S](context:ExecutionContext):org.mongodb.scala.Observable[S]" >}})* :
     Creates a new Observable that uses a specific `ExecutionContext` for future operations.
- - *[`recover`]({{< scapiref "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#recover[U>:T](pf:PartialFunction[Throwable,U]):org.mongodb.scala.Observable[U]">}})* :
+ - *[`recover`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#recover[U>:T](pf:PartialFunction[Throwable,U]):org.mongodb.scala.Observable[U]" >}})* :
     Creates a new `Observable` that will handle any matching throwable that this `Observable` might contain by assigning it a value of 
     another `Observable`.
- - *[`recoverWith`]({{< scapiref "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#recoverWith[U>:T](pf:PartialFunction[Throwable,org.mongodb.scala.Observable[U]]):org.mongodb.scala.Observable[U]">}})* :
+ - *[`recoverWith`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#recoverWith[U>:T](pf:PartialFunction[Throwable,org.mongodb.scala.Observable[U]]):org.mongodb.scala.Observable[U]" >}})* :
     Creates a new Observable that will handle any matching throwable that this Observable might contain.
- - *[`toFuture`]({{< scapiref "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#toFuture():scala.concurrent.Future[Seq[T]]">}})* :
+ - *[`toFuture`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#toFuture():scala.concurrent.Future[Seq[T]]" >}})* :
     Collects the `Observable` results and converts to a `Future`.
- - *[`transform`]({{< scapiref "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#transform[S](mapFunction:T=>S,errorMapFunction:Throwable=>Throwable):org.mongodb.scala.Observable[S]">}})* :
+ - *[`transform`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#transform[S](mapFunction:T=>S,errorMapFunction:Throwable=>Throwable):org.mongodb.scala.Observable[S]" >}})* :
     Creates a new `Observable` by applying the resultFunction function to each emitted result.
- - *[`withFilter`]({{< scapiref "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#withFilter(p:T=>Boolean):org.mongodb.scala.Observable[T]">}})* :
+ - *[`withFilter`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#withFilter(p:T=>Boolean):org.mongodb.scala.Observable[T]" >}})* :
     Provides for-comprehensions support to Observables.
- - *[`zip`]({{< scapiref "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#zip[U](that:org.mongodb.scala.Observable[U]):org.mongodb.scala.Observable[(T,U)]">}})* :
+ - *[`zip`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ObservableImplicits$BoxedPublisher.html#zip[U](that:org.mongodb.scala.Observable[U]):org.mongodb.scala.Observable[(T,U)]" >}})* :
     Zips the values of this and that `Observable`, and creates a new `Observable` holding the tuple of their results.
 
 ### SingleObservable
 
-As we know that a [`SingleObservable[T]`]({{< scapiref "org/mongodb/scala/SingleObservable.html" >}}) will only return a single item the `toFuture()` method will return a `Future[T]` in the same way as the `head` method does.
+As we know that a [`SingleObservable[T]`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/SingleObservable.html" >}}) will only return a single item the `toFuture()` method will return a `Future[T]` in the same way as the `head` method does.
 There is also an implicit converter that converts a `Publisher` to a `SingleObservable`

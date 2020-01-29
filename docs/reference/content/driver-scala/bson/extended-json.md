@@ -84,7 +84,7 @@ The `Document(json)` companion helper method constructs an instance of a `JsonRe
 equivalent Document instance. `JsonReader` automatically detects the JSON flavor in the string, so you do not need to specify it. 
 
 {{% note %}}
-In the [tools]({{< srcref "examples/scripts">}}) examples directory, there is sample code for `mongoimport` and `mongoexport`.
+In the [tools]({{< srcref "examples/scripts" >}}) examples directory, there is sample code for `mongoimport` and `mongoexport`.
 These examples are more fully featured than the above code snippets. They also provide an example of asynchronous error handling, as well 
 as chaining observables to enforce insertion order on import.
 {{% /note %}}

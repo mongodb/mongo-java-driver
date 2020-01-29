@@ -10,7 +10,7 @@ pre = "<i class='fa'></i>"
 
 ## Geospatial Search
 
-To support geospatial queries, MongoDB provides various geospatial indexes as well as [geospatial query operators]({{<docsref "reference/operator/query-geospatial/">}}).
+To support geospatial queries, MongoDB provides various geospatial indexes as well as [geospatial query operators]({{<docsref "reference/operator/query-geospatial/" >}}).
 
 ## Prerequisites
 
@@ -39,12 +39,12 @@ val mongoClient: MongoClient = MongoClient()
 val database: MongoDatabase = mongoClient.getDatabase("test")
 ```
 
-For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md">}}).
+For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md" >}}).
 
 ## Create the `2dsphere` Index
 
-To create a [`2dsphere` index]({{<docsref "core/2dsphere">}}), use the [`Indexes.geo2dsphere`]({{<scapiref "org/mongodb/scala/model/Indexes$.html#geo2dsphere(fieldNames:String*):org.mongodb.scala.bson.conversions.Bson">}})
-helper to create a specification for the `2dsphere` index and pass to [`MongoCollection.createIndex()`]({{<scapiref "org/mongodb/scala/MongoCollection.html#createIndex(key:org.mongodb.scala.bson.conversions.Bson,options:org.mongodb.scala.model.IndexOptions):org.mongodb.scala.SingleObservable[String]">}}) method.
+To create a [`2dsphere` index]({{<docsref "core/2dsphere" >}}), use the [`Indexes.geo2dsphere`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/model/Indexes$.html#geo2dsphere(fieldNames:String*):org.mongodb.scala.bson.conversions.Bson" >}})
+helper to create a specification for the `2dsphere` index and pass to [`MongoCollection.createIndex()`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoCollection.html#createIndex(key:org.mongodb.scala.bson.conversions.Bson,options:org.mongodb.scala.model.IndexOptions):org.mongodb.scala.SingleObservable[String]" >}}) method.
 
 The following example creates a `2dsphere` index on the `"contact.location"` field for the `restaurants` collection.
 
@@ -55,7 +55,7 @@ collection.createIndex(Indexes.geo2dsphere("contact.location")).printResults()
 
 ## Query for Locations Near a GeoJSON Point
 
-MongoDB provides various [geospatial query operators]({{<docsref "reference/operator/query-geospatial">}}). To facilitate the creation of geospatial queries filters, the Scala driver provides the [`Filters`]({{< scapiref "org/mongodb/scala/model/Filters$.html">}}) class and the ``org.mongodb.scala.model.geojson`` package.
+MongoDB provides various [geospatial query operators]({{<docsref "reference/operator/query-geospatial" >}}). To facilitate the creation of geospatial queries filters, the Scala driver provides the [`Filters`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/model/Filters$.html" >}}) class and the ``org.mongodb.scala.model.geojson`` package.
 
 The following example returns documents that are at least 1000 meters from and at most 5000 meters from the specified GeoJSON point ``org.mongodb.scala.model.geojson.Point``, sorted from nearest to farthest:
 

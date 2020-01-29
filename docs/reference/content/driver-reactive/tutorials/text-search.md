@@ -10,9 +10,9 @@ pre = "<i class='fa'></i>"
 
 ## Text Search
 
-MongoDB supports query operations that perform a [text search]({{<docsref "text-search">}}) of string content. To perform text search, MongoDB uses a [text index]({{<docsref "core/index-text">}}) and the [`$text` query operator]({{<docsref "reference/operator/query/text">}}).
+MongoDB supports query operations that perform a [text search]({{<docsref "text-search" >}}) of string content. To perform text search, MongoDB uses a [text index]({{<docsref "core/index-text" >}}) and the [`$text` query operator]({{<docsref "reference/operator/query/text" >}}).
 
-The Java driver provides the [`Filters.text()`]({{<apiref "com/mongodb/client/model/Filters.html#text(java.lang.String,com.mongodb.client.model.TextSearchOptions)">}}) helper to facilitate the creation of text search query filters.
+The Java driver provides the [`Filters.text()`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Filters.html#text(java.lang.String,com.mongodb.client.model.TextSearchOptions)" >}}) helper to facilitate the creation of text search query filters.
 
 ## Prerequisites
 
@@ -49,12 +49,12 @@ MongoClient mongoClient = MongoClients.create();
 MongoDatabase database = mongoClient.getDatabase("test");
 ```
 
-For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md">}}).
+For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md" >}}).
 
 ## Create the `text` Index
 
-To create a [text index]({{<docsref "core/index-text">}}), use the [`Indexes.text`]({{< relref "builders/indexes.md#text-index">}})
-static helper to create a specification for a text index and pass to [`MongoCollection.createIndex()`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html#createIndex(org.bson.conversions.Bson)">}}) method.
+To create a [text index]({{<docsref "core/index-text" >}}), use the [`Indexes.text`]({{< relref "builders/indexes.md#text-index" >}})
+static helper to create a specification for a text index and pass to [`MongoCollection.createIndex()`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoCollection.html#createIndex(org.bson.conversions.Bson)" >}}) method.
 
 The following example creates a text index on the `name` field for the `restaurants` collection.
 
@@ -65,7 +65,7 @@ collection.createIndex(Indexes.text("name")).subscribe(new PrintToStringSubscrib
 
 ## Perform Text Search
 
-To perform text search, use the [`Filters.text()`]({{<apiref "com/mongodb/client/model/Filters.html#text(java.lang.String,com.mongodb.client.model.TextSearchOptions)">}}) helper to specify the text search query filter.
+To perform text search, use the [`Filters.text()`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Filters.html#text(java.lang.String,com.mongodb.client.model.TextSearchOptions)" >}}) helper to specify the text search query filter.
 
 For example, the following code performs a text search on the `name` field for the word `"bakery"` or `"coffee"`.
 
@@ -79,11 +79,11 @@ The example should print the following output:
 Text search matches: [2]
 ```
 
-For more information on the text search, see [`$text` operator]({{<docsref "reference/operator/query/text">}}).
+For more information on the text search, see [`$text` operator]({{<docsref "reference/operator/query/text" >}}).
 
 ### Text Score
 
-For each matching document, text search assigns a score, representing the relevance of a document to the specified text search query filter. To return and sort by score, use the [`$meta`]({{<docsref "reference/operator/query/text/#sort-by-text-search-score">}}) operator in the projection document and the sort expression.
+For each matching document, text search assigns a score, representing the relevance of a document to the specified text search query filter. To return and sort by score, use the [`$meta`]({{<docsref "reference/operator/query/text/#sort-by-text-search-score" >}}) operator in the projection document and the sort expression.
 
 
 ```java
@@ -95,9 +95,9 @@ collection.find(Filters.text("bakery cafe"))
 
 ### Specify a Text Search Option
 
-The  [`Filters.text()`]({{<apiref "com/mongodb/client/model/Filters.html#text(java.lang.String,com.mongodb.client.model.TextSearchOptions)">}}) helper can accept various [text search options]({{<docsref "reference/operator/query/text">}}). The Java driver provides [`TextSearchOptions`]({{<apiref "com/mongodb/client/model/TextSearchOptions.html">}}) class to specify these options.
+The  [`Filters.text()`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Filters.html#text(java.lang.String,com.mongodb.client.model.TextSearchOptions)" >}}) helper can accept various [text search options]({{<docsref "reference/operator/query/text" >}}). The Java driver provides [`TextSearchOptions`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/TextSearchOptions.html" >}}) class to specify these options.
 
-For example, the following text search specifies the [text search language]({{<docsref "reference/text-search-languages">}}) option when performing text search for the word `cafe`:
+For example, the following text search specifies the [text search language]({{<docsref "reference/text-search-languages" >}}) option when performing text search for the word `cafe`:
 
 ```java
 collection.countDocuments(Filters.text("cafe", new TextSearchOptions().language("english")))
@@ -112,8 +112,8 @@ Text search matches (english): [1]
 
 For more information about text search see the following sections in the MongoDB Server Manual:
 
-- [`$text` query operator]({{< docsref "reference/operator/query/text">}})
+- [`$text` query operator]({{< docsref "reference/operator/query/text" >}})
 
 - [`text` index]({{< docsref "core/index-text" >}})
 
-- [Text Search Languages]({{<docsref "reference/text-search-languages">}})
+- [Text Search Languages]({{<docsref "reference/text-search-languages" >}})

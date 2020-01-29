@@ -48,7 +48,7 @@ The MongoDB Reactive Streams Driver API mirrors the Sync driver API and any meth
 where `T` is the type of response for the operation.  
 The exception to that rule is for methods in the async driver that return a `Void` value in the callback. 
 In [reactive streams](http://www.reactive-streams.org) this is forbidden, so in those circumstances we
-return a [`Success`]({{< apiref "com/mongodb/reactivestreams/client/Success.html">}}) on the operation.
+return a [`Success`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/Success.html" >}}) on the operation.
 
 {{% note %}}
 All [`Publishers`](http://www.reactive-streams.org/reactive-streams-1.0.1-javadoc/?org/reactivestreams/Publisher.html) returned 
@@ -68,7 +68,7 @@ do block on the results of one example before starting the next, so as to ensure
 
 1. ObservableSubscriber
 
-    The base subscriber class is the [`ObservableSubscriber<T>`]({{< srcref "driver-reactive-streams/src/examples/reactivestreams/tour/src/main/tour/SubscriberHelpers.java">}}), 
+    The base subscriber class is the [`ObservableSubscriber<T>`]({{< srcref "driver-reactive-streams/src/examples/reactivestreams/tour/src/main/tour/SubscriberHelpers.java" >}}), 
     a Subscriber that stores the results of the `Publisher<T>`. It also contains an `await()` method so we can block for results to ensure the state of 
     the database before going on to the next example.
 

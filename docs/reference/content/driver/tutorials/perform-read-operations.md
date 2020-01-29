@@ -56,11 +56,11 @@ MongoDatabase database = mongoClient.getDatabase("test");
 MongoCollection<Document> collection = database.getCollection("restaurants");
 ```
 
-For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md">}}).
+For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md" >}}).
 
 ## Query a Collection
 
-To query the collection, you can use the collection's [`find()`]({{< apiref "com/mongodb/client/MongoCollection.html#find()">}}) method.
+To query the collection, you can use the collection's [`find()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#find()" >}}) method.
 
 You can call the method without any arguments to query all documents in a collection:
 
@@ -77,17 +77,17 @@ collection.find(eq("name", "456 Cookies Shop"))
 
 ## Query Filters
 
-To query for documents that match certain conditions, pass a filter document to the [`find()`]({{< apiref "com/mongodb/client/MongoCollection.html#find()">}}) method.
+To query for documents that match certain conditions, pass a filter document to the [`find()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#find()" >}}) method.
 
 ### Empty Filter
 
-To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "org/bson/Document.html" >}}) object.
+To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "bson" "org/bson/Document.html" >}}) object.
 
 ```java
 collection.find(new Document()).forEach(printBlock);
 ```
 {{% note class="tip"%}}
-For the [`find()`]({{< apiref "com/mongodb/client/MongoCollection.html#find()">}}) method, you can also call the method without passing a filter object to match all documents in a collection.
+For the [`find()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#find()" >}}) method, you can also call the method without passing a filter object to match all documents in a collection.
 {{% /note %}}
 
 ```java
@@ -96,7 +96,7 @@ collection.find().forEach(printBlock);
 
 ### `Filters` Helper
 
-To facilitate the creation of filter documents, the Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) class that provides filter condition helper methods.
+To facilitate the creation of filter documents, the Java driver provides the [`Filters`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Filters.html" >}}) class that provides filter condition helper methods.
 
 Consider the following `find` operation which includes a filter `Document` which specifies that:
 
@@ -111,23 +111,23 @@ collection.find(
           .append("categories", "Bakery")).forEach(printBlock);
 ```
 
-The following example specifies the same filter condition using the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper methods:
+The following example specifies the same filter condition using the [`Filters`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Filters.html" >}}) helper methods:
 
 ```java
 collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery")))
             .forEach(printBlock);
 ```
 
-For a list of MongoDB query filter operators, refer to the [MongoDB Manual]({{<docsref "reference/operator/query">}}). For the associated `Filters` helpers, see [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}).
-See also the  [Query Documents Tutorial]({{<docsref "tutorial/query-documents">}}) for an overview of querying in MongoDB, including specifying filter conditions on arrays and embedded documents.
+For a list of MongoDB query filter operators, refer to the [MongoDB Manual]({{<docsref "reference/operator/query" >}}). For the associated `Filters` helpers, see [`Filters`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Filters.html" >}}).
+See also the  [Query Documents Tutorial]({{<docsref "tutorial/query-documents" >}}) for an overview of querying in MongoDB, including specifying filter conditions on arrays and embedded documents.
 
 ## FindIterable
 
-The [`find()`]({{< apiref "com/mongodb/client/MongoCollection.html#find()">}}) method returns an instance of the [`FindIterable`]({{< apiref "com/mongodb/client/FindIterable.html" >}}) interface. The interface provides various methods that you can chain to the `find()` method to modify the output or behavior of the query, such as [`sort()`]({{<apiref "com/mongodb/client/FindIterable.html#sort(org.bson.conversions.Bson)">}})  or [`projection()`]({{<apiref "com/mongodb/client/FindIterable.html#projection(org.bson.conversions.Bson)">}}), as well as for iterating the results, such as [`iterator()`]({{<apiref "com/mongodb/client/MongoIterable.html#iterator()">}}) and [`forEach()`]({{<apiref "com/mongodb/client/MongoIterable.html#forEach(com.mongodb.Block)">}}).
+The [`find()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#find()" >}}) method returns an instance of the [`FindIterable`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/FindIterable.html" >}}) interface. The interface provides various methods that you can chain to the `find()` method to modify the output or behavior of the query, such as [`sort()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/FindIterable.html#sort(org.bson.conversions.Bson)" >}})  or [`projection()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/FindIterable.html#projection(org.bson.conversions.Bson)" >}}), as well as for iterating the results, such as [`iterator()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoIterable.html#iterator()" >}}) and [`forEach()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoIterable.html#forEach(com.mongodb.Block)" >}}).
 
 ### Projections
 
-By default, queries in MongoDB return all fields in matching documents. To specify the fields to return in the matching documents, you can specify a [projection document]({{<docsref "tutorial/project-fields-from-query-results/#projection-document">}}).
+By default, queries in MongoDB return all fields in matching documents. To specify the fields to return in the matching documents, you can specify a [projection document]({{<docsref "tutorial/project-fields-from-query-results/#projection-document" >}}).
 
 Consider the following `find` operation which includes a projection `Document` which specifies that the matching documents return only the `name` field, `stars` field, and the `categories` field.
 
@@ -141,7 +141,7 @@ collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery"))
 ```
 
 To facilitate the creation of projection documents, the Java driver provides the
-[`Projections`]({{<apiref "com/mongodb/client/model/Projections.html">}}) class.
+[`Projections`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Projections.html" >}}) class.
 
 ```java
 collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery")))
@@ -149,14 +149,14 @@ collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery"))
                 .forEach(printBlock);
 ```
 
-In the projection document, you can also specify a projection expression using a [projection operator]({{<docsref "reference/operator/projection/">}})
+In the projection document, you can also specify a projection expression using a [projection operator]({{<docsref "reference/operator/projection/" >}})
 
-For an example on using the [`Projections.metaTextScore`]({{<apiref "com/mongodb/client/model/Projections.html#metaTextScore(java.lang.String)">}}),
-see the [Text Search tutorial]({{<relref "driver/tutorials/text-search.md">}}).
+For an example on using the [`Projections.metaTextScore`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Projections.html#metaTextScore(java.lang.String)" >}}),
+see the [Text Search tutorial]({{<relref "driver/tutorials/text-search.md" >}}).
 
 ### Sorts
 
-To sort documents, pass a [sort specification document]({{<docsref "reference/method/cursor.sort/#cursor.sort">}}) to the [`FindIterable.sort()`]({{<apiref "com/mongodb/client/FindIterable.html#sort(org.bson.conversions.Bson)">}}) method.  The Java driver provides [`Sorts`]({{< relref "builders/sorts.md">}}) helpers to facilitate the sort specification document.
+To sort documents, pass a [sort specification document]({{<docsref "reference/method/cursor.sort/#cursor.sort" >}}) to the [`FindIterable.sort()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/FindIterable.html#sort(org.bson.conversions.Bson)" >}}) method.  The Java driver provides [`Sorts`]({{< relref "builders/sorts.md" >}}) helpers to facilitate the sort specification document.
 
 ```java
 collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery")))
@@ -167,7 +167,7 @@ collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery"))
 
 ### Sort with Projections
 
-The [`FindIterable`]({{< apiref "com/mongodb/client/FindIterable.html" >}}) methods themselves return `FindIterable` objects, and as such, you can append multiple `FindIterable` methods to the `find()` method.
+The [`FindIterable`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/FindIterable.html" >}}) methods themselves return `FindIterable` objects, and as such, you can append multiple `FindIterable` methods to the `find()` method.
 
 ```java
 collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery")))
@@ -178,27 +178,27 @@ collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery"))
 
 ## MongoIterable
 
-The [`MongoIterable`]({{< apiref "com/mongodb/client/MongoIterable.html" >}}) interface provides helper methods to access the results of an operation:
+The [`MongoIterable`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoIterable.html" >}}) interface provides helper methods to access the results of an operation:
 
-- [`iterator()`]({{< apiref "com/mongodb/client/MongoIterable.html#iterator()" >}})
+- [`iterator()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoIterable.html#iterator()" >}})
 
-- [`first()`]({{< apiref "com/mongodb/client/MongoIterable.html#first()" >}})
+- [`first()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoIterable.html#first()" >}})
 
-- [`forEach()`]({{< apiref "com/mongodb/client/MongoIterable.html#forEach(com.mongodb.Block)" >}})
+- [`forEach()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoIterable.html#forEach(com.mongodb.Block)" >}})
 
 
-- [`map()`]({{< apiref "com/mongodb/client/MongoIterable.html#map(com.mongodb.Function)" >}})
+- [`map()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoIterable.html#map(com.mongodb.Function)" >}})
 
-- [`into()`]({{< apiref "com/mongodb/client/MongoIterable.html#into(A)" >}})
+- [`into()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoIterable.html#into(A)" >}})
 
 
 ## Read Preference
 
-For read operations on [replica sets]({{<docsref "replication/">}}) or [sharded clusters]({{<docsref "sharding/">}}), applications can configure the [read preference]({{<docsref "reference/read-preference">}}) at three levels:
+For read operations on [replica sets]({{<docsref "replication/" >}}) or [sharded clusters]({{<docsref "sharding/" >}}), applications can configure the [read preference]({{<docsref "reference/read-preference" >}}) at three levels:
 
-- In a [`MongoClient()`]({{< apiref "com/mongodb/client/MongoClient.html">}})
+- In a [`MongoClient()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoClient.html" >}})
 
-  - Via [`MongoClientSettings`]({{<apiref "com/mongodb/MongoClientSettings.html">}}):
+  - Via [`MongoClientSettings`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientSettings.html" >}}):
 
       ```java
       MongoClient mongoClient = MongoClients.create(MongoClientSettings.builder()
@@ -207,20 +207,20 @@ For read operations on [replica sets]({{<docsref "replication/">}}) or [sharded 
                                                     .build());
       ```
 
-  - Via [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString.html">}}), as in the following example:
+  - Via [`ConnectionString`]({{< apiref "mongodb-driver-core" "com/mongodb/ConnectionString.html" >}}), as in the following example:
 
       ```java
       MongoClient mongoClient = MongoClients.create("mongodb://host1:27017,host2:27017/?readPreference=secondary");
       ```
 
-- In a [`MongoDatabase`]({{<apiref "com/mongodb/client/MongoDatabase.html">}}) via its [`withReadPreference`]({{<apiref "com/mongodb/client/MongoDatabase.html#withReadPreference(com.mongodb.ReadPreference)">}}) method.
+- In a [`MongoDatabase`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoDatabase.html" >}}) via its [`withReadPreference`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoDatabase.html#withReadPreference(com.mongodb.ReadPreference)" >}}) method.
 
     ```java
     MongoDatabase database = mongoClient.getDatabase("test")
                              .withReadPreference(ReadPreference.secondary());
     ```
 
-- In a [`MongoCollection`]({{<apiref "com/mongodb/client/MongoCollection.html">}}) via its [`withReadPreference`]({{<apiref "com/mongodb/client/MongoCollection.html#withReadPreference(com.mongodb.ReadPreference)">}}) method:
+- In a [`MongoCollection`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html" >}}) via its [`withReadPreference`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#withReadPreference(com.mongodb.ReadPreference)" >}}) method:
 
     ```java
     MongoCollection<Document> collection = database.getCollection("restaurants")
@@ -237,11 +237,11 @@ For example, in the following, the `collectionWithReadPref` instance has the rea
 
 ## Read Concern
 
-For read operations on [replica sets]({{<docsref "replication/">}}) or [sharded clusters]({{<docsref "sharding/">}}), applications can configure the [read concern]({{<docsref "reference/read-concern">}}) at three levels:
+For read operations on [replica sets]({{<docsref "replication/" >}}) or [sharded clusters]({{<docsref "sharding/" >}}), applications can configure the [read concern]({{<docsref "reference/read-concern" >}}) at three levels:
 
-- In a [`MongoClient()`]({{< apiref "com/mongodb/MongoClient.html">}})
+- In a [`MongoClient()`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClient.html" >}})
 
-  - Via [`MongoClientSettings`]({{<apiref "com/mongodb/MongoClientSettings.html">}}):
+  - Via [`MongoClientSettings`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientSettings.html" >}}):
 
       ```java
       MongoClient mongoClient = MongoClients.create(MongoClientSettings.builder()
@@ -250,20 +250,20 @@ For read operations on [replica sets]({{<docsref "replication/">}}) or [sharded 
                                                     .build());
       ```
 
-  - Via [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString.html">}}), as in the following example:
+  - Via [`ConnectionString`]({{< apiref "mongodb-driver-core" "com/mongodb/ConnectionString.html" >}}), as in the following example:
 
       ```java
       MongoClient mongoClient = MongoClients.create("mongodb://host1:27017,host2:27017/?readConcernLevel=majority");
       ```
 
-- In a [`MongoDatabase`]({{<apiref "com/mongodb/reactivestreams/client/MongoDatabase.html">}}) via its [`withReadConcern`]({{<apiref "com/mongodb/reactivestreams/client/MongoDatabase.html#withReadConcern(com.mongodb.ReadConcern)">}}) method, as in the following example:
+- In a [`MongoDatabase`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoDatabase.html" >}}) via its [`withReadConcern`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoDatabase.html#withReadConcern(com.mongodb.ReadConcern)" >}}) method, as in the following example:
 
     ```java
     MongoDatabase database = mongoClient.getDatabase("test")
                                         .withReadConcern(ReadConcern.MAJORITY);
     ```
 
-- In a [`MongoCollection`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html">}}) via its [`withReadConcern`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html#withReadConcern(com.mongodb.ReadConcern)">}}) method, as in the following example:
+- In a [`MongoCollection`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoCollection.html" >}}) via its [`withReadConcern`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoCollection.html#withReadConcern(com.mongodb.ReadConcern)" >}}) method, as in the following example:
 
     ```java
     MongoCollection<Document> collection = database.getCollection("restaurants")
@@ -278,7 +278,7 @@ For example, in the following, the `collWithReadConcern` instance has an AVAILAB
 MongoCollection<Document> collWithReadConcern = collection.withReadConcern(ReadConcern.AVAILABLE);
 ```
 
-You can build `MongoClientSettings`, `MongoDatabase`, or `MongoCollection` to include a combination of read concern, read preference, and [write concern]({{<docsref "reference/write-concern">}}).
+You can build `MongoClientSettings`, `MongoDatabase`, or `MongoCollection` to include a combination of read concern, read preference, and [write concern]({{<docsref "reference/write-concern" >}}).
 
 For example, the following sets all three at the collection level:
 

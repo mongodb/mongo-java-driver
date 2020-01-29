@@ -11,7 +11,7 @@ title = "Quick Start"
 # MongoDB Driver Quick Start
 
 {{% note %}}
-The following code snippets come from the [`QuickTour.java`]({{< srcref "driver-sync/src/examples/tour/QuickTour.java">}}) example code
+The following code snippets come from the [`QuickTour.java`]({{< srcref "driver-sync/src/examples/tour/QuickTour.java" >}}) example code
 that can be found with the driver source on github.
 {{% /note %}}
 
@@ -60,8 +60,8 @@ import java.util.List;
 ```
 ## Make a Connection
 
-Use [`MongoClients.create()`]({{< apiref "com/mongodb/client/MongoClients.html">}}), 
-or [`MongoClient()`]({{< apiref "com/mongodb/MongoClient.html">}}) for the legacy MongoClient API, 
+Use [`MongoClients.create()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoClients.html" >}}), 
+or [`MongoClient()`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClient.html" >}}) for the legacy MongoClient API, 
 to make a connection to a running MongoDB instance.
 
 The `MongoClient` instance represents a pool of connections to the database; you will only need one instance of class `MongoClient` even with multiple threads.
@@ -110,7 +110,7 @@ MongoClient mongoClient = MongoClients.create(
                 .build());
 ```
 
-- You can specify the [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString.html">}}):
+- You can specify the [`ConnectionString`]({{< apiref "mongodb-driver-core" "com/mongodb/ConnectionString.html" >}}):
 
 ```java
 MongoClient mongoClient = MongoClients.create("mongodb://hostOne:27017");
@@ -140,7 +140,7 @@ MongoClient mongoClient = new MongoClient( "hostOne" , 27018 );
 ```
 
 - You can specify the
-[`MongoClientURI`]({{< apiref "/com/mongodb/MongoClientURI.html">}}) connection string:
+[`MongoClientURI`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientURI.html" >}}) connection string:
 
 ```java
  MongoClientURI connectionString = new MongoClientURI("mongodb://hostOne:27017,hostTwo:27017");
@@ -153,7 +153,7 @@ it is possible to list multiple domain names separated by a comma. For more info
 
 ## Access a Database
 
-Once you have a ``MongoClient`` instance connected to a MongoDB deployment, use the [`MongoClient.getDatabase()`]({{<apiref "com/mongodb/MongoClient.html#getDatabase(java.lang.String)">}}) method to access a database.
+Once you have a ``MongoClient`` instance connected to a MongoDB deployment, use the [`MongoClient.getDatabase()`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClient.html#getDatabase(java.lang.String)" >}}) method to access a database.
 
 Specify the name of the database to the ``getDatabase()`` method. If a database does not exist, MongoDB creates the database when you first store data for that database.
 
@@ -167,7 +167,7 @@ The following example accesses the ``mydb`` database:
 
 ## Access a Collection
 
-Once you have a `MongoDatabase` instance, use its [`getCollection()`]({{< apiref "com/mongodb/client/MongoDatabase.html#getCollection(java.lang.String)">}})
+Once you have a `MongoDatabase` instance, use its [`getCollection()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoDatabase.html#getCollection(java.lang.String)" >}})
 method to access a collection.
 
 Specify the name of the collection to the `getCollection()` method. If a collection does not exist, MongoDB creates the collection when you first store data for that collection.
@@ -182,7 +182,7 @@ MongoCollection<Document> collection = database.getCollection("test");
 
 ## Create a Document
 
-To create the document using the Java driver, use the [`Document`]({{< apiref "org/bson/Document.html" >}}) class.
+To create the document using the Java driver, use the [`Document`]({{< apiref "bson" "org/bson/Document.html" >}}) class.
 
 For example, consider the following JSON document:
 
@@ -198,7 +198,7 @@ For example, consider the following JSON document:
 ```
 
 To create the document using the Java driver, instantiate a `Document` object with a field and value, and use its
- [`append()`]({{< apiref "org/bson/Document.html#append()" >}}) method to include additional fields and values to the document object. The value can be another `Document` object to specify an embedded document:
+ [`append()`]({{< apiref "bson" "org/bson/Document.html#append()" >}}) method to include additional fields and values to the document object. The value can be another `Document` object to specify an embedded document:
 
  ```java
  Document doc = new Document("name", "MongoDB")
@@ -219,7 +219,7 @@ Once you have the `MongoCollection` object, you can insert documents into the co
 
 ### Insert One Document
 
-To insert a single document into the collection, you can use the collection's [`insertOne()`]({{< apiref "com/mongodb/client/MongoCollection.html#insertOne(TDocument)" >}}) method.
+To insert a single document into the collection, you can use the collection's [`insertOne()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#insertOne(TDocument)" >}}) method.
 
 ```java
 collection.insertOne(doc);
@@ -231,7 +231,7 @@ If no top-level `_id` field is specified in the document, MongoDB automatically 
 
 ### Insert Multiple Documents
 
-To add multiple documents, you can use the collection's [`insertMany()`]({{< apiref "com/mongodb/client/MongoCollection.html#insertMany(java.util.List)" >}}) method which takes a list of documents to insert.
+To add multiple documents, you can use the collection's [`insertMany()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#insertMany(java.util.List)" >}}) method which takes a list of documents to insert.
 
 The following example will add multiple documents of the form:
 
@@ -250,7 +250,7 @@ for (int i = 0; i < 100; i++) {
 ```
 
 To insert these documents to the collection, pass the list of documents to the
-[`insertMany()`]({{< apiref "com/mongodb/client/MongoCollection.html#insertMany(java.util.List)" >}}) method.
+[`insertMany()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#insertMany(java.util.List)" >}}) method.
 
 ```java
 collection.insertMany(documents);
@@ -261,7 +261,7 @@ If no top-level `_id` field is specified in the document, MongoDB automatically 
 
 ## Count Documents in A Collection
 
-To count the number of documents in a collection, you can use the collection's [`countDocuments()`]({{< apiref "com/mongodb/client/MongoCollection#countDocuments()">}})
+To count the number of documents in a collection, you can use the collection's [`countDocuments()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection#countDocuments()" >}})
 method.  The following code should print `101` (the 100 inserted via `insertMany` plus the 1 inserted via the `insertOne`).
 
 ```java
@@ -270,13 +270,13 @@ System.out.println(collection.countDocuments());
 
 ## Query the Collection
 
-To query the collection, you can use the collection's [`find()`]({{< apiref "com/mongodb/client/MongoCollection.html#find()">}}) method. You can call the method without any arguments to query all documents in a collection or pass a filter to query for documents that match the filter criteria.
+To query the collection, you can use the collection's [`find()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#find()" >}}) method. You can call the method without any arguments to query all documents in a collection or pass a filter to query for documents that match the filter criteria.
 
-The [`find()`]({{< apiref "com/mongodb/client/MongoCollection.html#find()">}}) method returns a [`FindIterable()`]({{< apiref "com/mongodb/client/FindIterable.html" >}}) instance that provides a fluent interface for chaining other methods.
+The [`find()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#find()" >}}) method returns a [`FindIterable()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/FindIterable.html" >}}) instance that provides a fluent interface for chaining other methods.
 
 ### Find the First Document in a Collection
 
-To return the first document in the collection, use the [`find()`]({{< apiref "com/mongodb/client/MongoCollection.html#find()">}}) method without any parameters and chain to `find()` method the [`first()`] ({{< apiref "com/mongodb/client/MongoIterable.html#first()">}}) method.
+To return the first document in the collection, use the [`find()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#find()" >}}) method without any parameters and chain to `find()` method the [`first()`] ({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoIterable.html#first()" >}}) method.
 
 If the collection is empty, the operation returns null.
 
@@ -315,7 +315,7 @@ To retrieve all the documents in the collection, we will use the
 `find()` method without any parameters.
 
 To iterate through the results, chain the
-[`iterator()`]({{< apiref "com/mongodb/client/MongoIterable.html#iterator()" >}}) method to the `find()`.
+[`iterator()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoIterable.html#iterator()" >}}) method to the `find()`.
 
 The following example retrieves all documents in the collection
 and prints the returned documents (101 documents):
@@ -342,12 +342,12 @@ for (Document cur : collection.find()) {
 ## Specify a Query Filter
 
 To query for documents that match certain conditions, pass a filter object to the 
-[`find()`]({{< apiref "com/mongodb/client/MongoCollection.html#find()">}}) method. To facilitate creating filter objects, the Java driver 
-provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper.
+[`find()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#find()" >}}) method. To facilitate creating filter objects, the Java driver 
+provides the [`Filters`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Filters.html" >}}) helper.
 
 ### Get A Single Document That Matches a Filter
 
-For example, to find the first document where the field ``i`` has the value `71`, pass an [`eq`]({{<apiref  "com/mongodb/client/model/Filters.html#eq(java.lang.String,TItem)">}}) filter object to specify the equality condition:
+For example, to find the first document where the field ``i`` has the value `71`, pass an [`eq`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Filters.html#eq(java.lang.String,TItem)" >}}) filter object to specify the equality condition:
 
 ```java
 myDoc = collection.find(eq("i", 71)).first();
@@ -374,9 +374,9 @@ Block<Document> printBlock = new Block<Document>() {
 collection.find(gt("i", 50)).forEach(printBlock);
 ```
 
-The example uses the [`forEach`]({{ <apiref "com/mongodb/client/MongoIterable.html#forEach(com.mongodb.Block)">}}) method on the ``FindIterable`` object to apply a block to each document.
+The example uses the [`forEach`]({{ < apiref "mongodb-driver-sync" "com/mongodb/client/MongoIterable.html#forEach(com.mongodb.Block)" >}}) method on the ``FindIterable`` object to apply a block to each document.
 
-To specify a filter for a range, such as ``50 < i <= 100``, you can use the [`and`]({{<apiref "com/mongodb/client/model/Filters.html#and(org.bson.conversions.Bson...)">}}) helper:
+To specify a filter for a range, such as ``50 < i <= 100``, you can use the [`and`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Filters.html#and(org.bson.conversions.Bson...)" >}}) helper:
 
 ```java
 collection.find(and(gt("i", 50), lte("i", 100))).forEach(printBlock);
@@ -384,19 +384,19 @@ collection.find(and(gt("i", 50), lte("i", 100))).forEach(printBlock);
 
 ## Update Documents
 
-To update documents in a collection, you can use the collection's [`updateOne`]({{<apiref "com/mongodb/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)">}})  and  [`updateMany`]({{<apiref "com/mongodb/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) methods.
+To update documents in a collection, you can use the collection's [`updateOne`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)" >}})  and  [`updateMany`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)" >}}) methods.
 
 Pass to the methods:
 
-- A filter object to determine the document or documents to update. To facilitate creating filter objects, the Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper. To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "org/bson/Document.html" >}}) object.
+- A filter object to determine the document or documents to update. To facilitate creating filter objects, the Java driver provides the [`Filters`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Filters.html" >}}) helper. To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "bson" "org/bson/Document.html" >}}) object.
 
-- An update document that specifies the modifications. For a list of the available operators, see [update operators]({{<docsref "reference/operator/update-field">}}).
+- An update document that specifies the modifications. For a list of the available operators, see [update operators]({{<docsref "reference/operator/update-field" >}}).
 
-The update methods return an [`UpdateResult`]({{<apiref "com/mongodb/client/result/UpdateResult.html">}}) which provides information about the operation including the number of documents modified by the update.
+The update methods return an [`UpdateResult`]({{< apiref "mongodb-driver-core" "com/mongodb/client/result/UpdateResult.html" >}}) which provides information about the operation including the number of documents modified by the update.
 
 ### Update a Single Document
 
-To update at most a single document, use the [`updateOne`]({{<apiref "com/mongodb/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)">}})
+To update at most a single document, use the [`updateOne`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)" >}})
 
 The following example updates the first document that meets the filter ``i`` equals ``10`` and sets the value of ``i`` to ``110``:
 
@@ -407,7 +407,7 @@ collection.updateOne(eq("i", 10), set("i", 110));
 
 ### Update Multiple Documents
 
-To update all documents matching the filter, use the [`updateMany`]({{<apiref "com/mongodb/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) method.
+To update all documents matching the filter, use the [`updateMany`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)" >}}) method.
 
 The following example increments the value of ``i`` by ``100`` for all documents where  =``i`` is less than ``100``:
 
@@ -419,16 +419,16 @@ System.out.println(updateResult.getModifiedCount());
 
 ## Delete Documents
 
-To delete documents from a collection, you can use the collection's [`deleteOne`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteOne(org.bson.conversions.Bson)">}}) and [`deleteMany`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteMany(org.bson.conversions.Bson)">}}) methods.
+To delete documents from a collection, you can use the collection's [`deleteOne`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#deleteOne(org.bson.conversions.Bson)" >}}) and [`deleteMany`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#deleteMany(org.bson.conversions.Bson)" >}}) methods.
 
-Pass to the methods a filter object to determine the document or documents to delete. To facilitate creating filter objects, the Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper. To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "org/bson/Document.html" >}}) object.
+Pass to the methods a filter object to determine the document or documents to delete. To facilitate creating filter objects, the Java driver provides the [`Filters`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Filters.html" >}}) helper. To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "bson" "org/bson/Document.html" >}}) object.
 
-The delete methods return a [`DeleteResult`]({{< apiref "com/mongodb/client/result/DeleteResult.html">}})
+The delete methods return a [`DeleteResult`]({{< apiref "mongodb-driver-core" "com/mongodb/client/result/DeleteResult.html" >}})
 which provides information about the operation including the number of documents deleted.
 
 ### Delete a Single Document That Match a Filter
 
-To delete at most a single document that match the filter, use the [`deleteOne`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteOne(org.bson.conversions.Bson)">}}) method:
+To delete at most a single document that match the filter, use the [`deleteOne`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#deleteOne(org.bson.conversions.Bson)" >}}) method:
 
 The following example deletes at most one document that meets the filter ``i`` equals ``110``:
 
@@ -438,7 +438,7 @@ collection.deleteOne(eq("i", 110));
 
 ### Delete All Documents That Match a Filter
 
-To delete all documents matching the filter use the [`deleteMany`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteMany(org.bson.conversions.Bson)">}}) method.
+To delete all documents matching the filter use the [`deleteMany`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#deleteMany(org.bson.conversions.Bson)" >}}) method.
 
 The following example deletes all documents where ``i`` is greater or equal to ``100``:
 
@@ -449,7 +449,7 @@ System.out.println(deleteResult.getDeletedCount());
 
 ## Create Indexes
 
-To create an index on a field or fields, pass an index specification document to the [`createIndex()`]({{<apiref "com/mongodb/client/MongoCollection.html#createIndex(org.bson.conversions.Bson)">}}) method. An index key specification document contains the fields to index and the index type for each field:
+To create an index on a field or fields, pass an index specification document to the [`createIndex()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#createIndex(org.bson.conversions.Bson)" >}}) method. An index key specification document contains the fields to index and the index type for each field:
 
 ```java
  new Document(<field1>, <type1>).append(<field2>, <type2>) ...

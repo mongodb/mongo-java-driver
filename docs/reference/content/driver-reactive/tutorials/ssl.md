@@ -12,8 +12,8 @@ title = "TLS/SSL"
 
 The Java driver supports TLS/SSL connections to MongoDB servers using
 the underlying support for TLS/SSL provided by the JDK. 
-You can configure the driver to use TLS/SSL either with [`ConnectionString`]({{<apiref "com/mongodb/ConnectionString">}}) or with
-[`MongoClientSettings`]({{<apiref "com/mongodb/MongoClientSettings">}}).
+You can configure the driver to use TLS/SSL either with [`ConnectionString`]({{< apiref "mongodb-driver-core" "com/mongodb/ConnectionString" >}}) or with
+[`MongoClientSettings`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientSettings" >}}).
 
 ## MongoClient API (since 3.7)
 
@@ -24,7 +24,7 @@ com.mongodb.reactivestreams.client.MongoClients;
 com.mongodb.reactivestreams.client.MongoClient;
 ```
 
-To specify TLS/SSL with [`ConnectionString`]({{<apiref "com/mongodb/ConnectionString">}}), specify `ssl=true` as part of the connection
+To specify TLS/SSL with [`ConnectionString`]({{< apiref "mongodb-driver-core" "com/mongodb/ConnectionString" >}}), specify `ssl=true` as part of the connection
 string, as in:
 
 ```java
@@ -39,7 +39,7 @@ import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoClient;
 ```
 
-To specify TLS/SSL with with [`MongoClientSettings`]({{<apiref "com/mongodb/MongoClientSettings">}}), set the `enabled` property to 
+To specify TLS/SSL with with [`MongoClientSettings`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientSettings" >}}), set the `enabled` property to 
 `true`, as in:
 
 ```java
@@ -59,7 +59,7 @@ import com.mongodb.reactivestreams.client.MongoClient;
 ```
 
 To specify the [`javax.net.ssl.SSLContext`](https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLContext.html) with 
-[`MongoClientSettings`]({{<apiref "com/mongodb/MongoClientSettings">}}), set the `sslContext` property, as in:
+[`MongoClientSettings`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientSettings" >}}), set the `sslContext` property, as in:
 
 ```java
 SSLContext sslContext = ...
@@ -76,10 +76,10 @@ MongoClient client = MongoClients.create(settings);
 
 By default, the driver ensures that the hostname included in the
 server's SSL certificate(s) matches the hostname(s) provided when
-constructing a [`MongoClient()`]({{< apiref "com/mongodb/reactivestreams/client/MongoClient.html">}}).
+constructing a [`MongoClient()`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoClient.html" >}}).
 
 If your application needs to disable hostname verification, you must explicitly indicate
-this in `MongoClientSettings`]({{<apiref "com/mongodb/MongoClientSettings">}}) 
+this in `MongoClientSettings`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientSettings" >}}) 
 
 ```java
 MongoClientSettings settings = MongoClientSettings.builder()

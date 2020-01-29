@@ -22,7 +22,7 @@ the other values to be lost.
 
 ### BsonDocument
 
-Although generally not needed by users of the high-level driver API, the [`BsonDocument`]({{< apiref "org/bson/BsonDocument" >}}) class is 
+Although generally not needed by users of the high-level driver API, the [`BsonDocument`]({{< apiref "bson" "org/bson/BsonDocument" >}}) class is 
 central to the way that documents are managed internally by the driver.  The `BsonDocument` class can represent dynamically structured 
 documents of any complexity with a type-safe API.  For instance, the document 
 
@@ -42,11 +42,11 @@ new BsonDocument().append("a", new BsonString("MongoDB"))
 
 The type safety comes from `BsonDocument` implementing `Map<String, BsonValue>`, so even built-in types like `int`, `String` and `List` must
 be wrapped in a sub-class of `BsonValue`.  For a complete list of `BsonValue` sub-types, please consult the 
-[`BsonValue`]({{< apiref "org/bson/BsonValue" >}}) API documentation. 
+[`BsonValue`]({{< apiref "bson" "org/bson/BsonValue" >}}) API documentation. 
 
 ### Document
 
-Most applications will use the [`Document`]({{< apiref "org/bson/Document" >}}) class instead.  Like `BsonDocument`, the 
+Most applications will use the [`Document`]({{< apiref "bson" "org/bson/Document" >}}) class instead.  Like `BsonDocument`, the 
 `Document` class can represent dynamically structured documents of any complexity; however, the typing is much looser, as `Document` 
 implements `Map<String, Object>`. As a result, the same document as above can be constructed using the Document class as follows:
 
@@ -79,17 +79,17 @@ reference .
 ### DBObject
 
 Although not recommended for new applications, those upgrading from the 2.x driver series may continue to use the 
-[`DBObject`]({{< apiref "com/mongodb/DBObject" >}}) interface to represent BSON documents.  `DBObject` is similar to Document in that it 
+[`DBObject`]({{< apiref "mongodb-driver-core" "com/mongodb/DBObject" >}}) interface to represent BSON documents.  `DBObject` is similar to Document in that it 
 represents BSON values as `Object`, but it has a few shortcomings that were impossible to overcome:
  
 - it is an interface rather than a class, so it's API can not be extended without breaking binary compatibility
 - it doesn't actually implement `Map<String, Object>`
-- because it is an interface, a separate concrete class called [`BasicDBObject`]({{< apiref "com/mongodb/BasicDBObject" >}}) which 
+- because it is an interface, a separate concrete class called [`BasicDBObject`]({{< apiref "mongodb-driver-core" "com/mongodb/BasicDBObject" >}}) which 
 implements that interface, is required
 
 ### Bson
 
-To tie these all together, the driver contains a small but powerful interface called [`Bson`]({{< apiref "org/bson/conversions/Bson" >}}). 
+To tie these all together, the driver contains a small but powerful interface called [`Bson`]({{< apiref "bson" "org/bson/conversions/Bson" >}}). 
 Any class that represents a BSON document, whether included in the driver itself or from a third party, can implement this interface and 
 can then be used any place in the high-level API where a BSON document is required. The three classes discussed above all implement this 
 interface and so can be used interchangeably based on the needs of a given application.  For example:

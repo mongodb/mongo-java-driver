@@ -61,11 +61,11 @@ MongoDatabase database = mongoClient.getDatabase("test");
 MongoCollection<Document> collection = database.getCollection("restaurants");
 ```
 
-For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md">}}).
+For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md" >}}).
 
 ## Watch the collection
 
-To create a change stream use one of the [`MongoCollection.watch()`]({{<apiref "com/mongodb/client/MongoCollection.html#watch">}}) methods.
+To create a change stream use one of the [`MongoCollection.watch()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#watch" >}}) methods.
 
 In the following example, the change stream prints out all changes it observes.
 
@@ -76,7 +76,7 @@ collection.watch().forEach(printBlock);
 ## Watch the database
 
 New in the 3.8 driver and MongoDB 4.0, applications can open a single change stream to watch all non-system collections of a database. To
-create such a change stream use one of the [`MongoDatabase.watch()`]({{<apiref "com/mongodb/client/MongoDatabase.html#watch">}}) methods.
+create such a change stream use one of the [`MongoDatabase.watch()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoDatabase.html#watch" >}}) methods.
 
 In the following example, the change stream prints out all the changes it observes on the given database.
 
@@ -88,7 +88,7 @@ database.watch().forEach(printBlock);
 
 New in the 3.8 driver and MongoDB 4.0, applications can open a single change stream to watch all non-system collections of all databases 
 in a MongoDB deployment. To create such a change stream use one of the 
-[`MongoClient.watch()`]({{<apiref "com/mongodb/client/MongoClient.html#watch">}}) methods.
+[`MongoClient.watch()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoClient.html#watch" >}}) methods.
 
 In the following example, the change stream prints out all the changes it observes on the deployment to which the `MongoClient` is
 connected
@@ -108,7 +108,7 @@ In the following example the change stream prints out all changes it observes, f
 - First it uses a [`$match`]({{< docsref "reference/operator/aggregation/match/" >}}) stage to filter for documents where the `operationType` 
 is either an `insert`, `update`, `replace` or `delete`.
 
-- Then, it sets the `fullDocument` to [`FullDocument.UPDATE_LOOKUP`]({{<apiref "com/mongodb/client/model/FullDocument.html#UPDATE_LOOKUP">}}),
+- Then, it sets the `fullDocument` to [`FullDocument.UPDATE_LOOKUP`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/FullDocument.html#UPDATE_LOOKUP" >}}),
 so that the document after the update is included in the results.
 
 ```java

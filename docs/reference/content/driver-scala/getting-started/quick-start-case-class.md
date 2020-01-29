@@ -11,7 +11,7 @@ title = "Quick Start - Case Classes"
 # Quick Start with case classes
 
 The following code snippets come from the `QuickTourCaseClass.scala` example code that can be found with the 
-[driver source]({{< srcref "examples/src/test/scala/tour/QuickStartCaseClass.scala">}}).
+[driver source]({{< srcref "examples/src/test/scala/tour/QuickStartCaseClass.scala" >}}).
 
 {{% note class="important" %}}
 This follows on from the [quick tour]({{< relref "driver-scala/getting-started/quick-start.md" >}}).
@@ -107,7 +107,7 @@ The operation completed successfully
 
 ## Querying the collection
 
-Use the [find()]({{< scapiref "org/mongodb/scala/MongoCollection.html#find[C](filter:org.bson.conversions.Bson)(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,org.mongodb.scala.collection.immutable.Document],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.FindObservable[C]">}})
+Use the [find()]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoCollection.html#find[C](filter:org.bson.conversions.Bson)(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,org.mongodb.scala.collection.immutable.Document],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.FindObservable[C]" >}})
 method to query the collection.
 
 ### Find the first person in a collection
@@ -152,8 +152,8 @@ Person(58dd0a68218de22333435fa4, Ida, Rhodes)
 ```
 
 {{% note %}}
-Use the [`Filters`]({{< relref "builders/filters.md">}}), [`Sorts`]({{< relref "builders/sorts.md">}}),
-[`Projections`]({{< relref "builders/projections.md">}}) and [`Updates`]({{< relref "builders/updates.md">}})
+Use the [`Filters`]({{< relref "builders/filters.md" >}}), [`Sorts`]({{< relref "builders/sorts.md" >}}),
+[`Projections`]({{< relref "builders/projections.md" >}}) and [`Updates`]({{< relref "builders/updates.md" >}})
 helpers for simple and concise ways of building up queries.
 {{% /note %}}
 
@@ -170,7 +170,7 @@ Which will print out the Person instances for Gertrude, George and Grace.
 ## Updating documents
 
 There are numerous [update operators](http://docs.mongodb.org/manual/reference/operator/update-field/)
-supported by MongoDB.  Use the [Updates]({{< scapiref "org/mongodb/scala/model/Updates$">}}) helpers to help update documents in the database.
+supported by MongoDB.  Use the [Updates]({{< apiref "mongo-scala-driver" "org/mongodb/scala/model/Updates$" >}}) helpers to help update documents in the database.
 
 The following update corrects the hyphenation for Tim Berners-Lee: 
 
@@ -178,12 +178,12 @@ The following update corrects the hyphenation for Tim Berners-Lee:
 collection.updateOne(equal("lastName", "Berners Lee"), set("lastName", "Berners-Lee")).printHeadResult("Update Result: ")
 ```
 
-The update methods return an [`UpdateResult`]({{< apiref "com/mongodb/client/result/UpdateResult.html">}}),
+The update methods return an [`UpdateResult`]({{< apiref "mongodb-driver-core" "com/mongodb/client/result/UpdateResult.html" >}}),
 which provides information about the operation including the number of documents modified by the update.
 
 ## Deleting documents
 
-To delete at most a single document (may be 0 if none match the filter) use the [`deleteOne`]({{< scapiref "org/mongodb/scala/MongoCollection.html#deleteOne(filter:org.bson.conversions.Bson):org.mongodb.scala.Observable[org.mongodb.scala.result.DeleteResult]">}}) 
+To delete at most a single document (may be 0 if none match the filter) use the [`deleteOne`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoCollection.html#deleteOne(filter:org.bson.conversions.Bson):org.mongodb.scala.Observable[org.mongodb.scala.result.DeleteResult]" >}}) 
 method:
 
 ```scala

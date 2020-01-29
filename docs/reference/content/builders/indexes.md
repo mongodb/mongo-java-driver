@@ -9,7 +9,7 @@ title = "Indexes"
 
 ## Indexes
 
-The [`Indexes`]({{< apiref "com/mongodb/client/model/Indexes" >}}) class provides static factory methods for all the MongoDB Index key types.  
+The [`Indexes`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Indexes" >}}) class provides static factory methods for all the MongoDB Index key types.  
 Each method returns an instance of the [`Bson`]({{< relref "bson/documents.md#bson" >}}) type, which can in turn be used with the `createIndex`
 methods.
 
@@ -23,7 +23,7 @@ All the examples below assume this static import.
 
 ### Ascending
 
-To specify an ascending index key, use one of the [`ascending`]({{< apiref "com/mongodb/client/model/Indexes" >}}) methods.
+To specify an ascending index key, use one of the [`ascending`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Indexes" >}}) methods.
 
 This example specifies an ascending index key for the `quantity` field:
 

@@ -19,7 +19,7 @@ release.
 * [Zstandard](https://github.com/facebook/zstd/): Zstandard compression can be used when connecting to MongoDB servers starting with the 4.2 release.
 
 The driver will negotiate which, if any, compression algorithm is used based on capabilities advertised by the server in
-the [ismaster]({{<docsref "reference/command/isMaster/">}}) command response. 
+the [ismaster]({{<docsref "reference/command/isMaster/" >}}) command response. 
 
 ### Specify compression via `ConnectionString`
 
@@ -27,7 +27,7 @@ the [ismaster]({{<docsref "reference/command/isMaster/">}}) command response.
 import org.mongodb.scala._
 ```
 
-To specify compression with [`ConnectionString`]({{<scapiref "org/mongodb/scala/ConnectionString$.html">}}), specify `compressors` as part of the connection
+To specify compression with [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ConnectionString$.html" >}}), specify `compressors` as part of the connection
 string, as in:
 
 ```scala
@@ -64,7 +64,7 @@ import org.mongodb.scala._
 import scala.collection.JavaConverters._
 ```
 
-To specify compression with [`MongoClientSettings`]({{<scapiref "org/mongodb/scala/MongoClientSettings$.html">}}), set the `compressors` property 
+To specify compression with [`MongoClientSettings`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoClientSettings$.html" >}}), set the `compressors` property 
 to a list of `MongoCompressor` instances:
 
 ```scala

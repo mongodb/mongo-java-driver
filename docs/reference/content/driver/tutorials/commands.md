@@ -10,7 +10,7 @@ pre = "<i class='fa'></i>"
 
 ## Run Commands
 
-Not all commands have a specific helper. However you can run any [MongoDB command]({{<docsref "reference/command">}}) by using the MongoDatabase's [`runCommand()`]({{<apiref "com/mongodb/client/MongoDatabase.html#runCommand(org.bson.conversions.Bson,com.mongodb.ReadPreference)">}}) method.
+Not all commands have a specific helper. However you can run any [MongoDB command]({{<docsref "reference/command" >}}) by using the MongoDatabase's [`runCommand()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoDatabase.html#runCommand(org.bson.conversions.Bson,com.mongodb.ReadPreference)" >}}) method.
 
 ## Prerequisites
 
@@ -36,14 +36,14 @@ MongoClient mongoClient = MongoClients.create();
 MongoDatabase database = mongoClient.getDatabase("test");
 ```
 
-For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md">}}).
+For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md" >}}).
 
 ## Run `buildInfo` and `collStats` Commands
 
-To run a command, construct a [`Document`]({{< apiref "org/bson/Document.html" >}})
+To run a command, construct a [`Document`]({{< apiref "bson" "org/bson/Document.html" >}})
 object that specifies the command and pass it to the `runCommand()` method.
 
-The following runs the [`buildInfo`]({{<docsref "reference/command/buildInfo">}}) command and the [`collStats`]({{<docsref "reference/command/collStats">}}) command:
+The following runs the [`buildInfo`]({{<docsref "reference/command/buildInfo" >}}) command and the [`collStats`]({{<docsref "reference/command/collStats" >}}) command:
 
 ```java
 Document buildInfoResults = database.runCommand(new Document("buildInfo", 1));
@@ -53,4 +53,4 @@ Document collStatsResults = database.runCommand(new Document("collStats", "resta
 System.out.println(collStatsResults.toJson());
 ```
 
-For a list of available MongoDB commands, see [MongoDB commands]({{<docsref "reference/command">}}).
+For a list of available MongoDB commands, see [MongoDB commands]({{<docsref "reference/command" >}}).

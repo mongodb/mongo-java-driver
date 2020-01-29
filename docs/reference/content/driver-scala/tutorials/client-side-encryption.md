@@ -50,7 +50,7 @@ More information about mongocryptd will soon be available from the official docu
 The following is a sample app that assumes the **key** and **schema** have already been created in MongoDB. The example uses a local key,
 however using AWS Key Management Service is also an option. The data in the `encryptedField` field is automatically encrypted on the
 insert and decrypted when using find on the client side. The following code snippet comes from the 
-[`ClientSideEncryptionSimpleTour.java`]({{< srcref "driver-scala/src/it/scala/tour/ClientSideEncryptionSimpleTour.java">}}) example code
+[`ClientSideEncryptionSimpleTour.java`]({{< srcref "driver-scala/src/it/scala/tour/ClientSideEncryptionSimpleTour.java" >}}) example code
 that can be found with the driver source on github:
 
 ```scala
@@ -109,7 +109,7 @@ Auto encryption is an **enterprise** only feature.
 
 The following example shows how to configure the `AutoEncryptionSettings` instance to create a new key and setting the json schema map.
 The full code snippet can be found in 
-[`ClientSideEncryptionAutoEncryptionSettingsTour.java`]({{< srcref "driver-scala/src/it/scala/tour/ClientSideEncryptionAutoEncryptionSettingsTour.java">}}):
+[`ClientSideEncryptionAutoEncryptionSettingsTour.java`]({{< srcref "driver-scala/src/it/scala/tour/ClientSideEncryptionAutoEncryptionSettingsTour.java" >}}):
 
 ```scala
 import java.security.SecureRandom
@@ -165,7 +165,7 @@ import tour.Helpers._
 #### Explicit Encryption and Decryption
 Explicit encryption and decryption is a **MongoDB community** feature and does not use the `mongocryptd` process. Explicit encryption is 
 provided by the `ClientEncryption` class. 
-The full code snippet can be found in [`ClientSideEncryptionExplicitEncryptionAndDecryptionTour.scala`]({{< srcref "driver-scala/src/it/scala/tour/ClientSideEncryptionAutoEncryptionSettingsTour.scala">}}):
+The full code snippet can be found in [`ClientSideEncryptionExplicitEncryptionAndDecryptionTour.scala`]({{< srcref "driver-scala/src/it/scala/tour/ClientSideEncryptionAutoEncryptionSettingsTour.scala" >}}):
 
 ```
 // This would have to be the same master key as was used to create the encryption key
@@ -225,7 +225,7 @@ println(
 #### Explicit Encryption and Auto Decryption
 
 Although automatic encryption requires MongoDB 4.2 enterprise or a MongoDB 4.2 Atlas cluster, automatic decryption is supported for all 
-users. To configure automatic decryption without automatic encryption set `bypassAutoEncryption(true)`. The full code snippet can be found in [`ClientSideEncryptionExplicitEncryptionOnlyTour.scala`]({{< srcref "driver-scala/src/it/scala/tour/ClientSideEncryptionExplicitEncryptionOnlyTour.scala">}}):
+users. To configure automatic decryption without automatic encryption set `bypassAutoEncryption(true)`. The full code snippet can be found in [`ClientSideEncryptionExplicitEncryptionOnlyTour.scala`]({{< srcref "driver-scala/src/it/scala/tour/ClientSideEncryptionExplicitEncryptionOnlyTour.scala" >}}):
 
 ```
 ...

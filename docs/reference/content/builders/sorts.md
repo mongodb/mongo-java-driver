@@ -9,7 +9,7 @@ title = "Sort Criteria  "
 
 ## Sorts
 
-The [`Sorts`]({{< apiref "com/mongodb/client/model/Sorts" >}}) class provides static factory methods for all the MongoDB sort criteria 
+The [`Sorts`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Sorts" >}}) class provides static factory methods for all the MongoDB sort criteria 
 operators.  Each method returns an instance of the [`Bson`]({{< relref "bson/documents.md#bson" >}}) type, which can in turn be passed to
 any method that expects sort criteria.
 

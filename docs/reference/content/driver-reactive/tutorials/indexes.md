@@ -10,13 +10,13 @@ pre = "<i class='fa'></i>"
 
 ## Create Indexes
 
-[Indexes]({{<docsref "indexes">}}) support the efficient execution of queries in MongoDB. To create an 
-[index]({{<docsref "indexes ">}}) on a field or fields, pass an index specification document to the 
-[`MongoCollection.createIndex()`]({{< apiref "com/mongodb/client/MongoCollection.html#createIndex(org.bson.conversions.Bson)">}}) 
+[Indexes]({{<docsref "indexes" >}}) support the efficient execution of queries in MongoDB. To create an 
+[index]({{<docsref "indexes " >}}) on a field or fields, pass an index specification document to the 
+[`MongoCollection.createIndex()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#createIndex(org.bson.conversions.Bson)" >}}) 
 method.
 
 The MongoDB Java Driver provides
-the [`Indexes`]({{<apiref "com/mongodb/client/model/Indexes.html">}}) class that
+the [`Indexes`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Indexes.html" >}}) class that
 includes static factory methods to create index specification
 documents for the various MongoDB Index key types.
 
@@ -56,11 +56,11 @@ MongoDatabase database = mongoClient.getDatabase("test");
 MongoCollection<Document> collection = database.getCollection("restaurants");
 ```
 
-For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md">}}).
+For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md" >}}).
 
 ## Ascending Index
 
-To create a specification for an ascending index, use the [`Indexes.ascending`]({{<apiref "com/mongodb/client/model/Indexes.html">}}) static helper methods.
+To create a specification for an ascending index, use the [`Indexes.ascending`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Indexes.html" >}}) static helper methods.
 
 ### Single Ascending Index
 
@@ -73,7 +73,7 @@ collection.createIndex(Indexes.ascending("name"))
 
 ### Compound Ascending Index
 
-The following example creates an ascending [compound index]({{<docsref "core/index-compound">}})  on the `stars` field and the `name`
+The following example creates an ascending [compound index]({{<docsref "core/index-compound" >}})  on the `stars` field and the `name`
  field:
 
 ```java
@@ -85,7 +85,7 @@ For an alternative way to create a compound index, see [Compound Indexes](#compo
 
 ## Descending Index
 
-To create a specification of a descending index, use the [`Indexes.descending`]({{<apiref "com/mongodb/client/model/Indexes.html">}}) static helper methods.
+To create a specification of a descending index, use the [`Indexes.descending`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Indexes.html" >}}) static helper methods.
 
 ### Single Descending Key Index
 
@@ -98,7 +98,7 @@ collection.createIndex(Indexes.descending("stars"))
 
 ### Compound Descending Key Index
 
-The following example creates a descending [compound index]({{<docsref "core/index-compound">}}) on the `stars` field and the `name` field:
+The following example creates a descending [compound index]({{<docsref "core/index-compound" >}}) on the `stars` field and the `name` field:
 
 ```java
 collection.createIndex(Indexes.descending("stars", "name"))
@@ -109,7 +109,7 @@ For an alternative way to create a compound index, see [Compound Indexes](#compo
 
 ## Compound Indexes
 
-To create a specification for a [compound index]({{<docsref "core/index-compound">}}), use the [`Indexes.compoundIndex`]({{<apiref "com/mongodb/client/model/Indexes.html">}}) static helper methods.
+To create a specification for a [compound index]({{<docsref "core/index-compound" >}}), use the [`Indexes.compoundIndex`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Indexes.html" >}}) static helper methods.
 
 {{% note %}}
 To create a specification for a compound index where all the keys are ascending, you can use the [`ascending()`](#compound-ascending-key-index) method. To create a specification for a compound index where all the keys are descending, you can use the [`descending()`](##compound-descending-key-index) method.
@@ -126,8 +126,8 @@ collection.createIndex(
 
 ## Text Indexes
 
-MongoDB provides [text indexes]({{<docsref "core/index-text">}}) to support text search of string content. Text indexes can include any field whose value is a string or an array of string elements. To create a specification for a text index, use the
-[`Indexes.text`]({{<apiref "com/mongodb/client/model/Indexes.html#text(java.lang.String)">}}) static helper method.
+MongoDB provides [text indexes]({{<docsref "core/index-text" >}}) to support text search of string content. Text indexes can include any field whose value is a string or an array of string elements. To create a specification for a text index, use the
+[`Indexes.text`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Indexes.html#text(java.lang.String)" >}}) static helper method.
 
 The following example creates a text index on the `name` field:
 
@@ -138,7 +138,7 @@ collection.createIndex(Indexes.text("name"))
 
 ## Hashed Index
 
-To create a specification for a [hashed index]({{<docsref "core/index-hashed">}}) index, use the [`Indexes.hashed`]({{<apiref "com/mongodb/client/model/Indexes.html#hashed(java.lang.String)">}}) static helper method.
+To create a specification for a [hashed index]({{<docsref "core/index-hashed" >}}) index, use the [`Indexes.hashed`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Indexes.html#hashed(java.lang.String)" >}}) static helper method.
 
 The following example creates a hashed index on the `_id` field:
 
@@ -150,11 +150,11 @@ collection.createIndex(Indexes.hashed("_id"))
 ## Geospatial Indexes
 
 To support geospatial queries, MongoDB supports various
-[geospatial indexes]({{<docsref "applications/geospatial-indexes">}}).
+[geospatial indexes]({{<docsref "applications/geospatial-indexes" >}}).
 
 ### `2dsphere`
 
-To create a specification for a [`2dsphere` index]({{<docsref "core/2dsphere">}}), use the [`Indexes.geo2dsphere`]({{<apiref "com/mongodb/client/model/Indexes.html#geo2dsphere(java.lang.String...)">}}) static helper methods.
+To create a specification for a [`2dsphere` index]({{<docsref "core/2dsphere" >}}), use the [`Indexes.geo2dsphere`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Indexes.html#geo2dsphere(java.lang.String...)" >}}) static helper methods.
 
 The following example creates a `2dsphere` index on the `"contact.location"` field:
 
@@ -165,7 +165,7 @@ collection.createIndex(Indexes.geo2dsphere("contact.location"))
 
 ### geoHaystack
 
-To create a specification for a [`geoHaystack` index]({{<docsref "core/geohaystack/">}}), use the [`Indexes.geoHaystack`]({{<apiref "com/mongodb/client/model/Indexes.html#geoHaystack(java.lang.String,org.bson.conversions.Bson)">}}) method. `geoHaystack` indexes can improve performance on queries that use flat geometries.
+To create a specification for a [`geoHaystack` index]({{<docsref "core/geohaystack/" >}}), use the [`Indexes.geoHaystack`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Indexes.html#geoHaystack(java.lang.String,org.bson.conversions.Bson)" >}}) method. `geoHaystack` indexes can improve performance on queries that use flat geometries.
 
 The following example creates a `geoHaystack` index on the `contact.location` field and an ascending index on the `stars` field:
 
@@ -178,7 +178,7 @@ collection.createIndex(
 ```
 
 
-To query a haystack index, use the [`geoSearch`]({{<docsref "reference/command/geoSearch">}}) command.
+To query a haystack index, use the [`geoSearch`]({{<docsref "reference/command/geoSearch" >}}) command.
 
 ## IndexOptions
 
@@ -187,14 +187,14 @@ import com.mongodb.client.model.IndexOptions;
 ```
 
 In addition to the index specification document, the
-[`createIndex()`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html#createIndex(org.bson.conversions.Bson,com.mongodb.client.model.IndexOptions)">}}) 
+[`createIndex()`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/MongoCollection.html#createIndex(org.bson.conversions.Bson,com.mongodb.client.model.IndexOptions)" >}}) 
 method can take an index options document, such as to create unique indexes or partial indexes.
 
-The Java Driver provides the [IndexOptions]({{<apiref "com/mongodb/client/model/IndexOptions.html">}}) class to specify various index options.
+The Java Driver provides the [IndexOptions]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/IndexOptions.html" >}}) class to specify various index options.
 
 ### Unique Index
 
-The following specifies a [`unique(true)`]({{<apiref "com/mongodb/client/model/IndexOptions.html#unique(boolean)">}}) option to create a [unique index]({{<docsref "core/index-unique">}}) on the `name` and `stars` fields:
+The following specifies a [`unique(true)`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/IndexOptions.html#unique(boolean)" >}}) option to create a [unique index]({{<docsref "core/index-unique" >}}) on the `name` and `stars` fields:
 
 ```java
 IndexOptions indexOptions = new IndexOptions().unique(true);
@@ -202,11 +202,11 @@ collection.createIndex(Indexes.ascending("name", "stars"), indexOptions)
           .subscribe(new PrintToStringSubscriber<String>());
 ```
 
-For more information on unique indexes, see [Unique Indexes]({{<docsref "core/index-unique">}}).
+For more information on unique indexes, see [Unique Indexes]({{<docsref "core/index-unique" >}}).
 
 ### Partial Index
 
-To create a [partial index]({{<docsref "core/index-partial/">}}), include a [partialFilterExpression]({{<apiref "com/mongodb/client/model/IndexOptions.html#partialFilterExpression(org.bson.conversions.Bson)">}}) as an index option.
+To create a [partial index]({{<docsref "core/index-partial/" >}}), include a [partialFilterExpression]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/IndexOptions.html#partialFilterExpression(org.bson.conversions.Bson)" >}}) as an index option.
 
 The following example creates a partial index on documents that have `status` field equal to `"A"`.
 
@@ -218,7 +218,7 @@ collection.createIndex(
           .subscribe(new PrintToStringSubscriber<String>());
 ```
 
-For more information on partial indexes, see [Partial Indexes]({{<docsref "core/index-partial/">}}).
+For more information on partial indexes, see [Partial Indexes]({{<docsref "core/index-partial/" >}}).
 
 ## Get a List of Indexes on a Collection
 
@@ -228,4 +228,4 @@ Use the `listIndexes()` method to get a list of indexes. The following lists the
 collection.listIndexes().subscribe(new PrintDocumentSubscriber());
 ```
 
-For other index options, see [MongoDB Manual]({{<docsref "core/index-properties">}}).
+For other index options, see [MongoDB Manual]({{<docsref "core/index-properties" >}}).

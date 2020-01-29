@@ -49,11 +49,11 @@ val database: MongoDatabase = mongoClient.getDatabase("test")
 val collection: MongoCollection[Document] = database.getCollection("restaurants")
 ```
 
-For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md">}}).
+For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md" >}}).
 
 ## Watch the collection
 
-To create a change stream use one of the [`MongoCollection.watch()`]({{<scapiref "org/mongodb/scala/MongoCollection.html#watch[C](clientSession:org.mongodb.scala.ClientSession,pipeline:Seq[org.mongodb.scala.bson.conversions.Bson])(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,TResult],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.ChangeStreamObservable[C]">}}) methods.
+To create a change stream use one of the [`MongoCollection.watch()`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoCollection.html#watch[C](clientSession:org.mongodb.scala.ClientSession,pipeline:Seq[org.mongodb.scala.bson.conversions.Bson])(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,TResult],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.ChangeStreamObservable[C]" >}}) methods.
 
 
 
@@ -85,7 +85,7 @@ observer.await() // Block waiting for the latch
 ## Watch the database
 
 New in the 3.8 driver and MongoDB 4.0, applications can open a single change stream to watch all non-system collections of a database. To
-create such a change stream use one of the [`MongoDatabase.watch()`]({{<scapiref "org/mongodb/scala/MongoDatabase.html#watch[C]()(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,org.mongodb.scala.Document],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.ChangeStreamObservable[C]">}}) methods.
+create such a change stream use one of the [`MongoDatabase.watch()`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoDatabase.html#watch[C]()(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,org.mongodb.scala.Document],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.ChangeStreamObservable[C]" >}}) methods.
 
 In the following example, the change stream prints out all the changes it observes on the given database.
 
@@ -99,7 +99,7 @@ observer.await() // Block waiting for the latch
 
 New in the 3.8 driver and MongoDB 4.0, applications can open a single change stream to watch all non-system collections of all databases 
 in a MongoDB deployment. To create such a change stream use one of the 
-[`MongoClient.watch()`]({{<scapiref "org/mongodb/scala/MongoClient.html#watch[C]()(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,org.mongodb.scala.Document],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.ChangeStreamObservable[C]">}}) methods.
+[`MongoClient.watch()`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoClient.html#watch[C]()(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,org.mongodb.scala.Document],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.ChangeStreamObservable[C]" >}}) methods.
 
 In the following example, the change stream prints out all the changes it observes on the deployment to which the `MongoClient` is
 connected
@@ -121,7 +121,7 @@ In the following example the change stream prints out all changes it observes, f
 - First it uses a [`$match`]({{< docsref "reference/operator/aggregation/match/" >}}) stage to filter for documents where the `operationType` 
 is either an `insert`, `update`, `replace` or `delete`.
 
-- Then, it sets the `fullDocument` to [`FullDocument.UPDATE_LOOKUP`]({{<scapiref "org/mongodb/scala/model/changestream/FullDocument$.html#UPDATE_LOOKUP:com.mongodb.client.model.changestream.FullDocument">}}),
+- Then, it sets the `fullDocument` to [`FullDocument.UPDATE_LOOKUP`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/model/changestream/FullDocument$.html#UPDATE_LOOKUP:com.mongodb.client.model.changestream.FullDocument" >}}),
 so that the document after the update is included in the results.
 
 ```scala

@@ -10,14 +10,14 @@ title = "Connect to MongoDB"
 
 ## Connect to MongoDB
 
-Use [`MongoClients.create()`]({{< apiref "com/mongodb/client/MongoClients.html">}}) (as of the 3.7 release), or 
-[`MongoClient()`]({{< apiref "com/mongodb/MongoClient .html">}}) for the legacy MongoClient API, to make a connection to a running MongoDB instance.
+Use [`MongoClients.create()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoClients.html" >}}) (as of the 3.7 release), or 
+[`MongoClient()`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClient .html" >}}) for the legacy MongoClient API, to make a connection to a running MongoDB instance.
 
 {{% note class="important" %}}
 The following examples are not meant to provide an exhaustive list
 of ways to instantiate `MongoClient`. For a complete list of MongoClients factory methods, see the 
-[`MongoClients API documentation`]({{< apiref "com/mongodb/client/MongoClients.html">}}), or for the legacy MongoClient API see 
-the [`MongoClient() API documentation`]({{< apiref "com/mongodb/MongoClient.html">}}).
+[`MongoClients API documentation`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoClients.html" >}}), or for the legacy MongoClient API see 
+the [`MongoClient() API documentation`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClient.html" >}}).
 
 {{% /note %}}
 
@@ -26,7 +26,7 @@ The 3.5 release deprecated socket keep-alive settings, also socket keep-alive ch
 It is *strongly recommended* that system keep-alive settings should be configured with shorter timeouts. 
 
 See the 
-['does TCP keep-alive time affect MongoDB deployments?']({{<docsref "/faq/diagnostics/#does-tcp-keepalive-time-affect-mongodb-deployments">}}) 
+['does TCP keep-alive time affect MongoDB deployments?']({{<docsref "/faq/diagnostics/#does-tcp-keepalive-time-affect-mongodb-deployments" >}}) 
 documentation for more information.
 {{% /note %}}
 
@@ -64,7 +64,7 @@ import java.util.Arrays;
 
 ## `MongoClient` (since 3.7 release)
 
-A [`MongoClient`]({{< apiref "com/mongodb/client/MongoClient.html">}}) instance represents a pool of connections
+A [`MongoClient`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoClient.html" >}}) instance represents a pool of connections
 to the database; you will only need one instance of class `MongoClient` even with multiple threads.
 
 {{% note class="important" %}}
@@ -103,13 +103,13 @@ To connect to a standalone MongoDB instance:
 
 ## Connect to a Replica Set
 
-To connect to a [replica set]({{<docsref "replication/">}}), you must specify one or more members to the `MongoClients` create method.
+To connect to a [replica set]({{<docsref "replication/" >}}), you must specify one or more members to the `MongoClients` create method.
 
 {{% note %}}
 MongoDB will auto-discover the primary and the secondaries.
 {{% /note %}}
 
-- You can specify the members using a [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString.html">}}):
+- You can specify the members using a [`ConnectionString`]({{< apiref "mongodb-driver-core" "com/mongodb/ConnectionString.html" >}}):
 
   - To specify at least two members of the replica set:
 
@@ -123,7 +123,7 @@ MongoDB will auto-discover the primary and the secondaries.
     MongoClient mongoClient = MongoClients.create("mongodb://host1:27017,host2:27017,host3:27017/?replicaSet=myReplicaSet");
 ```
 
-- You can specify a list of the all the replica set members' [`ServerAddress`]({{<apiref "com/mongodb/ServerAddress.html">}}):
+- You can specify a list of the all the replica set members' [`ServerAddress`]({{< apiref "mongodb-driver-core" "com/mongodb/ServerAddress.html" >}}):
 
 ```java
     MongoClient mongoClient = MongoClients.create(
@@ -139,12 +139,12 @@ MongoDB will auto-discover the primary and the secondaries.
 
 ## Connect to a Sharded Cluster
 
-To connect to a [sharded cluster]({{<docsref "sharding/">}}), specify the `mongos` instance
+To connect to a [sharded cluster]({{<docsref "sharding/" >}}), specify the `mongos` instance
 or instances to a `MongoClients` create method.
 
 To connect to a single `mongos` instance:
 
-- You can specify the hostname and the port in a [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString.html">}})
+- You can specify the hostname and the port in a [`ConnectionString`]({{< apiref "mongodb-driver-core" "com/mongodb/ConnectionString.html" >}})
 
 ```java
     MongoClient mongoClient = MongoClients.create( "mongodb://localhost:27017" );
@@ -158,13 +158,13 @@ or leave the connection string out if the `mongos` is running on localhost:27017
 
 To connect to multiple `mongos` instances:
 
-- You can specify the [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString.html">}}) with their hostnames and ports:
+- You can specify the [`ConnectionString`]({{< apiref "mongodb-driver-core" "com/mongodb/ConnectionString.html" >}}) with their hostnames and ports:
 
     ```java
     MongoClient mongoClient = MongoClients.create("mongodb://host1:27017,host2:27017");
     ```
 
-- You can specify a list of the `mongos` instances' [`ServerAddress`]({{ <apiref "com/mongodb/ServerAddress.html">}}):
+- You can specify a list of the `mongos` instances' [`ServerAddress`]({{ < apiref "mongodb-driver-core" "com/mongodb/ServerAddress.html" >}}):
 
 ```java
     MongoClient mongoClient = MongoClients.create(
@@ -222,7 +222,7 @@ Finally, in some cases you may need to combine a connection string with programm
 
 ## `MongoClient` (legacy API)
 
-A [`MongoClient`]({{< apiref "com/mongodb/MongoClient.html">}}) instance represents a pool of connections
+A [`MongoClient`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClient.html" >}}) instance represents a pool of connections
 to the database; you will only need one instance of class `MongoClient` even with multiple threads.
 
 {{% note class="important" %}}
@@ -265,7 +265,7 @@ To connect to a standalone MongoDB instance:
     ```
 
 - You can specify the
-  [`MongoClientURI`]({{< apiref "/com/mongodb/MongoClientURI.html">}}) connection string.
+  [`MongoClientURI`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientURI.html" >}}) connection string.
 
     ```java
     MongoClient mongoClient = new MongoClient(new MongoClientURI("mongodb://host1:27017"));
@@ -279,14 +279,14 @@ To connect to a standalone MongoDB instance:
 
 ## Connect to a Replica Set
 
-To connect to a [replica set]({{<docsref "replication/">}}), you must specify  one or more members to the
+To connect to a [replica set]({{<docsref "replication/" >}}), you must specify  one or more members to the
 `MongoClient` constructor.
 
 {{% note %}}
 MongoDB will auto-discover the primary and the secondaries.
 {{% /note %}}
 
-- You can specify the members using the [`MongoClientURI`]({{< apiref "/com/mongodb/MongoClientURI.html">}}) connection string:
+- You can specify the members using the [`MongoClientURI`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientURI.html" >}}) connection string:
 
   - To specify at least two members of the replica set:
 
@@ -303,7 +303,7 @@ MongoDB will auto-discover the primary and the secondaries.
               "mongodb://host1:27017,host2:27017,host3:27017/?replicaSet=myReplicaSet"));
         ```
 
-- You can specify a list of the all the replica set members' [`ServerAddress`]({{<apiref "com/mongodb/ServerAddress.html">}}):
+- You can specify a list of the all the replica set members' [`ServerAddress`]({{< apiref "mongodb-driver-core" "com/mongodb/ServerAddress.html" >}}):
 
     ```java
     MongoClient mongoClient = new MongoClient(
@@ -315,7 +315,7 @@ MongoDB will auto-discover the primary and the secondaries.
 
 ## Connect to a Sharded Cluster
 
-To connect to a [sharded cluster]({{<docsref "sharding/">}}), specify the `mongos` instance
+To connect to a [sharded cluster]({{<docsref "sharding/" >}}), specify the `mongos` instance
 or instances to the `MongoClient` constructor.
 
 To connect to a single `mongos` instance:
@@ -328,7 +328,7 @@ To connect to a single `mongos` instance:
     MongoClient mongoClient = new MongoClient( "localhost" , 27017 );
     ```
 
-- You can specify the [`MongoClientURI`]({{< apiref "/com/mongodb/MongoClientURI.html">}}) connection string:
+- You can specify the [`MongoClientURI`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientURI.html" >}}) connection string:
 
     ```java
     MongoClient mongoClient = new MongoClient(new MongoClientURI("mongodb://localhost:27017"));
@@ -336,7 +336,7 @@ To connect to a single `mongos` instance:
 
 To connect to multiple `mongos` instances:
 
-- You can specify the [`MongoClientURI`]({{< apiref "/com/mongodb/MongoClientURI.html">}}) connection string with their hostnames and ports:
+- You can specify the [`MongoClientURI`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientURI.html" >}}) connection string with their hostnames and ports:
 
     ```java
     MongoClient mongoClient = new MongoClient(
@@ -344,7 +344,7 @@ To connect to multiple `mongos` instances:
     ```
 
 - You can specify a list of the `mongos` instances'
-  [`ServerAddress`]({{ <apiref "com/mongodb/ServerAddress.html">}}):
+  [`ServerAddress`]({{ < apiref "mongodb-driver-core" "com/mongodb/ServerAddress.html" >}}):
 
     ```java
     MongoClient mongoClient = new MongoClient(

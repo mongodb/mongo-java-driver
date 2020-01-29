@@ -10,12 +10,12 @@ title = "Connect to MongoDB"
 
 ## Connect to MongoDB
 
-Use [`MongoClient()`]({{< scapiref "org/mongodb/scala/MongoClient.html">}}) to make a connection to a running MongoDB instance.
+Use [`MongoClient()`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoClient.html" >}}) to make a connection to a running MongoDB instance.
 
 {{% note class="important" %}}
 The following examples are not meant to provide an exhaustive list
 of ways to instantiate `MongoClient`. For a complete list of MongoClient companion methods, see the 
-[`MongoClient API documentation`]({{< scapiref "org/mongodb/scala/MongoClient.html">}}).
+[`MongoClient API documentation`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoClient.html" >}}).
 
 {{% /note %}}
 
@@ -23,7 +23,7 @@ of ways to instantiate `MongoClient`. For a complete list of MongoClient compani
 It is *strongly recommended* that system keep-alive settings should be configured with shorter timeouts. 
 
 See the 
-['does TCP keep-alive time affect MongoDB deployments?']({{<docsref "/faq/diagnostics/#does-tcp-keepalive-time-affect-mongodb-deployments">}}) 
+['does TCP keep-alive time affect MongoDB deployments?']({{<docsref "/faq/diagnostics/#does-tcp-keepalive-time-affect-mongodb-deployments" >}}) 
 documentation for more information.
 {{% /note %}}
 
@@ -43,7 +43,7 @@ import scala.collection.JavaConverters._
 
 ## `MongoClient`
 
-A [`MongoClient`]({{< scapiref "org/mongodb/scala/MongoClient.html">}}) instance represents a pool of connections
+A [`MongoClient`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoClient.html" >}}) instance represents a pool of connections
 to the database; you will only need one instance of class `MongoClient` even with multiple concurrent operations.
 
 {{% note class="important" %}}
@@ -82,13 +82,13 @@ To connect to a standalone MongoDB instance:
 
 ## Connect to a Replica Set
 
-To connect to a [replica set]({{<docsref "replication/">}}), you must specify one or more members to the `MongoClients` create method.
+To connect to a [replica set]({{<docsref "replication/" >}}), you must specify one or more members to the `MongoClients` create method.
 
 {{% note %}}
 MongoDB will auto-discover the primary and the secondaries.
 {{% /note %}}
 
-- You can specify the members using a [`ConnectionString`]({{< scapiref "org/mongodb/scala/ConnectionString$.html">}}):
+- You can specify the members using a [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ConnectionString$.html" >}}):
 
   - To specify at least two members of the replica set:
 
@@ -102,7 +102,7 @@ val mongoClient = MongoClient("mongodb://host1:27017,host2:27017,host3:27017")
 val mongoClient = MongoClient("mongodb://host1:27017,host2:27017,host3:27017/?replicaSet=myReplicaSet")
 ```
 
-- You can specify a list of the all the replica set members' [`ServerAddress`]({{<scapiref "org/mongodb/scala/ServerAddress$.html">}}):
+- You can specify a list of the all the replica set members' [`ServerAddress`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ServerAddress$.html" >}}):
 
 ```scala
 val mongoClient = MongoClient(
@@ -117,12 +117,12 @@ val mongoClient = MongoClient(
 
 ## Connect to a Sharded Cluster
 
-To connect to a [sharded cluster]({{<docsref "sharding/">}}), specify the `mongos` instance
+To connect to a [sharded cluster]({{<docsref "sharding/" >}}), specify the `mongos` instance
 or instances to a `MongoClients` create method.
 
 To connect to a single `mongos` instance:
 
-- You can specify the hostname and the port in a [`ConnectionString`]({{< scapiref "org/mongodb/scala/ConnectionString$.html">}})
+- You can specify the hostname and the port in a [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ConnectionString$.html" >}})
 
 ```scala
 val mongoClient = MongoClient( "mongodb://localhost:27017" )
@@ -136,13 +136,13 @@ val mongoClient = MongoClient()
 
 To connect to multiple `mongos` instances:
 
-- You can specify the [`ConnectionString`]({{< scapiref "org/mongodb/scala/ConnectionString$.html">}}) with their hostnames and ports:
+- You can specify the [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ConnectionString$.html" >}}) with their hostnames and ports:
 
     ```scala
     val mongoClient = MongoClient("mongodb://host1:27017,host2:27017")
     ```
 
-- You can specify a list of the `mongos` instances' [`ServerAddress`]({{ <apiref "com/mongodb/ServerAddress.html">}}):
+- You can specify a list of the `mongos` instances' [`ServerAddress`]({{ < apiref "mongodb-driver-core" "com/mongodb/ServerAddress.html" >}}):
 
 ```scala
 val mongoClient = MongoClient(
