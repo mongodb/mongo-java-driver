@@ -210,15 +210,17 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
                 if (reader.getCurrentBsonType() == BsonType.NULL) {
                     reader.readNull();
                 } else {
-                    value = decoderContext.decodeWithChildContext(propertyModel.getCachedCodec(), reader);
+                    Codec<S> codec = propertyModel.getCachedCodec();
+                    if (codec == null) {
+                        throw new CodecConfigurationException(format("Missing codec in '%s' for '%s'",
+                                classModel.getName(), propertyModel.getName()));
+                    }
+                    value = decoderContext.decodeWithChildContext(codec, reader);
                 }
                 if (propertyModel.isWritable()) {
                     instanceCreator.set(value, propertyModel);
                 }
-            } catch (BsonInvalidOperationException e) {
-                throw new CodecConfigurationException(format("Failed to decode '%s'. Decoding '%s' errored with: %s",
-                        classModel.getName(), name, e.getMessage()), e);
-            } catch (CodecConfigurationException e) {
+            } catch (BsonInvalidOperationException | CodecConfigurationException e) {
                 throw new CodecConfigurationException(format("Failed to decode '%s'. Decoding '%s' errored with: %s",
                         classModel.getName(), name, e.getMessage()), e);
             }

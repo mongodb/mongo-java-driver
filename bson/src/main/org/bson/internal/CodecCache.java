@@ -37,6 +37,16 @@ final class CodecCache {
     }
 
     @SuppressWarnings("unchecked")
+    public synchronized <T> Codec<T> putIfMissing(final Class<T> clazz, final Codec<T> codec){
+        if (codecCache.containsKey(clazz)) {
+            return (Codec<T>) codecCache.get(clazz).get();
+        } else {
+            codecCache.put(clazz, Optional.of(codec));
+            return codec;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
     public <T> Codec<T> getOrThrow(final Class<T> clazz) {
         if (codecCache.containsKey(clazz)) {
             Optional<? extends Codec<?>> optionalCodec = codecCache.get(clazz);
