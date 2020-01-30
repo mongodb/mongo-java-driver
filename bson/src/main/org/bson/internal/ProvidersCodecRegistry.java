@@ -56,8 +56,7 @@ public final class ProvidersCodecRegistry implements CodecRegistry, CycleDetecti
             for (CodecProvider provider : codecProviders) {
                 Codec<T> codec = provider.get(context.getCodecClass(), context);
                 if (codec != null) {
-                    codecCache.put(context.getCodecClass(), codec);
-                    return codec;
+                    return codecCache.putIfMissing(context.getCodecClass(), codec);
                 }
             }
             codecCache.put(context.getCodecClass(), null);

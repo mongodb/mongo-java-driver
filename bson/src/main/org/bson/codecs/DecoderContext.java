@@ -18,6 +18,8 @@ package org.bson.codecs;
 
 import org.bson.BsonReader;
 
+import static org.bson.assertions.Assertions.notNull;
+
 /**
  * The context for decoding values to BSON.
  *
@@ -90,6 +92,7 @@ public final class DecoderContext {
      * @since 3.5
      */
     public <T> T decodeWithChildContext(final Decoder<T> decoder, final BsonReader reader) {
+        notNull("decoder", decoder);
         return decoder.decode(reader, DEFAULT_CONTEXT);
     }
 
