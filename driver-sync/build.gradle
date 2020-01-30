@@ -53,6 +53,7 @@ jar {
         instruction 'Build-Version', project.gitVersion
         instruction 'Import-Package',
                 'org.bson.*',
+                'com.mongodb.crypt.capi.*;resolution:=optional',
                 'com.mongodb.*'
     }
 }
