@@ -60,7 +60,11 @@ ext {
 }
 
 afterEvaluate {
-    jar.manifest.attributes['Import-Package'] = 'org.bson.*,com.mongodb.*'
     jar.manifest.attributes['Automatic-Module-Name'] = 'org.mongodb.driver.reactivestreams'
     jar.manifest.attributes['Bundle-SymbolicName'] = 'org.mongodb.driver-reactivestreams'
+    jar.manifest.attributes['Import-Package'] = [
+            'org.bson.*',
+            'com.mongodb.crypt.capi.*;resolution:=optional',
+            'com.mongodb.*',
+    ].join(',')
 }
