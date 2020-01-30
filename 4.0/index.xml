@@ -18,7 +18,7 @@
       
       <guid>/mongo-java-driver/4.0/apidocs/</guid>
       <description> API Documentation The following API documentation is available:
- Bson MongoDB Driver Core MongoDB Driver Sync MongoDB Legacy Driver MongoDB Reactive Streams Driver MongoDB Scala Driver  </description>
+ Java Driver (modern API) Java Driver (legacy API) Java Reactive Streams Driver Scala Driver Bson (The bson layer)  </description>
     </item>
     
     <item>
