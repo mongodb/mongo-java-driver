@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Map;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -496,8 +497,14 @@ final class GridFSBucketImpl implements GridFSBucket {
         }
 
         ArrayList<Document> indexes = listIndexesIterable.into(new ArrayList<Document>());
-        for (Document indexDoc : indexes) {
-            if (indexDoc.get("key", Document.class).equals(index)) {
+        for (Document result : indexes) {
+            Document indexDoc = result.get("key", new Document());
+            for (final Map.Entry<String, Object> entry : indexDoc.entrySet()) {
+                if (entry.getValue() instanceof Number) {
+                    entry.setValue(((Number) entry.getValue()).intValue());
+                }
+            }
+            if (indexDoc.equals(index)) {
                 hasIndex = true;
                 break;
             }

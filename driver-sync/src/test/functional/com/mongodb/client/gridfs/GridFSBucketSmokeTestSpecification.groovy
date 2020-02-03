@@ -458,6 +458,33 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         direct << [true, false]
     }
 
+    def 'should not create if index is numerically the same'() {
+        when:
+        filesCollection.createIndex(new Document('filename', indexValue1).append('uploadDate', indexValue2))
+        chunksCollection.createIndex(new Document('files_id', indexValue1).append('n', indexValue2))
+        def contentBytes = 'Hello GridFS' as byte[]
+
+        then:
+        filesCollection.listIndexes().into([]).size() == 2
+        chunksCollection.listIndexes().into([]).size() == 2
+
+        when:
+        if (direct) {
+            gridFSBucket.uploadFromStream('myFile', new ByteArrayInputStream(contentBytes));
+        } else {
+            def outputStream = gridFSBucket.openUploadStream('myFile')
+            outputStream.write(contentBytes)
+            outputStream.close()
+        }
+
+        then:
+        filesCollection.listIndexes().into([]).size() == 2
+        chunksCollection.listIndexes().into([]).size() == 2
+
+        where:
+        [direct, indexValue1, indexValue2] << [[true, false], [1, 1.0, 1L], [1, 1.0, 1L]].combinations()
+    }
+
     def 'should mark and reset'() {
         given:
         def content = 1 .. 1000 as byte[]

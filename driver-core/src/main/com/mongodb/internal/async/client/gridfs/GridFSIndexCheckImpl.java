@@ -27,6 +27,7 @@ import com.mongodb.lang.Nullable;
 import org.bson.Document;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -85,8 +86,14 @@ final class GridFSIndexCheckImpl implements GridFSIndexCheck {
                     callback.onResult(null, t);
                 } else {
                     boolean hasIndex = false;
-                    for (Document indexDoc : indexes) {
-                        if (indexDoc.get("key", Document.class).equals(index)) {
+                    for (Document result : indexes) {
+                        Document indexDoc = result.get("key", new Document());
+                        for (final Map.Entry<String, Object> entry : indexDoc.entrySet()) {
+                            if (entry.getValue() instanceof Number) {
+                                entry.setValue(((Number) entry.getValue()).intValue());
+                            }
+                        }
+                        if (indexDoc.equals(index)) {
                             hasIndex = true;
                             break;
                         }
