@@ -450,6 +450,29 @@ class AsyncGridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         run(chunksCollection.listIndexes().&into, []).size() == 1
     }
 
+    def 'should not create if index is numerically the same'() {
+        when:
+        run(filesCollection.&createIndex, new Document('filename', indexValue1).append('uploadDate', indexValue2))
+        run(chunksCollection.&createIndex, new Document('files_id', indexValue1).append('n', indexValue2))
+        def contentBytes = 'Hello GridFS' as byte[]
+
+        then:
+        run(filesCollection.listIndexes().&into, []).size() == 2
+        run(chunksCollection.listIndexes().&into, []).size() == 2
+
+        when:
+        def outputStream = gridFSBucket.openUploadStream('myFile')
+        run(outputStream.&write, ByteBuffer.wrap(contentBytes))
+        run(outputStream.&close)
+
+        then:
+        run(filesCollection.listIndexes().&into, []).size() == 2
+        run(chunksCollection.listIndexes().&into, []).size() == 2
+
+        where:
+        [indexValue1, indexValue2] << [[1, 1.0, 1L], [1, 1.0, 1L]].combinations()
+    }
+
     def 'should use the user provided codec registries for encoding / decoding data'() {
         given:
         def client = AsyncMongoClients.create(getMongoClientBuilderFromConnectionString()
