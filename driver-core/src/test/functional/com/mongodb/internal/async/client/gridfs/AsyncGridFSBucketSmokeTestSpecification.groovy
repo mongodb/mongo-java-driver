@@ -30,11 +30,13 @@ import org.bson.Document
 import org.bson.UuidRepresentation
 import org.bson.types.ObjectId
 import org.junit.experimental.categories.Category
+import spock.lang.IgnoreIf
 import spock.lang.Unroll
 
 import java.nio.ByteBuffer
 import java.security.SecureRandom
 
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Updates.unset
 import static com.mongodb.internal.async.client.Fixture.getDefaultDatabaseName
@@ -450,6 +452,7 @@ class AsyncGridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         run(chunksCollection.listIndexes().&into, []).size() == 1
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should not create if index is numerically the same'() {
         when:
         run(filesCollection.&createIndex, new Document('filename', indexValue1).append('uploadDate', indexValue2))
