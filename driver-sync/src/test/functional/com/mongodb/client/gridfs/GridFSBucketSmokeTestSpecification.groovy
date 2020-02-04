@@ -32,8 +32,10 @@ import org.bson.Document
 import org.bson.UuidRepresentation
 import org.bson.codecs.UuidCodec
 import org.bson.types.ObjectId
+import spock.lang.IgnoreIf
 import spock.lang.Unroll
 
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.Fixture.getDefaultDatabase
 import static com.mongodb.client.Fixture.getDefaultDatabaseName
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder
@@ -458,6 +460,7 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         direct << [true, false]
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should not create if index is numerically the same'() {
         when:
         filesCollection.createIndex(new Document('filename', indexValue1).append('uploadDate', indexValue2))
