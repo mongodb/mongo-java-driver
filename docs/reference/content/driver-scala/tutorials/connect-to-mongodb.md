@@ -142,7 +142,7 @@ To connect to multiple `mongos` instances:
     val mongoClient = MongoClient("mongodb://host1:27017,host2:27017")
     ```
 
-- You can specify a list of the `mongos` instances' [`ServerAddress`]({{ < apiref "mongodb-driver-core" "com/mongodb/ServerAddress.html" >}}):
+- You can specify a list of the `mongos` instances' [`ServerAddress`]({{< apiref "mongodb-driver-core" "com/mongodb/ServerAddress.html" >}}):
 
 ```scala
 val mongoClient = MongoClient(

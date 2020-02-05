@@ -164,7 +164,7 @@ To connect to multiple `mongos` instances:
     MongoClient mongoClient = MongoClients.create("mongodb://host1:27017,host2:27017");
     ```
 
-- You can specify a list of the `mongos` instances' [`ServerAddress`]({{ < apiref "mongodb-driver-core" "com/mongodb/ServerAddress.html" >}}):
+- You can specify a list of the `mongos` instances' [`ServerAddress`]({{< apiref "mongodb-driver-core" "com/mongodb/ServerAddress.html" >}}):
 
 ```java
     MongoClient mongoClient = MongoClients.create(
@@ -344,7 +344,7 @@ To connect to multiple `mongos` instances:
     ```
 
 - You can specify a list of the `mongos` instances'
-  [`ServerAddress`]({{ < apiref "mongodb-driver-core" "com/mongodb/ServerAddress.html" >}}):
+  [`ServerAddress`]({{< apiref "mongodb-driver-core" "com/mongodb/ServerAddress.html" >}}):
 
     ```java
     MongoClient mongoClient = new MongoClient(
