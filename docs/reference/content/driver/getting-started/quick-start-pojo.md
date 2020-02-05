@@ -230,7 +230,7 @@ Block<Person> printBlock = new Block<Person>() {
 collection.find().forEach(printBlock);
 ```
 
-The example uses the [`forEach`]({{ < apiref "mongodb-driver-sync" "com/mongodb/client/MongoIterable.html#forEach(com.mongodb.Block)" >}}) method on the ``FindIterable`` 
+The example uses the [`forEach`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoIterable.html#forEach(com.mongodb.Block)" >}}) method on the ``FindIterable`` 
 object to apply a block to each Person and outputs the following:
 
 ```bash
