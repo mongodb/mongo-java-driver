@@ -309,6 +309,8 @@ class AggregatesSpecification extends Specification {
     def 'should render $out'() {
         expect:
         toBson(out('authors')) == parse('{ $out : "authors" }')
+        toBson(out(Document.parse('{ s3: "s3://bucket/path/to/file…?format=json&maxFileSize=100MiB"}'))) ==
+                parse('{ $out : { s3: "s3://bucket/path/to/file…?format=json&maxFileSize=100MiB"} }')
     }
 
     def 'should render merge'() {

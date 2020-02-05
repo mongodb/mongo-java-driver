@@ -351,6 +351,78 @@ class AsyncAggregateIterableSpecification extends Specification {
                 .comment('this is a comment'))
     }
 
+    def 'should build the expected AggregateToCollectionOperation for $out as a document'() {
+        given:
+        def cursor = Stub(AsyncBatchCursor) {
+            next(_) >> {
+                it[0].onResult(null, null)
+            }
+        }
+        def executor = new TestOperationExecutor([cursor, cursor, cursor, cursor, cursor]);
+        def pipeline = [new Document('$match', 1), new Document('$out', new Document('s3', true))]
+
+        when: 'aggregation includes $out'
+        def aggregateIterable = new AsyncAggregateIterableImpl(null, namespace, Document, Document, codecRegistry,
+                readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION, true)
+        def futureResultCallback = new FutureResultCallback()
+        aggregateIterable.toCollection(futureResultCallback)
+        futureResultCallback.get()
+
+        def operation = executor.getWriteOperation() as AggregateToCollectionOperation
+
+        then:
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
+                [new BsonDocument('$match', new BsonInt32(1)), BsonDocument.parse('{$out: {s3: true}}')],
+                readConcern, writeConcern))
+
+        when: 'Trying to iterate it should fail'
+        aggregateIterable.into([]) { result, t -> }
+
+        then:
+        thrown(IllegalStateException)
+
+        when: 'aggregation includes $out and is at the database level'
+        aggregateIterable = new AsyncAggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
+                readConcern, writeConcern, executor, pipeline, AggregationLevel.DATABASE, false)
+        futureResultCallback = new FutureResultCallback()
+        aggregateIterable.toCollection(futureResultCallback)
+        futureResultCallback.get()
+
+        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+
+        then:
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
+                [new BsonDocument('$match', new BsonInt32(1)), BsonDocument.parse('{$out: {s3: true}}')],
+                readConcern, writeConcern, AggregationLevel.DATABASE)
+        )
+
+        when: 'Trying to iterate it should fail'
+        aggregateIterable.into([]) { result, t -> }
+
+        then:
+        thrown(IllegalStateException)
+
+        when: 'toCollection should work as expected'
+        aggregateIterable = new AsyncAggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
+                readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION, false)
+        futureResultCallback = new FutureResultCallback()
+        aggregateIterable.toCollection(futureResultCallback)
+        futureResultCallback.get()
+
+        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+
+        then:
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
+                [new BsonDocument('$match', new BsonInt32(1)), BsonDocument.parse('{$out: {s3: true}}')],
+                readConcern, writeConcern))
+
+        when: 'Trying to iterate it should fail'
+        aggregateIterable.into([]) { result, t -> }
+
+        then:
+        thrown(IllegalStateException)
+    }
+
     def 'should handle exceptions correctly'() {
         given:
         def codecRegistry = fromProviders([new ValueCodecProvider(), new BsonValueCodecProvider()])

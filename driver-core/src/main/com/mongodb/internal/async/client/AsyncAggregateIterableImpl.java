@@ -84,8 +84,8 @@ class AsyncAggregateIterableImpl<TDocument, TResult> extends AsyncMongoIterableI
 
     @Override
     public void toCollection(final SingleResultCallback<Void> callback) {
-
-        if (getOutNamespace() == null) {
+        BsonDocument lastPipelineStage = getLastPipelineStage();
+        if (lastPipelineStage == null || !lastPipelineStage.containsKey("$out") && !lastPipelineStage.containsKey("$merge")) {
             throw new IllegalStateException("The last stage of the aggregation pipeline must be $out or $merge");
         }
 
@@ -169,17 +169,28 @@ class AsyncAggregateIterableImpl<TDocument, TResult> extends AsyncMongoIterableI
     }
 
     @Nullable
+    private BsonDocument getLastPipelineStage() {
+        if (pipeline.isEmpty()) {
+            return null;
+        } else {
+            Bson lastStage = notNull("last pipeline stage", pipeline.get(pipeline.size() - 1));
+            return lastStage.toBsonDocument(documentClass, codecRegistry);
+        }
+    }
+
+    @Nullable
     private MongoNamespace getOutNamespace() {
-        if (pipeline.size() == 0) {
+        BsonDocument lastPipelineStage = getLastPipelineStage();
+        if (lastPipelineStage == null) {
             return null;
         }
-
-        Bson lastStage = notNull("last stage", pipeline.get(pipeline.size() - 1));
-        BsonDocument lastStageDocument = lastStage.toBsonDocument(documentClass, codecRegistry);
-        if (lastStageDocument.containsKey("$out")) {
-            return new MongoNamespace(namespace.getDatabaseName(), lastStageDocument.getString("$out").getValue());
-        } else if (lastStageDocument.containsKey("$merge")) {
-            BsonDocument mergeDocument = lastStageDocument.getDocument("$merge");
+        if (lastPipelineStage.containsKey("$out")) {
+            if (!lastPipelineStage.get("$out").isString()) {
+                throw new IllegalStateException("Cannot return a cursor when the value for $out stage is not a string");
+            }
+            return new MongoNamespace(namespace.getDatabaseName(), lastPipelineStage.getString("$out").getValue());
+        } else if (lastPipelineStage.containsKey("$merge")) {
+            BsonDocument mergeDocument = lastPipelineStage.getDocument("$merge");
             if (mergeDocument.isDocument("into")) {
                 BsonDocument intoDocument = mergeDocument.getDocument("into");
                 return new MongoNamespace(intoDocument.getString("db", new BsonString(namespace.getDatabaseName())).getValue(),

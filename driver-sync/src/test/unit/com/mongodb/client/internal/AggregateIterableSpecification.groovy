@@ -16,15 +16,14 @@
 
 package com.mongodb.client.internal
 
-
 import com.mongodb.Function
 import com.mongodb.MongoException
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.WriteConcern
 import com.mongodb.client.ClientSession
-import com.mongodb.internal.client.model.AggregationLevel
 import com.mongodb.client.model.Collation
+import com.mongodb.internal.client.model.AggregationLevel
 import com.mongodb.internal.operation.AggregateOperation
 import com.mongodb.internal.operation.AggregateToCollectionOperation
 import com.mongodb.internal.operation.BatchCursor
@@ -329,6 +328,68 @@ class AggregateIterableSpecification extends Specification {
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))
                 .comment('this is a comment'))
+    }
+
+    def 'should build the expected AggregateToCollectionOperation for $out as a document'() {
+        given:
+        def executor = new TestOperationExecutor([null, null, null, null, null])
+        def pipeline = [new Document('$match', 1), new Document('$out', new Document('s3', true))]
+
+        when: 'aggregation includes $out'
+        def aggregateIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
+                readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION, false)
+
+        aggregateIterable.toCollection()
+        def operation = executor.getWriteOperation() as AggregateToCollectionOperation
+
+        then:
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
+                [new BsonDocument('$match', new BsonInt32(1)), BsonDocument.parse('{$out: {s3: true}}')],
+                readConcern, writeConcern, AggregationLevel.COLLECTION)
+        )
+
+        when: 'Trying to iterate it should fail'
+        aggregateIterable.iterator()
+
+        then:
+        thrown(IllegalStateException)
+
+        when: 'aggregation includes $out and is at the database level'
+        aggregateIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
+                readConcern, writeConcern, executor, pipeline, AggregationLevel.DATABASE, false)
+        aggregateIterable.toCollection()
+
+        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+
+        then:
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
+                [new BsonDocument('$match', new BsonInt32(1)), BsonDocument.parse('{$out: {s3: true}}')],
+                readConcern, writeConcern, AggregationLevel.DATABASE)
+        )
+
+        when: 'Trying to iterate it should fail'
+        aggregateIterable.iterator()
+
+        then:
+        thrown(IllegalStateException)
+
+        when: 'toCollection should work as expected'
+        aggregateIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
+                readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION, false)
+        aggregateIterable.toCollection()
+
+        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+
+        then:
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
+                [new BsonDocument('$match', new BsonInt32(1)), BsonDocument.parse('{$out: {s3: true}}')],
+                readConcern, writeConcern))
+
+        when: 'Trying to iterate it should fail'
+        aggregateIterable.iterator()
+
+        then:
+        thrown(IllegalStateException)
     }
 
 
