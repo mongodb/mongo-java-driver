@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-01-30T10:14:53.38">
+<meta name="date" content="2020-02-05T12:02:06.05">
 <link rel="shortcut icon" href="/mongo-java-driver/4.0/img/favicon.png">
 
     <title>Quick Start</title><link rel="stylesheet" href="/mongo-java-driver/4.0/lib/bootstrap.css" type="text/css" />
@@ -714,7 +714,8 @@ System.out.println(myDoc.toJson());
 collection.find(gt(&quot;i&quot;, 50)).forEach(printBlock);
 </code></pre>
 
-<p>The example uses the <a href="{{ &lt; apiref &quot;mongodb-driver-sync&quot; &quot;com/mongodb/client/MongoIterable.html#forEach(com.mongodb.Block"><code>forEach</code></a>&rdquo; &gt;}}) method on the <code>FindIterable</code> object to apply a block to each document.</p>
+<p>The example uses the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-sync/com/mongodb/client/MongoIterable.html#forEach(com.mongodb.Block)
+"><code>forEach</code></a> method on the <code>FindIterable</code> object to apply a block to each document.</p>
 
 <p>To specify a filter for a range, such as <code>50 &lt; i &lt;= 100</code>, you can use the <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/client/model/Filters.html#and(org.bson.conversions.Bson...)
 "><code>and</code></a> helper:</p>
