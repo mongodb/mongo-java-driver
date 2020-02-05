@@ -424,6 +424,18 @@ public final class Aggregates {
     }
 
     /**
+     * Creates a $out pipeline stage that writes out to the specified destination
+     *
+     * @param destination the destination details
+     * @return the $out pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/out/  $out
+     * @since 4.1
+     */
+    public static Bson out(final Bson destination) {
+        return new SimplePipelineStage("$out", destination);
+    }
+
+    /**
      * Creates a $merge pipeline stage that merges into the specified collection
      *
      * @param collectionName the name of the collection to merge into
