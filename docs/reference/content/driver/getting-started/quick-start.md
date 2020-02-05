@@ -374,7 +374,7 @@ Block<Document> printBlock = new Block<Document>() {
 collection.find(gt("i", 50)).forEach(printBlock);
 ```
 
-The example uses the [`forEach`]({{ < apiref "mongodb-driver-sync" "com/mongodb/client/MongoIterable.html#forEach(com.mongodb.Block)" >}}) method on the ``FindIterable`` object to apply a block to each document.
+The example uses the [`forEach`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoIterable.html#forEach(com.mongodb.Block)" >}}) method on the ``FindIterable`` object to apply a block to each document.
 
 To specify a filter for a range, such as ``50 < i <= 100``, you can use the [`and`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Filters.html#and(org.bson.conversions.Bson...)" >}}) helper:
 
