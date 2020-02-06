@@ -249,6 +249,13 @@ public final class SplittablePayload {
                     }
                     writer.writeEndArray();
                 }
+                if (update.getHint() != null) {
+                    writer.writeName("hint");
+                    BsonDocument hint = update.getHint().toBsonDocument(BsonDocument.class, null);
+                    getCodec(hint).encode(writer, hint, EncoderContext.builder().build());
+                } else if (update.getHintString() != null) {
+                    writer.writeString("hint", update.getHintString());
+                }
                 writer.writeEndDocument();
             } else {
                 DeleteRequest deleteRequest = (DeleteRequest) writeRequestWithIndex.getWriteRequest();

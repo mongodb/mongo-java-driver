@@ -62,4 +62,20 @@ class UpdateOptionsSpecification extends Specification {
         where:
         arrayFilters << [null, [], [new BsonDocument('a.b', new BsonInt32(1))]]
     }
+
+    def 'should set hint'() {
+        expect:
+        new UpdateOptions().hint(hint).getHint() == hint
+
+        where:
+        hint << [null, new BsonDocument('_id', new BsonInt32(1))]
+    }
+
+    def 'should set hint string'() {
+        expect:
+        new UpdateOptions().hintString(hint).getHintString() == hint
+
+        where:
+        hint << [null, '_id_']
+    }
 }
