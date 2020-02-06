@@ -302,4 +302,26 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(4, 2) })
+    def 'should support hint'() {
+        given:
+        getCollectionHelper().insertDocuments(Document.parse('{str: "foo"}'))
+        def requests = [new UpdateRequest(BsonDocument.parse('{str: "foo"}}'), BsonDocument.parse('{$set: {str: "bar"}}'), UPDATE)
+                                .hint(hint).hintString(hintString)]
+        def operation = new UpdateOperation(getNamespace(), false, ACKNOWLEDGED, false, requests)
+
+        when:
+        WriteConcernResult result = execute(operation, async)
+
+        then:
+        result.getCount() == 1
+
+        where:
+        [async, hint, hintString] << [
+                [true, false],
+                [null, new BsonDocument('_id', new BsonInt32(1))],
+                [null, '_id_']
+        ].combinations()
+    }
+
 }

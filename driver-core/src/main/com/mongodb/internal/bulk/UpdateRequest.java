@@ -19,6 +19,7 @@ package com.mongodb.internal.bulk;
 import com.mongodb.client.model.Collation;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
+import org.bson.conversions.Bson;
 
 import java.util.List;
 
@@ -37,6 +38,8 @@ public final class UpdateRequest extends WriteRequest {
     private boolean isUpsert = false;
     private Collation collation;
     private List<BsonDocument> arrayFilters;
+    private Bson hint;
+    private String hintString;
 
     /**
      * Construct a new instance.
@@ -171,6 +174,46 @@ public final class UpdateRequest extends WriteRequest {
      */
     public List<BsonDocument> getArrayFilters() {
         return arrayFilters;
+    }
+
+    /**
+     * Returns the hint for which index to use. The default is not to set a hint.
+     *
+     * @return the hint
+     */
+    public Bson getHint() {
+        return hint;
+    }
+
+    /**
+     * Sets the hint for which index to use. A null value means no hint is set.
+     *
+     * @param hint the hint
+     * @return this
+     */
+    public UpdateRequest hint(final Bson hint) {
+        this.hint = hint;
+        return this;
+    }
+
+    /**
+     * Gets the hint string to apply.
+     *
+     * @return the hint string, which should be the name of an existing index
+     */
+    public String getHintString() {
+        return hintString;
+    }
+
+    /**
+     * Sets the hint to apply.
+     *
+     * @param hint the name of the index which should be used for the operation
+     * @return this
+     */
+    public UpdateRequest hintString(final String hint) {
+        this.hintString = hint;
+        return this;
     }
 }
 

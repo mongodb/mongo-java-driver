@@ -746,6 +746,13 @@ public class JsonPoweredCrudTestHelper {
         if (arguments.containsKey("bypassDocumentValidation")) {
             options.bypassDocumentValidation(arguments.getBoolean("bypassDocumentValidation").getValue());
         }
+        if (arguments.containsKey("hint")) {
+            if (arguments.isDocument("hint")) {
+                options.hint(arguments.getDocument("hint"));
+            } else {
+                options.hintString(arguments.getString("hint").getValue());
+            }
+        }
 
         UpdateResult updateResult;
         if (clientSession == null) {
@@ -773,6 +780,13 @@ public class JsonPoweredCrudTestHelper {
         }
         if (arguments.containsKey("bypassDocumentValidation")) {
             options.bypassDocumentValidation(arguments.getBoolean("bypassDocumentValidation").getValue());
+        }
+        if (arguments.containsKey("hint")) {
+            if (arguments.isDocument("hint")) {
+                options.hint(arguments.getDocument("hint"));
+            } else {
+                options.hintString(arguments.getString("hint").getValue());
+            }
         }
 
         UpdateResult updateResult;
@@ -812,6 +826,13 @@ public class JsonPoweredCrudTestHelper {
         }
         if (arguments.containsKey("bypassDocumentValidation")) {
             options.bypassDocumentValidation(arguments.getBoolean("bypassDocumentValidation").getValue());
+        }
+        if (arguments.containsKey("hint")) {
+            if (arguments.isDocument("hint")) {
+                options.hint(arguments.getDocument("hint"));
+            } else {
+                options.hintString(arguments.getString("hint").getValue());
+            }
         }
 
         UpdateResult updateResult;
@@ -1055,6 +1076,13 @@ public class JsonPoweredCrudTestHelper {
         if (requestArguments.containsKey("collation")) {
             options.collation(getCollation(requestArguments.getDocument("collation")));
         }
+        if (requestArguments.containsKey("hint")) {
+            if (requestArguments.isDocument("hint")) {
+                options.hint(requestArguments.getDocument("hint"));
+            } else {
+                options.hintString(requestArguments.getString("hint").getValue());
+            }
+        }
         return options;
     }
 
@@ -1073,6 +1101,13 @@ public class JsonPoweredCrudTestHelper {
         }
         if (requestArguments.containsKey("collation")) {
             options.collation(getCollation(requestArguments.getDocument("collation")));
+        }
+        if (requestArguments.containsKey("hint")) {
+            if (requestArguments.isDocument("hint")) {
+                options.hint(requestArguments.getDocument("hint"));
+            } else {
+                options.hintString(requestArguments.getString("hint").getValue());
+            }
         }
         return options;
     }

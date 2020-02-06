@@ -17,6 +17,7 @@
 package com.mongodb.client.model;
 
 import com.mongodb.lang.Nullable;
+import org.bson.conversions.Bson;
 
 /**
  * The options to apply when replacing documents.
@@ -30,6 +31,8 @@ public class ReplaceOptions {
     private boolean upsert;
     private Boolean bypassDocumentValidation;
     private Collation collation;
+    private Bson hint;
+    private String hintString;
 
     /**
      * Returns true if a new document should be inserted if there are no matches to the query filter.  The default is false.
@@ -98,12 +101,60 @@ public class ReplaceOptions {
         return this;
     }
 
+    /**
+     * Returns the hint for which index to use. The default is not to set a hint.
+     *
+     * @return the hint
+     * @since 4.1
+     */
+    @Nullable
+    public Bson getHint() {
+        return hint;
+    }
+
+    /**
+     * Sets the hint for which index to use. A null value means no hint is set.
+     *
+     * @param hint the hint
+     * @return this
+     * @since 4.1
+     */
+    public ReplaceOptions hint(@Nullable final Bson hint) {
+        this.hint = hint;
+        return this;
+    }
+
+    /**
+     * Gets the hint string to apply.
+     *
+     * @return the hint string, which should be the name of an existing index
+     * @since 4.1
+     */
+    @Nullable
+    public String getHintString() {
+        return hintString;
+    }
+
+    /**
+     * Sets the hint to apply.
+     *
+     * @param hint the name of the index which should be used for the operation
+     * @return this
+     * @since 4.1
+     */
+    public ReplaceOptions hintString(@Nullable final String hint) {
+        this.hintString = hint;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "ReplaceOptions{"
                 + "upsert=" + upsert
                 + ", bypassDocumentValidation=" + bypassDocumentValidation
                 + ", collation=" + collation
+                + ", hint=" + hint
+                + ", hintString=" + hintString
                 + '}';
     }
 }

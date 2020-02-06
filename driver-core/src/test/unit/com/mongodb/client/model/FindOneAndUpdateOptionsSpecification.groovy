@@ -126,7 +126,7 @@ class FindOneAndUpdateOptionsSpecification extends Specification {
 
     def 'should set hint string'() {
         expect:
-        new FindOneAndUpdateOptions().hintString(hint).getHintString() == hint
+        new UpdateOptions().hintString(hint).getHintString() == hint
 
         where:
         hint << [null, '_id_']
