@@ -604,6 +604,13 @@ public class JsonPoweredCrudTestHelper {
         if (arguments.containsKey("collation")) {
             options.collation(getCollation(arguments.getDocument("collation")));
         }
+        if (arguments.containsKey("hint")) {
+            if (arguments.isDocument("hint")) {
+                options.hint(arguments.getDocument("hint"));
+            } else {
+                options.hintString(arguments.getString("hint").getValue());
+            }
+        }
 
         BsonDocument result;
         if (clientSession == null) {
@@ -639,7 +646,13 @@ public class JsonPoweredCrudTestHelper {
         if (arguments.containsKey("arrayFilters")) {
             options.arrayFilters((getListOfDocuments(arguments.getArray("arrayFilters"))));
         }
-
+        if (arguments.containsKey("hint")) {
+            if (arguments.isDocument("hint")) {
+                options.hint(arguments.getDocument("hint"));
+            } else {
+                options.hintString(arguments.getString("hint").getValue());
+            }
+        }
         BsonDocument result;
         if (clientSession == null) {
             if (arguments.isDocument("update")) {

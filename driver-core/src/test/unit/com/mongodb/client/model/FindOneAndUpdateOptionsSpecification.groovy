@@ -115,4 +115,20 @@ class FindOneAndUpdateOptionsSpecification extends Specification {
         where:
         arrayFilters << [null, [], [new BsonDocument('a.b', new BsonInt32(1))]]
     }
+
+    def 'should set hint'() {
+        expect:
+        new FindOneAndUpdateOptions().hint(hint).getHint() == hint
+
+        where:
+        hint << [null, new BsonDocument('_id', new BsonInt32(1))]
+    }
+
+    def 'should set hint string'() {
+        expect:
+        new FindOneAndUpdateOptions().hintString(hint).getHintString() == hint
+
+        where:
+        hint << [null, '_id_']
+    }
 }
