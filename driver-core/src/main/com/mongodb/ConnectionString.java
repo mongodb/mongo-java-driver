@@ -693,6 +693,9 @@ public class ConnectionString {
                     mechanism = AuthenticationMechanism.fromMechanismName(value);
                 }
             } else if (key.equals("authsource")) {
+                if (value.equals("")) {
+                    throw new IllegalArgumentException("authSource can not be an empty string");
+                }
                 authSource = value;
             } else if (key.equals("gssapiservicename")) {
                 gssapiServiceName = value;

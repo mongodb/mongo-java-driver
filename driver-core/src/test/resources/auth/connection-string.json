@@ -108,6 +108,16 @@
       }
     },
     {
+      "description": "must raise an error when the authSource is empty",
+      "uri": "mongodb://user:password@localhost/foo?authSource=",
+      "valid": false
+    },
+    {
+      "description": "must raise an error when the authSource is empty without credentials",
+      "uri": "mongodb://localhost/admin?authSource=",
+      "valid": false
+    },
+    {
       "description": "should throw an exception if authSource is invalid (GSSAPI)",
       "uri": "mongodb://user%40DOMAIN.COM@localhost/?authMechanism=GSSAPI&authSource=foo",
       "valid": false
