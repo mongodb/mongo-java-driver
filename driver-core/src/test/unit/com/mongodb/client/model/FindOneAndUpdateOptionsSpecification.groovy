@@ -110,7 +110,7 @@ class FindOneAndUpdateOptionsSpecification extends Specification {
 
     def 'should set array filters'() {
         expect:
-        new UpdateOptions().arrayFilters(arrayFilters).getArrayFilters() == arrayFilters
+        new FindOneAndUpdateOptions().arrayFilters(arrayFilters).getArrayFilters() == arrayFilters
 
         where:
         arrayFilters << [null, [], [new BsonDocument('a.b', new BsonInt32(1))]]
