@@ -29,6 +29,7 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
+import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
 import org.junit.After;
@@ -235,6 +236,10 @@ public abstract class AbstractChangeStreamsTest {
                     testDocument.getString("collection2_name").getValue());
 
             for (BsonValue test : testDocument.getArray("tests")) {
+                if (test.asDocument().getString("description").getValue()
+                        .equals("Change Stream should error when _id is projected out")) {
+                    test.asDocument().put("maxServerVersion", new BsonString("4.2"));
+                }
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
                         namespace, namespace2, test.asDocument(), skipTest(testDocument, test.asDocument())});
             }
