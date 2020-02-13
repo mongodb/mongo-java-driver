@@ -42,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
 
+@SuppressWarnings("deprecation")
 class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements MapReduceIterable<TResult> {
     private final SyncOperations<TDocument> operations;
     private final MongoNamespace namespace;

@@ -16,27 +16,18 @@
 
 package com.mongodb.reactivestreams.client.internal
 
-import com.mongodb.MongoNamespace
+
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.MapReduceAction
 import com.mongodb.internal.async.client.AsyncMapReduceIterable
 import org.bson.Document
-import org.bson.codecs.BsonValueCodecProvider
-import org.bson.codecs.DocumentCodecProvider
-import org.bson.codecs.ValueCodecProvider
 import org.reactivestreams.Subscriber
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.ReadPreference.secondary
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders
-
+@SuppressWarnings('deprecation')
 class MapReducePublisherImplSpecification extends Specification {
-
-    def namespace = new MongoNamespace('db', 'coll')
-    def codecRegistry = fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()])
-    def readPreference = secondary()
 
     def 'should call the underlying wrapped methods'() {
         given:

@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-
+@SuppressWarnings("deprecation")
 final class MapReducePublisherImpl<TResult> implements MapReducePublisher<TResult> {
     private final AsyncMapReduceIterable<TResult> wrapped;
 

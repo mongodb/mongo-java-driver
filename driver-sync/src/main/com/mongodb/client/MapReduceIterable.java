@@ -151,7 +151,9 @@ public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
      * @param sharded if the output database is sharded
      * @return this
      * @mongodb.driver.manual reference/command/mapReduce/#output-to-a-collection-with-an-action output with an action
+     * @deprecated this option will no longer be supported in MongoDB 4.4.
      */
+    @Deprecated
     MapReduceIterable<TResult> sharded(boolean sharded);
 
     /**
@@ -162,7 +164,9 @@ public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
      * @param nonAtomic if the post-processing step will prevent MongoDB from locking the database.
      * @return this
      * @mongodb.driver.manual reference/command/mapReduce/#output-to-a-collection-with-an-action output with an action
+     * @deprecated this option will no longer be supported in MongoDB 4.4 as it will no longer hold a global or database level write lock.
      */
+    @Deprecated
     MapReduceIterable<TResult> nonAtomic(boolean nonAtomic);
 
     /**
