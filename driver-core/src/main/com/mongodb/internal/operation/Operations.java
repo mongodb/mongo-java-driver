@@ -148,7 +148,8 @@ final class Operations<TDocument> {
                 .min(toBsonDocumentOrNull(options.getMin()))
                 .max(toBsonDocumentOrNull(options.getMax()))
                 .returnKey(options.isReturnKey())
-                .showRecordId(options.isShowRecordId());
+                .showRecordId(options.isShowRecordId())
+                .allowDiskUse(options.isAllowDiskUse());
 
         if (options.getHint() != null) {
             operation.hint(toBsonDocument(options.getHint()));

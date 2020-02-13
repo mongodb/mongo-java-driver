@@ -105,6 +105,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
                 .max(BsonDocument.parse('{ abc: 1000 }'))
                 .returnKey(true)
                 .showRecordId(true)
+                .allowDiskUse(true)
 
         when:
         operation.execute(readBinding)
@@ -143,6 +144,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
                 .max(BsonDocument.parse('{ abc: 1000 }'))
                 .returnKey(true)
                 .showRecordId(true)
+                .allowDiskUse(true)
 
         expectedCommand.append('filter', operation.getFilter())
                 .append('projection', operation.getProjection())
@@ -159,6 +161,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
                 .append('max', operation.getMax())
                 .append('returnKey', BsonBoolean.TRUE)
                 .append('showRecordId', BsonBoolean.TRUE)
+                .append('allowDiskUse', BsonBoolean.TRUE)
 
         if (commandLimit != null) {
             expectedCommand.append('limit', new BsonInt32(commandLimit))

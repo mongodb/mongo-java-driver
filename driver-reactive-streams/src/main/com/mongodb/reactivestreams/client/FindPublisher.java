@@ -18,6 +18,7 @@ package com.mongodb.reactivestreams.client;
 
 import com.mongodb.CursorType;
 import com.mongodb.client.model.Collation;
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
 
@@ -230,4 +231,17 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     FindPublisher<TResult> batchSize(int batchSize);
+
+    /**
+     * Enables writing to temporary files on the server. When set to true, the server
+     * can write temporary data to disk while executing the find operation.
+     *
+     * This option is sent only if the caller explicitly sets it to true.
+     *
+     * @param allowDiskUse the allowDiskUse
+     * @return this
+     * @since 4.1
+     * @mongodb.server.release 4.4
+     */
+    FindPublisher<TResult> allowDiskUse(@Nullable Boolean allowDiskUse);
 }

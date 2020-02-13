@@ -48,7 +48,6 @@ class FindObservableSpec extends BaseSpec with MockFactory {
     val hintString = "a_1"
     val duration = Duration(1, TimeUnit.SECONDS)
     val maxDuration = Duration(10, TimeUnit.SECONDS)
-    val modifiers = Document("mod" -> 1)
     val projection = Document("proj" -> 1)
     val sort = Document("sort" -> 1)
     val collation = Collation.builder().locale("en").build()
@@ -72,6 +71,7 @@ class FindObservableSpec extends BaseSpec with MockFactory {
     wrapper.expects(Symbol("skip"))(1).once()
     wrapper.expects(Symbol("sort"))(sort).once()
     wrapper.expects(Symbol("batchSize"))(batchSize).once()
+    wrapper.expects(Symbol("allowDiskUse"))(true).once()
 
     observable.collation(collation)
     observable.cursorType(CursorType.NonTailable)
@@ -88,5 +88,6 @@ class FindObservableSpec extends BaseSpec with MockFactory {
     observable.skip(1)
     observable.sort(sort)
     observable.batchSize(batchSize)
+    observable.allowDiskUse(true)
   }
 }

@@ -178,6 +178,12 @@ class AsyncFindIterableImpl<TDocument, TResult> extends AsyncMongoIterableImpl<T
     }
 
     @Override
+    public AsyncFindIterable<TResult> allowDiskUse(@Nullable final Boolean allowDiskUse) {
+        findOptions.allowDiskUse(allowDiskUse);
+        return this;
+    }
+
+    @Override
     public void first(final SingleResultCallback<TResult> callback) {
         notNull("callback", callback);
         getExecutor().execute(operations.findFirst(filter, resultClass, findOptions), getReadPreference(), getReadConcern(),
