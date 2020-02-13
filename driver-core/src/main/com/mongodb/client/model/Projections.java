@@ -133,6 +133,19 @@ public final class Projections {
     }
 
     /**
+     * Creates a $meta projection to the given field name for the given meta field name.
+     *
+     * @param fieldName the field name
+     * @param metaFieldName the meta field name
+     * @return the projection
+     * @mongodb.driver.manual reference/operator/projection/meta/#projection
+     * @since 4.1
+     */
+    public static Bson meta(final String fieldName, final String metaFieldName) {
+        return new BsonDocument(fieldName, new BsonDocument("$meta", new BsonString(metaFieldName)));
+    }
+
+    /**
      * Creates a projection to the given field name of the textScore, for use with text queries.
      *
      * @param fieldName the field name
@@ -140,7 +153,7 @@ public final class Projections {
      * @mongodb.driver.manual reference/operator/projection/meta/#projection textScore
      */
     public static Bson metaTextScore(final String fieldName) {
-        return new BsonDocument(fieldName, new BsonDocument("$meta", new BsonString("textScore")));
+        return meta(fieldName, "textScore");
     }
 
     /**
