@@ -36,9 +36,7 @@ import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonJavaScript;
-import org.bson.BsonNull;
 import org.bson.BsonString;
-import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 
@@ -450,9 +448,5 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     private QueryResult<T> createQueryResult(final BsonDocument result, final ConnectionDescription description) {
         return new QueryResult<T>(namespace, BsonDocumentWrapperHelper.<T>toList(result, "results"), 0,
                                   description.getServerAddress());
-    }
-
-    private static BsonValue asValueOrNull(final BsonValue value) {
-        return value == null ? BsonNull.VALUE : value;
     }
 }

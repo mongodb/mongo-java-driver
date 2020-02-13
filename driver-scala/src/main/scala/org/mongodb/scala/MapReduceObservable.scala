@@ -175,6 +175,7 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
    * @param sharded if the output database is sharded
    * @return this
    */
+  @deprecated("This option will no longer be supported in MongoDB 4.4.", "4.1.0")
   def sharded(sharded: Boolean): MapReduceObservable[TResult] = {
     wrapped.sharded(sharded)
     this
@@ -189,6 +190,10 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
    * @param nonAtomic if the post-processing step will prevent MongoDB from locking the database.
    * @return this
    */
+  @deprecated(
+    "This option will no longer be supported in MongoDB 4.4 as it will no longer hold a global or database level write lock",
+    "4.1.0"
+  )
   def nonAtomic(nonAtomic: Boolean): MapReduceObservable[TResult] = {
     wrapped.nonAtomic(nonAtomic)
     this

@@ -138,7 +138,9 @@ public interface MapReducePublisher<TResult> extends Publisher<TResult> {
      * @param sharded if the output database is sharded
      * @return this
      * @mongodb.driver.manual reference/command/mapReduce/#output-to-a-collection-with-an-action output with an action
+     * @deprecated this option will no longer be supported in MongoDB 4.4
      */
+    @Deprecated
     MapReducePublisher<TResult> sharded(boolean sharded);
 
     /**
@@ -149,7 +151,9 @@ public interface MapReducePublisher<TResult> extends Publisher<TResult> {
      * @param nonAtomic if the post-processing step will prevent MongoDB from locking the database.
      * @return this
      * @mongodb.driver.manual reference/command/mapReduce/#output-to-a-collection-with-an-action output with an action
+     * @deprecated this option will no longer be supported in MongoDB 4.4 as it will no longer hold a global or database level write lock.
      */
+    @Deprecated
     MapReducePublisher<TResult> nonAtomic(boolean nonAtomic);
 
     /**

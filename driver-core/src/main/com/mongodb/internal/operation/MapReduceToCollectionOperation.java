@@ -19,9 +19,9 @@ package com.mongodb.internal.operation;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.AsyncConnection;
@@ -31,9 +31,7 @@ import com.mongodb.internal.operation.CommandOperationHelper.CommandWriteTransfo
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonJavaScript;
-import org.bson.BsonNull;
 import org.bson.BsonString;
-import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
 
 import java.util.List;
@@ -54,6 +52,7 @@ import static com.mongodb.internal.operation.OperationHelper.releasingCallback;
 import static com.mongodb.internal.operation.OperationHelper.validateCollation;
 import static com.mongodb.internal.operation.OperationHelper.withAsyncConnection;
 import static com.mongodb.internal.operation.OperationHelper.withConnection;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionFourDotFour;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 import static com.mongodb.internal.operation.WriteConcernHelper.throwOnWriteConcernError;
@@ -595,8 +594,10 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
 
     private BsonDocument getCommand(final ConnectionDescription description) {
         BsonDocument outputDocument = new BsonDocument(getAction(), new BsonString(getCollectionName()));
-        putIfTrue(outputDocument, "sharded", isSharded());
-        putIfTrue(outputDocument, "nonAtomic", isNonAtomic());
+        if (description != null && !serverIsAtLeastVersionFourDotFour(description)) {
+            putIfTrue(outputDocument, "sharded", isSharded());
+            putIfTrue(outputDocument, "nonAtomic", isNonAtomic());
+        }
         if (getDatabaseName() != null) {
             outputDocument.put("db", new BsonString(getDatabaseName()));
         }
@@ -623,9 +624,5 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
             commandDocument.put("collation", collation.asDocument());
         }
         return commandDocument;
-    }
-
-    private static BsonValue asValueOrNull(final BsonValue value) {
-        return value == null ? BsonNull.VALUE : value;
     }
 }

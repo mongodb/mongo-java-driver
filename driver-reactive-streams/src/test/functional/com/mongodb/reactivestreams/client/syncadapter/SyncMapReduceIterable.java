@@ -25,6 +25,7 @@ import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
 
+@SuppressWarnings("deprecation")
 class SyncMapReduceIterable<T> extends SyncMongoIterable<T> implements MapReduceIterable<T> {
     private MapReducePublisher<T> wrapped;
 
