@@ -28,6 +28,7 @@ import static com.mongodb.client.model.Projections.exclude
 import static com.mongodb.client.model.Projections.excludeId
 import static com.mongodb.client.model.Projections.fields
 import static com.mongodb.client.model.Projections.include
+import static com.mongodb.client.model.Projections.meta
 import static com.mongodb.client.model.Projections.metaTextScore
 import static com.mongodb.client.model.Projections.slice
 import static org.bson.BsonDocument.parse
@@ -69,6 +70,12 @@ class ProjectionsSpecification extends Specification {
         expect:
         toBson(slice('x', 5)) == parse('{x : {$slice : 5}}')
         toBson(slice('x', 5, 10)) == parse('{x : {$slice : [5, 10]}}')
+    }
+
+    def 'meta'() {
+        expect:
+        toBson(meta('x', 'textScore')) == parse('{x : {$meta : "textScore"}}')
+        toBson(meta('x', 'recordId')) == parse('{x : {$meta : "recordId"}}')
     }
 
     def 'metaTextScore'() {

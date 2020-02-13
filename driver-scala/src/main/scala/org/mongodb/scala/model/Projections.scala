@@ -90,6 +90,17 @@ object Projections {
   def elemMatch(fieldName: String, filter: Bson): Bson = JProjections.elemMatch(fieldName, filter)
 
   /**
+   * Creates a \$meta projection to the given field name for the given meta field name.
+   *
+   * @param fieldName the field name
+   * @param metaFieldName the meta field name
+   * @return the projection
+   * @see [[http://http://docs.mongodb.org/manual/reference/operator/projection/meta/#projection meta]]
+   * @since 4.1
+   */
+  def meta(fieldName: String, metaFieldName: String): Bson = JProjections.meta(fieldName, metaFieldName)
+
+  /**
    * Creates a projection to the given field name of the textScore, for use with text queries.
    *
    * @param fieldName the field name
