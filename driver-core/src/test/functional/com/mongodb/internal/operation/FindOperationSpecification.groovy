@@ -95,6 +95,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         !operation.isOplogReplay()
         !operation.isPartial()
         !operation.isSlaveOk()
+        operation.isAllowDiskUse() == null
     }
 
     def 'should set optional values correctly'() {
@@ -119,6 +120,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
                 .slaveOk(true)
                 .oplogReplay(true)
                 .noCursorTimeout(true)
+                .allowDiskUse(true)
 
         then:
         operation.getFilter() == filter
@@ -134,6 +136,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         operation.isOplogReplay()
         operation.isPartial()
         operation.isSlaveOk()
+        operation.isAllowDiskUse()
     }
 
     def 'should query with default values'() {
@@ -388,7 +391,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 0) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def 'should apply $hint'() {
         given:
         def index = new BsonDocument('a', new BsonInt32(1))
@@ -554,11 +557,89 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         ]
     }
 
+    def 'should add allowDiskUse to command if the server version >= 3.2'() {
+        given:
+        def binding = Stub(ReadBinding)
+        def source = Stub(ConnectionSource)
+        def connection = Mock(Connection)
+        binding.readPreference >> ReadPreference.primary()
+        binding.readConnectionSource >> source
+        binding.sessionContext >> sessionContext
+        source.connection >> connection
+        source.retain() >> source
+        def commandDocument = new BsonDocument('find', new BsonString(getCollectionName())).append('allowDiskUse', BsonBoolean.TRUE)
+        appendReadConcernToCommand(sessionContext, commandDocument)
+
+        def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec()).allowDiskUse(true)
+
+        when:
+        operation.execute(binding)
+
+        then:
+        _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
+                6, STANDALONE, 1000, 100000, 100000, [])
+        1 * connection.command(_, commandDocument, _, _, _, sessionContext) >>
+                new BsonDocument('cursor', new BsonDocument('id', new BsonInt64(1))
+                        .append('ns', new BsonString(getNamespace().getFullName()))
+                        .append('firstBatch', new BsonArrayWrapper([])))
+        1 * connection.release()
+
+        where:
+        sessionContext << [
+                Stub(SessionContext) {
+                    isCausallyConsistent() >> true
+                    getOperationTime() >> new BsonTimestamp(42, 0)
+                    hasActiveTransaction() >> false
+                    getReadConcern() >> ReadConcern.DEFAULT
+                }
+        ]
+    }
+
+    def 'should add allowDiskUse to command if the server version >= 3.2 asynchronously'() {
+        given:
+        def binding = Stub(AsyncReadBinding)
+        def source = Stub(AsyncConnectionSource)
+        def connection = Mock(AsyncConnection)
+        binding.readPreference >> ReadPreference.primary()
+        binding.getReadConnectionSource(_) >> { it[0].onResult(source, null) }
+        binding.sessionContext >> sessionContext
+        source.getConnection(_) >> { it[0].onResult(connection, null) }
+        source.retain() >> source
+        def commandDocument = new BsonDocument('find', new BsonString(getCollectionName())).append('allowDiskUse', BsonBoolean.TRUE)
+        appendReadConcernToCommand(sessionContext, commandDocument)
+
+        def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec()).allowDiskUse(true)
+
+        when:
+        executeAsync(operation, binding)
+
+        then:
+        _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
+                6, STANDALONE, 1000, 100000, 100000, [])
+        1 * connection.commandAsync(_, commandDocument, _, _, _, sessionContext, _) >> {
+            it[6].onResult(new BsonDocument('cursor', new BsonDocument('id', new BsonInt64(1))
+                    .append('ns', new BsonString(getNamespace().getFullName()))
+                    .append('firstBatch', new BsonArrayWrapper([]))), null)
+        }
+        1 * connection.release()
+
+        where:
+        sessionContext << [
+                Stub(SessionContext) {
+                    isCausallyConsistent() >> true
+                    getOperationTime() >> new BsonTimestamp(42, 0)
+                    hasActiveTransaction() >> false
+                    getReadConcern() >> ReadConcern.MAJORITY
+                }
+        ]
+    }
+
     def 'should call query on Connection with no $query when there are no other meta operators'() {
         given:
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
                 .projection(new BsonDocument('x', new BsonInt32(1)))
                 .filter(new BsonDocument('z', new BsonString('val')))
+                .allowDiskUse(true)
         def binding = Stub(ReadBinding) {
             getSessionContext() >> Stub(SessionContext) {
                 getReadConcern() >> ReadConcern.DEFAULT

@@ -46,6 +46,7 @@ class FindOptionsSpecification extends Specification {
         !options.isNoCursorTimeout()
         !options.isOplogReplay()
         !options.isPartial()
+        !options.isAllowDiskUse()
     }
 
     def 'should set collation'() {
@@ -182,5 +183,13 @@ class FindOptionsSpecification extends Specification {
 
         where:
         hintString << [null, 'a_1']
+    }
+
+    def 'should set allowDiskUse'() {
+        expect:
+        new FindOptions().allowDiskUse(allowDiskUse).isAllowDiskUse() == allowDiskUse
+
+        where:
+        allowDiskUse << [true, false]
     }
 }

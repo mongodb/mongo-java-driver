@@ -222,4 +222,17 @@ public interface AsyncFindIterable<T> extends AsyncMongoIterable<T> {
      */
     AsyncFindIterable<T> showRecordId(boolean showRecordId);
 
+    /**
+     * Enables writing to temporary files on the server. When set to true, the server
+     * can write temporary data to disk while executing the find operation.
+     *
+     * <p>This option is sent only if the caller explicitly sets it to true.</p>
+     *
+     * @param allowDiskUse the allowDiskUse
+     * @return this
+     * @since 4.1
+     * @mongodb.server.release 4.4
+     */
+    AsyncFindIterable<T> allowDiskUse(@Nullable Boolean allowDiskUse);
+
 }

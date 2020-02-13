@@ -152,4 +152,10 @@ class SyncFindIterable<T> extends SyncMongoIterable<T> implements FindIterable<T
         wrapped.showRecordId(showRecordId);
         return this;
     }
+
+    @Override
+    public FindIterable<T> allowDiskUse(@Nullable final java.lang.Boolean allowDiskUse) {
+        wrapped.allowDiskUse(allowDiskUse);
+        return this;
+    }
 }

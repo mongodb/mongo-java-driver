@@ -21,11 +21,11 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoQueryException;
 import com.mongodb.ReadPreference;
-import com.mongodb.internal.async.AsyncBatchCursor;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.async.AsyncBatchCursor;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ConnectionSource;
@@ -36,6 +36,7 @@ import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.internal.operation.OperationHelper.CallableWithSource;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -100,6 +101,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
     private BsonDocument min;
     private boolean returnKey;
     private boolean showRecordId;
+    private Boolean allowDiskUse;
 
     /**
      * Construct a new instance.
@@ -620,6 +622,29 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
         return retryReads;
     }
 
+    /**
+     * Returns the allowDiskUse value
+     *
+     * @return the allowDiskUse value
+     */
+    public Boolean isAllowDiskUse() {
+        return allowDiskUse;
+    }
+
+    /**
+     * Enables writing to temporary files on the server. When set to true, the server
+     * can write temporary data to disk while executing the find operation.
+     *
+     * <p>This option is sent only if the caller explicitly sets it to true.</p>
+     *
+     * @param allowDiskUse the allowDiskUse
+     * @return this
+     */
+    public FindOperation<T> allowDiskUse(@Nullable final Boolean allowDiskUse) {
+        this.allowDiskUse = allowDiskUse;
+        return this;
+    }
+
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         return withReadConnectionSource(binding, new CallableWithSource<BatchCursor<T>>() {
@@ -738,7 +763,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
      */
     public ReadOperation<BsonDocument> asExplainableOperation() {
         return new CommandReadOperation<>(getNamespace().getDatabaseName(),
-                new BsonDocument("explain", getCommand(NoOpSessionContext.INSTANCE)),
+                new BsonDocument("explain", getCommand(NoOpSessionContext.INSTANCE, null)),
                 new BsonDocumentCodec());
     }
 
@@ -784,7 +809,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
         return document;
     }
 
-    private BsonDocument getCommand(final SessionContext sessionContext) {
+    private BsonDocument getCommand(final SessionContext sessionContext, final ConnectionDescription description) {
         BsonDocument commandDocument = new BsonDocument("find", new BsonString(namespace.getCollectionName()));
 
         appendReadConcernToCommand(sessionContext, commandDocument);
@@ -847,6 +872,9 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
         if (showRecordId) {
             commandDocument.put("showRecordId", BsonBoolean.TRUE);
         }
+        if (allowDiskUse != null) {
+            commandDocument.put("allowDiskUse", BsonBoolean.valueOf(allowDiskUse));
+        }
         return commandDocument;
     }
 
@@ -855,7 +883,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
             @Override
             public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
                 validateReadConcernAndCollation(connectionDescription, sessionContext.getReadConcern(), collation);
-                return getCommand(sessionContext);
+                return getCommand(sessionContext, connectionDescription);
             }
         };
     }

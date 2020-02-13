@@ -147,6 +147,7 @@ class AsyncAggregateIterableSpecification extends Specification {
         operation.getBatchSize() == 99
         operation.getMaxAwaitTime(MILLISECONDS) == 0
         operation.getMaxTime(MILLISECONDS) == 0
+        operation.isAllowDiskUse() == null
 
         when: 'aggregation includes $out and is at the database level'
         new AsyncAggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern,

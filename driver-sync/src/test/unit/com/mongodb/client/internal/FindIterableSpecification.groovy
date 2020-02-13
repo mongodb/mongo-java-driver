@@ -77,6 +77,7 @@ class FindIterableSpecification extends Specification {
                 .max(new Document('max', 1))
                 .returnKey(false)
                 .showRecordId(false)
+                .allowDiskUse(false)
 
         when: 'default input should be as expected'
         findIterable.iterator()
@@ -102,6 +103,7 @@ class FindIterableSpecification extends Specification {
                 .max(new BsonDocument('max', new BsonInt32(1)))
                 .returnKey(false)
                 .showRecordId(false)
+                .allowDiskUse(false)
                 .retryReads(true)
         )
         readPreference == secondary()
@@ -126,6 +128,7 @@ class FindIterableSpecification extends Specification {
                 .max(new Document('max', 2))
                 .returnKey(true)
                 .showRecordId(true)
+                .allowDiskUse(true)
                 .iterator()
 
         operation = executor.getReadOperation() as FindOperation<Document>
@@ -152,6 +155,7 @@ class FindIterableSpecification extends Specification {
                 .max(new BsonDocument('max', new BsonInt32(2)))
                 .returnKey(true)
                 .showRecordId(true)
+                .allowDiskUse(true)
                 .retryReads(true)
         )
 
