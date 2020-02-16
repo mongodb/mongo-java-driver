@@ -24,8 +24,8 @@ import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ServerType
 import com.mongodb.internal.bulk.InsertRequest
 import com.mongodb.internal.bulk.WriteRequestWithIndex
-import com.mongodb.internal.validator.NoOpFieldNameValidator
 import com.mongodb.internal.session.SessionContext
+import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonArray
 import org.bson.BsonBinary
 import org.bson.BsonBinaryReader
@@ -61,9 +61,9 @@ class CommandMessageSpecification extends Specification {
         def message = new CommandMessage(namespace, command, fieldNameValidator, readPreference,
                 MessageSettings.builder()
                         .maxWireVersion(THREE_DOT_SIX_WIRE_VERSION)
-                        .serverType(serverType)
+                        .serverType(serverType as ServerType)
                         .build(),
-                responseExpected, null, null, clusterConnectionMode)
+                responseExpected, exhaustAllowed, null, null, clusterConnectionMode)
         def output = new BasicOutputBuffer()
 
         when:
@@ -76,7 +76,8 @@ class CommandMessageSpecification extends Specification {
         messageHeader.opCode == OpCode.OP_MSG.value
         replyHeader.requestId < RequestMessage.currentGlobalId
         replyHeader.responseTo == 0
-        replyHeader.opMsgFlagBits == (responseExpected ? 0 : 2)
+        ((replyHeader.opMsgFlagBits & (1 << 16)) != 0) == exhaustAllowed
+        ((replyHeader.opMsgFlagBits & (1 << 1)) == 0) == responseExpected
 
         def expectedCommandDocument = command.clone()
                 .append('$db', new BsonString(namespace.databaseName))
@@ -96,7 +97,7 @@ class CommandMessageSpecification extends Specification {
         getCommandDocument(byteBuf, replyHeader) == expectedCommandDocument
 
         where:
-        [readPreference, serverType, clusterConnectionMode, sessionContext, responseExpected] << [
+        [readPreference, serverType, clusterConnectionMode, sessionContext, responseExpected, exhaustAllowed] << [
                 [ReadPreference.primary(), ReadPreference.secondary()],
                 [ServerType.REPLICA_SET_PRIMARY, ServerType.SHARD_ROUTER],
                 [ClusterConnectionMode.SINGLE, ClusterConnectionMode.MULTIPLE],
@@ -125,6 +126,7 @@ class CommandMessageSpecification extends Specification {
                             getReadConcern() >> ReadConcern.DEFAULT
                             }
                 ],
+                [true, false],
                 [true, false]
         ].combinations()
     }

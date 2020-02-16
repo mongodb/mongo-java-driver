@@ -343,7 +343,7 @@ public final class ClusterFixture {
                 ServerSettings.builder().build(),
                 ConnectionPoolSettings.builder().applyConnectionString(connectionString).build(),
                 streamFactory,
-                new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings(connectionString)),
+                new SocketStreamFactory(SocketSettings.builder().readTimeout(5, SECONDS).build(), getSslSettings(connectionString)),
                 connectionString.getCredential(),
                 null, null, null,
                 connectionString.getCompressorList());
@@ -367,6 +367,19 @@ public final class ClusterFixture {
         } else {
             throw new IllegalArgumentException("Unsupported stream type " + streamType);
         }
+    }
+
+    @Nullable
+    public static StreamFactoryFactory getOverriddenStreamFactoryFactory() {
+        String streamType = System.getProperty("org.mongodb.test.async.type", "nio2");
+
+        if (streamType.equals("netty")) {
+            if (nettyStreamFactoryFactory == null) {
+                nettyStreamFactoryFactory = NettyStreamFactoryFactory.builder().build();
+            }
+            return nettyStreamFactoryFactory;
+        }
+        return null;
     }
 
     private static SocketSettings getSocketSettings() {

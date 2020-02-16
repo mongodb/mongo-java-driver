@@ -486,6 +486,36 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
+        public <T> void send(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
+            isTrue("open", !isClosed.get());
+            wrapped.send(message, decoder, sessionContext);
+        }
+
+        @Override
+        public <T> T receive(final Decoder<T> decoder, final SessionContext sessionContext) {
+            isTrue("open", !isClosed.get());
+            return wrapped.receive(decoder, sessionContext);
+        }
+
+        @Override
+        public boolean supportsAdditionalTimeout() {
+            isTrue("open", !isClosed.get());
+            return wrapped.supportsAdditionalTimeout();
+        }
+
+        @Override
+        public <T> T receive(final Decoder<T> decoder, final SessionContext sessionContext, final int additionalTimeout) {
+            isTrue("open", !isClosed.get());
+            return wrapped.receive(decoder, sessionContext, additionalTimeout);
+        }
+
+        @Override
+        public boolean hasMoreToCome() {
+            isTrue("open", !isClosed.get());
+            return wrapped.hasMoreToCome();
+        }
+
+        @Override
         public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
                                             final SessionContext sessionContext, final SingleResultCallback<T> callback) {
             isTrue("open", !isClosed.get());

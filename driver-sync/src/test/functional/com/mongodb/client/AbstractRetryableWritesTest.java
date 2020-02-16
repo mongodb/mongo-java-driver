@@ -16,12 +16,14 @@
 
 package com.mongodb.client;
 
+import com.mongodb.Block;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.client.test.CollectionHelper;
+import com.mongodb.connection.ServerSettings;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -43,6 +45,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.JsonTestServerVersionChecker.skipTest;
@@ -91,6 +94,13 @@ public abstract class AbstractRetryableWritesTest {
         if (clientOptions.containsKey("retryWrites")) {
             builder.retryWrites(clientOptions.getBoolean("retryWrites").getValue());
         }
+        builder.applyToServerSettings(new Block<ServerSettings.Builder>() {
+            @Override
+            public void apply(final ServerSettings.Builder builder) {
+                builder.heartbeatFrequency(5, TimeUnit.MILLISECONDS);
+            }
+        });
+
         mongoClient = createMongoClient(builder.build());
 
         List<BsonDocument> documents = new ArrayList<>();

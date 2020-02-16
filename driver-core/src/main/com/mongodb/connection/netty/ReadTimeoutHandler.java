@@ -40,10 +40,10 @@ final class ReadTimeoutHandler extends ChannelInboundHandlerAdapter {
         this.readTimeout = readTimeout;
     }
 
-    void scheduleTimeout(final ChannelHandlerContext ctx) {
+    void scheduleTimeout(final ChannelHandlerContext ctx, final int additionalTimeout) {
         isTrue("Handler called from the eventLoop", ctx.channel().eventLoop().inEventLoop());
         if (timeout == null) {
-            timeout = ctx.executor().schedule(new ReadTimeoutTask(ctx), readTimeout, TimeUnit.MILLISECONDS);
+            timeout = ctx.executor().schedule(new ReadTimeoutTask(ctx), readTimeout + additionalTimeout, TimeUnit.MILLISECONDS);
         }
     }
 

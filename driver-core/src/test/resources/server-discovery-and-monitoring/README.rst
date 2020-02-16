@@ -2,9 +2,16 @@
 Server Discovery And Monitoring Tests
 =====================================
 
+.. contents::
+
+----
+
 The YAML and JSON files in this directory tree are platform-independent tests
 that drivers can use to prove their conformance to the
 Server Discovery And Monitoring Spec.
+
+Additional prose tests, that cannot be represented as spec tests, are
+described and MUST be implemented.
 
 Version
 -------
@@ -99,7 +106,6 @@ A "pool" object represents a correct connection pool for a given server.
 It has the following keys:
 
 - generation: This server's expected pool generation, like ``0``.
-- topologyVersion: absent, null, or a topologyVersion document.
 
 In monitoring tests, an "outcome" contains a list of SDAM events that should
 have been published by the client as a result of processing ismaster responses
@@ -118,11 +124,6 @@ Mocking
 ~~~~~~~
 
 Drivers should be able to test their server discovery and monitoring logic
-without any network I/O, by parsing ismaster responses from the test file
-and passing them into the driver code. Parts of the client and monitoring
-code may need to be mocked or subclassed to achieve this. `A reference
-implementation for PyMongo 3.x is available here
-<https://github.com/mongodb/mongo-python-driver/blob/26d25cd74effc1e7a8d52224eac6c9a95769b371/test/test_discovery_and_monitoring.py>`_.
 without any network I/O, by parsing ismaster and application error from the
 test file and passing them into the driver code. Parts of the client and
 monitoring code may need to be mocked or subclassed to achieve this.
@@ -182,3 +183,255 @@ the driver's current TopologyDescription or ServerDescription.
 For monitoring tests, clear the list of events collected so far.
 
 Continue until all phases have been executed.
+
+Integration Tests
+-----------------
+
+Integration tests are provided in the "integration" directory.
+
+Test Format
+~~~~~~~~~~~
+
+The same as the `Transactions Spec Test format
+</source/transactions/tests/README.rst#test-format>`_.
+
+Special Test Operations
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Certain operations that appear in the "operations" array do not correspond to
+API methods but instead represent special test operations. Such operations are
+defined on the "testRunner" object and are documented in the
+`Transactions Spec Test
+</source/transactions/tests/README.rst#special-test-operations>`_.
+
+Additional, SDAM test specific operations are documented here:
+
+configureFailPoint
+''''''''''''''''''
+
+The "configureFailPoint" operation instructs the test runner to configure
+the given server failpoint on the "admin" database. The runner MUST disable
+this failpoint at the end of the test. For example::
+
+      - name: configureFailPoint
+        object: testRunner
+        arguments:
+          failPoint:
+            configureFailPoint: failCommand
+            mode: { times: 1 }
+            data:
+                failCommands: ["insert"]
+                closeConnection: true
+
+Tests that use the "configureFailPoint" operation do not include
+``configureFailPoint`` commands in their command expectations. Drivers MUST
+ensure that ``configureFailPoint`` commands do not appear in the list of logged
+commands, either by manually filtering it from the list of observed commands or
+by using a different MongoClient to execute ``configureFailPoint``.
+
+wait
+''''
+
+The "wait" operation instructs the test runner to sleep for "ms"
+milliseconds. For example::
+
+      - name: wait
+        object: testRunner
+        arguments:
+          ms: 1000
+
+waitForEvent
+''''''''''''
+
+The "waitForEvent" operation instructs the test runner to wait until the test's
+MongoClient has published a specific event a given number of times. For
+example, the following instructs the test runner to wait for at least one
+PoolClearedEvent to be published::
+
+      - name: waitForEvent
+        object: testRunner
+        arguments:
+          event: PoolClearedEvent
+          count: 1
+
+Note that "count" includes events that were published while running previous
+operations.
+
+ServerMarkedUnknownEvent
+````````````````````````
+
+The ServerMarkedUnknownEvent may appear as an event in `waitForEvent`_ and
+`assertEventCount`_. This event is defined as ServerDescriptionChangedEvent
+where newDescription.type is ``Unknown``.
+
+assertEventCount
+''''''''''''''''
+
+The "assertEventCount" operation instructs the test runner to assert the test's
+MongoClient has published a specific event a given number of times. For
+example, the following instructs the test runner to assert that a single
+PoolClearedEvent was published::
+
+      - name: waitForEvent
+        object: testRunner
+        arguments:
+          event: PoolClearedEvent
+          count: 1
+
+recordPrimary
+'''''''''''''
+
+The "recordPrimary" operation instructs the test runner to record the current
+primary of the test's MongoClient. For example::
+
+      - name: recordPrimary
+        object: testRunner
+
+runAdminCommand
+'''''''''''''''
+
+The "runAdminCommand" operation instructs the test runner to run the given
+command on the admin database. Drivers MUST run this command on a different
+MongoClient from the one used for test operations. For example::
+
+      - name: runAdminCommand
+        object: testRunner
+        command_name: replSetStepDown
+        arguments:
+          command:
+            replSetStepDown: 20
+            force: false
+
+waitForPrimaryChange
+''''''''''''''''''''
+
+The "waitForPrimaryChange" operation instructs the test runner to wait up to
+"timeoutMS" milliseconds for the MongoClient to discover a new primary server.
+The new primary should be different from the one recorded by "recordPrimary".
+For example::
+
+      - name: waitForPrimaryChange
+        object: testRunner
+        arguments:
+          timeoutMS: 15000
+
+To implement, Drivers can subscribe to ServerDescriptionChangedEvents and wait
+for an event where newDescription.type is ``RSPrimary`` and the address is
+different from the one previously recorded by "recordPrimary".
+
+startThread
+'''''''''''
+
+The "startThread" operation instructs the test runner to start a new thread
+with the provided "name". The `runOnThread`_ and `waitForThread`_ operations
+reference a thread by its "name". For example::
+
+      - name: startThread
+        object: testRunner
+        arguments:
+          name: thread1
+
+runOnThread
+'''''''''''
+
+The "runOnThread" operation instructs the test runner to schedule an operation
+to be run on the given thread. runOnThread MUST NOT wait for the scheduled
+operation to complete. For example::
+
+      - name: runOnThread
+        object: testRunner
+        arguments:
+          name: thread1
+          operation:
+            name: insertOne
+            object: collection
+            arguments:
+              document:
+                _id: 2
+            error: true
+
+waitForThread
+'''''''''''''
+
+The "waitForThread" operation instructs the test runner to stop the given
+thread, wait for it to complete, and assert that the thread exited without
+any errors. For example::
+
+      - name: waitForThread
+        object: testRunner
+        arguments:
+          name: thread1
+
+Prose Tests
+-----------
+
+The following prose tests cannot be represented as spec tests and MUST be
+implemented.
+
+Streaming protocol Tests
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Drivers that implement the streaming protocol (multi-threaded or
+asynchronous drivers) must implement the following tests. Each test should be
+run against a standalone, replica set, and sharded cluster unless otherwise
+noted.
+
+Some of these cases should already be tested with the old protocol; in
+that case just verify the test cases succeed with the new protocol.
+
+1.  Configure the client with heartbeatFrequencyMS set to 500,
+    overriding the default of 10000. Assert the client processes
+    isMaster replies more frequently (approximately every 500ms).
+
+RTT Tests
+~~~~~~~~~
+
+Run the following test(s) on MongoDB 4.4+.
+
+1.  Test that RTT is continuously updated.
+
+    #. Create a client with  ``heartbeatFrequencyMS=500``,
+       ``appName=streamingRttTest``, and subscribe to server events.
+
+    #. Run a find command to wait for the server to be discovered.
+
+    #. Sleep for 2 seconds. This must be long enough for multiple heartbeats
+       to succeed.
+
+    #. Assert that each ``ServerDescriptionChangedEvent`` includes a non-zero
+       RTT.
+
+    #. Configure the following failpoint to block isMaster commands for 250ms
+       which should add extra latency to each RTT check::
+
+         db.adminCommand({
+             configureFailPoint: "failCommand",
+             mode: {times: 1000},
+             data: {
+               failCommands: ["isMaster"],
+               blockConnection: true,
+               blockTimeMS: 500,
+               appName: "streamingRttTest",
+             },
+         });
+
+    #. Wait for the server's RTT to exceed 250ms. Eventually the average RTT
+       should also exceed 500ms but we use 250ms to speed up the test. Note
+       that the `Server Description Equality`_ rule means that
+       ServerDescriptionChangedEvents will not be published. This test may
+       need to use a driver specific helper to obtain the latest RTT instead.
+
+    #. Disable the failpoint::
+
+         db.adminCommand({
+             configureFailPoint: "failCommand",
+             mode: "off",
+         });
+
+.. Section for links.
+
+.. _Server Description Equality: /source/server-discovery-and-monitoring/server-discovery-and-monitoring.rst#server-description-equality
+
+.. Section for links.
+
+.. _Server Description Equality: /source/server-discovery-and-monitoring/server-discovery-and-monitoring.rst#server-description-equality

@@ -42,6 +42,10 @@ class TestServerMonitor implements ServerMonitor {
     public void close() {
     }
 
+    @Override
+    public void cancelCurrentCheck() {
+    }
+
     public void setServerStateListener(final ChangeListener<ServerDescription> serverStateListener) {
         this.serverStateListener = serverStateListener;
     }

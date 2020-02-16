@@ -28,14 +28,15 @@ class ServerHeartbeatEventSpecification extends Specification {
     def 'should fail if elapsed time is negative'() {
         when:
         new ServerHeartbeatSucceededEvent(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                new BsonDocument('ok', new BsonInt32(1)), -1)
+                new BsonDocument('ok', new BsonInt32(1)), -1, false)
 
         then:
         def e = thrown(IllegalArgumentException)
         e.getMessage() == 'state should be: elapsed time is not negative'
 
         when:
-        new ServerHeartbeatFailedEvent(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())), -1, new Throwable())
+        new ServerHeartbeatFailedEvent(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())), -1, false,
+                new Throwable())
 
         then:
         e = thrown(IllegalArgumentException)

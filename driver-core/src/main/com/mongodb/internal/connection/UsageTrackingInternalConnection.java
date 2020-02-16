@@ -103,6 +103,36 @@ class UsageTrackingInternalConnection implements InternalConnection {
     }
 
     @Override
+    public <T> void send(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
+        wrapped.send(message, decoder, sessionContext);
+        lastUsedAt = System.currentTimeMillis();
+    }
+
+    @Override
+    public <T> T receive(final Decoder<T> decoder, final SessionContext sessionContext) {
+        T result = wrapped.receive(decoder, sessionContext);
+        lastUsedAt = System.currentTimeMillis();
+        return result;
+    }
+
+    @Override
+    public boolean supportsAdditionalTimeout() {
+        return wrapped.supportsAdditionalTimeout();
+    }
+
+    @Override
+    public <T> T receive(final Decoder<T> decoder, final SessionContext sessionContext, final int additionalTimeout) {
+        T result = wrapped.receive(decoder, sessionContext, additionalTimeout);
+        lastUsedAt = System.currentTimeMillis();
+        return result;
+    }
+
+    @Override
+    public boolean hasMoreToCome() {
+        return wrapped.hasMoreToCome();
+    }
+
+    @Override
     public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
                                         final SessionContext sessionContext, final SingleResultCallback<T> callback) {
         SingleResultCallback<T> errHandlingCallback = errorHandlingCallback(new SingleResultCallback<T>() {

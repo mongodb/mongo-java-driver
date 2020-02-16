@@ -33,6 +33,7 @@ public final class ServerHeartbeatSucceededEvent {
     private final ConnectionId connectionId;
     private final BsonDocument reply;
     private final long elapsedTimeNanos;
+    private final boolean awaited;
 
     /**
      * Construct an instance.
@@ -40,12 +41,29 @@ public final class ServerHeartbeatSucceededEvent {
      * @param connectionId the non-null connectionId
      * @param reply the non-null reply to an isMaster command
      * @param elapsedTimeNanos the non-negative elapsed time in nanoseconds
+     * @deprecated Prefer {@link #ServerHeartbeatSucceededEvent(ConnectionId, BsonDocument, long, boolean)}
      */
+    @Deprecated
     public ServerHeartbeatSucceededEvent(final ConnectionId connectionId, final BsonDocument reply, final long elapsedTimeNanos) {
+        this(connectionId, reply, elapsedTimeNanos, false);
+    }
+
+    /**
+     * Construct an instance.
+     *
+     * @param connectionId the non-null connectionId
+     * @param reply the non-null reply to an isMaster command
+     * @param elapsedTimeNanos the non-negative elapsed time in nanoseconds
+     * @param awaited true if the response was awaited
+     * @since 4.1
+     */
+    public ServerHeartbeatSucceededEvent(final ConnectionId connectionId, final BsonDocument reply, final long elapsedTimeNanos,
+                                         final boolean awaited) {
         this.connectionId = notNull("connectionId", connectionId);
         this.reply = notNull("reply", reply);
         isTrueArgument("elapsed time is not negative", elapsedTimeNanos >= 0);
         this.elapsedTimeNanos = elapsedTimeNanos;
+        this.awaited = awaited;
     }
 
     /**
@@ -77,12 +95,25 @@ public final class ServerHeartbeatSucceededEvent {
         return timeUnit.convert(elapsedTimeNanos, TimeUnit.NANOSECONDS);
     }
 
+    /**
+     * Gets whether the heartbeat was awaited.  If true, then {@link #getElapsedTime(TimeUnit)} reflects the sum of the round trip time
+     * to the server and the time that the server waited before sending a response.
+     *
+     * @return whether the response was awaited
+     * @since 4.1
+     * @mongodb.server.release 4.4
+     */
+    public boolean isAwaited() {
+        return awaited;
+    }
+
     @Override
     public String toString() {
         return "ServerHeartbeatSucceededEvent{"
                 + "connectionId=" + connectionId
                 + ", reply=" + reply
                 + ", elapsedTimeNanos=" + elapsedTimeNanos
+                + ", awaited=" + awaited
                 + "} ";
     }
 }
