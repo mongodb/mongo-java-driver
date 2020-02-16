@@ -48,6 +48,7 @@ import com.mongodb.internal.operation.MixedBulkWriteOperation;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
+import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.Document;
@@ -229,7 +230,9 @@ public final class CollectionHelper<T> {
     }
 
     public <D> List<D> find(final Codec<D> codec) {
-        BatchCursor<D> cursor = new FindOperation<D>(namespace, codec).execute(getBinding());
+        BatchCursor<D> cursor = new FindOperation<D>(namespace, codec)
+                .sort(new BsonDocument("_id", new BsonInt32(1)))
+                .execute(getBinding());
         List<D> results = new ArrayList<D>();
         while (cursor.hasNext()) {
             results.addAll(cursor.next());

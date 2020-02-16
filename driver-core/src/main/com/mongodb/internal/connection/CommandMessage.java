@@ -20,8 +20,8 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.connection.ClusterConnectionMode;
-import com.mongodb.internal.validator.MappedFieldNameValidator;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.internal.validator.MappedFieldNameValidator;
 import org.bson.BsonArray;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonBoolean;
@@ -34,7 +34,7 @@ import org.bson.FieldNameValidator;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.BsonOutput;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -61,6 +61,7 @@ public final class CommandMessage extends RequestMessage {
     private final BsonDocument command;
     private final FieldNameValidator commandFieldNameValidator;
     private final ReadPreference readPreference;
+    private final boolean exhaustAllowed;
     private final SplittablePayload payload;
     private final FieldNameValidator payloadFieldNameValidator;
     private final boolean responseExpected;
@@ -73,7 +74,22 @@ public final class CommandMessage extends RequestMessage {
     }
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
+                   final ReadPreference readPreference, final MessageSettings settings, final boolean exhaustAllowed) {
+        this(namespace, command, commandFieldNameValidator, readPreference, settings, true, exhaustAllowed, null, null,
+                MULTIPLE);
+    }
+
+    CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings, final boolean responseExpected,
+                   final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
+                   final ClusterConnectionMode clusterConnectionMode) {
+        this(namespace, command, commandFieldNameValidator, readPreference, settings, responseExpected, false, payload,
+                payloadFieldNameValidator, clusterConnectionMode);
+    }
+
+    CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
+                   final ReadPreference readPreference, final MessageSettings settings,
+                   final boolean responseExpected, final boolean exhaustAllowed,
                    final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
                    final ClusterConnectionMode clusterConnectionMode) {
         super(namespace.getFullName(), getOpCode(settings), settings);
@@ -82,6 +98,7 @@ public final class CommandMessage extends RequestMessage {
         this.commandFieldNameValidator = commandFieldNameValidator;
         this.readPreference = readPreference;
         this.responseExpected = responseExpected;
+        this.exhaustAllowed = exhaustAllowed;
         this.payload = payload;
         this.payloadFieldNameValidator = payloadFieldNameValidator;
         this.clusterConnectionMode = clusterConnectionMode;
@@ -99,7 +116,7 @@ public final class CommandMessage extends RequestMessage {
                     + byteBufBsonDocument.getSizeInBytes()
                     + 1 // payload type
                     + 4 // payload size
-                    + payload.getPayloadName().getBytes(Charset.forName("UTF-8")).length + 1;  // null-terminated UTF-8 payload name
+                    + payload.getPayloadName().getBytes(StandardCharsets.UTF_8).length + 1;  // null-terminated UTF-8 payload name
             commandBsonDocument.append(payload.getPayloadName(),
                     new BsonArray(ByteBufBsonDocument.createList(bsonOutput, payloadStartPosition)));
         } else {
@@ -186,11 +203,14 @@ public final class CommandMessage extends RequestMessage {
     }
 
     private int getOpMsgResponseExpectedFlagBit() {
-        if (requireOpMsgResponse()) {
-            return 0;
-        } else {
-            return 1 << 1;
+        int flagBits = 0;
+        if (!requireOpMsgResponse()) {
+            flagBits = 1 << 1;
         }
+        if (exhaustAllowed) {
+            flagBits |= 1 << 16;
+        }
+        return flagBits;
     }
 
     private boolean requireOpMsgResponse() {

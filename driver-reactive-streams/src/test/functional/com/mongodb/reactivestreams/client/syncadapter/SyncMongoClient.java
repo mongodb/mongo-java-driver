@@ -139,7 +139,7 @@ public class SyncMongoClient implements MongoClient {
 
     @Override
     public ClusterDescription getClusterDescription() {
-        throw new UnsupportedOperationException();
+        return wrapped.getClusterDescription();
     }
 
     private com.mongodb.reactivestreams.client.ClientSession unwrap(final ClientSession clientSession) {

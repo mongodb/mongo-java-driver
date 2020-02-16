@@ -24,4 +24,5 @@ interface ServerMonitor {
 
     void close();
 
+    void cancelCurrentCheck();
 }

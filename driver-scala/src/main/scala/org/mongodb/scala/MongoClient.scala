@@ -18,9 +18,10 @@ package org.mongodb.scala
 
 import java.io.Closeable
 
+import com.mongodb.connection.ClusterDescription
 import com.mongodb.reactivestreams.client.{ MongoClients, MongoClient => JMongoClient }
-import org.bson.codecs.configuration.CodecRegistry
 import org.bson.codecs.configuration.CodecRegistries.{ fromProviders, fromRegistries }
+import org.bson.codecs.configuration.CodecRegistry
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 import org.mongodb.scala.bson.codecs.{ DocumentCodecProvider, IterableCodecProvider }
 import org.mongodb.scala.bson.conversions.Bson
@@ -251,4 +252,21 @@ case class MongoClient(private val wrapped: JMongoClient) extends Closeable {
   )(implicit e: C DefaultsTo Document, ct: ClassTag[C]): ChangeStreamObservable[C] =
     ChangeStreamObservable(wrapped.watch(clientSession, pipeline.asJava, ct))
 
+  /**
+   * Gets the current cluster description.
+   *
+   * <p>
+   * This method will not block, meaning that it may return a { @link ClusterDescription} whose { @code clusterType} is unknown
+   * and whose { @link com.mongodb.connection.ServerDescription}s are all in the connecting state.  If the application requires
+   * notifications after the driver has connected to a member of the cluster, it should register a { @link ClusterListener} via
+   * the { @link ClusterSettings} in { @link com.mongodb.MongoClientSettings}.
+   * </p>
+   *
+   * @return the current cluster description
+   * @see ClusterSettings.Builder#addClusterListener(ClusterListener)
+   * @see com.mongodb.MongoClientSettings.Builder#applyToClusterSettings(com.mongodb.Block)
+   * @since 4.1
+   */
+  def getClusterDescription: ClusterDescription =
+    wrapped.getClusterDescription
 }

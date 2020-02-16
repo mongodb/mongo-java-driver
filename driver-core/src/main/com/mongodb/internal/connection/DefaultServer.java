@@ -26,7 +26,6 @@ import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
-import com.mongodb.connection.ServerType;
 import com.mongodb.connection.TopologyVersion;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
@@ -44,6 +43,8 @@ import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.connection.ClusterableServer.ConnectionState.AFTER_HANDSHAKE;
+import static com.mongodb.internal.connection.ClusterableServer.ConnectionState.BEFORE_HANDSHAKE;
 import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_TWO_WIRE_VERSION;
 import static java.util.Arrays.asList;
 
@@ -93,7 +94,7 @@ class DefaultServer implements ClusterableServer {
             connectionPool.invalidate();
             throw e;
         } catch (MongoSocketException e) {
-            invalidate(connectionPool.getGeneration());
+            invalidate(ConnectionState.BEFORE_HANDSHAKE, e, connectionPool.getGeneration(), description.getMaxWireVersion());
             throw e;
         }
     }
@@ -107,7 +108,7 @@ class DefaultServer implements ClusterableServer {
                 if (t instanceof MongoSecurityException) {
                     connectionPool.invalidate();
                 } else if (t instanceof MongoSocketException) {
-                    invalidate(connectionPool.getGeneration());
+                    invalidate(ConnectionState.BEFORE_HANDSHAKE, t, connectionPool.getGeneration(), description.getMaxWireVersion());
                 }
                 if (t != null) {
                     callback.onResult(null, t);
@@ -126,52 +127,46 @@ class DefaultServer implements ClusterableServer {
     }
 
     @Override
-    public void invalidate() {
-        invalidate(connectionPool.getGeneration());
+    public void resetToConnecting() {
+        serverStateListener.stateChanged(new ChangeEvent<>(description, ServerDescription.builder()
+                .state(CONNECTING).address(serverId.getAddress()).build()));
     }
 
     @Override
-    public void invalidate(final int connectionGeneration) {
+    public synchronized void invalidate() {
         if (!isClosed()) {
-            if (connectionGeneration < connectionPool.getGeneration()) {
-                return;
-            }
-            serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(description, ServerDescription.builder()
-                    .state(CONNECTING)
-                    .address(serverId.getAddress())
-                    .build()));
-            connectionPool.invalidate();
-            // TODO: in streaming protocol, we want to close the current connection and start over
+            serverStateListener.stateChanged(new ChangeEvent<>(description, ServerDescription.builder()
+                    .state(CONNECTING).address(serverId.getAddress()).build()));
             connect();
+            if (description.getMaxWireVersion() < FOUR_DOT_TWO_WIRE_VERSION) {
+                connectionPool.invalidate();
+            }
         }
     }
 
     @Override
-    public void invalidate(final Throwable reason) {
-        invalidate(reason, connectionPool.getGeneration(), description.getMaxWireVersion());
-    }
-
-    @Override
-    public void invalidate(final Throwable t, final int connectionGeneration, final int maxWireVersion) {
+    public synchronized void invalidate(final ConnectionState connectionState, final Throwable t, final int connectionGeneration,
+                                        final int maxWireVersion) {
         if (!isClosed()) {
             if (connectionGeneration < connectionPool.getGeneration()) {
                 return;
             }
-            if ((t instanceof MongoSocketException && !(t instanceof MongoSocketReadTimeoutException))) {
-                invalidate();
+            if (t instanceof MongoSocketException
+                    && (!(t instanceof MongoSocketReadTimeoutException) || connectionState == BEFORE_HANDSHAKE)) {
+                serverStateListener.stateChanged(new ChangeEvent<>(description, ServerDescription.builder()
+                        .state(CONNECTING).address(serverId.getAddress()).exception(t).build()));
+                connectionPool.invalidate();
+                serverMonitor.cancelCurrentCheck();
             } else if (t instanceof MongoNotPrimaryException || t instanceof MongoNodeIsRecoveringException) {
                 if (isStale(((MongoCommandException) t))) {
                     return;
                 }
-                if (maxWireVersion < FOUR_DOT_TWO_WIRE_VERSION) {
-                    invalidate();
-                } else if (SHUTDOWN_CODES.contains(((MongoCommandException) t).getErrorCode())) {
-                    invalidate();
-                } else {
-                    ChangeEvent<ServerDescription> event = new ChangeEvent<ServerDescription>(description, ServerDescription.builder()
-                            .state(CONNECTING).type(ServerType.UNKNOWN).address(serverId.getAddress()).exception(t).build());
-                    serverStateListener.stateChanged(event);
-                    connect();
+                serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(description, ServerDescription.builder()
+                        .state(CONNECTING).address(serverId.getAddress()).exception(t).build()));
+                connect();
+
+                if (maxWireVersion < FOUR_DOT_TWO_WIRE_VERSION || SHUTDOWN_CODES.contains(((MongoCommandException) t).getErrorCode())) {
+                    connectionPool.invalidate();
                 }
             }
         }
@@ -198,15 +193,6 @@ class DefaultServer implements ClusterableServer {
         }
 
         return false;
-    }
-
-    public void invalidate(final Throwable t, final int connectionGeneration, final int maxWireVersion,
-                           final SessionContext sessionContext) {
-        notNull("sessionContext", sessionContext);
-        invalidate(t, connectionGeneration, maxWireVersion);
-        if (t instanceof MongoSocketException && sessionContext.hasSession()) {
-            sessionContext.markSessionDirty();
-        }
     }
 
     @Override
@@ -240,7 +226,7 @@ class DefaultServer implements ClusterableServer {
                 protocol.setCommandListener(commandListener);
                 return protocol.execute(connection);
             } catch (MongoException e) {
-                invalidate(e, connection.getGeneration(), connection.getDescription().getMaxWireVersion());
+                invalidate(AFTER_HANDSHAKE, e, connection.getGeneration(), connection.getDescription().getMaxWireVersion());
                 throw e;
             }
         }
@@ -253,7 +239,7 @@ class DefaultServer implements ClusterableServer {
                 @Override
                 public void onResult(final T result, final Throwable t) {
                     if (t != null) {
-                        invalidate(t, connection.getGeneration(), connection.getDescription().getMaxWireVersion());
+                        invalidate(AFTER_HANDSHAKE, t, connection.getGeneration(), connection.getDescription().getMaxWireVersion());
                     }
                     callback.onResult(result, t);
                 }
@@ -271,7 +257,10 @@ class DefaultServer implements ClusterableServer {
                 invalidate();
                 return (T) e.getResponse();
             } catch (MongoException e) {
-                invalidate(e, connection.getGeneration(), connection.getDescription().getMaxWireVersion(), sessionContext);
+                invalidate(AFTER_HANDSHAKE, e, connection.getGeneration(), connection.getDescription().getMaxWireVersion());
+                if (e instanceof MongoSocketException && sessionContext.hasSession()) {
+                    sessionContext.markSessionDirty();
+                }
                 throw e;
             }
         }
@@ -289,7 +278,10 @@ class DefaultServer implements ClusterableServer {
                             invalidate();
                             callback.onResult((T) ((MongoWriteConcernWithResponseException) t).getResponse(), null);
                         } else {
-                            invalidate(t, connection.getGeneration(), connection.getDescription().getMaxWireVersion(), sessionContext);
+                            invalidate(AFTER_HANDSHAKE, t, connection.getGeneration(), connection.getDescription().getMaxWireVersion());
+                            if (t instanceof MongoSocketException && sessionContext.hasSession()) {
+                                sessionContext.markSessionDirty();
+                            }
                             callback.onResult(null, t);
                         }
                     } else {

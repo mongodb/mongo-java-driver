@@ -89,7 +89,7 @@ public class TestConnectionPoolListener implements ConnectionPoolListener {
     }
 
     private <T> boolean containsEvent(final Class<T> eventClass, final int expectedEventCount) {
-        return countEvents(eventClass) == expectedEventCount;
+        return countEvents(eventClass) >= expectedEventCount;
     }
 
     private void addEvent(final Object event) {

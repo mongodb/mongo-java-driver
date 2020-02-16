@@ -17,6 +17,7 @@
 package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.ClientSessionOptions;
+import com.mongodb.connection.ClusterDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.client.AsyncClientSession;
 import com.mongodb.internal.async.client.AsyncMongoClient;
@@ -154,5 +155,10 @@ public final class MongoClientImpl implements MongoClient {
                         }
                     }
                 }));
+    }
+
+    @Override
+    public ClusterDescription getClusterDescription() {
+        return wrapped.getClusterDescription();
     }
 }

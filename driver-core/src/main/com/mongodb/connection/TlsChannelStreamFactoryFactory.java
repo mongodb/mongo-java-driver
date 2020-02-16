@@ -197,6 +197,11 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Clo
         }
 
         @Override
+        public boolean supportsAdditionalTimeout() {
+            return true;
+        }
+
+        @Override
         public void openAsync(final AsyncCompletionHandler<Void> handler) {
             isTrue("unopened", getChannel() == null);
             try {

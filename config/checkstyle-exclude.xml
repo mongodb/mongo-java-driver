@@ -28,6 +28,7 @@
     <suppress checks="Regexp" files="Tour"/>
 
     <suppress checks="MethodLength" files="PojoRoundTripTest"/>
+    <suppress checks="MethodLength" files="AbstractUnifiedTest"/>
 
     <suppress checks="JavadocPackage" files="com[\\/]mongodb[\\/][^\\/]*\.java"/>
     <suppress checks="JavadocPackage" files="com[\\/]mongodb[\\/]client[\\/][^\\/]*\.java"/>

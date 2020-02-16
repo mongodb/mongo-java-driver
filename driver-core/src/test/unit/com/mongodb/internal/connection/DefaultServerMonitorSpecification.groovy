@@ -138,7 +138,11 @@ class DefaultServerMonitorSpecification extends Specification {
                         initialServerDescription
                     }
 
-                    sendAndReceive(_, _, _) >> {
+                    supportsAdditionalTimeout() >> true
+
+                    send(_, _, _) >> { }
+
+                    receive(_, _) >> {
                         BsonDocument.parse(isMasterResponse)
                     }
                 }
@@ -221,7 +225,11 @@ class DefaultServerMonitorSpecification extends Specification {
                         initialServerDescription
                     }
 
-                    sendAndReceive(_, _, _) >> {
+                    supportsAdditionalTimeout() >> true
+
+                    send(_, _, _) >> { }
+
+                    receive(_, _) >> {
                         throw exception
                     }
                 }

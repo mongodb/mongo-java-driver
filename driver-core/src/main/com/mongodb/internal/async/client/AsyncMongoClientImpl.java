@@ -22,6 +22,7 @@ import com.mongodb.Function;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ReadPreference;
+import com.mongodb.connection.ClusterDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -209,6 +210,11 @@ class AsyncMongoClientImpl implements AsyncMongoClient {
                                                               final Class<TResult> resultClass) {
         notNull("clientSession", clientSession);
         return createChangeStreamIterable(clientSession, pipeline, resultClass);
+    }
+
+    @Override
+    public ClusterDescription getClusterDescription() {
+        return cluster.getCurrentDescription();
     }
 
     private <TResult> AsyncChangeStreamIterable<TResult> createChangeStreamIterable(@Nullable final AsyncClientSession clientSession,

@@ -33,11 +33,16 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.connection.ClusterSettings;
+import com.mongodb.connection.ConnectionPoolSettings;
+import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerSettings;
+import com.mongodb.connection.ServerType;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
+import com.mongodb.event.ConnectionPoolClearedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
+import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -57,7 +62,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.getConnectionString;
@@ -71,6 +79,7 @@ import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -91,6 +100,8 @@ public abstract class AbstractUnifiedTest {
     private final boolean skipTest;
     private JsonPoweredCrudTestHelper helper;
     private final TestCommandListener commandListener;
+    private final TestConnectionPoolListener connectionPoolListener;
+    private final TestServerListener serverListener;
     private MongoClient mongoClient;
     private CollectionHelper<Document> collectionHelper;
     private Map<String, ClientSession> sessionsMap;
@@ -99,6 +110,8 @@ public abstract class AbstractUnifiedTest {
     private ConnectionString connectionString = null;
     private final String collectionName;
     private MongoDatabase database;
+    private final Map<String, ExecutorService> executorServiceMap = new HashMap<>();
+    private final Map<String, Future<Exception>> futureMap = new HashMap<>();
 
     private static final long MIN_HEARTBEAT_FREQUENCY_MS = 50L;
 
@@ -111,6 +124,8 @@ public abstract class AbstractUnifiedTest {
         this.data = data;
         this.definition = definition;
         this.commandListener = new TestCommandListener();
+        this.connectionPoolListener = new TestConnectionPoolListener();
+        this.serverListener = new TestServerListener();
         this.skipTest = skipTest;
     }
 
@@ -154,10 +169,22 @@ public abstract class AbstractUnifiedTest {
         MongoClientSettings.Builder builder = getMongoClientSettingsBuilder()
                 .applyConnectionString(connectionString)
                 .addCommandListener(commandListener)
+                .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
+                    @Override
+                    public void apply(final ClusterSettings.Builder builder) {
+                        if (clientOptions.containsKey("serverSelectionTimeoutMS")) {
+                            builder.serverSelectionTimeout(clientOptions.getNumber("serverSelectionTimeoutMS").longValue(),
+                                    MILLISECONDS);
+                        }
+                    }
+                })
                 .applyToSocketSettings(new Block<SocketSettings.Builder>() {
                     @Override
                     public void apply(final SocketSettings.Builder builder) {
-                        builder.readTimeout(5, TimeUnit.SECONDS);
+                        builder.readTimeout(5, SECONDS);
+                        if (clientOptions.containsKey("connectTimeoutMS")) {
+                            builder.connectTimeout(clientOptions.getNumber("connectTimeoutMS").intValue(), MILLISECONDS);
+                        }
                     }
                 })
                 .writeConcern(getWriteConcern(clientOptions))
@@ -165,10 +192,18 @@ public abstract class AbstractUnifiedTest {
                 .readPreference(getReadPreference(clientOptions))
                 .retryWrites(clientOptions.getBoolean("retryWrites", BsonBoolean.FALSE).getValue())
                 .retryReads(false)
+                .applyToConnectionPoolSettings(new Block<ConnectionPoolSettings.Builder>() {
+                    @Override
+                    public void apply(final ConnectionPoolSettings.Builder builder) {
+                        builder.addConnectionPoolListener(connectionPoolListener);
+                    }
+                })
                 .applyToServerSettings(new Block<ServerSettings.Builder>() {
                     @Override
                     public void apply(final ServerSettings.Builder builder) {
+//                        builder.heartbeatFrequency(5, MILLISECONDS);
                         builder.minHeartbeatFrequency(MIN_HEARTBEAT_FREQUENCY_MS, MILLISECONDS);
+                        builder.addServerListener(serverListener);
                     }
                 });
         if (clientOptions.containsKey("heartbeatFrequencyMS")) {
@@ -178,6 +213,16 @@ public abstract class AbstractUnifiedTest {
                     builder.heartbeatFrequency(clientOptions.getInt32("heartbeatFrequencyMS").intValue(), MILLISECONDS);
                 }
             });
+        }
+        if (clientOptions.containsKey("appname")) {
+            builder.applicationName(clientOptions.getString("appname").getValue());
+        }
+        if (clientOptions.containsKey("w")) {
+            if (clientOptions.isString("w")) {
+                builder.writeConcern(new WriteConcern(clientOptions.getString("w").getValue()));
+            } else if (clientOptions.isNumber("w")) {
+                builder.writeConcern(new WriteConcern(clientOptions.getNumber("w").intValue()));
+            }
         }
         mongoClient = createMongoClient(builder.build());
 
@@ -302,12 +347,19 @@ public abstract class AbstractUnifiedTest {
         }
     }
 
+    private void shutdownAllExecutors() {
+        for (ExecutorService cur : executorServiceMap.values()) {
+            cur.shutdownNow();
+        }
+    }
+
     @Test
     public void shouldPassAllOutcomes() {
         try {
             executeOperations(definition.getArray("operations"), false);
         } finally {
             closeAllSessions();
+            shutdownAllExecutors();
         }
 
         if (definition.containsKey("expectations")) {
@@ -333,7 +385,8 @@ public abstract class AbstractUnifiedTest {
     }
 
     private void executeOperations(final BsonArray operations, final boolean throwExceptions) {
-        TargetedFailPoint failPoint = null;
+        FailPoint failPoint = null;
+        ServerAddress currentPrimary = null;
 
         try {
             for (BsonValue cur : operations) {
@@ -386,9 +439,73 @@ public abstract class AbstractUnifiedTest {
                             }, transactionOptions);
                         }
                     } else if (operationName.equals("targetedFailPoint")) {
-                        assertTrue(failPoint == null);
+                        assertNull(failPoint);
                         failPoint = new TargetedFailPoint(operation);
                         failPoint.executeFailPoint();
+                    } else if (operationName.equals("configureFailPoint")) {
+                        assertNull(failPoint);
+                        failPoint = new FailPoint(operation);
+                        failPoint.executeFailPoint();
+                    } else if (operationName.equals("startThread")) {
+                        String target = operation.getDocument("arguments").getString("name").getValue();
+                        executorServiceMap.put(target, Executors.newSingleThreadExecutor());
+                    } else if (operationName.equals("runOnThread")) {
+                        String target = operation.getDocument("arguments").getString("name").getValue();
+                        ExecutorService executorService = executorServiceMap.get(target);
+                        Callable<Exception> callable = createCallable(operation.getDocument("arguments").getDocument("operation"));
+                        futureMap.put(target, executorService.submit(callable));
+                    } else if (operationName.equals("wait")) {
+                        Thread.sleep(operation.getDocument("arguments").getNumber("ms").longValue());
+                    } else if (operationName.equals("waitForThread")) {
+                        String target = operation.getDocument("arguments").getString("name").getValue();
+                        Exception exceptionFromFuture = futureMap.remove(target).get(5, SECONDS);
+                        if (exceptionFromFuture != null) {
+                            throw exceptionFromFuture;
+                        }
+                    } else if (operationName.equals("waitForEvent")) {
+                        String event = operation.getDocument("arguments").getString("event").getValue();
+                        int count = operation.getDocument("arguments").getNumber("count").intValue();
+                        switch (event) {
+                            case "PoolClearedEvent":
+                                connectionPoolListener.waitForEvent(ConnectionPoolClearedEvent.class, count, 5, SECONDS);
+                                break;
+                            case "ServerMarkedUnknownEvent":
+                                serverListener.waitForEvent(ServerType.UNKNOWN, count, 5, SECONDS);
+                                break;
+                            default:
+                                throw new UnsupportedOperationException("Unsupported event type: " + event);
+                        }
+                    } else if (operationName.equals("assertEventCount")) {
+                        String event = operation.getDocument("arguments").getString("event").getValue();
+                        int expectedCount = operation.getDocument("arguments").getNumber("count").intValue();
+                        int actualCount = -1;
+                        switch (event) {
+                            case "PoolClearedEvent":
+                                actualCount = connectionPoolListener.countEvents(ConnectionPoolClearedEvent.class);
+                                break;
+                            case "ServerMarkedUnknownEvent":
+                                actualCount = serverListener.countEvents(ServerType.UNKNOWN);
+                                break;
+                            default:
+                                throw new UnsupportedOperationException("Unsupported event type: " + event);
+                        }
+                        assertEquals(event + " counts not equal", expectedCount, actualCount);
+                    } else if (operationName.equals("recordPrimary")) {
+                        currentPrimary = getCurrentPrimary();
+                    } else if (operationName.equals("waitForPrimaryChange")) {
+                        long startTimeMillis = System.currentTimeMillis();
+                        int timeoutMillis = operation.getDocument("arguments").getNumber("timeoutMS").intValue();
+                        ServerAddress newPrimary = getCurrentPrimary();
+                        while (newPrimary == null || newPrimary.equals(currentPrimary)) {
+                            if (startTimeMillis + timeoutMillis <= System.currentTimeMillis()) {
+                                fail("Timed out waiting for primary change");
+                            }
+                            //noinspection BusyWait
+                            Thread.sleep(50);
+                            newPrimary = getCurrentPrimary();
+                        }
+                    } else if (operationName.equals("runAdminCommand")) {
+                         collectionHelper.runAdminCommand(operation.getDocument("arguments").getDocument("command"));
                     } else if (operationName.equals("assertSessionPinned")) {
                         final BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
                         assertNotNull(sessionsMap.get(arguments.getString("session").getValue()).getPinnedServerAddress());
@@ -465,6 +582,8 @@ public abstract class AbstractUnifiedTest {
                     if (!assertExceptionState(e, expectedResult, operationName) || throwExceptions) {
                         throw e;
                     }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
                 }
             }
         } finally {
@@ -472,6 +591,31 @@ public abstract class AbstractUnifiedTest {
                 failPoint.disableFailPoint();
             }
         }
+    }
+
+    private @Nullable ServerAddress getCurrentPrimary() {
+        for (ServerDescription serverDescription: mongoClient.getClusterDescription().getServerDescriptions()) {
+            if (serverDescription.getType() == ServerType.REPLICA_SET_PRIMARY) {
+                return serverDescription.getAddress();
+            }
+        }
+        return null;
+    }
+
+    private Callable<Exception> createCallable(final BsonDocument operation) {
+        return () -> {
+            try {
+                executeOperations(new BsonArray(singletonList(operation)), true);
+                return null;
+            } catch (Exception e) {
+                if (operation.getBoolean("error", BsonBoolean.FALSE).getValue()) {
+                    return null;
+                }
+                return e;
+            } catch (Error e) {
+                return new RuntimeException("Wrapping unexpected Error", e);
+            }
+        };
     }
 
     private void assertCollectionExists(final BsonDocument operation, final boolean shouldExist) {
@@ -625,12 +769,34 @@ public abstract class AbstractUnifiedTest {
         return clientSession;
     }
 
-    private class TargetedFailPoint {
+    private class FailPoint {
         private final BsonDocument failPointDocument;
+
+        protected FailPoint(final BsonDocument operation) {
+            this.failPointDocument = operation.getDocument("arguments").getDocument("failPoint");
+        }
+
+        public void executeFailPoint() {
+            executeCommand(failPointDocument);
+        }
+
+        public void disableFailPoint() {
+            executeCommand(new BsonDocument("configureFailPoint",
+                    failPointDocument.getString("configureFailPoint"))
+                    .append("mode", new BsonString("off")));
+        }
+
+        protected void executeCommand(final BsonDocument doc) {
+            collectionHelper.runAdminCommand(doc);
+        }
+    }
+
+    private class TargetedFailPoint extends FailPoint {
         private final MongoDatabase adminDB;
-        private MongoClient mongoClient;
+        private final MongoClient mongoClient;
 
         TargetedFailPoint(final BsonDocument operation) {
+            super(operation);
             final BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
             final ClientSession clientSession = sessionsMap.get(arguments.getString("session").getValue());
 
@@ -646,29 +812,23 @@ public abstract class AbstractUnifiedTest {
 
                 adminDB = mongoClient.getDatabase("admin");
             } else {
+                mongoClient = null;
                 adminDB = null;
             }
-            failPointDocument = arguments.getDocument("failPoint");
-        }
-
-        public void executeFailPoint() {
-            executeCommand(failPointDocument);
         }
 
         public void disableFailPoint() {
-            executeCommand(new BsonDocument("configureFailPoint",
-                    failPointDocument.getString("configureFailPoint"))
-                    .append("mode", new BsonString("off")));
+            super.disableFailPoint();
             if (mongoClient != null) {
                 mongoClient.close();
             }
         }
 
-        private void executeCommand(final BsonDocument doc) {
+        protected void executeCommand(final BsonDocument doc) {
             if (adminDB != null) {
                 adminDB.runCommand(doc);
             } else {
-                collectionHelper.runAdminCommand(doc);
+                super.executeCommand(doc);
             }
         }
     }

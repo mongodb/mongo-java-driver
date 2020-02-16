@@ -16,11 +16,8 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.annotations.NotThreadSafe;
-
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 
-@NotThreadSafe
 class ExponentiallyWeightedMovingAverage {
     private final double alpha;
     private long average = -1;
@@ -30,11 +27,11 @@ class ExponentiallyWeightedMovingAverage {
         this.alpha = alpha;
     }
 
-    void reset() {
+    synchronized void reset() {
         average = -1;
     }
 
-    long addSample(final long sample) {
+    synchronized long addSample(final long sample) {
         if (average == -1) {
             average = sample;
         } else {
@@ -44,7 +41,7 @@ class ExponentiallyWeightedMovingAverage {
         return average;
     }
 
-    long getAverage() {
+    synchronized long getAverage() {
         return average == -1 ? 0 : average;
     }
 }

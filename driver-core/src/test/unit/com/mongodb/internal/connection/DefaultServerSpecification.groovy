@@ -178,7 +178,7 @@ class DefaultServerSpecification extends Specification {
         def e = thrown(MongoException)
         e.is(exceptionToThrow)
         1 * connectionPool.invalidate()
-        1 * serverMonitor.connect()
+        1 * serverMonitor.cancelCurrentCheck()
 
         where:
         exceptionToThrow << [
@@ -240,7 +240,7 @@ class DefaultServerSpecification extends Specification {
         !receivedConnection
         receivedThrowable.is(exceptionToThrow)
         1 * connectionPool.invalidate()
-        1 * serverMonitor.connect()
+        1 * serverMonitor.cancelCurrentCheck()
 
 
         where:
@@ -397,7 +397,7 @@ class DefaultServerSpecification extends Specification {
         then:
         thrown(MongoSocketException)
         1 * connectionPool.invalidate()
-        1 * serverMonitor.connect()
+        1 * serverMonitor.cancelCurrentCheck()
 
         when:
         def futureResultCallback = new FutureResultCallback<WriteConcernResult>()
@@ -408,7 +408,7 @@ class DefaultServerSpecification extends Specification {
         then:
         thrown(MongoSocketException)
         1 * connectionPool.invalidate()
-        1 * serverMonitor.connect()
+        1 * serverMonitor.cancelCurrentCheck()
     }
 
     def 'should not invalidate on MongoSocketReadTimeoutException'() {

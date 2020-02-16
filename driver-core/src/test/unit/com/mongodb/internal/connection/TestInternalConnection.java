@@ -176,6 +176,21 @@ class TestInternalConnection implements InternalConnection {
         }
     }
 
+    @Override
+    public <T> void send(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <T> T receive(final Decoder<T> decoder, final SessionContext sessionContext) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean hasMoreToCome() {
+        throw new UnsupportedOperationException();
+    }
+
     private <T extends BsonDocument> T getResponseDocument(final ResponseBuffers responseBuffers,
                                                            final CommandMessage commandMessage, final Decoder<T> decoder) {
         ReplyMessage<T> replyMessage = new ReplyMessage<T>(responseBuffers, decoder, commandMessage.getId());

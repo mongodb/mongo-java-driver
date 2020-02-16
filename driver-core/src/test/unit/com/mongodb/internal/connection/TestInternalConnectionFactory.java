@@ -101,6 +101,20 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
         }
 
         @Override
+        public <T> void send(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
+        }
+
+        @Override
+        public <T> T receive(final Decoder<T> decoder, final SessionContext sessionContext) {
+            return null;
+        }
+
+        @Override
+        public boolean hasMoreToCome() {
+            return false;
+        }
+
+        @Override
         public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
                                             final SessionContext sessionContext, final SingleResultCallback<T> callback) {
             callback.onResult(null, null);

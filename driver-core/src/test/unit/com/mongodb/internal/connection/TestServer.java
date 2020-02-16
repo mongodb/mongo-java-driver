@@ -49,22 +49,18 @@ public class TestServer implements ClusterableServer {
     }
 
     @Override
+    public void resetToConnecting() {
+        this.description = ServerDescription.builder().state(CONNECTING).address(serverId.getAddress()).build();
+    }
+
+    @Override
     public void invalidate() {
         sendNotification(ServerDescription.builder().state(CONNECTING).address(serverId.getAddress()).build());
     }
 
     @Override
-    public void invalidate(final int connectionGeneration) {
-        invalidate();
-    }
-
-    @Override
-    public void invalidate(final Throwable reason) {
-        invalidate();
-    }
-
-    @Override
-    public void invalidate(final Throwable reason, final int connectionGeneration, final int maxWireVersion) {
+    public void invalidate(final ConnectionState connectionState, final Throwable reason, final int connectionGeneration,
+                           final int maxWireVersion) {
         invalidate();
     }
 

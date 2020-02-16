@@ -31,6 +31,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 public final class ServerHeartbeatFailedEvent {
     private final ConnectionId connectionId;
     private final long elapsedTimeNanos;
+    private final boolean awaited;
     private final Throwable throwable;
 
     /**
@@ -39,9 +40,26 @@ public final class ServerHeartbeatFailedEvent {
      * @param connectionId the non-null connectionId
      * @param elapsedTimeNanos the non-negative elapsed time in nanoseconds
      * @param throwable the non-null exception that caused the failure
+     * @deprecated Prefer {@link #ServerHeartbeatFailedEvent(ConnectionId, long, boolean, Throwable)}
      */
+    @Deprecated
     public ServerHeartbeatFailedEvent(final ConnectionId connectionId, final long elapsedTimeNanos, final Throwable throwable) {
+        this(connectionId, elapsedTimeNanos, false, throwable);
+    }
+
+    /**
+     * Construct an instance.
+     *
+     * @param connectionId the non-null connectionId
+     * @param elapsedTimeNanos the non-negative elapsed time in nanoseconds
+     * @param awaited true if the response was awaited
+     * @param throwable the non-null exception that caused the failure
+     * @since 4.1
+     */
+    public ServerHeartbeatFailedEvent(final ConnectionId connectionId, final long elapsedTimeNanos, final boolean awaited,
+                                      final Throwable throwable) {
         this.connectionId = notNull("connectionId", connectionId);
+        this.awaited = awaited;
         isTrueArgument("elapsed time is not negative", elapsedTimeNanos >= 0);
         this.elapsedTimeNanos = elapsedTimeNanos;
         this.throwable = notNull("throwable", throwable);
@@ -68,6 +86,18 @@ public final class ServerHeartbeatFailedEvent {
     }
 
     /**
+     * Gets whether the heartbeat was awaited.  If true, then {@link #getElapsedTime(TimeUnit)} reflects the sum of the round trip time
+     * to the server and the time that the server waited before sending a response.
+     *
+     * @return whether the response was awaited
+     * @since 4.1
+     * @mongodb.server.release 4.4
+     */
+    public boolean isAwaited() {
+        return awaited;
+    }
+
+    /**
      * Gets the exceptions that caused the failure
      *
      * @return the exception
@@ -81,6 +111,7 @@ public final class ServerHeartbeatFailedEvent {
         return "ServerHeartbeatFailedEvent{"
                 + "connectionId=" + connectionId
                 + ", elapsedTimeNanos=" + elapsedTimeNanos
+                + ", awaited=" + awaited
                 + ", throwable=" + throwable
                 + "} " + super.toString();
     }

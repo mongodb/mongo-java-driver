@@ -28,6 +28,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.test.CollectionHelper;
+import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.internal.connection.TestCommandListener;
@@ -135,6 +136,12 @@ public abstract class AbstractRetryableReadsTest {
                     @Override
                     public void apply(final SocketSettings.Builder builder) {
                         builder.readTimeout(5, TimeUnit.SECONDS);
+                    }
+                })
+                .applyToServerSettings(new Block<ServerSettings.Builder>() {
+                    @Override
+                    public void apply(final ServerSettings.Builder builder) {
+                        builder.heartbeatFrequency(5, TimeUnit.MILLISECONDS);
                     }
                 })
                 .writeConcern(getWriteConcern(clientOptions))

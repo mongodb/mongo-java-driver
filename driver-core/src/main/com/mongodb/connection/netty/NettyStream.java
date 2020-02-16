@@ -175,8 +175,18 @@ final class NettyStream implements Stream {
 
     @Override
     public ByteBuf read(final int numBytes) throws IOException {
+        return read(numBytes, 0);
+    }
+
+    @Override
+    public boolean supportsAdditionalTimeout() {
+        return true;
+    }
+
+    @Override
+    public ByteBuf read(final int numBytes, final int additionalTimeout) throws IOException {
         FutureAsyncCompletionHandler<ByteBuf> future = new FutureAsyncCompletionHandler<ByteBuf>();
-        readAsync(numBytes, future);
+        readAsync(numBytes, future, additionalTimeout);
         return future.get();
     }
 
@@ -201,7 +211,11 @@ final class NettyStream implements Stream {
 
     @Override
     public void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler) {
-        scheduleReadTimeout();
+        readAsync(numBytes, handler, 0);
+    }
+
+    private void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler, final int additionalTimeout) {
+        scheduleReadTimeout(additionalTimeout);
         ByteBuf buffer = null;
         Throwable exceptionResult = null;
         synchronized (this) {
@@ -431,15 +445,18 @@ final class NettyStream implements Stream {
         }
     }
 
-    private void scheduleReadTimeout() {
-        adjustTimeout(false);
+    private void scheduleReadTimeout(final int additionalTimeout) {
+        adjustTimeout(false, additionalTimeout);
     }
 
     private void disableReadTimeout() {
-        adjustTimeout(true);
+        adjustTimeout(true, 0);
     }
 
-    private void adjustTimeout(final boolean disable) {
+    private void adjustTimeout(final boolean disable, final int additionalTimeout) {
+            if (isClosed) {
+                return;
+            }
             ChannelHandler timeoutHandler = channel.pipeline().get(READ_HANDLER_NAME);
             if (timeoutHandler != null) {
                 final ReadTimeoutHandler readTimeoutHandler = (ReadTimeoutHandler) timeoutHandler;
@@ -459,12 +476,12 @@ final class NettyStream implements Stream {
                     }
                 } else {
                     if (executor.inEventLoop()) {
-                        readTimeoutHandler.scheduleTimeout(handlerContext);
+                        readTimeoutHandler.scheduleTimeout(handlerContext, additionalTimeout);
                     } else {
                         executor.submit(new Runnable() {
                             @Override
                             public void run() {
-                                readTimeoutHandler.scheduleTimeout(handlerContext);
+                                readTimeoutHandler.scheduleTimeout(handlerContext, additionalTimeout);
                             }
                         });
                     }

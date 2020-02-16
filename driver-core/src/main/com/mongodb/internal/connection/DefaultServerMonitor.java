@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.MongoSocketException;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ServerDescription;
@@ -27,14 +28,21 @@ import com.mongodb.event.ServerHeartbeatFailedEvent;
 import com.mongodb.event.ServerHeartbeatStartedEvent;
 import com.mongodb.event.ServerHeartbeatSucceededEvent;
 import com.mongodb.event.ServerMonitorListener;
+import com.mongodb.internal.session.SessionContext;
+import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
+import org.bson.BsonInt64;
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.types.ObjectId;
 
+import java.util.Objects;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
+import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.connection.ServerType.UNKNOWN;
@@ -59,6 +67,9 @@ class DefaultServerMonitor implements ServerMonitor {
     private final ServerSettings serverSettings;
     private final ServerMonitorRunnable monitor;
     private final Thread monitorThread;
+    private final RoundTripTimeRunnable roundTripTimeMonitor;
+    private final ExponentiallyWeightedMovingAverage averageRoundTripTime = new ExponentiallyWeightedMovingAverage(0.2);
+    private final Thread roundTripTimeMonitorThread;
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
     private volatile boolean isClosed;
@@ -76,12 +87,17 @@ class DefaultServerMonitor implements ServerMonitor {
         monitor = new ServerMonitorRunnable();
         monitorThread = new Thread(monitor, "cluster-" + this.serverId.getClusterId() + "-" + this.serverId.getAddress());
         monitorThread.setDaemon(true);
+        roundTripTimeMonitor = new RoundTripTimeRunnable();
+        roundTripTimeMonitorThread = new Thread(roundTripTimeMonitor,
+                "cluster-rtt-" + this.serverId.getClusterId() + "-" + this.serverId.getAddress());
+        roundTripTimeMonitorThread.setDaemon(true);
         isClosed = false;
     }
 
     @Override
     public void start() {
         monitorThread.start();
+        roundTripTimeMonitorThread.start();
     }
 
     @Override
@@ -97,67 +113,60 @@ class DefaultServerMonitor implements ServerMonitor {
     @Override
     public void close() {
         isClosed = true;
+        monitor.close();
         monitorThread.interrupt();
+        roundTripTimeMonitor.close();
+        roundTripTimeMonitorThread.interrupt();
+    }
+
+    @Override
+    public void cancelCurrentCheck() {
+        monitor.cancelCurrentCheck();
     }
 
     class ServerMonitorRunnable implements Runnable {
-        private final ExponentiallyWeightedMovingAverage averageRoundTripTime = new ExponentiallyWeightedMovingAverage(0.2);
+        private volatile InternalConnection connection = null;
+        private volatile boolean currentCheckCancelled;
+
+        void close() {
+            InternalConnection connection = this.connection;
+            if (connection != null) {
+                connection.close();
+            }
+        }
 
         @Override
-        @SuppressWarnings("unchecked")
-        public synchronized void run() {
-            InternalConnection connection = null;
-            try {
-                ServerDescription currentServerDescription = getConnectingServerDescription(null);
-                while (!isClosed) {
-                    ServerDescription previousServerDescription = currentServerDescription;
-                    try {
-                        if (connection == null) {
-                            connection = internalConnectionFactory.create(serverId);
-                            try {
-                                connection.open();
-                                currentServerDescription = connection.getInitialServerDescription();
-                            } catch (Throwable t) {
-                                connection = null;
-                                throw t;
-                            }
-                        } else {
-                            try {
-                                currentServerDescription = lookupServerDescription(connection);
-                            } catch (MongoSocketException e) {
-                                connectionPool.invalidate();
-                                connection.close();
-                                connection = null;
-                                connection = internalConnectionFactory.create(serverId);
-                                try {
-                                    connection.open();
-                                    currentServerDescription = connection.getInitialServerDescription();
-                                } catch (Throwable t) {
-                                    connection = null;
-                                    throw t;
-                                }
-                            }
-                        }
-                    } catch (Throwable t) {
-                        averageRoundTripTime.reset();
-                        currentServerDescription = getConnectingServerDescription(t);
-                    }
+        public void run() {
+            ServerDescription currentServerDescription = getConnectingServerDescription(null);
+            while (!isClosed) {
+                ServerDescription previousServerDescription = currentServerDescription;
+                currentServerDescription = lookupServerDescription(currentServerDescription);
 
-                    if (!isClosed) {
-                        try {
-                            logStateChange(previousServerDescription, currentServerDescription);
-                            serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(previousServerDescription,
-                                    currentServerDescription));
-                        } catch (Throwable t) {
-                            LOGGER.warn("Exception in monitor thread during notification of server description state change", t);
-                        }
-                        waitForNext();
-                    }
+                if (isClosed) {
+                    continue;
                 }
-            } finally {
-                if (connection != null) {
-                    connection.close();
+
+                if (currentCheckCancelled) {
+                    waitForNext();
+                    currentCheckCancelled = false;
+                    continue;
                 }
+
+                logStateChange(previousServerDescription, currentServerDescription);
+                serverStateListener.stateChanged(new ChangeEvent<>(previousServerDescription, currentServerDescription));
+
+                if (currentServerDescription.getException() != null) {
+                    connectionPool.invalidate();
+                }
+
+                if (((connection == null || shouldStreamResponses(currentServerDescription))
+                        && currentServerDescription.getTopologyVersion() != null)
+                        || (connection != null && connection.hasMoreToCome())
+                        || (currentServerDescription.getException() instanceof MongoSocketException
+                        && previousServerDescription.getType() != UNKNOWN)) {
+                    continue;
+                }
+                waitForNext();
             }
         }
 
@@ -165,28 +174,81 @@ class DefaultServerMonitor implements ServerMonitor {
             return ServerDescription.builder().type(UNKNOWN).state(CONNECTING).address(serverId.getAddress()).exception(exception).build();
         }
 
-        private ServerDescription lookupServerDescription(final InternalConnection connection) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(format("Checking status of %s", serverId.getAddress()));
-            }
-            serverMonitorListener.serverHearbeatStarted(new ServerHeartbeatStartedEvent(connection.getDescription().getConnectionId()));
-
-            long start = System.nanoTime();
+        private ServerDescription lookupServerDescription(final ServerDescription currentServerDescription) {
             try {
-                BsonDocument isMasterResult =
-                        executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), clusterClock, connection);
-                long elapsedTimeNanos = System.nanoTime() - start;
-                averageRoundTripTime.addSample(elapsedTimeNanos);
+                if (connection == null || connection.isClosed()) {
+                    currentCheckCancelled = false;
+                    connection = internalConnectionFactory.create(serverId);
+                    connection.open();
+                    averageRoundTripTime.addSample(connection.getInitialServerDescription().getRoundTripTimeNanos());
+                    return connection.getInitialServerDescription();
+                }
 
-                serverMonitorListener.serverHeartbeatSucceeded(
-                        new ServerHeartbeatSucceededEvent(connection.getDescription().getConnectionId(), isMasterResult, elapsedTimeNanos));
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug(format("Checking status of %s", serverId.getAddress()));
+                }
+                serverMonitorListener.serverHearbeatStarted(new ServerHeartbeatStartedEvent(connection.getDescription().getConnectionId()));
 
-                return createServerDescription(serverId.getAddress(), isMasterResult, averageRoundTripTime.getAverage());
-            } catch (RuntimeException e) {
-                serverMonitorListener.serverHeartbeatFailed(
-                        new ServerHeartbeatFailedEvent(connection.getDescription().getConnectionId(), System.nanoTime() - start, e));
-                throw e;
+                long start = System.nanoTime();
+                try {
+                    SessionContext sessionContext = new ClusterClockAdvancingSessionContext(NoOpSessionContext.INSTANCE, clusterClock);
+                    if (!connection.hasMoreToCome()) {
+                        BsonDocument ismaster = new BsonDocument("ismaster", new BsonInt32(1));
+                        if (shouldStreamResponses(currentServerDescription)) {
+                            ismaster.append("topologyVersion", currentServerDescription.getTopologyVersion().asDocument());
+                            ismaster.append("maxAwaitTimeMS", new BsonInt64(serverSettings.getHeartbeatFrequency(MILLISECONDS)));
+                        }
+
+                        connection.send(createCommandMessage(ismaster, connection, currentServerDescription), new BsonDocumentCodec(),
+                                sessionContext);
+                    }
+
+                    BsonDocument isMasterResult;
+                    if (shouldStreamResponses(currentServerDescription)) {
+                        isMasterResult = connection.receive(new BsonDocumentCodec(), sessionContext,
+                                Math.toIntExact(serverSettings.getHeartbeatFrequency(MILLISECONDS)));
+                    } else {
+                        isMasterResult = connection.receive(new BsonDocumentCodec(), sessionContext);
+                    }
+
+                    long elapsedTimeNanos = System.nanoTime() - start;
+                    serverMonitorListener.serverHeartbeatSucceeded(
+                            new ServerHeartbeatSucceededEvent(connection.getDescription().getConnectionId(), isMasterResult,
+                                    elapsedTimeNanos, currentServerDescription.getTopologyVersion() != null));
+
+                    return createServerDescription(serverId.getAddress(), isMasterResult, averageRoundTripTime.getAverage());
+                } catch (RuntimeException e) {
+                    serverMonitorListener.serverHeartbeatFailed(
+                            new ServerHeartbeatFailedEvent(connection.getDescription().getConnectionId(), System.nanoTime() - start,
+                                    currentServerDescription.getTopologyVersion() != null, e));
+                    throw e;
+                }
+            } catch (Throwable t) {
+                averageRoundTripTime.reset();
+                InternalConnection localConnection;
+                synchronized (this) {
+                    localConnection = connection;
+                    connection = null;
+                }
+                if (localConnection != null) {
+                    localConnection.close();
+                }
+                return getConnectingServerDescription(t);
             }
+        }
+
+        private boolean shouldStreamResponses(final ServerDescription currentServerDescription) {
+            return currentServerDescription.getTopologyVersion() != null && connection.supportsAdditionalTimeout();
+        }
+
+        private CommandMessage createCommandMessage(final BsonDocument ismaster, final InternalConnection connection,
+                                                    final ServerDescription currentServerDescription) {
+            return new CommandMessage(new MongoNamespace("admin", COMMAND_COLLECTION_NAME), ismaster,
+                    new NoOpFieldNameValidator(), primary(),
+                    MessageSettings.builder()
+                            .maxWireVersion(connection.getDescription().getMaxWireVersion())
+                            .build(),
+                    shouldStreamResponses(currentServerDescription));
         }
 
         private void logStateChange(final ServerDescription previousServerDescription,
@@ -194,7 +256,7 @@ class DefaultServerMonitor implements ServerMonitor {
             if (shouldLogStageChange(previousServerDescription, currentServerDescription)) {
                 if (currentServerDescription.getException() != null) {
                     LOGGER.info(format("Exception in monitor thread while connecting to server %s", serverId.getAddress()),
-                                currentServerDescription.getException());
+                            currentServerDescription.getException());
                 } else {
                     LOGGER.info(format("Monitor thread successfully connected to server with description %s", currentServerDescription));
                 }
@@ -227,6 +289,19 @@ class DefaultServerMonitor implements ServerMonitor {
                 lock.unlock();
             }
         }
+
+        public void cancelCurrentCheck() {
+            InternalConnection localConnection = null;
+            synchronized (this) {
+                if (connection != null && !currentCheckCancelled) {
+                    localConnection = connection;
+                    currentCheckCancelled = true;
+                }
+            }
+            if (localConnection != null) {
+                localConnection.close();
+            }
+        }
     }
 
     static boolean shouldLogStageChange(final ServerDescription previous, final ServerDescription current) {
@@ -238,7 +313,7 @@ class DefaultServerMonitor implements ServerMonitor {
             return true;
         }
         if (previous.getCanonicalAddress() != null
-                    ? !previous.getCanonicalAddress().equals(current.getCanonicalAddress()) : current.getCanonicalAddress() != null) {
+                ? !previous.getCanonicalAddress().equals(current.getCanonicalAddress()) : current.getCanonicalAddress() != null) {
             return true;
         }
         if (!previous.getHosts().equals(current.getHosts())) {
@@ -284,16 +359,76 @@ class DefaultServerMonitor implements ServerMonitor {
         Throwable currentException = current.getException();
         Class<?> thisExceptionClass = previousException != null ? previousException.getClass() : null;
         Class<?> thatExceptionClass = currentException != null ? currentException.getClass() : null;
-        if (thisExceptionClass != null ? !thisExceptionClass.equals(thatExceptionClass) : thatExceptionClass != null) {
+        if (!Objects.equals(thisExceptionClass, thatExceptionClass)) {
             return true;
         }
 
         String thisExceptionMessage = previousException != null ? previousException.getMessage() : null;
         String thatExceptionMessage = currentException != null ? currentException.getMessage() : null;
-        if (thisExceptionMessage != null ? !thisExceptionMessage.equals(thatExceptionMessage) : thatExceptionMessage != null) {
+        if (!Objects.equals(thisExceptionMessage, thatExceptionMessage)) {
             return true;
         }
 
         return false;
+    }
+
+
+    private class RoundTripTimeRunnable implements Runnable {
+        private volatile InternalConnection connection = null;
+
+        void close() {
+            InternalConnection connection = this.connection;
+            if (connection != null) {
+                connection.close();
+            }
+        }
+
+        @Override
+        public void run() {
+            try {
+                while (!isClosed) {
+                    try {
+                        if (connection == null) {
+                            initialize();
+                        } else {
+                            pingServer(connection);
+                        }
+                    } catch (Throwable t) {
+                        if (connection != null) {
+                            connection.close();
+                            connection = null;
+                        }
+                        averageRoundTripTime.reset();
+                    }
+                    waitForNext();
+                }
+            } finally {
+                if (connection != null) {
+                    connection.close();
+                }
+            }
+        }
+
+        private void initialize() {
+            connection = null;
+            connection = internalConnectionFactory.create(serverId);
+            connection.open();
+            averageRoundTripTime.addSample(connection.getInitialServerDescription().getRoundTripTimeNanos());
+        }
+
+        private void pingServer(final InternalConnection connection) {
+            long start = System.nanoTime();
+            executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), clusterClock, connection);
+            long elapsedTimeNanos = System.nanoTime() - start;
+            averageRoundTripTime.addSample(elapsedTimeNanos);
+        }
+    }
+
+    private void waitForNext() {
+        try {
+            Thread.sleep(serverSettings.getHeartbeatFrequency(MILLISECONDS));
+        } catch (InterruptedException e) {
+            // fall through
+        }
     }
 }
