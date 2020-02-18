@@ -126,6 +126,7 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
      *
      * @param oplogReplay if oplog replay is enabled
      * @return this
+     * @deprecated oplogReplay has been deprecated in MongoDB 4.4.
      */
     FindPublisher<TResult> oplogReplay(boolean oplogReplay);
 
