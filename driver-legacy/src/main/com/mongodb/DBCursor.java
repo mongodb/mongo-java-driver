@@ -362,6 +362,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @param oplogReplay if oplog replay is enabled
      * @return this
      * @since 3.9
+     * @deprecated oplogReplay has been deprecated in MongoDB 4.4.
      */
     public DBCursor oplogReplay(final boolean oplogReplay) {
         findOptions.oplogReplay(oplogReplay);

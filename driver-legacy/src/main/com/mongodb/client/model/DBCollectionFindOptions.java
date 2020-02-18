@@ -296,6 +296,7 @@ public final class DBCollectionFindOptions {
      * Users should not set this under normal circumstances.
      *
      * @return if oplog replay is enabled
+     * @deprecated oplogReplay has been deprecated in MongoDB 4.4.
      */
     public boolean isOplogReplay() {
         return oplogReplay;
@@ -306,6 +307,7 @@ public final class DBCollectionFindOptions {
      *
      * @param oplogReplay if oplog replay is enabled
      * @return this
+     * @deprecated oplogReplay has been deprecated in MongoDB 4.4.
      */
     public DBCollectionFindOptions oplogReplay(final boolean oplogReplay) {
         this.oplogReplay = oplogReplay;
