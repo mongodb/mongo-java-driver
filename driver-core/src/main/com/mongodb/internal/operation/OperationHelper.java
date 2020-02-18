@@ -48,12 +48,17 @@ import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.BsonInt64;
 import org.bson.codecs.Decoder;
+import org.bson.conversions.Bson;
 
 import java.util.Collections;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotFour;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotTwo;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionThreeDotFour;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionThreeDotSix;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -91,7 +96,7 @@ final class OperationHelper {
     }
 
     static void validateReadConcern(final ConnectionDescription description, final ReadConcern readConcern) {
-        if (!ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo(description) && !readConcern.isServerDefault()) {
+        if (!serverIsAtLeastVersionThreeDotTwo(description) && !readConcern.isServerDefault()) {
             throw new IllegalArgumentException(format("ReadConcern not supported by wire version: %s",
                     description.getMaxWireVersion()));
         }
@@ -100,7 +105,7 @@ final class OperationHelper {
     static void validateReadConcern(final AsyncConnection connection, final ReadConcern readConcern,
                                     final AsyncCallableWithConnection callable) {
         Throwable throwable = null;
-        if (!ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo(connection.getDescription()) && !readConcern.isServerDefault()) {
+        if (!serverIsAtLeastVersionThreeDotTwo(connection.getDescription()) && !readConcern.isServerDefault()) {
             throwable = new IllegalArgumentException(format("ReadConcern not supported by wire version: %s",
                     connection.getDescription().getMaxWireVersion()));
         }
@@ -122,7 +127,7 @@ final class OperationHelper {
     }
 
     static void validateCollation(final ConnectionDescription connectionDescription, final Collation collation) {
-        if (collation != null && !ServerVersionHelper.serverIsAtLeastVersionThreeDotFour(connectionDescription)) {
+        if (collation != null && !serverIsAtLeastVersionThreeDotFour(connectionDescription)) {
             throw new IllegalArgumentException(format("Collation not supported by wire version: %s",
                     connectionDescription.getMaxWireVersion()));
         }
@@ -130,7 +135,7 @@ final class OperationHelper {
 
     static void validateCollationAndWriteConcern(final ConnectionDescription connectionDescription, final Collation collation,
                                                  final WriteConcern writeConcern) {
-        if (collation != null && !ServerVersionHelper.serverIsAtLeastVersionThreeDotFour(connectionDescription)) {
+        if (collation != null && !serverIsAtLeastVersionThreeDotFour(connectionDescription)) {
             throw new IllegalArgumentException(format("Collation not supported by wire version: %s",
                     connectionDescription.getMaxWireVersion()));
         } else if (collation != null && !writeConcern.isAcknowledged()) {
@@ -138,10 +143,30 @@ final class OperationHelper {
         }
     }
 
+    private static void validateArrayFilters(final ConnectionDescription connectionDescription, final WriteConcern writeConcern) {
+        if (serverIsLessThanVersionThreeDotSix(connectionDescription)) {
+            throw new IllegalArgumentException(format("Array filters not supported by wire version: %s",
+                    connectionDescription.getMaxWireVersion()));
+        } else if (!writeConcern.isAcknowledged()) {
+            throw new MongoClientException("Specifying array filters with an unacknowledged WriteConcern is not supported");
+        }
+    }
+
+    private static void validateHint(final ConnectionDescription connectionDescription, final WriteConcern writeConcern) {
+        if (serverIsLessThanVersionThreeDotFour(connectionDescription)) {
+            throw new IllegalArgumentException(format("Hint not supported by wire version: %s",
+                    connectionDescription.getMaxWireVersion()));
+        } else if (!writeConcern.isAcknowledged() && serverIsLessThanVersionFourDotTwo(connectionDescription)) {
+            throw new MongoClientException(
+                    format("Specifying hints with an unacknowledged WriteConcern is not supported by wire version: %s",
+                            connectionDescription.getMaxWireVersion()));
+        }
+    }
+
     static void validateCollation(final AsyncConnection connection, final Collation collation,
                                   final AsyncCallableWithConnection callable) {
         Throwable throwable = null;
-        if (!ServerVersionHelper.serverIsAtLeastVersionThreeDotFour(connection.getDescription()) && collation != null) {
+        if (!serverIsAtLeastVersionThreeDotFour(connection.getDescription()) && collation != null) {
             throwable = new IllegalArgumentException(format("Collation not supported by wire version: %s",
                     connection.getDescription().getMaxWireVersion()));
         }
@@ -174,10 +199,42 @@ final class OperationHelper {
         validateCollationAndWriteConcern(connectionDescription, collation, writeConcern);
     }
 
+    static void validateUpdateRequestArrayFilters(final ConnectionDescription connectionDescription,
+                                                  final List<? extends WriteRequest> requests, final WriteConcern writeConcern) {
+        for (WriteRequest request : requests) {
+            List<BsonDocument> arrayFilters = null;
+            if (request instanceof UpdateRequest) {
+                arrayFilters = ((UpdateRequest) request).getArrayFilters();
+            }
+            if (arrayFilters != null) {
+                validateArrayFilters(connectionDescription, writeConcern);
+                break;
+            }
+        }
+    }
+
+    static void validateWriteRequestHints(final ConnectionDescription connectionDescription,
+                                          final List<? extends WriteRequest> requests, final WriteConcern writeConcern) {
+        for (WriteRequest request : requests) {
+            Bson hint = null;
+            String hintString = null;
+            if (request instanceof UpdateRequest) {
+                hint = ((UpdateRequest) request).getHint();
+                hintString = ((UpdateRequest) request).getHintString();
+            }
+            if (hint != null || hintString != null) {
+                validateHint(connectionDescription, writeConcern);
+                break;
+            }
+        }
+    }
+
     static void validateWriteRequests(final ConnectionDescription connectionDescription, final Boolean bypassDocumentValidation,
                                       final List<? extends WriteRequest> requests, final WriteConcern writeConcern) {
         checkBypassDocumentValidationIsSupported(connectionDescription, bypassDocumentValidation, writeConcern);
         validateWriteRequestCollations(connectionDescription, requests, writeConcern);
+        validateUpdateRequestArrayFilters(connectionDescription, requests, writeConcern);
+        validateWriteRequestHints(connectionDescription, requests, writeConcern);
     }
 
     static void validateWriteRequests(final AsyncConnection connection, final Boolean bypassDocumentValidation,
@@ -259,7 +316,7 @@ final class OperationHelper {
 
     static void checkBypassDocumentValidationIsSupported(final ConnectionDescription connectionDescription,
                                                          final Boolean bypassDocumentValidation, final WriteConcern writeConcern) {
-        if (bypassDocumentValidation != null && ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo(connectionDescription)
+        if (bypassDocumentValidation != null && serverIsAtLeastVersionThreeDotTwo(connectionDescription)
                 && !writeConcern.isAcknowledged()) {
             throw new MongoClientException("Specifying bypassDocumentValidation with an unacknowledged WriteConcern is not supported");
         }

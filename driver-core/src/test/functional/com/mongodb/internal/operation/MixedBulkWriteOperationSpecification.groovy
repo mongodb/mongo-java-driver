@@ -1207,6 +1207,82 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         async << [true, false]
     }
 
+    @IgnoreIf({ serverVersionAtLeast(3, 6) })
+    def 'should throw IllegalArgumentException if array filters is set and server version is less than 3.6'() {
+        given:
+        def requests = [
+                new UpdateRequest(new BsonDocument(), BsonDocument.parse('{ $set: {"y.$[i].b": 2}}'), UPDATE)
+                        .arrayFilters([BsonDocument.parse('{"i.b": 3}')])
+        ]
+        def operation = new MixedBulkWriteOperation(namespace, requests, true, ACKNOWLEDGED, false)
+
+        when:
+        execute(operation, async)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        where:
+        async << [true, false]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    def 'should throw if array filters is set and write concern is UNACKNOWLEDGED'() {
+        given:
+        def requests = [
+                new UpdateRequest(new BsonDocument(), BsonDocument.parse('{ $set: {"y.$[i].b": 2}}'), UPDATE)
+                        .arrayFilters([BsonDocument.parse('{"i.b": 3}')])
+        ]
+        def operation = new MixedBulkWriteOperation(namespace, requests, true, UNACKNOWLEDGED, false)
+
+        when:
+        execute(operation, async)
+
+        then:
+        thrown(MongoClientException)
+
+        where:
+        async << [true, false]
+    }
+
+    @IgnoreIf({ serverVersionAtLeast(3, 4) })
+    def 'should throw IllegalArgumentException if hint is set and server version is less than 3.4'() {
+        given:
+        def requests = [
+                new UpdateRequest(new BsonDocument(), BsonDocument.parse('{ $set: {"y.$[i].b": 2}}'), UPDATE)
+                        .hint(BsonDocument.parse('{ _id: 1 }'))
+        ]
+        def operation = new MixedBulkWriteOperation(namespace, requests, true, ACKNOWLEDGED, false)
+
+        when:
+        execute(operation, async)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        where:
+        async << [true, false]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) || serverVersionAtLeast(4, 2) })
+    def 'should throw if hint is set and write concern is UNACKNOWLEDGED'() {
+        given:
+        def requests = [
+                new UpdateRequest(new BsonDocument(), BsonDocument.parse('{ $set: {"y.$[i].b": 2}}'), UPDATE)
+                        .hintString('_id')
+        ]
+        def operation = new MixedBulkWriteOperation(namespace, requests, true, UNACKNOWLEDGED, false)
+
+        when:
+        execute(operation, async)
+
+        then:
+        thrown(MongoClientException)
+
+        where:
+        async << [true, false]
+    }
+
     private static List<WriteRequest> getTestWrites() {
         [new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                            new BsonDocument('$set', new BsonDocument('x', new BsonInt32(2))),
