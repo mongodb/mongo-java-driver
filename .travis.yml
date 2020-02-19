@@ -1,8 +1,6 @@
 dist: trusty
 sudo: true
 language: java
-jdk:
-- oraclejdk9
 
 notifications:
   email:
@@ -26,15 +24,24 @@ addons:
     packages:
     - libsnmp-dev
 
-install:
-  - wget http://downloads.mongodb.com/linux/${MONGODB_FILE_NAME}-${MONGODB}.tgz
-  - tar xzf ${MONGODB_FILE_NAME}-${MONGODB}.tgz
-  - ${PWD}/${MONGODB_FILE_NAME}-${MONGODB}/bin/mongod --version
-
-before_script:
-  - mkdir ${PWD}/${MONGODB_FILE_NAME}-${MONGODB}/data
-  - ${PWD}/${MONGODB_FILE_NAME}-${MONGODB}/bin/mongod --dbpath ${PWD}/${MONGODB_FILE_NAME}-${MONGODB}/data --logpath ${PWD}/${MONGODB_FILE_NAME}-${MONGODB}/mongodb.log --setParameter enableTestCommands=1 --fork --smallfiles --nojournal
-
+matrix:
+  include:
+      - arch: amd64
+        jdk: oraclejdk9
+        install:  
+          - wget http://downloads.mongodb.com/linux/${MONGODB_FILE_NAME}-${MONGODB}.tgz
+          - tar xzf ${MONGODB_FILE_NAME}-${MONGODB}.tgz
+          - ${PWD}/${MONGODB_FILE_NAME}-${MONGODB}/bin/mongod --version
+        before_script:
+          - mkdir ${PWD}/${MONGODB_FILE_NAME}-${MONGODB}/data
+          - ${PWD}/${MONGODB_FILE_NAME}-${MONGODB}/bin/mongod --dbpath ${PWD}/${MONGODB_FILE_NAME}-${MONGODB}/data --logpath ${PWD}/${MONGODB_FILE_NAME}-${MONGODB}/mongodb.log --setParameter enableTestCommands=1 --fork --smallfiles --nojournal
+        
+      - arch: s390x
+        jdk: openjdk11
+        before_script:
+          - mkdir data
+          - mongod --dbpath data --logpath ${PWD}/mongodb.log --setParameter enableTestCommands=1 --fork --nojournal
+    
 script:
   - ./gradlew -q assemble
   - ./gradlew check -Ptravistest=true
