@@ -743,22 +743,30 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
 
     @Override
     public String createIndex(final Bson keys) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<String> subscriber = new SingleResultSubscriber<>();
+        wrapped.createIndex(keys).subscribe(subscriber);
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public String createIndex(final Bson keys, final IndexOptions indexOptions) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<String> subscriber = new SingleResultSubscriber<>();
+        wrapped.createIndex(keys, indexOptions).subscribe(subscriber);
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public String createIndex(final ClientSession clientSession, final Bson keys) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<String> subscriber = new SingleResultSubscriber<>();
+        wrapped.createIndex(unwrap(clientSession), keys).subscribe(subscriber);
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public String createIndex(final ClientSession clientSession, final Bson keys, final IndexOptions indexOptions) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<String> subscriber = new SingleResultSubscriber<>();
+        wrapped.createIndex(unwrap(clientSession), keys, indexOptions).subscribe(subscriber);
+        return requireNonNull(subscriber.get());
     }
 
     @Override
@@ -804,42 +812,58 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
 
     @Override
     public void dropIndex(final String indexName) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
+        wrapped.dropIndex(indexName).subscribe(subscriber);
+        subscriber.get();
     }
 
     @Override
     public void dropIndex(final String indexName, final DropIndexOptions dropIndexOptions) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
+        wrapped.dropIndex(indexName, dropIndexOptions).subscribe(subscriber);
+        subscriber.get();
     }
 
     @Override
     public void dropIndex(final Bson keys) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
+        wrapped.dropIndex(keys).subscribe(subscriber);
+        subscriber.get();
     }
 
     @Override
     public void dropIndex(final Bson keys, final DropIndexOptions dropIndexOptions) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
+        wrapped.dropIndex(keys, dropIndexOptions).subscribe(subscriber);
+        subscriber.get();
     }
 
     @Override
     public void dropIndex(final ClientSession clientSession, final String indexName) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
+        wrapped.dropIndex(unwrap(clientSession), indexName).subscribe(subscriber);
+        subscriber.get();
     }
 
     @Override
     public void dropIndex(final ClientSession clientSession, final Bson keys) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
+        wrapped.dropIndex(unwrap(clientSession), keys).subscribe(subscriber);
+        subscriber.get();
     }
 
     @Override
     public void dropIndex(final ClientSession clientSession, final String indexName, final DropIndexOptions dropIndexOptions) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
+        wrapped.dropIndex(unwrap(clientSession), indexName, dropIndexOptions).subscribe(subscriber);
+        subscriber.get();
     }
 
     @Override
     public void dropIndex(final ClientSession clientSession, final Bson keys, final DropIndexOptions dropIndexOptions) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
+        wrapped.dropIndex(unwrap(clientSession), keys, dropIndexOptions).subscribe(subscriber);
+        subscriber.get();
     }
 
     @Override

@@ -227,10 +227,23 @@ public final class CommandMonitoringTestHelper {
         if (command.containsKey("maxTimeMS")) {
             command.put("maxTimeMS", new BsonInt32(command.getNumber("maxTimeMS").intValue()));
         }
+        // Tests do not expect the "ns" field in a result after running createIndex.
+        if (command.containsKey("createIndexes") && command.containsKey("indexes")) {
+            massageCommandIndexes(command.getArray("indexes"));
+        }
         massageActualCommand(command, expectedCommandStartedEvent.getCommand());
 
         return new CommandStartedEvent(event.getRequestId(), event.getConnectionDescription(), event.getDatabaseName(),
                 event.getCommandName(), command);
+    }
+
+    private static void massageCommandIndexes(final BsonArray indexes) {
+        for (BsonValue indexDocument : indexes) {
+            BsonDocument index = indexDocument.asDocument();
+            if (index.containsKey("ns")) {
+                index.remove("ns");
+            }
+        }
     }
 
     private static void massageActualCommand(final BsonDocument command, final BsonDocument expectedCommand) {
