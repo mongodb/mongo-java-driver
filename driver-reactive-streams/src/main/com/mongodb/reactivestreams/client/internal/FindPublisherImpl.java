@@ -92,6 +92,7 @@ final class FindPublisherImpl<TResult> implements FindPublisher<TResult> {
     }
 
     @Override
+    @Deprecated
     public FindPublisher<TResult> oplogReplay(final boolean oplogReplay) {
         wrapped.oplogReplay(oplogReplay);
         return this;
