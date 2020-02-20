@@ -192,12 +192,7 @@ public final class Updates {
      * @return the update
      * @mongodb.driver.manual reference/operator/update/currentDate/ $currentDate
      * @mongodb.driver.manual reference/bson-types/#date Date
-     * @mongodb.driver.manual reference/aggregation-variables/#variable.NOW
-     * @mongodb.driver.manual reference/aggregation-variables/#variable.CLUSTER_TIME
-     * @deprecated The $currentDate update operator has been deprecated in MongoDB 4.4. As an alternative perform updates with an
-     * aggregation pipeline and either the '$$NOW' or '$$CLUSTER_TIME' variables.
      */
-    @Deprecated
     public static Bson currentDate(final String fieldName) {
         return new SimpleUpdate<Boolean>(fieldName, true, "$currentDate");
     }
@@ -209,12 +204,7 @@ public final class Updates {
      * @return the update
      * @mongodb.driver.manual reference/operator/update/currentDate/ $currentDate
      * @mongodb.driver.manual reference/bson-types/#document-bson-type-timestamp Timestamp
-     * @mongodb.driver.manual reference/aggregation-variables/#variable.NOW
-     * @mongodb.driver.manual reference/aggregation-variables/#variable.CLUSTER_TIME
-     * @deprecated The $currentDate update operator has been deprecated in MongoDB 4.4. As an alternative perform updates with an
-     * aggregation pipeline and either the '$$NOW' or '$$CLUSTER_TIME' variables.
      */
-    @Deprecated
     public static Bson currentTimestamp(final String fieldName) {
         return new SimpleUpdate<BsonDocument>(fieldName, new BsonDocument("$type", new BsonString("timestamp")), "$currentDate");
     }
