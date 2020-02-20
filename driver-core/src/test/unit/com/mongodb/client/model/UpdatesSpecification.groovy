@@ -25,6 +25,8 @@ import static com.mongodb.client.model.Updates.bitwiseAnd
 import static com.mongodb.client.model.Updates.bitwiseOr
 import static com.mongodb.client.model.Updates.bitwiseXor
 import static com.mongodb.client.model.Updates.combine
+import static com.mongodb.client.model.Updates.currentDate
+import static com.mongodb.client.model.Updates.currentTimestamp
 import static com.mongodb.client.model.Updates.inc
 import static com.mongodb.client.model.Updates.max
 import static com.mongodb.client.model.Updates.min
@@ -42,7 +44,6 @@ import static com.mongodb.client.model.Updates.setOnInsert
 import static com.mongodb.client.model.Updates.unset
 import static org.bson.BsonDocument.parse
 
-@SuppressWarnings('deprecation')
 class UpdatesSpecification extends Specification {
 
     def 'should render $set'() {
@@ -100,8 +101,8 @@ class UpdatesSpecification extends Specification {
 
     def 'should render $currentDate'() {
         expect:
-        toBson(Updates.currentDate('x')) == parse('{$currentDate : { x : true} }')
-        toBson(Updates.currentTimestamp('x')) == parse('{$currentDate : { x : {$type : "timestamp"} } }')
+        toBson(currentDate('x')) == parse('{$currentDate : { x : true} }')
+        toBson(currentTimestamp('x')) == parse('{$currentDate : { x : {$type : "timestamp"} } }')
     }
 
     def 'should render $addToSet'() {
@@ -233,8 +234,8 @@ class UpdatesSpecification extends Specification {
         mul('x', 3.4d).equals(mul('x', 3.4d))
         min('x', 42).equals(min('x', 42))
         max('x', 42).equals(max('x', 42))
-        Updates.currentDate('x').equals(Updates.currentDate('x'))
-        Updates.currentTimestamp('x').equals(Updates.currentTimestamp('x'))
+        currentDate('x').equals(currentDate('x'))
+        currentTimestamp('x').equals(currentTimestamp('x'))
         addToSet('x', 1).equals(addToSet('x', 1))
         addEachToSet('x', [1, 2, 3]).equals(addEachToSet('x', [1, 2, 3]))
         push('x', 1).equals(push('x', 1))
@@ -257,8 +258,8 @@ class UpdatesSpecification extends Specification {
         mul('x', 3.4d).hashCode() == mul('x', 3.4d).hashCode()
         min('x', 42).hashCode() == min('x', 42).hashCode()
         max('x', 42).hashCode() == max('x', 42).hashCode()
-        Updates.currentDate('x').hashCode() == Updates.currentDate('x').hashCode()
-        Updates.currentTimestamp('x').hashCode() == Updates.currentTimestamp('x').hashCode()
+        currentDate('x').hashCode() == currentDate('x').hashCode()
+        currentTimestamp('x').hashCode() == currentTimestamp('x').hashCode()
         addToSet('x', 1).hashCode() == addToSet('x', 1).hashCode()
         addEachToSet('x', [1, 2, 3]).hashCode() == addEachToSet('x', [1, 2, 3]).hashCode()
         push('x', 1).hashCode() == push('x', 1).hashCode()
