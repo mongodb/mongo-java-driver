@@ -118,6 +118,7 @@ class AsyncFindIterableImpl<TDocument, TResult> extends AsyncMongoIterableImpl<T
     }
 
     @Override
+    @Deprecated
     public AsyncFindIterable<TResult> oplogReplay(final boolean oplogReplay) {
         findOptions.oplogReplay(oplogReplay);
         return this;

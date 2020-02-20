@@ -121,6 +121,7 @@ public interface FindIterable<TResult> extends MongoIterable<TResult> {
      * @return this
      * @deprecated oplogReplay has been deprecated in MongoDB 4.4.
      */
+    @Deprecated
     FindIterable<TResult> oplogReplay(boolean oplogReplay);
 
     /**
