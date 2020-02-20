@@ -19,6 +19,7 @@ package com.mongodb.client.internal
 
 import com.mongodb.CursorType
 import com.mongodb.Function
+import com.mongodb.MongoException
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.client.ClientSession
@@ -303,5 +304,29 @@ class FindIterableSpecification extends Specification {
 
         then:
         mongoIterable.getBatchSize() == batchSize
+    }
+
+    // Really testing MongoIterableImpl#forEach, but doing it once here since that class is abstract
+    def 'forEach should close cursor when there is an exception during iteration'() {
+        given:
+        def cursor = Mock(BatchCursor) {
+            hasNext() >> {
+                throw new MongoException('');
+            }
+        }
+        def executor = new TestOperationExecutor([cursor])
+        def mongoIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern,
+                executor, new Document())
+
+        when:
+        mongoIterable.forEach(new Consumer<Document>() {
+            @Override
+            void accept(Document document) {
+            }
+        })
+
+        then:
+        thrown(MongoException)
+        1 * cursor.close()
     }
 }
