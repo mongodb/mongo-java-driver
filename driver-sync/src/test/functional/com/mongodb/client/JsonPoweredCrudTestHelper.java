@@ -369,6 +369,27 @@ public class JsonPoweredCrudTestHelper {
         return toResult(iterable);
     }
 
+    BsonDocument getCreateIndexResult(final BsonDocument collectionOptions, final BsonDocument arguments,
+                                      @Nullable final ClientSession clientSession) {
+        String index;
+        if (clientSession == null) {
+            index = getCollection(collectionOptions).createIndex(arguments.getDocument("keys", new BsonDocument()));
+        } else {
+            index = getCollection(collectionOptions).createIndex(clientSession, arguments.getDocument("keys", new BsonDocument()));
+        }
+        return toResult("result", new BsonString(index));
+    }
+
+    BsonDocument getDropIndexResult(final BsonDocument collectionOptions, final BsonDocument arguments,
+                                    @Nullable final ClientSession clientSession) {
+        if (clientSession == null) {
+            getCollection(collectionOptions).dropIndex(arguments.getString("name").getValue());
+        } else {
+            getCollection(collectionOptions).dropIndex(clientSession, arguments.getString("name").getValue());
+        }
+        return new BsonDocument("ok", new BsonInt32(1));
+    }
+
     BsonDocument getListIndexesResult(final BsonDocument collectionOptions, final BsonDocument arguments,
                                       @Nullable final ClientSession clientSession) {
         ListIndexesIterable<BsonDocument> iterable;

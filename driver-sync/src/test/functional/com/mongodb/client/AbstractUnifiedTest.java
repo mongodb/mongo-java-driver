@@ -62,6 +62,8 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.ClusterFixture.getConnectionString;
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
 import static com.mongodb.ClusterFixture.isSharded;
+import static com.mongodb.ClusterFixture.isStandalone;
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
@@ -94,15 +96,22 @@ public abstract class AbstractUnifiedTest {
     private Map<String, BsonDocument> lsidMap;
     private boolean useMultipleMongoses = false;
     private ConnectionString connectionString = null;
-    private final String collectionName = "test";
+    private final String collectionName;
+    private MongoDatabase database;
 
     private static final long MIN_HEARTBEAT_FREQUENCY_MS = 50L;
 
     public AbstractUnifiedTest(final String filename, final String description, final BsonArray data, final BsonDocument definition,
                                final boolean skipTest) {
+        this(filename, description, getDefaultDatabaseName(), "test", data, definition, skipTest);
+    }
+
+    public AbstractUnifiedTest(final String filename, final String description, final String databaseName, final String collectionName,
+                               final BsonArray data, final BsonDocument definition, final boolean skipTest) {
         this.filename = filename;
         this.description = description;
-        this.databaseName = getDefaultDatabaseName();
+        this.databaseName = databaseName;
+        this.collectionName = collectionName;
         this.data = data;
         this.definition = definition;
         this.commandListener = new TestCommandListener();
@@ -176,7 +185,7 @@ public abstract class AbstractUnifiedTest {
         }
         mongoClient = createMongoClient(builder.build());
 
-        MongoDatabase database = mongoClient.getDatabase(databaseName);
+        database = mongoClient.getDatabase(databaseName);
 
         if (useMultipleMongoses) {
             // non-transactional distinct operation to avoid StaleDbVersion error
@@ -185,15 +194,17 @@ public abstract class AbstractUnifiedTest {
 
         helper = new JsonPoweredCrudTestHelper(description, database, database.getCollection(collectionName, BsonDocument.class));
 
-        ClientSession sessionZero = createSession("session0");
-        ClientSession sessionOne = createSession("session1");
+        if (serverVersionAtLeast(3, 6) && !isStandalone()) {
+            ClientSession sessionZero = createSession("session0");
+            ClientSession sessionOne = createSession("session1");
 
-        sessionsMap = new HashMap<String, ClientSession>();
-        sessionsMap.put("session0", sessionZero);
-        sessionsMap.put("session1", sessionOne);
-        lsidMap = new HashMap<String, BsonDocument>();
-        lsidMap.put("session0", sessionZero.getServerSession().getIdentifier());
-        lsidMap.put("session1", sessionOne.getServerSession().getIdentifier());
+            sessionsMap = new HashMap<String, ClientSession>();
+            sessionsMap.put("session0", sessionZero);
+            sessionsMap.put("session1", sessionOne);
+            lsidMap = new HashMap<String, BsonDocument>();
+            lsidMap.put("session0", sessionZero.getServerSession().getIdentifier());
+            lsidMap.put("session1", sessionOne.getServerSession().getIdentifier());
+        }
     }
 
     private ReadConcern getReadConcern(final BsonDocument clientOptions) {
@@ -288,8 +299,10 @@ public abstract class AbstractUnifiedTest {
     }
 
     private void closeAllSessions() {
-        for (ClientSession cur : sessionsMap.values()) {
-            cur.close();
+        if (sessionsMap != null) {
+            for (ClientSession cur : sessionsMap.values()) {
+                cur.close();
+            }
         }
     }
 
@@ -305,12 +318,20 @@ public abstract class AbstractUnifiedTest {
             List<CommandEvent> expectedEvents = getExpectedEvents(definition.getArray("expectations"), databaseName, null);
             List<CommandEvent> events = commandListener.getCommandStartedEvents();
 
-            assertEventsEquality(expectedEvents, events, lsidMap);
+            assertEventsEquality(expectedEvents, events.subList(0, expectedEvents.size()), lsidMap);
         }
 
         BsonDocument expectedOutcome = definition.getDocument("outcome", new BsonDocument());
         if (expectedOutcome.containsKey("collection")) {
-            List<BsonDocument> collectionData = collectionHelper.find(new BsonDocumentCodec());
+            BsonDocument collectionDocument = expectedOutcome.getDocument("collection");
+            List<BsonDocument> collectionData;
+            if (collectionDocument.containsKey("name")) {
+                collectionData = new CollectionHelper<Document>(new DocumentCodec(),
+                        new MongoNamespace(databaseName, collectionDocument.getString("name").getValue()))
+                        .find(new BsonDocumentCodec());
+            } else {
+                collectionData = collectionHelper.find(new BsonDocumentCodec());
+            }
             assertEquals(expectedOutcome.getDocument("collection").getArray("data").getValues(), collectionData);
         }
     }

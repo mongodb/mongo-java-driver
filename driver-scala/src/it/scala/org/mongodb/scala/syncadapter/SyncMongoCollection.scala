@@ -467,14 +467,16 @@ case class SyncMongoCollection[T](wrapped: MongoCollection[T]) extends JMongoCol
 
   override def drop(clientSession: ClientSession): Unit = wrapped.drop(unwrap(clientSession)).toFuture().get()
 
-  override def createIndex(keys: Bson) = throw new UnsupportedOperationException
+  override def createIndex(keys: Bson): String = wrapped.createIndex(keys).toFuture().get()
 
-  override def createIndex(keys: Bson, indexOptions: IndexOptions) = throw new UnsupportedOperationException
+  override def createIndex(keys: Bson, indexOptions: IndexOptions) =
+    wrapped.createIndex(keys, indexOptions).toFuture().get()
 
-  override def createIndex(clientSession: ClientSession, keys: Bson) = throw new UnsupportedOperationException
+  override def createIndex(clientSession: ClientSession, keys: Bson) =
+    wrapped.createIndex(unwrap(clientSession), keys).toFuture().get()
 
   override def createIndex(clientSession: ClientSession, keys: Bson, indexOptions: IndexOptions) =
-    throw new UnsupportedOperationException
+    wrapped.createIndex(unwrap(clientSession), keys, indexOptions).toFuture().get()
 
   override def createIndexes(indexes: java.util.List[IndexModel]) = throw new UnsupportedOperationException
 
@@ -503,37 +505,28 @@ case class SyncMongoCollection[T](wrapped: MongoCollection[T]) extends JMongoCol
   override def listIndexes[TResult](clientSession: ClientSession, resultClass: Class[TResult]) =
     throw new UnsupportedOperationException
 
-  override def dropIndex(indexName: String): Unit = {
-    throw new UnsupportedOperationException
-  }
+  override def dropIndex(indexName: String): Unit = wrapped.dropIndex(indexName).toFuture().get()
 
-  override def dropIndex(indexName: String, dropIndexOptions: DropIndexOptions): Unit = {
-    throw new UnsupportedOperationException
-  }
+  override def dropIndex(indexName: String, dropIndexOptions: DropIndexOptions): Unit =
+    wrapped.dropIndex(indexName, dropIndexOptions).toFuture().get()
 
-  override def dropIndex(keys: Bson): Unit = {
-    throw new UnsupportedOperationException
-  }
+  override def dropIndex(keys: Bson): Unit =
+    wrapped.dropIndex(keys).toFuture().get()
 
-  override def dropIndex(keys: Bson, dropIndexOptions: DropIndexOptions): Unit = {
-    throw new UnsupportedOperationException
-  }
+  override def dropIndex(keys: Bson, dropIndexOptions: DropIndexOptions): Unit =
+    wrapped.dropIndex(keys, dropIndexOptions).toFuture().get()
 
-  override def dropIndex(clientSession: ClientSession, indexName: String): Unit = {
-    throw new UnsupportedOperationException
-  }
+  override def dropIndex(clientSession: ClientSession, indexName: String): Unit =
+    wrapped.dropIndex(unwrap(clientSession), indexName).toFuture().get()
 
-  override def dropIndex(clientSession: ClientSession, keys: Bson): Unit = {
-    throw new UnsupportedOperationException
-  }
+  override def dropIndex(clientSession: ClientSession, keys: Bson): Unit =
+    wrapped.dropIndex(unwrap(clientSession), keys).toFuture().get()
 
-  override def dropIndex(clientSession: ClientSession, indexName: String, dropIndexOptions: DropIndexOptions): Unit = {
-    throw new UnsupportedOperationException
-  }
+  override def dropIndex(clientSession: ClientSession, indexName: String, dropIndexOptions: DropIndexOptions): Unit =
+    wrapped.dropIndex(unwrap(clientSession), indexName, dropIndexOptions).toFuture().get()
 
-  override def dropIndex(clientSession: ClientSession, keys: Bson, dropIndexOptions: DropIndexOptions): Unit = {
-    throw new UnsupportedOperationException
-  }
+  override def dropIndex(clientSession: ClientSession, keys: Bson, dropIndexOptions: DropIndexOptions): Unit =
+    wrapped.dropIndex(unwrap(clientSession), keys, dropIndexOptions).toFuture().get()
 
   override def dropIndexes(): Unit = {
     throw new UnsupportedOperationException
