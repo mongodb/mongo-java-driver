@@ -16,7 +16,6 @@
 
 package com.mongodb.client.internal;
 
-import com.mongodb.Block;
 import com.mongodb.Function;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
@@ -28,6 +27,7 @@ import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.lang.Nullable;
 
 import java.util.Collection;
+import java.util.function.Consumer;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -116,26 +116,18 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
         return new MappingIterable<TResult, U>(this, mapper);
     }
 
-    @SuppressWarnings("overloads")
-    private void forEach(final Block<? super TResult> block) {
-        MongoCursor<TResult> cursor = iterator();
-        try {
+    @Override
+    public void forEach(final Consumer<? super TResult> action) {
+        try (MongoCursor<TResult> cursor = iterator()) {
             while (cursor.hasNext()) {
-                block.apply(cursor.next());
+                action.accept(cursor.next());
             }
-        } finally {
-            cursor.close();
         }
     }
 
     @Override
     public <A extends Collection<? super TResult>> A into(final A target) {
-        forEach(new Block<TResult>() {
-            @Override
-            public void apply(final TResult t) {
-                target.add(t);
-            }
-        });
+        forEach(target::add);
         return target;
     }
 
