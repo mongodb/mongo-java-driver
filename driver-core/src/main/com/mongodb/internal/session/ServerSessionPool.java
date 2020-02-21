@@ -141,25 +141,29 @@ public class ServerSessionPool {
             return;
         }
 
-        Connection connection = cluster.selectServer(new ServerSelector() {
-            @Override
-            public List<ServerDescription> select(final ClusterDescription clusterDescription) {
-                for (ServerDescription cur : clusterDescription.getServerDescriptions()) {
-                    if (cur.getAddress().equals(primaryPreferred.get(0).getAddress())) {
-                        return Collections.singletonList(cur);
-                    }
-                }
-                return Collections.emptyList();
-            }
-        }).getConnection();
+        Connection connection = null;
         try {
+            connection = cluster.selectServer(new ServerSelector() {
+                @Override
+                public List<ServerDescription> select(final ClusterDescription clusterDescription) {
+                    for (ServerDescription cur : clusterDescription.getServerDescriptions()) {
+                        if (cur.getAddress().equals(primaryPreferred.get(0).getAddress())) {
+                            return Collections.singletonList(cur);
+                        }
+                    }
+                    return Collections.emptyList();
+                }
+            }).getConnection();
+
             connection.command("admin",
                     new BsonDocument("endSessions", new BsonArray(identifiers)), new NoOpFieldNameValidator(),
                     ReadPreference.primaryPreferred(), new BsonDocumentCodec(), NoOpSessionContext.INSTANCE);
         } catch (MongoException e) {
             // ignore exceptions
         } finally {
-            connection.release();
+            if (connection != null) {
+                connection.release();
+            }
         }
     }
 
