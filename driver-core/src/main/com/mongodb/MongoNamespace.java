@@ -58,8 +58,9 @@ public final class MongoNamespace {
         notNull("databaseName", databaseName);
         isTrueArgument("databaseName is not empty", !databaseName.isEmpty());
         for (int i = 0; i < databaseName.length(); i++) {
-            isTrueArgument("databaseName does not contain '" + databaseName.charAt(i) + "'",
-                    !PROHIBITED_CHARACTERS_IN_DATABASE_NAME.contains(databaseName.charAt(i)));
+            if (PROHIBITED_CHARACTERS_IN_DATABASE_NAME.contains(databaseName.charAt(i))) {
+                throw new IllegalArgumentException("state should be: databaseName does not contain '" + databaseName.charAt(i) + "'");
+            }
         }
     }
 
