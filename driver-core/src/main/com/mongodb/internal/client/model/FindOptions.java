@@ -267,7 +267,6 @@ public final class FindOptions {
      *
      * @return if oplog replay is enabled
      */
-    @Deprecated
     public boolean isOplogReplay() {
         return oplogReplay;
     }
@@ -278,7 +277,6 @@ public final class FindOptions {
      * @param oplogReplay if oplog replay is enabled
      * @return this
      */
-    @Deprecated
     public FindOptions oplogReplay(final boolean oplogReplay) {
         this.oplogReplay = oplogReplay;
         return this;
