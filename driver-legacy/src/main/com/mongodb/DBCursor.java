@@ -395,6 +395,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         return this;
     }
 
+    @SuppressWarnings("deprecation")
     private FindOperation<DBObject> getQueryOperation(final Decoder<DBObject> decoder) {
 
         return new FindOperation<DBObject>(collection.getNamespace(), decoder)
