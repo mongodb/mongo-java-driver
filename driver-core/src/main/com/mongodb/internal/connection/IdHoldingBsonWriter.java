@@ -127,8 +127,6 @@ public class IdHoldingBsonWriter extends LevelCountingBsonWriter {
 
     @Override
     public void writeEndArray() {
-        super.writeEndArray();
-
         if (isWritingId()) {
             getIdBsonWriter().writeEndArray();
             if (getIdBsonWriter().getCurrentLevel() == 0) {
@@ -136,6 +134,7 @@ public class IdHoldingBsonWriter extends LevelCountingBsonWriter {
                 id = new RawBsonDocument(getBytes()).get(ID_FIELD_NAME);
             }
         }
+        super.writeEndArray();
     }
 
     @Override
