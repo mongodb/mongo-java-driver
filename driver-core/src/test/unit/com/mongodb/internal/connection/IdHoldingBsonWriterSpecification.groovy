@@ -16,9 +16,11 @@
 
 package com.mongodb.internal.connection
 
+import org.bson.BsonArray
 import org.bson.BsonBinaryReader
 import org.bson.BsonBinaryWriter
 import org.bson.BsonDocument
+import org.bson.BsonObjectId
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
@@ -70,6 +72,20 @@ class IdHoldingBsonWriterSpecification extends Specification {
 
         where:
         id << getBsonValues()
+    }
+
+    def 'serialize document with list of documents that contain an _id field'() {
+        def bsonBinaryWriter = new BsonBinaryWriter(new BasicOutputBuffer())
+        def idTrackingBsonWriter = new IdHoldingBsonWriter(bsonBinaryWriter)
+        def document = new BsonDocument('_id', new BsonObjectId())
+                .append('items', new BsonArray(Collections.singletonList(new BsonDocument('_id', new BsonObjectId()))))
+
+        when:
+        new BsonDocumentCodec().encode(idTrackingBsonWriter, document, EncoderContext.builder().build())
+        def encodedDocument = getEncodedDocument(bsonBinaryWriter.getBsonOutput())
+
+        then:
+        encodedDocument == document
     }
 
     private static BsonDocument getEncodedDocument(BsonOutput buffer) {
