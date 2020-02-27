@@ -21,6 +21,7 @@ import org.bson.BsonBinarySubType;
 import org.bson.BsonSerializationException;
 import org.bson.UuidRepresentation;
 
+import java.util.Arrays;
 import java.util.UUID;
 
 /**
@@ -85,21 +86,28 @@ public final class UuidHelper {
         return binaryData;
     }
 
+    // This method will NOT modify the contents of the byte array
     public static UUID decodeBinaryToUuid(final byte[] data, final byte type, final UuidRepresentation uuidRepresentation) {
         if (data.length != 16) {
             throw new BsonSerializationException(String.format("Expected length to be 16, not %d.", data.length));
         }
 
+        byte[] localData = data;
+
         if (type == BsonBinarySubType.UUID_LEGACY.getValue()) {
             switch(uuidRepresentation) {
                 case C_SHARP_LEGACY:
-                    reverseByteArray(data, 0, 4);
-                    reverseByteArray(data, 4, 2);
-                    reverseByteArray(data, 6, 2);
+                    localData = Arrays.copyOf(data, 16);
+
+                    reverseByteArray(localData, 0, 4);
+                    reverseByteArray(localData, 4, 2);
+                    reverseByteArray(localData, 6, 2);
                     break;
                 case JAVA_LEGACY:
-                    reverseByteArray(data, 0, 8);
-                    reverseByteArray(data, 8, 8);
+                    localData = Arrays.copyOf(data, 16);
+
+                    reverseByteArray(localData, 0, 8);
+                    reverseByteArray(localData, 8, 8);
                     break;
                 case PYTHON_LEGACY:
                     break;
@@ -111,7 +119,7 @@ public final class UuidHelper {
             }
         }
 
-        return new UUID(readLongFromArrayBigEndian(data, 0), readLongFromArrayBigEndian(data, 8));
+        return new UUID(readLongFromArrayBigEndian(localData, 0), readLongFromArrayBigEndian(localData, 8));
     }
 
     private UuidHelper() {
