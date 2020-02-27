@@ -26,10 +26,11 @@ class UuidHelperSpecification extends Specification {
     @Unroll
     def 'should decode different types of UUID'() {
         given:
-        byte[] expectedBytes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+        byte[] expectedBytes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[]
 
         expect:
         uuid == UuidHelper.decodeBinaryToUuid(expectedBytes, (byte) type, uuidRepresentation)
+        expectedBytes == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[]
 
         where:
         uuid                                                    | type | uuidRepresentation
