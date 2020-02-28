@@ -123,7 +123,6 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     //
     @Test
     public void testMissingResumeTokenThrowsException() {
-        assumeTrue(serverVersionLessThan(4, 3));
         boolean exceptionFound = false;
 
         MongoCursor<ChangeStreamDocument<Document>> cursor = collection.watch(asList(Aggregates.project(Document.parse("{ _id : 0 }"))))
