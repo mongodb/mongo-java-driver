@@ -41,7 +41,6 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
-import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.internal.async.client.Fixture.getDefaultDatabaseName;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -74,7 +73,6 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     //
     @Test
     public void testMissingResumeTokenThrowsException() {
-        assumeTrue(serverVersionLessThan(4, 3));
         boolean exceptionFound = false;
         AsyncBatchCursor<ChangeStreamDocument<Document>> cursor =
                 createChangeStreamCursor(collection.watch(singletonList(Aggregates.project(Document.parse("{ _id : 0 }")))));
