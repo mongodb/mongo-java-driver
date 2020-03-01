@@ -27,7 +27,7 @@ import com.mongodb.crypt.capi.MongoCrypts;
 import javax.net.ssl.SSLContext;
 import java.security.NoSuchAlgorithmException;
 
-import static com.mongodb.internal.capi.MongoCryptOptionsHelper.createMongoCryptOptions;
+import static com.mongodb.internal.capi.MongoCryptHelper.createMongoCryptOptions;
 
 public final class Crypts {
 

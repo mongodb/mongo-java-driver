@@ -16,7 +16,11 @@
 
 package com.mongodb.internal.capi;
 
+import com.mongodb.Block;
+import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientException;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.connection.ClusterSettings;
 import com.mongodb.crypt.capi.MongoAwsKmsProviderOptions;
 import com.mongodb.crypt.capi.MongoCryptOptions;
 import com.mongodb.crypt.capi.MongoLocalKmsProviderOptions;
@@ -26,8 +30,9 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
-public final class MongoCryptOptionsHelper {
+public final class MongoCryptHelper {
 
     public static MongoCryptOptions createMongoCryptOptions(final Map<String, Map<String, Object>> kmsProviders,
                                                             final Map<String, BsonDocument> namespaceToLocalSchemaDocumentMap) {
@@ -75,6 +80,20 @@ public final class MongoCryptOptionsHelper {
         return spawnArgs;
     }
 
-    private MongoCryptOptionsHelper(){
+    public static MongoClientSettings createMongocryptdClientSettings(final String connectionString) {
+
+        return MongoClientSettings.builder()
+                .applyConnectionString(new ConnectionString((connectionString != null)
+                        ? connectionString : "mongodb://localhost:27020"))
+                .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
+                    @Override
+                    public void apply(final ClusterSettings.Builder builder) {
+                        builder.serverSelectionTimeout(1, TimeUnit.SECONDS);
+                    }
+                })
+                .build();
+    }
+
+    private MongoCryptHelper() {
     }
 }
