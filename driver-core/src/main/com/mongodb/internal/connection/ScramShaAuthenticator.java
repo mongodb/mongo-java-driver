@@ -22,6 +22,7 @@ import com.mongodb.ServerAddress;
 import com.mongodb.internal.authentication.SaslPrep;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
+import org.bson.BsonString;
 import org.bson.internal.Base64;
 
 import javax.crypto.Mac;
@@ -44,6 +45,8 @@ import static java.lang.String.format;
 class ScramShaAuthenticator extends SaslAuthenticator {
     private final RandomStringGenerator randomStringGenerator;
     private final AuthenticationHashGenerator authenticationHashGenerator;
+    private SaslClient speculativeSaslClient;
+    private BsonDocument speculativeAuthenticateResponse;
 
     private static final int MINIMUM_ITERATION_COUNT = 4096;
     private static final String GS2_HEADER = "n,,";
@@ -82,7 +85,37 @@ class ScramShaAuthenticator extends SaslAuthenticator {
 
     @Override
     protected SaslClient createSaslClient(final ServerAddress serverAddress) {
+        if (speculativeSaslClient != null) {
+            return speculativeSaslClient;
+        }
         return new ScramShaSaslClient(getMongoCredentialWithCache(), randomStringGenerator, authenticationHashGenerator);
+    }
+
+    @Override
+    public BsonDocument createSpeculativeAuthenticateCommand(final InternalConnection connection) {
+        try {
+            speculativeSaslClient = createSaslClient(connection.getDescription().getServerAddress());
+            BsonDocument startDocument = createSaslStartCommandDocument(speculativeSaslClient.evaluateChallenge(new byte[0]))
+                    .append("db", new BsonString("admin"));
+            appendSaslStartOptions(startDocument);
+            return startDocument;
+        } catch (Exception e) {
+            throw wrapException(e);
+        }
+    }
+
+    @Override
+    public BsonDocument getSpeculativeAuthenticateResponse() {
+        return speculativeAuthenticateResponse;
+    }
+
+    @Override
+    public void setSpeculativeAuthenticateResponse(final BsonDocument response) {
+        if (response == null) {
+            speculativeSaslClient = null;
+        } else {
+            speculativeAuthenticateResponse = response;
+        }
     }
 
     class ScramShaSaslClient implements SaslClient {

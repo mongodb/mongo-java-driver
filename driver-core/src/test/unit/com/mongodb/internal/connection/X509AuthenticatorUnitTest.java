@@ -23,6 +23,7 @@ import com.mongodb.async.FutureResultCallback;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerId;
+import org.bson.BsonDocument;
 import org.bson.io.BsonInput;
 import org.junit.Before;
 import org.junit.Test;
@@ -102,6 +103,20 @@ public class X509AuthenticatorUnitTest {
         futureCallback.get();
 
         validateMessages();
+    }
+
+    @Test
+    public void testSpeculativeAuthentication() {
+        String speculativeAuthenticateResponse = "{\"dbname\": \"$external\", "
+                + "\"user\": \"CN=client,OU=kerneluser,O=10Gen,L=New York City,ST=New York,C=US\"}";
+        BsonDocument expectedSpeculativeAuthenticateCommand = BsonDocument.parse("{authenticate: 1, "
+                + "user: \"CN=client,OU=kerneluser,O=10Gen,L=New York City,ST=New York,C=US\", "
+                + "mechanism: \"MONGODB-X509\", db: \"$external\"}");
+        subject.setSpeculativeAuthenticateResponse(BsonDocument.parse(speculativeAuthenticateResponse));
+        subject.authenticate(connection, connectionDescription);
+
+        assertEquals(connection.getSent().size(), 0);
+        assertEquals(expectedSpeculativeAuthenticateCommand, subject.createSpeculativeAuthenticateCommand(connection));
     }
 
     private void enqueueSuccessfulAuthenticationReply() {

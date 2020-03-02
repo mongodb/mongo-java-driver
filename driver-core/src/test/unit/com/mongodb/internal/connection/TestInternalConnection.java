@@ -17,6 +17,8 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
+import com.mongodb.connection.ConnectionId;
+import com.mongodb.connection.ServerType;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.ConnectionDescription;
@@ -34,6 +36,7 @@ import org.bson.io.ByteBufferBsonInput;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
@@ -57,7 +60,8 @@ class TestInternalConnection implements InternalConnection {
     private boolean closed;
 
     TestInternalConnection(final ServerId serverId) {
-        this.description = new ConnectionDescription(serverId);
+        this.description = new ConnectionDescription(new ConnectionId(serverId), 0, ServerType.UNKNOWN, 0, 0, 0,
+                Collections.<String>emptyList());
         this.bufferProvider = new SimpleBufferProvider();
 
         this.replies = new LinkedList<Interaction>();

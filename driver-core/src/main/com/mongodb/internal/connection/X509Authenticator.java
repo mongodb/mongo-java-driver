@@ -19,23 +19,32 @@ package com.mongodb.internal.connection;
 import com.mongodb.AuthenticationMechanism;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoSecurityException;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.CommandHelper.executeCommand;
 import static com.mongodb.internal.connection.CommandHelper.executeCommandAsync;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionThreeDotFour;
 
-class X509Authenticator extends Authenticator {
+class X509Authenticator extends Authenticator implements SpeculativeAuthenticator {
+    public static final Logger LOGGER = Loggers.getLogger("authenticator");
+    private BsonDocument speculativeAuthenticateResponse;
+
     X509Authenticator(final MongoCredentialWithCache credential) {
         super(credential);
     }
 
     @Override
     void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription) {
+        if (this.speculativeAuthenticateResponse != null) {
+            return;
+        }
         try {
             validateUserName(connectionDescription);
             BsonDocument authCommand = getAuthCommand(getMongoCredential().getUserName());
@@ -48,22 +57,42 @@ class X509Authenticator extends Authenticator {
     @Override
     void authenticateAsync(final InternalConnection connection, final ConnectionDescription connectionDescription,
                            final SingleResultCallback<Void> callback) {
-        try {
-            validateUserName(connectionDescription);
-            executeCommandAsync(getMongoCredential().getSource(), getAuthCommand(getMongoCredential().getUserName()), connection,
-                                new SingleResultCallback<BsonDocument>() {
-                                    @Override
-                                    public void onResult(final BsonDocument nonceResult, final Throwable t) {
-                                        if (t != null) {
-                                            callback.onResult(null, translateThrowable(t));
-                                        } else {
-                                            callback.onResult(null, null);
-                                        }
-                                    }
-                                });
-        } catch (Throwable t) {
-            callback.onResult(null, t);
+        if (speculativeAuthenticateResponse != null) {
+            callback.onResult(null, null);
+        } else {
+            SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
+            try {
+                validateUserName(connectionDescription);
+                executeCommandAsync(getMongoCredential().getSource(), getAuthCommand(getMongoCredential().getUserName()), connection,
+                        new SingleResultCallback<BsonDocument>() {
+                            @Override
+                            public void onResult(final BsonDocument nonceResult, final Throwable t) {
+                                if (t != null) {
+                                    errHandlingCallback.onResult(null, translateThrowable(t));
+                                } else {
+                                    errHandlingCallback.onResult(null, null);
+                                }
+                            }
+                        });
+            } catch (Throwable t) {
+                errHandlingCallback.onResult(null, t);
+            }
         }
+    }
+
+    @Override
+    public BsonDocument createSpeculativeAuthenticateCommand(final InternalConnection connection) {
+        return getAuthCommand(getMongoCredential().getUserName()).append("db", new BsonString("$external"));
+    }
+
+    @Override
+    public void setSpeculativeAuthenticateResponse(final BsonDocument response) {
+        this.speculativeAuthenticateResponse = response;
+    }
+
+    @Override
+    public BsonDocument getSpeculativeAuthenticateResponse() {
+        return speculativeAuthenticateResponse;
     }
 
     private BsonDocument getAuthCommand(final String userName) {

@@ -97,7 +97,7 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
 
     private ConnectionDescription initializeConnectionDescription(final InternalConnection internalConnection) {
         BsonDocument isMasterResult;
-        BsonDocument isMasterCommandDocument = createIsMasterCommand();
+        BsonDocument isMasterCommandDocument = createIsMasterCommand(authenticator, internalConnection);
 
         try {
             isMasterResult = executeCommand("admin", isMasterCommandDocument, internalConnection);
@@ -111,11 +111,11 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
 
         ConnectionDescription connectionDescription = createConnectionDescription(internalConnection.getDescription().getConnectionId(),
                 isMasterResult);
-        setAuthenticator(isMasterResult, connectionDescription);
+        setSpeculativeAuthenticateResponse(isMasterResult);
         return connectionDescription;
     }
 
-    private BsonDocument createIsMasterCommand() {
+    private BsonDocument createIsMasterCommand(final Authenticator authenticator, final InternalConnection connection) {
         BsonDocument isMasterCommandDocument = new BsonDocument("ismaster", new BsonInt32(1));
         if (clientMetadataDocument != null) {
             isMasterCommandDocument.append("client", clientMetadataDocument);
@@ -131,6 +131,13 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
             MongoCredential credential = authenticator.getMongoCredential();
             isMasterCommandDocument.append("saslSupportedMechs",
                     new BsonString(credential.getSource() + "." + credential.getUserName()));
+        }
+        if (authenticator instanceof SpeculativeAuthenticator) {
+            BsonDocument speculativeAuthenticateDocument =
+                    ((SpeculativeAuthenticator) authenticator).createSpeculativeAuthenticateCommand(connection);
+            if (speculativeAuthenticateDocument != null) {
+                isMasterCommandDocument.append("speculativeAuthenticate", speculativeAuthenticateDocument);
+            }
         }
         return isMasterCommandDocument;
     }
@@ -155,7 +162,7 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
 
     private void initializeConnectionDescriptionAsync(final InternalConnection internalConnection,
                                                       final SingleResultCallback<ConnectionDescription> callback) {
-        executeCommandAsync("admin", createIsMasterCommand(), internalConnection,
+        executeCommandAsync("admin", createIsMasterCommand(authenticator, internalConnection), internalConnection,
                 new SingleResultCallback<BsonDocument>() {
                     @Override
                     public void onResult(final BsonDocument isMasterResult, final Throwable t) {
@@ -171,17 +178,17 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
                         } else {
                             ConnectionId connectionId = internalConnection.getDescription().getConnectionId();
                             ConnectionDescription connectionDescription = createConnectionDescription(connectionId, isMasterResult);
-                            setAuthenticator(isMasterResult, connectionDescription);
+                            setSpeculativeAuthenticateResponse(isMasterResult);
                             callback.onResult(connectionDescription, null);
                         }
                     }
                 });
     }
 
-    private void setAuthenticator(final BsonDocument isMasterResult, final ConnectionDescription connectionDescription) {
-        if (checkSaslSupportedMechs) {
-            authenticator = ((DefaultAuthenticator) authenticator).getAuthenticatorFromIsMasterResult(isMasterResult,
-                    connectionDescription);
+    private void setSpeculativeAuthenticateResponse(final BsonDocument isMasterResult) {
+        if (authenticator instanceof SpeculativeAuthenticator) {
+            ((SpeculativeAuthenticator) authenticator).setSpeculativeAuthenticateResponse(
+                    isMasterResult.getDocument("speculativeAuthenticate", null));
         }
     }
 
