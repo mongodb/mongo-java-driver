@@ -10,9 +10,9 @@ title = "Issues & Help"
 
 We are lucky to have a vibrant MongoDB Java community with lots of varying
 experience of using the Java driver.  We often find the quickest way to get support for
-general questions is through the [mongodb-user google group](http://groups.google.com/group/mongodb-user)
+general questions is through the [MongoDB Community Forums](https://community.mongodb.com/tags/c/drivers-odms-connectors/7/java-driver)
 or through [stackoverflow](http://stackoverflow.com/questions/tagged/mongodb+java).  Please also
-refer to our own [support channels](http://www.mongodb.org/about/support) documentation.
+refer to our own [support channels](https://docs.mongodb.com/manual/support/) documentation.
 
 ## Bugs / Feature Requests
 
