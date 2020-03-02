@@ -26,6 +26,7 @@ import com.mongodb.bulk.BulkWriteUpsert;
 import com.mongodb.bulk.WriteConcernError;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -49,6 +50,7 @@ public class BulkWriteBatchCombiner {
     private final Set<BulkWriteUpsert> writeUpserts = new TreeSet<>(comparingInt(BulkWriteUpsert::getIndex));
     private final Set<BulkWriteInsert> writeInserts = new TreeSet<>(comparingInt(BulkWriteInsert::getIndex));
     private final Set<BulkWriteError> writeErrors = new TreeSet<>(comparingInt(BulkWriteError::getIndex));
+    private final Set<String> errorLabels = new HashSet<>();
     private final List<WriteConcernError> writeConcernErrors = new ArrayList<>();
 
     /**
@@ -86,6 +88,7 @@ public class BulkWriteBatchCombiner {
      */
     public void addErrorResult(final MongoBulkWriteException exception, final IndexMap indexMap) {
         addResult(exception.getWriteResult());
+        errorLabels.addAll(exception.getErrorLabels());
         mergeWriteErrors(exception.getWriteErrors(), indexMap);
         mergeWriteConcernError(exception.getWriteConcernError());
     }
@@ -157,19 +160,22 @@ public class BulkWriteBatchCombiner {
      * @return the bulk write exception, or null if there were no errors
      */
     public MongoBulkWriteException getError() {
-        return hasErrors() ? new MongoBulkWriteException(createResult(),
-                                                    new ArrayList<BulkWriteError>(writeErrors),
-                                                    writeConcernErrors.isEmpty() ? null
-                                                                                 : writeConcernErrors.get(writeConcernErrors.size() - 1),
-                                                    serverAddress) : null;
+        if (!hasErrors()) {
+            return null;
+        }
+        return new MongoBulkWriteException(createResult(), new ArrayList<>(writeErrors),
+                writeConcernErrors.isEmpty() ? null : writeConcernErrors.get(writeConcernErrors.size() - 1),
+                serverAddress, errorLabels);
     }
 
     private void mergeWriteConcernError(final WriteConcernError writeConcernError) {
         if (writeConcernError != null) {
             if (writeConcernErrors.isEmpty()) {
                 writeConcernErrors.add(writeConcernError);
+                errorLabels.addAll(writeConcernError.getErrorLabels());
             } else if (!writeConcernError.equals(writeConcernErrors.get(writeConcernErrors.size() - 1))) {
                 writeConcernErrors.add(writeConcernError);
+                errorLabels.addAll(writeConcernError.getErrorLabels());
             }
         }
     }

@@ -57,6 +57,15 @@ public class MongoWriteConcernException extends MongoServerException {
         super(writeConcernError.getCode(), writeConcernError.getMessage(), serverAddress);
         this.writeConcernResult = writeConcernResult;
         this.writeConcernError = notNull("writeConcernError", writeConcernError);
+        for (final String errorLabel : writeConcernError.getErrorLabels()) {
+            super.addLabel(errorLabel);
+        }
+    }
+
+    @Override
+    public void addLabel(final String errorLabel) {
+        writeConcernError.addLabel(errorLabel);
+        super.addLabel(errorLabel);
     }
 
     /**

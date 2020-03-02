@@ -727,7 +727,7 @@ class MongoCollectionSpecification extends Specification {
     def 'deleteOne should translate BulkWriteException correctly'() {
         given:
         def bulkWriteException = new MongoBulkWriteException(acknowledged(0, 0, 1, null, [], []),
-                [], new WriteConcernError(100, 'codeName', 'Message', new BsonDocument()), new ServerAddress())
+                [], new WriteConcernError(100, 'codeName', 'Message', new BsonDocument()), new ServerAddress(), [] as Set)
 
         def executor = new TestOperationExecutor([bulkWriteException])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED,
@@ -834,7 +834,7 @@ class MongoCollectionSpecification extends Specification {
         given:
         def bulkWriteException = new MongoBulkWriteException(bulkWriteResult, [],
                                                              new WriteConcernError(100, 'codeName', 'Message', new BsonDocument()),
-                                                             new ServerAddress())
+                                                             new ServerAddress(), [] as Set)
 
         def executor = new TestOperationExecutor([bulkWriteException])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED,
@@ -972,14 +972,14 @@ class MongoCollectionSpecification extends Specification {
         executor << new TestOperationExecutor([new MongoBulkWriteException(acknowledged(INSERT, 1, 0, [], []),
                 [new BulkWriteError(11000, 'oops',
                         new BsonDocument(), 0)],
-                null, new ServerAddress())])
+                null, new ServerAddress(), [] as Set)])
     }
 
     def 'should translate MongoBulkWriteException to MongoWriteConcernException'() {
         given:
         def executor = new TestOperationExecutor([new MongoBulkWriteException(acknowledged(INSERT, 1, 0, [], []), [],
                 new WriteConcernError(42, 'codeName', 'Message', new BsonDocument()),
-                new ServerAddress())])
+                new ServerAddress(), [] as Set)])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED,
                 true, true, readConcern, JAVA_LEGACY, executor)
 

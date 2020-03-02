@@ -25,9 +25,9 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.WriteConcern;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
@@ -42,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.operation.CommandOperationHelper.RETRYABLE_WRITE_ERROR_LABEL;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -157,16 +158,15 @@ public class CommitTransactionOperation extends TransactionOperation {
 
     private static final List<Integer> NON_RETRYABLE_WRITE_CONCERN_ERROR_CODES = asList(79, 100);
 
-    private static boolean shouldAddUnknownTransactionCommitResultLabel(final Throwable t) {
-        if (!(t instanceof MongoException)) {
-            return false;
-        }
-
-        MongoException e = (MongoException) t;
+    private static boolean shouldAddUnknownTransactionCommitResultLabel(final MongoException e) {
 
         if (e instanceof MongoSocketException || e instanceof MongoTimeoutException
                 || e instanceof MongoNotPrimaryException || e instanceof MongoNodeIsRecoveringException
                 || e instanceof MongoExecutionTimeoutException) {
+            return true;
+        }
+
+        if (e.hasErrorLabel(RETRYABLE_WRITE_ERROR_LABEL)) {
             return true;
         }
 

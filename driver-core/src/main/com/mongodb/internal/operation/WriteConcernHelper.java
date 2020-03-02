@@ -24,9 +24,13 @@ import com.mongodb.WriteConcernResult;
 import com.mongodb.bulk.WriteConcernError;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.connection.ProtocolHelper;
+import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
+import java.util.stream.Collectors;
+
+import static com.mongodb.internal.operation.CommandOperationHelper.addRetryableWriteErrorLabel;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotFour;
 
 /**
@@ -41,17 +45,14 @@ public final class WriteConcernHelper {
         }
     }
 
-    public static void throwOnWriteConcernError(final BsonDocument result, final ServerAddress serverAddress) {
+    public static void throwOnWriteConcernError(final BsonDocument result, final ServerAddress serverAddress, final int maxWireVersion) {
         if (hasWriteConcernError(result)) {
-            throwOnSpecialException(result, serverAddress);
-            throw createWriteConcernException(result, serverAddress);
-        }
-    }
-
-    public static void throwOnSpecialException(final BsonDocument result, final ServerAddress serverAddress) {
-        MongoException specialException = ProtocolHelper.createSpecialException(result, serverAddress, "errmsg");
-        if (specialException != null) {
-            throw specialException;
+            MongoException exception = ProtocolHelper.createSpecialException(result, serverAddress, "errmsg");
+            if (exception == null) {
+                exception = createWriteConcernException(result, serverAddress);
+            }
+            addRetryableWriteErrorLabel(exception, maxWireVersion);
+            throw exception;
         }
     }
 
@@ -60,7 +61,8 @@ public final class WriteConcernHelper {
     }
 
     public static MongoWriteConcernException createWriteConcernException(final BsonDocument result, final ServerAddress serverAddress) {
-        return new MongoWriteConcernException(createWriteConcernError(result.getDocument("writeConcernError")),
+        return new MongoWriteConcernException(
+                createWriteConcernError(result.getDocument("writeConcernError")),
                 WriteConcernResult.acknowledged(0, false, null), serverAddress);
     }
 
@@ -68,7 +70,9 @@ public final class WriteConcernHelper {
         return new WriteConcernError(writeConcernErrorDocument.getNumber("code").intValue(),
                 writeConcernErrorDocument.getString("codeName", new BsonString("")).getValue(),
                 writeConcernErrorDocument.getString("errmsg").getValue(),
-                writeConcernErrorDocument.getDocument("errInfo", new BsonDocument()));
+                writeConcernErrorDocument.getDocument("errInfo", new BsonDocument()),
+                writeConcernErrorDocument.getArray("errorLabels", new BsonArray()).stream().map(i -> i.asString().getValue())
+                        .collect(Collectors.toSet()));
     }
 
     private WriteConcernHelper() {

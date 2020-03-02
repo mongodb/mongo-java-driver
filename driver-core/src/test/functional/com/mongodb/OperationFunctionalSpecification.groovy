@@ -443,9 +443,11 @@ class OperationFunctionalSpecification extends Specification {
             }
         }
 
-        1 * connection.command(*_) >> { throw exception }
+        1 * connection.command(*_) >> {
+            throw exception
+        }
 
-        if (serverVersionSize == 1) {
+        if (serverVersionSize == 2) {
             1 * connection.release()
         } else {
             2 * connection.release()
@@ -489,7 +491,7 @@ class OperationFunctionalSpecification extends Specification {
         def callback = new FutureResultCallback()
 
         1 * connection.commandAsync(*_) >> { it.last().onResult(null, exception) }
-        if (serverVersionSize == 1) {
+        if (serverVersionSize == 2) {
             1 * connection.release()
         } else {
             2 * connection.release()

@@ -23,11 +23,10 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNodeIsRecoveringException;
 import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.MongoSocketException;
-import com.mongodb.MongoWriteConcernException;
 import com.mongodb.ReadPreference;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.AsyncWriteBinding;
@@ -36,9 +35,9 @@ import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
+import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
-import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
@@ -142,7 +141,8 @@ final class CommandOperationHelper {
         return new CommandWriteTransformer<BsonDocument, Void>() {
             @Override
             public Void apply(final BsonDocument result, final Connection connection) {
-                WriteConcernHelper.throwOnWriteConcernError(result, connection.getDescription().getServerAddress());
+                WriteConcernHelper.throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),
+                        connection.getDescription().getMaxWireVersion());
                 return null;
             }
         };
@@ -152,7 +152,8 @@ final class CommandOperationHelper {
         return new CommandWriteTransformerAsync<BsonDocument, Void>() {
             @Override
             public Void apply(final BsonDocument result, final AsyncConnection connection) {
-                WriteConcernHelper.throwOnWriteConcernError(result, connection.getDescription().getServerAddress());
+                WriteConcernHelper.throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),
+                        connection.getDescription().getMaxWireVersion());
                 return null;
             }
         };
@@ -162,7 +163,8 @@ final class CommandOperationHelper {
         return new CommandWriteTransformerAsync<BsonDocument, Void>() {
             @Override
             public Void apply(final BsonDocument result, final AsyncConnection connection) {
-                WriteConcernHelper.throwOnWriteConcernError(result, connection.getDescription().getServerAddress());
+                WriteConcernHelper.throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),
+                        connection.getDescription().getMaxWireVersion());
                 return null;
             }
         };
@@ -711,7 +713,7 @@ final class CommandOperationHelper {
                             commandResultDecoder, binding.getSessionContext()), connection);
                 } catch (MongoException e) {
                     exception = e;
-                    if (!shouldAttemptToRetryWrite(command, e)) {
+                    if (!shouldAttemptToRetryWrite(command, e, connection.getDescription().getMaxWireVersion())) {
                         if (isRetryWritesEnabled(command)) {
                             logUnableToRetry(command.getFirstKey(), e);
                         }
@@ -735,9 +737,14 @@ final class CommandOperationHelper {
                             }
                             BsonDocument retryCommand = retryCommandModifier.apply(originalCommand);
                             logRetryExecute(retryCommand.getFirstKey(), originalException);
-                            return transformer.apply(connection.command(database, retryCommand, fieldNameValidator,
-                                    readPreference, commandResultDecoder, binding.getSessionContext()),
-                                    connection);
+                            try {
+                                return transformer.apply(connection.command(database, retryCommand, fieldNameValidator,
+                                        readPreference, commandResultDecoder, binding.getSessionContext()),
+                                        connection);
+                            } catch (MongoException e) {
+                                addRetryableWriteErrorLabel(e, connection.getDescription().getMaxWireVersion());
+                                throw e;
+                            }
                         } finally {
                             connection.release();
                         }
@@ -821,7 +828,7 @@ final class CommandOperationHelper {
             }
 
             private void checkRetryableException(final Throwable originalError, final SingleResultCallback<R> releasingCallback) {
-                if (!shouldAttemptToRetryWrite(command, originalError)) {
+                if (!shouldAttemptToRetryWrite(command, originalError, oldConnection.getDescription().getMaxWireVersion())) {
                     if (isRetryWritesEnabled(command)) {
                         logUnableToRetry(command.getFirstKey(), originalError);
                     }
@@ -866,7 +873,7 @@ final class CommandOperationHelper {
         private final SingleResultCallback<R> callback;
 
         TransformingWriteResultCallback(final CommandWriteTransformerAsync<T, R> transformer,
-                                   final AsyncConnection connection, final SingleResultCallback<R> callback) {
+                                        final AsyncConnection connection, final SingleResultCallback<R> callback) {
             this.transformer = transformer;
             this.connection = connection;
             this.callback = callback;
@@ -875,6 +882,9 @@ final class CommandOperationHelper {
         @Override
         public void onResult(final T result, final Throwable t) {
             if (t != null) {
+                if (t instanceof MongoException) {
+                    addRetryableWriteErrorLabel((MongoException) t, connection.getDescription().getMaxWireVersion());
+                }
                 callback.onResult(null, t);
             } else {
                 try {
@@ -894,13 +904,6 @@ final class CommandOperationHelper {
         }
 
         if (t instanceof MongoSocketException || t instanceof MongoNotPrimaryException || t instanceof MongoNodeIsRecoveringException) {
-            return true;
-        }
-        String errorMessage = t.getMessage();
-        if (t instanceof MongoWriteConcernException) {
-            errorMessage = ((MongoWriteConcernException) t).getWriteConcernError().getMessage();
-        }
-        if (errorMessage.contains("not master") || errorMessage.contains("node is recovering")) {
             return true;
         }
         return RETRYABLE_ERROR_CODES.contains(((MongoException) t).getCode());
@@ -982,12 +985,13 @@ final class CommandOperationHelper {
         }
     }
 
-    private static boolean shouldAttemptToRetryRead(final boolean retryReadsEnabled, final Throwable exception) {
-        return retryReadsEnabled && isRetryableException(exception);
+    private static boolean shouldAttemptToRetryRead(final boolean retryReadsEnabled, final Throwable t) {
+        return retryReadsEnabled && isRetryableException(t);
     }
 
-    private static boolean shouldAttemptToRetryWrite(@Nullable final BsonDocument command, final Throwable exception) {
-        return isRetryWritesEnabled(command) && isRetryableException(exception);
+    private static boolean shouldAttemptToRetryWrite(@Nullable final BsonDocument command, final Throwable t,
+                                                     final int maxWireVersion) {
+        return shouldAttemptToRetryWrite(isRetryWritesEnabled(command), t, maxWireVersion);
     }
 
     private static boolean isRetryWritesEnabled(@Nullable final BsonDocument command) {
@@ -995,8 +999,25 @@ final class CommandOperationHelper {
                 || command.getFirstKey().equals("commitTransaction") || command.getFirstKey().equals("abortTransaction")));
     }
 
-    static boolean shouldAttemptToRetryWrite(final boolean retryWritesEnabled, final Throwable exception) {
-        return retryWritesEnabled && isRetryableException(exception);
+    static final String RETRYABLE_WRITE_ERROR_LABEL = "RetryableWriteError";
+    static boolean shouldAttemptToRetryWrite(final boolean retryWritesEnabled, final Throwable t, final int maxWireVersion) {
+        if (!retryWritesEnabled) {
+            return false;
+        } else if (!(t instanceof MongoException)) {
+            return false;
+        }
+
+        MongoException exception = (MongoException) t;
+        addRetryableWriteErrorLabel(exception, maxWireVersion);
+        return exception.hasErrorLabel(RETRYABLE_WRITE_ERROR_LABEL);
+    }
+
+    static void addRetryableWriteErrorLabel(final MongoException exception, final int maxWireVersion) {
+        if (maxWireVersion >= 9 && exception instanceof MongoSocketException) {
+            exception.addLabel(RETRYABLE_WRITE_ERROR_LABEL);
+        } else if (maxWireVersion < 9 && isRetryableException(exception)) {
+            exception.addLabel(RETRYABLE_WRITE_ERROR_LABEL);
+        }
     }
 
     static void logRetryExecute(final String operation, final Throwable originalError) {
@@ -1013,8 +1034,12 @@ final class CommandOperationHelper {
 
     static MongoException transformWriteException(final MongoException exception) {
         if (exception.getCode() == 20 && exception.getMessage().contains("Transaction numbers")) {
-            return new MongoClientException("This MongoDB deployment does not support retryable writes. "
+            MongoException clientException = new MongoClientException("This MongoDB deployment does not support retryable writes. "
                     + "Please add retryWrites=false to your connection string.", exception);
+            for (final String errorLabel : exception.getErrorLabels()) {
+                clientException.addLabel(errorLabel);
+            }
+            return clientException;
         }
         return exception;
     }

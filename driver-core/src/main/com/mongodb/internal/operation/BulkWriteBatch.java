@@ -35,11 +35,11 @@ import com.mongodb.internal.bulk.WriteRequestWithIndex;
 import com.mongodb.internal.connection.BulkWriteBatchCombiner;
 import com.mongodb.internal.connection.IndexMap;
 import com.mongodb.internal.connection.SplittablePayload;
+import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.CollectibleDocumentFieldNameValidator;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.internal.validator.UpdateFieldNameValidator;
-import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -325,8 +325,10 @@ final class BulkWriteBatch {
         if (!hasError(result)) {
             throw new MongoInternalException("This method should not have been called");
         }
-        return new MongoBulkWriteException(getBulkWriteResult(result), getWriteErrors(result), getWriteConcernError(result),
-                connectionDescription.getServerAddress());
+
+        return new MongoBulkWriteException(getBulkWriteResult(result), getWriteErrors(result),
+                getWriteConcernError(result), connectionDescription.getServerAddress(),
+                result.getArray("errorLabels", new BsonArray()).stream().map(i -> i.asString().getValue()).collect(Collectors.toSet()));
     }
 
     @SuppressWarnings("unchecked")
