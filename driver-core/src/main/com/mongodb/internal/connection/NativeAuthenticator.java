@@ -18,17 +18,22 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoSecurityException;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.authentication.NativeAuthenticationHelper.getAuthCommand;
 import static com.mongodb.internal.authentication.NativeAuthenticationHelper.getNonceCommand;
 import static com.mongodb.internal.connection.CommandHelper.executeCommand;
 import static com.mongodb.internal.connection.CommandHelper.executeCommandAsync;
 
 class NativeAuthenticator extends Authenticator {
+    public static final Logger LOGGER = Loggers.getLogger("authenticator");
+
     NativeAuthenticator(final MongoCredentialWithCache credential) {
         super(credential);
     }
@@ -52,12 +57,13 @@ class NativeAuthenticator extends Authenticator {
     @Override
     void authenticateAsync(final InternalConnection connection, final ConnectionDescription connectionDescription,
                            final SingleResultCallback<Void> callback) {
+        SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         executeCommandAsync(getMongoCredential().getSource(), getNonceCommand(), connection,
                             new SingleResultCallback<BsonDocument>() {
                                 @Override
                                 public void onResult(final BsonDocument nonceResult, final Throwable t) {
                                     if (t != null) {
-                                        callback.onResult(null, translateThrowable(t));
+                                        errHandlingCallback.onResult(null, translateThrowable(t));
                                     } else {
                                         executeCommandAsync(getMongoCredential().getSource(),
                                                             getAuthCommand(getUserNameNonNull(), getPasswordNonNull(),
@@ -67,9 +73,9 @@ class NativeAuthenticator extends Authenticator {
                                                                 @Override
                                                                 public void onResult(final BsonDocument result, final Throwable t) {
                                                                     if (t != null) {
-                                                                        callback.onResult(null, translateThrowable(t));
+                                                                        errHandlingCallback.onResult(null, translateThrowable(t));
                                                                     } else {
-                                                                        callback.onResult(null, null);
+                                                                        errHandlingCallback.onResult(null, null);
                                                                     }
                                                                 }
                                                             });

@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection
 
+import com.mongodb.AuthenticationMechanism
 import com.mongodb.MongoCompressor
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
@@ -29,10 +30,17 @@ import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
+import org.bson.internal.Base64
 import spock.lang.Specification
 
+import java.nio.charset.Charset
 import java.util.concurrent.CountDownLatch
 
+import static com.mongodb.MongoCredential.createCredential
+import static com.mongodb.MongoCredential.createMongoX509Credential
+import static com.mongodb.MongoCredential.createPlainCredential
+import static com.mongodb.MongoCredential.createScramSha1Credential
+import static com.mongodb.MongoCredential.createScramSha256Credential
 import static com.mongodb.internal.connection.ClientMetadataHelperSpecification.createExpectedClientMetadataDocument
 import static com.mongodb.internal.connection.MessageHelper.buildSuccessfulReply
 import static com.mongodb.internal.connection.MessageHelper.decodeCommand
@@ -243,9 +251,162 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
                                  [true, false]].combinations()
     }
 
+    def 'should speculatively authenticate with default authenticator'() {
+        given:
+        def credential = new MongoCredentialWithCache(createCredential('user', 'database', 'pencil' as char[]))
+        def authenticator = Spy(DefaultAuthenticator, constructorArgs: [credential])
+        def scramShaAuthenticator = Spy(ScramShaAuthenticator,
+                constructorArgs: [credential.withMechanism(AuthenticationMechanism.SCRAM_SHA_256),
+                                  { 'rOprNGfwEbeRWgbNEkqO' }, { 'pencil' }])
+        def initializer = new InternalStreamConnectionInitializer(authenticator, null, [])
+        authenticator.getAuthenticatorForIsMaster() >> scramShaAuthenticator
+        def serverResponse = 'r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096'
+        def speculativeAuthenticateResponse =
+                BsonDocument.parse("{ conversationId: 1, payload: BinData(0, '${encode64(serverResponse)}'), done: false }")
+        def firstClientChallenge = 'n,,n=user,r=rOprNGfwEbeRWgbNEkqO'
+
+        when:
+        enqueueSpeculativeAuthenticationResponsesForScramSha256()
+        def description = initializeConnection(async, initializer, internalConnection)
+
+        then:
+        description
+        if (async) {
+            1 * scramShaAuthenticator.authenticateAsync(internalConnection, _, _)
+        } else {
+            1 * scramShaAuthenticator.authenticate(internalConnection, _)
+        }
+        1 * ((SpeculativeAuthenticator) scramShaAuthenticator).createSpeculativeAuthenticateCommand(_)
+        ((SpeculativeAuthenticator) scramShaAuthenticator).getSpeculativeAuthenticateResponse() == speculativeAuthenticateResponse
+        def expectedIsMasterCommand = createIsMasterCommand(firstClientChallenge, 'SCRAM-SHA-256', true)
+        expectedIsMasterCommand == decodeCommand(internalConnection.getSent()[0])
+
+        where:
+        async << [false, false]
+    }
+
+    def 'should speculatively authenticate with SCRAM-SHA-256 authenticator'() {
+        given:
+        def credential = new MongoCredentialWithCache(createScramSha256Credential('user', 'database', 'pencil' as char[]))
+        def authenticator = Spy(ScramShaAuthenticator, constructorArgs: [credential, { 'rOprNGfwEbeRWgbNEkqO' }, { 'pencil' }])
+        def initializer = new InternalStreamConnectionInitializer(authenticator, null, [])
+        def serverResponse = 'r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096'
+        def speculativeAuthenticateResponse =
+                BsonDocument.parse("{ conversationId: 1, payload: BinData(0, '${encode64(serverResponse)}'), done: false }")
+        def firstClientChallenge = 'n,,n=user,r=rOprNGfwEbeRWgbNEkqO'
+
+        when:
+        enqueueSpeculativeAuthenticationResponsesForScramSha256()
+        def description = initializeConnection(async, initializer, internalConnection)
+
+        then:
+        description
+        if (async) {
+            1 * authenticator.authenticateAsync(internalConnection, _, _)
+        } else {
+            1 * authenticator.authenticate(internalConnection, _)
+        }
+        1 * ((SpeculativeAuthenticator) authenticator).createSpeculativeAuthenticateCommand(_)
+        ((SpeculativeAuthenticator) authenticator).getSpeculativeAuthenticateResponse() == speculativeAuthenticateResponse
+        def expectedIsMasterCommand = createIsMasterCommand(firstClientChallenge, 'SCRAM-SHA-256', false)
+        expectedIsMasterCommand == decodeCommand(internalConnection.getSent()[0])
+
+        where:
+        async << [true, false]
+    }
+
+    def 'should speculatively authenticate with SCRAM-SHA-1 authenticator'() {
+        given:
+        def credential = new MongoCredentialWithCache(createScramSha1Credential('user', 'database', 'pencil' as char[]))
+        def authenticator = Spy(ScramShaAuthenticator, constructorArgs: [credential, { 'fyko+d2lbbFgONRv9qkxdawL' }, { 'pencil' }])
+        def initializer = new InternalStreamConnectionInitializer(authenticator, null, [])
+        def serverResponse = 'r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096'
+        def speculativeAuthenticateResponse =
+                BsonDocument.parse("{ conversationId: 1, payload: BinData(0, '${encode64(serverResponse)}'), done: false }")
+
+        when:
+        enqueueSpeculativeAuthenticationResponsesForScramSha1()
+        def description = initializeConnection(async, initializer, internalConnection)
+        def firstClientChallenge = 'n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL'
+
+        then:
+        description
+        if (async) {
+            1 * authenticator.authenticateAsync(internalConnection, _, _)
+        } else {
+            1 * authenticator.authenticate(internalConnection, _)
+        }
+        1 * ((SpeculativeAuthenticator) authenticator).createSpeculativeAuthenticateCommand(_)
+        ((SpeculativeAuthenticator) authenticator).getSpeculativeAuthenticateResponse() == speculativeAuthenticateResponse
+        def expectedIsMasterCommand = createIsMasterCommand(firstClientChallenge, 'SCRAM-SHA-1', false)
+        expectedIsMasterCommand == decodeCommand(internalConnection.getSent()[0])
+
+        where:
+        async << [true, false]
+    }
+
+    def 'should speculatively authenticate with X509 authenticator'() {
+        given:
+        def credential = new MongoCredentialWithCache(createMongoX509Credential())
+        def authenticator = Spy(X509Authenticator, constructorArgs: [credential])
+        def initializer = new InternalStreamConnectionInitializer(authenticator, null, [])
+        def speculativeAuthenticateResponse =
+                BsonDocument.parse('{ dbname: "$external", user: "CN=client,OU=KernelUser,O=MongoDB,L=New York City,ST=New York,C=US"}')
+
+        when:
+        enqueueSpeculativeAuthenticationResponsesForX509()
+        def description = initializeConnection(async, initializer, internalConnection)
+
+        then:
+        description
+        if (async) {
+            1 * authenticator.authenticateAsync(internalConnection, _, _)
+        } else {
+            1 * authenticator.authenticate(internalConnection, _)
+        }
+        1 * ((SpeculativeAuthenticator) authenticator).createSpeculativeAuthenticateCommand(_)
+        ((SpeculativeAuthenticator) authenticator).getSpeculativeAuthenticateResponse() == speculativeAuthenticateResponse
+        def expectedIsMasterCommand = createIsMasterCommand('', 'MONGODB-X509', false)
+        expectedIsMasterCommand == decodeCommand(internalConnection.getSent()[0])
+
+        where:
+        async << [true, false]
+    }
+
+    def 'should not speculatively authenticate with Plain authenticator'() {
+        given:
+        def credential = new MongoCredentialWithCache(createPlainCredential('user', 'database', 'pencil' as char[]))
+        def authenticator = Spy(PlainAuthenticator, constructorArgs: [credential])
+        def initializer = new InternalStreamConnectionInitializer(authenticator, null, [])
+
+        when:
+        enqueueSpeculativeAuthenticationResponsesForPlain()
+        initializeConnection(async, initializer, internalConnection)
+
+        then:
+        ((SpeculativeAuthenticator) authenticator).getSpeculativeAuthenticateResponse() == null
+        ((SpeculativeAuthenticator) authenticator)
+                .createSpeculativeAuthenticateCommand(internalConnection) == null
+        BsonDocument.parse('{ismaster: 1}') == decodeCommand(internalConnection.getSent()[0])
+
+        where:
+        async << [true, false]
+    }
+
     private ConnectionDescription getExpectedDescription(final Integer localValue, final Integer serverValue) {
         new ConnectionDescription(new ConnectionId(serverId, localValue, serverValue),
                 3, ServerType.STANDALONE, 512, 16777216, 33554432, [])
+    }
+
+    def initializeConnection(final boolean async, final InternalStreamConnectionInitializer initializer,
+                             final TestInternalConnection connection) {
+        if (async) {
+            def futureCallback = new FutureResultCallback<ConnectionDescription>()
+            initializer.initializeAsync(connection, futureCallback)
+            futureCallback.get()
+        } else {
+            initializer.initialize(connection)
+        }
     }
 
     def enqueueSuccessfulReplies(final boolean isArbiter, final Integer serverConnectionId) {
@@ -268,5 +429,65 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
                         (isArbiter ? ', isreplicaset: true, arbiterOnly: true' : '') +
                         '}'))
         internalConnection.enqueueReply(buildSuccessfulReply('{ok: 1, versionArray : [3, 0, 0]}'))
+    }
+
+    def enqueueSpeculativeAuthenticationResponsesForScramSha256() {
+        def initialServerResponse = 'r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096'
+        def finalServerResponse = 'v=6rriTRBi23WpRR/wtup+mMhUZUn/dB5nLTJRsjl95G4='
+        enqueueSpeculativeAuthenticationResponsesForScramSha(initialServerResponse, finalServerResponse)
+    }
+
+    def enqueueSpeculativeAuthenticationResponsesForScramSha1() {
+        def initialServerResponse = 'r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096'
+        def finalServerResponse = 'v=rmF9pqV8S7suAoZWja4dJRkFsKQ='
+        enqueueSpeculativeAuthenticationResponsesForScramSha(initialServerResponse, finalServerResponse)
+    }
+
+    def enqueueSpeculativeAuthenticationResponsesForScramSha(final String initialServerResponse,
+                                                             final String finalServerResponse) {
+        internalConnection.enqueueReply(buildSuccessfulReply(
+                '{ok: 1, maxWireVersion: 9, ' +
+                        'ismaster: true, ' +
+                        'speculativeAuthenticate: { conversationId: 1, done: false, ' +
+                        "payload: BinData(0, '${encode64(initialServerResponse)}')}}"))
+        internalConnection.enqueueReply(buildSuccessfulReply(
+                '{ok: 1, maxWireVersion: 9, ' +
+                        'conversationId: 1, done: true, ' +
+                        "payload: BinData(0, '${encode64(finalServerResponse)}')}"))
+        internalConnection.enqueueReply(buildSuccessfulReply('{ok: 1}'))
+    }
+
+    def enqueueSpeculativeAuthenticationResponsesForX509() {
+        internalConnection.enqueueReply(buildSuccessfulReply(
+                '{ok: 1, maxWireVersion: 9, ismaster: true, conversationId: 1, ' +
+                        'speculativeAuthenticate: { dbname: \"$external\", ' +
+                        'user: \"CN=client,OU=KernelUser,O=MongoDB,L=New York City,ST=New York,C=US\" }}'))
+        internalConnection.enqueueReply(buildSuccessfulReply('{ok: 1}'))
+    }
+
+    def enqueueSpeculativeAuthenticationResponsesForPlain() {
+        internalConnection.enqueueReply(buildSuccessfulReply(
+                '{ok: 1, maxWireVersion: 9, ismaster: true, conversationId: 1}'))
+        internalConnection.enqueueReply(buildSuccessfulReply(
+                '{ok: 1, done: true, conversationId: 1}'))
+        internalConnection.enqueueReply(buildSuccessfulReply('{ok: 1}'))
+    }
+
+    def encode64(String string) {
+        Base64.encode(string.getBytes(Charset.forName('UTF-8')))
+    }
+
+    def createIsMasterCommand(final String firstClientChallenge, final String mechanism,
+                              final boolean hasSaslSupportedMechs) {
+        String isMaster = '{ismaster: 1, ' +
+                (hasSaslSupportedMechs ? 'saslSupportedMechs: "database.user", ' : '') +
+                (mechanism == 'MONGODB-X509' ?
+                        'speculativeAuthenticate: { authenticate: 1, ' +
+                                "mechanism: '${mechanism}', db: \"\$external\" } }" :
+                        'speculativeAuthenticate: { saslStart: 1, ' +
+                                "mechanism: '${mechanism}', payload: BinData(0, '${encode64(firstClientChallenge)}'), " +
+                                'db: "admin", options: { skipEmptyExchange: true } } }')
+
+        BsonDocument.parse(isMaster)
     }
 }

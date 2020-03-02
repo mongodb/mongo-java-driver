@@ -18,6 +18,7 @@ package com.mongodb.connection;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.Immutable;
+import org.bson.BsonArray;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,6 +41,7 @@ public class ConnectionDescription {
     private final int maxDocumentSize;
     private final int maxMessageSize;
     private final List<String> compressors;
+    private final BsonArray saslSupportedMechanisms;
 
     private static final int DEFAULT_MAX_MESSAGE_SIZE = 0x2000000;   // 32MB
     private static final int DEFAULT_MAX_WRITE_BATCH_SIZE = 512;
@@ -69,6 +71,25 @@ public class ConnectionDescription {
     public ConnectionDescription(final ConnectionId connectionId, final int maxWireVersion,
                                  final ServerType serverType, final int maxBatchCount, final int maxDocumentSize,
                                  final int maxMessageSize, final List<String> compressors) {
+        this(connectionId, maxWireVersion, serverType, maxBatchCount, maxDocumentSize, maxMessageSize, compressors, null);
+    }
+
+    /**
+     * Construct an instance.
+     *
+     * @param connectionId    the connection id
+     * @param maxWireVersion  the max wire version
+     * @param serverType      the server type
+     * @param maxBatchCount   the max batch count
+     * @param maxDocumentSize the max document size in bytes
+     * @param maxMessageSize  the max message size in bytes
+     * @param compressors     the available compressors on the connection
+     * @param saslSupportedMechanisms the supported SASL mechanisms
+     * @since 4.1
+     */
+    public ConnectionDescription(final ConnectionId connectionId, final int maxWireVersion,
+                                 final ServerType serverType, final int maxBatchCount, final int maxDocumentSize,
+                                 final int maxMessageSize, final List<String> compressors, final BsonArray saslSupportedMechanisms) {
         this.connectionId = connectionId;
         this.serverType = serverType;
         this.maxBatchCount = maxBatchCount;
@@ -76,6 +97,7 @@ public class ConnectionDescription {
         this.maxMessageSize = maxMessageSize;
         this.maxWireVersion = maxWireVersion;
         this.compressors = notNull("compressors", Collections.unmodifiableList(new ArrayList<String>(compressors)));
+        this.saslSupportedMechanisms = saslSupportedMechanisms;
     }
 
     /**
@@ -88,7 +110,7 @@ public class ConnectionDescription {
     public ConnectionDescription withConnectionId(final ConnectionId connectionId) {
         notNull("connectionId", connectionId);
         return new ConnectionDescription(connectionId, maxWireVersion, serverType, maxBatchCount, maxDocumentSize, maxMessageSize,
-                compressors);
+                compressors, saslSupportedMechanisms);
     }
 
     /**
@@ -162,6 +184,16 @@ public class ConnectionDescription {
      */
     public List<String> getCompressors() {
         return compressors;
+    }
+
+    /**
+     * Get the supported SASL mechanisms.
+     *
+     * @return the supported SASL mechanisms.
+     * @since 4.1
+     */
+    public BsonArray getSaslSupportedMechanisms() {
+        return saslSupportedMechanisms;
     }
 
     /**

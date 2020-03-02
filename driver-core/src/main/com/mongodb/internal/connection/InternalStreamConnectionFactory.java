@@ -31,9 +31,9 @@ import static com.mongodb.internal.connection.ClientMetadataHelper.createClientM
 class InternalStreamConnectionFactory implements InternalConnectionFactory {
     private final StreamFactory streamFactory;
     private final BsonDocument clientMetadataDocument;
-    private final Authenticator authenticator;
     private final List<MongoCompressor> compressorList;
     private final CommandListener commandListener;
+    private final MongoCredentialWithCache credential;
 
     InternalStreamConnectionFactory(final StreamFactory streamFactory, final MongoCredentialWithCache credential,
                                     final String applicationName, final MongoDriverInformation mongoDriverInformation,
@@ -43,11 +43,12 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
         this.compressorList = notNull("compressorList", compressorList);
         this.commandListener = commandListener;
         this.clientMetadataDocument = createClientMetadataDocument(applicationName, mongoDriverInformation);
-        authenticator = credential == null ? null : createAuthenticator(credential);
+        this.credential = credential;
     }
 
     @Override
     public InternalConnection create(final ServerId serverId) {
+        Authenticator authenticator = credential == null ? null : createAuthenticator(credential);
         return new InternalStreamConnection(serverId, streamFactory, compressorList, commandListener,
                                             new InternalStreamConnectionInitializer(authenticator, clientMetadataDocument,
                                                                                            compressorList));
