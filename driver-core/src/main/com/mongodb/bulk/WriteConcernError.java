@@ -16,7 +16,11 @@
 
 package com.mongodb.bulk;
 
+import com.mongodb.lang.NonNull;
 import org.bson.BsonDocument;
+
+import java.util.Collections;
+import java.util.Set;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -31,6 +35,7 @@ public class WriteConcernError {
     private final String codeName;
     private final String message;
     private final BsonDocument details;
+    private final Set<String> errorLabels;
 
 
     /**
@@ -42,10 +47,26 @@ public class WriteConcernError {
      * @param details any details
      */
     public WriteConcernError(final int code, final String codeName, final String message, final BsonDocument details) {
+        this(code, codeName, message, details, Collections.emptySet());
+    }
+
+    /**
+     * Constructs a new instance.
+     *
+     * @param code    the error code
+     * @param codeName the error code name
+     * @param message the error message
+     * @param details any details
+     * @param errorLabels any error labels
+     * @since 4.1
+     */
+    public WriteConcernError(final int code, final String codeName, final String message, final BsonDocument details,
+                             final Set<String> errorLabels) {
         this.code = code;
         this.codeName = notNull("codeName", codeName);
         this.message = notNull("message", message);
         this.details = notNull("details", details);
+        this.errorLabels = notNull("errorLabels", errorLabels);
     }
 
     /**
@@ -86,6 +107,29 @@ public class WriteConcernError {
         return details;
     }
 
+    /**
+     * Adds the given error label to the exception.
+     *
+     * @param errorLabel the non-null error label to add to the exception
+     *
+     * @since 4.1
+     */
+    public void addLabel(final String errorLabel) {
+        notNull("errorLabel", errorLabel);
+        errorLabels.add(errorLabel);
+    }
+
+    /**
+     * Gets the set of error labels associated with this exception.
+     *
+     * @return the error labels, which may not be null but may be empty
+     * @since 4.1
+     */
+    @NonNull
+    public Set<String> getErrorLabels() {
+        return Collections.unmodifiableSet(errorLabels);
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -109,6 +153,9 @@ public class WriteConcernError {
         if (!message.equals(that.message)) {
             return false;
         }
+        if (!errorLabels.equals(that.errorLabels)) {
+            return false;
+        }
 
         return true;
     }
@@ -119,6 +166,7 @@ public class WriteConcernError {
         result = 31 * result + codeName.hashCode();
         result = 31 * result + message.hashCode();
         result = 31 * result + details.hashCode();
+        result = 31 * result + errorLabels.hashCode();
         return result;
     }
 
@@ -129,6 +177,7 @@ public class WriteConcernError {
                + ", codeName='" + codeName + '\''
                + ", message='" + message + '\''
                + ", details=" + details
+               + ", errorLabels=" + errorLabels
                + '}';
     }
 }

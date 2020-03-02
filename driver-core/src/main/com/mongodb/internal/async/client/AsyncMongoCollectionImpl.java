@@ -17,6 +17,7 @@
 package com.mongodb.internal.async.client;
 
 import com.mongodb.MongoBulkWriteException;
+import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoWriteConcernException;
@@ -1066,14 +1067,17 @@ class AsyncMongoCollectionImpl<TDocument> implements AsyncMongoCollection<TDocum
         executor.execute(writeOperation, readConcern, clientSession, (result, t) -> {
             if (t instanceof MongoBulkWriteException) {
                 MongoBulkWriteException e = (MongoBulkWriteException) t;
+                MongoException exception;
                 if (e.getWriteErrors().isEmpty()) {
-                    callback.onResult(null,
-                                      new MongoWriteConcernException(e.getWriteConcernError(),
-                                              translateBulkWriteResult(type, e.getWriteResult()), e.getServerAddress()));
+                    exception = new MongoWriteConcernException(e.getWriteConcernError(),
+                            translateBulkWriteResult(type, e.getWriteResult()), e.getServerAddress());
                 } else {
-                    callback.onResult(null, new MongoWriteException(new WriteError(e.getWriteErrors().get(0)),
-                                                                    e.getServerAddress()));
+                    exception = new MongoWriteException(new WriteError(e.getWriteErrors().get(0)), e.getServerAddress());
                 }
+                for (final String errorLabel : e.getErrorLabels()) {
+                    exception.addLabel(errorLabel);
+                }
+                callback.onResult(null, exception);
             } else {
                 callback.onResult(result, t);
             }

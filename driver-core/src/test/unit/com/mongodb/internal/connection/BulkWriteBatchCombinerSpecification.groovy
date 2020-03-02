@@ -86,7 +86,7 @@ class BulkWriteBatchCombinerSpecification extends Specification {
 
         then:
         def e = thrown(MongoBulkWriteException)
-        e == new MongoBulkWriteException(BulkWriteResult.acknowledged(INSERT, 0, 0, [], []), [error], null, new ServerAddress())
+        e == new MongoBulkWriteException(BulkWriteResult.acknowledged(INSERT, 0, 0, [], []), [error], null, new ServerAddress(), [] as Set)
     }
 
     def 'should throw last write concern error'() {
@@ -101,7 +101,8 @@ class BulkWriteBatchCombinerSpecification extends Specification {
 
         then:
         def e = thrown(MongoBulkWriteException)
-        e == new MongoBulkWriteException(BulkWriteResult.acknowledged(INSERT, 0, 0, [], []), [], writeConcernError, new ServerAddress())
+        e == new MongoBulkWriteException(BulkWriteResult.acknowledged(INSERT, 0, 0, [], []), [], writeConcernError,
+                new ServerAddress(), [] as Set)
     }
 
     def 'should not stop run if no errors'() {

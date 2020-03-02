@@ -548,7 +548,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         def originalException = new MongoSocketException('Some failure', new ServerAddress())
 
         when:
-        testRetryableOperationThrowsOriginalError(operation, [[3, 6, 0], [3, 4, 0]],
+        testRetryableOperationThrowsOriginalError(operation, [[3, 6, 0], [3, 6, 0], [3, 4, 0]],
                 [REPLICA_SET_PRIMARY, REPLICA_SET_PRIMARY], originalException, async)
 
         then:
@@ -556,7 +556,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         commandException == originalException
 
         when:
-        testRetryableOperationThrowsOriginalError(operation, [[3, 6, 0], [3, 6, 0]],
+        testRetryableOperationThrowsOriginalError(operation, [[3, 6, 0], [3, 6, 0], [3, 6, 0]],
                 [REPLICA_SET_PRIMARY, STANDALONE], originalException, async)
 
         then:
@@ -564,7 +564,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         commandException == originalException
 
         when:
-        testRetryableOperationThrowsOriginalError(operation, [[3, 6, 0]],
+        testRetryableOperationThrowsOriginalError(operation, [[3, 6, 0], [3, 6, 0]],
                 [REPLICA_SET_PRIMARY], originalException, async)
 
         then:

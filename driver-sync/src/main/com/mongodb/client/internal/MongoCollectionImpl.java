@@ -17,6 +17,7 @@
 package com.mongodb.client.internal;
 
 import com.mongodb.MongoBulkWriteException;
+import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoWriteConcernException;
@@ -1007,13 +1008,18 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         try {
             return executor.execute(writeOperation, readConcern, clientSession);
         } catch (MongoBulkWriteException e) {
+            MongoException exception;
             if (e.getWriteErrors().isEmpty()) {
-                throw new MongoWriteConcernException(e.getWriteConcernError(),
+                exception = new MongoWriteConcernException(e.getWriteConcernError(),
                         translateBulkWriteResult(type, e.getWriteResult()),
                         e.getServerAddress());
             } else {
-                throw new MongoWriteException(new WriteError(e.getWriteErrors().get(0)), e.getServerAddress());
+                exception = new MongoWriteException(new WriteError(e.getWriteErrors().get(0)), e.getServerAddress());
             }
+            for (final String errorLabel : e.getErrorLabels()) {
+                exception.addLabel(errorLabel);
+            }
+            throw exception;
         }
     }
 

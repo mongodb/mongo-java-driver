@@ -54,7 +54,8 @@ final class FindAndModifyHelper {
 
     private static <T> T transformDocument(final BsonDocument result, final ServerAddress serverAddress) {
         if (hasWriteConcernError(result)) {
-            throw new MongoWriteConcernException(createWriteConcernError(result.getDocument("writeConcernError")),
+            throw new MongoWriteConcernException(
+                    createWriteConcernError(result.getDocument("writeConcernError")),
                     createWriteConcernResult(result.getDocument("lastErrorObject", new BsonDocument())), serverAddress);
         }
 

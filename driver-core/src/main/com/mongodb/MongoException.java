@@ -114,6 +114,11 @@ public class MongoException extends RuntimeException {
     public MongoException(final int code, final String msg, final Throwable t) {
         super(msg, t);
         this.code = code;
+        if (t instanceof MongoException) {
+            for (final String errorLabel : ((MongoException) t).getErrorLabels()) {
+                addLabel(errorLabel);
+            }
+        }
     }
 
     /**
