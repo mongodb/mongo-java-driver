@@ -37,6 +37,7 @@ import static com.mongodb.internal.operation.OperationHelper.withReadConnectionS
 final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     private final ReadBinding binding;
     private final ChangeStreamOperation<T> changeStreamOperation;
+    private final int maxWireVersion;
 
     private AggregateResponseBatchCursor<RawBsonDocument> wrapped;
     private BsonDocument resumeToken;
@@ -45,11 +46,13 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
     ChangeStreamBatchCursor(final ChangeStreamOperation<T> changeStreamOperation,
                             final AggregateResponseBatchCursor<RawBsonDocument> wrapped,
                             final ReadBinding binding,
-                            final BsonDocument resumeToken) {
+                            final BsonDocument resumeToken,
+                            final int maxWireVersion) {
         this.changeStreamOperation = changeStreamOperation;
         this.binding = binding.retain();
         this.wrapped = wrapped;
         this.resumeToken = resumeToken;
+        this.maxWireVersion = maxWireVersion;
     }
 
     AggregateResponseBatchCursor<RawBsonDocument> getWrapped() {
@@ -139,6 +142,11 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
         return wrapped.isFirstBatchEmpty();
     }
 
+    @Override
+    public int getMaxWireVersion() {
+        return maxWireVersion;
+    }
+
     private void cachePostBatchResumeToken(final AggregateResponseBatchCursor<RawBsonDocument> queryBatchCursor) {
         if (queryBatchCursor.getPostBatchResumeToken() != null) {
             resumeToken = queryBatchCursor.getPostBatchResumeToken();
@@ -165,7 +173,7 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
             try {
                 return function.apply(wrapped);
             } catch (Throwable t) {
-                if (!isRetryableError(t)) {
+                if (!isRetryableError(t, maxWireVersion)) {
                     throw MongoException.fromThrowableNonNull(t);
                 }
             }

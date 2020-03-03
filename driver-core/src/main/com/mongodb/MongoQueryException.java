@@ -48,9 +48,7 @@ public class MongoQueryException extends MongoServerException {
      */
     public MongoQueryException(final MongoCommandException commandException) {
         this(commandException.getServerAddress(), commandException.getErrorCode(), commandException.getErrorMessage());
-        for (String label : commandException.getErrorLabels()) {
-            addLabel(label);
-        }
+        addLabels(commandException.getErrorLabels());
     }
 
     /**

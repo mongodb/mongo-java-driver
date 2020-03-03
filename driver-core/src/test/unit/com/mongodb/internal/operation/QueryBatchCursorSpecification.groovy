@@ -119,7 +119,11 @@ class QueryBatchCursorSpecification extends Specification {
     def 'should handle exceptions when killing cursor and a connection can not be obtained'() {
         given:
         def serverAddress = new ServerAddress()
-        def connection = Mock(Connection)
+        def connection = Mock(Connection) {
+            _ * getDescription() >> Stub(ConnectionDescription) {
+                getMaxWireVersion() >> 4
+            }
+        }
         def connectionSource = Stub(ConnectionSource) {
             getConnection() >> { throw new MongoSocketOpenException("can't open socket", serverAddress, new IOException()) }
         }

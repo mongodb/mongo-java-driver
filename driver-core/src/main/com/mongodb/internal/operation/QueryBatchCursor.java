@@ -67,6 +67,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     private BsonDocument postBatchResumeToken;
     private BsonTimestamp operationTime;
     private boolean firstBatchEmpty;
+    private int maxWireVersion = 0;
 
     QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize, final Decoder<T> decoder) {
         this(firstQueryResult, limit, batchSize, decoder, null);
@@ -117,6 +118,9 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         if (serverCursor == null && this.connectionSource != null) {
             this.connectionSource.release();
             this.connectionSource = null;
+        }
+        if (connection != null) {
+            this.maxWireVersion = connection.getDescription().getMaxWireVersion();
         }
     }
 
@@ -250,6 +254,11 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     @Override
     public boolean isFirstBatchEmpty() {
         return firstBatchEmpty;
+    }
+
+    @Override
+    public int getMaxWireVersion() {
+        return maxWireVersion;
     }
 
     private void getMore() {

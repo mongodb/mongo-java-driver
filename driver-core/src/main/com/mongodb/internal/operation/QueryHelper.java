@@ -26,7 +26,7 @@ final class QueryHelper {
         if (commandException.getErrorCode() == 43) {
             return new MongoCursorNotFoundException(cursor.getId(), cursor.getAddress());
         } else {
-            return new MongoQueryException(cursor.getAddress(), commandException.getErrorCode(), commandException.getErrorMessage());
+            return new MongoQueryException(commandException);
         }
     }
 

@@ -24,11 +24,13 @@ import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.OperationType;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.event.CommandEvent;
+import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
+import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
 import org.junit.After;
@@ -47,6 +49,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.mongodb.JsonTestServerVersionChecker.skipTest;
+import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static java.lang.String.format;
@@ -64,8 +67,10 @@ public abstract class AbstractChangeStreamsTest {
     private final MongoNamespace namespace2;
     private final BsonDocument definition;
     private final boolean skipTest;
+
     private MongoClient mongoClient;
     private TestCommandListener commandListener;
+    private CollectionHelper<BsonDocument> collectionHelper;
 
     public AbstractChangeStreamsTest(final String filename, final String description, final MongoNamespace namespace,
                                      final MongoNamespace namespace2, final BsonDocument definition, final boolean skipTest) {
@@ -83,14 +88,16 @@ public abstract class AbstractChangeStreamsTest {
     public void setUp() {
         assumeFalse(skipTest);
         CollectionHelper.dropDatabase(namespace.getDatabaseName(), WriteConcern.MAJORITY);
-        CollectionHelper<BsonDocument> collectionHelper = new CollectionHelper<BsonDocument>(new BsonDocumentCodec(), namespace);
+        collectionHelper = new CollectionHelper<BsonDocument>(new BsonDocumentCodec(), namespace);
         collectionHelper.drop();
         collectionHelper.create();
 
-        CollectionHelper.dropDatabase(namespace2.getDatabaseName(), WriteConcern.MAJORITY);
-        CollectionHelper<BsonDocument> collectionHelper2 = new CollectionHelper<BsonDocument>(new BsonDocumentCodec(), namespace2);
-        collectionHelper2.drop();
-        collectionHelper2.create();
+        if (namespace2 != null) {
+            CollectionHelper.dropDatabase(namespace2.getDatabaseName(), WriteConcern.MAJORITY);
+            CollectionHelper<BsonDocument> collectionHelper2 = new CollectionHelper<BsonDocument>(new BsonDocumentCodec(), namespace2);
+            collectionHelper2.drop();
+            collectionHelper2.create();
+        }
 
         if (definition.containsKey("failPoint")) {
             collectionHelper.runAdminCommand(definition.getDocument("failPoint"));
@@ -102,6 +109,11 @@ public abstract class AbstractChangeStreamsTest {
 
     @After
     public void cleanUp() {
+        if (collectionHelper != null && definition.containsKey("failPoint")) {
+            collectionHelper.runAdminCommand(new BsonDocument("configureFailPoint",
+                    definition.getDocument("failPoint").getString("configureFailPoint"))
+                    .append("mode", new BsonString("off")));
+        }
         if (mongoClient != null) {
             mongoClient.close();
         }
@@ -149,7 +161,7 @@ public abstract class AbstractChangeStreamsTest {
                 cursor.next();
             } catch (MongoException e) {
                 assertTrue(e.getCode() == error.getInt32("code").intValue()
-                        || !Collections.disjoint(e.getErrorLabels(), error.getArray("errorLabels")));
+                        || !Collections.disjoint(e.getErrorLabels(), error.getArray("errorLabels", new BsonArray())));
             }
         }
     }
@@ -171,14 +183,27 @@ public abstract class AbstractChangeStreamsTest {
 
             String database = definition.getString("target").getValue().equals("client") ? "admin" : namespace.getDatabaseName();
             List<CommandEvent> expectedEvents = getExpectedEvents(definition.getArray("expectations"), database, new BsonDocument());
-            List<CommandEvent> events = commandListener.getEvents();
+            List<CommandEvent> events = filterCommandStartedEvents();
 
             for (int i = 0; i < expectedEvents.size(); i++) {
                 CommandEvent expectedEvent = expectedEvents.get(i);
                 CommandEvent event = events.get(i);
-                CommandMonitoringTestHelper.assertEventsEquality(singletonList(expectedEvent), singletonList(event));
+                assertEventsEquality(singletonList(expectedEvent), singletonList(event));
             }
         }
+    }
+
+    private List<CommandEvent> filterCommandStartedEvents() {
+        List<CommandEvent> events = commandListener.getEvents();
+        List<CommandEvent> filteredEvents = new ArrayList<CommandEvent>();
+
+        for (int i = 0; i < events.size(); i++) {
+            CommandEvent event = events.get(i);
+            if (event instanceof CommandStartedEvent && !event.getCommandName().toLowerCase().equals("killcursors")) {
+                filteredEvents.add(event);
+            }
+        }
+        return filteredEvents;
     }
 
 
@@ -224,15 +249,16 @@ public abstract class AbstractChangeStreamsTest {
                 localMongoClient.getDatabase(namespace.getDatabaseName()).getCollection(namespace.getCollectionName(), BsonDocument.class));
     }
 
-    @Parameterized.Parameters(name = "{1}")
+    @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<Object[]>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/change-streams")) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             MongoNamespace namespace = new MongoNamespace(testDocument.getString("database_name").getValue(),
                     testDocument.getString("collection_name").getValue());
-            MongoNamespace namespace2 = new MongoNamespace(testDocument.getString("database2_name").getValue(),
-                    testDocument.getString("collection2_name").getValue());
+            MongoNamespace namespace2 = testDocument.containsKey("database2_name")
+                    ? new MongoNamespace(testDocument.getString("database2_name").getValue(),
+                    testDocument.getString("collection2_name").getValue()) : null;
 
             for (BsonValue test : testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),

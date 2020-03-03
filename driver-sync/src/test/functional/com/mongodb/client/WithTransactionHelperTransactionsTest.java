@@ -19,6 +19,7 @@ package com.mongodb.client;
 import com.mongodb.MongoClientSettings;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -32,13 +33,15 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.mongodb.JsonTestServerVersionChecker.skipTest;
+import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 
 // See https://github.com/mongodb/specifications/tree/master/source/transactions-convenient-api/tests
 @RunWith(Parameterized.class)
 public class WithTransactionHelperTransactionsTest extends AbstractUnifiedTest {
-    public WithTransactionHelperTransactionsTest(final String filename, final String description, final BsonArray data,
+    public WithTransactionHelperTransactionsTest(final String filename, final String description, final String databaseName,
+                                                 final String collectionName, final BsonArray data,
                                                  final BsonDocument definition, final boolean skipTest) {
-        super(filename, description, data, definition, skipTest);
+        super(filename, description, databaseName, collectionName, data, definition, skipTest);
     }
 
     @Override
@@ -53,6 +56,9 @@ public class WithTransactionHelperTransactionsTest extends AbstractUnifiedTest {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             for (BsonValue test : testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
+                        testDocument.getString("database_name", new BsonString(getDefaultDatabaseName())).getValue(),
+                        testDocument.getString("collection_name",
+                                new BsonString(file.getName().substring(0, file.getName().lastIndexOf(".")))).getValue(),
                         testDocument.getArray("data"), test.asDocument(), skipTest(testDocument, test.asDocument())});
             }
         }

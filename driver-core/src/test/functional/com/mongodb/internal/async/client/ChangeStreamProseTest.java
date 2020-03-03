@@ -44,7 +44,6 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.internal.async.client.Fixture.getDefaultDatabaseName;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
@@ -131,29 +130,6 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
         assertTrue(exceptionFound);
     }
 
-    //
-    // ChangeStream will not attempt to resume after encountering error code 11601 (Interrupted), 136 (CappedPositionLost),
-    // or 237 (CursorKilled) while executing a getMore command.
-    //
-    @Test
-    public void testNoResumeErrors() {
-        assumeTrue(serverVersionAtLeast(4, 0));
-        AsyncBatchCursor<ChangeStreamDocument<Document>> cursor = createChangeStreamCursor();
-        insertOneDocument();
-
-        for (int errCode : asList(136, 237, 11601)) {
-            try {
-                setFailPoint("getMore", errCode);
-                getNextBatch(cursor);
-            } catch (MongoException e) {
-                assertEquals(errCode, e.getCode());
-            } finally {
-                disableFailPoint();
-            }
-        }
-        cursor.close();
-    }
-
     private void insertOneDocument() {
         FutureResultCallback<InsertOneResult> callback = new FutureResultCallback<>();
         collection.insertOne(Document.parse("{ x: 1 }"), callback);
@@ -182,7 +158,8 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
         failPointDocument = new BsonDocument("configureFailPoint", new BsonString("failCommand"))
                 .append("mode", new BsonDocument("times", new BsonInt32(1)))
                 .append("data", new BsonDocument("failCommands", new BsonArray(asList(new BsonString(command))))
-                        .append("errorCode", new BsonInt32(errCode)));
+                        .append("errorCode", new BsonInt32(errCode))
+                        .append("errorLabels", new BsonArray(asList(new BsonString("ResumableChangeStreamError")))));
         collectionHelper.runAdminCommand(failPointDocument);
     }
 

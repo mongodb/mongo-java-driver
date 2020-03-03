@@ -25,9 +25,9 @@ import org.bson.BsonArray;
 import org.bson.BsonDocument;
 
 public class SessionsTest extends AbstractSessionsTest {
-    public SessionsTest(final String filename, final String description, final BsonArray data, final BsonDocument definition,
-                        final boolean skipTest) {
-        super(filename, description, data, definition, skipTest);
+    public SessionsTest(final String filename, final String description, final String databaseName, final String collectionName,
+                        final BsonArray data, final BsonDocument definition, final boolean skipTest) {
+        super(filename, description, databaseName, collectionName, data, definition, skipTest);
     }
 
     @Override

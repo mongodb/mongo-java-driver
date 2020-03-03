@@ -17,7 +17,11 @@
 package com.mongodb;
 
 import com.mongodb.lang.Nullable;
+import org.bson.BsonArray;
+import org.bson.BsonDocument;
+import org.bson.BsonValue;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -115,10 +119,20 @@ public class MongoException extends RuntimeException {
         super(msg, t);
         this.code = code;
         if (t instanceof MongoException) {
-            for (final String errorLabel : ((MongoException) t).getErrorLabels()) {
-                addLabel(errorLabel);
-            }
+            addLabels(((MongoException) t).getErrorLabels());
         }
+    }
+
+    /**
+     * @param code     the error code
+     * @param msg      the message
+     * @param response the response
+     * @since 4.1
+     */
+    public MongoException(final int code, final String msg, final BsonDocument response) {
+        super(msg);
+        this.code = code;
+        addLabels(response.getArray("errorLabels", new BsonArray()));
     }
 
     /**
@@ -176,4 +190,15 @@ public class MongoException extends RuntimeException {
         return errorLabels.contains(errorLabel);
     }
 
+    protected void addLabels(final BsonArray labels) {
+        for (final BsonValue errorLabel : labels) {
+            addLabel(errorLabel.asString().getValue());
+        }
+    }
+
+    protected void addLabels(final Collection<String> labels) {
+        for (final String errorLabel : labels) {
+            addLabel(errorLabel);
+        }
+    }
 }
