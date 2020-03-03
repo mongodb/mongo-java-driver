@@ -27,6 +27,7 @@ import com.mongodb.crypt.capi.MongoCryptOptions;
 import com.mongodb.crypt.capi.MongoLocalKmsProviderOptions;
 import org.bson.BsonDocument;
 
+import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -78,11 +79,6 @@ public final class MongoCryptHelper {
             spawnArgs.add("--idleShutdownTimeoutSecs");
             spawnArgs.add("60");
         }
-        if (!spawnArgs.contains("--logpath")) {
-            spawnArgs.add("--logappend");
-            spawnArgs.add("--logpath");
-            spawnArgs.add(System.getProperty("os.name").startsWith("Windows") ? "NUL" : "/dev/null");
-        }
         return spawnArgs;
     }
 
@@ -113,7 +109,7 @@ public final class MongoCryptHelper {
 
     public static void startProcess(final ProcessBuilder processBuilder) {
         try {
-            processBuilder.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+            processBuilder.redirectOutput(new File(System.getProperty("os.name").startsWith("Windows") ? "NUL" : "/dev/null"));
             processBuilder.start();
         } catch (Throwable t) {
             throw new MongoClientException("Exception starting mongocryptd process. Is `mongocryptd` on the system path?", t);
