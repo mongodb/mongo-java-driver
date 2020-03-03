@@ -30,7 +30,8 @@ import java.util.Map;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.capi.MongoCryptHelper.createMongocryptdClientSettings;
-import static com.mongodb.internal.capi.MongoCryptHelper.createMongocryptdSpawnArgs;
+import static com.mongodb.internal.capi.MongoCryptHelper.createProcessBuilder;
+import static com.mongodb.internal.capi.MongoCryptHelper.startProcess;
 
 @SuppressWarnings("UseOfProcessBuilder")
 class CommandMarker implements Closeable {
@@ -45,8 +46,8 @@ class CommandMarker implements Closeable {
         }
 
         if (!options.containsKey("mongocryptdBypassSpawn") || !((Boolean) options.get("mongocryptdBypassSpawn"))) {
-            processBuilder = new ProcessBuilder(createMongocryptdSpawnArgs(options));
-            startProcess();
+            processBuilder = createProcessBuilder(options);
+            startProcess(processBuilder);
         } else {
             processBuilder = null;
         }
@@ -106,18 +107,10 @@ class CommandMarker implements Closeable {
 
     private void startProcessAndContinue(final SingleResultCallback<Void> callback) {
         try {
-            startProcess();
+            startProcess(processBuilder);
             callback.onResult(null, null);
         } catch (Throwable t) {
             callback.onResult(null, t);
-        }
-    }
-
-    private void startProcess() {
-        try {
-            processBuilder.start();
-        } catch (Throwable t) {
-            throw new MongoClientException("Exception starting mongocryptd process. Is `mongocryptd` on the system path?", t);
         }
     }
 }

@@ -26,12 +26,12 @@ import com.mongodb.client.MongoClients;
 import org.bson.RawBsonDocument;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.Map;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.capi.MongoCryptHelper.createMongocryptdClientSettings;
-import static com.mongodb.internal.capi.MongoCryptHelper.createMongocryptdSpawnArgs;
+import static com.mongodb.internal.capi.MongoCryptHelper.createProcessBuilder;
+import static com.mongodb.internal.capi.MongoCryptHelper.startProcess;
 
 @SuppressWarnings("UseOfProcessBuilder")
 class CommandMarker implements Closeable {
@@ -46,8 +46,8 @@ class CommandMarker implements Closeable {
         }
 
         if (!options.containsKey("mongocryptdBypassSpawn") || !((Boolean) options.get("mongocryptdBypassSpawn"))) {
-            processBuilder = new ProcessBuilder(createMongocryptdSpawnArgs(options));
-            startProcess();
+                processBuilder = createProcessBuilder(options);
+                startProcess(processBuilder);
         } else {
             processBuilder = null;
         }
@@ -63,7 +63,7 @@ class CommandMarker implements Closeable {
                 if (processBuilder == null) {  // mongocryptdBypassSpawn=true
                     throw e;
                 }
-                startProcess();
+                    startProcess(processBuilder);
                 return executeCommand(databaseName, command);
             }
         } catch (MongoException e) {
@@ -83,14 +83,6 @@ class CommandMarker implements Closeable {
                 .withReadConcern(ReadConcern.DEFAULT)
                 .withReadPreference(ReadPreference.primary())
                 .runCommand(markableCommand, RawBsonDocument.class);
-    }
-
-    private void startProcess() {
-        try {
-            processBuilder.start();
-        } catch (IOException e) {
-            throw new MongoClientException("Exception starting mongocryptd process. Is `mongocryptd` on the system path?", e);
-        }
     }
 
     private MongoClientException wrapInClientException(final MongoException e) {
