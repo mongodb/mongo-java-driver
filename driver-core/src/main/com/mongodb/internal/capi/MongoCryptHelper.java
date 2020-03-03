@@ -107,6 +107,19 @@ public final class MongoCryptHelper {
                 .build();
     }
 
+    public static ProcessBuilder createProcessBuilder(final Map<String, Object> options) {
+        return new ProcessBuilder(createMongocryptdSpawnArgs(options));
+    }
+
+    public static void startProcess(final ProcessBuilder processBuilder) {
+        try {
+            processBuilder.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+            processBuilder.start();
+        } catch (Throwable t) {
+            throw new MongoClientException("Exception starting mongocryptd process. Is `mongocryptd` on the system path?", t);
+        }
+    }
+
     private MongoCryptHelper() {
     }
 }
