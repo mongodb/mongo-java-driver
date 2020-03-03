@@ -173,7 +173,12 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
                             );
                             return;
                         }
-                        results.add(rawDocument.decode(changeStreamOperation.getDecoder()));
+                        try {
+                            results.add(rawDocument.decode(changeStreamOperation.getDecoder()));
+                        } catch (Exception e) {
+                            callback.onResult(null, e);
+                            return;
+                        }
                     }
                     resumeToken = rawDocuments.get(rawDocuments.size() - 1).getDocument("_id");
                     callback.onResult(results, null);
