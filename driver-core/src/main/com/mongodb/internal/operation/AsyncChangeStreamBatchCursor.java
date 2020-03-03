@@ -166,17 +166,21 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
                     callback.onResult(null, t);
                 } else if (rawDocuments != null) {
                     List<T> results = new ArrayList<T>();
-                    for (RawBsonDocument rawDocument : rawDocuments) {
-                        if (!rawDocument.containsKey("_id")) {
-                            callback.onResult(null,
-                                    new MongoChangeStreamException("Cannot provide resume functionality when the resume token is missing.")
-                            );
-                            return;
+                    try {
+                        for (RawBsonDocument rawDocument : rawDocuments) {
+                            if (!rawDocument.containsKey("_id")) {
+                                callback.onResult(null,
+                                        new MongoChangeStreamException("Cannot provide resume functionality when the resume token is missing.")
+                                );
+                                return;
+                            }
+                            results.add(rawDocument.decode(changeStreamOperation.getDecoder()));
                         }
-                        results.add(rawDocument.decode(changeStreamOperation.getDecoder()));
+                        resumeToken = rawDocuments.get(rawDocuments.size() - 1).getDocument("_id");
+                        callback.onResult(results, null);
+                    } catch (Exception e) {
+                        callback.onResult(null, e);
                     }
-                    resumeToken = rawDocuments.get(rawDocuments.size() - 1).getDocument("_id");
-                    callback.onResult(results, null);
                 } else {
                     callback.onResult(null, null);
                 }
