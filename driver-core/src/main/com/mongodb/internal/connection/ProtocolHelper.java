@@ -236,7 +236,7 @@ public final class ProtocolHelper {
         int errorCode = getErrorCode(response);
         String errorMessage = getErrorMessage(response, errorMessageFieldName);
         if (ErrorCategory.fromErrorCode(errorCode) == ErrorCategory.EXECUTION_TIMEOUT) {
-            return new MongoExecutionTimeoutException(errorCode, errorMessage);
+            return new MongoExecutionTimeoutException(errorCode, errorMessage, response);
         } else if (errorMessage.contains("not master or secondary") || errorMessage.contains("node is recovering")
                 || RECOVERING_CODES.contains(errorCode)) {
             return new MongoNodeIsRecoveringException(response, serverAddress);

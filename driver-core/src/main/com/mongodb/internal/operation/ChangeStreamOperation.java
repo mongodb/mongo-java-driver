@@ -325,7 +325,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
                         (AggregateResponseBatchCursor<RawBsonDocument>) wrapped.execute(binding);
                 return new ChangeStreamBatchCursor<T>(ChangeStreamOperation.this, cursor, binding,
                         setChangeStreamOptions(cursor.getPostBatchResumeToken(), cursor.getOperationTime(),
-                                source.getServerDescription().getMaxWireVersion(), cursor.isFirstBatchEmpty()));
+                                cursor.getMaxWireVersion(), cursor.isFirstBatchEmpty()), cursor.getMaxWireVersion());
             }
         });
     }
@@ -348,7 +348,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
                             } else {
                                 callback.onResult(new AsyncChangeStreamBatchCursor<T>(ChangeStreamOperation.this, cursor, binding,
                                         setChangeStreamOptions(cursor.getPostBatchResumeToken(), cursor.getOperationTime(),
-                                                source.getServerDescription().getMaxWireVersion(), cursor.isFirstBatchEmpty())), null);
+                                                cursor.getMaxWireVersion(), cursor.isFirstBatchEmpty()), cursor.getMaxWireVersion()), null);
                             }
                             source.release();
                         }
@@ -406,7 +406,10 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
             @Override
             public BsonArray create(final ConnectionDescription description, final SessionContext sessionContext) {
                 List<BsonDocument> changeStreamPipeline = new ArrayList<BsonDocument>();
-                BsonDocument changeStream = new BsonDocument("fullDocument", new BsonString(fullDocument.getValue()));
+                BsonDocument changeStream = new BsonDocument();
+                if (fullDocument != FullDocument.DEFAULT) {
+                    changeStream.append("fullDocument", new BsonString(fullDocument.getValue()));
+                }
 
                 if (changeStreamLevel == ChangeStreamLevel.CLIENT) {
                     changeStream.append("allChangesForCluster", BsonBoolean.TRUE);

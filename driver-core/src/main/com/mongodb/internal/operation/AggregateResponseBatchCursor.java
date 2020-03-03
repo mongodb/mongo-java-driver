@@ -49,4 +49,11 @@ public interface AggregateResponseBatchCursor<T> extends BatchCursor<T> {
      * @return true if the first batch was empty
      */
     boolean isFirstBatchEmpty();
+
+    /**
+     * Returns the max wire version.
+     *
+     * @return the max wire version
+     */
+    int getMaxWireVersion();
 }

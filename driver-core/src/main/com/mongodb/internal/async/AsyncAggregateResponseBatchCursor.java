@@ -46,4 +46,11 @@ public interface AsyncAggregateResponseBatchCursor<T> extends AsyncBatchCursor<T
      * @return true if the first batch was empty
      */
     boolean isFirstBatchEmpty();
+
+    /**
+     * Returns the max wire version.
+     *
+     * @return the max wire version
+     */
+    int getMaxWireVersion();
 }

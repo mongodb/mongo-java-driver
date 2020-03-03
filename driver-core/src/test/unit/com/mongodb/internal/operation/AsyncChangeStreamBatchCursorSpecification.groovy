@@ -33,7 +33,8 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
         def binding = Mock(AsyncReadBinding)
         def wrapped = Mock(AsyncQueryBatchCursor)
         def callback = Stub(SingleResultCallback)
-        def cursor = new AsyncChangeStreamBatchCursor(changeStreamOpertation, wrapped, binding, null)
+        def cursor = new AsyncChangeStreamBatchCursor(changeStreamOpertation, wrapped, binding, null,
+                ServerVersionHelper.FOUR_DOT_FOUR_WIRE_VERSION)
 
         when:
         cursor.setBatchSize(10)
@@ -73,7 +74,8 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
         def binding = Mock(AsyncReadBinding)
         def wrapped = Mock(AsyncQueryBatchCursor)
         def callback = Stub(SingleResultCallback)
-        def cursor = new AsyncChangeStreamBatchCursor(changeStreamOpertation, wrapped, binding, null)
+        def cursor = new AsyncChangeStreamBatchCursor(changeStreamOpertation, wrapped, binding, null,
+                ServerVersionHelper.FOUR_DOT_FOUR_WIRE_VERSION)
 
         when:
         cursor.next(callback)
@@ -97,7 +99,8 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
         def binding = Mock(AsyncReadBinding)
         def wrapped = Mock(AsyncQueryBatchCursor)
         def callback = Stub(SingleResultCallback)
-        def cursor = new AsyncChangeStreamBatchCursor(changeStreamOpertation, wrapped, binding, null)
+        def cursor = new AsyncChangeStreamBatchCursor(changeStreamOpertation, wrapped, binding, null,
+                ServerVersionHelper.FOUR_DOT_FOUR_WIRE_VERSION)
 
         when:
         cursor.tryNext(callback)
@@ -120,7 +123,8 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
         def changeStreamOpertation = Stub(ChangeStreamOperation)
         def binding = Mock(AsyncReadBinding)
         def wrapped = Mock(AsyncQueryBatchCursor)
-        def cursor = new AsyncChangeStreamBatchCursor(changeStreamOpertation, wrapped, binding, null)
+        def cursor = new AsyncChangeStreamBatchCursor(changeStreamOpertation, wrapped, binding, null,
+                ServerVersionHelper.FOUR_DOT_FOUR_WIRE_VERSION)
 
         given:
         cursor.close()

@@ -29,7 +29,8 @@ class ChangeStreamBatchCursorSpecification extends Specification {
         def binding = Stub(ReadBinding)
         def wrapped = Mock(QueryBatchCursor)
         def resumeToken = new BsonDocument('_id': new BsonInt32(1))
-        def cursor = new ChangeStreamBatchCursor(changeStreamOperation, wrapped, binding, resumeToken)
+        def cursor = new ChangeStreamBatchCursor(changeStreamOperation, wrapped, binding, resumeToken,
+                ServerVersionHelper.FOUR_DOT_FOUR_WIRE_VERSION)
 
         when:
         cursor.setBatchSize(10)

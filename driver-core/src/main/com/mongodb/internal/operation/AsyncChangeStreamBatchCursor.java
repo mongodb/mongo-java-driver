@@ -40,6 +40,7 @@ import static java.lang.String.format;
 final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     private final AsyncReadBinding binding;
     private final ChangeStreamOperation<T> changeStreamOperation;
+    private final int maxWireVersion;
 
     private volatile BsonDocument resumeToken;
     private volatile AsyncAggregateResponseBatchCursor<RawBsonDocument> wrapped;
@@ -53,12 +54,14 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
     AsyncChangeStreamBatchCursor(final ChangeStreamOperation<T> changeStreamOperation,
                                  final AsyncAggregateResponseBatchCursor<RawBsonDocument> wrapped,
                                  final AsyncReadBinding binding,
-                                 final BsonDocument resumeToken) {
+                                 final BsonDocument resumeToken,
+                                 final int maxWireVersion) {
         this.changeStreamOperation = changeStreamOperation;
         this.wrapped = wrapped;
         this.binding = binding;
         binding.retain();
         this.resumeToken = resumeToken;
+        this.maxWireVersion = maxWireVersion;
     }
 
     AsyncAggregateResponseBatchCursor<RawBsonDocument> getWrapped() {
@@ -141,6 +144,11 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
         return wrapped.isFirstBatchEmpty();
     }
 
+    @Override
+    public int getMaxWireVersion() {
+        return maxWireVersion;
+    }
+
     private void cachePostBatchResumeToken(final AsyncAggregateResponseBatchCursor<RawBsonDocument> queryBatchCursor) {
         if (queryBatchCursor.getPostBatchResumeToken() != null) {
             resumeToken = queryBatchCursor.getPostBatchResumeToken();
@@ -209,7 +217,7 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
                 if (t == null) {
                     endOperationInProgress();
                     callback.onResult(result, null);
-                } else if (isRetryableError(t)) {
+                } else if (isRetryableError(t, maxWireVersion)) {
                     wrapped.close();
                     retryOperation(asyncBlock, callback, tryNext);
                 } else {

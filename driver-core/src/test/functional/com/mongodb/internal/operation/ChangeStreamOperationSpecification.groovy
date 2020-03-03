@@ -100,7 +100,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         def resumeToken = BsonDocument.parse('{_id: 1}')
 
         when:
-        def changeStream = BsonDocument.parse('''{$changeStream: {fullDocument: "default", startAtOperationTime:
+        def changeStream = BsonDocument.parse('''{$changeStream: {startAtOperationTime:
                     { "$timestamp" : { "t" : 0, "i" : 0 }}}}''')
         if (changeStreamLevel == ChangeStreamLevel.CLIENT) {
             changeStream.getDocument('$changeStream').put('allChangesForCluster', BsonBoolean.TRUE)

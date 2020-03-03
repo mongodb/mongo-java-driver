@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import org.bson.BsonDocument;
+
 /**
  * Exception indicating that the execution of the current operation timed out as a result of the maximum operation time being exceeded.
  *
@@ -32,6 +34,19 @@ public class MongoExecutionTimeoutException extends MongoException {
      */
     public MongoExecutionTimeoutException(final int code, final String message) {
         super(code, message);
+
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param code the error code
+     * @param message the error message
+     * @param response the response
+     * @since 4.1
+     */
+    public MongoExecutionTimeoutException(final int code, final String message, final BsonDocument response) {
+        super(code, message, response);
 
     }
 }

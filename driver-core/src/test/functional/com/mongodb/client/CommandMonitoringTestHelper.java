@@ -76,7 +76,8 @@ public final class CommandMonitoringTestHelper {
             String commandName = eventDescriptionDocument.getString("command_name", new BsonString("")).getValue();
             if (eventType.equals("command_started_event")) {
                 BsonDocument commandDocument = eventDescriptionDocument.getDocument("command");
-                String actualDatabaseName = databaseName;
+                String actualDatabaseName = eventDescriptionDocument.containsKey("database_name")
+                        ? eventDescriptionDocument.getString("database_name").getValue() : databaseName;
                 // If the spec test supplies a $db field in the command, then use that database.
                 if (commandDocument.containsKey("$db")) {
                     actualDatabaseName = commandDocument.getString("$db").getValue();
@@ -253,9 +254,30 @@ public final class CommandMonitoringTestHelper {
                 command.remove(key);
             } else if (command.isDocument(key) && expectedCommand.isDocument(key)) {
                 massageActualCommand(command.getDocument(key), expectedCommand.getDocument(key));
+            } else if (command.containsKey("pipeline") && expectedCommand.containsKey("pipeline")) {
+                massagePipeline(command, expectedCommand);
             }
         }
 
+    }
+
+    // If the expected pipeline contains a $changeStream key with an empty document value, remove the
+    // startAtOperationTime and resumeAfter fields from the actual pipeline value.
+    private static void massagePipeline(final BsonDocument command, final BsonDocument expectedCommand) {
+        if (expectedCommand.containsKey("pipeline") && command.containsKey("pipeline")) {
+            if (!expectedCommand.getArray("pipeline").isEmpty()) {
+                BsonDocument expectedChangeStreamDocument = expectedCommand.getArray("pipeline").get(0).asDocument();
+                if (expectedChangeStreamDocument.containsKey("$changeStream")
+                        && expectedChangeStreamDocument.getDocument("$changeStream").isEmpty()) {
+                    if (!command.getArray("pipeline").isEmpty()) {
+                        BsonDocument actualChangeStreamDocument = command.getArray("pipeline").get(0).asDocument()
+                                .getDocument("$changeStream");
+                        actualChangeStreamDocument.remove("resumeAfter");
+                        actualChangeStreamDocument.remove("startAtOperationTime");
+                    }
+                }
+            }
+        }
     }
 
     private static CommandStartedEvent massageExpectedCommandStartedEvent(final CommandStartedEvent event,

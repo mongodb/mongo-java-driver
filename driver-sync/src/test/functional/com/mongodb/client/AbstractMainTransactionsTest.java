@@ -52,7 +52,8 @@ public abstract class AbstractMainTransactionsTest extends AbstractUnifiedTest {
             for (BsonValue test : testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
                         testDocument.getString("database_name", new BsonString(getDefaultDatabaseName())).getValue(),
-                        testDocument.getString("collection_name", new BsonString("test")).getValue(),
+                        testDocument.getString("collection_name",
+                                new BsonString(file.getName().substring(0, file.getName().lastIndexOf(".")))).getValue(),
                         testDocument.getArray("data"), test.asDocument(), skipTest(testDocument, test.asDocument())});
             }
         }
