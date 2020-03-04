@@ -109,6 +109,7 @@ public final class MongoCryptHelper {
 
     public static void startProcess(final ProcessBuilder processBuilder) {
         try {
+            processBuilder.redirectErrorStream(true);
             processBuilder.redirectOutput(new File(System.getProperty("os.name").startsWith("Windows") ? "NUL" : "/dev/null"));
             processBuilder.start();
         } catch (Throwable t) {
