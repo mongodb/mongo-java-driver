@@ -113,6 +113,9 @@ public class ConnectionPoolTest {
         for (ExecutorService cur : executorServiceMap.values()) {
             cur.shutdownNow();
         }
+        if (pool != null) {
+            pool.close();
+        }
     }
 
     @Test
