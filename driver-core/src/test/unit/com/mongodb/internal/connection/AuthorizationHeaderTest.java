@@ -60,6 +60,10 @@ public class AuthorizationHeaderTest {
         actual = AuthorizationHeader.getRegion("first.second");
         expected = "second";
         assertEquals(expected, actual);
+
+        actual = AuthorizationHeader.getRegion("sts.us-east-2.amazonaws.com");
+        expected = "us-east-2";
+        assertEquals(expected, actual);
     }
 
     @Test
