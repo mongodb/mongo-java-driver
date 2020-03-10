@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-description = "A Scala wrapper / extension to the bson library"
+description = "A Scala wrapper of the MongoDB Reactive Streams Java driver"
 archivesBaseName = 'mongo-scala-driver'
 
 dependencies {
-    compile project(path: ':bson', configuration: 'default')
     compile project(path: ':bson-scala', configuration: 'default')
-    compile project(path: ':driver-core', configuration: 'default')
     compile project(path: ':driver-reactive-streams', configuration: 'default')
-    compile project(path: ':driver-sync', configuration: 'default')
-
-    compile 'org.reactivestreams:reactive-streams:1.0.2'
 
     testImplementation project(':util')
     testImplementation project(':driver-sync')
@@ -104,7 +99,6 @@ afterEvaluate {
     jar.manifest.attributes['Automatic-Module-Name'] = 'org.mongodb.scala.mongo-scala-driver'
     jar.manifest.attributes['Import-Package'] = [
             'org.bson.*',
-            'com.mongodb.crypt.capi.*;resolution:=optional',
             'com.mongodb.*',
     ].join(',')
 }
