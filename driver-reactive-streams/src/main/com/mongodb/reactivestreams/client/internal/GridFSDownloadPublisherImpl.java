@@ -223,7 +223,9 @@ public class GridFSDownloadPublisherImpl implements GridFSDownloadPublisher {
                     }
 
                     int byteBufferSize = Math.max(chunkSize, bufferSizeBytes);
-                    byteBufferSize =  Math.min(Long.valueOf(remaining).intValue(), byteBufferSize);
+                    if (remaining < Integer.MAX_VALUE) {
+                        byteBufferSize = Math.min(Long.valueOf(remaining).intValue(), byteBufferSize);
+                    }
                     ByteBuffer byteBuffer = ByteBuffer.allocate(byteBufferSize);
 
                     if (currentBatchSize == 0) {
