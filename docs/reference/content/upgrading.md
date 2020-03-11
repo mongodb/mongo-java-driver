@@ -19,7 +19,7 @@ process is as seamless as possible.  Breaking changes are as follows:
     3.12 release, so if you compile your application with 3.12 and enable deprecation warnings in the compiler, you will be
     able to locate all uses of these API elements and follow the recommendations contained in the Javadoc for each API element
     to remove usage from your application. Most of these API elements are unlikely to be used by normal applications, but one bears
-    mentioning explicitly: the entire callback-baked asynchronous driver has been removed. Applications relying on this driver must either
+    mentioning explicitly: the entire callback-based asynchronous driver has been removed. Applications relying on this driver must either
     port their application to the Reactive Streams driver, or else must remain on a 3.x driver release.
   * While the `com.mongodb.MongoClient#getDB` method is deprecated in 3.x drivers, it has not been removed in this release. It will remain 
     at least until the next major release cycle.
