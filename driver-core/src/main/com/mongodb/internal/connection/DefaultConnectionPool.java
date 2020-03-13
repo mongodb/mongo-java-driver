@@ -221,9 +221,9 @@ class DefaultConnectionPool implements ConnectionPool {
                             LOGGER.trace(format("Pooled connection %s to server %s is now open",
                                                        pooledConnection.getDescription().getConnectionId(), serverId));
                         }
-                        callback.onResult(pooledConnection, null);
                         connectionPoolListener.connectionCheckedOut(
                                 new ConnectionCheckedOutEvent(pooledConnection.getDescription().getConnectionId()));
+                        callback.onResult(pooledConnection, null);
                     }
                 }
             });
@@ -560,7 +560,6 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Override
         public ConnectionDescription getDescription() {
-            isTrue("open", !isClosed.get());
             return wrapped.getDescription();
         }
     }
