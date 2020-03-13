@@ -510,7 +510,6 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Override
         public ConnectionDescription getDescription() {
-            isTrue("open", !isClosed.get());
             return wrapped.getDescription();
         }
     }
