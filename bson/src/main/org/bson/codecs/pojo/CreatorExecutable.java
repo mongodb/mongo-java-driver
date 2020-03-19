@@ -137,7 +137,9 @@ final class CreatorExecutable<T> {
 
     private void checkHasAnExecutable() {
         if (constructor == null && method == null) {
-            throw new CodecConfigurationException(format("Cannot find a public constructor for '%s'.", clazz.getSimpleName()));
+            throw new CodecConfigurationException(format("Cannot find a public constructor for '%s'.  Please ensure "
+                    + "the class has a public, empty constructor with no arguments, or else a constructor with a "
+                    + "BsonCreator annotation", clazz.getSimpleName()));
         }
     }
 
