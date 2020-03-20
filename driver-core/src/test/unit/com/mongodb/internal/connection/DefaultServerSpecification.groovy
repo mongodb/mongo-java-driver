@@ -30,14 +30,17 @@ import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcernResult
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.connection.ClusterId
+import com.mongodb.connection.ConnectionDescription
+import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerId
+import com.mongodb.connection.ServerType
 import com.mongodb.event.CommandListener
 import com.mongodb.event.ServerListener
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.bulk.InsertRequest
-import com.mongodb.internal.validator.NoOpFieldNameValidator
 import com.mongodb.internal.session.SessionContext
+import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.FieldNameValidator
@@ -287,7 +290,11 @@ class DefaultServerSpecification extends Specification {
         def connectionPool = Mock(ConnectionPool)
         def serverMonitorFactory = Stub(ServerMonitorFactory)
         def serverMonitor = Mock(ServerMonitor)
-        def internalConnection = Mock(InternalConnection)
+        def internalConnection = Mock(InternalConnection) {
+            getGeneration() >> 0
+            getDescription() >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())), 6,
+                    ServerType.STANDALONE, 1000, 16777216, 48000000, [])
+        }
         connectionPool.get() >> { internalConnection }
         serverMonitorFactory.create(_) >> { serverMonitor }
 
@@ -336,7 +343,11 @@ class DefaultServerSpecification extends Specification {
         def connectionPool = Mock(ConnectionPool)
         def serverMonitorFactory = Stub(ServerMonitorFactory)
         def serverMonitor = Mock(ServerMonitor)
-        def internalConnection = Mock(InternalConnection)
+        def internalConnection = Mock(InternalConnection) {
+            getGeneration() >> 0
+            getDescription() >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())), 6,
+                    ServerType.STANDALONE, 1000, 16777216, 48000000, [])
+        }
         connectionPool.get() >> { internalConnection }
         serverMonitorFactory.create(_) >> { serverMonitor }
 
@@ -364,7 +375,11 @@ class DefaultServerSpecification extends Specification {
         def connectionPool = Mock(ConnectionPool)
         def serverMonitorFactory = Stub(ServerMonitorFactory)
         def serverMonitor = Mock(ServerMonitor)
-        def internalConnection = Mock(InternalConnection)
+        def internalConnection = Mock(InternalConnection) {
+            getGeneration() >> 0
+            getDescription() >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())), 6,
+                    ServerType.STANDALONE, 1000, 16777216, 48000000, [])
+        }
         connectionPool.get() >> { internalConnection }
         serverMonitorFactory.create(_) >> { serverMonitor }
 
@@ -402,7 +417,11 @@ class DefaultServerSpecification extends Specification {
         def connectionPool = Mock(ConnectionPool)
         def serverMonitorFactory = Stub(ServerMonitorFactory)
         def serverMonitor = Mock(ServerMonitor)
-        def internalConnection = Mock(InternalConnection)
+        def internalConnection = Mock(InternalConnection) {
+            getGeneration() >> 0
+            getDescription() >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())), 6,
+                    ServerType.STANDALONE, 1000, 16777216, 48000000, [])
+        }
         connectionPool.get() >> { internalConnection }
         serverMonitorFactory.create(_, _) >> { serverMonitor }
 

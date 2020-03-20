@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 public class TestConnectionPool implements ConnectionPool {
 
     private final MongoException exceptionToThrow;
+    private int generation;
 
     public TestConnectionPool() {
         exceptionToThrow = null;
@@ -133,9 +134,15 @@ public class TestConnectionPool implements ConnectionPool {
 
     @Override
     public void invalidate() {
+        generation++;
     }
 
     @Override
     public void close() {
+    }
+
+    @Override
+    public int getGeneration() {
+       return generation;
     }
 }

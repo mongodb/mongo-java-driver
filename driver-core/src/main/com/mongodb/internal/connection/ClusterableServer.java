@@ -28,9 +28,23 @@ interface ClusterableServer extends Server {
 
     /**
      * Invalidate the description of this server due to the passed in reason.
+     * @param connectionGeneration the connection pool's generation of the connection from which the error arose
+     */
+    void invalidate(int connectionGeneration);
+
+    /**
+     * Invalidate the description of this server due to the passed in reason.
      * @param reason the reason for invalidation.
      */
     void invalidate(Throwable reason);
+
+    /**
+     * Invalidate the description of this server due to the passed in reason.
+     * @param reason the reason for invalidation.
+     * @param connectionGeneration the connection pool's generation of the connection from which the error arose
+     * @param maxWireVersion the maxWireVersion from the connection from which the error arose
+     */
+    void invalidate(Throwable reason, int connectionGeneration, int maxWireVersion);
 
     /**
      * <p>Closes the server.  Instances that have been closed will no longer be available for use.</p>

@@ -66,6 +66,15 @@ public interface InternalConnection extends BufferProvider {
     boolean isClosed();
 
     /**
+     * Gets the generation of this connection.  This can be used by connection pools to track whether the connection is stale.
+     *
+     * @return the generation.
+     */
+    default int getGeneration() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
      * Send a command message to the server.
      *
      * @param message   the command message to send

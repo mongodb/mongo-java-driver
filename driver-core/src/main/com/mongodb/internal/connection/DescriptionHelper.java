@@ -120,7 +120,8 @@ public final class DescriptionHelper {
     }
 
     private static TopologyVersion getTopologyVersion(final BsonDocument isMasterResult) {
-        return isMasterResult.containsKey("topologyVersion") ? new TopologyVersion(isMasterResult.getDocument("topologyVersion")) : null;
+        return isMasterResult.containsKey("topologyVersion") && isMasterResult.get("topologyVersion").isDocument()
+                ? new TopologyVersion(isMasterResult.getDocument("topologyVersion")) : null;
     }
 
     private static int getMaxMessageSizeBytes(final BsonDocument isMasterResult) {

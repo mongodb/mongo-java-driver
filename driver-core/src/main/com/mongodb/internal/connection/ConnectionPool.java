@@ -35,4 +35,6 @@ interface ConnectionPool extends Closeable {
     void invalidate();
 
     void close();
+
+    int getGeneration();
 }
