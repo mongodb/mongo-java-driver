@@ -120,10 +120,17 @@ final class AuthorizationHeader {
                 .collect(Collectors.joining(""));
     }
 
-    static String getRegion(final String host) {
-        return (!host.equals("sts.amazonaws.com") && host.contains("."))
-                ? host.split("\\.")[1]
-                : "us-east-1";
+    static String getRegion(final String host) throws SaslException {
+        String word = "(\\w)+(-\\w)*";
+        if (host.equals("sts.amazonaws.com") || host.matches(String.format("%s", word))) {
+            return "us-east-1";
+        }
+
+        if (host.matches(String.format("%s(.%s)+", word, word))) {
+            return host.split("\\.")[1];
+        }
+
+        throw new SaslException("Invalid host");
     }
 
     String getSignature() {

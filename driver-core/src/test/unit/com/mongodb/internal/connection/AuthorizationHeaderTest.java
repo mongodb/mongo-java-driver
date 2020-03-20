@@ -66,6 +66,26 @@ public class AuthorizationHeaderTest {
         assertEquals(expected, actual);
     }
 
+    @Test(expected = SaslException.class)
+    public void shouldThrowErrorOnEmptyMiddleHostLabels() throws SaslException {
+        AuthorizationHeader.getRegion("abc..def");
+    }
+
+    @Test(expected = SaslException.class)
+    public void shouldThrowErrorOnEmptyHostLabelAtStart() throws SaslException {
+        AuthorizationHeader.getRegion(".abc.def");
+    }
+
+    @Test(expected = SaslException.class)
+    public void shouldThrowErrorOnEmptyHostLabelAtEnd() throws SaslException {
+        AuthorizationHeader.getRegion("abc.def.");
+    }
+
+    @Test(expected = SaslException.class)
+    public void shouldThrowErrorOnEmptyHost() throws SaslException {
+        AuthorizationHeader.getRegion("");
+    }
+
     @Test
     public void testGetCanonicalHeaders() {
         Map<String, String> headers = new HashMap<>();
