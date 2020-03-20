@@ -26,6 +26,8 @@ For tutorials for some frequently used operations, see the [Tutorials section]({
 
 | Release | Documentation |
 |---------|---------------|
+|  2.9.0  | {{< releases version="2.9.0" url="https://mongodb.github.io/mongo-scala-driver/" >}} |
+|  2.8.0  | {{< releases version="2.8.0" url="https://mongodb.github.io/mongo-scala-driver/" >}} |
 |  2.7.0  | {{< releases version="2.7.0" url="https://mongodb.github.io/mongo-scala-driver/" >}} |
 |  2.6.0  | {{< releases version="2.6.0" url="https://mongodb.github.io/mongo-scala-driver/" >}} |
 |  2.5.0  | {{< releases version="2.5.0" url="https://mongodb.github.io/mongo-scala-driver/" >}} |
