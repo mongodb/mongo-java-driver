@@ -4,15 +4,16 @@
 $(document).ready(function() {
 
     var oldWidth = $("div#subpackage-spacer").width() + 1 + "px";
-    $("div#packages > ul > li.current").click(function() {
+    $("div#packages > ul > li.current").on("click", function() {
         $("div#subpackage-spacer").css({ "width": oldWidth });
         $("li.current-entities").toggle();
     });
 
     var controls = {
         visibility: {
-            publicOnly: $("#visbl").find("> ol > li.public"),
-            all: $("#visbl").find("> ol > li.all")
+            publicFilter: $("#visbl").find("> ol > li.public"),
+            protectedFilter: $("#visbl").find("> ol > li.protected"),
+            privateFilter: $("#visbl").find("> ol > li.private")
         }
     };
 
@@ -21,21 +22,14 @@ $(document).ready(function() {
         return str.replace(/([;&,\.\+\*\~':"\!\^#$%@\[\]\(\)=<>\|])/g, '\\$1');
     }
 
-    function toggleVisibilityFilter(ctrlToEnable, ctrToDisable) {
-        if (ctrlToEnable.hasClass("out")) {
-            ctrlToEnable.removeClass("out").addClass("in");
-            ctrToDisable.removeClass("in").addClass("out");
-            filter();
-        }
+    function toggleVisibilityFilter() {
+        $(this).toggleClass("in").toggleClass("out");
+        filter();
     }
 
-    controls.visibility.publicOnly.click(function () {
-        toggleVisibilityFilter(controls.visibility.publicOnly, controls.visibility.all);
-    });
-
-    controls.visibility.all.click(function () {
-        toggleVisibilityFilter(controls.visibility.all, controls.visibility.publicOnly);
-    });
+    controls.visibility.publicFilter.on("click", toggleVisibilityFilter);
+    controls.visibility.protectedFilter.on("click", toggleVisibilityFilter);
+    controls.visibility.privateFilter.on("click", toggleVisibilityFilter);
 
     function exposeMember(jqElem) {
         var jqElemParent = jqElem.parent(),
@@ -44,7 +38,7 @@ $(document).ready(function() {
 
         // switch visibility filter if necessary
         if (jqElemParent.attr("visbl") == "prt") {
-            toggleVisibilityFilter(controls.visibility.all, controls.visibility.publicOnly);
+            controls.visibility.privateFilter.removeClass("out").addClass("in");
         }
 
         // toggle appropriate ancestor filter buttons
@@ -75,7 +69,7 @@ $(document).ready(function() {
         return isHidden(this);
     }).removeClass("in").addClass("out");
 
-    $("#memberfilter > i.arrow").click(function() {
+    $("#memberfilter > i.arrow").on("click", function() {
         $(this).toggleClass("rotate");
         $("#filterby").toggle();
     });
@@ -85,7 +79,7 @@ $(document).ready(function() {
 
     // Member filter box
     var input = $("#memberfilter input");
-    input.bind("keyup", function(event) {
+    input.on("keyup", function(event) {
 
         switch ( event.keyCode ) {
 
@@ -98,7 +92,7 @@ $(document).ready(function() {
             input.val("");
             filter(false);
             window.scrollTo(0, $("body").offset().top);
-            input.focus();
+            input.trigger("focus");
             break;
 
         case 33: //page up
@@ -118,23 +112,23 @@ $(document).ready(function() {
 
         }
     });
-    input.focus(function(event) {
-        input.select();
+    input.on("focus", function(event) {
+        input.trigger("select");
     });
-    $("#memberfilter > .clear").click(function() {
-        $("#memberfilter input").attr("value", "");
+    $("#memberfilter > .clear").on("click", function() {
+        $("#memberfilter input").val("");
         $(this).hide();
         filter();
     });
-    $(document).keydown(function(event) {
+    $(document).on("keydown", function(event) {
         if (event.keyCode == 9) { // tab
-            $("#index-input", window.parent.document).focus();
-            input.attr("value", "");
+            $("#index-input", window.parent.document).trigger("focus");
+            input.val( "");
             return false;
         }
     });
 
-    $("#linearization li").click(function(){
+    $("#linearization li").on("click", function(){
         if ($(this).hasClass("in")) {
             $(this).removeClass("in");
             $(this).addClass("out");
@@ -145,7 +139,7 @@ $(document).ready(function() {
         filter();
     });
 
-    $("#implicits li").click(function(){
+    $("#implicits li").on("click", function(){
         if ($(this).hasClass("in")) {
             $(this).removeClass("in");
             $(this).addClass("out");
@@ -156,7 +150,7 @@ $(document).ready(function() {
         filter();
     });
 
-    $("#mbrsel > div > div.ancestors > ol > li.hideall").click(function() {
+    $("#mbrsel > div > div.ancestors > ol > li.hideall").on("click", function() {
         $("#linearization li.in").removeClass("in").addClass("out");
         $("#linearization li:first").removeClass("out").addClass("in");
         $("#implicits li.in").removeClass("in").addClass("out");
@@ -168,7 +162,7 @@ $(document).ready(function() {
 
         filter();
     })
-    $("#mbrsel > div > div.ancestors > ol > li.showall").click(function() {
+    $("#mbrsel > div > div.ancestors > ol > li.showall").on("click", function() {
         var filteredLinearization =
             $("#linearization li.out").filter(function() {
                 return ! isHiddenClass($(this).attr("name"));
@@ -188,15 +182,15 @@ $(document).ready(function() {
 
         filter();
     });
-    $("#order > ol > li.alpha").click(function() {
+    $("#order > ol > li.alpha").on("click", function() {
         if ($(this).hasClass("out"))
             orderAlpha();
     })
-    $("#order > ol > li.inherit").click(function() {
+    $("#order > ol > li.inherit").on("click", function() {
         if ($(this).hasClass("out"))
             orderInherit();
     });
-    $("#order > ol > li.group").click(function() {
+    $("#order > ol > li.group").on("click", function() {
         if ($(this).hasClass("out"))
             orderGroup();
     });
@@ -205,13 +199,9 @@ $(document).ready(function() {
     initInherit();
 
     // Create tooltips
-    $(".extype").add(".defval").tooltip({
-        tip: "#tooltip",
-        position: "top center",
-        predelay: 500,
-        onBeforeShow: function(ev) {
-            $(this.getTip()).text(this.getTrigger().attr("name"));
-        }
+    $(".extype").add(".defval").each(function(_,e) {
+        var $this = $(e);
+        $this.attr("title", $this.attr("name"));
     });
 
     /* Add toggle arrows */
@@ -219,6 +209,9 @@ $(document).ready(function() {
 
     function commentToggleFct(element){
         $("#template li.selected").removeClass("selected");
+        if (element.is("[fullcomment=no]")) {
+            return;
+        }
         element.toggleClass("open");
         var signature = element.find(".modifier_kind")
         var shortComment = element.find(".shortcomment");
@@ -245,7 +238,7 @@ $(document).ready(function() {
         }
     };
 
-    $("#template li[fullComment=yes]").click(function() {
+    $("#template li[fullComment=yes]").on("click", function() {
         var sel = window.getSelection().toString();
         if (!sel) commentToggleFct($(this));
     });
@@ -265,7 +258,7 @@ $(document).ready(function() {
       }
     };
 
-    $(".toggle").click(function() {
+    $(".toggle").on("click", function() {
       toggleShowContentFct($(this).parent());
       // Stop propagation so that we don't hide/show the parent (this a use case's full sig, which is nested in a member list)
       if ($(this).parent().hasClass("full-signature-block")) return false;
@@ -288,7 +281,7 @@ $(document).ready(function() {
         }
     }
 
-    $("#template span.permalink").click(function(e) {
+    $("#template span.permalink").on("click", function(e) {
         e.preventDefault();
         var href = $("a", this).attr("href");
         if (href.indexOf("#") != -1) {
@@ -439,7 +432,11 @@ function filter() {
     var query = $.trim($("#memberfilter input").val()).toLowerCase();
     query = query.replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&").replace(/\s+/g, "|");
     var queryRegExp = new RegExp(query, "i");
-    var privateMembersHidden = $("#visbl > ol > li.public").hasClass("in");
+
+    var publicMembersShown = $("#visbl > ol > li.public").hasClass("in");
+    var protectedMembersShown = $("#visbl > ol > li.protected").hasClass("in");
+    var privateMembersShown = $("#visbl > ol > li.private").hasClass("in");
+
     var orderingAlphabetic = $("#order > ol > li.alpha").hasClass("in");
     var orderingInheritance = $("#order > ol > li.inherit").hasClass("in");
     var orderingGroups = $("#order > ol > li.group").hasClass("in");
@@ -489,7 +486,16 @@ function filter() {
       var members = $(this);
       members.find("> ol > li").each(function() {
         var mbr = $(this);
-        if (privateMembersHidden && mbr.attr("visbl") == "prt") {
+        var visibility = mbr.attr("visbl");
+        if (!publicMembersShown && visibility == "pub") {
+          mbr.hide();
+          return;
+        }
+        if (!protectedMembersShown && visibility == "prt") {
+          mbr.hide();
+          return;
+        }
+        if (!privateMembersShown && visibility == "prv") {
           mbr.hide();
           return;
         }
