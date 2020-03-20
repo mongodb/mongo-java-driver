@@ -16,15 +16,8 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.MongoException;
 import com.mongodb.MongoInterruptedException;
-import com.mongodb.MongoSocketException;
-import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoTimeoutException;
-import com.mongodb.event.ConnectionCreatedEvent;
-import com.mongodb.event.ConnectionPoolCreatedEvent;
-import com.mongodb.event.ConnectionReadyEvent;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ConnectionPoolSettings;
@@ -37,12 +30,16 @@ import com.mongodb.event.ConnectionCheckOutStartedEvent;
 import com.mongodb.event.ConnectionCheckedInEvent;
 import com.mongodb.event.ConnectionCheckedOutEvent;
 import com.mongodb.event.ConnectionClosedEvent;
+import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.event.ConnectionPoolClearedEvent;
 import com.mongodb.event.ConnectionPoolClosedEvent;
+import com.mongodb.event.ConnectionPoolCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
+import com.mongodb.event.ConnectionReadyEvent;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.ConcurrentPool.Prune;
-import com.mongodb.internal.thread.DaemonThreadFactory;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.internal.thread.DaemonThreadFactory;
 import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
 
@@ -263,6 +260,11 @@ class DefaultConnectionPool implements ConnectionPool {
         }
     }
 
+    @Override
+    public int getGeneration() {
+        return generation.get();
+    }
+
     /**
      * Synchronously prune idle connections and ensure the minimum pool size.
      */
@@ -400,23 +402,6 @@ class DefaultConnectionPool implements ConnectionPool {
         return removedReason;
     }
 
-    /**
-     * If there was a socket exception that wasn't some form of interrupted read, increment the generation count so that any connections
-     * created prior will be discarded.
-     *
-     * @param connection the connection that generated the exception
-     * @param t          the exception
-     */
-    private void incrementGenerationOnSocketException(final InternalConnection connection, final Throwable t) {
-        if (t instanceof MongoSocketException && !(t instanceof MongoSocketReadTimeoutException)) {
-            if (LOGGER.isWarnEnabled()) {
-                LOGGER.warn(format("Got socket exception on connection [%s] to %s. All connections to %s will be closed.",
-                                   getId(connection), serverId.getAddress(), serverId.getAddress()));
-            }
-            invalidate();
-        }
-    }
-
     private ConnectionId getId(final InternalConnection internalConnection) {
         return internalConnection.getDescription().getConnectionId();
     }
@@ -427,6 +412,11 @@ class DefaultConnectionPool implements ConnectionPool {
 
         PooledConnection(final UsageTrackingInternalConnection wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
+        }
+
+        @Override
+        public int getGeneration() {
+            return wrapped.getGeneration();
         }
 
         @Override
@@ -485,23 +475,13 @@ class DefaultConnectionPool implements ConnectionPool {
         @Override
         public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
             isTrue("open", !isClosed.get());
-            try {
-                wrapped.sendMessage(byteBuffers, lastRequestId);
-            } catch (MongoException e) {
-                incrementGenerationOnSocketException(this, e);
-                throw e;
-            }
+            wrapped.sendMessage(byteBuffers, lastRequestId);
         }
 
         @Override
         public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
             isTrue("open", !isClosed.get());
-            try {
-                return wrapped.sendAndReceive(message, decoder, sessionContext);
-            } catch (MongoException e) {
-                incrementGenerationOnSocketException(this, e);
-                throw e;
-            }
+            return wrapped.sendAndReceive(message, decoder, sessionContext);
         }
 
         @Override
@@ -511,9 +491,6 @@ class DefaultConnectionPool implements ConnectionPool {
             wrapped.sendAndReceiveAsync(message, decoder, sessionContext, new SingleResultCallback<T>() {
                 @Override
                 public void onResult(final T result, final Throwable t) {
-                    if (t != null) {
-                        incrementGenerationOnSocketException(PooledConnection.this, t);
-                    }
                     callback.onResult(result, t);
                 }
             });
@@ -522,12 +499,7 @@ class DefaultConnectionPool implements ConnectionPool {
         @Override
         public ResponseBuffers receiveMessage(final int responseTo) {
             isTrue("open", !isClosed.get());
-            try {
-                return wrapped.receiveMessage(responseTo);
-            } catch (MongoException e) {
-                incrementGenerationOnSocketException(this, e);
-                throw e;
-            }
+            return wrapped.receiveMessage(responseTo);
         }
 
         @Override
@@ -536,9 +508,6 @@ class DefaultConnectionPool implements ConnectionPool {
             wrapped.sendMessageAsync(byteBuffers, lastRequestId, new SingleResultCallback<Void>() {
                 @Override
                 public void onResult(final Void result, final Throwable t) {
-                    if (t != null) {
-                        incrementGenerationOnSocketException(PooledConnection.this, t);
-                    }
                     callback.onResult(null, t);
                 }
             });
@@ -550,9 +519,6 @@ class DefaultConnectionPool implements ConnectionPool {
             wrapped.receiveMessageAsync(responseTo, new SingleResultCallback<ResponseBuffers>() {
                 @Override
                 public void onResult(final ResponseBuffers result, final Throwable t) {
-                    if (t != null) {
-                        incrementGenerationOnSocketException(PooledConnection.this, t);
-                    }
                     callback.onResult(result, t);
                 }
             });

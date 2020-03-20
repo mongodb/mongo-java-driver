@@ -18,28 +18,17 @@ package com.mongodb.internal.connection
 
 import category.Slow
 import com.mongodb.MongoException
-import com.mongodb.MongoNamespace
-import com.mongodb.MongoSocketReadException
-import com.mongodb.MongoSocketWriteException
 import com.mongodb.MongoTimeoutException
-
 import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterId
-import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ServerId
 import com.mongodb.event.ConnectionPoolListener
-import com.mongodb.internal.validator.NoOpFieldNameValidator
-import org.bson.BsonDocument
-import org.bson.BsonInt32
-import org.bson.ByteBuf
-import org.bson.codecs.BsonDocumentCodec
 import org.junit.experimental.categories.Category
 import spock.lang.Specification
 import spock.lang.Subject
 
 import java.util.concurrent.CountDownLatch
 
-import static com.mongodb.ReadPreference.primary
 import static com.mongodb.connection.ConnectionPoolSettings.builder
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.MINUTES
@@ -128,175 +117,6 @@ class DefaultConnectionPoolSpecification extends Specification {
 
         then:
         connectionGetter.gotTimeout
-    }
-
-    def 'should expire all connection after exception'() throws InterruptedException {
-        given:
-        int numberOfConnectionsCreated = 0
-
-        def mockConnectionFactory = Mock(InternalConnectionFactory)
-        mockConnectionFactory.create(_) >> {
-            numberOfConnectionsCreated++
-            Mock(InternalConnection) {
-                sendMessage(_, _) >> { throw new MongoSocketWriteException('', SERVER_ID.address, new IOException()) }
-                receiveMessage(_) >> { throw new MongoSocketReadException('', SERVER_ID.address, new IOException()) }
-                sendAndReceive(_, _, _) >> { throw new MongoSocketReadException('', SERVER_ID.address, new IOException()) }
-                getDescription() >> {
-                    new ConnectionDescription(SERVER_ID);
-                }
-            }
-        }
-
-        pool = new DefaultConnectionPool(SERVER_ID, mockConnectionFactory, builder().maxSize(2).build())
-        pool.start();
-
-        when:
-        def c1 = pool.get()
-        def c2 = pool.get()
-
-        and:
-        c2.sendMessage(Collections.<ByteBuf> emptyList(), 1)
-
-        then:
-        thrown(MongoSocketWriteException)
-
-        and:
-        c1.close()
-        c2.close()
-        pool.get().close()
-
-        then:
-        numberOfConnectionsCreated == 3
-
-        when:
-        c1 = pool.get()
-        c2 = pool.get()
-
-        and:
-        c2.receiveMessage(1)
-
-        then:
-        thrown(MongoSocketReadException)
-
-        and:
-        c1.close()
-        c2.close()
-        pool.get().close()
-
-        then:
-        numberOfConnectionsCreated == 5
-
-        when:
-        c1 = pool.get()
-        c2 = pool.get()
-
-        and:
-        c2.sendAndReceive(new CommandMessage(new MongoNamespace('test.coll'), new BsonDocument('ping', new BsonInt32(1)),
-                new NoOpFieldNameValidator(), primary(), MessageSettings.builder().build()),
-                new BsonDocumentCodec(), NoOpSessionContext.INSTANCE)
-
-        then:
-        thrown(MongoSocketReadException)
-
-        and:
-        c1.close()
-        c2.close()
-        pool.get().close()
-
-        then:
-        numberOfConnectionsCreated == 7
-    }
-
-    def 'should expire all connection after exception asynchronously'() {
-        given:
-        int numberOfConnectionsCreated = 0
-
-        def mockConnectionFactory = Mock(InternalConnectionFactory)
-        mockConnectionFactory.create(_) >> {
-            numberOfConnectionsCreated++
-            Mock(InternalConnection) {
-                sendMessageAsync(_, _, _) >> {
-                    it[2].onResult(null, new MongoSocketWriteException('', SERVER_ID.address, new IOException()))
-                };
-                receiveMessageAsync(_, _) >> {
-                    it[1].onResult(null, new MongoSocketReadException('', SERVER_ID.address, new IOException()))
-                };
-                sendAndReceiveAsync(_, _, _, _) >> {
-                    it[3].onResult(null, new MongoSocketReadException('', SERVER_ID.address, new IOException()))
-                };
-                getDescription() >> {
-                    new ConnectionDescription(SERVER_ID);
-                }
-            }
-        }
-
-        pool = new DefaultConnectionPool(SERVER_ID, mockConnectionFactory,
-                                         builder().maxSize(2).build())
-        pool.start();
-
-        when:
-        def c1 = pool.get()
-        def c2 = pool.get()
-
-        and:
-        def e;
-        c2.sendMessageAsync(Collections.<ByteBuf> emptyList(), 1) {
-            result, t -> e = t
-        }
-
-        then:
-        e instanceof MongoSocketWriteException
-
-        and:
-        c1.close()
-        c2.close()
-        pool.get().close()
-
-        then:
-        numberOfConnectionsCreated == 3
-
-        when:
-        c1 = pool.get()
-        c2 = pool.get()
-
-        and:
-        c2.receiveMessageAsync(1) {
-            result, t -> e = t
-        }
-
-        then:
-        e instanceof MongoSocketReadException
-
-        and:
-        c1.close()
-        c2.close()
-        pool.get().close()
-
-        then:
-        numberOfConnectionsCreated == 5
-
-        when:
-        c1 = pool.get()
-        c2 = pool.get()
-
-        and:
-        c2.sendAndReceiveAsync(new CommandMessage(new MongoNamespace('test.coll'),
-                new BsonDocument('ping', new BsonInt32(1)), new NoOpFieldNameValidator(), primary(),
-                MessageSettings.builder().build()),
-                new BsonDocumentCodec(), NoOpSessionContext.INSTANCE) {
-            result, t -> e = t
-        }
-
-        then:
-        e instanceof MongoSocketReadException
-
-        and:
-        c1.close()
-        c2.close()
-        pool.get().close()
-
-        then:
-        numberOfConnectionsCreated == 7
     }
 
     def 'should have size of 0 with default settings'() {

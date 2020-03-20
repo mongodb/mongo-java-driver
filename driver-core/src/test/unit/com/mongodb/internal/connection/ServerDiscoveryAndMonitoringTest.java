@@ -51,8 +51,15 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
     @Test
     public void shouldPassAllOutcomes() {
         for (BsonValue phase : getDefinition().getArray("phases")) {
-            for (BsonValue response : phase.asDocument().getArray("responses")) {
-                applyResponse(response.asArray());
+            if (phase.asDocument().containsKey("responses")) {
+                for (BsonValue response : phase.asDocument().getArray("responses")) {
+                    applyResponse(response.asArray());
+                }
+            }
+            if (phase.asDocument().containsKey("applicationErrors")) {
+                for (BsonValue response : phase.asDocument().getArray("applicationErrors")) {
+                    applyApplicationError(response.asDocument());
+                }
             }
             BsonDocument outcome = phase.asDocument().getDocument("outcome");
             assertTopology(outcome);
@@ -107,6 +114,12 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
             assertEquals(expectedServerDescriptionDocument.getString("setName").getValue(), serverDescription.getSetName());
         } else {
             assertNull(serverDescription.getSetName());
+        }
+
+        if (expectedServerDescriptionDocument.isDocument("pool")) {
+            int expectedGeneration = expectedServerDescriptionDocument.getDocument("pool").getNumber("generation").intValue();
+            DefaultServer server = (DefaultServer) getCluster().getServer(new ServerAddress(serverName));
+            assertEquals(expectedGeneration, server.getConnectionPool().getGeneration());
         }
     }
 

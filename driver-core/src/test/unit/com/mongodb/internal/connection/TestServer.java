@@ -17,12 +17,12 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.ServerAddress;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.event.ServerListener;
+import com.mongodb.internal.async.SingleResultCallback;
 
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 
@@ -54,7 +54,17 @@ public class TestServer implements ClusterableServer {
     }
 
     @Override
+    public void invalidate(final int connectionGeneration) {
+        invalidate();
+    }
+
+    @Override
     public void invalidate(final Throwable reason) {
+        invalidate();
+    }
+
+    @Override
+    public void invalidate(final Throwable reason, final int connectionGeneration, final int maxWireVersion) {
         invalidate();
     }
 

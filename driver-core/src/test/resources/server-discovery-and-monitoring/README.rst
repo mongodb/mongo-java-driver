@@ -23,22 +23,51 @@ Each YAML file has the following keys:
   A phase of the test optionally sends inputs to the client,
   then tests the client's resulting TopologyDescription.
 
-Each phase object has two keys:
+Each phase object has the following keys:
 
+- description: (optional) A textual description of this phase.
 - responses: (optional) An array of "response" objects. If not provided,
   the test runner should construct the client and perform assertions specified
   in the outcome object without processing any responses.
+- applicationErrors: (optional) An array of "applicationError" objects.
 - outcome: An "outcome" object representing the TopologyDescription.
 
 A response is a pair of values:
 
 - The source, for example "a:27017".
   This is the address the client sent the "ismaster" command to.
-- An ismaster response, for example `{ok: 1, ismaster: true}`.
+- An ismaster response, for example ``{ok: 1, ismaster: true}``.
   If the response includes an electionId it is shown in extended JSON like
-  `{"$oid": "000000000000000000000002"}`.
+  ``{"$oid": "000000000000000000000002"}``.
   The empty response `{}` indicates a network error
   when attempting to call "ismaster".
+
+An "applicationError" object has the following keys:
+
+- address: The source address, for example "a:27017".
+- generation: (optional) The error's generation number, for example ``1``.
+  When absent this value defaults to the pool's current generation number.
+- maxWireVersion: The ``maxWireVersion`` of the connection the error occurs
+  on, for example ``9``. Added to support testing the behavior of "not master"
+  errors on <4.2 and >=4.2 servers.
+- when: A string describing when this mock error should occur. Supported
+  values are:
+
+  - "beforeHandshakeCompletes": Simulate this mock error as if it occurred
+    during a new connection's handshake for an application operation.
+  - "afterHandshakeCompletes": Simulate this mock error as if it occurred
+    on an established connection for an application operation (i.e. after
+    the connection pool check out succeeds).
+
+- type: The type of error to mock. Supported values are:
+
+  - "command": A command error. Always accompanied with a "response".
+  - "network": A non-timeout network error.
+  - "timeout": A network timeout error.
+
+- response: (optional) A command error response, for example
+  ``{ok: 0, errmsg: "not master"}``. Present if and only if ``type`` is
+  "command".
 
 In non-monitoring tests, an "outcome" represents the correct
 TopologyDescription that results from processing the responses in the phases
@@ -64,6 +93,13 @@ current TopologyDescription. It has the following keys:
 - minWireVersion: absent or an integer.
 - maxWireVersion: absent or an integer.
 - topologyVersion: absent, null, or a topologyVersion document.
+- pool: (optional) A "pool" object.
+
+A "pool" object represents a correct connection pool for a given server.
+It has the following keys:
+
+- generation: This server's expected pool generation, like ``0``.
+- topologyVersion: absent, null, or a topologyVersion document.
 
 In monitoring tests, an "outcome" contains a list of SDAM events that should
 have been published by the client as a result of processing ismaster responses
@@ -87,6 +123,11 @@ and passing them into the driver code. Parts of the client and monitoring
 code may need to be mocked or subclassed to achieve this. `A reference
 implementation for PyMongo 3.x is available here
 <https://github.com/mongodb/mongo-python-driver/blob/26d25cd74effc1e7a8d52224eac6c9a95769b371/test/test_discovery_and_monitoring.py>`_.
+without any network I/O, by parsing ismaster and application error from the
+test file and passing them into the driver code. Parts of the client and
+monitoring code may need to be mocked or subclassed to achieve this.
+`A reference implementation for PyMongo 3.10.1 is available here
+<https://github.com/mongodb/mongo-python-driver/blob/3.10.1/test/test_discovery_and_monitoring.py>`_.
 
 Initialization
 ~~~~~~~~~~~~~~
@@ -114,9 +155,16 @@ events published during client construction.
 Test Phases
 ~~~~~~~~~~~
 
-For each phase in the file, parse the "responses" array.
-Pass in the responses in order to the driver code.
-If a response is the empty object `{}`, simulate a network error.
+For each phase in the file:
+
+#. Parse the "responses" array. Pass in the responses in order to the driver
+   code. If a response is the empty object ``{}``, simulate a network error.
+
+#. Parse the "applicationErrors" array. For each element, simulate the given
+   error as if it occurred while running an application operation. Note that
+   it is sufficient to construct a mock error and call the procedure which
+   updates the topology, e.g.
+   ``topology.handleApplicationError(address, generation, maxWireVersion, error)``.
 
 For non-monitoring tests,
 once all responses are processed, assert that the phase's "outcome" object
