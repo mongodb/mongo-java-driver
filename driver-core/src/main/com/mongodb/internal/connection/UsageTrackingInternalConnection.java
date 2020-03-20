@@ -16,10 +16,10 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
 import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
@@ -150,12 +150,8 @@ class UsageTrackingInternalConnection implements InternalConnection {
         return wrapped.getDescription();
     }
 
-    /**
-     * Gets the generation of this connection.  This can be used by connection pools to track whether the connection is stale.
-     *
-     * @return the generation.
-     */
-    int getGeneration() {
+    @Override
+    public int getGeneration() {
         return generation;
     }
 

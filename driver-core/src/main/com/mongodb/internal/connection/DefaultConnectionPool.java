@@ -263,6 +263,11 @@ class DefaultConnectionPool implements ConnectionPool {
         }
     }
 
+    @Override
+    public int getGeneration() {
+        return generation.get();
+    }
+
     /**
      * Synchronously prune idle connections and ensure the minimum pool size.
      */
@@ -427,6 +432,11 @@ class DefaultConnectionPool implements ConnectionPool {
 
         PooledConnection(final UsageTrackingInternalConnection wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
+        }
+
+        @Override
+        public int getGeneration() {
+            return wrapped.getGeneration();
         }
 
         @Override

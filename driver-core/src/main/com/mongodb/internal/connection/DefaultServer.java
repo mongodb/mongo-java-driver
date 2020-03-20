@@ -23,11 +23,11 @@ import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketReadTimeoutException;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerType;
+import com.mongodb.connection.TopologyVersion;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.CommandListener;
@@ -35,6 +35,7 @@ import com.mongodb.event.ServerClosedEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerOpeningEvent;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
 
 import java.util.List;
@@ -92,7 +93,7 @@ class DefaultServer implements ClusterableServer {
             connectionPool.invalidate();
             throw e;
         } catch (MongoSocketException e) {
-            invalidate();
+            invalidate(connectionPool.getGeneration());
             throw e;
         }
     }
@@ -106,7 +107,7 @@ class DefaultServer implements ClusterableServer {
                 if (t instanceof MongoSecurityException) {
                     connectionPool.invalidate();
                 } else if (t instanceof MongoSocketException) {
-                    invalidate();
+                    invalidate(connectionPool.getGeneration());
                 }
                 if (t != null) {
                     callback.onResult(null, t);
@@ -126,23 +127,43 @@ class DefaultServer implements ClusterableServer {
 
     @Override
     public void invalidate() {
+        invalidate(connectionPool.getGeneration());
+    }
+
+    @Override
+    public void invalidate(final int connectionGeneration) {
         if (!isClosed()) {
+            if (connectionGeneration < connectionPool.getGeneration()) {
+                return;
+            }
             serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(description, ServerDescription.builder()
                     .state(CONNECTING)
                     .address(serverId.getAddress())
                     .build()));
             connectionPool.invalidate();
+            // TODO: in streaming protocol, we want to close the current connection and start over
             connect();
         }
     }
 
     @Override
-    public void invalidate(final Throwable t) {
+    public void invalidate(final Throwable reason) {
+        invalidate(reason, connectionPool.getGeneration(), description.getMaxWireVersion());
+    }
+
+    @Override
+    public void invalidate(final Throwable t, final int connectionGeneration, final int maxWireVersion) {
         if (!isClosed()) {
+            if (connectionGeneration < connectionPool.getGeneration()) {
+                return;
+            }
             if ((t instanceof MongoSocketException && !(t instanceof MongoSocketReadTimeoutException))) {
                 invalidate();
             } else if (t instanceof MongoNotPrimaryException || t instanceof MongoNodeIsRecoveringException) {
-                if (description.getMaxWireVersion() < FOUR_DOT_TWO_WIRE_VERSION) {
+                if (isStale(((MongoCommandException) t))) {
+                    return;
+                }
+                if (maxWireVersion < FOUR_DOT_TWO_WIRE_VERSION) {
                     invalidate();
                 } else if (SHUTDOWN_CODES.contains(((MongoCommandException) t).getErrorCode())) {
                     invalidate();
@@ -156,9 +177,33 @@ class DefaultServer implements ClusterableServer {
         }
     }
 
-    public void invalidate(final Throwable t, final SessionContext sessionContext) {
+    private boolean isStale(final MongoCommandException t) {
+        if (!t.getResponse().containsKey("topologyVersion")) {
+            return false;
+        }
+        return isStale(description.getTopologyVersion(), new TopologyVersion(t.getResponse().getDocument("topologyVersion")));
+    }
+
+    private boolean isStale(final TopologyVersion currentTopologyVersion, final TopologyVersion candidateTopologyVersion) {
+        if (candidateTopologyVersion == null || currentTopologyVersion == null) {
+            return false;
+        }
+
+        if (!candidateTopologyVersion.getProcessId().equals(currentTopologyVersion.getProcessId())) {
+            return false;
+        }
+
+        if (candidateTopologyVersion.getCounter() <= currentTopologyVersion.getCounter()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public void invalidate(final Throwable t, final int connectionGeneration, final int maxWireVersion,
+                           final SessionContext sessionContext) {
         notNull("sessionContext", sessionContext);
-        invalidate(t);
+        invalidate(t, connectionGeneration, maxWireVersion);
         if (t instanceof MongoSocketException && sessionContext.hasSession()) {
             sessionContext.markSessionDirty();
         }
@@ -195,7 +240,7 @@ class DefaultServer implements ClusterableServer {
                 protocol.setCommandListener(commandListener);
                 return protocol.execute(connection);
             } catch (MongoException e) {
-                invalidate(e);
+                invalidate(e, connection.getGeneration(), connection.getDescription().getMaxWireVersion());
                 throw e;
             }
         }
@@ -208,7 +253,7 @@ class DefaultServer implements ClusterableServer {
                 @Override
                 public void onResult(final T result, final Throwable t) {
                     if (t != null) {
-                        invalidate(t);
+                        invalidate(t, connection.getGeneration(), connection.getDescription().getMaxWireVersion());
                     }
                     callback.onResult(result, t);
                 }
@@ -226,7 +271,7 @@ class DefaultServer implements ClusterableServer {
                 invalidate();
                 return (T) e.getResponse();
             } catch (MongoException e) {
-                invalidate(e, sessionContext);
+                invalidate(e, connection.getGeneration(), connection.getDescription().getMaxWireVersion(), sessionContext);
                 throw e;
             }
         }
@@ -244,7 +289,7 @@ class DefaultServer implements ClusterableServer {
                             invalidate();
                             callback.onResult((T) ((MongoWriteConcernWithResponseException) t).getResponse(), null);
                         } else {
-                            invalidate(t, sessionContext);
+                            invalidate(t, connection.getGeneration(), connection.getDescription().getMaxWireVersion(), sessionContext);
                             callback.onResult(null, t);
                         }
                     } else {
@@ -259,8 +304,28 @@ class DefaultServer implements ClusterableServer {
         @Override
         public void stateChanged(final ChangeEvent<ServerDescription> event) {
             ServerDescription oldDescription = description;
-            description = event.getNewValue();
-            serverListener.serverDescriptionChanged(new ServerDescriptionChangedEvent(serverId, description, oldDescription));
+            if (shouldReplace(oldDescription, event.getNewValue())) {
+                description = event.getNewValue();
+                serverListener.serverDescriptionChanged(new ServerDescriptionChangedEvent(serverId, description, oldDescription));
+            }
+        }
+
+        private boolean shouldReplace(final ServerDescription oldDescription, final ServerDescription newDescription) {
+            TopologyVersion oldTopologyVersion = oldDescription.getTopologyVersion();
+            TopologyVersion newTopologyVersion = newDescription.getTopologyVersion();
+            if (newTopologyVersion == null || oldTopologyVersion == null) {
+                return true;
+            }
+
+            if (!newTopologyVersion.getProcessId().equals(oldTopologyVersion.getProcessId())) {
+                return true;
+            }
+
+            if (newTopologyVersion.getCounter() >= oldTopologyVersion.getCounter()) {
+                return true;
+            }
+
+            return false;
         }
     }
 }

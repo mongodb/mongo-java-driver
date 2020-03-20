@@ -17,6 +17,8 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.ConnectionString;
+import com.mongodb.MongoSocketReadException;
+import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterId;
@@ -27,6 +29,7 @@ import com.mongodb.connection.ServerType;
 import com.mongodb.event.ClusterListener;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.bson.BsonInt32;
 import util.JsonPoweredTestHelper;
 
 import java.io.File;
@@ -40,12 +43,14 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.internal.connection.DescriptionHelper.createServerDescription;
+import static com.mongodb.internal.connection.ProtocolHelper.getCommandFailureException;
 import static org.junit.Assert.assertEquals;
 
 public class AbstractServerDiscoveryAndMonitoringTest {
     private final BsonDocument definition;
     private DefaultTestClusterableServerFactory factory;
     private BaseCluster cluster;
+    private TestInternalConnectionFactory internalConnectionFactory;
 
     public AbstractServerDiscoveryAndMonitoringTest(final BsonDocument definition) {
         this.definition = definition;
@@ -55,7 +60,7 @@ public class AbstractServerDiscoveryAndMonitoringTest {
         List<Object[]> data = new ArrayList<Object[]>();
         for (File file : JsonPoweredTestHelper.getTestFiles(root)) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
-            data.add(new Object[]{testDocument.getString("description").getValue(), testDocument});
+            data.add(new Object[]{file.getName() + ": " + testDocument.getString("description").getValue(), testDocument});
         }
         return data;
     }
@@ -71,6 +76,43 @@ public class AbstractServerDiscoveryAndMonitoringTest {
             serverDescription = createServerDescription(serverAddress, isMasterResult, 5000000);
         }
         factory.sendNotification(serverAddress, serverDescription);
+    }
+
+    protected void applyApplicationError(final BsonDocument applicationError) {
+        ServerAddress serverAddress = new ServerAddress(applicationError.getString("address").getValue());
+        int errorGeneration = applicationError.getNumber("generation",
+                new BsonInt32(((DefaultServer) getCluster().getServer(serverAddress)).getConnectionPool().getGeneration())).intValue();
+        int maxWireVersion = applicationError.getNumber("maxWireVersion").intValue();
+        String when = applicationError.getString("when").getValue();
+        String type = applicationError.getString("type").getValue();
+
+        ClusterableServer server = cluster.getServer(serverAddress);
+        RuntimeException exception;
+
+        switch (type) {
+            case "command":
+                exception = getCommandFailureException(applicationError.getDocument("response"), serverAddress);
+                break;
+            case "network":
+                exception = new MongoSocketReadException("Read error", serverAddress, new IOException());
+                break;
+            case "timeout":
+                exception = new MongoSocketReadTimeoutException("Read timeout error", serverAddress, new IOException());
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupported application error type: " + type);
+        }
+
+        switch (when) {
+            case "beforeHandshakeCompletes":
+                server.invalidate(errorGeneration);
+                break;
+            case "afterHandshakeCompletes":
+                server.invalidate(exception, errorGeneration, maxWireVersion);
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupported `when` value: " + when);
+        }
     }
 
     protected ClusterType getClusterType(final String topologyType) {
