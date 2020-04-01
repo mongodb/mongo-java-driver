@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-package com.mongodb.client.model;
+package com.mongodb.client.model
 
+import org.bson.BsonDocument
+import org.bson.Document;
 import spock.lang.Specification;
 
 class DeleteOptionsSpecification extends Specification {
@@ -26,6 +28,8 @@ class DeleteOptionsSpecification extends Specification {
 
         then:
         options.getCollation() == null
+        options.getHint() == null
+        options.getHintString() == null
     }
 
     def 'should set collation'() {
@@ -34,5 +38,21 @@ class DeleteOptionsSpecification extends Specification {
 
         where:
         collation << [null, Collation.builder().locale('en').build()]
+    }
+
+    def 'should set hint'() {
+        expect:
+        new DeleteOptions().hint(hint).getHint() == hint
+
+        where:
+        hint << [null, new BsonDocument(), new Document('a', 1)]
+    }
+
+    def 'should set hintString'() {
+        expect:
+        new DeleteOptions().hintString(hintString).getHintString() == hintString
+
+        where:
+        hintString << [null, 'a_1']
     }
 }

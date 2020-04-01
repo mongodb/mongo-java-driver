@@ -193,7 +193,7 @@ public abstract class AbstractCrudTest {
         }
     }
 
-    @Parameterized.Parameters(name = "{1}")
+    @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<Object[]>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/crud")) {

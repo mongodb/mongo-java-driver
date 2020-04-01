@@ -17,6 +17,7 @@
 package com.mongodb.client.model
 
 import org.bson.BsonDocument
+import org.bson.Document
 import spock.lang.Specification
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -33,6 +34,8 @@ class FindOneAndDeleteOptionsSpecification extends Specification {
         options.getMaxTime(MILLISECONDS) == 0
         options.getProjection() == null
         options.getSort() == null
+        options.getHint() == null
+        options.getHintString() == null
     }
 
     def 'should set collation'() {
@@ -77,5 +80,21 @@ class FindOneAndDeleteOptionsSpecification extends Specification {
 
         then:
         options.getMaxTime(SECONDS) == 1
+    }
+
+    def 'should set hint'() {
+        expect:
+        new FindOneAndDeleteOptions().hint(hint).getHint() == hint
+
+        where:
+        hint << [null, new BsonDocument(), new Document('a', 1)]
+    }
+
+    def 'should set hintString'() {
+        expect:
+        new FindOneAndDeleteOptions().hintString(hintString).getHintString() == hintString
+
+        where:
+        hintString << [null, 'a_1']
     }
 }

@@ -551,6 +551,13 @@ public class JsonPoweredCrudTestHelper {
         if (arguments.containsKey("collation")) {
             options.collation(getCollation(arguments.getDocument("collation")));
         }
+        if (arguments.containsKey("hint")) {
+            if (arguments.isDocument("hint")) {
+                options.hint(arguments.getDocument("hint"));
+            } else {
+                options.hintString(arguments.getString("hint").getValue());
+            }
+        }
 
         int deletedCount;
         if (clientSession == null) {
@@ -569,6 +576,13 @@ public class JsonPoweredCrudTestHelper {
         DeleteOptions options = new DeleteOptions();
         if (arguments.containsKey("collation")) {
             options.collation(getCollation(arguments.getDocument("collation")));
+        }
+        if (arguments.containsKey("hint")) {
+            if (arguments.isDocument("hint")) {
+                options.hint(arguments.getDocument("hint"));
+            } else {
+                options.hintString(arguments.getString("hint").getValue());
+            }
         }
 
         int deletedCount;
@@ -593,6 +607,13 @@ public class JsonPoweredCrudTestHelper {
         }
         if (arguments.containsKey("collation")) {
             options.collation(getCollation(arguments.getDocument("collation")));
+        }
+        if (arguments.containsKey("hint")) {
+            if (arguments.isDocument("hint")) {
+                options.hint(arguments.getDocument("hint"));
+            } else {
+                options.hintString(arguments.getString("hint").getValue());
+            }
         }
 
         BsonDocument result;
@@ -1111,6 +1132,13 @@ public class JsonPoweredCrudTestHelper {
         DeleteOptions options = new DeleteOptions();
         if (requestArguments.containsKey("collation")) {
             options.collation(getCollation(requestArguments.getDocument("collation")));
+        }
+        if (requestArguments.containsKey("hint")) {
+            if (requestArguments.isDocument("hint")) {
+                options.hint(requestArguments.getDocument("hint"));
+            } else {
+                options.hintString(requestArguments.getString("hint").getValue());
+            }
         }
         return options;
     }

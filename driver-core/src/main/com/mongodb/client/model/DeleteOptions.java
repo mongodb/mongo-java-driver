@@ -17,6 +17,7 @@
 package com.mongodb.client.model;
 
 import com.mongodb.lang.Nullable;
+import org.bson.conversions.Bson;
 
 /**
  * The options to apply when deleting documents.
@@ -26,6 +27,8 @@ import com.mongodb.lang.Nullable;
  * @mongodb.driver.manual reference/command/delete/ Delete Command
  */
 public class DeleteOptions {
+    private Bson hint;
+    private String hintString;
     private Collation collation;
 
     /**
@@ -52,10 +55,64 @@ public class DeleteOptions {
         return this;
     }
 
+    /**
+     * Gets the hint to apply.
+     *
+     * @return the hint, which should describe an existing index
+     * @since 4.1
+     * @mongodb.server.release 4.4
+     */
+    @Nullable
+    public Bson getHint() {
+        return hint;
+    }
+
+    /**
+     * Gets the hint string to apply.
+     *
+     * @return the hint string, which should be the name of an existing index
+     * @since 4.1
+     * @mongodb.server.release 4.4
+     */
+    @Nullable
+    public String getHintString() {
+        return hintString;
+    }
+
+    /**
+     * Sets the hint to apply.
+     *
+     * @param hint a document describing the index which should be used for this operation.
+     * @return this
+     * @since 4.1
+     * @mongodb.server.release 4.4
+     */
+    public DeleteOptions hint(@Nullable final Bson hint) {
+        this.hint = hint;
+        return this;
+    }
+
+    /**
+     * Sets the hint to apply.
+     *
+     * <p>Note: If {@link DeleteOptions#hint(Bson)} is set that will be used instead of any hint string.</p>
+     *
+     * @param hint the name of the index which should be used for the operation
+     * @return this
+     * @since 4.1
+     * @mongodb.server.release 4.4
+     */
+    public DeleteOptions hintString(@Nullable final String hint) {
+        this.hintString = hint;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "DeleteOptions{"
                 + "collation=" + collation
+                + ", hint=" + hint
+                + ", hintString='" + hintString + '\''
                 + '}';
     }
 }

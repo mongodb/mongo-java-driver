@@ -35,6 +35,8 @@ public class FindOneAndDeleteOptions {
     private Bson sort;
     private long maxTimeMS;
     private Collation collation;
+    private Bson hint;
+    private String hintString;
 
     /**
      * Gets a document describing the fields to return for all matching documents.
@@ -132,6 +134,58 @@ public class FindOneAndDeleteOptions {
         return this;
     }
 
+    /**
+     * Gets the hint to apply.
+     *
+     * @return the hint, which should describe an existing index
+     * @since 4.1
+     * @mongodb.server.release 4.4
+     */
+    @Nullable
+    public Bson getHint() {
+        return hint;
+    }
+
+    /**
+     * Gets the hint string to apply.
+     *
+     * @return the hint string, which should be the name of an existing index
+     * @since 4.1
+     * @mongodb.server.release 4.4
+     */
+    @Nullable
+    public String getHintString() {
+        return hintString;
+    }
+
+    /**
+     * Sets the hint to apply.
+     *
+     * @param hint a document describing the index which should be used for this operation.
+     * @return this
+     * @since 4.1
+     * @mongodb.server.release 4.4
+     */
+    public FindOneAndDeleteOptions hint(@Nullable final Bson hint) {
+        this.hint = hint;
+        return this;
+    }
+
+    /**
+     * Sets the hint to apply.
+     *
+     * <p>Note: If {@link FindOneAndDeleteOptions#hint(Bson)} is set that will be used instead of any hint string.</p>
+     *
+     * @param hint the name of the index which should be used for the operation
+     * @return this
+     * @since 4.1
+     * @mongodb.server.release 4.4
+     */
+    public FindOneAndDeleteOptions hintString(@Nullable final String hint) {
+        this.hintString = hint;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "FindOneAndDeleteOptions{"
@@ -139,6 +193,8 @@ public class FindOneAndDeleteOptions {
                 + ", sort=" + sort
                 + ", maxTimeMS=" + maxTimeMS
                 + ", collation=" + collation
+                + ", hint=" + hint
+                + ", hintString='" + hintString + '\''
                 + '}';
     }
 }

@@ -259,7 +259,9 @@ final class Operations<TDocument> {
                 .projection(toBsonDocument(options.getProjection()))
                 .sort(toBsonDocument(options.getSort()))
                 .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                .collation(options.getCollation());
+                .collation(options.getCollation())
+                .hint(options.getHint())
+                .hintString(options.getHintString());
     }
 
     FindAndReplaceOperation<TDocument> findOneAndReplace(final Bson filter, final TDocument replacement,
@@ -418,11 +420,15 @@ final class Operations<TDocument> {
             } else if (writeModel instanceof DeleteOneModel) {
                 DeleteOneModel<TDocument> deleteOneModel = (DeleteOneModel<TDocument>) writeModel;
                 writeRequest = new DeleteRequest(toBsonDocument(deleteOneModel.getFilter())).multi(false)
-                        .collation(deleteOneModel.getOptions().getCollation());
+                        .collation(deleteOneModel.getOptions().getCollation())
+                        .hint(deleteOneModel.getOptions().getHint())
+                        .hintString(deleteOneModel.getOptions().getHintString());
             } else if (writeModel instanceof DeleteManyModel) {
                 DeleteManyModel<TDocument> deleteManyModel = (DeleteManyModel<TDocument>) writeModel;
                 writeRequest = new DeleteRequest(toBsonDocument(deleteManyModel.getFilter())).multi(true)
-                        .collation(deleteManyModel.getOptions().getCollation());
+                        .collation(deleteManyModel.getOptions().getCollation())
+                        .hint(deleteManyModel.getOptions().getHint())
+                        .hintString(deleteManyModel.getOptions().getHintString());
             } else {
                 throw new UnsupportedOperationException(format("WriteModel of type %s is not supported", writeModel.getClass()));
             }
