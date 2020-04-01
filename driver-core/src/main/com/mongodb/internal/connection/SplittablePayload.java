@@ -268,6 +268,13 @@ public final class SplittablePayload {
                     BsonDocument collation = deleteRequest.getCollation().asDocument();
                     getCodec(collation).encode(writer, collation, EncoderContext.builder().build());
                 }
+                if (deleteRequest.getHint() != null) {
+                    writer.writeName("hint");
+                    BsonDocument hint = deleteRequest.getHint().toBsonDocument(BsonDocument.class, null);
+                    getCodec(hint).encode(writer, hint, EncoderContext.builder().build());
+                } else if (deleteRequest.getHintString() != null) {
+                    writer.writeString("hint", deleteRequest.getHintString());
+                }
                 writer.writeEndDocument();
             }
         }
