@@ -25,9 +25,9 @@ import org.junit.runners.Parameterized;
 // See https://github.com/mongodb/specifications/tree/master/source/transactions/tests
 @RunWith(Parameterized.class)
 public class MainTransactionsTest extends AbstractMainTransactionsTest {
-    public MainTransactionsTest(final String filename, final String description, final BsonArray data, final BsonDocument definition,
-                                final boolean skipTest) {
-        super(filename, description, data, definition, skipTest);
+    public MainTransactionsTest(final String filename, final String description, final String databaseName, final String collectionName,
+                                final BsonArray data, final BsonDocument definition, final boolean skipTest) {
+        super(filename, description, databaseName, collectionName, data, definition, skipTest);
     }
 
     @Override

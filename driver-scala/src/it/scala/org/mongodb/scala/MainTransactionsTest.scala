@@ -23,10 +23,20 @@ import org.mongodb.scala.syncadapter.SyncMongoClient
 class MainTransactionsTest(
     val filename: String,
     val description: String,
+    val databaseName: String,
+    val collectionName: String,
     val data: BsonArray,
     val definition: BsonDocument,
     val skipTest: Boolean
-) extends AbstractMainTransactionsTest(filename, description, data, definition, skipTest) {
+) extends AbstractMainTransactionsTest(
+      filename,
+      description,
+      databaseName,
+      collectionName,
+      data,
+      definition,
+      skipTest
+    ) {
   override protected def createMongoClient(settings: com.mongodb.MongoClientSettings) =
     SyncMongoClient(MongoClient(settings))
 }
