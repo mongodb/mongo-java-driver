@@ -67,6 +67,7 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
+import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -433,6 +434,14 @@ public abstract class AbstractUnifiedTest {
                         assertNotNull(clientSession);
                         assertNotNull(clientSession.getServerSession());
                         assertFalse(clientSession.getServerSession().isMarkedDirty());
+                    } else if (operationName.equals("assertCollectionExists")) {
+                        assertCollectionExists(operation, true);
+                    } else if (operationName.equals("assertCollectionNotExists")) {
+                        assertCollectionExists(operation, false);
+                    } else if (operationName.equals("assertIndexExists")) {
+                        assertIndexExists(operation, true);
+                    } else if (operationName.equals("assertIndexNotExists")) {
+                        assertIndexExists(operation, false);
                     } else {
                         BsonDocument actualOutcome = helper.getOperationResults(operation, clientSession);
                         if (expectedResult != null) {
@@ -461,6 +470,31 @@ public abstract class AbstractUnifiedTest {
                 failPoint.disableFailPoint();
             }
         }
+    }
+
+    private void assertCollectionExists(final BsonDocument operation, final boolean shouldExist) {
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+        String databaseName = arguments.getString("database").getValue();
+        String collection = arguments.getString("collection").getValue();
+        assertEquals(shouldExist, collectionExists(databaseName, collection));
+    }
+
+    private boolean collectionExists(final String databaseName, final String collectionName) {
+        return getMongoClient().getDatabase(databaseName).listCollectionNames().into(new ArrayList<String>()).contains(collectionName);
+    }
+
+    private void assertIndexExists(final BsonDocument operation, final boolean shouldExist) {
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+        String db = arguments.getString("database").getValue();
+        String collection = arguments.getString("collection").getValue();
+        String index = arguments.getString("index").getValue();
+        assertEquals(shouldExist, indexExists(db, collection, index));
+    }
+
+    private boolean indexExists(final String databaseName, final String collectionName, final String indexName) {
+        ArrayList<Document> indexes = getMongoClient().getDatabase(databaseName).getCollection(collectionName).listIndexes()
+                .into(new ArrayList<Document>());
+        return indexes.stream().anyMatch(document -> document.get("name").equals(indexName));
     }
 
     private boolean assertExceptionState(final RuntimeException e, final BsonValue expectedResult, final String operationName) {

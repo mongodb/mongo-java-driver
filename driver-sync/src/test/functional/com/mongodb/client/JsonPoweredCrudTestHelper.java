@@ -44,6 +44,7 @@ import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.InsertOneOptions;
@@ -372,12 +373,29 @@ public class JsonPoweredCrudTestHelper {
     BsonDocument getCreateIndexResult(final BsonDocument collectionOptions, final BsonDocument arguments,
                                       @Nullable final ClientSession clientSession) {
         String index;
+        IndexOptions indexOptions = new IndexOptions();
+
+        if (arguments.containsKey("name")) {
+            indexOptions.name(arguments.getString("name").getValue());
+        }
         if (clientSession == null) {
-            index = getCollection(collectionOptions).createIndex(arguments.getDocument("keys", new BsonDocument()));
+            index = getCollection(collectionOptions).createIndex(arguments.getDocument("keys", new BsonDocument()), indexOptions);
         } else {
-            index = getCollection(collectionOptions).createIndex(clientSession, arguments.getDocument("keys", new BsonDocument()));
+            index = getCollection(collectionOptions).createIndex(clientSession, arguments.getDocument("keys", new BsonDocument()),
+                    indexOptions);
         }
         return toResult("result", new BsonString(index));
+    }
+
+    BsonDocument getDatabaseCreateCollectionResult(final BsonDocument databaseOptions, final BsonDocument arguments,
+                                                   @Nullable final ClientSession clientSession) {
+        String index;
+        if (clientSession == null) {
+            database.createCollection(arguments.getString("collection").getValue());
+        } else {
+            database.createCollection(clientSession, arguments.getString("collection").getValue());
+        }
+        return new BsonDocument("ok", new BsonInt32(1));
     }
 
     BsonDocument getDropIndexResult(final BsonDocument collectionOptions, final BsonDocument arguments,
@@ -386,6 +404,16 @@ public class JsonPoweredCrudTestHelper {
             getCollection(collectionOptions).dropIndex(arguments.getString("name").getValue());
         } else {
             getCollection(collectionOptions).dropIndex(clientSession, arguments.getString("name").getValue());
+        }
+        return new BsonDocument("ok", new BsonInt32(1));
+    }
+
+    BsonDocument getDatabaseDropCollectionResult(final BsonDocument databaseOptions, final BsonDocument arguments,
+                                                 @Nullable final ClientSession clientSession) {
+        if (clientSession == null) {
+            database.getCollection(arguments.getString("collection").getValue()).drop();
+        } else {
+            database.getCollection(arguments.getString("collection").getValue()).drop(clientSession);
         }
         return new BsonDocument("ok", new BsonInt32(1));
     }

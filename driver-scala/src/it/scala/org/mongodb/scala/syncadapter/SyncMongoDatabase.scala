@@ -139,15 +139,15 @@ case class SyncMongoDatabase(wrapped: MongoDatabase) extends JMongoDatabase {
     throw new UnsupportedOperationException
 
   override def createCollection(collectionName: String): Unit = {
-    throw new UnsupportedOperationException
+    wrapped.createCollection(collectionName).toFuture().get()
   }
 
   override def createCollection(collectionName: String, createCollectionOptions: CreateCollectionOptions): Unit = {
-    throw new UnsupportedOperationException
+    wrapped.createCollection(collectionName, createCollectionOptions).toFuture().get()
   }
 
   override def createCollection(clientSession: ClientSession, collectionName: String): Unit = {
-    throw new UnsupportedOperationException
+    wrapped.createCollection(unwrap(clientSession), collectionName).toFuture().get()
   }
 
   override def createCollection(
@@ -155,7 +155,7 @@ case class SyncMongoDatabase(wrapped: MongoDatabase) extends JMongoDatabase {
       collectionName: String,
       createCollectionOptions: CreateCollectionOptions
   ): Unit = {
-    throw new UnsupportedOperationException
+    wrapped.createCollection(unwrap(clientSession), collectionName, createCollectionOptions).toFuture().get()
   }
 
   override def createView(viewName: String, viewOn: String, pipeline: java.util.List[_ <: Bson]): Unit = {
