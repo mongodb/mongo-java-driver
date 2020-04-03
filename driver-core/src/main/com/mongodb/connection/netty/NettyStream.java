@@ -269,7 +269,7 @@ final class NettyStream implements Stream {
     }
 
     @Override
-    public void close() {
+    public synchronized void close() {
         isClosed = true;
         if (channel != null) {
             channel.close();
@@ -395,20 +395,28 @@ final class NettyStream implements Stream {
 
         @Override
         public void operationComplete(final ChannelFuture future) {
-            if (future.isSuccess()) {
-                channel = channelFuture.channel();
-                channel.closeFuture().addListener(new ChannelFutureListener() {
-                    @Override
-                    public void operationComplete(final ChannelFuture future) {
-                        handleReadResponse(null, new IOException("The connection to the server was closed"));
+            synchronized (NettyStream.this) {
+                if (future.isSuccess()) {
+                    if (isClosed) {
+                        channelFuture.channel().close();
+                    } else {
+                        channel = channelFuture.channel();
+                        channel.closeFuture().addListener(new ChannelFutureListener() {
+                            @Override
+                            public void operationComplete(final ChannelFuture future) {
+                                handleReadResponse(null, new IOException("The connection to the server was closed"));
+                            }
+                        });
                     }
-                });
-                handler.completed(null);
-            } else {
-                if (socketAddressQueue.isEmpty()) {
-                    handler.failed(new MongoSocketOpenException("Exception opening socket", getAddress(), future.cause()));
+                    handler.completed(null);
                 } else {
-                    initializeChannel(handler, socketAddressQueue);
+                    if (isClosed) {
+                        handler.completed(null);
+                    } else if (socketAddressQueue.isEmpty()) {
+                        handler.failed(new MongoSocketOpenException("Exception opening socket", getAddress(), future.cause()));
+                    } else {
+                        initializeChannel(handler, socketAddressQueue);
+                    }
                 }
             }
         }
