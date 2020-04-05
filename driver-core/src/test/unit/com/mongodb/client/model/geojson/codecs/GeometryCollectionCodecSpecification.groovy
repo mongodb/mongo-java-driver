@@ -31,6 +31,7 @@ import org.bson.BsonDocumentWriter
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.configuration.CodecConfigurationException
+import org.bson.json.JsonReader
 import spock.lang.Specification
 
 import static com.mongodb.client.model.geojson.NamedCoordinateReferenceSystem.EPSG_4326_STRICT_WINDING
@@ -152,6 +153,19 @@ class GeometryCollectionCodecSpecification extends Specification {
 
         then:
         geometryCollection == decodedGeometryCollection
+    }
+
+    def 'should decode integral value types'() {
+        given:
+        def jsonRepresentation = '{type: "LineString", coordinates: [ [101.0, 0], [102.0, 2147483648] ] }'
+        def expectedGeometry = new LineString([new Position(101d, 0d), new Position(102d, 2147483648d)])
+        def codec = registry.get(LineString)
+
+        when:
+        def decodedGeometry = codec.decode(new JsonReader(jsonRepresentation), DecoderContext.builder().build())
+
+        then:
+        decodedGeometry == expectedGeometry
     }
 
     def 'should throw when decoding invalid documents'() {
