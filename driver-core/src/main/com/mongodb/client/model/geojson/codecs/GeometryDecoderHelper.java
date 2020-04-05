@@ -392,10 +392,7 @@ final class GeometryDecoderHelper {
         reader.readStartArray();
         List<Double> values = new ArrayList<Double>();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
-            if (reader.getCurrentBsonType() != BsonType.DOUBLE) {
-                throw new CodecConfigurationException("Invalid position");
-            }
-            values.add(reader.readDouble());
+            values.add(readAsDouble(reader));
         }
         reader.readEndArray();
 
@@ -404,6 +401,19 @@ final class GeometryDecoderHelper {
         } catch (IllegalArgumentException e) {
             throw new CodecConfigurationException(format("Invalid Position: %s", e.getMessage()));
         }
+    }
+
+    private static double readAsDouble(final BsonReader reader) {
+        if (reader.getCurrentBsonType() == BsonType.DOUBLE) {
+           return reader.readDouble();
+        } else if (reader.getCurrentBsonType() == BsonType.INT32) {
+            return reader.readInt32();
+        } else if (reader.getCurrentBsonType() == BsonType.INT64) {
+            return reader.readInt64();
+        }
+
+        throw new CodecConfigurationException("A GeoJSON position value must be a numerical type, but the value is of type "
+                + reader.getCurrentBsonType());
     }
 
     @Nullable
