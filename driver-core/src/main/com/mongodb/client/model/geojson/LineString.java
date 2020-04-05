@@ -21,6 +21,7 @@ import com.mongodb.lang.Nullable;
 import java.util.Collections;
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.doesNotContainNull;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -53,7 +54,7 @@ public final class LineString extends Geometry {
         super(coordinateReferenceSystem);
         notNull("coordinates", coordinates);
         isTrueArgument("coordinates must contain at least two positions", coordinates.size() >= 2);
-        isTrueArgument("coordinates contains only non-null positions", !coordinates.contains(null));
+        doesNotContainNull("coordinates", coordinates);
 
         this.coordinates = Collections.unmodifiableList(coordinates);
     }

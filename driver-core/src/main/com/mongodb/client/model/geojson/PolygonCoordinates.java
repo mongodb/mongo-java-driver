@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.doesNotContainNull;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -41,7 +42,7 @@ public final class PolygonCoordinates {
     @SafeVarargs
     public PolygonCoordinates(final List<Position> exterior, final List<Position>... holes) {
         notNull("exteriorRing", exterior);
-        isTrueArgument("ring contains only non-null positions", !exterior.contains(null));
+        doesNotContainNull("exterior", exterior);
         isTrueArgument("ring must contain at least four positions", exterior.size() >= 4);
         isTrueArgument("first and last position must be the same", exterior.get(0).equals(exterior.get(exterior.size() - 1)));
 
@@ -50,7 +51,7 @@ public final class PolygonCoordinates {
         List<List<Position>> holesList = new ArrayList<List<Position>>(holes.length);
         for (List<Position> hole : holes) {
             notNull("interiorRing", hole);
-            isTrueArgument("ring contains only non-null positions", !hole.contains(null));
+            doesNotContainNull("hole", hole);
             isTrueArgument("ring must contain at least four positions", hole.size() >= 4);
             isTrueArgument("first and last position must be the same", hole.get(0).equals(hole.get(hole.size() - 1)));
             holesList.add(Collections.unmodifiableList(hole));
