@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.doesNotContainNull;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -41,7 +42,7 @@ public final class Position {
      */
     public Position(final List<Double> values) {
         notNull("values", values);
-        isTrueArgument("value contains only non-null elements", !values.contains(null));
+        doesNotContainNull("values", values);
         isTrueArgument("value must contain at least two elements", values.size() >= 2);
         this.values = Collections.unmodifiableList(values);
     }

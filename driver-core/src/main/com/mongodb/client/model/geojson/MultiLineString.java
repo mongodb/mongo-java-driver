@@ -21,7 +21,7 @@ import com.mongodb.lang.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-import static com.mongodb.assertions.Assertions.isTrueArgument;
+import static com.mongodb.assertions.Assertions.doesNotContainNull;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -55,7 +55,7 @@ public final class MultiLineString extends Geometry {
 
         for (List<Position> line : coordinates) {
             notNull("line", line);
-            isTrueArgument("line contains only non-null positions", !line.contains(null));
+            doesNotContainNull("line", line);
         }
 
         this.coordinates = Collections.unmodifiableList(coordinates);

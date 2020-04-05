@@ -21,7 +21,7 @@ import com.mongodb.lang.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-import static com.mongodb.assertions.Assertions.isTrueArgument;
+import static com.mongodb.assertions.Assertions.doesNotContainNull;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -51,7 +51,7 @@ public final class MultiPolygon extends Geometry {
     public MultiPolygon(@Nullable final CoordinateReferenceSystem coordinateReferenceSystem, final List<PolygonCoordinates> coordinates) {
         super(coordinateReferenceSystem);
         notNull("coordinates", coordinates);
-        isTrueArgument("coordinates has no null elements", !coordinates.contains(null));
+        doesNotContainNull("coordinates", coordinates);
         this.coordinates = Collections.unmodifiableList(coordinates);
     }
 

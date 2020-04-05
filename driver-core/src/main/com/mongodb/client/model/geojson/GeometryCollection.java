@@ -21,7 +21,7 @@ import com.mongodb.lang.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-import static com.mongodb.assertions.Assertions.isTrueArgument;
+import static com.mongodb.assertions.Assertions.doesNotContainNull;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -51,7 +51,7 @@ public final class GeometryCollection extends Geometry {
                               final List<? extends Geometry> geometries) {
         super(coordinateReferenceSystem);
         notNull("geometries", geometries);
-        isTrueArgument("geometries contains only non-null elements", !geometries.contains(null));
+        doesNotContainNull("geometries", geometries);
         this.geometries = Collections.unmodifiableList(geometries);
     }
 

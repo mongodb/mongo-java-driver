@@ -19,6 +19,8 @@ package com.mongodb.assertions;
 
 import com.mongodb.internal.async.SingleResultCallback;
 
+import java.util.Collection;
+
 /**
  * <p>Design by contract assertions.</p> <p>This class is not part of the public API and may be removed or changed at any time.</p>
  */
@@ -97,6 +99,23 @@ public final class Assertions {
     public static void isTrueArgument(final String name, final boolean condition) {
         if (!condition) {
             throw new IllegalArgumentException("state should be: " + name);
+        }
+    }
+
+    /**
+     * Throw IllegalArgumentException if the collection contains a null value.
+     *
+     * @param name       the name of the collection
+     * @param collection the collection
+     * @throws java.lang.IllegalArgumentException if the collection contains a null value
+     */
+    public static void doesNotContainNull(final String name, final Collection<?> collection) {
+        // Use a loop instead of the contains method, as some implementations of that method will throw an exception if passed null as a
+        // parameter (in particular, lists returned by List.of methods)
+        for (Object o : collection) {
+            if (o == null) {
+                throw new IllegalArgumentException(name + " can not contain a null value");
+            }
         }
     }
 
