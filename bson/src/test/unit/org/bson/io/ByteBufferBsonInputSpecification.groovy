@@ -207,6 +207,26 @@ class ByteBufferBsonInputSpecification extends Specification {
         stream.position == 4
     }
 
+    def 'should handle invalid CString not null terminated'() {
+        when:
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([0xe0, 0xa4, 0x80] as byte[])))
+        stream.readCString()
+
+        then:
+        def e = thrown(BsonSerializationException)
+        e.getMessage() == 'Found a BSON string that is not null-terminated'
+    }
+
+    def 'should handle invalid CString not null terminated when skipping value'() {
+        when:
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([0xe0, 0xa4, 0x80] as byte[])))
+        stream.skipCString()
+
+        then:
+        def e = thrown(BsonSerializationException)
+        e.getMessage() == 'Found a BSON string that is not null-terminated'
+    }
+
     def 'should read from position'() {
         given:
         def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([4, 3, 2, 1] as byte[])))

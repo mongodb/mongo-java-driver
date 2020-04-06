@@ -67,7 +67,7 @@ public class BsonBinaryReaderTest {
             reader.readBsonType();
             fail("Should have thrown BsonSerializationException");
         } catch (BsonSerializationException e) {
-            assertEquals("While decoding a BSON document 1 bytes were required, but only 0 remain", e.getMessage());
+            assertEquals("Found a BSON string that is not null-terminated", e.getMessage());
         }
     }
 
