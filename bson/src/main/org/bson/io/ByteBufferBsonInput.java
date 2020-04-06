@@ -120,28 +120,25 @@ public class ByteBufferBsonInput implements BsonInput {
         int size = readInt32();
         if (size <= 0) {
             throw new BsonSerializationException(format("While decoding a BSON string found a size that is not a positive number: %d",
-                                                        size));
+                    size));
         }
+        ensureAvailable(size);
         return readString(size);
     }
 
     @Override
     public String readCString() {
-        ensureOpen();
-
-        // TODO: potentially optimize this
         int mark = buffer.position();
-        readUntilNullByte();
+        skipCString();
         int size = buffer.position() - mark;
         buffer.position(mark);
-
         return readString(size);
     }
 
     private String readString(final int size) {
         if (size == 2) {
-            byte asciiByte = readByte();               // if only one byte in the string, it must be ascii.
-            byte nullByte = readByte();                // read null terminator
+            byte asciiByte = buffer.get();               // if only one byte in the string, it must be ascii.
+            byte nullByte = buffer.get();                // read null terminator
             if (nullByte != 0) {
                 throw new BsonSerializationException("Found a BSON string that is not null-terminated");
             }
@@ -151,8 +148,8 @@ public class ByteBufferBsonInput implements BsonInput {
             return ONE_BYTE_ASCII_STRINGS[asciiByte];  // this will throw if asciiByte is negative
         } else {
             byte[] bytes = new byte[size - 1];
-            readBytes(bytes);
-            byte nullByte = readByte();
+            buffer.get(bytes);
+            byte nullByte = buffer.get();
             if (nullByte != 0) {
                 throw new BsonSerializationException("Found a BSON string that is not null-terminated");
             }
@@ -160,18 +157,16 @@ public class ByteBufferBsonInput implements BsonInput {
         }
     }
 
-    private void readUntilNullByte() {
-        //CHECKSTYLE:OFF
-        while (readByte() != 0) { //NOPMD
-            //do nothing - checkstyle & PMD hate this, not surprisingly
-        }
-        //CHECKSTYLE:ON
-    }
-
     @Override
     public void skipCString() {
         ensureOpen();
-        readUntilNullByte();
+        boolean checkNext = true;
+        while (checkNext) {
+            if (!buffer.hasRemaining()) {
+                throw new BsonSerializationException("Found a BSON string that is not null-terminated");
+            }
+            checkNext = buffer.get() != 0;
+        }
     }
 
     @Override
