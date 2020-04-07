@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.async.client;
 
-import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.async.FutureResultCallback;
@@ -30,8 +29,6 @@ import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
