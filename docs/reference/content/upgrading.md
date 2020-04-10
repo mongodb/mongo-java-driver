@@ -7,6 +7,12 @@ title = "Upgrade Considerations"
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
+# Upgrading to the 4.1 Driver
+
+The 4.1 release is a minor release as per the definition of [semantic versioning](https://semver.org). As such, there are no breaking
+changes in this release for users upgrading from the 4.0 release.  Please see the upgrading guide for the 4.0 driver (just below) if you
+plan to upgrade directly from a 3.x release of the driver. 
+
 # Upgrading to the 4.0 Driver
 
 ## Upgrading from the 3.12 Java driver
@@ -74,20 +80,21 @@ The minimum JVM is Java 8.
 
 The following table specifies the compatibility of the MongoDB Java driver for use with a specific version of MongoDB.
 
-|Java Driver Version|MongoDB 2.6|MongoDB 3.0 |MongoDB 3.2|MongoDB 3.4|MongoDB 3.6|MongoDB 4.0|MongoDB 4.2|
-|-------------------|-----------|------------|-----------|-----------|-----------|-----------|-----------|
-|Version 4.0        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |
-|Version 3.12       |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |
-|Version 3.11       |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |
-|Version 3.10       |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |
-|Version 3.9        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |
-|Version 3.9        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |
-|Version 3.8        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |
-|Version 3.7        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |     |
-|Version 3.6        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |     |
-|Version 3.5        |  ✓  |  ✓  |  ✓  |  ✓  |     |     |     |
-|Version 3.4        |  ✓  |  ✓  |  ✓  |  ✓  |     |     |     |
-|Version 3.3        |  ✓  |  ✓  |  ✓  |     |     |     |     |
-|Version 3.2        |  ✓  |  ✓  |  ✓  |     |     |     |     |
-|Version 3.1        |  ✓  |  ✓  |     |     |     |     |     |
-|Version 3.0        |  ✓  |  ✓  |     |     |     |     |     |
+|Java Driver Version|MongoDB 2.6|MongoDB 3.0 |MongoDB 3.2|MongoDB 3.4|MongoDB 3.6|MongoDB 4.0|MongoDB 4.2|MongoDB 4.4|
+|-------------------|-----------|------------|-----------|-----------|-----------|-----------|-----------|-----------|
+|Version 4.1        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |
+|Version 4.0        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |
+|Version 3.12       |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |
+|Version 3.11       |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |
+|Version 3.10       |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |     |
+|Version 3.9        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |     |
+|Version 3.9        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |     |
+|Version 3.8        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |     |
+|Version 3.7        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |     |     |
+|Version 3.6        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |     |     |
+|Version 3.5        |  ✓  |  ✓  |  ✓  |  ✓  |     |     |     |     |
+|Version 3.4        |  ✓  |  ✓  |  ✓  |  ✓  |     |     |     |     |
+|Version 3.3        |  ✓  |  ✓  |  ✓  |     |     |     |     |     |
+|Version 3.2        |  ✓  |  ✓  |  ✓  |     |     |     |     |     |
+|Version 3.1        |  ✓  |  ✓  |     |     |     |     |     |     |
+|Version 3.0        |  ✓  |  ✓  |     |     |     |     |     |     |

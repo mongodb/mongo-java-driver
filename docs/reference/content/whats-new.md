@@ -7,6 +7,15 @@ title = "What's New"
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
+# What's new in 4.1
+
+This release fully supports all MongoDB releases from versions 2.6 to 4.4. Key new features of the 4.1 Java driver release include:
+
+* Update and delete operations support index hinting.
+* The find operation supports allowDiskUse for sorts that require too much memory to execute in RAM.
+* Authentication supports the MONGODB-AWS mechanism using Amazon Web Services (AWS) Identity and Access Management (IAM) credentials.
+* Authentication requires fewer round trips to the server, resulting in faster connection setup.
+
 # What's new in 4.0
 
 This release adds no new features but, as a major release, contains breaking changes that may affect your application. Please consult the 
