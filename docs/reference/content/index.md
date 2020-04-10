@@ -6,12 +6,12 @@ type = "index"
 
 ## MongoDB Java Driver Documentation
 
-Welcome to the MongoDB JVM driver documentation hub for the 4.0 drivers release.
+Welcome to the MongoDB JVM driver documentation hub for the 4.1 drivers release.
 
 
-### What's New in 4.0
+### What's New in 4.1
 
-For key new features of 4.0, see [What's New]({{< relref "whats-new.md" >}}).
+For key new features of 4.1, see [What's New]({{< relref "whats-new.md" >}}).
 
 ### Upgrade
 
