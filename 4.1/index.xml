@@ -1184,7 +1184,7 @@ Note See the installation guide for instructions on how to install the MongoDB S
       <description>MongoDB Reactive Streams Driver Documentation The following guide provides information on using the MongoDB Reactive Streams Driver.
 Getting Started To get started, see the Installation Guide, the Quick Start Guide and the Quick Start with POJOs Guide.
 Tutorials For tutorials for some frequently used operations, see the Tutorials section.
-Previous Releases    Release Documentation     1.13.1 Reference &amp;#124; API   1.12.0 Reference &amp;#124; API   1.</description>
+Previous Releases    Release Documentation     4.0.2 Reference &amp;#124; API   1.13.1 Reference &amp;#124; API   1.</description>
     </item>
     
     <item>
@@ -1232,7 +1232,7 @@ Previous Releases    Release Documentation     1.13.1 Reference &amp;#124; API  
       <description>MongoDB Scala Driver Documentation The following guide provides information on using the MongoDB Scala Driver 4.0.
 Getting Started To get started, see the Installation Guide, the Quick Start Guide and the Quick Start with Case Classes.
 Tutorials For tutorials for some frequently used operations, see the Tutorials section.
-Previous Releases    Release Documentation     2.9.0 Reference &amp;#124; API   2.8.0 Reference &amp;#124; API   2.</description>
+Previous Releases    Release Documentation     4.0.2 Reference &amp;#124; API   2.9.0 Reference &amp;#124; API   2.</description>
     </item>
     
     <item>
