@@ -396,17 +396,6 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       .map(_.getSimpleName)
       .toSet ++ packageObjects -- scalaExclusions
 
-    println(
-      new Reflections(scalaPackageName, new SubTypesScanner(false))
-        .getSubTypesOf(classOf[Object])
-        .asScala
-        .filter(classFilter)
-        .filter(f => f.getPackage.getName == scalaPackageName)
-        .toSet
-    )
-    println("====")
-    println(local)
-
     diff(local, wrapped) shouldBe empty
   }
 
