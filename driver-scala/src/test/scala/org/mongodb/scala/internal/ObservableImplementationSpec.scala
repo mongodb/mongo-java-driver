@@ -167,6 +167,18 @@ class ObservableImplementationSpec extends BaseSpec with TableDrivenPropertyChec
         observer.completed should equal(true)
       }
     }
+
+    forAll(zippedObservablesWithEmptyObservable) { (observable: Observable[(Int, Int)]) =>
+      {
+        val observer = TestObserver[(Int, Int)]()
+        observable.subscribe(observer)
+
+        observer.subscription.foreach(_.request(100))
+
+        observer.results should equal(List())
+        observer.completed should equal(true)
+      }
+    }
   }
 
   it should "error if requested amount is less than 1" in {
@@ -256,6 +268,13 @@ class ObservableImplementationSpec extends BaseSpec with TableDrivenPropertyChec
       "observable",
       ZipObservable[Int, Int](TestObservable[Int](1 to 50), TestObservable[Int]()),
       ZipObservable[Int, Int](TestObservable[Int](), TestObservable[Int](1 to 50))
+    )
+
+  private def zippedObservablesWithEmptyObservable =
+    Table[Observable[(Int, Int)]](
+      "observable",
+      ZipObservable[Int, Int](TestObservable[Int](1 to 50), TestObservable[Int](List())),
+      ZipObservable[Int, Int](TestObservable[Int](List()), TestObservable[Int](1 to 50))
     )
 
   private def overRequestingObservables =
