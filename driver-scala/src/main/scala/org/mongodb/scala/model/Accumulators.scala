@@ -16,7 +16,9 @@
 
 package org.mongodb.scala.model
 
+import scala.collection.JavaConverters._
 import com.mongodb.client.model.{ Accumulators => JAccumulators }
+import org.mongodb.scala.bson.conversions.Bson
 
 /**
  * Builders for accumulators used in the group pipeline stage of an aggregation pipeline.
@@ -163,4 +165,123 @@ object Accumulators {
    */
   def stdDevSamp[TExpression](fieldName: String, expression: TExpression): BsonField =
     JAccumulators.stdDevSamp(fieldName, expression)
+
+  /**
+   * Creates an \$accumulator pipeline stage
+   *
+   * @param fieldName            the field name
+   * @param initFunction         a function used to initialize the state
+   * @param accumulateFunction   a function used to accumulate documents
+   * @param mergeFunction        a function used to merge two internal states, e.g. accumulated on different shards or
+   *                             threads. It returns the resulting state of the accumulator.
+   * @return the \$accumulator pipeline stage
+   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/accumulator/ \$accumulator]]
+   * @since 1.2
+   * @note Requires MongoDB 4.4 or greater
+   */
+  def accumulator(
+      fieldName: String,
+      initFunction: String,
+      accumulateFunction: String,
+      mergeFunction: String
+  ): BsonField =
+    JAccumulators.accumulator(fieldName, initFunction, accumulateFunction, mergeFunction)
+
+  /**
+   * Creates an \$accumulator pipeline stage
+   *
+   * @param fieldName            the field name
+   * @param initFunction         a function used to initialize the state
+   * @param accumulateFunction   a function used to accumulate documents
+   * @param mergeFunction        a function used to merge two internal states, e.g. accumulated on different shards or
+   *                             threads. It returns the resulting state of the accumulator.
+   * @param finalizeFunction     a function used to finalize the state and return the result (may be null)
+   * @return the \$accumulator pipeline stage
+   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/accumulator/ \$accumulator]]
+   * @since 1.2
+   * @note Requires MongoDB 4.4 or greater
+   */
+  def accumulator(
+      fieldName: String,
+      initFunction: String,
+      accumulateFunction: String,
+      mergeFunction: String,
+      finalizeFunction: String
+  ): BsonField =
+    JAccumulators.accumulator(fieldName, initFunction, accumulateFunction, mergeFunction, finalizeFunction)
+
+  /**
+   * Creates an \$accumulator pipeline stage
+   *
+   * @param fieldName            the field name
+   * @param initFunction         a function used to initialize the state
+   * @param initArgs             init function’s arguments (may be null)
+   * @param accumulateFunction   a function used to accumulate documents
+   * @param accumulateArgs       additional accumulate function’s arguments (may be null). The first argument to the
+   *                             function is ‘state’.
+   * @param mergeFunction        a function used to merge two internal states, e.g. accumulated on different shards or
+   *                             threads. It returns the resulting state of the accumulator.
+   * @param finalizeFunction     a function used to finalize the state and return the result (may be null)
+   * @return the \$accumulator pipeline stage
+   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/accumulator/ \$accumulator]]
+   * @since 1.2
+   * @note Requires MongoDB 4.4 or greater
+   */
+  def accumulator(
+      fieldName: String,
+      initFunction: String,
+      initArgs: Seq[String],
+      accumulateFunction: String,
+      accumulateArgs: Seq[String],
+      mergeFunction: String,
+      finalizeFunction: String
+  ): BsonField =
+    JAccumulators.accumulator(
+      fieldName,
+      initFunction,
+      initArgs.asJava,
+      accumulateFunction,
+      accumulateArgs.asJava,
+      mergeFunction,
+      finalizeFunction
+    )
+
+  /**
+   * Creates an \$accumulator pipeline stage
+   *
+   * @param fieldName            the field name
+   * @param initFunction         a function used to initialize the state
+   * @param initArgs             init function’s arguments (may be null)
+   * @param accumulateFunction   a function used to accumulate documents
+   * @param accumulateArgs       additional accumulate function’s arguments (may be null). The first argument to the
+   *                             function is ‘state’.
+   * @param mergeFunction        a function used to merge two internal states, e.g. accumulated on different shards or
+   *                             threads. It returns the resulting state of the accumulator.
+   * @param finalizeFunction     a function used to finalize the state and return the result (may be null)
+   * @param lang                 a language specifier
+   * @return the \$accumulator pipeline stage
+   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/accumulator/ \$accumulator]]
+   * @since 1.2
+   * @note Requires MongoDB 4.4 or greater
+   */
+  def accumulator(
+      fieldName: String,
+      initFunction: String,
+      initArgs: Seq[String],
+      accumulateFunction: String,
+      accumulateArgs: Seq[String],
+      mergeFunction: String,
+      finalizeFunction: String,
+      lang: String
+  ): BsonField =
+    JAccumulators.accumulator(
+      fieldName,
+      initFunction,
+      initArgs.asJava,
+      accumulateFunction,
+      accumulateArgs.asJava,
+      mergeFunction,
+      finalizeFunction,
+      lang
+    )
 }

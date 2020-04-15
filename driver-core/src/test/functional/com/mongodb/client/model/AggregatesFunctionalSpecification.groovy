@@ -26,6 +26,7 @@ import org.bson.conversions.Bson
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.client.model.Accumulators.accumulator
 import static com.mongodb.client.model.Accumulators.addToSet
 import static com.mongodb.client.model.Accumulators.avg
 import static com.mongodb.client.model.Accumulators.first
@@ -782,6 +783,50 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         then:
         results == [Document.parse('{_id: 1, count: 2}'),
                     Document.parse('{_id: 0, count: 1}')]
+
+        cleanup:
+        helper?.drop()
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(4, 3) })
+    def '$accumulator'() {
+        given:
+        def helper = getCollectionHelper()
+
+        when:
+        helper.drop()
+        helper.insertDocuments(Document.parse('{_id: 1, x: "string"}'))
+        def init = 'function() { return { x: "test string" } }'
+        def accumulate = 'function(state) { return state }'
+        def merge = 'function(state1, state2) { return state1 }'
+        def accumulatorExpr = accumulator('testString', init, accumulate, merge);
+        def results1 = helper.aggregate([group('$x', asList(accumulatorExpr))])
+
+        then:
+        results1.size() == 1
+        results1.contains(Document.parse('{ _id: "string", testString: { x: "test string" } }'))
+
+        when:
+        helper.drop()
+        helper.insertDocuments(Document.parse('{_id: 8751, title: "The Banquet", author: "Dante", copies: 2}'),
+                Document.parse('{_id: 8752, title: "Divine Comedy", author: "Dante", copies: 1}'),
+                Document.parse('{_id: 8645, title: "Eclogues", author: "Dante", copies: 2}'),
+                Document.parse('{_id: 7000, title: "The Odyssey", author: "Homer", copies: 10}'),
+                Document.parse('{_id: 7020, title: "Iliad", author: "Homer", copies: 10}'))
+        def initFunction = 'function(initCount, initSum) { return { count: parseInt(initCount), sum: parseInt(initSum) } }';
+        def accumulateFunction = 'function(state, numCopies) { return { count : state.count + 1, sum : state.sum + numCopies } }';
+        def mergeFunction = 'function(state1, state2) { return { count : state1.count + state2.count, sum : state1.sum + state2.sum } }';
+        def finalizeFunction = 'function(state) { return (state.sum / state.count) }';
+        def accumulatorExpression = accumulator('avgCopies', initFunction, [ '0', '0' ], accumulateFunction,
+                [ '$copies' ], mergeFunction, finalizeFunction)
+        def results2 = helper.aggregate([group('$author', asList(
+                new BsonField('minCopies', new Document('$min', '$copies')), accumulatorExpression,
+                new BsonField('maxCopies', new Document('$max', '$copies'))))])
+
+        then:
+        results2.size() == 2
+        results2.contains(Document.parse('{_id: "Dante", minCopies: 1, avgCopies: 1.6666666666666667, maxCopies : 2}'))
+        results2.contains(Document.parse('{_id: "Homer", minCopies: 10, avgCopies: 10.0, maxCopies : 10}'))
 
         cleanup:
         helper?.drop()
