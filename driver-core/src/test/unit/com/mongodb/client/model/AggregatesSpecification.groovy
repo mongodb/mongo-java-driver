@@ -26,6 +26,7 @@ import spock.lang.Specification
 
 import static BucketGranularity.R5
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.client.model.Accumulators.accumulator
 import static com.mongodb.client.model.Accumulators.addToSet
 import static com.mongodb.client.model.Accumulators.avg
 import static com.mongodb.client.model.Accumulators.first
@@ -68,6 +69,41 @@ import static java.util.Arrays.asList
 import static org.bson.BsonDocument.parse
 
 class AggregatesSpecification extends Specification {
+
+    @IgnoreIf({ !serverVersionAtLeast(4, 3) })
+    def 'should render $accumulator'() {
+        given:
+        def initFunction = 'function() { return { count : 0, sum : 0 } }';
+        def initFunctionWithArgs = 'function(initCount, initSun) { return { count : parseInt(initCount), sum : parseInt(initSun) } }';
+        def accumulateFunction = 'function(state, numCopies) { return { count : state.count + 1, sum : state.sum + numCopies } }';
+        def mergeFunction = 'function(state1, state2) { return { count : state1.count + state2.count, sum : state1.sum + state2.sum } }';
+        def finalizeFunction = 'function(state) { return (state.sum / state.count) }';
+
+        expect:
+        toBson(group(null, accumulator('test', initFunction, accumulateFunction, mergeFunction))) ==
+                parse('{$group: {_id: null, test: {$accumulator: {init: "' + initFunction + '", initArgs: [], accumulate: "' +
+                        accumulateFunction + '", accumulateArgs: [], merge: "' + mergeFunction + '", lang: "js"}}}}')
+        toBson(group(null, accumulator('test', initFunction, accumulateFunction, mergeFunction, finalizeFunction))) ==
+                parse('{$group: {_id: null, test: {$accumulator: {init: "' + initFunction + '", initArgs: [], accumulate: "' +
+                        accumulateFunction + '", accumulateArgs: [], merge: "' + mergeFunction + '", finalize: "' + finalizeFunction +
+                        '", lang: "js"}}}}')
+        toBson(group(null, accumulator('test', initFunctionWithArgs, ['0', '0'], accumulateFunction, [ '$copies' ], mergeFunction,
+                finalizeFunction))) ==
+                parse('{$group: {_id: null, test: {$accumulator: {init: "' + initFunctionWithArgs +
+                        '", initArgs: [ "0", "0" ], accumulate: "' + accumulateFunction +
+                        '", accumulateArgs: [ "$copies" ], merge: "' + mergeFunction +
+                        '", finalize: "' + finalizeFunction + '", lang: "js"}}}}')
+        toBson(group(null, accumulator('test', initFunction, accumulateFunction, mergeFunction, finalizeFunction, 'lang'))) ==
+                parse('{$group: {_id: null, test: {$accumulator: {init: "' + initFunction + '", initArgs: [], accumulate: "' +
+                        accumulateFunction + '", accumulateArgs: [], merge: "' + mergeFunction + '", finalize: "' + finalizeFunction +
+                        '", lang: "lang"}}}}')
+        toBson(group(null, accumulator('test', initFunctionWithArgs, ['0', '0'], accumulateFunction, [ '$copies' ], mergeFunction,
+                finalizeFunction, 'js'))) ==
+                parse('{$group: {_id: null, test: {$accumulator: {init: "' + initFunctionWithArgs +
+                        '", initArgs: [ "0", "0" ], accumulate: "' + accumulateFunction +
+                        '", accumulateArgs: [ "$copies" ], merge: "' + mergeFunction +
+                        '", finalize: "' + finalizeFunction + '", lang: "js"}}}}')
+    }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should render $addFields'() {
@@ -722,6 +758,56 @@ class AggregatesSpecification extends Specification {
                 addFields(new Field('b', 3), new Field('c', 5)).hashCode()
         addFields(asList(new Field('b', 3), new Field('c', 5))).hashCode() ==
                 addFields(asList(new Field('b', 3), new Field('c', 5))).hashCode()
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(4, 3) })
+    def 'should test equals for accumulator operator'() {
+        given:
+        def initFunction = 'function() { return { count : 0, sum : 0 } }';
+        def initFunctionWithArgs = 'function(initCount, initSun) { return { count : parseInt(initCount), sum : parseInt(initSun) } }';
+        def initArgs = ['0', '0']
+        def accumulateFunction = 'function(state, numCopies) { return { count : state.count + 1, sum : state.sum + numCopies } }';
+        def mergeFunction = 'function(state1, state2) { return { count : state1.count + state2.count, sum : state1.sum + state2.sum } }';
+        def finalizeFunction = 'function(state) { return (state.sum / state.count) }';
+
+        expect:
+        accumulator('test', initFunction, accumulateFunction, mergeFunction)
+                .equals(accumulator('test', initFunction, null, accumulateFunction, null, mergeFunction,
+                        null, 'js'))
+        accumulator('test', initFunction, accumulateFunction, mergeFunction, finalizeFunction)
+                .equals(accumulator('test', initFunction, null, accumulateFunction, null, mergeFunction,
+                        finalizeFunction, 'js'))
+        accumulator('test', initFunction, accumulateFunction, mergeFunction, finalizeFunction, 'lang')
+                .equals(accumulator('test', initFunction, null, accumulateFunction, null, mergeFunction,
+                        finalizeFunction, 'lang'))
+        accumulator('test', initFunctionWithArgs, initArgs, accumulateFunction, [ '$copies' ], mergeFunction, finalizeFunction)
+                .equals(accumulator('test', initFunctionWithArgs, initArgs, accumulateFunction, [ '$copies' ], mergeFunction,
+                        finalizeFunction, 'js'))
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(4, 3) })
+    def 'should test hashCode for accumulator operator'() {
+        given:
+        def initFunction = 'function() { return { count : 0, sum : 0 } }';
+        def initFunctionWithArgs = 'function(initCount, initSun) { return { count : parseInt(initCount), sum : parseInt(initSun) } }';
+        def initArgs = ['0', '0']
+        def accumulateFunction = 'function(state, numCopies) { return { count : state.count + 1, sum : state.sum + numCopies } }';
+        def mergeFunction = 'function(state1, state2) { return { count : state1.count + state2.count, sum : state1.sum + state2.sum } }';
+        def finalizeFunction = 'function(state) { return (state.sum / state.count) }';
+
+        expect:
+        accumulator('test', initFunction, accumulateFunction, mergeFunction).hashCode() ==
+                accumulator('test', initFunction, null, accumulateFunction, null,
+                        mergeFunction, null, 'js').hashCode()
+        accumulator('test', initFunction, accumulateFunction, mergeFunction, finalizeFunction).hashCode() ==
+                accumulator('test', initFunction, null, accumulateFunction, null,
+                        mergeFunction, finalizeFunction, 'js').hashCode()
+        accumulator('test', initFunction, accumulateFunction, mergeFunction, finalizeFunction, 'lang').hashCode() ==
+                accumulator('test', initFunction, null, accumulateFunction, null, mergeFunction,
+                        finalizeFunction, 'lang').hashCode()
+        accumulator('test', initFunctionWithArgs, initArgs, accumulateFunction, [ '$copies' ], mergeFunction,
+                finalizeFunction).hashCode() == accumulator('test', initFunctionWithArgs, initArgs, accumulateFunction,
+                [ '$copies' ], mergeFunction, finalizeFunction, 'js').hashCode()
     }
 
     def 'should test equals for ReplaceRootStage'() {
