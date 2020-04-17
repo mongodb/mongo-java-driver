@@ -49,6 +49,59 @@ public abstract class ReadPreference {
     }
 
     /**
+     * Create a new ReadPreference instance with a new tag set.
+     * <p>
+     * Note: this method is not supported for a primary read preference.
+     * </p>
+     *
+     * @param tagSet the new tag set
+     * @return a new ReadPreference instance with a new tag set
+     * @since 4.1
+     */
+    public abstract ReadPreference withTagSet(TagSet tagSet);
+
+    /**
+     * Create a new ReadPreference instance with a new tag set list.
+     * <p>
+     * Note: this method is not supported for a primary read preference.
+     * </p>
+     *
+     * @param tagSet the new tag set list
+     * @return a new ReadPreference instance with a new tag set list
+     * @since 4.1
+     */
+    public abstract ReadPreference withTagSetList(List<TagSet> tagSet);
+
+    /**
+     * Create a new ReadPreference instance with the maximum acceptable staleness of a secondary in order to be considered for
+     * read operations.
+     * <p>
+     * Note: this method is not supported for a primary read preference.
+     * </p>
+     *
+     * @param maxStalenessMS the max allowable staleness of secondaries. The minimum value is either 90 seconds, or the heartbeat frequency
+     *                       plus 10 seconds, whichever is greatest.
+     * @param timeUnit the time unit of maxStaleness
+     * @return a new ReadPreference instance with a new maximum allowable staleness
+     * @since 4.1
+     * @mongodb.server.release 3.4
+     */
+    public abstract ReadPreference withMaxStalenessMS(Long maxStalenessMS, TimeUnit timeUnit);
+
+    /**
+     * Create a new ReadPreference instance with hedge options.
+     * <p>
+     * Note: this method is not supported for a primary read preference.
+     * </p>
+     *
+     * @param hedgeOptions the hedge options
+     * @return a new ReadPreference instance with hedge options
+     * @since 4.1
+     * @mongodb.server.release 4.4
+     */
+    public abstract ReadPreference withHedgeOptions(ReadPreferenceHedgeOptions hedgeOptions);
+
+    /**
      * True if this read preference allows reading from a secondary member of a replica set.
      *
      * @return if reading from a secondary is ok
@@ -573,7 +626,7 @@ public abstract class ReadPreference {
         String nameToCheck = name.toLowerCase();
 
         if (nameToCheck.equals(PRIMARY.getName().toLowerCase())) {
-            throw new IllegalArgumentException("Primary read preference can not also specify tag sets or max staleness");
+            throw new IllegalArgumentException("Primary read preference can not also specify tag sets, max staleness or hedge");
         }
 
         if (nameToCheck.equals(SECONDARY.getName().toLowerCase())) {
@@ -597,6 +650,26 @@ public abstract class ReadPreference {
      */
     private static final class PrimaryReadPreference extends ReadPreference {
         private PrimaryReadPreference() {
+        }
+
+        @Override
+        public ReadPreference withTagSet(final TagSet tagSet) {
+            throw new UnsupportedOperationException("Primary read preference can not also specify tag sets");
+        }
+
+        @Override
+        public TaggableReadPreference withTagSetList(final List<TagSet> tagSet) {
+            throw new UnsupportedOperationException("Primary read preference can not also specify tag sets");
+        }
+
+        @Override
+        public TaggableReadPreference withMaxStalenessMS(final Long maxStalenessMS, final TimeUnit timeUnit) {
+            throw new UnsupportedOperationException("Primary read preference can not also specify max staleness");
+        }
+
+        @Override
+        public TaggableReadPreference withHedgeOptions(final ReadPreferenceHedgeOptions hedgeOptions) {
+            throw new UnsupportedOperationException("Primary read preference can not also specify hedge");
         }
 
         @Override
