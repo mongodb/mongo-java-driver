@@ -59,6 +59,7 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "NonNullApi",
       "Nullable",
       "Person",
+      "ReadPreferenceHedgeOptions",
       "ServerCursor",
       "ServerSession",
       "SessionContext",

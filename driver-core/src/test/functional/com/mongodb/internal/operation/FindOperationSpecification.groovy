@@ -23,6 +23,7 @@ import com.mongodb.MongoQueryException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
+import com.mongodb.ReadPreferenceHedgeOptions
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.client.model.CreateCollectionOptions
@@ -478,6 +479,38 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
         where:
         async << [true, false]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(4, 3) || ClusterFixture.isStandalone() })
+    def 'should read from a secondary when hedge is specified'() {
+        given:
+        def documents = [new Document('_id', 3), new Document('_id', 1), new Document('_id', 2), new Document('_id', 5),
+                         new Document('_id', 4)]
+        collectionHelper.insertDocuments(new DocumentCodec(), documents);
+        def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
+
+        when:
+        def hedgeOptions = isHedgeEnabled != null ?
+                ReadPreferenceHedgeOptions.builder().enabled(isHedgeEnabled as boolean).build() : null
+        def readPreference = ReadPreference.primaryPreferred().withHedgeOptions(hedgeOptions)
+        def syncBinding = new ClusterBinding(getCluster(), readPreference, ReadConcern.DEFAULT)
+        def asyncBinding = new AsyncClusterBinding(getAsyncCluster(), readPreference, ReadConcern.DEFAULT)
+        def cursor = async ? executeAsync(operation, asyncBinding) : executeSync(operation, syncBinding)
+        def firstBatch = {
+            if (async) {
+                def futureResultCallback = new FutureResultCallback()
+                cursor.next(futureResultCallback)
+                futureResultCallback.get()
+            } else {
+                cursor.next()
+            }
+        }()
+
+        then:
+        firstBatch.size() == 5
+
+        where:
+        [async, isHedgeEnabled] << [[true, false], [null, false, true]].combinations()
     }
 
     def 'should add read concern to command'() {
