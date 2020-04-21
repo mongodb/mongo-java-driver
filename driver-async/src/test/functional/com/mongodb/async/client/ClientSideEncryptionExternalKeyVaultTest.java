@@ -97,7 +97,7 @@ public class ClientSideEncryptionExternalKeyVaultTest {
         schemaMap.put("db.coll", bsonDocumentFromPath("external-schema.json"));
 
         AutoEncryptionSettings.Builder autoEncryptionSettingsBuilder = AutoEncryptionSettings.builder()
-                .keyVaultNamespace("admin.datakeys")
+                .keyVaultNamespace("keyvault.datakeys")
                 .kmsProviders(kmsProviders)
                 .schemaMap(schemaMap);
 
@@ -119,7 +119,7 @@ public class ClientSideEncryptionExternalKeyVaultTest {
         ClientEncryptionSettings.Builder clientEncryptionSettingsBuilder = ClientEncryptionSettings.builder().
                 keyVaultMongoClientSettings(getMongoClientBuilderFromConnectionString().build())
                 .kmsProviders(kmsProviders)
-                .keyVaultNamespace("admin.datakeys");
+                .keyVaultNamespace("keyvault.datakeys");
 
         if (withExternalKeyVault) {
             clientEncryptionSettingsBuilder.keyVaultMongoClientSettings(externalClientSettings);

@@ -100,7 +100,7 @@ public class ClientSideEncryptionCorpusTest {
                 .append("validator", new BsonDocument("$jsonSchema", schemaDocument)), documentCallback);
         documentCallback.get();
 
-        // Step 3: Drop and create admin.datakeys
+        // Step 3: Drop and create keyvault.datakeys
         MongoDatabase adminDatabase = client.getDatabase("admin");
         MongoCollection<BsonDocument> dataKeysCollection = adminDatabase.getCollection("datakeys", BsonDocument.class)
                 .withWriteConcern(WriteConcern.MAJORITY);
@@ -133,7 +133,7 @@ public class ClientSideEncryptionCorpusTest {
         schemaMap.put("db.coll", schemaDocument);
 
         AutoEncryptionSettings.Builder autoEncryptionSettingsBuilder = AutoEncryptionSettings.builder()
-                .keyVaultNamespace("admin.datakeys")
+                .keyVaultNamespace("keyvault.datakeys")
                 .kmsProviders(kmsProviders);
 
         if (useLocalSchema) {

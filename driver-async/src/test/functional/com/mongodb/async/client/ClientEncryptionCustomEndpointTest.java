@@ -88,7 +88,7 @@ public class ClientEncryptionCustomEndpointTest {
         ClientEncryptionSettings.Builder clientEncryptionSettingsBuilder = ClientEncryptionSettings.builder().
                 keyVaultMongoClientSettings(Fixture.getMongoClientSettings())
                 .kmsProviders(kmsProviders)
-                .keyVaultNamespace("admin.datakeys");
+                .keyVaultNamespace("keyvault.datakeys");
 
         ClientEncryptionSettings clientEncryptionSettings = clientEncryptionSettingsBuilder.build();
         clientEncryption = ClientEncryptions.create(clientEncryptionSettings);
