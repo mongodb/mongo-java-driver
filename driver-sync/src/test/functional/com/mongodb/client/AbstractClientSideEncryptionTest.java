@@ -146,9 +146,9 @@ public abstract class AbstractClientSideEncryptionTest {
             database.getCollection(collectionName, BsonDocument.class).insertMany(documents);
         }
 
-        /* Insert data into the "admin.datakeys" key vault. */
+        /* Insert data into the "keyvault.datakeys" key vault. */
         BsonArray data = specDocument.getArray("key_vault_data", new BsonArray());
-        collection = getMongoClient().getDatabase("admin").getCollection("datakeys", BsonDocument.class)
+        collection = getMongoClient().getDatabase("keyvault").getCollection("datakeys", BsonDocument.class)
                 .withWriteConcern(WriteConcern.MAJORITY);
         collection.drop();
         if (!data.isEmpty()) {
@@ -212,7 +212,7 @@ public abstract class AbstractClientSideEncryptionTest {
             }
         }
 
-        String keyVaultNamespace = "admin.datakeys";
+        String keyVaultNamespace = "keyvault.datakeys";
         if (cryptOptions.containsKey("keyVaultNamespace")) {
             keyVaultNamespace = cryptOptions.getString("keyVaultNamespace").getValue();
         }

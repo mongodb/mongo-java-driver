@@ -98,9 +98,9 @@ public class ClientSideEncryptionCorpusTest {
                 .append("validator", new BsonDocument("$jsonSchema", schemaDocument)), documentCallback);
         documentCallback.get();
 
-        // Step 3: Drop and create admin.datakeys
-        AsyncMongoDatabase adminDatabase = client.getDatabase("admin");
-        AsyncMongoCollection<BsonDocument> dataKeysCollection = adminDatabase.getCollection("datakeys", BsonDocument.class)
+        // Step 3: Drop and create keyvault.datakeys
+        AsyncMongoDatabase keyVaultDatabase = client.getDatabase("keyvault");
+        AsyncMongoCollection<BsonDocument> dataKeysCollection = keyVaultDatabase.getCollection("datakeys", BsonDocument.class)
                 .withWriteConcern(WriteConcern.MAJORITY);
 
         voidCallback = new FutureResultCallback<Void>();
@@ -131,7 +131,7 @@ public class ClientSideEncryptionCorpusTest {
         schemaMap.put("db.coll", schemaDocument);
 
         AutoEncryptionSettings.Builder autoEncryptionSettingsBuilder = AutoEncryptionSettings.builder()
-                .keyVaultNamespace("admin.datakeys")
+                .keyVaultNamespace("keyvault.datakeys")
                 .kmsProviders(kmsProviders);
 
         if (useLocalSchema) {
@@ -148,7 +148,7 @@ public class ClientSideEncryptionCorpusTest {
         ClientEncryptionSettings clientEncryptionSettings = ClientEncryptionSettings.builder().
                 keyVaultMongoClientSettings(getMongoClientSettings()).
                 kmsProviders(kmsProviders).
-                keyVaultNamespace("admin.datakeys").build();
+                keyVaultNamespace("keyvault.datakeys").build();
         clientEncryption = AsyncClientEncryptions.create(clientEncryptionSettings);
     }
 
