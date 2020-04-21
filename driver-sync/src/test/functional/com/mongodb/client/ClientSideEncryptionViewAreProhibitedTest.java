@@ -62,7 +62,7 @@ public class ClientSideEncryptionViewAreProhibitedTest {
         kmsProviders.put("local", localMasterkey);
 
         AutoEncryptionSettings.Builder autoEncryptionSettingsBuilder = AutoEncryptionSettings.builder()
-                .keyVaultNamespace("admin.datakeys")
+                .keyVaultNamespace("keyvault.datakeys")
                 .kmsProviders(kmsProviders);
 
         AutoEncryptionSettings autoEncryptionSettings = autoEncryptionSettingsBuilder.build();

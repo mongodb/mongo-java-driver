@@ -70,8 +70,8 @@ public class ClientSideEncryptionExternalKeyVaultTest {
 
         /* Step 1: get unencrypted client and recreate keys collection */
         client = getMongoClient();
-        MongoDatabase admin = client.getDatabase("admin");
-        MongoCollection<BsonDocument> datakeys = admin.getCollection("datakeys", BsonDocument.class)
+        MongoDatabase keyvaultDatabase = client.getDatabase("keyvault");
+        MongoCollection<BsonDocument> datakeys = keyvaultDatabase.getCollection("datakeys", BsonDocument.class)
                 .withWriteConcern(WriteConcern.MAJORITY);
         datakeys.drop();
         datakeys.insertOne(bsonDocumentFromPath("external-key.json"));
@@ -88,7 +88,7 @@ public class ClientSideEncryptionExternalKeyVaultTest {
         schemaMap.put("db.coll", bsonDocumentFromPath("external-schema.json"));
 
         AutoEncryptionSettings.Builder autoEncryptionSettingsBuilder = AutoEncryptionSettings.builder()
-                .keyVaultNamespace("admin.datakeys")
+                .keyVaultNamespace("keyvault.datakeys")
                 .kmsProviders(kmsProviders)
                 .schemaMap(schemaMap);
 
@@ -110,7 +110,7 @@ public class ClientSideEncryptionExternalKeyVaultTest {
         ClientEncryptionSettings.Builder clientEncryptionSettingsBuilder = ClientEncryptionSettings.builder().
                 keyVaultMongoClientSettings(getMongoClientSettingsBuilder().build())
                 .kmsProviders(kmsProviders)
-                .keyVaultNamespace("admin.datakeys");
+                .keyVaultNamespace("keyvault.datakeys");
 
         if (withExternalKeyVault) {
             clientEncryptionSettingsBuilder.keyVaultMongoClientSettings(externalClientSettings);
