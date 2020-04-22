@@ -550,9 +550,6 @@ functions:
 
 # Anchors
 
-hosts: &hosts
- - rhel70-small
-
 pre:
   - func: "fetch source"
   - func: "prepare resources"
@@ -722,7 +719,10 @@ axes:
     values:
       - id: "linux"
         display_name: "Linux"
-        run_on: *hosts
+        run_on: rhel70-small
+      - id: "linux-large"
+        display_name: "Linux Large"
+        run_on: rhel70-large
       - id: "ubuntu"
         display_name: "Ubuntu 18.04"
         run_on: ubuntu1804-test
@@ -821,14 +821,14 @@ buildvariants:
 # Test packaging and other release related routines
 - name: static-checks
   display_name: "Static Checks"
-  run_on: *hosts
+  run_on: rhel70-small
   tasks:
     - name: "static-analysis"
 
 - matrix_name: "tests-zlib-compression"
   matrix_spec: { compressor : "zlib", auth: "noauth", ssl: "nossl", jdk: "jdk8",
                  version: ["3.6", "4.0", "4.2", "4.4", "latest"],
-                 topology: "standalone", os: "linux" }
+                 topology: "standalone", os: "linux-large" }
   display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
@@ -918,7 +918,7 @@ buildvariants:
 
 - name: plain-auth-test
   display_name: "PLAIN (LDAP) Auth test"
-  run_on: *hosts
+  run_on: rhel70-small
   tasks:
     - name: "plain-auth-test"
 
@@ -931,7 +931,7 @@ buildvariants:
 
 - name: atlas-test
   display_name: "Atlas test"
-  run_on: *hosts
+  run_on: rhel70-small
   tasks:
     - name: "atlas-test"
 
