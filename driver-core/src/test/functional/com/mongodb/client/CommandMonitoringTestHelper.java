@@ -81,12 +81,14 @@ public final class CommandMonitoringTestHelper {
                 // If the spec test supplies a $db field in the command, then use that database.
                 if (commandDocument.containsKey("$db")) {
                     actualDatabaseName = commandDocument.getString("$db").getValue();
-                }
-                else if (commandName.equals("commitTransaction") || commandName.equals("abortTransaction")) {
-                    actualDatabaseName = "admin";
                 } else if (commandName.equals("")) {
                     commandName = commandDocument.keySet().iterator().next();
                 }
+
+                if (isAdminCommand(commandName)) {
+                    actualDatabaseName = "admin";
+                }
+
                 // Not clear whether these global fields should be included, but also not clear how to efficiently exclude them
                 if (ClusterFixture.serverVersionAtLeast(3, 6)) {
                     commandDocument.put("$db", new BsonString(actualDatabaseName));
@@ -108,6 +110,11 @@ public final class CommandMonitoringTestHelper {
             expectedEvents.add(commandEvent);
         }
         return expectedEvents;
+    }
+
+    private static final List<String> ADMIN_COMMANDS = asList("commitTransaction", "abortTransaction", "listDatabases");
+    static boolean isAdminCommand(final String commandName) {
+        return ADMIN_COMMANDS.contains(commandName);
     }
 
     static boolean isWriteCommand(final String commandName) {
