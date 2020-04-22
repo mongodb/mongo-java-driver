@@ -19,7 +19,7 @@
   "data": [],
   "tests": [
     {
-      "description": "ListDatabaseNames succeeds after InterruptedAtShutdown",
+      "description": "ListIndexNames succeeds after InterruptedAtShutdown",
       "failPoint": {
         "configureFailPoint": "failCommand",
         "mode": {
@@ -27,36 +27,38 @@
         },
         "data": {
           "failCommands": [
-            "listDatabases"
+            "listIndexes"
           ],
           "errorCode": 11600
         }
       },
       "operations": [
         {
-          "name": "listDatabaseNames",
-          "object": "client"
+          "name": "listIndexNames",
+          "object": "collection"
         }
       ],
       "expectations": [
         {
           "command_started_event": {
             "command": {
-              "listDatabases": 1
-            }
+              "listIndexes": "coll"
+            },
+            "database_name": "retryable-reads-tests"
           }
         },
         {
           "command_started_event": {
             "command": {
-              "listDatabases": 1
-            }
+              "listIndexes": "coll"
+            },
+            "database_name": "retryable-reads-tests"
           }
         }
       ]
     },
     {
-      "description": "ListDatabaseNames succeeds after InterruptedDueToReplStateChange",
+      "description": "ListIndexNames succeeds after InterruptedDueToReplStateChange",
       "failPoint": {
         "configureFailPoint": "failCommand",
         "mode": {
@@ -64,36 +66,38 @@
         },
         "data": {
           "failCommands": [
-            "listDatabases"
+            "listIndexes"
           ],
           "errorCode": 11602
         }
       },
       "operations": [
         {
-          "name": "listDatabaseNames",
-          "object": "client"
+          "name": "listIndexNames",
+          "object": "collection"
         }
       ],
       "expectations": [
         {
           "command_started_event": {
             "command": {
-              "listDatabases": 1
-            }
+              "listIndexes": "coll"
+            },
+            "database_name": "retryable-reads-tests"
           }
         },
         {
           "command_started_event": {
             "command": {
-              "listDatabases": 1
-            }
+              "listIndexes": "coll"
+            },
+            "database_name": "retryable-reads-tests"
           }
         }
       ]
     },
     {
-      "description": "ListDatabaseNames succeeds after NotMaster",
+      "description": "ListIndexNames succeeds after NotMaster",
       "failPoint": {
         "configureFailPoint": "failCommand",
         "mode": {
@@ -101,36 +105,38 @@
         },
         "data": {
           "failCommands": [
-            "listDatabases"
+            "listIndexes"
           ],
           "errorCode": 10107
         }
       },
       "operations": [
         {
-          "name": "listDatabaseNames",
-          "object": "client"
+          "name": "listIndexNames",
+          "object": "collection"
         }
       ],
       "expectations": [
         {
           "command_started_event": {
             "command": {
-              "listDatabases": 1
-            }
+              "listIndexes": "coll"
+            },
+            "database_name": "retryable-reads-tests"
           }
         },
         {
           "command_started_event": {
             "command": {
-              "listDatabases": 1
-            }
+              "listIndexes": "coll"
+            },
+            "database_name": "retryable-reads-tests"
           }
         }
       ]
     },
     {
-      "description": "ListDatabaseNames succeeds after NotMasterNoSlaveOk",
+      "description": "ListIndexNames succeeds after NotMasterNoSlaveOk",
       "failPoint": {
         "configureFailPoint": "failCommand",
         "mode": {
@@ -138,36 +144,38 @@
         },
         "data": {
           "failCommands": [
-            "listDatabases"
+            "listIndexes"
           ],
           "errorCode": 13435
         }
       },
       "operations": [
         {
-          "name": "listDatabaseNames",
-          "object": "client"
+          "name": "listIndexNames",
+          "object": "collection"
         }
       ],
       "expectations": [
         {
           "command_started_event": {
             "command": {
-              "listDatabases": 1
-            }
+              "listIndexes": "coll"
+            },
+            "database_name": "retryable-reads-tests"
           }
         },
         {
           "command_started_event": {
             "command": {
-              "listDatabases": 1
-            }
+              "listIndexes": "coll"
+            },
+            "database_name": "retryable-reads-tests"
           }
         }
       ]
     },
     {
-      "description": "ListDatabaseNames succeeds after NotMasterOrSecondary",
+      "description": "ListIndexNames succeeds after NotMasterOrSecondary",
       "failPoint": {
         "configureFailPoint": "failCommand",
         "mode": {
@@ -175,36 +183,38 @@
         },
         "data": {
           "failCommands": [
-            "listDatabases"
+            "listIndexes"
           ],
           "errorCode": 13436
         }
       },
       "operations": [
         {
-          "name": "listDatabaseNames",
-          "object": "client"
+          "name": "listIndexNames",
+          "object": "collection"
         }
       ],
       "expectations": [
         {
           "command_started_event": {
             "command": {
-              "listDatabases": 1
-            }
+              "listIndexes": "coll"
+            },
+            "database_name": "retryable-reads-tests"
           }
         },
         {
           "command_started_event": {
             "command": {
-              "listDatabases": 1
-            }
+              "listIndexes": "coll"
+            },
+            "database_name": "retryable-reads-tests"
           }
         }
       ]
     },
     {
-      "description": "ListDatabaseNames succeeds after PrimarySteppedDown",
+      "description": "ListIndexNames succeeds after PrimarySteppedDown",
       "failPoint": {
         "configureFailPoint": "failCommand",
         "mode": {
@@ -212,36 +222,38 @@
         },
         "data": {
           "failCommands": [
-            "listDatabases"
+            "listIndexes"
           ],
           "errorCode": 189
         }
       },
       "operations": [
         {
-          "name": "listDatabaseNames",
-          "object": "client"
+          "name": "listIndexNames",
+          "object": "collection"
         }
       ],
       "expectations": [
         {
           "command_started_event": {
             "command": {
-              "listDatabases": 1
-            }
+              "listIndexes": "coll"
+            },
+            "database_name": "retryable-reads-tests"
           }
         },
         {
           "command_started_event": {
             "command": {
-              "listDatabases": 1
-            }
+              "listIndexes": "coll"
+            },
+            "database_name": "retryable-reads-tests"
           }
         }
       ]
     },
     {
-      "description": "ListDatabaseNames succeeds after ShutdownInProgress",
+      "description": "ListIndexNames succeeds after ShutdownInProgress",
       "failPoint": {
         "configureFailPoint": "failCommand",
         "mode": {
@@ -249,36 +261,38 @@
         },
         "data": {
           "failCommands": [
-            "listDatabases"
+            "listIndexes"
           ],
           "errorCode": 91
         }
       },
       "operations": [
         {
-          "name": "listDatabaseNames",
-          "object": "client"
+          "name": "listIndexNames",
+          "object": "collection"
         }
       ],
       "expectations": [
         {
           "command_started_event": {
             "command": {
-              "listDatabases": 1
-            }
+              "listIndexes": "coll"
+            },
+            "database_name": "retryable-reads-tests"
           }
         },
         {
           "command_started_event": {
             "command": {
-              "listDatabases": 1
-            }
+              "listIndexes": "coll"
+            },
+            "database_name": "retryable-reads-tests"
           }
         }
       ]
     },
     {
-      "description": "ListDatabaseNames succeeds after HostNotFound",
+      "description": "ListIndexNames succeeds after HostNotFound",
       "failPoint": {
         "configureFailPoint": "failCommand",
         "mode": {
@@ -286,36 +300,38 @@
         },
         "data": {
           "failCommands": [
-            "listDatabases"
+            "listIndexes"
           ],
           "errorCode": 7
         }
       },
       "operations": [
         {
-          "name": "listDatabaseNames",
-          "object": "client"
+          "name": "listIndexNames",
+          "object": "collection"
         }
       ],
       "expectations": [
         {
           "command_started_event": {
             "command": {
-              "listDatabases": 1
-            }
+              "listIndexes": "coll"
+            },
+            "database_name": "retryable-reads-tests"
           }
         },
         {
           "command_started_event": {
             "command": {
-              "listDatabases": 1
-            }
+              "listIndexes": "coll"
+            },
+            "database_name": "retryable-reads-tests"
           }
         }
       ]
     },
     {
-      "description": "ListDatabaseNames succeeds after HostUnreachable",
+      "description": "ListIndexNames succeeds after HostUnreachable",
       "failPoint": {
         "configureFailPoint": "failCommand",
         "mode": {
@@ -323,36 +339,38 @@
         },
         "data": {
           "failCommands": [
-            "listDatabases"
+            "listIndexes"
           ],
           "errorCode": 6
         }
       },
       "operations": [
         {
-          "name": "listDatabaseNames",
-          "object": "client"
+          "name": "listIndexNames",
+          "object": "collection"
         }
       ],
       "expectations": [
         {
           "command_started_event": {
             "command": {
-              "listDatabases": 1
-            }
+              "listIndexes": "coll"
+            },
+            "database_name": "retryable-reads-tests"
           }
         },
         {
           "command_started_event": {
             "command": {
-              "listDatabases": 1
-            }
+              "listIndexes": "coll"
+            },
+            "database_name": "retryable-reads-tests"
           }
         }
       ]
     },
     {
-      "description": "ListDatabaseNames succeeds after NetworkTimeout",
+      "description": "ListIndexNames succeeds after NetworkTimeout",
       "failPoint": {
         "configureFailPoint": "failCommand",
         "mode": {
@@ -360,36 +378,38 @@
         },
         "data": {
           "failCommands": [
-            "listDatabases"
+            "listIndexes"
           ],
           "errorCode": 89
         }
       },
       "operations": [
         {
-          "name": "listDatabaseNames",
-          "object": "client"
+          "name": "listIndexNames",
+          "object": "collection"
         }
       ],
       "expectations": [
         {
           "command_started_event": {
             "command": {
-              "listDatabases": 1
-            }
+              "listIndexes": "coll"
+            },
+            "database_name": "retryable-reads-tests"
           }
         },
         {
           "command_started_event": {
             "command": {
-              "listDatabases": 1
-            }
+              "listIndexes": "coll"
+            },
+            "database_name": "retryable-reads-tests"
           }
         }
       ]
     },
     {
-      "description": "ListDatabaseNames succeeds after SocketException",
+      "description": "ListIndexNames succeeds after SocketException",
       "failPoint": {
         "configureFailPoint": "failCommand",
         "mode": {
@@ -397,36 +417,38 @@
         },
         "data": {
           "failCommands": [
-            "listDatabases"
+            "listIndexes"
           ],
           "errorCode": 9001
         }
       },
       "operations": [
         {
-          "name": "listDatabaseNames",
-          "object": "client"
+          "name": "listIndexNames",
+          "object": "collection"
         }
       ],
       "expectations": [
         {
           "command_started_event": {
             "command": {
-              "listDatabases": 1
-            }
+              "listIndexes": "coll"
+            },
+            "database_name": "retryable-reads-tests"
           }
         },
         {
           "command_started_event": {
             "command": {
-              "listDatabases": 1
-            }
+              "listIndexes": "coll"
+            },
+            "database_name": "retryable-reads-tests"
           }
         }
       ]
     },
     {
-      "description": "ListDatabaseNames fails after two NotMaster errors",
+      "description": "ListIndexNames fails after two NotMaster errors",
       "failPoint": {
         "configureFailPoint": "failCommand",
         "mode": {
@@ -434,15 +456,15 @@
         },
         "data": {
           "failCommands": [
-            "listDatabases"
+            "listIndexes"
           ],
           "errorCode": 10107
         }
       },
       "operations": [
         {
-          "name": "listDatabaseNames",
-          "object": "client",
+          "name": "listIndexNames",
+          "object": "collection",
           "error": true
         }
       ],
@@ -450,21 +472,23 @@
         {
           "command_started_event": {
             "command": {
-              "listDatabases": 1
-            }
+              "listIndexes": "coll"
+            },
+            "database_name": "retryable-reads-tests"
           }
         },
         {
           "command_started_event": {
             "command": {
-              "listDatabases": 1
-            }
+              "listIndexes": "coll"
+            },
+            "database_name": "retryable-reads-tests"
           }
         }
       ]
     },
     {
-      "description": "ListDatabaseNames fails after NotMaster when retryReads is false",
+      "description": "ListIndexNames fails after NotMaster when retryReads is false",
       "clientOptions": {
         "retryReads": false
       },
@@ -475,15 +499,15 @@
         },
         "data": {
           "failCommands": [
-            "listDatabases"
+            "listIndexes"
           ],
           "errorCode": 10107
         }
       },
       "operations": [
         {
-          "name": "listDatabaseNames",
-          "object": "client",
+          "name": "listIndexNames",
+          "object": "collection",
           "error": true
         }
       ],
@@ -491,8 +515,9 @@
         {
           "command_started_event": {
             "command": {
-              "listDatabases": 1
-            }
+              "listIndexes": "coll"
+            },
+            "database_name": "retryable-reads-tests"
           }
         }
       ]
