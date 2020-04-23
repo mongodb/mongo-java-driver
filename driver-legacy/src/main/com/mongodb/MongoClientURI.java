@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.lang.Nullable;
+import org.bson.UuidRepresentation;
 
 import java.util.List;
 
@@ -418,6 +419,10 @@ public class MongoClientURI {
         }
         if (!proxied.getCompressorList().isEmpty()) {
             builder.compressorList(proxied.getCompressorList());
+        }
+        UuidRepresentation uuidRepresentation = proxied.getUuidRepresentation();
+        if (uuidRepresentation != null) {
+            builder.uuidRepresentation(uuidRepresentation);
         }
         return builder.build();
     }

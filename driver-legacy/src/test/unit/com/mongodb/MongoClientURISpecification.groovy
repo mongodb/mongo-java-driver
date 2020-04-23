@@ -16,7 +16,7 @@
 
 package com.mongodb
 
-
+import org.bson.UuidRepresentation
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -140,6 +140,7 @@ class MongoClientURISpecification extends Specification {
                 + 'heartbeatFrequencyMS=20000&'
                 + 'retryWrites=true&'
                 + 'retryReads=true&'
+                + 'uuidRepresentation=csharpLegacy&'
                 + 'appName=app1')
 
         when:
@@ -164,6 +165,7 @@ class MongoClientURISpecification extends Specification {
         options.getHeartbeatFrequency() == 20000
         options.getRetryWrites()
         options.getRetryReads()
+        options.getUuidRepresentation() == UuidRepresentation.C_SHARP_LEGACY
         options.getApplicationName() == 'app1'
     }
 
@@ -183,6 +185,7 @@ class MongoClientURISpecification extends Specification {
         !options.isSslEnabled()
         options.getRetryWrites()
         options.getRetryReads()
+        options.getUuidRepresentation() == UuidRepresentation.JAVA_LEGACY
     }
 
     def 'should apply default uri to options'() {
@@ -214,6 +217,7 @@ class MongoClientURISpecification extends Specification {
                 .localThreshold(25)
                 .requiredReplicaSetName('test')
                 .compressorList([MongoCompressor.createZlibCompressor()])
+                .uuidRepresentation(UuidRepresentation.C_SHARP_LEGACY)
 
         when:
         def options = new MongoClientURI('mongodb://localhost', optionsBuilder).getOptions()
@@ -246,6 +250,7 @@ class MongoClientURISpecification extends Specification {
         options.getServerSettings().getHeartbeatFrequency(MILLISECONDS) == 5
         options.getServerSettings().getMinHeartbeatFrequency(MILLISECONDS) == 11
         options.compressorList == [MongoCompressor.createZlibCompressor()]
+        options.getUuidRepresentation() == UuidRepresentation.C_SHARP_LEGACY
     }
 
     @Unroll
