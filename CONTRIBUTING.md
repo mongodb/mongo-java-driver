@@ -30,5 +30,5 @@ pull request will not be considered.
 Talk To Us
 ----------
 
-If you want to work on something or have questions / complaints please reach out to us by creating a Question issue at 
-(https://jira.mongodb.org/secure/CreateIssue!default.jspa).
+If you have questions about using the driver, please reach out on the 
+[MongoDB Community Forums](https://developer.mongodb.com/community/forums/tags/c/drivers-odms-connectors/7/java-driver).
