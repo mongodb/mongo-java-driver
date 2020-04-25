@@ -354,13 +354,24 @@ class AsyncAggregateIterableSpecification extends Specification {
 
     def 'should build the expected AggregateToCollectionOperation for $out as a document'() {
         given:
+        def cannedResults = [new Document('_id', 1), new Document('_id', 1), new Document('_id', 1)]
         def cursor = Stub(AsyncBatchCursor) {
-            next(_) >> {
-                it[0].onResult(null, null)
-            }
+                def count = 0
+                def results;
+                def getResult = {
+                    count++
+                    results = count == 1 ? cannedResults : null
+                    results
+                }
+                next(_) >> {
+                    it[0].onResult(getResult(), null)
+                }
+                isClosed() >> { count >= 1 }
         }
         def executor = new TestOperationExecutor([cursor, cursor, cursor, cursor, cursor]);
         def pipeline = [new Document('$match', 1), new Document('$out', new Document('s3', true))]
+        def outWithDBpipeline = [new Document('$match', 1),
+                                 new Document('$out', new Document('db', 'testDB').append('coll', 'testCollection'))]
 
         when: 'aggregation includes $out'
         def aggregateIterable = new AsyncAggregateIterableImpl(null, namespace, Document, Document, codecRegistry,
@@ -422,6 +433,28 @@ class AsyncAggregateIterableSpecification extends Specification {
 
         then:
         thrown(IllegalStateException)
+
+        when: 'aggregation includes $out with namespace'
+        aggregateIterable = new AsyncAggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
+                readConcern, writeConcern, executor, outWithDBpipeline, AggregationLevel.COLLECTION, false)
+        futureResultCallback = new FutureResultCallback()
+        aggregateIterable.toCollection(futureResultCallback)
+        futureResultCallback.get()
+
+        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+
+        then:
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
+                [new BsonDocument('$match', new BsonInt32(1)),
+                 BsonDocument.parse('{$out: {db: "testDB", coll: "testCollection"}}')], readConcern, writeConcern))
+
+        when: 'Trying to iterate it should succeed'
+        def target = []
+        def results = new FutureResultCallback()
+        aggregateIterable.into(target, results)
+
+        then:
+        results.get() == cannedResults
     }
 
     def 'should handle exceptions correctly'() {

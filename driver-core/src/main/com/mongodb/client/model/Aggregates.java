@@ -424,6 +424,21 @@ public final class Aggregates {
     }
 
     /**
+     * Creates a $out pipeline stage that supports outputting to a different database.
+     *
+     * @param databaseName   the database name
+     * @param collectionName the collection name
+     * @return the $out pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/out/  $out
+     * @mongodb.server.release 4.4
+     * @since 4.1
+     */
+    public static Bson out(final String databaseName, final String collectionName) {
+        return new BsonDocument("$out", new BsonDocument("db", new BsonString(databaseName))
+                .append("coll", new BsonString(collectionName)));
+    }
+
+    /**
      * Creates a $out pipeline stage that writes out to the specified destination
      *
      * @param destination the destination details

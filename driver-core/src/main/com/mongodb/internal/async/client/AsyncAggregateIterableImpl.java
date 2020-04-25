@@ -185,10 +185,18 @@ class AsyncAggregateIterableImpl<TDocument, TResult> extends AsyncMongoIterableI
             return null;
         }
         if (lastPipelineStage.containsKey("$out")) {
-            if (!lastPipelineStage.get("$out").isString()) {
-                throw new IllegalStateException("Cannot return a cursor when the value for $out stage is not a string");
+            if (lastPipelineStage.get("$out").isString()) {
+                return new MongoNamespace(namespace.getDatabaseName(), lastPipelineStage.getString("$out").getValue());
+            } else if (lastPipelineStage.get("$out").isDocument()) {
+                BsonDocument outDocument = lastPipelineStage.getDocument("$out");
+                if (!outDocument.containsKey("db") || !outDocument.containsKey("coll")) {
+                    throw new IllegalStateException("Cannot return a cursor when the value for $out stage is not a namespace document");
+                }
+                return new MongoNamespace(outDocument.getString("db").getValue(), outDocument.getString("coll").getValue());
+            } else {
+                throw new IllegalStateException("Cannot return a cursor when the value for $out stage "
+                        + "is not a string or namespace document");
             }
-            return new MongoNamespace(namespace.getDatabaseName(), lastPipelineStage.getString("$out").getValue());
         } else if (lastPipelineStage.containsKey("$merge")) {
             BsonDocument mergeDocument = lastPipelineStage.getDocument("$merge");
             if (mergeDocument.isDocument("into")) {
