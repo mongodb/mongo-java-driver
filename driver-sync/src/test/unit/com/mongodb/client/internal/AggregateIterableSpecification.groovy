@@ -333,8 +333,28 @@ class AggregateIterableSpecification extends Specification {
 
     def 'should build the expected AggregateToCollectionOperation for $out as a document'() {
         given:
-        def executor = new TestOperationExecutor([null, null, null, null, null])
+        def cannedResults = [new Document('_id', 1), new Document('_id', 2), new Document('_id', 3)]
+        def cursor = {
+            Stub(BatchCursor) {
+                def count = 0
+                def results;
+                def getResult = {
+                    count++
+                    results = count == 1 ? cannedResults : null
+                    results
+                }
+                next() >> {
+                    getResult()
+                }
+                hasNext() >> {
+                    count == 0
+                }
+            }
+        }
+        def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor(), cursor(), cursor()])
         def pipeline = [new Document('$match', 1), new Document('$out', new Document('s3', true))]
+        def outWithDBpipeline = [new Document('$match', 1),
+                                 new Document('$out', new Document('db', 'testDB').append('coll', 'testCollection'))]
 
         when: 'aggregation includes $out'
         def aggregateIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
@@ -391,6 +411,25 @@ class AggregateIterableSpecification extends Specification {
 
         then:
         thrown(IllegalStateException)
+
+        when: 'aggregation includes $out with namespace'
+        aggregateIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
+                readConcern, writeConcern, executor, outWithDBpipeline, AggregationLevel.COLLECTION, false)
+        aggregateIterable.toCollection()
+
+        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+
+        then:
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
+                [new BsonDocument('$match', new BsonInt32(1)),
+                 BsonDocument.parse('{$out: {db: "testDB", coll: "testCollection"}}')], readConcern, writeConcern))
+
+        when: 'Trying to iterate it should succeed'
+        def results = []
+        aggregateIterable.into(results)
+
+        then:
+        results == cannedResults
     }
 
 

@@ -202,6 +202,20 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).find() == [a, b, c]
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(4, 3) })
+    def '$out to specified database'() {
+        given:
+        def outDatabaseName = getDatabaseName() + '_out'
+        def outCollectionName = getCollectionName() + '.out'
+        getCollectionHelper(new MongoNamespace(outDatabaseName, outCollectionName)).create()
+
+        when:
+        aggregate([out(outDatabaseName, outCollectionName)])
+
+        then:
+        getCollectionHelper(new MongoNamespace(outDatabaseName, outCollectionName)).find() == [a, b, c]
+    }
+
     @IgnoreIf({ !serverVersionAtLeast(4, 2) })
     def '$merge'() {
         given:

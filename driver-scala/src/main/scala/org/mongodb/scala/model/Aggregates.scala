@@ -378,6 +378,16 @@ object Aggregates {
   def out(collectionName: String): Bson = JAggregates.out(collectionName)
 
   /**
+   * Creates a `\$out` pipeline stage that supports outputting to a different database.
+   *
+   * @param databaseName   the database name
+   * @param collectionName the collection name
+   * @return the `\$out` pipeline stage
+   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/out/  \$out]]
+   */
+  def out(databaseName: String, collectionName: String): Bson = JAggregates.out(databaseName, collectionName)
+
+  /**
    * Creates a `\$merge` pipeline stage that merges into the specified collection using the specified options.
    *
    * @param collectionName the name of the collection to merge into
