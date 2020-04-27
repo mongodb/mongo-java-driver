@@ -88,13 +88,10 @@ class OperationExecutorImpl implements OperationExecutor {
                                             operation.executeAsync(binding, new SingleResultCallback<T>() {
                                                 @Override
                                                 public void onResult(final T result, final Throwable t) {
-                                                    try {
-                                                        labelException(t, session);
-                                                        unpinServerAddressOnTransientTransactionError(session, t);
-                                                        errHandlingCallback.onResult(result, t);
-                                                    } finally {
-                                                        binding.release();
-                                                    }
+                                                    labelException(session, t);
+                                                    unpinServerAddressOnTransientTransactionError(session, t);
+                                                    binding.release();
+                                                    errHandlingCallback.onResult(result, t);
                                                 }
                                             });
                                         }
@@ -134,13 +131,10 @@ class OperationExecutorImpl implements OperationExecutor {
                                         operation.executeAsync(binding, new SingleResultCallback<T>() {
                                             @Override
                                             public void onResult(final T result, final Throwable t) {
-                                                try {
-                                                    labelException(t, session);
-                                                    unpinServerAddressOnTransientTransactionError(session, t);
-                                                    errHandlingCallback.onResult(result, t);
-                                                } finally {
-                                                    binding.release();
-                                                }
+                                                labelException(session, t);
+                                                unpinServerAddressOnTransientTransactionError(session, t);
+                                                binding.release();
+                                                errHandlingCallback.onResult(result, t);
                                             }
                                         });
                                     }
@@ -151,7 +145,7 @@ class OperationExecutorImpl implements OperationExecutor {
         });
     }
 
-    private void labelException(final Throwable t, final ClientSession session) {
+    private void labelException(@Nullable final ClientSession session, @Nullable final Throwable t) {
         if (session != null && session.hasActiveTransaction()
                 && (t instanceof MongoSocketException || t instanceof MongoTimeoutException
                 || (t instanceof MongoQueryException && ((MongoQueryException) t).getErrorCode() == 91))
@@ -160,8 +154,9 @@ class OperationExecutorImpl implements OperationExecutor {
         }
     }
 
-    private void unpinServerAddressOnTransientTransactionError(final @Nullable ClientSession session, final Throwable throwable) {
-        if (session != null && throwable != null && throwable instanceof MongoException
+    private void unpinServerAddressOnTransientTransactionError(@Nullable final ClientSession session,
+                                                               @Nullable final Throwable throwable) {
+        if (session != null && throwable instanceof MongoException
                 && ((MongoException) throwable).hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)) {
             session.setPinnedServerAddress(null);
         }
