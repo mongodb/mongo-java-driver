@@ -201,3 +201,49 @@ ERefGuide.html).
 Some applications may want to force only the TLS 1.2 protocol. To do this, set the `jdk.tls.client.protocols` system property to "TLSv1.2".
 
 Java runtime environments prior to Java 8 started to enable the TLS 1.2 protocol only in later updates, as shown in the previous section. For the driver to force the use of the TLS 1.2 protocol with a Java runtime environment prior to Java 8, ensure that the update has TLS 1.2 enabled.
+
+
+## OCSP
+
+{{% note %}}
+The Java driver cannot enable OCSP by default on a per MongoClient basis.
+{{% /note %}}
+
+### Client-driven OCSP
+
+An application will need to set JVM system and security properties to ensure that client-driven OCSP is enabled:
+
+-  `com.sun.net.ssl.checkRevocation`:
+      When set to `true`, this system property enables revocation checking.
+
+-  `ocsp.enable`:
+      When set to `true`, this security property enables client-driven OCSP.
+      
+To configure an application to use client-driven OCSP, the application must already be set up to connect to a server using TLS. Setting these system properties is required to enable client-driven OCSP.
+
+{{% note %}}
+The support for TLS provided by the JDK utilizes “hard fail” behavior in the case of an unavailable OCSP responder in contrast to the mongo shell and drivers that utilize “soft fail” behavior.
+{{% /note %}}
+
+### OCSP Stapling
+
+{{% note class=important %}}
+The following exception may occur when using OCSP stapling with Java runtime environments that use the TLS 1.3 protocol (Java 11 and higher use TLS 1.3 by default):
+
+`javax.net.ssl.SSLHandshakeException: extension (5) should not be presented in certificate_request`
+
+The exception is due to a known issue with TLS 1.3 in Java 11 and higher. To avoid this exception when using a Java runtime environments using the TLS 1.3 protocol, you can force the application to use the TLS 1.2 protocol. To do this, set the `jdk.tls.client.protocols` system property to "TLSv1.2".
+{{% /note %}}
+
+An application will need to set several JVM system properties to set up OCSP stapling:
+
+-  `jdk.tls.client.enableStatusRequestExtension`:
+      When set to `true` (its default value), this enables OCSP stapling.
+
+-  `com.sun.net.ssl.checkRevocation`:
+      When set to `true`, this enables revocation checking. If this property is not set to `true`, then the connection will be allowed to proceed regardless of the presence or status of the revocation information.
+
+To configure an application to use OCSP stapling, the application must already be set up to connect to a server using TLS, and the server must be set up to staple an OCSP response to the certificate it returns as part of the the TLS handshake.
+
+For more information on configuring a Java application to use OCSP, please
+refer to the "Client-driven OCSP and OCSP Stapling" section in the [`JSSE Reference Guide`](https://docs.oracle.com/javase/9/security/java-secure-socket-extension-jsse-reference-guide.htm).

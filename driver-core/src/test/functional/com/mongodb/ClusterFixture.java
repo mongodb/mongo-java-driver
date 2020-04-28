@@ -93,6 +93,7 @@ public final class ClusterFixture {
     public static final String DEFAULT_URI = "mongodb://localhost:27017";
     public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
     public static final String MONGODB_TRANSACTION_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.transaction.uri";
+    private static final String MONGODB_OCSP_SHOULD_SUCCEED = "org.mongodb.test.ocsp.tls.should.succeed";
     private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
     private static final int COMMAND_NOT_FOUND_ERROR_CODE = 59;
     public static final long TIMEOUT = 60L;
@@ -192,6 +193,10 @@ public final class ClusterFixture {
                 cluster.close();
             }
         }
+    }
+
+    public static boolean getOcspShouldSucceed() {
+        return Integer.parseInt(System.getProperty(MONGODB_OCSP_SHOULD_SUCCEED)) == 1;
     }
 
     public static synchronized ConnectionString getMultiMongosConnectionString() {
