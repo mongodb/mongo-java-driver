@@ -56,6 +56,7 @@ import static com.mongodb.client.model.Aggregates.sample
 import static com.mongodb.client.model.Aggregates.skip
 import static com.mongodb.client.model.Aggregates.sort
 import static com.mongodb.client.model.Aggregates.sortByCount
+import static com.mongodb.client.model.Aggregates.unionWith
 import static com.mongodb.client.model.Aggregates.unwind
 import static com.mongodb.client.model.BsonHelper.toBson
 import static com.mongodb.client.model.Filters.eq
@@ -325,6 +326,13 @@ class AggregatesSpecification extends Specification {
     def 'should render $skip'() {
         expect:
         toBson(skip(5)) == parse('{ $skip : 5 }')
+    }
+
+    def 'should render $unionWith'() {
+        expect:
+        List<Bson> pipeline = asList(match(expr(new Document('$eq', asList('x', '1')))))
+        toBson(unionWith('with', pipeline)) ==
+                parse('''{ $unionWith : { coll: "with", pipeline : [{ $match : { $expr: { $eq : [ "x" , "1" ]}}}] }}''')
     }
 
     def 'should render $unwind'() {

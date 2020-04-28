@@ -378,6 +378,20 @@ public final class Aggregates {
     }
 
     /**
+     * Creates a $unionWith pipeline stage.
+     *
+     * @param collection    the name of the collection in the same database to perform the union with.
+     * @param pipeline      the pipeline to run on the union.
+     * @return the $unionWith pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/unionWith/ $unionWith
+     * @mongodb.server.release 4.4
+     * @since 4.1
+     */
+    public static Bson unionWith(final String collection, final List<? extends Bson> pipeline) {
+        return new UnionWithStage(collection, pipeline);
+    }
+
+    /**
      * Creates a $unwind pipeline stage for the specified field name, which must be prefixed by a {@code '$'} sign.
      *
      * @param fieldName the field name, prefixed by a {@code '$' sign}
@@ -1372,6 +1386,70 @@ public final class Aggregates {
                     + "name='$merge', "
                     + ", into=" + intoValue
                     + ", options=" + options
+                    + '}';
+        }
+    }
+
+    private static final class UnionWithStage implements Bson {
+        private final String collection;
+        private final List<? extends Bson> pipeline;
+
+        private UnionWithStage(final String collection, final List<? extends Bson> pipeline) {
+            this.collection = collection;
+            this.pipeline = pipeline;
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
+            BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+
+            writer.writeStartDocument();
+
+            writer.writeStartDocument("$unionWith");
+            writer.writeString("coll", collection);
+
+            writer.writeName("pipeline");
+            writer.writeStartArray();
+            for (Bson stage : pipeline) {
+                BuildersHelper.encodeValue(writer, stage, codecRegistry);
+            }
+            writer.writeEndArray();
+
+            writer.writeEndDocument();
+
+            return writer.getDocument();
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            UnionWithStage that = (UnionWithStage) o;
+
+            if (!collection.equals(that.collection)) {
+                return false;
+            }
+            return pipeline != null ? !pipeline.equals(that.pipeline) : that.pipeline != null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = collection.hashCode();
+            result = 31 * result + (pipeline != null ? pipeline.hashCode() : 0);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "Stage{"
+                    + "name='$unionWith'"
+                    + ", collection='" + collection + '\''
+                    + ", pipeline=" + pipeline
                     + '}';
         }
     }

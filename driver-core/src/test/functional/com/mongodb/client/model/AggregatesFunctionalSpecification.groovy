@@ -56,6 +56,7 @@ import static com.mongodb.client.model.Aggregates.sample
 import static com.mongodb.client.model.Aggregates.skip
 import static com.mongodb.client.model.Aggregates.sort
 import static com.mongodb.client.model.Aggregates.sortByCount
+import static com.mongodb.client.model.Aggregates.unionWith
 import static com.mongodb.client.model.Aggregates.unwind
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Filters.exists
@@ -980,5 +981,42 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
 
         then:
         results == [Document.parse('{b: 1, _id: 7}')]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(4, 3) })
+    def '$unionWith'() {
+        given:
+        def coll1Helper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'coll1'))
+        def coll2Helper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'coll2'))
+
+        coll1Helper.drop()
+        coll2Helper.drop()
+
+        coll1Helper.insertDocuments(
+                Document.parse('{ "name1" : "almonds" }'),
+                Document.parse('{ "name1" : "cookies" }'))
+
+        coll2Helper.insertDocuments(
+                Document.parse('{ "name2" : "cookies" }'),
+                Document.parse('{ "name2" : "cookies" }'),
+                Document.parse('{ "name2" : "pecans" }'))
+
+        def pipeline = asList(match(eq('name2', 'cookies')), project(fields(excludeId(), computed('name', '$name2'))),
+                sort(ascending('name')))
+
+        when:
+        def results = coll1Helper.aggregate([project(fields(excludeId(), computed('name', '$name1'))),
+                                             unionWith('coll2', pipeline)])
+
+        then:
+        results == [
+                Document.parse('{ name: "almonds" }'),
+                Document.parse('{ name: "cookies" }'),
+                Document.parse('{ name: "cookies" }'),
+                Document.parse('{ name: "cookies" }') ]
+
+        cleanup:
+        coll1Helper?.drop()
+        coll2Helper?.drop()
     }
 }
