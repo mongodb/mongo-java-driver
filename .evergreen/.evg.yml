@@ -442,6 +442,56 @@ functions:
           mongo --nodb setup.js aws_e2e_ecs.js
           cd -
 
+  "run-ocsp-test":
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          CA_FILE="$DRIVERS_TOOLS/.evergreen/ocsp/rsa/ca.pem" \
+          OCSP_TLS_SHOULD_SUCCEED="${OCSP_TLS_SHOULD_SUCCEED}" \
+          OCSP_MUST_STAPLE="${OCSP_MUST_STAPLE}" \
+          sh ${PROJECT_DIRECTORY}/.evergreen/run-ocsp-test.sh
+
+  "run-valid-ocsp-server":
+    - command: shell.exec
+      params:
+        script: |
+          cd ${DRIVERS_TOOLS}/.evergreen/ocsp
+          /opt/mongodbtoolchain/v3/bin/python3 -m venv ./venv
+          ./venv/bin/pip3 install -r ${DRIVERS_TOOLS}/.evergreen/ocsp/mock-ocsp-responder-requirements.txt
+    - command: shell.exec
+      params:
+        background: true
+        script: |
+          cd ${DRIVERS_TOOLS}/.evergreen/ocsp
+          nohup ./venv/bin/python3 ocsp_mock.py \
+          --ca_file rsa/ca.pem \
+          --ocsp_responder_cert rsa/ca.crt \
+          --ocsp_responder_key rsa/ca.key \
+          -p 8100 -v
+
+  "run-revoked-ocsp-server":
+    - command: shell.exec
+      params:
+        script: |
+          cd ${DRIVERS_TOOLS}/.evergreen/ocsp
+          /opt/mongodbtoolchain/v3/bin/python3 -m venv ./venv
+          ./venv/bin/pip3 install -r ${DRIVERS_TOOLS}/.evergreen/ocsp/mock-ocsp-responder-requirements.txt
+    - command: shell.exec
+      params:
+        background: true
+        script: |
+          cd ${DRIVERS_TOOLS}/.evergreen/ocsp
+          nohup ./venv/bin/python3 ocsp_mock.py \
+          --ca_file rsa/ca.pem \
+          --ocsp_responder_cert rsa/ca.crt \
+          --ocsp_responder_key rsa/ca.key \
+          -p 8100 \
+          -v \
+          --fault revoked
+
   "run gssapi auth test":
     - command: shell.exec
       type: test
@@ -612,6 +662,102 @@ tasks:
         - func: "run aws auth test with aws credentials and session token as environment variables"
         - func: "run aws auth test with aws EC2 credentials"
         - func: "run aws ECS auth test"
+
+    - name: "test-ocsp-valid-cert-server-staples"
+      tags: ["ocsp"]
+      commands:
+        - func: "run-valid-ocsp-server"
+        - func: "bootstrap mongo-orchestration"
+          vars:
+            ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
+            VERSION: "latest"
+            TOPOLOGY: "server"
+        - func: "run-ocsp-test"
+          vars:
+            OCSP_MUST_STAPLE: "true"
+            OCSP_TLS_SHOULD_SUCCEED: "1"
+
+    - name: "test-ocsp-invalid-cert-server-staples"
+      tags: ["ocsp"]
+      commands:
+        - func: "run-revoked-ocsp-server"
+        - func: "bootstrap mongo-orchestration"
+          vars:
+            ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
+            VERSION: "latest"
+            TOPOLOGY: "server"
+        - func: "run-ocsp-test"
+          vars:
+            OCSP_MUST_STAPLE: "true"
+            OCSP_TLS_SHOULD_SUCCEED: "0"
+
+    - name: "test-ocsp-valid-cert-server-does-not-staple"
+      tags: ["ocsp"]
+      commands:
+        - func: "run-valid-ocsp-server"
+        - func: "bootstrap mongo-orchestration"
+          vars:
+            ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
+            VERSION: "latest"
+            TOPOLOGY: "server"
+        - func: "run-ocsp-test"
+          vars:
+            OCSP_MUST_STAPLE: "false"
+            OCSP_TLS_SHOULD_SUCCEED: "1"
+
+    - name: "test-ocsp-invalid-cert-server-does-not-staple"
+      tags: ["ocsp"]
+      commands:
+        - func: "run-revoked-ocsp-server"
+        - func: "bootstrap mongo-orchestration"
+          vars:
+            ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
+            VERSION: "latest"
+            TOPOLOGY: "server"
+        - func: "run-ocsp-test"
+          vars:
+            OCSP_MUST_STAPLE: "false"
+            OCSP_TLS_SHOULD_SUCCEED: "0"
+
+    - name: "test-ocsp-soft-fail"
+      tags: ["ocsp"]
+      commands:
+        - func: "bootstrap mongo-orchestration"
+          vars:
+            ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
+            VERSION: "latest"
+            TOPOLOGY: "server"
+        - func: "run-ocsp-test"
+          vars:
+            OCSP_MUST_STAPLE: "false"
+            OCSP_TLS_SHOULD_SUCCEED: "0"
+
+    - name: "test-ocsp-malicious-invalid-cert-mustStaple-server-does-not-staple"
+      tags: ["ocsp"]
+      commands:
+        - func: "run-revoked-ocsp-server"
+        - func: "bootstrap mongo-orchestration"
+          vars:
+            ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-disableStapling-singleEndpoint.json"
+            VERSION: "latest"
+            TOPOLOGY: "server"
+        - func: "run-ocsp-test"
+          vars:
+            OCSP_MUST_STAPLE: "false"
+            OCSP_TLS_SHOULD_SUCCEED: "0"
+
+    - name: "test-ocsp-malicious-no-responder-mustStaple-server-does-not-staple"
+      tags: ["ocsp"]
+      commands:
+        - func: "bootstrap mongo-orchestration"
+          vars:
+            ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-disableStapling-singleEndpoint.json"
+            VERSION: "latest"
+            TOPOLOGY: "server"
+        - func: "run-ocsp-test"
+          vars:
+            OCSP_MUST_STAPLE: "false"
+            OCSP_TLS_SHOULD_SUCCEED: "0"
 
     - name: "gssapi-auth-test"
       commands:
@@ -928,6 +1074,12 @@ buildvariants:
   run_on: ubuntu1804-test
   tasks:
     - name: "aws-auth-test"
+
+- matrix_name: "ocsp-test"
+  matrix_spec: { auth: "noauth", ssl: "ssl", jdk: "jdk11", version: ["4.4", "latest"], os: "ubuntu" }
+  display_name: "OCSP test ${version} ${os}"
+  tasks:
+    - name: ".ocsp"
 
 - name: atlas-test
   display_name: "Atlas test"
