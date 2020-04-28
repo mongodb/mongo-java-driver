@@ -431,4 +431,15 @@ object Aggregates {
   def merge(namespace: MongoNamespace, mergeOptions: MergeOptions): Bson =
     JAggregates.merge(namespace, mergeOptions.wrapped)
 
+  /**
+   * Creates a `\$unionWith` pipeline stage.
+   *
+   * @param collection    the name of the collection in the same database to perform the union with.
+   * @param pipeline      the pipeline to run on the union.
+   * @return the \$unionWith` pipeline stage
+   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/unionWith/]]
+   */
+  def unionWith(collection: String, pipeline: Bson*): Bson =
+    JAggregates.unionWith(collection, pipeline.asJava)
+
 }
