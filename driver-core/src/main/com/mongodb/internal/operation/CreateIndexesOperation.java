@@ -16,8 +16,10 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.CreateIndexCommitQuorum;
 import com.mongodb.DuplicateKeyException;
 import com.mongodb.ErrorCategory;
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
@@ -58,6 +60,7 @@ import static com.mongodb.internal.operation.OperationHelper.releasingCallback;
 import static com.mongodb.internal.operation.OperationHelper.validateIndexRequestCollations;
 import static com.mongodb.internal.operation.OperationHelper.withAsyncConnection;
 import static com.mongodb.internal.operation.OperationHelper.withConnection;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionFourDotFour;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 
 /**
@@ -71,6 +74,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
     private final List<IndexRequest> requests;
     private final WriteConcern writeConcern;
     private long maxTimeMS;
+    private CreateIndexCommitQuorum commitQuorum;
 
     /**
      * Construct a new instance.
@@ -161,6 +165,28 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
         return this;
     }
 
+    /**
+     * Gets the create index commit quorum.
+     *
+     * @return the create index commit quorum
+     * @since 4.1
+     */
+    public CreateIndexCommitQuorum getCommitQuorum() {
+        return commitQuorum;
+    }
+
+    /**
+     * Sets the create index commit quorum.
+     *
+     * @param commitQuorum the create index commit quorum
+     * @return this
+     * @since 4.1
+     */
+    public CreateIndexesOperation commitQuorum(final CreateIndexCommitQuorum commitQuorum) {
+        this.commitQuorum = commitQuorum;
+        return this;
+    }
+
     @Override
     public Void execute(final WriteBinding binding) {
         return withConnection(binding, new CallableWithConnection<Void>() {
@@ -194,14 +220,18 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
                             if (t != null) {
                                 wrappedCallback.onResult(null, t);
                             } else {
-                                executeCommandAsync(binding, namespace.getDatabaseName(),
-                                        getCommand(connection.getDescription()), connection, writeConcernErrorWriteTransformer(),
-                                        new SingleResultCallback<Void>() {
-                                            @Override
-                                            public void onResult(final Void result, final Throwable t) {
-                                                wrappedCallback.onResult(null, translateException(t));
-                                            }
-                                        });
+                                try {
+                                    executeCommandAsync(binding, namespace.getDatabaseName(),
+                                            getCommand(connection.getDescription()), connection, writeConcernErrorWriteTransformer(),
+                                            new SingleResultCallback<Void>() {
+                                                @Override
+                                                public void onResult(final Void result, final Throwable t) {
+                                                    wrappedCallback.onResult(null, translateException(t));
+                                                }
+                                            });
+                                } catch (Throwable t1) {
+                                    wrappedCallback.onResult(null, t1);
+                                }
                             }
                         }
                     });
@@ -284,6 +314,14 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
         command.put("indexes", new BsonArray(values));
         putIfNotZero(command, "maxTimeMS", maxTimeMS);
         appendWriteConcernToCommand(writeConcern, command, description);
+        if (commitQuorum != null) {
+            if (serverIsAtLeastVersionFourDotFour(description)) {
+                command.put("commitQuorum", commitQuorum.toBsonValue());
+            } else {
+                throw new MongoClientException("Specifying a value for the create index commit quorum option "
+                        + "requires a minimum MongoDB version of 4.4");
+            }
+        }
         return command;
     }
 

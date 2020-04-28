@@ -64,6 +64,14 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
   type BulkWriteResult = com.mongodb.bulk.BulkWriteResult
 
   /**
+   * Represents the  commit quorum specifies how many data-bearing members of a replica set, including the primary, must
+   * complete the index builds successfully before the primary marks the indexes as ready.
+   *
+   * @since 4.1
+   */
+  type CreateIndexCommitQuorum = com.mongodb.CreateIndexCommitQuorum
+
+  /**
    * A MongoDB namespace, which includes a database name and collection name.
    */
   type MongoNamespace = com.mongodb.MongoNamespace

@@ -16,7 +16,9 @@
 
 package com.mongodb.internal.operation
 
+import com.mongodb.CreateIndexCommitQuorum
 import com.mongodb.DuplicateKeyException
+import com.mongodb.MongoClientException
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoWriteConcernException
@@ -95,6 +97,46 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
 
         where:
         async << [true, false]
+    }
+
+    @IgnoreIf({ serverVersionAtLeast(4, 3) })
+    def 'should throw exception if commit quorum is set where server < 4.3'() {
+        given:
+        def keys = new BsonDocument('field', new BsonInt32(1))
+        def operation = new CreateIndexesOperation(getNamespace(), [new IndexRequest(keys)])
+                .commitQuorum(CreateIndexCommitQuorum.MAJORITY)
+
+        when:
+        execute(operation, async)
+
+        then:
+        thrown(MongoClientException)
+
+        where:
+        async << [true, false]
+    }
+
+    @IgnoreIf({ !isDiscoverableReplicaSet() || !serverVersionAtLeast(4, 3) })
+    def 'should create index with commit quorum'() {
+        given:
+        def keys = new BsonDocument('field', new BsonInt32(1))
+
+        when:
+        def operation = new CreateIndexesOperation(getNamespace(), [new IndexRequest(keys)])
+                .commitQuorum(quorum)
+
+        then:
+        operation.getCommitQuorum() == quorum
+
+        when:
+        execute(operation, async)
+
+        then:
+        getUserCreatedIndexes('key') == [field1Index]
+
+        where:
+        [async, quorum] << [[true, false], [CreateIndexCommitQuorum.MAJORITY, CreateIndexCommitQuorum.VOTING_MEMBERS,
+                                            CreateIndexCommitQuorum.create(1), CreateIndexCommitQuorum.create(2)]].combinations()
     }
 
     def 'should be able to create a single index with a BsonInt64'() {

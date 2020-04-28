@@ -16,6 +16,7 @@
 
 package com.mongodb.client.internal
 
+import com.mongodb.CreateIndexCommitQuorum
 import com.mongodb.MongoBulkWriteException
 import com.mongodb.MongoClientSettings
 import com.mongodb.MongoException
@@ -1134,7 +1135,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'should use CreateIndexOperations correctly'() {
         given:
-        def executor = new TestOperationExecutor([null, null, null, null])
+        def executor = new TestOperationExecutor([null, null, null, null, null])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED,
                 true, true, readConcern, JAVA_LEGACY, executor)
         def createIndexMethod = collection.&createIndex
@@ -1168,6 +1169,21 @@ class MongoCollectionSpecification extends Specification {
         indexNames = execute(createIndexesMethod, session,
                 [new IndexModel(new Document('key', 1)), new IndexModel(new Document('key1', 1))],
                 new CreateIndexOptions().maxTime(10, MILLISECONDS))
+        operation = executor.getWriteOperation() as CreateIndexesOperation
+
+        then:
+        expect operation, isTheSameAs(expectedOperation)
+        executor.getClientSession() == session
+        indexNames == ['key_1', 'key1_1']
+
+        when:
+        expectedOperation = new CreateIndexesOperation(namespace,
+                [new IndexRequest(new BsonDocument('key', new BsonInt32(1))),
+                 new IndexRequest(new BsonDocument('key1', new BsonInt32(1)))], ACKNOWLEDGED)
+                .commitQuorum(CreateIndexCommitQuorum.VOTING_MEMBERS)
+        indexNames = execute(createIndexesMethod, session,
+                [new IndexModel(new Document('key', 1)), new IndexModel(new Document('key1', 1))],
+                new CreateIndexOptions().commitQuorum(CreateIndexCommitQuorum.VOTING_MEMBERS))
         operation = executor.getWriteOperation() as CreateIndexesOperation
 
         then:
