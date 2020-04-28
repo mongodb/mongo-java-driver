@@ -17,6 +17,9 @@
 package com.mongodb.client.model;
 
 
+import com.mongodb.CreateIndexCommitQuorum;
+import com.mongodb.lang.Nullable;
+
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -29,6 +32,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public class CreateIndexOptions {
     private long maxTimeMS;
+    private CreateIndexCommitQuorum commitQuorum;
 
     /**
      * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
@@ -54,10 +58,36 @@ public class CreateIndexOptions {
         return this;
     }
 
+    /**
+     * Gets the create index commit quorum for this operation.
+     *
+     * @return the create index commit quorum
+     * @mongodb.server.release 4.4
+     * @since 4.1
+     */
+    @Nullable
+    public CreateIndexCommitQuorum getCommitQuorum() {
+        return commitQuorum;
+    }
+
+    /**
+     * Sets the create index commit quorum for this operation.
+     *
+     * @param commitQuorum the create index commit quorum
+     * @return this
+     * @mongodb.server.release 4.4
+     * @since 4.1
+     */
+    public CreateIndexOptions commitQuorum(final CreateIndexCommitQuorum commitQuorum) {
+        this.commitQuorum = commitQuorum;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "CreateIndexOptions{"
                 + "maxTimeMS=" + maxTimeMS
+                + ", commitQuorum=" + commitQuorum
                 + '}';
     }
 }

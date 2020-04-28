@@ -482,7 +482,8 @@ final class Operations<TDocument> {
             );
         }
         return new CreateIndexesOperation(namespace, indexRequests, writeConcern)
-                .maxTime(createIndexOptions.getMaxTime(MILLISECONDS), MILLISECONDS);
+                .maxTime(createIndexOptions.getMaxTime(MILLISECONDS), MILLISECONDS)
+                .commitQuorum(createIndexOptions.getCommitQuorum());
     }
 
     DropIndexOperation dropIndex(final String indexName, final DropIndexOptions dropIndexOptions) {
