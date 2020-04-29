@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.MongoClientException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
@@ -46,8 +45,8 @@ import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.DocumentHelper.putIfTrue;
 import static com.mongodb.internal.operation.OperationHelper.validateCollation;
+import static com.mongodb.internal.operation.OperationHelper.validateHint;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotTwo;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -453,9 +452,7 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
             commandDocument.put("arrayFilters", new BsonArray(arrayFilters));
         }
         if (hint != null || hintString != null) {
-            if (serverIsLessThanVersionFourDotTwo(connectionDescription)) {
-                throw new MongoClientException("Specifying a value for the hint option requires a minimum MongoDB version of 4.2");
-            }
+            validateHint(connectionDescription, getWriteConcern());
             if (hint != null) {
                 commandDocument.put("hint", hint.toBsonDocument(BsonDocument.class, null));
             } else {
