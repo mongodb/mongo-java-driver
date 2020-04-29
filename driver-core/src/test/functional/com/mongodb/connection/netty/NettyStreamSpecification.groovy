@@ -1,14 +1,17 @@
 package com.mongodb.connection.netty
 
 import category.Slow
+import com.mongodb.MongoSocketException
 import com.mongodb.MongoSocketOpenException
 import com.mongodb.ServerAddress
+import com.mongodb.connection.AsyncCompletionHandler
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SslSettings
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 import static com.mongodb.ClusterFixture.getSslSettings
@@ -63,5 +66,44 @@ class NettyStreamSpecification extends Specification {
 
         then:
         thrown(MongoSocketOpenException)
+    }
+
+    @IgnoreIf({ getSslSettings().isEnabled() })
+    def 'should fail AsyncCompletionHandler if name resolution fails'() {
+        given:
+        def serverAddress = Stub(ServerAddress)
+        def exception = new MongoSocketException('Temporary failure in name resolution', serverAddress)
+        serverAddress.getSocketAddresses() >> { throw exception }
+
+        def stream = new NettyStreamFactory(SocketSettings.builder().connectTimeout(1000, TimeUnit.MILLISECONDS).build(),
+                SslSettings.builder().build()).create(serverAddress)
+        def callback = new CallbackErrorHolder()
+
+        when:
+        stream.openAsync(callback)
+
+        then:
+        callback.getError().is(exception)
+    }
+
+    class CallbackErrorHolder implements AsyncCompletionHandler<Void> {
+        CountDownLatch latch = new CountDownLatch(1)
+        Throwable throwable = null
+
+        Throwable getError() {
+            latch.countDown()
+            throwable
+        }
+
+        @Override
+        void completed(Void r) {
+            latch.await()
+        }
+
+        @Override
+        void failed(Throwable t) {
+            throwable = t
+            latch.countDown()
+        }
     }
 }
