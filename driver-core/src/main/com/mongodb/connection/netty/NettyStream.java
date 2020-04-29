@@ -106,7 +106,16 @@ final class NettyStream implements Stream {
 
     @Override
     public void openAsync(final AsyncCompletionHandler<Void> handler) {
-        initializeChannel(handler, new LinkedList<SocketAddress>(address.getSocketAddresses()));
+        Queue<SocketAddress> socketAddressQueue;
+
+        try {
+            socketAddressQueue = new LinkedList<SocketAddress>(address.getSocketAddresses());
+        } catch (Throwable t) {
+            handler.failed(t);
+            return;
+        }
+
+        initializeChannel(handler, socketAddressQueue);
     }
 
     private void initializeChannel(final AsyncCompletionHandler<Void> handler, final Queue<SocketAddress> socketAddressQueue) {

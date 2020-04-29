@@ -55,7 +55,16 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
     @Override
     public void openAsync(final AsyncCompletionHandler<Void> handler) {
         isTrue("unopened", getChannel() == null);
-        initializeSocketChannel(handler, new LinkedList<SocketAddress>(serverAddress.getSocketAddresses()));
+        Queue<SocketAddress> socketAddressQueue;
+
+        try {
+            socketAddressQueue = new LinkedList<SocketAddress>(serverAddress.getSocketAddresses());
+        } catch (Throwable t) {
+            handler.failed(t);
+            return;
+        }
+
+        initializeSocketChannel(handler, socketAddressQueue);
     }
 
     private void initializeSocketChannel(final AsyncCompletionHandler<Void> handler, final Queue<SocketAddress> socketAddressQueue) {
