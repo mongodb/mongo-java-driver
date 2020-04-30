@@ -16,9 +16,10 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
 import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
@@ -33,6 +34,13 @@ public interface InternalConnection extends BufferProvider {
      * @return the connection description
      */
     ConnectionDescription getDescription();
+
+    /**
+     * Get the initial server description
+     *
+     * @return the initial server description
+     */
+    ServerDescription getInitialServerDescription();
 
     /**
      * Opens the connection so its ready for use

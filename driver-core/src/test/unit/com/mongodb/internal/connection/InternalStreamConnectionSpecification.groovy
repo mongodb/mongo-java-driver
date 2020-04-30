@@ -31,6 +31,8 @@ import com.mongodb.connection.AsyncCompletionHandler
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
+import com.mongodb.connection.ServerConnectionState
+import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerType
 import com.mongodb.connection.Stream
@@ -38,8 +40,8 @@ import com.mongodb.connection.StreamFactory
 import com.mongodb.event.CommandFailedEvent
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.event.CommandSucceededEvent
-import com.mongodb.internal.validator.NoOpFieldNameValidator
 import com.mongodb.internal.session.SessionContext
+import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
@@ -59,6 +61,7 @@ import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageS
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxWriteBatchSize
 import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize
 import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION
+import static java.util.concurrent.TimeUnit.NANOSECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 
 @SuppressWarnings(['UnusedVariable'])
@@ -75,6 +78,14 @@ class InternalStreamConnectionSpecification extends Specification {
 
     def connectionDescription = new ConnectionDescription(connectionId, 3,
             ServerType.STANDALONE, getDefaultMaxWriteBatchSize(), getDefaultMaxDocumentSize(), getDefaultMaxMessageSize(), [])
+    def serverDescription = ServerDescription.builder()
+            .ok(true)
+            .state(ServerConnectionState.CONNECTED)
+            .type(ServerType.STANDALONE)
+            .address(serverAddress)
+            .build()
+    def internalConnectionInitializationDescription =
+            new InternalConnectionInitializationDescription(connectionDescription, serverDescription)
     def stream = Mock(Stream) {
         openAsync(_) >> { it[0].completed(null) }
     }
@@ -82,8 +93,8 @@ class InternalStreamConnectionSpecification extends Specification {
         create(_) >> { stream }
     }
     def initializer = Mock(InternalConnectionInitializer) {
-        initialize(_) >> { connectionDescription }
-        initializeAsync(_, _) >> { it[1].onResult(connectionDescription, null) }
+        initialize(_) >> { internalConnectionInitializationDescription }
+        initializeAsync(_, _) >> { it[1].onResult(internalConnectionInitializationDescription, null) }
     }
 
     def getConnection() {
@@ -96,14 +107,19 @@ class InternalStreamConnectionSpecification extends Specification {
         connection
     }
 
-    def 'should change the connection description when opened'() {
+    def 'should change the description when opened'() {
         when:
         def connection = getConnection()
 
         then:
         connection.getDescription().getServerType() == ServerType.UNKNOWN
         connection.getDescription().getConnectionId().getServerValue() == null
-
+        connection.getInitialServerDescription() == ServerDescription.builder()
+                .address(serverAddress)
+                .type(ServerType.UNKNOWN)
+                .state(ServerConnectionState.CONNECTING)
+                .lastUpdateTimeNanos(connection.getInitialServerDescription().getLastUpdateTime(NANOSECONDS))
+                .build();
         when:
         connection.open()
 
@@ -111,10 +127,12 @@ class InternalStreamConnectionSpecification extends Specification {
         connection.opened()
         connection.getDescription().getServerType() == ServerType.STANDALONE
         connection.getDescription().getConnectionId().getServerValue() == 1
+        connection.getDescription() == connectionDescription
+        connection.getInitialServerDescription() == serverDescription
     }
 
     @Category(Async)
-    def 'should change the connection description when opened asynchronously'() {
+    def 'should change the description when opened asynchronously'() {
         when:
         def connection = getConnection()
         def futureResultCallback = new FutureResultCallback<Void>()
@@ -122,6 +140,12 @@ class InternalStreamConnectionSpecification extends Specification {
         then:
         connection.getDescription().getServerType() == ServerType.UNKNOWN
         connection.getDescription().getConnectionId().getServerValue() == null
+        connection.getInitialServerDescription() == ServerDescription.builder()
+                .address(serverAddress)
+                .type(ServerType.UNKNOWN)
+                .state(ServerConnectionState.CONNECTING)
+                .lastUpdateTimeNanos(connection.getInitialServerDescription().getLastUpdateTime(NANOSECONDS))
+                .build();
 
         when:
         connection.openAsync(futureResultCallback)
@@ -129,8 +153,8 @@ class InternalStreamConnectionSpecification extends Specification {
 
         then:
         connection.opened()
-        connection.getDescription().getServerType() == ServerType.STANDALONE
-        connection.getDescription().getConnectionId().getServerValue() == 1
+        connection.getDescription() == connectionDescription
+        connection.getInitialServerDescription() == serverDescription
     }
 
     def 'should close the stream when initialization throws an exception'() {

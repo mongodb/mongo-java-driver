@@ -17,12 +17,11 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.connection.ConnectionDescription;
 
 interface InternalConnectionInitializer {
 
-    ConnectionDescription initialize(InternalConnection internalConnection);
+    InternalConnectionInitializationDescription initialize(InternalConnection internalConnection);
 
-    void initializeAsync(InternalConnection internalConnection, SingleResultCallback<ConnectionDescription> callback);
+    void initializeAsync(InternalConnection internalConnection, SingleResultCallback<InternalConnectionInitializationDescription> callback);
 
 }

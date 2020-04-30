@@ -24,6 +24,8 @@ import com.mongodb.event.ServerListener
 import com.mongodb.event.ServerMonitorListener
 import org.bson.Document
 
+import java.util.concurrent.TimeUnit
+
 class MongoClientListenerRegistrationSpecification extends FunctionalSpecification {
 
     def 'should register event listeners'() {
@@ -48,13 +50,20 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
         def builder = Fixture.mongoClientBuilderFromConnectionString
         builder.applyToClusterSettings { it.addClusterListener(clusterListener) }
                 .applyToConnectionPoolSettings { it.addConnectionPoolListener(connectionPoolListener) }
-                .applyToServerSettings { it.addServerListener(serverListener).addServerMonitorListener(serverMonitorListener) }
+                .applyToServerSettings {
+                    it.addServerListener(serverListener)
+                    it.heartbeatFrequency(1, TimeUnit.MILLISECONDS)
+                    it.addServerMonitorListener(serverMonitorListener)
+                }
                 .addCommandListener(commandListener)
         def settings = builder.build()
         def client = AsyncMongoClients.create(settings)
 
         then:
         run(client.getDatabase('admin').&runCommand, new Document('ping', 1))
+
+        cleanup:
+        client?.close()
     }
 
     def 'should register multiple command listeners'() {
@@ -72,6 +81,9 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
         1 * second.commandStarted(_)
         1 * first.commandSucceeded(_)
         1 * second.commandSucceeded(_)
+
+        cleanup:
+        client?.close()
     }
 
     def run(operation, ... args) {

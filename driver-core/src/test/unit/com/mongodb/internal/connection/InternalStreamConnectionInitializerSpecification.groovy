@@ -20,12 +20,14 @@ import com.mongodb.AuthenticationMechanism
 import com.mongodb.MongoCompressor
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
+import com.mongodb.connection.ServerConnectionState
+import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerType
+import com.mongodb.internal.async.SingleResultCallback
 import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -35,6 +37,7 @@ import spock.lang.Specification
 
 import java.nio.charset.Charset
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.MongoCredential.createMongoX509Credential
@@ -57,9 +60,12 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         when:
         enqueueSuccessfulReplies(false, null)
         def description = initializer.initialize(internalConnection)
+        def connectionDescription = description.connectionDescription
+        def serverDescription = description.serverDescription
 
         then:
-        description == getExpectedDescription(description.connectionId.localValue, null)
+        connectionDescription == getExpectedConnectionDescription(connectionDescription.connectionId.localValue, null)
+        serverDescription == getExpectedServerDescription(serverDescription)
     }
 
     def 'should create correct description asynchronously'() {
@@ -68,12 +74,15 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
         when:
         enqueueSuccessfulReplies(false, null)
-        def futureCallback = new FutureResultCallback<ConnectionDescription>()
+        def futureCallback = new FutureResultCallback<InternalConnectionInitializationDescription>()
         initializer.initializeAsync(internalConnection, futureCallback)
         def description = futureCallback.get()
+        def connectionDescription = description.connectionDescription
+        def serverDescription = description.serverDescription
 
         then:
-        description == getExpectedDescription(description.connectionId.localValue, null)
+        connectionDescription == getExpectedConnectionDescription(connectionDescription.connectionId.localValue, null)
+        serverDescription == getExpectedServerDescription(serverDescription)
     }
 
     def 'should create correct description with server connection id'() {
@@ -82,10 +91,10 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
         when:
         enqueueSuccessfulReplies(false, 123)
-        def description = initializer.initialize(internalConnection)
+        def description = initializer.initialize(internalConnection).connectionDescription
 
         then:
-        description == getExpectedDescription(description.connectionId.localValue, 123)
+        description == getExpectedConnectionDescription(description.connectionId.localValue, 123)
     }
 
     def 'should create correct description with server connection id from isMaster'() {
@@ -94,10 +103,10 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
         when:
         enqueueSuccessfulRepliesWithConnectionIdIsIsMasterResponse(false, 123)
-        def description = initializer.initialize(internalConnection)
+        def description = initializer.initialize(internalConnection).connectionDescription
 
         then:
-        description == getExpectedDescription(description.connectionId.localValue, 123)
+        description == getExpectedConnectionDescription(description.connectionId.localValue, 123)
     }
 
     def 'should create correct description with server connection id asynchronously'() {
@@ -106,12 +115,12 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
         when:
         enqueueSuccessfulReplies(false, 123)
-        def futureCallback = new FutureResultCallback<ConnectionDescription>()
+        def futureCallback = new FutureResultCallback<InternalConnectionInitializationDescription>()
         initializer.initializeAsync(internalConnection, futureCallback)
-        def description = futureCallback.get()
+        def description = futureCallback.get().connectionDescription
 
         then:
-        description == getExpectedDescription(description.connectionId.localValue, 123)
+        description == getExpectedConnectionDescription(description.connectionId.localValue, 123)
     }
 
     def 'should create correct description with server connection id from isMaster asynchronously'() {
@@ -120,12 +129,12 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
         when:
         enqueueSuccessfulRepliesWithConnectionIdIsIsMasterResponse(false, 123)
-        def futureCallback = new FutureResultCallback<ConnectionDescription>()
+        def futureCallback = new FutureResultCallback<InternalConnectionInitializationDescription>()
         initializer.initializeAsync(internalConnection, futureCallback)
-        def description = futureCallback.get()
+        def description = futureCallback.get().connectionDescription
 
         then:
-        description == getExpectedDescription(description.connectionId.localValue, 123)
+        description == getExpectedConnectionDescription(description.connectionId.localValue, 123)
     }
 
     def 'should authenticate'() {
@@ -136,7 +145,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         when:
         enqueueSuccessfulReplies(false, null)
 
-        def description = initializer.initialize(internalConnection)
+        def description = initializer.initialize(internalConnection).connectionDescription
 
         then:
         description
@@ -151,9 +160,9 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         when:
         enqueueSuccessfulReplies(false, null)
 
-        def futureCallback = new FutureResultCallback<ConnectionDescription>()
+        def futureCallback = new FutureResultCallback<InternalConnectionInitializationDescription>()
         initializer.initializeAsync(internalConnection, futureCallback)
-        def description = futureCallback.get()
+        def description = futureCallback.get().connectionDescription
 
         then:
         description
@@ -168,7 +177,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         when:
         enqueueSuccessfulReplies(true, null)
 
-        def description = initializer.initialize(internalConnection)
+        def description = initializer.initialize(internalConnection).connectionDescription
 
         then:
         description
@@ -183,9 +192,9 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         when:
         enqueueSuccessfulReplies(true, null)
 
-        def futureCallback = new FutureResultCallback<ConnectionDescription>()
+        def futureCallback = new FutureResultCallback<InternalConnectionInitializationDescription>()
         initializer.initializeAsync(internalConnection, futureCallback)
-        def description = futureCallback.get()
+        def description = futureCallback.get().connectionDescription
 
         then:
         description
@@ -393,7 +402,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         async << [true, false]
     }
 
-    private ConnectionDescription getExpectedDescription(final Integer localValue, final Integer serverValue) {
+    private ConnectionDescription getExpectedConnectionDescription(final Integer localValue, final Integer serverValue) {
         new ConnectionDescription(new ConnectionId(serverId, localValue, serverValue),
                 3, ServerType.STANDALONE, 512, 16777216, 33554432, [])
     }
@@ -407,6 +416,20 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         } else {
             initializer.initialize(connection)
         }
+    }
+
+    private ServerDescription getExpectedServerDescription(ServerDescription actualServerDescription) {
+        ServerDescription.builder()
+                .ok(true)
+                .address(serverId.address)
+                .type(ServerType.STANDALONE)
+                .state(ServerConnectionState.CONNECTED)
+                .minWireVersion(0)
+                .maxWireVersion(3)
+                .maxDocumentSize(16777216)
+                .roundTripTime(actualServerDescription.getRoundTripTimeNanos(), TimeUnit.NANOSECONDS)
+                .lastUpdateTimeNanos(actualServerDescription.getLastUpdateTime(TimeUnit.NANOSECONDS))
+                .build()
     }
 
     def enqueueSuccessfulReplies(final boolean isArbiter, final Integer serverConnectionId) {
