@@ -26,6 +26,7 @@ import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerType
+import com.mongodb.connection.TopologyVersion
 import org.bson.types.ObjectId
 import spock.lang.Specification
 
@@ -243,7 +244,8 @@ class DescriptionHelperSpecification extends Specification {
 
     def 'server description should reflect ismaster result from primary'() {
         given:
-        ObjectId electionId = new ObjectId();
+        ObjectId electionId = new ObjectId()
+        ObjectId topologyVersionProcessId = new ObjectId()
 
         when:
         def serverDescription = createServerDescription(serverAddress,
@@ -269,6 +271,10 @@ class DescriptionHelperSpecification extends Specification {
                         "maxWireVersion" : 3,
                         "minWireVersion" : 0,
                         "electionId" : {\$oid : "${electionId.toHexString()}" },
+                        "topologyVersion" : {
+                               processId: {\$oid : "${topologyVersionProcessId.toHexString()}"},
+                               counter: {\$numberLong : "42"}
+                           },
                         "setVersion" : 2,
                         tags : { "dc" : "east", "use" : "production" }
                         "ok" : 1
@@ -284,6 +290,7 @@ class DescriptionHelperSpecification extends Specification {
                          .maxDocumentSize(16777216)
                          .electionId(electionId)
                          .setVersion(2)
+                         .topologyVersion(new TopologyVersion(topologyVersionProcessId, 42))
                          .type(ServerType.REPLICA_SET_PRIMARY)
                          .setName('replset')
                          .primary('localhost:27017')

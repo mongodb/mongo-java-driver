@@ -95,6 +95,7 @@ public class ServerDescriptionTest {
         assertEquals(0, serverDescription.getMaxWireVersion());
         assertNull(serverDescription.getElectionId());
         assertNull(serverDescription.getSetVersion());
+        assertNull(serverDescription.getTopologyVersion());
         assertNull(serverDescription.getLastWriteDate());
         assertTrue(serverDescription.getLastUpdateTime(TimeUnit.NANOSECONDS) > currentNanoTime);
         assertNull(serverDescription.getLogicalSessionTimeoutMinutes());
@@ -104,6 +105,7 @@ public class ServerDescriptionTest {
     @Test
     public void testBuilder() throws UnknownHostException {
         IllegalArgumentException exception = new IllegalArgumentException();
+        TopologyVersion topologyVersion = new TopologyVersion(new ObjectId(), 42);
         ServerDescription serverDescription = builder()
                                               .address(new ServerAddress("localhost:27018"))
                                               .type(ServerType.REPLICA_SET_PRIMARY)
@@ -125,6 +127,7 @@ public class ServerDescriptionTest {
                                               .maxWireVersion(2)
                                               .electionId(new ObjectId("123412341234123412341234"))
                                               .setVersion(2)
+                                              .topologyVersion(topologyVersion)
                                               .lastWriteDate(new Date(1234L))
                                               .lastUpdateTimeNanos(40000L)
                                               .logicalSessionTimeoutMinutes(30)
@@ -160,6 +163,7 @@ public class ServerDescriptionTest {
         assertEquals(2, serverDescription.getMaxWireVersion());
         assertEquals(new ObjectId("123412341234123412341234"), serverDescription.getElectionId());
         assertEquals(Integer.valueOf(2), serverDescription.getSetVersion());
+        assertEquals(topologyVersion, serverDescription.getTopologyVersion());
         assertEquals(new Date(1234), serverDescription.getLastWriteDate());
         assertEquals(40000L, serverDescription.getLastUpdateTime(TimeUnit.NANOSECONDS));
         assertEquals((Integer) 30, serverDescription.getLogicalSessionTimeoutMinutes());
@@ -229,6 +233,9 @@ public class ServerDescriptionTest {
         otherDescription = createBuilder().setVersion(3).build();
         assertNotEquals(builder.build(), otherDescription);
 
+        otherDescription = createBuilder().topologyVersion(new TopologyVersion(new ObjectId(), 44)).build();
+        assertNotEquals(builder.build(), otherDescription);
+
         // test exception state changes
         assertNotEquals(createBuilder().exception(new IOException()).build(),
                 createBuilder().exception(new RuntimeException()).build());
@@ -248,6 +255,32 @@ public class ServerDescriptionTest {
         // roundTripTime is considered equals and equivalent state
         otherDescription = createBuilder().roundTripTime(62, TimeUnit.MILLISECONDS).build();
         assertEquals(builder.build(), otherDescription);
+    }
+
+    private ServerDescription.Builder createBuilder() {
+        return builder().address(new ServerAddress())
+                       .type(ServerType.SHARD_ROUTER)
+                       .tagSet(new TagSet(singletonList(new Tag("dc", "ny"))))
+                       .setName("test")
+                       .maxDocumentSize(100)
+                       .roundTripTime(50000, TimeUnit.NANOSECONDS)
+                       .primary("localhost:27017")
+                       .canonicalAddress("localhost:27017")
+                       .hosts(new HashSet<String>(asList("localhost:27017", "localhost:27018")))
+                       .passives(new HashSet<String>(singletonList("localhost:27019")))
+                       .arbiters(new HashSet<String>(singletonList("localhost:27020")))
+                       .ok(true)
+                       .state(CONNECTED)
+                       .minWireVersion(1)
+                       .lastWriteDate(new Date())
+                       .maxWireVersion(2)
+                       .electionId(new ObjectId("abcdabcdabcdabcdabcdabcd"))
+                       .setVersion(2)
+                       .topologyVersion(new TopologyVersion(new ObjectId("5e47699e32e4571020a96f07"), 42))
+                       .lastUpdateTimeNanos(1)
+                       .lastWriteDate(new Date(42))
+                       .logicalSessionTimeoutMinutes(25)
+                       .roundTripTime(56, TimeUnit.MILLISECONDS);
     }
 
     @Test
@@ -495,8 +528,4 @@ public class ServerDescriptionTest {
             .lastWriteDate(new Date(42))
             .logicalSessionTimeoutMinutes(25)
             .roundTripTime(56, TimeUnit.MILLISECONDS).build();
-
-    private ServerDescription.Builder createBuilder() {
-        return builder(SERVER_DESCRIPTION);
-    }
 }
