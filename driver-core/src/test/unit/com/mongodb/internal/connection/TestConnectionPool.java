@@ -17,8 +17,9 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
 import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
@@ -85,6 +86,11 @@ public class TestConnectionPool implements ConnectionPool {
 
             @Override
             public ConnectionDescription getDescription() {
+                throw new UnsupportedOperationException("Not implemented yet");
+            }
+
+            @Override
+            public ServerDescription getInitialServerDescription() {
                 throw new UnsupportedOperationException("Not implemented yet");
             }
 

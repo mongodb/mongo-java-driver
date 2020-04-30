@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.connection.ServerDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -148,6 +149,11 @@ class UsageTrackingInternalConnection implements InternalConnection {
     @Override
     public ConnectionDescription getDescription() {
         return wrapped.getDescription();
+    }
+
+    @Override
+    public ServerDescription getInitialServerDescription() {
+        return wrapped.getInitialServerDescription();
     }
 
     @Override

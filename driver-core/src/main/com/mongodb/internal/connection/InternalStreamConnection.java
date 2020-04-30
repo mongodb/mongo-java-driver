@@ -27,16 +27,19 @@ import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoSocketWriteException;
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.NotThreadSafe;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ConnectionId;
+import com.mongodb.connection.ServerConnectionState;
+import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
+import com.mongodb.connection.ServerType;
 import com.mongodb.connection.Stream;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
@@ -92,6 +95,7 @@ public class InternalStreamConnection implements InternalConnection {
     private final InternalConnectionInitializer connectionInitializer;
 
     private volatile ConnectionDescription description;
+    private volatile ServerDescription initialServerDescription;
     private volatile Stream stream;
 
     private final AtomicBoolean isClosed = new AtomicBoolean();
@@ -112,6 +116,11 @@ public class InternalStreamConnection implements InternalConnection {
         this.commandListener = commandListener;
         this.connectionInitializer = notNull("connectionInitializer", connectionInitializer);
         description = new ConnectionDescription(serverId);
+        initialServerDescription = ServerDescription.builder()
+                .address(serverId.getAddress())
+                .type(ServerType.UNKNOWN)
+                .state(ServerConnectionState.CONNECTING)
+                .build();
     }
 
     @Override
@@ -120,12 +129,20 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     @Override
+    public ServerDescription getInitialServerDescription() {
+       return initialServerDescription;
+    }
+
+    @Override
     public void open() {
         isTrue("Open already called", stream == null);
         stream = streamFactory.create(serverId.getAddress());
         try {
             stream.open();
-            description = connectionInitializer.initialize(this);
+            LOGGER.debug("Done opening stream to " + serverId.toString());
+            InternalConnectionInitializationDescription initializationDescription = connectionInitializer.initialize(this);
+            description = initializationDescription.getConnectionDescription();
+            initialServerDescription = initializationDescription.getServerDescription();
             opened.set(true);
             sendCompressor = findSendCompressor(description);
             LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
@@ -151,14 +168,16 @@ public class InternalStreamConnection implements InternalConnection {
         stream.openAsync(new AsyncCompletionHandler<Void>() {
             @Override
             public void completed(final Void aVoid) {
-                connectionInitializer.initializeAsync(InternalStreamConnection.this, new SingleResultCallback<ConnectionDescription>() {
+                connectionInitializer.initializeAsync(InternalStreamConnection.this,
+                        new SingleResultCallback<InternalConnectionInitializationDescription>() {
                     @Override
-                    public void onResult(final ConnectionDescription result, final Throwable t) {
+                    public void onResult(final InternalConnectionInitializationDescription result, final Throwable t) {
                         if (t != null) {
                             close();
                             callback.onResult(null, t);
                         } else {
-                            description = result;
+                            description = result.getConnectionDescription();
+                            initialServerDescription = result.getServerDescription();
                             opened.set(true);
                             sendCompressor = findSendCompressor(description);
                             if (LOGGER.isInfoEnabled()) {

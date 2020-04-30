@@ -116,30 +116,26 @@ class DefaultServerMonitor implements ServerMonitor {
                             connection = internalConnectionFactory.create(serverId);
                             try {
                                 connection.open();
+                                currentServerDescription = connection.getInitialServerDescription();
                             } catch (Throwable t) {
                                 connection = null;
                                 throw t;
                             }
-                        }
-                        try {
-                            currentServerDescription = lookupServerDescription(connection);
-                        } catch (MongoSocketException e) {
-                            connectionPool.invalidate();
-                            connection.close();
-                            connection = null;
-                            connection = internalConnectionFactory.create(serverId);
-                            try {
-                                connection.open();
-                            } catch (Throwable t) {
-                                connection = null;
-                                throw t;
-                            }
+                        } else {
                             try {
                                 currentServerDescription = lookupServerDescription(connection);
-                            } catch (MongoSocketException e1) {
+                            } catch (MongoSocketException e) {
+                                connectionPool.invalidate();
                                 connection.close();
                                 connection = null;
-                                throw e1;
+                                connection = internalConnectionFactory.create(serverId);
+                                try {
+                                    connection.open();
+                                    currentServerDescription = connection.getInitialServerDescription();
+                                } catch (Throwable t) {
+                                    connection = null;
+                                    throw t;
+                                }
                             }
                         }
                     } catch (Throwable t) {

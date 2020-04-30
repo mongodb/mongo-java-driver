@@ -17,12 +17,13 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
-import com.mongodb.connection.ConnectionId;
-import com.mongodb.connection.ServerType;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.connection.ConnectionId;
+import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
+import com.mongodb.connection.ServerType;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
@@ -93,6 +94,11 @@ class TestInternalConnection implements InternalConnection {
     @Override
     public ConnectionDescription getDescription() {
         return description;
+    }
+
+    @Override
+    public ServerDescription getInitialServerDescription() {
+        throw new UnsupportedOperationException();
     }
 
     public void open() {

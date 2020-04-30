@@ -44,21 +44,19 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
         def serverListener = Mock(ServerListener) {
             (1.._) * _
         }
-        def serverMonitorListener = Mock(ServerMonitorListener) {
-            (1.._) * _
-        }
-
         when:
         def optionBuilder = MongoClientOptions.builder(mongoClientURI.options)
                 .addClusterListener(clusterListener)
                 .addCommandListener(commandListener)
                 .addConnectionPoolListener(connectionPoolListener)
                 .addServerListener(serverListener)
-                .addServerMonitorListener(serverMonitorListener)
         def client = new MongoClient(getMongoClientURI(optionBuilder))
 
         then:
         client.getDatabase('admin').runCommand(new Document('ping', 1))
+
+        cleanup:
+        client?.close()
     }
 
     def 'should register single command listener'() {
@@ -74,6 +72,9 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
         then:
         1 * first.commandStarted(_)
         1 * first.commandSucceeded(_)
+
+        cleanup:
+        client?.close()
     }
 
     def 'should register multiple command listeners'() {
@@ -93,18 +94,21 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
         1 * second.commandStarted(_)
         1 * first.commandSucceeded(_)
         1 * second.commandSucceeded(_)
+
+        cleanup:
+        client?.close()
     }
 
     def 'should register single listeners for monitor events'() {
         given:
         def latch = new CountDownLatch(1)
         def clusterListener = Mock(ClusterListener) {
-           1 * clusterOpening(_)
+            1 * clusterOpening(_)
         }
         def serverListener = Mock(ServerListener) {
             (1.._) * serverOpening(_)
         }
-        def serverMonitorListener = Mock(ServerMonitorListener){
+        def serverMonitorListener = Mock(ServerMonitorListener) {
             (1.._) * serverHearbeatStarted(_) >> {
                 if (latch.count > 0) {
                     latch.countDown()
@@ -113,6 +117,7 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
         }
 
         def optionsBuilder = MongoClientOptions.builder(mongoClientURI.options)
+                .heartbeatFrequency(1)
                 .addClusterListener(clusterListener)
                 .addServerListener(serverListener)
                 .addServerMonitorListener(serverMonitorListener)
@@ -137,7 +142,7 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
         def serverListener = Mock(ServerListener) {
             (1.._) * serverOpening(_)
         }
-        def serverMonitorListener = Mock(ServerMonitorListener){
+        def serverMonitorListener = Mock(ServerMonitorListener) {
             (1.._) * serverHearbeatStarted(_) >> {
                 if (latch.count > 0) {
                     latch.countDown()
@@ -150,7 +155,7 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
         def serverListenerTwo = Mock(ServerListener) {
             (1.._) * serverOpening(_)
         }
-        def serverMonitorListenerTwo = Mock(ServerMonitorListener){
+        def serverMonitorListenerTwo = Mock(ServerMonitorListener) {
             (1.._) * serverHearbeatStarted(_) >> {
                 if (latch.count > 0) {
                     latch.countDown()
@@ -159,6 +164,7 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
         }
 
         def optionsBuilder = MongoClientOptions.builder(mongoClientURI.options)
+                .heartbeatFrequency(1)
                 .addClusterListener(clusterListener)
                 .addServerListener(serverListener)
                 .addServerMonitorListener(serverMonitorListener)

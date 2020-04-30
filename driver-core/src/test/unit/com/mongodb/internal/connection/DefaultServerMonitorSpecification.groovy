@@ -20,9 +20,11 @@ import com.mongodb.MongoSocketReadTimeoutException
 import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
+import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerSettings
+import com.mongodb.connection.ServerType
 import com.mongodb.event.ServerHeartbeatFailedEvent
 import com.mongodb.event.ServerHeartbeatStartedEvent
 import com.mongodb.event.ServerHeartbeatSucceededEvent
@@ -84,7 +86,7 @@ class DefaultServerMonitorSpecification extends Specification {
         def serverMonitorListener = new ServerMonitorListener() {
             @Override
             void serverHearbeatStarted(final ServerHeartbeatStartedEvent event) {
-                 startedEvent = event
+                startedEvent = event
             }
 
             @Override
@@ -101,6 +103,12 @@ class DefaultServerMonitorSpecification extends Specification {
         }
 
         def connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(''), new ServerAddress()))
+        def initialServerDescription = ServerDescription.builder()
+                .ok(true)
+                .address(new ServerAddress())
+                .type(ServerType.STANDALONE)
+                .state(ServerConnectionState.CONNECTED)
+                .build()
 
         def isMasterResponse = '{' +
                 'ismaster : true, ' +
@@ -123,10 +131,12 @@ class DefaultServerMonitorSpecification extends Specification {
                     }
 
                     getDescription() >> {
-                       connectionDescription
+                        connectionDescription
                     }
 
-                    sendMessage(_, _) >> { }
+                    getInitialServerDescription() >> {
+                        initialServerDescription
+                    }
 
                     sendAndReceive(_, _, _) >> {
                         BsonDocument.parse(isMasterResponse)
@@ -135,7 +145,7 @@ class DefaultServerMonitorSpecification extends Specification {
             }
         }
         monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()),
-                ServerSettings.builder().heartbeatFrequency(1, TimeUnit.HOURS).addServerMonitorListener(serverMonitorListener).build(),
+                ServerSettings.builder().heartbeatFrequency(1, TimeUnit.SECONDS).addServerMonitorListener(serverMonitorListener).build(),
                 new ClusterClock(), changeListener, internalConnectionFactory, new TestConnectionPool())
 
         when:
@@ -186,6 +196,12 @@ class DefaultServerMonitorSpecification extends Specification {
         }
 
         def connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(''), new ServerAddress()))
+        def initialServerDescription = ServerDescription.builder()
+                .ok(true)
+                .address(new ServerAddress())
+                .type(ServerType.STANDALONE)
+                .state(ServerConnectionState.CONNECTED)
+                .build()
         def exception = new MongoSocketReadTimeoutException('read timeout', new ServerAddress(), new IOException())
 
         def internalConnectionFactory = Mock(InternalConnectionFactory) {
@@ -201,6 +217,10 @@ class DefaultServerMonitorSpecification extends Specification {
                         connectionDescription
                     }
 
+                    getInitialServerDescription() >> {
+                        initialServerDescription
+                    }
+
                     sendAndReceive(_, _, _) >> {
                         throw exception
                     }
@@ -208,7 +228,7 @@ class DefaultServerMonitorSpecification extends Specification {
             }
         }
         monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()),
-                ServerSettings.builder().heartbeatFrequency(1, TimeUnit.HOURS).addServerMonitorListener(serverMonitorListener).build(),
+                ServerSettings.builder().heartbeatFrequency(1, TimeUnit.SECONDS).addServerMonitorListener(serverMonitorListener).build(),
                 new ClusterClock(), changeListener, internalConnectionFactory, new TestConnectionPool())
 
         when:

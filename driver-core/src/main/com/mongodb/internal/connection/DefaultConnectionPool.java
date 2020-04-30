@@ -21,6 +21,7 @@ import com.mongodb.MongoTimeoutException;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ConnectionPoolSettings;
+import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
@@ -527,6 +528,12 @@ class DefaultConnectionPool implements ConnectionPool {
         @Override
         public ConnectionDescription getDescription() {
             return wrapped.getDescription();
+        }
+
+        @Override
+        public ServerDescription getInitialServerDescription() {
+            isTrue("open", !isClosed.get());
+            return wrapped.getInitialServerDescription();
         }
     }
 

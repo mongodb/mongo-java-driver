@@ -16,11 +16,12 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ConnectionId;
+import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerType;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
 import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
@@ -125,6 +126,11 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
             return new ConnectionDescription(connectionId, 7, ServerType.UNKNOWN, 1000,
                     getDefaultMaxDocumentSize(), 100000, Collections.<String>emptyList());
 
+        }
+
+        @Override
+        public ServerDescription getInitialServerDescription() {
+            return ServerDescription.builder().build();  // TODO: do we need more than this?
         }
     }
 }
