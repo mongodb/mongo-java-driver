@@ -508,11 +508,13 @@ final class Operations<TDocument> {
     }
 
     <TResult> ListDatabasesOperation<TResult> listDatabases(final Class<TResult> resultClass, final Bson filter,
-                                                                   final Boolean nameOnly, final long maxTimeMS) {
+                                                            final Boolean nameOnly, final long maxTimeMS,
+                                                            final Boolean authorizedDatabasesOnly) {
         return new ListDatabasesOperation<TResult>(codecRegistry.get(resultClass)).maxTime(maxTimeMS, MILLISECONDS)
                 .retryReads(retryReads)
                 .filter(toBsonDocumentOrNull(filter))
-                .nameOnly(nameOnly);
+                .nameOnly(nameOnly)
+                .authorizedDatabasesOnly(authorizedDatabasesOnly);
     }
 
     <TResult> ListIndexesOperation<TResult> listIndexes(final Class<TResult> resultClass, final Integer batchSize,

@@ -28,4 +28,9 @@ case class SyncListDatabasesIterable[T](wrapped: ListDatabasesObservable[T])
     wrapped.nameOnly(nameOnly)
     this
   }
+
+  override def authorizedDatabasesOnly(authorizedDatabasesOnly: java.lang.Boolean): ListDatabasesIterable[T] = {
+    wrapped.authorizedDatabasesOnly(authorizedDatabasesOnly)
+    this
+  }
 }

@@ -55,6 +55,12 @@ final class ListDatabasesPublisherImpl<TResult> implements ListDatabasesPublishe
     }
 
     @Override
+    public ListDatabasesPublisher<TResult> authorizedDatabasesOnly(final Boolean authorizedDatabasesOnly) {
+        wrapped.authorizedDatabasesOnly(authorizedDatabasesOnly);
+        return this;
+    }
+
+    @Override
     public ListDatabasesPublisher<TResult> batchSize(final int batchSize) {
         wrapped.batchSize(batchSize);
         return this;

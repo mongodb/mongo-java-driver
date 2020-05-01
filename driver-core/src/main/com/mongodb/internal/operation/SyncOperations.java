@@ -235,8 +235,9 @@ public final class SyncOperations<TDocument> {
     }
 
     public <TResult> ReadOperation<BatchCursor<TResult>> listDatabases(final Class<TResult> resultClass, final Bson filter,
-                                                                       final Boolean nameOnly, final long maxTimeMS) {
-        return operations.listDatabases(resultClass, filter, nameOnly, maxTimeMS);
+                                                                       final Boolean nameOnly, final long maxTimeMS,
+                                                                       final Boolean authorizedDatabases) {
+        return operations.listDatabases(resultClass, filter, nameOnly, maxTimeMS, authorizedDatabases);
     }
 
     public <TResult> ReadOperation<BatchCursor<TResult>> listIndexes(final Class<TResult> resultClass, final Integer batchSize,

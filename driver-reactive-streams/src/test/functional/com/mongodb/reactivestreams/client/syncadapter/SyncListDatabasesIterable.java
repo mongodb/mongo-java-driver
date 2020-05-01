@@ -54,4 +54,10 @@ class SyncListDatabasesIterable<T> extends SyncMongoIterable<T> implements ListD
         wrapped.nameOnly(nameOnly);
         return this;
     }
+
+    @Override
+    public ListDatabasesIterable<T> authorizedDatabasesOnly(@Nullable final Boolean authorizedDatabasesOnly) {
+        wrapped.authorizedDatabasesOnly(authorizedDatabasesOnly);
+        return this;
+    }
 }

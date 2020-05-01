@@ -58,6 +58,7 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
     private long maxTimeMS;
     private BsonDocument filter;
     private Boolean nameOnly;
+    private Boolean authorizedDatabasesOnly;
 
     /**
      * Construct a new instance.
@@ -133,6 +134,18 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
     }
 
     /**
+     * Sets the authorizedDatabasesOnly flag that indicates whether the command should return just the databases which the user
+     * is authorized to see.
+     *
+     * @param authorizedDatabasesOnly the authorizedDatabasesOnly flag, which may be null
+     * @return this
+     */
+    public ListDatabasesOperation<T> authorizedDatabasesOnly(final Boolean authorizedDatabasesOnly) {
+        this.authorizedDatabasesOnly = authorizedDatabasesOnly;
+        return this;
+    }
+
+    /**
      * Enables retryable reads if a read fails due to a network error.
      *
      * @param retryReads true if reads should be retried
@@ -164,6 +177,17 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
      */
     public Boolean getNameOnly() {
         return nameOnly;
+    }
+
+    /**
+     * Gets the authorizedDatabasesOnly flag that indicates whether the command should return just the databases which the user
+     * is authorized to see.
+     *
+     * @return the authorized databases value
+     * @since 4.1
+     */
+    public Boolean getAuthorizedDatabasesOnly() {
+        return authorizedDatabasesOnly;
     }
 
     /**
@@ -230,6 +254,9 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
         }
         if (nameOnly != null) {
             command.put("nameOnly", new BsonBoolean(nameOnly));
+        }
+        if (authorizedDatabasesOnly != null) {
+            command.put("authorizedDatabases", new BsonBoolean(authorizedDatabasesOnly));
         }
         return command;
     }
