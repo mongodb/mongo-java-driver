@@ -17,9 +17,10 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.event.ServerListener;
 import org.bson.BsonDocument;
+import org.bson.BsonNull;
 import org.bson.BsonValue;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,6 +36,7 @@ import static com.mongodb.internal.event.EventListenerHelper.NO_OP_SERVER_LISTEN
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 // See https://github.com/mongodb/specifications/tree/master/source/server-discovery-and-monitoring/tests
@@ -43,12 +45,7 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
 
     public ServerDiscoveryAndMonitoringTest(final String description, final BsonDocument definition) {
         super(definition);
-        init(new ServerListenerFactory() {
-            @Override
-            public ServerListener create(final ServerAddress serverAddress) {
-                return NO_OP_SERVER_LISTENER;
-            }
-        }, NO_OP_CLUSTER_LISTENER);
+        init(serverAddress -> NO_OP_SERVER_LISTENER, NO_OP_CLUSTER_LISTENER);
     }
 
     @Test
@@ -65,7 +62,7 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
 
     private void assertTopology(final BsonDocument outcome) {
         assertTopologyType(outcome.getString("topologyType").getValue());
-        assertLogicalSessionTimeout(outcome.get("logicalSessionTimeoutMinutes"));
+        assertLogicalSessionTimeout(outcome.get("logicalSessionTimeoutMinutes", BsonNull.VALUE));
         assertDriverCompatibility(outcome.get("compatible"));
     }
 
@@ -125,25 +122,33 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
     }
 
     private void assertTopologyType(final String topologyType) {
-        if (topologyType.equals("Single")) {
-            assertEquals(SingleServerCluster.class, getCluster().getClass());
-            assertEquals(getClusterType(topologyType, getCluster().getCurrentDescription().getServerDescriptions()),
-                    getCluster().getCurrentDescription().getType());
-        } else if (topologyType.equals("ReplicaSetWithPrimary")) {
-            assertEquals(MultiServerCluster.class, getCluster().getClass());
-            assertEquals(getClusterType(topologyType), getCluster().getCurrentDescription().getType());
-            assertEquals(1, getPrimaries(getCluster().getCurrentDescription()).size());
-        } else if (topologyType.equals("ReplicaSetNoPrimary")) {
-            assertEquals(MultiServerCluster.class, getCluster().getClass());
-            assertEquals(getClusterType(topologyType), getCluster().getCurrentDescription().getType());
-            assertEquals(0, getPrimaries(getCluster().getCurrentDescription()).size());
-        } else if (topologyType.equals("Sharded")) {
-            assertEquals(MultiServerCluster.class, getCluster().getClass());
-            assertEquals(getClusterType(topologyType), getCluster().getCurrentDescription().getType());
-        } else if (topologyType.equals("Unknown")) {
-            assertEquals(getClusterType(topologyType), getCluster().getCurrentDescription().getType());
-        } else {
-            throw new UnsupportedOperationException("No handler for topology type " + topologyType);
+        switch (topologyType) {
+            case "Single":
+                assertTrue(getCluster().getClass() == SingleServerCluster.class
+                        || (getCluster().getClass() == MultiServerCluster.class
+                            && getCluster().getDescription().getType() == ClusterType.STANDALONE));
+                assertEquals(getClusterType(topologyType, getCluster().getCurrentDescription().getServerDescriptions()),
+                        getCluster().getCurrentDescription().getType());
+                break;
+            case "ReplicaSetWithPrimary":
+                assertEquals(MultiServerCluster.class, getCluster().getClass());
+                assertEquals(getClusterType(topologyType), getCluster().getCurrentDescription().getType());
+                assertEquals(1, getPrimaries(getCluster().getCurrentDescription()).size());
+                break;
+            case "ReplicaSetNoPrimary":
+                assertEquals(MultiServerCluster.class, getCluster().getClass());
+                assertEquals(getClusterType(topologyType), getCluster().getCurrentDescription().getType());
+                assertEquals(0, getPrimaries(getCluster().getCurrentDescription()).size());
+                break;
+            case "Sharded":
+                assertEquals(MultiServerCluster.class, getCluster().getClass());
+                assertEquals(getClusterType(topologyType), getCluster().getCurrentDescription().getType());
+                break;
+            case "Unknown":
+                assertEquals(getClusterType(topologyType), getCluster().getCurrentDescription().getType());
+                break;
+            default:
+                throw new UnsupportedOperationException("No handler for topology type " + topologyType);
         }
     }
 

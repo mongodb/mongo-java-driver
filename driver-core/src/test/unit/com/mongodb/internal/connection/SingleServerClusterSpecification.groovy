@@ -133,23 +133,6 @@ class SingleServerClusterSpecification extends Specification {
         cluster?.close()
     }
 
-    def 'should have no replica set servers in description when replica set name does not match required one'() {
-        given:
-        def cluster = new SingleServerCluster(CLUSTER_ID,
-                ClusterSettings.builder().mode(SINGLE).requiredReplicaSetName('test1').hosts(Arrays.asList(firstServer)).build(),
-                factory)
-
-        when:
-        sendNotification(firstServer, ServerType.REPLICA_SET_PRIMARY, 'test2')
-
-        then:
-        cluster.getDescription().type == REPLICA_SET
-        ClusterDescriptionHelper.getAll(cluster.getDescription()) == [] as Set
-
-        cleanup:
-        cluster?.close()
-    }
-
     def 'getServer should throw when cluster is incompatible'() {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(SINGLE).hosts(Arrays.asList(firstServer))

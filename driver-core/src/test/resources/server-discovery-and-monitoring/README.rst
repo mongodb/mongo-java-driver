@@ -63,6 +63,7 @@ current TopologyDescription. It has the following keys:
 - logicalSessionTimeoutMinutes: absent, null, or an integer.
 - minWireVersion: absent or an integer.
 - maxWireVersion: absent or an integer.
+- topologyVersion: absent, null, or a topologyVersion document.
 
 In monitoring tests, an "outcome" contains a list of SDAM events that should
 have been published by the client as a result of processing ismaster responses
@@ -85,7 +86,7 @@ without any network I/O, by parsing ismaster responses from the test file
 and passing them into the driver code. Parts of the client and monitoring
 code may need to be mocked or subclassed to achieve this. `A reference
 implementation for PyMongo 3.x is available here
-<https://github.com/mongodb/mongo-python-driver/blob/3.0-dev/test/test_discovery_and_monitoring.py>`_.
+<https://github.com/mongodb/mongo-python-driver/blob/26d25cd74effc1e7a8d52224eac6c9a95769b371/test/test_discovery_and_monitoring.py>`_.
 
 Initialization
 ~~~~~~~~~~~~~~
@@ -125,10 +126,10 @@ For monitoring tests, once all responses are processed, assert that the
 events collected so far by the SDAM event listener are equivalent to the
 events specified in the phase.
 
-Some fields such as "logicalSessionTimeoutMinutes" or "compatible" were added
-later and haven't been added to all test files. If these fields are present,
-test that they are equivalent to the fields of the driver's current
-TopologyDescription.
+Some fields such as "logicalSessionTimeoutMinutes", "compatible", and
+"topologyVersion" were added later and haven't been added to all test files.
+If these fields are present, test that they are equivalent to the fields of
+the driver's current TopologyDescription or ServerDescription.
 
 For monitoring tests, clear the list of events collected so far.
 

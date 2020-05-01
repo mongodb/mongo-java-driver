@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -226,6 +227,7 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code uuidRepresentation=unspecified|standard|javaLegacy|csharpLegacy|pythonLegacy}.  See
  * {@link MongoClientSettings#getUuidRepresentation()} for documentation of semantics of this parameter.  Defaults to "javaLegacy", but
  * will change to "unspecified" in the next major release.</li>
+ * <li>{@code directConnection=true|false}. If true the driver will set the connection to be a direct connection to the host.</li>
  * </ul>
  *
  * @mongodb.driver.manual reference/connection-string Connection String Format
@@ -247,6 +249,7 @@ public class ConnectionString {
     private final String collection;
     private final String connectionString;
 
+    private Boolean directConnection;
     private ReadPreference readPreference;
     private WriteConcern writeConcern;
     private Boolean retryWrites;
@@ -389,6 +392,15 @@ public class ConnectionString {
             combinedOptionsMaps.put("ssl", singletonList("true"));
         }
         translateOptions(combinedOptionsMaps);
+
+        if (directConnection != null && directConnection) {
+            if (isSrvProtocol) {
+                throw new IllegalArgumentException("Direct connections are not supported when using mongodb+srv protocol");
+            } else if (hosts.size() > 1) {
+                throw new IllegalArgumentException("Direct connections are not supported when using multiple hosts");
+            }
+        }
+
         credential = createCredentials(combinedOptionsMaps, userName, password);
         warnOnUnsupportedOptions(combinedOptionsMaps);
     }
@@ -434,6 +446,8 @@ public class ConnectionString {
         GENERAL_OPTIONS_KEYS.add("appname");
 
         GENERAL_OPTIONS_KEYS.add("uuidrepresentation");
+
+        GENERAL_OPTIONS_KEYS.add("directconnection");
 
         COMPRESSOR_KEYS.add("compressors");
         COMPRESSOR_KEYS.add("zlibcompressionlevel");
@@ -535,6 +549,8 @@ public class ConnectionString {
                 retryReads = parseBoolean(value, "retryreads");
             } else if (key.equals("uuidrepresentation")) {
                 uuidRepresentation = createUuidRepresentation(value);
+            } else if (key.equals("directconnection")) {
+                directConnection = parseBoolean(value, "directconnection");
             }
         }
 
@@ -1082,7 +1098,6 @@ public class ConnectionString {
         return database;
     }
 
-
     /**
      * Gets the collection name
      *
@@ -1091,6 +1106,17 @@ public class ConnectionString {
     @Nullable
     public String getCollection() {
         return collection;
+    }
+
+    /**
+     * Indicates if the connection should be a direct connection
+     *
+     * @return true if a direct connection
+     * @since 4.1
+     */
+    @Nullable
+    public Boolean isDirectConnection() {
+        return directConnection;
     }
 
     /**
@@ -1337,91 +1363,45 @@ public class ConnectionString {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof ConnectionString)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
-
-        ConnectionString that = (ConnectionString) o;
-
-        if (collection != null ? !collection.equals(that.collection) : that.collection != null) {
-            return false;
-        }
-        if (connectTimeout != null ? !connectTimeout.equals(that.connectTimeout) : that.connectTimeout != null) {
-            return false;
-        }
-        if (credential != null ? !credential.equals(that.credential) : that.credential != null) {
-            return false;
-        }
-        if (database != null ? !database.equals(that.database) : that.database != null) {
-            return false;
-        }
-        if (!hosts.equals(that.hosts)) {
-            return false;
-        }
-        if (maxConnectionIdleTime != null ? !maxConnectionIdleTime.equals(that.maxConnectionIdleTime)
-                                          : that.maxConnectionIdleTime != null) {
-            return false;
-        }
-        if (maxConnectionLifeTime != null ? !maxConnectionLifeTime.equals(that.maxConnectionLifeTime)
-                                          : that.maxConnectionLifeTime != null) {
-            return false;
-        }
-        if (maxConnectionPoolSize != null ? !maxConnectionPoolSize.equals(that.maxConnectionPoolSize)
-                                          : that.maxConnectionPoolSize != null) {
-            return false;
-        }
-        if (maxWaitTime != null ? !maxWaitTime.equals(that.maxWaitTime) : that.maxWaitTime != null) {
-            return false;
-        }
-        if (minConnectionPoolSize != null ? !minConnectionPoolSize.equals(that.minConnectionPoolSize)
-                                          : that.minConnectionPoolSize != null) {
-            return false;
-        }
-        if (readPreference != null ? !readPreference.equals(that.readPreference) : that.readPreference != null) {
-            return false;
-        }
-        if (requiredReplicaSetName != null ? !requiredReplicaSetName.equals(that.requiredReplicaSetName)
-                                           : that.requiredReplicaSetName != null) {
-            return false;
-        }
-        if (socketTimeout != null ? !socketTimeout.equals(that.socketTimeout) : that.socketTimeout != null) {
-            return false;
-        }
-        if (sslEnabled != null ? !sslEnabled.equals(that.sslEnabled) : that.sslEnabled != null) {
-            return false;
-        }
-        if (writeConcern != null ? !writeConcern.equals(that.writeConcern) : that.writeConcern != null) {
-            return false;
-        }
-        if (applicationName != null ? !applicationName.equals(that.applicationName) : that.applicationName != null) {
-            return false;
-        }
-        if (!compressorList.equals(that.compressorList)) {
-            return false;
-        }
-
-        return true;
+        final ConnectionString that = (ConnectionString) o;
+        return isSrvProtocol == that.isSrvProtocol
+                && Objects.equals(directConnection, that.directConnection)
+                && Objects.equals(credential, that.credential)
+                && Objects.equals(hosts, that.hosts)
+                && Objects.equals(database, that.database)
+                && Objects.equals(collection, that.collection)
+                && Objects.equals(readPreference, that.readPreference)
+                && Objects.equals(writeConcern, that.writeConcern)
+                && Objects.equals(retryWrites, that.retryWrites)
+                && Objects.equals(retryReads, that.retryReads)
+                && Objects.equals(readConcern, that.readConcern)
+                && Objects.equals(minConnectionPoolSize, that.minConnectionPoolSize)
+                && Objects.equals(maxConnectionPoolSize, that.maxConnectionPoolSize)
+                && Objects.equals(maxWaitTime, that.maxWaitTime)
+                && Objects.equals(maxConnectionIdleTime, that.maxConnectionIdleTime)
+                && Objects.equals(maxConnectionLifeTime, that.maxConnectionLifeTime)
+                && Objects.equals(connectTimeout, that.connectTimeout)
+                && Objects.equals(socketTimeout, that.socketTimeout)
+                && Objects.equals(sslEnabled, that.sslEnabled)
+                && Objects.equals(sslInvalidHostnameAllowed, that.sslInvalidHostnameAllowed)
+                && Objects.equals(requiredReplicaSetName, that.requiredReplicaSetName)
+                && Objects.equals(serverSelectionTimeout, that.serverSelectionTimeout)
+                && Objects.equals(localThreshold, that.localThreshold)
+                && Objects.equals(heartbeatFrequency, that.heartbeatFrequency)
+                && Objects.equals(applicationName, that.applicationName)
+                && Objects.equals(compressorList, that.compressorList)
+                && Objects.equals(uuidRepresentation, that.uuidRepresentation);
     }
 
     @Override
     public int hashCode() {
-        int result = credential != null ? credential.hashCode() : 0;
-        result = 31 * result + hosts.hashCode();
-        result = 31 * result + (database != null ? database.hashCode() : 0);
-        result = 31 * result + (collection != null ? collection.hashCode() : 0);
-        result = 31 * result + (readPreference != null ? readPreference.hashCode() : 0);
-        result = 31 * result + (writeConcern != null ? writeConcern.hashCode() : 0);
-        result = 31 * result + (minConnectionPoolSize != null ? minConnectionPoolSize.hashCode() : 0);
-        result = 31 * result + (maxConnectionPoolSize != null ? maxConnectionPoolSize.hashCode() : 0);
-        result = 31 * result + (maxWaitTime != null ? maxWaitTime.hashCode() : 0);
-        result = 31 * result + (maxConnectionIdleTime != null ? maxConnectionIdleTime.hashCode() : 0);
-        result = 31 * result + (maxConnectionLifeTime != null ? maxConnectionLifeTime.hashCode() : 0);
-        result = 31 * result + (connectTimeout != null ? connectTimeout.hashCode() : 0);
-        result = 31 * result + (socketTimeout != null ? socketTimeout.hashCode() : 0);
-        result = 31 * result + (sslEnabled != null ? sslEnabled.hashCode() : 0);
-        result = 31 * result + (requiredReplicaSetName != null ? requiredReplicaSetName.hashCode() : 0);
-        result = 31 * result + (applicationName != null ? applicationName.hashCode() : 0);
-        result = 31 * result + compressorList.hashCode();
-        return result;
+        return Objects.hash(credential, isSrvProtocol, hosts, database, collection, directConnection, readPreference,
+                writeConcern, retryWrites, retryReads, readConcern, minConnectionPoolSize, maxConnectionPoolSize, maxWaitTime,
+                maxConnectionIdleTime, maxConnectionLifeTime, connectTimeout, socketTimeout, sslEnabled, sslInvalidHostnameAllowed,
+                requiredReplicaSetName, serverSelectionTimeout, localThreshold, heartbeatFrequency, applicationName, compressorList,
+                uuidRepresentation);
     }
 }

@@ -212,6 +212,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <li>{@code uuidRepresentation=unspecified|standard|javaLegacy|csharpLegacy|pythonLegacy}.  See
  * {@link MongoClientOptions#getUuidRepresentation()} for documentation of semantics of this parameter.  Defaults to "javaLegacy", but
  * will change to "unspecified" in the next major release.</li>
+ * <li>{@code directConnection=true|false}. If true the driver will set the connection to be a direct connection to the host.</li>
  * </ul>
  *
  * @mongodb.driver.manual reference/connection-string Connection String URI Format

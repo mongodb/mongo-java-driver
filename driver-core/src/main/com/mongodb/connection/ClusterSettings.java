@@ -22,6 +22,7 @@ import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.internal.connection.Cluster;
+import com.mongodb.internal.connection.ServerAddressHelper;
 import com.mongodb.internal.selector.LatencyMinimizingServerSelector;
 import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.ServerSelector;
@@ -31,6 +32,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -262,24 +264,23 @@ public final class ClusterSettings {
          * @return this
          */
         public Builder applyConnectionString(final ConnectionString connectionString) {
+            Boolean directConnection = connectionString.isDirectConnection();
+
             if (connectionString.isSrvProtocol()) {
                 mode(ClusterConnectionMode.MULTIPLE);
                 srvHost(connectionString.getHosts().get(0));
-            }
-            else if (connectionString.getHosts().size() == 1 && connectionString.getRequiredReplicaSetName() == null) {
+            } else if ((directConnection != null && directConnection)
+                    || (directConnection == null && connectionString.getHosts().size() == 1
+                        && connectionString.getRequiredReplicaSetName() == null)) {
                 mode(ClusterConnectionMode.SINGLE)
-                .hosts(singletonList(createServerAddress(connectionString.getHosts().get(0))));
+                        .hosts(singletonList(createServerAddress(connectionString.getHosts().get(0))));
             } else {
-                List<ServerAddress> seedList = new ArrayList<ServerAddress>();
-                for (final String cur : connectionString.getHosts()) {
-                    seedList.add(createServerAddress(cur));
-                }
+                List<ServerAddress> seedList = connectionString.getHosts().stream()
+                        .map(ServerAddressHelper::createServerAddress)
+                        .collect(Collectors.toList());
                 mode(ClusterConnectionMode.MULTIPLE).hosts(seedList);
             }
             requiredReplicaSetName(connectionString.getRequiredReplicaSetName());
-
-            Integer maxConnectionPoolSize = connectionString.getMaxConnectionPoolSize();
-            int maxSize = maxConnectionPoolSize != null ? maxConnectionPoolSize : 100;
 
             Integer serverSelectionTimeout = connectionString.getServerSelectionTimeout();
             if (serverSelectionTimeout != null) {
@@ -562,7 +563,6 @@ public final class ClusterSettings {
             if (builder.mode == ClusterConnectionMode.SINGLE && builder.hosts.size() > 1) {
                 throw new IllegalArgumentException("Can not directly connect to more than one server");
             }
-
             mode = builder.mode != null ? builder.mode : hosts.size() == 1 ? ClusterConnectionMode.SINGLE : ClusterConnectionMode.MULTIPLE;
         }
         requiredReplicaSetName = builder.requiredReplicaSetName;

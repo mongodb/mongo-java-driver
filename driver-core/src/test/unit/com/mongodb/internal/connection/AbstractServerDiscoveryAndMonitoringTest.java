@@ -120,18 +120,14 @@ public class AbstractServerDiscoveryAndMonitoringTest {
 
     protected void init(final ServerListenerFactory serverListenerFactory, final ClusterListener clusterListener) {
         ConnectionString connectionString = new ConnectionString(definition.getString("uri").getValue());
-
-        ClusterConnectionMode mode = getMode(connectionString);
         ClusterSettings settings = ClusterSettings.builder()
+                                           .applyConnectionString(connectionString)
                                            .serverSelectionTimeout(1, TimeUnit.SECONDS)
-                                           .hosts(getHosts(connectionString))
-                                           .mode(mode)
-                                           .requiredReplicaSetName(connectionString.getRequiredReplicaSetName())
                                            .build();
 
         ClusterId clusterId = new ClusterId();
 
-        factory = new DefaultTestClusterableServerFactory(clusterId, mode, serverListenerFactory);
+        factory = new DefaultTestClusterableServerFactory(clusterId, settings.getMode(), serverListenerFactory);
 
         ClusterSettings clusterSettings = settings.getClusterListeners().contains(clusterListener) ? settings
                 : ClusterSettings.builder(settings).addClusterListener(clusterListener).build();
@@ -140,22 +136,6 @@ public class AbstractServerDiscoveryAndMonitoringTest {
             cluster = new SingleServerCluster(clusterId, clusterSettings, factory);
         } else {
             cluster = new MultiServerCluster(clusterId, clusterSettings, factory);
-        }
-    }
-
-    private List<ServerAddress> getHosts(final ConnectionString connectionString) {
-        List<ServerAddress> serverAddresses = new ArrayList<ServerAddress>();
-        for (String host : connectionString.getHosts()) {
-            serverAddresses.add(new ServerAddress(host));
-        }
-        return serverAddresses;
-    }
-
-    private ClusterConnectionMode getMode(final ConnectionString connectionString) {
-        if (connectionString.getHosts().size() > 1 || connectionString.getRequiredReplicaSetName() != null) {
-            return ClusterConnectionMode.MULTIPLE;
-        } else {
-            return ClusterConnectionMode.SINGLE;
         }
     }
 

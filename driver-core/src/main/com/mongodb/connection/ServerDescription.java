@@ -102,6 +102,17 @@ public class ServerDescription {
     }
 
     /**
+     * Creates a Builder for a ServerDescription instance based on a previous serverDescription.
+     *
+     * @param serverDescription the ServerDescription to base the builder from
+     * @return a new Builder for ServerDescription.
+     * @since 4.1
+     */
+    public static Builder builder(final ServerDescription serverDescription) {
+        return new Builder(serverDescription);
+    }
+
+    /**
      * Gets the string representing the host name and port that this member of a replica set was configured with,
      * e.g. {@code "somehost:27019"}. This is typically derived from the "me" field from the "isMaster" command response.
      *
@@ -149,6 +160,33 @@ public class ServerDescription {
         private Integer logicalSessionTimeoutMinutes;
 
         private Throwable exception;
+
+        Builder() {
+        }
+
+        Builder(final ServerDescription serverDescription) {
+            this.address = serverDescription.address;
+            this.type = serverDescription.type;
+            this.canonicalAddress = serverDescription.canonicalAddress;
+            this.hosts = serverDescription.hosts;
+            this.passives = serverDescription.passives;
+            this.arbiters = serverDescription.arbiters;
+            this.primary = serverDescription.primary;
+            this.maxDocumentSize = serverDescription.maxDocumentSize;
+            this.tagSet = serverDescription.tagSet;
+            this.setName = serverDescription.setName;
+            this.roundTripTimeNanos = serverDescription.roundTripTimeNanos;
+            this.ok = serverDescription.ok;
+            this.state = serverDescription.state;
+            this.minWireVersion = serverDescription.minWireVersion;
+            this.maxWireVersion = serverDescription.maxWireVersion;
+            this.electionId = serverDescription.electionId;
+            this.setVersion = serverDescription.setVersion;
+            this.lastWriteDate = serverDescription.lastWriteDate;
+            this.lastUpdateTimeNanos = serverDescription.lastUpdateTimeNanos;
+            this.logicalSessionTimeoutMinutes = serverDescription.logicalSessionTimeoutMinutes;
+            this.exception = serverDescription.exception;
+        }
 
         /**
          * Sets the address of the server.
