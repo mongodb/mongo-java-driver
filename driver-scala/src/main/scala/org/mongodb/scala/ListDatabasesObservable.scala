@@ -72,6 +72,20 @@ case class ListDatabasesObservable[TResult](wrapped: ListDatabasesPublisher[TRes
   }
 
   /**
+   * Sets the authorizedDatabasesOnly flag that indicates whether the command should return just the databases which the user
+   * is authorized to see.
+   *
+   * @param authorizedDatabasesOnly the authorizedDatabasesOnly flag, which may be null
+   * @return this
+   * @since 4.1
+   * @mongodb.server.release 4.0.5
+   */
+  def authorizedDatabasesOnly(authorizedDatabasesOnly: Boolean): ListDatabasesObservable[TResult] = {
+    wrapped.authorizedDatabasesOnly(authorizedDatabasesOnly)
+    this
+  }
+
+  /**
    * Sets the number of documents to return per batch.
    *
    * @param batchSize the batch size

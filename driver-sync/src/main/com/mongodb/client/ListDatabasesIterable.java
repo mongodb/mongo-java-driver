@@ -69,4 +69,15 @@ public interface ListDatabasesIterable<TResult> extends MongoIterable<TResult> {
      * @mongodb.server.release 3.4.3
      */
     ListDatabasesIterable<TResult> nameOnly(@Nullable Boolean nameOnly);
+
+    /**
+     * Sets the authorizedDatabasesOnly flag that indicates whether the command should return just the databases which the user
+     * is authorized to see.
+     *
+     * @param authorizedDatabasesOnly the authorizedDatabasesOnly flag, which may be null
+     * @return this
+     * @since 4.1
+     * @mongodb.server.release 4.0
+     */
+    ListDatabasesIterable<TResult> authorizedDatabasesOnly(@Nullable Boolean authorizedDatabasesOnly);
 }

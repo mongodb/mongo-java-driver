@@ -64,6 +64,14 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
         then:
         names.contains(getDatabaseName())
 
+        when:
+        operation = operation.authorizedDatabasesOnly(true).nameOnly(true)
+                .filter(new BsonDocument('name',  new BsonRegularExpression("^${getDatabaseName()}")))
+        names = executeAndCollectBatchCursorResults(operation, async)*.get('name')
+
+        then:
+        names.contains(getDatabaseName())
+
         where:
         async << [true, false]
     }

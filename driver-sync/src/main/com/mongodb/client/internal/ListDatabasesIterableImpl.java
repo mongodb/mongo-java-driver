@@ -43,6 +43,7 @@ public class ListDatabasesIterableImpl<TResult> extends MongoIterableImpl<TResul
     private long maxTimeMS;
     private Bson filter;
     private Boolean nameOnly;
+    private Boolean authorizedDatabasesOnly;
 
     ListDatabasesIterableImpl(@Nullable final ClientSession clientSession, final Class<TResult> resultClass,
                               final CodecRegistry codecRegistry, final ReadPreference readPreference,
@@ -84,7 +85,13 @@ public class ListDatabasesIterableImpl<TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
+    public ListDatabasesIterable<TResult> authorizedDatabasesOnly(@Nullable final Boolean authorizedDatabasesOnly) {
+        this.authorizedDatabasesOnly = authorizedDatabasesOnly;
+        return this;
+    }
+
+    @Override
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
-        return operations.listDatabases(resultClass, filter, nameOnly, maxTimeMS);
+        return operations.listDatabases(resultClass, filter, nameOnly, maxTimeMS, authorizedDatabasesOnly);
     }
 }

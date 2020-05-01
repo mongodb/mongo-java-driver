@@ -38,6 +38,7 @@ final class AsyncListDatabasesIterableImpl<TResult> extends AsyncMongoIterableIm
     private long maxTimeMS;
     private Bson filter;
     private Boolean nameOnly;
+    private Boolean authorizedDatabasesOnly;
 
     AsyncListDatabasesIterableImpl(@Nullable final AsyncClientSession clientSession, final Class<TResult> resultClass,
                                    final CodecRegistry codecRegistry, final ReadPreference readPreference,
@@ -74,7 +75,13 @@ final class AsyncListDatabasesIterableImpl<TResult> extends AsyncMongoIterableIm
     }
 
     @Override
+    public AsyncListDatabasesIterable<TResult> authorizedDatabasesOnly(@Nullable final Boolean authorizedDatabasesOnly) {
+        this.authorizedDatabasesOnly = authorizedDatabasesOnly;
+        return this;
+    }
+
+    @Override
     AsyncReadOperation<AsyncBatchCursor<TResult>> asAsyncReadOperation() {
-        return operations.listDatabases(resultClass, filter, nameOnly, maxTimeMS);
+        return operations.listDatabases(resultClass, filter, nameOnly, maxTimeMS, authorizedDatabasesOnly);
     }
 }

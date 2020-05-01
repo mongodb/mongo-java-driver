@@ -251,8 +251,9 @@ public final class AsyncOperations<TDocument> {
     }
 
     public <TResult> AsyncReadOperation<AsyncBatchCursor<TResult>> listDatabases(final Class<TResult> resultClass, final Bson filter,
-                                                                                 final Boolean nameOnly, final long maxTimeMS) {
-        return operations.listDatabases(resultClass, filter, nameOnly, maxTimeMS);
+                                                                                 final Boolean nameOnly, final long maxTimeMS,
+                                                                                 final Boolean authorizedDatabasesOnly) {
+        return operations.listDatabases(resultClass, filter, nameOnly, maxTimeMS, authorizedDatabasesOnly);
     }
 
     public <TResult> AsyncReadOperation<AsyncBatchCursor<TResult>> listIndexes(final Class<TResult> resultClass, final Integer batchSize,

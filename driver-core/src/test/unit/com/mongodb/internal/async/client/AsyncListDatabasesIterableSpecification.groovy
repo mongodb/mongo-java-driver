@@ -48,7 +48,7 @@ class AsyncListDatabasesIterableSpecification extends Specification {
                 it[0].onResult(null, null)
             }
         }
-        def executor = new TestOperationExecutor([cursor, cursor]);
+        def executor = new TestOperationExecutor([cursor, cursor, cursor]);
         def listDatabasesIterable = new AsyncListDatabasesIterableImpl<Document>(null, Document, codecRegistry, readPreference,
                 executor, true)
                 .maxTime(1000, MILLISECONDS)
@@ -73,6 +73,16 @@ class AsyncListDatabasesIterableSpecification extends Specification {
         then: 'should use the overrides'
         expect operation, isTheSameAs(new ListDatabasesOperation<Document>(new DocumentCodec()).maxTime(999, MILLISECONDS)
                 .filter(BsonDocument.parse('{a: 1}')).nameOnly(true).retryReads(true))
+
+        when: 'overriding initial options'
+        listDatabasesIterable.maxTime(101, MILLISECONDS).filter(Document.parse('{a: 1}'))
+                .authorizedDatabasesOnly(true).into([]) { result, t -> }
+
+        operation = executor.getReadOperation() as ListDatabasesOperation<Document>
+
+        then: 'should use the overrides'
+        expect operation, isTheSameAs(new ListDatabasesOperation<Document>(new DocumentCodec()).maxTime(101, MILLISECONDS)
+                .filter(BsonDocument.parse('{a: 1}')).nameOnly(true).authorizedDatabasesOnly(true).retryReads(true))
     }
 
     def 'should follow the MongoIterable interface as expected'() {

@@ -62,6 +62,17 @@ public interface ListDatabasesPublisher<TResult> extends Publisher<TResult> {
     ListDatabasesPublisher<TResult> nameOnly(Boolean nameOnly);
 
     /**
+     * Sets the authorizedDatabasesOnly flag that indicates whether the command should return just the databases which the user
+     * is authorized to see.
+     *
+     * @param authorizedDatabasesOnly the authorizedDatabasesOnly flag, which may be null
+     * @return this
+     * @since 4.1
+     * @mongodb.server.release 4.0
+     */
+    ListDatabasesPublisher<TResult> authorizedDatabasesOnly(Boolean authorizedDatabasesOnly);
+
+    /**
      * Sets the number of documents to return per batch.
      *
      * <p>Overrides the {@link org.reactivestreams.Subscription#request(long)} value for setting the batch size, allowing for fine grained
