@@ -197,7 +197,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
                 return;
             }
 
-            if (event.getNewDescription().isOk()) {
+            if (newDescription.isOk()) {
                 if (clusterType == UNKNOWN && newDescription.getType() != REPLICA_SET_GHOST) {
                     clusterType = newDescription.getClusterType();
                     if (LOGGER.isInfoEnabled()) {

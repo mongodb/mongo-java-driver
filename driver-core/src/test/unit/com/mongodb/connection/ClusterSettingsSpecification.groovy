@@ -173,15 +173,45 @@ class ClusterSettingsSpecification extends Specification {
         settings.requiredReplicaSetName == null
 
         when:
-        settings = ClusterSettings.builder().applyConnectionString(new ConnectionString('mongodb://example.com:27018,' +
-                                                                                        'example.com:27019/?replicaSet=test'))
+        settings = ClusterSettings.builder().applyConnectionString(new ConnectionString('mongodb+srv://test5.test.build.10gen.cc/')).build()
+
+        then:
+        settings.mode == ClusterConnectionMode.MULTIPLE;
+        settings.hosts == [new ServerAddress('127.0.0.1:27017')]
+        settings.requiredClusterType == ClusterType.REPLICA_SET
+        settings.requiredReplicaSetName == 'repl0'
+
+        when:
+        settings = ClusterSettings.builder().applyConnectionString(new ConnectionString('mongodb://example.com:27018/?replicaSet=test'))
                                   .build()
 
         then:
         settings.mode == ClusterConnectionMode.MULTIPLE
-        settings.hosts == [new ServerAddress('example.com:27018'), new ServerAddress('example.com:27019')]
+        settings.hosts == [new ServerAddress('example.com:27018')]
         settings.requiredClusterType == ClusterType.REPLICA_SET
         settings.requiredReplicaSetName == 'test'
+
+        when:
+        settings = ClusterSettings.builder()
+                .applyConnectionString(new ConnectionString('mongodb://example.com:27018/?directConnection=false'))
+                .build()
+
+        then:
+        settings.mode == ClusterConnectionMode.MULTIPLE
+        settings.hosts == [new ServerAddress('example.com:27018')]
+        settings.requiredClusterType == ClusterType.UNKNOWN
+        settings.requiredReplicaSetName == null
+
+        when:
+        settings = ClusterSettings.builder()
+                .applyConnectionString(new ConnectionString('mongodb://example.com:27018/?directConnection=true'))
+                .build()
+
+        then:
+        settings.mode == ClusterConnectionMode.SINGLE
+        settings.hosts == [new ServerAddress('example.com:27018')]
+        settings.requiredClusterType == ClusterType.UNKNOWN
+        settings.requiredReplicaSetName == null
 
         when:
         settings = ClusterSettings.builder().applyConnectionString(new ConnectionString('mongodb://example.com:27018,example.com:27019'))

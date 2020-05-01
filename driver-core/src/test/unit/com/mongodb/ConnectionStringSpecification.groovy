@@ -109,6 +109,15 @@ class ConnectionStringSpecification extends Specification {
         thrown(IllegalArgumentException)
     }
 
+    def 'should throw exception if direct connection when using mongodb+srv'() {
+        when:
+        new ConnectionString('mongodb+srv://test5.test.build.10gen.cc/?directConnection=true')
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+
     def 'should correctly parse different write concerns'() {
         expect:
         uri.getWriteConcern() == writeConcern
@@ -375,31 +384,32 @@ class ConnectionStringSpecification extends Specification {
 
         where:
 
-        cause                                       | connectionString
-        'is not a connection string'                | 'hello world'
-        'is missing a host'                         | 'mongodb://'
-        'has an empty host'                         | 'mongodb://localhost:27017,,localhost:27019'
-        'has an malformed IPv6 host'                | 'mongodb://[::1'
-        'has unescaped colons'                      | 'mongodb://locahost::1'
-        'is missing a slash'                        | 'mongodb://localhost?wTimeout=5'
-        'contains an invalid port string'           | 'mongodb://localhost:twenty'
-        'contains an invalid port negative'         | 'mongodb://localhost:-1'
-        'contains an invalid port out of range'     | 'mongodb://localhost:1000000'
-        'contains multiple at-signs'                | 'mongodb://user@123:password@localhost'
-        'contains multiple colons'                  | 'mongodb://user:123:password@localhost'
-        'invalid integer in options'                | 'mongodb://localhost/?wTimeout=five'
-        'has incomplete options'                    | 'mongodb://localhost/?wTimeout'
-        'has an unknown auth mechanism'             | 'mongodb://user:password@localhost/?authMechanism=postItNote'
-        'invalid readConcern'                       | 'mongodb://localhost:27017/?readConcernLevel=pickThree'
-        'contains tags but no mode'                 | 'mongodb://localhost:27017/?readPreferenceTags=dc:ny'
-        'contains max staleness but no mode'        | 'mongodb://localhost:27017/?maxStalenessSeconds=100.5'
-        'contains tags and primary mode'            | 'mongodb://localhost:27017/?readPreference=primary&readPreferenceTags=dc:ny'
-        'contains max staleness and primary mode'   | 'mongodb://localhost:27017/?readPreference=primary&maxStalenessSeconds=100'
-        'contains non-integral max staleness'       | 'mongodb://localhost:27017/?readPreference=secondary&maxStalenessSeconds=100.0'
-        'contains GSSAPI mechanism with no user'    | 'mongodb://localhost:27017/?authMechanism=GSSAPI'
-        'contains SCRAM mechanism with no user'     | 'mongodb://localhost:27017/?authMechanism=SCRAM-SHA-1'
-        'contains MONGODB mechanism with no user'   | 'mongodb://localhost:27017/?authMechanism=MONGODB-CR'
-        'contains PLAIN mechanism with no user'     | 'mongodb://localhost:27017/?authMechanism=PLAIN'
+        cause                                           | connectionString
+        'is not a connection string'                    | 'hello world'
+        'is missing a host'                             | 'mongodb://'
+        'has an empty host'                             | 'mongodb://localhost:27017,,localhost:27019'
+        'has an malformed IPv6 host'                    | 'mongodb://[::1'
+        'has unescaped colons'                          | 'mongodb://locahost::1'
+        'is missing a slash'                            | 'mongodb://localhost?wTimeout=5'
+        'contains an invalid port string'               | 'mongodb://localhost:twenty'
+        'contains an invalid port negative'             | 'mongodb://localhost:-1'
+        'contains an invalid port out of range'         | 'mongodb://localhost:1000000'
+        'contains multiple at-signs'                    | 'mongodb://user@123:password@localhost'
+        'contains multiple colons'                      | 'mongodb://user:123:password@localhost'
+        'invalid integer in options'                    | 'mongodb://localhost/?wTimeout=five'
+        'has incomplete options'                        | 'mongodb://localhost/?wTimeout'
+        'has an unknown auth mechanism'                 | 'mongodb://user:password@localhost/?authMechanism=postItNote'
+        'invalid readConcern'                           | 'mongodb://localhost:27017/?readConcernLevel=pickThree'
+        'contains tags but no mode'                     | 'mongodb://localhost:27017/?readPreferenceTags=dc:ny'
+        'contains max staleness but no mode'            | 'mongodb://localhost:27017/?maxStalenessSeconds=100.5'
+        'contains tags and primary mode'                | 'mongodb://localhost:27017/?readPreference=primary&readPreferenceTags=dc:ny'
+        'contains max staleness and primary mode'       | 'mongodb://localhost:27017/?readPreference=primary&maxStalenessSeconds=100'
+        'contains non-integral max staleness'           | 'mongodb://localhost:27017/?readPreference=secondary&maxStalenessSeconds=100.0'
+        'contains GSSAPI mechanism with no user'        | 'mongodb://localhost:27017/?authMechanism=GSSAPI'
+        'contains SCRAM mechanism with no user'         | 'mongodb://localhost:27017/?authMechanism=SCRAM-SHA-1'
+        'contains MONGODB mechanism with no user'       | 'mongodb://localhost:27017/?authMechanism=MONGODB-CR'
+        'contains PLAIN mechanism with no user'         | 'mongodb://localhost:27017/?authMechanism=PLAIN'
+        'contains multiple hosts and directConnection'  | 'mongodb://localhost:27017,localhost:27018/?directConnection=true'
     }
 
     def 'should have correct defaults for options'() {
@@ -613,6 +623,7 @@ class ConnectionStringSpecification extends Specification {
                              + 'socketTimeoutMS=5500;'
                              + 'safe=false;w=1;wtimeout=2500;'
                              + 'fsync=true;readPreference=primary;'
+                             + 'directConnection=true;'
                              + 'ssl=true')                           |  new ConnectionString('mongodb://localhost/db.coll?minPoolSize=5;'
                                                                                              + 'maxPoolSize=10;'
                                                                                              + 'waitQueueTimeoutMS=150;'
@@ -620,6 +631,7 @@ class ConnectionStringSpecification extends Specification {
                                                                                              + '&replicaSet=test;connectTimeoutMS=2500;'
                                                                                              + 'socketTimeoutMS=5500&safe=false&w=1;'
                                                                                              + 'wtimeout=2500;fsync=true'
+                                                                                             + '&directConnection=true'
                                                                                              + '&readPreference=primary;ssl=true')
     }
 
