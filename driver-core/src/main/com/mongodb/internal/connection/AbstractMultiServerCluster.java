@@ -261,7 +261,8 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         ensureServers(newDescription);
 
         if (newDescription.getCanonicalAddress() != null
-                && !newDescription.getAddress().equals(new ServerAddress(newDescription.getCanonicalAddress()))) {
+                && !newDescription.getAddress().equals(new ServerAddress(newDescription.getCanonicalAddress()))
+                && !newDescription.isPrimary()) {
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info(format("Canonical address %s does not match server address.  Removing %s from client view of cluster",
                                    newDescription.getCanonicalAddress(), newDescription.getAddress()));
