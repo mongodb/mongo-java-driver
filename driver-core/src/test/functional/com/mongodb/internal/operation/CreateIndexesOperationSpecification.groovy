@@ -25,6 +25,7 @@ import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
 import com.mongodb.internal.bulk.IndexRequest
+import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonDocumentWrapper
 import org.bson.BsonInt32
@@ -546,14 +547,14 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         given:
         def operation = new CreateIndexesOperation(getNamespace(),
                 [new IndexRequest(new BsonDocument('$**', new BsonInt32(1)))
-                        .wildcardProjection(new BsonDocument('a', new BsonInt32(1)).append('b.c', new BsonInt32(1)))])
+                        .wildcardProjection(new BsonDocument('a', BsonBoolean.TRUE).append('_id', BsonBoolean.FALSE))])
 
         when:
         execute(operation, async)
 
         then:
         getUserCreatedIndexes('key').contains(['$**': 1])
-        getUserCreatedIndexes('wildcardProjection').contains(['a': 1, 'b.c': 1])
+        getUserCreatedIndexes('wildcardProjection').contains(['a': true, '_id': false])
 
         where:
         async << [true, false]
