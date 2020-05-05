@@ -92,6 +92,16 @@ public class ObjectIdTest {
     }
 
     @Test
+    public void testGetSmallestWithDate() {
+        Date date = new Date(1588467737760L);
+        byte[] expectedBytes = new byte[]{94, -82, 24, 25, 0, 0, 0, 0, 0, 0, 0, 0};
+        ObjectId objectId = ObjectId.getSmallestWithDate(date);
+        assertArrayEquals(expectedBytes, objectId.toByteArray());
+        assertEquals(date.getTime() / 1000 * 1000, objectId.getDate().getTime());
+        assertEquals(-1, objectId.compareTo(new ObjectId(date)));
+    }
+
+    @Test
     public void testGetTimeZero() {
         assertEquals(0L, new ObjectId(0, 0).getDate().getTime());
     }

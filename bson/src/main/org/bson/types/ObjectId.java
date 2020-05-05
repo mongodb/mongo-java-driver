@@ -75,6 +75,21 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
     }
 
     /**
+     * Gets a new object id with the give date value and all other bits zeroed.
+     * <p>
+     * The returned object id will compare as less than or equal to any other object id within the same second as the given date, and
+     * less than any later date.
+     * </p>
+     *
+     * @param date the date
+     * @return the ObjectId
+     * @since 4.1
+     */
+    public static ObjectId getSmallestWithDate(final Date date) {
+        return new ObjectId(dateToTimestampSeconds(date), 0, (short) 0, 0, false);
+    }
+
+    /**
      * Checks if a string could be an {@code ObjectId}.
      *
      * @param hexString a potential ObjectId as a String.
