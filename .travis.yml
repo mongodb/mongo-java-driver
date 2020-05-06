@@ -1,14 +1,15 @@
-dist: trusty
+dist: bionic
 sudo: true
 language: java
 jdk:
-- oraclejdk9
+  - oraclejdk11
 
 notifications:
   email:
     recipients:
     - jeff.yemin@mongodb.com
-    - ross@mongodb.com
+    - ross.lawley@mongodb.com
+    - john.stewart@mongodb.com
     on_success: change
     on_failure: always
 
@@ -18,8 +19,8 @@ branches:
 
 env:
   global:
-    - MONGODB_FILE_NAME=mongodb-linux-x86_64-enterprise-ubuntu1404
-    - MONGODB=3.6.1
+    - MONGODB_FILE_NAME=mongodb-linux-x86_64-enterprise-ubuntu1804
+    - MONGODB=4.2.6
 
 addons:
   apt:
@@ -33,7 +34,7 @@ install:
 
 before_script:
   - mkdir ${PWD}/${MONGODB_FILE_NAME}-${MONGODB}/data
-  - ${PWD}/${MONGODB_FILE_NAME}-${MONGODB}/bin/mongod --dbpath ${PWD}/${MONGODB_FILE_NAME}-${MONGODB}/data --logpath ${PWD}/${MONGODB_FILE_NAME}-${MONGODB}/mongodb.log --setParameter enableTestCommands=1 --fork --smallfiles --nojournal
+  - ${PWD}/${MONGODB_FILE_NAME}-${MONGODB}/bin/mongod --dbpath ${PWD}/${MONGODB_FILE_NAME}-${MONGODB}/data --logpath ${PWD}/${MONGODB_FILE_NAME}-${MONGODB}/mongodb.log --setParameter enableTestCommands=1 --fork --nojournal
 
 script:
   - ./gradlew -q assemble
