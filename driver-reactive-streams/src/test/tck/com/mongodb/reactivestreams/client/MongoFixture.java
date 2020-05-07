@@ -77,7 +77,7 @@ public final class MongoFixture {
         try {
             run(getMongoClient().getDatabase(name).runCommand(new Document("dropDatabase", 1)));
         } catch (MongoCommandException e) {
-            if (!e.getErrorMessage().startsWith("ns not found")) {
+            if (!e.getErrorMessage().contains("ns not found")) {
                 throw e;
             }
         }
