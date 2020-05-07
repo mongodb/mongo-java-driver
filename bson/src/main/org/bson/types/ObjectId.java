@@ -75,7 +75,7 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
     }
 
     /**
-     * Gets a new object id with the give date value and all other bits zeroed.
+     * Gets a new object id with the given date value and all other bits zeroed.
      * <p>
      * The returned object id will compare as less than or equal to any other object id within the same second as the given date, and
      * less than any later date.
