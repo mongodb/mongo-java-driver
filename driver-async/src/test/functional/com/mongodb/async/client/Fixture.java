@@ -117,7 +117,7 @@ public final class Fixture {
             database.runCommand(new Document("drop", namespace.getCollectionName()), futureResultCallback);
             futureResultCallback.get(60, SECONDS);
         } catch (MongoCommandException e) {
-            if (!e.getErrorMessage().startsWith("ns not found")) {
+            if (!e.getErrorMessage().contains("ns not found")) {
                 throw e;
             }
         } catch (Throwable t) {
@@ -141,7 +141,7 @@ public final class Fixture {
                             .runCommand(new Document("dropDatabase", 1), futureResultCallback);
             futureResultCallback.get(60, SECONDS);
         } catch (MongoCommandException e) {
-            if (!e.getErrorMessage().startsWith("ns not found")) {
+            if (!e.getErrorMessage().contains("ns not found")) {
                 throw e;
             }
         } catch (Throwable t) {
