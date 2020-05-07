@@ -81,7 +81,7 @@ public final class Fixture {
             database.runCommand(new Document("drop", namespace.getCollectionName())).subscribe(subscriber);
             subscriber.await(10, SECONDS);
         } catch (MongoCommandException e) {
-            if (!e.getErrorMessage().startsWith("ns not found")) {
+            if (!e.getErrorMessage().contains("ns not found")) {
                 throw e;
             }
         }
@@ -97,7 +97,7 @@ public final class Fixture {
             getMongoClient().getDatabase(name).runCommand(new Document("dropDatabase", 1)).subscribe(subscriber);
             subscriber.await(10, SECONDS);
         } catch (MongoCommandException e) {
-            if (!e.getErrorMessage().startsWith("ns not found")) {
+            if (!e.getErrorMessage().contains("ns not found")) {
                 throw e;
             }
         }
