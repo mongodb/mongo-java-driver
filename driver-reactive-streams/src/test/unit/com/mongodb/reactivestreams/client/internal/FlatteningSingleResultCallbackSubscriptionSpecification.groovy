@@ -265,7 +265,8 @@ class FlatteningSingleResultCallbackSubscriptionSpecification extends Specificat
 
         then:
         def ex = thrown(MongoException)
-        ex.message == 'exception calling onComplete'
+        ex.message == 'Subscription has already been terminated'
+        ex.cause.cause.message == 'exception calling onComplete'
         subscriber.assertTerminalEvent()
         subscriber.assertNoErrors()
     }
@@ -298,7 +299,8 @@ class FlatteningSingleResultCallbackSubscriptionSpecification extends Specificat
 
         then:
         def ex = thrown(MongoException)
-        ex.message == 'exception calling onError'
+        ex.message == 'Subscription has already been terminated'
+        ex.cause.cause.message == 'exception calling onError'
         subscriber.assertTerminalEvent()
         subscriber.assertErrored()
     }
