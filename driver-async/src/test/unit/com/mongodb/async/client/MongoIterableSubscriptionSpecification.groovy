@@ -464,7 +464,7 @@ class MongoIterableSubscriptionSpecification extends Specification {
 
         then:
         def ex = thrown(MongoException)
-        ex.message == 'exception calling onComplete'
+        ex.message == 'Subscription has already been terminated'
         observer.assertTerminalEvent()
         observer.assertNoErrors()
     }
@@ -497,7 +497,8 @@ class MongoIterableSubscriptionSpecification extends Specification {
 
         then:
         def ex = thrown(MongoException)
-        ex.message == 'exception calling onError'
+        ex.message == 'Subscription has already been terminated'
+        ex.cause.cause.message == 'exception calling onError'
         observer.assertTerminalEvent()
         observer.assertErrored()
     }

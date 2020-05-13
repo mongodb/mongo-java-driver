@@ -69,6 +69,9 @@ abstract class AbstractSubscription<TResult> implements Subscription {
         if (n < 1) {
             throw new IllegalArgumentException("Number requested must be > 0: " + n);
         }
+        if (isTerminated()) {
+            return;
+        }
 
         boolean requestData = false;
         synchronized (this) {
@@ -132,7 +135,7 @@ abstract class AbstractSubscription<TResult> implements Subscription {
                 throw MongoException.fromThrowableNonNull(t1);
             }
         } else {
-            throw MongoException.fromThrowableNonNull(t);
+            throw new MongoException("Subscription has already been terminated", t);
         }
     }
 
