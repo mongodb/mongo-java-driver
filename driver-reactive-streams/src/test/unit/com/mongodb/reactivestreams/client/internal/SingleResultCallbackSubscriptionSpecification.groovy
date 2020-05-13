@@ -302,7 +302,8 @@ class SingleResultCallbackSubscriptionSpecification extends Specification {
         def ex = thrown(MongoException)
         subscriber.assertNoErrors()
         subscriber.assertTerminalEvent()
-        ex.message == 'exception calling onComplete'
+        ex.message == 'Subscription has already been terminated'
+        ex.cause.cause.message == 'exception calling onComplete'
     }
 
     def 'should throw the exception if calling onError raises one'() {
