@@ -24,21 +24,23 @@ Find operations retrieve documents from a collection. You can specify a filter t
      import com.mongodb.client.MongoClient;
      import com.mongodb.client.MongoCollection;
      import com.mongodb.client.MongoDatabase;
+     import com.mongodb.client.FindIterable;
      import com.mongodb.client.model.Projections;
      import com.mongodb.client.model.Filters;
      import static com.mongodb.client.model.Filters.*;
      import static com.mongodb.client.model.Projections.*;
      import com.mongodb.client.model.Sorts;
      import java.util.Arrays;
+     import java.util.function.Consumer;
      import org.bson.Document;
      ```
 
 - Include the following code which the examples in the tutorials will use to print the results of the find operations:
 
     ```java
-    Block<Document> printBlock = new Block<Document>() {
+    Consumer<Document> printConsumer = new Consumer<Document>() {
            @Override
-           public void apply(final Document document) {
+           public void accept(final Document document) {
                System.out.println(document.toJson());
            }
     };
@@ -65,14 +67,14 @@ To query the collection, you can use the collection's [`find()`]({{< apiref "mon
 You can call the method without any arguments to query all documents in a collection:
 
 ```java
-collection.find().forEach(printBlock);
+collection.find().forEach(printConsumer);
 ```
 
 Or pass a filter to query for documents that match the filter criteria:
 
 ```java
 collection.find(eq("name", "456 Cookies Shop"))
-            .forEach(printBlock);
+            .forEach(printConsumer);
 ```
 
 ## Query Filters
@@ -84,14 +86,14 @@ To query for documents that match certain conditions, pass a filter document to 
 To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "bson" "org/bson/Document.html" >}}) object.
 
 ```java
-collection.find(new Document()).forEach(printBlock);
+collection.find(new Document()).forEach(printConsumer);
 ```
 {{% note class="tip"%}}
 For the [`find()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#find()" >}}) method, you can also call the method without passing a filter object to match all documents in a collection.
 {{% /note %}}
 
 ```java
-collection.find().forEach(printBlock);
+collection.find().forEach(printConsumer);
 ```
 
 ### `Filters` Helper
@@ -108,14 +110,14 @@ Consider the following `find` operation which includes a filter `Document` which
 collection.find(
     new Document("stars", new Document("$gte", 2)
           .append("$lt", 5))
-          .append("categories", "Bakery")).forEach(printBlock);
+          .append("categories", "Bakery")).forEach(printConsumer);
 ```
 
 The following example specifies the same filter condition using the [`Filters`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Filters.html" >}}) helper methods:
 
 ```java
 collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery")))
-            .forEach(printBlock);
+            .forEach(printConsumer);
 ```
 
 For a list of MongoDB query filter operators, refer to the [MongoDB Manual]({{<docsref "reference/operator/query" >}}). For the associated `Filters` helpers, see [`Filters`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Filters.html" >}}).
@@ -123,7 +125,7 @@ See also the  [Query Documents Tutorial]({{<docsref "tutorial/query-documents" >
 
 ## FindIterable
 
-The [`find()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#find()" >}}) method returns an instance of the [`FindIterable`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/FindIterable.html" >}}) interface. The interface provides various methods that you can chain to the `find()` method to modify the output or behavior of the query, such as [`sort()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/FindIterable.html#sort(org.bson.conversions.Bson)" >}})  or [`projection()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/FindIterable.html#projection(org.bson.conversions.Bson)" >}}), as well as for iterating the results, such as [`iterator()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoIterable.html#iterator()" >}}) and [`forEach()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoIterable.html#forEach(com.mongodb.Block)" >}}).
+The [`find()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoCollection.html#find()" >}}) method returns an instance of the [`FindIterable`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/FindIterable.html" >}}) interface. The interface provides various methods that you can chain to the `find()` method to modify the output or behavior of the query, such as [`sort()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/FindIterable.html#sort(org.bson.conversions.Bson)" >}})  or [`projection()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/FindIterable.html#projection(org.bson.conversions.Bson)" >}}), as well as for iterating the results, such as [`iterator()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoIterable.html#iterator()" >}}).
 
 ### Projections
 
@@ -137,7 +139,7 @@ collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery"))
                      .append("stars", 1)
                      .append("categories",1)
                      .append("_id", 0))
-                .forEach(printBlock);
+                .forEach(printConsumer);
 ```
 
 To facilitate the creation of projection documents, the Java driver provides the
@@ -146,7 +148,7 @@ To facilitate the creation of projection documents, the Java driver provides the
 ```java
 collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery")))
                 .projection(fields(include("name", "stars", "categories"), excludeId()))
-                .forEach(printBlock);
+                .forEach(printConsumer);
 ```
 
 In the projection document, you can also specify a projection expression using a [projection operator]({{<docsref "reference/operator/projection/" >}})
@@ -161,7 +163,7 @@ To sort documents, pass a [sort specification document]({{<docsref "reference/me
 ```java
 collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery")))
                 .sort(Sorts.ascending("name"))
-                .forEach(printBlock);
+                .forEach(printConsumer);
 
 ```
 
@@ -173,7 +175,7 @@ The [`FindIterable`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/FindIt
 collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery")))
                 .sort(Sorts.ascending("name"))
                 .projection(fields(include("name", "stars", "categories"), excludeId()))
-                .forEach(printBlock);
+                .forEach(printConsumer);
 ```
 
 ## MongoIterable
@@ -183,9 +185,6 @@ The [`MongoIterable`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/Mongo
 - [`iterator()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoIterable.html#iterator()" >}})
 
 - [`first()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoIterable.html#first()" >}})
-
-- [`forEach()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoIterable.html#forEach(com.mongodb.Block)" >}})
-
 
 - [`map()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoIterable.html#map(com.mongodb.Function)" >}})
 
