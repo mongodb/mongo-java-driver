@@ -74,7 +74,7 @@ final class MongoIterableSubscription<TResult> extends AbstractSubscription<TRes
     void requestMoreData() {
         boolean mustRead = false;
         synchronized (this) {
-            if (!isReading && !isTerminated() && batchCursor != null) {
+            if (!isReading && !isTerminated() && batchCursor != null && !batchCursor.isClosed()) {
                 isReading = true;
                 mustRead = true;
             }
