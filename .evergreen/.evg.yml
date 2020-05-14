@@ -1027,7 +1027,7 @@ buildvariants:
      - name: "socket-test"
 
 - matrix_name: "tests-netty"
-  matrix_spec: { auth: "noauth", ssl: "*", jdk: "jdk8", version: ["4.2"], topology: "standalone", os: "linux" }
+  matrix_spec: { auth: "noauth", ssl: "*", jdk: "jdk8", version: ["4.2", "4.4"], topology: "replicaset", os: "linux" }
   display_name: "Netty: ${version} ${topology} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
