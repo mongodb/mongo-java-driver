@@ -38,6 +38,7 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.ServerType;
 import com.mongodb.connection.SocketSettings;
+import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.ConnectionPoolClearedEvent;
@@ -131,6 +132,11 @@ public abstract class AbstractUnifiedTest {
 
     protected abstract MongoClient createMongoClient(MongoClientSettings settings);
 
+    @Nullable
+    protected StreamFactoryFactory getStreamFactoryFactory() {
+        return null;
+    }
+
     @Before
     public void setUp() {
         assumeFalse(skipTest);
@@ -201,7 +207,7 @@ public abstract class AbstractUnifiedTest {
                 .applyToServerSettings(new Block<ServerSettings.Builder>() {
                     @Override
                     public void apply(final ServerSettings.Builder builder) {
-//                        builder.heartbeatFrequency(5, MILLISECONDS);
+                        builder.heartbeatFrequency(50, MILLISECONDS);
                         builder.minHeartbeatFrequency(MIN_HEARTBEAT_FREQUENCY_MS, MILLISECONDS);
                         builder.addServerListener(serverListener);
                     }
@@ -223,6 +229,10 @@ public abstract class AbstractUnifiedTest {
             } else if (clientOptions.isNumber("w")) {
                 builder.writeConcern(new WriteConcern(clientOptions.getNumber("w").intValue()));
             }
+        }
+        StreamFactoryFactory streamFactoryFactory = getStreamFactoryFactory();
+        if (streamFactoryFactory != null) {
+            builder.streamFactoryFactory(streamFactoryFactory);
         }
         mongoClient = createMongoClient(builder.build());
 

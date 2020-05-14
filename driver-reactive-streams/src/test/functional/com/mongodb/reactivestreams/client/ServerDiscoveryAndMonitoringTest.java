@@ -19,9 +19,12 @@ package com.mongodb.reactivestreams.client;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.AbstractServerDiscoveryAndMonitoringTest;
 import com.mongodb.client.MongoClient;
+import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+
+import static com.mongodb.ClusterFixture.getOverriddenStreamFactoryFactory;
 
 public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAndMonitoringTest {
     public ServerDiscoveryAndMonitoringTest(final String filename, final String description, final String databaseName,
@@ -33,5 +36,10 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
         return new SyncMongoClient(MongoClients.create(settings));
+    }
+
+    @Override
+    protected StreamFactoryFactory getStreamFactoryFactory() {
+        return getOverriddenStreamFactoryFactory();
     }
 }
