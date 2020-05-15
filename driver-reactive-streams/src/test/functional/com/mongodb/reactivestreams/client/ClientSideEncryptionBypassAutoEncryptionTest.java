@@ -31,17 +31,16 @@ import org.bson.Document;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import static reactivestreams.helpers.SubscriberHelpers.ObservableSubscriber;
-import static reactivestreams.helpers.SubscriberHelpers.OperationSubscriber;
 
 import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
 
-
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
+import static reactivestreams.helpers.SubscriberHelpers.ObservableSubscriber;
+import static reactivestreams.helpers.SubscriberHelpers.OperationSubscriber;
 
 public class ClientSideEncryptionBypassAutoEncryptionTest {
     private MongoClient clientEncrypted;
@@ -116,6 +115,9 @@ public class ClientSideEncryptionBypassAutoEncryptionTest {
         if (clientEncrypted != null) {
             Fixture.dropDatabase(Fixture.getDefaultDatabaseName());
             clientEncrypted.close();
+        }
+        if (clientEncryption != null) {
+            clientEncryption.close();
         }
     }
 }

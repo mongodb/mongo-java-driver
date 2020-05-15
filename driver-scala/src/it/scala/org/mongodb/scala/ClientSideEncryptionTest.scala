@@ -16,11 +16,11 @@
 
 package org.mongodb.scala
 
-import com.mongodb.client.{ AbstractClientSideEncryptionTest, Fixture }
+import com.mongodb.client.{AbstractClientSideEncryptionTest, Fixture}
 import com.mongodb.event.CommandListener
+import org.bson.{BsonArray, BsonDocument}
+import org.junit.After
 import org.mongodb.scala.syncadapter.SyncMongoClient
-import org.bson.BsonArray
-import org.bson.BsonDocument
 
 class ClientSideEncryptionTest(
     val filename: String,
@@ -48,4 +48,9 @@ class ClientSideEncryptionTest(
 
   override protected def getDatabase(databaseName: String): com.mongodb.client.MongoDatabase =
     mongoClient.getDatabase(databaseName)
+
+  @After
+  def cleanUp(): Unit = {
+    if (mongoClient != null) mongoClient.close()
+  }
 }
