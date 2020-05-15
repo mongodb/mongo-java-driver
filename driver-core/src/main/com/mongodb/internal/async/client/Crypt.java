@@ -18,7 +18,6 @@ package com.mongodb.internal.async.client;
 
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoInternalException;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.crypt.capi.MongoCrypt;
@@ -29,6 +28,7 @@ import com.mongodb.crypt.capi.MongoExplicitEncryptOptions;
 import com.mongodb.crypt.capi.MongoKeyDecryptor;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
@@ -242,6 +242,7 @@ public class Crypt implements Closeable {
             commandMarker.close();
         }
         keyRetriever.close();
+        keyManagementService.close();
     }
 
     private void executeStateMachine(final MongoCryptContext cryptContext, final String databaseName,
