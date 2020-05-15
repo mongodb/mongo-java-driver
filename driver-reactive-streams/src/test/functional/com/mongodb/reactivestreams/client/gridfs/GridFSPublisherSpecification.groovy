@@ -117,14 +117,14 @@ class GridFSPublisherSpecification extends FunctionalSpecification {
 
     def 'should round trip with small chunks'() {
         given:
-        def contentSize = 1024 * 500
+        def contentSize = 1024 * 10
         def chunkSize = 10
         def contentBytes = new byte[contentSize]
         new SecureRandom().nextBytes(contentBytes)
         def options = new GridFSUploadOptions().chunkSizeBytes(chunkSize)
 
         when:
-        def fileId = run(MINUTES.toMillis(5), gridFSBucket.&uploadFromPublisher, 'myFile',
+        def fileId = run(gridFSBucket.&uploadFromPublisher, 'myFile',
                 createPublisher(ByteBuffer.wrap(contentBytes)), options)
 
         then:
