@@ -242,6 +242,7 @@ public class Crypt implements Closeable {
             commandMarker.close();
         }
         keyRetriever.close();
+        keyManagementService.close();
     }
 
     private void executeStateMachine(final MongoCryptContext cryptContext, final String databaseName,

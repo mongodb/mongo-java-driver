@@ -40,15 +40,22 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class KeyManagementService {
     private final int defaultPort;
+    private final TlsChannelStreamFactoryFactory tlsChannelStreamFactoryFactory;
     private final StreamFactory streamFactory;
 
     KeyManagementService(final SSLContext sslContext, final int defaultPort, final int timeoutMillis) {
         this.defaultPort = defaultPort;
-        this.streamFactory = new TlsChannelStreamFactoryFactory().create(SocketSettings.builder()
+        this.tlsChannelStreamFactoryFactory = new TlsChannelStreamFactoryFactory();
+        this.streamFactory = tlsChannelStreamFactoryFactory.create(SocketSettings.builder()
                         .connectTimeout(timeoutMillis, TimeUnit.MILLISECONDS)
                         .readTimeout(timeoutMillis, TimeUnit.MILLISECONDS)
                         .build(),
                 SslSettings.builder().enabled(true).context(sslContext).build());
+    }
+
+
+    public void close() {
+        tlsChannelStreamFactoryFactory.close();
     }
 
     void decryptKey(final MongoKeyDecryptor keyDecryptor, final SingleResultCallback<Void> callback) {
