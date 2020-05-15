@@ -18,7 +18,6 @@ package com.mongodb.internal.async.client;
 
 import com.mongodb.MongoSocketException;
 import com.mongodb.ServerAddress;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
@@ -26,6 +25,7 @@ import com.mongodb.connection.Stream;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.TlsChannelStreamFactoryFactory;
 import com.mongodb.crypt.capi.MongoKeyDecryptor;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.AsynchronousChannelStream;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
@@ -40,15 +40,22 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class KeyManagementService {
     private final int defaultPort;
+    private final TlsChannelStreamFactoryFactory tlsChannelStreamFactoryFactory;
     private final StreamFactory streamFactory;
 
     KeyManagementService(final SSLContext sslContext, final int defaultPort, final int timeoutMillis) {
         this.defaultPort = defaultPort;
-        this.streamFactory = new TlsChannelStreamFactoryFactory().create(SocketSettings.builder()
+        this.tlsChannelStreamFactoryFactory = new TlsChannelStreamFactoryFactory();
+        this.streamFactory = tlsChannelStreamFactoryFactory.create(SocketSettings.builder()
                         .connectTimeout(timeoutMillis, TimeUnit.MILLISECONDS)
                         .readTimeout(timeoutMillis, TimeUnit.MILLISECONDS)
                         .build(),
                 SslSettings.builder().enabled(true).context(sslContext).build());
+    }
+
+
+    public void close() {
+        tlsChannelStreamFactoryFactory.close();
     }
 
     void decryptKey(final MongoKeyDecryptor keyDecryptor, final SingleResultCallback<Void> callback) {
