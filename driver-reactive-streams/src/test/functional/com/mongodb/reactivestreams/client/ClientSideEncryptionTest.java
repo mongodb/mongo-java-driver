@@ -25,6 +25,7 @@ import com.mongodb.event.CommandListener;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.junit.After;
 
 public class ClientSideEncryptionTest extends AbstractClientSideEncryptionTest {
 
@@ -48,5 +49,12 @@ public class ClientSideEncryptionTest extends AbstractClientSideEncryptionTest {
     @Override
     protected MongoDatabase getDatabase(final String databaseName) {
         return mongoClient.getDatabase(databaseName);
+    }
+
+    @After
+    public void cleanUp() {
+        if (mongoClient != null) {
+            mongoClient.close();
+        }
     }
 }
