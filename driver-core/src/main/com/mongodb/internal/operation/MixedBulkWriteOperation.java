@@ -494,7 +494,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 } else {
                     MongoException writeConcernBasedError = ProtocolHelper.createSpecialException(result,
                             connection.getDescription().getServerAddress(), "errMsg");
-                    if (writeConcernBasedError != null && shouldAttemptToRetryWrite(true, writeConcernBasedError, maxWireVersion)) {
+                    if (writeConcernBasedError != null && shouldAttemptToRetryWrite(retryWrites, writeConcernBasedError, maxWireVersion)) {
                         if (retryWrites && !isSecondAttempt) {
                             retryExecuteBatchesAsync(binding, batch,
                                     new MongoWriteConcernWithResponseException(writeConcernBasedError, result),
