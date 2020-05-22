@@ -64,7 +64,6 @@ import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
-import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -94,15 +93,16 @@ public abstract class AbstractUnifiedTest {
     private Map<String, BsonDocument> lsidMap;
     private boolean useMultipleMongoses = false;
     private ConnectionString connectionString = null;
-    private final String collectionName = "test";
+    private final String collectionName;
 
     private static final long MIN_HEARTBEAT_FREQUENCY_MS = 50L;
 
-    public AbstractUnifiedTest(final String filename, final String description, final BsonArray data, final BsonDocument definition,
-                               final boolean skipTest) {
+    public AbstractUnifiedTest(final String filename, final String description, final String databaseName, final String collectionName,
+                               final BsonArray data, final BsonDocument definition, final boolean skipTest) {
         this.filename = filename;
         this.description = description;
-        this.databaseName = getDefaultDatabaseName();
+        this.databaseName = databaseName;
+        this.collectionName = collectionName;
         this.data = data;
         this.definition = definition;
         this.commandListener = new TestCommandListener();
