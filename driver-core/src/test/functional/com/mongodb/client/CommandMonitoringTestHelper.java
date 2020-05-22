@@ -76,7 +76,8 @@ public final class CommandMonitoringTestHelper {
             String commandName = eventDescriptionDocument.getString("command_name", new BsonString("")).getValue();
             if (eventType.equals("command_started_event")) {
                 BsonDocument commandDocument = eventDescriptionDocument.getDocument("command");
-                String actualDatabaseName = databaseName;
+                String actualDatabaseName = eventDescriptionDocument.containsKey("database_name")
+                                            ? eventDescriptionDocument.getString("database_name").getValue() : databaseName;
                 // If the spec test supplies a $db field in the command, then use that database.
                 if (commandDocument.containsKey("$db")) {
                     actualDatabaseName = commandDocument.getString("$db").getValue();

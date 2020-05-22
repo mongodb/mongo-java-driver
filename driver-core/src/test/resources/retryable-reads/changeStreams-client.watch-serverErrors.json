@@ -13,7 +13,7 @@
       ]
     }
   ],
-  "database_name": "admin",
+  "database_name": "retryable-reads-tests",
   "collection_name": "coll",
   "data": [
     {
