@@ -109,7 +109,7 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
     public FindAndUpdateOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final boolean retryWrites,
                                   final Decoder<T> decoder, final BsonDocument update) {
         super(namespace, writeConcern, retryWrites, decoder);
-        this.update = notNull("decoder", update);
+        this.update = notNull("update", update);
         this.updatePipeline = null;
     }
 
