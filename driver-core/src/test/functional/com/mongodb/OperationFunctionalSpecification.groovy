@@ -52,8 +52,8 @@ import com.mongodb.internal.operation.AsyncWriteOperation
 import com.mongodb.internal.operation.InsertOperation
 import com.mongodb.internal.operation.ReadOperation
 import com.mongodb.internal.operation.WriteOperation
-import com.mongodb.internal.validator.NoOpFieldNameValidator
 import com.mongodb.internal.session.SessionContext
+import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
 import org.bson.Document
 import org.bson.FieldNameValidator
@@ -154,6 +154,16 @@ class OperationFunctionalSpecification extends Specification {
             }
         }
         results
+    }
+
+    def next(cursor, boolean async, int minimumCount) {
+        List<BsonDocument> retVal = []
+
+        while (retVal.size() < minimumCount) {
+            retVal.addAll(next(cursor, async))
+        }
+
+        retVal
     }
 
     def next(cursor, boolean async) {
