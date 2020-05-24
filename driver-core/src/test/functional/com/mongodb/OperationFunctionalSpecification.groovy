@@ -156,6 +156,16 @@ class OperationFunctionalSpecification extends Specification {
         results
     }
 
+    def next(cursor, boolean async, int minimumCount) {
+        List<BsonDocument> retVal = []
+
+        while (retVal.size() < minimumCount) {
+            retVal.addAll(next(cursor, async))
+        }
+
+        retVal
+    }
+
     def next(cursor, boolean async) {
         if (async) {
             def futureResultCallback = new FutureResultCallback<List<BsonDocument>>()

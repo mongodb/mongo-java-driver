@@ -16,7 +16,6 @@
 
 package com.mongodb.operation
 
-
 import com.mongodb.MongoException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
@@ -155,7 +154,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         def expected = insertDocuments(helper, [1, 2])
 
         then:
-        def next = nextAndClean(cursor, async)
+        def next = nextAndClean(cursor, async, expected.size())
         next == expected
 
         when:
@@ -164,7 +163,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
         then:
         cursor.getBatchSize() == 5
-        nextAndClean(cursor, async) == expected
+        nextAndClean(cursor, async, expected.size()) == expected
 
         then:
         if (async) {
@@ -193,7 +192,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         when:
         def cursor = execute(operation, false)
         helper.insertDocuments(BsonDocument.parse('{ _id : 2, x : 2 }'))
-        ChangeStreamDocument<BsonDocument> next = next(cursor, false).get(0)
+        ChangeStreamDocument<BsonDocument> next = next(cursor, false, 1).get(0)
 
         then:
         next.getResumeToken() != null
@@ -220,7 +219,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         when:
         def cursor = execute(operation, false)
         helper.updateOne(BsonDocument.parse('{ _id : 2}'), BsonDocument.parse('{ $set : {x : 3}, $unset : {y : 1}}'))
-        ChangeStreamDocument<BsonDocument> next = next(cursor, false).get(0)
+        ChangeStreamDocument<BsonDocument> next = next(cursor, false, 1).get(0)
 
         then:
         next.getResumeToken() != null
@@ -247,7 +246,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         when:
         def cursor = execute(operation, false)
         helper.replaceOne(BsonDocument.parse('{ _id : 2}'), BsonDocument.parse('{ _id : 2, x : 3}'), false)
-        ChangeStreamDocument<BsonDocument> next = next(cursor, false).get(0)
+        ChangeStreamDocument<BsonDocument> next = next(cursor, false, 1).get(0)
 
         then:
         next.getResumeToken() != null
@@ -274,7 +273,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         when:
         def cursor = execute(operation, false)
         helper.deleteOne(BsonDocument.parse('{ _id : 2}'))
-        ChangeStreamDocument<BsonDocument> next = next(cursor, false).get(0)
+        ChangeStreamDocument<BsonDocument> next = next(cursor, false, 1).get(0)
 
         then:
         next.getResumeToken() != null
@@ -301,7 +300,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         when:
         def cursor = execute(operation, false)
         helper.drop()
-        ChangeStreamDocument<BsonDocument> next = next(cursor, false).get(0)
+        ChangeStreamDocument<BsonDocument> next = next(cursor, false, 1).get(0)
 
         then:
         next.getResumeToken() != null
@@ -329,7 +328,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         when:
         def cursor = execute(operation, false)
         helper.drop()
-        ChangeStreamDocument<BsonDocument> next = next(cursor, false).get(0)
+        ChangeStreamDocument<BsonDocument> next = next(cursor, false, 1).get(0)
 
         then:
         next.getResumeToken() != null
@@ -358,7 +357,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         when:
         def cursor = execute(operation, false)
         helper.dropDatabase('JavaDriverTest')
-        ChangeStreamDocument<BsonDocument> next = next(cursor, false).get(0)
+        ChangeStreamDocument<BsonDocument> next = next(cursor, false, 1).get(0)
 
         then:
         next.getResumeToken() != null
@@ -387,7 +386,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         when:
         def cursor = execute(operation, false)
         helper.renameCollection(newNamespace)
-        ChangeStreamDocument<BsonDocument> next = next(cursor, false).get(0)
+        ChangeStreamDocument<BsonDocument> next = next(cursor, false, 1).get(0)
 
         then:
         next.getResumeToken() != null
@@ -442,7 +441,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         def expected = insertDocuments(helper, [1, 2])
 
         then:
-        nextAndClean(cursor, async) == expected
+        nextAndClean(cursor, async, expected.size()) == expected
 
         then:
         tryNextAndClean(cursor, async) == null
@@ -451,7 +450,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         expected = insertDocuments(helper, [3, 4])
 
         then:
-        nextAndClean(cursor, async) == expected
+        nextAndClean(cursor, async, expected.size()) == expected
 
         cleanup:
         cursor?.close()
@@ -473,15 +472,12 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         def expected = insertDocuments(helper, [1, 2])
 
         then:
-        nextAndClean(cursor, async) == expected
+        nextAndClean(cursor, async, expected.size()) == expected
 
         when:
         helper.killCursor(helper.getNamespace(), cursor.getWrapped().getServerCursor())
         expected = insertDocuments(helper, [3, 4])
-        def results = nextAndClean(cursor, async)
-        if (results.size() < expected.size()) {
-            results.addAll(nextAndClean(cursor, async))
-        }
+        def results = nextAndClean(cursor, async, expected.size())
 
         then:
         results == expected
@@ -493,10 +489,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         expected = insertDocuments(helper, [5, 6])
         helper.killCursor(helper.getNamespace(), cursor.getWrapped().getServerCursor())
 
-        results = nextAndClean(cursor, async)
-        if (results.size() < expected.size()) {
-            results.addAll(nextAndClean(cursor, async))
-        }
+        results = nextAndClean(cursor, async, expected.size())
 
         then:
         results == expected
@@ -521,7 +514,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
         when:
         def expected = insertDocuments(helper, [1, 2])
-        def result = next(cursor, async)
+        def result = next(cursor, async, 2)
 
         then:
         result.size() == 2
@@ -532,7 +525,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
         operation.startAtOperationTime(result.last().getTimestamp('clusterTime'))
         cursor = execute(operation, async)
-        result = nextAndClean(cursor, async)
+        result = nextAndClean(cursor, async, expected.tail.size())
 
         then:
         result == expected.tail()
@@ -556,7 +549,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
         when:
         def expected = insertDocuments(helper, [1, 2])
-        def result = next(cursor, async)
+        def result = next(cursor, async, 2)
 
         then:
         result.size() == 2
@@ -567,7 +560,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
         operation.resumeAfter(result.head().getDocument('_id')).startAtOperationTime(null)
         cursor = execute(operation, async)
-        result = nextAndClean(cursor, async)
+        result = nextAndClean(cursor, async, expected.tail().size())
 
         then:
         result == expected.tail()
@@ -592,7 +585,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
         when:
         def expected = insertDocuments(helper, [1, 2])
-        def result = next(cursor, async)
+        def result = next(cursor, async, 2)
 
         then:
         result.size() == 2
@@ -602,7 +595,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         waitForLastRelease(async ? getAsyncCluster() : getCluster())
 
         cursor = execute(operation.startAfter(result.head().getDocument('_id')).startAtOperationTime(null), async)
-        result = nextAndClean(cursor, async)
+        result = nextAndClean(cursor, async, expected.tail().size())
 
         then:
         result == expected.tail()
@@ -760,6 +753,10 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
     def tryNextAndClean(cursor, boolean async) {
         removeExtra(tryNext(cursor, async))
+    }
+
+    def nextAndClean(cursor, boolean async, int minimumCount) {
+        removeExtra(next(cursor, async, minimumCount))
     }
 
     def nextAndClean(cursor, boolean async) {
