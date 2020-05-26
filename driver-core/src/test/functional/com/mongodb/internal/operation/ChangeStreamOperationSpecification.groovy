@@ -525,7 +525,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
         operation.startAtOperationTime(result.last().getTimestamp('clusterTime'))
         cursor = execute(operation, async)
-        result = nextAndClean(cursor, async, expected.tail.size())
+        result = nextAndClean(cursor, async, expected.tail().size())
 
         then:
         result == expected.tail()
