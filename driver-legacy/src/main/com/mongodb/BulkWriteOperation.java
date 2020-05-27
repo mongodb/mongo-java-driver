@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
@@ -66,6 +67,7 @@ public class BulkWriteOperation {
      * @since 2.14
      * @mongodb.server.release 3.2
      */
+    @Nullable
     public Boolean getBypassDocumentValidation() {
         return bypassDocumentValidation;
     }
@@ -77,7 +79,7 @@ public class BulkWriteOperation {
      * @since 2.14
      * @mongodb.server.release 3.2
      */
-    public void setBypassDocumentValidation(final Boolean bypassDocumentValidation) {
+    public void setBypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
     }
 

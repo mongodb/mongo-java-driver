@@ -17,6 +17,7 @@
 
 package com.mongodb.reactivestreams.client;
 
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
 
@@ -48,7 +49,7 @@ public interface ListDatabasesPublisher<TResult> extends Publisher<TResult> {
      * @mongodb.server.release 3.4.2
      * @since 1.7
      */
-    ListDatabasesPublisher<TResult> filter(Bson filter);
+    ListDatabasesPublisher<TResult> filter(@Nullable Bson filter);
 
     /**
      * Sets the nameOnly flag that indicates whether the command should return just the database names or return the database names and
@@ -59,7 +60,7 @@ public interface ListDatabasesPublisher<TResult> extends Publisher<TResult> {
      * @mongodb.server.release 3.4.3
      * @since 1.7
      */
-    ListDatabasesPublisher<TResult> nameOnly(Boolean nameOnly);
+    ListDatabasesPublisher<TResult> nameOnly(@Nullable Boolean nameOnly);
 
     /**
      * Sets the authorizedDatabasesOnly flag that indicates whether the command should return just the databases which the user
@@ -70,7 +71,7 @@ public interface ListDatabasesPublisher<TResult> extends Publisher<TResult> {
      * @since 4.1
      * @mongodb.server.release 4.0
      */
-    ListDatabasesPublisher<TResult> authorizedDatabasesOnly(Boolean authorizedDatabasesOnly);
+    ListDatabasesPublisher<TResult> authorizedDatabasesOnly(@Nullable Boolean authorizedDatabasesOnly);
 
     /**
      * Sets the number of documents to return per batch.

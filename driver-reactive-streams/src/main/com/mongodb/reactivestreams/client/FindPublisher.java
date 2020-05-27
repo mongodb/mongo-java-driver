@@ -46,12 +46,12 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    FindPublisher<TResult> filter(Bson filter);
+    FindPublisher<TResult> filter(@Nullable Bson filter);
 
     /**
      * Sets the limit to apply.
      *
-     * @param limit the limit, which may be null
+     * @param limit the limit
      * @return this
      * @mongodb.driver.manual reference/method/cursor.limit/#cursor.limit Limit
      */
@@ -102,7 +102,7 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Projection
      */
-    FindPublisher<TResult> projection(Bson projection);
+    FindPublisher<TResult> projection(@Nullable Bson projection);
     /**
      * Sets the sort criteria to apply to the query.
      *
@@ -110,7 +110,7 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
-    FindPublisher<TResult> sort(Bson sort);
+    FindPublisher<TResult> sort(@Nullable Bson sort);
 
     /**
      * The server normally times out idle cursors after an inactivity period (10 minutes)
@@ -156,7 +156,7 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
      * @since 1.3
      * @mongodb.server.release 3.4
      */
-    FindPublisher<TResult> collation(Collation collation);
+    FindPublisher<TResult> collation(@Nullable Collation collation);
 
     /**
      * Sets the comment to the query. A null value means no comment is set.
@@ -165,7 +165,7 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
      * @return this
      * @since 1.6
      */
-    FindPublisher<TResult> comment(String comment);
+    FindPublisher<TResult> comment(@Nullable String comment);
 
     /**
      * Sets the hint for which index to use. A null value means no hint is set.
@@ -174,7 +174,7 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
      * @return this
      * @since 1.6
      */
-    FindPublisher<TResult> hint(Bson hint);
+    FindPublisher<TResult> hint(@Nullable Bson hint);
 
     /**
      * Sets the hint for which index to use. A null value means no hint is set.
@@ -183,7 +183,7 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
      * @return this
      * @since 1.13
      */
-    FindPublisher<TResult> hintString(String hint);
+    FindPublisher<TResult> hintString(@Nullable String hint);
 
     /**
      * Sets the exclusive upper bound for a specific index. A null value means no max is set.
@@ -192,7 +192,7 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
      * @return this
      * @since 1.6
      */
-    FindPublisher<TResult> max(Bson max);
+    FindPublisher<TResult> max(@Nullable Bson max);
 
     /**
      * Sets the minimum inclusive lower bound for a specific index. A null value means no max is set.
@@ -201,7 +201,7 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
      * @return this
      * @since 1.6
      */
-    FindPublisher<TResult> min(Bson min);
+    FindPublisher<TResult> min(@Nullable Bson min);
 
     /**
      * Sets the returnKey. If true the find operation will return only the index keys in the resulting documents.

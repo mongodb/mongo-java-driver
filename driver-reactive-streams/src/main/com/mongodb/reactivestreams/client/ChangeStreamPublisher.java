@@ -20,6 +20,7 @@ package com.mongodb.reactivestreams.client;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 import org.reactivestreams.Publisher;
@@ -98,7 +99,7 @@ public interface ChangeStreamPublisher<TResult> extends Publisher<ChangeStreamDo
      * @param collation the collation options to use
      * @return this
      */
-    ChangeStreamPublisher<TResult> collation(Collation collation);
+    ChangeStreamPublisher<TResult> collation(@Nullable Collation collation);
 
     /**
      * Returns a {@code MongoIterable} containing the results of the change stream based on the document class provided.

@@ -24,6 +24,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernException;
 import com.mongodb.WriteConcernResult;
+import com.mongodb.bulk.WriteConcernError;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.bulk.BulkWriteError;
 import com.mongodb.bulk.BulkWriteResult;
@@ -198,17 +199,21 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
     private BsonDocument manufactureGetLastErrorResponse(final MongoBulkWriteException e) {
         BsonDocument response = new BsonDocument();
         addBulkWriteResultToResponse(e.getWriteResult(), response);
-        if (e.getWriteConcernError() != null) {
-            response.putAll(e.getWriteConcernError().getDetails());
-        }
-        if (getLastError(e) != null) {
-            response.put("err", new BsonString(getLastError(e).getMessage()));
-            response.put("code", new BsonInt32(getLastError(e).getCode()));
-            response.putAll(getLastError(e).getDetails());
 
-        } else if (e.getWriteConcernError() != null) {
-            response.put("err", new BsonString(e.getWriteConcernError().getMessage()));
-            response.put("code", new BsonInt32(e.getWriteConcernError().getCode()));
+        WriteConcernError writeConcernError = e.getWriteConcernError();
+        if (writeConcernError != null) {
+            response.putAll(writeConcernError.getDetails());
+        }
+
+        BulkWriteError lastError = getLastError(e);
+        if (lastError != null) {
+            response.put("err", new BsonString(lastError.getMessage()));
+            response.put("code", new BsonInt32(lastError.getCode()));
+            response.putAll(lastError.getDetails());
+
+        } else if (writeConcernError != null) {
+            response.put("err", new BsonString(writeConcernError.getMessage()));
+            response.put("code", new BsonInt32(writeConcernError.getCode()));
         }
         return response;
     }

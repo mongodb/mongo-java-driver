@@ -53,7 +53,6 @@ final class AsyncListCollectionsIterableImpl<TResult> extends AsyncMongoIterable
 
     @Override
     public AsyncListCollectionsIterable<TResult> filter(@Nullable final Bson filter) {
-        notNull("filter", filter);
         this.filter = filter;
         return this;
     }

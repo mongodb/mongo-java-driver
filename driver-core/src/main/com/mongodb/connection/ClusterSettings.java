@@ -24,6 +24,7 @@ import com.mongodb.event.ClusterListener;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.ServerAddressHelper;
 import com.mongodb.internal.selector.LatencyMinimizingServerSelector;
+import com.mongodb.lang.Nullable;
 import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.ServerSelector;
 
@@ -324,6 +325,7 @@ public final class ClusterSettings {
      * @return the SRV host, or null if none specified
      * @since 3.10
      */
+    @Nullable
     public String getSrvHost() {
         return srvHost;
     }
@@ -389,6 +391,7 @@ public final class ClusterSettings {
      * @return the server selector, which may be null
      * @see Cluster#selectServer(com.mongodb.selector.ServerSelector)
      */
+    @Nullable
     public ServerSelector getServerSelector() {
         return serverSelector;
     }

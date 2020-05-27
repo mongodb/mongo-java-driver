@@ -393,8 +393,12 @@ abstract class BaseCluster implements Cluster {
                     MIN_DRIVER_WIRE_VERSION, MIN_DRIVER_SERVER_VERSION);
         } else {
             incompatibleServer = curDescription.findServerIncompatiblyNewerThanDriver();
-            message = format("Server at %s requires wire version %d, but this version of the driver only supports up to %d.",
-                    incompatibleServer.getAddress(), incompatibleServer.getMinWireVersion(), MAX_DRIVER_WIRE_VERSION);
+            if (incompatibleServer != null) {
+                message = format("Server at %s requires wire version %d, but this version of the driver only supports up to %d.",
+                        incompatibleServer.getAddress(), incompatibleServer.getMinWireVersion(), MAX_DRIVER_WIRE_VERSION);
+            } else {
+                throw new IllegalStateException("Server can't be both older than the driver and newer.");
+            }
         }
         return new MongoIncompatibleDriverException(message, curDescription);
     }

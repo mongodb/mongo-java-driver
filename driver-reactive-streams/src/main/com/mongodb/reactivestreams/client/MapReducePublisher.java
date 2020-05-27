@@ -19,6 +19,7 @@ package com.mongodb.reactivestreams.client;
 
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.MapReduceAction;
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
 
@@ -49,7 +50,7 @@ public interface MapReducePublisher<TResult> extends Publisher<TResult> {
      * @return this
      * @mongodb.driver.manual reference/command/mapReduce/#mapreduce-finalize-cmd Requirements for the finalize Function
      */
-    MapReducePublisher<TResult> finalizeFunction(String finalizeFunction);
+    MapReducePublisher<TResult> finalizeFunction(@Nullable String finalizeFunction);
 
     /**
      * Sets the global variables that are accessible in the map, reduce and finalize functions.
@@ -58,7 +59,7 @@ public interface MapReducePublisher<TResult> extends Publisher<TResult> {
      * @return this
      * @mongodb.driver.manual reference/command/mapReduce mapReduce
      */
-    MapReducePublisher<TResult> scope(Bson scope);
+    MapReducePublisher<TResult> scope(@Nullable Bson scope);
 
     /**
      * Sets the sort criteria to apply to the query.
@@ -67,7 +68,7 @@ public interface MapReducePublisher<TResult> extends Publisher<TResult> {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
-    MapReducePublisher<TResult> sort(Bson sort);
+    MapReducePublisher<TResult> sort(@Nullable Bson sort);
 
     /**
      * Sets the query filter to apply to the query.
@@ -76,7 +77,7 @@ public interface MapReducePublisher<TResult> extends Publisher<TResult> {
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    MapReducePublisher<TResult> filter(Bson filter);
+    MapReducePublisher<TResult> filter(@Nullable Bson filter);
 
     /**
      * Sets the limit to apply.
@@ -131,7 +132,7 @@ public interface MapReducePublisher<TResult> extends Publisher<TResult> {
      * @return this
      * @mongodb.driver.manual reference/command/mapReduce/#output-to-a-collection-with-an-action output with an action
      */
-    MapReducePublisher<TResult> databaseName(String databaseName);
+    MapReducePublisher<TResult> databaseName(@Nullable String databaseName);
     /**
      * Sets if the output database is sharded
      *
@@ -167,7 +168,7 @@ public interface MapReducePublisher<TResult> extends Publisher<TResult> {
      * @mongodb.driver.manual reference/command/aggregate/ Aggregation
      * @mongodb.server.release 3.2
      */
-    MapReducePublisher<TResult> bypassDocumentValidation(Boolean bypassDocumentValidation);
+    MapReducePublisher<TResult> bypassDocumentValidation(@Nullable Boolean bypassDocumentValidation);
 
     /**
      * Aggregates documents to a collection according to the specified map-reduce function with the given options, which must specify a
@@ -187,7 +188,7 @@ public interface MapReducePublisher<TResult> extends Publisher<TResult> {
      * @since 1.3
      * @mongodb.server.release 3.4
      */
-    MapReducePublisher<TResult> collation(Collation collation);
+    MapReducePublisher<TResult> collation(@Nullable Collation collation);
 
     /**
      * Sets the number of documents to return per batch.

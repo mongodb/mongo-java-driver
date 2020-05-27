@@ -18,6 +18,7 @@ package com.mongodb.reactivestreams.client.gridfs;
 
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.model.Collation;
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
 
@@ -52,7 +53,7 @@ public interface GridFSFindPublisher extends Publisher<GridFSFile> {
      * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      * @see com.mongodb.client.model.Filters
      */
-    GridFSFindPublisher filter(Bson filter);
+    GridFSFindPublisher filter(@Nullable Bson filter);
 
     /**
      * Sets the limit to apply.
@@ -79,7 +80,7 @@ public interface GridFSFindPublisher extends Publisher<GridFSFile> {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
-    GridFSFindPublisher sort(Bson sort);
+    GridFSFindPublisher sort(@Nullable Bson sort);
 
     /**
      * The server normally times out idle cursors after an inactivity period (10 minutes)
@@ -109,7 +110,7 @@ public interface GridFSFindPublisher extends Publisher<GridFSFile> {
      * @since 1.3
      * @mongodb.server.release 3.4
      */
-    GridFSFindPublisher collation(Collation collation);
+    GridFSFindPublisher collation(@Nullable Collation collation);
 
     /**
      * Sets the number of documents to return per batch.

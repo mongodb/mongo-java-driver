@@ -272,35 +272,37 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         }
 
         if (newDescription.isPrimary()) {
-            if (newDescription.getSetVersion() != null && newDescription.getElectionId() != null) {
+            ObjectId electionId = newDescription.getElectionId();
+            Integer setVersion = newDescription.getSetVersion();
+            if (setVersion != null && electionId != null) {
                 if (isStalePrimary(newDescription)) {
                     if (LOGGER.isInfoEnabled()) {
                         LOGGER.info(format("Invalidating potential primary %s whose (set version, election id) tuple of (%d, %s) "
                                 + "is less than one already seen of (%d, %s)",
                                 newDescription.getAddress(),
-                                newDescription.getSetVersion(), newDescription.getElectionId(),
+                                setVersion, electionId,
                                 maxSetVersion, maxElectionId));
                     }
                     addressToServerTupleMap.get(newDescription.getAddress()).server.invalidate();
                     return false;
                 }
 
-                if (!newDescription.getElectionId().equals(maxElectionId)) {
+                if (!electionId.equals(maxElectionId)) {
                     if (LOGGER.isInfoEnabled()) {
-                        LOGGER.info(format("Setting max election id to %s from replica set primary %s", newDescription.getElectionId(),
+                        LOGGER.info(format("Setting max election id to %s from replica set primary %s", electionId,
                                 newDescription.getAddress()));
                     }
-                    maxElectionId = newDescription.getElectionId();
+                    maxElectionId = electionId;
                 }
             }
 
-            if (newDescription.getSetVersion() != null
-                    && (maxSetVersion == null || newDescription.getSetVersion().compareTo(maxSetVersion) > 0)) {
+            if (setVersion != null
+                    && (maxSetVersion == null || setVersion.compareTo(maxSetVersion) > 0)) {
                 if (LOGGER.isInfoEnabled()) {
-                    LOGGER.info(format("Setting max set version to %d from replica set primary %s", newDescription.getSetVersion(),
+                    LOGGER.info(format("Setting max set version to %d from replica set primary %s", setVersion,
                             newDescription.getAddress()));
                 }
-                maxSetVersion = newDescription.getSetVersion();
+                maxSetVersion = setVersion;
             }
 
             if (isNotAlreadyPrimary(newDescription.getAddress())) {
@@ -316,8 +318,9 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
             return false;
         }
 
-        return (maxSetVersion.compareTo(newDescription.getSetVersion()) > 0
-                || (maxSetVersion.equals(newDescription.getSetVersion()) && maxElectionId.compareTo(newDescription.getElectionId()) > 0));
+        Integer setVersion = newDescription.getSetVersion();
+        return (setVersion == null || maxSetVersion.compareTo(setVersion) > 0
+                || (maxSetVersion.equals(setVersion) && maxElectionId.compareTo(newDescription.getElectionId()) > 0));
     }
 
     private boolean isNotAlreadyPrimary(final ServerAddress address) {

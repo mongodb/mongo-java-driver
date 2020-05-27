@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
 import org.bson.codecs.Decoder;
@@ -55,7 +56,8 @@ final class BulkWriteHelper {
                                            translateWriteConcernError(e.getWriteConcernError()), e.getServerAddress());
     }
 
-    static WriteConcernError translateWriteConcernError(final com.mongodb.bulk.WriteConcernError writeConcernError) {
+    @Nullable
+    static WriteConcernError translateWriteConcernError(@Nullable final com.mongodb.bulk.WriteConcernError writeConcernError) {
         return writeConcernError == null ? null : new WriteConcernError(writeConcernError.getCode(), writeConcernError.getMessage(),
                                                                         DBObjects.toDBObject(writeConcernError.getDetails()));
     }

@@ -21,6 +21,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.selector.WritableServerSelector;
+import com.mongodb.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -138,6 +139,7 @@ public class ClusterDescription {
      * @return a server in the cluster that is incompatibly older than the driver, or null if there are none
      * @since 3.6
      */
+    @Nullable
     public ServerDescription findServerIncompatiblyOlderThanDriver() {
         for (ServerDescription cur : serverDescriptions) {
             if (cur.isIncompatiblyOlderThanDriver()) {
@@ -153,6 +155,7 @@ public class ClusterDescription {
      * @return a server in the cluster that is incompatibly newer than the driver, or null if there are none
      * @since 3.6
      */
+    @Nullable
     public ServerDescription findServerIncompatiblyNewerThanDriver() {
         for (ServerDescription cur : serverDescriptions) {
             if (cur.isIncompatiblyNewerThanDriver()) {
@@ -210,6 +213,7 @@ public class ClusterDescription {
      * @return any exception encountered while resolving the SRV record for the initial host, or null if none
      * @since 3.10
      */
+    @Nullable
     public MongoException getSrvResolutionException() {
         return srvResolutionException;
     }
@@ -231,18 +235,21 @@ public class ClusterDescription {
      * @mongodb.server.release 3.6
      * @since 3.6
      */
+    @Nullable
     public Integer getLogicalSessionTimeoutMinutes() {
         Integer retVal = null;
 
         for (ServerDescription cur : getServersByPredicate(this, serverDescription ->
                 serverDescription.isPrimary() || serverDescription.isSecondary())) {
-            if (cur.getLogicalSessionTimeoutMinutes() == null) {
+
+            Integer logicalSessionTimeoutMinutes = cur.getLogicalSessionTimeoutMinutes();
+            if (logicalSessionTimeoutMinutes == null) {
                 return null;
             }
             if (retVal == null) {
-                retVal = cur.getLogicalSessionTimeoutMinutes();
+                retVal = logicalSessionTimeoutMinutes;
             } else {
-                retVal = Math.min(retVal, cur.getLogicalSessionTimeoutMinutes());
+                retVal = Math.min(retVal, logicalSessionTimeoutMinutes);
             }
         }
         return retVal;

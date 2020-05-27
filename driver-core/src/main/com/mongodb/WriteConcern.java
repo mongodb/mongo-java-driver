@@ -192,6 +192,7 @@ public class WriteConcern implements Serializable {
      *
      * @return w, either an instance of Integer or String or null
      */
+    @Nullable
     public Object getWObject() {
         return w;
     }
@@ -239,6 +240,7 @@ public class WriteConcern implements Serializable {
      * @since 3.2
      * @mongodb.driver.manual core/write-concern/#journaled Journaled
      */
+    @Nullable
     public Boolean getJournal() {
         return journal;
     }
@@ -369,7 +371,7 @@ public class WriteConcern implements Serializable {
      * @since 3.2
      * @mongodb.driver.manual reference/write-concern/#j-option j option
      */
-    public WriteConcern withJournal(final Boolean journal) {
+    public WriteConcern withJournal(@Nullable final Boolean journal) {
         return new WriteConcern(w, wTimeoutMS, fsync, journal);
     }
 

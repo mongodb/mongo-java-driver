@@ -105,7 +105,7 @@ public final class DBCollectionFindOptions {
     /**
      * Sets the limit to apply.
      *
-     * @param limit the limit, which may be null
+     * @param limit the limit
      * @return this
      * @mongodb.driver.manual reference/method/cursor.limit/#cursor.limit Limit
      */
@@ -117,7 +117,7 @@ public final class DBCollectionFindOptions {
     /**
      * Gets the number of documents to skip.  The default is 0.
      *
-     * @return the number of documents to skip, which may be null
+     * @return the number of documents to skip
      * @mongodb.driver.manual reference/method/cursor.skip/#cursor.skip Skip
      */
     public int getSkip() {
@@ -204,7 +204,7 @@ public final class DBCollectionFindOptions {
      * Gets the number of documents to return per batch.  Default to 0, which indicates that the server chooses an appropriate batch
      * size.
      *
-     * @return the batch size, which may be null
+     * @return the batch size
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     public int getBatchSize() {

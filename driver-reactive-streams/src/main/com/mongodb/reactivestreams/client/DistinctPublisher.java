@@ -17,6 +17,7 @@
 package com.mongodb.reactivestreams.client;
 
 import com.mongodb.client.model.Collation;
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
 
@@ -37,7 +38,7 @@ public interface DistinctPublisher<TResult> extends Publisher<TResult> {
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    DistinctPublisher<TResult> filter(Bson filter);
+    DistinctPublisher<TResult> filter(@Nullable Bson filter);
 
     /**
      * Sets the maximum execution time on the server for this operation.
@@ -57,7 +58,7 @@ public interface DistinctPublisher<TResult> extends Publisher<TResult> {
      * @since 1.3
      * @mongodb.server.release 3.4
      */
-    DistinctPublisher<TResult> collation(Collation collation);
+    DistinctPublisher<TResult> collation(@Nullable Collation collation);
 
     /**
      * Sets the number of documents to return per batch.

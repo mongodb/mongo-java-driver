@@ -37,7 +37,6 @@ final class ListCollectionsPublisherImpl<TResult> implements ListCollectionsPubl
 
     @Override
     public ListCollectionsPublisher<TResult> filter(final Bson filter) {
-        notNull("filter", filter);
         wrapped.filter(filter);
         return this;
     }

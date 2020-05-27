@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
+
 import java.util.List;
 
 /**
@@ -41,7 +43,7 @@ public class BulkWriteException extends MongoServerException {
      * @param serverAddress            the server address.
      */
     BulkWriteException(final BulkWriteResult writeResult, final List<BulkWriteError> writeErrors,
-                       final WriteConcernError writeConcernError, final ServerAddress serverAddress) {
+                       @Nullable final WriteConcernError writeConcernError, final ServerAddress serverAddress) {
         super("Bulk write operation error on server " + serverAddress + ". "
               + (writeErrors.isEmpty() ? "" : "Write errors: " + writeErrors + ". ")
               + (writeConcernError == null ? "" : "Write concern error: " + writeConcernError + ". "), serverAddress);
@@ -74,6 +76,7 @@ public class BulkWriteException extends MongoServerException {
      *
      * @return the write concern error
      */
+    @Nullable
     public WriteConcernError getWriteConcernError() {
         return writeConcernError;
     }

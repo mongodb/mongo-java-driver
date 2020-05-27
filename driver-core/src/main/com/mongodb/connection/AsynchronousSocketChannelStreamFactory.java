@@ -19,6 +19,7 @@ package com.mongodb.connection;
 import com.mongodb.ServerAddress;
 import com.mongodb.internal.connection.AsynchronousSocketChannelStream;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
+import com.mongodb.lang.Nullable;
 
 import java.nio.channels.AsynchronousChannelGroup;
 
@@ -54,7 +55,7 @@ public class AsynchronousSocketChannelStreamFactory implements StreamFactory {
      * @since 3.6
      */
     public AsynchronousSocketChannelStreamFactory(final SocketSettings settings, final SslSettings sslSettings,
-                                                  final AsynchronousChannelGroup group) {
+                                                  @Nullable final AsynchronousChannelGroup group) {
         if (sslSettings.isEnabled()) {
             throw new UnsupportedOperationException("No SSL support in java.nio.channels.AsynchronousSocketChannel. For SSL support use "
                     + "com.mongodb.connection.TlsChannelStreamFactoryFactory");

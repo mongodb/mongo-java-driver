@@ -60,7 +60,6 @@ class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> im
 
     @Override
     public ListCollectionsIterable<TResult> filter(@Nullable final Bson filter) {
-        notNull("filter", filter);
         this.filter = filter;
         return this;
     }

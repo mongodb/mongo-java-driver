@@ -129,6 +129,7 @@ public class ServerDescription {
      * @mongodb.server.release 3.6
      * @since 3.6
      */
+    @Nullable
     public Integer getLogicalSessionTimeoutMinutes() {
         return logicalSessionTimeoutMinutes;
     }
@@ -390,7 +391,7 @@ public class ServerDescription {
          * @since 3.4
          * @mongodb.server.release 3.4
          */
-        public Builder lastWriteDate(final Date lastWriteDate) {
+        public Builder lastWriteDate(@Nullable final Date lastWriteDate) {
             this.lastWriteDate = lastWriteDate;
             return this;
         }
@@ -417,7 +418,7 @@ public class ServerDescription {
          * @mongodb.server.release 3.6
          * @since 3.6
          */
-        public Builder logicalSessionTimeoutMinutes(final Integer logicalSessionTimeoutMinutes) {
+        public Builder logicalSessionTimeoutMinutes(@Nullable final Integer logicalSessionTimeoutMinutes) {
             this.logicalSessionTimeoutMinutes = logicalSessionTimeoutMinutes;
             return this;
         }
@@ -643,6 +644,7 @@ public class ServerDescription {
      *
      * @return the electionId, which may be null
      */
+    @Nullable
     public ObjectId getElectionId() {
         return electionId;
     }
@@ -652,6 +654,7 @@ public class ServerDescription {
      *
      * @return the setVersion, which may be null
      */
+    @Nullable
     public Integer getSetVersion() {
         return setVersion;
     }
@@ -759,6 +762,7 @@ public class ServerDescription {
      *
      * @return the exception, which may be null
      */
+    @Nullable
     public Throwable getException() {
         return exception;
     }
