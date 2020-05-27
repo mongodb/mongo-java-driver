@@ -63,7 +63,7 @@ import static com.mongodb.internal.operation.OperationHelper.AsyncCallableWithCo
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToQueryResult;
 import static com.mongodb.internal.operation.OperationHelper.releasingCallback;
-import static com.mongodb.internal.operation.OperationHelper.validateReadConcernAndCollation;
+import static com.mongodb.internal.operation.OperationHelper.validateFindOptions;
 import static com.mongodb.internal.operation.OperationHelper.withAsyncReadConnection;
 import static com.mongodb.internal.operation.OperationHelper.withReadConnectionSource;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
@@ -661,7 +661,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                     }
                 } else {
                     try {
-                        validateReadConcernAndCollation(connection, binding.getSessionContext().getReadConcern(), collation);
+                        validateFindOptions(connection, binding.getSessionContext().getReadConcern(), collation, allowDiskUse);
                         QueryResult<T> queryResult = connection.query(namespace,
                                 asDocument(connection.getDescription(), binding.getReadPreference()),
                                 projection,
@@ -702,7 +702,8 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                     } else {
                         final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback =
                                 releasingCallback(errHandlingCallback, source, connection);
-                        validateReadConcernAndCollation(source, connection, binding.getSessionContext().getReadConcern(), collation,
+                        validateFindOptions(source, connection, binding.getSessionContext().getReadConcern(), collation,
+                                allowDiskUse,
                                 new AsyncCallableWithConnectionAndSource() {
                                     @Override
                                     public void call(final AsyncConnectionSource source, final AsyncConnection connection, final
@@ -882,7 +883,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
         return new CommandOperationHelper.CommandCreator() {
             @Override
             public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
-                validateReadConcernAndCollation(connectionDescription, sessionContext.getReadConcern(), collation);
+                validateFindOptions(connectionDescription, sessionContext.getReadConcern(), collation, allowDiskUse);
                 return getCommand(sessionContext, connectionDescription);
             }
         };

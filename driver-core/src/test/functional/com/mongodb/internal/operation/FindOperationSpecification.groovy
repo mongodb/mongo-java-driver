@@ -672,7 +672,6 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
                 .projection(new BsonDocument('x', new BsonInt32(1)))
                 .filter(new BsonDocument('z', new BsonString('val')))
-                .allowDiskUse(true)
         def binding = Stub(ReadBinding) {
             getSessionContext() >> Stub(SessionContext) {
                 getReadConcern() >> ReadConcern.DEFAULT

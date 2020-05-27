@@ -318,6 +318,9 @@ public final class CommandMonitoringTestHelper {
         if (command.containsKey("writeConcern") && command.isNull("writeConcern")) {
             command.remove("writeConcern");
         }
+        if (command.containsKey("allowDiskUse") && command.isNull("allowDiskUse")) {
+            command.remove("allowDiskUse");
+        }
         if (command.containsKey("readConcern")) {
             if (command.isNull("readConcern")) {
                 command.remove("readConcern");
