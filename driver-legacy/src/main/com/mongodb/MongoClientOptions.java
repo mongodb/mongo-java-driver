@@ -208,6 +208,7 @@ public class MongoClientOptions {
      * @mongodb.server.release 3.4
      * @since 3.4
      */
+    @Nullable
     public String getApplicationName() {
         return applicationName;
     }
@@ -442,6 +443,7 @@ public class MongoClientOptions {
      * @return the configured SSLContext, which may be null.  In that case {@code SSLContext.getDefault()} will be used when SSL is enabled.
      * @since 3.5
      */
+    @Nullable
     public SSLContext getSslContext() {
         return sslContext;
     }
@@ -563,6 +565,7 @@ public class MongoClientOptions {
      * @return the server selector, which may be null
      * @since 3.6
      */
+    @Nullable
     public ServerSelector getServerSelector() {
         return serverSelector;
     }

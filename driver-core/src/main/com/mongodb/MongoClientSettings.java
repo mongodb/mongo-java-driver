@@ -210,8 +210,10 @@ public final class MongoClientSettings {
             if (connectionString.getReadPreference() != null) {
                 readPreference = connectionString.getReadPreference();
             }
-            if (connectionString.getRetryWritesValue() != null) {
-                retryWrites = connectionString.getRetryWritesValue();
+
+            Boolean retryWritesValue = connectionString.getRetryWritesValue();
+            if (retryWritesValue != null) {
+                retryWrites = retryWritesValue;
             }
             if (connectionString.getUuidRepresentation() != null) {
                 uuidRepresentation = connectionString.getUuidRepresentation();

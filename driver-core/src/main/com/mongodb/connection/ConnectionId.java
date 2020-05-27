@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.annotations.Immutable;
+import com.mongodb.lang.Nullable;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -63,7 +64,7 @@ public final class ConnectionId {
      * @see #withServerValue(int)
      * @since 3.11
      */
-    public ConnectionId(final ServerId serverId, final int localValue, final Integer serverValue) {
+    public ConnectionId(final ServerId serverId, final int localValue, @Nullable final Integer serverValue) {
         this.serverId = notNull("serverId", serverId);
         this.localValue = localValue;
         this.serverValue = serverValue;
@@ -109,6 +110,7 @@ public final class ConnectionId {
      *
      * @return the server generated id value for the connection or null if not set.
      */
+    @Nullable
     public Integer getServerValue() {
         return serverValue;
     }

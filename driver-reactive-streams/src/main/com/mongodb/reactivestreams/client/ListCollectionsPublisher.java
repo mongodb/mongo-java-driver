@@ -16,6 +16,7 @@
 
 package com.mongodb.reactivestreams.client;
 
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
 
@@ -36,7 +37,7 @@ public interface ListCollectionsPublisher<TResult> extends Publisher<TResult> {
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    ListCollectionsPublisher<TResult> filter(Bson filter);
+    ListCollectionsPublisher<TResult> filter(@Nullable Bson filter);
 
     /**
      * Sets the maximum execution time on the server for this operation.

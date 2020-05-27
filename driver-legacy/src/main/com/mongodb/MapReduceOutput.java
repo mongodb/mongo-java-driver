@@ -95,6 +95,7 @@ public class MapReduceOutput {
      *
      * @return the collection or null
      */
+    @Nullable
     public DBCollection getOutputCollection() {
         return collection;
     }

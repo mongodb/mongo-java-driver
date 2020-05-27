@@ -29,6 +29,7 @@ import com.mongodb.event.ServerHeartbeatSucceededEvent;
 import com.mongodb.event.ServerMonitorListener;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
+import org.bson.types.ObjectId;
 
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -271,24 +272,28 @@ class DefaultServerMonitor implements ServerMonitor {
         if (previous.getMaxWireVersion() != current.getMaxWireVersion()) {
             return true;
         }
-        if (previous.getElectionId() != null
-                    ? !previous.getElectionId().equals(current.getElectionId()) : current.getElectionId() != null) {
+        ObjectId previousElectionId = previous.getElectionId();
+        if (previousElectionId != null
+                    ? !previousElectionId.equals(current.getElectionId()) : current.getElectionId() != null) {
             return true;
         }
-        if (previous.getSetVersion() != null
-                    ? !previous.getSetVersion().equals(current.getSetVersion()) : current.getSetVersion() != null) {
+        Integer setVersion = previous.getSetVersion();
+        if (setVersion != null
+                    ? !setVersion.equals(current.getSetVersion()) : current.getSetVersion() != null) {
             return true;
         }
 
         // Compare class equality and message as exceptions rarely override equals
-        Class<?> thisExceptionClass = previous.getException() != null ? previous.getException().getClass() : null;
-        Class<?> thatExceptionClass = current.getException() != null ? current.getException().getClass() : null;
+        Throwable previousException = previous.getException();
+        Throwable currentException = current.getException();
+        Class<?> thisExceptionClass = previousException != null ? previousException.getClass() : null;
+        Class<?> thatExceptionClass = currentException != null ? currentException.getClass() : null;
         if (thisExceptionClass != null ? !thisExceptionClass.equals(thatExceptionClass) : thatExceptionClass != null) {
             return true;
         }
 
-        String thisExceptionMessage = previous.getException() != null ? previous.getException().getMessage() : null;
-        String thatExceptionMessage = current.getException() != null ? current.getException().getMessage() : null;
+        String thisExceptionMessage = previousException != null ? previousException.getMessage() : null;
+        String thatExceptionMessage = currentException != null ? currentException.getMessage() : null;
         if (thisExceptionMessage != null ? !thisExceptionMessage.equals(thatExceptionMessage) : thatExceptionMessage != null) {
             return true;
         }

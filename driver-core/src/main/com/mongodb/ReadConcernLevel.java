@@ -73,7 +73,7 @@ public enum ReadConcernLevel {
     }
 
     /**
-     * @return the String representation of the read concern level that the MongoDB server understands or null for the default
+     * @return the String representation of the read concern level that the MongoDB server understands
      */
     public String getValue() {
         return value;
