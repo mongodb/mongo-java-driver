@@ -318,9 +318,8 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
             return false;
         }
 
-        Integer setVersion = newDescription.getSetVersion();
-        return (setVersion == null || maxSetVersion.compareTo(setVersion) > 0
-                || (maxSetVersion.equals(setVersion) && maxElectionId.compareTo(newDescription.getElectionId()) > 0));
+        return (newDescription.getSetVersion() == null || maxSetVersion.compareTo(newDescription.getSetVersion()) > 0
+                || (maxSetVersion.equals(newDescription.getSetVersion()) && maxElectionId.compareTo(newDescription.getElectionId()) > 0));
     }
 
     private boolean isNotAlreadyPrimary(final ServerAddress address) {
