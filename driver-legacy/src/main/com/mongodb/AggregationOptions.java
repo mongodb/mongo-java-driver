@@ -19,6 +19,7 @@ package com.mongodb;
 
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.client.model.Collation;
+import com.mongodb.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
@@ -51,6 +52,7 @@ public class AggregationOptions {
      *
      * @return true if aggregation stages can write data to temporary files
      */
+    @Nullable
     public Boolean getAllowDiskUse() {
         return allowDiskUse;
     }
@@ -60,6 +62,7 @@ public class AggregationOptions {
      *
      * @return the batch size
      */
+    @Nullable
     public Integer getBatchSize() {
         return batchSize;
     }
@@ -82,6 +85,7 @@ public class AggregationOptions {
      * @since 2.14
      * @mongodb.server.release 3.2
      */
+    @Nullable
     public Boolean getBypassDocumentValidation() {
         return bypassDocumentValidation;
     }
@@ -93,6 +97,7 @@ public class AggregationOptions {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
+    @Nullable
     public Collation getCollation() {
         return collation;
     }
@@ -140,7 +145,7 @@ public class AggregationOptions {
          * @param size the batch size to apply to the cursor
          * @return {@code this} so calls can be chained
          */
-        public Builder batchSize(final Integer size) {
+        public Builder batchSize(@Nullable final Integer size) {
             batchSize = size;
             return this;
         }
@@ -152,7 +157,7 @@ public class AggregationOptions {
          * @param allowDiskUse whether or not aggregation stages can write data to temporary files
          * @return {@code this} so calls can be chained
          */
-        public Builder allowDiskUse(final Boolean allowDiskUse) {
+        public Builder allowDiskUse(@Nullable final Boolean allowDiskUse) {
             this.allowDiskUse = allowDiskUse;
             return this;
         }
@@ -177,7 +182,7 @@ public class AggregationOptions {
          * @since 2.14
          * @mongodb.server.release 3.2
          */
-        public Builder bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+        public Builder bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
             this.bypassDocumentValidation = bypassDocumentValidation;
             return this;
         }
@@ -190,7 +195,7 @@ public class AggregationOptions {
          * @since 3.4
          * @mongodb.server.release 3.4
          */
-        public Builder collation(final Collation collation) {
+        public Builder collation(@Nullable final Collation collation) {
             this.collation = collation;
             return this;
         }

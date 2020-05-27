@@ -285,6 +285,7 @@ public final class DBCollectionFindAndModifyOptions {
      * @since 3.6
      * @mongodb.server.release 3.6
      */
+    @Nullable
     public List<? extends DBObject> getArrayFilters() {
         return arrayFilters;
     }

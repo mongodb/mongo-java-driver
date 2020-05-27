@@ -108,6 +108,7 @@ public class MongoBulkWriteException extends MongoServerException {
      *
      * @return the write concern error
      */
+    @Nullable
     public WriteConcernError getWriteConcernError() {
         return writeConcernError;
     }

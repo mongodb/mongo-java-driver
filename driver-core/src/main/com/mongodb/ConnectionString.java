@@ -1178,6 +1178,7 @@ public class ConnectionString {
      * @since 3.9
      * @mongodb.server.release 3.6
      */
+    @Nullable
     public Boolean getRetryWritesValue() {
         return retryWrites;
     }
@@ -1189,6 +1190,7 @@ public class ConnectionString {
      * @since 3.11
      * @mongodb.server.release 3.6
      */
+    @Nullable
     public Boolean getRetryReads() {
         return retryReads;
     }

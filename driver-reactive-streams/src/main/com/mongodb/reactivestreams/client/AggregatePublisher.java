@@ -17,6 +17,7 @@
 package com.mongodb.reactivestreams.client;
 
 import com.mongodb.client.model.Collation;
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
 
@@ -37,7 +38,7 @@ public interface AggregatePublisher<TResult> extends Publisher<TResult> {
      * @return this
      * @mongodb.driver.manual reference/command/aggregate/ Aggregation
      */
-    AggregatePublisher<TResult> allowDiskUse(Boolean allowDiskUse);
+    AggregatePublisher<TResult> allowDiskUse(@Nullable Boolean allowDiskUse);
 
     /**
      * Sets the maximum execution time on the server for this operation.
@@ -73,7 +74,7 @@ public interface AggregatePublisher<TResult> extends Publisher<TResult> {
      * @mongodb.driver.manual reference/command/aggregate/ Aggregation
      * @mongodb.server.release 3.2
      */
-    AggregatePublisher<TResult> bypassDocumentValidation(Boolean bypassDocumentValidation);
+    AggregatePublisher<TResult> bypassDocumentValidation(@Nullable Boolean bypassDocumentValidation);
 
     /**
      * Aggregates documents according to the specified aggregation pipeline, which must end with a $out stage.
@@ -92,7 +93,7 @@ public interface AggregatePublisher<TResult> extends Publisher<TResult> {
      * @since 1.3
      * @mongodb.server.release 3.4
      */
-    AggregatePublisher<TResult> collation(Collation collation);
+    AggregatePublisher<TResult> collation(@Nullable Collation collation);
 
     /**
      * Sets the comment to the aggregation. A null value means no comment is set.
@@ -102,7 +103,7 @@ public interface AggregatePublisher<TResult> extends Publisher<TResult> {
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    AggregatePublisher<TResult> comment(String comment);
+    AggregatePublisher<TResult> comment(@Nullable String comment);
 
     /**
      * Sets the hint for which index to use. A null value means no hint is set.
@@ -112,7 +113,7 @@ public interface AggregatePublisher<TResult> extends Publisher<TResult> {
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    AggregatePublisher<TResult> hint(Bson hint);
+    AggregatePublisher<TResult> hint(@Nullable Bson hint);
 
     /**
      * Sets the number of documents to return per batch.
