@@ -1069,8 +1069,8 @@ buildvariants:
     - name: "plain-auth-test"
 
 - matrix_name: "aws-auth-test"
-  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk11", version: ["4.4", "latest"], os: "ubuntu" }
-  display_name: "MONGODB-AWS Auth test ${version} ${os}"
+  matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk11"], version: ["4.4", "latest"], os: "ubuntu" }
+  display_name: "MONGODB-AWS Auth test ${version} ${jdk}"
   run_on: ubuntu1804-test
   tasks:
     - name: "aws-auth-test"
