@@ -47,9 +47,9 @@ import static com.mongodb.internal.operation.OperationHelper.isRetryableRead
 import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite
 import static com.mongodb.internal.operation.OperationHelper.validateCollation
 import static com.mongodb.internal.operation.OperationHelper.validateCollationAndWriteConcern
+import static com.mongodb.internal.operation.OperationHelper.validateFindOptions
 import static com.mongodb.internal.operation.OperationHelper.validateIndexRequestCollations
 import static com.mongodb.internal.operation.OperationHelper.validateReadConcern
-import static com.mongodb.internal.operation.OperationHelper.validateReadConcernAndCollation
 import static com.mongodb.internal.operation.OperationHelper.validateWriteRequests
 
 class OperationHelperSpecification extends Specification {
@@ -203,14 +203,14 @@ class OperationHelperSpecification extends Specification {
         threeTwoConnectionDescription   | enCollation
     }
 
-    def 'should accept valid readConcern and collation'() {
+    def 'should accept valid find options'() {
         given:
         def connection = Stub(Connection) {
             getDescription() >> connectionDescription
         }
 
         when:
-        validateReadConcernAndCollation(connection, readConcern, collation)
+        validateFindOptions(connection, readConcern, collation, allowDiskUse)
 
         then:
         notThrown(IllegalArgumentException)
@@ -219,33 +219,33 @@ class OperationHelperSpecification extends Specification {
         def asyncConnection = Stub(AsyncConnection) {
             getDescription() >> connectionDescription
         }
-        validateReadConcernAndCollation(asyncConnection, readConcern, collation, asyncCallableWithConnection)
+        validateFindOptions(asyncConnection, readConcern, collation, allowDiskUse, asyncCallableWithConnection)
 
         then:
         notThrown(IllegalArgumentException)
 
         when:
         def asyncConnactionSource = Stub(AsyncConnectionSource)
-        validateReadConcernAndCollation(asyncConnactionSource, asyncConnection, readConcern, collation,
+        validateFindOptions(asyncConnactionSource, asyncConnection, readConcern, collation, allowDiskUse,
                 asyncCallableWithConnectionAndSource)
 
         then:
         notThrown(IllegalArgumentException)
 
         where:
-        connectionDescription          | readConcern           | collation
-        threeFourConnectionDescription | ReadConcern.DEFAULT   | enCollation
-        threeConnectionDescription     | ReadConcern.DEFAULT   | null
+        connectionDescription          | readConcern           | collation    | allowDiskUse
+        threeFourConnectionDescription | ReadConcern.DEFAULT   | enCollation  | true
+        threeConnectionDescription     | ReadConcern.DEFAULT   | null         | null
     }
 
-    def 'should throw on invalid readConcern and collation'() {
+    def 'should throw on invalid find options'() {
         given:
         def connection = Stub(Connection) {
             getDescription() >> connectionDescription
         }
 
         when:
-        validateReadConcernAndCollation(connection, readConcern, collation)
+        validateFindOptions(connection, readConcern, collation, allowDiskUse)
 
         then:
         thrown(IllegalArgumentException)
@@ -254,23 +254,24 @@ class OperationHelperSpecification extends Specification {
         def asyncConnection = Stub(AsyncConnection) {
             getDescription() >> connectionDescription
         }
-        validateReadConcernAndCollation(asyncConnection, readConcern, collation, asyncCallableWithConnection)
+        validateFindOptions(asyncConnection, readConcern, collation, allowDiskUse, asyncCallableWithConnection)
 
         then:
         thrown(IllegalArgumentException)
 
         when:
         def asyncConnactionSource = Stub(AsyncConnectionSource)
-        validateReadConcernAndCollation(asyncConnactionSource, asyncConnection, readConcern, collation,
+        validateFindOptions(asyncConnactionSource, asyncConnection, readConcern, collation, allowDiskUse,
                 asyncCallableWithConnectionAndSource)
 
         then:
         thrown(IllegalArgumentException)
 
         where:
-        connectionDescription          | readConcern           | collation
-        threeConnectionDescription     | ReadConcern.MAJORITY  | null
-        threeConnectionDescription     | ReadConcern.DEFAULT   | enCollation
+        connectionDescription          | readConcern           | collation    | allowDiskUse
+        threeConnectionDescription     | ReadConcern.MAJORITY  | null         | null
+        threeConnectionDescription     | ReadConcern.DEFAULT   | enCollation  | null
+        threeConnectionDescription     | ReadConcern.DEFAULT   | null         | true
     }
 
     def 'should accept valid writeRequests'() {

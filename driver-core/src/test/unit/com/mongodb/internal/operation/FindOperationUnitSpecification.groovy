@@ -105,7 +105,6 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
                 .max(BsonDocument.parse('{ abc: 1000 }'))
                 .returnKey(true)
                 .showRecordId(true)
-                .allowDiskUse(true)
 
         when:
         operation.execute(readBinding)
@@ -124,7 +123,6 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
 
         then:
         testOperation(operation, [3, 2, 0], expectedCommand, async, commandResult)
-
         // Overrides
         when:
         operation.filter(new BsonDocument('a', BsonBoolean.TRUE))
@@ -144,7 +142,10 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
                 .max(BsonDocument.parse('{ abc: 1000 }'))
                 .returnKey(true)
                 .showRecordId(true)
-                .allowDiskUse(true)
+
+        if (allowDiskUse != null) {
+            operation.allowDiskUse(allowDiskUse.value)
+        }
 
         expectedCommand.append('filter', operation.getFilter())
                 .append('projection', operation.getProjection())
@@ -161,8 +162,10 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
                 .append('max', operation.getMax())
                 .append('returnKey', BsonBoolean.TRUE)
                 .append('showRecordId', BsonBoolean.TRUE)
-                .append('allowDiskUse', BsonBoolean.TRUE)
 
+        if (allowDiskUse != null) {
+            expectedCommand.append('allowDiskUse', new BsonBoolean(allowDiskUse))
+        }
         if (commandLimit != null) {
             expectedCommand.append('limit', new BsonInt32(commandLimit))
         }
@@ -174,15 +177,17 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
         }
 
         then:
-        testOperation(operation, [3, 2, 0], expectedCommand, async, commandResult)
+        testOperation(operation, version, expectedCommand, async, commandResult)
 
         where:
-        async << [true, true, true, true, true, false, false, false, false, false]
-        limit << [100, -100, 100, 0, 100, 100, -100, 100, 0, 100]
-        batchSize << [10, 10, -10, 10, 0, 10, 10, -10, 10, 0]
-        commandLimit << [100, 100, 10, null, 100, 100, 100, 10, null, 100]
-        commandBatchSize << [10, null, null, 10, null, 10, null, null, 10, null]
-        commandSingleBatch << [null, true, true, null, null, null, true, true, null, null]
+        async << [true] * 5 + [false] * 5 + [true] * 5 + [false] * 5
+        limit << [100, -100, 100, 0, 100] * 4
+        batchSize << [10, 10, -10, 10, 0] * 4
+        commandLimit << [100, 100, 10, null, 100] * 4
+        commandBatchSize << [10, null, null, 10, null] * 4
+        commandSingleBatch << [null, true, true, null, null] * 4
+        allowDiskUse << [null] * 10 + [true] * 10
+        version << [[3, 2, 0]] * 10 + [[3, 4, 0]] * 10
     }
 
     def 'should use the ReadBindings readPreference to set slaveOK'() {

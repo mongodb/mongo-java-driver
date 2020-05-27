@@ -52,6 +52,7 @@ import org.bson.conversions.Bson;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -171,6 +172,18 @@ final class OperationHelper {
         }
     }
 
+    static void validateAllowDiskUse(final Connection connection, final Boolean allowDiskUse) {
+        validateAllowDiskUse(connection.getDescription(), allowDiskUse).ifPresent(throwable -> {
+            throw new IllegalArgumentException(throwable.getMessage());
+        });
+    }
+
+    static void validateAllowDiskUse(final AsyncConnection connection, final Boolean allowDiskUse,
+                                     final AsyncCallableWithConnection callable) {
+        Optional<Throwable> throwable = validateAllowDiskUse(connection.getDescription(), allowDiskUse);
+        callable.call(connection, throwable.isPresent() ? throwable.get() : null);
+    }
+
     static void validateCollation(final AsyncConnection connection, final Collation collation,
                                   final AsyncCallableWithConnection callable) {
         Throwable throwable = null;
@@ -287,6 +300,20 @@ final class OperationHelper {
         }
     }
 
+    static void validateFindOptions(final Connection connection, final ReadConcern readConcern, final Collation collation,
+                                    final Boolean allowDiskUse) {
+        validateReadConcernAndCollation(connection, readConcern, collation);
+        validateAllowDiskUse(connection, allowDiskUse);
+    }
+
+    static void validateFindOptions(final ConnectionDescription description, final ReadConcern readConcern,
+                                    final Collation collation, final Boolean allowDiskUse) {
+        validateReadConcernAndCollation(description, readConcern, collation);
+        validateAllowDiskUse(description, allowDiskUse).ifPresent(throwable -> {
+            throw new IllegalArgumentException(throwable.getMessage());
+        });
+    }
+
     static void validateReadConcernAndCollation(final Connection connection, final ReadConcern readConcern,
                                                 final Collation collation) {
         validateReadConcern(connection, readConcern);
@@ -299,10 +326,35 @@ final class OperationHelper {
         validateCollation(description, collation);
     }
 
+    static void validateFindOptions(final AsyncConnection connection, final ReadConcern readConcern,
+                                    final Collation collation, final Boolean allowDiskUse,
+                                    final AsyncCallableWithConnection callable) {
+        validateReadConcernAndCollation(connection, readConcern, collation, new AsyncCallableWithConnection() {
+            @Override
+            public void call(final AsyncConnection connection, final Throwable t) {
+                if (t != null) {
+                    callable.call(connection, t);
+                } else {
+                    validateAllowDiskUse(connection, allowDiskUse, callable);
+                }
+            }
+        });
+    }
+
+    static void validateFindOptions(final AsyncConnectionSource source, final AsyncConnection connection, final ReadConcern readConcern,
+                                    final Collation collation, final Boolean allowDiskUse,
+                                    final AsyncCallableWithConnectionAndSource callable) {
+        validateFindOptions(connection, readConcern, collation, allowDiskUse, new AsyncCallableWithConnection() {
+            @Override
+            public void call(final AsyncConnection connection, final Throwable t) {
+                callable.call(source, connection, t);
+            }
+        });
+    }
+
     static void validateReadConcernAndCollation(final AsyncConnection connection, final ReadConcern readConcern,
-                                                final Collation collation,
-                                                final AsyncCallableWithConnection callable) {
-        validateReadConcern(connection, readConcern, new AsyncCallableWithConnection(){
+                                                final Collation collation, final AsyncCallableWithConnection callable) {
+        validateReadConcern(connection, readConcern, new AsyncCallableWithConnection() {
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
                 if (t != null) {
@@ -698,6 +750,15 @@ final class OperationHelper {
                 withAsyncConnectionSource(source, callable);
             }
         }
+    }
+
+    private static Optional<Throwable> validateAllowDiskUse(final ConnectionDescription description, final Boolean allowDiskUse) {
+        Optional<Throwable> throwable = Optional.empty();
+        if (allowDiskUse != null && serverIsLessThanVersionThreeDotFour(description)) {
+            throwable = Optional.of(new IllegalArgumentException(format("allowDiskUse not supported by wire version: %s",
+                    description.getMaxWireVersion())));
+        }
+        return throwable;
     }
 
     private OperationHelper() {

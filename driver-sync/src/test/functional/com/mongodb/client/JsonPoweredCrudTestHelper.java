@@ -549,6 +549,9 @@ public class JsonPoweredCrudTestHelper {
         if (arguments.containsKey("returnKey")) {
             iterable.returnKey(arguments.getBoolean("returnKey").getValue());
         }
+        if (arguments.containsKey("allowDiskUse")) {
+            iterable.allowDiskUse(arguments.getBoolean("allowDiskUse").getValue());
+        }
 
         return iterable;
     }
