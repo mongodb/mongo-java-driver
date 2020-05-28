@@ -15,7 +15,7 @@ JDK=${JDK:-jdk11}
 
 echo "Running MONGODB-AWS authentication tests"
 
-export JAVA_HOME="/opt/java/${JDK}"
+export JAVA_HOME="/opt/java/jdk11"
 
 # ensure no secrets are printed in log files
 set +x
@@ -35,4 +35,4 @@ set -x
 
 echo "Running tests with ${JDK}"
 ./gradlew -version
-./gradlew -PjdkHome=${JAVA_HOME} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --debug --info driver-core:test --tests AwsAuthenticationSpecification
+./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --debug --info driver-core:test --tests AwsAuthenticationSpecification
