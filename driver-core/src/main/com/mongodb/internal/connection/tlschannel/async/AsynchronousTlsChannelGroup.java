@@ -29,6 +29,7 @@ import com.mongodb.internal.connection.tlschannel.impl.ByteBufferSet;
 import com.mongodb.internal.connection.tlschannel.util.Util;
 
 import java.io.IOException;
+import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.CancelledKeyException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.InterruptedByTimeoutException;
@@ -265,6 +266,9 @@ public class AsynchronousTlsChannelGroup {
         try {
             // a null op means cancel any operation
             if (op != null && socket.readOperation == op || op == null && socket.readOperation != null) {
+                if (op == null) {
+                    socket.readOperation.onFailure.accept(new AsynchronousCloseException());
+                }
                 socket.readOperation = null;
                 cancelledReads.increment();
                 currentReads.decrement();
@@ -282,6 +286,9 @@ public class AsynchronousTlsChannelGroup {
         try {
             // a null op means cancel any operation
             if (op != null && socket.writeOperation == op || op == null && socket.writeOperation != null) {
+                if (op == null) {
+                    socket.writeOperation.onFailure.accept(new AsynchronousCloseException());
+                }
                 socket.writeOperation = null;
                 cancelledWrites.increment();
                 currentWrites.decrement();
