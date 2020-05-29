@@ -329,7 +329,6 @@ functions:
       type: test
       params:
         working_dir: "src"
-        silent: true
         script: |
           cat <<'EOF' > "${PROJECT_DIRECTORY}/prepare_mongodb_aws.sh"
             alias urlencode='python -c "import sys, urllib as ul; print ul.quote_plus(sys.argv[1])"'
@@ -1069,8 +1068,8 @@ buildvariants:
     - name: "plain-auth-test"
 
 - matrix_name: "aws-auth-test"
-  matrix_spec: { jdk: "jdk11" }
-  display_name: "MONGODB-AWS Auth test"
+  matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk11"], version: ["4.4", "latest"], os: "ubuntu" }
+  display_name: "MONGODB-AWS Auth test ${version} ${jdk}"
   run_on: ubuntu1804-test
   tasks:
     - name: "aws-auth-test"
