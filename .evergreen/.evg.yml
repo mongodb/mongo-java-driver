@@ -329,6 +329,7 @@ functions:
       type: test
       params:
         working_dir: "src"
+        silent: true
         script: |
           cat <<'EOF' > "${PROJECT_DIRECTORY}/prepare_mongodb_aws.sh"
             alias urlencode='python -c "import sys, urllib as ul; print ul.quote_plus(sys.argv[1])"'
