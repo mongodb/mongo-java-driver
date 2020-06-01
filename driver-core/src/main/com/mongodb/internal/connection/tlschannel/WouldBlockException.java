@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Original Work: MIT License, Copyright (c) [2015-2018] all contributors
+ * Original Work: MIT License, Copyright (c) [2015-2020] all contributors
  * https://github.com/marianobarrios/tls-channel
  */
 
 package com.mongodb.internal.connection.tlschannel;
 
 /**
- * Signals that some IO operation cannot continue because the channel is in non
- * blocking mode and some blocking would otherwise happen.
+ * Signals that some IO operation cannot continue because the channel is in non blocking mode and
+ * some blocking would otherwise happen.
  */
 public class WouldBlockException extends TlsChannelFlowControlException {
-
-    private static final long serialVersionUID = -165334493836093518L;
+  private static final long serialVersionUID = -1881728208118024998L;
 }

@@ -13,23 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Original Work: MIT License, Copyright (c) [2015-2018] all contributors
+ * Original Work: MIT License, Copyright (c) [2015-2020] all contributors
  * https://github.com/marianobarrios/tls-channel
  */
 
 package com.mongodb.internal.connection.tlschannel.async;
 
-import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.diagnostics.logging.Loggers;
-import com.mongodb.internal.connection.tlschannel.NeedsReadException;
-import com.mongodb.internal.connection.tlschannel.NeedsTaskException;
-import com.mongodb.internal.connection.tlschannel.NeedsWriteException;
-import com.mongodb.internal.connection.tlschannel.TlsChannel;
-import com.mongodb.internal.connection.tlschannel.impl.ByteBufferSet;
-import com.mongodb.internal.connection.tlschannel.util.Util;
-
 import java.io.IOException;
-import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.CancelledKeyException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.InterruptedByTimeoutException;
@@ -40,13 +30,13 @@ import java.nio.channels.ShutdownChannelGroupException;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.WritePendingException;
 import java.util.Iterator;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -55,24 +45,27 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
-import java.util.function.IntBinaryOperator;
 import java.util.function.LongConsumer;
-
-import static java.lang.String.format;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import com.mongodb.internal.connection.tlschannel.NeedsReadException;
+import com.mongodb.internal.connection.tlschannel.NeedsTaskException;
+import com.mongodb.internal.connection.tlschannel.NeedsWriteException;
+import com.mongodb.internal.connection.tlschannel.TlsChannel;
+import com.mongodb.internal.connection.tlschannel.impl.ByteBufferSet;
+import com.mongodb.internal.connection.tlschannel.util.Util;
 
 /**
- * This class encapsulates the infrastructure for running {@link AsynchronousTlsChannel}s. Each instance of this class
- * is a singleton-like object that manages a thread pool that makes it possible to run a group of asynchronous
- * channels.
+ * This class encapsulates the infrastructure for running {@link AsynchronousTlsChannel}s. Each
+ * instance of this class is a singleton-like object that manages a thread pool that makes it
+ * possible to run a group of asynchronous channels.
  */
 public class AsynchronousTlsChannelGroup {
 
-    private static final Logger LOGGER = Loggers.getLogger("connection.tls");
+    private static final Logger logger = LoggerFactory.getLogger(AsynchronousTlsChannelGroup.class);
 
-    /**
-     * The main executor of the group has a queue, whose size is a multiple of the number of CPUs.
-     */
-    private static final int QUEUE_LENGTH_MULTIPLIER = 32;
+    /** The main executor of the group has a queue, whose size is a multiple of the number of CPUs. */
+    private static final int queueLengthMultiplier = 32;
 
     private static AtomicInteger globalGroupCount = new AtomicInteger();
 
@@ -82,39 +75,30 @@ public class AsynchronousTlsChannelGroup {
         final SocketChannel socketChannel;
 
         /**
-         * Used to wait until the channel is effectively in the selector (which happens asynchronously to the initial
-         * registration.
+         * Used to wait until the channel is effectively in the selector (which happens asynchronously
+         * to the initial registration.
          */
         final CountDownLatch registered = new CountDownLatch(1);
 
         SelectionKey key;
 
-        /**
-         * Protects {@link #readOperation} reference and instance.
-         */
+        /** Protects {@link #readOperation} reference and instance. */
         final Lock readLock = new ReentrantLock();
 
-        /**
-         * Protects {@link #writeOperation} reference and instance.
-         */
+        /** Protects {@link #writeOperation} reference and instance. */
         final Lock writeLock = new ReentrantLock();
 
-        /**
-         * Current read operation, in not null
-         */
+        /** Current read operation, in not null */
         ReadOperation readOperation;
 
-        /**
-         * Current write operation, if not null
-         */
+        /** Current write operation, if not null */
         WriteOperation writeOperation;
 
-        /**
-         * Bitwise union of pending operation to be registered in the selector
-         */
+        /** Bitwise union of pending operation to be registered in the selector */
         final AtomicInteger pendingOps = new AtomicInteger();
 
-        RegisteredSocket(final TlsChannel tlsChannel, final SocketChannel socketChannel) {
+        RegisteredSocket(TlsChannel tlsChannel, SocketChannel socketChannel)
+                throws ClosedChannelException {
             this.tlsChannel = tlsChannel;
             this.socketChannel = socketChannel;
         }
@@ -139,7 +123,7 @@ public class AsynchronousTlsChannelGroup {
         final Consumer<Throwable> onFailure;
         Future<?> timeoutFuture;
 
-        Operation(final ByteBufferSet bufferSet, final LongConsumer onSuccess, final Consumer<Throwable> onFailure) {
+        Operation(ByteBufferSet bufferSet, LongConsumer onSuccess, Consumer<Throwable> onFailure) {
             this.bufferSet = bufferSet;
             this.onSuccess = onSuccess;
             this.onFailure = onFailure;
@@ -147,7 +131,7 @@ public class AsynchronousTlsChannelGroup {
     }
 
     static final class ReadOperation extends Operation {
-        ReadOperation(final ByteBufferSet bufferSet, final LongConsumer onSuccess, final Consumer<Throwable> onFailure) {
+        ReadOperation(ByteBufferSet bufferSet, LongConsumer onSuccess, Consumer<Throwable> onFailure) {
             super(bufferSet, onSuccess, onFailure);
         }
     }
@@ -155,12 +139,12 @@ public class AsynchronousTlsChannelGroup {
     static final class WriteOperation extends Operation {
 
         /**
-         * Because a write operation can flag a block (needs read/write) even after the source buffer was read from, we
-         * need to accumulate consumed bytes.
+         * Because a write operation can flag a block (needs read/write) even after the source buffer
+         * was read from, we need to accumulate consumed bytes.
          */
         long consumesBytes = 0;
 
-        WriteOperation(final ByteBufferSet bufferSet, final LongConsumer onSuccess, final Consumer<Throwable> onFailure) {
+        WriteOperation(ByteBufferSet bufferSet, LongConsumer onSuccess, Consumer<Throwable> onFailure) {
             super(bufferSet, onSuccess, onFailure);
         }
     }
@@ -168,8 +152,8 @@ public class AsynchronousTlsChannelGroup {
     private final int id = globalGroupCount.getAndIncrement();
 
     /**
-     * With the intention of being spacer with warnings, use this flag to ensure that we only log the warning about
-     * needed task once.
+     * With the intention of being spacer with warnings, use this flag to ensure that we only log the
+     * warning about needed task once.
      */
     private final AtomicBoolean loggedTaskWarning = new AtomicBoolean();
 
@@ -177,25 +161,22 @@ public class AsynchronousTlsChannelGroup {
 
     final ExecutorService executor;
 
-    private final ScheduledThreadPoolExecutor timeoutExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
-        @Override
-        public Thread newThread(final Runnable runnable) {
-            return new Thread(runnable, format("async-channel-group-%d-timeout-thread", id));
-        }
-    }
-    );
+    private final ScheduledThreadPoolExecutor timeoutExecutor =
+            new ScheduledThreadPoolExecutor(
+                    1,
+                    runnable ->
+                            new Thread(runnable, String.format("async-channel-group-%d-timeout-thread", id)));
 
-    private final Thread selectorThread = new Thread(new Runnable() {
-        @Override
-        public void run() {
-            AsynchronousTlsChannelGroup.this.loop();
-        }
-    }, format("async-channel-group-%d-selector", id));
+    private final Thread selectorThread =
+            new Thread(this::loop, String.format("async-channel-group-%d-selector", id));
 
-    private final ConcurrentLinkedQueue<RegisteredSocket> pendingRegistrations = new ConcurrentLinkedQueue<RegisteredSocket>();
+    private final ConcurrentLinkedQueue<RegisteredSocket> pendingRegistrations =
+            new ConcurrentLinkedQueue<>();
 
     private enum Shutdown {
-        No, Wait, Immediate
+        No,
+        Wait,
+        Immediate
     }
 
     private volatile Shutdown shutdown = Shutdown.No;
@@ -220,37 +201,36 @@ public class AsynchronousTlsChannelGroup {
     /**
      * Creates an instance of this class.
      *
-     * @param nThreads number of threads in the executor used to assist the selector loop and run completion handlers.
+     * @param nThreads number of threads in the executor used to assist the selector loop and run
+     *     completion handlers.
      */
-    public AsynchronousTlsChannelGroup(final int nThreads) {
+    public AsynchronousTlsChannelGroup(int nThreads) {
         try {
             selector = Selector.open();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         timeoutExecutor.setRemoveOnCancelPolicy(true);
-        this.executor = new ThreadPoolExecutor(
-                nThreads, nThreads,
-                0, TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<Runnable>(nThreads * QUEUE_LENGTH_MULTIPLIER),
-                new ThreadFactory() {
-                    @Override
-                    public Thread newThread(final Runnable runnable) {
-                        return new Thread(runnable, format("async-channel-group-%d-handler-executor", id));
-                    }
-                },
-                new ThreadPoolExecutor.CallerRunsPolicy());
+        this.executor =
+                new ThreadPoolExecutor(
+                        nThreads,
+                        nThreads,
+                        0,
+                        TimeUnit.MILLISECONDS,
+                        new LinkedBlockingQueue<>(nThreads * queueLengthMultiplier),
+                        runnable ->
+                                new Thread(runnable, String.format("async-channel-group-%d-handler-executor", id)),
+                        new ThreadPoolExecutor.CallerRunsPolicy());
         selectorThread.start();
     }
 
-    /**
-     * Creates an instance of this class, using as many thread as available processors.
-     */
+    /** Creates an instance of this class, using as many thread as available processors. */
     public AsynchronousTlsChannelGroup() {
         this(Runtime.getRuntime().availableProcessors());
     }
 
-    RegisteredSocket registerSocket(final TlsChannel reader, final SocketChannel socketChannel) {
+    RegisteredSocket registerSocket(TlsChannel reader, SocketChannel socketChannel)
+            throws ClosedChannelException {
         if (shutdown != Shutdown.No) {
             throw new ShutdownChannelGroupException();
         }
@@ -261,13 +241,13 @@ public class AsynchronousTlsChannelGroup {
         return socket;
     }
 
-    boolean doCancelRead(final RegisteredSocket socket, final ReadOperation op) {
+    boolean doCancelRead(RegisteredSocket socket, ReadOperation op) {
         socket.readLock.lock();
         try {
             // a null op means cancel any operation
             if (op != null && socket.readOperation == op || op == null && socket.readOperation != null) {
                 if (op == null) {
-                    socket.readOperation.onFailure.accept(new AsynchronousCloseException());
+                    socket.readOperation.onFailure.accept(new CancellationException());
                 }
                 socket.readOperation = null;
                 cancelledReads.increment();
@@ -281,13 +261,13 @@ public class AsynchronousTlsChannelGroup {
         }
     }
 
-    boolean doCancelWrite(final RegisteredSocket socket, final WriteOperation op) {
+    boolean doCancelWrite(RegisteredSocket socket, WriteOperation op) {
         socket.writeLock.lock();
         try {
             // a null op means cancel any operation
             if (op != null && socket.writeOperation == op || op == null && socket.writeOperation != null) {
                 if (op == null) {
-                    socket.writeOperation.onFailure.accept(new AsynchronousCloseException());
+                    socket.writeOperation.onFailure.accept(new CancellationException());
                 }
                 socket.writeOperation = null;
                 cancelledWrites.increment();
@@ -302,10 +282,12 @@ public class AsynchronousTlsChannelGroup {
     }
 
     ReadOperation startRead(
-            final RegisteredSocket socket,
-            final ByteBufferSet buffer,
-            final long timeout, final TimeUnit unit,
-            final LongConsumer onSuccess, final Consumer<Throwable> onFailure)
+            RegisteredSocket socket,
+            ByteBufferSet buffer,
+            long timeout,
+            TimeUnit unit,
+            LongConsumer onSuccess,
+            Consumer<Throwable> onFailure)
             throws ReadPendingException {
         checkTerminated();
         Util.assertTrue(buffer.hasRemaining());
@@ -317,22 +299,22 @@ public class AsynchronousTlsChannelGroup {
                 throw new ReadPendingException();
             }
             op = new ReadOperation(buffer, onSuccess, onFailure);
-            final ReadOperation finalOp = op;
             /*
              * we do not try to outsmart the TLS state machine and register for both IO operations for each new socket
              * operation
              */
             socket.pendingOps.set(SelectionKey.OP_WRITE | SelectionKey.OP_READ);
             if (timeout != 0) {
-                op.timeoutFuture = timeoutExecutor.schedule(new Runnable() {
-                    @Override
-                    public void run() {
-                        boolean success = AsynchronousTlsChannelGroup.this.doCancelRead(socket, finalOp);
-                        if (success) {
-                            finalOp.onFailure.accept(new InterruptedByTimeoutException());
-                        }
-                    }
-                }, timeout, unit);
+                op.timeoutFuture =
+                        timeoutExecutor.schedule(
+                                () -> {
+                                    boolean success = doCancelRead(socket, op);
+                                    if (success) {
+                                        op.onFailure.accept(new InterruptedByTimeoutException());
+                                    }
+                                },
+                                timeout,
+                                unit);
             }
             socket.readOperation = op;
         } finally {
@@ -345,10 +327,12 @@ public class AsynchronousTlsChannelGroup {
     }
 
     WriteOperation startWrite(
-            final RegisteredSocket socket,
-            final ByteBufferSet buffer,
-            final long timeout, final TimeUnit unit,
-            final LongConsumer onSuccess, final Consumer<Throwable> onFailure)
+            RegisteredSocket socket,
+            ByteBufferSet buffer,
+            long timeout,
+            TimeUnit unit,
+            LongConsumer onSuccess,
+            Consumer<Throwable> onFailure)
             throws WritePendingException {
         checkTerminated();
         Util.assertTrue(buffer.hasRemaining());
@@ -360,22 +344,22 @@ public class AsynchronousTlsChannelGroup {
                 throw new WritePendingException();
             }
             op = new WriteOperation(buffer, onSuccess, onFailure);
-            final WriteOperation finalOp = op;
             /*
              * we do not try to outsmart the TLS state machine and register for both IO operations for each new socket
              * operation
              */
             socket.pendingOps.set(SelectionKey.OP_WRITE | SelectionKey.OP_READ);
             if (timeout != 0) {
-                op.timeoutFuture = timeoutExecutor.schedule(new Runnable() {
-                    @Override
-                    public void run() {
-                        boolean success = AsynchronousTlsChannelGroup.this.doCancelWrite(socket, finalOp);
-                        if (success) {
-                            finalOp.onFailure.accept(new InterruptedByTimeoutException());
-                        }
-                    }
-                }, timeout, unit);
+                op.timeoutFuture =
+                        timeoutExecutor.schedule(
+                                () -> {
+                                    boolean success = doCancelWrite(socket, op);
+                                    if (success) {
+                                        op.onFailure.accept(new InterruptedByTimeoutException());
+                                    }
+                                },
+                                timeout,
+                                unit);
             }
             socket.writeOperation = op;
         } finally {
@@ -393,7 +377,7 @@ public class AsynchronousTlsChannelGroup {
         }
     }
 
-    private void waitForSocketRegistration(final RegisteredSocket socket) {
+    private void waitForSocketRegistration(RegisteredSocket socket) {
         try {
             socket.registered.await();
         } catch (InterruptedException e) {
@@ -403,7 +387,8 @@ public class AsynchronousTlsChannelGroup {
 
     private void loop() {
         try {
-            while (shutdown == Shutdown.No || shutdown == Shutdown.Wait && currentRegistrations.intValue() > 0) {
+            while (shutdown == Shutdown.No
+                    || shutdown == Shutdown.Wait && currentRegistrations.intValue() > 0) {
                 int c = selector.select(); // block
                 selectionCount.increment();
                 // avoid unnecessary creation of iterator object
@@ -427,7 +412,7 @@ public class AsynchronousTlsChannelGroup {
                 processPendingInterests();
             }
         } catch (Throwable e) {
-            LOGGER.error("error in selector loop", e);
+            logger.error("error in selector loop", e);
         } finally {
             executor.shutdown();
             // use shutdownNow to stop delayed tasks
@@ -441,7 +426,7 @@ public class AsynchronousTlsChannelGroup {
             try {
                 selector.close();
             } catch (IOException e) {
-                LOGGER.warn(format("error closing selector: %s", e.getMessage()));
+                logger.warn("error closing selector: {}", e.getMessage());
             }
         }
     }
@@ -451,59 +436,50 @@ public class AsynchronousTlsChannelGroup {
             RegisteredSocket socket = (RegisteredSocket) key.attachment();
             int pending = socket.pendingOps.getAndSet(0);
             if (pending != 0) {
-                try {
-                    key.interestOps(key.interestOps() | pending);
-                } catch (CancelledKeyException e) {
-                    // can happen when channels are closed with pending operations
-                    break;
-                }
+                key.interestOps(key.interestOps() | pending);
             }
         }
     }
 
-    private void processWrite(final RegisteredSocket socket) {
+    private void processWrite(RegisteredSocket socket) {
         socket.writeLock.lock();
         try {
-            final WriteOperation op = socket.writeOperation;
+            WriteOperation op = socket.writeOperation;
             if (op != null) {
-                executor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            AsynchronousTlsChannelGroup.this.doWrite(socket, op);
-                        } catch (Throwable e) {
-                            LOGGER.error("error in operation", e);
-                        }
-                    }
-                });
+                executor.execute(
+                        () -> {
+                            try {
+                                doWrite(socket, op);
+                            } catch (Throwable e) {
+                                logger.error("error in operation", e);
+                            }
+                        });
             }
         } finally {
             socket.writeLock.unlock();
         }
     }
 
-    private void processRead(final RegisteredSocket socket) {
+    private void processRead(RegisteredSocket socket) {
         socket.readLock.lock();
         try {
-            final ReadOperation op = socket.readOperation;
+            ReadOperation op = socket.readOperation;
             if (op != null) {
-                executor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            AsynchronousTlsChannelGroup.this.doRead(socket, op);
-                        } catch (Throwable e) {
-                            LOGGER.error("error in operation", e);
-                        }
-                    }
-                });
+                executor.execute(
+                        () -> {
+                            try {
+                                doRead(socket, op);
+                            } catch (Throwable e) {
+                                logger.error("error in operation", e);
+                            }
+                        });
             }
         } finally {
             socket.readLock.unlock();
         }
     }
 
-    private void doWrite(final RegisteredSocket socket, final WriteOperation op) {
+    private void doWrite(RegisteredSocket socket, WriteOperation op) {
         socket.writeLock.lock();
         try {
             if (socket.writeOperation != op) {
@@ -526,20 +502,10 @@ public class AsynchronousTlsChannelGroup {
                 successfulWrites.increment();
                 currentWrites.decrement();
             } catch (NeedsReadException e) {
-                socket.pendingOps.accumulateAndGet(SelectionKey.OP_READ, new IntBinaryOperator() {
-                    @Override
-                    public int applyAsInt(final int a, final int b) {
-                        return a | b;
-                    }
-                });
+                socket.pendingOps.accumulateAndGet(SelectionKey.OP_READ, (a, b) -> a | b);
                 selector.wakeup();
             } catch (NeedsWriteException e) {
-                socket.pendingOps.accumulateAndGet(SelectionKey.OP_WRITE, new IntBinaryOperator() {
-                    @Override
-                    public int applyAsInt(final int a, final int b) {
-                        return a | b;
-                    }
-                });
+                socket.pendingOps.accumulateAndGet(SelectionKey.OP_WRITE, (a, b) -> a | b);
                 selector.wakeup();
             } catch (IOException e) {
                 if (socket.writeOperation == op) {
@@ -558,10 +524,10 @@ public class AsynchronousTlsChannelGroup {
     }
 
     /**
-     * Intended use of the channel group is with sockets that run tasks internally, but out of tolerance, run tasks in
-     * thread in case the socket does not.
+     * Intended use of the channel group is with sockets that run tasks internally, but out of
+     * tolerance, run tasks in thread in case the socket does not.
      */
-    private void writeHandlingTasks(final RegisteredSocket socket, final WriteOperation op) throws IOException {
+    private void writeHandlingTasks(RegisteredSocket socket, WriteOperation op) throws IOException {
         while (true) {
             try {
                 socket.tlsChannel.write(op.bufferSet.array, op.bufferSet.offset, op.bufferSet.length);
@@ -575,14 +541,14 @@ public class AsynchronousTlsChannelGroup {
 
     private void warnAboutNeedTask() {
         if (!loggedTaskWarning.getAndSet(true)) {
-            LOGGER.warn(format(
-                    "caught %s; channels used in asynchronous groups should run tasks themselves; "
+            logger.warn(
+                    "caught {}; channels used in asynchronous groups should run tasks themselves; "
                             + "although task is being dealt with anyway, consider configuring channels properly",
-                    NeedsTaskException.class.getName()));
+                    NeedsTaskException.class.getName());
         }
     }
 
-    private void doRead(final RegisteredSocket socket, final ReadOperation op) {
+    private void doRead(RegisteredSocket socket, ReadOperation op) {
         socket.readLock.lock();
         try {
             if (socket.readOperation != op) {
@@ -600,20 +566,10 @@ public class AsynchronousTlsChannelGroup {
                 successfulReads.increment();
                 currentReads.decrement();
             } catch (NeedsReadException e) {
-                socket.pendingOps.accumulateAndGet(SelectionKey.OP_READ, new IntBinaryOperator() {
-                    @Override
-                    public int applyAsInt(final int a, final int b) {
-                        return a | b;
-                    }
-                });
+                socket.pendingOps.accumulateAndGet(SelectionKey.OP_READ, (a, b) -> a | b);
                 selector.wakeup();
             } catch (NeedsWriteException e) {
-                socket.pendingOps.accumulateAndGet(SelectionKey.OP_WRITE, new IntBinaryOperator() {
-                    @Override
-                    public int applyAsInt(final int a, final int b) {
-                        return a | b;
-                    }
-                });
+                socket.pendingOps.accumulateAndGet(SelectionKey.OP_WRITE, (a, b) -> a | b);
                 selector.wakeup();
             } catch (IOException e) {
                 if (socket.readOperation == op) {
@@ -631,10 +587,8 @@ public class AsynchronousTlsChannelGroup {
         }
     }
 
-    /**
-     * @see #writeHandlingTasks
-     */
-    private long readHandlingTasks(final RegisteredSocket socket, final ReadOperation op) throws IOException {
+    /** @see #writeHandlingTasks */
+    private long readHandlingTasks(RegisteredSocket socket, ReadOperation op) throws IOException {
         while (true) {
             try {
                 return socket.tlsChannel.read(op.bufferSet.array, op.bufferSet.offset, op.bufferSet.length);
@@ -649,9 +603,7 @@ public class AsynchronousTlsChannelGroup {
         RegisteredSocket socket;
         while ((socket = pendingRegistrations.poll()) != null) {
             socket.key = socket.socketChannel.register(selector, 0, socket);
-            if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace(format("registered key: %ss", socket.key));
-            }
+            logger.trace("registered key: {}", socket.key);
             socket.registered.countDown();
         }
     }
@@ -659,15 +611,16 @@ public class AsynchronousTlsChannelGroup {
     /**
      * Whether either {@link #shutdown()} or {@link #shutdownNow()} have been called.
      *
-     * @return {@code true} if this group has initiated shutdown and {@code false} if the group is active
+     * @return {@code true} if this group has initiated shutdown and {@code false} if the group is
+     *     active
      */
     public boolean isShutdown() {
         return shutdown != Shutdown.No;
     }
 
     /**
-     * Starts the shutdown process. New sockets cannot be registered, already registered one continue operating normally
-     * until they are closed.
+     * Starts the shutdown process. New sockets cannot be registered, already registered one continue
+     * operating normally until they are closed.
      */
     public void shutdown() {
         shutdown = Shutdown.Wait;
@@ -675,8 +628,8 @@ public class AsynchronousTlsChannelGroup {
     }
 
     /**
-     * Shuts down this channel group immediately. All registered sockets are closed, pending operations may or may not
-     * finish.
+     * Shuts down this channel group immediately. All registered sockets are closed, pending
+     * operations may or may not finish.
      */
     public void shutdownNow() {
         shutdown = Shutdown.Immediate;
@@ -685,21 +638,25 @@ public class AsynchronousTlsChannelGroup {
 
     /**
      * Whether this channel group was shut down, and all pending tasks have drained.
+     *
+     * @return whether the channel is terminated
      */
     public boolean isTerminated() {
         return executor.isTerminated();
     }
 
     /**
-     * Blocks until all registers sockets are closed and pending tasks finished execution after a shutdown request, or
-     * the timeout occurs, or the current thread is interrupted, whichever happens first.
+     * Blocks until all registers sockets are closed and pending tasks finished execution after a
+     * shutdown request, or the timeout occurs, or the current thread is interrupted, whichever
+     * happens first.
      *
      * @param timeout the maximum time to wait
-     * @param unit    the time unit of the timeout argument
-     * @return {@code true} if this group terminated and {@code false} if the group elapsed before termination
+     * @param unit the time unit of the timeout argument
+     * @return {@code true} if this group terminated and {@code false} if the group elapsed before
+     *     termination
      * @throws InterruptedException if interrupted while waiting
      */
-    public boolean awaitTermination(final long timeout, final TimeUnit unit) throws InterruptedException {
+    public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
         return executor.awaitTermination(timeout, unit);
     }
 
@@ -805,5 +762,4 @@ public class AsynchronousTlsChannelGroup {
     public long getCurrentRegistrationCount() {
         return currentRegistrations.longValue();
     }
-
 }

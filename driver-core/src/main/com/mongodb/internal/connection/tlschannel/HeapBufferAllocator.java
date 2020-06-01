@@ -22,24 +22,20 @@ package com.mongodb.internal.connection.tlschannel;
 import java.nio.ByteBuffer;
 
 /**
- * A factory for {@link ByteBuffer}s. Implementations are free to return heap or direct buffers, or
- * to do any kind of pooling. They are also expected to be thread-safe.
+ * Allocator that creates heap buffers. The {@link #free(ByteBuffer)} method is a no-op, as heap
+ * buffers are handled completely by the garbage collector.
+ *
+ * <p>Direct buffers are generally used as a simple and generally good enough default solution.
  */
-public interface BufferAllocator {
+public class HeapBufferAllocator implements BufferAllocator {
 
-  /**
-   * Allocate a {@link ByteBuffer} with the given initial capacity.
-   *
-   * @param size the size to allocate
-   * @return the newly created buffer
-   */
-  ByteBuffer allocate(int size);
+  @Override
+  public ByteBuffer allocate(int size) {
+    return ByteBuffer.allocate(size);
+  }
 
-  /**
-   * Deallocate the given {@link ByteBuffer}.
-   *
-   * @param buffer the buffer to deallocate, that should have been allocated using the same {@link
-   *     BufferAllocator} instance
-   */
-  void free(ByteBuffer buffer);
+  @Override
+  public void free(ByteBuffer buffer) {
+    // GC does it
+  }
 }

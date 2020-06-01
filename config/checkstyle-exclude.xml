@@ -22,7 +22,7 @@
 
 <suppressions>
 
-    <suppress checks="VisibilityModifier" files="com[\\/]mongodb[\\/]internal[\\/]connection[\\/]tlschannel[\\/]"/>
+    <suppress checks="[a-zA-Z0-9]*" files="com[\\/]mongodb[\\/]internal[\\/]connection[\\/]tlschannel[\\/]"/>
 
     <suppress checks="MethodLength" files="QuickTour"/>
     <suppress checks="Regexp" files="Tour"/>

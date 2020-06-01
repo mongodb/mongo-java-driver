@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Original Work: MIT License, Copyright (c) [2015-2018] all contributors
+ * Original Work: MIT License, Copyright (c) [2015-2020] all contributors
  * https://github.com/marianobarrios/tls-channel
  */
 
@@ -24,28 +24,23 @@ import java.nio.channels.ByteChannel;
 
 /**
  * Base class for exceptions used to control flow.
- * <p>
- * Because exceptions of this class are not used to signal errors, they don't
- * contain stack traces, to improve efficiency.
- * <p>
- * This class inherits from {@link IOException} as a compromise to allow
- * {@link TlsChannel} to throw it while still implementing the
- * {@link ByteChannel} interface.
+ *
+ * <p>Because exceptions of this class are not used to signal errors, they don't contain stack
+ * traces, to improve efficiency.
+ *
+ * <p>This class inherits from {@link IOException} as a compromise to allow {@link TlsChannel} to
+ * throw it while still implementing the {@link ByteChannel} interface.
  */
 public abstract class TlsChannelFlowControlException extends IOException {
+  private static final long serialVersionUID = -2394919487958591959L;
 
-    private static final long serialVersionUID = 6237031103824382007L;
+  public TlsChannelFlowControlException() {
+    super();
+  }
 
-    public TlsChannelFlowControlException() {
-        super();
-    }
-
-    /**
-     * For efficiency, override this method to do nothing.
-     */
-    @Override
-    public Throwable fillInStackTrace() {
-        return this;
-    }
-
+  /** For efficiency, override this method to do nothing. */
+  @Override
+  public Throwable fillInStackTrace() {
+    return this;
+  }
 }

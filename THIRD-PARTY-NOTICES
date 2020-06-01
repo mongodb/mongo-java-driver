@@ -107,27 +107,33 @@ https://github.com/mongodb/mongo-java-driver.
 
 7) The following files (originally from https://github.com/marianobarrios/tls-channel):
 
-       AsynchronousTlsChannel.java
-       AsynchronousTlsChannelGroup.java
-       ExtendedAsynchronousByteChannel.java
-       BufferHolder.java
-       ByteBufferSet.java
-       ByteBufferUtil.java
-       TlsChannelImpl.java
-       TlsChannelCallbackException.java
-       Util.java
-       BufferAllocator.java
-       ClientTlsChannel.java
-       NeedsReadException.java
-       NeedsTaskException.java
-       NeedsWriteException.java
-       TlsChannel.java
-       TlsChannelBuilder.java
-       TlsChannelFlowControlException.java
-       TrackingAllocator.java
-       WouldBlockException.java
+        AsynchronousTlsChannel.java
+        AsynchronousTlsChannelGroup.java
+        BufferAllocator.java
+        BufferHolder.java
+        ByteBufferSet.java
+        ByteBufferUtil.java
+        ClientTlsChannel.java
+        DirectBufferAllocator.java
+        DirectBufferDeallocator.java
+        ExtendedAsynchronousByteChannel.java
+        HeapBufferAllocator.java
+        NeedsReadException.java
+        NeedsTaskException.java
+        NeedsWriteException.java
+        ServerTlsChannel.java
+        SniSslContextFactory.java
+        TlsChannel.java
+        TlsChannelBuilder.java
+        TlsChannelCallbackException.java
+        TlsChannelFlowControlException.java
+        TlsChannelImpl.java
+        TlsExplorer.java
+        TrackingAllocator.java
+        Util.java
+        WouldBlockException.java
 
-     Copyright (c) [2015-2018] all contributors
+     Copyright (c) [2015-2020] all contributors
 
      MIT License
 
