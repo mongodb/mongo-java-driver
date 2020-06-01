@@ -37,7 +37,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 final class SocketStreamHelper {
     // Keep alive options and their values for Java 11+
     private static final String TCP_KEEPIDLE = "TCP_KEEPIDLE";
-    private static final int TCP_KEEPIDLE_DURATION = 300;
+    private static final int TCP_KEEPIDLE_DURATION = 120;
     private static final String TCP_KEEPCOUNT = "TCP_KEEPCOUNT";
     private static final int TCP_KEEPCOUNT_LIMIT = 9;
     private static final String TCP_KEEPINTERVAL = "TCP_KEEPINTERVAL";
