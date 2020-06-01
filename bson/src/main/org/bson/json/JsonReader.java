@@ -244,16 +244,9 @@ public class JsonReader extends AbstractBsonReader {
                 } else if ("DBPointer".equals(value)) {
                     setCurrentBsonType(BsonType.DB_POINTER);
                     currentValue = visitDBPointerConstructor();
-                } else if ("UUID".equals(value)
-                           || "GUID".equals(value)
-                           || "CSUUID".equals(value)
-                           || "CSGUID".equals(value)
-                           || "JUUID".equals(value)
-                           || "JGUID".equals(value)
-                           || "PYUUID".equals(value)
-                           || "PYGUID".equals(value)) {
+                } else if ("UUID".equals(value)) {
                     setCurrentBsonType(BsonType.BINARY);
-                    currentValue = visitUUIDConstructor(value);
+                    currentValue = visitUUIDConstructor();
                 } else if ("new".equals(value)) {
                     visitNew();
                 } else {
@@ -594,15 +587,8 @@ public class JsonReader extends AbstractBsonReader {
         } else if ("DBPointer".equals(value)) {
             currentValue = visitDBPointerConstructor();
             setCurrentBsonType(BsonType.DB_POINTER);
-        } else if ("UUID".equals(value)
-                   || "GUID".equals(value)
-                   || "CSUUID".equals(value)
-                   || "CSGUID".equals(value)
-                   || "JUUID".equals(value)
-                   || "JGUID".equals(value)
-                   || "PYUUID".equals(value)
-                   || "PYGUID".equals(value)) {
-            currentValue = visitUUIDConstructor(value);
+        } else if ("UUID".equals(value)) {
+            currentValue = visitUUIDConstructor();
             setCurrentBsonType(BsonType.BINARY);
         } else {
             throw new JsonParseException("JSON reader expected a type name but found '%s'.", value);
@@ -716,16 +702,11 @@ public class JsonReader extends AbstractBsonReader {
         return new BsonBinary(subTypeToken.getValue(Integer.class).byteValue(), bytes);
     }
 
-    private BsonBinary visitUUIDConstructor(final String uuidConstructorName) {
+    private BsonBinary visitUUIDConstructor() {
         verifyToken(JsonTokenType.LEFT_PAREN);
-        String hexString = readStringFromExtendedJson().replaceAll("\\{", "").replaceAll("}", "").replaceAll("-", "");
+        String hexString = readStringFromExtendedJson().replace("-", "");
         verifyToken(JsonTokenType.RIGHT_PAREN);
-        byte[] bytes = decodeHex(hexString);
-        BsonBinarySubType subType = BsonBinarySubType.UUID_STANDARD;
-        if (!"UUID".equals(uuidConstructorName) || !"GUID".equals(uuidConstructorName)) {
-            subType = BsonBinarySubType.UUID_LEGACY;
-        }
-        return new BsonBinary(subType, bytes);
+        return new BsonBinary(BsonBinarySubType.UUID_STANDARD, decodeHex(hexString));
     }
 
     private BsonRegularExpression visitRegularExpressionConstructor() {

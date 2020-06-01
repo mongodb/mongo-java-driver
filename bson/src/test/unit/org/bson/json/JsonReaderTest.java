@@ -946,6 +946,19 @@ public class JsonReaderTest {
     }
 
     @Test
+    public void testUuidConstructor() {
+        String json = "UUID(\"b5f21e0c-2a0d-42d6-ad03-d827008d8ab6\")";
+        testStringAndStream(json, bsonReader -> {
+            assertEquals(BsonType.BINARY, bsonReader.readBsonType());
+            BsonBinary binary = bsonReader.readBinaryData();
+            assertEquals(BsonBinarySubType.UUID_STANDARD.getValue(), binary.getType());
+            assertArrayEquals(new byte[]{-75, -14, 30, 12, 42, 13, 66, -42, -83, 3, -40, 39, 0, -115, -118, -74}, binary.getData());
+            assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+            return null;
+        });
+    }
+
+    @Test
     public void testInfinity() {
         String json = "{ \"value\" : Infinity }";
         testStringAndStream(json, bsonReader -> {
