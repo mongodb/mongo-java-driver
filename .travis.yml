@@ -39,7 +39,6 @@ before_script:
 script:
   - ./gradlew -q assemble
   - ./gradlew check -Ptravistest=true
-  - ./gradlew docs
 
 after_script:
   - pkill mongod
