@@ -17,29 +17,14 @@
  * https://github.com/marianobarrios/tls-channel
  */
 
-package com.mongodb.internal.connection.tlschannel;
-
-import java.nio.ByteBuffer;
-
 /**
- * A factory for {@link ByteBuffer}s. Implementations are free to return heap or direct buffers, or
- * to do any kind of pooling. They are also expected to be thread-safe.
+ * TLS Channel is a library that implements a ByteChannel interface to a TLS (Transport Layer
+ * Security) connection. The library delegates all cryptographic operations to the standard Java TLS
+ * implementation: SSLEngine; effectively hiding it behind an easy-to-use streaming API, that allows
+ * to securitize JVM applications with minimal added complexity.
+ *
+ * <p>In other words, a simple library that allows the programmer to have TLS using the same
+ * standard socket API used for plaintext, just like OpenSSL does for C, only for Java, filling a
+ * specially painful missing feature of the standard Java library.
  */
-public interface BufferAllocator {
-
-  /**
-   * Allocate a {@link ByteBuffer} with the given initial capacity.
-   *
-   * @param size the size to allocate
-   * @return the newly created buffer
-   */
-  ByteBuffer allocate(int size);
-
-  /**
-   * Deallocate the given {@link ByteBuffer}.
-   *
-   * @param buffer the buffer to deallocate, that should have been allocated using the same {@link
-   *     BufferAllocator} instance
-   */
-  void free(ByteBuffer buffer);
-}
+package com.mongodb.internal.connection.tlschannel;

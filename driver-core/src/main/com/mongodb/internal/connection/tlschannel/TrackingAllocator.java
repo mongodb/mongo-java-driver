@@ -13,80 +13,71 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Original Work: MIT License, Copyright (c) [2015-2018] all contributors
+ * Original Work: MIT License, Copyright (c) [2015-2020] all contributors
  * https://github.com/marianobarrios/tls-channel
  */
 
 package com.mongodb.internal.connection.tlschannel;
 
-import org.bson.ByteBuf;
-
+import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAccumulator;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.function.LongBinaryOperator;
 
-/**
- * A decorating {@link BufferAllocator} that keeps statistics.
- */
+/** A decorating {@link BufferAllocator} that keeps statistics. */
 public class TrackingAllocator implements BufferAllocator {
 
-    private BufferAllocator impl;
+  private BufferAllocator impl;
 
-    private LongAdder bytesAllocatedAdder = new LongAdder();
-    private LongAdder bytesDeallocatedAdder = new LongAdder();
-    private AtomicLong currentAllocationSize = new AtomicLong();
-    private LongAccumulator maxAllocationSizeAcc = new LongAccumulator(new LongBinaryOperator() {
-        @Override
-        public long applyAsLong(final long a, final long b) {
-            return Math.max(a, b);
-        }
-    }, 0);
+  private LongAdder bytesAllocatedAdder = new LongAdder();
+  private LongAdder bytesDeallocatedAdder = new LongAdder();
+  private AtomicLong currentAllocationSize = new AtomicLong();
+  private LongAccumulator maxAllocationSizeAcc = new LongAccumulator(Math::max, 0);
 
-    private LongAdder buffersAllocatedAdder = new LongAdder();
-    private LongAdder buffersDeallocatedAdder = new LongAdder();
+  private LongAdder buffersAllocatedAdder = new LongAdder();
+  private LongAdder buffersDeallocatedAdder = new LongAdder();
 
-    public TrackingAllocator(final BufferAllocator impl) {
-        this.impl = impl;
-    }
+  public TrackingAllocator(BufferAllocator impl) {
+    this.impl = impl;
+  }
 
-    public ByteBuf allocate(final int size) {
-        bytesAllocatedAdder.add(size);
-        currentAllocationSize.addAndGet(size);
-        buffersAllocatedAdder.increment();
-        return impl.allocate(size);
-    }
+  public ByteBuffer allocate(int size) {
+    bytesAllocatedAdder.add(size);
+    currentAllocationSize.addAndGet(size);
+    buffersAllocatedAdder.increment();
+    return impl.allocate(size);
+  }
 
-    public void free(final ByteBuf buffer) {
-        int size = buffer.capacity();
-        bytesDeallocatedAdder.add(size);
-        maxAllocationSizeAcc.accumulate(currentAllocationSize.longValue());
-        currentAllocationSize.addAndGet(-size);
-        buffersDeallocatedAdder.increment();
-        impl.free(buffer);
-    }
+  public void free(ByteBuffer buffer) {
+    int size = buffer.capacity();
+    bytesDeallocatedAdder.add(size);
+    maxAllocationSizeAcc.accumulate(currentAllocationSize.longValue());
+    currentAllocationSize.addAndGet(-size);
+    buffersDeallocatedAdder.increment();
+    impl.free(buffer);
+  }
 
-    public long bytesAllocated() {
-        return bytesAllocatedAdder.longValue();
-    }
+  public long bytesAllocated() {
+    return bytesAllocatedAdder.longValue();
+  }
 
-    public long bytesDeallocated() {
-        return bytesDeallocatedAdder.longValue();
-    }
+  public long bytesDeallocated() {
+    return bytesDeallocatedAdder.longValue();
+  }
 
-    public long currentAllocation() {
-        return currentAllocationSize.longValue();
-    }
+  public long currentAllocation() {
+    return currentAllocationSize.longValue();
+  }
 
-    public long maxAllocation() {
-        return maxAllocationSizeAcc.longValue();
-    }
+  public long maxAllocation() {
+    return maxAllocationSizeAcc.longValue();
+  }
 
-    public long buffersAllocated() {
-        return buffersAllocatedAdder.longValue();
-    }
+  public long buffersAllocated() {
+    return buffersAllocatedAdder.longValue();
+  }
 
-    public long buffersDeallocated() {
-        return buffersDeallocatedAdder.longValue();
-    }
+  public long buffersDeallocated() {
+    return buffersDeallocatedAdder.longValue();
+  }
 }

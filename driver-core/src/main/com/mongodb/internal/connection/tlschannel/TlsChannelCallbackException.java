@@ -19,27 +19,16 @@
 
 package com.mongodb.internal.connection.tlschannel;
 
-import java.nio.ByteBuffer;
+import javax.net.ssl.SSLException;
 
 /**
- * A factory for {@link ByteBuffer}s. Implementations are free to return heap or direct buffers, or
- * to do any kind of pooling. They are also expected to be thread-safe.
+ * Thrown during {@link TlsChannel} handshake to indicate that a user-supplied function threw an
+ * exception.
  */
-public interface BufferAllocator {
+public class TlsChannelCallbackException extends SSLException {
+  private static final long serialVersionUID = 8491908031320425318L;
 
-  /**
-   * Allocate a {@link ByteBuffer} with the given initial capacity.
-   *
-   * @param size the size to allocate
-   * @return the newly created buffer
-   */
-  ByteBuffer allocate(int size);
-
-  /**
-   * Deallocate the given {@link ByteBuffer}.
-   *
-   * @param buffer the buffer to deallocate, that should have been allocated using the same {@link
-   *     BufferAllocator} instance
-   */
-  void free(ByteBuffer buffer);
+  public TlsChannelCallbackException(String message, Throwable throwable) {
+    super(message, throwable);
+  }
 }

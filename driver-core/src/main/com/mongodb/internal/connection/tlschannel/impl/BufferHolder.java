@@ -13,150 +13,139 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Original Work: MIT License, Copyright (c) [2015-2018] all contributors
+ * Original Work: MIT License, Copyright (c) [2015-2020] all contributors
  * https://github.com/marianobarrios/tls-channel
  */
 
 package com.mongodb.internal.connection.tlschannel.impl;
 
-import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.connection.tlschannel.BufferAllocator;
-import org.bson.ByteBuf;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
-
-import static com.mongodb.internal.connection.tlschannel.impl.TlsChannelImpl.MAX_TLS_PACKET_SIZE;
-import static java.lang.String.format;
+import java.util.Optional;
 
 public class BufferHolder {
 
-    private static final Logger LOGGER = Loggers.getLogger("connection.tls");
-    // Round to next highest power of two to account for PowerOfTwoBufferPool allocation style
-    private static final byte[] ZEROS = new byte[roundUpToNextHighestPowerOfTwo(MAX_TLS_PACKET_SIZE)];
+  private static final Logger logger = LoggerFactory.getLogger(BufferHolder.class);
+  private static final byte[] zeros = new byte[TlsChannelImpl.maxTlsPacketSize];
 
-    public final String name;
-    public final BufferAllocator allocator;
-    public final boolean plainData;
-    public final int maxSize;
-    public final boolean opportunisticDispose;
+  public final String name;
+  public final BufferAllocator allocator;
+  public final boolean plainData;
+  public final int maxSize;
+  public final boolean opportunisticDispose;
 
-    private ByteBuf byteBuf;
-    public ByteBuffer buffer;
-    public int lastSize;
+  public ByteBuffer buffer;
+  public int lastSize;
 
-    public BufferHolder(final String name, final BufferAllocator allocator, final int initialSize,
-                        final int maxSize, final boolean plainData, final boolean opportunisticDispose) {
-        this.name = name;
-        this.allocator = allocator;
-        this.buffer = null;
-        this.maxSize = maxSize;
-        this.plainData = plainData;
-        this.opportunisticDispose = opportunisticDispose;
-        this.lastSize = initialSize;
+  public BufferHolder(
+      String name,
+      Optional<ByteBuffer> buffer,
+      BufferAllocator allocator,
+      int initialSize,
+      int maxSize,
+      boolean plainData,
+      boolean opportunisticDispose) {
+    this.name = name;
+    this.allocator = allocator;
+    this.buffer = buffer.orElse(null);
+    this.maxSize = maxSize;
+    this.plainData = plainData;
+    this.opportunisticDispose = opportunisticDispose;
+    this.lastSize = buffer.map(b -> b.capacity()).orElse(initialSize);
+  }
+
+  public void prepare() {
+    if (buffer == null) {
+      buffer = allocator.allocate(lastSize);
     }
+  }
 
-    public void prepare() {
-        if (buffer == null) {
-            byteBuf = allocator.allocate(lastSize);
-            buffer = byteBuf.asNIO();
-        }
+  public boolean release() {
+    if (opportunisticDispose && buffer.position() == 0) {
+      return dispose();
+    } else {
+      return false;
     }
+  }
 
-    public boolean release() {
-        if (opportunisticDispose && buffer.position() == 0) {
-            return dispose();
-        } else {
-            return false;
-        }
+  public boolean dispose() {
+    if (buffer != null) {
+      allocator.free(buffer);
+      buffer = null;
+      return true;
+    } else {
+      return false;
     }
+  }
 
-    public boolean dispose() {
-        if (buffer != null) {
-            allocator.free(byteBuf);
-            buffer = null;
-            return true;
-        } else {
-            return false;
-        }
-    }
+  public void resize(int newCapacity) {
+    if (newCapacity > maxSize)
+      throw new IllegalArgumentException(
+          String.format(
+              "new capacity (%s) bigger than absolute max size (%s)", newCapacity, maxSize));
+    logger.trace(
+        "resizing buffer {}, increasing from {} to {} (manual sizing)",
+        name,
+        buffer.capacity(),
+        newCapacity);
+    resizeImpl(newCapacity);
+  }
 
-    public void resize(final int newCapacity) {
-        if (newCapacity > maxSize) {
-            throw new IllegalArgumentException(format("new capacity (%s) bigger than absolute max size (%s)", newCapacity, maxSize));
-        }
-        if (LOGGER.isTraceEnabled()) {
-            LOGGER.trace(format("resizing buffer %s, increasing from %s to %s (manual sizing)", name, buffer.capacity(), newCapacity));
-        }
-        resizeImpl(newCapacity);
+  public void enlarge() {
+    if (buffer.capacity() >= maxSize) {
+      throw new IllegalStateException(
+          String.format(
+              "%s buffer insufficient despite having capacity of %d", name, buffer.capacity()));
     }
+    int newCapacity = Math.min(buffer.capacity() * 2, maxSize);
+    logger.trace(
+        "enlarging buffer {}, increasing from {} to {} (automatic enlarge)",
+        name,
+        buffer.capacity(),
+        newCapacity);
+    resizeImpl(newCapacity);
+  }
 
-    public void enlarge() {
-        if (buffer.capacity() >= maxSize) {
-            throw new IllegalStateException(
-                    format("%s buffer insufficient despite having capacity of %d", name, buffer.capacity()));
-        }
-        int newCapacity = Math.min(lastSize * 2, maxSize);
-        if (LOGGER.isTraceEnabled()) {
-            LOGGER.trace(format("enlarging buffer %s, increasing from %s to %s (automatic enlarge)", name, buffer.capacity(), newCapacity));
-        }
-        resizeImpl(newCapacity);
+  private void resizeImpl(int newCapacity) {
+    ByteBuffer newBuffer = allocator.allocate(newCapacity);
+    buffer.flip();
+    newBuffer.put(buffer);
+    if (plainData) {
+      zero();
     }
+    allocator.free(buffer);
+    buffer = newBuffer;
+    lastSize = newCapacity;
+  }
 
-    private void resizeImpl(final int newCapacity) {
-        ByteBuf newByteBuf = allocator.allocate(newCapacity);
-        ByteBuffer newBuffer = newByteBuf.asNIO();
-        ((Buffer) buffer).flip();
-        newBuffer.put(buffer);
-        if (plainData) {
-            zero();
-        }
-        allocator.free(byteBuf);
-        byteBuf = newByteBuf;
-        buffer = newBuffer;
-        lastSize = newCapacity;
-    }
+  /**
+   * Fill with zeros the remaining of the supplied buffer. This method does not change the buffer
+   * position.
+   *
+   * <p>Typically used for security reasons, with buffers that contains now-unused plaintext.
+   */
+  public void zeroRemaining() {
+    buffer.mark();
+    buffer.put(zeros, 0, buffer.remaining());
+    buffer.reset();
+  }
 
-    /**
-     * Fill with zeros the remaining of the supplied buffer. This method does
-     * not change the buffer position.
-     * <p>
-     * Typically used for security reasons, with buffers that contains
-     * now-unused plaintext.
-     */
-    public void zeroRemaining() {
-        ((Buffer) buffer).mark();
-        buffer.put(ZEROS, 0, buffer.remaining());
-        ((Buffer) buffer).reset();
-    }
+  /**
+   * Fill the buffer with zeros. This method does not change the buffer position.
+   *
+   * <p>Typically used for security reasons, with buffers that contains now-unused plaintext.
+   */
+  public void zero() {
+    buffer.mark();
+    buffer.position(0);
+    buffer.put(zeros, 0, buffer.remaining());
+    buffer.reset();
+  }
 
-    /**
-     * Fill the buffer with zeros. This method does not change the buffer position.
-     * <p>
-     * Typically used for security reasons, with buffers that contains
-     * now-unused plaintext.
-     */
-    public void zero() {
-        ((Buffer) buffer).mark();
-        ((Buffer) buffer).position(0);
-        buffer.put(ZEROS, 0, buffer.remaining());
-        ((Buffer) buffer).reset();
-    }
-
-    public boolean nullOrEmpty() {
-        return buffer == null || buffer.position() == 0;
-    }
-
-    private static int roundUpToNextHighestPowerOfTwo(final int size) {
-        int v = size;
-        v--;
-        v |= v >> 1;
-        v |= v >> 2;
-        v |= v >> 4;
-        v |= v >> 8;
-        v |= v >> 16;
-        v++;
-        return v;
-    }
+  public boolean nullOrEmpty() {
+    return buffer == null || buffer.position() == 0;
+  }
 }
