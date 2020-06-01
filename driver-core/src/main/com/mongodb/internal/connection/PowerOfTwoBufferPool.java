@@ -74,12 +74,16 @@ public class PowerOfTwoBufferPool implements BufferProvider {
 
     @Override
     public ByteBuf getBuffer(final int size) {
+        return new PooledByteBufNIO(getByteBuffer(size));
+    }
+
+    public ByteBuffer getByteBuffer(final int size) {
         ConcurrentPool<ByteBuffer> pool = powerOfTwoToPoolMap.get(log2(roundUpToNextHighestPowerOfTwo(size)));
         ByteBuffer byteBuffer = (pool == null) ? createNew(size) : pool.get();
 
         ((Buffer) byteBuffer).clear();
         ((Buffer) byteBuffer).limit(size);
-        return new PooledByteBufNIO(byteBuffer);
+        return byteBuffer;
     }
 
     private ByteBuffer createNew(final int size) {
@@ -88,7 +92,7 @@ public class PowerOfTwoBufferPool implements BufferProvider {
         return buf;
     }
 
-    private void release(final ByteBuffer buffer) {
+    public void release(final ByteBuffer buffer) {
         ConcurrentPool<ByteBuffer> pool = powerOfTwoToPoolMap.get(log2(roundUpToNextHighestPowerOfTwo(buffer.capacity())));
         if (pool != null) {
             pool.release(buffer);

@@ -20,7 +20,6 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
-import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.Stream;
 
@@ -45,7 +44,7 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
     private final AsynchronousChannelGroup group;
 
     public AsynchronousSocketChannelStream(final ServerAddress serverAddress, final SocketSettings settings,
-                                    final BufferProvider bufferProvider, final AsynchronousChannelGroup group) {
+                                          final PowerOfTwoBufferPool bufferProvider, final AsynchronousChannelGroup group) {
         super(serverAddress, settings, bufferProvider);
         this.serverAddress = serverAddress;
         this.settings = settings;

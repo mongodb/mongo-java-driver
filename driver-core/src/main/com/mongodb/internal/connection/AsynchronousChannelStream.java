@@ -23,7 +23,6 @@ import com.mongodb.MongoSocketReadException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
-import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.Stream;
 import org.bson.ByteBuf;
@@ -46,12 +45,12 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public abstract class AsynchronousChannelStream implements Stream {
     private final ServerAddress serverAddress;
     private final SocketSettings settings;
-    private final BufferProvider bufferProvider;
+    private final PowerOfTwoBufferPool bufferProvider;
     private volatile ExtendedAsynchronousByteChannel channel;
     private volatile boolean isClosed;
 
     public AsynchronousChannelStream(final ServerAddress serverAddress, final SocketSettings settings,
-                                     final BufferProvider bufferProvider) {
+                                     final PowerOfTwoBufferPool bufferProvider) {
         this.serverAddress = serverAddress;
         this.settings = settings;
         this.bufferProvider = bufferProvider;
@@ -65,7 +64,7 @@ public abstract class AsynchronousChannelStream implements Stream {
         return settings;
     }
 
-    public BufferProvider getBufferProvider() {
+    public PowerOfTwoBufferPool getBufferProvider() {
         return bufferProvider;
     }
 

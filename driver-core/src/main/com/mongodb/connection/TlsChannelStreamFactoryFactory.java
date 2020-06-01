@@ -23,13 +23,13 @@ import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.connection.AsynchronousChannelStream;
 import com.mongodb.internal.connection.ConcurrentLinkedDeque;
+import com.mongodb.internal.connection.ExtendedAsynchronousByteChannel;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 import com.mongodb.internal.connection.tlschannel.BufferAllocator;
 import com.mongodb.internal.connection.tlschannel.ClientTlsChannel;
 import com.mongodb.internal.connection.tlschannel.TlsChannel;
 import com.mongodb.internal.connection.tlschannel.async.AsynchronousTlsChannel;
 import com.mongodb.internal.connection.tlschannel.async.AsynchronousTlsChannelGroup;
-import org.bson.ByteBuf;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -37,11 +37,15 @@ import javax.net.ssl.SSLParameters;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.StandardSocketOptions;
+import java.nio.ByteBuffer;
+import java.nio.channels.CompletionHandler;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.internal.connection.SslHelper.enableHostNameVerification;
@@ -89,12 +93,7 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Clo
 
     @Override
     public StreamFactory create(final SocketSettings socketSettings, final SslSettings sslSettings) {
-        return new StreamFactory() {
-            @Override
-            public Stream create(final ServerAddress serverAddress) {
-                return new TlsChannelStream(serverAddress, socketSettings, sslSettings, bufferPool, group, selectorMonitor);
-            }
-        };
+        return serverAddress -> new TlsChannelStream(serverAddress, socketSettings, sslSettings, bufferPool, group, selectorMonitor);
     }
 
     @Override
@@ -119,7 +118,7 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Clo
 
         private final Selector selector;
         private volatile boolean isClosed;
-        private final ConcurrentLinkedDeque<Pair> pendingRegistrations = new ConcurrentLinkedDeque<Pair>();
+        private final ConcurrentLinkedDeque<Pair> pendingRegistrations = new ConcurrentLinkedDeque<>();
 
         SelectorMonitor() {
             try {
@@ -130,38 +129,33 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Clo
         }
 
         void start() {
-            Thread selectorThread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        while (!isClosed) {
-                            try {
-                                selector.select();
-
-                                for (SelectionKey selectionKey : selector.selectedKeys()) {
-                                    selectionKey.cancel();
-                                    Runnable runnable = (Runnable) selectionKey.attachment();
-                                    runnable.run();
-                                }
-
-                                for (Iterator<Pair> iter = pendingRegistrations.iterator(); iter.hasNext();) {
-                                    Pair pendingRegistration = iter.next();
-                                    pendingRegistration.socketChannel.register(selector, SelectionKey.OP_CONNECT,
-                                            pendingRegistration.attachment);
-                                    iter.remove();
-                                }
-                            } catch (IOException e) {
-                                LOGGER.warn("Exception in selector loop", e);
-                            } catch (RuntimeException e) {
-                                LOGGER.warn("Exception in selector loop", e);
-                            }
-                        }
-                    } finally {
+            Thread selectorThread = new Thread(() -> {
+                try {
+                    while (!isClosed) {
                         try {
-                            selector.close();
-                        } catch (IOException e) {
-                            // ignore
+                            selector.select();
+
+                            for (SelectionKey selectionKey : selector.selectedKeys()) {
+                                selectionKey.cancel();
+                                Runnable runnable = (Runnable) selectionKey.attachment();
+                                runnable.run();
+                            }
+
+                            for (Iterator<Pair> iter = pendingRegistrations.iterator(); iter.hasNext();) {
+                                Pair pendingRegistration = iter.next();
+                                pendingRegistration.socketChannel.register(selector, SelectionKey.OP_CONNECT,
+                                        pendingRegistration.attachment);
+                                iter.remove();
+                            }
+                        } catch (IOException | RuntimeException e) {
+                            LOGGER.warn("Exception in selector loop", e);
                         }
+                    }
+                } finally {
+                    try {
+                        selector.close();
+                    } catch (IOException e) {
+                        // ignore
                     }
                 }
             });
@@ -188,7 +182,7 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Clo
         private final SslSettings sslSettings;
 
         TlsChannelStream(final ServerAddress serverAddress, final SocketSettings settings, final SslSettings sslSettings,
-                         final BufferProvider bufferProvider, final AsynchronousTlsChannelGroup group,
+                         final PowerOfTwoBufferPool bufferProvider, final AsynchronousTlsChannelGroup group,
                          final SelectorMonitor selectorMonitor) {
             super(serverAddress, settings, bufferProvider);
             this.sslSettings = sslSettings;
@@ -219,42 +213,39 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Clo
 
                 socketChannel.connect(getServerAddress().getSocketAddress());
 
-                selectorMonitor.register(socketChannel, new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            if (!socketChannel.finishConnect()) {
-                                throw new MongoSocketOpenException("Failed to finish connect", getServerAddress());
-                            }
-
-                            SSLEngine sslEngine = getSslContext().createSSLEngine(getServerAddress().getHost(),
-                                    getServerAddress().getPort());
-                            sslEngine.setUseClientMode(true);
-
-                            SSLParameters sslParameters = sslEngine.getSSLParameters();
-                            enableSni(getServerAddress().getHost(), sslParameters);
-
-                            if (!sslSettings.isInvalidHostNameAllowed()) {
-                                enableHostNameVerification(sslParameters);
-                            }
-                            sslEngine.setSSLParameters(sslParameters);
-
-                            BufferAllocator bufferAllocator = new BufferProviderAllocator();
-
-                            TlsChannel tlsChannel = ClientTlsChannel.newBuilder(socketChannel, sslEngine)
-                                    .withEncryptedBufferAllocator(bufferAllocator)
-                                    .withPlainBufferAllocator(bufferAllocator)
-                                    .build();
-
-                            // build asynchronous channel, based in the TLS channel and associated with the global group.
-                            setChannel(new AsynchronousTlsChannel(group, tlsChannel, socketChannel));
-
-                            handler.completed(null);
-                        } catch (IOException e) {
-                            handler.failed(new MongoSocketOpenException("Exception opening socket", getServerAddress(), e));
-                        } catch (Throwable t) {
-                            handler.failed(t);
+                selectorMonitor.register(socketChannel, () -> {
+                    try {
+                        if (!socketChannel.finishConnect()) {
+                            throw new MongoSocketOpenException("Failed to finish connect", getServerAddress());
                         }
+
+                        SSLEngine sslEngine = getSslContext().createSSLEngine(getServerAddress().getHost(),
+                                getServerAddress().getPort());
+                        sslEngine.setUseClientMode(true);
+
+                        SSLParameters sslParameters = sslEngine.getSSLParameters();
+                        enableSni(getServerAddress().getHost(), sslParameters);
+
+                        if (!sslSettings.isInvalidHostNameAllowed()) {
+                            enableHostNameVerification(sslParameters);
+                        }
+                        sslEngine.setSSLParameters(sslParameters);
+
+                        BufferAllocator bufferAllocator = new BufferProviderAllocator();
+
+                        TlsChannel tlsChannel = ClientTlsChannel.newBuilder(socketChannel, sslEngine)
+                                .withEncryptedBufferAllocator(bufferAllocator)
+                                .withPlainBufferAllocator(bufferAllocator)
+                                .build();
+
+                        // build asynchronous channel, based in the TLS channel and associated with the global group.
+                        setChannel(new AsynchronousTlsChannelAdapter(new AsynchronousTlsChannel(group, tlsChannel, socketChannel)));
+
+                        handler.completed(null);
+                    } catch (IOException e) {
+                        handler.failed(new MongoSocketOpenException("Exception opening socket", getServerAddress(), e));
+                    } catch (Throwable t) {
+                        handler.failed(t);
                     }
                 });
             } catch (IOException e) {
@@ -274,13 +265,75 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Clo
 
         private class BufferProviderAllocator implements BufferAllocator {
             @Override
-            public ByteBuf allocate(final int size) {
-                return getBufferProvider().getBuffer(size);
+            public ByteBuffer allocate(final int size) {
+                return getBufferProvider().getByteBuffer(size);
             }
 
             @Override
-            public void free(final ByteBuf buffer) {
-                buffer.release();
+            public void free(final ByteBuffer buffer) {
+                getBufferProvider().release(buffer);
+            }
+        }
+
+        public static class AsynchronousTlsChannelAdapter implements ExtendedAsynchronousByteChannel {
+            private final AsynchronousTlsChannel wrapped;
+
+            AsynchronousTlsChannelAdapter(final AsynchronousTlsChannel wrapped) {
+                this.wrapped = wrapped;
+            }
+
+            @Override
+            public <A> void read(final ByteBuffer dst, final A attach, final CompletionHandler<Integer, ? super A> handler) {
+                wrapped.read(dst, attach, handler);
+            }
+
+            @Override
+            public <A> void read(final ByteBuffer dst, final long timeout, final TimeUnit unit, final A attach,
+                                 final CompletionHandler<Integer, ? super A> handler) {
+                wrapped.read(dst, timeout, unit, attach, handler);
+            }
+
+            @Override
+            public <A> void read(final ByteBuffer[] dsts, final int offset, final int length, final long timeout, final TimeUnit unit,
+                                 final A attach, final CompletionHandler<Long, ? super A> handler) {
+                wrapped.read(dsts, offset, length, timeout, unit, attach, handler);
+            }
+
+            @Override
+            public Future<Integer> read(final ByteBuffer dst) {
+                return wrapped.read(dst);
+            }
+
+            @Override
+            public <A> void write(final ByteBuffer src, final A attach, final CompletionHandler<Integer, ? super A> handler) {
+                wrapped.write(src, attach, handler);
+            }
+
+            @Override
+            public <A> void write(final ByteBuffer src, final long timeout, final TimeUnit unit, final A attach,
+                                  final CompletionHandler<Integer, ? super A> handler) {
+                wrapped.write(src, timeout, unit, attach, handler);
+            }
+
+            @Override
+            public <A> void write(final ByteBuffer[] srcs, final int offset, final int length, final long timeout, final TimeUnit unit,
+                                  final A attach, final CompletionHandler<Long, ? super A> handler) {
+                wrapped.write(srcs, offset, length, timeout, unit, attach, handler);
+            }
+
+            @Override
+            public Future<Integer> write(final ByteBuffer src) {
+                return wrapped.write(src);
+            }
+
+            @Override
+            public boolean isOpen() {
+                return wrapped.isOpen();
+            }
+
+            @Override
+            public void close() throws IOException {
+                wrapped.close();
             }
         }
     }

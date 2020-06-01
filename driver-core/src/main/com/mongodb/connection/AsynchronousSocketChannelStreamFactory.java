@@ -31,7 +31,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 3.0
  */
 public class AsynchronousSocketChannelStreamFactory implements StreamFactory {
-    private final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
+    private final PowerOfTwoBufferPool bufferProvider = new PowerOfTwoBufferPool();
     private final SocketSettings settings;
     private final AsynchronousChannelGroup group;
 
