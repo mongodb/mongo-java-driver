@@ -23,6 +23,7 @@ import com.mongodb.internal.connection.tlschannel.BufferAllocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 
@@ -111,7 +112,7 @@ public class BufferHolder {
 
   private void resizeImpl(int newCapacity) {
     ByteBuffer newBuffer = allocator.allocate(newCapacity);
-    buffer.flip();
+    ((Buffer) buffer).flip();
     newBuffer.put(buffer);
     if (plainData) {
       zero();
@@ -128,9 +129,9 @@ public class BufferHolder {
    * <p>Typically used for security reasons, with buffers that contains now-unused plaintext.
    */
   public void zeroRemaining() {
-    buffer.mark();
+    ((Buffer) buffer).mark();
     buffer.put(zeros, 0, buffer.remaining());
-    buffer.reset();
+    ((Buffer) buffer).reset();
   }
 
   /**
@@ -139,10 +140,10 @@ public class BufferHolder {
    * <p>Typically used for security reasons, with buffers that contains now-unused plaintext.
    */
   public void zero() {
-    buffer.mark();
-    buffer.position(0);
+    ((Buffer) buffer).mark();
+    ((Buffer) buffer).position(0);
     buffer.put(zeros, 0, buffer.remaining());
-    buffer.reset();
+    ((Buffer) buffer).reset();
   }
 
   public boolean nullOrEmpty() {
