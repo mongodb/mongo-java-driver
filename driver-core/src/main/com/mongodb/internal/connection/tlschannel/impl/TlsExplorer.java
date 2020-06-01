@@ -23,6 +23,7 @@ import javax.net.ssl.SNIHostName;
 import javax.net.ssl.SNIServerName;
 import javax.net.ssl.SSLProtocolException;
 import javax.net.ssl.StandardConstants;
+import java.nio.Buffer;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -51,7 +52,7 @@ public final class TlsExplorer {
    */
   public static int getRequiredSize(ByteBuffer source) {
     if (source.remaining() < RECORD_HEADER_SIZE) throw new BufferUnderflowException();
-    source.mark();
+    ((Buffer) source).mark();
     try {
       byte firstByte = source.get();
       source.get(); // second byte discarded
@@ -63,13 +64,13 @@ public final class TlsExplorer {
         return (((source.get() & 0xFF) << 8) | (source.get() & 0xFF)) + 5;
       }
     } finally {
-      source.reset();
+      ((Buffer) source).reset();
     }
   }
 
   public static Map<Integer, SNIServerName> explore(ByteBuffer source) throws SSLProtocolException {
     if (source.remaining() < RECORD_HEADER_SIZE) throw new BufferUnderflowException();
-    source.mark();
+    ((Buffer) source).mark();
     try {
       byte firstByte = source.get();
       ignore(source, 1); // ignore second byte
@@ -84,7 +85,7 @@ public final class TlsExplorer {
         throw new SSLProtocolException("Not handshake record");
       }
     } finally {
-      source.reset();
+      ((Buffer) source).reset();
     }
   }
 
@@ -134,7 +135,7 @@ public final class TlsExplorer {
     // records, but in practice this does not occur.
     if (handshakeLength > recordLength - 4) // 4: handshake header size
     throw new SSLProtocolException("Handshake message spans multiple records");
-    input.limit(handshakeLength + input.position());
+    ((Buffer) input).limit(handshakeLength + input.position());
     return exploreClientHello(input);
   }
 
@@ -257,7 +258,9 @@ public final class TlsExplorer {
   }
 
   private static void ignore(ByteBuffer input, int length) {
-    if (length != 0) input.position(input.position() + length);
+    if (length != 0) {
+      ((Buffer) input).position(input.position() + length);
+    }
   }
 
   // For some reason, SNIServerName is abstract

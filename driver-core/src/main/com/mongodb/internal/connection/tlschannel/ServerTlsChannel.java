@@ -35,6 +35,7 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.StandardConstants;
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.Channel;
@@ -399,7 +400,7 @@ public class ServerTlsChannel implements TlsChannel {
         }
         TlsChannelImpl.readFromChannel(underlying, inEncrypted.buffer); // IO block
       }
-      inEncrypted.buffer.flip();
+      ((Buffer) inEncrypted.buffer).flip();
       Map<Integer, SNIServerName> serverNames = TlsExplorer.explore(inEncrypted.buffer);
       inEncrypted.buffer.compact();
       SNIServerName hostName = serverNames.get(StandardConstants.SNI_HOST_NAME);
@@ -421,7 +422,7 @@ public class ServerTlsChannel implements TlsChannel {
       }
       TlsChannelImpl.readFromChannel(underlying, inEncrypted.buffer); // IO block
     }
-    inEncrypted.buffer.flip();
+    ((Buffer) inEncrypted.buffer).flip();
     int recordHeaderSize = TlsExplorer.getRequiredSize(inEncrypted.buffer);
     inEncrypted.buffer.compact();
     return recordHeaderSize;

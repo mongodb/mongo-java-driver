@@ -19,6 +19,7 @@
 
 package com.mongodb.internal.connection.tlschannel.impl;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
 public class ByteBufferUtil {
@@ -43,8 +44,8 @@ public class ByteBufferUtil {
       return;
     }
     ByteBuffer tmp = src.duplicate();
-    tmp.limit(src.position() + length);
+    ((Buffer) tmp).limit(src.position() + length);
     dst.put(tmp);
-    src.position(src.position() + length);
+    ((Buffer) src).position(src.position() + length);
   }
 }

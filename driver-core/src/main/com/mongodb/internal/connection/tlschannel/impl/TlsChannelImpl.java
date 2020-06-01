@@ -36,6 +36,7 @@ import javax.net.ssl.SSLEngineResult.Status;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.ClosedChannelException;
@@ -210,7 +211,7 @@ public class TlsChannelImpl implements ByteChannel {
         throw new ClosedChannelException();
       }
       HandshakeStatus handshakeStatus = engine.getHandshakeStatus();
-      int bytesToReturn = inPlain.nullOrEmpty() ? 0 : inPlain.buffer.position();
+      int bytesToReturn = inPlain.nullOrEmpty() ? 0 :inPlain.buffer.position();
       while (true) {
         if (bytesToReturn > 0) {
           if (inPlain.nullOrEmpty()) {
@@ -263,7 +264,7 @@ public class TlsChannelImpl implements ByteChannel {
   }
 
   private int transferPendingPlain(ByteBufferSet dstBuffers) {
-    inPlain.buffer.flip(); // will read
+    ((Buffer) inPlain.buffer).flip(); // will read
     int bytes = dstBuffers.putRemaining(inPlain.buffer);
     inPlain.buffer.compact(); // will write
     boolean disposed = inPlain.release();
@@ -314,7 +315,7 @@ public class TlsChannelImpl implements ByteChannel {
   }
 
   private SSLEngineResult callEngineUnwrap(ByteBufferSet dest) throws SSLException {
-    inEncrypted.buffer.flip();
+    ((Buffer) inEncrypted.buffer).flip();
     try {
       SSLEngineResult result =
           engine.unwrap(inEncrypted.buffer, dest.array, dest.offset, dest.length);
@@ -449,7 +450,7 @@ public class TlsChannelImpl implements ByteChannel {
     if (outEncrypted.buffer.position() == 0) {
       return;
     }
-    outEncrypted.buffer.flip();
+    ((Buffer) outEncrypted.buffer).flip();
     try {
       try {
         writeToChannel(writeChannel, outEncrypted.buffer);
