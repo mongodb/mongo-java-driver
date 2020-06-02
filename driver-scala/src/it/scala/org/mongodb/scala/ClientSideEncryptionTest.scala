@@ -16,9 +16,9 @@
 
 package org.mongodb.scala
 
-import com.mongodb.client.{AbstractClientSideEncryptionTest, Fixture}
+import com.mongodb.client.{ AbstractClientSideEncryptionTest, Fixture }
 import com.mongodb.event.CommandListener
-import org.bson.{BsonArray, BsonDocument}
+import org.bson.{ BsonArray, BsonDocument }
 import org.junit.After
 import org.mongodb.scala.syncadapter.SyncMongoClient
 
