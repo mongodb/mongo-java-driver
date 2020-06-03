@@ -302,6 +302,9 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
         if (request.getWildcardProjection() != null) {
             index.append("wildcardProjection", request.getWildcardProjection());
         }
+        if (request.isHidden()) {
+            index.append("hidden", BsonBoolean.TRUE);
+        }
         return index;
     }
 

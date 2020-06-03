@@ -560,6 +560,30 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(4, 4) })
+    def 'should be able to set hidden index'() {
+        given:
+        def operation = new CreateIndexesOperation(getNamespace(), [new IndexRequest(new BsonDocument('field', new BsonInt32(1)))])
+
+        when:
+        execute(operation, async)
+
+        then:
+        getUserCreatedIndexes('hidden').size() == 0
+
+        when:
+        getCollectionHelper().drop(getNamespace())
+        operation = new CreateIndexesOperation(getNamespace(),
+                [new IndexRequest(new BsonDocument('field', new BsonInt32(1))).hidden(true)])
+        execute(operation, async)
+
+        then:
+        getUserCreatedIndexes('hidden').size() == 1
+
+        where:
+        async << [true, false]
+    }
+
     Document getIndex(final String indexName) {
         getIndexes().find {
             it -> it.getString('name') == indexName

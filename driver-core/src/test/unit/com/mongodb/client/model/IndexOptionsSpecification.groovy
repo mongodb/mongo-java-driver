@@ -47,6 +47,7 @@ class IndexOptionsSpecification extends Specification {
         options.getPartialFilterExpression() == null
         options.getCollation() == null
         options.getWildcardProjection() == null
+        !options.isHidden()
         def wildcardProjection = BsonDocument.parse('{a  : 1}')
 
         when:
@@ -73,6 +74,7 @@ class IndexOptionsSpecification extends Specification {
                 .partialFilterExpression(partialFilterExpression)
                 .collation(collation)
                 .wildcardProjection(wildcardProjection)
+                .hidden(true)
 
         then:
         options.isBackground()
@@ -94,6 +96,7 @@ class IndexOptionsSpecification extends Specification {
         options.getPartialFilterExpression() == partialFilterExpression
         options.getCollation() == collation
         options.getWildcardProjection() == wildcardProjection
+        options.isHidden()
     }
 
     def 'should convert expireAfter'() {

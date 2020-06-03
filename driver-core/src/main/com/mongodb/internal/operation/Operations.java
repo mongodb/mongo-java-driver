@@ -479,6 +479,7 @@ final class Operations<TDocument> {
                     .partialFilterExpression(toBsonDocument(model.getOptions().getPartialFilterExpression()))
                     .collation(model.getOptions().getCollation())
                     .wildcardProjection(toBsonDocument(model.getOptions().getWildcardProjection()))
+                    .hidden(model.getOptions().isHidden())
             );
         }
         return new CreateIndexesOperation(namespace, indexRequests, writeConcern)

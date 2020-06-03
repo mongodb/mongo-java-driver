@@ -56,6 +56,7 @@ class IndexRequestSpecification extends Specification {
         request.getPartialFilterExpression() == null
         request.getCollation() == null
         request.getWildcardProjection() == null
+        !request.isHidden()
 
         when:
         def keys = BsonDocument.parse('{ a: 1 }')
@@ -94,6 +95,7 @@ class IndexRequestSpecification extends Specification {
                 .partialFilterExpression(partialFilterExpression)
                 .collation(collation)
                 .wildcardProjection(wildcardProjection)
+                .hidden(true)
 
         then:
         request2.getKeys() == keys
@@ -117,6 +119,7 @@ class IndexRequestSpecification extends Specification {
         request2.getPartialFilterExpression() == partialFilterExpression
         request2.getCollation() == collation
         request2.getWildcardProjection() == wildcardProjection
+        request2.isHidden()
     }
 
 
