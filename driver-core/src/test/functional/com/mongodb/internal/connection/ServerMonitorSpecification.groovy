@@ -31,6 +31,7 @@ import com.mongodb.connection.SocketStreamFactory
 import org.bson.types.ObjectId
 
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
@@ -195,7 +196,9 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
                         latch.countDown()
                     }
                 },
-                new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(),
+                new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder()
+                        .connectTimeout(500, TimeUnit.MILLISECONDS)
+                        .build(),
                         getSslSettings()), getCredentialWithCache(), null, null, [], null),
                 new TestConnectionPool())
         serverMonitor.start()
