@@ -47,6 +47,7 @@ public class IndexOptions {
     private Bson partialFilterExpression;
     private Collation collation;
     private Bson wildcardProjection;
+    private boolean hidden;
 
     /**
      * Create the index in the background
@@ -491,6 +492,30 @@ public class IndexOptions {
         return this;
     }
 
+    /**
+     * Gets whether the index should not be used by the query planner when executing operations.
+     *
+     * @return true if the index should not be used by the query planner when executing operations.
+     * @mongodb.server.release 4.4
+     * @since 4.1
+     */
+    public boolean isHidden() {
+        return hidden;
+    }
+
+    /**
+     * Should the index not be used by the query planner when executing operations.
+     *
+     * @param hidden true if the index should be hidden
+     * @return this
+     * @mongodb.server.release 4.4
+     * @since 4.1
+     */
+    public IndexOptions hidden(final boolean hidden) {
+        this.hidden = hidden;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "IndexOptions{"
@@ -513,6 +538,7 @@ public class IndexOptions {
                 + ", partialFilterExpression=" + partialFilterExpression
                 + ", collation=" + collation
                 + ", wildcardProjection=" + wildcardProjection
+                + ", hidden=" + hidden
                 + '}';
     }
 }

@@ -1200,6 +1200,7 @@ class AsyncMongoCollectionSpecification extends Specification {
                          .partialFilterExpression(BsonDocument.parse('{status: "active"}'))
                          .collation(collation)
                          .wildcardProjection(new BsonDocument('a', new BsonInt32(1)))
+                         .hidden(true)
                 ], ACKNOWLEDGED)
         indexName = execute(createIndexMethod, session, new Document('key', 1), new IndexOptions()
                 .background(true)
@@ -1220,7 +1221,8 @@ class AsyncMongoCollectionSpecification extends Specification {
                 .storageEngine(BsonDocument.parse('{wiredTiger: {configString: "block_compressor=zlib"}}'))
                 .partialFilterExpression(BsonDocument.parse('{status: "active"}'))
                 .collation(collation)
-                .wildcardProjection(new BsonDocument('a', new BsonInt32(1))))
+                .wildcardProjection(new BsonDocument('a', new BsonInt32(1)))
+                .hidden(true))
         operation = executor.getWriteOperation() as CreateIndexesOperation
 
         then:
