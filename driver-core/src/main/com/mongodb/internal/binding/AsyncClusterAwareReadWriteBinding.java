@@ -16,6 +16,8 @@
 
 package com.mongodb.internal.binding;
 
+import com.mongodb.ServerAddress;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.Cluster;
 
 /**
@@ -23,4 +25,12 @@ import com.mongodb.internal.connection.Cluster;
  */
 public interface AsyncClusterAwareReadWriteBinding extends AsyncReadWriteBinding {
     Cluster getCluster();
+
+    /**
+     * Returns a connection source to the specified server
+     *
+     * @param serverAddress the server address
+     * @param callback the to be passed the connection source
+     */
+    void getConnectionSource(ServerAddress serverAddress, SingleResultCallback<AsyncConnectionSource> callback);
 }
