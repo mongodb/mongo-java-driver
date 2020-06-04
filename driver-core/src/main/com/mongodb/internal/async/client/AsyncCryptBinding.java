@@ -17,8 +17,9 @@
 package com.mongodb.internal.async.client;
 
 import com.mongodb.ReadPreference;
-import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.ServerAddress;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
@@ -63,6 +64,20 @@ public class AsyncCryptBinding implements AsyncClusterAwareReadWriteBinding {
     @Override
     public void getReadConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
         wrapped.getReadConnectionSource(new SingleResultCallback<AsyncConnectionSource>() {
+            @Override
+            public void onResult(final AsyncConnectionSource result, final Throwable t) {
+                if (t != null) {
+                    callback.onResult(null, t);
+                } else {
+                    callback.onResult(new AsyncCryptConnectionSource(result), null);
+                }
+            }
+        });
+    }
+
+    @Override
+    public void getConnectionSource(final ServerAddress serverAddress, final SingleResultCallback<AsyncConnectionSource> callback) {
+        wrapped.getConnectionSource(serverAddress, new SingleResultCallback<AsyncConnectionSource>() {
             @Override
             public void onResult(final AsyncConnectionSource result, final Throwable t) {
                 if (t != null) {
