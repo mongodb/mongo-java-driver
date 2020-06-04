@@ -18,6 +18,7 @@ package com.mongodb.binding;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.ServerAddress;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.Server;
@@ -26,6 +27,7 @@ import com.mongodb.internal.binding.AbstractReferenceCounted;
 import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
 import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
 import com.mongodb.selector.ReadPreferenceServerSelector;
+import com.mongodb.selector.ServerAddressSelector;
 import com.mongodb.selector.ServerSelector;
 import com.mongodb.selector.WritableServerSelector;
 import com.mongodb.session.SessionContext;
@@ -89,18 +91,23 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
     }
 
     @Override
-    public ConnectionSource getReadConnectionSource() {
-        return new ClusterBindingConnectionSource(new ReadPreferenceServerSelector(readPreference));
-    }
-
-    @Override
     public SessionContext getSessionContext() {
         return new ReadConcernAwareNoOpSessionContext(readConcern);
     }
 
     @Override
+    public ConnectionSource getReadConnectionSource() {
+        return new ClusterBindingConnectionSource(new ReadPreferenceServerSelector(readPreference));
+    }
+
+    @Override
     public ConnectionSource getWriteConnectionSource() {
         return new ClusterBindingConnectionSource(new WritableServerSelector());
+    }
+
+    @Override
+    public ConnectionSource getConnectionSource(final ServerAddress serverAddress) {
+        return new ClusterBindingConnectionSource(new ServerAddressSelector(serverAddress));
     }
 
     private final class ClusterBindingConnectionSource extends AbstractReferenceCounted implements ConnectionSource {

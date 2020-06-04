@@ -18,6 +18,7 @@ package com.mongodb.binding;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Cluster;
@@ -27,6 +28,7 @@ import com.mongodb.internal.binding.AbstractReferenceCounted;
 import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding;
 import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
 import com.mongodb.selector.ReadPreferenceServerSelector;
+import com.mongodb.selector.ServerAddressSelector;
 import com.mongodb.selector.ServerSelector;
 import com.mongodb.selector.WritableServerSelector;
 import com.mongodb.session.SessionContext;
@@ -100,6 +102,11 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
     @Override
     public void getWriteConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
         getAsyncClusterBindingConnectionSource(new WritableServerSelector(), callback);
+    }
+
+    @Override
+    public void getConnectionSource(final ServerAddress serverAddress, final SingleResultCallback<AsyncConnectionSource> callback) {
+        getAsyncClusterBindingConnectionSource(new ServerAddressSelector(serverAddress), callback);
     }
 
     private void getAsyncClusterBindingConnectionSource(final ServerSelector serverSelector,

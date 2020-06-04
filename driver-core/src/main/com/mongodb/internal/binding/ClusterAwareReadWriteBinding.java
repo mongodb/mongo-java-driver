@@ -16,6 +16,8 @@
 
 package com.mongodb.internal.binding;
 
+import com.mongodb.ServerAddress;
+import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadWriteBinding;
 import com.mongodb.connection.Cluster;
 
@@ -24,4 +26,10 @@ import com.mongodb.connection.Cluster;
  */
 public interface ClusterAwareReadWriteBinding extends ReadWriteBinding {
     Cluster getCluster();
+
+    /**
+     * Returns a connection source to the specified server address.
+     * @return the connection source
+     */
+    ConnectionSource getConnectionSource(ServerAddress serverAddress);
 }

@@ -18,9 +18,9 @@ package com.mongodb.client.internal;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.ServerAddress;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadWriteBinding;
-import com.mongodb.binding.SingleServerBinding;
 import com.mongodb.client.ClientSession;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.Connection;
@@ -79,23 +79,19 @@ public class ClientSessionBinding implements ReadWriteBinding {
 
     @Override
     public ConnectionSource getReadConnectionSource() {
-        return new SessionBindingConnectionSource(wrapConnectionSource(wrapped.getReadConnectionSource()));
+        if (isActiveShardedTxn()) {
+            return new SessionBindingConnectionSource(wrapped.getConnectionSource(pinServer()));
+        } else {
+            return new SessionBindingConnectionSource(wrapped.getReadConnectionSource());
+        }
     }
 
     public ConnectionSource getWriteConnectionSource() {
-        return new SessionBindingConnectionSource(wrapConnectionSource(wrapped.getWriteConnectionSource()));
-    }
-
-    private ConnectionSource wrapConnectionSource(final ConnectionSource connectionSource) {
-        ConnectionSource retVal = connectionSource;
         if (isActiveShardedTxn()) {
-            setPinnedServerAddress();
-            SingleServerBinding binding = new SingleServerBinding(wrapped.getCluster(), session.getPinnedServerAddress(),
-                    wrapped.getReadPreference());
-            retVal = binding.getWriteConnectionSource();
-            binding.release();
+            return new SessionBindingConnectionSource(wrapped.getConnectionSource(pinServer()));
+        } else {
+            return new SessionBindingConnectionSource(wrapped.getWriteConnectionSource());
         }
-        return retVal;
     }
 
     @Override
@@ -107,11 +103,14 @@ public class ClientSessionBinding implements ReadWriteBinding {
         return session.hasActiveTransaction() && wrapped.getCluster().getDescription().getType() == ClusterType.SHARDED;
     }
 
-    private void setPinnedServerAddress() {
-        if (session.getPinnedServerAddress() == null) {
+    private ServerAddress pinServer() {
+        ServerAddress pinnedServerAddress = session.getPinnedServerAddress();
+        if (pinnedServerAddress == null) {
             Server server = wrapped.getCluster().selectServer(new ReadPreferenceServerSelector(wrapped.getReadPreference()));
-            session.setPinnedServerAddress(server.getDescription().getAddress());
+            pinnedServerAddress = server.getDescription().getAddress();
+            session.setPinnedServerAddress(pinnedServerAddress);
         }
+        return pinnedServerAddress;
     }
 
     private class SessionBindingConnectionSource implements ConnectionSource {
