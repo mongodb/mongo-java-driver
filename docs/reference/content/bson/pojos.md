@@ -473,7 +473,7 @@ public final class Person {
 ### Changing what is serialized
 
 By default `null` values aren't serialized. This is controlled by the default implementation of the 
-[`FieldSerialization`]({{< apiref "bson" "org/bson/codecs/pojo/FieldSerialization.html" >}}) interface. Custom implementations can be set on 
+[`PropertySerialization`]({{< apiref "bson" "org/bson/codecs/pojo/PropertySerialization.html" >}}) interface. Custom implementations can be set on
 the `PropertyModelBuilder` which is available from the `ClassModelBuilder`.
 
 The [`BsonIgnore`]({{< apiref "bson" "org/bson/codecs/pojo/annotations/BsonIgnore.html" >}}) can be used along with the `DEFAULT_CONVENTIONS` to mark
