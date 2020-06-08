@@ -20,6 +20,7 @@ import com.mongodb.CursorType;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.Function;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Collation;
@@ -188,6 +189,11 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
     public FindIterable<TResult> allowDiskUse(@Nullable final Boolean allowDiskUse) {
         findOptions.allowDiskUse(allowDiskUse);
         return this;
+    }
+
+    @Override
+    public <U> FindIterable<U> map(Function<TResult, U> mapper) {
+        return new MappingFindIterable<TResult, U>(this, mapper);
     }
 
     @Nullable
