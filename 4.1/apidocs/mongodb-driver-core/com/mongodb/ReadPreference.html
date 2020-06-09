@@ -27,7 +27,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":10,"i1":6,"i2":6,"i3":6,"i4":6,"i5":9,"i6":9,"i7":9,"i8":9,"i9":9,"i10":9,"i11":9,"i12":9,"i13":9,"i14":9,"i15":9,"i16":9,"i17":9,"i18":9,"i19":9,"i20":9,"i21":9,"i22":9,"i23":9,"i24":9,"i25":9,"i26":9,"i27":9,"i28":9,"i29":9,"i30":6,"i31":9,"i32":9,"i33":9};
+var data = {"i0":10,"i1":6,"i2":6,"i3":6,"i4":6,"i5":9,"i6":9,"i7":9,"i8":9,"i9":9,"i10":9,"i11":9,"i12":9,"i13":9,"i14":9,"i15":9,"i16":9,"i17":9,"i18":9,"i19":9,"i20":9,"i21":9,"i22":9,"i23":9,"i24":9,"i25":9,"i26":9,"i27":9,"i28":9,"i29":9,"i30":6,"i31":9,"i32":9,"i33":9,"i34":6,"i35":6,"i36":6,"i37":6};
 var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -427,6 +427,36 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 <div class="block">Creates a taggable read preference from the given read preference name, list of tag sets, and max allowable staleness of secondaries.</div>
 </td>
 </tr>
+<tr id="i34" class="altColor">
+<td class="colFirst"><code>abstract <a href="ReadPreference.html" title="class in com.mongodb">ReadPreference</a></code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#withHedgeOptions(com.mongodb.ReadPreferenceHedgeOptions)">withHedgeOptions</a></span>&#8203;(<a href="ReadPreferenceHedgeOptions.html" title="class in com.mongodb">ReadPreferenceHedgeOptions</a>&nbsp;hedgeOptions)</code></th>
+<td class="colLast">
+<div class="block">Create a new ReadPreference instance with hedge options.</div>
+</td>
+</tr>
+<tr id="i35" class="rowColor">
+<td class="colFirst"><code>abstract <a href="ReadPreference.html" title="class in com.mongodb">ReadPreference</a></code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#withMaxStalenessMS(java.lang.Long,java.util.concurrent.TimeUnit)">withMaxStalenessMS</a></span>&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Long.html?is-external=true" title="class or interface in java.lang" class="externalLink">Long</a>&nbsp;maxStalenessMS,
+                  <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/TimeUnit.html?is-external=true" title="class or interface in java.util.concurrent" class="externalLink">TimeUnit</a>&nbsp;timeUnit)</code></th>
+<td class="colLast">
+<div class="block">Create a new ReadPreference instance with the maximum acceptable staleness of a secondary in order to be considered for
+ read operations.</div>
+</td>
+</tr>
+<tr id="i36" class="altColor">
+<td class="colFirst"><code>abstract <a href="ReadPreference.html" title="class in com.mongodb">ReadPreference</a></code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#withTagSet(com.mongodb.TagSet)">withTagSet</a></span>&#8203;(<a href="TagSet.html" title="class in com.mongodb">TagSet</a>&nbsp;tagSet)</code></th>
+<td class="colLast">
+<div class="block">Create a new ReadPreference instance with a new tag set.</div>
+</td>
+</tr>
+<tr id="i37" class="rowColor">
+<td class="colFirst"><code>abstract <a href="ReadPreference.html" title="class in com.mongodb">ReadPreference</a></code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#withTagSetList(java.util.List)">withTagSetList</a></span>&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/List.html?is-external=true" title="class or interface in java.util" class="externalLink">List</a>&lt;<a href="TagSet.html" title="class in com.mongodb">TagSet</a>&gt;&nbsp;tagSet)</code></th>
+<td class="colLast">
+<div class="block">Create a new ReadPreference instance with a new tag set list.</div>
+</td>
+</tr>
 </table>
 <ul class="blockList">
 <li class="blockList"><a id="methods.inherited.from.class.java.lang.Object">
@@ -451,6 +481,94 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 <!--   -->
 </a>
 <h3>Method Detail</h3>
+<a id="withTagSet(com.mongodb.TagSet)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>withTagSet</h4>
+<pre class="methodSignature">public abstract&nbsp;<a href="ReadPreference.html" title="class in com.mongodb">ReadPreference</a>&nbsp;withTagSet&#8203;(<a href="TagSet.html" title="class in com.mongodb">TagSet</a>&nbsp;tagSet)</pre>
+<div class="block">Create a new ReadPreference instance with a new tag set.
+ <p>
+ Note: this method is not supported for a primary read preference.
+ </p></div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>tagSet</code> - the new tag set</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>a new ReadPreference instance with a new tag set</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>4.1</dd>
+</dl>
+</li>
+</ul>
+<a id="withTagSetList(java.util.List)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>withTagSetList</h4>
+<pre class="methodSignature">public abstract&nbsp;<a href="ReadPreference.html" title="class in com.mongodb">ReadPreference</a>&nbsp;withTagSetList&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/List.html?is-external=true" title="class or interface in java.util" class="externalLink">List</a>&lt;<a href="TagSet.html" title="class in com.mongodb">TagSet</a>&gt;&nbsp;tagSet)</pre>
+<div class="block">Create a new ReadPreference instance with a new tag set list.
+ <p>
+ Note: this method is not supported for a primary read preference.
+ </p></div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>tagSet</code> - the new tag set list</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>a new ReadPreference instance with a new tag set list</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>4.1</dd>
+</dl>
+</li>
+</ul>
+<a id="withMaxStalenessMS(java.lang.Long,java.util.concurrent.TimeUnit)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>withMaxStalenessMS</h4>
+<pre class="methodSignature">public abstract&nbsp;<a href="ReadPreference.html" title="class in com.mongodb">ReadPreference</a>&nbsp;withMaxStalenessMS&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Long.html?is-external=true" title="class or interface in java.lang" class="externalLink">Long</a>&nbsp;maxStalenessMS,
+                                                  <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/TimeUnit.html?is-external=true" title="class or interface in java.util.concurrent" class="externalLink">TimeUnit</a>&nbsp;timeUnit)</pre>
+<div class="block">Create a new ReadPreference instance with the maximum acceptable staleness of a secondary in order to be considered for
+ read operations.
+ <p>
+ Note: this method is not supported for a primary read preference.
+ </p></div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>maxStalenessMS</code> - the max allowable staleness of secondaries. The minimum value is either 90 seconds, or the heartbeat frequency
+                       plus 10 seconds, whichever is greatest.</dd>
+<dd><code>timeUnit</code> - the time unit of maxStaleness</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>a new ReadPreference instance with a new maximum allowable staleness</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>4.1</dd>
+<dl><dt><span class="strong">Since server release</span></dt><dd><a href='http://docs.mongodb.org/manual/release-notes/3.4'>3.4</a></dd></dl>
+</li>
+</ul>
+<a id="withHedgeOptions(com.mongodb.ReadPreferenceHedgeOptions)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>withHedgeOptions</h4>
+<pre class="methodSignature">public abstract&nbsp;<a href="ReadPreference.html" title="class in com.mongodb">ReadPreference</a>&nbsp;withHedgeOptions&#8203;(<a href="ReadPreferenceHedgeOptions.html" title="class in com.mongodb">ReadPreferenceHedgeOptions</a>&nbsp;hedgeOptions)</pre>
+<div class="block">Create a new ReadPreference instance with hedge options.
+ <p>
+ Note: this method is not supported for a primary read preference.
+ </p></div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>hedgeOptions</code> - the hedge options</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>a new ReadPreference instance with hedge options</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>4.1</dd>
+<dl><dt><span class="strong">Since server release</span></dt><dd><a href='http://docs.mongodb.org/manual/release-notes/4.4'>4.4</a></dd></dl>
+</li>
+</ul>
 <a id="isSlaveOk()">
 <!--   -->
 </a>

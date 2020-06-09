@@ -27,7 +27,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":10,"i1":10,"i2":10,"i3":10};
+var data = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -163,6 +163,17 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
                              <a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/bson/org/bson/BsonDocument.html?is-external=true" title="class or interface in org.bson" class="externalLink">BsonDocument</a>&nbsp;reply,
                              long&nbsp;elapsedTimeNanos)</code></th>
 <td class="colLast">
+<div class="block"><span class="deprecatedLabel">Deprecated.</span>
+<div class="deprecationComment">Prefer <a href="#%3Cinit%3E(com.mongodb.connection.ConnectionId,org.bson.BsonDocument,long,boolean)"><code>ServerHeartbeatSucceededEvent(ConnectionId, BsonDocument, long, boolean)</code></a></div>
+</div>
+</td>
+</tr>
+<tr class="rowColor">
+<th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(com.mongodb.connection.ConnectionId,org.bson.BsonDocument,long,boolean)">ServerHeartbeatSucceededEvent</a></span>&#8203;(<a href="../connection/ConnectionId.html" title="class in com.mongodb.connection">ConnectionId</a>&nbsp;connectionId,
+                             <a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/bson/org/bson/BsonDocument.html?is-external=true" title="class or interface in org.bson" class="externalLink">BsonDocument</a>&nbsp;reply,
+                             long&nbsp;elapsedTimeNanos,
+                             boolean&nbsp;awaited)</code></th>
+<td class="colLast">
 <div class="block">Construct an instance.</div>
 </td>
 </tr>
@@ -206,6 +217,13 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 </td>
 </tr>
 <tr id="i3" class="rowColor">
+<td class="colFirst"><code>boolean</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isAwaited()">isAwaited</a></span>()</code></th>
+<td class="colLast">
+<div class="block">Gets whether the heartbeat was awaited.</div>
+</td>
+</tr>
+<tr id="i4" class="altColor">
 <td class="colFirst"><code><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html?is-external=true" title="class or interface in java.lang" class="externalLink">String</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#toString()">toString</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
@@ -237,18 +255,44 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 <a id="&lt;init&gt;(com.mongodb.connection.ConnectionId,org.bson.BsonDocument,long)">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>ServerHeartbeatSucceededEvent</h4>
-<pre>public&nbsp;ServerHeartbeatSucceededEvent&#8203;(<a href="../connection/ConnectionId.html" title="class in com.mongodb.connection">ConnectionId</a>&nbsp;connectionId,
+<pre><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Deprecated.html?is-external=true" title="class or interface in java.lang" class="externalLink">@Deprecated</a>
+public&nbsp;ServerHeartbeatSucceededEvent&#8203;(<a href="../connection/ConnectionId.html" title="class in com.mongodb.connection">ConnectionId</a>&nbsp;connectionId,
                                      <a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/bson/org/bson/BsonDocument.html?is-external=true" title="class or interface in org.bson" class="externalLink">BsonDocument</a>&nbsp;reply,
                                      long&nbsp;elapsedTimeNanos)</pre>
+<div class="deprecationBlock"><span class="deprecatedLabel">Deprecated.</span>
+<div class="deprecationComment">Prefer <a href="#%3Cinit%3E(com.mongodb.connection.ConnectionId,org.bson.BsonDocument,long,boolean)"><code>ServerHeartbeatSucceededEvent(ConnectionId, BsonDocument, long, boolean)</code></a></div>
+</div>
 <div class="block">Construct an instance.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>connectionId</code> - the non-null connectionId</dd>
 <dd><code>reply</code> - the non-null reply to an isMaster command</dd>
 <dd><code>elapsedTimeNanos</code> - the non-negative elapsed time in nanoseconds</dd>
+</dl>
+</li>
+</ul>
+<a id="&lt;init&gt;(com.mongodb.connection.ConnectionId,org.bson.BsonDocument,long,boolean)">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>ServerHeartbeatSucceededEvent</h4>
+<pre>public&nbsp;ServerHeartbeatSucceededEvent&#8203;(<a href="../connection/ConnectionId.html" title="class in com.mongodb.connection">ConnectionId</a>&nbsp;connectionId,
+                                     <a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/bson/org/bson/BsonDocument.html?is-external=true" title="class or interface in org.bson" class="externalLink">BsonDocument</a>&nbsp;reply,
+                                     long&nbsp;elapsedTimeNanos,
+                                     boolean&nbsp;awaited)</pre>
+<div class="block">Construct an instance.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>connectionId</code> - the non-null connectionId</dd>
+<dd><code>reply</code> - the non-null reply to an isMaster command</dd>
+<dd><code>elapsedTimeNanos</code> - the non-negative elapsed time in nanoseconds</dd>
+<dd><code>awaited</code> - true if the response was awaited</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>4.1</dd>
 </dl>
 </li>
 </ul>
@@ -304,6 +348,23 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>the elapsed time in the given time unit</dd>
 </dl>
+</li>
+</ul>
+<a id="isAwaited()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>isAwaited</h4>
+<pre class="methodSignature">public&nbsp;boolean&nbsp;isAwaited()</pre>
+<div class="block">Gets whether the heartbeat was awaited.  If true, then <a href="#getElapsedTime(java.util.concurrent.TimeUnit)"><code>getElapsedTime(TimeUnit)</code></a> reflects the sum of the round trip time
+ to the server and the time that the server waited before sending a response.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>whether the response was awaited</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>4.1</dd>
+<dl><dt><span class="strong">Since server release</span></dt><dd><a href='http://docs.mongodb.org/manual/release-notes/4.4'>4.4</a></dd></dl>
 </li>
 </ul>
 <a id="toString()">

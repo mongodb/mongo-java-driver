@@ -340,7 +340,8 @@ extends org.reactivestreams.Publisher&lt;TResult&gt;</pre>
 <ul class="blockList">
 <li class="blockList">
 <h4>finalizeFunction</h4>
-<pre class="methodSignature"><a href="MapReducePublisher.html" title="interface in com.mongodb.reactivestreams.client">MapReducePublisher</a>&lt;<a href="MapReducePublisher.html" title="type parameter in MapReducePublisher">TResult</a>&gt;&nbsp;finalizeFunction&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html?is-external=true" title="class or interface in java.lang" class="externalLink">String</a>&nbsp;finalizeFunction)</pre>
+<pre class="methodSignature"><a href="MapReducePublisher.html" title="interface in com.mongodb.reactivestreams.client">MapReducePublisher</a>&lt;<a href="MapReducePublisher.html" title="type parameter in MapReducePublisher">TResult</a>&gt;&nbsp;finalizeFunction&#8203;(<a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/mongodb-driver-core/com/mongodb/lang/Nullable.html?is-external=true" title="class or interface in com.mongodb.lang" class="externalLink">@Nullable</a>
+                                             <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html?is-external=true" title="class or interface in java.lang" class="externalLink">String</a>&nbsp;finalizeFunction)</pre>
 <div class="block">Sets the JavaScript function that follows the reduce method and modifies the output.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
@@ -356,7 +357,8 @@ extends org.reactivestreams.Publisher&lt;TResult&gt;</pre>
 <ul class="blockList">
 <li class="blockList">
 <h4>scope</h4>
-<pre class="methodSignature"><a href="MapReducePublisher.html" title="interface in com.mongodb.reactivestreams.client">MapReducePublisher</a>&lt;<a href="MapReducePublisher.html" title="type parameter in MapReducePublisher">TResult</a>&gt;&nbsp;scope&#8203;(<a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/bson/org/bson/conversions/Bson.html?is-external=true" title="class or interface in org.bson.conversions" class="externalLink">Bson</a>&nbsp;scope)</pre>
+<pre class="methodSignature"><a href="MapReducePublisher.html" title="interface in com.mongodb.reactivestreams.client">MapReducePublisher</a>&lt;<a href="MapReducePublisher.html" title="type parameter in MapReducePublisher">TResult</a>&gt;&nbsp;scope&#8203;(<a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/mongodb-driver-core/com/mongodb/lang/Nullable.html?is-external=true" title="class or interface in com.mongodb.lang" class="externalLink">@Nullable</a>
+                                  <a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/bson/org/bson/conversions/Bson.html?is-external=true" title="class or interface in org.bson.conversions" class="externalLink">Bson</a>&nbsp;scope)</pre>
 <div class="block">Sets the global variables that are accessible in the map, reduce and finalize functions.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
@@ -372,7 +374,8 @@ extends org.reactivestreams.Publisher&lt;TResult&gt;</pre>
 <ul class="blockList">
 <li class="blockList">
 <h4>sort</h4>
-<pre class="methodSignature"><a href="MapReducePublisher.html" title="interface in com.mongodb.reactivestreams.client">MapReducePublisher</a>&lt;<a href="MapReducePublisher.html" title="type parameter in MapReducePublisher">TResult</a>&gt;&nbsp;sort&#8203;(<a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/bson/org/bson/conversions/Bson.html?is-external=true" title="class or interface in org.bson.conversions" class="externalLink">Bson</a>&nbsp;sort)</pre>
+<pre class="methodSignature"><a href="MapReducePublisher.html" title="interface in com.mongodb.reactivestreams.client">MapReducePublisher</a>&lt;<a href="MapReducePublisher.html" title="type parameter in MapReducePublisher">TResult</a>&gt;&nbsp;sort&#8203;(<a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/mongodb-driver-core/com/mongodb/lang/Nullable.html?is-external=true" title="class or interface in com.mongodb.lang" class="externalLink">@Nullable</a>
+                                 <a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/bson/org/bson/conversions/Bson.html?is-external=true" title="class or interface in org.bson.conversions" class="externalLink">Bson</a>&nbsp;sort)</pre>
 <div class="block">Sets the sort criteria to apply to the query.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
@@ -388,7 +391,8 @@ extends org.reactivestreams.Publisher&lt;TResult&gt;</pre>
 <ul class="blockList">
 <li class="blockList">
 <h4>filter</h4>
-<pre class="methodSignature"><a href="MapReducePublisher.html" title="interface in com.mongodb.reactivestreams.client">MapReducePublisher</a>&lt;<a href="MapReducePublisher.html" title="type parameter in MapReducePublisher">TResult</a>&gt;&nbsp;filter&#8203;(<a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/bson/org/bson/conversions/Bson.html?is-external=true" title="class or interface in org.bson.conversions" class="externalLink">Bson</a>&nbsp;filter)</pre>
+<pre class="methodSignature"><a href="MapReducePublisher.html" title="interface in com.mongodb.reactivestreams.client">MapReducePublisher</a>&lt;<a href="MapReducePublisher.html" title="type parameter in MapReducePublisher">TResult</a>&gt;&nbsp;filter&#8203;(<a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/mongodb-driver-core/com/mongodb/lang/Nullable.html?is-external=true" title="class or interface in com.mongodb.lang" class="externalLink">@Nullable</a>
+                                   <a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/bson/org/bson/conversions/Bson.html?is-external=true" title="class or interface in org.bson.conversions" class="externalLink">Bson</a>&nbsp;filter)</pre>
 <div class="block">Sets the query filter to apply to the query.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
@@ -488,7 +492,8 @@ extends org.reactivestreams.Publisher&lt;TResult&gt;</pre>
 <ul class="blockList">
 <li class="blockList">
 <h4>databaseName</h4>
-<pre class="methodSignature"><a href="MapReducePublisher.html" title="interface in com.mongodb.reactivestreams.client">MapReducePublisher</a>&lt;<a href="MapReducePublisher.html" title="type parameter in MapReducePublisher">TResult</a>&gt;&nbsp;databaseName&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html?is-external=true" title="class or interface in java.lang" class="externalLink">String</a>&nbsp;databaseName)</pre>
+<pre class="methodSignature"><a href="MapReducePublisher.html" title="interface in com.mongodb.reactivestreams.client">MapReducePublisher</a>&lt;<a href="MapReducePublisher.html" title="type parameter in MapReducePublisher">TResult</a>&gt;&nbsp;databaseName&#8203;(<a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/mongodb-driver-core/com/mongodb/lang/Nullable.html?is-external=true" title="class or interface in com.mongodb.lang" class="externalLink">@Nullable</a>
+                                         <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html?is-external=true" title="class or interface in java.lang" class="externalLink">String</a>&nbsp;databaseName)</pre>
 <div class="block">Sets the name of the database to output into.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
@@ -546,7 +551,8 @@ extends org.reactivestreams.Publisher&lt;TResult&gt;</pre>
 <ul class="blockList">
 <li class="blockList">
 <h4>bypassDocumentValidation</h4>
-<pre class="methodSignature"><a href="MapReducePublisher.html" title="interface in com.mongodb.reactivestreams.client">MapReducePublisher</a>&lt;<a href="MapReducePublisher.html" title="type parameter in MapReducePublisher">TResult</a>&gt;&nbsp;bypassDocumentValidation&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Boolean.html?is-external=true" title="class or interface in java.lang" class="externalLink">Boolean</a>&nbsp;bypassDocumentValidation)</pre>
+<pre class="methodSignature"><a href="MapReducePublisher.html" title="interface in com.mongodb.reactivestreams.client">MapReducePublisher</a>&lt;<a href="MapReducePublisher.html" title="type parameter in MapReducePublisher">TResult</a>&gt;&nbsp;bypassDocumentValidation&#8203;(<a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/mongodb-driver-core/com/mongodb/lang/Nullable.html?is-external=true" title="class or interface in com.mongodb.lang" class="externalLink">@Nullable</a>
+                                                     <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Boolean.html?is-external=true" title="class or interface in java.lang" class="externalLink">Boolean</a>&nbsp;bypassDocumentValidation)</pre>
 <div class="block">Sets the bypass document level validation flag.
 
  <p>Note: This only applies when an $out stage is specified</p>.</div>
@@ -581,7 +587,8 @@ extends org.reactivestreams.Publisher&lt;TResult&gt;</pre>
 <ul class="blockList">
 <li class="blockList">
 <h4>collation</h4>
-<pre class="methodSignature"><a href="MapReducePublisher.html" title="interface in com.mongodb.reactivestreams.client">MapReducePublisher</a>&lt;<a href="MapReducePublisher.html" title="type parameter in MapReducePublisher">TResult</a>&gt;&nbsp;collation&#8203;(<a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/mongodb-driver-core/com/mongodb/client/model/Collation.html?is-external=true" title="class or interface in com.mongodb.client.model" class="externalLink">Collation</a>&nbsp;collation)</pre>
+<pre class="methodSignature"><a href="MapReducePublisher.html" title="interface in com.mongodb.reactivestreams.client">MapReducePublisher</a>&lt;<a href="MapReducePublisher.html" title="type parameter in MapReducePublisher">TResult</a>&gt;&nbsp;collation&#8203;(<a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/mongodb-driver-core/com/mongodb/lang/Nullable.html?is-external=true" title="class or interface in com.mongodb.lang" class="externalLink">@Nullable</a>
+                                      <a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/mongodb-driver-core/com/mongodb/client/model/Collation.html?is-external=true" title="class or interface in com.mongodb.client.model" class="externalLink">Collation</a>&nbsp;collation)</pre>
 <div class="block">Sets the collation options
 
  <p>A null value represents the server default.</p></div>

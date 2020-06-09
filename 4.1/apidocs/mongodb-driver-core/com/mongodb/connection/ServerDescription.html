@@ -27,7 +27,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":9,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":9,"i7":9,"i8":9,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10,"i23":10,"i24":10,"i25":10,"i26":10,"i27":10,"i28":10,"i29":10,"i30":10,"i31":10,"i32":10,"i33":10,"i34":10,"i35":10,"i36":10,"i37":10,"i38":10};
+var data = {"i0":9,"i1":9,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":9,"i8":9,"i9":9,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10,"i23":10,"i24":10,"i25":10,"i26":10,"i27":10,"i28":10,"i29":10,"i30":10,"i31":10,"i32":10,"i33":10,"i34":10,"i35":10,"i36":10,"i37":10,"i38":10,"i39":10,"i40":10};
 var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -232,27 +232,34 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 </td>
 </tr>
 <tr id="i1" class="rowColor">
+<td class="colFirst"><code>static <a href="ServerDescription.Builder.html" title="class in com.mongodb.connection">ServerDescription.Builder</a></code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#builder(com.mongodb.connection.ServerDescription)">builder</a></span>&#8203;(<a href="ServerDescription.html" title="class in com.mongodb.connection">ServerDescription</a>&nbsp;serverDescription)</code></th>
+<td class="colLast">
+<div class="block">Creates a Builder for a ServerDescription instance based on a previous serverDescription.</div>
+</td>
+</tr>
+<tr id="i2" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#equals(java.lang.Object)">equals</a></span>&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Object.html?is-external=true" title="class or interface in java.lang" class="externalLink">Object</a>&nbsp;o)</code></th>
 <td class="colLast">
 <div class="block">Returns true if this instance is equals to @code{o}.</div>
 </td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code><a href="../ServerAddress.html" title="class in com.mongodb">ServerAddress</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getAddress()">getAddress</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Gets the address of this server</div>
 </td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/Set.html?is-external=true" title="class or interface in java.util" class="externalLink">Set</a>&lt;<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html?is-external=true" title="class or interface in java.lang" class="externalLink">String</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getArbiters()">getArbiters</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Gets the arbiters in the replica set</div>
 </td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html?is-external=true" title="class or interface in java.lang" class="externalLink">String</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getCanonicalAddress()">getCanonicalAddress</a></span>()</code></th>
 <td class="colLast">
@@ -260,49 +267,49 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
  e.g.</div>
 </td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code><a href="ClusterType.html" title="enum in com.mongodb.connection">ClusterType</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getClusterType()">getClusterType</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Gets the type of the cluster this server is in (for example, replica set).</div>
 </td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>static int</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getDefaultMaxDocumentSize()">getDefaultMaxDocumentSize</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Get the default maximum document size.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>static int</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getDefaultMaxWireVersion()">getDefaultMaxWireVersion</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Get the default maximum wire version</div>
 </td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>static int</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getDefaultMinWireVersion()">getDefaultMinWireVersion</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Get the default minimum wire version</div>
 </td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code><a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/bson/org/bson/types/ObjectId.html?is-external=true" title="class or interface in org.bson.types" class="externalLink">ObjectId</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getElectionId()">getElectionId</a></span>()</code></th>
 <td class="colLast">
 <div class="block">The replica set electionid reported by this MongoDB server.</div>
 </td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Throwable.html?is-external=true" title="class or interface in java.lang" class="externalLink">Throwable</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getException()">getException</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Gets the exception thrown while attempting to determine the server description.</div>
 </td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/Set.html?is-external=true" title="class or interface in java.util" class="externalLink">Set</a>&lt;<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html?is-external=true" title="class or interface in java.lang" class="externalLink">String</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getHosts()">getHosts</a></span>()</code></th>
 <td class="colLast">
@@ -310,187 +317,194 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
  passive, nor arbiters.</div>
 </td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>long</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getLastUpdateTime(java.util.concurrent.TimeUnit)">getLastUpdateTime</a></span>&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/TimeUnit.html?is-external=true" title="class or interface in java.util.concurrent" class="externalLink">TimeUnit</a>&nbsp;timeUnit)</code></th>
 <td class="colLast">
 <div class="block">Gets the time that this server description was created, using a monotonic clock like <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/System.html?is-external=true#nanoTime()" title="class or interface in java.lang" class="externalLink"><code>System.nanoTime()</code></a>.</div>
 </td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/Date.html?is-external=true" title="class or interface in java.util" class="externalLink">Date</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getLastWriteDate()">getLastWriteDate</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Gets the last write date.</div>
 </td>
 </tr>
-<tr id="i14" class="altColor">
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Integer.html?is-external=true" title="class or interface in java.lang" class="externalLink">Integer</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getLogicalSessionTimeoutMinutes()">getLogicalSessionTimeoutMinutes</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Gets the session timeout in minutes.</div>
 </td>
 </tr>
-<tr id="i15" class="rowColor">
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>int</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getMaxDocumentSize()">getMaxDocumentSize</a></span>()</code></th>
 <td class="colLast">
 <div class="block">The maximum permitted size of a BSON object in bytes for this mongod process.</div>
 </td>
 </tr>
-<tr id="i16" class="altColor">
+<tr id="i17" class="rowColor">
 <td class="colFirst"><code>int</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getMaxWireVersion()">getMaxWireVersion</a></span>()</code></th>
 <td class="colLast">
 <div class="block">The latest version of the wire protocol that this MongoDB server is capable of using to communicate with clients.</div>
 </td>
 </tr>
-<tr id="i17" class="rowColor">
+<tr id="i18" class="altColor">
 <td class="colFirst"><code>int</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getMinWireVersion()">getMinWireVersion</a></span>()</code></th>
 <td class="colLast">
 <div class="block">The earliest version of the wire protocol that this MongoDB server is capable of using to communicate with clients.</div>
 </td>
 </tr>
-<tr id="i18" class="altColor">
+<tr id="i19" class="rowColor">
 <td class="colFirst"><code><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/Set.html?is-external=true" title="class or interface in java.util" class="externalLink">Set</a>&lt;<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html?is-external=true" title="class or interface in java.lang" class="externalLink">String</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getPassives()">getPassives</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Gets the passive members of the replica set.</div>
 </td>
 </tr>
-<tr id="i19" class="rowColor">
+<tr id="i20" class="altColor">
 <td class="colFirst"><code><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html?is-external=true" title="class or interface in java.lang" class="externalLink">String</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getPrimary()">getPrimary</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Gets the address of the current primary in the replica set</div>
 </td>
 </tr>
-<tr id="i20" class="altColor">
+<tr id="i21" class="rowColor">
 <td class="colFirst"><code>long</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getRoundTripTimeNanos()">getRoundTripTimeNanos</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Get the time it took to make the round trip for requesting this information from the server in nanoseconds.</div>
 </td>
 </tr>
-<tr id="i21" class="rowColor">
+<tr id="i22" class="altColor">
 <td class="colFirst"><code><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html?is-external=true" title="class or interface in java.lang" class="externalLink">String</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getSetName()">getSetName</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Gets the name of the replica set</div>
 </td>
 </tr>
-<tr id="i22" class="altColor">
+<tr id="i23" class="rowColor">
 <td class="colFirst"><code><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Integer.html?is-external=true" title="class or interface in java.lang" class="externalLink">Integer</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getSetVersion()">getSetVersion</a></span>()</code></th>
 <td class="colLast">
 <div class="block">The replica set setVersion reported by this MongoDB server.</div>
 </td>
 </tr>
-<tr id="i23" class="rowColor">
+<tr id="i24" class="altColor">
 <td class="colFirst"><code><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html?is-external=true" title="class or interface in java.lang" class="externalLink">String</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getShortDescription()">getShortDescription</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Returns a short, pretty description for this ServerDescription.</div>
 </td>
 </tr>
-<tr id="i24" class="altColor">
+<tr id="i25" class="rowColor">
 <td class="colFirst"><code><a href="ServerConnectionState.html" title="enum in com.mongodb.connection">ServerConnectionState</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getState()">getState</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Gets the current state of the connection to the server.</div>
 </td>
 </tr>
-<tr id="i25" class="rowColor">
+<tr id="i26" class="altColor">
 <td class="colFirst"><code><a href="../TagSet.html" title="class in com.mongodb">TagSet</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getTagSet()">getTagSet</a></span>()</code></th>
 <td class="colLast">
 <div class="block">A set of all tags assigned to this member.</div>
 </td>
 </tr>
-<tr id="i26" class="altColor">
+<tr id="i27" class="rowColor">
+<td class="colFirst"><code><a href="TopologyVersion.html" title="class in com.mongodb.connection">TopologyVersion</a></code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getTopologyVersion()">getTopologyVersion</a></span>()</code></th>
+<td class="colLast">
+<div class="block">The topologyVersion reported by this MongoDB server.</div>
+</td>
+</tr>
+<tr id="i28" class="altColor">
 <td class="colFirst"><code><a href="ServerType.html" title="enum in com.mongodb.connection">ServerType</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getType()">getType</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Gets the type of the server, for example whether it's a standalone or in a replica set.</div>
 </td>
 </tr>
-<tr id="i27" class="rowColor">
+<tr id="i29" class="rowColor">
 <td class="colFirst"><code>int</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#hashCode()">hashCode</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i28" class="altColor">
+<tr id="i30" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#hasTags(com.mongodb.TagSet)">hasTags</a></span>&#8203;(<a href="../TagSet.html" title="class in com.mongodb">TagSet</a>&nbsp;desiredTags)</code></th>
 <td class="colLast">
 <div class="block">Returns true if the server has the given tags.</div>
 </td>
 </tr>
-<tr id="i29" class="rowColor">
+<tr id="i31" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isCompatibleWithDriver()">isCompatibleWithDriver</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Return whether the server is compatible with the driver.</div>
 </td>
 </tr>
-<tr id="i30" class="altColor">
+<tr id="i32" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isIncompatiblyNewerThanDriver()">isIncompatiblyNewerThanDriver</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Return whether the server is compatible with the driver.</div>
 </td>
 </tr>
-<tr id="i31" class="rowColor">
+<tr id="i33" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isIncompatiblyOlderThanDriver()">isIncompatiblyOlderThanDriver</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Return whether the server is compatible with the driver.</div>
 </td>
 </tr>
-<tr id="i32" class="altColor">
+<tr id="i34" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isOk()">isOk</a></span>()</code></th>
 <td class="colLast">
 <div class="block">The isOK() result from requesting this information from the server</div>
 </td>
 </tr>
-<tr id="i33" class="rowColor">
+<tr id="i35" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isPrimary()">isPrimary</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Returns whether this can be treated as a primary server.</div>
 </td>
 </tr>
-<tr id="i34" class="altColor">
+<tr id="i36" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isReplicaSetMember()">isReplicaSetMember</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Gets whether this server is a replica set member.</div>
 </td>
 </tr>
-<tr id="i35" class="rowColor">
+<tr id="i37" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isSecondary()">isSecondary</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Returns whether this can be treated as a secondary server.</div>
 </td>
 </tr>
-<tr id="i36" class="altColor">
+<tr id="i38" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isShardRouter()">isShardRouter</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Gets whether this is a server that is the entry point to a sharded instance of MongoDB.</div>
 </td>
 </tr>
-<tr id="i37" class="rowColor">
+<tr id="i39" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isStandAlone()">isStandAlone</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Gets whether this is part of a replica set/sharded system, or is a single server.</div>
 </td>
 </tr>
-<tr id="i38" class="altColor">
+<tr id="i40" class="altColor">
 <td class="colFirst"><code><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html?is-external=true" title="class or interface in java.lang" class="externalLink">String</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#toString()">toString</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
@@ -591,6 +605,24 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 </dl>
 </li>
 </ul>
+<a id="builder(com.mongodb.connection.ServerDescription)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>builder</h4>
+<pre class="methodSignature">public static&nbsp;<a href="ServerDescription.Builder.html" title="class in com.mongodb.connection">ServerDescription.Builder</a>&nbsp;builder&#8203;(<a href="ServerDescription.html" title="class in com.mongodb.connection">ServerDescription</a>&nbsp;serverDescription)</pre>
+<div class="block">Creates a Builder for a ServerDescription instance based on a previous serverDescription.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>serverDescription</code> - the ServerDescription to base the builder from</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>a new Builder for ServerDescription.</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>4.1</dd>
+</dl>
+</li>
+</ul>
 <a id="getCanonicalAddress()">
 <!--   -->
 </a>
@@ -612,7 +644,8 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 <ul class="blockList">
 <li class="blockList">
 <h4>getLogicalSessionTimeoutMinutes</h4>
-<pre class="methodSignature">public&nbsp;<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Integer.html?is-external=true" title="class or interface in java.lang" class="externalLink">Integer</a>&nbsp;getLogicalSessionTimeoutMinutes()</pre>
+<pre class="methodSignature"><a href="../lang/Nullable.html" title="annotation in com.mongodb.lang">@Nullable</a>
+public&nbsp;<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Integer.html?is-external=true" title="class or interface in java.lang" class="externalLink">Integer</a>&nbsp;getLogicalSessionTimeoutMinutes()</pre>
 <div class="block">Gets the session timeout in minutes.</div>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
@@ -916,7 +949,8 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 <ul class="blockList">
 <li class="blockList">
 <h4>getElectionId</h4>
-<pre class="methodSignature">public&nbsp;<a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/bson/org/bson/types/ObjectId.html?is-external=true" title="class or interface in org.bson.types" class="externalLink">ObjectId</a>&nbsp;getElectionId()</pre>
+<pre class="methodSignature"><a href="../lang/Nullable.html" title="annotation in com.mongodb.lang">@Nullable</a>
+public&nbsp;<a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/bson/org/bson/types/ObjectId.html?is-external=true" title="class or interface in org.bson.types" class="externalLink">ObjectId</a>&nbsp;getElectionId()</pre>
 <div class="block">The replica set electionid reported by this MongoDB server.</div>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
@@ -930,12 +964,29 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 <ul class="blockList">
 <li class="blockList">
 <h4>getSetVersion</h4>
-<pre class="methodSignature">public&nbsp;<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Integer.html?is-external=true" title="class or interface in java.lang" class="externalLink">Integer</a>&nbsp;getSetVersion()</pre>
+<pre class="methodSignature"><a href="../lang/Nullable.html" title="annotation in com.mongodb.lang">@Nullable</a>
+public&nbsp;<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Integer.html?is-external=true" title="class or interface in java.lang" class="externalLink">Integer</a>&nbsp;getSetVersion()</pre>
 <div class="block">The replica set setVersion reported by this MongoDB server.</div>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>the setVersion, which may be null</dd>
 </dl>
+</li>
+</ul>
+<a id="getTopologyVersion()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getTopologyVersion</h4>
+<pre class="methodSignature">public&nbsp;<a href="TopologyVersion.html" title="class in com.mongodb.connection">TopologyVersion</a>&nbsp;getTopologyVersion()</pre>
+<div class="block">The topologyVersion reported by this MongoDB server.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the topologyVersion, which may be null</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>4.1</dd>
+<dl><dt><span class="strong">Since server release</span></dt><dd><a href='http://docs.mongodb.org/manual/release-notes/4.4'>4.4</a></dd></dl>
 </li>
 </ul>
 <a id="getLastWriteDate()">
@@ -1081,7 +1132,8 @@ public&nbsp;<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.bas
 <ul class="blockList">
 <li class="blockList">
 <h4>getException</h4>
-<pre class="methodSignature">public&nbsp;<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Throwable.html?is-external=true" title="class or interface in java.lang" class="externalLink">Throwable</a>&nbsp;getException()</pre>
+<pre class="methodSignature"><a href="../lang/Nullable.html" title="annotation in com.mongodb.lang">@Nullable</a>
+public&nbsp;<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Throwable.html?is-external=true" title="class or interface in java.lang" class="externalLink">Throwable</a>&nbsp;getException()</pre>
 <div class="block">Gets the exception thrown while attempting to determine the server description.  This is useful for diagnostic purposed when
  determining the root cause of a connectivity failure.</div>
 <dl>

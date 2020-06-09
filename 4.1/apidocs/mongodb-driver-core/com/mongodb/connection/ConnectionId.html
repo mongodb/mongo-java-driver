@@ -284,6 +284,7 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 <h4>ConnectionId</h4>
 <pre>public&nbsp;ConnectionId&#8203;(<a href="ServerId.html" title="class in com.mongodb.connection">ServerId</a>&nbsp;serverId,
                     int&nbsp;localValue,
+                    <a href="../lang/Nullable.html" title="annotation in com.mongodb.lang">@Nullable</a>
                     <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Integer.html?is-external=true" title="class or interface in java.lang" class="externalLink">Integer</a>&nbsp;serverValue)</pre>
 <div class="block">Construct an instance with the given serverId, localValue, and serverValue.
 
@@ -364,7 +365,8 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 <ul class="blockList">
 <li class="blockList">
 <h4>getServerValue</h4>
-<pre class="methodSignature">public&nbsp;<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Integer.html?is-external=true" title="class or interface in java.lang" class="externalLink">Integer</a>&nbsp;getServerValue()</pre>
+<pre class="methodSignature"><a href="../lang/Nullable.html" title="annotation in com.mongodb.lang">@Nullable</a>
+public&nbsp;<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Integer.html?is-external=true" title="class or interface in java.lang" class="externalLink">Integer</a>&nbsp;getServerValue()</pre>
 <div class="block">Gets the server generated id value for the connection or null if not set.</div>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>

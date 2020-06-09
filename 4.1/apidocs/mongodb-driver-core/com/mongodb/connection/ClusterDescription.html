@@ -466,7 +466,8 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 <ul class="blockList">
 <li class="blockList">
 <h4>findServerIncompatiblyOlderThanDriver</h4>
-<pre class="methodSignature">public&nbsp;<a href="ServerDescription.html" title="class in com.mongodb.connection">ServerDescription</a>&nbsp;findServerIncompatiblyOlderThanDriver()</pre>
+<pre class="methodSignature"><a href="../lang/Nullable.html" title="annotation in com.mongodb.lang">@Nullable</a>
+public&nbsp;<a href="ServerDescription.html" title="class in com.mongodb.connection">ServerDescription</a>&nbsp;findServerIncompatiblyOlderThanDriver()</pre>
 <div class="block">Return a server in the cluster that is incompatibly older than the driver.</div>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
@@ -482,7 +483,8 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 <ul class="blockList">
 <li class="blockList">
 <h4>findServerIncompatiblyNewerThanDriver</h4>
-<pre class="methodSignature">public&nbsp;<a href="ServerDescription.html" title="class in com.mongodb.connection">ServerDescription</a>&nbsp;findServerIncompatiblyNewerThanDriver()</pre>
+<pre class="methodSignature"><a href="../lang/Nullable.html" title="annotation in com.mongodb.lang">@Nullable</a>
+public&nbsp;<a href="ServerDescription.html" title="class in com.mongodb.connection">ServerDescription</a>&nbsp;findServerIncompatiblyNewerThanDriver()</pre>
 <div class="block">Return a server in the cluster that is incompatibly newer than the driver.</div>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
@@ -560,7 +562,8 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 <ul class="blockList">
 <li class="blockList">
 <h4>getSrvResolutionException</h4>
-<pre class="methodSignature">public&nbsp;<a href="../MongoException.html" title="class in com.mongodb">MongoException</a>&nbsp;getSrvResolutionException()</pre>
+<pre class="methodSignature"><a href="../lang/Nullable.html" title="annotation in com.mongodb.lang">@Nullable</a>
+public&nbsp;<a href="../MongoException.html" title="class in com.mongodb">MongoException</a>&nbsp;getSrvResolutionException()</pre>
 <div class="block">Gets any exception encountered while resolving the SRV record for the initial host.</div>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
@@ -592,7 +595,8 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 <ul class="blockList">
 <li class="blockList">
 <h4>getLogicalSessionTimeoutMinutes</h4>
-<pre class="methodSignature">public&nbsp;<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Integer.html?is-external=true" title="class or interface in java.lang" class="externalLink">Integer</a>&nbsp;getLogicalSessionTimeoutMinutes()</pre>
+<pre class="methodSignature"><a href="../lang/Nullable.html" title="annotation in com.mongodb.lang">@Nullable</a>
+public&nbsp;<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Integer.html?is-external=true" title="class or interface in java.lang" class="externalLink">Integer</a>&nbsp;getLogicalSessionTimeoutMinutes()</pre>
 <div class="block">Gets the logical session timeout in minutes, or null if at least one of the known servers does not support logical sessions.</div>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>

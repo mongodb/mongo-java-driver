@@ -27,7 +27,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10,"i23":10,"i24":10,"i25":10,"i26":10,"i27":10,"i28":10,"i29":10,"i30":10,"i31":10,"i32":10,"i33":10,"i34":10,"i35":10,"i36":10,"i37":10,"i38":10};
+var data = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10,"i23":10,"i24":10,"i25":10,"i26":10,"i27":10,"i28":10,"i29":10,"i30":10,"i31":10,"i32":10,"i33":10,"i34":10,"i35":10,"i36":10,"i37":10,"i38":10,"i39":10,"i40":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -336,116 +336,130 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 </td>
 </tr>
 <tr id="i22" class="altColor">
+<td class="colFirst"><code><a href="IndexOptions.html" title="class in com.mongodb.client.model">IndexOptions</a></code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#hidden(boolean)">hidden</a></span>&#8203;(boolean&nbsp;hidden)</code></th>
+<td class="colLast">
+<div class="block">Should the index not be used by the query planner when executing operations.</div>
+</td>
+</tr>
+<tr id="i23" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isBackground()">isBackground</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Create the index in the background</div>
 </td>
 </tr>
-<tr id="i23" class="rowColor">
+<tr id="i24" class="altColor">
+<td class="colFirst"><code>boolean</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isHidden()">isHidden</a></span>()</code></th>
+<td class="colLast">
+<div class="block">Gets whether the index should not be used by the query planner when executing operations.</div>
+</td>
+</tr>
+<tr id="i25" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isSparse()">isSparse</a></span>()</code></th>
 <td class="colLast">
 <div class="block">If true, the index only references documents with the specified field</div>
 </td>
 </tr>
-<tr id="i24" class="altColor">
+<tr id="i26" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isUnique()">isUnique</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Gets if the index should be unique.</div>
 </td>
 </tr>
-<tr id="i25" class="rowColor">
+<tr id="i27" class="rowColor">
 <td class="colFirst"><code><a href="IndexOptions.html" title="class in com.mongodb.client.model">IndexOptions</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#languageOverride(java.lang.String)">languageOverride</a></span>&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html?is-external=true" title="class or interface in java.lang" class="externalLink">String</a>&nbsp;languageOverride)</code></th>
 <td class="colLast">
 <div class="block">Sets the name of the field that contains the language string.</div>
 </td>
 </tr>
-<tr id="i26" class="altColor">
+<tr id="i28" class="altColor">
 <td class="colFirst"><code><a href="IndexOptions.html" title="class in com.mongodb.client.model">IndexOptions</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#max(java.lang.Double)">max</a></span>&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Double.html?is-external=true" title="class or interface in java.lang" class="externalLink">Double</a>&nbsp;max)</code></th>
 <td class="colLast">
 <div class="block">Sets the upper inclusive boundary for the longitude and latitude values for 2d indexes..</div>
 </td>
 </tr>
-<tr id="i27" class="rowColor">
+<tr id="i29" class="rowColor">
 <td class="colFirst"><code><a href="IndexOptions.html" title="class in com.mongodb.client.model">IndexOptions</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#min(java.lang.Double)">min</a></span>&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Double.html?is-external=true" title="class or interface in java.lang" class="externalLink">Double</a>&nbsp;min)</code></th>
 <td class="colLast">
 <div class="block">Sets the lower inclusive boundary for the longitude and latitude values for 2d indexes..</div>
 </td>
 </tr>
-<tr id="i28" class="altColor">
+<tr id="i30" class="altColor">
 <td class="colFirst"><code><a href="IndexOptions.html" title="class in com.mongodb.client.model">IndexOptions</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#name(java.lang.String)">name</a></span>&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html?is-external=true" title="class or interface in java.lang" class="externalLink">String</a>&nbsp;name)</code></th>
 <td class="colLast">
 <div class="block">Sets the name of the index.</div>
 </td>
 </tr>
-<tr id="i29" class="rowColor">
+<tr id="i31" class="rowColor">
 <td class="colFirst"><code><a href="IndexOptions.html" title="class in com.mongodb.client.model">IndexOptions</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#partialFilterExpression(org.bson.conversions.Bson)">partialFilterExpression</a></span>&#8203;(<a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/bson/org/bson/conversions/Bson.html?is-external=true" title="class or interface in org.bson.conversions" class="externalLink">Bson</a>&nbsp;partialFilterExpression)</code></th>
 <td class="colLast">
 <div class="block">Sets the filter expression for the documents to be included in the index</div>
 </td>
 </tr>
-<tr id="i30" class="altColor">
+<tr id="i32" class="altColor">
 <td class="colFirst"><code><a href="IndexOptions.html" title="class in com.mongodb.client.model">IndexOptions</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#sparse(boolean)">sparse</a></span>&#8203;(boolean&nbsp;sparse)</code></th>
 <td class="colLast">
 <div class="block">Should the index only references documents with the specified field</div>
 </td>
 </tr>
-<tr id="i31" class="rowColor">
+<tr id="i33" class="rowColor">
 <td class="colFirst"><code><a href="IndexOptions.html" title="class in com.mongodb.client.model">IndexOptions</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#sphereVersion(java.lang.Integer)">sphereVersion</a></span>&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Integer.html?is-external=true" title="class or interface in java.lang" class="externalLink">Integer</a>&nbsp;sphereVersion)</code></th>
 <td class="colLast">
 <div class="block">Sets the 2dsphere index version number.</div>
 </td>
 </tr>
-<tr id="i32" class="altColor">
+<tr id="i34" class="altColor">
 <td class="colFirst"><code><a href="IndexOptions.html" title="class in com.mongodb.client.model">IndexOptions</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#storageEngine(org.bson.conversions.Bson)">storageEngine</a></span>&#8203;(<a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/bson/org/bson/conversions/Bson.html?is-external=true" title="class or interface in org.bson.conversions" class="externalLink">Bson</a>&nbsp;storageEngine)</code></th>
 <td class="colLast">
 <div class="block">Sets the storage engine options document for this index.</div>
 </td>
 </tr>
-<tr id="i33" class="rowColor">
+<tr id="i35" class="rowColor">
 <td class="colFirst"><code><a href="IndexOptions.html" title="class in com.mongodb.client.model">IndexOptions</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#textVersion(java.lang.Integer)">textVersion</a></span>&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Integer.html?is-external=true" title="class or interface in java.lang" class="externalLink">Integer</a>&nbsp;textVersion)</code></th>
 <td class="colLast">
 <div class="block">Set the text index version number.</div>
 </td>
 </tr>
-<tr id="i34" class="altColor">
+<tr id="i36" class="altColor">
 <td class="colFirst"><code><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html?is-external=true" title="class or interface in java.lang" class="externalLink">String</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#toString()">toString</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i35" class="rowColor">
+<tr id="i37" class="rowColor">
 <td class="colFirst"><code><a href="IndexOptions.html" title="class in com.mongodb.client.model">IndexOptions</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#unique(boolean)">unique</a></span>&#8203;(boolean&nbsp;unique)</code></th>
 <td class="colLast">
 <div class="block">Should the index should be unique.</div>
 </td>
 </tr>
-<tr id="i36" class="altColor">
+<tr id="i38" class="altColor">
 <td class="colFirst"><code><a href="IndexOptions.html" title="class in com.mongodb.client.model">IndexOptions</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#version(java.lang.Integer)">version</a></span>&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Integer.html?is-external=true" title="class or interface in java.lang" class="externalLink">Integer</a>&nbsp;version)</code></th>
 <td class="colLast">
 <div class="block">Sets the index version number.</div>
 </td>
 </tr>
-<tr id="i37" class="rowColor">
+<tr id="i39" class="rowColor">
 <td class="colFirst"><code><a href="IndexOptions.html" title="class in com.mongodb.client.model">IndexOptions</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#weights(org.bson.conversions.Bson)">weights</a></span>&#8203;(<a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/bson/org/bson/conversions/Bson.html?is-external=true" title="class or interface in org.bson.conversions" class="externalLink">Bson</a>&nbsp;weights)</code></th>
 <td class="colLast">
 <div class="block">Sets the weighting object for use with a text index.</div>
 </td>
 </tr>
-<tr id="i38" class="altColor">
+<tr id="i40" class="altColor">
 <td class="colFirst"><code><a href="IndexOptions.html" title="class in com.mongodb.client.model">IndexOptions</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#wildcardProjection(org.bson.conversions.Bson)">wildcardProjection</a></span>&#8203;(<a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/bson/org/bson/conversions/Bson.html?is-external=true" title="class or interface in org.bson.conversions" class="externalLink">Bson</a>&nbsp;wildcardProjection)</code></th>
 <td class="colLast">
@@ -1125,6 +1139,40 @@ public&nbsp;<a href="Collation.html" title="class in com.mongodb.client.model">C
 <dt><span class="simpleTagLabel">Since:</span></dt>
 <dd>3.10</dd>
 <dl><dt><span class="strong">Since server release</span></dt><dd><a href='http://docs.mongodb.org/manual/release-notes/4.2'>4.2</a></dd></dl>
+</li>
+</ul>
+<a id="isHidden()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>isHidden</h4>
+<pre class="methodSignature">public&nbsp;boolean&nbsp;isHidden()</pre>
+<div class="block">Gets whether the index should not be used by the query planner when executing operations.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>true if the index should not be used by the query planner when executing operations.</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>4.1</dd>
+<dl><dt><span class="strong">Since server release</span></dt><dd><a href='http://docs.mongodb.org/manual/release-notes/4.4'>4.4</a></dd></dl>
+</li>
+</ul>
+<a id="hidden(boolean)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>hidden</h4>
+<pre class="methodSignature">public&nbsp;<a href="IndexOptions.html" title="class in com.mongodb.client.model">IndexOptions</a>&nbsp;hidden&#8203;(boolean&nbsp;hidden)</pre>
+<div class="block">Should the index not be used by the query planner when executing operations.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>hidden</code> - true if the index should be hidden</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>this</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>4.1</dd>
+<dl><dt><span class="strong">Since server release</span></dt><dd><a href='http://docs.mongodb.org/manual/release-notes/4.4'>4.4</a></dd></dl>
 </li>
 </ul>
 <a id="toString()">

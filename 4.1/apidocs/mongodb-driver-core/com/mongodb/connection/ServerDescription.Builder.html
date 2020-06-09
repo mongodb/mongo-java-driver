@@ -27,7 +27,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10};
+var data = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -91,13 +91,13 @@ loadScripts(document, 'script');</script>
 <li>Summary:&nbsp;</li>
 <li>Nested&nbsp;|&nbsp;</li>
 <li>Field&nbsp;|&nbsp;</li>
-<li><a href="#constructor.summary">Constr</a>&nbsp;|&nbsp;</li>
+<li>Constr&nbsp;|&nbsp;</li>
 <li><a href="#method.summary">Method</a></li>
 </ul>
 <ul class="subNavList">
 <li>Detail:&nbsp;</li>
 <li>Field&nbsp;|&nbsp;</li>
-<li><a href="#constructor.detail">Constr</a>&nbsp;|&nbsp;</li>
+<li>Constr&nbsp;|&nbsp;</li>
 <li><a href="#method.detail">Method</a></li>
 </ul>
 </div>
@@ -146,27 +146,6 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 <div class="summary">
 <ul class="blockList">
 <li class="blockList">
-<!-- ======== CONSTRUCTOR SUMMARY ======== -->
-<section role="region">
-<ul class="blockList">
-<li class="blockList"><a id="constructor.summary">
-<!--   -->
-</a>
-<h3>Constructor Summary</h3>
-<table class="memberSummary">
-<caption><span>Constructors</span><span class="tabEnd">&nbsp;</span></caption>
-<tr>
-<th class="colFirst" scope="col">Constructor</th>
-<th class="colLast" scope="col">Description</th>
-</tr>
-<tr class="altColor">
-<th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E()">Builder</a></span>()</code></th>
-<td class="colLast">&nbsp;</td>
-</tr>
-</table>
-</li>
-</ul>
-</section>
 <!-- ========== METHOD SUMMARY =========== -->
 <section role="region">
 <ul class="blockList">
@@ -331,6 +310,13 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 </tr>
 <tr id="i21" class="rowColor">
 <td class="colFirst"><code><a href="ServerDescription.Builder.html" title="class in com.mongodb.connection">ServerDescription.Builder</a></code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#topologyVersion(com.mongodb.connection.TopologyVersion)">topologyVersion</a></span>&#8203;(<a href="TopologyVersion.html" title="class in com.mongodb.connection">TopologyVersion</a>&nbsp;topologyVersion)</code></th>
+<td class="colLast">
+<div class="block">Sets the topologyVersion reported by this server.</div>
+</td>
+</tr>
+<tr id="i22" class="altColor">
+<td class="colFirst"><code><a href="ServerDescription.Builder.html" title="class in com.mongodb.connection">ServerDescription.Builder</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#type(com.mongodb.connection.ServerType)">type</a></span>&#8203;(<a href="ServerType.html" title="enum in com.mongodb.connection">ServerType</a>&nbsp;type)</code></th>
 <td class="colLast">
 <div class="block">Sets the type of the server, for example whether it's a standalone or in a replica set.</div>
@@ -353,25 +339,6 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 <div class="details">
 <ul class="blockList">
 <li class="blockList">
-<!-- ========= CONSTRUCTOR DETAIL ======== -->
-<section role="region">
-<ul class="blockList">
-<li class="blockList"><a id="constructor.detail">
-<!--   -->
-</a>
-<h3>Constructor Detail</h3>
-<a id="&lt;init&gt;()">
-<!--   -->
-</a>
-<ul class="blockListLast">
-<li class="blockList">
-<h4>Builder</h4>
-<pre>public&nbsp;Builder()</pre>
-</li>
-</ul>
-</li>
-</ul>
-</section>
 <!-- ============ METHOD DETAIL ========== -->
 <section role="region">
 <ul class="blockList">
@@ -657,13 +624,32 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 </dl>
 </li>
 </ul>
+<a id="topologyVersion(com.mongodb.connection.TopologyVersion)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>topologyVersion</h4>
+<pre class="methodSignature">public&nbsp;<a href="ServerDescription.Builder.html" title="class in com.mongodb.connection">ServerDescription.Builder</a>&nbsp;topologyVersion&#8203;(<a href="TopologyVersion.html" title="class in com.mongodb.connection">TopologyVersion</a>&nbsp;topologyVersion)</pre>
+<div class="block">Sets the topologyVersion reported by this server.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>topologyVersion</code> - the topology version</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>this</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>4.1</dd>
+<dl><dt><span class="strong">Since server release</span></dt><dd><a href='http://docs.mongodb.org/manual/release-notes/4.4'>4.4</a></dd></dl>
+</li>
+</ul>
 <a id="lastWriteDate(java.util.Date)">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
 <h4>lastWriteDate</h4>
-<pre class="methodSignature">public&nbsp;<a href="ServerDescription.Builder.html" title="class in com.mongodb.connection">ServerDescription.Builder</a>&nbsp;lastWriteDate&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/Date.html?is-external=true" title="class or interface in java.util" class="externalLink">Date</a>&nbsp;lastWriteDate)</pre>
+<pre class="methodSignature">public&nbsp;<a href="ServerDescription.Builder.html" title="class in com.mongodb.connection">ServerDescription.Builder</a>&nbsp;lastWriteDate&#8203;(<a href="../lang/Nullable.html" title="annotation in com.mongodb.lang">@Nullable</a>
+                                               <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/Date.html?is-external=true" title="class or interface in java.util" class="externalLink">Date</a>&nbsp;lastWriteDate)</pre>
 <div class="block">Sets the lastWriteDate reported by this server</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
@@ -700,7 +686,8 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 <ul class="blockList">
 <li class="blockList">
 <h4>logicalSessionTimeoutMinutes</h4>
-<pre class="methodSignature">public&nbsp;<a href="ServerDescription.Builder.html" title="class in com.mongodb.connection">ServerDescription.Builder</a>&nbsp;logicalSessionTimeoutMinutes&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Integer.html?is-external=true" title="class or interface in java.lang" class="externalLink">Integer</a>&nbsp;logicalSessionTimeoutMinutes)</pre>
+<pre class="methodSignature">public&nbsp;<a href="ServerDescription.Builder.html" title="class in com.mongodb.connection">ServerDescription.Builder</a>&nbsp;logicalSessionTimeoutMinutes&#8203;(<a href="../lang/Nullable.html" title="annotation in com.mongodb.lang">@Nullable</a>
+                                                              <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Integer.html?is-external=true" title="class or interface in java.lang" class="externalLink">Integer</a>&nbsp;logicalSessionTimeoutMinutes)</pre>
 <div class="block">Sets the session timeout in minutes.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
@@ -796,13 +783,13 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 <li>Summary:&nbsp;</li>
 <li>Nested&nbsp;|&nbsp;</li>
 <li>Field&nbsp;|&nbsp;</li>
-<li><a href="#constructor.summary">Constr</a>&nbsp;|&nbsp;</li>
+<li>Constr&nbsp;|&nbsp;</li>
 <li><a href="#method.summary">Method</a></li>
 </ul>
 <ul class="subNavList">
 <li>Detail:&nbsp;</li>
 <li>Field&nbsp;|&nbsp;</li>
-<li><a href="#constructor.detail">Constr</a>&nbsp;|&nbsp;</li>
+<li>Constr&nbsp;|&nbsp;</li>
 <li><a href="#method.detail">Method</a></li>
 </ul>
 </div>

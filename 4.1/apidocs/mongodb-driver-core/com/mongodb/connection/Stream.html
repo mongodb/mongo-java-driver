@@ -27,8 +27,8 @@
     catch(err) {
     }
 //-->
-var data = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6};
-var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"]};
+var data = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":18,"i7":6,"i8":18,"i9":6,"i10":6};
+var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
 var tableTab = "tableTab";
@@ -149,7 +149,7 @@ extends <a href="BufferProvider.html" title="interface in com.mongodb.connection
 </a>
 <h3>Method Summary</h3>
 <table class="memberSummary">
-<caption><span id="t0" class="activeTableTab"><span>All Methods</span><span class="tabEnd">&nbsp;</span></span><span id="t2" class="tableTab"><span><a href="javascript:show(2);">Instance Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t3" class="tableTab"><span><a href="javascript:show(4);">Abstract Methods</a></span><span class="tabEnd">&nbsp;</span></span></caption>
+<caption><span id="t0" class="activeTableTab"><span>All Methods</span><span class="tabEnd">&nbsp;</span></span><span id="t2" class="tableTab"><span><a href="javascript:show(2);">Instance Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t3" class="tableTab"><span><a href="javascript:show(4);">Abstract Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t5" class="tableTab"><span><a href="javascript:show(16);">Default Methods</a></span><span class="tabEnd">&nbsp;</span></span></caption>
 <tr>
 <th class="colFirst" scope="col">Modifier and Type</th>
 <th class="colSecond" scope="col">Method</th>
@@ -198,6 +198,14 @@ extends <a href="BufferProvider.html" title="interface in com.mongodb.connection
 </td>
 </tr>
 <tr id="i6" class="altColor">
+<td class="colFirst"><code>default <a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/bson/org/bson/ByteBuf.html?is-external=true" title="class or interface in org.bson" class="externalLink">ByteBuf</a></code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#read(int,int)">read</a></span>&#8203;(int&nbsp;numBytes,
+    int&nbsp;additionalTimeout)</code></th>
+<td class="colLast">
+<div class="block">Read from the stream, blocking until the requested number of bytes have been read.</div>
+</td>
+</tr>
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#readAsync(int,com.mongodb.connection.AsyncCompletionHandler)">readAsync</a></span>&#8203;(int&nbsp;numBytes,
          <a href="AsyncCompletionHandler.html" title="interface in com.mongodb.connection">AsyncCompletionHandler</a>&lt;<a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/bson/org/bson/ByteBuf.html?is-external=true" title="class or interface in org.bson" class="externalLink">ByteBuf</a>&gt;&nbsp;handler)</code></th>
@@ -205,14 +213,21 @@ extends <a href="BufferProvider.html" title="interface in com.mongodb.connection
 <div class="block">Read from the stream, asynchronously.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i8" class="altColor">
+<td class="colFirst"><code>default boolean</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#supportsAdditionalTimeout()">supportsAdditionalTimeout</a></span>()</code></th>
+<td class="colLast">
+<div class="block">Gets whether this implementation supports specifying an additional timeout for read operations</div>
+</td>
+</tr>
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#write(java.util.List)">write</a></span>&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/List.html?is-external=true" title="class or interface in java.util" class="externalLink">List</a>&lt;<a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/bson/org/bson/ByteBuf.html?is-external=true" title="class or interface in org.bson" class="externalLink">ByteBuf</a>&gt;&nbsp;buffers)</code></th>
 <td class="colLast">
 <div class="block">Write each buffer in the list to the stream in order, blocking until all are completely written.</div>
 </td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#writeAsync(java.util.List,com.mongodb.connection.AsyncCompletionHandler)">writeAsync</a></span>&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/List.html?is-external=true" title="class or interface in java.util" class="externalLink">List</a>&lt;<a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/bson/org/bson/ByteBuf.html?is-external=true" title="class or interface in org.bson" class="externalLink">ByteBuf</a>&gt;&nbsp;buffers,
           <a href="AsyncCompletionHandler.html" title="interface in com.mongodb.connection">AsyncCompletionHandler</a>&lt;<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Void.html?is-external=true" title="class or interface in java.lang" class="externalLink">Void</a>&gt;&nbsp;handler)</code></th>
@@ -306,6 +321,60 @@ extends <a href="BufferProvider.html" title="interface in com.mongodb.connection
 <dd>a byte buffer filled with number of bytes requested</dd>
 <dt><span class="throwsLabel">Throws:</span></dt>
 <dd><code><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/io/IOException.html?is-external=true" title="class or interface in java.io" class="externalLink">IOException</a></code> - if there are problems reading from the stream</dd>
+</dl>
+</li>
+</ul>
+<a id="supportsAdditionalTimeout()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>supportsAdditionalTimeout</h4>
+<pre class="methodSignature">default&nbsp;boolean&nbsp;supportsAdditionalTimeout()</pre>
+<div class="block">Gets whether this implementation supports specifying an additional timeout for read operations
+ <p>
+ The default is to not support specifying an additional timeout
+ </p></div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>true if this implementation supports specifying an additional timeouts for reads operations</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>4.1</dd>
+<dt><span class="seeLabel">See Also:</span></dt>
+<dd><a href="#read(int,int)"><code>read(int, int)</code></a></dd>
+</dl>
+</li>
+</ul>
+<a id="read(int,int)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>read</h4>
+<pre class="methodSignature">default&nbsp;<a href="http://mongodb.github.io/mongo-java-driver/4.1/apidocs/bson/org/bson/ByteBuf.html?is-external=true" title="class or interface in org.bson" class="externalLink">ByteBuf</a>&nbsp;read&#8203;(int&nbsp;numBytes,
+                     int&nbsp;additionalTimeout)
+              throws <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/io/IOException.html?is-external=true" title="class or interface in java.io" class="externalLink">IOException</a></pre>
+<div class="block">Read from the stream, blocking until the requested number of bytes have been read.  If supported by the implementation,
+ adds the given additional timeout to the configured timeout for the stream.
+ <p>
+ This method should not be called unless <a href="#supportsAdditionalTimeout()"><code>supportsAdditionalTimeout()</code></a> returns true.
+ </p>
+ <p>
+ The default behavior is to throw an <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/UnsupportedOperationException.html?is-external=true" title="class or interface in java.lang" class="externalLink"><code>UnsupportedOperationException</code></a>
+ </p></div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>numBytes</code> - The number of bytes to read into the returned byte buffer</dd>
+<dd><code>additionalTimeout</code> - additional timeout in milliseconds to add to the configured timeout</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>a byte buffer filled with number of bytes requested</dd>
+<dt><span class="throwsLabel">Throws:</span></dt>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/io/IOException.html?is-external=true" title="class or interface in java.io" class="externalLink">IOException</a></code> - if there are problems reading from the stream</dd>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/UnsupportedOperationException.html?is-external=true" title="class or interface in java.lang" class="externalLink">UnsupportedOperationException</a></code> - if this implementation does not support additional timeouts</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>4.1</dd>
+<dt><span class="seeLabel">See Also:</span></dt>
+<dd><a href="#supportsAdditionalTimeout()"><code>supportsAdditionalTimeout()</code></a></dd>
 </dl>
 </li>
 </ul>

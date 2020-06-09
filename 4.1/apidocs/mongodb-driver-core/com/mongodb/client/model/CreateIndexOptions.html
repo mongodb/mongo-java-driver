@@ -27,7 +27,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":10,"i1":10,"i2":10};
+var data = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -181,13 +181,27 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 <th class="colLast" scope="col">Description</th>
 </tr>
 <tr id="i0" class="altColor">
+<td class="colFirst"><code><a href="CreateIndexOptions.html" title="class in com.mongodb.client.model">CreateIndexOptions</a></code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#commitQuorum(com.mongodb.CreateIndexCommitQuorum)">commitQuorum</a></span>&#8203;(<a href="../../CreateIndexCommitQuorum.html" title="class in com.mongodb">CreateIndexCommitQuorum</a>&nbsp;commitQuorum)</code></th>
+<td class="colLast">
+<div class="block">Sets the create index commit quorum for this operation.</div>
+</td>
+</tr>
+<tr id="i1" class="rowColor">
+<td class="colFirst"><code><a href="../../CreateIndexCommitQuorum.html" title="class in com.mongodb">CreateIndexCommitQuorum</a></code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getCommitQuorum()">getCommitQuorum</a></span>()</code></th>
+<td class="colLast">
+<div class="block">Gets the create index commit quorum for this operation.</div>
+</td>
+</tr>
+<tr id="i2" class="altColor">
 <td class="colFirst"><code>long</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getMaxTime(java.util.concurrent.TimeUnit)">getMaxTime</a></span>&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/TimeUnit.html?is-external=true" title="class or interface in java.util.concurrent" class="externalLink">TimeUnit</a>&nbsp;timeUnit)</code></th>
 <td class="colLast">
 <div class="block">Gets the maximum execution time on the server for this operation.</div>
 </td>
 </tr>
-<tr id="i1" class="rowColor">
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code><a href="CreateIndexOptions.html" title="class in com.mongodb.client.model">CreateIndexOptions</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#maxTime(long,java.util.concurrent.TimeUnit)">maxTime</a></span>&#8203;(long&nbsp;maxTime,
        <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/TimeUnit.html?is-external=true" title="class or interface in java.util.concurrent" class="externalLink">TimeUnit</a>&nbsp;timeUnit)</code></th>
@@ -195,7 +209,7 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 <div class="block">Sets the maximum execution time on the server for this operation.</div>
 </td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html?is-external=true" title="class or interface in java.lang" class="externalLink">String</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#toString()">toString</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
@@ -275,6 +289,41 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>this</dd>
 </dl>
+</li>
+</ul>
+<a id="getCommitQuorum()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getCommitQuorum</h4>
+<pre class="methodSignature"><a href="../../lang/Nullable.html" title="annotation in com.mongodb.lang">@Nullable</a>
+public&nbsp;<a href="../../CreateIndexCommitQuorum.html" title="class in com.mongodb">CreateIndexCommitQuorum</a>&nbsp;getCommitQuorum()</pre>
+<div class="block">Gets the create index commit quorum for this operation.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the create index commit quorum</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>4.1</dd>
+<dl><dt><span class="strong">Since server release</span></dt><dd><a href='http://docs.mongodb.org/manual/release-notes/4.4'>4.4</a></dd></dl>
+</li>
+</ul>
+<a id="commitQuorum(com.mongodb.CreateIndexCommitQuorum)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>commitQuorum</h4>
+<pre class="methodSignature">public&nbsp;<a href="CreateIndexOptions.html" title="class in com.mongodb.client.model">CreateIndexOptions</a>&nbsp;commitQuorum&#8203;(<a href="../../CreateIndexCommitQuorum.html" title="class in com.mongodb">CreateIndexCommitQuorum</a>&nbsp;commitQuorum)</pre>
+<div class="block">Sets the create index commit quorum for this operation.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>commitQuorum</code> - the create index commit quorum</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>this</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>4.1</dd>
+<dl><dt><span class="strong">Since server release</span></dt><dd><a href='http://docs.mongodb.org/manual/release-notes/4.4'>4.4</a></dd></dl>
 </li>
 </ul>
 <a id="toString()">
