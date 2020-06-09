@@ -227,7 +227,7 @@ The support for TLS provided by the JDK utilizes “hard fail” behavior in the
 
 ### OCSP Stapling
 
-{{% note class=important %}}
+{{% note class="important" %}}
 The following exception may occur when using OCSP stapling with Java runtime environments that use the TLS 1.3 protocol (Java 11 and higher use TLS 1.3 by default):
 
 `javax.net.ssl.SSLHandshakeException: extension (5) should not be presented in certificate_request`
