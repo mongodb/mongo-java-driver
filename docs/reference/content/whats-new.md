@@ -11,6 +11,7 @@ title = "What's New"
 
 This release fully supports all MongoDB releases from versions 2.6 to 4.4. Key new features of the 4.1 Java driver release include:
 
+* Significant reduction in client-perceived failover times during planned maintenance events
 * Update and delete operations support index hinting.
 * The find operation supports allowDiskUse for sorts that require too much memory to execute in RAM.
 * Authentication supports the MONGODB-AWS mechanism using Amazon Web Services (AWS) Identity and Access Management (IAM) credentials.
