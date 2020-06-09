@@ -61,7 +61,7 @@ configure(coreProjects) {
 
     evaluationDependsOn(':util')
     group = 'org.mongodb'
-    version = '4.1.0-beta2'
+    version = '4.1.0-SNAPSHOT'
 
     repositories {
         mavenLocal()
