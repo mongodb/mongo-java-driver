@@ -39,7 +39,7 @@ public final class UuidHelper {
         bytes[offset] = (byte) (0xFFL & (x >> 56));
     }
 
-    private static long readLongFromArrayBigEndian(final byte[] bytes, final int offset) {
+    public static long readLongFromArrayBigEndian(final byte[] bytes, final int offset) {
         long x = 0;
         x |= (0xFFL & bytes[offset + 7]);
         x |= (0xFFL & bytes[offset + 6]) << 8;

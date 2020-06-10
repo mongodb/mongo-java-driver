@@ -18,6 +18,7 @@ package org.bson;
 
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
+import org.bson.internal.UuidHelper;
 
 import static org.bson.Bits.readLong;
 
@@ -87,6 +88,10 @@ class BSONCallbackAdapter extends AbstractBsonWriter {
             bsonCallback.gotUUID(getName(),
                     readLong(value.getData(), 0),
                     readLong(value.getData(), 8));
+        } else if (value.getType() == BsonBinarySubType.UUID_STANDARD.getValue()) {
+            bsonCallback.gotUUID(getName(),
+                UuidHelper.readLongFromArrayBigEndian(value.getData(), 0),
+                UuidHelper.readLongFromArrayBigEndian(value.getData(), 8));
         } else {
             bsonCallback.gotBinary(getName(), value.getType(), value.getData());
         }
