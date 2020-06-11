@@ -192,7 +192,7 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
     }
 
     @Override
-    public <U> FindIterable<U> map(Function<TResult, U> mapper) {
+    public <U> FindIterable<U> map(final Function<TResult, U> mapper) {
         return new MappingFindIterable<TResult, U>(this, mapper);
     }
 
