@@ -164,6 +164,11 @@ class DefaultConnectionPool implements ConnectionPool {
                             PooledConnection connection = getPooledConnection(getRemainingWaitTime(), MILLISECONDS);
                             openAsync(connection, errHandlingCallback);
                         }
+                    } catch (MongoTimeoutException e) {
+                        Exception exception = new MongoTimeoutException(format("Timeout waiting for a pooled connection after %d %s",
+                                settings.getMaxWaitTime(MILLISECONDS), MILLISECONDS));
+                        emitCheckOutFailedEvent(exception);
+                        errHandlingCallback.onResult(null, exception);
                     } catch (Throwable t) {
                         emitCheckOutFailedEvent(t);
                         errHandlingCallback.onResult(null, t);
