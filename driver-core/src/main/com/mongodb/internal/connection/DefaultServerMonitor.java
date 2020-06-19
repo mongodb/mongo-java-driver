@@ -178,8 +178,9 @@ class DefaultServerMonitor implements ServerMonitor {
             try {
                 if (connection == null || connection.isClosed()) {
                     currentCheckCancelled = false;
-                    connection = internalConnectionFactory.create(serverId);
-                    connection.open();
+                    InternalConnection newConnection = internalConnectionFactory.create(serverId);
+                    newConnection.open();
+                    connection = newConnection;
                     averageRoundTripTime.addSample(connection.getInitialServerDescription().getRoundTripTimeNanos());
                     return connection.getInitialServerDescription();
                 }
