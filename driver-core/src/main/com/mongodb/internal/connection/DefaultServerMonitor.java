@@ -398,7 +398,6 @@ class DefaultServerMonitor implements ServerMonitor {
                             connection.close();
                             connection = null;
                         }
-                        averageRoundTripTime.reset();
                     }
                     waitForNext();
                 }
