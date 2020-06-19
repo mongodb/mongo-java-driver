@@ -138,35 +138,41 @@ class DefaultServerMonitor implements ServerMonitor {
         @Override
         public void run() {
             ServerDescription currentServerDescription = getConnectingServerDescription(null);
-            while (!isClosed) {
-                ServerDescription previousServerDescription = currentServerDescription;
-                currentServerDescription = lookupServerDescription(currentServerDescription);
+            try {
+                while (!isClosed) {
+                    ServerDescription previousServerDescription = currentServerDescription;
+                    currentServerDescription = lookupServerDescription(currentServerDescription);
 
-                if (isClosed) {
-                    continue;
-                }
+                    if (isClosed) {
+                        continue;
+                    }
 
-                if (currentCheckCancelled) {
+                    if (currentCheckCancelled) {
+                        waitForNext();
+                        currentCheckCancelled = false;
+                        continue;
+                    }
+
+                    logStateChange(previousServerDescription, currentServerDescription);
+                    serverStateListener.stateChanged(new ChangeEvent<>(previousServerDescription, currentServerDescription));
+
+                    if (currentServerDescription.getException() != null) {
+                        connectionPool.invalidate();
+                    }
+
+                    if (((connection == null || shouldStreamResponses(currentServerDescription))
+                            && currentServerDescription.getTopologyVersion() != null)
+                            || (connection != null && connection.hasMoreToCome())
+                            || (currentServerDescription.getException() instanceof MongoSocketException
+                            && previousServerDescription.getType() != UNKNOWN)) {
+                        continue;
+                    }
                     waitForNext();
-                    currentCheckCancelled = false;
-                    continue;
                 }
-
-                logStateChange(previousServerDescription, currentServerDescription);
-                serverStateListener.stateChanged(new ChangeEvent<>(previousServerDescription, currentServerDescription));
-
-                if (currentServerDescription.getException() != null) {
-                    connectionPool.invalidate();
+            } finally {
+                if (connection != null) {
+                    connection.close();
                 }
-
-                if (((connection == null || shouldStreamResponses(currentServerDescription))
-                        && currentServerDescription.getTopologyVersion() != null)
-                        || (connection != null && connection.hasMoreToCome())
-                        || (currentServerDescription.getException() instanceof MongoSocketException
-                        && previousServerDescription.getType() != UNKNOWN)) {
-                    continue;
-                }
-                waitForNext();
             }
         }
 
