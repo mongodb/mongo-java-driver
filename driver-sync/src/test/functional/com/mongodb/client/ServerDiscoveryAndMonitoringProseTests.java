@@ -36,6 +36,7 @@ import static com.mongodb.ClusterFixture.disableFailPoint;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static java.util.Collections.synchronizedList;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.bson.BsonDocument.parse;
 import static org.junit.Assert.assertFalse;
@@ -73,7 +74,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
         assumeTrue(isStandalone());
         assumeTrue(serverVersionAtLeast(4, 4));
 
-        List<ServerDescriptionChangedEvent> events = new ArrayList<>();
+        List<ServerDescriptionChangedEvent> events = synchronizedList(new ArrayList<>());
         MongoClientSettings settings = getMongoClientSettingsBuilder()
                                        .applicationName("streamingRttTest")
                                        .applyToServerSettings(new Block<ServerSettings.Builder>() {
