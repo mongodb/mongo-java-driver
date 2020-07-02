@@ -145,6 +145,8 @@ public class InitialDnsSeedlistDiscoveryTest {
                     // the authSource is ignored.  If the test gets this far, at least we know that a TXT record
                     // containing in authSource doesn't blow up.  We just don't test that it's actually used.
                     assertTrue(true);
+                } else if (entry.getKey().equals("directConnection")) {
+                    assertEquals(entry.getValue().asBoolean().getValue(), connectionString.isDirectConnection());
                 } else {
                     throw new UnsupportedOperationException("No support configured yet for " + entry.getKey());
                 }
