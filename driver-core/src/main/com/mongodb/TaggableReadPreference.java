@@ -255,10 +255,12 @@ public abstract class TaggableReadPreference extends ReadPreference {
             }
         } else {
             ServerDescription mostUpToDateSecondary = findMostUpToDateSecondary(clusterDescription);
-            for (ServerDescription cur : servers) {
-                if (getLastWriteDateNonNull(mostUpToDateSecondary).getTime() - getLastWriteDateNonNull(cur).getTime()
-                        + heartbeatFrequencyMS <= maxStaleness) {
-                    freshServers.add(cur);
+            if (mostUpToDateSecondary != null) {
+                for (ServerDescription cur : servers) {
+                    if (getLastWriteDateNonNull(mostUpToDateSecondary).getTime() - getLastWriteDateNonNull(cur).getTime()
+                            + heartbeatFrequencyMS <= maxStaleness) {
+                        freshServers.add(cur);
+                    }
                 }
             }
         }
@@ -292,9 +294,6 @@ public abstract class TaggableReadPreference extends ReadPreference {
                     mostUpdateToDateSecondary = cur;
                 }
             }
-        }
-        if (mostUpdateToDateSecondary == null) {
-            throw new MongoInternalException("Expected at least one secondary in cluster description: " + clusterDescription);
         }
         return mostUpdateToDateSecondary;
     }
