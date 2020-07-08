@@ -31,7 +31,7 @@ class LazyPojoCodec<T> extends PojoCodec<T> {
     private final PropertyCodecRegistry propertyCodecRegistry;
     private final DiscriminatorLookup discriminatorLookup;
     private final ConcurrentMap<ClassModel<?>, Codec<?>> codecCache;
-    private volatile PojoCodecImpl<T> pojoCodec;
+    private PojoCodecImpl<T> pojoCodec;
 
     LazyPojoCodec(final ClassModel<T> classModel, final CodecRegistry registry, final PropertyCodecRegistry propertyCodecRegistry,
                   final DiscriminatorLookup discriminatorLookup, final ConcurrentMap<ClassModel<?>, Codec<?>> codecCache) {
@@ -57,7 +57,7 @@ class LazyPojoCodec<T> extends PojoCodec<T> {
         return getPojoCodec().decode(reader, decoderContext);
     }
 
-    private Codec<T> getPojoCodec() {
+    private synchronized Codec<T> getPojoCodec() {
         if (pojoCodec == null) {
             pojoCodec = new PojoCodecImpl<T>(classModel, registry, propertyCodecRegistry, discriminatorLookup, codecCache, true);
         }
