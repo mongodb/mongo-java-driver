@@ -1,4 +1,4 @@
-current = "4.0.4"
+current = "4.0.5"
 
 [[versions]]
   version = "4.1.0-beta2"
@@ -6,13 +6,13 @@ current = "4.0.4"
   api = "./4.1/apidocs"
 
 [[versions]]
-  version = "4.0.4"
+  version = "4.0.5"
   docs = "./4.0"
+  status = "current"
   api = "./4.0/apidocs"
 
 [[versions]]
-  version = "3.12.5"
-  status = "current"
+  version = "3.12.6"
   docs = "./3.12"
   api = "./3.12/javadoc"
 
