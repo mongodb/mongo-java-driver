@@ -10,7 +10,12 @@ pre = "<i class='fa'></i>"
 
 ## Text Search
 
-MongoDB supports query operations that perform a [text search]({{<docsref "text-search" >}}) of string content. To perform text search, MongoDB uses a [text index]({{<docsref "core/index-text" >}}) and the [`$text` query operator]({{<docsref "reference/operator/query/text" >}}).
+[Atlas Search](https://docs.atlas.mongodb.com/atlas-search) makes it easy to build fast, relevance-based search capabilities on top of your 
+MongoDB data. Try it today on [MongoDB Atlas](https://www.mongodb.com/cloud/atlas), our fully managed database as a service.
+
+Alternatively, MongoDB supports simpler query operations that perform a [text search]({{<docsref "text-search" >}}) of string content. To
+perform text search, MongoDB uses a [text index]({{<docsref "core/index-text" >}}) and the 
+[`$text` query operator]({{<docsref "reference/operator/query/text" >}}).
 
 The Java driver provides the [`Filters.text()`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Filters.html#text(java.lang.String,com.mongodb.client.model.TextSearchOptions)" >}}) helper to facilitate the creation of text search query filters.
 
