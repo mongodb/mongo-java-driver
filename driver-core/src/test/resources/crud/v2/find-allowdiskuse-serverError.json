@@ -1,7 +1,7 @@
 {
   "runOn": [
     {
-      "minServerVersion": "3.4",
+      "minServerVersion": "3.2",
       "maxServerVersion": "4.3.0"
     }
   ],

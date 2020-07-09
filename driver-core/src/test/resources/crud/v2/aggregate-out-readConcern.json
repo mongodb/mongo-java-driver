@@ -351,6 +351,35 @@
           "error": true
         }
       ],
+      "expectations": [
+        {
+          "command_started_event": {
+            "command": {
+              "aggregate": "test_aggregate_out_readconcern",
+              "pipeline": [
+                {
+                  "$sort": {
+                    "x": 1
+                  }
+                },
+                {
+                  "$match": {
+                    "_id": {
+                      "$gt": 1
+                    }
+                  }
+                },
+                {
+                  "$out": "other_test_collection"
+                }
+              ],
+              "readConcern": {
+                "level": "!invalid123"
+              }
+            }
+          }
+        }
+      ]
     }
   ]
 }
