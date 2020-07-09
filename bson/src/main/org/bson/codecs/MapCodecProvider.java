@@ -23,6 +23,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import java.util.Map;
 
 import static org.bson.assertions.Assertions.notNull;
+import static org.bson.codecs.BsonTypeClassMap.DEFAULT_BSON_TYPE_CLASS_MAP;
 
 /**
  * A {@code CodecProvider} for the Map class and all the default Codec implementations on which it depends.
@@ -37,7 +38,7 @@ public class MapCodecProvider implements CodecProvider {
      * Construct a new instance with a default {@code BsonTypeClassMap}.
      */
     public MapCodecProvider() {
-        this(new BsonTypeClassMap());
+        this(DEFAULT_BSON_TYPE_CLASS_MAP);
     }
 
     /**
@@ -57,7 +58,7 @@ public class MapCodecProvider implements CodecProvider {
      * @param valueTransformer the value transformer for decoded values
      */
     public MapCodecProvider(final Transformer valueTransformer) {
-        this(new BsonTypeClassMap(), valueTransformer);
+        this(DEFAULT_BSON_TYPE_CLASS_MAP, valueTransformer);
     }
 
     /**

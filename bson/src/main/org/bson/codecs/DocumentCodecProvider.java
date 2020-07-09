@@ -23,6 +23,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.CodeWithScope;
 
 import static org.bson.assertions.Assertions.notNull;
+import static org.bson.codecs.BsonTypeClassMap.DEFAULT_BSON_TYPE_CLASS_MAP;
 
 /**
  * A {@code CodecProvider} for the Document class and all the default Codec implementations on which it depends.
@@ -37,7 +38,7 @@ public class DocumentCodecProvider implements CodecProvider {
      * Construct a new instance with a default {@code BsonTypeClassMap}.
      */
     public DocumentCodecProvider() {
-        this(new BsonTypeClassMap());
+        this(DEFAULT_BSON_TYPE_CLASS_MAP);
     }
 
     /**
@@ -48,7 +49,7 @@ public class DocumentCodecProvider implements CodecProvider {
      * @see org.bson.codecs.DocumentCodec#DocumentCodec(org.bson.codecs.configuration.CodecRegistry, BsonTypeClassMap, org.bson.Transformer)
      */
     public DocumentCodecProvider(final Transformer valueTransformer) {
-        this(new BsonTypeClassMap(), valueTransformer);
+        this(DEFAULT_BSON_TYPE_CLASS_MAP, valueTransformer);
     }
 
     /**

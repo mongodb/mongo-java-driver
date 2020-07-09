@@ -70,6 +70,7 @@ import java.util.Set;
  * @since 3.0
  */
 public class BsonTypeClassMap {
+    static final BsonTypeClassMap DEFAULT_BSON_TYPE_CLASS_MAP = new BsonTypeClassMap();
     private final Map<BsonType, Class<?>> map = new HashMap<BsonType, Class<?>>();
 
     /**

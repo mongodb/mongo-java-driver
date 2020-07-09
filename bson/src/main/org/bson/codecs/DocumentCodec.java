@@ -34,6 +34,7 @@ import java.util.UUID;
 
 import static java.util.Arrays.asList;
 import static org.bson.assertions.Assertions.notNull;
+import static org.bson.codecs.BsonTypeClassMap.DEFAULT_BSON_TYPE_CLASS_MAP;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 /**
@@ -48,7 +49,8 @@ public class DocumentCodec implements CollectibleCodec<Document>, OverridableUui
     private static final CodecRegistry DEFAULT_REGISTRY = fromProviders(asList(new ValueCodecProvider(),
             new BsonValueCodecProvider(),
             new DocumentCodecProvider()));
-    private static final BsonTypeClassMap DEFAULT_BSON_TYPE_CLASS_MAP = new BsonTypeClassMap();
+    private static final BsonTypeCodecMap DEFAULT_BSON_TYPE_CODEC_MAP = new BsonTypeCodecMap(DEFAULT_BSON_TYPE_CLASS_MAP, DEFAULT_REGISTRY);
+    private static final IdGenerator DEFAULT_ID_GENERATOR = new ObjectIdGenerator();
 
     private final BsonTypeCodecMap bsonTypeCodecMap;
     private final CodecRegistry registry;
@@ -60,7 +62,7 @@ public class DocumentCodec implements CollectibleCodec<Document>, OverridableUui
      * Construct a new instance with a default {@code CodecRegistry}.
      */
     public DocumentCodec() {
-        this(DEFAULT_REGISTRY);
+        this(DEFAULT_REGISTRY, DEFAULT_BSON_TYPE_CODEC_MAP, null);
     }
 
     /**
@@ -93,8 +95,11 @@ public class DocumentCodec implements CollectibleCodec<Document>, OverridableUui
      * @param valueTransformer the value transformer to use as a final step when decoding the value of any field in the document
      */
     public DocumentCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap, final Transformer valueTransformer) {
-        this(registry, new BsonTypeCodecMap(notNull("bsonTypeClassMap", bsonTypeClassMap), registry),
-                new ObjectIdGenerator(), valueTransformer, UuidRepresentation.UNSPECIFIED);
+        this(registry, new BsonTypeCodecMap(notNull("bsonTypeClassMap", bsonTypeClassMap), registry), valueTransformer);
+    }
+
+    private DocumentCodec(final CodecRegistry registry, final BsonTypeCodecMap bsonTypeCodecMap, final Transformer valueTransformer) {
+        this(registry, bsonTypeCodecMap, DEFAULT_ID_GENERATOR, valueTransformer, UuidRepresentation.UNSPECIFIED);
     }
 
     private DocumentCodec(final CodecRegistry registry, final BsonTypeCodecMap bsonTypeCodecMap, final IdGenerator idGenerator,

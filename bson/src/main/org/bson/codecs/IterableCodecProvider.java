@@ -21,6 +21,7 @@ import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import static org.bson.assertions.Assertions.notNull;
+import static org.bson.codecs.BsonTypeClassMap.DEFAULT_BSON_TYPE_CLASS_MAP;
 
 /**
  * A {@code CodecProvider} for classes than implement the {@code Iterable} interface.
@@ -35,7 +36,7 @@ public class IterableCodecProvider implements CodecProvider {
      * Construct a new instance with a default {@code BsonTypeClassMap} and no {@code Transformer}.
      */
     public IterableCodecProvider() {
-        this(new BsonTypeClassMap());
+        this(DEFAULT_BSON_TYPE_CLASS_MAP);
     }
 
     /**
@@ -45,7 +46,7 @@ public class IterableCodecProvider implements CodecProvider {
      * @param valueTransformer the value transformer for decoded values
      */
     public IterableCodecProvider(final Transformer valueTransformer) {
-        this(new BsonTypeClassMap(), valueTransformer);
+        this(DEFAULT_BSON_TYPE_CLASS_MAP, valueTransformer);
     }
 
     /**

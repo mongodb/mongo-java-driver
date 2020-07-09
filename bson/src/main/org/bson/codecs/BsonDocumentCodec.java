@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static org.bson.assertions.Assertions.notNull;
 import static org.bson.codecs.BsonValueCodecProvider.getBsonTypeClassMap;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
@@ -41,6 +42,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 public class BsonDocumentCodec implements CollectibleCodec<BsonDocument> {
     private static final String ID_FIELD_NAME = "_id";
     private static final CodecRegistry DEFAULT_REGISTRY = fromProviders(new BsonValueCodecProvider());
+    private static final BsonTypeCodecMap DEFAULT_BSON_TYPE_CODEC_MAP = new BsonTypeCodecMap(getBsonTypeClassMap(), DEFAULT_REGISTRY);
 
     private final CodecRegistry codecRegistry;
     private final BsonTypeCodecMap bsonTypeCodecMap;
@@ -49,7 +51,7 @@ public class BsonDocumentCodec implements CollectibleCodec<BsonDocument> {
      * Creates a new instance with a default codec registry that uses the {@link BsonValueCodecProvider}.
      */
     public BsonDocumentCodec() {
-        this(DEFAULT_REGISTRY);
+        this(DEFAULT_REGISTRY, DEFAULT_BSON_TYPE_CODEC_MAP);
     }
 
     /**
@@ -58,11 +60,12 @@ public class BsonDocumentCodec implements CollectibleCodec<BsonDocument> {
      * @param codecRegistry the {@code CodecRegistry} to use to look up the codecs for encoding and decoding to/from BSON
      */
     public BsonDocumentCodec(final CodecRegistry codecRegistry) {
-        if (codecRegistry == null) {
-            throw new IllegalArgumentException("Codec registry can not be null");
-        }
-        this.codecRegistry = codecRegistry;
-        this.bsonTypeCodecMap = new BsonTypeCodecMap(getBsonTypeClassMap(), codecRegistry);
+        this(codecRegistry, new BsonTypeCodecMap(getBsonTypeClassMap(), codecRegistry));
+    }
+
+    private BsonDocumentCodec(final CodecRegistry codecRegistry, final BsonTypeCodecMap bsonTypeCodecMap) {
+        this.codecRegistry = notNull("Codec registry", codecRegistry);
+        this.bsonTypeCodecMap = notNull("bsonTypeCodecMap", bsonTypeCodecMap);
     }
 
     /**
