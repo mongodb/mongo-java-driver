@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 final class AuthorizationHeader {
+    public static final String NEW_LINE = System.lineSeparator();
     private static final String AWS4_HMAC_SHA256 = "AWS4-HMAC-SHA256";
     private static final String SERVICE = "sts";
 
@@ -65,12 +66,12 @@ final class AuthorizationHeader {
         final String signedHeaders = getSignedHeaders(requestHeaders);
 
         final List<String> request = Arrays.asList(method, "/", query, headers, signedHeaders, hash(body));
-        return String.join("\n", request);
+        return String.join(NEW_LINE, request);
     }
 
     static String createStringToSign(final String hash, final String timestamp, final String credentialScope) {
         final List<String> toSign = Arrays.asList(AWS4_HMAC_SHA256, timestamp, credentialScope, hash);
-        return String.join("\n", toSign);
+        return String.join(NEW_LINE, toSign);
     }
 
     static String calculateSignature(final String toSign, final String secret, final String date, final String region,

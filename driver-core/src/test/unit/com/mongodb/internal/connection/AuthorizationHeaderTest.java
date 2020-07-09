@@ -22,6 +22,7 @@ import javax.security.sasl.SaslException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.mongodb.internal.connection.AuthorizationHeader.NEW_LINE;
 import static org.junit.Assert.assertEquals;
 
 public class AuthorizationHeaderTest {
@@ -97,11 +98,11 @@ public class AuthorizationHeaderTest {
         headers.put("My-Header2", "    \"a   b   c\"  ");
 
         String actual = AuthorizationHeader.getCanonicalHeaders(headers);
-        String expected = "content-type:application/x-www-form-urlencoded; charset=utf-8\n"
-                + "host:iam.amazonaws.com\n"
-                + "my-header1:a b c\n"
-                + "my-header2:\"a b c\"\n"
-                + String.format("x-amz-date:%s\n", timestamp);
+        String expected = "content-type:application/x-www-form-urlencoded; charset=utf-8" + NEW_LINE
+                + "host:iam.amazonaws.com" + NEW_LINE
+                + "my-header1:a b c" + NEW_LINE
+                + "my-header2:\"a b c\"" + NEW_LINE
+                + String.format("x-amz-date:%s%n", timestamp);
         assertEquals(expected, actual);
     }
 
@@ -126,15 +127,16 @@ public class AuthorizationHeaderTest {
         requestHeaders.put("X-Amz-Date", timestamp);
 
         String actual = AuthorizationHeader.createCanonicalRequest("GET", "Action=ListUsers&Version=2010-05-08", "", requestHeaders);
-        String expected = "GET\n"
-                + "/\n"
-                + "Action=ListUsers&Version=2010-05-08\n"
-                + "content-type:application/x-www-form-urlencoded; charset=utf-8\n"
-                + "host:iam.amazonaws.com\n"
-                + String.format("x-amz-date:%s\n", timestamp)
-                + "\n"
-                + "content-type;host;x-amz-date\n"
+        String expected = "GET" + NEW_LINE
+                + "/" + NEW_LINE
+                + "Action=ListUsers&Version=2010-05-08" + NEW_LINE
+                + "content-type:application/x-www-form-urlencoded; charset=utf-8" + NEW_LINE
+                + "host:iam.amazonaws.com" + NEW_LINE
+                + String.format("x-amz-date:%s%n", timestamp)
+                + NEW_LINE
+                + "content-type;host;x-amz-date" + NEW_LINE
                 + "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+
         assertEquals(expected, actual);
 
         String token = "FakeFakeFakeFake";
@@ -145,17 +147,17 @@ public class AuthorizationHeaderTest {
         requestHeaders.put("X-Amz-Security-Token", token);
 
         actual = AuthorizationHeader.createCanonicalRequest("GET", "Action=ListUsers&Version=2010-05-08", "", requestHeaders);
-        expected = "GET\n"
-                + "/\n"
-                + "Action=ListUsers&Version=2010-05-08\n"
-                + "content-type:application/x-www-form-urlencoded; charset=utf-8\n"
-                + "host:iam.amazonaws.com\n"
-                + String.format("x-amz-date:%s\n", timestamp)
-                + String.format("x-amz-security-token:%s\n", token)
-                + "x-mongodb-gs2-cb-flag:n\n"
-                + String.format("x-mongodb-server-nonce:%s\n", nonce)
-                + "\n"
-                + "content-type;host;x-amz-date;x-amz-security-token;x-mongodb-gs2-cb-flag;x-mongodb-server-nonce\n"
+        expected = "GET" + NEW_LINE
+                + "/" + NEW_LINE
+                + "Action=ListUsers&Version=2010-05-08" + NEW_LINE
+                + "content-type:application/x-www-form-urlencoded; charset=utf-8" + NEW_LINE
+                + "host:iam.amazonaws.com" + NEW_LINE
+                + String.format("x-amz-date:%s%n", timestamp)
+                + String.format("x-amz-security-token:%s%n", token)
+                + "x-mongodb-gs2-cb-flag:n" + NEW_LINE
+                + String.format("x-mongodb-server-nonce:%s%n", nonce)
+                + NEW_LINE
+                + "content-type;host;x-amz-date;x-amz-security-token;x-mongodb-gs2-cb-flag;x-mongodb-server-nonce" + NEW_LINE
                 + "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
         assertEquals(expected, actual);
     }
@@ -167,10 +169,10 @@ public class AuthorizationHeaderTest {
         String hash = "f536975d06c0309214f805bb90ccff089219ecd68b2577efef23edd43b7e1a59";
 
         String actual = AuthorizationHeader.createStringToSign(hash, timestamp, credentialScope);
-        String expected = "AWS4-HMAC-SHA256\n"
+        String expected = "AWS4-HMAC-SHA256" + NEW_LINE
                 + timestamp
-                + "\n"
-                + String.format("%s/us-east-1/iam/aws4_request\n", date)
+                + NEW_LINE
+                + String.format("%s/us-east-1/iam/aws4_request%n", date)
                 + "f536975d06c0309214f805bb90ccff089219ecd68b2577efef23edd43b7e1a59";
         assertEquals(expected, actual);
     }
