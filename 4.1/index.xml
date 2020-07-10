@@ -278,7 +278,7 @@ import org.mongodb.scala._ import org.mongodb.scala.model.Filters._ import org.m
       <description>Find Operations Find operations retrieve documents from a collection. You can specify a filter to select only those documents that match the filter condition.
 Prerequisites  The example below requires a restaurants collection in the test database. To create and populate the collection, follow the directions in github.
  Include the following import statements:
-import com.mongodb.*; import com.mongodb.client.MongoClients; import com.mongodb.client.MongoClient; import com.mongodb.client.MongoCollection; import com.mongodb.client.MongoDatabase; import com.mongodb.client.model.Projections; import com.mongodb.client.model.Filters; import static com.</description>
+import com.mongodb.*; import com.mongodb.client.MongoClients; import com.mongodb.client.MongoClient; import com.mongodb.client.MongoCollection; import com.mongodb.client.MongoDatabase; import com.mongodb.client.FindIterable; import com.mongodb.client.model.Projections; import com.</description>
     </item>
     
     <item>
@@ -390,10 +390,9 @@ Prerequisites  The example below requires a restaurants collection in the test d
       <pubDate>Tue, 07 Jun 2016 23:28:50 -0400</pubDate>
       
       <guid>/mongo-java-driver/4.1/driver/tutorials/text-search/</guid>
-      <description>Text Search MongoDB supports query operations that perform a text search of string content. To perform text search, MongoDB uses a text index and the $text query operator.
-The Java driver provides the Filters.text() helper to facilitate the creation of text search query filters.
-Prerequisites  The example below requires a restaurants collection in the test database. To create and populate the collection, follow the directions in github.
- Include the following import statements:</description>
+      <description>Text Search Atlas Search makes it easy to build fast, relevance-based search capabilities on top of your MongoDB data. Try it today on MongoDB Atlas, our fully managed database as a service.
+Alternatively, MongoDB supports simpler query operations that perform a text search of string content. To perform text search, MongoDB uses a text index and the $text query operator.
+The Java driver provides the Filters.text() helper to facilitate the creation of text search query filters.</description>
     </item>
     
     <item>
@@ -1068,7 +1067,7 @@ Bugs / Feature Requests If you think you’ve found a bug or want to see a new f
       <guid>/mongo-java-driver/4.1/driver-reactive/getting-started/installation/</guid>
       <description> Installation The recommended way to get started using one of the drivers in your project is with a dependency management system.
  MongoDB Reactive Streams Driver The Reactive Streams implementation for asynchronous stream processing with non-blocking back pressure.
-&amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.mongodb&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;mongodb-driver-reactivestreams&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;4.1.0-beta2&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; &amp;lt;/dependencies&amp;gt;    dependencies { compile &#39;org.mongodb:mongodb-driver-reactivestreams:4.1.0-beta2&#39; }    libraryDependencies += &#34;org.mongodb&#34; %% &#34;mongodb-driver-reactivestreams&#34; % &#34;4.1.0-beta2&#34;  </description>
+&amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.mongodb&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;mongodb-driver-reactivestreams&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;4.1.0-rc0&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; &amp;lt;/dependencies&amp;gt;    dependencies { compile &#39;org.mongodb:mongodb-driver-reactivestreams:4.1.0-rc0&#39; }    libraryDependencies += &#34;org.mongodb&#34; %% &#34;mongodb-driver-reactivestreams&#34; % &#34;4.1.0-rc0&#34;  </description>
     </item>
     
     <item>
@@ -1079,7 +1078,7 @@ Bugs / Feature Requests If you think you’ve found a bug or want to see a new f
       <guid>/mongo-java-driver/4.1/driver-scala/getting-started/installation/</guid>
       <description>Installation The recommended way to get started using one of the drivers in your project is with a dependency management system.
  MongoDB Scala Driver The Reactive Streams based Scala implementation for asynchronous stream processing with non-blocking back pressure.
-Scala 2.12 &amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.mongodb.scala&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;mongo-scala-driver&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;4.1.0-beta2_2.12&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; &amp;lt;/dependencies&amp;gt;    dependencies { compile &#39;org.mongodb.scala:mongo-scala-driver:4.1.0-beta2_2.12&#39; }    libraryDependencies += &#34;org.mongodb.scala&#34; %% &#34;mongo-scala-driver&#34; % &#34;4.1.0-beta2&#34;  Scala 2.11 &amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.</description>
+Scala 2.12 &amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.mongodb.scala&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;mongo-scala-driver&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;4.1.0-rc0_2.12&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; &amp;lt;/dependencies&amp;gt;    dependencies { compile &#39;org.mongodb.scala:mongo-scala-driver:4.1.0-rc0_2.12&#39; }    libraryDependencies += &#34;org.mongodb.scala&#34; %% &#34;mongo-scala-driver&#34; % &#34;4.1.0-rc0&#34;  Scala 2.11 &amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.</description>
     </item>
     
     <item>

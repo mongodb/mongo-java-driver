@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-06-09T12:07:35.77">
+<meta name="date" content="2020-07-10T15:24:12.77">
 <link rel="shortcut icon" href="/mongo-java-driver/4.1/img/favicon.png">
 
     <title>POJOs</title><link rel="stylesheet" href="/mongo-java-driver/4.1/lib/bootstrap.css" type="text/css" />
@@ -818,8 +818,8 @@ public final class Person {
 <h3 id="changing-what-is-serialized">Changing what is serialized</h3>
 
 <p>By default <code>null</code> values aren&rsquo;t serialized. This is controlled by the default implementation of the
-<a href="/mongo-java-driver/4.1/apidocs/bson/org/bson/codecs/pojo/FieldSerialization.html
-"><code>FieldSerialization</code></a> interface. Custom implementations can be set on
+<a href="/mongo-java-driver/4.1/apidocs/bson/org/bson/codecs/pojo/PropertySerialization.html
+"><code>PropertySerialization</code></a> interface. Custom implementations can be set on
 the <code>PropertyModelBuilder</code> which is available from the <code>ClassModelBuilder</code>.</p>
 
 <p>The <a href="/mongo-java-driver/4.1/apidocs/bson/org/bson/codecs/pojo/annotations/BsonIgnore.html

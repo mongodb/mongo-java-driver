@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-06-09T12:07:35.8">
+<meta name="date" content="2020-07-10T15:24:12.8">
 <link rel="shortcut icon" href="/mongo-java-driver/4.1/img/favicon.png">
 
     <title>Read Operations</title><link rel="stylesheet" href="/mongo-java-driver/4.1/lib/bootstrap.css" type="text/css" />
@@ -331,20 +331,22 @@
  import com.mongodb.client.MongoClient;
  import com.mongodb.client.MongoCollection;
  import com.mongodb.client.MongoDatabase;
+ import com.mongodb.client.FindIterable;
  import com.mongodb.client.model.Projections;
  import com.mongodb.client.model.Filters;
  import static com.mongodb.client.model.Filters.*;
  import static com.mongodb.client.model.Projections.*;
  import com.mongodb.client.model.Sorts;
  import java.util.Arrays;
+ import java.util.function.Consumer;
  import org.bson.Document;
 </code></pre></li>
 
 <li><p>Include the following code which the examples in the tutorials will use to print the results of the find operations:</p>
 
-<pre><code class="language-java">Block&lt;Document&gt; printBlock = new Block&lt;Document&gt;() {
+<pre><code class="language-java">Consumer&lt;Document&gt; printConsumer = new Consumer&lt;Document&gt;() {
        @Override
-       public void apply(final Document document) {
+       public void accept(final Document document) {
            System.out.println(document.toJson());
        }
 };
@@ -371,13 +373,13 @@ MongoCollection&lt;Document&gt; collection = database.getCollection(&quot;restau
 
 <p>You can call the method without any arguments to query all documents in a collection:</p>
 
-<pre><code class="language-java">collection.find().forEach(printBlock);
+<pre><code class="language-java">collection.find().forEach(printConsumer);
 </code></pre>
 
 <p>Or pass a filter to query for documents that match the filter criteria:</p>
 
 <pre><code class="language-java">collection.find(eq(&quot;name&quot;, &quot;456 Cookies Shop&quot;))
-            .forEach(printBlock);
+            .forEach(printConsumer);
 </code></pre>
 
 <h2 id="query-filters">Query Filters</h2>
@@ -390,7 +392,7 @@ MongoCollection&lt;Document&gt; collection = database.getCollection(&quot;restau
 <p>To specify an empty filter (i.e. match all documents in a collection), use an empty <a href="/mongo-java-driver/4.1/apidocs/bson/org/bson/Document.html
 "><code>Document</code></a> object.</p>
 
-<pre><code class="language-java">collection.find(new Document()).forEach(printBlock);
+<pre><code class="language-java">collection.find(new Document()).forEach(printConsumer);
 </code></pre>
 
 <div class="admonition tip">
@@ -400,7 +402,7 @@ MongoCollection&lt;Document&gt; collection = database.getCollection(&quot;restau
 </div>
 
 
-<pre><code class="language-java">collection.find().forEach(printBlock);
+<pre><code class="language-java">collection.find().forEach(printConsumer);
 </code></pre>
 
 <h3 id="filters-helper"><code>Filters</code> Helper</h3>
@@ -419,14 +421,14 @@ MongoCollection&lt;Document&gt; collection = database.getCollection(&quot;restau
 <pre><code class="language-java">collection.find(
     new Document(&quot;stars&quot;, new Document(&quot;$gte&quot;, 2)
           .append(&quot;$lt&quot;, 5))
-          .append(&quot;categories&quot;, &quot;Bakery&quot;)).forEach(printBlock);
+          .append(&quot;categories&quot;, &quot;Bakery&quot;)).forEach(printConsumer);
 </code></pre>
 
 <p>The following example specifies the same filter condition using the <a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-core/com/mongodb/client/model/Filters.html
 "><code>Filters</code></a> helper methods:</p>
 
 <pre><code class="language-java">collection.find(and(gte(&quot;stars&quot;, 2), lt(&quot;stars&quot;, 5), eq(&quot;categories&quot;, &quot;Bakery&quot;)))
-            .forEach(printBlock);
+            .forEach(printConsumer);
 </code></pre>
 
 <p>For a list of MongoDB query filter operators, refer to the <a href="http://docs.mongodb.org/manual/reference/operator/query
@@ -442,8 +444,7 @@ See also the  <a href="http://docs.mongodb.org/manual/tutorial/query-documents
 "><code>FindIterable</code></a> interface. The interface provides various methods that you can chain to the <code>find()</code> method to modify the output or behavior of the query, such as <a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-sync/com/mongodb/client/FindIterable.html#sort(org.bson.conversions.Bson)
 "><code>sort()</code></a>  or <a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-sync/com/mongodb/client/FindIterable.html#projection(org.bson.conversions.Bson)
 "><code>projection()</code></a>, as well as for iterating the results, such as <a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-sync/com/mongodb/client/MongoIterable.html#iterator()
-"><code>iterator()</code></a> and <a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-sync/com/mongodb/client/MongoIterable.html#forEach(com.mongodb.Block)
-"><code>forEach()</code></a>.</p>
+"><code>iterator()</code></a>.</p>
 
 <h3 id="projections">Projections</h3>
 
@@ -457,7 +458,7 @@ See also the  <a href="http://docs.mongodb.org/manual/tutorial/query-documents
                      .append(&quot;stars&quot;, 1)
                      .append(&quot;categories&quot;,1)
                      .append(&quot;_id&quot;, 0))
-                .forEach(printBlock);
+                .forEach(printConsumer);
 </code></pre>
 
 <p>To facilitate the creation of projection documents, the Java driver provides the
@@ -466,7 +467,7 @@ See also the  <a href="http://docs.mongodb.org/manual/tutorial/query-documents
 
 <pre><code class="language-java">collection.find(and(gte(&quot;stars&quot;, 2), lt(&quot;stars&quot;, 5), eq(&quot;categories&quot;, &quot;Bakery&quot;)))
                 .projection(fields(include(&quot;name&quot;, &quot;stars&quot;, &quot;categories&quot;), excludeId()))
-                .forEach(printBlock);
+                .forEach(printConsumer);
 </code></pre>
 
 <p>In the projection document, you can also specify a projection expression using a <a href="http://docs.mongodb.org/manual/reference/operator/projection/
@@ -484,7 +485,7 @@ see the <a href="/mongo-java-driver/4.1/driver/tutorials/text-search/">Text Sear
 
 <pre><code class="language-java">collection.find(and(gte(&quot;stars&quot;, 2), lt(&quot;stars&quot;, 5), eq(&quot;categories&quot;, &quot;Bakery&quot;)))
                 .sort(Sorts.ascending(&quot;name&quot;))
-                .forEach(printBlock);
+                .forEach(printConsumer);
 
 </code></pre>
 
@@ -496,7 +497,7 @@ see the <a href="/mongo-java-driver/4.1/driver/tutorials/text-search/">Text Sear
 <pre><code class="language-java">collection.find(and(gte(&quot;stars&quot;, 2), lt(&quot;stars&quot;, 5), eq(&quot;categories&quot;, &quot;Bakery&quot;)))
                 .sort(Sorts.ascending(&quot;name&quot;))
                 .projection(fields(include(&quot;name&quot;, &quot;stars&quot;, &quot;categories&quot;), excludeId()))
-                .forEach(printBlock);
+                .forEach(printConsumer);
 </code></pre>
 
 <h2 id="mongoiterable">MongoIterable</h2>
@@ -510,9 +511,6 @@ see the <a href="/mongo-java-driver/4.1/driver/tutorials/text-search/">Text Sear
 
 <li><p><a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-sync/com/mongodb/client/MongoIterable.html#first()
 "><code>first()</code></a></p></li>
-
-<li><p><a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-sync/com/mongodb/client/MongoIterable.html#forEach(com.mongodb.Block)
-"><code>forEach()</code></a></p></li>
 
 <li><p><a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-sync/com/mongodb/client/MongoIterable.html#map(com.mongodb.Function)
 "><code>map()</code></a></p></li>
