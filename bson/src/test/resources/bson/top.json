@@ -152,6 +152,10 @@
             "string": "{\"a\" : {\"$code\" : 42}}"
         },
         {
+            "description": "Bad $code (type is number, not string) when $scope is also present",
+            "string": "{\"a\" : {\"$code\" : 42, \"$scope\" : {}}}"
+        },
+        {
             "description": "Bad $code (extra field)",
             "string": "{\"a\" : {\"$code\" : \"\", \"unrelated\": true}}"
         },
