@@ -202,7 +202,11 @@ public abstract class AbstractCrudTest {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
                         testDocument.getString("database_name", new BsonString(getDefaultDatabaseName())).getValue(),
                         testDocument.getString("collection_name", new BsonString("test")).getValue(),
-                        testDocument.getArray("data", new BsonArray()), test.asDocument(), skipTest(testDocument, test.asDocument())});
+                        testDocument.getArray("data", new BsonArray()), test.asDocument(),
+                        skipTest(testDocument, test.asDocument())
+                                // Skip test because is assumes the driver sends an invalid read concern level to the server.  But the
+                                // Java driver uses an enum for read concern level so it's a client-side not a server-side error
+                                || test.asDocument().getString("description").getValue().equals("invalid readConcern with out stage")});
             }
         }
         return data;
