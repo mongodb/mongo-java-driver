@@ -31,7 +31,7 @@ For tutorials for some frequently used operations, see the [Tutorials section]({
 
 | Release | Documentation |
 |---------|---------------|
-|  4.0.2  | {{< releases version="4.0" >}} | 
+|  4.0.5  | {{< releases version="4.0" >}} | 
 |  3.12.2 | {{< releases version="3.12" >}} | 
 |  3.11.2 | {{< releases version="3.11" >}} |
 |  3.10.2 | {{< releases version="3.10" >}} |
