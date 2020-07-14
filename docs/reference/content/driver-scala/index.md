@@ -27,10 +27,10 @@ For tutorials for some frequently used operations, see the [Tutorials section]({
 | Release | Documentation |
 |---------|---------------|
 |  4.0.2  | {{< releases version="4.0" >}} | 
-|  2.9.0  | {{< releases version="2.9.0" url="https://mongodb.github.io/mongo-scala-driver/" >}} |
-|  2.8.0  | {{< releases version="2.8.0" url="https://mongodb.github.io/mongo-scala-driver/" >}} |
-|  2.7.0  | {{< releases version="2.7.0" url="https://mongodb.github.io/mongo-scala-driver/" >}} |
-|  2.6.0  | {{< releases version="2.6.0" url="https://mongodb.github.io/mongo-scala-driver/" >}} |
-|  2.5.0  | {{< releases version="2.5.0" url="https://mongodb.github.io/mongo-scala-driver/" >}} |
-|  2.4.2  | {{< releases version="2.4.2" url="https://mongodb.github.io/mongo-scala-driver/" >}} |
-|  2.3.0  | {{< releases version="2.3.0" url="https://mongodb.github.io/mongo-scala-driver/" >}} |
+|  2.9.0  | {{< releases version="2.9" apiDir="scaladoc" url="https://mongodb.github.io/mongo-scala-driver/" >}} |
+|  2.8.0  | {{< releases version="2.8" apiDir="scaladoc" url="https://mongodb.github.io/mongo-scala-driver/" >}} |
+|  2.7.0  | {{< releases version="2.7" apiDir="scaladoc" url="https://mongodb.github.io/mongo-scala-driver/" >}} |
+|  2.6.0  | {{< releases version="2.6" apiDir="scaladoc" url="https://mongodb.github.io/mongo-scala-driver/" >}} |
+|  2.5.0  | {{< releases version="2.5" apiDir="scaladoc" url="https://mongodb.github.io/mongo-scala-driver/" >}} |
+|  2.4.2  | {{< releases version="2.4" apiDir="scaladoc" url="https://mongodb.github.io/mongo-scala-driver/" >}} |
+|  2.3.0  | {{< releases version="2.3" apiDir="scaladoc" url="https://mongodb.github.io/mongo-scala-driver/" >}} |
