@@ -1,5 +1,6 @@
 {{- $url := .Get "url" | default "../../" -}}
 {{- $version := .Get "version" -}}
 {{- $legacy := .Get "legacy" -}}
+{{- $apiDir := .Get "apiDir" | default "javadoc" -}}
 
-<a href="{{ $url }}{{$version}}/">Reference</a> &#124; <a href="{{  $url }}{{$version}}/javadoc/">API</a>
+<a href="{{ $url }}{{$version}}/">Reference</a> &#124; <a href="{{  $url }}{{$version}}/{{$apiDir}}/">API</a>
