@@ -37,7 +37,6 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
-import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
 import com.mongodb.internal.session.ServerSessionPool;
@@ -102,8 +101,7 @@ public class MongoClientDelegate {
 
         ClusterDescription connectedClusterDescription = getConnectedClusterDescription();
 
-        if (connectedClusterDescription.getType() == ClusterType.STANDALONE
-                || connectedClusterDescription.getLogicalSessionTimeoutMinutes() == null) {
+        if (connectedClusterDescription.getLogicalSessionTimeoutMinutes() == null) {
             return null;
         } else {
             ClientSessionOptions mergedOptions = ClientSessionOptions.builder(options)
