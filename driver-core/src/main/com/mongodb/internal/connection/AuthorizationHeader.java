@@ -115,7 +115,7 @@ final class AuthorizationHeader {
 
     static String getCanonicalHeaders(final Map<String, String> requestHeaders) {
         return requestHeaders.entrySet().stream()
-                .map(kvp -> String.format("%s:%s%n", kvp.getKey().toLowerCase(), kvp.getValue().trim().replaceAll(" +", " ")))
+                .map(kvp -> String.format("%s:%s\n", kvp.getKey().toLowerCase(), kvp.getValue().trim().replaceAll(" +", " ")))
                 .sorted()
                 .collect(Collectors.joining(""));
     }
