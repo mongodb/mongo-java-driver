@@ -41,29 +41,19 @@ import java.util.concurrent.TimeUnit
 import static Fixture.getMongoClient
 import static TestHelper.run
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
-import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 
 class MongoClientSessionSpecification extends FunctionalSpecification {
 
     def 'should throw IllegalArgumentException if options are null'() {
         when:
-        Fixture.getMongoClient().startSession(null, Stub(SingleResultCallback))
+        getMongoClient().startSession(null, Stub(SingleResultCallback))
 
         then:
         thrown(IllegalArgumentException)
     }
 
-    @IgnoreIf({ serverVersionAtLeast(3, 6) && !isStandalone() })
-    def 'should throw MongoClientException starting a session when sessions are not supported'() {
-        when:
-        startSession(ClientSessionOptions.builder().build())
-
-        then:
-        thrown(MongoClientException)
-    }
-
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) || isStandalone() })
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'should create session with correct defaults'() {
         when:
         def options = ClientSessionOptions.builder().build()
@@ -71,7 +61,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
 
         then:
         clientSession != null
-        clientSession.getOriginator() == Fixture.getMongoClient()
+        clientSession.getOriginator() == getMongoClient()
         clientSession.isCausallyConsistent()
         clientSession.getOptions() == ClientSessionOptions.builder()
                 .defaultTransactionOptions(TransactionOptions.builder()
@@ -88,7 +78,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         clientSession.close()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) || isStandalone() })
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'cluster time should advance'() {
         given:
         def firstOperationTime = new BsonTimestamp(42, 1)
@@ -132,7 +122,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         clientSession.close()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) || isStandalone() })
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'operation time should advance'() {
         given:
         def firstOperationTime = new BsonTimestamp(42, 1)
@@ -173,7 +163,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         clientSession.close()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) || isStandalone() })
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'methods that use the session should throw if the session is closed'() {
         given:
         def options = ClientSessionOptions.builder().build()
@@ -202,7 +192,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         clientSession.close()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) || isStandalone() })
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'informational methods should not throw if the session is closed'() {
         given:
         def options = ClientSessionOptions.builder().build()
@@ -219,7 +209,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         true
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) || isStandalone() })
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'should apply causally consistent session option to client session'() {
         when:
         def clientSession = startSession(ClientSessionOptions.builder().causallyConsistent(causallyConsistent).build())
@@ -235,7 +225,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         causallyConsistent << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) || isStandalone() })
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'client session should have server session with valid identifier'() {
         given:
         def clientSession = startSession(ClientSessionOptions.builder().build())
@@ -254,7 +244,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         clientSession.close()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) || isStandalone() })
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'should use a default session'() {
         given:
         def commandListener = new TestCommandListener()
@@ -273,25 +263,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         client?.close()
     }
 
-    @IgnoreIf({ serverVersionAtLeast(3, 6) && !isStandalone() })
-    def 'should not use a default session when sessions are not supported'() {
-        given:
-        def commandListener = new TestCommandListener()
-        def options = Fixture.getMongoClientBuilderFromConnectionString().addCommandListener(commandListener).build()
-        def client = AsyncMongoClients.create(options)
-
-        when:
-        run(client.getDatabase('admin').&runCommand, new BsonDocument('ping', new BsonInt32(1)))
-
-        then:
-        def pingCommandStartedEvent = commandListener.events.get(0)
-        !(pingCommandStartedEvent as CommandStartedEvent).command.containsKey('lsid')
-
-        cleanup:
-        client?.close()
-    }
-
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) || isStandalone() })
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'should throw exception if unacknowledged write used with explicit session'() {
         given:
         def session = run(getMongoClient().&startSession)
@@ -334,7 +306,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
     // This test is inherently racy as it's possible that the server _does_ replicate fast enough and therefore the test passes anyway
     // even if causal consistency was not actually in effect.  For that reason the test iterates a number of times in order to increase
     // confidence that it's really causal consistency that is causing the test to succeed
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) || isStandalone() })
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     @Category(Slow)
     def 'should find inserted document on a secondary when causal consistency is enabled'() {
         given:
