@@ -20,9 +20,7 @@ import com.mongodb.ClientSessionOptions;
 import com.mongodb.TransactionOptions;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
-import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.connection.ServerType;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.Server;
 import com.mongodb.internal.session.ServerSessionPool;
@@ -58,8 +56,7 @@ class ClientSessionHelper {
                              final SingleResultCallback<AsyncClientSession> callback) {
         ClusterDescription clusterDescription = mongoClient.getCluster().getCurrentDescription();
         if (!getServerDescriptionListToConsiderForSessionSupport(clusterDescription).isEmpty()
-                && clusterDescription.getLogicalSessionTimeoutMinutes() != null
-                && clusterDescription.getType() != ClusterType.STANDALONE) {
+                && clusterDescription.getLogicalSessionTimeoutMinutes() != null) {
             callback.onResult(createClientSession(options, executor), null);
         } else {
             mongoClient.getCluster().selectServerAsync(new ServerSelector() {
@@ -72,8 +69,7 @@ class ClientSessionHelper {
                 public void onResult(final Server server, final Throwable t) {
                     if (t != null) {
                         callback.onResult(null, null);
-                    } else if (server.getDescription().getLogicalSessionTimeoutMinutes() == null
-                            || server.getDescription().getType() == ServerType.STANDALONE) {
+                    } else if (server.getDescription().getLogicalSessionTimeoutMinutes() == null) {
                         callback.onResult(null, null);
                     } else {
                         callback.onResult(createClientSession(options, executor), null);

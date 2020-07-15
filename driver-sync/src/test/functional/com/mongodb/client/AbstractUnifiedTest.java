@@ -72,7 +72,6 @@ import java.util.stream.Collectors;
 import static com.mongodb.ClusterFixture.getConnectionString;
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
 import static com.mongodb.ClusterFixture.isSharded;
-import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
@@ -245,7 +244,7 @@ public abstract class AbstractUnifiedTest {
 
         helper = new JsonPoweredCrudTestHelper(description, database, database.getCollection(collectionName, BsonDocument.class));
 
-        if (serverVersionAtLeast(3, 6) && !isStandalone()) {
+        if (serverVersionAtLeast(3, 6)) {
             ClientSession sessionZero = createSession("session0");
             ClientSession sessionOne = createSession("session1");
 

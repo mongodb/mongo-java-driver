@@ -25,13 +25,11 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
-import com.mongodb.ServerAddress;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
-import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.ClusterBinding;
@@ -46,7 +44,6 @@ import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
 import org.bson.codecs.configuration.CodecRegistry;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
@@ -97,8 +94,7 @@ public class MongoClientDelegate {
 
         ClusterDescription connectedClusterDescription = getConnectedClusterDescription();
 
-        if (connectedClusterDescription.getType() == ClusterType.STANDALONE
-                || connectedClusterDescription.getLogicalSessionTimeoutMinutes() == null) {
+        if (connectedClusterDescription.getLogicalSessionTimeoutMinutes() == null) {
             return null;
         } else {
             ClientSessionOptions mergedOptions = ClientSessionOptions.builder(options)
@@ -113,14 +109,6 @@ public class MongoClientDelegate {
                     .build();
             return new ClientSessionImpl(serverSessionPool, originator, mergedOptions, this);
         }
-    }
-
-    public List<ServerAddress> getServerAddressList() {
-        List<ServerAddress> serverAddresses = new ArrayList<ServerAddress>();
-        for (final ServerDescription cur : cluster.getDescription().getServerDescriptions()) {
-            serverAddresses.add(cur.getAddress());
-        }
-        return serverAddresses;
     }
 
     public void close() {
