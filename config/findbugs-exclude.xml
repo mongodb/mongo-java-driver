@@ -169,4 +169,10 @@
         <Bug pattern="RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"/>
     </Match>
 
+    <!-- AWS use UNIX-style line endings -->
+    <Match>
+        <Class name="com.mongodb.internal.connection.AuthorizationHeader"/>
+        <Bug pattern="VA_FORMAT_STRING_USES_NEWLINE"/>
+    </Match>
+
 </FindBugsFilter>
