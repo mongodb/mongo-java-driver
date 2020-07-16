@@ -19,7 +19,7 @@ jobs:
     - name: Set up JDK
       uses: actions/setup-java@v1
       with:
-        java-version: 11
+        java-version: 13
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
