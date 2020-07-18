@@ -304,7 +304,7 @@ configure(javaCodeCheckedProjects) {
 def getGitVersion() {
     def describeStdOut = new ByteArrayOutputStream()
     exec {
-        commandLine 'git', 'describe', '--tags', '--always', '--dirty'
+        commandLine 'git', 'describe', '--dirty'
         standardOutput = describeStdOut
     }
     describeStdOut.toString().substring(1).trim()
