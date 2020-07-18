@@ -32,6 +32,9 @@ atlassian-ide-plugin.xml
 # code review
 codereview.rc
 
+# evergreen
+expansion.yml
+
 # local settings
 **/gradle.properties
 local.properties
