@@ -584,11 +584,19 @@ functions:
     - command: shell.exec
       type: test
       params:
-        silent: true
         working_dir: "src"
         script: |
           # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
-          PROJECT_DIRECTORY=${PROJECT_DIRECTORY} NEXUS_USERNAME=${nexus_username} NEXUS_PASSWORD=${nexus_password} SIGNING_PASSWORD=${signing_password} SIGNING_KEY_ID=${signing_keyId} RING_FILE_GPG_BASE64=${ring_file_gpg_base64} .evergreen/publish.sh
+          RELEASE=false PROJECT_DIRECTORY=${PROJECT_DIRECTORY} NEXUS_USERNAME=${nexus_username} NEXUS_PASSWORD=${nexus_password} SIGNING_PASSWORD=${signing_password} SIGNING_KEY_ID=${signing_keyId} RING_FILE_GPG_BASE64=${ring_file_gpg_base64} .evergreen/publish.sh
+
+  "publish release":
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        script: |
+          # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
+          RELEASE=true PROJECT_DIRECTORY=${PROJECT_DIRECTORY} NEXUS_USERNAME=${nexus_username} NEXUS_PASSWORD=${nexus_password} SIGNING_PASSWORD=${signing_password} SIGNING_KEY_ID=${signing_keyId} RING_FILE_GPG_BASE64=${ring_file_gpg_base64} .evergreen/publish.sh
 
   "cleanup":
     - command: shell.exec
@@ -1155,6 +1163,11 @@ tasks:
       commands:
         - func: "publish snapshot"
 
+    - name: publish-release
+      git_tag_only: true
+      commands:
+        - func: "publish release"
+
     - name: "perf"
       tags: ["perf"]
       commands:
@@ -1467,6 +1480,12 @@ buildvariants:
   run_on: ubuntu1804-test
   tasks:
     - name: "publish-snapshot"
+
+- name: publish-release
+  display_name: "Publish Release"
+  run_on: ubuntu1804-test
+  tasks:
+    - name: "publish-release"
 
 - matrix_name: "tests-storage-engines"
   matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk8", os: "linux", version: ["3.6", "4.0"], topology: ["replicaset", "sharded-cluster"], storage-engine: "mmapv1" }
