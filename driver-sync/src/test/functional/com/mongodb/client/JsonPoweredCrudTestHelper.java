@@ -101,7 +101,7 @@ public class JsonPoweredCrudTestHelper {
     }
 
     public JsonPoweredCrudTestHelper(final String description, final MongoDatabase database,
-                                     final MongoCollection<BsonDocument> collection, final GridFSBucket gridFSBucket,
+                                     final MongoCollection<BsonDocument> collection, @Nullable final GridFSBucket gridFSBucket,
                                      final MongoClient mongoClient) {
         this.description = description;
         this.database = database;
