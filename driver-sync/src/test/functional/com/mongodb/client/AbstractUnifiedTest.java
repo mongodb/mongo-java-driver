@@ -71,6 +71,7 @@ import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.getConnectionString;
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
+import static com.mongodb.ClusterFixture.isDataLakeTest;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
@@ -146,7 +147,10 @@ public abstract class AbstractUnifiedTest {
         collectionHelper = new CollectionHelper<Document>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
 
         collectionHelper.killAllSessions();
-        collectionHelper.create(collectionName, new CreateCollectionOptions(), WriteConcern.MAJORITY);
+
+        if (!isDataLakeTest()) {
+            collectionHelper.create(collectionName, new CreateCollectionOptions(), WriteConcern.MAJORITY);
+        }
 
         if (!data.isEmpty()) {
             List<BsonDocument> documents = new ArrayList<BsonDocument>();
@@ -242,7 +246,8 @@ public abstract class AbstractUnifiedTest {
             runDistinctOnEachNode();
         }
 
-        helper = new JsonPoweredCrudTestHelper(description, database, database.getCollection(collectionName, BsonDocument.class));
+        helper = new JsonPoweredCrudTestHelper(description, database, database.getCollection(collectionName, BsonDocument.class),
+                null, mongoClient);
 
         if (serverVersionAtLeast(3, 6)) {
             ClientSession sessionZero = createSession("session0");
@@ -375,6 +380,7 @@ public abstract class AbstractUnifiedTest {
             List<CommandEvent> expectedEvents = getExpectedEvents(definition.getArray("expectations"), databaseName, null);
             List<CommandEvent> events = commandListener.getCommandStartedEvents();
 
+            assertTrue("Actual number of events is less than expected number of events", events.size() >= expectedEvents.size());
             assertEventsEquality(expectedEvents, events.subList(0, expectedEvents.size()), lsidMap);
         }
 

@@ -86,6 +86,30 @@ public class TestCommandListener implements CommandListener {
         }
     }
 
+    public CommandStartedEvent getCommandStartedEvent(final String commandName) {
+        for (CommandEvent event : getCommandStartedEvents()) {
+            if (event instanceof CommandStartedEvent) {
+                CommandStartedEvent startedEvent = (CommandStartedEvent) event;
+                if (startedEvent.getCommandName().equals(commandName)) {
+                    return startedEvent;
+                }
+            }
+        }
+        throw new IllegalArgumentException(commandName + " not found in command started event list");
+    }
+
+    public CommandSucceededEvent getCommandSucceededEvent(final String commandName) {
+        for (CommandEvent event : getEvents()) {
+            if (event instanceof CommandSucceededEvent) {
+                CommandSucceededEvent succeededEvent = (CommandSucceededEvent) event;
+                if (succeededEvent.getCommandName().equals(commandName)) {
+                    return succeededEvent;
+                }
+            }
+        }
+        throw new IllegalArgumentException(commandName + " not found in command succeeded event list");
+    }
+
     public List<CommandEvent> getCommandStartedEvents() {
         return getCommandStartedEvents(Integer.MAX_VALUE);
     }

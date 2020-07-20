@@ -224,6 +224,14 @@ functions:
       params:
         file: mo-expansion.yml
 
+  "bootstrap mongohoused":
+    - command: shell.exec
+      params:
+        background: true
+        script: |
+          DRIVERS_TOOLS="${DRIVERS_TOOLS}" \
+          sh ${DRIVERS_TOOLS}/.evergreen/atlas_data_lake/run-mongohouse-local.sh
+
   "run tests":
     - command: shell.exec
       type: test
@@ -441,6 +449,15 @@ functions:
 
           mongo --nodb setup.js aws_e2e_ecs.js
           cd -
+
+  "run atlas data lake test":
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          JDK=${JDK} .evergreen/run-atlas-data-lake-test.sh
 
   "run-ocsp-test":
     - command: shell.exec
@@ -1098,6 +1115,11 @@ tasks:
             OCSP_MUST_STAPLE: "false"
             OCSP_TLS_SHOULD_SUCCEED: "0"
 
+    - name: "atlas-data-lake-test"
+      commands:
+        - func: "bootstrap mongohoused"
+        - func: "run atlas data lake test"
+
     - name: "gssapi-auth-test"
       commands:
         - func: "run gssapi auth test"
@@ -1419,6 +1441,12 @@ buildvariants:
   display_name: "OCSP test ${version} ${os}"
   tasks:
     - name: ".ocsp"
+
+- name: atlas-data-lake-test
+  display_name: "Atlas Data Lake test"
+  run_on: ubuntu1804-test
+  tasks:
+    - name: "atlas-data-lake-test"
 
 - name: atlas-test
   display_name: "Atlas test"
