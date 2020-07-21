@@ -227,10 +227,13 @@ functions:
   "bootstrap mongohoused":
     - command: shell.exec
       params:
+        script: |
+          DRIVERS_TOOLS="${DRIVERS_TOOLS}" sh ${DRIVERS_TOOLS}/.evergreen/atlas_data_lake/build-mongohouse-local.sh
+    - command: shell.exec
+      params:
         background: true
         script: |
-          DRIVERS_TOOLS="${DRIVERS_TOOLS}" \
-          sh ${DRIVERS_TOOLS}/.evergreen/atlas_data_lake/run-mongohouse-local.sh
+          DRIVERS_TOOLS="${DRIVERS_TOOLS}" sh ${DRIVERS_TOOLS}/.evergreen/atlas_data_lake/run-mongohouse-local.sh
 
   "run tests":
     - command: shell.exec
