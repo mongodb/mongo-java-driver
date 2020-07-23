@@ -24,11 +24,12 @@ export ORG_GRADLE_PROJECT_signing_secretKeyRingFile=/tmp/secring.gpg
 echo "Publishing snapshot with jdk11"
 export JAVA_HOME="/opt/java/jdk11"
 
-./gradlew -version
 if [ "$RELEASE" == "true" ]; then
-  ./gradlew --stacktrace --info publishArchives
-  ./gradlew --stacktrace --info :bson-scala:publishArchives :driver-scala:publishArchives -PdefaultScalaVersions=2.11.12,2.12.10
+  TASK="publishArchives"
 else
-  ./gradlew publishSnapshots
-  ./gradlew :bson-scala:publishSnapshots :driver-scala:publishSnapshots -PdefaultScalaVersions=2.11.12,2.12.10
+  TASK="publishSnapshots"
 fi
+
+./gradlew -version
+./gradlew --stacktrace --info ${TASK}
+./gradlew --stacktrace --info :bson-scala:${TASK} :driver-scala:${TASK} -PdefaultScalaVersions=2.11.12,2.12.10
