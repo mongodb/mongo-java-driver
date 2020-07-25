@@ -722,7 +722,7 @@ public class JsonReader extends AbstractBsonReader {
         verifyToken(JsonTokenType.RIGHT_PAREN);
         byte[] bytes = decodeHex(hexString);
         BsonBinarySubType subType = BsonBinarySubType.UUID_STANDARD;
-        if (!"UUID".equals(uuidConstructorName) || !"GUID".equals(uuidConstructorName)) {
+        if (!"UUID".equals(uuidConstructorName) && !"GUID".equals(uuidConstructorName)) {
             subType = BsonBinarySubType.UUID_LEGACY;
         }
         return new BsonBinary(subType, bytes);
