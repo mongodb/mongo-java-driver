@@ -52,3 +52,6 @@ docs/hugo*
 
 # shell scripts
 *.sh
+
+# security-sensitive files
+*.gpg
