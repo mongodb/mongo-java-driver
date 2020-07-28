@@ -13,18 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.mongodb.scala
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.{ Await, Future }
+import org.junit.runner.RunWith
+import org.scalatest.{ FlatSpec, Matchers }
+import org.scalatestplus.junit.JUnitRunner
 
-package object syncadapter {
-
-  val WAIT_DURATION: Duration = Duration(60, "second")
-
-  implicit class FutureToResult[T](future: Future[T]) {
-    def get(): T = Await.result(future, WAIT_DURATION)
-  }
-
-}
+@RunWith(classOf[JUnitRunner])
+abstract class BaseSpec extends FlatSpec with Matchers {}

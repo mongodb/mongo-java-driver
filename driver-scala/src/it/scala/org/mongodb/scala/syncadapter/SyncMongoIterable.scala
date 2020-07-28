@@ -23,7 +23,6 @@ import com.mongodb.client.{ MongoCursor, MongoIterable }
 import org.mongodb.scala.Observable
 
 import scala.concurrent.Await
-import scala.concurrent.duration.Duration
 import scala.language.reflectiveCalls
 
 trait SyncMongoIterable[T] extends MongoIterable[T] {
@@ -34,7 +33,7 @@ trait SyncMongoIterable[T] extends MongoIterable[T] {
 
   override def cursor(): MongoCursor[T] = SyncMongoCursor[T](wrapped)
 
-  override def first(): T = Await.result(wrapped.head(), Duration(10, "second"))
+  override def first(): T = Await.result(wrapped.head(), WAIT_DURATION)
 
   override def map[U](mapper: Function[T, U]) = throw new UnsupportedOperationException
 

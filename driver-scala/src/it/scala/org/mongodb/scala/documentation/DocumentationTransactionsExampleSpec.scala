@@ -16,24 +16,22 @@
 
 package org.mongodb.scala.documentation
 
+import org.mongodb.scala._
 import org.mongodb.scala.model.{ Filters, Updates }
 import org.mongodb.scala.result.{ InsertOneResult, UpdateResult }
-import org.mongodb.scala._
 
 import scala.concurrent.Await
-import scala.concurrent.duration.Duration
 
 //scalastyle:off magic.number regex
 class DocumentationTransactionsExampleSpec extends RequiresMongoDBISpec {
 
   // Implicit functions that execute the Observable and return the results
-  val waitDuration = Duration(5, "seconds")
   implicit class ObservableExecutor[T](observable: Observable[T]) {
-    def execute(): Seq[T] = Await.result(observable.toFuture(), waitDuration)
+    def execute(): Seq[T] = Await.result(observable.toFuture(), WAIT_DURATION)
   }
 
   implicit class SingleObservableExecutor[T](observable: SingleObservable[T]) {
-    def execute(): T = Await.result(observable.toFuture(), waitDuration)
+    def execute(): T = Await.result(observable.toFuture(), WAIT_DURATION)
   }
   // end implicit functions
 

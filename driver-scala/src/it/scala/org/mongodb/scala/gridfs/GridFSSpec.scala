@@ -266,7 +266,7 @@ class GridFSSpec extends RequiresMongoDBISpec with FuturesSpec {
               val actualDocuments: Seq[Document] = chunksCollection.map(_.find()).get.futureValue
 
               for ((expected, actual) <- documents zip actualDocuments) {
-                objectId should equal(actual.get[BsonObjectId]("files_id").get)
+                objectId should equal(actual.get[BsonObjectId]("files_id").get.getValue())
                 expected.get("n") should equal(actual.get("n"))
                 expected.get("data") should equal(actual.get("data"))
               }

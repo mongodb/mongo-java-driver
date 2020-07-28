@@ -19,13 +19,12 @@ package org.mongodb.scala.documentation
 import java.util.concurrent.atomic.AtomicBoolean
 
 import com.mongodb.client.model.changestream.{ ChangeStreamDocument, FullDocument }
+import org.mongodb.scala._
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.bson.{ BsonArray, BsonDocument, BsonNull, BsonString, BsonValue }
-import org.mongodb.scala._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
-import scala.concurrent.duration.Duration
 import scala.language.reflectiveCalls
 
 // imports required for filters, projections and updates
@@ -40,13 +39,12 @@ import org.mongodb.scala.model.Updates.{ combine, currentDate, set }
 class DocumentationExampleSpec extends RequiresMongoDBISpec with FuturesSpec {
 
   // Implicit functions that execute the Observable and return the results
-  val waitDuration = Duration(5, "seconds")
   implicit class ObservableExecutor[T](observable: Observable[T]) {
-    def execute(): Seq[T] = Await.result(observable, waitDuration)
+    def execute(): Seq[T] = Await.result(observable, WAIT_DURATION)
   }
 
   implicit class SingleObservableExecutor[T](observable: SingleObservable[T]) {
-    def execute(): T = Await.result(observable, waitDuration)
+    def execute(): T = Await.result(observable, WAIT_DURATION)
   }
   // end implicit functions
 
