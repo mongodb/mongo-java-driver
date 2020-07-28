@@ -15,6 +15,7 @@ trap "rm ${PROJECT_DIRECTORY}/secring.gpg; exit" EXIT HUP
 
 git status
 
+
 export ORG_GRADLE_PROJECT_nexusUsername=${NEXUS_USERNAME}
 export ORG_GRADLE_PROJECT_nexusPassword=${NEXUS_PASSWORD}
 export ORG_GRADLE_PROJECT_signing_keyId=${SIGNING_KEY_ID}
