@@ -55,6 +55,7 @@ def javaProjects = subprojects.findAll { !it.name.contains('scala') }
 def scalaProjects = subprojects.findAll { it.name.contains('scala') }
 def javaMainProjects = javaProjects.findAll { !['util'].contains(it.name) }
 def javaCodeCheckedProjects = javaMainProjects.findAll { !['driver-benchmarks'].contains(it.name) }
+def javaAndScalaTestedProjects = javaCodeCheckedProjects + scalaProjects
 
 configure(coreProjects) {
     apply plugin: 'idea'
@@ -153,34 +154,9 @@ configure(javaMainProjects) {
     }
 }
 
-configure(javaCodeCheckedProjects) {
-    apply plugin: 'checkstyle'
-    apply plugin: "com.github.spotbugs"
-    apply plugin: 'jacoco'
-    apply plugin: 'groovy'
-    apply plugin: 'codenarc'
-
-    dependencies {
-        testImplementation 'org.codehaus.groovy:groovy-all:2.4.15'
-        testImplementation 'org.spockframework:spock-core:1.1-groovy-2.4'
-        testImplementation 'cglib:cglib-nodep:2.2.2'
-        testImplementation 'org.objenesis:objenesis:1.3'
-        testImplementation 'org.hamcrest:hamcrest-all:1.3'
-        testImplementation 'ch.qos.logback:logback-classic:1.1.1'
-        testImplementation project(':util') //Adding categories to classpath
-    }
-
-    sourceSets {
-        test {
-            groovy.srcDirs = ['src/test/functional', 'src/test/unit', 'src/test/tck']
-        }
-    }
-
+configure(javaAndScalaTestedProjects) {
     /* Testing */
     tasks.withType(Test) {
-        maxHeapSize = "4g"
-        maxParallelForks = 1
-
         systemProperties(
                 'org.mongodb.test.uri': System.getProperty('org.mongodb.test.uri'),
                 'org.mongodb.test.transaction.uri': System.getProperty('org.mongodb.test.transaction.uri'),
@@ -214,11 +190,11 @@ configure(javaCodeCheckedProjects) {
             }
             if (project.hasProperty('ocsp.property')) {
                 systemProperties(
-                    'org.mongodb.test.ocsp.tls.should.succeed': project.property('ocsp.tls.should.succeed'),
-                    'java.security.properties': file(project.property('ocsp.property')),
-                    'com.sun.net.ssl.checkRevocation': project.property('ssl.checkRevocation'),
-                    'jdk.tls.client.enableStatusRequestExtension': project.property('client.enableStatusRequestExtension'),
-                    'jdk.tls.client.protocols': project.property('client.protocols')
+                        'org.mongodb.test.ocsp.tls.should.succeed': project.property('ocsp.tls.should.succeed'),
+                        'java.security.properties': file(project.property('ocsp.property')),
+                        'com.sun.net.ssl.checkRevocation': project.property('ssl.checkRevocation'),
+                        'jdk.tls.client.enableStatusRequestExtension': project.property('client.enableStatusRequestExtension'),
+                        'jdk.tls.client.protocols': project.property('client.protocols')
                 )
             }
         }
@@ -230,8 +206,38 @@ configure(javaCodeCheckedProjects) {
                     'java.security.krb5.kdc': project.getProperty('krb5.kdc'),
                     'java.security.krb5.realm': project.getProperty('krb5.realm'),
                     'java.security.auth.login.config': project.getProperty('auth.login.config'),
-                    )
+            )
         }
+    }
+}
+
+configure(javaCodeCheckedProjects) {
+    apply plugin: 'checkstyle'
+    apply plugin: "com.github.spotbugs"
+    apply plugin: 'jacoco'
+    apply plugin: 'groovy'
+    apply plugin: 'codenarc'
+
+    dependencies {
+        testImplementation 'org.codehaus.groovy:groovy-all:2.4.15'
+        testImplementation 'org.spockframework:spock-core:1.1-groovy-2.4'
+        testImplementation 'cglib:cglib-nodep:2.2.2'
+        testImplementation 'org.objenesis:objenesis:1.3'
+        testImplementation 'org.hamcrest:hamcrest-all:1.3'
+        testImplementation 'ch.qos.logback:logback-classic:1.1.1'
+        testImplementation project(':util') //Adding categories to classpath
+    }
+
+    sourceSets {
+        test {
+            groovy.srcDirs = ['src/test/functional', 'src/test/unit', 'src/test/tck']
+        }
+    }
+
+    /* Testing */
+    tasks.withType(Test) {
+        maxHeapSize = "4g"
+        maxParallelForks = 1
 
         useJUnit {
             excludeCategories 'category.Slow'

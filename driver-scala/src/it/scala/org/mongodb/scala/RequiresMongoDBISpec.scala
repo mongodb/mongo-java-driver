@@ -26,13 +26,13 @@ import scala.concurrent.duration.{ Duration, _ }
 import scala.concurrent.{ Await, ExecutionContext }
 import scala.util.{ Properties, Try }
 
-trait RequiresMongoDBISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
+trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
 
   implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
 
   private val DEFAULT_URI: String = "mongodb://localhost:27017/"
   private val MONGODB_URI_SYSTEM_PROPERTY_NAME: String = "org.mongodb.test.uri"
-  private val WAIT_DURATION: Duration = 10.seconds
+  val WAIT_DURATION: Duration = 60.seconds
   private val DB_PREFIX = "mongo-scala-"
   private var _currentTestName: Option[String] = None
   private var mongoDBOnline: Boolean = false
@@ -53,8 +53,10 @@ trait RequiresMongoDBISpec extends FlatSpec with Matchers with BeforeAndAfterAll
    */
   def collectionName: String = _currentTestName.getOrElse(suiteName).filter(_.isLetterOrDigit)
 
-  val mongoClientURI: String = Properties.propOrElse(MONGODB_URI_SYSTEM_PROPERTY_NAME, DEFAULT_URI)
-
+  val mongoClientURI: String = {
+    val uri = Properties.propOrElse(MONGODB_URI_SYSTEM_PROPERTY_NAME, DEFAULT_URI)
+    if (!uri.isBlank) uri else DEFAULT_URI
+  }
   val connectionString: ConnectionString = ConnectionString(mongoClientURI)
 
   def mongoClientSettingsBuilder: MongoClientSettings.Builder =

@@ -284,11 +284,13 @@ class GridFSObservableSpec extends RequiresMongoDBISpec with FuturesSpec with Be
   }
 
   it should "use the user provided codec registries for encoding / decoding data" in {
-    val codecRegistry = CodecRegistries.fromRegistries(
-      CodecRegistries.fromCodecs(new UuidCodec(UuidRepresentation.STANDARD)),
-      MongoClient.DEFAULT_CODEC_REGISTRY
+    val client = MongoClient(
+      mongoClientSettingsBuilder
+        .uuidRepresentation(UuidRepresentation.STANDARD)
+        .build()
     )
-    val database = mongoClient().getDatabase(databaseName).withCodecRegistry(codecRegistry)
+
+    val database = client.getDatabase(databaseName)
     val uuid = UUID.randomUUID()
     val fileMeta = new org.bson.Document("uuid", uuid)
     val bucket = GridFSBucket(database)

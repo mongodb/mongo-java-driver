@@ -51,7 +51,7 @@ case class SyncMongoCursor[T](val observable: Observable[T]) extends MongoCursor
     }
   })
   try {
-    if (!latch.await(30, TimeUnit.SECONDS)) {
+    if (!latch.await(WAIT_DURATION.toSeconds, TimeUnit.SECONDS)) {
       throw new MongoTimeoutException("Timeout waiting for subscription")
     }
   } catch {
@@ -68,7 +68,7 @@ case class SyncMongoCursor[T](val observable: Observable[T]) extends MongoCursor
     if (nextResult.isDefined) {
       return true
     }
-    val first = results.pollFirst(30, TimeUnit.SECONDS)
+    val first = results.pollFirst(WAIT_DURATION.toSeconds, TimeUnit.SECONDS)
     first match {
       case n if n == null                 => throw new MongoTimeoutException("Time out!!!")
       case t if t.isInstanceOf[Throwable] => throw translateError(t.asInstanceOf[Throwable])
