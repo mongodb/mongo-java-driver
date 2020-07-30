@@ -88,7 +88,7 @@ public class DocumentCodecProvider implements CodecProvider {
             return (Codec<T>) new DocumentCodec(registry);           
         }                                                                                              
                                                                                                        
-        // CodecProvider returns null if it's not a provider for the requresed Class 
+        // CodecProvider returns null if it's not a provider for the requested Class 
         return null;                                          
     }                                                                                                  
 }

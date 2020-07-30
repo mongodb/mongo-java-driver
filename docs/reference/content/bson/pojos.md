@@ -60,7 +60,7 @@ encoded and decoded.
 Automatic POJO support can be provided by setting `PojoCodecProvider.Builder#automatic(true)`, once built the `PojoCodecProvider` will 
 automatically create a POJO `Codec` for any class that contains at least one serializable or deserializable property.
 
-The entry point for customisable POJO support is the `PojoCodecProvider`. New instances can be created via the
+The entry point for customizable POJO support is the `PojoCodecProvider`. New instances can be created via the
 [`PojoCodecProvider.builder()`]({{< apiref "bson" "org/bson/codecs/pojo/PojoCodecProvider.html#builder" >}}) method. The `builder` allows users to 
 register any combination of:
 

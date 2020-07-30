@@ -69,7 +69,7 @@ The logical operator methods include:
  
 #### Examples
 
-This example creates a filter that selects all documents where ther value of the `qty` field is greater than `20` and the value of the 
+This example creates a filter that selects all documents where the value of the `qty` field is greater than `20` and the value of the 
 `user` field equals `"jdoe"`:
  
 ```scala

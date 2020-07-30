@@ -11,7 +11,7 @@ title = "Projections"
 ## Projections
 
 The [`Projections`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/model/Projections$" >}}) class provides static factory methods for all the MongoDB 
-projection opererators.  Each method returns an instance of the [`Bson`]({{< relref "bson/documents.md#bson" >}}) type, which can in turn
+projection operators.  Each method returns an instance of the [`Bson`]({{< relref "bson/documents.md#bson" >}}) type, which can in turn
 be passed to any method that expects a projection.
 
 For brevity, you may choose to import the methods of the `Projections` class statically:
