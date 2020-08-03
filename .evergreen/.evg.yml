@@ -36,6 +36,7 @@ functions:
     - command: shell.exec
       params:
         working_dir: "src"
+        shell: bash
         script: |
            # Get the current unique version of this checkout
            if [ "${is_patch}" = "true" ]; then
@@ -87,6 +88,7 @@ functions:
   "prepare resources":
     - command: shell.exec
       params:
+        shell: bash
         script: |
           ${PREPARE_SHELL}
           rm -rf $DRIVERS_TOOLS
@@ -126,6 +128,7 @@ functions:
       type: test
       params:
         working_dir: "src"
+        shell: bash
         script: |
           ${PREPARE_SHELL}
           ${PROJECT_DIRECTORY}/${file}
@@ -133,6 +136,7 @@ functions:
   "upload mo artifacts":
     - command: shell.exec
       params:
+        shell: bash
         script: |
           ${PREPARE_SHELL}
           find $MONGO_ORCHESTRATION_HOME -name \*.log | xargs tar czf mongodb-logs.tar.gz
@@ -160,6 +164,7 @@ functions:
   "upload working dir logs":
     - command: shell.exec
       params:
+        shell: bash
         script: |
           ${PREPARE_SHELL}
           find ${PROJECT_DIRECTORY} -name \*.log | xargs tar czf working-dir-logs.tar.gz
@@ -601,6 +606,7 @@ functions:
   "cleanup":
     - command: shell.exec
       params:
+        shell: bash
         script: |
           ${PREPARE_SHELL}
           cd "$MONGO_ORCHESTRATION_HOME"
