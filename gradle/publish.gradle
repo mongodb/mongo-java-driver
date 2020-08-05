@@ -106,6 +106,7 @@ configure(javaProjects) { project ->
         publishing.publications.mavenJava.artifactId = project.archivesBaseName
         publishing.publications.mavenJava.pom configurePom(project)
         signing {
+            useInMemoryPgpKeys(findProperty("signingKey"), findProperty("signingPassword"))
             sign publishing.publications.mavenJava
         }
     }
@@ -143,27 +144,8 @@ configure(scalaProjects) { project ->
         jar configureJarManifestAttributes(project)
         publishing.publications.mavenJava.pom configurePom(project)
         signing {
+            useInMemoryPgpKeys(findProperty("signingKey"), findProperty("signingPassword"))
             sign publishing.publications.mavenJava
-        }
-    }
-}
-
-/*
-For security we allow the signing-related project properties to be passed in as environment variables, which
-Gradle enables if they are prefixed with "ORG_GRADLE_PROJECT_".  But since environment variables can not contain
-the '.' character and the signing-related properties contain '.', here we map signing-related project properties with '_'
-to ones with '.' that are expected by the signing plugin.
-*/
-gradle.taskGraph.whenReady { taskGraph ->
-    if (taskGraph.allTasks.any { it instanceof Sign }) {
-        if (project.hasProperty("signing_keyId")) {
-            allprojects { ext."signing.keyId" = project.property("signing_keyId") }
-        }
-        if (project.hasProperty("signing_secretKeyRingFile")) {
-            allprojects { ext."signing.secretKeyRingFile" = project.property("signing_secretKeyRingFile") }
-        }
-        if (project.hasProperty("signing_password")) {
-            allprojects { ext."signing.password" = project.property("signing_password") }
         }
     }
 }

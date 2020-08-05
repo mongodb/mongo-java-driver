@@ -592,7 +592,7 @@ functions:
         working_dir: "src"
         script: |
           # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
-          RELEASE=false PROJECT_DIRECTORY=${PROJECT_DIRECTORY} NEXUS_USERNAME=${nexus_username} NEXUS_PASSWORD=${nexus_password} SIGNING_PASSWORD=${signing_password} SIGNING_KEY_ID=${signing_keyId} RING_FILE_GPG_BASE64=${ring_file_gpg_base64} .evergreen/publish.sh
+          RELEASE=false PROJECT_DIRECTORY=${PROJECT_DIRECTORY} NEXUS_USERNAME=${nexus_username} NEXUS_PASSWORD=${nexus_password} SIGNING_PASSWORD=${signing_password} SIGNING_KEY="${gpg_ascii_armored}" .evergreen/publish.sh
 
   "publish release":
     - command: shell.exec
@@ -601,7 +601,7 @@ functions:
         working_dir: "src"
         script: |
           # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
-          RELEASE=true PROJECT_DIRECTORY=${PROJECT_DIRECTORY} NEXUS_USERNAME=${nexus_username} NEXUS_PASSWORD=${nexus_password} SIGNING_PASSWORD=${signing_password} SIGNING_KEY_ID=${signing_keyId} RING_FILE_GPG_BASE64=${ring_file_gpg_base64} .evergreen/publish.sh
+          RELEASE=true PROJECT_DIRECTORY=${PROJECT_DIRECTORY} NEXUS_USERNAME=${nexus_username} NEXUS_PASSWORD=${nexus_password} SIGNING_PASSWORD=${signing_password} SIGNING_KEY="${gpg_ascii_armored}" .evergreen/publish.sh
 
   "cleanup":
     - command: shell.exec
