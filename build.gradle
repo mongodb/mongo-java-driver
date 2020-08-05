@@ -54,7 +54,7 @@ def coreProjects = subprojects.findAll { !['util'].contains(it.name) }
 def javaProjects = subprojects.findAll { !it.name.contains('scala') }
 def scalaProjects = subprojects.findAll { it.name.contains('scala') }
 def javaMainProjects = javaProjects.findAll { !['util'].contains(it.name) }
-def javaCodeCheckedProjects = javaMainProjects.findAll { !['driver-benchmarks'].contains(it.name) }
+def javaCodeCheckedProjects = javaMainProjects.findAll { !['driver-benchmarks', 'driver-workload-executor'].contains(it.name) }
 def javaAndScalaTestedProjects = javaCodeCheckedProjects + scalaProjects
 
 configure(coreProjects) {
