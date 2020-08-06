@@ -98,9 +98,13 @@ public class WorkloadExecutor {
 
         BsonArray operations = workload.getArray("operations");
 
+        outer:
         while (!done) {
             for (BsonValue cur : operations.getValues()) {
                 try {
+                    if (done) {
+                        break outer;
+                    }
                     BsonDocument operation = cur.asDocument().clone();
                     BsonValue expectedResult = operation.get("result");
                     BsonDocument resultDocument = helper.getOperationResults(operation);
