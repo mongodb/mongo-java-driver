@@ -58,8 +58,8 @@ public class WorkloadExecutor {
      * @param args no arguments are expected
      */
     public static void main(String[] args) {
-        String outputDirectory = System.getProperty("org.mongodb.workload.output.directory") == null
-                ? System.getProperty("user.dir") : System.getProperty("org.mongodb.workload.output.directory");
+        String outputDirectory =
+                System.getProperty("org.mongodb.workload.output.directory", System.getProperty("user.dir"));
         
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
@@ -70,14 +70,14 @@ public class WorkloadExecutor {
             }
         }));
 
-        String connectionString = System.getProperty("org.mongodb.test.uri");
-        if (connectionString == null) {
-            connectionString = "mongodb://localhost";
-        }
+        String connectionString = System.getProperty("org.mongodb.test.uri", "mongodb://localhost");
 
         MongoClient mongoClient = MongoClients.create(connectionString);
 
         String workloadSpec = System.getProperty("org.mongodb.workload.spec");
+        if (workloadSpec == null) {
+            throw new IllegalArgumentException("'org.mongodb.workload.spec' system property is required");
+        }
         BsonDocument workload = BsonDocument.parse(workloadSpec);
 
         MongoDatabase database = mongoClient.getDatabase(workload.getString("database").getValue());
