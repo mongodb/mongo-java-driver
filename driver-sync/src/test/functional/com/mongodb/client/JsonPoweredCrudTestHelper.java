@@ -71,7 +71,6 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.types.ObjectId;
-import org.junit.AssumptionViolatedException;
 import util.Hex;
 
 import java.io.ByteArrayInputStream;
@@ -126,9 +125,6 @@ public class JsonPoweredCrudTestHelper {
         } catch (NoSuchMethodException e) {
             throw new UnsupportedOperationException("No handler for operation " + methodName);
         } catch (InvocationTargetException e) {
-            if (e.getTargetException() instanceof AssumptionViolatedException) {
-                throw (AssumptionViolatedException) e.getTargetException();
-            }
             if (e.getTargetException() instanceof MongoException) {
                 throw (MongoException) e.getTargetException();
             }
