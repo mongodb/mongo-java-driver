@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-present MongoDB, Inc.
+ * Copyright 2016-present MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,33 @@
  * limitations under the License.
  */
 
-include ':bson'
-include ':driver-benchmarks'
-include ':driver-workload-executor'
-include ':driver-core'
-include ':driver-legacy'
-include ':driver-sync'
-include ':driver-reactive-streams'
-include ':bson-scala'
-include ':driver-scala'
-include ':util'
+apply plugin: 'application'
+
+mainClassName = "com.mongodb.workload.WorkloadExecutor"
+
+run {
+    systemProperties System.getProperties()
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main'
+        }
+        resources {
+            srcDir 'src/resources'
+        }
+    }
+}
+
+dependencies {
+    api project(':driver-sync')
+
+    implementation project(':driver-sync').sourceSets.test.output
+
+    implementation 'ch.qos.logback:logback-classic:1.1.1'
+}
+
+javadoc {
+    enabled = false
+}

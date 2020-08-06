@@ -70,7 +70,7 @@ ext {
 }
 
 def scalaProjects = subprojects.findAll { it.name.contains('scala') }
-def javaProjects = subprojects.findAll { !scalaProjects.contains(it) && !['util', 'driver-benchmarks'].contains(it.name) }
+def javaProjects = subprojects.findAll { !scalaProjects.contains(it) && !['util', 'driver-benchmarks', 'driver-workload-executor'].contains(it.name) }
 
 configure(javaProjects) { project ->
     apply plugin: 'biz.aQute.bnd.builder'
