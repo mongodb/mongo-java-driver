@@ -16,7 +16,6 @@
 
 package com.mongodb.workload;
 
-import com.mongodb.WriteConcern;
 import com.mongodb.client.JsonPoweredCrudTestHelper;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
@@ -33,8 +32,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -83,16 +80,6 @@ public class WorkloadExecutor {
         MongoDatabase database = mongoClient.getDatabase(workload.getString("database").getValue());
         MongoCollection<BsonDocument> collection = database.getCollection(workload.getString("collection").getValue(),
                 BsonDocument.class);
-
-        if (workload.containsKey("testData")) {
-            List<BsonDocument> documents = new ArrayList<>();
-            for (BsonValue document : workload.getArray("testData")) {
-                documents.add(document.asDocument());
-            }
-
-            collection.withWriteConcern(WriteConcern.MAJORITY).drop();
-            collection.withWriteConcern(WriteConcern.MAJORITY).insertMany(documents);
-        }
 
         JsonPoweredCrudTestHelper helper = new JsonPoweredCrudTestHelper("Workload executor", database, collection);
 
