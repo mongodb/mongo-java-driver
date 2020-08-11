@@ -12,7 +12,7 @@ current = "4.1.0"
   api = "./4.0/apidocs"
 
 [[versions]]
-  version = "3.12.6"
+  version = "3.12.7"
   docs = "./3.12"
   api = "./3.12/javadoc"
 
