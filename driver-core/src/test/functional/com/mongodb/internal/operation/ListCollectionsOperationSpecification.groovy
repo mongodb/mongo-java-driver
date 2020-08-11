@@ -16,18 +16,18 @@
 
 package com.mongodb.internal.operation
 
-import category.Async
+
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.ServerCursor
-import com.mongodb.internal.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.connection.ConnectionDescription
+import com.mongodb.internal.async.AsyncBatchCursor
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
 import com.mongodb.internal.binding.ConnectionSource
@@ -44,7 +44,6 @@ import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
-import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
@@ -73,7 +72,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         collectionHelper.dropDatabase(madeUpDatabase)
     }
 
-    @Category(Async)
+
     def 'should return empty cursor if database does not exist asynchronously'() {
         given:
         def operation = new ListCollectionsOperation(madeUpDatabase, new DocumentCodec())
@@ -214,7 +213,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         collection.size() > 2
     }
 
-    @Category(Async)
+
     def 'should return collection names if a collection exists asynchronously'() {
         given:
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
@@ -312,7 +311,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         cursor.tryNext() == null
     }
 
-    @Category(Async)
+
     def 'should filter indexes asynchronously'() {
         given:
         new DropDatabaseOperation(databaseName).execute(getBinding())
@@ -359,7 +358,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         cursor?.close()
     }
 
-    @Category(Async)
+
     def 'should use the set batchSize of collections asynchronously'() {
         given:
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
@@ -409,7 +408,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         disableMaxTimeFailPoint()
     }
 
-    @Category(Async)
+
     @IgnoreIf({ isSharded() })
     def 'should throw execution timeout exception from executeAsync'() {
         given:

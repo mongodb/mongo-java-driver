@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.connection
 
-import category.Slow
+import util.spock.annotations.Slow
 import com.mongodb.MongoSocketOpenException
 import com.mongodb.MongoSocketReadTimeoutException
 import com.mongodb.OperationFunctionalSpecification
@@ -29,7 +29,6 @@ import com.mongodb.connection.netty.NettyStreamFactory
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
-import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
 import java.util.concurrent.TimeUnit
@@ -40,7 +39,7 @@ import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.internal.connection.CommandHelper.executeCommand
 
 @IgnoreIf({ System.getProperty('ignoreSlowUnitTests') == 'true' })
-@Category(Slow)
+@Slow
 class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification {
 
     static SocketSettings openSocketSettings = SocketSettings.builder().connectTimeout(1, TimeUnit.MILLISECONDS).build()

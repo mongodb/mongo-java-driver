@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.operation
 
-import category.Slow
+import util.spock.annotations.Slow
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.internal.bulk.InsertRequest
 import com.mongodb.internal.bulk.UpdateRequest
@@ -25,7 +25,6 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonSerializationException
 import org.bson.codecs.BsonDocumentCodec
-import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.getBinding
@@ -143,7 +142,7 @@ class UpdateOperationForReplacementSpecification extends OperationFunctionalSpec
         async << [true, false]
     }
 
-    @Category(Slow)
+    @Slow
     def 'should throw exception if document is too large'() {
         given:
         byte[] hugeByteArray = new byte[(1024 * 1024 * 16) + 16 * 1024]

@@ -16,7 +16,6 @@
 
 package com.mongodb.gridfs;
 
-import category.Slow;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.DatabaseTestCase;
@@ -24,7 +23,7 @@ import com.mongodb.MongoException;
 import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Tag;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -169,7 +168,7 @@ public class GridFSTest extends DatabaseTestCase {
     }
 
     @Test
-    @Category(Slow.class)
+    @Tag("Slow")
     public void testMultipleChunks() throws Exception {
         int fileSize = 1024 * 128;
         byte[] randomBytes = new byte[fileSize];
@@ -191,7 +190,7 @@ public class GridFSTest extends DatabaseTestCase {
     }
 
     @Test
-    @Category(Slow.class)
+    @Tag("Slow")
     public void getBigChunkSize() throws Exception {
         GridFSInputFile file = gridFS.createFile("512kb_bucket");
         file.setChunkSize(file.getChunkSize() * 2);

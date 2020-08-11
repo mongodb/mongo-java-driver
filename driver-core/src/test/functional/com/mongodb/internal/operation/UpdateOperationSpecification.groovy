@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.operation
 
-import category.Slow
+import util.spock.annotations.Slow
 import com.mongodb.MongoClientException
 import com.mongodb.MongoException
 import com.mongodb.OperationFunctionalSpecification
@@ -29,7 +29,6 @@ import org.bson.BsonObjectId
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import org.bson.types.ObjectId
-import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
@@ -135,7 +134,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @Category(Slow)
+    @Slow
     def 'should allow update larger than 16MB'() {
         // small enough so the update document is 16MB, but enough to push the the request as a whole over 16MB
         def binary = new BsonBinary(new byte[16 * 1024 * 1024 - 24])
