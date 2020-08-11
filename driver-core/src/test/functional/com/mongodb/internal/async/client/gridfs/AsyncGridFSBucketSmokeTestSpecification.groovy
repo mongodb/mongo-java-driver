@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.async.client.gridfs
 
-import category.Slow
+import util.spock.annotations.Slow
 import com.mongodb.MongoGridFSException
 import com.mongodb.client.gridfs.model.GridFSFile
 import com.mongodb.client.gridfs.model.GridFSUploadOptions
@@ -29,7 +29,6 @@ import org.bson.BsonString
 import org.bson.Document
 import org.bson.UuidRepresentation
 import org.bson.types.ObjectId
-import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 import spock.lang.Unroll
 
@@ -109,7 +108,7 @@ class AsyncGridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         'a large file directly'         | true       | 5
     }
 
-    @Category(Slow)
+    @Slow
     def 'should round trip with small chunks'() {
         given:
         def contentSize = 1024 * 500
@@ -138,7 +137,7 @@ class AsyncGridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         byteBuffer.array() == contentBytes
     }
 
-    @Category(Slow)
+    @Slow
     def 'should round trip with data larger than the internal bufferSize'() {
         given:
         def contentSize = 1024 * 1024 * 5

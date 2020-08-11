@@ -16,12 +16,12 @@
 
 package com.mongodb.internal.operation
 
-import category.Async
+
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
-import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.connection.ConnectionDescription
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
 import com.mongodb.internal.binding.ConnectionSource
@@ -33,7 +33,6 @@ import org.bson.BsonRegularExpression
 import org.bson.Document
 import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
-import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
@@ -94,7 +93,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
         disableMaxTimeFailPoint()
     }
 
-    @Category(Async)
+
     @IgnoreIf({ isSharded() })
     def 'should throw execution timeout exception from executeAsync'() {
         given:

@@ -1,13 +1,12 @@
 package com.mongodb.connection.netty
 
-import category.Slow
+import util.spock.annotations.Slow
 import com.mongodb.MongoSocketException
 import com.mongodb.MongoSocketOpenException
 import com.mongodb.ServerAddress
 import com.mongodb.connection.AsyncCompletionHandler
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SslSettings
-import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
@@ -18,7 +17,7 @@ import static com.mongodb.ClusterFixture.getSslSettings
 
 class NettyStreamSpecification extends Specification {
 
-    @Category(Slow)
+    @Slow
     @IgnoreIf({ getSslSettings().isEnabled() })
     def 'should successfully connect with working ip address group'() {
         given:
@@ -43,7 +42,7 @@ class NettyStreamSpecification extends Specification {
         !stream.isClosed()
     }
 
-    @Category(Slow)
+    @Slow
     @IgnoreIf({ getSslSettings().isEnabled() })
     def 'should throw exception with non-working ip address group'() {
         given:

@@ -16,14 +16,13 @@
 
 package com.mongodb.internal.operation
 
-import category.Async
+
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
-import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.executeAsync
@@ -45,7 +44,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
         !collectionNameExists(getCollectionName())
     }
 
-    @Category(Async)
+
     def 'should drop a collection that exists asynchronously'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentTo', 'createTheCollection'))
@@ -69,7 +68,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
         !collectionNameExists('nonExistingCollection')
     }
 
-    @Category(Async)
+
     def 'should not error when dropping a collection that does not exist asynchronously'() {
         given:
         def namespace = new MongoNamespace(getDatabaseName(), 'nonExistingCollection')

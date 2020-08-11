@@ -256,22 +256,22 @@ configure(javaCodeCheckedProjects) {
 
         useJUnitPlatform {
             includeEngines('junit-jupiter', 'junit-vintage', 'spock')
-            excludeTags('category.Slow')
+            excludeTags('Slow')
         }
+        systemProperty('spock.configuration', "${configDir}/spock/ExcludeSlow.groovy")
         testLogging {
             exceptionFormat = 'full'
             events("passed", "skipped", "failed")
         }
-
         jacoco { enabled = false }
-
     }
 
     task testSlowOnly(type: Test) {
         useJUnitPlatform {
-            includeEngines('junit-jupiter', 'junit-vintage')
-            includeTags('category.Slow')
+            includeEngines('junit-jupiter', 'junit-vintage', 'spock')
+            includeTags('Slow')
         }
+        systemProperty('spock.configuration', "${configDir}/spock/OnlySlow.groovy")
     }
 
     gradle.taskGraph.whenReady { taskGraph ->

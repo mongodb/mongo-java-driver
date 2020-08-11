@@ -1,6 +1,6 @@
 package com.mongodb.internal.connection
 
-import category.Slow
+import util.spock.annotations.Slow
 import com.mongodb.MongoSocketException
 import com.mongodb.MongoSocketOpenException
 import com.mongodb.ServerAddress
@@ -8,7 +8,6 @@ import com.mongodb.connection.AsyncCompletionHandler
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SslSettings
-import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
@@ -21,7 +20,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class AsyncSocketChannelStreamSpecification extends Specification {
 
-    @Category(Slow)
+    @Slow
     @IgnoreIf({ getSslSettings().isEnabled() })
     def 'should successfully connect with working ip address list'() {
         given:
@@ -46,7 +45,7 @@ class AsyncSocketChannelStreamSpecification extends Specification {
         !stream.isClosed()
     }
 
-    @Category(Slow)
+    @Slow
     @IgnoreIf({ getSslSettings().isEnabled() })
     def 'should fail to connect with non-working ip address list'() {
         given:

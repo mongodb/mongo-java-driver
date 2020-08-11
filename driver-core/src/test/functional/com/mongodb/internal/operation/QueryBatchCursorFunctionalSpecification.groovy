@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.operation
 
-import category.Slow
+import util.spock.annotations.Slow
 import com.mongodb.MongoCursorNotFoundException
 import com.mongodb.MongoTimeoutException
 import com.mongodb.OperationFunctionalSpecification
@@ -34,7 +34,6 @@ import org.bson.BsonString
 import org.bson.BsonTimestamp
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
-import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
 import java.util.concurrent.CountDownLatch
@@ -186,7 +185,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
     }
 
     @SuppressWarnings('EmptyCatchBlock')
-    @Category(Slow)
+    @Slow
     def 'should block waiting for next batch on a tailable cursor'() {
         given:
         def connection = connectionSource.getConnection()
@@ -234,7 +233,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         false     | 0
     }
 
-    @Category(Slow)
+    @Slow
     def 'test try next with tailable'() {
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
@@ -259,7 +258,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         nextBatch.iterator().next().get('_id') == 2
     }
 
-    @Category(Slow)
+    @Slow
     def 'hasNext should throw when cursor is closed in another thread'() {
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
@@ -286,7 +285,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 2) || isSharded() })
-    @Category(Slow)
+    @Slow
     def 'test maxTimeMS'() {
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
@@ -311,7 +310,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
    }
 
     @SuppressWarnings('EmptyCatchBlock')
-    @Category(Slow)
+    @Slow
     def 'test tailable interrupt'() throws InterruptedException {
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1))
@@ -363,7 +362,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
     }
 
     @IgnoreIf({ isSharded() })
-    @Category(Slow)
+    @Slow
     def 'should kill cursor if limit is reached on get more'() throws InterruptedException {
         given:
         def firstBatch = executeQuery(3)
@@ -425,7 +424,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         !cursor.hasNext()
     }
 
-    @Category(Slow)
+    @Slow
     def 'test limit with large documents'() {
         given:
         char[] array = 'x' * 16000

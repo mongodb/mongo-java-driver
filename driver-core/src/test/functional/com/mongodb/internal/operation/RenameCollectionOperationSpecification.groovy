@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.operation
 
-import category.Async
+
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoServerException
 import com.mongodb.MongoWriteConcernException
@@ -24,7 +24,6 @@ import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
-import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.executeAsync
@@ -53,7 +52,7 @@ class RenameCollectionOperationSpecification extends OperationFunctionalSpecific
         collectionNameExists('newCollection')
     }
 
-    @Category(Async)
+
     def 'should return rename a collection asynchronously'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
@@ -80,7 +79,7 @@ class RenameCollectionOperationSpecification extends OperationFunctionalSpecific
         collectionNameExists(getCollectionName())
     }
 
-    @Category(Async)
+
     def 'should throw if not drop and collection exists asynchronously'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))

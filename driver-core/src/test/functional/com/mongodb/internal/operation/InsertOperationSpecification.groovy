@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.operation
 
-import category.Slow
+import util.spock.annotations.Slow
 import com.mongodb.DuplicateKeyException
 import com.mongodb.MongoClientException
 import com.mongodb.OperationFunctionalSpecification
@@ -26,7 +26,6 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonSerializationException
 import org.bson.codecs.BsonDocumentCodec
-import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.getAsyncSingleConnectionBinding
@@ -123,7 +122,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @Category(Slow)
+    @Slow
     def 'should insert a batch at The limit of the batch size'() {
         given:
         byte[] hugeByteArray = new byte[1024 * 1024 * 16 - 2127]

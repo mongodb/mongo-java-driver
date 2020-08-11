@@ -16,7 +16,6 @@
 
 package com.mongodb;
 
-import category.Slow;
 import com.mongodb.client.model.DBCollectionCountOptions;
 import org.bson.BSONObject;
 import org.bson.BsonBinarySubType;
@@ -32,7 +31,7 @@ import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Tag;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -58,12 +57,12 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
@@ -476,7 +475,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
-    @Category(Slow.class)
+    @Tag("Slow")
     public void testFindAndReplaceA16MDocument() {
         BasicDBObject documentWithJustId = new BasicDBObject("_id", 42);
         DBObject foundDocument = collection.findAndModify(documentWithJustId, new BasicDBObject("_id", 1), null, false,

@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.connection
 
-import category.Async
+
 import com.mongodb.MongoNamespace
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
@@ -26,7 +26,6 @@ import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.codecs.BsonDocumentCodec
-import org.junit.experimental.categories.Category
 import spock.lang.Specification
 
 import static com.mongodb.ReadPreference.primary
@@ -56,7 +55,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         connection.openedAt <= System.currentTimeMillis()
     }
 
-    @Category(Async)
+
     def 'openAt should be set on open asynchronously'() {
         when:
         def futureResultCallback = new FutureResultCallback<Void>()
@@ -87,7 +86,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         connection.lastUsedAt <= System.currentTimeMillis()
     }
 
-    @Category(Async)
+
     def 'lastUsedAt should be set on open asynchronously'() {
         when:
         def futureResultCallback = new FutureResultCallback<Void>()
@@ -118,7 +117,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         connection.lastUsedAt <= System.currentTimeMillis()
     }
 
-    @Category(Async)
+
     def 'lastUsedAt should be set on sendMessage asynchronously'() {
         given:
         def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);

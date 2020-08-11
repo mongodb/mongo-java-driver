@@ -16,14 +16,13 @@
 
 package com.mongodb.internal.connection
 
-import category.Slow
+import util.spock.annotations.Slow
 import com.mongodb.MongoException
 import com.mongodb.MongoTimeoutException
 import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ServerId
 import com.mongodb.event.ConnectionPoolListener
-import org.junit.experimental.categories.Category
 import spock.lang.Specification
 import spock.lang.Subject
 
@@ -132,7 +131,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         connectionFactory.createdConnections.size() == 0
     }
 
-    @Category(Slow)
+    @Slow
     def 'should ensure min pool size after maintenance task runs'() {
         given:
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
