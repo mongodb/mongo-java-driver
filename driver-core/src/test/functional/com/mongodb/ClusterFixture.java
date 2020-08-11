@@ -250,6 +250,7 @@ public final class ClusterFixture {
     @Nullable
     private static ConnectionString getConnectionStringFromSystemProperty(final String property) {
         String mongoURIProperty = System.getProperty(property);
+        System.getProperties().entrySet().forEach(System.out::println);
         if (mongoURIProperty != null && !mongoURIProperty.isEmpty()) {
             return new ConnectionString(mongoURIProperty);
         }

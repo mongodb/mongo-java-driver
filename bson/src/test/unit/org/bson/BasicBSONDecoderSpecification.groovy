@@ -34,10 +34,10 @@ import java.util.regex.Pattern
 class BasicBSONDecoderSpecification extends Specification {
 
     @Subject
-    private final BSONDecoder bsonDecoder = new BasicBSONDecoder();
+    private final BasicBSONDecoder bsonDecoder = new BasicBSONDecoder();
 
     def setupSpec() {
-        Map.metaClass.bitwiseNegate = { new BasicBSONObject(delegate) }
+        Map.metaClass.bitwiseNegate = { new BasicBSONObject(delegate as Map) }
         Pattern.metaClass.equals = { Pattern other ->
             delegate.pattern() == other.pattern() && delegate.flags() == other.flags()
         }
@@ -57,10 +57,10 @@ class BasicBSONDecoderSpecification extends Specification {
     @Unroll
     def 'should decode #type'() {
         expect:
-        document == bsonDecoder.readObject((byte[]) bytes)
+        documentWithType as BasicBSONObject  == bsonDecoder.readObject((byte[]) bytes)
 
         where:
-        document                                                 | bytes
+        documentWithType                                         | bytes
         ['d1': -1.01]                                            | [17, 0, 0, 0, 1, 100, 49, 0, 41, 92, -113, -62, -11, 40, -16, -65, 0]
         ['d2': Float.MIN_VALUE]                                  | [17, 0, 0, 0, 1, 100, 50, 0, 0, 0, 0, 0, 0, 0, -96, 54, 0]
         ['d3': Double.MAX_VALUE]                                 | [17, 0, 0, 0, 1, 100, 51, 0, -1, -1, -1, -1, -1, -1, -17, 127, 0]
@@ -97,10 +97,10 @@ class BasicBSONDecoderSpecification extends Specification {
 
     def 'should decode complex structures'() {
         expect:
-        document == bsonDecoder.readObject((byte[]) bytes)
+        complexDocument as BasicBSONObject  == bsonDecoder.readObject((byte[]) bytes)
 
         where:
-        document                                                                  | bytes
+        complexDocument                                                           | bytes
         ['a': ~['d1': ~['b': true], 'd2': ~['b': false]]]                         | [39, 0, 0, 0, 3, 97, 0, 31, 0, 0, 0, 3, 100, 49, 0, 9, 0, 0, 0, 8, 98, 0, 1, 0, 3, 100, 50, 0, 9, 0, 0, 0, 8, 98, 0, 0, 0, 0, 0]
         ['a': [~['b1': true], ~['b2': false]]]                                    | [39, 0, 0, 0, 4, 97, 0, 31, 0, 0, 0, 3, 48, 0, 10, 0, 0, 0, 8, 98, 49, 0, 1, 0, 3, 49, 0, 10, 0, 0, 0, 8, 98, 50, 0, 0, 0, 0, 0]
         ['a': [[1, 2]]]                                                           | [35, 0, 0, 0, 4, 97, 0, 27, 0, 0, 0, 4, 48, 0, 19, 0, 0, 0, 16, 48, 0, 1, 0, 0, 0, 16, 49, 0, 2, 0, 0, 0, 0, 0, 0]

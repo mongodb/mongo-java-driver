@@ -20,9 +20,7 @@ import java.util.Date
 
 import scala.collection.JavaConverters._
 
-import org.scalatest.{ FlatSpec, Matchers }
-
-class BsonValueSpec extends FlatSpec with Matchers {
+class BsonValueSpec extends BaseSpec {
 
   "BsonArray companion" should "create a BsonArray" in {
     BsonArray() should equal(new BsonArray())

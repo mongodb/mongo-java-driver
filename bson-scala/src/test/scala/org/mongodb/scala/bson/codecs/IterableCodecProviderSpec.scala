@@ -17,10 +17,9 @@
 package org.mongodb.scala.bson.codecs
 
 import org.bson.codecs.configuration.CodecRegistries.fromProviders
+import org.mongodb.scala.bson.BaseSpec
 
-import org.scalatest.{ FlatSpec, Matchers }
-
-class IterableCodecProviderSpec extends FlatSpec with Matchers {
+class IterableCodecProviderSpec extends BaseSpec {
 
   "IterableCodecProvider" should "get the correct codec" in {
 

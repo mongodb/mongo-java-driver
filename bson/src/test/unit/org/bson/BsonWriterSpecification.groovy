@@ -1,7 +1,7 @@
 /*
  * Copyright 2008-present MongoDB, Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -17,14 +17,13 @@
 package org.bson
 
 import org.bson.io.BasicOutputBuffer
-import org.junit.Test
 import spock.lang.Specification
 
 class BsonWriterSpecification extends Specification {
 
-    def shouldThrowExceptionForBooleanWhenWritingBeforeStartingDocument() {
+    def 'shouldThrowExceptionForBooleanWhenWritingBeforeStartingDocument'() {
         when:
-        writer.writeBoolean('b1', true);
+        writer.writeBoolean('b1', true)
 
         then:
         thrown(BsonInvalidOperationException)
@@ -33,9 +32,9 @@ class BsonWriterSpecification extends Specification {
         writer << [new BsonBinaryWriter(new BasicOutputBuffer()), new BsonDocumentWriter(new BsonDocument())]
     }
 
-    def shouldThrowExceptionForArrayWhenWritingBeforeStartingDocument() {
+    def 'shouldThrowExceptionForArrayWhenWritingBeforeStartingDocument'() {
         when:
-        writer.writeStartArray();
+        writer.writeStartArray()
 
         then:
         thrown(BsonInvalidOperationException)
@@ -44,9 +43,9 @@ class BsonWriterSpecification extends Specification {
         writer << [new BsonBinaryWriter(new BasicOutputBuffer()), new BsonDocumentWriter(new BsonDocument())]
     }
 
-    def shouldThrowExceptionForNullWhenWritingBeforeStartingDocument() {
+    def 'shouldThrowExceptionForNullWhenWritingBeforeStartingDocument'() {
         when:
-        writer.writeNull();
+        writer.writeNull()
 
         then:
         thrown(BsonInvalidOperationException)
@@ -55,10 +54,10 @@ class BsonWriterSpecification extends Specification {
         writer << [new BsonBinaryWriter(new BasicOutputBuffer()), new BsonDocumentWriter(new BsonDocument())]
     }
 
-    def shouldThrowExceptionForStringWhenStateIsValue() {
+    def 'shouldThrowExceptionForStringWhenStateIsValue'() {
         when:
-        writer.writeStartDocument();
-        writer.writeString('SomeString');
+        writer.writeStartDocument()
+        writer.writeString('SomeString')
 
         then:
         thrown(BsonInvalidOperationException)
@@ -67,10 +66,10 @@ class BsonWriterSpecification extends Specification {
         writer << [new BsonBinaryWriter(new BasicOutputBuffer()), new BsonDocumentWriter(new BsonDocument())]
     }
 
-    def shouldThrowExceptionWhenEndingAnArrayWhenStateIsValue() {
+    def 'shouldThrowExceptionWhenEndingAnArrayWhenStateIsValue'() {
         when:
-        writer.writeStartDocument();
-        writer.writeEndArray();
+        writer.writeStartDocument()
+        writer.writeEndArray()
 
         then:
         thrown(BsonInvalidOperationException)
@@ -79,11 +78,11 @@ class BsonWriterSpecification extends Specification {
         writer << [new BsonBinaryWriter(new BasicOutputBuffer()), new BsonDocumentWriter(new BsonDocument())]
     }
 
-    def shouldThrowExceptionWhenWritingASecondName() {
+    def 'shouldThrowExceptionWhenWritingASecondName'() {
         when:
-        writer.writeStartDocument();
-        writer.writeName('f1');
-        writer.writeName('i2');
+        writer.writeStartDocument()
+        writer.writeName('f1')
+        writer.writeName('i2')
 
         then:
         thrown(BsonInvalidOperationException)
@@ -92,11 +91,11 @@ class BsonWriterSpecification extends Specification {
         writer << [new BsonBinaryWriter(new BasicOutputBuffer()), new BsonDocumentWriter(new BsonDocument())]
     }
 
-    def shouldThrowExceptionWhenEndingADocumentBeforeValueIsWritten() {
+    def 'shouldThrowExceptionWhenEndingADocumentBeforeValueIsWritten'() {
         when:
-        writer.writeStartDocument();
-        writer.writeName('f1');
-        writer.writeEndDocument();
+        writer.writeStartDocument()
+        writer.writeName('f1')
+        writer.writeEndDocument()
 
         then:
         thrown(BsonInvalidOperationException)
@@ -105,12 +104,12 @@ class BsonWriterSpecification extends Specification {
         writer << [new BsonBinaryWriter(new BasicOutputBuffer()), new BsonDocumentWriter(new BsonDocument())]
     }
 
-    def shouldThrowAnExceptionWhenTryingToWriteASecondValue() {
+    def 'shouldThrowAnExceptionWhenTryingToWriteASecondValue'() {
         when:
-        writer.writeStartDocument();
-        writer.writeName('f1');
-        writer.writeDouble(100);
-        writer.writeString('i2');
+        writer.writeStartDocument()
+        writer.writeName('f1')
+        writer.writeDouble(100)
+        writer.writeString('i2')
 
         then:
         thrown(BsonInvalidOperationException)
@@ -119,12 +118,12 @@ class BsonWriterSpecification extends Specification {
         writer << [new BsonBinaryWriter(new BasicOutputBuffer()), new BsonDocumentWriter(new BsonDocument())]
     }
 
-    def shouldThrowAnExceptionWhenTryingToWriteJavaScript() {
+    def 'shouldThrowAnExceptionWhenTryingToWriteJavaScript'() {
         when:
-        writer.writeStartDocument();
-        writer.writeName('f1');
-        writer.writeDouble(100);
-        writer.writeJavaScript('var i');
+        writer.writeStartDocument()
+        writer.writeName('f1')
+        writer.writeDouble(100)
+        writer.writeJavaScript('var i')
 
         then:
         thrown(BsonInvalidOperationException)
@@ -133,13 +132,13 @@ class BsonWriterSpecification extends Specification {
         writer << [new BsonBinaryWriter(new BasicOutputBuffer()), new BsonDocumentWriter(new BsonDocument())]
     }
 
-    def shouldThrowAnExceptionWhenWritingANameInAnArray() {
+    def 'shouldThrowAnExceptionWhenWritingANameInAnArray'() {
         when:
-        writer.writeStartDocument();
-        writer.writeName('f1');
-        writer.writeDouble(100);
-        writer.writeStartArray('f2');
-        writer.writeName('i3');
+        writer.writeStartDocument()
+        writer.writeName('f1')
+        writer.writeDouble(100)
+        writer.writeStartArray('f2')
+        writer.writeName('i3')
 
         then:
         thrown(BsonInvalidOperationException)
@@ -148,13 +147,13 @@ class BsonWriterSpecification extends Specification {
         writer << [new BsonBinaryWriter(new BasicOutputBuffer()), new BsonDocumentWriter(new BsonDocument())]
     }
 
-    def shouldThrowAnExceptionWhenEndingDocumentInTheMiddleOfWritingAnArray() {
+    def 'shouldThrowAnExceptionWhenEndingDocumentInTheMiddleOfWritingAnArray'() {
         when:
-        writer.writeStartDocument();
-        writer.writeName('f1');
-        writer.writeDouble(100);
-        writer.writeStartArray('f2');
-        writer.writeEndDocument();
+        writer.writeStartDocument()
+        writer.writeName('f1')
+        writer.writeDouble(100)
+        writer.writeStartArray('f2')
+        writer.writeEndDocument()
 
         then:
         thrown(BsonInvalidOperationException)
@@ -163,15 +162,15 @@ class BsonWriterSpecification extends Specification {
         writer << [new BsonBinaryWriter(new BasicOutputBuffer()), new BsonDocumentWriter(new BsonDocument())]
     }
 
-    def shouldThrowAnExceptionWhenEndingAnArrayInASubDocument() {
+    def 'shouldThrowAnExceptionWhenEndingAnArrayInASubDocument'() {
         when:
         writer.with {
-            writeStartDocument();
-            writeName('f1');
-            writeDouble(100);
-            writeStartArray('f2');
-            writeStartDocument();
-            writeEndArray();
+            writeStartDocument()
+            writeName('f1')
+            writeDouble(100)
+            writeStartArray('f2')
+            writeStartDocument()
+            writeEndArray()
         }
 
         then:
@@ -181,17 +180,17 @@ class BsonWriterSpecification extends Specification {
         writer << [new BsonBinaryWriter(new BasicOutputBuffer()), new BsonDocumentWriter(new BsonDocument())]
     }
 
-    def shouldThrowAnExceptionWhenWritingANameInAnArrayEvenWhenSubDocumentExistsInArray() {
+    def 'shouldThrowAnExceptionWhenWritingANameInAnArrayEvenWhenSubDocumentExistsInArray'() {
         when:
         //Does this test even make sense?
         writer.with {
-            writeStartDocument();
-            writeName('f1');
-            writeDouble(100);
-            writeStartArray('f2');
-            writeStartDocument();
-            writeEndDocument();
-            writeName('i3');
+            writeStartDocument()
+            writeName('f1')
+            writeDouble(100)
+            writeStartArray('f2')
+            writeStartDocument()
+            writeEndDocument()
+            writeName('i3')
         }
 
         then:
@@ -201,18 +200,18 @@ class BsonWriterSpecification extends Specification {
         writer << [new BsonBinaryWriter(new BasicOutputBuffer()), new BsonDocumentWriter(new BsonDocument())]
     }
 
-    def shouldThrowExceptionWhenWritingObjectsIntoNestedArrays() {
+    def 'shouldThrowExceptionWhenWritingObjectsIntoNestedArrays'() {
         when:
 //This test seem redundant?
         writer.with {
-            writeStartDocument();
-            writeName('f1');
-            writeDouble(100);
-            writeStartArray('f2');
-            writeStartArray();
-            writeStartArray();
-            writeStartArray();
-            writeInt64('i4', 10);
+            writeStartDocument()
+            writeName('f1')
+            writeDouble(100)
+            writeStartArray('f2')
+            writeStartArray()
+            writeStartArray()
+            writeStartArray()
+            writeInt64('i4', 10)
         }
         then:
         thrown(BsonInvalidOperationException)
@@ -221,13 +220,13 @@ class BsonWriterSpecification extends Specification {
         writer << [new BsonBinaryWriter(new BasicOutputBuffer()), new BsonDocumentWriter(new BsonDocument())]
     }
 
-    def shouldThrowAnExceptionWhenAttemptingToEndAnArrayThatWasNotStarted() {
+    def 'shouldThrowAnExceptionWhenAttemptingToEndAnArrayThatWasNotStarted'() {
         when:
         writer.with {
-            writeStartDocument();
-            writeStartArray('f2');
-            writeEndArray();
-            writeEndArray();
+            writeStartDocument()
+            writeStartArray('f2')
+            writeEndArray()
+            writeEndArray()
         }
         then:
         thrown(BsonInvalidOperationException)
@@ -236,12 +235,12 @@ class BsonWriterSpecification extends Specification {
         writer << [new BsonBinaryWriter(new BasicOutputBuffer()), new BsonDocumentWriter(new BsonDocument())]
     }
 
-    def shouldThrowAnErrorIfTryingToWriteNamesIntoAJavascriptScope1() {
+    def 'shouldThrowAnErrorIfTryingToWriteNamesIntoAJavascriptScope1'() {
         when:
-        writer.writeStartDocument();
-        writer.writeJavaScriptWithScope('js1', 'var i = 1');
+        writer.writeStartDocument()
+        writer.writeJavaScriptWithScope('js1', 'var i = 1')
 
-        writer.writeBoolean('b4', true);
+        writer.writeBoolean('b4', true)
 
         then:
         thrown(BsonInvalidOperationException)
@@ -250,14 +249,13 @@ class BsonWriterSpecification extends Specification {
         writer << [new BsonBinaryWriter(new BasicOutputBuffer()), new BsonDocumentWriter(new BsonDocument())]
     }
 
-    @Test(expected = BsonInvalidOperationException)
-    def shouldThrowAnErrorIfTryingToWriteNamesIntoAJavascriptScope2() {
+    def 'shouldThrowAnErrorIfTryingToWriteNamesIntoAJavascriptScope2'() {
         when:
         //do we really need to test every type written after writeJavaScriptWithScope?
-        writer.writeStartDocument();
-        writer.writeJavaScriptWithScope('js1', 'var i = 1');
+        writer.writeStartDocument()
+        writer.writeJavaScriptWithScope('js1', 'var i = 1')
 
-        writer.writeBinaryData(new BsonBinary([0, 0, 1, 0] as byte[]));
+        writer.writeBinaryData(new BsonBinary([0, 0, 1, 0] as byte[]))
 
         then:
         thrown(BsonInvalidOperationException)
@@ -266,13 +264,13 @@ class BsonWriterSpecification extends Specification {
         writer << [new BsonBinaryWriter(new BasicOutputBuffer()), new BsonDocumentWriter(new BsonDocument())]
     }
 
-    def shouldThrowAnErrorIfTryingToWriteNamesIntoAJavascriptScope3() {
+    def 'shouldThrowAnErrorIfTryingToWriteNamesIntoAJavascriptScope3'() {
         when:
         //do we really need to test every type written after writeJavaScriptWithScope?
-        writer.writeStartDocument();
-        writer.writeJavaScriptWithScope('js1', 'var i = 1');
+        writer.writeStartDocument()
+        writer.writeJavaScriptWithScope('js1', 'var i = 1')
 
-        writer.writeStartArray();
+        writer.writeStartArray()
 
         then:
         thrown(BsonInvalidOperationException)
@@ -281,13 +279,13 @@ class BsonWriterSpecification extends Specification {
         writer << [new BsonBinaryWriter(new BasicOutputBuffer()), new BsonDocumentWriter(new BsonDocument())]
     }
 
-    def shouldThrowAnErrorIfTryingToWriteNamesIntoAJavascriptScope4() {
+    def 'shouldThrowAnErrorIfTryingToWriteNamesIntoAJavascriptScope4'() {
         when:
         //do we really need to test every type written after writeJavaScriptWithScope?
-        writer.writeStartDocument();
-        writer.writeJavaScriptWithScope('js1', 'var i = 1');
+        writer.writeStartDocument()
+        writer.writeJavaScriptWithScope('js1', 'var i = 1')
 
-        writer.writeEndDocument();
+        writer.writeEndDocument()
 
         then:
         thrown(BsonInvalidOperationException)
@@ -296,10 +294,10 @@ class BsonWriterSpecification extends Specification {
         writer << [new BsonBinaryWriter(new BasicOutputBuffer()), new BsonDocumentWriter(new BsonDocument())]
     }
 
-    def shouldThrowAnErrorIfKeyContainsNullCharacter() {
+    def 'shouldThrowAnErrorIfKeyContainsNullCharacter'() {
         when:
-        writer.writeStartDocument();
-        writer.writeBoolean('h\u0000i', true);
+        writer.writeStartDocument()
+        writer.writeBoolean('h\u0000i', true)
 
 
         then:
@@ -309,10 +307,10 @@ class BsonWriterSpecification extends Specification {
         writer << [new BsonBinaryWriter(new BasicOutputBuffer()), new BsonDocumentWriter(new BsonDocument())]
     }
 
-    def shouldNotThrowAnErrorIfValueContainsNullCharacter() {
+    def 'shouldNotThrowAnErrorIfValueContainsNullCharacter'() {
         when:
-        writer.writeStartDocument();
-        writer.writeString('x', 'h\u0000i');
+        writer.writeStartDocument()
+        writer.writeString('x', 'h\u0000i')
 
         then:
         true
@@ -321,15 +319,15 @@ class BsonWriterSpecification extends Specification {
         writer << [new BsonBinaryWriter(new BasicOutputBuffer()), new BsonDocumentWriter(new BsonDocument())]
     }
 
-    def shouldNotThrowAnExceptionIfCorrectlyStartingAndEndingDocumentsAndSubDocuments() {
+    def 'shouldNotThrowAnExceptionIfCorrectlyStartingAndEndingDocumentsAndSubDocuments'() {
         when:
-        writer.writeStartDocument();
-        writer.writeJavaScriptWithScope('js1', 'var i = 1');
+        writer.writeStartDocument()
+        writer.writeJavaScriptWithScope('js1', 'var i = 1')
 
-        writer.writeStartDocument();
-        writer.writeEndDocument();
+        writer.writeStartDocument()
+        writer.writeEndDocument()
 
-        writer.writeEndDocument();
+        writer.writeEndDocument()
 
         then:
         true
@@ -338,9 +336,9 @@ class BsonWriterSpecification extends Specification {
         writer << [new BsonBinaryWriter(new BasicOutputBuffer()), new BsonDocumentWriter(new BsonDocument())]
     }
 
-    def shouldThrowOnInvalidFieldName() {
+    def 'shouldThrowOnInvalidFieldName'() {
         given:
-        writer.writeStartDocument();
+        writer.writeStartDocument()
         writer.writeString('good', 'string')
 
         when:
@@ -353,7 +351,7 @@ class BsonWriterSpecification extends Specification {
         writer << [new BsonBinaryWriter(new BasicOutputBuffer(), new TestFieldNameValidator('bad'))]
     }
 
-    def shouldThrowOnInvalidFieldNameNestedInDocument() {
+    def 'shouldThrowOnInvalidFieldNameNestedInDocument'() {
         given:
         writer.with {
             writeStartDocument()
@@ -372,7 +370,7 @@ class BsonWriterSpecification extends Specification {
         writer << [new BsonBinaryWriter(new BasicOutputBuffer(), new TestFieldNameValidator('bad'))]
     }
 
-    def shouldThrowOnInvalidFieldNameNestedInDocumentInArray() {
+    def 'shouldThrowOnInvalidFieldNameNestedInDocumentInArray'() {
         given:
         writer.with {
             writeStartDocument()
@@ -392,10 +390,8 @@ class BsonWriterSpecification extends Specification {
         writer << [new BsonBinaryWriter(new BasicOutputBuffer(), new TestFieldNameValidator('bad'))]
     }
 
-
     class TestFieldNameValidator implements FieldNameValidator {
-        private final String badFieldName;
-
+        private final String badFieldName
 
         TestFieldNameValidator(final String badFieldName) {
             this.badFieldName = badFieldName

@@ -17,12 +17,12 @@
 package com.mongodb;
 
 import org.bson.types.ObjectId;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -45,7 +45,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         DBObject inserted1 = BasicDBObjectBuilder.start().add("x", 1).add("y", 2).get();
         DBObject inserted2 = BasicDBObjectBuilder.start().add("x", 3).add("y", 3).get();
         c.insert(inserted1, inserted2);
-        Assert.assertThat(collection.count(), is(2L));
+        assertThat(collection.count(), is(2L));
     }
 
     @Test(expected = DuplicateKeyException.class)

@@ -29,7 +29,6 @@ import com.mongodb.connection.SocketStreamFactory
 import com.mongodb.connection.netty.NettyStreamFactory
 import org.bson.BsonDocument
 import org.bson.BsonString
-import org.junit.Test
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
@@ -151,7 +150,6 @@ class GSSAPIAuthenticationSpecification extends Specification {
         async << [true, false]
     }
 
-    @Test
     def 'should authorize when successfully authenticated with SaslClient properties'() {
         given:
         Map<String, Object> saslClientProperties = [:]

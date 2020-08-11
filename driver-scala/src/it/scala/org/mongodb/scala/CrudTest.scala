@@ -31,7 +31,7 @@ class CrudTest(
     val definition: BsonDocument,
     val skipTest: Boolean
 ) extends AbstractCrudTest(filename, description, databaseName, collectionName, data, definition, skipTest) {
-  private var mongoClient: SyncMongoClient = _
+  private var mongoClient: SyncMongoClient = null
 
   override protected def createMongoClient(commandListener: CommandListener): Unit = {
     mongoClient = SyncMongoClient(MongoClient(getMongoClientSettingsBuilder.addCommandListener(commandListener).build))
