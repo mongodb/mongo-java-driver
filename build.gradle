@@ -32,6 +32,9 @@ buildscript {
         // Scala plugins
         classpath "com.adtran:scala-multiversion-plugin:1.0.35"
         classpath "com.diffplug.spotless:spotless-plugin-gradle:3.27.1"
+
+        // Test logging plugin
+        classpath 'com.adarshr:gradle-test-logger-plugin:2.1.0'
     }
 }
 
@@ -226,6 +229,7 @@ configure(javaCodeCheckedProjects) {
     apply plugin: 'jacoco'
     apply plugin: 'groovy'
     apply plugin: 'codenarc'
+    apply plugin: 'com.adarshr.test-logger'
 
     dependencies {
         testImplementation(platform("org.junit:junit-bom:$junitBomVersion"))
@@ -259,11 +263,20 @@ configure(javaCodeCheckedProjects) {
             excludeTags('Slow')
         }
         systemProperty('spock.configuration', "${configDir}/spock/ExcludeSlow.groovy")
+
+        jacoco { enabled = false }
+
         testLogging {
             exceptionFormat = 'full'
             events("passed", "skipped", "failed")
         }
-        jacoco { enabled = false }
+
+        testlogger {
+            theme 'standard'
+            showExceptions false
+            showStackTraces false
+            showFullStackTraces false
+        }
     }
 
     task testSlowOnly(type: Test) {
@@ -340,8 +353,6 @@ def getGitVersion() {
 apply from: 'gradle/publish.gradle'
 apply from: 'gradle/deploy.gradle'
 apply from: 'gradle/javadoc.gradle'
-apply from: 'gradle/testSummary.gradle'
-
 
 //////////////////////////////////////////
 // Root project configuration           //
