@@ -18,12 +18,11 @@ package org.mongodb.scala.bson
 
 import java.util.Date
 
+import org.mongodb.scala.bson.collection.{ immutable, mutable }
+
 import scala.language.implicitConversions
 
-import org.mongodb.scala.bson.collection.{ immutable, mutable }
-import org.scalatest.{ FlatSpec, Matchers }
-
-class BsonTransformerSpec extends FlatSpec with Matchers {
+class BsonTransformerSpec extends BaseSpec {
 
   "The BsonTransformer companion" should "not transform BsonValues" in {
     transform(BsonString("abc")) should equal(BsonString("abc"))

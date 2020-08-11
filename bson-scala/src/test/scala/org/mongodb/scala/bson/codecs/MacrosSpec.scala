@@ -20,21 +20,22 @@ import java.nio.ByteBuffer
 import java.util
 import java.util.Date
 
-import scala.collection.JavaConverters._
-import scala.reflect.ClassTag
 import org.bson._
 import org.bson.codecs.configuration.{ CodecProvider, CodecRegistries, CodecRegistry }
 import org.bson.codecs.{ Codec, DecoderContext, EncoderContext }
 import org.bson.io.{ BasicOutputBuffer, ByteBufferBsonInput, OutputBuffer }
 import org.bson.types.ObjectId
+import org.mongodb.scala.bson.BaseSpec
 import org.mongodb.scala.bson.annotations.BsonProperty
-import org.mongodb.scala.bson.codecs.Registry.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.bson.codecs.Macros.{ createCodecProvider, createCodecProviderIgnoreNone }
+import org.mongodb.scala.bson.codecs.Registry.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.bson.collection.immutable.Document
-import org.scalatest.{ FlatSpec, Matchers }
+
+import scala.collection.JavaConverters._
+import scala.reflect.ClassTag
 
 //scalastyle:off
-class MacrosSpec extends FlatSpec with Matchers {
+class MacrosSpec extends BaseSpec {
 
   case class Empty()
   case class Person(firstName: String, lastName: String)

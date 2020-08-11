@@ -25,7 +25,7 @@ import org.bson.UuidRepresentation
 import org.bson.codecs.UuidCodec
 import org.bson.codecs.configuration.CodecRegistries
 import org.mongodb.scala._
-import org.mongodb.scala.bson.{ BsonDocument, BsonString, ObjectId }
+import org.mongodb.scala.bson.{ BsonBinary, BsonDocument, BsonString, ObjectId }
 import org.mongodb.scala.model.{ Filters, Updates }
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.exceptions.TestFailedException
@@ -304,12 +304,9 @@ class GridFSObservableSpec extends RequiresMongoDBISpec with FuturesSpec with Be
       .head()
       .futureValue
 
-    val file = bucket.find(Filters.eq("_id", fileId)).head().futureValue
-
-    file.getMetadata should equal(fileMeta)
-
     val fileAsDocument = filesCollection.find[BsonDocument]().head().futureValue
     fileAsDocument.getDocument("metadata").getBinary("uuid").getType should equal(4.toByte)
+    fileAsDocument.getDocument("metadata").getBinary("uuid").asUuid() should equal(uuid)
   }
 
   it should "handle missing file name data when downloading" in {

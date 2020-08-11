@@ -13,20 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.mongodb.scala.bson
 
-package org.mongodb.scala.bson.codecs
+import org.junit.runner.RunWith
+import org.scalatest.{ FlatSpec, Matchers }
+import org.scalatestplus.junit.JUnitRunner
 
-import org.bson.codecs.configuration.CodecRegistries.fromProviders
-import org.bson.codecs.configuration.CodecRegistry
-import org.bson.codecs.{ BsonValueCodecProvider, ValueCodecProvider }
-
-object Registry {
-
-  val DEFAULT_CODEC_REGISTRY: CodecRegistry = fromProviders(
-    DocumentCodecProvider(),
-    IterableCodecProvider(),
-    new ValueCodecProvider(),
-    new BsonValueCodecProvider()
-  )
-
-}
+@RunWith(classOf[JUnitRunner])
+abstract class BaseSpec extends FlatSpec with Matchers {}

@@ -19,10 +19,9 @@ package org.mongodb.scala.bson.codecs
 import org.bson.codecs.{ DecoderContext, EncoderContext }
 import org.bson.{ BsonDocumentReader, BsonDocumentWriter, Transformer }
 import org.mongodb.scala.bson.codecs.Registry.DEFAULT_CODEC_REGISTRY
-import org.mongodb.scala.bson.BsonDocument
-import org.scalatest.{ FlatSpec, Matchers }
+import org.mongodb.scala.bson.{ BaseSpec, BsonDocument }
 
-class IterableCodecSpec extends FlatSpec with Matchers {
+class IterableCodecSpec extends BaseSpec {
 
   "IterableCodec" should "have the correct encoding class" in {
     val codec = IterableCodec(DEFAULT_CODEC_REGISTRY, BsonTypeClassMap())
