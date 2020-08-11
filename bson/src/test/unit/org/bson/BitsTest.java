@@ -17,14 +17,18 @@
 
 package org.bson;
 
-import org.junit.Test;
+
+
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 
 public class BitsTest {
 
@@ -57,16 +61,20 @@ public class BitsTest {
         assertArrayEquals(BYTES, Arrays.copyOfRange(buffer, offset, BYTES.length + offset));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testReadFullyUsingNotEnoughBigBuffer() throws IOException {
-        Bits.readFully(new ByteArrayInputStream(BYTES), new byte[2], 0, BYTES.length);
+        assertThrows(IllegalArgumentException.class, () ->
+                Bits.readFully(new ByteArrayInputStream(BYTES), new byte[2], 0, BYTES.length)
+        );
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testReadFullyUsingNotEnoughBigBufferWithOffset() throws IOException {
-        int offset = 10;
-        byte[] buffer = new byte[BYTES.length];
-        Bits.readFully(new ByteArrayInputStream(BYTES), buffer, offset, BYTES.length);
+        assertThrows(IllegalArgumentException.class, () -> {
+            int offset = 10;
+            byte[] buffer = new byte[BYTES.length];
+            Bits.readFully(new ByteArrayInputStream(BYTES), buffer, offset, BYTES.length);
+        });
     }
 
     @Test
@@ -89,9 +97,11 @@ public class BitsTest {
         assertEquals(Long.MAX_VALUE, Bits.readLong(BYTES, 24));
     }
 
-    @Test(expected = ArrayIndexOutOfBoundsException.class)
+    @Test
     public void testReadLongWithNotEnoughData() {
-        Bits.readLong(Arrays.copyOfRange(BYTES, 24, 30), 0);
+        assertThrows(ArrayIndexOutOfBoundsException.class, () ->
+                Bits.readLong(Arrays.copyOfRange(BYTES, 24, 30), 0)
+        );
     }
 
 }
