@@ -16,9 +16,7 @@
 
 package com.mongodb
 
-
 import org.bson.BsonDocument
-import org.junit.Test
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.configureFailPoint
@@ -85,10 +83,10 @@ class DBFunctionalSpecification extends FunctionalSpecification {
         database.setWriteConcern(null)
     }
 
-    @Test
+
     def 'should execute command with customer encoder'() {
         when:
-        CommandResult commandResult = database.command(new BasicDBObject('isMaster', 1), DefaultDBEncoder.FACTORY.create());
+        CommandResult commandResult = database.command(new BasicDBObject('isMaster', 1), DefaultDBEncoder.FACTORY.create())
 
         then:
         commandResult.ok()

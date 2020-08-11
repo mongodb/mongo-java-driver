@@ -63,7 +63,7 @@ class IndexesSpecification extends Specification {
         toBson(geoHaystack('x', descending('b'))) == parse('{x : "geoHaystack", b: -1}')
     }
 
-    def 'text'() {
+    def 'text helper'() {
         expect:
         toBson(text('x')) == parse('{x : "text"}')
         toBson(text()) == parse('{ "$**" : "text"}')

@@ -199,7 +199,8 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         def includeWriteConcern = (writeConcern.isAcknowledged() && !writeConcern.isServerDefault()
                 && serverVersionIsGreaterThan(serverVersion, [3, 4, 0]))
         def cannedResult = new BsonDocument('value', new BsonDocumentWrapper(BsonDocument.parse('{}'), new BsonDocumentCodec()))
-        def operation = new FindAndDeleteOperation<Document>(getNamespace(), writeConcern, retryWrites, documentCodec)
+        def operation = new FindAndDeleteOperation<Document>(getNamespace(), writeConcern as WriteConcern,
+                retryWrites as boolean, documentCodec)
         def expectedCommand = new BsonDocument('findAndModify', new BsonString(getNamespace().getCollectionName()))
                 .append('remove', BsonBoolean.TRUE)
 

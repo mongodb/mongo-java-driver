@@ -140,7 +140,7 @@ class MongoChangeStreamCursorSpecification extends Specification {
         given:
         def firstBatch = [RawBsonDocument.parse('{ _id: { _data: 1 }, x: 1 }'),
                           RawBsonDocument.parse('{ _id: { _data: 2 }, x: 1 }')]
-        def secondBatch = [RawBsonDocument.parse('{ _id: { _data: 3 }, x: 2 }')]
+        List<BsonDocument> secondBatch = [RawBsonDocument.parse('{ _id: { _data: 3 }, x: 2 }')]
 
         def batchCursor = Stub(AggregateResponseBatchCursor)
         def codec = new RawBsonDocumentCodec();
@@ -157,11 +157,11 @@ class MongoChangeStreamCursorSpecification extends Specification {
 
         expect:
         cursor.getResumeToken() == resumeToken
-        cursor.next()
+        cursor.next() == firstBatch.head()
         cursor.getResumeToken() == new BsonDocument('_data', new BsonInt32(1))
-        cursor.next()
+        cursor.next() == firstBatch.last()
         cursor.getResumeToken() == new BsonDocument('_data', new BsonInt32(2))
-        cursor.next()
+        cursor.next() == secondBatch.head()
         cursor.getResumeToken() == new BsonDocument('_data', new BsonInt32(3))
     }
 
@@ -189,15 +189,15 @@ class MongoChangeStreamCursorSpecification extends Specification {
 
         expect:
         cursor.getResumeToken() == resumeToken
-        cursor.tryNext()
+        cursor.tryNext() == firstBatch.head()
         cursor.getResumeToken() == new BsonDocument('_data', new BsonInt32(1))
-        cursor.tryNext()
+        cursor.tryNext() == firstBatch.last()
         cursor.getResumeToken() == new BsonDocument('_data', new BsonInt32(2))
-        !cursor.tryNext()
+        cursor.tryNext() == null
         cursor.getResumeToken() == new BsonDocument('_data', new BsonInt32(2))
-        cursor.tryNext()
+        cursor.tryNext() == secondBatch.head()
         cursor.getResumeToken() == new BsonDocument('_data', new BsonInt32(3))
-        !cursor.tryNext()
+        cursor.tryNext() == null
         cursor.getResumeToken() == new BsonDocument('_data', new BsonInt32(3))
     }
 }
