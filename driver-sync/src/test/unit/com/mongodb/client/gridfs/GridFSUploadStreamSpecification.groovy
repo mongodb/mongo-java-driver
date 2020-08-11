@@ -101,8 +101,7 @@ class GridFSUploadStreamSpecification extends Specification {
         def content = 'file content ' as byte[]
         def metadata = new Document('contentType', 'text/txt')
         def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255, metadata)
-        def chunksData
-        def fileData
+        def filesId = fileId
 
         when:
         uploadStream.write(content)
@@ -110,27 +109,45 @@ class GridFSUploadStreamSpecification extends Specification {
 
         then:
         if (clientSession != null) {
-            1 * chunksCollection.insertOne(clientSession) { Document data -> chunksData = data }
+            1 * chunksCollection.insertOne(clientSession) {
+                verifyAll(it, Document) {
+                    it.get('files_id') == filesId
+                    it.getInteger('n') == 0
+                    it.get('data', Binary).getData() == content
+                }
+            }
         } else {
-            1 * chunksCollection.insertOne { Document data -> chunksData = data }
+            1 * chunksCollection.insertOne {
+                verifyAll(it, Document) {
+                    it.get('files_id') == filesId
+                    it.getInteger('n') == 0
+                    it.get('data', Binary).getData() == content
+                }
+            }
         }
-
-        chunksData.get('files_id') == fileId
-        chunksData.getInteger('n') == 0
-        chunksData.get('data', Binary).getData() == content
 
         then:
         if (clientSession != null) {
-            1 * filesCollection.insertOne(clientSession) { GridFSFile data -> fileData = data }
+            1 * filesCollection.insertOne(clientSession) {
+                verifyAll(it, GridFSFile) {
+                    it.getId() == fileId
+                    it.getFilename() == filename
+                    it.getLength() == content.length as Long
+                    it.getChunkSize() == 255
+                    it.getMetadata() == metadata
+                }
+            }
         } else {
-            1 * filesCollection.insertOne { GridFSFile data -> fileData = data }
+            1 * filesCollection.insertOne {
+                verifyAll(it, GridFSFile) {
+                    it.getId() == fileId
+                    it.getFilename() == filename
+                    it.getLength() == content.length as Long
+                    it.getChunkSize() == 255
+                    it.getMetadata() == metadata
+                }
+            }
         }
-
-        fileData.getId() == fileId
-        fileData.getFilename() == filename
-        fileData.getLength() == content.length as Long
-        fileData.getChunkSize() == 255
-        fileData.getMetadata() == metadata
 
         where:
         clientSession << [null, Stub(ClientSession)]
