@@ -924,7 +924,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
     wrapped.updateOne(clientSession, filter, update.asJava, options)
 
   /**
-   * Update a single document in the collection according to the specified arguments.
+   * Update all documents in the collection according to the specified arguments.
    *
    * [[http://docs.mongodb.org/manual/tutorial/modify-documents/ Updates]]
    * [[http://docs.mongodb.org/manual/reference/operator/update/ Update Operators]]
@@ -938,7 +938,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
     wrapped.updateMany(filter, update)
 
   /**
-   * Update a single document in the collection according to the specified arguments.
+   * Update all documents in the collection according to the specified arguments.
    *
    * [[http://docs.mongodb.org/manual/tutorial/modify-documents/ Updates]]
    * [[http://docs.mongodb.org/manual/reference/operator/update/ Update Operators]]
@@ -953,7 +953,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
     wrapped.updateMany(filter, update, options)
 
   /**
-   * Update a single document in the collection according to the specified arguments.
+   * Update all documents in the collection according to the specified arguments.
    *
    * [[http://docs.mongodb.org/manual/tutorial/modify-documents/ Updates]]
    * [[http://docs.mongodb.org/manual/reference/operator/update/ Update Operators]]
@@ -970,7 +970,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
     wrapped.updateMany(clientSession, filter, update)
 
   /**
-   * Update a single document in the collection according to the specified arguments.
+   * Update all documents in the collection according to the specified arguments.
    *
    * [[http://docs.mongodb.org/manual/tutorial/modify-documents/ Updates]]
    * [[http://docs.mongodb.org/manual/reference/operator/update/ Update Operators]]
@@ -993,7 +993,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
     wrapped.updateMany(clientSession, filter, update, options)
 
   /**
-   * Update a single document in the collection according to the specified arguments.
+   * Update all documents in the collection according to the specified arguments.
    *
    * [[http://docs.mongodb.org/manual/tutorial/modify-documents/ Updates]]
    * [[http://docs.mongodb.org/manual/reference/operator/update/ Update Operators]]
@@ -1008,7 +1008,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
     wrapped.updateMany(filter, update.asJava)
 
   /**
-   * Update a single document in the collection according to the specified arguments.
+   * Update all documents in the collection according to the specified arguments.
    *
    * [[http://docs.mongodb.org/manual/tutorial/modify-documents/ Updates]]
    * [[http://docs.mongodb.org/manual/reference/operator/update/ Update Operators]]
@@ -1024,7 +1024,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
     wrapped.updateMany(filter, update.asJava, options)
 
   /**
-   * Update a single document in the collection according to the specified arguments.
+   * Update all documents in the collection according to the specified arguments.
    *
    * [[http://docs.mongodb.org/manual/tutorial/modify-documents/ Updates]]
    * [[http://docs.mongodb.org/manual/reference/operator/update/ Update Operators]]
@@ -1040,7 +1040,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
     wrapped.updateMany(clientSession, filter, update.asJava)
 
   /**
-   * Update a single document in the collection according to the specified arguments.
+   * Update all documents in the collection according to the specified arguments.
    *
    * [[http://docs.mongodb.org/manual/tutorial/modify-documents/ Updates]]
    * [[http://docs.mongodb.org/manual/reference/operator/update/ Update Operators]]
