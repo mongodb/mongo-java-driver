@@ -30,6 +30,7 @@ import org.bson.codecs.pojo.entities.AbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.AsymmetricalCreatorModel;
 import org.bson.codecs.pojo.entities.AsymmetricalIgnoreModel;
 import org.bson.codecs.pojo.entities.AsymmetricalModel;
+import org.bson.codecs.pojo.entities.ComposeInterfaceModel;
 import org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.ConcreteCollectionsModel;
 import org.bson.codecs.pojo.entities.ConcreteStandAloneAbstractInterfaceModel;
@@ -39,6 +40,8 @@ import org.bson.codecs.pojo.entities.ConverterModel;
 import org.bson.codecs.pojo.entities.CustomPropertyCodecOptionalModel;
 import org.bson.codecs.pojo.entities.GenericTreeModel;
 import org.bson.codecs.pojo.entities.InterfaceBasedModel;
+import org.bson.codecs.pojo.entities.InterfaceModelB;
+import org.bson.codecs.pojo.entities.InterfaceModelImpl;
 import org.bson.codecs.pojo.entities.InvalidCollectionModel;
 import org.bson.codecs.pojo.entities.InvalidGetterAndSetterModel;
 import org.bson.codecs.pojo.entities.InvalidMapModel;
@@ -65,6 +68,7 @@ import org.bson.codecs.pojo.entities.conventions.CollectionsGetterNullModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorConstructorPrimitivesModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorConstructorThrowsExceptionModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorMethodThrowsExceptionModel;
+import org.bson.codecs.pojo.entities.conventions.InterfaceModelBInstanceCreatorConvention;
 import org.bson.codecs.pojo.entities.conventions.MapGetterImmutableModel;
 import org.bson.codecs.pojo.entities.conventions.MapGetterMutableModel;
 import org.bson.codecs.pojo.entities.conventions.MapGetterNonEmptyModel;
@@ -499,7 +503,7 @@ public final class PojoCustomTest extends PojoTestCase {
     public void testEncodingInvalidCollectionModel() {
         try {
             encodesTo(getPojoCodecProviderBuilder(InvalidCollectionModel.class), new InvalidCollectionModel(asList(1, 2, 3)),
-                "{collectionField: [1, 2, 3]}");
+                    "{collectionField: [1, 2, 3]}");
         } catch (CodecConfigurationException e) {
             assertTrue(e.getMessage().startsWith("Failed to encode 'InvalidCollectionModel'. Encoding 'collectionField' errored with:"));
             throw e;
@@ -510,6 +514,17 @@ public final class PojoCustomTest extends PojoTestCase {
     public void testInvalidMapModelWithCustomPropertyCodecProvider() {
         encodesTo(getPojoCodecProviderBuilder(InvalidMapModel.class).register(new InvalidMapPropertyCodecProvider()), getInvalidMapModel(),
                 "{'invalidMap': {'1': 1, '2': 2}}");
+    }
+
+    @Test
+    public void testInterfaceModelCreatorMadeInConvention() {
+        roundTrip(
+                getPojoCodecProviderBuilder(ComposeInterfaceModel.class, InterfaceModelB.class, InterfaceModelImpl.class)
+                        .conventions(Collections.singletonList(new InterfaceModelBInstanceCreatorConvention())),
+                new ComposeInterfaceModel("someTitle",
+                        new InterfaceModelImpl("a", "b")),
+                "{'title': 'someTitle', 'nestedModel': {'propertyA': 'a', 'propertyB': 'b'}}"
+        );
     }
 
     @Test(expected = CodecConfigurationException.class)

@@ -25,6 +25,7 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,12 +51,12 @@ final class PojoBuilderHelper {
         ArrayList<Annotation> annotations = new ArrayList<Annotation>();
         Set<String> propertyNames = new TreeSet<String>();
         Map<String, TypeParameterMap> propertyTypeParameterMap = new HashMap<String, TypeParameterMap>();
-        Class<? super T> currentClass = clazz;
         String declaringClassName =  clazz.getSimpleName();
-        TypeData<?> parentClassTypeData = null;
 
         Map<String, PropertyMetadata<?>> propertyNameMap = new HashMap<String, PropertyMetadata<?>>();
-        while (!currentClass.isEnum() && currentClass.getSuperclass() != null) {
+        for (ClassWithParentTypeData<? super T> currentClassWithParentTypeData : getClassHierarchy(clazz, null)) {
+            Class<? super T> currentClass = currentClassWithParentTypeData.clazz;
+            TypeData<?> parentClassTypeData = currentClassWithParentTypeData.parentClassTypeData;
             annotations.addAll(asList(currentClass.getDeclaredAnnotations()));
             List<String> genericTypeNames = new ArrayList<String>();
             for (TypeVariable<? extends Class<? super T>> classTypeVariable : currentClass.getTypeParameters()) {
@@ -118,11 +119,6 @@ final class PojoBuilderHelper {
             }
 
             parentClassTypeData = TypeData.newInstance(currentClass.getGenericSuperclass(), currentClass);
-            currentClass = currentClass.getSuperclass();
-        }
-
-        if (currentClass.isInterface()) {
-            annotations.addAll(asList(currentClass.getDeclaredAnnotations()));
         }
 
         for (String propertyName : propertyNames) {
@@ -259,6 +255,33 @@ final class PojoBuilderHelper {
             throw new IllegalStateException(format("%s cannot be null", property));
         }
         return value;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> Set<ClassWithParentTypeData<? super T>> getClassHierarchy(final Class<? super T> clazz,
+                                                                                 final TypeData<?> classTypeData) {
+        Set<ClassWithParentTypeData<? super T>> classesToScan = new LinkedHashSet<>();
+        Class<? super T> currentClass = clazz;
+        TypeData<?> parentClassTypeData = classTypeData;
+        while (currentClass != null && !currentClass.isEnum() && !currentClass.equals(Object.class)) {
+            classesToScan.add(new ClassWithParentTypeData<>(currentClass, parentClassTypeData));
+            parentClassTypeData = TypeData.newInstance(currentClass.getGenericSuperclass(), currentClass);
+            for (Class<?> interfaceClass : currentClass.getInterfaces()) {
+                classesToScan.addAll(getClassHierarchy((Class<? super T>) interfaceClass, parentClassTypeData));
+            }
+            currentClass = currentClass.getSuperclass();
+        }
+        return classesToScan;
+    }
+
+    private static final class ClassWithParentTypeData<T> {
+        private final Class<T> clazz;
+        private final TypeData<?> parentClassTypeData;
+
+        private ClassWithParentTypeData(final Class<T> clazz, final TypeData<?> parentClassTypeData) {
+            this.clazz = clazz;
+            this.parentClassTypeData = parentClassTypeData;
+        }
     }
 
     private PojoBuilderHelper() {
