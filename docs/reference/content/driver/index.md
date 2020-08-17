@@ -32,9 +32,9 @@ For tutorials for some frequently used operations, see the [Tutorials section]({
 | Release | Documentation |
 |---------|---------------|
 |  4.0.5  | {{< releases version="4.0" >}} | 
-|  3.12.2 | {{< releases version="3.12" >}} | 
-|  3.11.2 | {{< releases version="3.11" >}} |
-|  3.10.2 | {{< releases version="3.10" >}} |
-|  3.9.0  | {{< releases version="3.9"  >}} |
-|  3.8.2  | {{< releases version="3.8"  >}} |
-|  3.7.1  | {{< releases version="3.7"  >}} |
+|  3.12.2 | {{< releases version="3.12" apiDir="javadoc" >}} | 
+|  3.11.2 | {{< releases version="3.11" apiDir="javadoc" >}} |
+|  3.10.2 | {{< releases version="3.10" apiDir="javadoc" >}} |
+|  3.9.0  | {{< releases version="3.9"  apiDir="javadoc" >}} |
+|  3.8.2  | {{< releases version="3.8"  apiDir="javadoc" >}} |
+|  3.7.1  | {{< releases version="3.7"  apiDir="javadoc" >}} |

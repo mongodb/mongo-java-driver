@@ -27,9 +27,9 @@ For tutorials for some frequently used operations, see the [Tutorials section]({
 | Release | Documentation |
 |---------|---------------|
 | 4.0.5   | {{< releases version="4.0" >}} | 
-| 1.13.1  | {{< releases version="1.13" url="https://mongodb.github.io/mongo-java-driver-reactivestreams/" >}} |
-| 1.12.0  | {{< releases version="1.12" url="https://mongodb.github.io/mongo-java-driver-reactivestreams/" >}} |
-| 1.11.0  | {{< releases version="1.11" url="https://mongodb.github.io/mongo-java-driver-reactivestreams/" >}} |
-| 1.10.0  | {{< releases version="1.10" url="https://mongodb.github.io/mongo-java-driver-reactivestreams/" >}} |
-| 1.9.2   | {{< releases version="1.9"  url="https://mongodb.github.io/mongo-java-driver-reactivestreams/" >}} |
-| 1.8.0   | {{< releases version="1.8"  url="https://mongodb.github.io/mongo-java-driver-reactivestreams/" >}} |
+| 1.13.1  | {{< releases version="1.13" apiDir="javadoc" url="https://mongodb.github.io/mongo-java-driver-reactivestreams/" >}} |
+| 1.12.0  | {{< releases version="1.12" apiDir="javadoc" url="https://mongodb.github.io/mongo-java-driver-reactivestreams/" >}} |
+| 1.11.0  | {{< releases version="1.11" apiDir="javadoc" url="https://mongodb.github.io/mongo-java-driver-reactivestreams/" >}} |
+| 1.10.0  | {{< releases version="1.10" apiDir="javadoc" url="https://mongodb.github.io/mongo-java-driver-reactivestreams/" >}} |
+| 1.9.2   | {{< releases version="1.9"  apiDir="javadoc" url="https://mongodb.github.io/mongo-java-driver-reactivestreams/" >}} |
+| 1.8.0   | {{< releases version="1.8"  apiDir="javadoc" url="https://mongodb.github.io/mongo-java-driver-reactivestreams/" >}} |
