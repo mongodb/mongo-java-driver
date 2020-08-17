@@ -785,10 +785,10 @@ important The server&amp;rsquo;s behavior related to duplicate key names in a do
     
     <item>
       <title>Documents</title>
-      <link>/mongo-java-driver/4.1/driver-scala/bson/documents/</link>
+      <link>/mongo-java-driver/4.1/driver-scala/bson/scala-documents/</link>
       <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
       
-      <guid>/mongo-java-driver/4.1/driver-scala/bson/documents/</guid>
+      <guid>/mongo-java-driver/4.1/driver-scala/bson/scala-documents/</guid>
       <description>Documents The scala driver includes two scala specific representations for BSON documents. Following convention from the scala collections library, there are immutable and mutable implementations of documents. The underlying implementations of the scala Document use the type safe BsonDocument class. The scala bson classes are available from the org.mongodb.scala.bson namespace, which includes type aliases and companion objects. In general this should suffice but for advanced use cases you may need to use org.</description>
     </item>
     
@@ -804,10 +804,10 @@ important The server&amp;rsquo;s behavior related to duplicate key names in a do
     
     <item>
       <title>Extended JSON</title>
-      <link>/mongo-java-driver/4.1/driver-scala/bson/extended-json/</link>
+      <link>/mongo-java-driver/4.1/driver-scala/bson/scala-extended-json/</link>
       <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
       
-      <guid>/mongo-java-driver/4.1/driver-scala/bson/extended-json/</guid>
+      <guid>/mongo-java-driver/4.1/driver-scala/bson/scala-extended-json/</guid>
       <description>MongoDB Extended JSON The Scala driver supports reading and writing BSON documents represented as
 MongoDB Extended JSON. Both variants are supported:
  Strict Mode: representations of BSON types that conform to the JSON RFC. This is the format that mongoexport produces and mongoimport consumes. Shell Mode: a superset of JSON that the MongoDB shell can parse.  Furthermore, the Document provides two sets of convenience methods for this purpose:</description>

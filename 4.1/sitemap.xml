@@ -328,7 +328,7 @@
   </url>
   
   <url>
-    <loc>/mongo-java-driver/4.1/driver-scala/bson/documents/</loc>
+    <loc>/mongo-java-driver/4.1/driver-scala/bson/scala-documents/</loc>
     <lastmod>2015-03-19T14:27:51-04:00</lastmod>
   </url>
   
@@ -338,7 +338,7 @@
   </url>
   
   <url>
-    <loc>/mongo-java-driver/4.1/driver-scala/bson/extended-json/</loc>
+    <loc>/mongo-java-driver/4.1/driver-scala/bson/scala-extended-json/</loc>
     <lastmod>2015-03-19T14:27:51-04:00</lastmod>
   </url>
   
