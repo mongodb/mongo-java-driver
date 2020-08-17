@@ -15,8 +15,8 @@ The BSON library comprehensively supports [BSON](http://www.bsonspec.org), the d
 
 For everyday usage there are type aliases and companion objects available from the [`org.mongodb.scala.bson`]({{< apiref="org.mongodb.scala.bson.package" >}}) package.
 
-- [Documents]({{< relref "documents.md" >}}): Documentation of the driver's support for BSON document representations
-- [Extended JSON]({{< relref "extended-json.md" >}}): Documentation of the driver's support for MongoDB Extended JSON
+- [Documents]({{< relref "scala-documents.md" >}}): Documentation of the driver's support for BSON document representations
+- [Extended JSON]({{< relref "scala-extended-json.md" >}}): Documentation of the driver's support for MongoDB Extended JSON
 
 For advanced usage you may need to use `org.bson` directly. See the core Java driver documentation for:
 

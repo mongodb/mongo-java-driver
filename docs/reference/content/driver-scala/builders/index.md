@@ -20,6 +20,6 @@ The driver provides several classes that make it easier to use the CRUD API.
 - [Indexes]({{< relref "indexes.md" >}}): Documentation of the driver's support for creating index keys
 
 {{% note class="important" %}}
-Builders make use of the [`Bson`]({{< relref "driver-scala/bson/documents.md#bson" >}}) helper which unlike the [`Document`]({{< relref "driver-scala/bson/documents.md#document" >}}) is not type safe. Instead conversion to `BSON` is done via  
+Builders make use of the [`Bson`]({{< relref "driver-scala/bson/scala-documents.md#bson" >}}) helper which unlike the [`Document`]({{< relref "driver-scala/bson/scala-documents.md#document" >}}) is not type safe. Instead conversion to `BSON` is done via  
 [Codecs and the CodecRegistry]({{< relref "bson/codecs.md" >}}).
 {{% /note %}}
