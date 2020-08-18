@@ -117,8 +117,6 @@ final class PojoBuilderHelper {
                     }
                 }
             }
-
-            parentClassTypeData = TypeData.newInstance(currentClass.getGenericSuperclass(), currentClass);
         }
 
         for (String propertyName : propertyNames) {
