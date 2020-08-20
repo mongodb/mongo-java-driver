@@ -16,9 +16,9 @@
 
 package org.mongodb.scala.bson.codecs
 
-import org.bson.codecs.{ BsonValueCodecProvider, ValueCodecProvider }
 import org.bson.codecs.configuration.CodecRegistries.fromProviders
 import org.bson.codecs.configuration.CodecRegistry
+import org.bson.codecs.{ BsonValueCodecProvider, ValueCodecProvider }
 
 object Registry {
 

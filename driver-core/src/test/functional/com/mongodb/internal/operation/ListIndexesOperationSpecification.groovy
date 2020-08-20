@@ -16,17 +16,17 @@
 
 package com.mongodb.internal.operation
 
-import category.Async
+
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.ServerCursor
-import com.mongodb.internal.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.connection.ConnectionDescription
+import com.mongodb.internal.async.AsyncBatchCursor
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
 import com.mongodb.internal.binding.ConnectionSource
@@ -43,7 +43,6 @@ import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
-import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
@@ -66,7 +65,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         !cursor.hasNext()
     }
 
-    @Category(Async)
+
     def 'should return empty list for nonexistent collection asynchronously'() {
         given:
         def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
@@ -96,7 +95,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         !indexes.hasNext()
     }
 
-    @Category(Async)
+
     def 'should return default index on Collection that exists asynchronously'() {
         given:
         def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
@@ -132,7 +131,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         !cursor.hasNext()
     }
 
-    @Category(Async)
+
     def 'should return created indexes on Collection asynchronously'() {
         given:
         def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
@@ -183,7 +182,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         cursor?.close()
     }
 
-    @Category(Async)
+
     def 'should use the set batchSize of collections asynchronously'() {
         given:
         def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec()).batchSize(2)
@@ -232,7 +231,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         disableMaxTimeFailPoint()
     }
 
-    @Category(Async)
+
     @IgnoreIf({ isSharded() })
     def 'should throw execution timeout exception from executeAsync'() {
         given:

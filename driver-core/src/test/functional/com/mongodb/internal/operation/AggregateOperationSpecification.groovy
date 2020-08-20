@@ -227,12 +227,12 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         helper.insertDocuments(['{_id: 0, a: 0}', '{_id: 1, a: 1}'].collect { BsonDocument.parse(it) })
 
         then:
-        def next = next(cursor, async).collect { doc ->
+        def nextDoc = next(cursor, async).collect { doc ->
             doc.remove('_id')
             doc.remove('clusterTime')
             doc
         }
-        next == expected
+        nextDoc == expected
 
         cleanup:
         cursor?.close()

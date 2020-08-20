@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.connection
 
-import category.Async
+
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoInternalException
 import com.mongodb.MongoNamespace
@@ -48,7 +48,6 @@ import org.bson.BsonString
 import org.bson.ByteBuf
 import org.bson.ByteBufNIO
 import org.bson.codecs.BsonDocumentCodec
-import org.junit.experimental.categories.Category
 import spock.lang.Specification
 
 import java.nio.ByteBuffer
@@ -131,7 +130,7 @@ class InternalStreamConnectionSpecification extends Specification {
         connection.getInitialServerDescription() == serverDescription
     }
 
-    @Category(Async)
+
     def 'should change the description when opened asynchronously'() {
         when:
         def connection = getConnection()
@@ -172,7 +171,7 @@ class InternalStreamConnectionSpecification extends Specification {
         connection.isClosed()
     }
 
-    @Category(Async)
+
     def 'should close the stream when initialization throws an exception asynchronously'() {
         given:
         def failedInitializer = Mock(InternalConnectionInitializer) {
@@ -212,7 +211,7 @@ class InternalStreamConnectionSpecification extends Specification {
         thrown MongoSocketClosedException
     }
 
-    @Category(Async)
+
     def 'should close the stream when writing a message throws an exception asynchronously'() {
         given:
         def (buffers1, messageId1, sndCallbck1, rcvdCallbck1) = helper.isMasterAsync()
@@ -301,7 +300,7 @@ class InternalStreamConnectionSpecification extends Specification {
         connection.isClosed()
     }
 
-    @Category(Async)
+
     def 'should close the stream when reading the message header throws an exception asynchronously'() {
         given:
         int seen = 0
@@ -363,7 +362,7 @@ class InternalStreamConnectionSpecification extends Specification {
         thrown MongoSocketClosedException
     }
 
-    @Category(Async)
+
     def 'should close the stream when reading the message body throws an exception asynchronously'() {
         given:
         def (buffers1, messageId1, sndCallbck1, rcvdCallbck1) = helper.isMasterAsync()

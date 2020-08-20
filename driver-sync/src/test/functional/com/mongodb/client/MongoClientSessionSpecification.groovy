@@ -16,7 +16,7 @@
 
 package com.mongodb.client
 
-import category.Slow
+import util.spock.annotations.Slow
 import com.mongodb.ClientSessionOptions
 import com.mongodb.MongoClientException
 import com.mongodb.MongoClientSettings
@@ -32,7 +32,6 @@ import org.bson.BsonInt32
 import org.bson.BsonTimestamp
 import org.bson.Document
 import org.junit.Assert
-import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
 import java.util.concurrent.TimeUnit
@@ -257,7 +256,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
     // even if causal consistency was not actually in effect.  For that reason the test iterates a number of times in order to increase
     // confidence that it's really causal consistency that is causing the test to succeed
     @IgnoreIf({ !serverVersionAtLeast(3, 6) })
-    @Category(Slow)
+    @Slow
     def 'should find inserted document on a secondary when causal consistency is enabled'() {
         given:
         def collection = getMongoClient().getDatabase(getDefaultDatabaseName()).getCollection(getCollectionName())

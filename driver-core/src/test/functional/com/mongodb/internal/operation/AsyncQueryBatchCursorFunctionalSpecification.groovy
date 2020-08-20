@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.operation
 
-import category.Slow
+import util.spock.annotations.Slow
 import com.mongodb.MongoCursorNotFoundException
 import com.mongodb.MongoException
 import com.mongodb.MongoTimeoutException
@@ -25,8 +25,8 @@ import com.mongodb.ReadPreference
 import com.mongodb.ServerCursor
 import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.client.model.CreateCollectionOptions
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
 import com.mongodb.internal.connection.AsyncConnection
@@ -39,7 +39,6 @@ import org.bson.BsonString
 import org.bson.BsonTimestamp
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
-import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
 import java.util.concurrent.CountDownLatch
@@ -231,7 +230,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         waitForRelease(connectionSource, 1)
     }
 
-    @Category(Slow)
+    @Slow
     def 'should block waiting for first batch on a tailable cursor'() {
         given:
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
@@ -260,7 +259,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         }
     }
 
-    @Category(Slow)
+    @Slow
     def 'should block waiting for next batch on a tailable cursor'() {
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))

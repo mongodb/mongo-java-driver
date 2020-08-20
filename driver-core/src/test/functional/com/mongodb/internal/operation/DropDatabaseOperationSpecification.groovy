@@ -16,14 +16,13 @@
 
 package com.mongodb.internal.operation
 
-import category.Async
+
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
 import org.bson.BsonDocument
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
-import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.configureFailPoint
@@ -48,7 +47,7 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
         !databaseNameExists(databaseName)
     }
 
-    @Category(Async)
+
     @IgnoreIf({ isSharded() })
     def 'should drop a database that exists asynchronously'() {
         given:
@@ -73,7 +72,7 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
         !databaseNameExists(dbName)
     }
 
-    @Category(Async)
+
     def 'should not error when dropping a collection that does not exist asynchronously'() {
         given:
         def dbName = 'nonExistingDatabase'

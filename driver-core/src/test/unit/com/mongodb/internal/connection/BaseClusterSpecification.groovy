@@ -16,14 +16,13 @@
 
 package com.mongodb.internal.connection
 
-import category.Slow
+import util.spock.annotations.Slow
 import com.mongodb.ClusterFixture
 import com.mongodb.MongoClientException
 import com.mongodb.MongoException
 import com.mongodb.MongoInternalException
 import com.mongodb.MongoInterruptedException
 import com.mongodb.MongoTimeoutException
-
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterDescription
@@ -35,7 +34,6 @@ import com.mongodb.connection.ServerType
 import com.mongodb.internal.selector.ReadPreferenceServerSelector
 import com.mongodb.internal.selector.ServerAddressSelector
 import com.mongodb.internal.selector.WritableServerSelector
-import org.junit.experimental.categories.Category
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
@@ -199,7 +197,7 @@ class BaseClusterSpecification extends Specification {
         serverSelectionTimeoutMS << [30, 0, -1]
     }
 
-    @Category(Slow)
+    @Slow
     def 'should wait indefinitely for a server until interrupted'() {
         given:
         def cluster = new MultiServerCluster(new ClusterId(),
@@ -230,7 +228,7 @@ class BaseClusterSpecification extends Specification {
         cluster?.close()
     }
 
-    @Category(Slow)
+    @Slow
     def 'should wait indefinitely for a cluster description until interrupted'() {
         given:
         def cluster = new MultiServerCluster(new ClusterId(),

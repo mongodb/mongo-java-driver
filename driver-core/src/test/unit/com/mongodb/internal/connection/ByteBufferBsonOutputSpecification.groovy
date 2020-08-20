@@ -16,10 +16,9 @@
 
 package com.mongodb.internal.connection
 
-import category.Slow
+import util.spock.annotations.Slow
 import org.bson.BsonSerializationException
 import org.bson.types.ObjectId
-import org.junit.experimental.categories.Category
 import spock.lang.Specification
 
 import java.security.SecureRandom
@@ -343,7 +342,7 @@ class ByteBufferBsonOutputSpecification extends Specification {
         bsonOutput.size == 1027
     }
 
-    @Category(Slow)
+    @Slow
     def 'should grow to maximum allowed size of byte buffer'() {
         given:
         def bsonOutput = new ByteBufferBsonOutput(new SimpleBufferProvider())

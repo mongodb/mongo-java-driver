@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.connection
 
-import category.Async
+
 import com.mongodb.MongoCommandException
 import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterId
@@ -29,7 +29,6 @@ import com.mongodb.connection.netty.NettyStreamFactory
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonTimestamp
-import org.junit.experimental.categories.Category
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
@@ -70,7 +69,7 @@ class CommandHelperSpecification extends Specification {
         1 * connection.sendAndReceive(_, _, ) { it instanceof ClusterClockAdvancingSessionContext }
     }
 
-    @Category(Async)
+
     def 'should execute command asynchronously'() {
         when:
         BsonDocument receivedDocument = null

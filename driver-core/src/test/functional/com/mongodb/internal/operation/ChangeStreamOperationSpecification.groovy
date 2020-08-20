@@ -192,15 +192,15 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         when:
         def cursor = execute(operation, false)
         helper.insertDocuments(BsonDocument.parse('{ _id : 2, x : 2 }'))
-        ChangeStreamDocument<BsonDocument> next = next(cursor, false, 1).get(0)
+        ChangeStreamDocument<BsonDocument> nextDoc = next(cursor, false, 1).get(0)
 
         then:
-        next.getResumeToken() != null
-        next.getDocumentKey() == BsonDocument.parse('{ _id : 2 }')
-        next.getFullDocument() == BsonDocument.parse('{ _id : 2, x : 2 }')
-        next.getNamespace() == helper.getNamespace()
-        next.getOperationType() == OperationType.INSERT
-        next.getUpdateDescription() == null
+        nextDoc.getResumeToken() != null
+        nextDoc.getDocumentKey() == BsonDocument.parse('{ _id : 2 }')
+        nextDoc.getFullDocument() == BsonDocument.parse('{ _id : 2, x : 2 }')
+        nextDoc.getNamespace() == helper.getNamespace()
+        nextDoc.getOperationType() == OperationType.INSERT
+        nextDoc.getUpdateDescription() == null
 
         cleanup:
         cursor?.close()
@@ -219,15 +219,15 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         when:
         def cursor = execute(operation, false)
         helper.updateOne(BsonDocument.parse('{ _id : 2}'), BsonDocument.parse('{ $set : {x : 3}, $unset : {y : 1}}'))
-        ChangeStreamDocument<BsonDocument> next = next(cursor, false, 1).get(0)
+        ChangeStreamDocument<BsonDocument> nextDoc = next(cursor, false, 1).get(0)
 
         then:
-        next.getResumeToken() != null
-        next.getDocumentKey() == BsonDocument.parse('{ _id : 2 }')
-        next.getFullDocument() == BsonDocument.parse('{ _id : 2, x : 3 }')
-        next.getNamespace() == helper.getNamespace()
-        next.getOperationType() == OperationType.UPDATE
-        next.getUpdateDescription() == new UpdateDescription(['y'], BsonDocument.parse('{x : 3}'))
+        nextDoc.getResumeToken() != null
+        nextDoc.getDocumentKey() == BsonDocument.parse('{ _id : 2 }')
+        nextDoc.getFullDocument() == BsonDocument.parse('{ _id : 2, x : 3 }')
+        nextDoc.getNamespace() == helper.getNamespace()
+        nextDoc.getOperationType() == OperationType.UPDATE
+        nextDoc.getUpdateDescription() == new UpdateDescription(['y'], BsonDocument.parse('{x : 3}'))
 
         cleanup:
         cursor?.close()
@@ -246,15 +246,15 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         when:
         def cursor = execute(operation, false)
         helper.replaceOne(BsonDocument.parse('{ _id : 2}'), BsonDocument.parse('{ _id : 2, x : 3}'), false)
-        ChangeStreamDocument<BsonDocument> next = next(cursor, false, 1).get(0)
+        ChangeStreamDocument<BsonDocument> nextDoc = next(cursor, false, 1).get(0)
 
         then:
-        next.getResumeToken() != null
-        next.getDocumentKey() == BsonDocument.parse('{ _id : 2 }')
-        next.getFullDocument() == BsonDocument.parse('{ _id : 2, x : 3 }')
-        next.getNamespace() == helper.getNamespace()
-        next.getOperationType() == OperationType.REPLACE
-        next.getUpdateDescription() == null
+        nextDoc.getResumeToken() != null
+        nextDoc.getDocumentKey() == BsonDocument.parse('{ _id : 2 }')
+        nextDoc.getFullDocument() == BsonDocument.parse('{ _id : 2, x : 3 }')
+        nextDoc.getNamespace() == helper.getNamespace()
+        nextDoc.getOperationType() == OperationType.REPLACE
+        nextDoc.getUpdateDescription() == null
 
         cleanup:
         cursor?.close()
@@ -273,15 +273,15 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         when:
         def cursor = execute(operation, false)
         helper.deleteOne(BsonDocument.parse('{ _id : 2}'))
-        ChangeStreamDocument<BsonDocument> next = next(cursor, false, 1).get(0)
+        ChangeStreamDocument<BsonDocument> nextDoc = next(cursor, false, 1).get(0)
 
         then:
-        next.getResumeToken() != null
-        next.getDocumentKey() == BsonDocument.parse('{ _id : 2 }')
-        next.getFullDocument() == null
-        next.getNamespace() == helper.getNamespace()
-        next.getOperationType() == OperationType.DELETE
-        next.getUpdateDescription() == null
+        nextDoc.getResumeToken() != null
+        nextDoc.getDocumentKey() == BsonDocument.parse('{ _id : 2 }')
+        nextDoc.getFullDocument() == null
+        nextDoc.getNamespace() == helper.getNamespace()
+        nextDoc.getOperationType() == OperationType.DELETE
+        nextDoc.getUpdateDescription() == null
 
         cleanup:
         cursor?.close()
@@ -300,15 +300,15 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         when:
         def cursor = execute(operation, false)
         helper.drop()
-        ChangeStreamDocument<BsonDocument> next = next(cursor, false, 1).get(0)
+        ChangeStreamDocument<BsonDocument> nextDoc = next(cursor, false, 1).get(0)
 
         then:
-        next.getResumeToken() != null
-        next.getDocumentKey() == null
-        next.getFullDocument() == null
-        next.getNamespace() == null
-        next.getOperationType() == OperationType.INVALIDATE
-        next.getUpdateDescription() == null
+        nextDoc.getResumeToken() != null
+        nextDoc.getDocumentKey() == null
+        nextDoc.getFullDocument() == null
+        nextDoc.getNamespace() == null
+        nextDoc.getOperationType() == OperationType.INVALIDATE
+        nextDoc.getUpdateDescription() == null
 
         cleanup:
         cursor?.close()
@@ -328,15 +328,15 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         when:
         def cursor = execute(operation, false)
         helper.drop()
-        ChangeStreamDocument<BsonDocument> next = next(cursor, false, 1).get(0)
+        ChangeStreamDocument<BsonDocument> nextDoc = next(cursor, false, 1).get(0)
 
         then:
-        next.getResumeToken() != null
-        next.getDocumentKey() == null
-        next.getFullDocument() == null
-        next.getNamespace() == helper.getNamespace()
-        next.getOperationType() == OperationType.DROP
-        next.getUpdateDescription() == null
+        nextDoc.getResumeToken() != null
+        nextDoc.getDocumentKey() == null
+        nextDoc.getFullDocument() == null
+        nextDoc.getNamespace() == helper.getNamespace()
+        nextDoc.getOperationType() == OperationType.DROP
+        nextDoc.getUpdateDescription() == null
 
         cleanup:
         cursor?.close()
@@ -357,15 +357,15 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         when:
         def cursor = execute(operation, false)
         helper.dropDatabase('JavaDriverTest')
-        ChangeStreamDocument<BsonDocument> next = next(cursor, false, 1).get(0)
+        ChangeStreamDocument<BsonDocument> nextDoc = next(cursor, false, 1).get(0)
 
         then:
-        next.getResumeToken() != null
-        next.getDocumentKey() == null
-        next.getFullDocument() == null
-        next.getDatabaseName() == 'JavaDriverTest'
-        next.getOperationType() == OperationType.DROP_DATABASE
-        next.getUpdateDescription() == null
+        nextDoc.getResumeToken() != null
+        nextDoc.getDocumentKey() == null
+        nextDoc.getFullDocument() == null
+        nextDoc.getDatabaseName() == 'JavaDriverTest'
+        nextDoc.getOperationType() == OperationType.DROP_DATABASE
+        nextDoc.getUpdateDescription() == null
 
         cleanup:
         cursor?.close()
@@ -386,16 +386,16 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         when:
         def cursor = execute(operation, false)
         helper.renameCollection(newNamespace)
-        ChangeStreamDocument<BsonDocument> next = next(cursor, false, 1).get(0)
+        ChangeStreamDocument<BsonDocument> nextDoc = next(cursor, false, 1).get(0)
 
         then:
-        next.getResumeToken() != null
-        next.getDocumentKey() == null
-        next.getFullDocument() == null
-        next.getNamespace() == helper.getNamespace()
-        next.getDestinationNamespace() == newNamespace
-        next.getOperationType() == OperationType.RENAME
-        next.getUpdateDescription() == null
+        nextDoc.getResumeToken() != null
+        nextDoc.getDocumentKey() == null
+        nextDoc.getFullDocument() == null
+        nextDoc.getNamespace() == helper.getNamespace()
+        nextDoc.getDestinationNamespace() == newNamespace
+        nextDoc.getOperationType() == OperationType.RENAME
+        nextDoc.getUpdateDescription() == null
 
         cleanup:
         cursor?.close()

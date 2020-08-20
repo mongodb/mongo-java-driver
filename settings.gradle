@@ -16,6 +16,7 @@
 
 include ':bson'
 include ':driver-benchmarks'
+include ':driver-workload-executor'
 include ':driver-core'
 include ':driver-legacy'
 include ':driver-sync'

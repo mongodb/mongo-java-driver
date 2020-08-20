@@ -16,16 +16,14 @@
 
 package org.mongodb.scala.bson.collections
 
-import scala.collection.mutable
-
 import org.bson.json.JsonParseException
 import org.bson.{ BsonArray, BsonDocument, BsonValue }
-
-import org.mongodb.scala.bson.{ BsonBoolean, BsonString }
 import org.mongodb.scala.bson.collection.mutable.Document
-import org.scalatest.{ FlatSpec, Matchers }
+import org.mongodb.scala.bson.{ BaseSpec, BsonBoolean, BsonString }
 
-class MutableDocumentSpec extends FlatSpec with Matchers {
+import scala.collection.mutable
+
+class MutableDocumentSpec extends BaseSpec {
 
   val emptyDoc: Document = Document.empty
   val doc: Document = Document("key" -> "value", "key2" -> "value2", "key3" -> "value3")

@@ -196,13 +196,13 @@ class OperationFunctionalSpecification extends Specification {
     }
 
     void testOperation(Map params) {
-        params.async = params.async ?: false
-        params.result = params.result ?: null
-        params.checkCommand = params.checkCommand ?: true
-        params.checkSlaveOk = params.checkSlaveOk ?: false
-        params.readPreference = params.readPreference ?: ReadPreference.primary()
-        params.retryable = params.retryable ?: false
-        params.serverType = params.serverType ?: ServerType.STANDALONE
+        params.async = params.async != null ? params.async : false
+        params.result = params.result != null ? params.result : null
+        params.checkCommand = params.checkCommand != null ? params.checkCommand : true
+        params.checkSlaveOk = params.checkSlaveOk != null ? params.checkSlaveOk : false
+        params.readPreference = params.readPreference != null ? params.readPreference : ReadPreference.primary()
+        params.retryable = params.retryable != null ? params.retryable : false
+        params.serverType = params.serverType != null ? params.serverType : ServerType.STANDALONE
         testOperation(params.operation, params.serverVersion, params.expectedCommand, params.async, params.result, params.checkCommand,
                 params.checkSlaveOk, params.readPreference, params.retryable, params.serverType)
     }

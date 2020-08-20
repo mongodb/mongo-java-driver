@@ -16,8 +16,7 @@
 
 package com.mongodb.internal.operation
 
-import category.Async
-import category.Slow
+import util.spock.annotations.Slow
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import org.bson.BsonBinary
@@ -25,7 +24,6 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
 import org.bson.codecs.BsonDocumentCodec
-import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
@@ -48,7 +46,7 @@ class CommandOperationSpecification extends OperationFunctionalSpecification {
         result.getNumber('n').intValue() == 0
     }
 
-    @Category(Async)
+
     def 'should execute read command asynchronously'() {
         given:
         def commandOperation = new CommandReadOperation<BsonDocument>(getNamespace().databaseName,
@@ -76,7 +74,7 @@ class CommandOperationSpecification extends OperationFunctionalSpecification {
         result.containsKey('value')
     }
 
-    @Category(Async)
+
     def 'should execute write command asynchronously'() {
         when:
         def result = executeAsync(new CommandWriteOperation<BsonDocument>(getNamespace().databaseName,
@@ -91,7 +89,7 @@ class CommandOperationSpecification extends OperationFunctionalSpecification {
         result.containsKey('value')
     }
 
-    @Category(Slow)
+    @Slow
     def 'should execute command larger than 16MB'() {
         when:
         def result = new CommandWriteOperation<BsonDocument>(getNamespace().databaseName,
@@ -127,7 +125,7 @@ class CommandOperationSpecification extends OperationFunctionalSpecification {
         disableMaxTimeFailPoint()
     }
 
-    @Category(Async)
+
     @IgnoreIf({ isSharded() })
     def 'should throw execution timeout exception from executeAsync'() {
         given:

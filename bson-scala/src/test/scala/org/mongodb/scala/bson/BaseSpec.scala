@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.mongodb.scala.bson
 
-package category;
+import org.junit.runner.RunWith
+import org.scalatest.{ FlatSpec, Matchers }
+import org.scalatestplus.junit.JUnitRunner
 
-/**
- * Marker for slow tests.
- */
-public interface Slow {
-}
+@RunWith(classOf[JUnitRunner])
+abstract class BaseSpec extends FlatSpec with Matchers {}
