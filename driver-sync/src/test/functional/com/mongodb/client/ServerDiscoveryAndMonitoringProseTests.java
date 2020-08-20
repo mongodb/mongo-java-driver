@@ -65,7 +65,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
 
         try (MongoClient ignored = MongoClients.create(settings)) {
             assertTrue("Took longer than expected to reach expected number of hearbeats",
-                       latch.await(500, TimeUnit.MILLISECONDS));
+                       latch.await(1500, TimeUnit.MILLISECONDS));
         }
     }
 
