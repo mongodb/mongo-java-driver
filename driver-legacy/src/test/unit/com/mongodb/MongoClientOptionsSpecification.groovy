@@ -177,6 +177,7 @@ class MongoClientOptionsSpecification extends Specification {
                                         .sslInvalidHostNameAllowed(true)
                                         .sslContext(SSLContext.getDefault())
                                         .dbDecoderFactory(LazyDBDecoder.FACTORY)
+                                        .cipherSuites('TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384', 'TLS_DHE_RSA_WITH_AES_256_CBC_SHA256')
                                         .heartbeatFrequency(5)
                                         .minHeartbeatFrequency(11)
                                         .heartbeatConnectTimeout(15)
@@ -206,6 +207,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.getSocketTimeout() == 700
         options.isSslEnabled()
         options.isSslInvalidHostNameAllowed()
+        options.getCipherSuites() == ['TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384', 'TLS_DHE_RSA_WITH_AES_256_CBC_SHA256']
         options.getSslContext() == SSLContext.getDefault()
         options.getDbDecoderFactory() == LazyDBDecoder.FACTORY
         options.getDbEncoderFactory() == encoderFactory
@@ -258,6 +260,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .maxConnectionIdleTime(300)
                 .maxConnectionLifeTime(400)
                 .sslEnabled(true)
+                .cipherSuites('TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384', 'TLS_DHE_RSA_WITH_AES_256_CBC_SHA256')
                 .sslInvalidHostNameAllowed(true)
                 .sslContext(SSLContext.getDefault())
                 .dbDecoderFactory(LazyDBDecoder.FACTORY)
@@ -557,6 +560,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .sslEnabled(true)
                 .sslInvalidHostNameAllowed(true)
                 .sslContext(SSLContext.getDefault())
+                .cipherSuites('TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384', 'TLS_DHE_RSA_WITH_AES_256_CBC_SHA256')
                 .dbDecoderFactory(LazyDBDecoder.FACTORY)
                 .heartbeatFrequency(5)
                 .minHeartbeatFrequency(11)
@@ -586,9 +590,10 @@ class MongoClientOptionsSpecification extends Specification {
         when:
         // A regression test so that if any more methods are added then the builder(final MongoClientOptions options) should be updated
         def actual = MongoClientOptions.Builder.declaredFields.grep { !it.synthetic } *.name.sort()
-        def expected = ['applicationName', 'autoEncryptionSettings', 'clusterListeners', 'codecRegistry', 'commandListeners',
-                        'compressorList', 'connectTimeout', 'connectionPoolListeners', 'cursorFinalizerEnabled', 'dbDecoderFactory',
-                        'dbEncoderFactory', 'heartbeatConnectTimeout', 'heartbeatFrequency', 'heartbeatSocketTimeout', 'localThreshold',
+        def expected = ['applicationName', 'autoEncryptionSettings', 'cipherSuites', 'clusterListeners',
+                        'codecRegistry', 'commandListeners', 'compressorList', 'connectTimeout',
+                        'connectionPoolListeners', 'cursorFinalizerEnabled', 'dbDecoderFactory', 'dbEncoderFactory',
+                        'heartbeatConnectTimeout', 'heartbeatFrequency', 'heartbeatSocketTimeout', 'localThreshold',
                         'maxConnectionIdleTime', 'maxConnectionLifeTime', 'maxConnectionsPerHost', 'maxWaitTime', 'minConnectionsPerHost',
                         'minHeartbeatFrequency', 'readConcern', 'readPreference', 'requiredReplicaSetName', 'retryReads', 'retryWrites',
                         'serverListeners', 'serverMonitorListeners', 'serverSelectionTimeout', 'serverSelector',

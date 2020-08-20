@@ -22,6 +22,8 @@ import com.mongodb.annotations.NotThreadSafe;
 
 import javax.net.ssl.SSLContext;
 
+import java.util.Arrays;
+
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -34,7 +36,7 @@ public class SslSettings {
     private final boolean enabled;
     private final boolean invalidHostNameAllowed;
     private final SSLContext context;
-
+    private final String[] cipherSuites;
     /**
      * Gets a Builder for creating a new SSLSettings instance.
      *
@@ -63,7 +65,7 @@ public class SslSettings {
         private boolean enabled;
         private boolean invalidHostNameAllowed;
         private SSLContext context;
-
+        private String[] cipherSuites;
         private Builder(){
         }
 
@@ -138,6 +140,16 @@ public class SslSettings {
 
             return this;
         }
+        /**
+         * Takes the settings from the given {@code cipherSuites} and applies them to the builder
+         *
+         * @param cipherSuites cipher suite list like RSA_AES256_SHA384
+         * @return this
+         */
+        public Builder cipherSuites(final String[] cipherSuites) {
+            this.cipherSuites = cipherSuites;
+            return this;
+        }
 
         /**
          * Create a new SSLSettings from the settings in this builder.
@@ -180,10 +192,20 @@ public class SslSettings {
         return context;
     }
 
+    /**
+     * Get Enabled Cipher Suites
+     *
+     * @return the enabled Cipher Suites, which defaults to null if not configured.
+     */
+    public String[] getCipherSuites() {
+        return cipherSuites;
+    }
+
     SslSettings(final Builder builder) {
         enabled = builder.enabled;
         invalidHostNameAllowed = builder.invalidHostNameAllowed;
         context = builder.context;
+        cipherSuites = builder.cipherSuites;
     }
 
     @Override
@@ -220,6 +242,7 @@ public class SslSettings {
                + "enabled=" + enabled
                + ", invalidHostNameAllowed=" + invalidHostNameAllowed
                + ", context=" + context
+               + ", cipherSuites=" + Arrays.toString(cipherSuites)
                + '}';
     }
 }

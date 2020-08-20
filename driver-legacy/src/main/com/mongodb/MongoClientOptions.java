@@ -35,6 +35,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import javax.net.ssl.SSLContext;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -76,6 +77,7 @@ public class MongoClientOptions {
     private final boolean sslEnabled;
     private final boolean sslInvalidHostNameAllowed;
     private final SSLContext sslContext;
+    private final String[] cipherSuites;
     private final int heartbeatFrequency;
     private final int minHeartbeatFrequency;
     private final int heartbeatConnectTimeout;
@@ -120,6 +122,7 @@ public class MongoClientOptions {
         sslEnabled = builder.sslEnabled;
         sslInvalidHostNameAllowed = builder.sslInvalidHostNameAllowed;
         sslContext = builder.sslContext;
+        cipherSuites = builder.cipherSuites;
         heartbeatFrequency = builder.heartbeatFrequency;
         minHeartbeatFrequency = builder.minHeartbeatFrequency;
         heartbeatConnectTimeout = builder.heartbeatConnectTimeout;
@@ -446,6 +449,15 @@ public class MongoClientOptions {
     @Nullable
     public SSLContext getSslContext() {
         return sslContext;
+    }
+
+    /**
+     * Get Enabled Cipher Suites
+     *
+     * @return the enabled Cipher Suites, which defaults to null if not configured.
+     */
+    public String[] getCipherSuites() {
+        return cipherSuites;
     }
 
     /**
@@ -874,6 +886,7 @@ public class MongoClientOptions {
                + ", sslEnabled=" + sslEnabled
                + ", sslInvalidHostNamesAllowed=" + sslInvalidHostNameAllowed
                + ", sslContext=" + sslContext
+               + ", cipherSuites=" + Arrays.toString(cipherSuites)
                + ", heartbeatFrequency=" + heartbeatFrequency
                + ", minHeartbeatFrequency=" + minHeartbeatFrequency
                + ", heartbeatConnectTimeout=" + heartbeatConnectTimeout
@@ -926,6 +939,7 @@ public class MongoClientOptions {
         private boolean sslEnabled = false;
         private boolean sslInvalidHostNameAllowed = false;
         private SSLContext sslContext;
+        private String[] cipherSuites;
 
         private int heartbeatFrequency = 10000;
         private int minHeartbeatFrequency = 500;
@@ -972,6 +986,7 @@ public class MongoClientOptions {
             sslEnabled = options.isSslEnabled();
             sslInvalidHostNameAllowed = options.isSslInvalidHostNameAllowed();
             sslContext = options.getSslContext();
+            cipherSuites = options.getCipherSuites();
             heartbeatFrequency = options.getHeartbeatFrequency();
             minHeartbeatFrequency = options.getMinHeartbeatFrequency();
             heartbeatConnectTimeout = options.getHeartbeatConnectTimeout();
@@ -1488,6 +1503,16 @@ public class MongoClientOptions {
          */
         public Builder autoEncryptionSettings(final AutoEncryptionSettings autoEncryptionSettings) {
             this.autoEncryptionSettings = autoEncryptionSettings;
+            return this;
+        }
+        /**
+         * Takes the settings from the given {@code cipherSuites} and applies them to the builder
+         *
+         * @param cipherSuites cipher suite list like RSA_AES256_SHA384
+         * @return this
+         */
+        public Builder cipherSuites(final String[] cipherSuites) {
+            this.cipherSuites = cipherSuites;
             return this;
         }
 

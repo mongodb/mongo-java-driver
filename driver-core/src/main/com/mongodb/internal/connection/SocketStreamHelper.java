@@ -68,6 +68,11 @@ final class SocketStreamHelper {
                 sslParameters = new SSLParameters();
             }
 
+            String[] cipherSuites = sslSettings.getCipherSuites();
+            if (cipherSuites != null && cipherSuites.length > 0) {
+                sslParameters.setCipherSuites(cipherSuites);
+            }
+
             enableSni(inetSocketAddress.getHostName(), sslParameters);
 
             if (!sslSettings.isInvalidHostNameAllowed()) {

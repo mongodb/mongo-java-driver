@@ -151,6 +151,10 @@ final class NettyStream implements Stream {
                         if (!sslSettings.isInvalidHostNameAllowed()) {
                             enableHostNameVerification(sslParameters);
                         }
+                        String[] cipherSuites = sslSettings.getCipherSuites();
+                        if (cipherSuites != null && cipherSuites.length > 0) {
+                            sslParameters.setCipherSuites(cipherSuites);
+                        }
                         engine.setSSLParameters(sslParameters);
                         ch.pipeline().addFirst("ssl", new SslHandler(engine, false));
                     }

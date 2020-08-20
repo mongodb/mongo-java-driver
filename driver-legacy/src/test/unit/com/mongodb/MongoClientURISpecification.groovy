@@ -202,6 +202,7 @@ class MongoClientURISpecification extends Specification {
                 .sslEnabled(true)
                 .sslInvalidHostNameAllowed(true)
                 .sslContext(SSLContext.getDefault())
+                .cipherSuites('TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384', 'TLS_DHE_RSA_WITH_AES_256_CBC_SHA256')
                 .heartbeatFrequency(5)
                 .minHeartbeatFrequency(11)
                 .heartbeatConnectTimeout(15)
