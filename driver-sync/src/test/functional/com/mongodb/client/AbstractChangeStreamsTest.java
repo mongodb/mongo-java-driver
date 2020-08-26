@@ -179,7 +179,8 @@ public abstract class AbstractChangeStreamsTest {
     }
 
     private void checkExpectations() {
-        if (definition.containsKey("expectations") && definition.getArray("expectations").size() > 0) {
+        if (definition.containsKey("expectations") && !definition.isNull("expectations")
+                && definition.getArray("expectations").size() > 0) {
 
             String database = definition.getString("target").getValue().equals("client") ? "admin" : namespace.getDatabaseName();
             List<CommandEvent> expectedEvents = getExpectedEvents(definition.getArray("expectations"), database, new BsonDocument());
