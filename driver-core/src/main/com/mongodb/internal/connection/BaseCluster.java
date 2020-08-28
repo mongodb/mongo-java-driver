@@ -21,7 +21,6 @@ import com.mongodb.MongoIncompatibleDriverException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ClusterSettings;
@@ -33,7 +32,7 @@ import com.mongodb.event.ClusterClosedEvent;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ClusterOpeningEvent;
-import com.mongodb.event.ServerListener;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.ServerSelector;
 import org.bson.BsonTimestamp;
@@ -374,8 +373,10 @@ abstract class BaseCluster implements Cluster {
         return result;
     }
 
-    protected ClusterableServer createServer(final ServerAddress serverAddress, final ServerListener serverListener) {
-        return serverFactory.create(serverAddress, createServerListener(serverFactory.getSettings(), serverListener), clusterClock);
+    protected ClusterableServer createServer(final ServerAddress serverAddress,
+                                             final ServerDescriptionChangedListener serverDescriptionChangedListener) {
+        return serverFactory.create(serverAddress, serverDescriptionChangedListener, createServerListener(serverFactory.getSettings()),
+                clusterClock);
     }
 
     private void throwIfIncompatible(final ClusterDescription curDescription) {
