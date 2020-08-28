@@ -57,6 +57,7 @@ class DefaultServer implements ClusterableServer {
     private final ConnectionFactory connectionFactory;
     private final ServerMonitor serverMonitor;
     private final ChangeListener<ServerDescription> serverStateListener;
+    private final ServerDescriptionChangedListener serverDescriptionChangedListener;
     private final ServerListener serverListener;
     private final CommandListener commandListener;
     private final ClusterClock clusterClock;
@@ -65,7 +66,9 @@ class DefaultServer implements ClusterableServer {
 
     DefaultServer(final ServerId serverId, final ClusterConnectionMode clusterConnectionMode, final ConnectionPool connectionPool,
                   final ConnectionFactory connectionFactory, final ServerMonitorFactory serverMonitorFactory,
-                  final ServerListener serverListener, final CommandListener commandListener, final ClusterClock clusterClock) {
+                  final ServerDescriptionChangedListener serverDescriptionChangedListener, final ServerListener serverListener,
+                  final CommandListener commandListener, final ClusterClock clusterClock) {
+        this.serverDescriptionChangedListener = notNull("internalServerListener", serverDescriptionChangedListener);
         this.serverListener = notNull("serverListener", serverListener);
         this.commandListener = commandListener;
         this.clusterClock = notNull("clusterClock", clusterClock);
@@ -201,7 +204,8 @@ class DefaultServer implements ClusterableServer {
             connectionPool.close();
             serverMonitor.close();
             isClosed = true;
-            serverListener.serverClosed(new ServerClosedEvent(serverId));
+            ServerClosedEvent event = new ServerClosedEvent(serverId);
+            serverListener.serverClosed(event);
         }
     }
 
@@ -298,7 +302,10 @@ class DefaultServer implements ClusterableServer {
             ServerDescription oldDescription = description;
             if (shouldReplace(oldDescription, event.getNewValue())) {
                 description = event.getNewValue();
-                serverListener.serverDescriptionChanged(new ServerDescriptionChangedEvent(serverId, description, oldDescription));
+                ServerDescriptionChangedEvent serverDescriptionChangedEvent =
+                        new ServerDescriptionChangedEvent(serverId, description, oldDescription);
+                serverDescriptionChangedListener.serverDescriptionChanged(serverDescriptionChangedEvent);
+                serverListener.serverDescriptionChanged(serverDescriptionChangedEvent);
             }
         }
 

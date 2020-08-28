@@ -27,14 +27,17 @@ import com.mongodb.internal.async.SingleResultCallback;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 
 public class TestServer implements ClusterableServer {
+    private final ServerDescriptionChangedListener serverDescriptionChangedListener;
     private final ServerListener serverListener;
     private ServerDescription description;
     private boolean isClosed;
     private final ServerId serverId;
     private int connectCount;
 
-    public TestServer(final ServerAddress serverAddress, final ServerListener serverListener) {
+    public TestServer(final ServerAddress serverAddress, final ServerDescriptionChangedListener serverDescriptionChangedListener,
+                      final ServerListener serverListener) {
         this.serverId = new ServerId(new ClusterId(), serverAddress);
+        this.serverDescriptionChangedListener = serverDescriptionChangedListener;
         this.serverListener = serverListener;
         this.description = ServerDescription.builder().state(CONNECTING).address(serverId.getAddress()).build();
         invalidate();
@@ -43,8 +46,12 @@ public class TestServer implements ClusterableServer {
     public void sendNotification(final ServerDescription newDescription) {
         ServerDescription currentDescription = description;
         description = newDescription;
+        ServerDescriptionChangedEvent event = new ServerDescriptionChangedEvent(serverId, newDescription, currentDescription);
+        if (serverDescriptionChangedListener != null) {
+            serverDescriptionChangedListener.serverDescriptionChanged(event);
+        }
         if (serverListener != null) {
-            serverListener.serverDescriptionChanged(new ServerDescriptionChangedEvent(serverId, newDescription, currentDescription));
+            serverListener.serverDescriptionChanged(event);
         }
     }
 

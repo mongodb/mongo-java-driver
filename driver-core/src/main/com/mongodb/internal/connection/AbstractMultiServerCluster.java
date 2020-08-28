@@ -28,7 +28,6 @@ import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
-import com.mongodb.event.ServerListener;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
@@ -135,7 +134,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
     }
 
 
-    private final class DefaultServerStateListener implements ServerListener {
+    private final class DefaultServerDescriptionChangedListener implements ServerDescriptionChangedListener {
         @Override
         public void serverDescriptionChanged(final ServerDescriptionChangedEvent event) {
             onChange(event);
@@ -350,7 +349,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info(format("Adding discovered server %s to client view of cluster", serverAddress));
             }
-            ClusterableServer server = createServer(serverAddress, new DefaultServerStateListener());
+            ClusterableServer server = createServer(serverAddress, new DefaultServerDescriptionChangedListener());
             addressToServerTupleMap.put(serverAddress, new ServerTuple(server, getConnectingServerDescription(serverAddress)));
         }
     }

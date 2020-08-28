@@ -29,7 +29,6 @@ import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
-import com.mongodb.event.ServerListener;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static java.lang.String.format;
@@ -56,7 +55,7 @@ public final class SingleServerCluster extends BaseCluster {
         // synchronized in the constructor because the change listener is re-entrant to this instance.
         // In other words, we are leaking a reference to "this" from the constructor.
         synchronized (this) {
-            this.server = createServer(settings.getHosts().get(0), new DefaultServerStateListener());
+            this.server = createServer(settings.getHosts().get(0), new DefaultServerDescriptionChangedListener());
             publishDescription(server.getDescription());
         }
     }
@@ -80,7 +79,7 @@ public final class SingleServerCluster extends BaseCluster {
         }
     }
 
-    private class DefaultServerStateListener implements ServerListener {
+    private class DefaultServerDescriptionChangedListener implements ServerDescriptionChangedListener {
         @Override
         public void serverDescriptionChanged(final ServerDescriptionChangedEvent event) {
             ServerDescription newDescription = event.getNewDescription();
