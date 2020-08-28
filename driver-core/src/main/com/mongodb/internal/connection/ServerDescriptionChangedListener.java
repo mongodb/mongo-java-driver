@@ -16,13 +16,11 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.ServerAddress;
-import com.mongodb.connection.ServerSettings;
-import com.mongodb.event.ServerListener;
+import com.mongodb.event.ServerDescriptionChangedEvent;
 
-public interface ClusterableServerFactory {
-    ClusterableServer create(ServerAddress serverAddress, ServerDescriptionChangedListener serverDescriptionChangedListener,
-                             ServerListener serverListener, ClusterClock clusterClock);
-
-    ServerSettings getSettings();
+// internal interface that Cluster implementations register with Server implementations in order be notified of changes in server state.
+// Server implementations should fire this event even if the state has not changed according to the rules of topology change event
+// notification in the SDAM specification.
+interface ServerDescriptionChangedListener {
+    void serverDescriptionChanged(ServerDescriptionChangedEvent event);
 }

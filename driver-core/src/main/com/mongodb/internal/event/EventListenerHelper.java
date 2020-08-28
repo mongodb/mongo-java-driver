@@ -25,7 +25,6 @@ import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerMonitorListener;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public final class EventListenerHelper {
@@ -74,20 +73,14 @@ public final class EventListenerHelper {
         }
     }
 
-    public static ServerListener createServerListener(final ServerSettings serverSettings, final ServerListener additionalServerListener) {
-        List<ServerListener> mergedServerListeners = new ArrayList<ServerListener>();
-        if (additionalServerListener != null) {
-            mergedServerListeners.add(additionalServerListener);
-        }
-        mergedServerListeners.addAll(serverSettings.getServerListeners());
-
-        switch (mergedServerListeners.size()) {
+    public static ServerListener createServerListener(final ServerSettings serverSettings) {
+        switch (serverSettings.getServerListeners().size()) {
             case 0:
                 return NO_OP_SERVER_LISTENER;
             case 1:
-                return mergedServerListeners.get(0);
+                return serverSettings.getServerListeners().get(0);
             default:
-                return new ServerListenerMulticaster(mergedServerListeners);
+                return new ServerListenerMulticaster(serverSettings.getServerListeners());
         }
     }
 
