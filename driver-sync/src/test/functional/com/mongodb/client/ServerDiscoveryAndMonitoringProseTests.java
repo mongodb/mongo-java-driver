@@ -92,7 +92,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
         try (MongoClient client = MongoClients.create(settings)) {
             client.getDatabase("admin").runCommand(new Document("ping", 1));
             Thread.sleep(250);
-            assertTrue(events.size() > 1);
+            assertTrue(events.size() >= 1);
             events.forEach(event ->
                            assertTrue(event.getNewDescription().getRoundTripTimeNanos() > 0));
 

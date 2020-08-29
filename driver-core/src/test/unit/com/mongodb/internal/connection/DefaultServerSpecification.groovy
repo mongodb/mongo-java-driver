@@ -33,9 +33,12 @@ import com.mongodb.async.FutureResultCallback
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
+import com.mongodb.connection.ServerConnectionState
+import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerType
 import com.mongodb.event.CommandListener
+import com.mongodb.event.ServerDescriptionChangedEvent
 import com.mongodb.event.ServerListener
 import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.bulk.InsertRequest
@@ -55,6 +58,12 @@ import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.internal.event.EventListenerHelper.NO_OP_SERVER_LISTENER
 
 class DefaultServerSpecification extends Specification {
+    private static final ServerDescriptionChangedListener NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER =
+            new ServerDescriptionChangedListener() {
+                @Override
+                void serverDescriptionChanged(final ServerDescriptionChangedEvent event) {
+                }
+            }
     private static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator()
     def serverId = new ServerId(new ClusterId(), new ServerAddress())
 
@@ -71,7 +80,7 @@ class DefaultServerSpecification extends Specification {
         serverMonitorFactory.create(_, _) >> { serverMonitor }
         connectionPool.get() >> { internalConnection }
         def server = new DefaultServer(serverId, mode, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_LISTENER, null, clusterTime)
+                NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, NO_OP_SERVER_LISTENER, null, clusterTime)
 
         when:
         def receivedConnection = server.getConnection()
@@ -100,7 +109,7 @@ class DefaultServerSpecification extends Specification {
         serverMonitorFactory.create(_, _) >> { serverMonitor }
 
         def server = new DefaultServer(serverId, mode, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_LISTENER, null, clusterTime)
+                NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, NO_OP_SERVER_LISTENER, null, clusterTime)
 
         when:
         def latch = new CountDownLatch(1)
@@ -123,8 +132,15 @@ class DefaultServerSpecification extends Specification {
         def serverListener = Mock(ServerListener)
         def clusterTime = new ClusterClock()
         def connectionFactory = Mock(ConnectionFactory)
+        def serverMonitorFactory = new TestServerMonitorFactory(serverId)
         def server = new DefaultServer(serverId, SINGLE, new TestConnectionPool(), connectionFactory,
-                new TestServerMonitorFactory(serverId), serverListener, null, clusterTime)
+                serverMonitorFactory, NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, serverListener, null, clusterTime)
+        serverMonitorFactory.sendNotification(ServerDescription.builder()
+                .address(serverId.getAddress())
+                .ok(true)
+                .state(ServerConnectionState.CONNECTED)
+                .type(ServerType.STANDALONE)
+                .build())
 
         when:
         server.invalidate()
@@ -147,7 +163,7 @@ class DefaultServerSpecification extends Specification {
         serverMonitorFactory.create(_) >> { serverMonitor }
 
         def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_LISTENER, null, clusterTime)
+                NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, NO_OP_SERVER_LISTENER, null, clusterTime)
         server.close()
 
         when:
@@ -169,7 +185,7 @@ class DefaultServerSpecification extends Specification {
         serverMonitorFactory.create(_) >> { serverMonitor }
 
         def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_LISTENER, null, clusterTime)
+                NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, NO_OP_SERVER_LISTENER, null, clusterTime)
 
         when:
         server.getConnection()
@@ -200,7 +216,7 @@ class DefaultServerSpecification extends Specification {
         serverMonitorFactory.create(_) >> { serverMonitor }
 
         def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_LISTENER, null, clusterTime)
+                NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, NO_OP_SERVER_LISTENER, null, clusterTime)
 
         when:
         server.getConnection()
@@ -227,7 +243,7 @@ class DefaultServerSpecification extends Specification {
         connectionPool.getAsync(_) >> { it[0].onResult(null, exceptionToThrow) }
         serverMonitorFactory.create(_) >> { serverMonitor }
         def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory,
-                serverMonitorFactory, NO_OP_SERVER_LISTENER, null, clusterTime)
+                serverMonitorFactory, NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, NO_OP_SERVER_LISTENER, null, clusterTime)
 
         when:
         def latch = new CountDownLatch(1)
@@ -262,7 +278,7 @@ class DefaultServerSpecification extends Specification {
         connectionPool.getAsync(_) >> { it[0].onResult(null, exceptionToThrow) }
         serverMonitorFactory.create(_) >> { serverMonitor }
         def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory,
-                serverMonitorFactory, NO_OP_SERVER_LISTENER, null, clusterTime)
+                serverMonitorFactory, NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, NO_OP_SERVER_LISTENER, null, clusterTime)
 
         when:
         def latch = new CountDownLatch(1)
@@ -301,7 +317,7 @@ class DefaultServerSpecification extends Specification {
         TestConnectionFactory connectionFactory = new TestConnectionFactory()
 
         def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_LISTENER, null, clusterTime)
+                NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, NO_OP_SERVER_LISTENER, null, clusterTime)
         def testConnection = (TestConnection) server.getConnection()
 
         when:
@@ -354,7 +370,7 @@ class DefaultServerSpecification extends Specification {
         TestConnectionFactory connectionFactory = new TestConnectionFactory()
 
         def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_LISTENER, null, clusterTime)
+                NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, NO_OP_SERVER_LISTENER, null, clusterTime)
         def testConnection = (TestConnection) server.getConnection()
 
         when:
@@ -386,7 +402,7 @@ class DefaultServerSpecification extends Specification {
         TestConnectionFactory connectionFactory = new TestConnectionFactory()
 
         def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_LISTENER, null, clusterTime)
+                NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, NO_OP_SERVER_LISTENER, null, clusterTime)
         def testConnection = (TestConnection) server.getConnection()
 
         when:
@@ -428,7 +444,7 @@ class DefaultServerSpecification extends Specification {
         TestConnectionFactory connectionFactory = new TestConnectionFactory()
 
         def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_LISTENER, null, clusterTime)
+                NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, NO_OP_SERVER_LISTENER, null, clusterTime)
         def testConnection = (TestConnection) server.getConnection()
 
         when:
@@ -469,7 +485,7 @@ class DefaultServerSpecification extends Specification {
         TestConnectionFactory connectionFactory = new TestConnectionFactory()
 
         def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_LISTENER, commandListener, clusterTime)
+                NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, NO_OP_SERVER_LISTENER, commandListener, clusterTime)
         def testConnection = (TestConnection) server.getConnection()
 
         testConnection.enqueueProtocol(protocol)
@@ -506,7 +522,7 @@ class DefaultServerSpecification extends Specification {
         TestConnectionFactory connectionFactory = new TestConnectionFactory()
 
         def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_LISTENER, null, clusterClock)
+                NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, NO_OP_SERVER_LISTENER, null, clusterClock)
         def testConnection = (TestConnection) server.getConnection()
         def sessionContext = new TestSessionContext(initialClusterTime)
         def response = BsonDocument.parse(

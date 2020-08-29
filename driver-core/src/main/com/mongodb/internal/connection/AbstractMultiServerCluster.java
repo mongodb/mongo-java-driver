@@ -26,7 +26,6 @@ import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
-import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 import org.bson.types.ObjectId;
 
@@ -100,7 +99,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
             }
             newDescription = updateDescription();
         }
-        fireChangeEvent(new ClusterDescriptionChangedEvent(getClusterId(), newDescription, currentDescription));
+        fireChangeEvent(newDescription, currentDescription);
     }
 
     @Override
@@ -165,7 +164,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
             ClusterDescription oldClusterDescription = getCurrentDescription();
             ClusterDescription newClusterDescription = updateDescription();
 
-            fireChangeEvent(new ClusterDescriptionChangedEvent(getClusterId(), newClusterDescription, oldClusterDescription));
+            fireChangeEvent(newClusterDescription, oldClusterDescription);
         }
     }
 
@@ -224,7 +223,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
             }
         }
         if (shouldUpdateDescription) {
-            fireChangeEvent(new ClusterDescriptionChangedEvent(getClusterId(), newClusterDescription, oldClusterDescription));
+            fireChangeEvent(newClusterDescription, oldClusterDescription);
         }
     }
 
