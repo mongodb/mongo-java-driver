@@ -115,7 +115,7 @@ class DnsMultiServerClusterSpecification extends Specification {
         clusterDescription = cluster.getDescription()
 
         then: 'events are generated, description is updated, and the removed server is closed'
-        2 * clusterListener.clusterDescriptionChanged(_)
+        1 * clusterListener.clusterDescriptionChanged(_)
         clusterDescription.getType() == SHARDED
         ClusterDescriptionHelper.getAll(clusterDescription) == factory.getDescriptions(secondServer, thirdServer)
         clusterDescription.getSrvResolutionException() == null

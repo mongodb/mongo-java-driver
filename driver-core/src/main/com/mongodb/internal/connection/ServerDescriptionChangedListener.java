@@ -18,9 +18,11 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.event.ServerDescriptionChangedEvent;
 
-// internal interface that Cluster implementations register with Server implementations in order be notified of changes in server state.
-// Server implementations should fire this event even if the state has not changed according to the rules of topology change event
-// notification in the SDAM specification.
+/*
+ internal interface that Cluster implementations register with Server implementations in order be notified of changes in
+ server state. Server implementations should fire this event even if the state has not changed according to the rules of
+ topology change event notification in the SDAM specification.
+*/
 interface ServerDescriptionChangedListener {
     void serverDescriptionChanged(ServerDescriptionChangedEvent event);
 }
