@@ -45,6 +45,7 @@ import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.ClusterableServer.ConnectionState.AFTER_HANDSHAKE;
 import static com.mongodb.internal.connection.ClusterableServer.ConnectionState.BEFORE_HANDSHAKE;
+import static com.mongodb.internal.connection.EventHelper.equivalentEvent;
 import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_TWO_WIRE_VERSION;
 import static java.util.Arrays.asList;
 
@@ -305,7 +306,9 @@ class DefaultServer implements ClusterableServer {
                 ServerDescriptionChangedEvent serverDescriptionChangedEvent =
                         new ServerDescriptionChangedEvent(serverId, description, oldDescription);
                 serverDescriptionChangedListener.serverDescriptionChanged(serverDescriptionChangedEvent);
-                serverListener.serverDescriptionChanged(serverDescriptionChangedEvent);
+                if (!equivalentEvent(description, oldDescription)) {
+                    serverListener.serverDescriptionChanged(serverDescriptionChangedEvent);
+                }
             }
         }
 

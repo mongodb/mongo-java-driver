@@ -27,7 +27,6 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerType;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
-import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -122,6 +121,6 @@ public final class SingleServerCluster extends BaseCluster {
                 getServerFactory().getSettings());
 
         updateDescription(description);
-        fireChangeEvent(new ClusterDescriptionChangedEvent(getClusterId(), description, currentDescription));
+        fireChangeEvent(description, currentDescription);
     }
 }
