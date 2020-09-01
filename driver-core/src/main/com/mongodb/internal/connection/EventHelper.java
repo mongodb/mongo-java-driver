@@ -108,16 +108,15 @@ final class EventHelper {
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private static boolean exceptionsEquals(final Throwable current, final Throwable previous) {
+        if (current == null || previous == null) {
+            return current == previous;
+        }
         // Compare class equality and message as exceptions rarely override equals
-        Class<?> thisExceptionClass = current != null ? current.getClass() : null;
-        Class<?> thatExceptionClass = previous != null ? previous.getClass() : null;
-        if (!Objects.equals(thisExceptionClass, thatExceptionClass)) {
+        if (!Objects.equals(current.getClass(), previous.getClass())) {
             return false;
         }
 
-        String thisExceptionMessage = current != null ? current.getMessage() : null;
-        String thatExceptionMessage = previous != null ? previous.getMessage() : null;
-        if (!Objects.equals(thisExceptionMessage, thatExceptionMessage)) {
+        if (!Objects.equals(current.getMessage(), previous.getMessage())) {
             return false;
         }
         return true;

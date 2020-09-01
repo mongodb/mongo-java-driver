@@ -205,8 +205,7 @@ class DefaultServer implements ClusterableServer {
             connectionPool.close();
             serverMonitor.close();
             isClosed = true;
-            ServerClosedEvent event = new ServerClosedEvent(serverId);
-            serverListener.serverClosed(event);
+            serverListener.serverClosed(new ServerClosedEvent(serverId));
         }
     }
 
