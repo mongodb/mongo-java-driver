@@ -381,8 +381,7 @@ public final class Filters {
     }
 
     /**
-     * Creates a filter that matches all documents where the value of the field matches the given regular expression pattern with the given
-     * options applied.
+     * Creates a filter that matches all documents where the value of the field matches the given regular expression pattern.
      *
      * @param fieldName the field name
      * @param pattern   the pattern
@@ -409,8 +408,7 @@ public final class Filters {
     }
 
     /**
-     * Creates a filter that matches all documents where the value of the field matches the given regular expression pattern with the given
-     * options applied.
+     * Creates a filter that matches all documents where the value of the field matches the given regular expression pattern.
      *
      * @param fieldName the field name
      * @param pattern   the pattern
