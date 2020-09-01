@@ -283,8 +283,7 @@ object Filters {
   def mod(fieldName: String, divisor: Long, remainder: Long): Bson = JFilters.mod(fieldName, divisor, remainder)
 
   /**
-   * Creates a filter that matches all documents where the value of the field matches the given regular expression pattern with the given
-   * options applied.
+   * Creates a filter that matches all documents where the value of the field matches the given regular expression pattern.
    *
    * @param fieldName the field name
    * @param pattern   the pattern
@@ -307,8 +306,7 @@ object Filters {
     JFilters.regex(fieldName: String, pattern: String, options: String)
 
   /**
-   * Creates a filter that matches all documents where the value of the field matches the given regular expression pattern with the given
-   * options applied.
+   * Creates a filter that matches all documents where the value of the field matches the given regular expression pattern.
    *
    * @param fieldName the field name
    * @param regex   the regex
