@@ -53,6 +53,7 @@ import static com.mongodb.client.model.Filters.gte
 import static com.mongodb.client.model.Filters.jsonSchema
 import static com.mongodb.client.model.Filters.lt
 import static com.mongodb.client.model.Filters.lte
+import static com.mongodb.client.model.Filters.empty
 import static com.mongodb.client.model.Filters.mod
 import static com.mongodb.client.model.Filters.ne
 import static com.mongodb.client.model.Filters.near
@@ -657,6 +658,11 @@ class FiltersSpecification extends Specification {
                                                                                           bsonType : "object"
                                                                                        }
                                                                                     }''')
+    }
+
+    def 'should render an empty document'() {
+        expect:
+        toBson(empty()) == parse('''{}''')
     }
 
     def 'should render with iterable value'() {

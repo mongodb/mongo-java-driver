@@ -41,6 +41,7 @@ import static com.mongodb.client.model.Filters.gte
 import static com.mongodb.client.model.Filters.jsonSchema
 import static com.mongodb.client.model.Filters.lt
 import static com.mongodb.client.model.Filters.lte
+import static com.mongodb.client.model.Filters.empty
 import static com.mongodb.client.model.Filters.mod
 import static com.mongodb.client.model.Filters.ne
 import static com.mongodb.client.model.Filters.nin
@@ -340,5 +341,10 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
     def '$jsonSchema'() {
         expect:
         find(jsonSchema(Document.parse('{ bsonType : "object", properties: { x : {type : "number", minimum : 2} } } '))) == [b, c]
+    }
+
+    def 'empty matches everything'() {
+        expect:
+        find(empty()) == [a, b, c]
     }
 }
