@@ -853,6 +853,17 @@ public final class Filters {
         return new SimpleEncodingFilter<Bson>("$jsonSchema", schema);
     }
 
+    /**
+     * Creates an empty filter that will match all documents.
+     *
+     * @return the filter
+     * @since 4.2
+     */
+    public static Bson empty() {
+        return new BsonDocument();
+    }
+
+
     private static Bson createNearFilterDocument(final String fieldName, final double x, final double y, @Nullable final Double maxDistance,
                                                  @Nullable final Double minDistance, final String operator) {
         BsonDocument nearFilter = new BsonDocument(operator, new BsonArray(Arrays.asList(new BsonDouble(x), new BsonDouble(y))));

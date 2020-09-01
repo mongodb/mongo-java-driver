@@ -767,4 +767,10 @@ class FiltersSpec extends BaseSpec {
     )
   }
 
+  it should "render an empty document" in {
+    toBson(model.Filters.empty()) should equal(
+      Document("""{}""")
+    )
+  }
+
 }
