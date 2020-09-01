@@ -19,17 +19,7 @@ package com.mongodb.client.model;
 import com.mongodb.client.model.geojson.Geometry;
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.lang.Nullable;
-import org.bson.BsonArray;
-import org.bson.BsonBoolean;
-import org.bson.BsonDocument;
-import org.bson.BsonDocumentWriter;
-import org.bson.BsonDouble;
-import org.bson.BsonInt32;
-import org.bson.BsonInt64;
-import org.bson.BsonRegularExpression;
-import org.bson.BsonString;
-import org.bson.BsonType;
-import org.bson.BsonValue;
+import org.bson.*;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -852,6 +842,17 @@ public final class Filters {
     public static Bson jsonSchema(final Bson schema) {
         return new SimpleEncodingFilter<Bson>("$jsonSchema", schema);
     }
+
+    /**
+     * Creates a filter that will match all documents.
+     *
+     * @return the filter
+     * @since 4.2
+     */
+    public static Bson matchEverything() {
+        return new Document();
+    }
+
 
     private static Bson createNearFilterDocument(final String fieldName, final double x, final double y, @Nullable final Double maxDistance,
                                                  @Nullable final Double minDistance, final String operator) {

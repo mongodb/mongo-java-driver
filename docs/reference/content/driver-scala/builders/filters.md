@@ -33,7 +33,8 @@ The comparison operator methods include:
 - `lte`: Matches values that are less than or equal to a specified value.
 - `ne`: Matches all values that are not equal to a specified value. Aliased to `notEqual` as `neq` is a reserved word. 
 - `in`: Matches any of the values specified in an array.  
-- `nin`: Matches none of the values specified in an array. 
+- `nin`: Matches none of the values specified in an array.
+- `matchEverything`: Matches all the documents. 
 
 #### Examples
 

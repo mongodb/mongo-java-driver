@@ -690,6 +690,14 @@ object Filters {
     JFilters.nearSphere(fieldName, x, y, maxDistance.asJava, minDistance.asJava)
   }
 
+  /**
+   * Creates a filter that will match all documents.
+   *
+   * @return the filter
+   * @since 4.2
+   */
+  def matchEverything(): Bson = JFilters.matchEverything()
+
   private implicit class ScalaOptionDoubleToJavaDoubleOrNull(maybeDouble: Option[Double]) {
     def asJava: java.lang.Double = maybeDouble.map(double2Double).orNull
   }
