@@ -30,7 +30,6 @@ import org.bson.BsonRegularExpression;
 import org.bson.BsonString;
 import org.bson.BsonType;
 import org.bson.BsonValue;
-import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -855,13 +854,13 @@ public final class Filters {
     }
 
     /**
-     * Creates a filter that will match all documents.
+     * Creates an empty filter that will match all documents.
      *
      * @return the filter
      * @since 4.2
      */
-    public static Bson matchEverything() {
-        return new Document();
+    public static Bson empty() {
+        return new BsonDocument();
     }
 
 

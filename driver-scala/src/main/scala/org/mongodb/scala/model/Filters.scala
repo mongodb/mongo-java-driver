@@ -696,7 +696,7 @@ object Filters {
    * @return the filter
    * @since 4.2
    */
-  def matchEverything(): Bson = JFilters.matchEverything()
+  def empty(): Bson = JFilters.empty()
 
   private implicit class ScalaOptionDoubleToJavaDoubleOrNull(maybeDouble: Option[Double]) {
     def asJava: java.lang.Double = maybeDouble.map(double2Double).orNull

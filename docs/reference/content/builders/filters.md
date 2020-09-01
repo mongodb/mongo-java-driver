@@ -33,7 +33,7 @@ The comparison operator methods include:
 - `ne`: Matches all values that are not equal to a specified value.
 - `in`: Matches any of the values specified in an array.  
 - `nin`: Matches none of the values specified in an array.
-- `matchEverything`: Matches all the documents. 
+- `empty`: Matches all the documents. 
 
 #### Examples
 
@@ -55,6 +55,18 @@ This example creates a filter that selects all documents where the value of the 
 
 ```java
 in("qty", 5, 15)
+```
+
+This example creates a filter that selects all documents because the predicate is empty:
+
+```java
+empty()
+```
+
+It will render as:
+
+```json
+{}
 ```
 
 ### Logical
