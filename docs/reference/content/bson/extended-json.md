@@ -116,5 +116,32 @@ try {
 The `Document.parse()` static factory method constructs an instance of a `JsonReader` with the given string and returns an instance of an
 equivalent Document. `JsonReader` automatically detects the JSON flavor in the string, so you do not need to specify it.
 
+### Reading and Writing JSON Directly
+If you do not need a document and only want to deal with JSON, you can use `JsonObject` to read and write JSON directly. `JsonObject` 
+is simply a wrapper class that takes in a `String` in the constructor and returns the `String` in the `getJson()` method. 
+Reading and writing JSON directly is more efficient than constructing a `Document` first and then calling `toJson()`, and it is also more efficient than calling `Document#parse`. 
+The codec responsible for reading/writing JSON (`JsonObjectCodec`) is part of the default registry, so doing this is very simple 
+and demonstrated by the following example:
 
+```java
+MongoDatabase database = mongoClient.getDatabase("mydb");
+MongoCollection<JsonObject> collection = database.getCollection("json", JsonObject.class);
+collection.insertOne(new JsonObject("{hello: 1}"));
+JsonObject jsonObject = collection.find().first();
+```
+
+### Reading and Writing JSON with CustomSettings
+You can also provide custom `JsonWriterSettings` to the `JsonObjectCodec`, by constructing the codec yourself and then creating your own registry:
+
+```java
+CodecRegistry codecRegistry = fromRegistries(fromCodecs(
+        new JsonObjectCodec(JsonWriterSettings
+                .builder()
+                .outputMode(JsonMode.EXTENDED)
+                .build())),
+        getDefaultCodecRegistry());
+MongoDatabase database = mongoClient.getDatabase("mydb").withCodecRegistry(codecRegistry);
+MongoCollection<JsonObject> collection = database.getCollection("json", JsonObject.class);
+collection.insertOne(new JsonObject("{hello: 1}"));
+```
 

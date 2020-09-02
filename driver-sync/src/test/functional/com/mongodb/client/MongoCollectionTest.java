@@ -29,6 +29,7 @@ import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.json.JsonObject;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
@@ -207,5 +208,19 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
         // then
         assertEquals(doc, collection.find().first());
+    }
+
+    @Test
+    public void testJsonObjectEncodingAndDecoding() {
+        // given
+        MongoCollection<JsonObject> test = database.getCollection("test", JsonObject.class);
+        JsonObject json = new JsonObject("{\"_id\": {\"$oid\": \"5f5a5442306e56d34136dbcf\"}, \"hello\": 1}");
+        test.drop();
+
+        // when
+        test.insertOne(json);
+
+        // then
+        assertEquals(json, test.find().first());
     }
 }

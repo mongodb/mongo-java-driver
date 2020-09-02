@@ -28,6 +28,7 @@ import com.mongodb.internal.client.model.changestream.ChangeStreamLevel
 import com.mongodb.internal.connection.Cluster
 import org.bson.BsonDocument
 import org.bson.Document
+import org.bson.json.JsonObject
 import org.bson.codecs.ValueCodecProvider
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.internal.OverridableUuidRepresentationCodecRegistry
@@ -57,6 +58,7 @@ class MongoClientSpecification extends Specification {
         codecRegistry.get(Integer)
         codecRegistry.get(MultiPolygon)
         codecRegistry.get(Iterable)
+        codecRegistry.get(JsonObject)
     }
 
     def 'should use ListDatabasesIterableImpl correctly'() {
