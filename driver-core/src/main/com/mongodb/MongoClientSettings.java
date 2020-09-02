@@ -53,8 +53,6 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 
-
-
 /**
  * Various settings to control the behavior of a {@code MongoClient}.
  *
