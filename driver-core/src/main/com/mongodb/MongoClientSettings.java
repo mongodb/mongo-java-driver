@@ -63,9 +63,10 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 @Immutable
 public final class MongoClientSettings {
     private static final CodecRegistry DEFAULT_CODEC_REGISTRY =
-            fromRegistries(fromCodecs(
+            fromRegistries(
+                fromCodecs(
                     new JsonStringCodec()),
-            fromProviders(asList(new ValueCodecProvider(),
+                fromProviders(asList(new ValueCodecProvider(),
                     new BsonValueCodecProvider(),
                     new DBRefCodecProvider(),
                     new DBObjectCodecProvider(),
