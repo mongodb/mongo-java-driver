@@ -44,7 +44,6 @@ public class JsonStringCodec implements Codec<JsonString> {
 
     @Override
     public JsonString decode(final BsonReader reader, final DecoderContext decoderContext) {
-        System.out.println("Output mode: " + writerSettings.getOutputMode());
         StringWriter stringWriter = new StringWriter();
         new JsonWriter(stringWriter, writerSettings).pipe(reader);
         return new JsonString(stringWriter.toString());
