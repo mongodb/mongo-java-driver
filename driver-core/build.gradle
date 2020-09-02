@@ -61,6 +61,7 @@ afterEvaluate {
         'javax.management.*',
         'javax.naming.*',
         'javax.net.*',
+        'jdk.net.*',
         'javax.security.sasl.*',
         'javax.security.auth.callback.*',
         'org.ietf.jgss.*',
