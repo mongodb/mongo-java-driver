@@ -691,7 +691,7 @@ object Filters {
   }
 
   /**
-   * Creates a filter that will match all documents.
+   * Creates an empty filter that will match all documents.
    *
    * @return the filter
    * @since 4.2
