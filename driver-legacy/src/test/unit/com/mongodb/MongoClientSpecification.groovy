@@ -28,7 +28,7 @@ import com.mongodb.internal.client.model.changestream.ChangeStreamLevel
 import com.mongodb.internal.connection.Cluster
 import org.bson.BsonDocument
 import org.bson.Document
-import org.bson.JsonString
+import org.bson.json.JsonString
 import org.bson.codecs.ValueCodecProvider
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.internal.OverridableUuidRepresentationCodecRegistry

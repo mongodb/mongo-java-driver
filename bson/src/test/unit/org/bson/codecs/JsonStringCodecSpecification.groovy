@@ -19,8 +19,10 @@ package org.bson.codecs
 import org.bson.BsonDocument
 import org.bson.BsonDocumentReader
 import org.bson.BsonDocumentWriter
+import org.bson.json.JsonMode
+import org.bson.json.JsonWriterSettings
 import spock.lang.Specification
-import org.bson.JsonString;
+import org.bson.json.JsonString;
 
 import static org.bson.BsonDocument.parse
 
@@ -55,6 +57,18 @@ class JsonStringCodecSpecification extends Specification {
 
         then:
         jsonString.getJson() == "{\"hello\": {\"world\": 1}}"
+    }
+
+    def 'should use JsonWriterSettings'() {
+        given:
+        def codec = new JsonStringCodec(JsonWriterSettings.builder().outputMode(JsonMode.EXTENDED).build())
+        def reader = new BsonDocumentReader(parse("{hello: 1}"))
+
+        when:
+        def jsonString = codec.decode(reader, DecoderContext.builder().build())
+
+        then:
+        jsonString.getJson() == "{\"hello\": {\"\$numberInt\": \"1\"}}"
     }
 
 }

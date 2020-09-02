@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package org.bson;
+package org.bson.json;
 
 /**
  * A wrapper class that holds a JSON string. This class makes decoding straight
- * to JSON easy
+ * to JSON easy.
  */
 public class JsonString {
     private final String json;
