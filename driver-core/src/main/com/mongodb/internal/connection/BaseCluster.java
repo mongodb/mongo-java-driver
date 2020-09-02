@@ -51,7 +51,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerDescription.MAX_DRIVER_WIRE_VERSION;
 import static com.mongodb.connection.ServerDescription.MIN_DRIVER_SERVER_VERSION;
 import static com.mongodb.connection.ServerDescription.MIN_DRIVER_WIRE_VERSION;
-import static com.mongodb.internal.connection.EventHelper.equivalentEvent;
+import static com.mongodb.internal.connection.EventHelper.wouldDescriptionsGenerateEquivalentEvents;
 import static com.mongodb.internal.event.EventListenerHelper.createServerListener;
 import static com.mongodb.internal.event.EventListenerHelper.getClusterListener;
 import static java.lang.String.format;
@@ -254,7 +254,7 @@ abstract class BaseCluster implements Cluster {
     }
 
     protected void fireChangeEvent(final ClusterDescription newDescription, final ClusterDescription previousDescription) {
-        if (!equivalentEvent(newDescription, previousDescription)) {
+        if (!wouldDescriptionsGenerateEquivalentEvents(newDescription, previousDescription)) {
              clusterListener.clusterDescriptionChanged(
                      new ClusterDescriptionChangedEvent(getClusterId(), newDescription, previousDescription));
         }

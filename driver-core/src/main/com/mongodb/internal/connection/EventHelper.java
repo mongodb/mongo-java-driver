@@ -23,7 +23,12 @@ import java.util.Objects;
 
 final class EventHelper {
 
-    static boolean equivalentEvent(final ClusterDescription current, final ClusterDescription previous) {
+    /**
+     * Determine whether the two cluster descriptions are effectively equivalent for the purpose of cluster event
+     * generation, according to the equality rules enumerated in the Server Discovery and Monitoring specification.
+     */
+    static boolean wouldDescriptionsGenerateEquivalentEvents(final ClusterDescription current,
+                                                             final ClusterDescription previous) {
         if (!exceptionsEquals(current.getSrvResolutionException(), previous.getSrvResolutionException())) {
             return false;
         }
@@ -38,14 +43,19 @@ final class EventHelper {
                     break;
                 }
             }
-            if (!equivalentEvent(curNew, matchingPrev)) {
+            if (!wouldDescriptionsGenerateEquivalentEvents(curNew, matchingPrev)) {
                 return false;
             }
         }
         return true;
     }
 
-    static boolean equivalentEvent(final ServerDescription current, final ServerDescription previous) {
+    /**
+     * Determine whether the two server descriptions are effectively equivalent for the purpose of server event
+     * generation, according to the equality rules enumerated in the Server Discovery and Monitoring specification.
+     */
+    static boolean wouldDescriptionsGenerateEquivalentEvents(final ServerDescription current,
+                                                             final ServerDescription previous) {
         if (current == previous) {
             return true;
         }
