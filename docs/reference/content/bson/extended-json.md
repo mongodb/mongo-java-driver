@@ -116,29 +116,5 @@ try {
 The `Document.parse()` static factory method constructs an instance of a `JsonReader` with the given string and returns an instance of an
 equivalent Document. `JsonReader` automatically detects the JSON flavor in the string, so you do not need to specify it.
 
-### Reading Directly to JSON
-If you do not need a document and only want to deal with JSON, you can use the `JsonStringCodec` to read JSON directly from the database. 
-This is more efficient than constructing a `Document` first and then calling `toJson()`. `JsonStringCodec` is part of the default registry, 
-so doing this is very simple and demonstrated by the following example:
 
-```java
-MongoDatabase database = mongoClient.getDatabase("mydb");
-MongoCollection<JsonString> collection = database.getCollection("json", JsonString.class);
-collection.insertOne(new JsonString("{hello: 1}"));
-JsonString jsonString = collection.find().first();
-```
-`JsonString` is simply a wrapper class that takes in a `String` in the constructor and returns the `String` in the get `getJson()` method.
-
-You can also provide custom `JsonWriterSettings` to the `JsonStringCodec`, by constructing the codec yourself and then creating your own registy:
-```java
-CodecRegistry codecRegistry = fromRegistries(fromCodecs(
-        new JsonStringCodec(JsonWriterSettings
-                .builder()
-                .outputMode(JsonMode.EXTENDED)
-                .build())),
-        getDefaultCodecRegistry());
-MongoDatabase database = mongoClient.getDatabase("mydb").withCodecRegistry(codecRegistry);
-MongoCollection<JsonString> collection = database.getCollection("json", JsonString.class);
-collection.insertOne(new JsonString("{hello: 1}"));
-```
 

@@ -88,3 +88,29 @@ In the [tools]({{< srcref "examples/scripts" >}}) examples directory, there is s
 These examples are more fully featured than the above code snippets. They also provide an example of asynchronous error handling, as well 
 as chaining observables to enforce insertion order on import.
 {{% /note %}}
+
+### Reading Directly to JSON
+If you do not need a document and only want to deal with JSON, you can use the `JsonStringCodec` to read JSON directly from the database. 
+This is more efficient than constructing a `Document` first and then calling `toJson()`. `JsonStringCodec` is part of the default registry, 
+so doing this is very simple and demonstrated by the following example:
+
+```scala
+val database: MongoDatabase = mongoClient.getDatabase("mydb")
+val collection: MongoCollection[JsonString] = database.getCollection("test")
+collection.insertOne(new JsonString("{hello: 1}")).results()
+collection.find.first().printResults()
+```
+`JsonString` is simply a wrapper class that takes in a `String` in the constructor and returns the `String` in the get `getJson()` method.
+
+You can also provide custom `JsonWriterSettings` to the `JsonStringCodec`, by constructing the codec yourself and then creating your own registy:
+```scala
+val codecRegistry =
+      fromRegistries(
+        fromCodecs(new JsonStringCodec(JsonWriterSettings.builder().outputMode(JsonMode.EXTENDED).build())),
+        DEFAULT_CODEC_REGISTRY
+      )
+    val database: MongoDatabase = mongoClient.getDatabase("mydb").withCodecRegistry(codecRegistry)
+    val collection: MongoCollection[JsonString] = database.getCollection("test")
+    collection.insertOne(new JsonString("{hello: 1}")).results()
+    val jsonString: SingleObservable[JsonString] = collection.find.first()
+```
