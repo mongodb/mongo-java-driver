@@ -26,6 +26,11 @@ import org.bson.json.JsonWriterSettings;
 
 import java.io.StringWriter;
 
+/**
+ * Encodes and Decodes JSON strings.
+ *
+ * @since 4.2
+ */
 public class JsonStringCodec implements Codec<JsonString> {
     private final JsonWriterSettings writerSettings;
 

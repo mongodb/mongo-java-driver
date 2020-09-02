@@ -19,6 +19,8 @@ package org.bson.json;
 /**
  * A wrapper class that holds a JSON string. This class makes decoding straight
  * to JSON easy.
+ *
+ * @since 4.2
  */
 public class JsonString {
     private final String json;
