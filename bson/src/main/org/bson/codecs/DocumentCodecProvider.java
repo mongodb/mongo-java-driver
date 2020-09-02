@@ -17,7 +17,6 @@
 package org.bson.codecs;
 
 import org.bson.Document;
-import org.bson.JsonString;
 import org.bson.Transformer;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -84,10 +83,6 @@ public class DocumentCodecProvider implements CodecProvider {
 
         if (clazz == Document.class) {
             return (Codec<T>) new DocumentCodec(registry, bsonTypeClassMap, valueTransformer);
-        }
-
-        if (clazz == JsonString.class) {
-            return (Codec<T>) new JsonStringCodec();
         }
 
         return null;
