@@ -102,7 +102,7 @@ public class ServerDiscoveryAndMonitoringMonitoringTest extends AbstractServerDi
                 BsonDocument newDescription = topologyDescriptionChangedEventDocument.getDocument("newDescription");
                 assertEqualClusterDescriptions(createClusterDescriptionFromClusterDescriptionDocument(newDescription),
                         event.getNewDescription());
-                if (newDescription.getString("topologyType").getValue().equals("Single")) {
+                if (newDescription.getString("topologyType").getValue().equals("Single") && isSingleServerClusterExpected()) {
                     assertEquals(SingleServerCluster.class, getCluster().getClass());
                 } else {
                     assertEquals(MultiServerCluster.class, getCluster().getClass());

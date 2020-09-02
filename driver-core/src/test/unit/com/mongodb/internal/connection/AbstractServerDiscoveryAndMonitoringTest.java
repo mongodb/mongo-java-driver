@@ -186,6 +186,14 @@ public class AbstractServerDiscoveryAndMonitoringTest {
         return definition;
     }
 
+    protected boolean isSingleServerClusterExpected() {
+        ConnectionString connectionString = new ConnectionString(definition.getString("uri").getValue());
+        Boolean directConnection = connectionString.isDirectConnection();
+        return (directConnection != null && directConnection)
+                || (directConnection == null && connectionString.getHosts().size() == 1
+                && connectionString.getRequiredReplicaSetName() == null);
+    }
+
     protected DefaultTestClusterableServerFactory getFactory() {
         return factory;
     }
