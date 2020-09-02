@@ -97,8 +97,8 @@ so doing this is very simple and demonstrated by the following example:
 ```scala
 val database: MongoDatabase = mongoClient.getDatabase("mydb")
 val collection: MongoCollection[JsonString] = database.getCollection("test")
-collection.insertOne(new JsonString("{hello: 1}")).results()
-collection.find.first().printResults()
+collection.insertOne(new JsonString("{hello: 1}")).printResults()
+val jsonString: SingleObservable[JsonString] = collection.find.first()
 ```
 `JsonString` is simply a wrapper class that takes in a `String` in the constructor and returns the `String` in the get `getJson()` method.
 
@@ -106,11 +106,14 @@ You can also provide custom `JsonWriterSettings` to the `JsonStringCodec`, by co
 ```scala
 val codecRegistry =
       fromRegistries(
-        fromCodecs(new JsonStringCodec(JsonWriterSettings.builder().outputMode(JsonMode.EXTENDED).build())),
+        fromCodecs(new JsonStringCodec(JsonWriterSettings
+           .builder()
+           .outputMode(JsonMode.EXTENDED)
+           .build())),
         DEFAULT_CODEC_REGISTRY
       )
-    val database: MongoDatabase = mongoClient.getDatabase("mydb").withCodecRegistry(codecRegistry)
-    val collection: MongoCollection[JsonString] = database.getCollection("test")
-    collection.insertOne(new JsonString("{hello: 1}")).results()
-    val jsonString: SingleObservable[JsonString] = collection.find.first()
+val database: MongoDatabase = mongoClient.getDatabase("mydb").withCodecRegistry(codecRegistry)
+val collection: MongoCollection[JsonString] = database.getCollection("test")
+collection.insertOne(new JsonString("{hello: 1}")).printResults()
+val jsonString: SingleObservable[JsonString] = collection.find.first()
 ```
