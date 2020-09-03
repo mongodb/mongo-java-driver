@@ -41,7 +41,7 @@ class JsonStringCodecSpecification extends Specification {
         def writer = new BsonDocumentWriter(new BsonDocument())
 
         when:
-        codec.encode(writer, new JsonString("{hello: {world: 1}}"), EncoderContext.builder().build())
+        codec.encode(writer, new JsonString('{hello: {world: 1}}'), EncoderContext.builder().build())
 
         then:
         writer.document == parse('{hello: {world: 1}}')
@@ -50,24 +50,24 @@ class JsonStringCodecSpecification extends Specification {
     def 'should decode JsonString correctly'() {
         given:
         def codec = new JsonStringCodec()
-        def reader = new BsonDocumentReader(parse("{hello: {world: 1}}"))
+        def reader = new BsonDocumentReader(parse('{hello: {world: 1}}'))
 
         when:
         def jsonString = codec.decode(reader, DecoderContext.builder().build())
 
         then:
-        jsonString.getJson() == "{\"hello\": {\"world\": 1}}"
+        jsonString.getJson() == '{"hello": {"world": 1}}'
     }
 
     def 'should use JsonWriterSettings'() {
         given:
         def codec = new JsonStringCodec(JsonWriterSettings.builder().outputMode(JsonMode.EXTENDED).build())
-        def reader = new BsonDocumentReader(parse("{hello: 1}"))
+        def reader = new BsonDocumentReader(parse('{hello: 1}'))
 
         when:
         def jsonString = codec.decode(reader, DecoderContext.builder().build())
 
         then:
-        jsonString.getJson() == "{\"hello\": {\"\$numberInt\": \"1\"}}"
+        jsonString.getJson() == '{"hello": {"$numberInt": "1"}}'
     }
 }
