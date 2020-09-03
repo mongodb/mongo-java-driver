@@ -17,12 +17,14 @@
 package org.bson.codecs.pojo;
 
 
+import org.bson.BsonType;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonDiscriminator;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonIgnore;
 import org.bson.codecs.pojo.annotations.BsonProperty;
+import org.bson.codecs.pojo.annotations.BsonRepresentation;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -85,6 +87,15 @@ final class ConventionAnnotationImpl implements Convention {
                 classModelBuilder.idPropertyName(propertyModelBuilder.getName());
             } else if (annotation instanceof BsonIgnore) {
                 propertyModelBuilder.readName(null);
+            } else if (annotation instanceof BsonRepresentation) {
+                BsonRepresentation bsonRepresentation = (BsonRepresentation) annotation;
+                BsonType bsonRep =  bsonRepresentation.value();
+                Class<?> propertyType = propertyModelBuilder.getTypeData().getType();
+                if (!bsonRepIsValid(bsonRep, propertyType)) {
+                    throw new CodecConfigurationException(bsonRep + " is not a valid representation for " + propertyType);
+                }
+
+                propertyModelBuilder.bsonRepresentation(bsonRep);
             }
         }
 
@@ -98,6 +109,14 @@ final class ConventionAnnotationImpl implements Convention {
                 propertyModelBuilder.writeName(null);
             }
         }
+    }
+
+    private <T> boolean  bsonRepIsValid(final BsonType bsonRep, final Class<T> clazz) {
+        if (bsonRep == BsonType.OBJECT_ID && clazz == String.class) {
+            return true;
+        }
+
+        return false;
     }
 
     @SuppressWarnings("unchecked")

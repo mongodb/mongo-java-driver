@@ -30,6 +30,8 @@ final class ConventionObjectIdGeneratorsImpl implements Convention {
                    classModelBuilder.idGenerator(IdGenerators.OBJECT_ID_GENERATOR);
                } else if (classModelBuilder.getIdGenerator() == null && idType.equals(BsonObjectId.class)) {
                    classModelBuilder.idGenerator(IdGenerators.BSON_OBJECT_ID_GENERATOR);
+               } else if (classModelBuilder.getIdGenerator() == null && idType.equals(String.class)) {
+                   classModelBuilder.idGenerator(IdGenerators.STRING_ID_GENERATOR);
                }
            }
        }

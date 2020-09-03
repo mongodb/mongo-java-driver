@@ -40,4 +40,12 @@ public class IdGeneratorsTest {
         assertEquals(BsonObjectId.class, idGenerator.generate().getClass());
     }
 
+    @Test
+    public void testStringIdGenerator() {
+        IdGenerator<String> idGenerator = IdGenerators.STRING_ID_GENERATOR;
+
+        assertEquals(String.class, idGenerator.getType());
+        assertEquals(String.class, idGenerator.generate().getClass());
+    }
+
 }

@@ -57,6 +57,8 @@ import org.bson.codecs.pojo.entities.SimpleIdModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.SimpleNestedPojoModel;
 import org.bson.codecs.pojo.entities.UpperBoundsModel;
+import org.bson.codecs.pojo.entities.BsonRepresentationUnsupportedInt;
+import org.bson.codecs.pojo.entities.BsonRepresentationUnsupportedString;
 import org.bson.codecs.pojo.entities.conventions.AnnotationModel;
 import org.bson.codecs.pojo.entities.conventions.CollectionsGetterImmutableModel;
 import org.bson.codecs.pojo.entities.conventions.CollectionsGetterMutableModel;
@@ -593,6 +595,22 @@ public final class PojoCustomTest extends PojoTestCase {
     @Test(expected = CodecConfigurationException.class)
     public void testInvalidGetterAndSetterModelDecoding() {
         decodingShouldFail(getCodec(InvalidGetterAndSetterModel.class), "{'integerField': 42, 'stringField': 'myString'}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testInvalidBsonRepresentationStringDecoding() {
+        decodingShouldFail(getCodec(BsonRepresentationUnsupportedString.class), "{'id': 'hello', s: 3}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testInvalidBsonRepresentationStringEncoding() {
+        encodesTo(getPojoCodecProviderBuilder(BsonRepresentationUnsupportedString.class),
+                new BsonRepresentationUnsupportedString("1"), "");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testInvalidBsonRepresentationIntDecoding() {
+        decodingShouldFail(getCodec(BsonRepresentationUnsupportedInt.class), "{'id': 'hello', s: '3'}");
     }
 
     private List<Convention> getDefaultAndUseGettersConvention() {
