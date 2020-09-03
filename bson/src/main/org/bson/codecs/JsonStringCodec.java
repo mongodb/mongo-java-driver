@@ -34,10 +34,18 @@ import java.io.StringWriter;
 public class JsonStringCodec implements Codec<JsonString> {
     private final JsonWriterSettings writerSettings;
 
+    /**
+     * Construct a JsonStringCodec with default JsonWriterSettings
+     */
     public JsonStringCodec() {
         this(JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build());
     }
 
+    /**
+     * Construct a JsonStringCodec with provided JsonWriterSettings
+     *
+     * @param writerSettings the settings
+     */
     public JsonStringCodec(final JsonWriterSettings writerSettings) {
         this.writerSettings = writerSettings;
     }

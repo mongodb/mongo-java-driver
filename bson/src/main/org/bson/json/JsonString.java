@@ -25,10 +25,20 @@ package org.bson.json;
 public class JsonString {
     private final String json;
 
-    public JsonString(String json) {
+    /**
+     * Constructs a new instance with the given JSON string
+     *
+     * @param json the JSON string
+     */
+    public JsonString(final String json) {
         this.json = json;
     }
 
+    /**
+     * Gets the JSON string
+     *
+     * @return the JSON string
+     */
     public String getJson() {
         return json;
     }

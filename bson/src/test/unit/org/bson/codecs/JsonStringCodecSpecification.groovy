@@ -70,5 +70,4 @@ class JsonStringCodecSpecification extends Specification {
         then:
         jsonString.getJson() == "{\"hello\": {\"\$numberInt\": \"1\"}}"
     }
-
 }
