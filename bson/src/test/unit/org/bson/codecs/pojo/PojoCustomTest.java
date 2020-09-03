@@ -57,6 +57,8 @@ import org.bson.codecs.pojo.entities.SimpleIdModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.SimpleNestedPojoModel;
 import org.bson.codecs.pojo.entities.UpperBoundsModel;
+import org.bson.codecs.pojo.entities.BsonRepresentationUnsupportedInt;
+import org.bson.codecs.pojo.entities.BsonRepresentationUnsupportedString;
 import org.bson.codecs.pojo.entities.conventions.AnnotationModel;
 import org.bson.codecs.pojo.entities.conventions.CollectionsGetterImmutableModel;
 import org.bson.codecs.pojo.entities.conventions.CollectionsGetterMutableModel;
@@ -69,6 +71,7 @@ import org.bson.codecs.pojo.entities.conventions.MapGetterImmutableModel;
 import org.bson.codecs.pojo.entities.conventions.MapGetterMutableModel;
 import org.bson.codecs.pojo.entities.conventions.MapGetterNonEmptyModel;
 import org.bson.codecs.pojo.entities.conventions.MapGetterNullModel;
+import org.bson.codecs.pojo.entities.conventions.BsonRepresentationModel;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
@@ -78,6 +81,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -89,6 +93,7 @@ import static org.bson.codecs.pojo.Conventions.DEFAULT_CONVENTIONS;
 import static org.bson.codecs.pojo.Conventions.NO_CONVENTIONS;
 import static org.bson.codecs.pojo.Conventions.SET_PRIVATE_FIELDS_CONVENTION;
 import static org.bson.codecs.pojo.Conventions.USE_GETTERS_FOR_SETTERS;
+import static org.bson.codecs.pojo.Conventions.CLASS_AND_PROPERTY_CONVENTION;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -593,6 +598,33 @@ public final class PojoCustomTest extends PojoTestCase {
     @Test(expected = CodecConfigurationException.class)
     public void testInvalidGetterAndSetterModelDecoding() {
         decodingShouldFail(getCodec(InvalidGetterAndSetterModel.class), "{'integerField': 42, 'stringField': 'myString'}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testInvalidBsonRepresentationStringDecoding() {
+        decodingShouldFail(getCodec(BsonRepresentationUnsupportedString.class), "{'id': 'hello', s: 3}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testInvalidBsonRepresentationStringEncoding() {
+        encodesTo(getPojoCodecProviderBuilder(BsonRepresentationUnsupportedString.class),
+                new BsonRepresentationUnsupportedString("1"), "");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testInvalidBsonRepresentationIntDecoding() {
+        decodingShouldFail(getCodec(BsonRepresentationUnsupportedInt.class), "{'id': 'hello', s: '3'}");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testStringIdIsNotObjectId() {
+        encodesTo(getCodec(BsonRepresentationModel.class), new BsonRepresentationModel("notanobjectid", 1), null);
+    }
+
+    @Test
+    public void testRoundTripWithoutBsonAnnotation() {
+        roundTrip(getPojoCodecProviderBuilder(BsonRepresentationModel.class).conventions(Arrays.asList(CLASS_AND_PROPERTY_CONVENTION)),
+                new BsonRepresentationModel("hello", 1), "{'_id': 'hello', 'age': 1}");
     }
 
     private List<Convention> getDefaultAndUseGettersConvention() {

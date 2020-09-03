@@ -97,6 +97,7 @@ import org.bson.codecs.pojo.entities.conventions.InterfaceModelImplB;
 import org.bson.codecs.pojo.entities.conventions.Subclass1Model;
 import org.bson.codecs.pojo.entities.conventions.Subclass2Model;
 import org.bson.codecs.pojo.entities.conventions.SuperClassModel;
+import org.bson.codecs.pojo.entities.conventions.BsonRepresentationModel;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -506,6 +507,10 @@ public final class PojoRoundTripTest extends PojoTestCase {
                 }}),
                 getPojoCodecProviderBuilder(MapListGenericExtendedModel.class),
                 "{values: {a: [1, 2, 3], b: [4, 5, 6]}}"));
+
+        data.add(new TestData("BsonRepresentation is encoded and decoded correctly", new BsonRepresentationModel(1),
+                getPojoCodecProviderBuilder(BsonRepresentationModel.class),
+                "{'_id': {'$oid': '111111111111111111111111'}, 'age': 1}"));
 
 
         return data;

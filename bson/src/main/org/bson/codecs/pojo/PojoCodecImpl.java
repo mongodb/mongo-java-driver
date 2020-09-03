@@ -25,6 +25,7 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.RepresentationConfigurable;
 import org.bson.diagnostics.Logger;
 import org.bson.diagnostics.Loggers;
 
@@ -266,12 +267,22 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
         return codec;
     }
 
+    @SuppressWarnings("unchecked")
     private <S> Codec<S> getCodecFromPropertyRegistry(final PropertyModel<S> propertyModel) {
+        Codec<S> codec = null;
         try {
-            return propertyCodecRegistry.get(propertyModel.getTypeData());
+            codec = propertyCodecRegistry.get(propertyModel.getTypeData());
         } catch (CodecConfigurationException e) {
             return new LazyMissingCodec<S>(propertyModel.getTypeData().getType(), e);
         }
+        BsonType representation = propertyModel.getBsonRepresentation();
+        if (representation != null) {
+            if (codec instanceof RepresentationConfigurable) {
+                return ((RepresentationConfigurable<S>) codec).withRepresentation(representation);
+            }
+            throw new CodecConfigurationException("Codec must implement RepresentationConfigurable to support BsonRepresentation");
+        }
+        return codec;
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -319,7 +330,7 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
 
         return new PropertyModel<V>(propertyModel.getName(), propertyModel.getReadName(), propertyModel.getWriteName(),
                 specializedPropertyType, null, propertyModel.getPropertySerialization(), propertyModel.useDiscriminator(),
-                propertyModel.getPropertyAccessor(), propertyModel.getError());
+                propertyModel.getPropertyAccessor(), propertyModel.getError(), propertyModel.getBsonRepresentation());
     }
 
     @SuppressWarnings("unchecked")

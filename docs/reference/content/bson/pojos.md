@@ -355,6 +355,8 @@ The following annotations are available from the
     configure if a property is serialized and / or deserialized.
   * [`BsonProperty`]({{< apiref "bson" "org/bson/codecs/pojo/annotations/BsonProperty.html" >}}). Allows for an alternative document key 
     name when converting the POJO field to BSON. Also, allows a field to turn on using a discriminator when storing a POJO value.
+  * [`BsonRepresentation`]({{<apiref "bson" "org/bson/codecs/pojo/annotations/BsonRepresentation.html" > }}). Allows for the type of property stored
+    in the database to be different from the type of the property in the POJO.
 
 Annotations can be applied to read and / or write contexts by configuring the getter / setter methods. Any annotations applied to a field 
 are applied to both read and write contexts.
@@ -368,7 +370,9 @@ import org.bson.codecs.pojo.annotations.*;
 public final class Person {
 
     @BsonId
+    @BsonRepresentation(BsonType.ObjectId)
     public String personId;
+
     public String firstName;
 
     @BsonProperty("surname")
@@ -389,7 +393,7 @@ public final class Person {
 The `Person` POJO Will produce BSON similar to:
 
 ```json
-{ "_id": "1234567890", "_t": "Person", "firstName": "Alan", "surname": "Turing",
+{ "_id": {"$oid": "111111111111111111111111"}, "_t": "Person", "firstName": "Alan", "surname": "Turing",
   "address": { "_t": "Address", "address": "The Mansion", "street": "Sherwood Drive", 
                "town": "Bletchley", "postcode": "MK3 6EB" } }
 ```
@@ -478,3 +482,17 @@ the `PropertyModelBuilder` which is available from the `ClassModelBuilder`.
 
 The [`BsonIgnore`]({{< apiref "bson" "org/bson/codecs/pojo/annotations/BsonIgnore.html" >}}) can be used along with the `DEFAULT_CONVENTIONS` to mark
 a property to be ignored when serializing and or deserializing.
+
+### Specifying the BSON Type
+For some types, you can specify what BSON type you want used to represent the value by using `@BsonRepresentation`. 
+For example, to specify that a `String` should be represented as an `ObjectId`:
+
+```java
+public class MyClass {
+    @BsonRepresentation(BsonType.ObjectId)
+    public String id;
+}
+```
+
+Currently, the only supported type is `ObjectId` for `String` properties. This allows you to 
+store the id as an `ObjectId`, while remaining free of any dependencies on the driver in your class.
