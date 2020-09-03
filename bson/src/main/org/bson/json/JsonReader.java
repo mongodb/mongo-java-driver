@@ -42,6 +42,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.UUID;
 
 import static java.lang.String.format;
 
@@ -608,6 +609,10 @@ public class JsonReader extends AbstractBsonReader {
                     setCurrentBsonType(BsonType.BINARY);
                     return;
                 }
+            } if ("$uuid".equals(value)) {
+                currentValue = visitUuidExtendedJson();
+                setCurrentBsonType(BsonType.BINARY);
+                return;
             } else if ("$regex".equals(value) || "$options".equals(value)) {
                 currentValue = visitRegularExpressionExtendedJson(value);
                 if (currentValue != null) {
@@ -1209,6 +1214,17 @@ public class JsonReader extends AbstractBsonReader {
             throw new JsonParseException("JSON reader expected an integer but found '%s'.", nextToken.getValue());
         }
         return value;
+    }
+
+    private BsonBinary visitUuidExtendedJson() {
+        verifyToken(JsonTokenType.COLON);
+        String uuidString = readStringFromExtendedJson();
+        verifyToken(JsonTokenType.END_OBJECT);
+        try {
+            return new BsonBinary(UUID.fromString(uuidString));
+        } catch (IllegalArgumentException e) {
+            throw new JsonParseException(e);
+        }
     }
 
     private void visitJavaScriptExtendedJson() {
