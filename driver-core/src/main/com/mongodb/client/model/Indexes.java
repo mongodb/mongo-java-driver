@@ -65,7 +65,7 @@ public final class Indexes {
     }
 
     /**
-     * Create an index key for an ascending index on the given fields.
+     * Create an index key for an descending index on the given fields.
      *
      * @param fieldNames the field names, which must contain at least one
      * @return the index specification
@@ -76,7 +76,7 @@ public final class Indexes {
     }
 
     /**
-     * Create an index key for an ascending index on the given fields.
+     * Create an index key for an descending index on the given fields.
      *
      * @param fieldNames the field names, which must contain at least one
      * @return the index specification
@@ -99,7 +99,7 @@ public final class Indexes {
     }
 
     /**
-     * Create an index key for an ascending index on the given fields.
+     * Create an index key for an 2dsphere index on the given fields.
      *
      * @param fieldNames the field names, which must contain at least one
      * @return the index specification
