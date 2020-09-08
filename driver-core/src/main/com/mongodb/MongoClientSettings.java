@@ -35,7 +35,7 @@ import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.IterableCodecProvider;
 import org.bson.codecs.MapCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
-import org.bson.codecs.JsonStringCodec;
+import org.bson.codecs.JsonStringCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.jsr310.Jsr310CodecProvider;
 
@@ -48,9 +48,7 @@ import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.bson.codecs.configuration.CodecRegistries.fromCodecs;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
-import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 
 /**
@@ -61,10 +59,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 @Immutable
 public final class MongoClientSettings {
     private static final CodecRegistry DEFAULT_CODEC_REGISTRY =
-            fromRegistries(
-                fromCodecs(
-                    new JsonStringCodec()),
-                fromProviders(asList(new ValueCodecProvider(),
+            fromProviders(asList(new ValueCodecProvider(),
                     new BsonValueCodecProvider(),
                     new DBRefCodecProvider(),
                     new DBObjectCodecProvider(),
@@ -74,7 +69,8 @@ public final class MongoClientSettings {
                     new GeoJsonCodecProvider(),
                     new GridFSFileCodecProvider(),
                     new Jsr310CodecProvider(),
-                    new BsonCodecProvider())));
+                    new BsonCodecProvider(),
+                    new JsonStringCodecProvider()));
 
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;

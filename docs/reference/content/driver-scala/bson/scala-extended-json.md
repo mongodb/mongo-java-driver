@@ -89,10 +89,12 @@ These examples are more fully featured than the above code snippets. They also p
 as chaining observables to enforce insertion order on import.
 {{% /note %}}
 
-### Reading Directly to JSON
-If you do not need a document and only want to deal with JSON, you can use the `JsonStringCodec` to read JSON directly from the database. 
-This is more efficient than constructing a `Document` first and then calling `toJson()`. `JsonStringCodec` is part of the default registry, 
-so doing this is very simple and demonstrated by the following example:
+### Reading and Writing JSON Directly
+If you do not need a document and only want to deal with JSON, you can use `JsonString` to read and write JSON directly. `JsonString` 
+is simply a wrapper class that takes in a `String` in the constructor and returns the `String` in the get `getJson()` method. 
+Reading and writing directly is more efficient than constructing a `Document` first and then calling `toJson()`, and it is also more efficient than calling `Document#parse`. 
+The codec responsible for reading/writing JSON (`JsonStringCodec`) is part of the default registry, so doing this is very simple 
+and demonstrated by the following example:
 
 ```scala
 val database: MongoDatabase = mongoClient.getDatabase("mydb")
@@ -100,9 +102,10 @@ val collection: MongoCollection[JsonString] = database.getCollection("test")
 collection.insertOne(new JsonString("{hello: 1}")).printResults()
 val jsonString: SingleObservable[JsonString] = collection.find.first()
 ```
-`JsonString` is simply a wrapper class that takes in a `String` in the constructor and returns the `String` in the get `getJson()` method.
 
-You can also provide custom `JsonWriterSettings` to the `JsonStringCodec`, by constructing the codec yourself and then creating your own registy:
+### Reading and Writing JSON with CustomSettings
+You can also provide custom `JsonWriterSettings` to the `JsonStringCodec`, by constructing the codec yourself and then creating your own registry:
+
 ```scala
 val codecRegistry =
       fromRegistries(

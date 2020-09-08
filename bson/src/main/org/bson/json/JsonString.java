@@ -17,8 +17,8 @@
 package org.bson.json;
 
 /**
- * A wrapper class that holds a JSON string. This class makes decoding straight
- * to JSON easy.
+ * A wrapper class that holds a JSON document string. This class makes decoding straight
+ * to JSON easy. Note that this class only holds valid JSON documents, not arrays.
  *
  * @since 4.2
  */
@@ -26,11 +26,22 @@ public class JsonString {
     private final String json;
 
     /**
-     * Constructs a new instance with the given JSON string
+     * Constructs a new instance with the given JSON string. Clients must ensure
+     * they only pass in valid JSON documents to this constructor. The constructor does not
+     * perform full validation on construction, but an invalid JsonString will cause
+     * errors later on when it is attempted to be inserted.
      *
      * @param json the JSON string
      */
     public JsonString(final String json) {
+        if (json == null) {
+            throw new IllegalArgumentException("Json cannot be null");
+        }
+
+        if (json.charAt(0) != '{' || json.charAt(json.length() - 1) != '}') {
+            throw new IllegalArgumentException("Json must be a valid JSON document");
+        }
+
         this.json = json;
     }
 
@@ -41,6 +52,30 @@ public class JsonString {
      */
     public String getJson() {
         return json;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        JsonString that = (JsonString) o;
+
+        if (!json.equals(that.getJson())) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return json.hashCode();
     }
 
     @Override
