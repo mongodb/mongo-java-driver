@@ -53,6 +53,7 @@ import static com.mongodb.client.model.Aggregates.project
 import static com.mongodb.client.model.Aggregates.replaceRoot
 import static com.mongodb.client.model.Aggregates.replaceWith
 import static com.mongodb.client.model.Aggregates.sample
+import static com.mongodb.client.model.Aggregates.set
 import static com.mongodb.client.model.Aggregates.skip
 import static com.mongodb.client.model.Aggregates.sort
 import static com.mongodb.client.model.Aggregates.sortByCount
@@ -205,6 +206,12 @@ class AggregatesSpecification extends Specification {
         expect:
         toBson(project(fields(include('title', 'author'), computed('lastName', '$author.last')))) ==
         parse('{ $project : { title : 1 , author : 1, lastName : "$author.last" } }')
+    }
+
+    def 'should render $set'() {
+        expect:
+        toBson(set(fields(computed('lastName', '$author.last')))) ==
+                parse('{ $set : { lastName : "$author.last" } }')
     }
 
     def 'should render $replaceRoot'() {

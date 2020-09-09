@@ -182,6 +182,18 @@ public final class Aggregates {
     }
 
     /**
+     * Creates a $set pipeline stage for the specified projection
+     *
+     * @param projection the projection
+     * @return the $set pipeline stage
+     * @see Projections
+     * @mongodb.driver.manual reference/operator/aggregation/set/ $set
+     */
+    public static Bson set(final Bson projection) {
+        return new SimplePipelineStage("$set", projection);
+    }
+
+    /**
      * Creates a $sort pipeline stage for the specified sort specification
      *
      * @param sort the sort specification

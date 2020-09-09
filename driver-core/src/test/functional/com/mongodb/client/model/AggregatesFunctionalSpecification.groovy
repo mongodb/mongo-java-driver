@@ -53,6 +53,7 @@ import static com.mongodb.client.model.Aggregates.project
 import static com.mongodb.client.model.Aggregates.replaceRoot
 import static com.mongodb.client.model.Aggregates.replaceWith
 import static com.mongodb.client.model.Aggregates.sample
+import static com.mongodb.client.model.Aggregates.set
 import static com.mongodb.client.model.Aggregates.skip
 import static com.mongodb.client.model.Aggregates.sort
 import static com.mongodb.client.model.Aggregates.sortByCount
@@ -108,6 +109,13 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         aggregate([project(fields(include('x'), computed('c', '$y')))]) == [new Document('_id', 1).append('x', 1).append('c', 'a'),
                                                                             new Document('_id', 2).append('x', 2).append('c', 'b'),
                                                                             new Document('_id', 3).append('x', 3).append('c', 'c')]
+    }
+
+    def '$set'() {
+        expect:
+        aggregate([set(fields(computed('c', '$y')))]) == [new Document(a).append('c', 'a'),
+                                                          new Document(b).append('c', 'b'),
+                                                          new Document(c).append('c', 'c')]
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 4) })
