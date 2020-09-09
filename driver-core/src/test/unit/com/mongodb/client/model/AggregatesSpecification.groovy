@@ -121,6 +121,20 @@ class AggregatesSpecification extends Specification {
         toBson(addFields(asList(new Field('b', 3), new Field('c', 5)))) == parse('{$addFields: {b: 3, c: 5}}')
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(4, 2) })
+    def 'should render $set'() {
+        expect:
+        toBson(set(new Field('newField', null))) == parse('{$set: {newField: null}}')
+        toBson(set(new Field('newField', 'hello'))) == parse('{$set: {newField: "hello"}}')
+        toBson(set(new Field('this', '$$CURRENT'))) == parse('{$set: {this: "$$CURRENT"}}')
+        toBson(set(new Field('myNewField', new Document('c', 3)
+                .append('d', 4)))) == parse('{$set: {myNewField: {c: 3, d: 4}}}')
+        toBson(set(new Field('alt3', new Document('$lt', asList('$a', 3))))) == parse(
+                '{$addFields: {alt3: {$lt: ["$a", 3]}}}')
+        toBson(set(new Field('b', 3), new Field('c', 5))) == parse('{$set: {b: 3, c: 5}}')
+        toBson(set(asList(new Field('b', 3), new Field('c', 5)))) == parse('{$set: {b: 3, c: 5}}')
+    }
+
     def 'should render $bucket'() {
         expect:
         toBson(bucket('$screenSize', [0, 24, 32, 50, 100000])) == parse('''{
@@ -206,12 +220,6 @@ class AggregatesSpecification extends Specification {
         expect:
         toBson(project(fields(include('title', 'author'), computed('lastName', '$author.last')))) ==
         parse('{ $project : { title : 1 , author : 1, lastName : "$author.last" } }')
-    }
-
-    def 'should render $set'() {
-        expect:
-        toBson(set(fields(computed('lastName', '$author.last')))) ==
-                parse('{ $set : { lastName : "$author.last" } }')
     }
 
     def 'should render $replaceRoot'() {

@@ -54,6 +54,23 @@ public final class Aggregates {
         return addFields(asList(fields));
     }
 
+
+    /**
+     * Creates a $set pipeline stage for the specified projection
+     *
+     * @param fields the fields to add
+     * @return the $set pipeline stage
+     * @see Projections
+     * @mongodb.driver.manual reference/operator/aggregation/set/ $set
+     */
+    public static Bson set(final Field<?>... fields) {
+        return set(asList(fields));
+    }
+
+    public static Bson set(final List<Field<?>> fields) {
+        return new AddFieldsStage("$set", fields);
+    }
+
     /**
      * Creates an $addFields pipeline stage
      *
@@ -64,7 +81,7 @@ public final class Aggregates {
      * @since 3.4
      */
     public static Bson addFields(final List<Field<?>> fields) {
-        return new AddFieldsStage(fields);
+        return new AddFieldsStage("$addFields", fields);
     }
 
     /**
@@ -179,18 +196,6 @@ public final class Aggregates {
      */
     public static Bson project(final Bson projection) {
         return new SimplePipelineStage("$project", projection);
-    }
-
-    /**
-     * Creates a $set pipeline stage for the specified projection
-     *
-     * @param projection the projection
-     * @return the $set pipeline stage
-     * @see Projections
-     * @mongodb.driver.manual reference/operator/aggregation/set/ $set
-     */
-    public static Bson set(final Bson projection) {
-        return new SimplePipelineStage("$set", projection);
     }
 
     /**
@@ -1162,8 +1167,10 @@ public final class Aggregates {
 
     private static class AddFieldsStage implements Bson {
         private final List<Field<?>> fields;
+        private final String operation; //one of $addFields or $set
 
-        AddFieldsStage(final List<Field<?>> fields) {
+        AddFieldsStage(String operation, final List<Field<?>> fields) {
+            this.operation = operation;
             this.fields = fields;
         }
 
@@ -1171,7 +1178,7 @@ public final class Aggregates {
         public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
             BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
             writer.writeStartDocument();
-            writer.writeName("$addFields");
+            writer.writeName(operation);
             writer.writeStartDocument();
             for (Field<?> field : fields) {
                 writer.writeName(field.getName());

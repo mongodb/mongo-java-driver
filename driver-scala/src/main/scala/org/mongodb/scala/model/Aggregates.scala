@@ -42,6 +42,17 @@ object Aggregates {
   def addFields(fields: Field[_]*): Bson = JAggregates.addFields(fields.asJava)
 
   /**
+   * Creates an \$set pipeline stage
+   *
+   * @param fields the fields to add
+   * @return the \$set pipeline stage
+   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/set/ \$set]]
+   * @since 1.2
+   * @note Requires MongoDB 3.4 or greater
+   */
+  def set(fields: Field[_]*): Bson = JAggregates.set(fields.asJava)
+
+  /**
    * Creates a \$bucket pipeline stage
    *
    * @param groupBy    the criteria to group By
