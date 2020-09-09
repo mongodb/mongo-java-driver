@@ -22,52 +22,52 @@ import org.bson.BsonDocumentWriter
 import org.bson.json.JsonMode
 import org.bson.json.JsonWriterSettings
 import spock.lang.Specification
-import org.bson.json.JsonString;
+import org.bson.json.JsonObject;
 
 import static org.bson.BsonDocument.parse
 
-class JsonStringCodecSpecification extends Specification {
-    def 'should have JsonString encoding class'() {
+class JsonObjectCodecSpecification extends Specification {
+    def 'should have JsonObject encoding class'() {
         given:
-        def codec = new JsonStringCodec()
+        def codec = new JsonObjectCodec()
 
         expect:
-        codec.getEncoderClass() == JsonString
+        codec.getEncoderClass() == JsonObject
     }
 
-    def 'should encode JsonString correctly'() {
+    def 'should encode JsonObject correctly'() {
         given:
-        def codec = new JsonStringCodec()
+        def codec = new JsonObjectCodec()
         def writer = new BsonDocumentWriter(new BsonDocument())
 
         when:
-        codec.encode(writer, new JsonString('{hello: {world: 1}}'), EncoderContext.builder().build())
+        codec.encode(writer, new JsonObject('{hello: {world: 1}}'), EncoderContext.builder().build())
 
         then:
         writer.document == parse('{hello: {world: 1}}')
     }
 
-    def 'should decode JsonString correctly'() {
+    def 'should decode JsonObject correctly'() {
         given:
-        def codec = new JsonStringCodec()
+        def codec = new JsonObjectCodec()
         def reader = new BsonDocumentReader(parse('{hello: {world: 1}}'))
 
         when:
-        def jsonString = codec.decode(reader, DecoderContext.builder().build())
+        def jsonObject = codec.decode(reader, DecoderContext.builder().build())
 
         then:
-        jsonString.getJson() == '{"hello": {"world": 1}}'
+        jsonObject.getJson() == '{"hello": {"world": 1}}'
     }
 
     def 'should use JsonWriterSettings'() {
         given:
-        def codec = new JsonStringCodec(JsonWriterSettings.builder().outputMode(JsonMode.EXTENDED).build())
+        def codec = new JsonObjectCodec(JsonWriterSettings.builder().outputMode(JsonMode.EXTENDED).build())
         def reader = new BsonDocumentReader(parse('{hello: 1}'))
 
         when:
-        def jsonString = codec.decode(reader, DecoderContext.builder().build())
+        def jsonObject = codec.decode(reader, DecoderContext.builder().build())
 
         then:
-        jsonString.getJson() == '{"hello": {"$numberInt": "1"}}'
+        jsonObject.getJson() == '{"hello": {"$numberInt": "1"}}'
     }
 }

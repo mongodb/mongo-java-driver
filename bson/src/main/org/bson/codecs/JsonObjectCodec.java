@@ -18,7 +18,7 @@ package org.bson.codecs;
 
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.json.JsonString;
+import org.bson.json.JsonObject;
 import org.bson.json.JsonReader;
 import org.bson.json.JsonWriter;
 import org.bson.json.JsonWriterSettings;
@@ -26,44 +26,44 @@ import org.bson.json.JsonWriterSettings;
 import java.io.StringWriter;
 
 /**
- * Encodes and Decodes JSON strings.
+ * Encodes and Decodes JSON object strings.
  *
  * @since 4.2
  */
-public class JsonStringCodec implements Codec<JsonString> {
+public class JsonObjectCodec implements Codec<JsonObject> {
     private final JsonWriterSettings writerSettings;
 
     /**
-     * Construct a JsonStringCodec with default JsonWriterSettings
+     * Construct a JsonObjectCodec with default JsonWriterSettings
      */
-    public JsonStringCodec() {
+    public JsonObjectCodec() {
         this(JsonWriterSettings.builder().build());
     }
 
     /**
-     * Construct a JsonStringCodec with provided JsonWriterSettings
+     * Construct a JsonObjectCodec with provided JsonWriterSettings
      *
      * @param writerSettings the settings
      */
-    public JsonStringCodec(final JsonWriterSettings writerSettings) {
+    public JsonObjectCodec(final JsonWriterSettings writerSettings) {
         this.writerSettings = writerSettings;
     }
 
     @Override
-    public void encode(final BsonWriter writer, final JsonString value, final EncoderContext encoderContext) {
+    public void encode(final BsonWriter writer, final JsonObject value, final EncoderContext encoderContext) {
         writer.pipe(new JsonReader(value.getJson()));
     }
 
     @Override
-    public JsonString decode(final BsonReader reader, final DecoderContext decoderContext) {
+    public JsonObject decode(final BsonReader reader, final DecoderContext decoderContext) {
         StringWriter stringWriter = new StringWriter();
         new JsonWriter(stringWriter, writerSettings).pipe(reader);
-        return new JsonString(stringWriter.toString());
+        return new JsonObject(stringWriter.toString());
     }
 
     @Override
-    public Class<JsonString> getEncoderClass() {
-        return JsonString.class;
+    public Class<JsonObject> getEncoderClass() {
+        return JsonObject.class;
     }
 
 }

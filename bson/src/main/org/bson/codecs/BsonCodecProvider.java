@@ -19,6 +19,7 @@ package org.bson.codecs;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
+import org.bson.json.JsonObject;
 
 /**
  * A codec for encoding simple Bson interface implementations
@@ -30,7 +31,9 @@ public class BsonCodecProvider implements CodecProvider {
     @Override
     @SuppressWarnings("unchecked")
     public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-        if (Bson.class.isAssignableFrom(clazz)) {
+        if (clazz == JsonObject.class) {
+            return (Codec<T>) new JsonObjectCodec();
+        } else if (Bson.class.isAssignableFrom(clazz)) {
             return (Codec<T>) new BsonCodec(registry);
         }
         return null;

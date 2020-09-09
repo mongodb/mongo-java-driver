@@ -16,42 +16,53 @@
 
 package org.bson.json;
 
+import org.bson.BsonDocument;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
+
 /**
- * A wrapper class that holds a JSON document string. This class makes decoding straight
- * to JSON easy. Note that this class only holds valid JSON documents, not arrays.
+ * A wrapper class that holds a JSON object string. This class makes decoding JSON efficient.
+ * Note that this class only holds valid JSON objects, not arrays.
  *
  * @since 4.2
  */
-public class JsonString {
+public class JsonObject implements Bson {
     private final String json;
 
     /**
-     * Constructs a new instance with the given JSON string. Clients must ensure
-     * they only pass in valid JSON documents to this constructor. The constructor does not
-     * perform full validation on construction, but an invalid JsonString will cause
-     * errors later on when it is attempted to be inserted.
+     * Constructs a new instance with the given JSON object string. Clients must ensure
+     * they only pass in valid JSON objects to this constructor. The constructor does not
+     * perform full validation on construction, but an invalid JsonObject can cause errors
+     * when it is used later on.
      *
-     * @param json the JSON string
+     * @param json the JSON object string
      */
-    public JsonString(final String json) {
+    public JsonObject(final String json) {
         if (json == null) {
             throw new IllegalArgumentException("Json cannot be null");
         }
 
-        if (json.charAt(0) != '{' || json.charAt(json.length() - 1) != '}') {
-            throw new IllegalArgumentException("Json must be a valid JSON document");
+        String trimmed = json.trim();
+
+        if (trimmed.charAt(0) != '{' || trimmed.charAt(trimmed.length() - 1) != '}') {
+            throw new IllegalArgumentException("Json must be a valid JSON object");
         }
 
-        this.json = json;
+        this.json = trimmed;
     }
 
     /**
-     * Gets the JSON string
+     * Gets the JSON object string
      *
-     * @return the JSON string
+     * @return the JSON object string
      */
     public String getJson() {
         return json;
+    }
+
+    @Override
+    public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry registry) {
+        return BsonDocument.parse(json);
     }
 
     @Override
@@ -64,7 +75,7 @@ public class JsonString {
             return false;
         }
 
-        JsonString that = (JsonString) o;
+        JsonObject that = (JsonObject) o;
 
         if (!json.equals(that.getJson())) {
             return false;

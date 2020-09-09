@@ -20,6 +20,7 @@ package org.bson.codecs
 import org.bson.BsonDocument
 import org.bson.BsonDocumentWrapper
 import org.bson.RawBsonDocument
+import org.bson.json.JsonObject
 import spock.lang.Specification
 
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
@@ -37,5 +38,7 @@ class BsonCodecProviderSpecification extends Specification {
         provider.get(BsonDocumentWrapper, codecRegistry).class == BsonCodec
         provider.get(RawBsonDocument, codecRegistry).class == BsonCodec
         provider.get(BsonDocumentSubclass, codecRegistry).class == BsonCodec
+
+        provider.get(JsonObject, codecRegistry).class == JsonObjectCodec
     }
 }
