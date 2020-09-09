@@ -113,7 +113,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
 
     def '$set'() {
         expect:
-        aggregate([set(fields(computed('c', '$y')))]) == [new Document(a).append('c', 'a'),
+        aggregate([set(new Field('c', '$y'))]) == [new Document(a).append('c', 'a'),
                                                           new Document(b).append('c', 'b'),
                                                           new Document(c).append('c', 'c')]
     }
