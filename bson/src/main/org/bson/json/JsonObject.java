@@ -22,7 +22,7 @@ import org.bson.conversions.Bson;
 
 /**
  * A wrapper class that holds a JSON object string. This class makes decoding JSON efficient.
- * Note that this class only holds valid JSON objects, not arrays.
+ * Note that this class only holds valid JSON objects, not arrays or other values.
  *
  * @since 4.2
  */
@@ -42,13 +42,19 @@ public class JsonObject implements Bson {
             throw new IllegalArgumentException("Json cannot be null");
         }
 
-        String trimmed = json.trim();
+        for (int i = 0; i < json.length(); i++) {
+            char c = json.charAt(i);
+            if (c == '{') {
+                break;
+            }
 
-        if (trimmed.charAt(0) != '{' || trimmed.charAt(trimmed.length() - 1) != '}') {
-            throw new IllegalArgumentException("Json must be a valid JSON object");
+            // Valid whitespace characters according to the json spec: https://www.json.org/json-en.html
+            if (c != 0x0020 && c != 0x000A && c != 0x000D && c != 0x0009) {
+                throw new IllegalArgumentException("Json must be a valid JSON object");
+            }
         }
 
-        this.json = trimmed;
+        this.json = json;
     }
 
     /**

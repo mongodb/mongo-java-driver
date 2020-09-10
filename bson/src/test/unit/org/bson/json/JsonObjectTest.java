@@ -37,10 +37,15 @@ public class JsonObjectTest {
         new JsonObject("['A', 'B', 'C']");
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testWhitespaceArray() {
+        new JsonObject(" ['A']");
+    }
+
     @Test
-    public void testLeadingAndTrailingWhitespace() {
-        JsonObject j = new JsonObject("   {hello: 2}  ");
-        assertEquals(j.getJson(), "{hello: 2}");
+    public void testLeadingWhitespace() {
+        JsonObject j = new JsonObject("\n\t {hello: 2");
+        assertEquals(j.getJson(), "\n\t {hello: 2");
     }
 
     @Test

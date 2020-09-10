@@ -33,6 +33,7 @@ import org.bson.codecs.BsonCodecProvider;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.IterableCodecProvider;
+import org.bson.codecs.JsonObjectCodecProvider;
 import org.bson.codecs.MapCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -68,6 +69,7 @@ public final class MongoClientSettings {
                     new GeoJsonCodecProvider(),
                     new GridFSFileCodecProvider(),
                     new Jsr310CodecProvider(),
+                    new JsonObjectCodecProvider(),
                     new BsonCodecProvider()));
 
     private final ReadPreference readPreference;
