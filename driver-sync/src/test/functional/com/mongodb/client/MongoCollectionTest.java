@@ -215,6 +215,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         // given
         MongoCollection<JsonObject> test = database.getCollection("test", JsonObject.class);
         JsonObject json = new JsonObject("{\"_id\": {\"$oid\": \"5f5a5442306e56d34136dbcf\"}, \"hello\": 1}");
+        test.drop();
 
         // when
         test.insertOne(json);
