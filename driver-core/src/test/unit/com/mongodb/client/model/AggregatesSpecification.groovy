@@ -130,7 +130,7 @@ class AggregatesSpecification extends Specification {
         toBson(set(new Field('myNewField', new Document('c', 3)
                 .append('d', 4)))) == parse('{$set: {myNewField: {c: 3, d: 4}}}')
         toBson(set(new Field('alt3', new Document('$lt', asList('$a', 3))))) == parse(
-                '{$addFields: {alt3: {$lt: ["$a", 3]}}}')
+                '{$set: {alt3: {$lt: ["$a", 3]}}}')
         toBson(set(new Field('b', 3), new Field('c', 5))) == parse('{$set: {b: 3, c: 5}}')
         toBson(set(asList(new Field('b', 3), new Field('c', 5)))) == parse('{$set: {b: 3, c: 5}}')
     }
