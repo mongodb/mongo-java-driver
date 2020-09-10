@@ -54,7 +54,6 @@ public final class Aggregates {
         return addFields(asList(fields));
     }
 
-
     /**
      * Creates a $set pipeline stage for the specified projection
      *
@@ -67,6 +66,14 @@ public final class Aggregates {
         return set(asList(fields));
     }
 
+    /**
+     * Creates a $set pipeline stage for the specified projection
+     *
+     * @param fields the fields to add
+     * @return the $set pipeline stage
+     * @see Projections
+     * @mongodb.driver.manual reference/operator/aggregation/set/ $set
+     */
     public static Bson set(final List<Field<?>> fields) {
         return new AddFieldsStage("$set", fields);
     }
@@ -1169,7 +1176,7 @@ public final class Aggregates {
         private final List<Field<?>> fields;
         private final String operation; //one of $addFields or $set
 
-        AddFieldsStage(String operation, final List<Field<?>> fields) {
+        AddFieldsStage(final String operation, final List<Field<?>> fields) {
             this.operation = operation;
             this.fields = fields;
         }
