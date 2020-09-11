@@ -17,8 +17,12 @@
 package org.bson.json;
 
 import org.bson.BsonDocument;
+import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
+
+import static org.bson.assertions.Assertions.notNull;
+import static org.bson.assertions.Assertions.isTrueArgument;
 
 /**
  * A wrapper class that holds a JSON object string. This class makes decoding JSON efficient.
@@ -38,21 +42,18 @@ public class JsonObject implements Bson {
      * @param json the JSON object string
      */
     public JsonObject(final String json) {
-        if (json == null) {
-            throw new IllegalArgumentException("Json cannot be null");
-        }
+        notNull("Json", json);
 
+        boolean foundBrace = false;
         for (int i = 0; i < json.length(); i++) {
             char c = json.charAt(i);
             if (c == '{') {
+                foundBrace = true;
                 break;
             }
-
-            // Valid whitespace characters according to the json spec: https://www.json.org/json-en.html
-            if (c != 0x0020 && c != 0x000A && c != 0x000D && c != 0x0009) {
-                throw new IllegalArgumentException("Json must be a valid JSON object");
-            }
+            isTrueArgument("json is a valid JSON object", Character.isWhitespace(c));
         }
+        isTrueArgument("json is a valid JSON object", foundBrace);
 
         this.json = json;
     }
@@ -68,7 +69,7 @@ public class JsonObject implements Bson {
 
     @Override
     public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry registry) {
-        return BsonDocument.parse(json);
+        return new BsonDocumentWrapper<JsonObject>(this, registry.get(JsonObject.class));
     }
 
     @Override

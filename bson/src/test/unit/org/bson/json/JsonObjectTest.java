@@ -18,8 +18,11 @@ package org.bson.json;
 
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
+import org.bson.codecs.BsonCodecProvider;
+import org.bson.codecs.JsonObjectCodecProvider;
 import org.junit.Test;
 
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
@@ -54,6 +57,11 @@ public class JsonObjectTest {
     @Test(expected = IllegalArgumentException.class)
     public void testHorizontalTabInvalidObject() {
         new JsonObject("\t123");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testOnlyWhitespace() {
+        new JsonObject("    \t\n  \r  ");
     }
 
     @Test
@@ -114,6 +122,6 @@ public class JsonObjectTest {
     public void testToBsonDocument() {
         JsonObject j1 = new JsonObject("{hello: 1}");
         BsonDocument b1 = new BsonDocument("hello", new BsonInt32(1));
-        assertEquals(j1.toBsonDocument(null, null), b1);
+        assertEquals(j1.toBsonDocument(null, fromProviders(new JsonObjectCodecProvider(), new BsonCodecProvider())), b1);
     }
 }

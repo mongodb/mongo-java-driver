@@ -118,7 +118,7 @@ equivalent Document. `JsonReader` automatically detects the JSON flavor in the s
 
 ### Reading and Writing JSON Directly
 If you do not need a document and only want to deal with JSON, you can use `JsonObject` to read and write JSON directly. `JsonObject` 
-is simply a wrapper class that takes in a `String` in the constructor and returns the `String` in the get `getJson()` method. 
+is simply a wrapper class that takes in a `String` in the constructor and returns the `String` in the `getJson()` method. 
 Reading and writing JSON directly is more efficient than constructing a `Document` first and then calling `toJson()`, and it is also more efficient than calling `Document#parse`. 
 The codec responsible for reading/writing JSON (`JsonObjectCodec`) is part of the default registry, so doing this is very simple 
 and demonstrated by the following example:
