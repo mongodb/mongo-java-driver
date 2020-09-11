@@ -25,8 +25,7 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.FlexibleCodec;
-import org.bson.codecs.FlexibleCodecProvider;
+import org.bson.codecs.RepresentationConfigurable;
 import org.bson.diagnostics.Logger;
 import org.bson.diagnostics.Loggers;
 
@@ -48,7 +47,6 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
     private final ClassModel<T> classModel;
     private final CodecRegistry registry;
     private final PropertyCodecRegistry propertyCodecRegistry;
-    private final FlexibleCodecProvider flexibleCodecProvider;
     private final DiscriminatorLookup discriminatorLookup;
     private final ConcurrentMap<ClassModel<?>, Codec<?>> codecCache;
     private final boolean specialized;
@@ -60,7 +58,6 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
         this.discriminatorLookup = discriminatorLookup;
         this.codecCache = new ConcurrentHashMap<ClassModel<?>, Codec<?>>();
         this.propertyCodecRegistry = new PropertyCodecRegistryImpl(this, registry, propertyCodecProviders);
-        this.flexibleCodecProvider = new FlexibleCodecProvider();
         this.specialized = shouldSpecialize(classModel);
         specialize();
     }
@@ -73,7 +70,6 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
         this.discriminatorLookup = discriminatorLookup;
         this.codecCache = codecCache;
         this.propertyCodecRegistry = propertyCodecRegistry;
-        this.flexibleCodecProvider = new FlexibleCodecProvider();
         this.specialized = specialized;
         specialize();
     }
@@ -271,18 +267,14 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
         return codec;
     }
 
+    @SuppressWarnings("unchecked")
     private <S> Codec<S> getCodecFromPropertyRegistry(final PropertyModel<S> propertyModel) {
         try {
-            BsonType bsonRep = propertyModel.getBsonRepresentation();
-            if (bsonRep == null) {
-                return propertyCodecRegistry.get(propertyModel.getTypeData());
+            Codec<S> codec = propertyCodecRegistry.get(propertyModel.getTypeData());
+            BsonType representation = propertyModel.getBsonRepresentation();
+            if (codec instanceof RepresentationConfigurable && representation != null) {
+                return ((RepresentationConfigurable<S>) codec).withRepresentation(representation);
             }
-            FlexibleCodec<S> codec = flexibleCodecProvider.get(propertyModel.getTypeData().getType(), fromCodecs());
-            if (codec == null) {
-                throw new CodecConfigurationException("BsonRepresentation " + bsonRep + " on type "
-                        + propertyModel.getTypeData().getType() + " not supported");
-            }
-            codec.setBsonRep(bsonRep);
             return codec;
         } catch (CodecConfigurationException e) {
             return new LazyMissingCodec<S>(propertyModel.getTypeData().getType(), e);

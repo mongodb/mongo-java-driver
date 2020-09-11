@@ -25,13 +25,22 @@ import org.bson.BsonType;
  * @param <T> the value type
  * @since 4.2
  */
-public interface FlexibleCodec<T> extends Codec<T> {
+public interface RepresentationConfigurable<T> {
 
     /**
-     * Sets the BsonRepresentation that should be used by the codec to decide
-     * what types of values to decode and how it should translate them.
+     * Gets the BsonRepresentation.
      *
-     * @param bsonRep the BsonRepresentation.
+     * @return the BsonRepresentation
      */
-    void setBsonRep(BsonType bsonRep);
+    BsonType getRepresentation();
+
+    /**
+     * Returns an immutable codec with the given representation. If the provided representation
+     * is not supported an exception will be thrown.
+     *
+     * @param representation the BsonRepresentation.
+     * @return a new Codec with the correct representation.
+     * @throws IllegalArgumentException
+     */
+    Codec<T> withRepresentation(BsonType representation);
 }

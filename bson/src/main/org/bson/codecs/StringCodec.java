@@ -16,27 +16,74 @@
 
 package org.bson.codecs;
 
+import org.bson.BsonInvalidOperationException;
 import org.bson.BsonReader;
 import org.bson.BsonType;
 import org.bson.BsonWriter;
+import org.bson.codecs.configuration.CodecConfigurationException;
+import org.bson.types.ObjectId;
+
+import static org.bson.assertions.Assertions.isTrueArgument;
 
 /**
  * Encodes and decodes {@code String} objects.
  *
  * @since 3.0
  */
-public class StringCodec implements Codec<String> {
+public class StringCodec implements Codec<String>, RepresentationConfigurable<String> {
+    private BsonType representation;
+
+    /**
+     * Constructs a StringCodec with a String representation.
+     */
+    public StringCodec() {
+        representation = BsonType.STRING;
+    }
+
+    private StringCodec(final BsonType representation) {
+        this.representation = representation;
+    }
+
+    @Override
+    public BsonType getRepresentation() {
+        return representation;
+    }
+
+    @Override
+    public Codec<String> withRepresentation(final BsonType representation) {
+        isTrueArgument("representation = ObjectId or String",
+                representation == BsonType.OBJECT_ID || representation == BsonType.STRING);
+        return new StringCodec(representation);
+    }
+
+
     @Override
     public void encode(final BsonWriter writer, final String value, final EncoderContext encoderContext) {
-        writer.writeString(value);
+        switch (representation) {
+            case STRING:
+                writer.writeString(value);
+                break;
+            case OBJECT_ID:
+                writer.writeObjectId(new ObjectId(value));
+                break;
+            default:
+                throw new BsonInvalidOperationException("Cannot encode a String to a " + representation);
+        }
     }
 
     @Override
     public String decode(final BsonReader reader, final DecoderContext decoderContext) {
-        if (reader.getCurrentBsonType() == BsonType.SYMBOL) {
-            return reader.readSymbol();
-        } else {
-            return reader.readString();
+        switch (representation) {
+            case STRING:
+                if (reader.getCurrentBsonType() == BsonType.SYMBOL) {
+                    return reader.readSymbol();
+                } else {
+                    return reader.readString();
+                }
+            case OBJECT_ID:
+                return reader.readObjectId().toHexString();
+            default:
+                throw new CodecConfigurationException("Cannot decode " + representation + " to a String");
         }
     }
 
