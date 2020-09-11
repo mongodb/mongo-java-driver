@@ -24,7 +24,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 
-
 public class JsonObjectTest {
 
     @Test(expected = IllegalArgumentException.class)
@@ -38,14 +37,53 @@ public class JsonObjectTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testWhitespaceArray() {
+    public void testSpaceInvalidObject() {
         new JsonObject(" ['A']");
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testLineFeedInvalidObject() {
+        new JsonObject("\nvalue");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCarriageReturnInvalidObject() {
+        new JsonObject("\r123");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testHorizontalTabInvalidObject() {
+        new JsonObject("\t123");
+    }
+
     @Test
-    public void testLeadingWhitespace() {
-        JsonObject j = new JsonObject("\n\t {hello: 2");
-        assertEquals(j.getJson(), "\n\t {hello: 2");
+    public void testSpaceValidObject() {
+        String json = "   {hello: 2}";
+        assertEquals(new JsonObject(json).getJson(), json);
+    }
+
+    @Test
+    public void testLineFeedValidObject() {
+        String json = "\n{hello: 2}";
+        assertEquals(new JsonObject(json).getJson(), json);
+    }
+
+    @Test
+    public void testCarriageReturnValidObject() {
+        String json = "\r{hello: 2}";
+        assertEquals(new JsonObject(json).getJson(), json);
+    }
+
+    @Test
+    public void testHorizontalTabValidObject() {
+        String json = "\t{hello: 2}";
+        assertEquals(new JsonObject(json).getJson(), json);
+    }
+
+    @Test
+    public void testLeadingAndTrailingWhitespace() {
+        String json = "\n\t\r {hello: 2} \n";
+        assertEquals(new JsonObject(json).getJson(), json);
     }
 
     @Test
