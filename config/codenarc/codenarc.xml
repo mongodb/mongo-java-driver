@@ -55,6 +55,13 @@
         <exclude name='MethodParameterTypeRequired'/>
         <exclude name='FieldTypeRequired '/>
         <exclude name="VariableTypeRequired"/>
+        <exclude name="CompileStatic"/>
+        <exclude name="ImplicitClosureParameter"/>
+        <exclude name="NoJavaUtilDate"/>
+        <exclude name="ImplicitReturnStatement"/>
+        <exclude name="StaticFieldsBeforeInstanceFields"/>
+        <exclude name="StaticMethodsBeforeInstanceMethods"/>
+        <exclude name="PublicMethodsBeforeNonPublicMethods"/>
     </ruleset-ref>
     <ruleset-ref path='rulesets/design.xml'>
         <rule-config name='BuilderMethodWithSideEffects'>
@@ -91,6 +98,9 @@
         <exclude name='ConsecutiveBlankLines'/>
         <exclude name='FileEndsWithoutNewline'/>
         <exclude name='Indentation'/>
+        <exclude name="ClassEndsWithBlankLine"/>
+        <exclude name="ClassStartsWithBlankLine"/>
+        <exclude name="SpaceAroundOperator"/>
     </ruleset-ref>
     <ruleset-ref path='rulesets/generic.xml'/>
     <ruleset-ref path='rulesets/groovyism.xml'>

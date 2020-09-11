@@ -314,7 +314,7 @@ configure(javaCodeCheckedProjects) {
     }
 
     codenarc {
-        toolVersion = '1.1'
+        toolVersion = '1.6.1'
         reportFormat = project.buildingWith('xmlReports.enabled') ? 'xml' : 'html'
     }
 
