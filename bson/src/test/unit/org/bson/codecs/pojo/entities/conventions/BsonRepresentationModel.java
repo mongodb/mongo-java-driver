@@ -22,55 +22,30 @@ import org.bson.types.ObjectId;
 
 import java.util.Objects;
 
-public class AnnotationBsonRepresentation {
-    private String id;
-    private String friendId;
-
+public class BsonRepresentationModel {
     @BsonRepresentation(BsonType.OBJECT_ID)
-    private String parentId;
+    private String id;
 
     private int age;
 
-    public AnnotationBsonRepresentation() {}
+    public BsonRepresentationModel() {}
 
-    public AnnotationBsonRepresentation(final int age) {
+    public BsonRepresentationModel(final int age) {
         id = new ObjectId("111111111111111111111111").toHexString();
-        friendId = "";
-        parentId = "";
         this.age = age;
     }
 
-    public AnnotationBsonRepresentation(final String id, final String friendId, final String parentId, final int age) {
+    public BsonRepresentationModel(final String id, final int age) {
         this.id = id;
-        this.friendId = friendId;
-        this.parentId = parentId;
         this.age = age;
     }
 
-    @BsonRepresentation(BsonType.OBJECT_ID)
     public String getId() {
         return id;
     }
 
     public void setId(final String id) {
         this.id = id;
-    }
-
-    public String getFriendId() {
-        return friendId;
-    }
-
-    @BsonRepresentation(BsonType.OBJECT_ID)
-    public void setFriendId(final String friendId) {
-        this.friendId = friendId;
-    }
-
-    public String getParentId() {
-        return parentId;
-    }
-
-    public void setParentId(final String parentId) {
-        this.parentId = parentId;
     }
 
     public int getAge() {
@@ -89,7 +64,7 @@ public class AnnotationBsonRepresentation {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        AnnotationBsonRepresentation that = (AnnotationBsonRepresentation) o;
+        BsonRepresentationModel that = (BsonRepresentationModel) o;
         return age == that.age && Objects.equals(id, that.id);
     }
 

@@ -109,6 +109,8 @@ public final class ConventionsTest {
     public void testBsonRepresentation() {
         ClassModel<AnnotationBsonRepresentation> classModel = ClassModel.builder(AnnotationBsonRepresentation.class).build();
         assertEquals(classModel.getPropertyModel("id").getBsonRepresentation(), BsonType.OBJECT_ID);
+        assertEquals(classModel.getPropertyModel("parentId").getBsonRepresentation(), BsonType.OBJECT_ID);
+        assertNull(classModel.getPropertyModel("friendId").getBsonRepresentation());
         assertNull(classModel.getPropertyModel("age").getBsonRepresentation());
     }
 

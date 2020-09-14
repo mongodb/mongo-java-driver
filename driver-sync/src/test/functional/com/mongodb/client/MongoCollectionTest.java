@@ -31,7 +31,7 @@ import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
-import org.bson.codecs.pojo.entities.conventions.AnnotationBsonRepresentation;
+import org.bson.codecs.pojo.entities.conventions.BsonRepresentationModel;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
@@ -219,13 +219,13 @@ public class MongoCollectionTest extends DatabaseTestCase {
         CodecRegistry pojoCodecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
                 fromProviders(PojoCodecProvider.builder().automatic(true).build()));
 
-        MongoCollection<AnnotationBsonRepresentation> test =
-                database.getCollection("test", AnnotationBsonRepresentation.class)
+        MongoCollection<BsonRepresentationModel> test =
+                database.getCollection("test", BsonRepresentationModel.class)
                 .withCodecRegistry(pojoCodecRegistry);
         test.drop();
 
         // when
-        test.insertOne(new AnnotationBsonRepresentation(null, 1));
+        test.insertOne(new BsonRepresentationModel(null, 1));
 
         // then
         assertNotNull(test.find().first().getId());
