@@ -393,7 +393,7 @@ public final class Person {
 The `Person` POJO Will produce BSON similar to:
 
 ```json
-{ "_id": "ObjectId(111111111111111111111111)", "_t": "Person", "firstName": "Alan", "surname": "Turing",
+{ "_id": {"$oid": "111111111111111111111111"}, "_t": "Person", "firstName": "Alan", "surname": "Turing",
   "address": { "_t": "Address", "address": "The Mansion", "street": "Sherwood Drive", 
                "town": "Bletchley", "postcode": "MK3 6EB" } }
 ```

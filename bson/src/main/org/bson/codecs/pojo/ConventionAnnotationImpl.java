@@ -90,11 +90,6 @@ final class ConventionAnnotationImpl implements Convention {
             } else if (annotation instanceof BsonRepresentation) {
                 BsonRepresentation bsonRepresentation = (BsonRepresentation) annotation;
                 BsonType bsonRep =  bsonRepresentation.value();
-                Class<?> propertyType = propertyModelBuilder.getTypeData().getType();
-                if (!bsonRepIsValid(bsonRep, propertyType)) {
-                    throw new CodecConfigurationException(bsonRep + " is not a valid representation for " + propertyType);
-                }
-
                 propertyModelBuilder.bsonRepresentation(bsonRep);
             }
         }
@@ -109,14 +104,6 @@ final class ConventionAnnotationImpl implements Convention {
                 propertyModelBuilder.writeName(null);
             }
         }
-    }
-
-    private <T> boolean  bsonRepIsValid(final BsonType bsonRep, final Class<T> clazz) {
-        if (bsonRep == BsonType.OBJECT_ID && clazz == String.class) {
-            return true;
-        }
-
-        return false;
     }
 
     @SuppressWarnings("unchecked")
