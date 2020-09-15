@@ -27,7 +27,7 @@ buildscript {
     dependencies {
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:3.0.3'
         classpath "gradle.plugin.com.github.spotbugs.snom:spotbugs-gradle-plugin:4.5.0"
-        classpath 'biz.aQute.bnd:biz.aQute.bnd.gradle:4.3.1'
+        classpath 'biz.aQute.bnd:biz.aQute.bnd.gradle:5.1.2'
         
         // Scala plugins
         classpath "com.adtran:scala-multiversion-plugin:1.0.35"
