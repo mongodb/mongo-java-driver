@@ -55,6 +55,7 @@ public class ClassModelBuilder<T> {
     private String discriminator;
     private String discriminatorKey;
     private String idPropertyName;
+    private boolean isRecord;
 
     ClassModelBuilder(final Class<T> type) {
         configureClassModelBuilder(this, notNull("type", type));
@@ -234,6 +235,23 @@ public class ClassModelBuilder<T> {
      */
     public boolean removeProperty(final String propertyName) {
         return propertyModelBuilders.remove(getProperty(notNull("propertyName", propertyName)));
+    }
+
+    /**
+     * @return returns true if the ClassModelBuilder represents a record
+     */
+    public boolean getIsRecord() {
+        return isRecord;
+    }
+
+    /**
+     * Sets whether or not the ClassModelBuilder represents a record
+     * @param isRecord whether or not the ClassModelBuilder represents a record
+     * @return this
+     */
+    public ClassModelBuilder<T> isRecord(boolean isRecord) {
+        this.isRecord = isRecord;
+        return this;
     }
 
     /**

@@ -19,8 +19,10 @@ package org.bson.codecs.pojo;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.RecordComponent;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
@@ -42,10 +44,19 @@ import static org.bson.codecs.pojo.PropertyReflectionUtils.isGetter;
 import static org.bson.codecs.pojo.PropertyReflectionUtils.toPropertyName;
 
 final class PojoBuilderHelper {
-
-    @SuppressWarnings("unchecked")
     static <T> void configureClassModelBuilder(final ClassModelBuilder<T> classModelBuilder, final Class<T> clazz) {
         classModelBuilder.type(notNull("clazz", clazz));
+
+        if (isRecord(clazz)) {
+            configureRecordClassModelBuilder(classModelBuilder, clazz);
+        } else {
+            configurePojoClassModelBuilder(classModelBuilder, clazz);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> void configurePojoClassModelBuilder(final ClassModelBuilder<T> classModelBuilder, final Class<T> clazz) {
+        classModelBuilder.isRecord(false);
 
         ArrayList<Annotation> annotations = new ArrayList<Annotation>();
         Set<String> propertyNames = new TreeSet<String>();
@@ -57,10 +68,7 @@ final class PojoBuilderHelper {
         Map<String, PropertyMetadata<?>> propertyNameMap = new HashMap<String, PropertyMetadata<?>>();
         while (!currentClass.isEnum() && currentClass.getSuperclass() != null) {
             annotations.addAll(asList(currentClass.getDeclaredAnnotations()));
-            List<String> genericTypeNames = new ArrayList<String>();
-            for (TypeVariable<? extends Class<? super T>> classTypeVariable : currentClass.getTypeParameters()) {
-                genericTypeNames.add(classTypeVariable.getName());
-            }
+            List<String> genericTypeNames = getGenericTypeNames(currentClass);
 
             PropertyReflectionUtils.PropertyMethods propertyMethods = getPropertyMethods(currentClass);
 
@@ -144,8 +152,61 @@ final class PojoBuilderHelper {
                 noArgsConstructor.setAccessible(true);
             }
         }
+        classModelBuilder.instanceCreatorFactory(new InstanceCreatorFactoryImpl<T>(
+                new ConstructorCreatorExecutable<>(clazz, noArgsConstructor)));
+    }
 
-        classModelBuilder.instanceCreatorFactory(new InstanceCreatorFactoryImpl<T>(new CreatorExecutable<T>(clazz, noArgsConstructor)));
+    private static <T> void configureRecordClassModelBuilder(final ClassModelBuilder<T> classModelBuilder, final Class<T> clazz) {
+        classModelBuilder.isRecord(true);
+
+        Map<String, TypeParameterMap> propertyTypeParameterMap = new HashMap<>();
+        String declaringClassName = clazz.getSimpleName();
+        Map<String, PropertyMetadata<?>> propertyNameMap = new HashMap<>();
+
+        List<String> genericTypeNames = getGenericTypeNames(clazz);
+
+        List<Annotation> annotations = new ArrayList<>();
+        annotations.addAll(asList(clazz.getDeclaredAnnotations()));
+
+        RecordComponent[] recordComponents = clazz.getRecordComponents();
+        Class<?>[] types = new Class<?>[recordComponents.length];
+        for (int i = 0; i < recordComponents.length; i++) {
+            RecordComponent recordComponent = recordComponents[i];
+            String name = recordComponent.getName();
+            types[i] = recordComponent.getType();
+
+            Method getter;
+            try {
+                getter = clazz.getDeclaredMethod(name);
+            } catch (NoSuchMethodException e) {
+                throw new IllegalStateException("Record must have getter method with same name as field", e);
+            }
+            PropertyMetadata<?> metadata = getOrCreateMethodPropertyMetadata(name, declaringClassName, propertyNameMap,
+                    TypeData.newInstance(getter, true), propertyTypeParameterMap, null, genericTypeNames,
+                    getGenericType(getter, true));
+
+            metadata.setGetter(getter);
+
+            for (Annotation a : recordComponent.getAnnotations()) {
+                metadata.addWriteAnnotation(a);
+                metadata.addReadAnnotation(a);
+            }
+
+            propertyNameMap.put(name, metadata);
+            classModelBuilder.addProperty(createPropertyModelBuilder(metadata));
+        }
+        reverse(annotations);
+        classModelBuilder.annotations(annotations);
+
+        classModelBuilder.propertyNameToTypeParameterMap(propertyTypeParameterMap);
+
+        Constructor<T> constructor;
+        try {
+            constructor = clazz.getConstructor(types);
+        } catch (NoSuchMethodException e) {
+            throw new IllegalStateException("Record must have a constructor that matches the record components", e);
+        }
+        classModelBuilder.instanceCreatorFactory(new InstanceCreatorFactoryImpl<T>(new RecordCreatorExecutable<T>(clazz, constructor)));
     }
 
     private static <T, S> PropertyMetadata<T> getOrCreateMethodPropertyMetadata(final String propertyName,
@@ -209,7 +270,11 @@ final class PojoBuilderHelper {
     }
 
     private static Type getGenericType(final Method method) {
-        return isGetter(method) ? method.getGenericReturnType() : method.getGenericParameterTypes()[0];
+        return getGenericType(method, isGetter(method));
+    }
+
+    private static Type getGenericType(final Method method, final boolean isGetterMethod) {
+        return isGetterMethod ? method.getGenericReturnType() : method.getGenericParameterTypes()[0];
     }
 
     @SuppressWarnings("unchecked")
@@ -254,11 +319,28 @@ final class PojoBuilderHelper {
         return builder.build();
     }
 
+    private static <T> List<String> getGenericTypeNames(final Class<T> clazz) {
+        List<String> genericTypeNames = new ArrayList<String>();
+        for (TypeVariable<? extends Class<? super T>> classTypeVariable : clazz.getTypeParameters()) {
+            genericTypeNames.add(classTypeVariable.getName());
+        }
+        return genericTypeNames;
+    }
+
     static <V> V stateNotNull(final String property, final V value) {
         if (value == null) {
             throw new IllegalStateException(format("%s cannot be null", property));
         }
         return value;
+    }
+
+    static boolean isRecord(final Class<?> clazz) {
+        try {
+            // Getting the class of the class is intentional. isRecord is a method on the class, not the object
+            return (Boolean) clazz.getClass().getMethod("isRecord").invoke(clazz);
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ignored) {
+            return false;
+        }
     }
 
     private PojoBuilderHelper() {

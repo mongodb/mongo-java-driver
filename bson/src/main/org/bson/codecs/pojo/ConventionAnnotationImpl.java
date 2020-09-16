@@ -117,7 +117,10 @@ final class ConventionAnnotationImpl implements Convention {
                         if (creatorExecutable != null) {
                             throw new CodecConfigurationException("Found multiple constructors annotated with @BsonCreator");
                         }
-                        creatorExecutable = new CreatorExecutable<T>(clazz, (Constructor<T>) constructor);
+                        if (classModelBuilder.getIsRecord()) {
+                            throw new CodecConfigurationException("@BsonCreator is not supported for records");
+                        }
+                        creatorExecutable = new ConstructorCreatorExecutable<>(clazz, (Constructor<T>) constructor);
                     }
                 }
             }
@@ -137,7 +140,7 @@ final class ConventionAnnotationImpl implements Convention {
                                         format("Invalid method annotated with @BsonCreator. Returns '%s', expected %s",
                                                 method.getReturnType(), bsonCreatorClass));
                             }
-                            creatorExecutable = new CreatorExecutable<T>(clazz, method);
+                            creatorExecutable = new MethodCreatorExecutable<T>(clazz, method);
                             foundStaticBsonCreatorMethod = true;
                         }
                     }
@@ -148,7 +151,7 @@ final class ConventionAnnotationImpl implements Convention {
         }
 
         if (creatorExecutable != null) {
-            List<BsonProperty> properties = creatorExecutable.getProperties();
+            List<String> properties = creatorExecutable.getProperties();
             List<Class<?>> parameterTypes = creatorExecutable.getParameterTypes();
             List<Type> parameterGenericTypes = creatorExecutable.getParameterGenericTypes();
 
@@ -165,14 +168,14 @@ final class ConventionAnnotationImpl implements Convention {
                 if (isIdProperty) {
                     propertyModelBuilder = classModelBuilder.getProperty(classModelBuilder.getIdPropertyName());
                 } else {
-                    BsonProperty bsonProperty = properties.get(i);
+                    String bsonProperty = properties.get(i);
 
                     // Find the property using write name and falls back to read name
                     for (PropertyModelBuilder<?> builder : classModelBuilder.getPropertyModelBuilders()) {
-                        if (bsonProperty.value().equals(builder.getWriteName())) {
+                        if (bsonProperty.equals(builder.getWriteName())) {
                             propertyModelBuilder = builder;
                             break;
-                        } else if (bsonProperty.value().equals(builder.getReadName())) {
+                        } else if (bsonProperty.equals(builder.getReadName())) {
                             // When there is a property that matches the read name of the parameter, save it but continue to look
                             // This is just in case there is another property that matches the write name.
                             propertyModelBuilder = builder;
@@ -181,16 +184,16 @@ final class ConventionAnnotationImpl implements Convention {
 
                     // Support legacy options, when BsonProperty matches the actual POJO property name (e.g. method name or field name).
                     if (propertyModelBuilder == null) {
-                        propertyModelBuilder = classModelBuilder.getProperty(bsonProperty.value());
+                        propertyModelBuilder = classModelBuilder.getProperty(bsonProperty);
                     }
 
                     if (propertyModelBuilder == null) {
-                        propertyModelBuilder = addCreatorPropertyToClassModelBuilder(classModelBuilder, bsonProperty.value(),
+                        propertyModelBuilder = addCreatorPropertyToClassModelBuilder(classModelBuilder, bsonProperty,
                             parameterType);
                     } else {
                         // If not using a legacy BsonProperty reference to the property set the write name to be the annotated name.
-                        if (!bsonProperty.value().equals(propertyModelBuilder.getName())) {
-                            propertyModelBuilder.writeName(bsonProperty.value());
+                        if (!bsonProperty.equals(propertyModelBuilder.getName())) {
+                            propertyModelBuilder.writeName(bsonProperty);
                         }
                         tryToExpandToGenericType(parameterType, propertyModelBuilder, genericType);
                     }

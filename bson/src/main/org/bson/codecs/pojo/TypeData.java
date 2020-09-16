@@ -49,7 +49,11 @@ final class TypeData<T> implements TypeWithTypeParameters<T> {
     }
 
     public static TypeData<?> newInstance(final Method method) {
-        if (isGetter(method)) {
+        return newInstance(method, isGetter(method));
+    }
+
+    public static TypeData<?> newInstance(final Method method, final boolean isGetterMethod) {
+        if (isGetterMethod) {
             return newInstance(method.getGenericReturnType(), method.getReturnType());
         } else {
             return newInstance(method.getGenericParameterTypes()[0], method.getParameterTypes()[0]);

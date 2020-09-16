@@ -633,7 +633,7 @@ public final class PojoCustomTest extends PojoTestCase {
         return conventions;
     }
 
-    class ObjectCodec implements Codec<Object> {
+    static class ObjectCodec implements Codec<Object> {
 
         @Override
         public Object decode(final BsonReader reader, final DecoderContext decoderContext) {

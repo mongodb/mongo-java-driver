@@ -30,9 +30,11 @@ import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.json.JsonObject;
 import org.bson.codecs.pojo.PojoCodecProvider;
+import org.bson.codecs.pojo.RecordCodecProvider;
 import org.bson.codecs.pojo.entities.conventions.BsonRepresentationModel;
+import org.bson.codecs.pojo.entities.records.SimpleRecord;
+import org.bson.json.JsonObject;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
@@ -46,9 +48,9 @@ import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class MongoCollectionTest extends DatabaseTestCase {
@@ -244,5 +246,24 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
         // then
         assertNotNull(test.find().first().getId());
+    }
+
+    @Test
+    public void testRecordSupport() {
+        //given
+        CodecRegistry recordCodecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
+                fromProviders(RecordCodecProvider.builder().automatic(true).build()));
+
+        MongoCollection<SimpleRecord> test =
+                database.getCollection("test", SimpleRecord.class)
+                        .withCodecRegistry(recordCodecRegistry);
+        test.drop();
+        SimpleRecord record = new SimpleRecord(42, "stringField");
+
+        // when
+        test.insertOne(record);
+
+        // then
+        assertEquals(record, test.find().first());
     }
 }

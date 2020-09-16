@@ -38,6 +38,7 @@ import org.bson.codecs.MapCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.jsr310.Jsr310CodecProvider;
+import org.bson.codecs.pojo.RecordCodecProvider;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -70,7 +71,8 @@ public final class MongoClientSettings {
                     new GridFSFileCodecProvider(),
                     new Jsr310CodecProvider(),
                     new JsonObjectCodecProvider(),
-                    new BsonCodecProvider()));
+                    new BsonCodecProvider(),
+                    RecordCodecProvider.builder().automatic(true).build()));
 
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;

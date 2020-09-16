@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-include ':bson'
-include ':driver-benchmarks'
-include ':driver-workload-executor'
-include ':driver-core'
-include ':driver-legacy'
-include ':driver-sync'
-include ':driver-reactive-streams'
-include ':bson-scala'
-include ':driver-scala'
-include ':util'
-include 'record-support'
+package org.bson.codecs.pojo.entities.records;
+
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+public record ConcreteCollectionsRecord(Collection<Integer> collection, List<Integer> list,
+                                        LinkedList<Integer> linked, Map<String, Double> map,
+                                        ConcurrentHashMap<String, Double> concurrent) {
+}

@@ -46,7 +46,7 @@ final class InstanceCreatorImpl<T> implements InstanceCreator<T> {
                 if (creatorExecutable.getIdPropertyIndex() != null && creatorExecutable.getIdPropertyIndex() == i) {
                     this.properties.put(ClassModelBuilder.ID_PROPERTY_NAME, creatorExecutable.getIdPropertyIndex());
                 } else {
-                    this.properties.put(creatorExecutable.getProperties().get(i).value(), i);
+                    this.properties.put(creatorExecutable.getProperties().get(i), i);
                 }
             }
 

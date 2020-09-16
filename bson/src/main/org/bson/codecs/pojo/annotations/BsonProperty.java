@@ -33,7 +33,7 @@ import java.lang.annotation.Target;
  * @see org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION
  */
 @Documented
-@Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+@Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.RECORD_COMPONENT})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface BsonProperty {
     /**

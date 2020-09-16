@@ -14,14 +14,7 @@
  * limitations under the License.
  */
 
-include ':bson'
-include ':driver-benchmarks'
-include ':driver-workload-executor'
-include ':driver-core'
-include ':driver-legacy'
-include ':driver-sync'
-include ':driver-reactive-streams'
-include ':bson-scala'
-include ':driver-scala'
-include ':util'
-include 'record-support'
+package org.bson.codecs.pojo.entities.records;
+
+public interface InterfaceRecord {
+}

@@ -14,14 +14,8 @@
  * limitations under the License.
  */
 
-include ':bson'
-include ':driver-benchmarks'
-include ':driver-workload-executor'
-include ':driver-core'
-include ':driver-legacy'
-include ':driver-sync'
-include ':driver-reactive-streams'
-include ':bson-scala'
-include ':driver-scala'
-include ':util'
-include 'record-support'
+package org.bson.codecs.pojo.entities.records;
+
+public record ReusedGenericsRecord<A, B, C>(A field1, B field2, C field3, Integer field4, C field5, B field6,
+                                             A field7, String field8) {
+}

@@ -37,6 +37,8 @@ import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationInheritedModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationModel;
+import org.bson.codecs.pojo.entities.records.NestedSimpleIdRecord;
+import org.bson.codecs.pojo.entities.records.SimpleIdRecord;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -269,6 +271,23 @@ public final class ClassModelTest {
 
     <T> TypeData<T> createTypeData(final Class<T> clazz, final Class<?>... types) {
         return createBuilder(clazz, types).build();
+    }
+
+    @Test
+    public void testRecordBuilder() {
+        ClassModel<NestedSimpleIdRecord> classModel = ClassModel.builder(NestedSimpleIdRecord.class).build();
+
+        assertEquals(classModel.getType(), NestedSimpleIdRecord.class);
+        assertEquals(classModel.getName(), "NestedSimpleIdRecord");
+        assertTrue(classModel.getInstanceCreatorFactory() instanceof InstanceCreatorFactoryImpl);
+        assertFalse(classModel.useDiscriminator());
+        assertEquals(classModel.getDiscriminatorKey(), "_t");
+        assertEquals(classModel.getDiscriminator(), "org.bson.codecs.pojo.entities.records.NestedSimpleIdRecord");
+
+        assertEquals(2, classModel.getPropertyModels().size());
+        assertEquals(classModel.getPropertyModel("id").getTypeData(), createTypeData(String.class));
+        assertEquals(classModel.getPropertyModel("nestedSimpleIdRecord").getTypeData(), createTypeData(SimpleIdRecord.class));
+        assertEquals(classModel.getPropertyModel("id"), classModel.getIdPropertyModel());
     }
 
 }
