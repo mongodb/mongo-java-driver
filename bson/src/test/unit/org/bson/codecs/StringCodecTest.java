@@ -20,6 +20,7 @@ import org.bson.BsonInvalidOperationException;
 import org.bson.BsonReader;
 import org.bson.BsonType;
 import org.bson.BsonWriter;
+import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.json.JsonReader;
 import org.bson.json.JsonWriter;
 import org.junit.Test;
@@ -49,7 +50,7 @@ public class StringCodecTest {
         assertEquals(((RepresentationConfigurable) child).getRepresentation(), BsonType.STRING);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = CodecConfigurationException.class)
     public void testInvalidRepresentation() {
         ((RepresentationConfigurable) parent).withRepresentation(BsonType.INT32);
     }

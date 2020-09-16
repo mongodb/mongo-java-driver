@@ -23,8 +23,6 @@ import org.bson.BsonWriter;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.types.ObjectId;
 
-import static org.bson.assertions.Assertions.isTrueArgument;
-
 /**
  * Encodes and decodes {@code String} objects.
  *
@@ -51,8 +49,9 @@ public class StringCodec implements Codec<String>, RepresentationConfigurable<St
 
     @Override
     public Codec<String> withRepresentation(final BsonType representation) {
-        isTrueArgument("representation = ObjectId or String",
-                representation == BsonType.OBJECT_ID || representation == BsonType.STRING);
+        if (representation != BsonType.OBJECT_ID && representation != BsonType.STRING) {
+            throw new CodecConfigurationException(representation + " is not a supported representation for StringCodec");
+        }
         return new StringCodec(representation);
     }
 

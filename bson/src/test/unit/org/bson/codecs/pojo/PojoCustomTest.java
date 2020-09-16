@@ -597,18 +597,18 @@ public final class PojoCustomTest extends PojoTestCase {
         decodingShouldFail(getCodec(InvalidGetterAndSetterModel.class), "{'integerField': 42, 'stringField': 'myString'}");
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = CodecConfigurationException.class)
     public void testInvalidBsonRepresentationStringDecoding() {
         decodingShouldFail(getCodec(BsonRepresentationUnsupportedString.class), "{'id': 'hello', s: 3}");
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = CodecConfigurationException.class)
     public void testInvalidBsonRepresentationStringEncoding() {
         encodesTo(getPojoCodecProviderBuilder(BsonRepresentationUnsupportedString.class),
                 new BsonRepresentationUnsupportedString("1"), "");
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = CodecConfigurationException.class)
     public void testInvalidBsonRepresentationIntDecoding() {
         decodingShouldFail(getCodec(BsonRepresentationUnsupportedInt.class), "{'id': 'hello', s: '3'}");
     }

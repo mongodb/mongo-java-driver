@@ -17,6 +17,7 @@
 package org.bson.codecs;
 
 import org.bson.BsonType;
+import org.bson.codecs.configuration.CodecConfigurationException;
 
 /**
  * Implementations of this interface can decode additional types
@@ -40,7 +41,7 @@ public interface RepresentationConfigurable<T> {
      *
      * @param representation the BsonRepresentation.
      * @return a new Codec with the correct representation.
-     * @throws IllegalArgumentException
+     * @throws CodecConfigurationException if the codec does not support the provided representation
      */
     Codec<T> withRepresentation(BsonType representation);
 }

@@ -269,19 +269,20 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
 
     @SuppressWarnings("unchecked")
     private <S> Codec<S> getCodecFromPropertyRegistry(final PropertyModel<S> propertyModel) {
+        Codec<S> codec = null;
         try {
-            Codec<S> codec = propertyCodecRegistry.get(propertyModel.getTypeData());
-            BsonType representation = propertyModel.getBsonRepresentation();
-            if (representation != null) {
-                if (codec instanceof RepresentationConfigurable) {
-                    return ((RepresentationConfigurable<S>) codec).withRepresentation(representation);
-                }
-                throw new IllegalArgumentException("Codec must implement RepresentationConfigurable to support BsonRepresentation");
-            }
-            return codec;
+            codec = propertyCodecRegistry.get(propertyModel.getTypeData());
         } catch (CodecConfigurationException e) {
             return new LazyMissingCodec<S>(propertyModel.getTypeData().getType(), e);
         }
+        BsonType representation = propertyModel.getBsonRepresentation();
+        if (representation != null) {
+            if (codec instanceof RepresentationConfigurable) {
+                return ((RepresentationConfigurable<S>) codec).withRepresentation(representation);
+            }
+            throw new CodecConfigurationException("Codec must implement RepresentationConfigurable to support BsonRepresentation");
+        }
+        return codec;
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
