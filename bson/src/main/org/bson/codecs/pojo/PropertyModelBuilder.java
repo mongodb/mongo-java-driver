@@ -235,6 +235,7 @@ public final class PropertyModelBuilder<T> {
      * Returns the BsonRepresentation
      *
      * @return the BsonRepresentation
+     * @since 4.2
      */
     public BsonType getBsonRepresentation() {
         return bsonRepresentation;
@@ -245,6 +246,7 @@ public final class PropertyModelBuilder<T> {
      *
      * @param bsonRepresentation the BsonRepresentation
      * @return this
+     * @since 4.2
      */
     public PropertyModelBuilder<T> bsonRepresentation(final BsonType bsonRepresentation) {
         this.bsonRepresentation = bsonRepresentation;

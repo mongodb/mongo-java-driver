@@ -118,6 +118,8 @@ public final class PropertyModel<T> {
 
     /**
      * @return the BsonRepresentation of the field
+     *
+     * @since 4.2
      */
     public BsonType getBsonRepresentation() {
         return bsonRepresentation;
