@@ -132,7 +132,7 @@ MongoClientOptions options = MongoClientOptions.builder()
 
 By default, the driver ensures that the hostname included in the
 server's SSL certificate(s) matches the hostname(s) provided when
-constructing a [`MongoClient()`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClient.html" >}}).
+constructing a [`MongoClient()`]({{< apiref "mongodb-driver-sync" "com/mongodb/MongoClient.html" >}}).
 
 If your application needs to disable hostname verification, you must explicitly indicate
 this in `MongoClientSettings`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientSettings" >}}) 
