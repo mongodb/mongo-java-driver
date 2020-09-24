@@ -76,7 +76,7 @@ The following table specifies the compatibility of the MongoDB Java driver for u
 
 |Java Driver Version|MongoDB 3.0 |MongoDB 3.2|MongoDB 3.4|MongoDB 3.6|MongoDB 4.0|MongoDB 4.2|MongoDB 4.4|
 |-------------------|------------|-----------|-----------|-----------|-----------|-----------|-----------|
-|Version 4.0        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |
+|Version 4.0        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |
 |Version 3.12       |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓* |
 |Version 3.11       |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |
 |Version 3.10       |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |     |
