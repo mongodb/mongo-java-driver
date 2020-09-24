@@ -17,7 +17,7 @@ Use [`MongoClients.create()`]({{< apiref "mongodb-driver-sync" "com/mongodb/clie
 The following examples are not meant to provide an exhaustive list
 of ways to instantiate `MongoClient`. For a complete list of MongoClients factory methods, see the 
 [`MongoClients API documentation`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoClients.html" >}}), or for the legacy MongoClient API see 
-the [`MongoClient() API documentation`]({{< apiref "mongodb-driver-sync" "com/mongodb/MongoClient.html" >}}).
+the [`MongoClient() API documentation`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoClient.html" >}}).
 
 {{% /note %}}
 
@@ -222,7 +222,7 @@ Finally, in some cases you may need to combine a connection string with programm
 
 ## `MongoClient` (legacy API)
 
-A [`MongoClient`]({{< apiref "mongodb-driver-sync" "com/mongodb/MongoClient.html" >}}) instance represents a pool of connections
+A [`MongoClient`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoClient.html" >}}) instance represents a pool of connections
 to the database; you will only need one instance of class `MongoClient` even with multiple threads.
 
 {{% note class="important" %}}
