@@ -30,7 +30,7 @@ buildscript {
         classpath 'biz.aQute.bnd:biz.aQute.bnd.gradle:5.1.2'
         
         // Scala plugins
-        classpath "com.adtran:scala-multiversion-plugin:1.0.35"
+        classpath "com.adtran:scala-multiversion-plugin:1.0.36"
         classpath "com.diffplug.spotless:spotless-plugin-gradle:3.27.1"
 
         // Test logging plugin
