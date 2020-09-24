@@ -61,7 +61,7 @@ import java.util.List;
 ## Make a Connection
 
 Use [`MongoClients.create()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoClients.html" >}}), 
-or [`MongoClient()`]({{< apiref "mongodb-driver-sync" "com/mongodb/MongoClient.html" >}}) for the legacy MongoClient API, 
+or [`MongoClient()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoClient.html" >}}) for the legacy MongoClient API, 
 to make a connection to a running MongoDB instance.
 
 The `MongoClient` instance represents a pool of connections to the database; you will only need one instance of class `MongoClient` even with multiple threads.
