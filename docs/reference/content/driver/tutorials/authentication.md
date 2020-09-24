@@ -39,7 +39,7 @@ An authentication credential is represented as an instance of the
 factory methods for each of the supported authentication mechanisms.
 
 You can also use a [`MongoClientURI`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientURI.html" >}}) and pass it to a 
-[`MongoClient()`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClient.html" >}}) constructor that takes a `MongoClientURI` parameter.
+[`MongoClient()`]({{< apiref "mongodb-driver-sync" "com/mongodb/MongoClient.html" >}}) constructor that takes a `MongoClientURI` parameter.
 
 ## Default Authentication Mechanism
 
