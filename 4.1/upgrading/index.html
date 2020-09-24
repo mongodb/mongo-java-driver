@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-08-18T11:19:53.3">
+<meta name="date" content="2020-09-24T10:15:04.51">
 <link rel="shortcut icon" href="/mongo-java-driver/4.1/img/favicon.png">
 
     <title>Upgrade Considerations</title><link rel="stylesheet" href="/mongo-java-driver/4.1/lib/bootstrap.css" type="text/css" />
@@ -398,7 +398,6 @@ Please note that <code>onNext</code> will not be called just <code>onComplete</c
 <thead>
 <tr>
 <th>Java Driver Version</th>
-<th>MongoDB 2.6</th>
 <th>MongoDB 3.0</th>
 <th>MongoDB 3.2</th>
 <th>MongoDB 3.4</th>
@@ -419,12 +418,10 @@ Please note that <code>onNext</code> will not be called just <code>onComplete</c
 <td>✓</td>
 <td>✓</td>
 <td>✓</td>
-<td>✓</td>
 </tr>
 
 <tr>
 <td>Version 4.0</td>
-<td>✓</td>
 <td>✓</td>
 <td>✓</td>
 <td>✓</td>
@@ -442,13 +439,11 @@ Please note that <code>onNext</code> will not be called just <code>onComplete</c
 <td>✓</td>
 <td>✓</td>
 <td>✓</td>
-<td>✓</td>
-<td></td>
+<td>✓*</td>
 </tr>
 
 <tr>
 <td>Version 3.11</td>
-<td>✓</td>
 <td>✓</td>
 <td>✓</td>
 <td>✓</td>
@@ -465,7 +460,6 @@ Please note that <code>onNext</code> will not be called just <code>onComplete</c
 <td>✓</td>
 <td>✓</td>
 <td>✓</td>
-<td>✓</td>
 <td></td>
 <td></td>
 </tr>
@@ -477,14 +471,12 @@ Please note that <code>onNext</code> will not be called just <code>onComplete</c
 <td>✓</td>
 <td>✓</td>
 <td>✓</td>
-<td>✓</td>
 <td></td>
 <td></td>
 </tr>
 
 <tr>
 <td>Version 3.9</td>
-<td>✓</td>
 <td>✓</td>
 <td>✓</td>
 <td>✓</td>
@@ -501,14 +493,12 @@ Please note that <code>onNext</code> will not be called just <code>onComplete</c
 <td>✓</td>
 <td>✓</td>
 <td>✓</td>
-<td>✓</td>
 <td></td>
 <td></td>
 </tr>
 
 <tr>
 <td>Version 3.7</td>
-<td>✓</td>
 <td>✓</td>
 <td>✓</td>
 <td>✓</td>
@@ -524,7 +514,6 @@ Please note that <code>onNext</code> will not be called just <code>onComplete</c
 <td>✓</td>
 <td>✓</td>
 <td>✓</td>
-<td>✓</td>
 <td></td>
 <td></td>
 <td></td>
@@ -532,7 +521,6 @@ Please note that <code>onNext</code> will not be called just <code>onComplete</c
 
 <tr>
 <td>Version 3.5</td>
-<td>✓</td>
 <td>✓</td>
 <td>✓</td>
 <td>✓</td>
@@ -547,7 +535,6 @@ Please note that <code>onNext</code> will not be called just <code>onComplete</c
 <td>✓</td>
 <td>✓</td>
 <td>✓</td>
-<td>✓</td>
 <td></td>
 <td></td>
 <td></td>
@@ -556,7 +543,6 @@ Please note that <code>onNext</code> will not be called just <code>onComplete</c
 
 <tr>
 <td>Version 3.3</td>
-<td>✓</td>
 <td>✓</td>
 <td>✓</td>
 <td></td>
@@ -570,7 +556,6 @@ Please note that <code>onNext</code> will not be called just <code>onComplete</c
 <td>Version 3.2</td>
 <td>✓</td>
 <td>✓</td>
-<td>✓</td>
 <td></td>
 <td></td>
 <td></td>
@@ -580,7 +565,6 @@ Please note that <code>onNext</code> will not be called just <code>onComplete</c
 
 <tr>
 <td>Version 3.1</td>
-<td>✓</td>
 <td>✓</td>
 <td></td>
 <td></td>
@@ -593,7 +577,6 @@ Please note that <code>onNext</code> will not be called just <code>onComplete</c
 <tr>
 <td>Version 3.0</td>
 <td>✓</td>
-<td>✓</td>
 <td></td>
 <td></td>
 <td></td>
@@ -603,6 +586,8 @@ Please note that <code>onNext</code> will not be called just <code>onComplete</c
 </tr>
 </tbody>
 </table>
+
+<p>* The 3.12 driver is tested against MongoDB 4.4 but does not support all the new features</p>
 <div id="btnv"></div>
 </div></div><div class="right-column">
 <div class="wrapper"><div class="toc">
