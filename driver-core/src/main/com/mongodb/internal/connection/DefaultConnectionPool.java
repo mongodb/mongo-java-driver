@@ -583,10 +583,13 @@ class DefaultConnectionPool implements ConnectionPool {
         public UsageTrackingInternalConnection create(final boolean initialize) {
             UsageTrackingInternalConnection internalConnection =
             new UsageTrackingInternalConnection(internalConnectionFactory.create(serverId), generation.get());
+            ConnectionId id = getId(internalConnection);
+            connectionCreated(connectionPoolListener, id);
             if (initialize) {
                 internalConnection.open();
+                connectionPoolListener.connectionReady(new ConnectionReadyEvent(id));
             }
-            connectionCreated(connectionPoolListener, getId(internalConnection));
+
             return internalConnection;
         }
 
