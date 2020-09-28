@@ -17,11 +17,9 @@
 package org.mongodb.scala.bson.codecs.macrocodecs
 
 import scala.reflect.macros.whitebox
-
 import org.bson.codecs.Codec
 import org.bson.codecs.configuration.CodecRegistry
-
-import org.mongodb.scala.bson.annotations.BsonProperty
+import org.mongodb.scala.bson.annotations.{ BsonIgnore, BsonProperty }
 
 private[codecs] object CaseClassCodec {
 
@@ -157,6 +155,36 @@ private[codecs] object CaseClassCodec {
         .toMap
     }
 
+    val ignoredFields: Map[Type, Seq[(TermName, Tree)]] = {
+      knownTypes.map { tpe =>
+        if (!isCaseClass(tpe)) {
+          (tpe, Nil)
+        } else {
+          val constructor = tpe.decl(termNames.CONSTRUCTOR)
+          if (!constructor.isMethod) c.abort(c.enclosingPosition, "No constructor, unsupported class type")
+
+          val defaults = constructor.asMethod.paramLists.head
+            .map(_.asTerm)
+            .zipWithIndex
+            .filter(_._1.annotations.exists(_.tree.tpe == typeOf[BsonIgnore]))
+            .map {
+              case (p, i) =>
+                if (p.isParamWithDefault) {
+                  val getterName = TermName("apply$default$" + (i + 1))
+                  p.name -> q"${tpe.typeSymbol.companion}.$getterName"
+                } else {
+                  c.abort(
+                    c.enclosingPosition,
+                    s"Field [${p.name}] with BsonIgnore annotation must have a default value"
+                  )
+                }
+            }
+
+          tpe -> defaults
+        }
+      }.toMap
+    }
+
     // Data converters
     def keyName(t: Type): Literal = Literal(Constant(t.typeSymbol.name.decodedName.toString))
     def keyNameTerm(t: TermName): Literal = Literal(classAnnotatedFieldsMap.getOrElse(t, Constant(t.toString)))
@@ -284,12 +312,14 @@ private[codecs] object CaseClassCodec {
      * @param fields the list of fields
      * @return the tree that writes the case class fields
      */
-    def writeClassValues(fields: List[(TermName, Type)]): List[Tree] = {
-      fields.map({
-        case (name, f) =>
-          val key = keyNameTerm(name)
-          f match {
-            case optional if isOption(optional) => q"""
+    def writeClassValues(fields: List[(TermName, Type)], ignoredFields: Seq[(TermName, Tree)]): List[Tree] = {
+      fields
+        .filterNot { case (name, _) => ignoredFields.exists { case (iname, _) => name == iname } }
+        .map({
+          case (name, f) =>
+            val key = keyNameTerm(name)
+            f match {
+              case optional if isOption(optional) => q"""
               val localVal = instanceValue.$name
               if (localVal.isDefined) {
                 writer.writeName($key)
@@ -298,13 +328,13 @@ private[codecs] object CaseClassCodec {
                 writer.writeName($key)
                 this.writeFieldValue($key, writer, this.bsonNull, encoderContext)
               }"""
-            case _                              => q"""
+              case _                              => q"""
               val localVal = instanceValue.$name
               writer.writeName($key)
               this.writeFieldValue($key, writer, localVal, encoderContext)
               """
-          }
-      })
+            }
+        })
     }
 
     /*
@@ -314,7 +344,7 @@ private[codecs] object CaseClassCodec {
       val cases: Seq[Tree] = {
         fields.map(field => cq""" ${keyName(field._1)} =>
             val instanceValue = value.asInstanceOf[${field._1}]
-            ..${writeClassValues(field._2)}""").toSeq
+            ..${writeClassValues(field._2, ignoredFields(field._1))}""").toSeq
       }
 
       q"""
@@ -325,23 +355,29 @@ private[codecs] object CaseClassCodec {
       """
     }
 
-    def fieldSetters(fields: List[(TermName, Type)]) = {
+    def fieldSetters(fields: List[(TermName, Type)], ignoredFields: Seq[(TermName, Tree)]) = {
       fields.map({
         case (name, f) =>
           val key = keyNameTerm(name)
           val missingField = Literal(Constant(s"Missing field: $key"))
-          f match {
-            case optional if isOption(optional) =>
-              q"$name = (if (fieldData.contains($key)) Option(fieldData($key)) else None).asInstanceOf[$f]"
-            case _ =>
-              q"""$name = fieldData.getOrElse($key, throw new BsonInvalidOperationException($missingField)).asInstanceOf[$f]"""
+
+          ignoredFields.find { case (iname, _) => name == iname }.map(_._2) match {
+            case Some(default) =>
+              q"$name = $default"
+            case None =>
+              f match {
+                case optional if isOption(optional) =>
+                  q"$name = (if (fieldData.contains($key)) Option(fieldData($key)) else None).asInstanceOf[$f]"
+                case _ =>
+                  q"""$name = fieldData.getOrElse($key, throw new BsonInvalidOperationException($missingField)).asInstanceOf[$f]"""
+              }
           }
       })
     }
 
     def getInstance = {
       val cases = knownTypes.map { st =>
-        cq"${keyName(st)} => new $st(..${fieldSetters(fields(st))})"
+        cq"${keyName(st)} => new $st(..${fieldSetters(fields(st), ignoredFields(st))})"
       } :+ cq"""_ => throw new BsonInvalidOperationException("Unexpected class type: " + className)"""
       q"className match { case ..$cases }"
     }
