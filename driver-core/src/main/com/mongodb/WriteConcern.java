@@ -74,8 +74,6 @@ public class WriteConcern implements Serializable {
 
     private final Integer wTimeoutMS;
 
-    private final Boolean fsync;
-
     private final Boolean journal;
 
     /**
@@ -84,7 +82,7 @@ public class WriteConcern implements Serializable {
      * @since 2.10.0
      * @mongodb.driver.manual core/write-concern/#write-concern-acknowledged Acknowledged
      */
-    public static final WriteConcern ACKNOWLEDGED = new WriteConcern((Object) null, null, null, null);
+    public static final WriteConcern ACKNOWLEDGED = new WriteConcern((Object) null, null, null);
 
     /**
      * Write operations that use this write concern will wait for acknowledgement from a single member.
@@ -139,7 +137,7 @@ public class WriteConcern implements Serializable {
      * @mongodb.driver.manual reference/write-concern/#w-option w option
      */
     public WriteConcern(final int w) {
-        this(w, null, null, null);
+        this(w, null, null);
     }
 
     /**
@@ -151,7 +149,7 @@ public class WriteConcern implements Serializable {
      * @mongodb.driver.manual reference/write-concern/#w-option w option
      */
     public WriteConcern(final String w) {
-        this(w, null, null, null);
+        this(w, null, null);
         notNull("w", w);
     }
 
@@ -164,17 +162,15 @@ public class WriteConcern implements Serializable {
      * @mongodb.driver.manual reference/write-concern/#wtimeout wtimeout option
      */
     public WriteConcern(final int w, final int wTimeoutMS) {
-        this(w, wTimeoutMS, null, null);
+        this(w, wTimeoutMS, null);
     }
 
     // Private constructor for creating the "default" unacknowledged write concern.  Necessary because there already a no-args
     // constructor that means something else.
-    private WriteConcern(@Nullable final Object w, @Nullable final Integer wTimeoutMS, @Nullable final Boolean fsync,
-                         @Nullable final Boolean journal) {
+    private WriteConcern(@Nullable final Object w, @Nullable final Integer wTimeoutMS, @Nullable final Boolean journal) {
         if (w instanceof Integer) {
             isTrueArgument("w >= 0", ((Integer) w) >= 0);
             if ((Integer) w == 0) {
-                isTrueArgument("fsync is false when w is 0", fsync == null || !fsync);
                 isTrueArgument("journal is false when w is 0", journal == null || !journal);
             }
         } else if (w != null) {
@@ -183,7 +179,6 @@ public class WriteConcern implements Serializable {
         isTrueArgument("wtimeout >= 0", wTimeoutMS == null || wTimeoutMS >= 0);
         this.w = w;
         this.wTimeoutMS = wTimeoutMS;
-        this.fsync = fsync;
         this.journal = journal;
     }
 
@@ -264,9 +259,7 @@ public class WriteConcern implements Serializable {
         BsonDocument document = new BsonDocument();
 
         addW(document);
-
         addWTimeout(document);
-        addFSync(document);
         addJ(document);
 
         return document;
@@ -280,7 +273,7 @@ public class WriteConcern implements Serializable {
      */
     public boolean isAcknowledged() {
         if (w instanceof Integer) {
-            return (Integer) w > 0 || (journal != null && journal) || (fsync != null && fsync);
+            return (Integer) w > 0 || (journal != null && journal);
         }
         return true;
     }
@@ -313,9 +306,6 @@ public class WriteConcern implements Serializable {
         if (wTimeoutMS != null ? !wTimeoutMS.equals(that.wTimeoutMS) : that.wTimeoutMS != null) {
             return false;
         }
-        if (fsync != null ? !fsync.equals(that.fsync) : that.fsync != null) {
-            return false;
-        }
         if (journal != null ? !journal.equals(that.journal) : that.journal != null) {
             return false;
         }
@@ -327,14 +317,13 @@ public class WriteConcern implements Serializable {
     public int hashCode() {
         int result = w != null ? w.hashCode() : 0;
         result = 31 * result + (wTimeoutMS != null ? wTimeoutMS.hashCode() : 0);
-        result = 31 * result + (fsync != null ? fsync.hashCode() : 0);
         result = 31 * result + (journal != null ? journal.hashCode() : 0);
         return result;
     }
 
     @Override
     public String toString() {
-        return "WriteConcern{w=" + w + ", wTimeout=" + wTimeoutMS + " ms, fsync=" + fsync + ", journal=" + journal;
+        return "WriteConcern{w=" + w + ", wTimeout=" + wTimeoutMS + " ms, journal=" + journal;
 
     }
 
@@ -346,7 +335,7 @@ public class WriteConcern implements Serializable {
      * @mongodb.driver.manual core/write-concern/#replica-acknowledged Replica Acknowledged
      */
     public WriteConcern withW(final int w) {
-        return new WriteConcern(Integer.valueOf(w), wTimeoutMS, fsync, journal);
+        return new WriteConcern(Integer.valueOf(w), wTimeoutMS, journal);
     }
 
     /**
@@ -360,7 +349,7 @@ public class WriteConcern implements Serializable {
      */
     public WriteConcern withW(final String w) {
         notNull("w", w);
-        return new WriteConcern(w, wTimeoutMS, fsync, journal);
+        return new WriteConcern(w, wTimeoutMS, journal);
     }
 
     /**
@@ -372,7 +361,7 @@ public class WriteConcern implements Serializable {
      * @mongodb.driver.manual reference/write-concern/#j-option j option
      */
     public WriteConcern withJournal(@Nullable final Boolean journal) {
-        return new WriteConcern(w, wTimeoutMS, fsync, journal);
+        return new WriteConcern(w, wTimeoutMS, journal);
     }
 
     /**
@@ -389,7 +378,7 @@ public class WriteConcern implements Serializable {
         long newWTimeOutMS = TimeUnit.MILLISECONDS.convert(wTimeout, timeUnit);
         isTrueArgument("wTimeout >= 0", wTimeout >= 0);
         isTrueArgument("wTimeout <= " + Integer.MAX_VALUE + " ms", newWTimeOutMS <= Integer.MAX_VALUE);
-        return new WriteConcern(w, (int) newWTimeOutMS, fsync, journal);
+        return new WriteConcern(w, (int) newWTimeOutMS, journal);
     }
 
     private void addW(final BsonDocument document) {
@@ -403,12 +392,6 @@ public class WriteConcern implements Serializable {
     private void addJ(final BsonDocument document) {
         if (journal != null) {
             document.put("j", BsonBoolean.valueOf(journal));
-        }
-    }
-
-    private void addFSync(final BsonDocument document) {
-        if (fsync != null) {
-            document.put("fsync", BsonBoolean.valueOf(fsync));
         }
     }
 
