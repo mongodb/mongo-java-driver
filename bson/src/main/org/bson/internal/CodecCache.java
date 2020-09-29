@@ -19,41 +19,36 @@ package org.bson.internal;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecConfigurationException;
 
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static java.lang.String.format;
 
 final class CodecCache {
-    private final ConcurrentMap<Class<?>, Optional<? extends Codec<?>>> codecCache =
-            new ConcurrentHashMap<Class<?>, Optional<? extends Codec<?>>>();
+    private final ConcurrentMap<Class<?>, Optional<Codec<?>>> codecCache = new ConcurrentHashMap<>();
 
     public boolean containsKey(final Class<?> clazz) {
         return codecCache.containsKey(clazz);
     }
 
     public void put(final Class<?> clazz, final Codec<?> codec){
-        codecCache.put(clazz, Optional.of(codec));
+        codecCache.put(clazz, Optional.ofNullable(codec));
     }
 
     @SuppressWarnings("unchecked")
-    public synchronized <T> Codec<T> putIfMissing(final Class<T> clazz, final Codec<T> codec){
-        if (codecCache.containsKey(clazz)) {
-            return (Codec<T>) codecCache.get(clazz).get();
-        } else {
-            codecCache.put(clazz, Optional.of(codec));
-            return codec;
+    public synchronized <T> Codec<T> putIfMissing(final Class<T> clazz, final Codec<T> codec) {
+        Optional<Codec<?>> cachedCodec = codecCache.computeIfAbsent(clazz, clz -> Optional.of(codec));
+        if (cachedCodec.isPresent()) {
+            return (Codec<T>) cachedCodec.get();
         }
+        codecCache.put(clazz, Optional.of(codec));
+        return codec;
     }
 
     @SuppressWarnings("unchecked")
     public <T> Codec<T> getOrThrow(final Class<T> clazz) {
-        if (codecCache.containsKey(clazz)) {
-            Optional<? extends Codec<?>> optionalCodec = codecCache.get(clazz);
-            if (!optionalCodec.isEmpty()) {
-                return (Codec<T>) optionalCodec.get();
-            }
-        }
-        throw new CodecConfigurationException(format("Can't find a codec for %s.", clazz));
+        return (Codec<T>) codecCache.getOrDefault(clazz, Optional.empty()).orElseThrow(
+                () -> new CodecConfigurationException(format("Can't find a codec for %s.", clazz)));
     }
 }
