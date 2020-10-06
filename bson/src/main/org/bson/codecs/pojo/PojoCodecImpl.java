@@ -293,4 +293,9 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
         }
         return true;
     }
+
+    @Override
+    DiscriminatorLookup getDiscriminatorLookup() {
+        return discriminatorLookup;
+    }
 }
