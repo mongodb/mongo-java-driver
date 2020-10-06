@@ -67,7 +67,7 @@ class LazyPropertyModelCodec<T> implements Codec<T> {
             if (localCodec instanceof PojoCodec) {
                 PojoCodec<T> pojoCodec = (PojoCodec<T>) localCodec;
                 ClassModel<T> specialized = getSpecializedClassModel(pojoCodec.getClassModel(), propertyModel);
-                localCodec = new PojoCodecImpl<>(specialized, registry, propertyCodecRegistry, discriminatorLookup, true);
+                localCodec = new PojoCodecImpl<>(specialized, registry, propertyCodecRegistry, pojoCodec.getDiscriminatorLookup(), true);
             }
             codec = localCodec;
         }
