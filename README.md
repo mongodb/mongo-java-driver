@@ -123,10 +123,6 @@ A couple of manual configuration steps are required to run the code in IntelliJ:
  - Set `compileBuildConfig` to execute Before Build. via Gradle > Tasks > other > right click compileBuildConfig - click on "Execute Before Build" 
  - Delegate all build actions to Gradle: Settings > Build, Execution, Deployment > Build Tools > Gradle > Runner - tick "Delegate IDE build/run actions to gradle"
 
-### Build status:
-
-[![Build Status](https://travis-ci.org/mongodb/mongo-java-driver.svg?branch=master)](https://travis-ci.org/mongodb/mongo-java-driver)
-
 ## Maintainers
 
 * Jeff Yemin           jeff.yemin@mongodb.com
