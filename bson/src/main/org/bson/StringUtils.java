@@ -16,21 +16,16 @@
 
 package org.bson;
 
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.StringJoiner;
 
 final class StringUtils {
-    public static String join(final String delimiter, final Collection<?> s) {
-        StringBuilder builder = new StringBuilder();
-        Iterator<?> iter = s.iterator();
-        while (iter.hasNext()) {
-            builder.append(iter.next());
-            if (!iter.hasNext()) {
-                break;
-            }
-            builder.append(delimiter);
+    @SafeVarargs
+    public static <T> String join(final String delimiter, final T... values) {
+        StringJoiner joiner = new StringJoiner(delimiter);
+        for (T v : values) {
+            joiner.add(String.valueOf(v));
         }
-        return builder.toString();
+        return joiner.toString();
     }
 
     private StringUtils() { }
