@@ -58,7 +58,7 @@ public class QuickTour {
      */
     public static void main(final String[] args) {
         MongoClient mongoClient;
-        // change
+        // change another one
 
         if (args.length == 0) {
             // connect to the local database server
