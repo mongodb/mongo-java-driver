@@ -132,6 +132,7 @@ public final class PojoRoundTripTest extends PojoTestCase {
     @Test
     public void test() {
         roundTrip(builder, model, json);
+        threadedRoundTrip(builder, model, json);
     }
 
     private static List<TestData> testCases() {
