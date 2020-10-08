@@ -636,7 +636,8 @@ public final class PojoCustomTest extends PojoTestCase {
     @Test
     public void testMultiplePojoProviders() {
         NestedGenericHolderFieldWithMultipleTypeParamsModel model = getNestedGenericHolderFieldWithMultipleTypeParamsModel();
-        PojoCodecProvider provider1 = PojoCodecProvider.builder().register(NestedGenericHolderFieldWithMultipleTypeParamsModel.class).build();
+        PojoCodecProvider provider1 = PojoCodecProvider.builder().register(NestedGenericHolderFieldWithMultipleTypeParamsModel.class)
+                .build();
         PojoCodecProvider provider2 = PojoCodecProvider.builder().register(PropertyWithMultipleTypeParamsModel.class).build();
         PojoCodecProvider provider3 = PojoCodecProvider.builder().register(SimpleGenericsModel.class).build();
         PojoCodecProvider provider4 = PojoCodecProvider.builder().register(GenericHolderModel.class).build();
