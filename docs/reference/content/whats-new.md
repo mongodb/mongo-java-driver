@@ -280,7 +280,7 @@ The 3.6 release adds support for [change streams](http://dochub.mongodb.org/core
 ### Retryable writes
 
 The 3.6 release adds support for retryable writes using the `retryWrites` option in 
-[`MongoClientOptions`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientOptions" >}}).
+[`MongoClientOptions`]({{< apiref "mongodb-driver-legacy" "com/mongodb/MongoClientOptions" >}}).
 
 ### Compression
 
@@ -297,7 +297,7 @@ The 3.6 release adds support for [causally consistency](http://dochub.mongodb.or
 ### Application-configured server selection
 
 The 3.6 release adds support for application-configured control over server selection, using the `serverSelector` option in
-[`MongoClientOptions`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientOptions" >}}).
+[`MongoClientOptions`]({{< apiref "mongodb-driver-legacy" "com/mongodb/MongoClientOptions" >}}).
 
 ### POJO Codec improvements
 
