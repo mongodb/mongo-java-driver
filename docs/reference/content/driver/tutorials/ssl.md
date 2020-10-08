@@ -15,7 +15,7 @@ the underlying support for TLS/SSL provided by the JDK.
 You can configure the driver to use TLS/SSL either with [`ConnectionString`]({{< apiref "mongodb-driver-core" "com/mongodb/ConnectionString" >}}) or with
 [`MongoClientSettings`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientSettings" >}}).
 With the legacy MongoClient API you can use either [`MongoClientURI`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientURI" >}}) or 
-[`MongoClientOptions`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientOptions" >}}).
+[`MongoClientOptions`]({{< apiref "mongodb-driver-legacy" "com/mongodb/MongoClientOptions" >}}).
 
 ## MongoClient API (since 3.7)
 
@@ -99,7 +99,7 @@ import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoClient;
 ```
 
-To specify TLS/SSL with with [`MongoClientOptions`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientOptions" >}}), set the `sslEnabled` property to `true`, as in:
+To specify TLS/SSL with with [`MongoClientOptions`]({{< apiref "mongodb-driver-legacy" "com/mongodb/MongoClientOptions" >}}), set the `sslEnabled` property to `true`, as in:
 
 ```java
 MongoClientOptions options = MongoClientOptions.builder()
@@ -117,7 +117,7 @@ import com.mongodb.MongoClient;
 ```
 
 To specify the [`javax.net.ssl.SSLContext`](https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLContext.html) with 
-[`MongoClientOptions`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientOptions" >}}), set the `sslContext` property, as in:
+[`MongoClientOptions`]({{< apiref "mongodb-driver-legacy" "com/mongodb/MongoClientOptions" >}}), set the `sslContext` property, as in:
 
 ```java
 SSLContext sslContext = ...
@@ -146,7 +146,7 @@ MongoClientSettings settings = MongoClientSettings.builder()
         .build();
 ```
 
-or, with the legacy `MongoClientOptions`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientOptions" >}}), using the `sslInvalidHostNameAllowed` property:
+or, with the legacy `MongoClientOptions`]({{< apiref "mongodb-driver-legacy" "com/mongodb/MongoClientOptions" >}}), using the `sslInvalidHostNameAllowed` property:
 
 ```java
 MongoClientOptions.builder()
