@@ -613,7 +613,7 @@ public final class PojoCustomTest extends PojoTestCase {
 
     @Test(expected = CodecConfigurationException.class)
     public void testInvalidBsonRepresentationIntDecoding() {
-        decodingShouldFail(getCodec(BsonRepresentationUnsupportedInt.class), "{'id': 'hello', s: '3'}");
+        decodingShouldFail(getCodec(BsonRepresentationUnsupportedInt.class), "{'id': 'hello', age: '3'}");
     }
 
     @Test(expected = IllegalArgumentException.class)

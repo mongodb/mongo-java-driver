@@ -21,9 +21,11 @@ import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 class PropertyCodecRegistryImpl implements PropertyCodecRegistry {
     private final List<PropertyCodecProvider> propertyCodecProviders;
+    private final ConcurrentHashMap<TypeWithTypeParameters<?>, Codec<?>> propertyCodecCache;
 
     PropertyCodecRegistryImpl(final PojoCodec<?> pojoCodec, final CodecRegistry codecRegistry,
                               final List<PropertyCodecProvider> propertyCodecProviders) {
@@ -36,15 +38,22 @@ class PropertyCodecRegistryImpl implements PropertyCodecRegistry {
         augmentedProviders.add(new EnumPropertyCodecProvider(codecRegistry));
         augmentedProviders.add(new FallbackPropertyCodecProvider(pojoCodec, codecRegistry));
         this.propertyCodecProviders = augmentedProviders;
+        this.propertyCodecCache = new ConcurrentHashMap<>();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public <S> Codec<S> get(final TypeWithTypeParameters<S> type) {
+    public <S> Codec<S> get(final TypeWithTypeParameters<S> typeWithTypeParameters) {
+        if (propertyCodecCache.containsKey(typeWithTypeParameters)) {
+            return (Codec<S>) propertyCodecCache.get(typeWithTypeParameters);
+        }
+
         for (PropertyCodecProvider propertyCodecProvider : propertyCodecProviders) {
-            Codec<S> codec = propertyCodecProvider.get(type, this);
-            if (codec != null) {
-                return codec;
-            }
+                Codec<S> codec = propertyCodecProvider.get(typeWithTypeParameters, this);
+                if (codec != null) {
+                    propertyCodecCache.put(typeWithTypeParameters, codec);
+                    return codec;
+                }
         }
         return null;
     }

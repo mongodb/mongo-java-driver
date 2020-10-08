@@ -25,21 +25,14 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.RepresentationConfigurable;
 import org.bson.diagnostics.Logger;
 import org.bson.diagnostics.Loggers;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 import static java.lang.String.format;
-import static org.bson.codecs.configuration.CodecRegistries.fromCodecs;
-import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
-import static org.bson.codecs.pojo.PojoSpecializationHelper.specializeTypeData;
 
 
 final class PojoCodecImpl<T> extends PojoCodec<T> {
@@ -48,39 +41,26 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
     private final CodecRegistry registry;
     private final PropertyCodecRegistry propertyCodecRegistry;
     private final DiscriminatorLookup discriminatorLookup;
-    private final ConcurrentMap<ClassModel<?>, Codec<?>> codecCache;
     private final boolean specialized;
 
     PojoCodecImpl(final ClassModel<T> classModel, final CodecRegistry codecRegistry,
                   final List<PropertyCodecProvider> propertyCodecProviders, final DiscriminatorLookup discriminatorLookup) {
         this.classModel = classModel;
-        this.registry = fromRegistries(fromCodecs(this), codecRegistry);
+        this.registry = codecRegistry;
         this.discriminatorLookup = discriminatorLookup;
-        this.codecCache = new ConcurrentHashMap<ClassModel<?>, Codec<?>>();
         this.propertyCodecRegistry = new PropertyCodecRegistryImpl(this, registry, propertyCodecProviders);
         this.specialized = shouldSpecialize(classModel);
         specialize();
     }
 
-    PojoCodecImpl(final ClassModel<T> classModel, final CodecRegistry registry, final PropertyCodecRegistry propertyCodecRegistry,
-                  final DiscriminatorLookup discriminatorLookup, final ConcurrentMap<ClassModel<?>, Codec<?>> codecCache,
-                  final boolean specialized) {
+    PojoCodecImpl(final ClassModel<T> classModel, final CodecRegistry codecRegistry, final PropertyCodecRegistry propertyCodecRegistry,
+                  final DiscriminatorLookup discriminatorLookup, final boolean specialized) {
         this.classModel = classModel;
-        this.registry = fromRegistries(fromCodecs(this), registry);
+        this.registry = codecRegistry;
         this.discriminatorLookup = discriminatorLookup;
-        this.codecCache = codecCache;
         this.propertyCodecRegistry = propertyCodecRegistry;
         this.specialized = specialized;
         specialize();
-    }
-
-    private void specialize() {
-        if (specialized) {
-            codecCache.put(classModel, this);
-            for (PropertyModel<?> propertyModel : classModel.getPropertyModels()) {
-                addToCache(propertyModel);
-            }
-        }
     }
 
     @SuppressWarnings("unchecked")
@@ -234,9 +214,18 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
         }
     }
 
-    private <S> void addToCache(final PropertyModel<S> propertyModel) {
-        Codec<S> codec = propertyModel.getCodec() != null ? propertyModel.getCodec() : specializePojoCodec(propertyModel);
-        propertyModel.cachedCodec(codec);
+    private void specialize() {
+        if (specialized) {
+            classModel.getPropertyModels().forEach(this::cachePropertyModelCodec);
+        }
+    }
+
+    private <S> void cachePropertyModelCodec(final PropertyModel<S> propertyModel) {
+        if (propertyModel.getCachedCodec() == null) {
+            Codec<S> codec = propertyModel.getCodec() != null ? propertyModel.getCodec()
+                    : new LazyPropertyModelCodec<>(propertyModel, registry, propertyCodecRegistry, discriminatorLookup);
+            propertyModel.cachedCodec(codec);
+        }
     }
 
     private <S, V> boolean areEquivalentTypes(final Class<S> t1, final Class<V> t2) {
@@ -248,89 +237,6 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
             return true;
         }
         return false;
-    }
-
-
-
-    @SuppressWarnings("unchecked")
-    private <S> Codec<S> specializePojoCodec(final PropertyModel<S> propertyModel) {
-        Codec<S> codec = getCodecFromPropertyRegistry(propertyModel);
-        if (codec instanceof PojoCodec) {
-            PojoCodec<S> pojoCodec = (PojoCodec<S>) codec;
-            ClassModel<S> specialized = getSpecializedClassModel(pojoCodec.getClassModel(), propertyModel);
-            if (codecCache.containsKey(specialized)) {
-                codec = (Codec<S>) codecCache.get(specialized);
-            } else {
-                codec = new LazyPojoCodec<S>(specialized, registry, propertyCodecRegistry, discriminatorLookup, codecCache);
-            }
-        }
-        return codec;
-    }
-
-    @SuppressWarnings("unchecked")
-    private <S> Codec<S> getCodecFromPropertyRegistry(final PropertyModel<S> propertyModel) {
-        Codec<S> codec = null;
-        try {
-            codec = propertyCodecRegistry.get(propertyModel.getTypeData());
-        } catch (CodecConfigurationException e) {
-            return new LazyMissingCodec<S>(propertyModel.getTypeData().getType(), e);
-        }
-        BsonType representation = propertyModel.getBsonRepresentation();
-        if (representation != null) {
-            if (codec instanceof RepresentationConfigurable) {
-                return ((RepresentationConfigurable<S>) codec).withRepresentation(representation);
-            }
-            throw new CodecConfigurationException("Codec must implement RepresentationConfigurable to support BsonRepresentation");
-        }
-        return codec;
-    }
-
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private <S, V> ClassModel<S> getSpecializedClassModel(final ClassModel<S> clazzModel, final PropertyModel<V> propertyModel) {
-        boolean useDiscriminator = propertyModel.useDiscriminator() == null ? clazzModel.useDiscriminator()
-                : propertyModel.useDiscriminator();
-        boolean validDiscriminator = clazzModel.getDiscriminatorKey() != null && clazzModel.getDiscriminator() != null;
-        boolean changeTheDiscriminator = (useDiscriminator != clazzModel.useDiscriminator()) && validDiscriminator;
-
-        if (propertyModel.getTypeData().getTypeParameters().isEmpty() && !changeTheDiscriminator){
-            return clazzModel;
-        }
-
-        ArrayList<PropertyModel<?>> concretePropertyModels = new ArrayList<PropertyModel<?>>(clazzModel.getPropertyModels());
-        PropertyModel<?> concreteIdProperty = clazzModel.getIdPropertyModel();
-
-        List<TypeData<?>> propertyTypeParameters = propertyModel.getTypeData().getTypeParameters();
-        for (int i = 0; i < concretePropertyModels.size(); i++) {
-            PropertyModel<?> model = concretePropertyModels.get(i);
-            String propertyName = model.getName();
-            TypeParameterMap typeParameterMap = clazzModel.getPropertyNameToTypeParameterMap().get(propertyName);
-            if (typeParameterMap.hasTypeParameters()) {
-                PropertyModel<?> concretePropertyModel = getSpecializedPropertyModel(model, propertyTypeParameters, typeParameterMap);
-                concretePropertyModels.set(i, concretePropertyModel);
-                if (concreteIdProperty != null && concreteIdProperty.getName().equals(propertyName)) {
-                    concreteIdProperty = concretePropertyModel;
-                }
-            }
-        }
-
-        boolean discriminatorEnabled = changeTheDiscriminator ? propertyModel.useDiscriminator() : clazzModel.useDiscriminator();
-        return new ClassModel<S>(clazzModel.getType(), clazzModel.getPropertyNameToTypeParameterMap(),
-                clazzModel.getInstanceCreatorFactory(), discriminatorEnabled, clazzModel.getDiscriminatorKey(),
-                clazzModel.getDiscriminator(), IdPropertyModelHolder.create(clazzModel, concreteIdProperty), concretePropertyModels);
-    }
-
-    @SuppressWarnings("unchecked")
-    private <V> PropertyModel<V> getSpecializedPropertyModel(final PropertyModel<V> propertyModel,
-                                                             final List<TypeData<?>> propertyTypeParameters,
-                                                             final TypeParameterMap typeParameterMap) {
-        TypeData<V> specializedPropertyType = specializeTypeData(propertyModel.getTypeData(), propertyTypeParameters, typeParameterMap);
-        if (propertyModel.getTypeData().equals(specializedPropertyType)) {
-            return propertyModel;
-        }
-
-        return new PropertyModel<V>(propertyModel.getName(), propertyModel.getReadName(), propertyModel.getWriteName(),
-                specializedPropertyType, null, propertyModel.getPropertySerialization(), propertyModel.useDiscriminator(),
-                propertyModel.getPropertyAccessor(), propertyModel.getError(), propertyModel.getBsonRepresentation());
     }
 
     @SuppressWarnings("unchecked")
@@ -347,7 +253,10 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
                 if (discriminatorKey.equals(name)) {
                     discriminatorKeyFound = true;
                     try {
-                        codec = (Codec<T>) registry.get(discriminatorLookup.lookup(reader.readString()));
+                        Class<?> discriminatorClass = discriminatorLookup.lookup(reader.readString());
+                        if (!codec.getEncoderClass().equals(discriminatorClass)) {
+                            codec = (Codec<T>) registry.get(discriminatorClass);
+                        }
                     } catch (Exception e) {
                         throw new CodecConfigurationException(format("Failed to decode '%s'. Decoding errored with: %s",
                                 classModel.getName(), e.getMessage()), e);
