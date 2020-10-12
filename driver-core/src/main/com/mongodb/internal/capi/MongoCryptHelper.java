@@ -16,9 +16,12 @@
 
 package com.mongodb.internal.capi;
 
+import com.mongodb.Block;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.connection.ClusterSettings;
+import com.mongodb.connection.SocketSettings;
 import com.mongodb.crypt.capi.MongoAwsKmsProviderOptions;
 import com.mongodb.crypt.capi.MongoCryptOptions;
 import com.mongodb.crypt.capi.MongoLocalKmsProviderOptions;
@@ -70,7 +73,7 @@ public final class MongoCryptHelper {
 
     @SuppressWarnings("unchecked")
     public static List<String> createMongocryptdSpawnArgs(final Map<String, Object> options) {
-        List<String> spawnArgs = new ArrayList<>();
+        List<String> spawnArgs = new ArrayList<String>();
 
         String path = options.containsKey("mongocryptdSpawnPath")
                 ? (String) options.get("mongocryptdSpawnPath")
@@ -91,10 +94,18 @@ public final class MongoCryptHelper {
     public static MongoClientSettings createMongocryptdClientSettings(final String connectionString) {
 
         return MongoClientSettings.builder()
-                .applyToClusterSettings(builder -> builder.serverSelectionTimeout(1, TimeUnit.SECONDS))
-                .applyToSocketSettings(builder -> {
-                    builder.readTimeout(1, TimeUnit.SECONDS);
-                    builder.connectTimeout(1, TimeUnit.SECONDS);
+                .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
+                    @Override
+                    public void apply(final ClusterSettings.Builder builder) {
+                        builder.serverSelectionTimeout(1, TimeUnit.SECONDS);
+                    }
+                })
+                .applyToSocketSettings(new Block<SocketSettings.Builder>() {
+                    @Override
+                    public void apply(final SocketSettings.Builder builder) {
+                        builder.readTimeout(1, TimeUnit.SECONDS);
+                        builder.connectTimeout(1, TimeUnit.SECONDS);
+                    }
                 })
                 .applyConnectionString(new ConnectionString((connectionString != null)
                         ? connectionString : "mongodb://localhost:27020"))

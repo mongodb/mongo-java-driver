@@ -273,8 +273,7 @@ class Crypt implements Closeable {
 
     private void fetchKeys(final MongoCryptContext keyBroker) {
         try {
-            RawBsonDocument mongoOperation = keyBroker.getMongoOperation();
-            for (BsonDocument bsonDocument : keyRetriever.find(mongoOperation)) {
+            for (BsonDocument bsonDocument : keyRetriever.find(keyBroker.getMongoOperation())) {
                 keyBroker.addMongoOperationResult(bsonDocument);
             }
             keyBroker.completeMongoOperation();
