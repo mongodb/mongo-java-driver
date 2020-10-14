@@ -26,6 +26,9 @@ import com.mongodb.crypt.capi.MongoAwsKmsProviderOptions;
 import com.mongodb.crypt.capi.MongoCryptOptions;
 import com.mongodb.crypt.capi.MongoLocalKmsProviderOptions;
 import org.bson.BsonDocument;
+import org.bson.BsonDocumentWrapper;
+import org.bson.Document;
+import org.bson.codecs.DocumentCodec;
 
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -40,6 +43,7 @@ public final class MongoCryptHelper {
                                                             final Map<String, BsonDocument> namespaceToLocalSchemaDocumentMap) {
         MongoCryptOptions.Builder mongoCryptOptionsBuilder = MongoCryptOptions.builder();
 
+        BsonDocument bsonKmsProviders = new BsonDocument();
         for (Map.Entry<String, Map<String, Object>> entry : kmsProviders.entrySet()) {
             if (entry.getKey().equals("aws")) {
                 mongoCryptOptionsBuilder.awsKmsProviderOptions(
@@ -55,9 +59,14 @@ public final class MongoCryptHelper {
                                 .build()
                 );
             } else {
-                throw new MongoClientException("Unrecognized KMS provider key: " + entry.getKey());
+                bsonKmsProviders.put(entry.getKey(), new BsonDocumentWrapper<>(new Document(entry.getValue()), new DocumentCodec()));
             }
         }
+
+        if (!bsonKmsProviders.isEmpty()) {
+            mongoCryptOptionsBuilder.kmsProviderOptions(bsonKmsProviders);
+        }
+
         mongoCryptOptionsBuilder.localSchemaMap(namespaceToLocalSchemaDocumentMap);
         return mongoCryptOptionsBuilder.build();
     }
