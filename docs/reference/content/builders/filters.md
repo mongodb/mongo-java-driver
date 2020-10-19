@@ -87,13 +87,14 @@ This example creates a filter that selects all documents where the value of the 
 and(gt("qty", 20), eq("user", "jdoe"))
 ```
 
-The `and` method generates a `$and` operator only if necessary, as the query language implicity ands together all the elements in a 
-filter. So the above example will render as: 
+The `and` method generates a `$and` operator at all times, so the result would render:
 
 ```json
-{ 
-   "qty" : { "$gt" : 20 },
-   "user" : "jdoe"
+{
+  "$and": [
+    { "qty" : { "$gt" : 20 }},
+    { "user" : "jdoe" }
+  ]
 }
 ```
 

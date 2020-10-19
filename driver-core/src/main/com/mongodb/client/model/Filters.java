@@ -208,9 +208,7 @@ public final class Filters {
     }
 
     /**
-     * Creates a filter that performs a logical AND of the provided list of filters.  Note that this will only generate a "$and"
-     * operator if absolutely necessary, as the query language implicity ands together all the keys.  In other words, a query expression
-     * like:
+     * Creates a filter that performs a logical AND of the provided list of filters.
      *
      * <blockquote><pre>
      *    and(eq("x", 1), lt("y", 3))
@@ -218,7 +216,7 @@ public final class Filters {
      *
      * will generate a MongoDB query like:
      * <blockquote><pre>
-     *    {x : 1, y : {$lt : 3}}
+     *    { $and: [{x : 1}, {y : {$lt : 3}}]}
      * </pre></blockquote>
      *
      * @param filters the list of filters to and together
