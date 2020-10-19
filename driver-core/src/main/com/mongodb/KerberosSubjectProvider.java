@@ -50,6 +50,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 @ThreadSafe
 public class KerberosSubjectProvider implements SubjectProvider {
     private static final Logger LOGGER = Loggers.getLogger("authenticator");
+    private static final String TGT_PREFIX = "krbtgt/";
 
     private final String loginContextName;
     private Subject subject;
@@ -90,7 +91,7 @@ public class KerberosSubjectProvider implements SubjectProvider {
 
     private static boolean needNewSubject(@NonNull final Subject subject) {
         for (KerberosTicket cur : subject.getPrivateCredentials(KerberosTicket.class)) {
-            if (cur.getServer().getName().startsWith("krbtgt/")) {
+            if (cur.getServer().getName().startsWith(TGT_PREFIX)) {
                 if (System.currentTimeMillis() > cur.getEndTime().getTime() - MILLISECONDS.convert(5, MINUTES)) {
                     LOGGER.info("The TGT is close to expiring. Time to reacquire.");
                     return true;

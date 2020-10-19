@@ -37,6 +37,7 @@ import javax.security.auth.Subject
 import javax.security.auth.login.LoginContext
 
 import static com.mongodb.AuthenticationMechanism.GSSAPI
+import static com.mongodb.ClusterFixture.getCredential
 import static com.mongodb.ClusterFixture.getConnectionString
 import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.MongoCredential.JAVA_SUBJECT_PROVIDER_KEY
@@ -44,7 +45,7 @@ import static com.mongodb.MongoCredential.createGSSAPICredential
 import static com.mongodb.internal.connection.CommandHelper.executeCommand
 import static java.util.concurrent.TimeUnit.SECONDS
 
-@IgnoreIf({ ClusterFixture.getCredential() == null || ClusterFixture.getCredential().getAuthenticationMechanism() != GSSAPI })
+@IgnoreIf({ getCredential() == null || getCredential().getAuthenticationMechanism() != GSSAPI })
 class GSSAPIAuthenticationSpecification extends Specification {
 
     def 'should not authorize when not authenticated'() {
@@ -191,7 +192,7 @@ class GSSAPIAuthenticationSpecification extends Specification {
     }
 
     private static MongoCredential getMongoCredential() {
-        ClusterFixture.getCredential()
+        getCredential()
     }
 
     private static InternalStreamConnection createConnection(final boolean async, final MongoCredential credential) {
