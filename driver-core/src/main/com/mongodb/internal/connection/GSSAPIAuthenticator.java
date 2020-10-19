@@ -16,10 +16,13 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.KerberosSubjectProvider;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
+import com.mongodb.SubjectProvider;
+import com.mongodb.lang.NonNull;
 import org.ietf.jgss.GSSCredential;
 import org.ietf.jgss.GSSException;
 import org.ietf.jgss.GSSManager;
@@ -97,5 +100,10 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
         return getNonNullMechanismProperty(CANONICALIZE_HOST_NAME_KEY, CANONICALIZE_HOST_NAME_DEFAULT_VALUE)
                ? InetAddress.getByName(serverAddress.getHost()).getCanonicalHostName()
                : serverAddress.getHost();
+    }
+
+    @NonNull
+    protected SubjectProvider getDefaultSubjectProvider() {
+        return new KerberosSubjectProvider();
     }
 }
