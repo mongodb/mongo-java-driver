@@ -128,6 +128,21 @@ public final class MongoCredential {
     public static final String JAVA_SASL_CLIENT_PROPERTIES_KEY = "JAVA_SASL_CLIENT_PROPERTIES";
 
     /**
+     * Mechanism property key for controlling the {@link javax.security.auth.Subject} under which GSSAPI authentication executes.
+     * <p>
+     * See the {@link SubjectProvider} documentation for a description of how this mechanism property is used.
+     * </p>
+     * <p>
+     * This property is ignored if the {@link #JAVA_SUBJECT_KEY} property is set.
+     * </p>
+     * @see SubjectProvider
+     * @see #createGSSAPICredential(String)
+     * @see #withMechanismProperty(String, Object)
+     * @since 4.2
+     */
+    public static final String JAVA_SUBJECT_PROVIDER_KEY = "JAVA_SUBJECT_PROVIDER";
+
+    /**
      * Mechanism property key for overriding the {@link javax.security.auth.Subject} under which GSSAPI authentication executes.
      *
      * @see #createGSSAPICredential(String)
