@@ -36,6 +36,7 @@ import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -47,6 +48,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class TestCommandListener implements CommandListener {
+    private final List<String> eventTypes;
     private final List<CommandEvent> events = new ArrayList<>();
     private final Lock lock = new ReentrantLock();
     private final Condition commandCompletedCondition = lock.newCondition();
@@ -66,6 +68,14 @@ public class TestCommandListener implements CommandListener {
                         return null;
                     }
                 });
+    }
+
+    public TestCommandListener() {
+        this(Arrays.asList("commandStartedEvent", "commandSucceededEvent", "commandFailedEvent"));
+    }
+
+    public TestCommandListener(final List<String> eventTypes) {
+        this.eventTypes = eventTypes;
     }
 
     public void reset() {
@@ -180,6 +190,9 @@ public class TestCommandListener implements CommandListener {
 
     @Override
     public void commandStarted(final CommandStartedEvent event) {
+        if (!eventTypes.contains("commandStartedEvent")) {
+            return;
+        }
         lock.lock();
         try {
             events.add(new CommandStartedEvent(event.getRequestId(), event.getConnectionDescription(), event.getDatabaseName(),
@@ -192,6 +205,9 @@ public class TestCommandListener implements CommandListener {
 
     @Override
     public void commandSucceeded(final CommandSucceededEvent event) {
+        if (!eventTypes.contains("commandSucceededEvent")) {
+            return;
+        }
         lock.lock();
         try {
             events.add(new CommandSucceededEvent(event.getRequestId(), event.getConnectionDescription(), event.getCommandName(),
@@ -205,6 +221,9 @@ public class TestCommandListener implements CommandListener {
 
     @Override
     public void commandFailed(final CommandFailedEvent event) {
+        if (!eventTypes.contains("commandFailedEvent")) {
+            return;
+        }
         lock.lock();
         try {
             events.add(event);

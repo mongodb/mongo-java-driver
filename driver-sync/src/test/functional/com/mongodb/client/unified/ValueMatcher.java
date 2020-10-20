@@ -1,0 +1,136 @@
+/*
+ * Copyright 2008-present MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.mongodb.client.unified;
+
+import org.bson.BsonDocument;
+import org.bson.BsonType;
+import org.bson.BsonValue;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static java.util.Collections.singletonList;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+final class ValueMatcher {
+    public static void assertValuesMatch(final BsonValue expected, final BsonValue actual) {
+        assertValuesMatch(expected, actual, true);
+    }
+
+    public static void assertValuesMatch(final BsonValue expected, final BsonValue actual, final boolean isRoot) {
+        if (expected.isDocument()) {
+            BsonDocument expectedDocument = expected.asDocument();
+
+            if (expectedDocument.size() == 1 && expectedDocument.getFirstKey().startsWith("$$")) {
+                //noinspection SwitchStatementWithTooFewBranches
+                switch (expectedDocument.getFirstKey()) {
+                    default:
+                        throw new UnsupportedOperationException("Unsupported special operator: " + expectedDocument.getFirstKey());
+                }
+            }
+
+            assertTrue("Actual value must be a document but is " + actual.getBsonType(), actual.isDocument());
+            BsonDocument actualDocument = actual.asDocument();
+            expectedDocument.forEach((key, value) -> {
+                if (value.isDocument() && value.asDocument().size() == 1 && value.asDocument().getFirstKey().startsWith("$$")) {
+                    switch (value.asDocument().getFirstKey()) {
+                        case "$$exists":
+                            assertTrue("Actual document must contain key " + key, actualDocument.containsKey(key));
+                            return;
+                        case "$$type":
+                            List<String> types;
+                            if (value.asDocument().isString("$$type")) {
+                                types = singletonList(value.asDocument().getString("$$type").getValue());
+                            } else if (value.asDocument().isArray("$$type")) {
+                                types = value.asDocument().getArray("$$type").stream()
+                                        .map(type -> type.asString().getValue()).collect(Collectors.toList());
+                            } else {
+                                throw new UnsupportedOperationException("Unsupported type for $$type value");
+                            }
+                            assertTrue(types.contains(asTypeString(actualDocument.get(key).getBsonType())));
+                            return;
+                        case "$$unsetOrMatches":
+                            if (!actualDocument.containsKey(key)) {
+                                return;
+                            }
+                            value = value.asDocument().get("$$unsetOrMatches");
+                            break;
+                        default:
+                            throw new UnsupportedOperationException("Unsupported special operator: " + value.asDocument().getFirstKey());
+                    }
+                }
+
+                assertTrue("Actual document must contain key " + key, actualDocument.containsKey(key));
+                assertValuesMatch(value, actualDocument.get(key), false);
+            });
+            if (!isRoot) {
+                assertEquals("Non-root documents must have same number of keys", expectedDocument.size(), actualDocument.size());
+            }
+        } else if (expected.isArray()) {
+            assertTrue("Actual value must be an array but is " + actual.getBsonType(), actual.isArray());
+            assertEquals("Arrays must be the same size", expected.asArray().size(), actual.asArray().size());
+            for (int i = 0; i < expected.asArray().size(); i++) {
+                assertValuesMatch(expected.asArray().get(i), actual.asArray().get(i), false);
+            }
+        } else if (expected.isNumber()) {
+            assertTrue(actual.isNumber());
+            assertEquals(expected.asNumber().doubleValue(), actual.asNumber().doubleValue(), 0.0);
+        } else {
+            assertEquals(expected.getBsonType(), actual.getBsonType());
+            assertEquals(expected, actual);
+        }
+    }
+
+    private static String asTypeString(final BsonType bsonType) {
+        switch (bsonType) {
+            case DOUBLE:
+                return "double";
+            case STRING:
+                return "string";
+            case DOCUMENT:
+                return "object";
+            case ARRAY:
+                return "array";
+            case BINARY:
+                return "binData";
+            case OBJECT_ID:
+                return "objectId";
+            case BOOLEAN:
+                return "bool";
+            case DATE_TIME:
+                return "date";
+            case NULL:
+                return "null";
+            case REGULAR_EXPRESSION:
+                return "regex";
+            case INT32:
+                return "int";
+            case TIMESTAMP:
+                return "timestamp";
+            case INT64:
+                return "long";
+            case DECIMAL128:
+                return "decimal";
+            default:
+                throw new UnsupportedOperationException("Unsupported bson type conversion to string: " + bsonType);
+        }
+    }
+
+    private ValueMatcher() {
+    }
+}
