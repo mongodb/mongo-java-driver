@@ -56,6 +56,7 @@ public class UnifiedTestValidator extends UnifiedTest {
 
             if (!(fileDocument.getString("description").getValue().equals("poc-crud")
                     || fileDocument.getString("description").getValue().equals("poc-retryable-reads")
+                    || fileDocument.getString("description").getValue().equals("poc-retryable-writes")
                     || fileDocument.getString("description").getValue().equals("poc-command-monitoring")
                     || fileDocument.getString("description").getValue().equals("poc-sessions"))) {
                 continue;

@@ -27,11 +27,13 @@ import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.ReplaceOptions;
+import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
@@ -89,6 +91,43 @@ final class UnifiedCrudHelper {
             }
         }
         return new OperationResult(new BsonArray(iterable.into(new ArrayList<>())));
+    }
+
+    OperationResult executeFindOneAndUpdate(final BsonDocument operation) {
+        MongoCollection<BsonDocument> collection = entities.getCollections().get(operation.getString("object").getValue());
+        BsonDocument arguments = operation.getDocument("arguments");
+
+        BsonDocument filter = null;
+        BsonDocument update = null;
+        FindOneAndUpdateOptions options = new FindOneAndUpdateOptions();
+
+        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
+            switch (cur.getKey()) {
+                case "filter":
+                    filter = cur.getValue().asDocument();
+                    break;
+                case "update":
+                    update = cur.getValue().asDocument();
+                    break;
+                case "returnDocument":
+                    switch (cur.getValue().asString().getValue()) {
+                        case "Before":
+                            options.returnDocument(ReturnDocument.BEFORE);
+                            break;
+                        case "After":
+                            options.returnDocument(ReturnDocument.AFTER);
+                            break;
+                        default:
+                            throw new UnsupportedOperationException("Can't happen");
+                    }
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+            }
+        }
+
+        BsonDocument result = collection.findOneAndUpdate(requireNonNull(filter), requireNonNull(update), options);
+        return new OperationResult(result);
     }
 
     OperationResult executeAggregate(final BsonDocument operation) {

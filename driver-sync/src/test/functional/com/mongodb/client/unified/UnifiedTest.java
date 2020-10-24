@@ -38,6 +38,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -62,6 +63,7 @@ public abstract class UnifiedTest {
     private final UnifiedCrudHelper crudHelper = new UnifiedCrudHelper(entities);
     private final ValueMatcher valueMatcher = new ValueMatcher(entities);
     private final EventMatcher eventMatcher = new EventMatcher(valueMatcher);
+    private List<FailPoint> failPoints = new ArrayList<>();
 
     public UnifiedTest(final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entitiesArray,
                        final BsonArray initialData, final BsonDocument definition) {
@@ -98,6 +100,9 @@ public abstract class UnifiedTest {
 
     @After
     public void cleanUp() {
+        for (FailPoint failPoint: failPoints) {
+            failPoint.disableFailPoint();
+        }
         entities.close();
     }
 
@@ -167,6 +172,8 @@ public abstract class UnifiedTest {
                     return crudHelper.executeAggregate(operation);
                 case "find":
                     return crudHelper.executeFind(operation);
+                case "findOneAndUpdate":
+                    return crudHelper.executeFindOneAndUpdate(operation);
                 case "listDatabases":
                     return crudHelper.executeListDatabases(operation);
                 default:
@@ -183,11 +190,10 @@ public abstract class UnifiedTest {
         return OperationResult.NONE;
     }
 
-    // TODO: disable failPoint after test
     private OperationResult executeFailpoint(final BsonDocument operation) {
-        BsonDocument arguments = operation.getDocument("arguments");
-        MongoClient client = entities.getClients().get(arguments.getString("client").getValue());
-        client.getDatabase("admin").runCommand(arguments.getDocument("failPoint"));
+        FailPoint failPoint = new FailPoint(operation, entities);
+        failPoint.executeFailPoint();
+        failPoints.add(failPoint);
         return OperationResult.NONE;
     }
 
