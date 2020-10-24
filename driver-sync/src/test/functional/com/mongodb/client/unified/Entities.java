@@ -33,6 +33,7 @@ import org.bson.BsonValue;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
@@ -89,6 +90,25 @@ final class Entities {
                         clientSettingsBuilder.addCommandListener(testCommandListener);
                         clientCommandListeners.put(id, testCommandListener);
                     }
+                    if (entity.containsKey("uriOptions")) {
+                        entity.getDocument("uriOptions").forEach((key, value) -> {
+                            switch (key) {
+                                case "retryReads":
+                                   clientSettingsBuilder.retryReads(value.asBoolean().getValue());
+                                   break;
+                                case "retryWrites":
+                                    clientSettingsBuilder.retryWrites(value.asBoolean().getValue());
+                                    break;
+                                default:
+                                    throw new UnsupportedOperationException("Unsupported uri option: " + key);
+                            }
+                        });
+                    }
+                    clientSettingsBuilder.applyToServerSettings(builder -> {
+                        // TODO: only set if not in uriOptions
+                        builder.heartbeatFrequency(50, TimeUnit.MILLISECONDS);
+                        builder.minHeartbeatFrequency(50, TimeUnit.MILLISECONDS);
+                    });
                     clients.put(id, mongoClientSupplier.get(clientSettingsBuilder.build()));
                     break;
                 case "database": {

@@ -55,6 +55,7 @@ public class UnifiedTestValidator extends UnifiedTest {
             BsonDocument fileDocument = getTestDocument(file);
 
             if (!(fileDocument.getString("description").getValue().equals("poc-crud")
+                    || fileDocument.getString("description").getValue().equals("poc-retryable-reads")
                     || fileDocument.getString("description").getValue().equals("poc-command-monitoring")
                     || fileDocument.getString("description").getValue().equals("poc-sessions"))) {
                 continue;

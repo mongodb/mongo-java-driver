@@ -20,6 +20,7 @@ import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.BulkWriteOptions;
@@ -57,6 +58,11 @@ final class UnifiedCrudHelper {
 
     UnifiedCrudHelper(final Entities entities) {
         this.entities = entities;
+    }
+
+    OperationResult executeListDatabases(final BsonDocument operation) {
+        MongoClient client = entities.getClients().get(operation.getString("object").getValue());
+        return new OperationResult(new BsonArray(client.listDatabases(BsonDocument.class).into(new ArrayList<>())));
     }
 
     OperationResult executeFind(final BsonDocument operation) {

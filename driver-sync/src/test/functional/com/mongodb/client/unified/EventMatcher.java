@@ -22,14 +22,10 @@ import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
-import org.bson.BsonString;
-import org.bson.BsonValue;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 final class EventMatcher {
     private final ValueMatcher valueMatcher;
@@ -39,65 +35,38 @@ final class EventMatcher {
     }
 
     public void assertEventsEquality(final BsonArray expectedEventDocuments, final List<CommandEvent> events) {
-        assertEquals(expectedEventDocuments.size(), events.size());
+        assertEquals("Number of events must be the same", expectedEventDocuments.size(), events.size());
 
-        List<CommandEvent> expectedEvents = getExpectedEvents(expectedEventDocuments);
         for (int i = 0; i < events.size(); i++) {
             CommandEvent actual = events.get(i);
-            CommandEvent expected = expectedEvents.get(i);
-
-            assertEquals(expected.getClass(), actual.getClass());
-            assertEquals(expected.getCommandName(), actual.getCommandName());
+            String eventType = expectedEventDocuments.get(i).asDocument().getFirstKey();
+            BsonDocument expected = expectedEventDocuments.get(i).asDocument().getDocument(eventType);
+            if (expected.containsKey("commandName")) {
+                assertEquals("Command names must be equal", expected.getString("commandName").getValue(), actual.getCommandName());
+            }
 
             if (actual.getClass().equals(CommandStartedEvent.class)) {
-                CommandStartedEvent expectedCommandStartedEvent = (CommandStartedEvent) expected;
+                assertEquals(eventType, "commandStartedEvent");
                 CommandStartedEvent actualCommandStartedEvent = (CommandStartedEvent) actual;
 
-                assertEquals(expectedCommandStartedEvent.getDatabaseName(), actualCommandStartedEvent.getDatabaseName());
-                valueMatcher.assertValuesMatch(expectedCommandStartedEvent.getCommand(), actualCommandStartedEvent.getCommand());
-
-            } else if (actual.getClass().equals(CommandSucceededEvent.class)) {
-                CommandSucceededEvent actualCommandSucceededEvent = (CommandSucceededEvent) actual;
-                CommandSucceededEvent expectedCommandSucceededEvent = (CommandSucceededEvent) expected;
-
-                if (expectedCommandSucceededEvent.getResponse() == null) {
-                    assertNull(actualCommandSucceededEvent.getResponse());
-                } else {
-                    valueMatcher.assertValuesMatch(expectedCommandSucceededEvent.getResponse(), actualCommandSucceededEvent.getResponse());
+                if (expected.containsKey("databaseName")) {
+                    assertEquals(expected.getString("databaseName").getValue(), actualCommandStartedEvent.getDatabaseName());
                 }
-            } else if (!actual.getClass().equals(CommandFailedEvent.class)) {
+                if (expected.containsKey("command")) {
+                    valueMatcher.assertValuesMatch(expected.getDocument("command"), actualCommandStartedEvent.getCommand());
+                }
+            } else if (actual.getClass().equals(CommandSucceededEvent.class)) {
+                assertEquals(eventType, "commandSucceededEvent");
+                CommandSucceededEvent actualCommandSucceededEvent = (CommandSucceededEvent) actual;
+
+                if (expected.containsKey("reply")) {
+                    valueMatcher.assertValuesMatch(expected.getDocument("reply"), actualCommandSucceededEvent.getResponse());
+                }
+            } else if (actual.getClass().equals(CommandFailedEvent.class)) {
+                assertEquals(eventType, "commandFailedEvent");
+            } else {
                 throw new UnsupportedOperationException("Unsupported event type: " + actual.getClass());
             }
         }
-    }
-
-    private static List<CommandEvent> getExpectedEvents(final BsonArray expectedEventDocuments) {
-        List<CommandEvent> expectedEvents = new ArrayList<>(expectedEventDocuments.size());
-        for (BsonValue expectedEventDocument : expectedEventDocuments) {
-            BsonDocument curExpectedEventDocument = expectedEventDocument.asDocument();
-            String eventType = curExpectedEventDocument.getFirstKey();
-            BsonDocument eventDescriptionDocument = curExpectedEventDocument.getDocument(eventType);
-            String commandName = eventDescriptionDocument.getString("commandName", new BsonString("")).getValue();
-            CommandEvent commandEvent;
-            switch (eventType) {
-                case "commandStartedEvent":
-                    commandEvent = new CommandStartedEvent(1, null,
-                            eventDescriptionDocument.getString("databaseName").getValue(), commandName,
-                            eventDescriptionDocument.getDocument("command"));
-                    break;
-                case "commandSucceededEvent":
-                    BsonDocument replyDocument = eventDescriptionDocument.get("reply").asDocument();
-                    commandEvent = new CommandSucceededEvent(1, null, commandName, replyDocument, 1);
-
-                    break;
-                case "commandFailedEvent":
-                    commandEvent = new CommandFailedEvent(1, null, commandName, 1, null);
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Unsupported command event type: " + eventType);
-            }
-            expectedEvents.add(commandEvent);
-        }
-        return expectedEvents;
     }
 }

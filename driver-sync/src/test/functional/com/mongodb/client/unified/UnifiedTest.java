@@ -167,6 +167,8 @@ public abstract class UnifiedTest {
                     return crudHelper.executeAggregate(operation);
                 case "find":
                     return crudHelper.executeFind(operation);
+                case "listDatabases":
+                    return crudHelper.executeListDatabases(operation);
                 default:
                     throw new UnsupportedOperationException("Unsupported test operation: " + name);
             }
