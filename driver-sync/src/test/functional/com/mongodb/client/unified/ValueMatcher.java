@@ -28,22 +28,37 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 final class ValueMatcher {
-    public static void assertValuesMatch(final BsonValue expected, final BsonValue actual) {
+    private final Entities entities;
+
+    ValueMatcher(final Entities entities) {
+        this.entities = entities;
+    }
+
+    public void assertValuesMatch(final BsonValue expected, final BsonValue actual) {
         assertValuesMatch(expected, actual, true);
     }
 
-    public static void assertValuesMatch(final BsonValue expected, final BsonValue actual, final boolean isRoot) {
+    private void assertValuesMatch(final BsonValue initialExpected, final BsonValue actual, final boolean isRoot) {
+        BsonValue expected = initialExpected;
+        if (initialExpected.isDocument() && initialExpected.asDocument().size() == 1
+                && initialExpected.asDocument().getFirstKey().startsWith("$$")) {
+            BsonDocument expectedDocument = initialExpected.asDocument();
+
+            //noinspection SwitchStatementWithTooFewBranches
+            switch (expectedDocument.getFirstKey()) {
+                case "$$unsetOrMatches":
+                    if (actual == null) {
+                        return;
+                    }
+                    expected = expectedDocument.get("$$unsetOrMatches");
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported special operator: " + expectedDocument.getFirstKey());
+            }
+        }
+
         if (expected.isDocument()) {
             BsonDocument expectedDocument = expected.asDocument();
-
-            if (expectedDocument.size() == 1 && expectedDocument.getFirstKey().startsWith("$$")) {
-                //noinspection SwitchStatementWithTooFewBranches
-                switch (expectedDocument.getFirstKey()) {
-                    default:
-                        throw new UnsupportedOperationException("Unsupported special operator: " + expectedDocument.getFirstKey());
-                }
-            }
-
             assertTrue("Actual value must be a document but is " + actual.getBsonType(), actual.isDocument());
             BsonDocument actualDocument = actual.asDocument();
             expectedDocument.forEach((key, value) -> {
@@ -69,6 +84,9 @@ final class ValueMatcher {
                                 return;
                             }
                             value = value.asDocument().get("$$unsetOrMatches");
+                            break;
+                        case "$$sessionLsid":
+                            value = entities.getSessionIdentifiers().get(value.asDocument().getString("$$sessionLsid").getValue());
                             break;
                         default:
                             throw new UnsupportedOperationException("Unsupported special operator: " + value.asDocument().getFirstKey());
@@ -129,8 +147,5 @@ final class ValueMatcher {
             default:
                 throw new UnsupportedOperationException("Unsupported bson type conversion to string: " + bsonType);
         }
-    }
-
-    private ValueMatcher() {
     }
 }

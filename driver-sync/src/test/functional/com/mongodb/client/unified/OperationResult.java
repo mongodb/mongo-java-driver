@@ -19,6 +19,9 @@ package com.mongodb.client.unified;
 import org.bson.BsonValue;
 
 final class OperationResult {
+
+    public static final OperationResult NONE = new OperationResult();
+
     private final BsonValue result;
 
     OperationResult() {

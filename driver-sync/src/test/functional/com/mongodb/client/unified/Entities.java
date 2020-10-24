@@ -42,6 +42,7 @@ final class Entities {
     private final Map<String, MongoDatabase> databases = new HashMap<>();
     private final Map<String, MongoCollection<BsonDocument>> collections = new HashMap<>();
     private final Map<String, ClientSession> sessions = new HashMap<>();
+    private final Map<String, BsonDocument> sessionIdentifiers = new HashMap<>();
     private final Map<String, GridFSBucket> buckets = new HashMap<>();
     private final Map<String, TestCommandListener> clientCommandListeners = new HashMap<>();
 
@@ -59,6 +60,10 @@ final class Entities {
 
     public Map<String, ClientSession> getSessions() {
         return sessions;
+    }
+
+    public Map<String, BsonDocument> getSessionIdentifiers() {
+        return sessionIdentifiers;
     }
 
     public Map<String, GridFSBucket> getBuckets() {
@@ -113,7 +118,9 @@ final class Entities {
                 case "session": {
                     MongoClient client = getClients().get(entity.getString("client").getValue());
                     ClientSessionOptions options = ClientSessionOptions.builder().build();
-                    sessions.put(id, client.startSession(options));
+                    ClientSession session = client.startSession(options);
+                    sessions.put(id, session);
+                    sessionIdentifiers.put(id, session.getServerSession().getIdentifier());
                     break;
                 }
                 case "bucket": {

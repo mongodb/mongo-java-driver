@@ -190,7 +190,7 @@ public class TestCommandListener implements CommandListener {
 
     @Override
     public void commandStarted(final CommandStartedEvent event) {
-        if (!eventTypes.contains("commandStartedEvent")) {
+        if (!eventTypes.contains("commandStartedEvent") || event.getCommandName().equals("configureFailPoint")) {
             return;
         }
         lock.lock();
@@ -205,7 +205,7 @@ public class TestCommandListener implements CommandListener {
 
     @Override
     public void commandSucceeded(final CommandSucceededEvent event) {
-        if (!eventTypes.contains("commandSucceededEvent")) {
+        if (!eventTypes.contains("commandSucceededEvent") || event.getCommandName().equals("configureFailPoint")) {
             return;
         }
         lock.lock();
@@ -221,7 +221,7 @@ public class TestCommandListener implements CommandListener {
 
     @Override
     public void commandFailed(final CommandFailedEvent event) {
-        if (!eventTypes.contains("commandFailedEvent")) {
+        if (!eventTypes.contains("commandFailedEvent") || event.getCommandName().equals("configureFailPoint")) {
             return;
         }
         lock.lock();

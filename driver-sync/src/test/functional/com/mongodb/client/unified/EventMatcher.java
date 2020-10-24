@@ -32,9 +32,47 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 final class EventMatcher {
+    private final ValueMatcher valueMatcher;
 
-    public static List<CommandEvent> getExpectedEvents(final BsonArray expectedEventDocuments) {
-        List<CommandEvent> expectedEvents = new ArrayList<CommandEvent>(expectedEventDocuments.size());
+    EventMatcher(final ValueMatcher valueMatcher) {
+        this.valueMatcher = valueMatcher;
+    }
+
+    public void assertEventsEquality(final BsonArray expectedEventDocuments, final List<CommandEvent> events) {
+        assertEquals(expectedEventDocuments.size(), events.size());
+
+        List<CommandEvent> expectedEvents = getExpectedEvents(expectedEventDocuments);
+        for (int i = 0; i < events.size(); i++) {
+            CommandEvent actual = events.get(i);
+            CommandEvent expected = expectedEvents.get(i);
+
+            assertEquals(expected.getClass(), actual.getClass());
+            assertEquals(expected.getCommandName(), actual.getCommandName());
+
+            if (actual.getClass().equals(CommandStartedEvent.class)) {
+                CommandStartedEvent expectedCommandStartedEvent = (CommandStartedEvent) expected;
+                CommandStartedEvent actualCommandStartedEvent = (CommandStartedEvent) actual;
+
+                assertEquals(expectedCommandStartedEvent.getDatabaseName(), actualCommandStartedEvent.getDatabaseName());
+                valueMatcher.assertValuesMatch(expectedCommandStartedEvent.getCommand(), actualCommandStartedEvent.getCommand());
+
+            } else if (actual.getClass().equals(CommandSucceededEvent.class)) {
+                CommandSucceededEvent actualCommandSucceededEvent = (CommandSucceededEvent) actual;
+                CommandSucceededEvent expectedCommandSucceededEvent = (CommandSucceededEvent) expected;
+
+                if (expectedCommandSucceededEvent.getResponse() == null) {
+                    assertNull(actualCommandSucceededEvent.getResponse());
+                } else {
+                    valueMatcher.assertValuesMatch(expectedCommandSucceededEvent.getResponse(), actualCommandSucceededEvent.getResponse());
+                }
+            } else if (!actual.getClass().equals(CommandFailedEvent.class)) {
+                throw new UnsupportedOperationException("Unsupported event type: " + actual.getClass());
+            }
+        }
+    }
+
+    private static List<CommandEvent> getExpectedEvents(final BsonArray expectedEventDocuments) {
+        List<CommandEvent> expectedEvents = new ArrayList<>(expectedEventDocuments.size());
         for (BsonValue expectedEventDocument : expectedEventDocuments) {
             BsonDocument curExpectedEventDocument = expectedEventDocument.asDocument();
             String eventType = curExpectedEventDocument.getFirstKey();
@@ -61,40 +99,5 @@ final class EventMatcher {
             expectedEvents.add(commandEvent);
         }
         return expectedEvents;
-    }
-
-    public static void assertEventsEquality(final List<CommandEvent> expectedEvents, final List<CommandEvent> events) {
-        assertEquals(expectedEvents.size(), events.size());
-
-        for (int i = 0; i < events.size(); i++) {
-            CommandEvent actual = events.get(i);
-            CommandEvent expected = expectedEvents.get(i);
-
-            assertEquals(expected.getClass(), actual.getClass());
-            assertEquals(expected.getCommandName(), actual.getCommandName());
-
-            if (actual.getClass().equals(CommandStartedEvent.class)) {
-                CommandStartedEvent expectedCommandStartedEvent = (CommandStartedEvent) expected;
-                CommandStartedEvent actualCommandStartedEvent = (CommandStartedEvent) actual;
-
-                assertEquals(expectedCommandStartedEvent.getDatabaseName(), actualCommandStartedEvent.getDatabaseName());
-                ValueMatcher.assertValuesMatch(expectedCommandStartedEvent.getCommand(), actualCommandStartedEvent.getCommand());
-
-            } else if (actual.getClass().equals(CommandSucceededEvent.class)) {
-                CommandSucceededEvent actualCommandSucceededEvent = (CommandSucceededEvent) actual;
-                CommandSucceededEvent expectedCommandSucceededEvent = (CommandSucceededEvent) expected;
-
-                if (expectedCommandSucceededEvent.getResponse() == null) {
-                    assertNull(actualCommandSucceededEvent.getResponse());
-                } else {
-                    ValueMatcher.assertValuesMatch(expectedCommandSucceededEvent.getResponse(), actualCommandSucceededEvent.getResponse());
-                }
-            } else if (!actual.getClass().equals(CommandFailedEvent.class)) {
-                throw new UnsupportedOperationException("Unsupported event type: " + actual.getClass());
-            }
-        }
-    }
-
-    private EventMatcher() {
     }
 }

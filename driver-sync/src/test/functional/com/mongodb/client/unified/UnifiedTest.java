@@ -19,10 +19,12 @@ package com.mongodb.client.unified;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.event.CommandEvent;
+import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -37,13 +39,15 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.getServerVersion;
-import static com.mongodb.client.unified.EventMatcher.assertEventsEquality;
 import static com.mongodb.client.unified.RunOnRequirementsMatcher.runOnRequirementsMet;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
@@ -56,6 +60,8 @@ public abstract class UnifiedTest {
     private final BsonDocument definition;
     private final Entities entities = new Entities();
     private final UnifiedCrudHelper crudHelper = new UnifiedCrudHelper(entities);
+    private final ValueMatcher valueMatcher = new ValueMatcher(entities);
+    private final EventMatcher eventMatcher = new EventMatcher(valueMatcher);
 
     public UnifiedTest(final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entitiesArray,
                        final BsonArray initialData, final BsonDocument definition) {
@@ -101,7 +107,7 @@ public abstract class UnifiedTest {
             BsonDocument operation = cur.asDocument();
             OperationResult result = executeOperation(operation);
             if (operation.containsKey("expectResult")) {
-                ValueMatcher.assertValuesMatch(operation.get("expectResult"), requireNonNull(result.getResult()));
+                valueMatcher.assertValuesMatch(operation.get("expectResult"), requireNonNull(result.getResult()));
             }
         }
 
@@ -118,12 +124,7 @@ public abstract class UnifiedTest {
         for (BsonValue cur : operation.getArray("expectEvents")) {
             BsonDocument curClientEvents = cur.asDocument();
             TestCommandListener listener = entities.getClientCommandListeners().get(curClientEvents.getString("client").getValue());
-            List<CommandEvent> expectedEvents = EventMatcher.getExpectedEvents(curClientEvents.getArray("events"));
-            List<CommandEvent> events = listener.getEvents();
-
-            assertEquals(String.format("Actual number of events (%d) is less than expected number of events (%d)",
-                    events.size(), expectedEvents.size()), expectedEvents.size(), events.size());
-            assertEventsEquality(expectedEvents, events.subList(0, expectedEvents.size()));
+            eventMatcher.assertEventsEquality(curClientEvents.getArray("events"), listener.getEvents());
         }
     }
 
@@ -132,7 +133,7 @@ public abstract class UnifiedTest {
             BsonDocument curDocument = cur.asDocument();
             MongoNamespace namespace = new MongoNamespace(curDocument.getString("databaseName").getValue(),
                     curDocument.getString("collectionName").getValue());
-            List<BsonDocument> collectionData = new CollectionHelper<BsonDocument>(new BsonDocumentCodec(), namespace).find();
+            List<BsonDocument> collectionData = new CollectionHelper<>(new BsonDocumentCodec(), namespace).find();
             assertEquals(curDocument.getArray("documents").stream().map(BsonValue::asDocument).collect(toList()),
                     collectionData);
         }
@@ -142,8 +143,22 @@ public abstract class UnifiedTest {
         String name = operation.getString("name").getValue();
         try {
             switch (name) {
+                case "failPoint":
+                    return executeFailpoint(operation);
+                case "endSession":
+                    return executeEndSession(operation);
+                case "assertSessionDirty":
+                    return executeAssertSessionDirty(operation);
+                case "assertSessionNotDirty":
+                    return executeAssertSessionNotDirty(operation);
+                case "assertSameLsidOnLastTwoCommands":
+                    return executeAssertSameLsidOnLastTwoCommands(operation);
+                case "assertDifferentLsidOnLastTwoCommands":
+                    return executeAssertDifferentLsidOnLastTwoCommands(operation);
                 case "bulkWrite":
                     return crudHelper.executeBulkWrite(operation);
+                case "insertOne":
+                    return crudHelper.executeInsertOne(operation);
                 case "insertMany":
                     return crudHelper.executeInsertMany(operation);
                 case "replaceOne":
@@ -163,7 +178,67 @@ public abstract class UnifiedTest {
                 throw e;
             }
         }
-        return new OperationResult();
+        return OperationResult.NONE;
+    }
+
+    // TODO: disable failPoint after test
+    private OperationResult executeFailpoint(final BsonDocument operation) {
+        BsonDocument arguments = operation.getDocument("arguments");
+        MongoClient client = entities.getClients().get(arguments.getString("client").getValue());
+        client.getDatabase("admin").runCommand(arguments.getDocument("failPoint"));
+        return OperationResult.NONE;
+    }
+
+    private OperationResult executeEndSession(final BsonDocument operation) {
+        ClientSession session = entities.getSessions().get(operation.getString("object").getValue());
+        session.close();
+        return OperationResult.NONE;
+    }
+
+    private OperationResult executeAssertSessionDirty(final BsonDocument operation) {
+        return executeAssertSessionDirtiness(operation, true);
+    }
+
+    private OperationResult executeAssertSessionNotDirty(final BsonDocument operation) {
+        return executeAssertSessionDirtiness(operation, false);
+    }
+
+    private OperationResult executeAssertSessionDirtiness(final BsonDocument operation, final boolean expected) {
+        ClientSession session = entities.getSessions().get(operation.getDocument("arguments").getString("session").getValue());
+        assertNotNull(session.getServerSession());
+        assertEquals(expected, session.getServerSession().isMarkedDirty());
+        return OperationResult.NONE;
+    }
+
+    private OperationResult executeAssertSameLsidOnLastTwoCommands(final BsonDocument operation) {
+        return executeAssertLsidOnLastTwoCommands(operation, true);
+    }
+
+    private OperationResult executeAssertDifferentLsidOnLastTwoCommands(final BsonDocument operation) {
+       return executeAssertLsidOnLastTwoCommands(operation, false);
+    }
+
+    private OperationResult executeAssertLsidOnLastTwoCommands(final BsonDocument operation, final boolean same) {
+        TestCommandListener listener = entities.getClientCommandListeners()
+                .get(operation.getDocument("arguments").getString("client").getValue());
+        List<CommandEvent> events = lastTwoCommandEvents(listener);
+        String eventsJson = listener.getCommandStartedEvents().stream()
+                .map(e -> ((CommandStartedEvent) e).getCommand().toJson())
+                .collect(Collectors.joining(", "));
+        BsonDocument expected = ((CommandStartedEvent) events.get(0)).getCommand().getDocument("lsid");
+        BsonDocument actual = ((CommandStartedEvent) events.get(1)).getCommand().getDocument("lsid");
+        if (same) {
+            assertEquals(eventsJson, expected, actual);
+        } else {
+            assertNotEquals(eventsJson, expected, actual);
+        }
+        return OperationResult.NONE;
+    }
+
+    private List<CommandEvent> lastTwoCommandEvents(final TestCommandListener listener) {
+        List<CommandEvent> events = listener.getCommandStartedEvents();
+        assertTrue(events.size() >= 2);
+        return events.subList(events.size() - 2, events.size());
     }
 
     private void addInitialData() {

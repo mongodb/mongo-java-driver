@@ -18,6 +18,7 @@ package com.mongodb.client.unified;
 
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.ClientSession;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -27,6 +28,7 @@ import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneModel;
+import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.UpdateManyModel;
@@ -34,6 +36,7 @@ import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.InsertManyResult;
+import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -130,6 +133,36 @@ final class UnifiedCrudHelper {
                 .append("modifiedCount", new BsonInt32((int) result.getModifiedCount()))
                 .append("upsertedId", result.getUpsertedId())
         );
+    }
+
+
+    OperationResult executeInsertOne(final BsonDocument operation) {
+        MongoCollection<BsonDocument> collection = entities.getCollections().get(operation.getString("object").getValue());
+        ClientSession session = null;
+        BsonDocument document = null;
+        InsertOneOptions options = new InsertOneOptions();
+
+        for (Map.Entry<String, BsonValue> cur : operation.getDocument("arguments").entrySet()) {
+            switch (cur.getKey()) {
+                case "session":
+                    session = entities.getSessions().get(cur.getValue().asString().getValue());
+                    break;
+                case "document":
+                    document = cur.getValue().asDocument();
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+            }
+        }
+        InsertOneResult result = session == null
+                ? collection.insertOne(requireNonNull(document), options)
+                : collection.insertOne(session, requireNonNull(document), options);
+        return toExpected(result);
+    }
+
+    private OperationResult toExpected(final InsertOneResult result) {
+        return new OperationResult(new BsonDocument()
+                .append("insertedId", result.getInsertedId()));
     }
 
     OperationResult executeInsertMany(final BsonDocument operation) {
