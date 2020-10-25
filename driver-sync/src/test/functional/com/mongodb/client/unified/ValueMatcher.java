@@ -91,7 +91,7 @@ final class ValueMatcher {
                             value = value.asDocument().get("$$unsetOrMatches");
                             break;
                         case "$$sessionLsid":
-                            value = entities.getSessionIdentifiers().get(value.asDocument().getString("$$sessionLsid").getValue());
+                            value = entities.getSessionIdentifier(value.asDocument().getString("$$sessionLsid").getValue());
                             break;
                         default:
                             throw new UnsupportedOperationException("Unsupported special operator: " + value.asDocument().getFirstKey());

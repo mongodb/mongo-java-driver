@@ -47,32 +47,32 @@ final class Entities {
     private final Map<String, GridFSBucket> buckets = new HashMap<>();
     private final Map<String, TestCommandListener> clientCommandListeners = new HashMap<>();
 
-    public Map<String, MongoClient> getClients() {
-        return clients;
+    public MongoClient getClient(final String id) {
+        return clients.get(id);
     }
 
-    public Map<String, MongoDatabase> getDatabases() {
-        return databases;
+    public MongoDatabase getDatabase(final String id) {
+        return databases.get(id);
     }
 
-    public Map<String, MongoCollection<BsonDocument>> getCollections() {
-        return collections;
+    public MongoCollection<BsonDocument> getCollection(final String id) {
+        return collections.get(id);
     }
 
-    public Map<String, ClientSession> getSessions() {
-        return sessions;
+    public ClientSession getSession(final String id) {
+        return sessions.get(id);
     }
 
-    public Map<String, BsonDocument> getSessionIdentifiers() {
-        return sessionIdentifiers;
+    public BsonDocument getSessionIdentifier(final String id) {
+        return sessionIdentifiers.get(id);
     }
 
-    public Map<String, GridFSBucket> getBuckets() {
-        return buckets;
+    public GridFSBucket getBucket(final String id) {
+        return buckets.get(id);
     }
 
-    public Map<String, TestCommandListener> getClientCommandListeners() {
-        return clientCommandListeners;
+    public TestCommandListener getClientCommandListener(final String id) {
+        return clientCommandListeners.get(id);
     }
 
     public void init(final BsonArray entitiesArray, final MongoClientSupplier mongoClientSupplier) {
@@ -112,12 +112,12 @@ final class Entities {
                     clients.put(id, mongoClientSupplier.get(clientSettingsBuilder.build()));
                     break;
                 case "database": {
-                    MongoClient client = getClients().get(entity.getString("client").getValue());
+                    MongoClient client = clients.get(entity.getString("client").getValue());
                     databases.put(id, client.getDatabase(entity.getString("databaseName").getValue()));
                     break;
                 }
                 case "collection": {
-                    MongoDatabase database = getDatabases().get(entity.getString("database").getValue());
+                    MongoDatabase database = databases.get(entity.getString("database").getValue());
                     MongoCollection<BsonDocument> collection = database.getCollection(entity.getString("collectionName").getValue(),
                             BsonDocument.class);
                     if (entity.containsKey("collectionOptions")) {
@@ -136,7 +136,7 @@ final class Entities {
                     break;
                 }
                 case "session": {
-                    MongoClient client = getClients().get(entity.getString("client").getValue());
+                    MongoClient client = clients.get(entity.getString("client").getValue());
                     ClientSessionOptions options = ClientSessionOptions.builder().build();
                     ClientSession session = client.startSession(options);
                     sessions.put(id, session);
@@ -144,7 +144,7 @@ final class Entities {
                     break;
                 }
                 case "bucket": {
-                    MongoDatabase database = getDatabases().get(entity.getString("database").getValue());
+                    MongoDatabase database = databases.get(entity.getString("database").getValue());
                     buckets.put(id, GridFSBuckets.create(database));
                     break;
                 }
@@ -159,7 +159,7 @@ final class Entities {
     }
 
     public void close() {
-        for (MongoClient client : getClients().values()) {
+        for (MongoClient client : clients.values()) {
             client.close();
         }
     }

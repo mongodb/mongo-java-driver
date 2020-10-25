@@ -131,7 +131,7 @@ public abstract class UnifiedTest {
     private void compareEvents(final BsonDocument operation) {
         for (BsonValue cur : operation.getArray("expectEvents")) {
             BsonDocument curClientEvents = cur.asDocument();
-            TestCommandListener listener = entities.getClientCommandListeners().get(curClientEvents.getString("client").getValue());
+            TestCommandListener listener = entities.getClientCommandListener(curClientEvents.getString("client").getValue());
             eventMatcher.assertEventsEquality(curClientEvents.getArray("events"), listener.getEvents());
         }
     }
@@ -223,7 +223,7 @@ public abstract class UnifiedTest {
     }
 
     private OperationResult executeEndSession(final BsonDocument operation) {
-        ClientSession session = entities.getSessions().get(operation.getString("object").getValue());
+        ClientSession session = entities.getSession(operation.getString("object").getValue());
         session.close();
         return OperationResult.NONE;
     }
@@ -237,7 +237,7 @@ public abstract class UnifiedTest {
     }
 
     private OperationResult executeAssertSessionDirtiness(final BsonDocument operation, final boolean expected) {
-        ClientSession session = entities.getSessions().get(operation.getDocument("arguments").getString("session").getValue());
+        ClientSession session = entities.getSession(operation.getDocument("arguments").getString("session").getValue());
         assertNotNull(session.getServerSession());
         assertEquals(expected, session.getServerSession().isMarkedDirty());
         return OperationResult.NONE;
@@ -252,8 +252,8 @@ public abstract class UnifiedTest {
     }
 
     private OperationResult executeAssertLsidOnLastTwoCommands(final BsonDocument operation, final boolean same) {
-        TestCommandListener listener = entities.getClientCommandListeners()
-                .get(operation.getDocument("arguments").getString("client").getValue());
+        TestCommandListener listener = entities.getClientCommandListener(
+                operation.getDocument("arguments").getString("client").getValue());
         List<CommandEvent> events = lastTwoCommandEvents(listener);
         String eventsJson = listener.getCommandStartedEvents().stream()
                 .map(e -> ((CommandStartedEvent) e).getCommand().toJson())
@@ -270,7 +270,7 @@ public abstract class UnifiedTest {
 
     private OperationResult executeAssertSessionTransactionState(final BsonDocument operation) {
         BsonDocument arguments = operation.getDocument("arguments");
-        ClientSession session = entities.getSessions().get(arguments.getString("session").getValue());
+        ClientSession session = entities.getSession(arguments.getString("session").getValue());
         String state = arguments.getString("state").getValue();
         //noinspection SwitchStatementWithTooFewBranches
         switch (state) {

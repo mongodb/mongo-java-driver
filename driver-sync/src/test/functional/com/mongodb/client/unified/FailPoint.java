@@ -26,7 +26,7 @@ final class FailPoint {
 
     protected FailPoint(final BsonDocument operation, final Entities entities) {
         BsonDocument arguments = operation.getDocument("arguments");
-        client = entities.getClients().get(arguments.getString("client").getValue());
+        client = entities.getClient(arguments.getString("client").getValue());
         failPointDocument = arguments.getDocument("failPoint");
     }
 
