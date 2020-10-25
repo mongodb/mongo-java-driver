@@ -21,6 +21,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
+import com.mongodb.client.model.Filters;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.event.CommandEvent;
@@ -43,10 +44,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.getServerVersion;
+import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.unified.RunOnRequirementsMatcher.runOnRequirementsMet;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -63,7 +66,7 @@ public abstract class UnifiedTest {
     private final UnifiedCrudHelper crudHelper = new UnifiedCrudHelper(entities);
     private final ValueMatcher valueMatcher = new ValueMatcher(entities);
     private final EventMatcher eventMatcher = new EventMatcher(valueMatcher);
-    private List<FailPoint> failPoints = new ArrayList<>();
+    private final List<FailPoint> failPoints = new ArrayList<>();
 
     public UnifiedTest(final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entitiesArray,
                        final BsonArray initialData, final BsonDocument definition) {
@@ -160,6 +163,16 @@ public abstract class UnifiedTest {
                     return executeAssertSameLsidOnLastTwoCommands(operation);
                 case "assertDifferentLsidOnLastTwoCommands":
                     return executeAssertDifferentLsidOnLastTwoCommands(operation);
+                case "assertSessionTransactionState":
+                    return executeAssertSessionTransactionState(operation);
+                case "assertCollectionExists":
+                    return executeAssertCollectionExists(operation);
+                case "assertCollectionNotExists":
+                    return executeAssertCollectionNotExists(operation);
+                case "assertIndexExists":
+                    return executeAssertIndexExists(operation);
+                case "assertIndexNotExists":
+                    return executeAssertIndexNotExists(operation);
                 case "bulkWrite":
                     return crudHelper.executeBulkWrite(operation);
                 case "insertOne":
@@ -176,6 +189,18 @@ public abstract class UnifiedTest {
                     return crudHelper.executeFindOneAndUpdate(operation);
                 case "listDatabases":
                     return crudHelper.executeListDatabases(operation);
+                case "dropCollection":
+                    return crudHelper.executeDropCollection(operation);
+                case "createCollection":
+                    return crudHelper.executeCreateCollection(operation);
+                case "createIndex":
+                    return crudHelper.executeCreateIndex(operation);
+                case "startTransaction":
+                    return crudHelper.executeStartTransaction(operation);
+                case "commitTransaction":
+                    return crudHelper.executeCommitTransaction(operation);
+                case "abortTransaction":
+                    return crudHelper.executeAbortTransaction(operation);
                 default:
                     throw new UnsupportedOperationException("Unsupported test operation: " + name);
             }
@@ -241,6 +266,59 @@ public abstract class UnifiedTest {
             assertNotEquals(eventsJson, expected, actual);
         }
         return OperationResult.NONE;
+    }
+
+    private OperationResult executeAssertSessionTransactionState(final BsonDocument operation) {
+        BsonDocument arguments = operation.getDocument("arguments");
+        ClientSession session = entities.getSessions().get(arguments.getString("session").getValue());
+        String state = arguments.getString("state").getValue();
+        //noinspection SwitchStatementWithTooFewBranches
+        switch (state) {
+            case "starting":
+                assertTrue(session.hasActiveTransaction());
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupported transaction state: " + state);
+        }
+        return OperationResult.NONE;
+    }
+
+    private OperationResult executeAssertCollectionExists(final BsonDocument operation) {
+        assertTrue(collectionExists(operation));
+        return OperationResult.NONE;
+    }
+
+    private OperationResult executeAssertCollectionNotExists(final BsonDocument operation) {
+        assertFalse(collectionExists(operation));
+        return OperationResult.NONE;
+    }
+
+    private boolean collectionExists(final BsonDocument operation) {
+        BsonDocument arguments = operation.getDocument("arguments");
+        String databaseName = arguments.getString("databaseName").getValue();
+        String collectionName = arguments.getString("collectionName").getValue();
+        return getMongoClient().getDatabase(databaseName)
+                .listCollections().filter(Filters.eq("name", collectionName)).first() != null;
+    }
+
+    private OperationResult executeAssertIndexExists(final BsonDocument operation) {
+        assertTrue(indexExists(operation));
+        return OperationResult.NONE;
+    }
+
+    private OperationResult executeAssertIndexNotExists(final BsonDocument operation) {
+        assertFalse(indexExists(operation));
+        return OperationResult.NONE;
+    }
+
+    private boolean indexExists(final BsonDocument operation) {
+        BsonDocument arguments = operation.getDocument("arguments");
+        String databaseName = arguments.getString("databaseName").getValue();
+        String collectionName = arguments.getString("collectionName").getValue();
+        String indexName = arguments.getString("indexName").getValue();
+        return getMongoClient().getDatabase(databaseName).getCollection(collectionName)
+                .listIndexes(BsonDocument.class).into(new ArrayList<>()).stream()
+                .anyMatch(document -> document.getString("name").getValue().equals(indexName));
     }
 
     private List<CommandEvent> lastTwoCommandEvents(final TestCommandListener listener) {

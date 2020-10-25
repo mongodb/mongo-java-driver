@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 final class ValueMatcher {
@@ -65,7 +66,11 @@ final class ValueMatcher {
                 if (value.isDocument() && value.asDocument().size() == 1 && value.asDocument().getFirstKey().startsWith("$$")) {
                     switch (value.asDocument().getFirstKey()) {
                         case "$$exists":
-                            assertTrue("Actual document must contain key " + key, actualDocument.containsKey(key));
+                            if (value.asDocument().getBoolean("$$exists").getValue()) {
+                                assertTrue("Actual document must contain key " + key, actualDocument.containsKey(key));
+                            } else {
+                                assertFalse("Actual document must not contain key " + key, actualDocument.containsKey(key));
+                            }
                             return;
                         case "$$type":
                             List<String> types;

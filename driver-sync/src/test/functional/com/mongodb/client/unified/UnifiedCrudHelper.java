@@ -28,6 +28,7 @@ import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.InsertOneOptions;
@@ -320,5 +321,86 @@ final class UnifiedCrudHelper {
             }
         }
         return options;
+    }
+
+    OperationResult executeStartTransaction(final BsonDocument operation) {
+        ClientSession session = entities.getSessions().get(operation.getString("object").getValue());
+        session.startTransaction();
+        return OperationResult.NONE;
+    }
+
+    OperationResult executeCommitTransaction(final BsonDocument operation) {
+        ClientSession session = entities.getSessions().get(operation.getString("object").getValue());
+        session.commitTransaction();
+        return OperationResult.NONE;
+    }
+
+    OperationResult executeAbortTransaction(final BsonDocument operation) {
+        ClientSession session = entities.getSessions().get(operation.getString("object").getValue());
+        session.abortTransaction();
+        return OperationResult.NONE;
+    }
+
+    public OperationResult executeDropCollection(final BsonDocument operation) {
+        MongoDatabase database = entities.getDatabases().get(operation.getString("object").getValue());
+        BsonDocument arguments = operation.getDocument("arguments");
+        database.getCollection(arguments.getString("collection").getValue()).drop();
+        return OperationResult.NONE;
+    }
+
+    public OperationResult executeCreateCollection(final BsonDocument operation) {
+        MongoDatabase database = entities.getDatabases().get(operation.getString("object").getValue());
+        String collectionName = null;
+        ClientSession session = null;
+
+        for (Map.Entry<String, BsonValue> cur : operation.getDocument("arguments").entrySet()) {
+            switch (cur.getKey()) {
+                case "collection":
+                    collectionName = cur.getValue().asString().getValue();
+                    break;
+                case "session":
+                    session = entities.getSessions().get(cur.getValue().asString().getValue());
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+            }
+        }
+
+        if (session == null) {
+            database.createCollection(requireNonNull(collectionName));
+        } else {
+            database.createCollection(session, requireNonNull(collectionName));
+        }
+        return OperationResult.NONE;
+    }
+
+    public OperationResult executeCreateIndex(final BsonDocument operation) {
+        MongoCollection<BsonDocument> collection = entities.getCollections().get(operation.getString("object").getValue());
+        BsonDocument keys = null;
+        ClientSession session = null;
+        IndexOptions options = new IndexOptions();
+
+        for (Map.Entry<String, BsonValue> cur : operation.getDocument("arguments").entrySet()) {
+            switch (cur.getKey()) {
+                case "name":
+                    options.name(cur.getValue().asString().getValue());
+                    break;
+                case "keys":
+                    keys = cur.getValue().asDocument();
+                    break;
+                case "session":
+                    session = entities.getSessions().get(cur.getValue().asString().getValue());
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+            }
+        }
+
+        if (session == null) {
+            collection.createIndex(requireNonNull(keys), options);
+        } else {
+            collection.createIndex(session, requireNonNull(keys), options);
+        }
+        return OperationResult.NONE;
     }
 }
