@@ -18,10 +18,12 @@ package com.mongodb.client.unified;
 
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.ChangeStreamIterable;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.DeleteManyModel;
@@ -402,5 +404,45 @@ final class UnifiedCrudHelper {
             collection.createIndex(session, requireNonNull(keys), options);
         }
         return OperationResult.NONE;
+    }
+
+    public OperationResult executeChangeStream(final BsonDocument operation) {
+        String entityName = operation.getString("object").getValue();
+        MongoCollection<BsonDocument> collection = entities.getCollection(entityName);
+        MongoDatabase database = entities.getDatabase(entityName);
+        MongoClient client = entities.getClient(entityName);
+        ChangeStreamIterable<BsonDocument> iterable = null;
+        if (collection != null) {
+            iterable = collection.watch();
+        } else if (database != null) {
+            iterable = database.watch(BsonDocument.class);
+        } else if (client != null) {
+            iterable = client.watch(BsonDocument.class);
+        } else {
+            throw new UnsupportedOperationException("No entity found for id: " + entityName);
+        }
+
+        for (Map.Entry<String, BsonValue> cur : operation.getDocument("arguments", new BsonDocument()).entrySet()) {
+            //noinspection SwitchStatementWithTooFewBranches
+            switch (cur.getKey()) {
+                case "batchSize":
+                    iterable.batchSize(cur.getValue().asNumber().intValue());
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+            }
+        }
+
+        MongoCursor<BsonDocument> cursor = iterable
+                .withDocumentClass(BsonDocument.class).cursor();
+        entities.addChangeStream(operation.getString("saveResultAsEntity").getValue(), cursor);
+
+        return OperationResult.NONE;
+    }
+
+    public OperationResult executeIterateUntilDocumentOrError(final BsonDocument operation) {
+        MongoCursor<BsonDocument> cursor = entities.getChangeStream(operation.getString("object").getValue());
+
+        return new OperationResult(cursor.next());
     }
 }

@@ -23,6 +23,7 @@ import com.mongodb.ReadConcernLevel;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
@@ -32,6 +33,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonValue;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -46,6 +48,15 @@ final class Entities {
     private final Map<String, BsonDocument> sessionIdentifiers = new HashMap<>();
     private final Map<String, GridFSBucket> buckets = new HashMap<>();
     private final Map<String, TestCommandListener> clientCommandListeners = new HashMap<>();
+    private final Map<String, MongoCursor<BsonDocument>> changeStreams = new HashMap<>();
+
+    public void addChangeStream(final String id, final MongoCursor<BsonDocument> cursor) {
+        changeStreams.put(id, cursor);
+    }
+
+    public MongoCursor<BsonDocument> getChangeStream(final String id) {
+        return changeStreams.get(id);
+    }
 
     public MongoClient getClient(final String id) {
         return clients.get(id);
@@ -84,9 +95,14 @@ final class Entities {
                 case "client":
                     MongoClientSettings.Builder clientSettingsBuilder = getMongoClientSettingsBuilder();
                     if (entity.containsKey("observeEvents")) {
+                        List<String> ignoreCommandMonitoringEvents = entity
+                                .getArray("ignoreCommandMonitoringEvents", new BsonArray()).stream()
+                                .map(type -> type.asString().getValue()).collect(Collectors.toList());
+                        ignoreCommandMonitoringEvents.add("configureFailPoint");
                         TestCommandListener testCommandListener = new TestCommandListener(
                                 entity.getArray("observeEvents").stream()
-                                        .map(type -> type.asString().getValue()).collect(Collectors.toList()));
+                                        .map(type -> type.asString().getValue()).collect(Collectors.toList()),
+                                ignoreCommandMonitoringEvents);
                         clientSettingsBuilder.addCommandListener(testCommandListener);
                         clientCommandListeners.put(id, testCommandListener);
                     }

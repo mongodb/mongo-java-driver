@@ -201,6 +201,10 @@ public abstract class UnifiedTest {
                     return crudHelper.executeCommitTransaction(operation);
                 case "abortTransaction":
                     return crudHelper.executeAbortTransaction(operation);
+                case "createChangeStream":
+                    return crudHelper.executeChangeStream(operation);
+                case "iterateUntilDocumentOrError":
+                    return crudHelper.executeIterateUntilDocumentOrError(operation);
                 default:
                     throw new UnsupportedOperationException("Unsupported test operation: " + name);
             }

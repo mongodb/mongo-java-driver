@@ -102,7 +102,9 @@ final class ValueMatcher {
                 assertValuesMatch(value, actualDocument.get(key), false);
             });
             if (!isRoot) {
-                assertEquals("Non-root documents must have same number of keys", expectedDocument.size(), actualDocument.size());
+                for (String key : actualDocument.keySet()) {
+                    assertTrue("Actual document contains unexpected key: " + key, expectedDocument.containsKey(key));
+                }
             }
         } else if (expected.isArray()) {
             assertTrue("Actual value must be an array but is " + actual.getBsonType(), actual.isArray());

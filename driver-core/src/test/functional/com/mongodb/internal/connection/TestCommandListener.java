@@ -43,12 +43,14 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static java.util.Collections.emptyList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class TestCommandListener implements CommandListener {
     private final List<String> eventTypes;
+    private final List<String> ignoredCommandMonitoringEvents;
     private final List<CommandEvent> events = new ArrayList<>();
     private final Lock lock = new ReentrantLock();
     private final Condition commandCompletedCondition = lock.newCondition();
@@ -71,11 +73,12 @@ public class TestCommandListener implements CommandListener {
     }
 
     public TestCommandListener() {
-        this(Arrays.asList("commandStartedEvent", "commandSucceededEvent", "commandFailedEvent"));
+        this(Arrays.asList("commandStartedEvent", "commandSucceededEvent", "commandFailedEvent"), emptyList());
     }
 
-    public TestCommandListener(final List<String> eventTypes) {
+    public TestCommandListener(final List<String> eventTypes, List<String> ignoredCommandMonitoringEvents) {
         this.eventTypes = eventTypes;
+        this.ignoredCommandMonitoringEvents = ignoredCommandMonitoringEvents;
     }
 
     public void reset() {
@@ -190,7 +193,7 @@ public class TestCommandListener implements CommandListener {
 
     @Override
     public void commandStarted(final CommandStartedEvent event) {
-        if (!eventTypes.contains("commandStartedEvent") || event.getCommandName().equals("configureFailPoint")) {
+        if (!eventTypes.contains("commandStartedEvent") || ignoredCommandMonitoringEvents.contains(event.getCommandName())) {
             return;
         }
         lock.lock();
@@ -205,7 +208,7 @@ public class TestCommandListener implements CommandListener {
 
     @Override
     public void commandSucceeded(final CommandSucceededEvent event) {
-        if (!eventTypes.contains("commandSucceededEvent") || event.getCommandName().equals("configureFailPoint")) {
+        if (!eventTypes.contains("commandSucceededEvent") || ignoredCommandMonitoringEvents.contains(event.getCommandName())) {
             return;
         }
         lock.lock();
@@ -221,7 +224,7 @@ public class TestCommandListener implements CommandListener {
 
     @Override
     public void commandFailed(final CommandFailedEvent event) {
-        if (!eventTypes.contains("commandFailedEvent") || event.getCommandName().equals("configureFailPoint")) {
+        if (!eventTypes.contains("commandFailedEvent") || ignoredCommandMonitoringEvents.contains(event.getCommandName())) {
             return;
         }
         lock.lock();

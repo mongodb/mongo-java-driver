@@ -23,6 +23,7 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
+import org.junit.Before;
 import org.junit.runners.Parameterized;
 
 import java.io.File;
@@ -32,14 +33,34 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static org.junit.Assume.assumeTrue;
 import static util.JsonPoweredTestHelper.getTestDocument;
 import static util.JsonPoweredTestHelper.getTestFiles;
 
 public class UnifiedTestValidator extends UnifiedTest {
+    private final String fileDescription;
+    private final String testDescription;
+
     public UnifiedTestValidator(final String fileDescription, final String testDescription, final String schemaVersion,
                                 @Nullable final BsonArray runOnRequirements, final BsonArray entities, final BsonArray initialData,
                                 final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
+        this.fileDescription = fileDescription;
+        this.testDescription = testDescription;
+    }
+
+    @Before
+    public void setUp() {
+        assumeTrue(fileDescription.equals("poc-crud")
+                || fileDescription.equals("poc-retryable-reads")
+                || fileDescription.equals("poc-retryable-writes")
+                || fileDescription.equals("poc-transactions")
+                || fileDescription.equals("poc-command-monitoring")
+                || fileDescription.equals("poc-sessions")
+                || fileDescription.equals("poc-change-streams"));
+        // TODO: remove after https://jira.mongodb.org/browse/JAVA-3871 is fixed
+        assumeTrue(!(fileDescription.equals("poc-change-streams") && testDescription.equals("Test consecutive resume")));
+        super.setUp();
     }
 
     @Override
@@ -53,15 +74,6 @@ public class UnifiedTestValidator extends UnifiedTest {
 
         for (File file : getTestFiles("/unified-test-format/")) {
             BsonDocument fileDocument = getTestDocument(file);
-
-            if (!(fileDocument.getString("description").getValue().equals("poc-crud")
-                    || fileDocument.getString("description").getValue().equals("poc-retryable-reads")
-                    || fileDocument.getString("description").getValue().equals("poc-retryable-writes")
-                    || fileDocument.getString("description").getValue().equals("poc-transactions")
-                    || fileDocument.getString("description").getValue().equals("poc-command-monitoring")
-                    || fileDocument.getString("description").getValue().equals("poc-sessions"))) {
-                continue;
-            }
 
             for (BsonValue cur : fileDocument.getArray("tests")) {
                 BsonDocument testDocument = cur.asDocument();
