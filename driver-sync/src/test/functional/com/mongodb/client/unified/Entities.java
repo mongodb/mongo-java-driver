@@ -56,35 +56,79 @@ final class Entities {
     }
 
     public MongoCursor<BsonDocument> getChangeStream(final String id) {
-        return changeStreams.get(id);
+        MongoCursor<BsonDocument> changeStream = changeStreams.get(id);
+        if (changeStream == null) {
+            throw new IllegalStateException("Missing change stream with id: " + id);
+        }
+        return changeStream;
+    }
+
+    public boolean hasClient(final String id) {
+        return clients.containsKey(id);
     }
 
     public MongoClient getClient(final String id) {
-        return clients.get(id);
+        MongoClient mongoClient = clients.get(id);
+        if (mongoClient == null) {
+            throw new IllegalStateException("Missing client with id: " + id);
+        }
+        return mongoClient;
+    }
+
+    public boolean hasDatabase(final String id) {
+        return databases.containsKey(id);
     }
 
     public MongoDatabase getDatabase(final String id) {
-        return databases.get(id);
+        MongoDatabase database = databases.get(id);
+        if (database == null) {
+            throw new IllegalStateException("Missing database with id: " + id);
+        }
+        return database;
+    }
+
+    public boolean hasCollection(final String id) {
+        return collections.containsKey(id);
     }
 
     public MongoCollection<BsonDocument> getCollection(final String id) {
-        return collections.get(id);
+        MongoCollection<BsonDocument> collection = collections.get(id);
+        if (collection == null) {
+            throw new IllegalStateException("Missing collection with id: " + id);
+        }
+        return collection;
     }
 
     public ClientSession getSession(final String id) {
-        return sessions.get(id);
+        ClientSession clientSession = sessions.get(id);
+        if (clientSession == null) {
+            throw new IllegalStateException("Missing session with id: " + id);
+        }
+        return clientSession;
     }
 
     public BsonDocument getSessionIdentifier(final String id) {
-        return sessionIdentifiers.get(id);
+        BsonDocument sessionIdentifier = sessionIdentifiers.get(id);
+        if (sessionIdentifier == null) {
+            throw new IllegalStateException("Missing session identifier with id: " + id);
+        }
+        return sessionIdentifier;
     }
 
     public GridFSBucket getBucket(final String id) {
-        return buckets.get(id);
+        GridFSBucket bucket = buckets.get(id);
+        if (bucket == null) {
+            throw new IllegalStateException("Missing bucket with id: " + id);
+        }
+        return bucket;
     }
 
     public TestCommandListener getClientCommandListener(final String id) {
-        return clientCommandListeners.get(id);
+        TestCommandListener commandListener = clientCommandListeners.get(id);
+        if (commandListener == null) {
+            throw new IllegalStateException("Missing command listener with id: " + id);
+        }
+        return commandListener;
     }
 
     public void init(final BsonArray entitiesArray, final MongoClientSupplier mongoClientSupplier) {

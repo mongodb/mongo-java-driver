@@ -153,7 +153,7 @@ public abstract class UnifiedTest {
         String name = operation.getString("name").getValue();
         switch (name) {
             case "failPoint":
-                return executeFailpoint(operation);
+                return executeFailPoint(operation);
             case "endSession":
                 return executeEndSession(operation);
             case "assertSessionDirty":
@@ -211,7 +211,7 @@ public abstract class UnifiedTest {
         }
     }
 
-    private OperationResult executeFailpoint(final BsonDocument operation) {
+    private OperationResult executeFailPoint(final BsonDocument operation) {
         FailPoint failPoint = new FailPoint(operation, entities);
         failPoint.executeFailPoint();
         failPoints.add(failPoint);

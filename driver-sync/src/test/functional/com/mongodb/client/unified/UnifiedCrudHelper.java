@@ -67,6 +67,11 @@ final class UnifiedCrudHelper {
 
     OperationResult executeListDatabases(final BsonDocument operation) {
         MongoClient client = entities.getClient(operation.getString("object").getValue());
+
+        if (operation.containsKey("arguments")) {
+            throw new UnsupportedOperationException("Unexpected arguments");
+        }
+
         try {
             return OperationResult.of(new BsonArray(client.listDatabases(BsonDocument.class).into(new ArrayList<>())));
         } catch (Exception e) {
@@ -149,16 +154,14 @@ final class UnifiedCrudHelper {
 
     OperationResult executeAggregate(final BsonDocument operation) {
         String entityName = operation.getString("object").getValue();
-        MongoCollection<BsonDocument> collection = entities.getCollection(entityName);
-        MongoDatabase database = entities.getDatabase(entityName);
 
         BsonDocument arguments = operation.getDocument("arguments");
         List<BsonDocument> pipeline = arguments.getArray("pipeline").stream().map(BsonValue::asDocument).collect(toList());
         AggregateIterable<BsonDocument> iterable;
-        if (database != null) {
-            iterable = database.aggregate(requireNonNull(pipeline), BsonDocument.class);
-        } else if (collection != null) {
-            iterable = collection.aggregate(requireNonNull(pipeline));
+        if (entities.hasDatabase(entityName)) {
+            iterable = entities.getDatabase(entityName).aggregate(requireNonNull(pipeline), BsonDocument.class);
+        } else if (entities.hasCollection(entityName)) {
+            iterable = entities.getCollection(entityName).aggregate(requireNonNull(pipeline));
         } else {
             throw new UnsupportedOperationException("Unsupported entity type with name: " + entityName);
         }
@@ -189,6 +192,10 @@ final class UnifiedCrudHelper {
         BsonDocument filter = arguments.getDocument("filter");
         BsonDocument replacement = arguments.getDocument("replacement");
         ReplaceOptions options = getReplaceOptions(arguments);
+
+        if (operation.getDocument("arguments").size() > 2) {
+            throw new UnsupportedOperationException("Unexpected arguments");
+        }
 
         try {
             UpdateResult result = collection.replaceOne(filter, replacement, options);
@@ -260,6 +267,7 @@ final class UnifiedCrudHelper {
             }
         }
         requireNonNull(documents);
+
         try {
             InsertManyResult result = collection.insertMany(documents, options);
             return toExpected(result);
@@ -291,8 +299,11 @@ final class UnifiedCrudHelper {
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
+
+        requireNonNull(requests);
+
         try {
-            BulkWriteResult result = collection.bulkWrite(requireNonNull(requests), options);
+            BulkWriteResult result = collection.bulkWrite(requests, options);
             return toExpected(result);
         } catch (Exception e) {
            return OperationResult.of(e);
@@ -364,8 +375,13 @@ final class UnifiedCrudHelper {
     }
 
     OperationResult executeStartTransaction(final BsonDocument operation) {
+        ClientSession session = entities.getSession(operation.getString("object").getValue());
+
+        if (operation.containsKey("arguments")) {
+            throw new UnsupportedOperationException("Unexpected arguments");
+        }
+
         try {
-            ClientSession session = entities.getSession(operation.getString("object").getValue());
             session.startTransaction();
             return OperationResult.NONE;
         } catch (Exception e) {
@@ -374,8 +390,13 @@ final class UnifiedCrudHelper {
     }
 
     OperationResult executeCommitTransaction(final BsonDocument operation) {
+        ClientSession session = entities.getSession(operation.getString("object").getValue());
+
+        if (operation.containsKey("arguments")) {
+            throw new UnsupportedOperationException("Unexpected arguments");
+        }
+
         try {
-            ClientSession session = entities.getSession(operation.getString("object").getValue());
             session.commitTransaction();
             return OperationResult.NONE;
         } catch (Exception e) {
@@ -384,8 +405,13 @@ final class UnifiedCrudHelper {
     }
 
     OperationResult executeAbortTransaction(final BsonDocument operation) {
+        ClientSession session = entities.getSession(operation.getString("object").getValue());
+
+        if (operation.containsKey("arguments")) {
+            throw new UnsupportedOperationException("Unexpected arguments");
+        }
+
         try {
-            ClientSession session = entities.getSession(operation.getString("object").getValue());
             session.abortTransaction();
             return OperationResult.NONE;
         } catch (Exception e) {
@@ -394,10 +420,16 @@ final class UnifiedCrudHelper {
     }
 
     public OperationResult executeDropCollection(final BsonDocument operation) {
+        MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
+        BsonDocument arguments = operation.getDocument("arguments");
+        String collectionName = arguments.getString("collection").getValue();
+
+        if (operation.getDocument("arguments").size() > 1) {
+            throw new UnsupportedOperationException("Unexpected arguments");
+        }
+
         try {
-            MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
-            BsonDocument arguments = operation.getDocument("arguments");
-            database.getCollection(arguments.getString("collection").getValue()).drop();
+            database.getCollection(collectionName).drop();
             return OperationResult.NONE;
         } catch (Exception e) {
             return OperationResult.of(e);
@@ -422,11 +454,13 @@ final class UnifiedCrudHelper {
             }
         }
 
+        requireNonNull(collectionName);
+
         try {
             if (session == null) {
-                database.createCollection(requireNonNull(collectionName));
+                database.createCollection(collectionName);
             } else {
-                database.createCollection(session, requireNonNull(collectionName));
+                database.createCollection(session, collectionName);
             }
             return OperationResult.NONE;
         } catch (Exception e) {
@@ -456,11 +490,13 @@ final class UnifiedCrudHelper {
             }
         }
 
+        requireNonNull(keys);
+
         try {
             if (session == null) {
-                collection.createIndex(requireNonNull(keys), options);
+                collection.createIndex(keys, options);
             } else {
-                collection.createIndex(session, requireNonNull(keys), options);
+                collection.createIndex(session, keys, options);
             }
             return OperationResult.NONE;
         } catch (Exception e) {
@@ -470,16 +506,13 @@ final class UnifiedCrudHelper {
 
     public OperationResult executeChangeStream(final BsonDocument operation) {
         String entityName = operation.getString("object").getValue();
-        MongoCollection<BsonDocument> collection = entities.getCollection(entityName);
-        MongoDatabase database = entities.getDatabase(entityName);
-        MongoClient client = entities.getClient(entityName);
         ChangeStreamIterable<BsonDocument> iterable;
-        if (collection != null) {
-            iterable = collection.watch();
-        } else if (database != null) {
-            iterable = database.watch(BsonDocument.class);
-        } else if (client != null) {
-            iterable = client.watch(BsonDocument.class);
+        if (entities.hasCollection(entityName)) {
+            iterable = entities.getCollection(entityName).watch();
+        } else if (entities.hasDatabase(entityName)) {
+            iterable = entities.getDatabase(entityName).watch(BsonDocument.class);
+        } else if (entities.hasClient(entityName)) {
+            iterable = entities.getClient(entityName).watch(BsonDocument.class);
         } else {
             throw new UnsupportedOperationException("No entity found for id: " + entityName);
         }
@@ -506,6 +539,10 @@ final class UnifiedCrudHelper {
 
     public OperationResult executeIterateUntilDocumentOrError(final BsonDocument operation) {
         MongoCursor<BsonDocument> cursor = entities.getChangeStream(operation.getString("object").getValue());
+
+        if (operation.containsKey("arguments")) {
+            throw new UnsupportedOperationException("Unexpected arguments");
+        }
 
         try {
             return OperationResult.of(cursor.next());
