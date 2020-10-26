@@ -29,6 +29,7 @@ import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonArray;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 
@@ -94,6 +95,9 @@ final class Entities {
             switch (entityType) {
                 case "client":
                     MongoClientSettings.Builder clientSettingsBuilder = getMongoClientSettingsBuilder();
+                    if (entity.getBoolean("useMultipleMongoses", BsonBoolean.FALSE).getValue()) {
+                        throw new UnsupportedOperationException("Unsupported client entity specification: useMultipleMongoses");
+                    }
                     if (entity.containsKey("observeEvents")) {
                         List<String> ignoreCommandMonitoringEvents = entity
                                 .getArray("ignoreCommandMonitoringEvents", new BsonArray()).stream()
@@ -129,7 +133,20 @@ final class Entities {
                     break;
                 case "database": {
                     MongoClient client = clients.get(entity.getString("client").getValue());
-                    databases.put(id, client.getDatabase(entity.getString("databaseName").getValue()));
+                    MongoDatabase database = client.getDatabase(entity.getString("databaseName").getValue());
+                    if (entity.containsKey("collectionOptions")) {
+                        for (Map.Entry<String, BsonValue> entry : entity.getDocument("collectionOptions").entrySet()) {
+                            //noinspection SwitchStatementWithTooFewBranches
+                            switch (entry.getKey()) {
+                                case "readConcern":
+                                    database = database.withReadConcern(asReadConcern(entry.getValue()));
+                                    break;
+                                default:
+                                    throw new UnsupportedOperationException("Unsupported database option: " + entry.getKey());
+                            }
+                        }
+                    }
+                    databases.put(id, database);
                     break;
                 }
                 case "collection": {
@@ -155,12 +172,18 @@ final class Entities {
                     MongoClient client = clients.get(entity.getString("client").getValue());
                     ClientSessionOptions options = ClientSessionOptions.builder().build();
                     ClientSession session = client.startSession(options);
+                    if (entity.containsKey("sessionOptions")) {
+                        throw new UnsupportedOperationException("Unsupported session specification: sessionOptions");
+                    }
                     sessions.put(id, session);
                     sessionIdentifiers.put(id, session.getServerSession().getIdentifier());
                     break;
                 }
                 case "bucket": {
                     MongoDatabase database = databases.get(entity.getString("database").getValue());
+                    if (entity.containsKey("bucketOptions")) {
+                        throw new UnsupportedOperationException("Unsupported session specification: bucketOptions");
+                    }
                     buckets.put(id, GridFSBuckets.create(database));
                     break;
                 }

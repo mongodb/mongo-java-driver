@@ -31,7 +31,7 @@ final class FailPoint {
     }
 
     public void executeFailPoint() {
-        executeCommand(failPointDocument);
+        client.getDatabase("admin").runCommand(failPointDocument);
     }
 
     public void disableFailPoint() {
@@ -39,9 +39,5 @@ final class FailPoint {
                 .runCommand(new BsonDocument("configureFailPoint",
                         failPointDocument.getString("configureFailPoint"))
                         .append("mode", new BsonString("off")));
-    }
-
-    protected void executeCommand(final BsonDocument doc) {
-        client.getDatabase("admin").runCommand(failPointDocument);
     }
 }
