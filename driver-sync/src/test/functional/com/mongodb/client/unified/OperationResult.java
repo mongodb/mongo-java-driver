@@ -23,16 +23,36 @@ final class OperationResult {
     public static final OperationResult NONE = new OperationResult();
 
     private final BsonValue result;
+    private final Exception exception;
 
-    OperationResult() {
-        result = null;
+    static OperationResult of(final BsonValue result) {
+        return new OperationResult(result);
     }
 
-    OperationResult(final BsonValue result) {
+    static OperationResult of(final Exception exception) {
+        return new OperationResult(exception);
+    }
+
+    private OperationResult() {
+        result = null;
+        exception = null;
+    }
+
+    private OperationResult(final BsonValue result) {
         this.result = result;
+        this.exception = null;
+    }
+
+    private OperationResult(final Exception exception) {
+        this.result = null;
+        this.exception = exception;
     }
 
     public BsonValue getResult() {
         return result;
+    }
+
+    public Exception getException() {
+        return exception;
     }
 }

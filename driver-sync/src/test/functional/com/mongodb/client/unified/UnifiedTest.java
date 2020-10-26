@@ -103,7 +103,7 @@ public abstract class UnifiedTest {
 
     @After
     public void cleanUp() {
-        for (FailPoint failPoint: failPoints) {
+        for (FailPoint failPoint : failPoints) {
             failPoint.disableFailPoint();
         }
         entities.close();
@@ -116,6 +116,8 @@ public abstract class UnifiedTest {
             OperationResult result = executeOperation(operation);
             if (operation.containsKey("expectResult")) {
                 valueMatcher.assertValuesMatch(operation.get("expectResult"), requireNonNull(result.getResult()));
+            } else if (operation.containsKey("expectError")) {
+                ErrorMatcher.assertErrorsMatch(operation.getDocument("expectError"), requireNonNull(result.getException()));
             }
         }
 
@@ -149,74 +151,64 @@ public abstract class UnifiedTest {
 
     private OperationResult executeOperation(final BsonDocument operation) {
         String name = operation.getString("name").getValue();
-        try {
-            switch (name) {
-                case "failPoint":
-                    return executeFailpoint(operation);
-                case "endSession":
-                    return executeEndSession(operation);
-                case "assertSessionDirty":
-                    return executeAssertSessionDirty(operation);
-                case "assertSessionNotDirty":
-                    return executeAssertSessionNotDirty(operation);
-                case "assertSameLsidOnLastTwoCommands":
-                    return executeAssertSameLsidOnLastTwoCommands(operation);
-                case "assertDifferentLsidOnLastTwoCommands":
-                    return executeAssertDifferentLsidOnLastTwoCommands(operation);
-                case "assertSessionTransactionState":
-                    return executeAssertSessionTransactionState(operation);
-                case "assertCollectionExists":
-                    return executeAssertCollectionExists(operation);
-                case "assertCollectionNotExists":
-                    return executeAssertCollectionNotExists(operation);
-                case "assertIndexExists":
-                    return executeAssertIndexExists(operation);
-                case "assertIndexNotExists":
-                    return executeAssertIndexNotExists(operation);
-                case "bulkWrite":
-                    return crudHelper.executeBulkWrite(operation);
-                case "insertOne":
-                    return crudHelper.executeInsertOne(operation);
-                case "insertMany":
-                    return crudHelper.executeInsertMany(operation);
-                case "replaceOne":
-                    return crudHelper.executeReplaceOne(operation);
-                case "aggregate":
-                    return crudHelper.executeAggregate(operation);
-                case "find":
-                    return crudHelper.executeFind(operation);
-                case "findOneAndUpdate":
-                    return crudHelper.executeFindOneAndUpdate(operation);
-                case "listDatabases":
-                    return crudHelper.executeListDatabases(operation);
-                case "dropCollection":
-                    return crudHelper.executeDropCollection(operation);
-                case "createCollection":
-                    return crudHelper.executeCreateCollection(operation);
-                case "createIndex":
-                    return crudHelper.executeCreateIndex(operation);
-                case "startTransaction":
-                    return crudHelper.executeStartTransaction(operation);
-                case "commitTransaction":
-                    return crudHelper.executeCommitTransaction(operation);
-                case "abortTransaction":
-                    return crudHelper.executeAbortTransaction(operation);
-                case "createChangeStream":
-                    return crudHelper.executeChangeStream(operation);
-                case "iterateUntilDocumentOrError":
-                    return crudHelper.executeIterateUntilDocumentOrError(operation);
-                default:
-                    throw new UnsupportedOperationException("Unsupported test operation: " + name);
-            }
-        } catch (UnsupportedOperationException e) {
-            throw e;
-        } catch (Exception e) {
-            // TODO: need more robust error assertions
-            if (!operation.containsKey("expectError")) {
-                throw e;
-            }
+        switch (name) {
+            case "failPoint":
+                return executeFailpoint(operation);
+            case "endSession":
+                return executeEndSession(operation);
+            case "assertSessionDirty":
+                return executeAssertSessionDirty(operation);
+            case "assertSessionNotDirty":
+                return executeAssertSessionNotDirty(operation);
+            case "assertSameLsidOnLastTwoCommands":
+                return executeAssertSameLsidOnLastTwoCommands(operation);
+            case "assertDifferentLsidOnLastTwoCommands":
+                return executeAssertDifferentLsidOnLastTwoCommands(operation);
+            case "assertSessionTransactionState":
+                return executeAssertSessionTransactionState(operation);
+            case "assertCollectionExists":
+                return executeAssertCollectionExists(operation);
+            case "assertCollectionNotExists":
+                return executeAssertCollectionNotExists(operation);
+            case "assertIndexExists":
+                return executeAssertIndexExists(operation);
+            case "assertIndexNotExists":
+                return executeAssertIndexNotExists(operation);
+            case "bulkWrite":
+                return crudHelper.executeBulkWrite(operation);
+            case "insertOne":
+                return crudHelper.executeInsertOne(operation);
+            case "insertMany":
+                return crudHelper.executeInsertMany(operation);
+            case "replaceOne":
+                return crudHelper.executeReplaceOne(operation);
+            case "aggregate":
+                return crudHelper.executeAggregate(operation);
+            case "find":
+                return crudHelper.executeFind(operation);
+            case "findOneAndUpdate":
+                return crudHelper.executeFindOneAndUpdate(operation);
+            case "listDatabases":
+                return crudHelper.executeListDatabases(operation);
+            case "dropCollection":
+                return crudHelper.executeDropCollection(operation);
+            case "createCollection":
+                return crudHelper.executeCreateCollection(operation);
+            case "createIndex":
+                return crudHelper.executeCreateIndex(operation);
+            case "startTransaction":
+                return crudHelper.executeStartTransaction(operation);
+            case "commitTransaction":
+                return crudHelper.executeCommitTransaction(operation);
+            case "abortTransaction":
+                return crudHelper.executeAbortTransaction(operation);
+            case "createChangeStream":
+                return crudHelper.executeChangeStream(operation);
+            case "iterateUntilDocumentOrError":
+                return crudHelper.executeIterateUntilDocumentOrError(operation);
+            default:
+                throw new UnsupportedOperationException("Unsupported test operation: " + name);
         }
-        return OperationResult.NONE;
     }
 
     private OperationResult executeFailpoint(final BsonDocument operation) {
@@ -252,7 +244,7 @@ public abstract class UnifiedTest {
     }
 
     private OperationResult executeAssertDifferentLsidOnLastTwoCommands(final BsonDocument operation) {
-       return executeAssertLsidOnLastTwoCommands(operation, false);
+        return executeAssertLsidOnLastTwoCommands(operation, false);
     }
 
     private OperationResult executeAssertLsidOnLastTwoCommands(final BsonDocument operation, final boolean same) {

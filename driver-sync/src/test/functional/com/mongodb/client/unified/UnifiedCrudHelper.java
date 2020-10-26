@@ -67,7 +67,11 @@ final class UnifiedCrudHelper {
 
     OperationResult executeListDatabases(final BsonDocument operation) {
         MongoClient client = entities.getClient(operation.getString("object").getValue());
-        return new OperationResult(new BsonArray(client.listDatabases(BsonDocument.class).into(new ArrayList<>())));
+        try {
+            return OperationResult.of(new BsonArray(client.listDatabases(BsonDocument.class).into(new ArrayList<>())));
+        } catch (Exception e) {
+            return OperationResult.of(e);
+        }
     }
 
     OperationResult executeFind(final BsonDocument operation) {
@@ -93,7 +97,11 @@ final class UnifiedCrudHelper {
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
-        return new OperationResult(new BsonArray(iterable.into(new ArrayList<>())));
+        try {
+            return OperationResult.of(new BsonArray(iterable.into(new ArrayList<>())));
+        } catch (Exception e) {
+            return OperationResult.of(e);
+        }
     }
 
     OperationResult executeFindOneAndUpdate(final BsonDocument operation) {
@@ -128,9 +136,15 @@ final class UnifiedCrudHelper {
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
+        requireNonNull(filter);
+        requireNonNull(update);
 
-        BsonDocument result = collection.findOneAndUpdate(requireNonNull(filter), requireNonNull(update), options);
-        return new OperationResult(result);
+        try {
+            BsonDocument result = collection.findOneAndUpdate(filter, update, options);
+            return OperationResult.of(result);
+        } catch (Exception e) {
+            return OperationResult.of(e);
+        }
     }
 
     OperationResult executeAggregate(final BsonDocument operation) {
@@ -157,11 +171,15 @@ final class UnifiedCrudHelper {
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
-        if (pipeline.get(pipeline.size() - 1).getFirstKey().equals("$out")) {
-            iterable.toCollection();
-            return new OperationResult();
-        } else {
-            return new OperationResult(new BsonArray(iterable.into(new ArrayList<>())));
+        try {
+            if (pipeline.get(pipeline.size() - 1).getFirstKey().equals("$out")) {
+                iterable.toCollection();
+                return OperationResult.NONE;
+            } else {
+                return OperationResult.of(new BsonArray(iterable.into(new ArrayList<>())));
+            }
+        } catch (Exception e) {
+            return OperationResult.of(e);
         }
     }
 
@@ -171,12 +189,17 @@ final class UnifiedCrudHelper {
         BsonDocument filter = arguments.getDocument("filter");
         BsonDocument replacement = arguments.getDocument("replacement");
         ReplaceOptions options = getReplaceOptions(arguments);
-        UpdateResult result = collection.replaceOne(requireNonNull(filter), requireNonNull(replacement), options);
-        return toExpected(result);
+
+        try {
+            UpdateResult result = collection.replaceOne(filter, replacement, options);
+            return toExpected(result);
+        } catch (Exception e) {
+            return OperationResult.of(e);
+        }
     }
 
     private OperationResult toExpected(final UpdateResult result) {
-        return new OperationResult(new BsonDocument()
+        return OperationResult.of(new BsonDocument()
                 .append("matchedCount", new BsonInt32((int) result.getMatchedCount()))
                 .append("modifiedCount", new BsonInt32((int) result.getModifiedCount()))
                 .append("upsertedId", result.getUpsertedId())
@@ -202,14 +225,20 @@ final class UnifiedCrudHelper {
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
-        InsertOneResult result = session == null
-                ? collection.insertOne(requireNonNull(document), options)
-                : collection.insertOne(session, requireNonNull(document), options);
-        return toExpected(result);
+        requireNonNull(document);
+
+        try {
+            InsertOneResult result = session == null
+                    ? collection.insertOne(document, options)
+                    : collection.insertOne(session, document, options);
+            return toExpected(result);
+        } catch (Exception e) {
+            return OperationResult.of(e);
+        }
     }
 
     private OperationResult toExpected(final InsertOneResult result) {
-        return new OperationResult(new BsonDocument()
+        return OperationResult.of(new BsonDocument()
                 .append("insertedId", result.getInsertedId()));
     }
 
@@ -230,12 +259,17 @@ final class UnifiedCrudHelper {
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
-        InsertManyResult result = collection.insertMany(requireNonNull(documents), options);
-        return toExpected(result);
+        requireNonNull(documents);
+        try {
+            InsertManyResult result = collection.insertMany(documents, options);
+            return toExpected(result);
+        } catch (Exception e) {
+            return OperationResult.of(e);
+        }
     }
 
     private OperationResult toExpected(final InsertManyResult result) {
-        return new OperationResult(new BsonDocument()
+        return OperationResult.of(new BsonDocument()
                 .append("insertedIds", new BsonDocument(result.getInsertedIds().entrySet().stream()
                         .map(value -> new BsonElement(value.getKey().toString(), value.getValue())).collect(toList())))
         );
@@ -257,12 +291,16 @@ final class UnifiedCrudHelper {
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
-        BulkWriteResult result = collection.bulkWrite(requireNonNull(requests), options);
-        return toExpected(result);
+        try {
+            BulkWriteResult result = collection.bulkWrite(requireNonNull(requests), options);
+            return toExpected(result);
+        } catch (Exception e) {
+           return OperationResult.of(e);
+        }
     }
 
     private OperationResult toExpected(final BulkWriteResult result) {
-        return new OperationResult(new BsonDocument()
+        return OperationResult.of(new BsonDocument()
                 .append("deletedCount", new BsonInt32(result.getDeletedCount()))
                 .append("insertedCount", new BsonInt32(result.getInsertedCount()))
                 .append("matchedCount", new BsonInt32(result.getMatchedCount()))
@@ -326,28 +364,44 @@ final class UnifiedCrudHelper {
     }
 
     OperationResult executeStartTransaction(final BsonDocument operation) {
-        ClientSession session = entities.getSession(operation.getString("object").getValue());
-        session.startTransaction();
-        return OperationResult.NONE;
+        try {
+            ClientSession session = entities.getSession(operation.getString("object").getValue());
+            session.startTransaction();
+            return OperationResult.NONE;
+        } catch (Exception e) {
+            return OperationResult.of(e);
+        }
     }
 
     OperationResult executeCommitTransaction(final BsonDocument operation) {
-        ClientSession session = entities.getSession(operation.getString("object").getValue());
-        session.commitTransaction();
-        return OperationResult.NONE;
+        try {
+            ClientSession session = entities.getSession(operation.getString("object").getValue());
+            session.commitTransaction();
+            return OperationResult.NONE;
+        } catch (Exception e) {
+            return OperationResult.of(e);
+        }
     }
 
     OperationResult executeAbortTransaction(final BsonDocument operation) {
-        ClientSession session = entities.getSession(operation.getString("object").getValue());
-        session.abortTransaction();
-        return OperationResult.NONE;
+        try {
+            ClientSession session = entities.getSession(operation.getString("object").getValue());
+            session.abortTransaction();
+            return OperationResult.NONE;
+        } catch (Exception e) {
+            return OperationResult.of(e);
+        }
     }
 
     public OperationResult executeDropCollection(final BsonDocument operation) {
-        MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
-        database.getCollection(arguments.getString("collection").getValue()).drop();
-        return OperationResult.NONE;
+        try {
+            MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
+            BsonDocument arguments = operation.getDocument("arguments");
+            database.getCollection(arguments.getString("collection").getValue()).drop();
+            return OperationResult.NONE;
+        } catch (Exception e) {
+            return OperationResult.of(e);
+        }
     }
 
     public OperationResult executeCreateCollection(final BsonDocument operation) {
@@ -368,12 +422,16 @@ final class UnifiedCrudHelper {
             }
         }
 
-        if (session == null) {
-            database.createCollection(requireNonNull(collectionName));
-        } else {
-            database.createCollection(session, requireNonNull(collectionName));
+        try {
+            if (session == null) {
+                database.createCollection(requireNonNull(collectionName));
+            } else {
+                database.createCollection(session, requireNonNull(collectionName));
+            }
+            return OperationResult.NONE;
+        } catch (Exception e) {
+            return OperationResult.of(e);
         }
-        return OperationResult.NONE;
     }
 
     public OperationResult executeCreateIndex(final BsonDocument operation) {
@@ -398,12 +456,16 @@ final class UnifiedCrudHelper {
             }
         }
 
-        if (session == null) {
-            collection.createIndex(requireNonNull(keys), options);
-        } else {
-            collection.createIndex(session, requireNonNull(keys), options);
+        try {
+            if (session == null) {
+                collection.createIndex(requireNonNull(keys), options);
+            } else {
+                collection.createIndex(session, requireNonNull(keys), options);
+            }
+            return OperationResult.NONE;
+        } catch (Exception e) {
+            return OperationResult.of(e);
         }
-        return OperationResult.NONE;
     }
 
     public OperationResult executeChangeStream(final BsonDocument operation) {
@@ -411,7 +473,7 @@ final class UnifiedCrudHelper {
         MongoCollection<BsonDocument> collection = entities.getCollection(entityName);
         MongoDatabase database = entities.getDatabase(entityName);
         MongoClient client = entities.getClient(entityName);
-        ChangeStreamIterable<BsonDocument> iterable = null;
+        ChangeStreamIterable<BsonDocument> iterable;
         if (collection != null) {
             iterable = collection.watch();
         } else if (database != null) {
@@ -433,16 +495,22 @@ final class UnifiedCrudHelper {
             }
         }
 
-        MongoCursor<BsonDocument> cursor = iterable
-                .withDocumentClass(BsonDocument.class).cursor();
-        entities.addChangeStream(operation.getString("saveResultAsEntity").getValue(), cursor);
-
-        return OperationResult.NONE;
+        try {
+            MongoCursor<BsonDocument> cursor = iterable.withDocumentClass(BsonDocument.class).cursor();
+            entities.addChangeStream(operation.getString("saveResultAsEntity").getValue(), cursor);
+            return OperationResult.NONE;
+        } catch (Exception e) {
+            return OperationResult.of(e);
+        }
     }
 
     public OperationResult executeIterateUntilDocumentOrError(final BsonDocument operation) {
         MongoCursor<BsonDocument> cursor = entities.getChangeStream(operation.getString("object").getValue());
 
-        return new OperationResult(cursor.next());
+        try {
+            return OperationResult.of(cursor.next());
+        } catch (Exception e) {
+            return OperationResult.of(e);
+        }
     }
 }

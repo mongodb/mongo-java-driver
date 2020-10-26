@@ -76,7 +76,7 @@ public class TestCommandListener implements CommandListener {
         this(Arrays.asList("commandStartedEvent", "commandSucceededEvent", "commandFailedEvent"), emptyList());
     }
 
-    public TestCommandListener(final List<String> eventTypes, List<String> ignoredCommandMonitoringEvents) {
+    public TestCommandListener(final List<String> eventTypes, final List<String> ignoredCommandMonitoringEvents) {
         this.eventTypes = eventTypes;
         this.ignoredCommandMonitoringEvents = ignoredCommandMonitoringEvents;
     }
