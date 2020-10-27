@@ -33,7 +33,7 @@ import static org.junit.Assert.assertTrue;
 
 final class ErrorMatcher {
     private static final Set<String> EXPECTED_ERROR_FIELDS = new HashSet<>(
-            asList("isError", "expectError", "isClientError", "isClientError",
+            asList("isError", "expectError", "isClientError", "errorCodeName",
                     "isClientError", "errorLabelsOmit", "errorLabelsContain", "expectResult"));
 
     static void assertErrorsMatch(final BsonDocument expectedError, final Exception e) {

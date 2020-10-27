@@ -39,7 +39,9 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static org.junit.Assume.assumeTrue;
 
 final class Entities {
     private final Map<String, MongoClient> clients = new HashMap<>();
@@ -140,7 +142,8 @@ final class Entities {
                 case "client":
                     MongoClientSettings.Builder clientSettingsBuilder = getMongoClientSettingsBuilder();
                     if (entity.getBoolean("useMultipleMongoses", BsonBoolean.FALSE).getValue()) {
-                        throw new UnsupportedOperationException("Unsupported client entity specification: useMultipleMongoses");
+                        assumeTrue(getMultiMongosConnectionString() != null);
+                        clientSettingsBuilder.applyConnectionString(getMultiMongosConnectionString());
                     }
                     if (entity.containsKey("observeEvents")) {
                         List<String> ignoreCommandMonitoringEvents = entity

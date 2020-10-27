@@ -154,12 +154,18 @@ public abstract class UnifiedTest {
         switch (name) {
             case "failPoint":
                 return executeFailPoint(operation);
+            case "targetedFailPoint":
+                return executeTargetedFailPoint(operation);
             case "endSession":
                 return executeEndSession(operation);
             case "assertSessionDirty":
                 return executeAssertSessionDirty(operation);
             case "assertSessionNotDirty":
                 return executeAssertSessionNotDirty(operation);
+            case "assertSessionPinned":
+                return executeAssertSessionPinned(operation);
+            case "assertSessionUnpinned":
+                return executeAssertSessionUnpinned(operation);
             case "assertSameLsidOnLastTwoCommands":
                 return executeAssertSameLsidOnLastTwoCommands(operation);
             case "assertDifferentLsidOnLastTwoCommands":
@@ -212,7 +218,14 @@ public abstract class UnifiedTest {
     }
 
     private OperationResult executeFailPoint(final BsonDocument operation) {
-        FailPoint failPoint = new FailPoint(operation, entities);
+        FailPoint failPoint = FailPoint.untargeted(operation, entities);
+        failPoint.executeFailPoint();
+        failPoints.add(failPoint);
+        return OperationResult.NONE;
+    }
+
+    private OperationResult executeTargetedFailPoint(final BsonDocument operation) {
+        FailPoint failPoint = FailPoint.targeted(operation, entities);
         failPoint.executeFailPoint();
         failPoints.add(failPoint);
         return OperationResult.NONE;
@@ -236,6 +249,21 @@ public abstract class UnifiedTest {
         ClientSession session = entities.getSession(operation.getDocument("arguments").getString("session").getValue());
         assertNotNull(session.getServerSession());
         assertEquals(expected, session.getServerSession().isMarkedDirty());
+        return OperationResult.NONE;
+    }
+
+    private OperationResult executeAssertSessionPinned(final BsonDocument operation) {
+        return executeAssertSessionPinniness(operation, true);
+    }
+
+    private OperationResult executeAssertSessionUnpinned(final BsonDocument operation) {
+        return executeAssertSessionPinniness(operation, false);
+    }
+
+    private OperationResult executeAssertSessionPinniness(final BsonDocument operation, final boolean expected) {
+        ClientSession session = entities.getSession(operation.getDocument("arguments").getString("session").getValue());
+        assertNotNull(session.getServerSession());
+        assertEquals(expected, session.getPinnedServerAddress() != null);
         return OperationResult.NONE;
     }
 
