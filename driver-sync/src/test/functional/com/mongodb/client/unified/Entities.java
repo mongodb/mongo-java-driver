@@ -44,6 +44,7 @@ import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static org.junit.Assume.assumeTrue;
 
 final class Entities {
+    private final Map<String, BsonValue> results = new HashMap<>();
     private final Map<String, MongoClient> clients = new HashMap<>();
     private final Map<String, MongoDatabase> databases = new HashMap<>();
     private final Map<String, MongoCollection<BsonDocument>> collections = new HashMap<>();
@@ -52,6 +53,18 @@ final class Entities {
     private final Map<String, GridFSBucket> buckets = new HashMap<>();
     private final Map<String, TestCommandListener> clientCommandListeners = new HashMap<>();
     private final Map<String, MongoCursor<BsonDocument>> changeStreams = new HashMap<>();
+
+    public void addResult(final String id, final BsonValue result) {
+        results.put(id, result);
+    }
+
+    public BsonValue getResult(final String id) {
+        BsonValue result = results.get(id);
+        if (result == null) {
+            throw new IllegalStateException("Missing change stream with id: " + id);
+        }
+        return result;
+    }
 
     public void addChangeStream(final String id, final MongoCursor<BsonDocument> cursor) {
         changeStreams.put(id, cursor);

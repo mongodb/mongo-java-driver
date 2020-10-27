@@ -53,6 +53,12 @@ final class ValueMatcher {
                     }
                     expected = expectedDocument.get("$$unsetOrMatches");
                     break;
+                case "$$type":
+                    assertExpectedType(actual, expectedDocument.get("$$type"));
+                    return;
+                case "$$matchesHexBytes":
+                    expected = expectedDocument.getString("$$matchesHexBytes");
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported special operator: " + expectedDocument.getFirstKey());
             }
@@ -73,22 +79,19 @@ final class ValueMatcher {
                             }
                             return;
                         case "$$type":
-                            List<String> types;
-                            if (value.asDocument().isString("$$type")) {
-                                types = singletonList(value.asDocument().getString("$$type").getValue());
-                            } else if (value.asDocument().isArray("$$type")) {
-                                types = value.asDocument().getArray("$$type").stream()
-                                        .map(type -> type.asString().getValue()).collect(Collectors.toList());
-                            } else {
-                                throw new UnsupportedOperationException("Unsupported type for $$type value");
-                            }
-                            assertTrue(types.contains(asTypeString(actualDocument.get(key).getBsonType())));
+                            assertExpectedType(actualDocument.get(key), value.asDocument().get("$$type"));
                             return;
                         case "$$unsetOrMatches":
                             if (!actualDocument.containsKey(key)) {
                                 return;
                             }
                             value = value.asDocument().get("$$unsetOrMatches");
+                            break;
+                        case "$$matchesEntity":
+                            value = entities.getResult(value.asDocument().getString("$$matchesEntity").getValue());
+                            break;
+                        case "$$matchesHexBytes":
+                            value = value.asDocument().getString("$$matchesHexBytes");
                             break;
                         case "$$sessionLsid":
                             value = entities.getSessionIdentifier(value.asDocument().getString("$$sessionLsid").getValue());
@@ -119,6 +122,18 @@ final class ValueMatcher {
             assertEquals(expected.getBsonType(), actual.getBsonType());
             assertEquals(expected, actual);
         }
+    }
+
+    private void assertExpectedType(final BsonValue actualValue, final BsonValue expectedTypes) {
+        List<String> types;
+        if (expectedTypes.isString()) {
+            types = singletonList(expectedTypes.asString().getValue());
+        } else if (expectedTypes.isArray()) {
+            types = expectedTypes.asArray().stream().map(type -> type.asString().getValue()).collect(Collectors.toList());
+        } else {
+            throw new UnsupportedOperationException("Unsupported type for $$type value");
+        }
+        assertTrue(types.contains(asTypeString(actualValue.getBsonType())));
     }
 
     private static String asTypeString(final BsonType bsonType) {

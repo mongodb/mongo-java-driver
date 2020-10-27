@@ -58,6 +58,7 @@ public class UnifiedTestValidator extends UnifiedTest {
                 || fileDescription.equals("poc-transactions-mongos-pin-auto")
                 || fileDescription.equals("poc-command-monitoring")
                 || fileDescription.equals("poc-sessions")
+                || fileDescription.equals("poc-gridfs")
                 || fileDescription.equals("poc-change-streams"));
         // TODO: remove after https://jira.mongodb.org/browse/JAVA-3871 is fixed
         assumeTrue(!(fileDescription.equals("poc-change-streams") && testDescription.equals("Test consecutive resume")));

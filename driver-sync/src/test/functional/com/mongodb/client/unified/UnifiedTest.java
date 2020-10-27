@@ -64,6 +64,7 @@ public abstract class UnifiedTest {
     private final BsonDocument definition;
     private final Entities entities = new Entities();
     private final UnifiedCrudHelper crudHelper = new UnifiedCrudHelper(entities);
+    private final UnifiedGridFSHelper gridFSHelper = new UnifiedGridFSHelper(entities);
     private final ValueMatcher valueMatcher = new ValueMatcher(entities);
     private final EventMatcher eventMatcher = new EventMatcher(valueMatcher);
     private final List<FailPoint> failPoints = new ArrayList<>();
@@ -188,6 +189,8 @@ public abstract class UnifiedTest {
                 return crudHelper.executeInsertMany(operation);
             case "replaceOne":
                 return crudHelper.executeReplaceOne(operation);
+            case "deleteOne":
+                return crudHelper.executeDeleteOne(operation);
             case "aggregate":
                 return crudHelper.executeAggregate(operation);
             case "find":
@@ -212,6 +215,12 @@ public abstract class UnifiedTest {
                 return crudHelper.executeChangeStream(operation);
             case "iterateUntilDocumentOrError":
                 return crudHelper.executeIterateUntilDocumentOrError(operation);
+            case "delete":
+                return gridFSHelper.executeDelete(operation);
+            case "download":
+                return gridFSHelper.executeDownload(operation);
+            case "upload":
+                return gridFSHelper.executeUpload(operation);
             default:
                 throw new UnsupportedOperationException("Unsupported test operation: " + name);
         }

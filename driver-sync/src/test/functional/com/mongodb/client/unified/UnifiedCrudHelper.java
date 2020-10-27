@@ -41,6 +41,7 @@ import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
+import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
@@ -184,6 +185,29 @@ final class UnifiedCrudHelper {
         } catch (Exception e) {
             return OperationResult.of(e);
         }
+    }
+
+    OperationResult executeDeleteOne(final BsonDocument operation) {
+        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument filter = arguments.getDocument("filter");
+
+        if (operation.getDocument("arguments").size() > 1) {
+            throw new UnsupportedOperationException("Unexpected arguments");
+        }
+
+        try {
+            DeleteResult result = collection.deleteOne(filter);
+            return toExpected(result);
+        } catch (Exception e) {
+            return OperationResult.of(e);
+        }
+    }
+
+    private OperationResult toExpected(final DeleteResult result) {
+        return OperationResult.of(new BsonDocument()
+                .append("deletedCount", new BsonInt32((int) result.getDeletedCount()))
+        );
     }
 
     OperationResult executeReplaceOne(final BsonDocument operation) {
