@@ -65,11 +65,7 @@ final class Entities {
     }
 
     public BsonValue getResult(final String id) {
-        BsonValue result = results.get(id);
-        if (result == null) {
-            throw new IllegalStateException("Missing change stream with id: " + id);
-        }
-        return result;
+        return getEntity(id, results, "result");
     }
 
     public void addChangeStream(final String id, final MongoCursor<BsonDocument> cursor) {
@@ -77,11 +73,7 @@ final class Entities {
     }
 
     public MongoCursor<BsonDocument> getChangeStream(final String id) {
-        MongoCursor<BsonDocument> changeStream = changeStreams.get(id);
-        if (changeStream == null) {
-            throw new IllegalStateException("Missing change stream with id: " + id);
-        }
-        return changeStream;
+        return getEntity(id, changeStreams, "change streams");
     }
 
     public boolean hasClient(final String id) {
@@ -89,11 +81,7 @@ final class Entities {
     }
 
     public MongoClient getClient(final String id) {
-        MongoClient mongoClient = clients.get(id);
-        if (mongoClient == null) {
-            throw new IllegalStateException("Missing client with id: " + id);
-        }
-        return mongoClient;
+        return getEntity(id, clients, "client");
     }
 
     public boolean hasDatabase(final String id) {
@@ -101,11 +89,7 @@ final class Entities {
     }
 
     public MongoDatabase getDatabase(final String id) {
-        MongoDatabase database = databases.get(id);
-        if (database == null) {
-            throw new IllegalStateException("Missing database with id: " + id);
-        }
-        return database;
+        return getEntity(id, databases, "database");
     }
 
     public boolean hasCollection(final String id) {
@@ -113,43 +97,31 @@ final class Entities {
     }
 
     public MongoCollection<BsonDocument> getCollection(final String id) {
-        MongoCollection<BsonDocument> collection = collections.get(id);
-        if (collection == null) {
-            throw new IllegalStateException("Missing collection with id: " + id);
-        }
-        return collection;
+        return getEntity(id, collections, "collection");
     }
 
     public ClientSession getSession(final String id) {
-        ClientSession clientSession = sessions.get(id);
-        if (clientSession == null) {
-            throw new IllegalStateException("Missing session with id: " + id);
-        }
-        return clientSession;
+        return getEntity(id, sessions, "session");
     }
 
     public BsonDocument getSessionIdentifier(final String id) {
-        BsonDocument sessionIdentifier = sessionIdentifiers.get(id);
-        if (sessionIdentifier == null) {
-            throw new IllegalStateException("Missing session identifier with id: " + id);
-        }
-        return sessionIdentifier;
+        return getEntity(id, sessionIdentifiers, "session identifier");
     }
 
     public GridFSBucket getBucket(final String id) {
-        GridFSBucket bucket = buckets.get(id);
-        if (bucket == null) {
-            throw new IllegalStateException("Missing bucket with id: " + id);
-        }
-        return bucket;
+        return getEntity(id, buckets, "bucket");
     }
 
     public TestCommandListener getClientCommandListener(final String id) {
-        TestCommandListener commandListener = clientCommandListeners.get(id);
-        if (commandListener == null) {
-            throw new IllegalStateException("Missing command listener with id: " + id);
+        return getEntity(id, clientCommandListeners, "command listener");
+    }
+
+    private <T> T getEntity(final String id, final Map<String, T> entities, final String type) {
+        T entity = entities.get(id);
+        if (entity == null) {
+            throw new IllegalStateException("Missing " + type + " with id: " + id);
         }
-        return commandListener;
+        return entity;
     }
 
     public void init(final BsonArray entitiesArray, final MongoClientSupplier mongoClientSupplier) {
