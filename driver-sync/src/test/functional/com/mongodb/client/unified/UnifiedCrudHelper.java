@@ -16,6 +16,10 @@
 
 package com.mongodb.client.unified;
 
+import com.mongodb.ReadConcern;
+import com.mongodb.ReadConcernLevel;
+import com.mongodb.TransactionOptions;
+import com.mongodb.WriteConcern;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.ChangeStreamIterable;
@@ -64,6 +68,20 @@ final class UnifiedCrudHelper {
 
     UnifiedCrudHelper(final Entities entities) {
         this.entities = entities;
+    }
+
+    static ReadConcern asReadConcern(final BsonDocument readConcernDocument) {
+        if (readConcernDocument.size() > 1) {
+            throw new UnsupportedOperationException("Unsupported read concern properties");
+        }
+        return new ReadConcern(ReadConcernLevel.fromString(readConcernDocument.getString("level").getValue()));
+    }
+
+    static WriteConcern asWriteConcern(final BsonDocument writeConcernDocument) {
+        if (writeConcernDocument.size() > 1) {
+            throw new UnsupportedOperationException("Unsupported write concern properties");
+        }
+        return new WriteConcern(writeConcernDocument.getInt32("w").intValue());
     }
 
     OperationResult executeListDatabases(final BsonDocument operation) {
@@ -437,6 +455,38 @@ final class UnifiedCrudHelper {
 
         try {
             session.abortTransaction();
+            return OperationResult.NONE;
+        } catch (Exception e) {
+            return OperationResult.of(e);
+        }
+    }
+
+    OperationResult executeWithTransaction(final BsonDocument operation, final OperationAsserter operationAsserter) {
+        ClientSession session = entities.getSession(operation.getString("object").getValue());
+        BsonArray callback = operation.getDocument("arguments").getArray("callback");
+        TransactionOptions.Builder optionsBuilder = TransactionOptions.builder();
+        for (Map.Entry<String, BsonValue> entry : operation.getDocument("arguments").entrySet()) {
+            switch (entry.getKey()) {
+                case "callback":
+                    break;
+                case "readConcern":
+                    optionsBuilder.readConcern(asReadConcern(entry.getValue().asDocument()));
+                    break;
+                case "writeConcern":
+                    optionsBuilder.writeConcern(asWriteConcern(entry.getValue().asDocument()));
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported transaction option: " + entry.getKey());
+            }
+        }
+
+        try {
+            session.withTransaction(() -> {
+                for (BsonValue cur : callback) {
+                    operationAsserter.assertOperation(cur.asDocument());
+                }
+                return null;
+            }, optionsBuilder.build());
             return OperationResult.NONE;
         } catch (Exception e) {
             return OperationResult.of(e);

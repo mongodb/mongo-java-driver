@@ -113,13 +113,7 @@ public abstract class UnifiedTest {
     @Test
     public void shouldPassAllOutcomes() {
         for (BsonValue cur : definition.getArray("operations")) {
-            BsonDocument operation = cur.asDocument();
-            OperationResult result = executeOperation(operation);
-            if (operation.containsKey("expectResult")) {
-                valueMatcher.assertValuesMatch(operation.get("expectResult"), requireNonNull(result.getResult()));
-            } else if (operation.containsKey("expectError")) {
-                ErrorMatcher.assertErrorsMatch(operation.getDocument("expectError"), requireNonNull(result.getException()));
-            }
+            assertOperation(cur.asDocument());
         }
 
         if (definition.containsKey("outcome")) {
@@ -147,6 +141,15 @@ public abstract class UnifiedTest {
             List<BsonDocument> collectionData = new CollectionHelper<>(new BsonDocumentCodec(), namespace).find();
             assertEquals(curDocument.getArray("documents").stream().map(BsonValue::asDocument).collect(toList()),
                     collectionData);
+        }
+    }
+
+    private void assertOperation(final BsonDocument operation) {
+        OperationResult result = executeOperation(operation);
+        if (operation.containsKey("expectResult")) {
+            valueMatcher.assertValuesMatch(operation.get("expectResult"), requireNonNull(result.getResult()));
+        } else if (operation.containsKey("expectError")) {
+            ErrorMatcher.assertErrorsMatch(operation.getDocument("expectError"), requireNonNull(result.getException()));
         }
     }
 
@@ -211,6 +214,8 @@ public abstract class UnifiedTest {
                 return crudHelper.executeCommitTransaction(operation);
             case "abortTransaction":
                 return crudHelper.executeAbortTransaction(operation);
+            case "withTransaction":
+                return crudHelper.executeWithTransaction(operation, this::assertOperation);
             case "createChangeStream":
                 return crudHelper.executeChangeStream(operation);
             case "iterateUntilDocumentOrError":

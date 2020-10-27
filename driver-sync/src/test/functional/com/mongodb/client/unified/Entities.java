@@ -20,6 +20,8 @@ import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadConcernLevel;
+import com.mongodb.TransactionOptions;
+import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -40,7 +42,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
+import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static com.mongodb.client.unified.UnifiedCrudHelper.asReadConcern;
+import static com.mongodb.client.unified.UnifiedCrudHelper.asWriteConcern;
+import static java.util.Objects.requireNonNull;
 import static org.junit.Assume.assumeTrue;
 
 final class Entities {
@@ -155,8 +161,11 @@ final class Entities {
                 case "client":
                     MongoClientSettings.Builder clientSettingsBuilder = getMongoClientSettingsBuilder();
                     if (entity.getBoolean("useMultipleMongoses", BsonBoolean.FALSE).getValue()) {
-                        assumeTrue(getMultiMongosConnectionString() != null);
-                        clientSettingsBuilder.applyConnectionString(getMultiMongosConnectionString());
+                        assumeTrue("Multiple mongos connection string not available for sharded cluster",
+                                !isSharded() || getMultiMongosConnectionString() != null);
+                        if (isSharded()) {
+                            clientSettingsBuilder.applyConnectionString(requireNonNull(getMultiMongosConnectionString()));
+                        }
                     }
                     if (entity.containsKey("observeEvents")) {
                         List<String> ignoreCommandMonitoringEvents = entity
@@ -179,6 +188,13 @@ final class Entities {
                                 case "retryWrites":
                                     clientSettingsBuilder.retryWrites(value.asBoolean().getValue());
                                     break;
+                                case "readConcernLevel":
+                                    clientSettingsBuilder.readConcern(
+                                            new ReadConcern(ReadConcernLevel.fromString(value.asString().getValue())));
+                                    break;
+                                case "w":
+                                    clientSettingsBuilder.writeConcern(new WriteConcern(value.asInt32().intValue()));
+                                    break;
                                 default:
                                     throw new UnsupportedOperationException("Unsupported uri option: " + key);
                             }
@@ -199,7 +215,7 @@ final class Entities {
                             //noinspection SwitchStatementWithTooFewBranches
                             switch (entry.getKey()) {
                                 case "readConcern":
-                                    database = database.withReadConcern(asReadConcern(entry.getValue()));
+                                    database = database.withReadConcern(asReadConcern(entry.getValue().asDocument()));
                                     break;
                                 default:
                                     throw new UnsupportedOperationException("Unsupported database option: " + entry.getKey());
@@ -218,7 +234,7 @@ final class Entities {
                             //noinspection SwitchStatementWithTooFewBranches
                             switch (entry.getKey()) {
                                 case "readConcern":
-                                    collection = collection.withReadConcern(asReadConcern(entry.getValue()));
+                                    collection = collection.withReadConcern(asReadConcern(entry.getValue().asDocument()));
                                     break;
                                 default:
                                     throw new UnsupportedOperationException("Unsupported collection option: " + entry.getKey());
@@ -230,11 +246,20 @@ final class Entities {
                 }
                 case "session": {
                     MongoClient client = clients.get(entity.getString("client").getValue());
-                    ClientSessionOptions options = ClientSessionOptions.builder().build();
-                    ClientSession session = client.startSession(options);
+                    ClientSessionOptions.Builder optionsBuilder = ClientSessionOptions.builder();
                     if (entity.containsKey("sessionOptions")) {
-                        throw new UnsupportedOperationException("Unsupported session specification: sessionOptions");
+                        for (Map.Entry<String, BsonValue> entry : entity.getDocument("sessionOptions").entrySet()) {
+                            //noinspection SwitchStatementWithTooFewBranches
+                            switch (entry.getKey()) {
+                                case "defaultTransactionOptions":
+                                    optionsBuilder.defaultTransactionOptions(getTransactionOptions(entry.getValue().asDocument()));
+                                    break;
+                                default:
+                                    throw new UnsupportedOperationException("Unsupported session option: " + entry.getKey());
+                            }
+                        }
                     }
+                    ClientSession session = client.startSession(optionsBuilder.build());
                     sessions.put(id, session);
                     sessionIdentifiers.put(id, session.getServerSession().getIdentifier());
                     break;
@@ -253,8 +278,21 @@ final class Entities {
         }
     }
 
-    private ReadConcern asReadConcern(final BsonValue value) {
-        return new ReadConcern(ReadConcernLevel.fromString(value.asDocument().getString("level").getValue()));
+    private TransactionOptions getTransactionOptions(final BsonDocument options) {
+        TransactionOptions.Builder transactionOptionsBuilder = TransactionOptions.builder();
+        for (Map.Entry<String, BsonValue> entry : options.entrySet()) {
+            switch (entry.getKey()) {
+                case "readConcern":
+                    transactionOptionsBuilder.readConcern(asReadConcern(entry.getValue().asDocument()));
+                    break;
+                case "writeConcern":
+                    transactionOptionsBuilder.writeConcern(asWriteConcern(entry.getValue().asDocument()));
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported transaction option: " + entry.getKey());
+            }
+        }
+        return transactionOptionsBuilder.build();
     }
 
     public void close() {
