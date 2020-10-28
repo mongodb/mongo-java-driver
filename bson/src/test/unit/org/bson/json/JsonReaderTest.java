@@ -141,6 +141,17 @@ public class JsonReaderTest {
     }
 
     @Test
+    public void testDateTimeShellDateOnly() {
+        String json = "ISODate(\"1970-01-01\")";
+        testStringAndStream(json, bsonReader -> {
+            assertEquals(BsonType.DATE_TIME, bsonReader.readBsonType());
+            assertEquals(0, bsonReader.readDateTime());
+            assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+            return null;
+        });
+    }
+
+    @Test
     public void testDateTimeShell() {
         String json = "ISODate(\"1970-01-01T00:00:00Z\")";
         testStringAndStream(json, bsonReader -> {

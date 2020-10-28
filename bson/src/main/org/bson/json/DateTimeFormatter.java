@@ -17,25 +17,30 @@
 package org.bson.json;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAccessor;
 import java.time.temporal.TemporalQuery;
 
+import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
 import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
 final class DateTimeFormatter {
+    private static final int DATE_STRING_LENGTH = "1970-01-01".length();
+
     static long parse(final String dateTimeString) {
-        try {
+        // ISO_OFFSET_DATE_TIME will not parse date strings consisting of just year-month-day, so use ISO_LOCAL_DATE for those
+        if (dateTimeString.length() == DATE_STRING_LENGTH) {
+            return LocalDate.parse(dateTimeString, ISO_LOCAL_DATE).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
+        } else {
             return ISO_OFFSET_DATE_TIME.parse(dateTimeString, new TemporalQuery<Instant>() {
                 @Override
                 public Instant queryFrom(final TemporalAccessor temporal) {
                     return Instant.from(temporal);
                 }
             }).toEpochMilli();
-        } catch (DateTimeParseException e) {
-            throw new IllegalArgumentException(e.getMessage());
         }
     }
 
@@ -45,4 +50,5 @@ final class DateTimeFormatter {
 
     private DateTimeFormatter() {
     }
+
 }
