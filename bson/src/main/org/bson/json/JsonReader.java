@@ -38,6 +38,7 @@ import java.io.Reader;
 import java.text.DateFormat;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
+import java.time.format.DateTimeParseException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
@@ -823,28 +824,14 @@ public class JsonReader extends AbstractBsonReader {
         }
 
         verifyToken(JsonTokenType.RIGHT_PAREN);
-        String[] patterns = {"yyyy-MM-dd", "yyyy-MM-dd'T'HH:mm:ssz", "yyyy-MM-dd'T'HH:mm:ss.SSSz"};
 
-        SimpleDateFormat format = new SimpleDateFormat(patterns[0], Locale.ENGLISH);
-        ParsePosition pos = new ParsePosition(0);
-        String s = token.getValue(String.class);
+        String dateTimeString = token.getValue(String.class);
 
-        if (s.endsWith("Z")) {
-            s = s.substring(0, s.length() - 1) + "GMT-00:00";
+        try {
+            return DateTimeFormatter.parse(dateTimeString);
+        } catch (DateTimeParseException e) {
+            throw new JsonParseException("Failed to parse string as a date: " + dateTimeString, e);
         }
-
-        for (final String pattern : patterns) {
-            format.applyPattern(pattern);
-            format.setLenient(true);
-            pos.setIndex(0);
-
-            Date date = format.parse(s, pos);
-
-            if (date != null && pos.getIndex() == s.length()) {
-                return date.getTime();
-            }
-        }
-        throw new JsonParseException("Invalid date format.");
     }
 
     private BsonBinary visitHexDataConstructor() {
@@ -1062,7 +1049,7 @@ public class JsonReader extends AbstractBsonReader {
                 String dateTimeString = valueToken.getValue(String.class);
                 try {
                     value = DateTimeFormatter.parse(dateTimeString);
-                } catch (IllegalArgumentException e) {
+                } catch (DateTimeParseException e) {
                     throw new JsonParseException("Failed to parse string as a date", e);
                 }
             } else {

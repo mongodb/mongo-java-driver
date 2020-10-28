@@ -45,6 +45,7 @@ public class JsonParseException extends RuntimeException {
         super(s);
     }
 
+
     /**
      * Constructs a new runtime exception with string formatted using specified pattern and arguments.
      *
@@ -56,9 +57,20 @@ public class JsonParseException extends RuntimeException {
     }
 
     /**
+     * Constructs a new runtime exception with the specified detail message and root cause.
+     *
+     * @param s The detail message
+     * @param t the throwable root cause
+     * @since 4.2
+     */
+    public JsonParseException(final String s, final Throwable t) {
+        super(s, t);
+    }
+
+    /**
      * Create a JSONParseException with the given {@link Throwable} cause.
      *
-     * @param t the throwable root case
+     * @param t the throwable root cause
      */
     public JsonParseException(final Throwable t) {
         super(t);
