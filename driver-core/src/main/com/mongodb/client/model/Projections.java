@@ -25,6 +25,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.List;
+import java.util.Map;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Arrays.asList;
@@ -55,6 +56,21 @@ public final class Projections {
      */
     public static <TExpression> Bson computed(final String fieldName, final TExpression expression) {
         return new SimpleExpression<TExpression>(fieldName, expression);
+    }
+
+    /**
+     * Creates a projection of fields computed from the given expressions. Projection with an expression is only supported
+     * using the $project aggregation pipeline stage.
+     *
+     * @param fields     the map of fields to expressions
+     * @param <TExpression> the expression type
+     * @return the projection
+     * @see Aggregates#project(Bson)
+     * @see com.mongodb.client.model.expressions.Expressions
+     * @since 4.?
+     */
+    public static <TExpression> Bson computed(final Map<String, TExpression> fields) {
+        return new CompoundExpression<>(fields);
     }
 
     /**

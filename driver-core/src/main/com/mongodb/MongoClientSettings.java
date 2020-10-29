@@ -19,6 +19,7 @@ package com.mongodb;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider;
+import com.mongodb.client.model.expressions.codecs.ExpressionCodecProvider;
 import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
@@ -70,7 +71,8 @@ public final class MongoClientSettings {
                     new GridFSFileCodecProvider(),
                     new Jsr310CodecProvider(),
                     new JsonObjectCodecProvider(),
-                    new BsonCodecProvider()));
+                    new BsonCodecProvider(),
+                    new ExpressionCodecProvider()));
 
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;
