@@ -25,6 +25,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.List;
+import java.util.Map;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Arrays.asList;
@@ -55,6 +56,10 @@ public final class Projections {
      */
     public static <TExpression> Bson computed(final String fieldName, final TExpression expression) {
         return new SimpleExpression<TExpression>(fieldName, expression);
+    }
+
+    public static <TExpression> Bson computed(Map<String, TExpression> fields) {
+        return new CompoundExpression<>(fields);
     }
 
     /**

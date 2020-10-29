@@ -28,6 +28,8 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
 import static org.bson.assertions.Assertions.notNull;
@@ -65,6 +67,21 @@ public final class Aggregates {
      */
     public static Bson addFields(final List<Field<?>> fields) {
         return new AddFieldsStage(fields);
+    }
+
+    /**
+     * Creates an $addFields pipeline stage
+     *
+     * @param fields        the fields to add
+     * @return the $addFields pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/addFields/ $addFields
+     * @mongodb.server.release 3.4
+     * @since 3.4
+     */
+    public static <TExpression> Bson addFields(final Map<String, TExpression> fields) {
+        return new AddFieldsStage(fields.entrySet().stream()
+                .map(entry -> new Field<>(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList()));
     }
 
     /**
