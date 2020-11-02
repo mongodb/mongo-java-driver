@@ -173,17 +173,8 @@ configure(javaMainProjects) {
 configure(javaAndScalaTestedProjects) {
     /* Testing */
     tasks.withType(Test) {
-        systemProperties(
-                'org.mongodb.test.uri': System.getProperty('org.mongodb.test.uri'),
-                'org.mongodb.test.transaction.uri': System.getProperty('org.mongodb.test.transaction.uri'),
-                'org.mongodb.test.data.lake': System.getProperty('org.mongodb.test.data.lake'),
-                'org.mongodb.useSocket': System.getProperty('org.mongodb.useSocket', 'false'),
-                'org.mongodb.disableAsync': System.getProperty('org.mongodb.disableAsync', 'false'),
-                'org.mongodb.test.async.type': System.getProperty('org.mongodb.test.async.type', 'nio2'),
-                'org.mongodb.test.awsAccessKeyId': System.getProperty('org.mongodb.test.awsAccessKeyId'),
-                'org.mongodb.test.awsSecretAccessKey': System.getProperty('org.mongodb.test.awsSecretAccessKey'),
-                'jna.library.path': System.getProperty('jna.library.path')
-        )
+        systemProperties(System.getProperties().findAll { it.key.toString().startsWith("org.mongodb.") })
+        systemProperty('jna.library.path', System.getProperty('jna.library.path'))
 
         project.ext.buildingWith = { propertyName ->
             project.hasProperty(propertyName) && project.property(propertyName).toBoolean()
