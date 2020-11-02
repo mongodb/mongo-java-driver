@@ -578,7 +578,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
                 def response = connection.command(getDatabaseName(), findCommand,
                         OperationFunctionalSpecification.NO_OP_FIELD_NAME_VALIDATOR, readPreference,
                         CommandResultDocumentCodec.create(new DocumentCodec(), 'firstBatch'),
-                        connectionSource.sessionContext)
+                        connectionSource.sessionContext, null)
                 cursorDocumentToQueryResult(response.getDocument('cursor'), connection.getDescription().getServerAddress())
             } else {
                 connection.query(getNamespace(), filter, null, 0, limit, batchSize,

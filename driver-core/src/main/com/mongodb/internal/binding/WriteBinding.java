@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.binding;
 
+import com.mongodb.ServerApi;
 import com.mongodb.internal.session.SessionContext;
 
 /**
@@ -39,6 +40,8 @@ public interface WriteBinding extends ReferenceCounted {
      * @since 3.6
      */
     SessionContext getSessionContext();
+
+    ServerApi getServerApi();
 
     @Override
     WriteBinding retain();

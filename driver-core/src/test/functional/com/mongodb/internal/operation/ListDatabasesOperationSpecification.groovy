@@ -116,11 +116,13 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
         given:
         def connection = Mock(Connection)
         def connectionSource = Stub(ConnectionSource) {
+            getServerApi() >> null
             getConnection() >> connection
         }
         def readBinding = Stub(ReadBinding) {
             getReadConnectionSource() >> connectionSource
             getReadPreference() >> readPreference
+            getServerApi() >> null
         }
         def operation = new ListDatabasesOperation(helper.decoder)
 
@@ -129,7 +131,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         _ * connection.getDescription() >> helper.connectionDescription
-        1 * connection.command(_, _, _, readPreference, _, _) >> helper.commandResult
+        1 * connection.command(_, _, _, readPreference, _, _, null) >> helper.commandResult
         1 * connection.release()
 
         where:

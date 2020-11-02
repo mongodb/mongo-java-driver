@@ -269,7 +269,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
                                                              NO_OP_FIELD_NAME_VALIDATOR,
                                                              ReadPreference.primary(),
                                                              CommandResultDocumentCodec.create(decoder, "nextBatch"),
-                                                             connectionSource.getSessionContext()));
+                                                             connectionSource.getSessionContext(), null));
                 } catch (MongoCommandException e) {
                     throw translateCommandException(e, serverCursor);
                 }
@@ -341,7 +341,8 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             try {
                 if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
                     connection.command(namespace.getDatabaseName(), asKillCursorsCommandDocument(), NO_OP_FIELD_NAME_VALIDATOR,
-                            ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.getSessionContext());
+                            ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.getSessionContext(),
+                            connectionSource.getServerApi());
                 } else {
                     connection.killCursor(namespace, singletonList(serverCursor.getId()));
                 }

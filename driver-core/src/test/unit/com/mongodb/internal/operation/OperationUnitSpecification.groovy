@@ -94,16 +94,19 @@ class OperationUnitSpecification extends Specification {
 
         def connectionSource = Stub(ConnectionSource) {
             getConnection() >> connection
+            getServerApi() >> null
         }
         def readBinding = Stub(ReadBinding) {
             getReadConnectionSource() >> connectionSource
             getReadPreference() >> readPreference
+            getServerApi() >> null
             getSessionContext() >> Stub(SessionContext) {
                 hasActiveTransaction() >> false
                 getReadConcern() >> ReadConcern.DEFAULT
             }
         }
         def writeBinding = Stub(WriteBinding) {
+            getServerApi() >> null
             getWriteConnectionSource() >> connectionSource
         }
 

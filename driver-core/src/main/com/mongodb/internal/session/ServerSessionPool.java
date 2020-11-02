@@ -155,9 +155,10 @@ public class ServerSessionPool {
                 }
             }).getConnection();
 
+            // TODO: how to inject serverApi here, or should we just not?
             connection.command("admin",
                     new BsonDocument("endSessions", new BsonArray(identifiers)), new NoOpFieldNameValidator(),
-                    ReadPreference.primaryPreferred(), new BsonDocumentCodec(), NoOpSessionContext.INSTANCE);
+                    ReadPreference.primaryPreferred(), new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, null);
         } catch (MongoException e) {
             // ignore exceptions
         } finally {

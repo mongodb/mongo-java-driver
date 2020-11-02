@@ -42,6 +42,7 @@ class QueryBatchCursorSpecification extends Specification {
         }
         def connectionSource = Stub(ConnectionSource) {
             getConnection() >> { connection }
+            getServerApi() >> null
         }
         connectionSource.retain() >> connectionSource
 
@@ -72,7 +73,7 @@ class QueryBatchCursorSpecification extends Specification {
         cursor.hasNext()
 
         then:
-        1 * connection.command(database, expectedCommand, _, _, _, _) >> {
+        1 * connection.command(database, expectedCommand, _, _, _, _, null) >> {
             reply
         }
         1 * connection.release()
@@ -95,6 +96,7 @@ class QueryBatchCursorSpecification extends Specification {
             _ * command(_, _, _, _, _) >> { throw new MongoSocketException('No MongoD', serverAddress) }
         }
         def connectionSource = Stub(ConnectionSource) {
+            getServerApi() >> null
             getConnection() >> { connection }
         }
         connectionSource.retain() >> connectionSource

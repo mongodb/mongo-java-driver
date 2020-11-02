@@ -545,7 +545,7 @@ class DefaultServerSpecification extends Specification {
             latch.await()
         } else {
             testConnection.command('admin', new BsonDocument('ping', new BsonInt32(1)), NO_OP_FIELD_NAME_VALIDATOR,
-                    ReadPreference.primary(), new BsonDocumentCodec(), sessionContext)
+                    ReadPreference.primary(), new BsonDocumentCodec(), sessionContext, null)
         }
 
         then:

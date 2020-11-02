@@ -19,6 +19,7 @@ package com.mongodb.client.internal;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
+import com.mongodb.ServerApi;
 import com.mongodb.client.ClientSession;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
@@ -99,6 +100,11 @@ public class ClientSessionBinding implements ReadWriteBinding {
         return sessionContext;
     }
 
+    @Override
+    public ServerApi getServerApi() {
+        return wrapped.getServerApi();
+    }
+
     private boolean isActiveShardedTxn() {
         return session.hasActiveTransaction() && wrapped.getCluster().getDescription().getType() == ClusterType.SHARDED;
     }
@@ -128,6 +134,11 @@ public class ClientSessionBinding implements ReadWriteBinding {
         @Override
         public SessionContext getSessionContext() {
             return sessionContext;
+        }
+
+        @Override
+        public ServerApi getServerApi() {
+            return wrapped.getServerApi();
         }
 
         @Override

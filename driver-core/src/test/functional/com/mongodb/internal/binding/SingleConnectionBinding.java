@@ -17,6 +17,7 @@
 package com.mongodb.internal.binding;
 
 import com.mongodb.ReadPreference;
+import com.mongodb.ServerApi;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
@@ -110,6 +111,11 @@ public class SingleConnectionBinding implements ReadWriteBinding {
     }
 
     @Override
+    public ServerApi getServerApi() {
+        return null; // TODO
+    }
+
+    @Override
     public ConnectionSource getWriteConnectionSource() {
         isTrue("open", getCount() > 0);
         return new SingleConnectionSource(writeServer, writeConnection);
@@ -134,6 +140,11 @@ public class SingleConnectionBinding implements ReadWriteBinding {
         @Override
         public SessionContext getSessionContext() {
             return NoOpSessionContext.INSTANCE;
+        }
+
+        @Override
+        public ServerApi getServerApi() {
+            return null;  // TODO
         }
 
         @Override

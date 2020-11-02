@@ -37,6 +37,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -96,6 +97,7 @@ public class MongoClientOptions {
     private final List<CommandListener> commandListeners;
 
     private final AutoEncryptionSettings autoEncryptionSettings;
+    private final ServerApi serverApi;
 
     private MongoClientOptions(final Builder builder) {
         applicationName = builder.applicationName;
@@ -133,6 +135,7 @@ public class MongoClientOptions {
         clusterListeners = unmodifiableList(builder.clusterListeners);
         commandListeners = unmodifiableList(builder.commandListeners);
         autoEncryptionSettings = builder.autoEncryptionSettings;
+        serverApi = builder.serverApi;
 
         ConnectionPoolSettings.Builder connectionPoolSettingsBuilder = ConnectionPoolSettings.builder()
                 .minSize(getMinConnectionsPerHost())
@@ -542,6 +545,16 @@ public class MongoClientOptions {
     }
 
     /**
+     * Gets the server API to use when sending commands to the server.
+     *
+     * @return the server API
+     * @since 4.3
+     */
+    public Optional<ServerApi> getServerApi() {
+        return Optional.ofNullable(serverApi);
+    }
+
+    /**
      * Gets the server selector.
      *
      * <p>The server selector augments the normal server selection rules applied by the driver when determining
@@ -804,6 +817,9 @@ public class MongoClientOptions {
                 : that.autoEncryptionSettings != null) {
             return false;
         }
+        if (serverApi != null ? !serverApi.equals(that.serverApi) : that.serverApi != null) {
+            return false;
+        }
 
         return true;
     }
@@ -844,6 +860,7 @@ public class MongoClientOptions {
         result = 31 * result + (cursorFinalizerEnabled ? 1 : 0);
         result = 31 * result + compressorList.hashCode();
         result = 31 * result + (autoEncryptionSettings != null ? autoEncryptionSettings.hashCode() : 0);
+        result = 31 * result + (serverApi != null ? serverApi.hashCode() : 0);
         return result;
     }
 
@@ -888,6 +905,7 @@ public class MongoClientOptions {
                + ", serverSettings=" + serverSettings
                + ", heartbeatSocketSettings=" + heartbeatSocketSettings
                + ", autoEncryptionSettings="  + autoEncryptionSettings
+               + ", serverApi=" + serverApi
                + '}';
     }
 
@@ -938,6 +956,7 @@ public class MongoClientOptions {
         private DBEncoderFactory dbEncoderFactory = DefaultDBEncoder.FACTORY;
         private boolean cursorFinalizerEnabled = true;
         private AutoEncryptionSettings autoEncryptionSettings;
+        private ServerApi serverApi;
 
         /**
          * Creates a Builder for MongoClientOptions.
@@ -987,6 +1006,7 @@ public class MongoClientOptions {
             serverListeners.addAll(options.getServerListeners());
             serverMonitorListeners.addAll(options.getServerMonitorListeners());
             autoEncryptionSettings = options.getAutoEncryptionSettings();
+            serverApi = options.getServerApi().orElse(null);
         }
 
         /**

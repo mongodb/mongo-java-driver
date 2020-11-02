@@ -63,7 +63,7 @@ class CommandMessageSpecification extends Specification {
                         .maxWireVersion(THREE_DOT_SIX_WIRE_VERSION)
                         .serverType(serverType as ServerType)
                         .build(),
-                responseExpected, exhaustAllowed, null, null, clusterConnectionMode)
+                responseExpected, exhaustAllowed, null, null, clusterConnectionMode, null)
         def output = new BasicOutputBuffer()
 
         when:
@@ -138,7 +138,7 @@ class CommandMessageSpecification extends Specification {
                         .maxWireVersion(THREE_DOT_FOUR_WIRE_VERSION)
                         .serverType(serverType)
                         .build(),
-                responseExpected, null, null, clusterConnectionMode)
+                responseExpected, null, null, clusterConnectionMode, null)
         def output = new BasicOutputBuffer()
         def expectedFlagBits = 0
         if (readPreference.isSlaveOk()) {
@@ -196,7 +196,7 @@ class CommandMessageSpecification extends Specification {
         given:
         def message = new CommandMessage(namespace, originalCommandDocument, fieldNameValidator, ReadPreference.primary(),
                 MessageSettings.builder().maxWireVersion(maxWireVersion).build(), true, payload, new NoOpFieldNameValidator(),
-                ClusterConnectionMode.MULTIPLE)
+                ClusterConnectionMode.MULTIPLE, null)
         def output = new ByteBufferBsonOutput(new SimpleBufferProvider())
         message.encode(output, NoOpSessionContext.INSTANCE)
 
@@ -255,7 +255,7 @@ class CommandMessageSpecification extends Specification {
                                                      new BsonDocument('_id', new BsonInt32(5)).append('c', new BsonBinary(new byte[451]))]
                 .withIndex().collect { doc, i -> new WriteRequestWithIndex(new InsertRequest(doc), i) } )
         def message = new CommandMessage(namespace, insertCommand, fieldNameValidator, ReadPreference.primary(), messageSettings,
-                false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE)
+                false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE, null)
         def output = new BasicOutputBuffer()
         def sessionContext = Stub(SessionContext) {
             getReadConcern() >> ReadConcern.DEFAULT
@@ -278,7 +278,7 @@ class CommandMessageSpecification extends Specification {
         when:
         payload = payload.getNextSplit()
         message = new CommandMessage(namespace, insertCommand, fieldNameValidator, ReadPreference.primary(), messageSettings,
-                false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE)
+                false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE, null)
         output.truncateToPosition(0)
         message.encode(output, sessionContext)
         byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
@@ -296,7 +296,7 @@ class CommandMessageSpecification extends Specification {
         when:
         payload = payload.getNextSplit()
         message = new CommandMessage(namespace, insertCommand, fieldNameValidator, ReadPreference.primary(), messageSettings,
-                false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE)
+                false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE, null)
         output.truncateToPosition(0)
         message.encode(output, sessionContext)
         byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
@@ -314,7 +314,7 @@ class CommandMessageSpecification extends Specification {
         when:
         payload = payload.getNextSplit()
         message = new CommandMessage(namespace, insertCommand, fieldNameValidator, ReadPreference.primary(), messageSettings,
-                false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE)
+                false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE, null)
         output.truncateToPosition(0)
         message.encode(output, sessionContext)
         byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
@@ -338,7 +338,7 @@ class CommandMessageSpecification extends Specification {
                                                      new BsonDocument('c', new BsonBinary(new byte[450]))]
                 .withIndex().collect { doc, i -> new WriteRequestWithIndex(new InsertRequest(doc), i) } )
         def message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
-                false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE)
+                false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE, null)
         def output = new BasicOutputBuffer()
         def sessionContext = Stub(SessionContext) {
             getReadConcern() >> ReadConcern.DEFAULT
@@ -361,7 +361,7 @@ class CommandMessageSpecification extends Specification {
         when:
         payload = payload.getNextSplit()
         message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
-                false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE)
+                false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE, null)
         output.truncateToPosition(0)
         message.encode(output, sessionContext)
         byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
@@ -383,7 +383,7 @@ class CommandMessageSpecification extends Specification {
         def payload = new SplittablePayload(INSERT, [new BsonDocument('a', new BsonBinary(new byte[900]))]
                 .withIndex().collect { doc, i -> new WriteRequestWithIndex(new InsertRequest(doc), i) })
         def message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
-                false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE)
+                false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE, null)
         def output = new BasicOutputBuffer()
         def sessionContext = Stub(SessionContext) {
             getReadConcern() >> ReadConcern.DEFAULT
@@ -401,7 +401,7 @@ class CommandMessageSpecification extends Specification {
         def messageSettings = MessageSettings.builder().maxWireVersion(THREE_DOT_SIX_WIRE_VERSION).build()
         def payload = new SplittablePayload(INSERT, [new BsonDocument('a', new BsonInt32(1))])
         def message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
-                false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE)
+                false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE, null)
         def output = new BasicOutputBuffer()
         def sessionContext = Stub(SessionContext) {
             getReadConcern() >> ReadConcern.DEFAULT
@@ -421,7 +421,7 @@ class CommandMessageSpecification extends Specification {
                 .maxWireVersion(FOUR_DOT_ZERO_WIRE_VERSION).build()
         def payload = new SplittablePayload(INSERT, [new BsonDocument('a', new BsonInt32(1))])
         def message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
-                false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE)
+                false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE, null)
         def output = new BasicOutputBuffer()
         def sessionContext = Stub(SessionContext) {
             getReadConcern() >> ReadConcern.DEFAULT

@@ -122,9 +122,11 @@ class CommandOperationHelperSpecification extends Specification {
         def connection = Mock(Connection)
         def function = Stub(CommandOperationHelper.CommandWriteTransformer)
         def connectionSource = Stub(ConnectionSource) {
+            getServerApi() >> null
             getConnection() >> connection
         }
         def writeBinding = Stub(WriteBinding) {
+            getServerApi() >> null
             getWriteConnectionSource() >> connectionSource
         }
         def connectionDescription = Stub(ConnectionDescription)
@@ -134,7 +136,7 @@ class CommandOperationHelperSpecification extends Specification {
 
         then:
         _ * connection.getDescription() >> connectionDescription
-        1 * connection.command(dbName, command, _, primary(), decoder, _)
+        1 * connection.command(dbName, command, _, primary(), decoder, _, null)
         1 * connection.release()
     }
 
@@ -162,6 +164,7 @@ class CommandOperationHelperSpecification extends Specification {
         }
         def writeBinding = Stub(WriteBinding) {
             getWriteConnectionSource() >> connectionSource
+            getServerApi() >> null
             getSessionContext() >> Stub(SessionContext) {
                 hasSession() >> true
                 hasActiveTransaction() >> false
@@ -174,7 +177,7 @@ class CommandOperationHelperSpecification extends Specification {
                 FindAndModifyHelper.transformer())
 
         then:
-        2 * connection.command(dbName, command, _, primary(), decoder, _) >> { results.poll() }
+        2 * connection.command(dbName, command, _, primary(), decoder, _, null) >> { results.poll() }
 
         then:
         def ex = thrown(MongoWriteConcernException)
@@ -248,6 +251,7 @@ class CommandOperationHelperSpecification extends Specification {
         def readBinding = Stub(ReadBinding) {
             getReadConnectionSource() >> connectionSource
             getReadPreference() >> readPreference
+            getServerApi() >> null
         }
         def connectionDescription = Stub(ConnectionDescription)
 
@@ -256,7 +260,7 @@ class CommandOperationHelperSpecification extends Specification {
 
         then:
         _ * connection.getDescription() >> connectionDescription
-        1 * connection.command(dbName, command, _, readPreference, decoder, _)
+        1 * connection.command(dbName, command, _, readPreference, decoder, _, null)
         1 * connection.release()
 
         where:

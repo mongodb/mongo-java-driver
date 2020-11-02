@@ -25,8 +25,8 @@ import com.mongodb.client.internal.ChangeStreamIterableImpl;
 import com.mongodb.client.internal.ListDatabasesIterableImpl;
 import com.mongodb.client.internal.MongoClientDelegate;
 import com.mongodb.client.internal.MongoDatabaseImpl;
-import com.mongodb.client.internal.SimpleMongoClient;
 import com.mongodb.client.internal.OperationExecutor;
+import com.mongodb.client.internal.SimpleMongoClient;
 import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterSettings;
@@ -343,7 +343,8 @@ public class MongoClient implements Closeable {
 
         AutoEncryptionSettings autoEncryptionSettings = options.getAutoEncryptionSettings();
         this.delegate = new MongoClientDelegate(cluster, createRegistry(options.getCodecRegistry(), options.getUuidRepresentation()), this,
-                autoEncryptionSettings == null ? null : createCrypt(asSimpleMongoClient(), autoEncryptionSettings));
+                autoEncryptionSettings == null ? null : createCrypt(asSimpleMongoClient(), autoEncryptionSettings),
+                options.getServerApi().orElse(null));
 
         cursorCleaningService = options.isCursorFinalizerEnabled() ? createCursorCleaningService() : null;
     }
@@ -736,7 +737,7 @@ public class MongoClient implements Closeable {
                 getCommandListener(options.getCommandListeners()),
                 options.getApplicationName(),
                 wrapMongoDriverInformation(mongoDriverInformation),
-                options.getCompressorList());
+                options.getCompressorList(), null);  // TODO: add server api to MongoClientOptions
     }
 
     private static MongoDriverInformation wrapMongoDriverInformation(@Nullable final MongoDriverInformation mongoDriverInformation) {
@@ -811,7 +812,8 @@ public class MongoClient implements Closeable {
     private void cleanCursors() {
         ServerCursorAndNamespace cur;
         while ((cur = orphanedCursors.poll()) != null) {
-            ReadWriteBinding binding = new SingleServerBinding(delegate.getCluster(), cur.serverCursor.getAddress());
+            ReadWriteBinding binding = new SingleServerBinding(delegate.getCluster(), cur.serverCursor.getAddress(),
+                    options.getServerApi().orElse(null));
             try {
                 ConnectionSource source = binding.getReadConnectionSource();
                 try {
