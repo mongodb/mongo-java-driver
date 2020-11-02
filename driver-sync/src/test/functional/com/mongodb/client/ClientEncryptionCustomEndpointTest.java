@@ -22,6 +22,7 @@ import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.client.vault.ClientEncryptions;
+import com.mongodb.crypt.capi.MongoCryptException;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
@@ -32,12 +33,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.mongodb.ClusterFixture.hasEncryptionTestsEnabled;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static org.junit.Assert.assertEquals;
@@ -49,36 +52,51 @@ import static org.junit.Assume.assumeTrue;
 public class ClientEncryptionCustomEndpointTest {
 
     private ClientEncryption clientEncryption;
-    private BsonDocument masterKey;
+    private ClientEncryption invalidClientEncryption;
+    private final String provider;
+    private final BsonDocument masterKey;
+    private final boolean testInvalidClientEncryption;
     private final Class<? extends RuntimeException> exceptionClass;
-    // Delay loading this class because one of the expected classes is MongoCryptException, which should only be loaded after we
-    // determine that we're running on Java 8+ (since MongoCryptException is compiled with Java 8 target version)
-    private final String wrappedExceptionClassName;
+    private final Class<? extends RuntimeException> wrappedExceptionClass;
     private final String messageContainedInException;
 
     public ClientEncryptionCustomEndpointTest(@SuppressWarnings("unused") final String name,
+                                              final String provider,
                                               final BsonDocument masterKey,
+                                              final boolean testInvalidClientEncryption,
                                               @Nullable final Class<? extends RuntimeException> exceptionClass,
-                                              @Nullable final String wrappedExceptionClassName,
+                                              @Nullable final Class<? extends RuntimeException> wrappedExceptionClass,
                                               @Nullable final String messageContainedInException) {
+        this.provider = provider;
         this.masterKey = masterKey;
+        this.testInvalidClientEncryption = testInvalidClientEncryption;
         this.exceptionClass = exceptionClass;
-        this.wrappedExceptionClassName = wrappedExceptionClassName;
+        this.wrappedExceptionClass = wrappedExceptionClass;
         this.messageContainedInException = messageContainedInException;
     }
 
     @Before
     public void setUp() {
         assumeTrue(serverVersionAtLeast(4, 1));
-        assumeTrue("Encryption test with external keyVault is disabled",
-                System.getProperty("org.mongodb.test.awsAccessKeyId") != null
-                        && !System.getProperty("org.mongodb.test.awsAccessKeyId").isEmpty());
+        assumeTrue("Custom Endpoint tests disables", hasEncryptionTestsEnabled());
 
-        Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>();
-        Map<String, Object> awsCreds = new HashMap<String, Object>();
-        awsCreds.put("accessKeyId", System.getProperty("org.mongodb.test.awsAccessKeyId"));
-        awsCreds.put("secretAccessKey", System.getProperty("org.mongodb.test.awsSecretAccessKey"));
-        kmsProviders.put("aws", awsCreds);
+        Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{
+            put("aws",  new HashMap<String, Object>() {{
+                put("accessKeyId", System.getProperty("org.mongodb.test.awsAccessKeyId"));
+                put("secretAccessKey", System.getProperty("org.mongodb.test.awsSecretAccessKey"));
+            }});
+            put("azure",  new HashMap<String, Object>() {{
+                put("tenantId", System.getProperty("org.mongodb.test.azureTenantId"));
+                put("clientId", System.getProperty("org.mongodb.test.azureClientId"));
+                put("clientSecret", System.getProperty("org.mongodb.test.azureClientSecret"));
+                put("identityPlatformEndpoint", "login.microsoftonline.com:443");
+            }});
+            put("gcp",  new HashMap<String, Object>() {{
+                put("email", System.getProperty("org.mongodb.test.gcpEmail"));
+                put("privateKey", System.getProperty("org.mongodb.test.gcpPrivateKey"));
+                put("endpoint", "oauth2.googleapis.com:443");
+            }});
+        }};
 
         ClientEncryptionSettings.Builder clientEncryptionSettingsBuilder = ClientEncryptionSettings.builder().
                 keyVaultMongoClientSettings(getMongoClientSettings())
@@ -87,6 +105,26 @@ public class ClientEncryptionCustomEndpointTest {
 
         ClientEncryptionSettings clientEncryptionSettings = clientEncryptionSettingsBuilder.build();
         clientEncryption = ClientEncryptions.create(clientEncryptionSettings);
+
+        Map<String, Map<String, Object>> invalidKmsProviders = new HashMap<String, Map<String, Object>>() {{
+            put("azure",  new HashMap<String, Object>() {{
+                put("tenantId", System.getProperty("org.mongodb.test.azureTenantId"));
+                put("clientId", System.getProperty("org.mongodb.test.azureClientId"));
+                put("clientSecret", System.getProperty("org.mongodb.test.azureClientSecret"));
+                put("identityPlatformEndpoint", "example.com:443");
+            }});
+            put("gcp",  new HashMap<String, Object>() {{
+                put("email", System.getProperty("org.mongodb.test.gcpEmail"));
+                put("privateKey", System.getProperty("org.mongodb.test.gcpPrivateKey"));
+                put("endpoint", "example.com:443");
+            }});
+        }};
+
+        invalidClientEncryption = ClientEncryptions.create(ClientEncryptionSettings.builder().
+                keyVaultMongoClientSettings(getMongoClientSettings())
+                .kmsProviders(invalidKmsProviders)
+                .keyVaultNamespace("keyvault.datakeys")
+                .build());
     }
 
     @After
@@ -98,27 +136,23 @@ public class ClientEncryptionCustomEndpointTest {
                 // ignore
             }
         }
+
+        if (invalidClientEncryption != null) {
+            try {
+                invalidClientEncryption.close();
+            } catch (Exception e) {
+                // ignore
+            }
+        }
     }
 
     @Test
-    public void testEndpoint() throws Exception {
-        try {
-            BsonBinary dataKeyId = clientEncryption.createDataKey("aws", new DataKeyOptions()
-                    .masterKey(masterKey));
-
-            assertNull("Expected exception, but encryption succeeded", exceptionClass);
-
-            clientEncryption.encrypt(new BsonString("test"), new EncryptOptions("AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic")
-                    .keyId(dataKeyId));
-        } catch (Exception e) {
-            if (exceptionClass == null) {
-                throw e;
-            }
-            assertEquals(exceptionClass, e.getClass());
-            assertEquals(wrappedExceptionClassName, e.getCause().getClass().getName());
-            if (messageContainedInException != null) {
-                assertTrue(e.getCause().getMessage().contains(messageContainedInException));
-            }
+    public void testCustomEndpoint() {
+        if (testInvalidClientEncryption) {
+            testEndpoint(clientEncryption, null, null, null);
+            testEndpoint(invalidClientEncryption, exceptionClass, wrappedExceptionClass, messageContainedInException);
+        } else {
+            testEndpoint(clientEncryption, exceptionClass, wrappedExceptionClass, messageContainedInException);
         }
     }
 
@@ -126,31 +160,105 @@ public class ClientEncryptionCustomEndpointTest {
     public static Collection<Object[]> data() {
         List<Object[]> data = new ArrayList<Object[]>();
 
-        data.add(new Object[]{"default endpoint",
-                getDefaultMasterKey(),
-                null, null, null});
-        data.add(new Object[]{"valid endpoint",
-                getDefaultMasterKey().append("endpoint", new BsonString("kms.us-east-1.amazonaws.com")),
-                null, null, null});
-        data.add(new Object[]{"valid endpoint port",
-                getDefaultMasterKey().append("endpoint", new BsonString("kms.us-east-1.amazonaws.com:443")),
-                null, null, null});
-        data.add(new Object[]{"invalid endpoint port",
-                getDefaultMasterKey().append("endpoint", new BsonString("kms.us-east-1.amazonaws.com:12345")),
-                MongoClientException.class, "java.net.ConnectException", "Connection refused"});
-        data.add(new Object[]{"invalid amazon region in endpoint",
-                getDefaultMasterKey().append("endpoint", new BsonString("kms.us-east-2.amazonaws.com")),
-                MongoClientException.class, "com.mongodb.crypt.capi.MongoCryptException", "us-east-1"});
-        data.add(new Object[]{"invalid endpoint host",
-                getDefaultMasterKey().append("endpoint", new BsonString("example.com")),
-                MongoClientException.class, "com.mongodb.crypt.capi.MongoCryptException", "parse error"});
+        data.add(new Object[]{"1. [aws] valid endpoint",
+                "aws",
+                BsonDocument.parse("{"
+                        + "  region: \"us-east-1\","
+                        + "  key: \"arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0\""
+                        + "}"),
+                false, null, null, null});
+        data.add(new Object[]{"2. [aws] valid explicit endpoint",
+                "aws",
+                BsonDocument.parse("{"
+                        + "  region: \"us-east-1\","
+                        + "  key: \"arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0\","
+                        + "  endpoint: \"kms.us-east-1.amazonaws.com\""
+                        + "}"),
+                false, null, null, null});
+        data.add(new Object[]{"3. [aws] valid explicit endpoint and port",
+                "aws",
+                BsonDocument.parse("{"
+                        + "  region: \"us-east-1\","
+                        + "  key: \"arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0\","
+                        + "  endpoint: \"kms.us-east-1.amazonaws.com:443\""
+                        + "}"),
+                false, null, null, null});
+        data.add(new Object[]{"4. [aws] invalid amazon region in endpoint",
+                "aws",
+                BsonDocument.parse("{\n"
+                        + "  region: \"us-east-1\",\n"
+                        + "  key: \"arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0\",\n"
+                        + "  endpoint: \"kms.us-east-1.amazonaws.com:12345\"\n"
+                        + "}"),
+                false, MongoClientException.class, ConnectException.class, "Connection refused"});
+        data.add(new Object[]{"5. [aws] invalid endpoint host",
+                "aws",
+                BsonDocument.parse("{\n"
+                        + "  region: \"us-east-1\",\n"
+                        + "  key: \"arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0\",\n"
+                        + "  endpoint: \"kms.us-east-2.amazonaws.com\"\n"
+                        + "}"),
+                false, MongoClientException.class, MongoCryptException.class, "us-east-1"});
+        data.add(new Object[]{"6. [aws] invalid endpoint host",
+                "aws",
+                BsonDocument.parse("{\n"
+                        + "  region: \"us-east-1\",\n"
+                        + "  key: \"arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0\",\n"
+                        + "  endpoint: \"example.com\"\n"
+                        + "}"),
+                false, MongoClientException.class, MongoCryptException.class, "parse error"});
 
+        data.add(new Object[]{"7. [azure] valid and invalid kms providers test",
+                "azure",
+                BsonDocument.parse("{\n"
+                        + "  \"keyVaultEndpoint\": \"key-vault-kevinalbs.vault.azure.net\",\n"
+                        + "  \"keyName\": \"test-key\"\n"
+                        + "}"),
+                true, MongoClientException.class, MongoCryptException.class, "parse error"});
+
+        data.add(new Object[]{"8. [gcp] valid and invalid kms providers test",
+                "gcp",
+                BsonDocument.parse("{\n"
+                        + "  \"projectId\": \"csfle-poc\",\n"
+                        + "  \"location\": \"global\",\n"
+                        + "  \"keyRing\": \"test\",\n"
+                        + "  \"keyName\": \"quickstart\",\n"
+                        + "  \"endpoint\": \"cloudkms.googleapis.com:443\"\n"
+                        + "}"),
+                true, MongoClientException.class, MongoCryptException.class, "parse error"});
+
+        data.add(new Object[]{"9. [gcp] invalid endpoint",
+                "gcp",
+                BsonDocument.parse("{\n"
+                        + "  \"projectId\": \"csfle-poc\",\n"
+                        + "  \"location\": \"global\",\n"
+                        + "  \"keyRing\": \"test\",\n"
+                        + "  \"keyName\": \"quickstart\",\n"
+                        + "  \"endpoint\": \"example.com:443\"\n"
+                        + "}"),
+                false, MongoClientException.class, MongoCryptException.class, "Invalid KMS response"});
         return data;
     }
 
-    private static BsonDocument getDefaultMasterKey() {
-        return new BsonDocument()
-                .append("region", new BsonString("us-east-1"))
-                .append("key", new BsonString("arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0"));
+    private void testEndpoint(final ClientEncryption clientEncryption,
+                              @Nullable final Class<? extends RuntimeException> exceptionClass,
+                              @Nullable final Class<? extends RuntimeException> wrappedExceptionClass,
+                              @Nullable final String messageContainedInException) {
+        try {
+            BsonBinary dataKeyId = clientEncryption.createDataKey(provider, new DataKeyOptions().masterKey(masterKey));
+            assertNull("Expected exception, but encryption succeeded", exceptionClass);
+            clientEncryption.encrypt(new BsonString("test"), new EncryptOptions("AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic")
+                    .keyId(dataKeyId));
+
+        } catch (Exception e) {
+            if (exceptionClass == null) {
+                throw e;
+            }
+            assertEquals(exceptionClass, e.getClass());
+            assertEquals(wrappedExceptionClass, e.getCause().getClass());
+            if (messageContainedInException != null) {
+                assertTrue("Actual Error: " + e.getCause().getMessage(), e.getCause().getMessage().contains(messageContainedInException));
+            }
+        }
     }
 }

@@ -49,6 +49,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.mongodb.ClusterFixture.hasEncryptionTestsEnabled;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.internal.async.client.Fixture.getMongoClientBuilderFromConnectionString;
 import static com.mongodb.internal.async.client.Fixture.getMongoClientSettings;
@@ -74,9 +75,7 @@ public class ClientSideEncryptionCorpusTest {
     @Before
     public void setUp() throws IOException, URISyntaxException {
         assumeTrue(serverVersionAtLeast(4, 1));
-        assumeTrue("Corpus tests disabled",
-                System.getProperty("org.mongodb.test.awsAccessKeyId") != null
-                        && !System.getProperty("org.mongodb.test.awsAccessKeyId").isEmpty());
+        assumeTrue("Corpus tests disabled", hasEncryptionTestsEnabled());
 
         MongoClientSettings clientSettings = getMongoClientBuilderFromConnectionString()
                 .codecRegistry(fromRegistries(fromCodecs(new UuidCodec(UuidRepresentation.STANDARD)),
@@ -111,21 +110,36 @@ public class ClientSideEncryptionCorpusTest {
         dataKeysCollection.insertOne(bsonDocumentFromPath("corpus-key-aws.json"), insertOneCallback);
         insertOneCallback.get();
         insertOneCallback = new FutureResultCallback<>();
+        dataKeysCollection.insertOne(bsonDocumentFromPath("corpus-key-azure.json"), insertOneCallback);
+        insertOneCallback.get();
+        insertOneCallback = new FutureResultCallback<>();
+        dataKeysCollection.insertOne(bsonDocumentFromPath("corpus-key-gcp.json"), insertOneCallback);
+        insertOneCallback.get();
+        insertOneCallback = new FutureResultCallback<>();
         dataKeysCollection.insertOne(bsonDocumentFromPath("corpus-key-local.json"), insertOneCallback);
         insertOneCallback.get();
 
-        // Step 4: Configure our objects
-        Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>();
-        Map<String, Object> awsCreds = new HashMap<String, Object>();
-        Map<String, Object> localMasterkey = new HashMap<String, Object>();
-        awsCreds.put("accessKeyId", System.getProperty("org.mongodb.test.awsAccessKeyId"));
-        awsCreds.put("secretAccessKey", System.getProperty("org.mongodb.test.awsSecretAccessKey"));
 
-        byte[] localMasterkeyBytes = Base64.getDecoder().decode("Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBM"
-                + "UN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk");
-        localMasterkey.put("key", localMasterkeyBytes);
-        kmsProviders.put("aws", awsCreds);
-        kmsProviders.put("local", localMasterkey);
+        // Step 4: Configure our objects
+        Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{
+            put("aws",  new HashMap<String, Object>() {{
+                put("accessKeyId", System.getProperty("org.mongodb.test.awsAccessKeyId"));
+                put("secretAccessKey", System.getProperty("org.mongodb.test.awsSecretAccessKey"));
+            }});
+            put("azure",  new HashMap<String, Object>() {{
+                put("tenantId", System.getProperty("org.mongodb.test.azureTenantId"));
+                put("clientId", System.getProperty("org.mongodb.test.azureClientId"));
+                put("clientSecret", System.getProperty("org.mongodb.test.azureClientSecret"));
+            }});
+            put("gcp",  new HashMap<String, Object>() {{
+                put("email", System.getProperty("org.mongodb.test.gcpEmail"));
+                put("privateKey", System.getProperty("org.mongodb.test.gcpPrivateKey"));
+            }});
+            put("local", new HashMap<String, Object>() {{
+                put("key", "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBM"
+                        + "UN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk");
+            }});
+        }};
 
         HashMap<String, BsonDocument> schemaMap = new HashMap<String, BsonDocument>();
         schemaMap.put("db.coll", schemaDocument);
@@ -159,7 +173,7 @@ public class ClientSideEncryptionCorpusTest {
         BsonDocument corpus = bsonDocumentFromPath("corpus.json");
         BsonDocument corpusCopied = new BsonDocument();
         for (String field : corpus.keySet()) {
-            if (field.equals("_id") || field.equals("altname_aws") || field.equals("altname_local")) {
+            if (!corpus.get(field).isDocument()) {
                 corpusCopied.append(field, corpus.get(field));
                 continue;
             }
@@ -173,6 +187,8 @@ public class ClientSideEncryptionCorpusTest {
             BsonValue value = fieldDocument.get("value");
 
             byte[] awsKeyId = Base64.getDecoder().decode("AWSAAAAAAAAAAAAAAAAAAA==");
+            byte[] azureKeyId = Base64.getDecoder().decode("AZUREAAAAAAAAAAAAAAAAA==");
+            byte[] gcpKeyId = Base64.getDecoder().decode("GCPAAAAAAAAAAAAAAAAAAA==");
             byte[] localKeyId = Base64.getDecoder().decode("LOCALAAAAAAAAAAAAAAAAA==");
 
             if (method.equals("auto")) {
@@ -195,12 +211,21 @@ public class ClientSideEncryptionCorpusTest {
 
             EncryptOptions opts = new EncryptOptions(fullAlgorithmName);
             if (identifier.equals("id")) {
-                if (kms.equals("aws")) {
-                    opts.keyId(new BsonBinary(BsonBinarySubType.UUID_STANDARD, awsKeyId));
-                } else if (kms.equals("local")) {
-                    opts.keyId(new BsonBinary(BsonBinarySubType.UUID_STANDARD, localKeyId));
-                } else {
-                    throw new UnsupportedOperationException("Unsupported provider: " + kms);
+                switch (kms) {
+                    case "aws":
+                        opts.keyId(new BsonBinary(BsonBinarySubType.UUID_STANDARD, awsKeyId));
+                        break;
+                    case "azure":
+                        opts.keyId(new BsonBinary(BsonBinarySubType.UUID_STANDARD, azureKeyId));
+                        break;
+                    case "gcp":
+                        opts.keyId(new BsonBinary(BsonBinarySubType.UUID_STANDARD, gcpKeyId));
+                        break;
+                    case "local":
+                        opts.keyId(new BsonBinary(BsonBinarySubType.UUID_STANDARD, localKeyId));
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("Unsupported provider: " + kms);
                 }
             } else if (identifier.equals("altname")) {
                 opts.keyAltName(kms);

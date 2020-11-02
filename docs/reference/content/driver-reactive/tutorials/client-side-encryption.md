@@ -45,8 +45,8 @@ More information about mongocryptd will soon be available from the official docu
 ### Examples
 
 The following is a sample app that assumes the **key** and **schema** have already been created in MongoDB. The example uses a local key,
-however using AWS Key Management Service is also an option. The data in the `encryptedField` field is automatically encrypted on the
-insert and decrypted when using find on the client side. The following code snippet comes from the 
+however using either of the AWS / Azure / GCP Key Management Service is also an option. The data in the `encryptedField` field is 
+automatically encrypted on the insert and decrypted when using find on the client side. The following code snippet comes from the 
 [`ClientSideEncryptionSimpleTour.java`]({{< srcref "driver-reactive/src/examples/reactivestreams/tour/ClientSideEncryptionSimpleTour.java" >}}) example code
 that can be found with the driver source on github:
 

@@ -247,7 +247,12 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" SAFE_FOR_MULTI_MONGOS="${SAFE_FOR_MULTI_MONGOS}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" AWS_ACCESS_KEY_ID=${aws_access_key_id} AWS_SECRET_ACCESS_KEY=${aws_secret_access_key} .evergreen/run-tests.sh
+          AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" SAFE_FOR_MULTI_MONGOS="${SAFE_FOR_MULTI_MONGOS}" TOPOLOGY="${TOPOLOGY}" \
+          COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" \
+          AWS_ACCESS_KEY_ID=${aws_access_key_id} AWS_SECRET_ACCESS_KEY=${aws_secret_access_key} \
+          AZURE_TENANT_ID=${azure_tenant_id} AZURE_CLIENT_ID=${azure_client_id} AZURE_CLIENT_SECRET=${azure_client_secret} \
+          GCP_EMAIL=${gcp_email} GCP_PRIVATE_KEY=${gcp_private_key} \
+          .evergreen/run-tests.sh
 
   "run reactive streams tck tests":
     - command: shell.exec
@@ -274,7 +279,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          SCALA="${SCALA}" AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" SAFE_FOR_MULTI_MONGOS="${SAFE_FOR_MULTI_MONGOS}" TOPOLOGY="${TOPOLOGY}" AWS_ACCESS_KEY_ID=${aws_access_key_id} AWS_SECRET_ACCESS_KEY=${aws_secret_access_key} .evergreen/run-scala-tests.sh
+          SCALA="${SCALA}" AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" SAFE_FOR_MULTI_MONGOS="${SAFE_FOR_MULTI_MONGOS}" TOPOLOGY="${TOPOLOGY}" JDK="${JDK}" .evergreen/run-scala-tests.sh
 
   "run socket tests":
     - command: shell.exec
@@ -1308,7 +1313,7 @@ axes:
         variables:
           JDK: "jdk11"
       - id: "jdk8"
-        display_name: JDK8 
+        display_name: JDK8
         variables:
            JDK: "jdk8"
 
@@ -1336,7 +1341,7 @@ axes:
         display_name: MMAPv1
         variables:
            STORAGE_ENGINE: "mmapv1"
-           
+
 buildvariants:
 
 # Test packaging and other release related routines

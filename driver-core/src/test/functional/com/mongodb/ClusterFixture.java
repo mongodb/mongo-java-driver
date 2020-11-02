@@ -178,6 +178,15 @@ public final class ClusterFixture {
         return versionList;
     }
 
+    public static boolean hasEncryptionTestsEnabled() {
+        List<String> requiredSystemProperties = asList("awsAccessKeyId", "awsSecretAccessKey", "azureTenantId", "azureClientId",
+                "azureClientSecret", "gcpEmail", "gcpPrivateKey");
+        return requiredSystemProperties.stream()
+                        .map(name -> System.getProperty("org.mongodb.test." + name, ""))
+                        .filter(s -> !s.isEmpty())
+                        .count() == requiredSystemProperties.size();
+    }
+
     public static Document getServerStatus() {
         return new CommandWriteOperation<Document>("admin", new BsonDocument("serverStatus", new BsonInt32(1)), new DocumentCodec())
                 .execute(getBinding());
