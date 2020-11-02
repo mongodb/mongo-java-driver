@@ -164,7 +164,7 @@ class StreamHelper {
     static isMaster() {
         CommandMessage command = new CommandMessage(new MongoNamespace('admin', COMMAND_COLLECTION_NAME),
                 new BsonDocument('ismaster', new BsonInt32(1)), new NoOpFieldNameValidator(), ReadPreference.primary(),
-                MessageSettings.builder().build())
+                MessageSettings.builder().build(), null)
         OutputBuffer outputBuffer = new BasicOutputBuffer()
         command.encode(outputBuffer, NoOpSessionContext.INSTANCE)
         nextMessageId++

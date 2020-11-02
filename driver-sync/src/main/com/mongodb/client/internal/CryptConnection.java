@@ -19,6 +19,7 @@ package com.mongodb.client.internal;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
+import com.mongodb.ServerApi;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.bulk.DeleteRequest;
@@ -29,9 +30,9 @@ import com.mongodb.internal.connection.MessageSettings;
 import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.internal.connection.SplittablePayload;
 import com.mongodb.internal.connection.SplittablePayloadBsonWriter;
+import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
 import com.mongodb.lang.Nullable;
-import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonBinaryWriterSettings;
@@ -94,7 +95,7 @@ class CryptConnection implements Connection {
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                          final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-                         final boolean responseExpected, @Nullable final SplittablePayload payload,
+                         @Nullable final ServerApi serverApi, final boolean responseExpected, @Nullable final SplittablePayload payload,
                          @Nullable final FieldNameValidator payloadFieldNameValidator) {
 
         if (serverIsLessThanVersionFourDotTwo(wrapped.getDescription())) {
@@ -116,7 +117,7 @@ class CryptConnection implements Connection {
                 new RawBsonDocument(bsonOutput.getInternalBuffer(), 0, bsonOutput.getSize()));
 
         RawBsonDocument encryptedResponse = wrapped.command(database, encryptedCommand, commandFieldNameValidator, readPreference,
-                new RawBsonDocumentCodec(), sessionContext, responseExpected, null, null);
+                new RawBsonDocumentCodec(), sessionContext, serverApi, responseExpected, null, null);
 
         RawBsonDocument decryptedResponse = crypt.decrypt(encryptedResponse);
 
@@ -127,8 +128,10 @@ class CryptConnection implements Connection {
 
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-                         final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext) {
-        return command(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, true, null, null);
+                         final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
+                         @Nullable final ServerApi serverApi) {
+        return command(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi, true, null,
+                null);
     }
 
     @SuppressWarnings("unchecked")

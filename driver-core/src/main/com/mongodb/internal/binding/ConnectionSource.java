@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.binding;
 
+import com.mongodb.ServerApi;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.session.SessionContext;
@@ -42,6 +43,8 @@ public interface ConnectionSource extends ReferenceCounted {
      * @since 3.6
      */
     SessionContext getSessionContext();
+
+    ServerApi getServerApi();
 
     /**
      * Gets a connection from this source.

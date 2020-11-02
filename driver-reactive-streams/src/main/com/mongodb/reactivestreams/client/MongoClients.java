@@ -144,7 +144,7 @@ public final class MongoClients {
         return new DefaultClusterFactory().createCluster(settings.getClusterSettings(), settings.getServerSettings(),
                 settings.getConnectionPoolSettings(), streamFactory, heartbeatStreamFactory, settings.getCredential(),
                 getCommandListener(settings.getCommandListeners()), settings.getApplicationName(), mongoDriverInformation,
-                settings.getCompressorList());
+                settings.getCompressorList(), settings.getServerApi());
     }
 
     private static MongoDriverInformation wrapMongoDriverInformation(final MongoDriverInformation mongoDriverInformation) {

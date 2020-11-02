@@ -37,8 +37,8 @@ import javax.security.auth.Subject
 import javax.security.auth.login.LoginContext
 
 import static com.mongodb.AuthenticationMechanism.GSSAPI
-import static com.mongodb.ClusterFixture.getCredential
 import static com.mongodb.ClusterFixture.getConnectionString
+import static com.mongodb.ClusterFixture.getCredential
 import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.MongoCredential.JAVA_SUBJECT_PROVIDER_KEY
 import static com.mongodb.MongoCredential.createGSSAPICredential
@@ -200,7 +200,7 @@ class GSSAPIAuthenticationSpecification extends Specification {
                 new ServerId(new ClusterId(), new ServerAddress(getConnectionString().getHosts().get(0))),
                 async ? new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings())
                         : new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()), [], null,
-                new InternalStreamConnectionInitializer(createAuthenticator(credential), null, []))
+                new InternalStreamConnectionInitializer(createAuthenticator(credential), null, [], null))
     }
 
     private static Authenticator createAuthenticator(final MongoCredential credential) {

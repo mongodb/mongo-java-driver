@@ -21,6 +21,7 @@ import com.mongodb.ClusterFixture;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
+import com.mongodb.ServerApi;
 import com.mongodb.client.internal.MongoClientImpl;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerSettings;
@@ -82,6 +83,10 @@ public final class Fixture {
         return ClusterFixture.getConnectionString().getConnectionString();
     }
 
+    private static synchronized ServerApi getServerApi() {
+        return ClusterFixture.getServerApi();
+    }
+
     public static synchronized MongoClientSettings getMongoClientSettings() {
         if (mongoClientSettings == null) {
             MongoClientSettings.Builder builder = MongoClientSettings.builder()
@@ -92,6 +97,9 @@ public final class Fixture {
                             builder.minHeartbeatFrequency(MIN_HEARTBEAT_FREQUENCY_MS, TimeUnit.MILLISECONDS);
                         }
                     });
+            if (getServerApi() != null) {
+                builder.serverApi(getServerApi());
+            }
             mongoClientSettings = builder.build();
         }
         return mongoClientSettings;

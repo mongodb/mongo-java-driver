@@ -29,6 +29,7 @@ import org.junit.Test;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import static com.mongodb.ClusterFixture.getServerApi;
 import static org.junit.Assert.assertEquals;
 
 public class PlainAuthenticatorUnitTest {
@@ -42,7 +43,7 @@ public class PlainAuthenticatorUnitTest {
         connection = new TestInternalConnection(new ServerId(new ClusterId(), new ServerAddress("localhost", 27017)));
         connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()));
         credential = MongoCredential.createPlainCredential("user", "$external", "pencil".toCharArray());
-        subject = new PlainAuthenticator(new MongoCredentialWithCache(credential));
+        subject = new PlainAuthenticator(new MongoCredentialWithCache(credential), getServerApi());
     }
 
     @Test

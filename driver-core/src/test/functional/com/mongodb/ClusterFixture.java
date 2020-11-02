@@ -95,6 +95,7 @@ import static org.junit.Assume.assumeTrue;
 public final class ClusterFixture {
     public static final String DEFAULT_URI = "mongodb://localhost:27017";
     public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
+    public static final String MONGODB_API_VERSION = "org.mongodb.test.api.version";
     public static final String MONGODB_TRANSACTION_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.transaction.uri";
     public static final String DATA_LAKE_TEST_SYSTEM_PROPERTY_NAME = "org.mongodb.test.data.lake";
     private static final String MONGODB_OCSP_SHOULD_SUCCEED = "org.mongodb.test.ocsp.tls.should.succeed";
@@ -110,6 +111,7 @@ public final class ClusterFixture {
     private static Map<ReadPreference, AsyncReadWriteBinding> asyncBindingMap = new HashMap<ReadPreference, AsyncReadWriteBinding>();
 
     private static ServerVersion serverVersion;
+    private static BsonDocument serverParameters;
 
     private static NettyStreamFactoryFactory nettyStreamFactoryFactory;
 
@@ -132,7 +134,7 @@ public final class ClusterFixture {
         if (serverVersion == null) {
             serverVersion = getVersion(new CommandReadOperation<BsonDocument>("admin",
                     new BsonDocument("buildInfo", new BsonInt32(1)), new BsonDocumentCodec())
-                    .execute(new ClusterBinding(getCluster(), ReadPreference.nearest(), ReadConcern.DEFAULT)));
+                    .execute(new ClusterBinding(getCluster(), ReadPreference.nearest(), ReadConcern.DEFAULT, getServerApi())));
         }
         return serverVersion;
     }
@@ -241,7 +243,7 @@ public final class ClusterFixture {
         try {
             BsonDocument isMasterResult = new CommandReadOperation<BsonDocument>("admin",
                     new BsonDocument("ismaster", new BsonInt32(1)), new BsonDocumentCodec()).execute(new ClusterBinding(cluster,
-                    ReadPreference.nearest(), ReadConcern.DEFAULT));
+                    ReadPreference.nearest(), ReadConcern.DEFAULT, getServerApi()));
             if (isMasterResult.containsKey("setName")) {
                 connectionString = new ConnectionString(DEFAULT_URI + "/?replicaSet="
                         + isMasterResult.getString("setName").getValue());
@@ -258,6 +260,14 @@ public final class ClusterFixture {
         }
     }
 
+    public static ServerApi getServerApi() {
+         if (System.getProperty(MONGODB_API_VERSION) == null) {
+             return null;
+         } else {
+             return ServerApi.builder().version(ServerApiVersion.findByValue(System.getProperty(MONGODB_API_VERSION))).build();
+         }
+    }
+
     @Nullable
     private static ConnectionString getConnectionStringFromSystemProperty(final String property) {
         String mongoURIProperty = System.getProperty(property);
@@ -268,7 +278,7 @@ public final class ClusterFixture {
     }
 
     public static ReadWriteBinding getBinding(final Cluster cluster) {
-        return new ClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT);
+        return new ClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, getServerApi());
     }
 
     public static ReadWriteBinding getBinding() {
@@ -281,7 +291,7 @@ public final class ClusterFixture {
 
     private static ReadWriteBinding getBinding(final Cluster cluster, final ReadPreference readPreference) {
         if (!bindingMap.containsKey(readPreference)) {
-            ReadWriteBinding binding = new ClusterBinding(cluster, readPreference, ReadConcern.DEFAULT);
+            ReadWriteBinding binding = new ClusterBinding(cluster, readPreference, ReadConcern.DEFAULT, getServerApi());
             if (serverVersionAtLeast(3, 6)) {
                 binding = new SessionBinding(binding);
             }
@@ -357,7 +367,7 @@ public final class ClusterFixture {
                 ServerSettings.builder().build(),
                 ConnectionPoolSettings.builder().maxSize(1).build(),
                 streamFactory, streamFactory, credential, null, null, null,
-                Collections.<MongoCompressor>emptyList());
+                Collections.<MongoCompressor>emptyList(), getServerApi());
     }
 
     private static Cluster createCluster(final ConnectionString connectionString, final StreamFactory streamFactory) {
@@ -368,7 +378,7 @@ public final class ClusterFixture {
                 new SocketStreamFactory(SocketSettings.builder().readTimeout(5, SECONDS).build(), getSslSettings(connectionString)),
                 connectionString.getCredential(),
                 null, null, null,
-                connectionString.getCompressorList());
+                connectionString.getCompressorList(), getServerApi());
     }
 
     public static StreamFactory getStreamFactory() {
@@ -450,6 +460,16 @@ public final class ClusterFixture {
     @Nullable
     public static MongoCredentialWithCache getCredentialWithCache() {
         return getConnectionString().getCredential() == null ? null : new MongoCredentialWithCache(getConnectionString().getCredential());
+    }
+
+    public static BsonDocument getServerParameters() {
+        if (serverParameters == null) {
+            serverParameters = new CommandWriteOperation<>("admin",
+                    new BsonDocument("getParameter", new BsonString("*")),
+                    new BsonDocumentCodec())
+                    .execute(getBinding());
+        }
+        return serverParameters;
     }
 
     public static boolean isDiscoverableReplicaSet() {

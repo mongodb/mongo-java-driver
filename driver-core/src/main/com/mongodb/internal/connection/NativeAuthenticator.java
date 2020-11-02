@@ -18,10 +18,12 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoSecurityException;
+import com.mongodb.ServerApi;
+import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
@@ -34,21 +36,21 @@ import static com.mongodb.internal.connection.CommandHelper.executeCommandAsync;
 class NativeAuthenticator extends Authenticator {
     public static final Logger LOGGER = Loggers.getLogger("authenticator");
 
-    NativeAuthenticator(final MongoCredentialWithCache credential) {
-        super(credential);
+    NativeAuthenticator(final MongoCredentialWithCache credential, final @Nullable ServerApi serverApi) {
+        super(credential, serverApi);
     }
 
     @Override
     public void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription) {
         try {
             BsonDocument nonceResponse = executeCommand(getMongoCredential().getSource(),
-                                                         getNonceCommand(),
+                                                         getNonceCommand(), getServerApi(),
                                                          connection);
 
             BsonDocument authCommand = getAuthCommand(getUserNameNonNull(),
                                                       getPasswordNonNull(),
                                                       ((BsonString) nonceResponse.get("nonce")).getValue());
-            executeCommand(getMongoCredential().getSource(), authCommand, connection);
+            executeCommand(getMongoCredential().getSource(), authCommand, getServerApi(), connection);
         } catch (MongoCommandException e) {
             throw new MongoSecurityException(getMongoCredential(), "Exception authenticating", e);
         }

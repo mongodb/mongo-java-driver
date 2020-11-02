@@ -172,7 +172,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         when:
         connection.sendAndReceive(new CommandMessage(new MongoNamespace('test.coll'),
                 new BsonDocument('ping', new BsonInt32(1)), new NoOpFieldNameValidator(), primary(),
-                MessageSettings.builder().build()),
+                MessageSettings.builder().build(), null),
                 new BsonDocumentCodec(), NoOpSessionContext.INSTANCE)
 
         then:
@@ -190,7 +190,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         when:
         connection.sendAndReceiveAsync(new CommandMessage(new MongoNamespace('test.coll'),
                 new BsonDocument('ping', new BsonInt32(1)), new NoOpFieldNameValidator(), primary(),
-                MessageSettings.builder().build()),
+                MessageSettings.builder().build(), null),
                 new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, futureResultCallback)
         futureResultCallback.get()
 

@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection
 
-import util.spock.annotations.Slow
 import com.mongodb.MongoSocketOpenException
 import com.mongodb.MongoSocketReadTimeoutException
 import com.mongodb.OperationFunctionalSpecification
@@ -30,6 +29,7 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
 import spock.lang.IgnoreIf
+import util.spock.annotations.Slow
 
 import java.util.concurrent.TimeUnit
 
@@ -64,7 +64,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
         given:
         def connection = new InternalStreamConnectionFactory(
                 new AsynchronousSocketChannelStreamFactory(readSocketSettings, getSslSettings()), getCredentialWithCache(), null, null,
-                [], null).create(new ServerId(new ClusterId(), getPrimary()))
+                [], null,).create(new ServerId(new ClusterId(), getPrimary()))
         connection.open()
 
         getCollectionHelper().insertDocuments(new BsonDocument('_id', new BsonInt32(1)));
@@ -84,7 +84,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
     def 'should throw a MongoSocketOpenException when the Netty Stream fails to open'() {
         given:
         def connection = new InternalStreamConnectionFactory(
-                new NettyStreamFactory(openSocketSettings, getSslSettings()), getCredentialWithCache(), null, null, [], null
+                new NettyStreamFactory(openSocketSettings, getSslSettings()), getCredentialWithCache(), null, null, [], null,
         ).create(new ServerId(new ClusterId(), new ServerAddress(new InetSocketAddress('192.168.255.255', 27017))))
 
         when:
@@ -98,7 +98,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
     def 'should throw a MongoSocketReadTimeoutException with the Netty stream'() {
         given:
         def connection = new InternalStreamConnectionFactory(
-                new NettyStreamFactory(readSocketSettings, getSslSettings()), getCredentialWithCache(), null, null, [], null
+                new NettyStreamFactory(readSocketSettings, getSslSettings()), getCredentialWithCache(), null, null, [], null,
         ).create(new ServerId(new ClusterId(), getPrimary()))
         connection.open()
 

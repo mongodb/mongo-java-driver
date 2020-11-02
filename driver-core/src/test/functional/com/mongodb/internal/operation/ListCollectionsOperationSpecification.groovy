@@ -431,11 +431,13 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         given:
         def connection = Mock(Connection)
         def connectionSource = Stub(ConnectionSource) {
+            getServerApi() >> null
             getConnection() >> connection
         }
         def readBinding = Stub(ReadBinding) {
             getReadConnectionSource() >> connectionSource
             getReadPreference() >> readPreference
+            getServerApi() >> null
         }
         def operation = new ListCollectionsOperation(helper.dbName, helper.decoder)
 
@@ -452,7 +454,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
         then:
         _ * connection.getDescription() >> helper.threeZeroConnectionDescription
-        1 * connection.command(_, _, _, readPreference, _, _) >> helper.commandResult
+        1 * connection.command(_, _, _, readPreference, _, _, null) >> helper.commandResult
         1 * connection.release()
 
         where:

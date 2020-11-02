@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
+import com.mongodb.ServerApi;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ConnectionDescription;
@@ -99,7 +100,7 @@ public interface Connection extends ReferenceCounted {
      * @since 3.6
      */
     <T> T command(String database, BsonDocument command, FieldNameValidator fieldNameValidator, ReadPreference readPreference,
-                  Decoder<T> commandResultDecoder, SessionContext sessionContext);
+                  Decoder<T> commandResultDecoder, SessionContext sessionContext, ServerApi serverApi);
 
     /**
      * Executes the command, consuming as much of the {@code SplittablePayload} as possible.
@@ -118,7 +119,7 @@ public interface Connection extends ReferenceCounted {
      * @since 3.6
      */
     <T> T command(String database, BsonDocument command, FieldNameValidator commandFieldNameValidator, ReadPreference readPreference,
-                  Decoder<T> commandResultDecoder, SessionContext sessionContext, boolean responseExpected,
+                  Decoder<T> commandResultDecoder, SessionContext sessionContext, ServerApi serverApi, boolean responseExpected,
                   SplittablePayload payload, FieldNameValidator payloadFieldNameValidator);
 
     /**

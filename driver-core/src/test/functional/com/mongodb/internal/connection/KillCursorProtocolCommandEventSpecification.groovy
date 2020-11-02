@@ -43,7 +43,7 @@ class KillCursorProtocolCommandEventSpecification extends OperationFunctionalSpe
 
     def setupSpec() {
         connection = new InternalStreamConnectionFactory(new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                getCredentialWithCache(), null, null, [], null)
+                getCredentialWithCache(), null, null, [], null, null)
                 .create(new ServerId(new ClusterId(), getPrimary()))
         connection.open();
     }
