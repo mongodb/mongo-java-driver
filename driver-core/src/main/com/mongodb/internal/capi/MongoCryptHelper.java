@@ -22,16 +22,13 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.SocketSettings;
-import com.mongodb.crypt.capi.MongoAwsKmsProviderOptions;
 import com.mongodb.crypt.capi.MongoCryptOptions;
-import com.mongodb.crypt.capi.MongoLocalKmsProviderOptions;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
 
 import java.io.File;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -45,28 +42,9 @@ public final class MongoCryptHelper {
 
         BsonDocument bsonKmsProviders = new BsonDocument();
         for (Map.Entry<String, Map<String, Object>> entry : kmsProviders.entrySet()) {
-            if (entry.getKey().equals("aws")) {
-                mongoCryptOptionsBuilder.awsKmsProviderOptions(
-                        MongoAwsKmsProviderOptions.builder()
-                                .accessKeyId((String) entry.getValue().get("accessKeyId"))
-                                .secretAccessKey((String) entry.getValue().get("secretAccessKey"))
-                                .build()
-                );
-            } else if (entry.getKey().equals("local")) {
-                mongoCryptOptionsBuilder.localKmsProviderOptions(
-                        MongoLocalKmsProviderOptions.builder()
-                                .localMasterKey(ByteBuffer.wrap((byte[]) entry.getValue().get("key")))
-                                .build()
-                );
-            } else {
-                bsonKmsProviders.put(entry.getKey(), new BsonDocumentWrapper<>(new Document(entry.getValue()), new DocumentCodec()));
-            }
+            bsonKmsProviders.put(entry.getKey(), new BsonDocumentWrapper<>(new Document(entry.getValue()), new DocumentCodec()));
         }
-
-        if (!bsonKmsProviders.isEmpty()) {
-            mongoCryptOptionsBuilder.kmsProviderOptions(bsonKmsProviders);
-        }
-
+        mongoCryptOptionsBuilder.kmsProviderOptions(bsonKmsProviders);
         mongoCryptOptionsBuilder.localSchemaMap(namespaceToLocalSchemaDocumentMap);
         return mongoCryptOptionsBuilder.build();
     }

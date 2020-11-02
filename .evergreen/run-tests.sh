@@ -12,10 +12,14 @@ set -o errexit  # Exit the script with error if any of the commands fail
 #       COMPRESSOR              Set to enable compression. Values are "snappy" and "zlib" (default is no compression)
 #       STREAM_TYPE             Set the stream type.  Values are "nio2" or "netty".  Defaults to "nio2".
 #       JDK                     Set the version of java to be used.  Java versions can be set from the java toolchain /opt/java
-#                               "jdk5", "jdk6", "jdk7", "jdk8", "jdk9"
 #       SLOW_TESTS_ONLY         Set to true to only run the slow tests
 #       AWS_ACCESS_KEY_ID       The AWS access key identifier for client-side encryption
 #       AWS_SECRET_ACCESS_KEY   The AWS secret access key for client-side encryption
+#       AZURE_TENANT_ID         The Azure tenant identifier for client-side encryption
+#       AZURE_CLIENT_ID         The Azure client identifier for client-side encryption
+#       AZURE_CLIENT_SECRET     The Azure client secret for client-side encryption
+#       GCP_EMAIL               The GCP email for client-side encryption
+#       GCP_PRIVATE_KEY         The GCP private key for client-side encryption
 
 AUTH=${AUTH:-noauth}
 SSL=${SSL:-nossl}
@@ -118,5 +122,7 @@ if [ "$SLOW_TESTS_ONLY" == "true" ]; then
 else
     ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} \
               -Dorg.mongodb.test.awsAccessKeyId=${AWS_ACCESS_KEY_ID} -Dorg.mongodb.test.awsSecretAccessKey=${AWS_SECRET_ACCESS_KEY} \
+              -Dorg.mongodb.test.azureTenantId=${AZURE_TENANT_ID} -Dorg.mongodb.test.azureClientId=${AZURE_CLIENT_ID} -Dorg.mongodb.test.azureClientSecret=${AZURE_CLIENT_SECRET} \
+              -Dorg.mongodb.test.gcpEmail=${GCP_EMAIL} -Dorg.mongodb.test.gcpPrivateKey=${GCP_PRIVATE_KEY} \
               ${TRANSACTION_URI} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} --stacktrace --info --continue test
 fi
