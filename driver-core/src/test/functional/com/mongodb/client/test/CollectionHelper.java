@@ -132,6 +132,10 @@ public final class CollectionHelper<T> {
         create(namespace.getCollectionName(), new CreateCollectionOptions(), WriteConcern.ACKNOWLEDGED);
     }
 
+    public void create(final WriteConcern writeConcern) {
+        create(namespace.getCollectionName(), new CreateCollectionOptions(), writeConcern);
+    }
+
     public void create(final String collectionName, final CreateCollectionOptions options) {
         create(collectionName, options, WriteConcern.ACKNOWLEDGED);
     }
