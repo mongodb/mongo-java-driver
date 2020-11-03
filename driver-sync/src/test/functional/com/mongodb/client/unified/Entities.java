@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
@@ -124,7 +125,7 @@ final class Entities {
         return entity;
     }
 
-    public void init(final BsonArray entitiesArray, final MongoClientSupplier mongoClientSupplier) {
+    public void init(final BsonArray entitiesArray, final Function<MongoClientSettings, MongoClient> mongoClientSupplier) {
         for (BsonValue cur : entitiesArray.getValues()) {
             String entityType = cur.asDocument().getFirstKey();
             BsonDocument entity = cur.asDocument().getDocument(entityType);
@@ -151,6 +152,10 @@ final class Entities {
                         clientSettingsBuilder.addCommandListener(testCommandListener);
                         clientCommandListeners.put(id, testCommandListener);
                     }
+                    clientSettingsBuilder.applyToServerSettings(builder -> {
+                        builder.heartbeatFrequency(50, TimeUnit.MILLISECONDS);
+                        builder.minHeartbeatFrequency(50, TimeUnit.MILLISECONDS);
+                    });
                     if (entity.containsKey("uriOptions")) {
                         entity.getDocument("uriOptions").forEach((key, value) -> {
                             switch (key) {
@@ -172,12 +177,7 @@ final class Entities {
                             }
                         });
                     }
-                    clientSettingsBuilder.applyToServerSettings(builder -> {
-                        // TODO: only set if not in uriOptions
-                        builder.heartbeatFrequency(50, TimeUnit.MILLISECONDS);
-                        builder.minHeartbeatFrequency(50, TimeUnit.MILLISECONDS);
-                    });
-                    clients.put(id, mongoClientSupplier.get(clientSettingsBuilder.build()));
+                    clients.put(id, mongoClientSupplier.apply(clientSettingsBuilder.build()));
                     break;
                 case "database": {
                     MongoClient client = clients.get(entity.getString("client").getValue());
