@@ -58,6 +58,7 @@ import static com.mongodb.internal.operation.CommandOperationHelper.CommandReadT
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformerAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandAsyncWithConnection;
 import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandWithConnection;
+import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNullOrEmpty;
 import static com.mongodb.internal.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
@@ -815,7 +816,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
 
         appendReadConcernToCommand(sessionContext, commandDocument);
 
-        putIfNotNullOrEmpty(commandDocument, "filter", filter);
+        putIfNotNull(commandDocument, "filter", filter);
         putIfNotNullOrEmpty(commandDocument, "sort", sort);
         putIfNotNullOrEmpty(commandDocument, "projection", projection);
         if (skip > 0) {

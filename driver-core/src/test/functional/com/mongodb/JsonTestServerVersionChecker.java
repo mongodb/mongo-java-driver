@@ -31,7 +31,7 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 
 public final class JsonTestServerVersionChecker {
-    private static final List<String> TOPOLOGY_TYPES = asList("sharded", "replicaset", "single");
+    private static final List<String> TOPOLOGY_TYPES = asList("sharded", "sharded-replicaset", "replicaset", "single");
 
     public static boolean skipTest(final BsonDocument testDocument, final BsonDocument testDefinition) {
         return skipTest(testDocument, testDefinition, getServerVersion());
@@ -86,10 +86,10 @@ public final class JsonTestServerVersionChecker {
         return topologyFound;
     }
 
-    private static boolean topologyMatches(final BsonArray topologyTypes) {
+    public static boolean topologyMatches(final BsonArray topologyTypes) {
         for (BsonValue type : topologyTypes) {
             String typeString = type.asString().getValue();
-            if (typeString.equals("sharded") && isSharded()) {
+            if ((typeString.equals("sharded") || typeString.equals("sharded-replicaset")) && isSharded()) {
                 return true;
             } else if (typeString.equals("replicaset") && isDiscoverableReplicaSet()) {
                 return true;
@@ -102,11 +102,11 @@ public final class JsonTestServerVersionChecker {
         return false;
     }
 
-    private static ServerVersion getMinServerVersionForField(final String fieldName, final BsonDocument document) {
+    public static ServerVersion getMinServerVersionForField(final String fieldName, final BsonDocument document) {
         return new ServerVersion(getVersionList(document.getString(fieldName).getValue()));
     }
 
-    private static ServerVersion getMaxServerVersionForField(final String fieldName, final BsonDocument document) {
+    public static ServerVersion getMaxServerVersionForField(final String fieldName, final BsonDocument document) {
         List<Integer> versionList = getVersionList(document.getString(fieldName).getValue());
         if (versionList.size() > 2 && versionList.get(2).equals(0)) {
             versionList = asList(versionList.get(0), versionList.get(1), Integer.MAX_VALUE);
