@@ -59,6 +59,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
@@ -84,6 +85,23 @@ final class UnifiedCrudHelper {
         return new WriteConcern(writeConcernDocument.getInt32("w").intValue());
     }
 
+    private OperationResult resultOf(final Supplier<BsonValue> operationResult) {
+        try {
+            return OperationResult.of(operationResult.get());
+        } catch (Exception e) {
+            return OperationResult.of(e);
+        }
+    }
+
+    private ClientSession getSession(final BsonDocument arguments) {
+        if (arguments.containsKey("session")) {
+            return entities.getSession(arguments.getString("session").asString().getValue());
+        } else {
+            return null;
+        }
+    }
+
+
     OperationResult executeListDatabases(final BsonDocument operation) {
         MongoClient client = entities.getClient(operation.getString("object").getValue());
 
@@ -91,11 +109,8 @@ final class UnifiedCrudHelper {
             throw new UnsupportedOperationException("Unexpected arguments");
         }
 
-        try {
-            return OperationResult.of(new BsonArray(client.listDatabases(BsonDocument.class).into(new ArrayList<>())));
-        } catch (Exception e) {
-            return OperationResult.of(e);
-        }
+        return resultOf(() ->
+                new BsonArray(client.listDatabases(BsonDocument.class).into(new ArrayList<>())));
     }
 
     OperationResult executeFind(final BsonDocument operation) {
@@ -121,28 +136,22 @@ final class UnifiedCrudHelper {
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
-        try {
-            return OperationResult.of(new BsonArray(iterable.into(new ArrayList<>())));
-        } catch (Exception e) {
-            return OperationResult.of(e);
-        }
+        return resultOf(() ->
+                new BsonArray(iterable.into(new ArrayList<>())));
     }
 
     OperationResult executeFindOneAndUpdate(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments");
 
-        BsonDocument filter = null;
-        BsonDocument update = null;
+        BsonDocument filter = arguments.getDocument("filter").asDocument();
+        BsonDocument update = arguments.getDocument("update").asDocument();
         FindOneAndUpdateOptions options = new FindOneAndUpdateOptions();
 
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
                 case "filter":
-                    filter = cur.getValue().asDocument();
-                    break;
                 case "update":
-                    update = cur.getValue().asDocument();
                     break;
                 case "returnDocument":
                     switch (cur.getValue().asString().getValue()) {
@@ -160,15 +169,9 @@ final class UnifiedCrudHelper {
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
-        requireNonNull(filter);
-        requireNonNull(update);
 
-        try {
-            BsonDocument result = collection.findOneAndUpdate(filter, update, options);
-            return OperationResult.of(result);
-        } catch (Exception e) {
-            return OperationResult.of(e);
-        }
+        return resultOf(() ->
+                collection.findOneAndUpdate(filter, update, options));
     }
 
     OperationResult executeAggregate(final BsonDocument operation) {
@@ -193,16 +196,14 @@ final class UnifiedCrudHelper {
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
-        try {
+        return resultOf(() -> {
             if (pipeline.get(pipeline.size() - 1).getFirstKey().equals("$out")) {
                 iterable.toCollection();
-                return OperationResult.NONE;
+                return null;
             } else {
-                return OperationResult.of(new BsonArray(iterable.into(new ArrayList<>())));
+                return new BsonArray(iterable.into(new ArrayList<>()));
             }
-        } catch (Exception e) {
-            return OperationResult.of(e);
-        }
+        });
     }
 
     OperationResult executeDeleteOne(final BsonDocument operation) {
@@ -214,18 +215,12 @@ final class UnifiedCrudHelper {
             throw new UnsupportedOperationException("Unexpected arguments");
         }
 
-        try {
-            DeleteResult result = collection.deleteOne(filter);
-            return toExpected(result);
-        } catch (Exception e) {
-            return OperationResult.of(e);
-        }
+        return resultOf(() ->
+            toExpected(collection.deleteOne(filter)));
     }
 
-    private OperationResult toExpected(final DeleteResult result) {
-        return OperationResult.of(new BsonDocument()
-                .append("deletedCount", new BsonInt32((int) result.getDeletedCount()))
-        );
+    private BsonDocument toExpected(final DeleteResult result) {
+        return new BsonDocument("deletedCount", new BsonInt32((int) result.getDeletedCount()));
     }
 
     OperationResult executeReplaceOne(final BsonDocument operation) {
@@ -239,67 +234,54 @@ final class UnifiedCrudHelper {
             throw new UnsupportedOperationException("Unexpected arguments");
         }
 
-        try {
-            UpdateResult result = collection.replaceOne(filter, replacement, options);
-            return toExpected(result);
-        } catch (Exception e) {
-            return OperationResult.of(e);
-        }
+        return resultOf(() ->
+                toExpected(collection.replaceOne(filter, replacement, options)));
     }
 
-    private OperationResult toExpected(final UpdateResult result) {
-        return OperationResult.of(new BsonDocument()
+    private BsonDocument toExpected(final UpdateResult result) {
+        return new BsonDocument()
                 .append("matchedCount", new BsonInt32((int) result.getMatchedCount()))
                 .append("modifiedCount", new BsonInt32((int) result.getModifiedCount()))
-                .append("upsertedId", result.getUpsertedId())
-        );
+                .append("upsertedId", result.getUpsertedId());
     }
 
 
     OperationResult executeInsertOne(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        ClientSession session = null;
-        BsonDocument document = null;
+        BsonDocument arguments = operation.getDocument("arguments");
+        ClientSession session = getSession(arguments);
+        BsonDocument document = arguments.getDocument("document").asDocument();
         InsertOneOptions options = new InsertOneOptions();
 
-        for (Map.Entry<String, BsonValue> cur : operation.getDocument("arguments").entrySet()) {
+        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
                 case "session":
-                    session = entities.getSession(cur.getValue().asString().getValue());
-                    break;
                 case "document":
-                    document = cur.getValue().asDocument();
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
-        requireNonNull(document);
 
-        try {
-            InsertOneResult result = session == null
+        return resultOf(() ->
+                toExpected(session == null
                     ? collection.insertOne(document, options)
-                    : collection.insertOne(session, document, options);
-            return toExpected(result);
-        } catch (Exception e) {
-            return OperationResult.of(e);
-        }
+                    : collection.insertOne(session, document, options)));
     }
 
-    private OperationResult toExpected(final InsertOneResult result) {
-        return OperationResult.of(new BsonDocument()
-                .append("insertedId", result.getInsertedId()));
+    private BsonDocument toExpected(final InsertOneResult result) {
+        return new BsonDocument("insertedId", result.getInsertedId());
     }
 
     OperationResult executeInsertMany(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        List<BsonDocument> documents = null;
+        BsonDocument arguments = operation.getDocument("arguments");
+        List<BsonDocument> documents = arguments.getArray("documents").stream().map(BsonValue::asDocument).collect(toList());
         InsertManyOptions options = new InsertManyOptions();
 
-        for (Map.Entry<String, BsonValue> cur : operation.getDocument("arguments").entrySet()) {
+        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
                 case "documents":
-                    documents = cur.getValue().asArray().stream().map(BsonValue::asDocument).collect(toList());
                     break;
                 case "ordered":
                     options.ordered(cur.getValue().asBoolean().getValue());
@@ -308,31 +290,25 @@ final class UnifiedCrudHelper {
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
-        requireNonNull(documents);
 
-        try {
-            InsertManyResult result = collection.insertMany(documents, options);
-            return toExpected(result);
-        } catch (Exception e) {
-            return OperationResult.of(e);
-        }
+        return resultOf(() ->
+            toExpected(collection.insertMany(documents, options)));
     }
 
-    private OperationResult toExpected(final InsertManyResult result) {
-        return OperationResult.of(new BsonDocument()
-                .append("insertedIds", new BsonDocument(result.getInsertedIds().entrySet().stream()
-                        .map(value -> new BsonElement(value.getKey().toString(), value.getValue())).collect(toList())))
-        );
+    private BsonDocument toExpected(final InsertManyResult result) {
+        return new BsonDocument("insertedIds", new BsonDocument(result.getInsertedIds().entrySet().stream()
+                        .map(value -> new BsonElement(value.getKey().toString(), value.getValue())).collect(toList())));
     }
 
     OperationResult executeBulkWrite(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        List<WriteModel<BsonDocument>> requests = null;
+        BsonDocument arguments = operation.getDocument("arguments");
+        List<WriteModel<BsonDocument>> requests = arguments.getArray("requests").stream()
+                .map(value -> toWriteModel(value.asDocument())).collect(toList());
         BulkWriteOptions options = new BulkWriteOptions();
-        for (Map.Entry<String, BsonValue> cur : operation.getDocument("arguments").entrySet()) {
+        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
                 case "requests":
-                    requests = cur.getValue().asArray().stream().map(value -> toWriteModel(value.asDocument())).collect(toList());
                     break;
                 case "ordered":
                     options.ordered(cur.getValue().asBoolean().getValue());
@@ -342,18 +318,12 @@ final class UnifiedCrudHelper {
             }
         }
 
-        requireNonNull(requests);
-
-        try {
-            BulkWriteResult result = collection.bulkWrite(requests, options);
-            return toExpected(result);
-        } catch (Exception e) {
-           return OperationResult.of(e);
-        }
+        return resultOf(() ->
+            toExpected(collection.bulkWrite(requests, options)));
     }
 
-    private OperationResult toExpected(final BulkWriteResult result) {
-        return OperationResult.of(new BsonDocument()
+    private BsonDocument toExpected(final BulkWriteResult result) {
+        return new BsonDocument()
                 .append("deletedCount", new BsonInt32(result.getDeletedCount()))
                 .append("insertedCount", new BsonInt32(result.getInsertedCount()))
                 .append("matchedCount", new BsonInt32(result.getMatchedCount()))
@@ -362,7 +332,7 @@ final class UnifiedCrudHelper {
                 .append("insertedIds", new BsonDocument(result.getInserts().stream()
                         .map(value -> new BsonElement(Integer.toString(value.getIndex()), value.getId())).collect(toList())))
                 .append("upsertedIds", new BsonDocument(result.getUpserts().stream()
-                        .map(value -> new BsonElement(Integer.toString(value.getIndex()), value.getId())).collect(toList()))));
+                        .map(value -> new BsonElement(Integer.toString(value.getIndex()), value.getId())).collect(toList())));
     }
 
     private WriteModel<BsonDocument> toWriteModel(final BsonDocument document) {
@@ -423,12 +393,10 @@ final class UnifiedCrudHelper {
             throw new UnsupportedOperationException("Unexpected arguments");
         }
 
-        try {
+        return resultOf(() -> {
             session.startTransaction();
-            return OperationResult.NONE;
-        } catch (Exception e) {
-            return OperationResult.of(e);
-        }
+            return null;
+        });
     }
 
     OperationResult executeCommitTransaction(final BsonDocument operation) {
@@ -438,12 +406,10 @@ final class UnifiedCrudHelper {
             throw new UnsupportedOperationException("Unexpected arguments");
         }
 
-        try {
+        return resultOf(() -> {
             session.commitTransaction();
-            return OperationResult.NONE;
-        } catch (Exception e) {
-            return OperationResult.of(e);
-        }
+            return null;
+        });
     }
 
     OperationResult executeAbortTransaction(final BsonDocument operation) {
@@ -453,12 +419,10 @@ final class UnifiedCrudHelper {
             throw new UnsupportedOperationException("Unexpected arguments");
         }
 
-        try {
+        return resultOf(() -> {
             session.abortTransaction();
-            return OperationResult.NONE;
-        } catch (Exception e) {
-            return OperationResult.of(e);
-        }
+            return null;
+        });
     }
 
     OperationResult executeWithTransaction(final BsonDocument operation, final OperationAsserter operationAsserter) {
@@ -480,17 +444,15 @@ final class UnifiedCrudHelper {
             }
         }
 
-        try {
+        return resultOf(() -> {
             session.withTransaction(() -> {
                 for (BsonValue cur : callback) {
                     operationAsserter.assertOperation(cur.asDocument());
                 }
                 return null;
             }, optionsBuilder.build());
-            return OperationResult.NONE;
-        } catch (Exception e) {
-            return OperationResult.of(e);
-        }
+            return null;
+        });
     }
 
     public OperationResult executeDropCollection(final BsonDocument operation) {
@@ -502,80 +464,66 @@ final class UnifiedCrudHelper {
             throw new UnsupportedOperationException("Unexpected arguments");
         }
 
-        try {
+        return resultOf(() -> {
             database.getCollection(collectionName).drop();
-            return OperationResult.NONE;
-        } catch (Exception e) {
-            return OperationResult.of(e);
-        }
+            return null;
+        });
     }
 
     public OperationResult executeCreateCollection(final BsonDocument operation) {
         MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
-        String collectionName = null;
-        ClientSession session = null;
+        BsonDocument arguments = operation.getDocument("arguments");
+        String collectionName = arguments.getString("collection").getValue();
+        ClientSession session = getSession(arguments);
 
-        for (Map.Entry<String, BsonValue> cur : operation.getDocument("arguments").entrySet()) {
+        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
                 case "collection":
-                    collectionName = cur.getValue().asString().getValue();
-                    break;
                 case "session":
-                    session = entities.getSession(cur.getValue().asString().getValue());
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
 
-        requireNonNull(collectionName);
-
-        try {
+        return resultOf(() -> {
             if (session == null) {
                 database.createCollection(collectionName);
             } else {
                 database.createCollection(session, collectionName);
             }
-            return OperationResult.NONE;
-        } catch (Exception e) {
-            return OperationResult.of(e);
-        }
+            return null;
+        });
     }
 
     public OperationResult executeCreateIndex(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        BsonDocument keys = null;
-        ClientSession session = null;
+        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument keys = arguments.getDocument("keys").asDocument();
+        ClientSession session = getSession(arguments);
         IndexOptions options = new IndexOptions();
 
-        for (Map.Entry<String, BsonValue> cur : operation.getDocument("arguments").entrySet()) {
+        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
+                case "keys":
+                case "session":
+                    break;
                 case "name":
                     options.name(cur.getValue().asString().getValue());
-                    break;
-                case "keys":
-                    keys = cur.getValue().asDocument();
-                    break;
-                case "session":
-                    session = entities.getSession(cur.getValue().asString().getValue());
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
 
-        requireNonNull(keys);
-
-        try {
+        return resultOf(() -> {
             if (session == null) {
                 collection.createIndex(keys, options);
             } else {
                 collection.createIndex(session, keys, options);
             }
-            return OperationResult.NONE;
-        } catch (Exception e) {
-            return OperationResult.of(e);
-        }
+            return null;
+        });
     }
 
     public OperationResult executeChangeStream(final BsonDocument operation) {
@@ -602,13 +550,11 @@ final class UnifiedCrudHelper {
             }
         }
 
-        try {
+        return resultOf(() -> {
             MongoCursor<BsonDocument> cursor = iterable.withDocumentClass(BsonDocument.class).cursor();
             entities.addChangeStream(operation.getString("saveResultAsEntity").getValue(), cursor);
-            return OperationResult.NONE;
-        } catch (Exception e) {
-            return OperationResult.of(e);
-        }
+            return null;
+        });
     }
 
     public OperationResult executeIterateUntilDocumentOrError(final BsonDocument operation) {
@@ -618,10 +564,6 @@ final class UnifiedCrudHelper {
             throw new UnsupportedOperationException("Unexpected arguments");
         }
 
-        try {
-            return OperationResult.of(cursor.next());
-        } catch (Exception e) {
-            return OperationResult.of(e);
-        }
+        return resultOf(cursor::next);
     }
 }
