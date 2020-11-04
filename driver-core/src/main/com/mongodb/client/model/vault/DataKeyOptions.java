@@ -93,7 +93,7 @@ public class DataKeyOptions {
      * </p>
      * <ul>
      *   <li>projectId: a String</li>
-     *   <li>location: String/li>
+     *   <li>location: String</li>
      *   <li>keyRing: String</li>
      *   <li>keyName: String</li>
      *   <li>keyVersion: an optional String, the specific version of the named key, defaults to using the key's primary version.</li>
