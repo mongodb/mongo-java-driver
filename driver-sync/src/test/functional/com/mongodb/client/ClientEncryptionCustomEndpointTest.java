@@ -211,18 +211,18 @@ public class ClientEncryptionCustomEndpointTest {
         data.add(new Object[]{"7. [azure] valid and invalid kms providers test",
                 "azure",
                 BsonDocument.parse("{\n"
-                        + "  \"keyVaultEndpoint\": \"key-vault-kevinalbs.vault.azure.net\",\n"
-                        + "  \"keyName\": \"test-key\"\n"
+                        + "  \"keyVaultEndpoint\": \"key-vault-csfle.vault.azure.net\",\n"
+                        + "  \"keyName\": \"key-name-csfle\"\n"
                         + "}"),
                 true, MongoClientException.class, MongoCryptException.class, "parse error"});
 
         data.add(new Object[]{"8. [gcp] valid and invalid kms providers test",
                 "gcp",
                 BsonDocument.parse("{\n"
-                        + "  \"projectId\": \"csfle-poc\",\n"
+                        + "  \"projectId\": \"devprod-drivers\",\n"
                         + "  \"location\": \"global\",\n"
-                        + "  \"keyRing\": \"test\",\n"
-                        + "  \"keyName\": \"quickstart\",\n"
+                        + "  \"keyRing\": \"key-ring-csfle\",\n"
+                        + "  \"keyName\": \"key-name-csfle\",\n"
                         + "  \"endpoint\": \"cloudkms.googleapis.com:443\"\n"
                         + "}"),
                 true, MongoClientException.class, MongoCryptException.class, "parse error"});
