@@ -6,7 +6,7 @@ type = "index"
 
 ## MongoDB Java Driver Documentation
 
-Welcome to the MongoDB JVM driver documentation hub for the 4. 2 drivers release.
+Welcome to the MongoDB JVM driver documentation hub for the 4.2 drivers release.
 
 
 ### What's New in 4.2
