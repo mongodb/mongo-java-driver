@@ -7,6 +7,13 @@ title = "What's New"
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
+# What's new in 4.2
+
+This release fully supports all MongoDB releases from versions 2.6 to 4.4. Key new features of the 4.2 Java driver release include:
+
+* Client-side field level encryption has been expanded to support Azure and GCP Keystores.
+* Added support to cache Kerberos tickets so that they can be re-used for multiple authentication requests.
+
 # What's new in 4.1
 
 This release fully supports all MongoDB releases from versions 2.6 to 4.4. Key new features of the 4.1 Java driver release include:

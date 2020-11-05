@@ -355,7 +355,7 @@ The following annotations are available from the
     configure if a property is serialized and / or deserialized.
   * [`BsonProperty`]({{< apiref "bson" "org/bson/codecs/pojo/annotations/BsonProperty.html" >}}). Allows for an alternative document key 
     name when converting the POJO field to BSON. Also, allows a field to turn on using a discriminator when storing a POJO value.
-  * [`BsonRepresentation`]({{<apiref "bson" "org/bson/codecs/pojo/annotations/BsonRepresentation.html" > }}). Allows for the type of property stored
+  * [`BsonRepresentation`]({{<apiref "bson" "org/bson/codecs/pojo/annotations/BsonRepresentation.html" >}}). Allows for the type of property stored
     in the database to be different from the type of the property in the POJO.
 
 Annotations can be applied to read and / or write contexts by configuring the getter / setter methods. Any annotations applied to a field 
