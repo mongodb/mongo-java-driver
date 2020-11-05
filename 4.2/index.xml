@@ -321,8 +321,7 @@ Prerequisites  The example below requires a restaurants collection in the test d
       
       <guid>/mongo-java-driver/4.2/whats-new/</guid>
       <description>What&amp;rsquo;s new in 4.2 This release fully supports all MongoDB releases from versions 2.6 to 4.4. Key new features of the 4.2 Java driver release include:
- Client-side field level encryption has been expanded to support Azure and GCP Keystores.  What&amp;rsquo;s new in 4.1 This release fully supports all MongoDB releases from versions 2.6 to 4.4. Key new features of the 4.1 Java driver release include:
- Significant reduction in client-perceived failover times during planned maintenance events Update and delete operations support index hinting.</description>
+ Client-side field level encryption has been expanded to support Azure and GCP Keystores. Added support to cache Kerberos tickets so that they can be re-used for multiple authentication requests.  What&amp;rsquo;s new in 4.1 This release fully supports all MongoDB releases from versions 2.</description>
     </item>
     
     <item>
@@ -1241,7 +1240,7 @@ Previous Releases    Release Documentation     4.1.1 Reference &amp;#124; API   
       <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
       
       <guid>/mongo-java-driver/4.2/</guid>
-      <description>MongoDB Java Driver Documentation Welcome to the MongoDB JVM driver documentation hub for the 4. 2 drivers release.
+      <description>MongoDB Java Driver Documentation Welcome to the MongoDB JVM driver documentation hub for the 4.2 drivers release.
 What&amp;rsquo;s New in 4.2 For key new features of 4.2, see What&amp;rsquo;s New.
 Upgrade To upgrade, refer to the Upgrade Considerations documentation.
 MongoDB Driver For the synchronous MongoDB Driver, see MongoDB Driver section.
