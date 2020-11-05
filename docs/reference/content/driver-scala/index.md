@@ -9,7 +9,7 @@ title = "Scala Driver"
 
 ## MongoDB Scala Driver Documentation
 
-The following guide provides information on using the MongoDB Scala Driver 4.0.
+The following guide provides information on using the MongoDB Scala Driver.
 
 ## Getting Started
 
@@ -26,6 +26,7 @@ For tutorials for some frequently used operations, see the [Tutorials section]({
 
 | Release | Documentation |
 |---------|---------------|
+|  4.1.1  | {{< releases version="4.1" >}} | 
 |  4.0.5  | {{< releases version="4.0" >}} | 
 |  2.9.0  | {{< releases version="2.9" apiDir="scaladoc" url="https://mongodb.github.io/mongo-scala-driver/" >}} |
 |  2.8.0  | {{< releases version="2.8" apiDir="scaladoc" url="https://mongodb.github.io/mongo-scala-driver/" >}} |

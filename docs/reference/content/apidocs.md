@@ -17,4 +17,4 @@ The following API documentation is available:
   - [Java Reactive Streams Driver]({{< apiref "mongodb-driver-reactivestreams" "index.html" >}})
   - [Scala Driver]({{< apiref "mongo-scala-driver" "index.html" >}})
   - [Bson]({{< apiref "bson" "index.html" >}}) (The bson layer)
-  - [Core]({{< apiref ""mongodb-driver-core" "index.html" >}}) (The shared core classes)
+  - [Core]({{< apiref "mongodb-driver-core" "index.html" >}}) (The shared core classes)

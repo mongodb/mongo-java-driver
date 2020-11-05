@@ -26,6 +26,7 @@ For tutorials for some frequently used operations, see the [Tutorials section]({
 
 | Release | Documentation |
 |---------|---------------|
+| 4.1.1   | {{< releases version="4.1" >}} | 
 | 4.0.5   | {{< releases version="4.0" >}} | 
 | 1.13.1  | {{< releases version="1.13" apiDir="javadoc" url="https://mongodb.github.io/mongo-java-driver-reactivestreams/" >}} |
 | 1.12.0  | {{< releases version="1.12" apiDir="javadoc" url="https://mongodb.github.io/mongo-java-driver-reactivestreams/" >}} |
