@@ -7,6 +7,11 @@ title = "Upgrade Considerations"
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
+# Upgrading to the 4.2 Driver
+
+The 4.2 release is a minor release as per the definition of [semantic versioning](https://semver.org). As such, there are no breaking
+changes in this release for users upgrading from the 4.1 release.
+
 # Upgrading to the 4.1 Driver
 
 The 4.1 release is a minor release as per the definition of [semantic versioning](https://semver.org). As such, there are no breaking
@@ -82,6 +87,7 @@ The following table specifies the compatibility of the MongoDB Java driver for u
 
 |Java Driver Version|MongoDB 3.0 |MongoDB 3.2|MongoDB 3.4|MongoDB 3.6|MongoDB 4.0|MongoDB 4.2|MongoDB 4.4|
 |-------------------|------------|-----------|-----------|-----------|-----------|-----------|-----------|
+|Version 4.2        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |
 |Version 4.1        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |
 |Version 4.0        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |
 |Version 3.12       |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓* |
