@@ -16,6 +16,7 @@
 
 package com.mongodb.client.unified;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonType;
 import org.bson.BsonValue;
@@ -30,22 +31,25 @@ import static org.junit.Assert.assertTrue;
 
 final class ValueMatcher {
     private final Entities entities;
+    private final AssertionContext context;
 
-    ValueMatcher(final Entities entities) {
+    ValueMatcher(final Entities entities, final AssertionContext context) {
         this.entities = entities;
+        this.context = context;
     }
 
     public void assertValuesMatch(final BsonValue expected, final BsonValue actual) {
-        assertValuesMatch(expected, actual, true);
+        assertValuesMatch(expected, actual, true, null, -1);
     }
 
-    private void assertValuesMatch(final BsonValue initialExpected, final BsonValue actual, final boolean isRoot) {
+    private void assertValuesMatch(final BsonValue initialExpected, final BsonValue actual, final boolean isRoot,
+                                   final @Nullable String keyContext, final int arrayPositionContext) {
         BsonValue expected = initialExpected;
+        context.push(ContextElement.ofValueMatcher(expected, actual, keyContext, arrayPositionContext));
         if (initialExpected.isDocument() && initialExpected.asDocument().size() == 1
                 && initialExpected.asDocument().getFirstKey().startsWith("$$")) {
             BsonDocument expectedDocument = initialExpected.asDocument();
 
-            //noinspection SwitchStatementWithTooFewBranches
             switch (expectedDocument.getFirstKey()) {
                 case "$$unsetOrMatches":
                     if (actual == null) {
@@ -66,16 +70,18 @@ final class ValueMatcher {
 
         if (expected.isDocument()) {
             BsonDocument expectedDocument = expected.asDocument();
-            assertTrue("Actual value must be a document but is " + actual.getBsonType(), actual.isDocument());
+            assertTrue(context.getMessage("Actual value must be a document but is " + actual.getBsonType()), actual.isDocument());
             BsonDocument actualDocument = actual.asDocument();
             expectedDocument.forEach((key, value) -> {
                 if (value.isDocument() && value.asDocument().size() == 1 && value.asDocument().getFirstKey().startsWith("$$")) {
                     switch (value.asDocument().getFirstKey()) {
                         case "$$exists":
                             if (value.asDocument().getBoolean("$$exists").getValue()) {
-                                assertTrue("Actual document must contain key " + key, actualDocument.containsKey(key));
+                                assertTrue(context.getMessage("Actual document must contain key " + key),
+                                        actualDocument.containsKey(key));
                             } else {
-                                assertFalse("Actual document must not contain key " + key, actualDocument.containsKey(key));
+                                assertFalse(context.getMessage("Actual document must not contain key " + key),
+                                        actualDocument.containsKey(key));
                             }
                             return;
                         case "$$type":
@@ -101,27 +107,29 @@ final class ValueMatcher {
                     }
                 }
 
-                assertTrue("Actual document must contain key " + key, actualDocument.containsKey(key));
-                assertValuesMatch(value, actualDocument.get(key), false);
+                assertTrue(context.getMessage("Actual document must contain key " + key), actualDocument.containsKey(key));
+                assertValuesMatch(value, actualDocument.get(key), false, key, -1);
             });
             if (!isRoot) {
                 for (String key : actualDocument.keySet()) {
-                    assertTrue("Actual document contains unexpected key: " + key, expectedDocument.containsKey(key));
+                    assertTrue(context.getMessage("Actual document contains unexpected key: " + key), expectedDocument.containsKey(key));
                 }
             }
         } else if (expected.isArray()) {
-            assertTrue("Actual value must be an array but is " + actual.getBsonType(), actual.isArray());
-            assertEquals("Arrays must be the same size", expected.asArray().size(), actual.asArray().size());
+            assertTrue(context.getMessage("Actual value must be an array but is " + actual.getBsonType()), actual.isArray());
+            assertEquals(context.getMessage("Arrays must be the same size"), expected.asArray().size(), actual.asArray().size());
             for (int i = 0; i < expected.asArray().size(); i++) {
-                assertValuesMatch(expected.asArray().get(i), actual.asArray().get(i), false);
+                assertValuesMatch(expected.asArray().get(i), actual.asArray().get(i), false, keyContext, i);
             }
         } else if (expected.isNumber()) {
-            assertTrue(actual.isNumber());
-            assertEquals(expected.asNumber().doubleValue(), actual.asNumber().doubleValue(), 0.0);
+            assertTrue(context.getMessage("Expected a number"), actual.isNumber());
+            assertEquals(context.getMessage("Expected BSON numbers to be equal"),
+                    expected.asNumber().doubleValue(), actual.asNumber().doubleValue(), 0.0);
         } else {
-            assertEquals(expected.getBsonType(), actual.getBsonType());
-            assertEquals(expected, actual);
+            assertEquals(context.getMessage("Expected BSON types to be equal"), expected.getBsonType(), actual.getBsonType());
+            assertEquals(context.getMessage("Expected BSON values to be equal"), expected, actual);
         }
+        context.pop();
     }
 
     private void assertExpectedType(final BsonValue actualValue, final BsonValue expectedTypes) {
@@ -133,7 +141,9 @@ final class ValueMatcher {
         } else {
             throw new UnsupportedOperationException("Unsupported type for $$type value");
         }
-        assertTrue(types.contains(asTypeString(actualValue.getBsonType())));
+        assertTrue(context.getMessage("Expected BSON type to be one of " + types + " but was "
+                        + asTypeString(actualValue.getBsonType())),
+                types.contains(asTypeString(actualValue.getBsonType())));
     }
 
     private static String asTypeString(final BsonType bsonType) {

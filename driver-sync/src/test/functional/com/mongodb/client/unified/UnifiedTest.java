@@ -62,11 +62,13 @@ public abstract class UnifiedTest {
     private final BsonArray entitiesArray;
     private final BsonArray initialData;
     private final BsonDocument definition;
+    private final AssertionContext context = new AssertionContext();
     private final Entities entities = new Entities();
     private final UnifiedCrudHelper crudHelper = new UnifiedCrudHelper(entities);
     private final UnifiedGridFSHelper gridFSHelper = new UnifiedGridFSHelper(entities);
-    private final ValueMatcher valueMatcher = new ValueMatcher(entities);
-    private final EventMatcher eventMatcher = new EventMatcher(valueMatcher);
+    private final ValueMatcher valueMatcher = new ValueMatcher(entities, context);
+    private final ErrorMatcher errorMatcher = new ErrorMatcher(context);
+    private final EventMatcher eventMatcher = new EventMatcher(valueMatcher, context);
     private final List<FailPoint> failPoints = new ArrayList<>();
 
     public UnifiedTest(final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entitiesArray,
@@ -76,6 +78,7 @@ public abstract class UnifiedTest {
         this.entitiesArray = entitiesArray;
         this.initialData = initialData;
         this.definition = definition;
+        this.context.push(ContextElement.ofOperation(definition));
     }
 
     protected abstract MongoClient createMongoClient(MongoClientSettings settings);
@@ -128,8 +131,9 @@ public abstract class UnifiedTest {
     private void compareEvents(final BsonDocument operation) {
         for (BsonValue cur : operation.getArray("expectEvents")) {
             BsonDocument curClientEvents = cur.asDocument();
-            TestCommandListener listener = entities.getClientCommandListener(curClientEvents.getString("client").getValue());
-            eventMatcher.assertEventsEquality(curClientEvents.getArray("events"), listener.getEvents());
+            String client = curClientEvents.getString("client").getValue();
+            TestCommandListener listener = entities.getClientCommandListener(client);
+            eventMatcher.assertEventsEquality(client, curClientEvents.getArray("events"), listener.getEvents());
         }
     }
 
@@ -138,9 +142,11 @@ public abstract class UnifiedTest {
             BsonDocument curDocument = cur.asDocument();
             MongoNamespace namespace = new MongoNamespace(curDocument.getString("databaseName").getValue(),
                     curDocument.getString("collectionName").getValue());
-            List<BsonDocument> collectionData = new CollectionHelper<>(new BsonDocumentCodec(), namespace).find();
-            assertEquals(curDocument.getArray("documents").stream().map(BsonValue::asDocument).collect(toList()),
-                    collectionData);
+            List<BsonDocument> expectedOutcome = curDocument.getArray("documents").stream().map(BsonValue::asDocument).collect(toList());
+            List<BsonDocument> actualOutcome = new CollectionHelper<>(new BsonDocumentCodec(), namespace).find();
+            context.push(ContextElement.ofOutcome(namespace, expectedOutcome, actualOutcome));
+            assertEquals(context.getMessage("Outcomes are not equal"), expectedOutcome, actualOutcome);
+            context.pop();
         }
     }
 
@@ -149,7 +155,7 @@ public abstract class UnifiedTest {
         if (operation.containsKey("expectResult")) {
             valueMatcher.assertValuesMatch(operation.get("expectResult"), requireNonNull(result.getResult()));
         } else if (operation.containsKey("expectError")) {
-            ErrorMatcher.assertErrorsMatch(operation.getDocument("expectError"), requireNonNull(result.getException()));
+            errorMatcher.assertErrorsMatch(operation.getDocument("expectError"), requireNonNull(result.getException()));
         }
     }
 
