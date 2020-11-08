@@ -29,44 +29,54 @@ import static org.junit.Assert.assertEquals;
 
 final class EventMatcher {
     private final ValueMatcher valueMatcher;
+    private final AssertionContext context;
 
-    EventMatcher(final ValueMatcher valueMatcher) {
+    EventMatcher(final ValueMatcher valueMatcher, final AssertionContext context) {
         this.valueMatcher = valueMatcher;
+        this.context = context;
     }
 
-    public void assertEventsEquality(final BsonArray expectedEventDocuments, final List<CommandEvent> events) {
-        assertEquals("Number of events must be the same", expectedEventDocuments.size(), events.size());
+    public void assertEventsEquality(final String client, final BsonArray expectedEventDocuments, final List<CommandEvent> events) {
+        context.push(ContextElement.ofEvents(client));
+        assertEquals(context.getMessage("Number of events must be the same"), expectedEventDocuments.size(), events.size());
 
         for (int i = 0; i < events.size(); i++) {
             CommandEvent actual = events.get(i);
-            String eventType = expectedEventDocuments.get(i).asDocument().getFirstKey();
-            BsonDocument expected = expectedEventDocuments.get(i).asDocument().getDocument(eventType);
+            BsonDocument expectedEventDocument = expectedEventDocuments.get(i).asDocument();
+            String eventType = expectedEventDocument.getFirstKey();
+            context.push(ContextElement.ofEvent(expectedEventDocument, actual, i));
+            BsonDocument expected = expectedEventDocument.getDocument(eventType);
+
             if (expected.containsKey("commandName")) {
-                assertEquals("Command names must be equal", expected.getString("commandName").getValue(), actual.getCommandName());
+                assertEquals(context.getMessage("Command names must be equal"),
+                        expected.getString("commandName").getValue(), actual.getCommandName());
             }
 
             if (actual.getClass().equals(CommandStartedEvent.class)) {
-                assertEquals(eventType, "commandStartedEvent");
+                assertEquals(context.getMessage("Expected CommandStartedEvent"), eventType, "commandStartedEvent");
                 CommandStartedEvent actualCommandStartedEvent = (CommandStartedEvent) actual;
 
                 if (expected.containsKey("databaseName")) {
-                    assertEquals(expected.getString("databaseName").getValue(), actualCommandStartedEvent.getDatabaseName());
+                    assertEquals(context.getMessage("Expected database names to match"),
+                            expected.getString("databaseName").getValue(), actualCommandStartedEvent.getDatabaseName());
                 }
                 if (expected.containsKey("command")) {
                     valueMatcher.assertValuesMatch(expected.getDocument("command"), actualCommandStartedEvent.getCommand());
                 }
             } else if (actual.getClass().equals(CommandSucceededEvent.class)) {
-                assertEquals(eventType, "commandSucceededEvent");
+                assertEquals(context.getMessage("Expected CommandSucceededEvent"), eventType, "commandSucceededEvent");
                 CommandSucceededEvent actualCommandSucceededEvent = (CommandSucceededEvent) actual;
 
                 if (expected.containsKey("reply")) {
                     valueMatcher.assertValuesMatch(expected.getDocument("reply"), actualCommandSucceededEvent.getResponse());
                 }
             } else if (actual.getClass().equals(CommandFailedEvent.class)) {
-                assertEquals(eventType, "commandFailedEvent");
+                assertEquals(context.getMessage("Expected CommandFailedEvent"), eventType, "commandFailedEvent");
             } else {
                 throw new UnsupportedOperationException("Unsupported event type: " + actual.getClass());
             }
+            context.pop();
         }
+        context.pop();
     }
 }
