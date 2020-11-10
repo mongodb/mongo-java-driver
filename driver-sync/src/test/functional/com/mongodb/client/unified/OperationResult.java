@@ -55,4 +55,15 @@ final class OperationResult {
     public Exception getException() {
         return exception;
     }
+
+    @Override
+    public String toString() {
+        if (result != null) {
+            return result.toString();
+        } else if (exception != null) {
+            return exception.toString();
+        } else {
+            return "<No Result>";
+        }
+    }
 }

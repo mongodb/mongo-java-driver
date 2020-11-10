@@ -46,7 +46,6 @@ import java.util.stream.Collectors;
 import static com.mongodb.ClusterFixture.getServerVersion;
 import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.unified.RunOnRequirementsMatcher.runOnRequirementsMet;
-import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -78,7 +77,7 @@ public abstract class UnifiedTest {
         this.entitiesArray = entitiesArray;
         this.initialData = initialData;
         this.definition = definition;
-        this.context.push(ContextElement.ofOperation(definition));
+        this.context.push(ContextElement.ofTest(definition));
     }
 
     protected abstract MongoClient createMongoClient(MongoClientSettings settings);
@@ -152,11 +151,15 @@ public abstract class UnifiedTest {
 
     private void assertOperation(final BsonDocument operation) {
         OperationResult result = executeOperation(operation);
+        context.push(ContextElement.ofOperation(operation, result));
         if (operation.containsKey("expectResult")) {
-            valueMatcher.assertValuesMatch(operation.get("expectResult"), requireNonNull(result.getResult()));
+            assertNotNull(context.getMessage("The operation expects a result but an exception occurred"), result.getResult());
+            valueMatcher.assertValuesMatch(operation.get("expectResult"), result.getResult());
         } else if (operation.containsKey("expectError")) {
-            errorMatcher.assertErrorsMatch(operation.getDocument("expectError"), requireNonNull(result.getException()));
+            assertNotNull(context.getMessage("The operation expects an error but no exception was thrown"), result.getException());
+            errorMatcher.assertErrorsMatch(operation.getDocument("expectError"), result.getException());
         }
+        context.pop();
     }
 
     private OperationResult executeOperation(final BsonDocument operation) {
