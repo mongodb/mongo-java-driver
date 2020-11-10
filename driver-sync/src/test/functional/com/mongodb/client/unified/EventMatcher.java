@@ -37,7 +37,7 @@ final class EventMatcher {
     }
 
     public void assertEventsEquality(final String client, final BsonArray expectedEventDocuments, final List<CommandEvent> events) {
-        context.push(ContextElement.ofEvents(client));
+        context.push(ContextElement.ofEvents(client, expectedEventDocuments, events));
         assertEquals(context.getMessage("Number of events must be the same"), expectedEventDocuments.size(), events.size());
 
         for (int i = 0; i < events.size(); i++) {

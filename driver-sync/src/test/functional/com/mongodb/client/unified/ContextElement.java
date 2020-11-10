@@ -21,16 +21,22 @@ import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
+import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.json.JsonWriterSettings;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 abstract class ContextElement {
-    static ContextElement ofOperation(final BsonDocument operation) {
-        return new OperationContextElement(operation);
+    public static ContextElement ofTest(final BsonDocument definition) {
+        return new TestContextContextElement(definition);
+    }
+
+    static ContextElement ofOperation(final BsonDocument operation, final OperationResult result) {
+        return new OperationContextElement(operation, result);
     }
 
     static ContextElement ofValueMatcher(final BsonValue expected, final BsonValue actual, final String key, final int arrayPosition) {
@@ -42,28 +48,47 @@ abstract class ContextElement {
     }
 
     static ContextElement ofOutcome(final MongoNamespace namespace, final List<BsonDocument> expectedOutcome,
-                                           final List<BsonDocument> actualOutcome) {
+                                    final List<BsonDocument> actualOutcome) {
         return new OutcomeMatchingContextElement(namespace, expectedOutcome, actualOutcome);
     }
 
-    static ContextElement ofEvents(final String client) {
-        return new EventsMatchingContextElement(client);
+    static ContextElement ofEvents(final String client, final BsonArray expectedEvents, final List<CommandEvent> actualEvents) {
+        return new EventsMatchingContextElement(client, expectedEvents, actualEvents);
     }
 
     static ContextElement ofEvent(final BsonDocument expected, final CommandEvent actual, final int eventPosition) {
         return new EventMatchingContextElement(expected, actual, eventPosition);
     }
 
-    private static class OperationContextElement extends ContextElement {
-        private final BsonDocument operation;
 
-        OperationContextElement(final BsonDocument operation) {
-            this.operation = operation;
+    private static class TestContextContextElement extends ContextElement {
+        private final BsonDocument definition;
+
+        TestContextContextElement(final BsonDocument definition) {
+            this.definition = definition;
         }
 
         public String toString() {
-            return "Operation Context: " + "\n"
-                    + operation.toJson(JsonWriterSettings.builder().indent(true).build());
+            return "Test Context: " + "\n"
+                    + definition.toJson(JsonWriterSettings.builder().indent(true).build());
+        }
+    }
+
+    private static class OperationContextElement extends ContextElement {
+        private final BsonDocument operation;
+        private final OperationResult result;
+
+        OperationContextElement(final BsonDocument operation, final OperationResult result) {
+            this.operation = operation;
+            this.result = result;
+        }
+
+        public String toString() {
+            return "Operation Result Context: " + "\n"
+                    + "   Operation:\n"
+                    + operation.toJson(JsonWriterSettings.builder().indent(true).build()) + "\n"
+                    + "   Actual result:\n"
+                    + result + "\n";
         }
     }
 
@@ -121,7 +146,7 @@ abstract class ContextElement {
         private final List<BsonDocument> actualOutcome;
 
         OutcomeMatchingContextElement(final MongoNamespace namespace, final List<BsonDocument> expectedOutcome,
-                                             final List<BsonDocument> actualOutcome) {
+                                      final List<BsonDocument> actualOutcome) {
             this.namespace = namespace;
             this.expectedOutcome = expectedOutcome;
             this.actualOutcome = actualOutcome;
@@ -139,15 +164,26 @@ abstract class ContextElement {
 
     private static class EventsMatchingContextElement extends ContextElement {
         private final String client;
+        private final BsonArray expectedEvents;
+        private final List<CommandEvent> actualEvents;
 
-        EventsMatchingContextElement(final String client) {
+        EventsMatchingContextElement(final String client, final BsonArray expectedEvents, final List<CommandEvent> actualEvents) {
             this.client = client;
+            this.expectedEvents = expectedEvents;
+            this.actualEvents = actualEvents;
         }
 
         @Override
         public String toString() {
             return "Events MatchingContext: \n"
-                    + "   client: '" + client + "\n";
+                    + "   client: '" + client + "\n"
+                    + "   Expected events:\n"
+                    + new BsonDocument("events", expectedEvents).toJson(JsonWriterSettings.builder().indent(true).build()) + "\n"
+                    + "   Actual events:\n"
+                    + new BsonDocument("events", new BsonArray(actualEvents.stream()
+                    .map(ContextElement::eventToDocument).collect(Collectors.toList())))
+                    .toJson(JsonWriterSettings.builder().indent(true).build())
+                    + "\n";
         }
     }
 
@@ -169,26 +205,26 @@ abstract class ContextElement {
                     + "   expected event: " + expectedEvent + "\n"
                     + "   actual event:   " + eventToDocument(actualEvent) + "\n";
         }
+    }
 
-        BsonDocument eventToDocument(final CommandEvent event) {
-            if (event instanceof CommandStartedEvent) {
-                CommandStartedEvent commandStartedEvent = (CommandStartedEvent) event;
-                return new BsonDocument("commandStartedEvent",
-                        new BsonDocument("command", commandStartedEvent.getCommand())
-                                .append("databaseName", new BsonString(commandStartedEvent.getDatabaseName())));
-            }
-            if (event instanceof CommandSucceededEvent) {
-                CommandSucceededEvent commandSucceededEvent = (CommandSucceededEvent) event;
-                return new BsonDocument("commandSucceededEvent",
-                        new BsonDocument("reply", commandSucceededEvent.getResponse())
-                                .append("commandName", new BsonString(commandSucceededEvent.getCommandName())));
-            } else if (event instanceof CommandFailedEvent) {
-                CommandFailedEvent commandFailedEvent = (CommandFailedEvent) event;
-                return new BsonDocument("commandFailedEvent",
-                        new BsonDocument("commandName", new BsonString(commandFailedEvent.getCommandName())));
-            } else {
-                throw new UnsupportedOperationException("Unsupported command event: " + event.getClass().getName());
-            }
+    private static BsonDocument eventToDocument(final CommandEvent event) {
+        if (event instanceof CommandStartedEvent) {
+            CommandStartedEvent commandStartedEvent = (CommandStartedEvent) event;
+            return new BsonDocument("commandStartedEvent",
+                    new BsonDocument("command", commandStartedEvent.getCommand())
+                            .append("databaseName", new BsonString(commandStartedEvent.getDatabaseName())));
+        }
+        if (event instanceof CommandSucceededEvent) {
+            CommandSucceededEvent commandSucceededEvent = (CommandSucceededEvent) event;
+            return new BsonDocument("commandSucceededEvent",
+                    new BsonDocument("reply", commandSucceededEvent.getResponse())
+                            .append("commandName", new BsonString(commandSucceededEvent.getCommandName())));
+        } else if (event instanceof CommandFailedEvent) {
+            CommandFailedEvent commandFailedEvent = (CommandFailedEvent) event;
+            return new BsonDocument("commandFailedEvent",
+                    new BsonDocument("commandName", new BsonString(commandFailedEvent.getCommandName())));
+        } else {
+            throw new UnsupportedOperationException("Unsupported command event: " + event.getClass().getName());
         }
     }
 }
