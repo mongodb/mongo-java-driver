@@ -137,7 +137,6 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
                                  final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
                                  final SessionContext sessionContext, final boolean responseExpected, final SplittablePayload payload,
                                  final FieldNameValidator payloadFieldNameValidator, final SingleResultCallback<T> callback) {
-        // TODO: inject ServerApi
         executeProtocolAsync(new CommandProtocolImpl<T>(database, command, commandFieldNameValidator, readPreference,
                 commandResultDecoder, responseExpected, payload,  payloadFieldNameValidator, clusterConnectionMode, null),
                 sessionContext, callback);

@@ -78,7 +78,7 @@ public class MongoClientDelegate {
                         @Nullable final Crypt crypt, @Nullable final ServerApi serverApi) {
         this.cluster = cluster;
         this.codecRegistry = codecRegistry;
-        this.serverSessionPool = new ServerSessionPool(cluster);
+        this.serverSessionPool = new ServerSessionPool(cluster, serverApi);
         this.originator = originator;
         this.operationExecutor = operationExecutor == null ? new DelegateOperationExecutor() : operationExecutor;
         this.crypt = crypt;

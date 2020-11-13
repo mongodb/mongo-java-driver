@@ -737,7 +737,7 @@ public class MongoClient implements Closeable {
                 getCommandListener(options.getCommandListeners()),
                 options.getApplicationName(),
                 wrapMongoDriverInformation(mongoDriverInformation),
-                options.getCompressorList(), null);  // TODO: add server api to MongoClientOptions
+                options.getCompressorList(), options.getServerApi().orElse(null));
     }
 
     private static MongoDriverInformation wrapMongoDriverInformation(@Nullable final MongoDriverInformation mongoDriverInformation) {

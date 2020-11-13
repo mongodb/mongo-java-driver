@@ -189,7 +189,6 @@ public final class CommandMessage extends RequestMessage {
                 }
                 addDocument(getCommandToEncode(), bsonOutput, commandFieldNameValidator, elements);
             } else {
-                // TODO: should never get to this point with a serverApi specified?
                 addDocumentWithPayload(bsonOutput, messageStartPosition);
             }
         }

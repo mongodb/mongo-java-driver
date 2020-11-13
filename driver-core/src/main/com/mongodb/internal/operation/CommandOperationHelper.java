@@ -346,7 +346,6 @@ final class CommandOperationHelper {
                                            final CommandReadTransformer<D, T> transformer, final SessionContext sessionContext,
                                            final ServerApi serverApi) {
 
-        // TODO: Get ServerApi somehow
         return transformer.apply(connection.command(database, command, fieldNameValidator, readPreference, decoder, sessionContext,
                 serverApi), source, connection);
     }
@@ -376,7 +375,6 @@ final class CommandOperationHelper {
                                                 final CommandWriteTransformer<D, T> transformer, final SessionContext sessionContext,
                                                 final ServerApi serverApi) {
 
-        // TODO: inject ServerApi somehow
         return transformer.apply(connection.command(database, command, fieldNameValidator, readPreference, decoder, sessionContext,
                 serverApi),
                 connection);
