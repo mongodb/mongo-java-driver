@@ -52,7 +52,7 @@ connection string for the MongoDB cluster.
             <remote-naming/>
         </subsystem>
 
-A MongoClient instance will be accessible via the JNDI name `java:global/LocalMongoClient`.
+A MongoClient instance will be accessible via the JNDI name `java:global/MyMongoClient`.
 
 ### Tomcat
 
