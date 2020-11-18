@@ -265,11 +265,12 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
                 try {
                     initFromCommandResult(connection.command(namespace.getDatabaseName(),
-                                                             asGetMoreCommandDocument(),
-                                                             NO_OP_FIELD_NAME_VALIDATOR,
-                                                             ReadPreference.primary(),
-                                                             CommandResultDocumentCodec.create(decoder, "nextBatch"),
-                                                             connectionSource.getSessionContext(), null));
+                            asGetMoreCommandDocument(),
+                            NO_OP_FIELD_NAME_VALIDATOR,
+                            ReadPreference.primary(),
+                            CommandResultDocumentCodec.create(decoder, "nextBatch"),
+                            connectionSource.getSessionContext(),
+                            null /* As per spec, ServerApi elements are not included in getMore commands */));
                 } catch (MongoCommandException e) {
                     throw translateCommandException(e, serverCursor);
                 }

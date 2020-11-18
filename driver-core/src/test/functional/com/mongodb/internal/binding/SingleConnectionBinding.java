@@ -26,6 +26,7 @@ import com.mongodb.internal.connection.Server;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.selector.WritableServerSelector;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -111,8 +112,9 @@ public class SingleConnectionBinding implements ReadWriteBinding {
     }
 
     @Override
+    @Nullable
     public ServerApi getServerApi() {
-        return null; // TODO
+        return null;
     }
 
     @Override

@@ -50,7 +50,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
         given:
         def connection = new InternalStreamConnectionFactory(
                 new AsynchronousSocketChannelStreamFactory(openSocketSettings, getSslSettings()), getCredentialWithCache(), null, null,
-                [], null,).create(new ServerId(new ClusterId(), new ServerAddress(new InetSocketAddress('192.168.255.255', 27017))))
+                [], null).create(new ServerId(new ClusterId(), new ServerAddress(new InetSocketAddress('192.168.255.255', 27017))))
 
         when:
         connection.open()

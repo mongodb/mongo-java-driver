@@ -31,6 +31,7 @@ import com.mongodb.internal.connection.Server;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.session.ClientSessionContext;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 
 import static org.bson.assertions.Assertions.notNull;
 
@@ -101,6 +102,7 @@ public class ClientSessionBinding implements ReadWriteBinding {
     }
 
     @Override
+    @Nullable
     public ServerApi getServerApi() {
         return wrapped.getServerApi();
     }

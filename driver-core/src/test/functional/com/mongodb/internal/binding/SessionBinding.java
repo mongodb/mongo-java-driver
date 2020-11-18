@@ -21,6 +21,7 @@ import com.mongodb.ServerApi;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 
 import static org.bson.assertions.Assertions.notNull;
 
@@ -65,6 +66,7 @@ public class SessionBinding implements ReadWriteBinding {
     }
 
     @Override
+    @Nullable
     public ServerApi getServerApi() {
         return wrapped.getServerApi();
     }

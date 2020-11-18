@@ -18,6 +18,7 @@ package com.mongodb.internal.binding;
 
 import com.mongodb.ServerApi;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 
 /**
  * A factory of connection sources to servers that can be written to, e.g, a standalone, a mongos, or a replica set primary.
@@ -41,6 +42,7 @@ public interface WriteBinding extends ReferenceCounted {
      */
     SessionContext getSessionContext();
 
+    @Nullable
     ServerApi getServerApi();
 
     @Override

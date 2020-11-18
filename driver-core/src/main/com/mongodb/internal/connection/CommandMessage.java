@@ -189,6 +189,9 @@ public final class CommandMessage extends RequestMessage {
                 }
                 addDocument(getCommandToEncode(), bsonOutput, commandFieldNameValidator, elements);
             } else {
+                // We're not concerned with adding ServerApi elements here.  The only reason we do it for OP_QUERY-based commands is that
+                // OP_QUERY is always used for the handshake, and we have to pass ServerApi elements in the handshake.  Other than that,
+                // all servers that support ServerApi also support OP_MSG, so this code path should never be hit.
                 addDocumentWithPayload(bsonOutput, messageStartPosition);
             }
         }

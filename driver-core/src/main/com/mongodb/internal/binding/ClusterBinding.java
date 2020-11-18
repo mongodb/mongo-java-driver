@@ -89,6 +89,7 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
     }
 
     @Override
+    @Nullable
     public ServerApi getServerApi() {
         return serverApi;
     }

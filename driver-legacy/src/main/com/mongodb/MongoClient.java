@@ -344,7 +344,7 @@ public class MongoClient implements Closeable {
         AutoEncryptionSettings autoEncryptionSettings = options.getAutoEncryptionSettings();
         this.delegate = new MongoClientDelegate(cluster, createRegistry(options.getCodecRegistry(), options.getUuidRepresentation()), this,
                 autoEncryptionSettings == null ? null : createCrypt(asSimpleMongoClient(), autoEncryptionSettings),
-                options.getServerApi().orElse(null));
+                options.getServerApi());
 
         cursorCleaningService = options.isCursorFinalizerEnabled() ? createCursorCleaningService() : null;
     }
@@ -737,7 +737,7 @@ public class MongoClient implements Closeable {
                 getCommandListener(options.getCommandListeners()),
                 options.getApplicationName(),
                 wrapMongoDriverInformation(mongoDriverInformation),
-                options.getCompressorList(), options.getServerApi().orElse(null));
+                options.getCompressorList(), options.getServerApi());
     }
 
     private static MongoDriverInformation wrapMongoDriverInformation(@Nullable final MongoDriverInformation mongoDriverInformation) {
@@ -813,7 +813,7 @@ public class MongoClient implements Closeable {
         ServerCursorAndNamespace cur;
         while ((cur = orphanedCursors.poll()) != null) {
             ReadWriteBinding binding = new SingleServerBinding(delegate.getCluster(), cur.serverCursor.getAddress(),
-                    options.getServerApi().orElse(null));
+                    options.getServerApi());
             try {
                 ConnectionSource source = binding.getReadConnectionSource();
                 try {

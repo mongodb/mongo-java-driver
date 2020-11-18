@@ -37,7 +37,6 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -547,11 +546,12 @@ public class MongoClientOptions {
     /**
      * Gets the server API to use when sending commands to the server.
      *
-     * @return the server API
+     * @return the server API, which may be null
      * @since 4.3
      */
-    public Optional<ServerApi> getServerApi() {
-        return Optional.ofNullable(serverApi);
+    @Nullable
+    public ServerApi getServerApi() {
+        return serverApi;
     }
 
     /**
@@ -1006,7 +1006,7 @@ public class MongoClientOptions {
             serverListeners.addAll(options.getServerListeners());
             serverMonitorListeners.addAll(options.getServerMonitorListeners());
             autoEncryptionSettings = options.getAutoEncryptionSettings();
-            serverApi = options.getServerApi().orElse(null);
+            serverApi = options.getServerApi();
         }
 
         /**

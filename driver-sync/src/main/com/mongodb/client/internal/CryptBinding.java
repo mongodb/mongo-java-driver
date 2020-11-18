@@ -26,6 +26,7 @@ import com.mongodb.internal.binding.ReadWriteBinding;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 
 class CryptBinding implements ClusterAwareReadWriteBinding {
     private final ClusterAwareReadWriteBinding wrapped;
@@ -62,6 +63,7 @@ class CryptBinding implements ClusterAwareReadWriteBinding {
     }
 
     @Override
+    @Nullable
     public ServerApi getServerApi() {
         return wrapped.getServerApi();
     }

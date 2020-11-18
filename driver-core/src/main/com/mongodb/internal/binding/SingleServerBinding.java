@@ -74,6 +74,7 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
     }
 
     @Override
+    @Nullable
     public ServerApi getServerApi() {
         return serverApi;
     }

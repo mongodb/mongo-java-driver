@@ -43,7 +43,6 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -182,7 +181,7 @@ public final class MongoClientSettings {
             readConcern = settings.getReadConcern();
             credential = settings.getCredential();
             uuidRepresentation = settings.getUuidRepresentation();
-            serverApi = settings.getServerApi().orElse(null);
+            serverApi = settings.getServerApi();
             streamFactoryFactory = settings.getStreamFactoryFactory();
             autoEncryptionSettings = settings.getAutoEncryptionSettings();
             clusterSettingsBuilder.applySettings(settings.getClusterSettings());
@@ -651,11 +650,12 @@ public final class MongoClientSettings {
     /**
      * Gets the server API to use when sending commands to the server.
      *
-     * @return the server API
+     * @return the server API, which may be null
      * @since 4.3
      */
-    public Optional<ServerApi> getServerApi() {
-        return Optional.ofNullable(serverApi);
+    @Nullable
+    public ServerApi getServerApi() {
+        return serverApi;
     }
 
     /**

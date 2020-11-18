@@ -68,7 +68,7 @@ public final class MongoClientImpl implements MongoClient {
         this.delegate = new MongoClientDelegate(notNull("cluster", cluster),
                 createRegistry(settings.getCodecRegistry(), settings.getUuidRepresentation()), this, operationExecutor,
                 autoEncryptionSettings == null ? null : createCrypt(SimpleMongoClients.create(this), autoEncryptionSettings),
-                settings.getServerApi().orElse(null));
+                settings.getServerApi());
     }
 
     @Override
@@ -205,7 +205,7 @@ public final class MongoClientImpl implements MongoClient {
         return new DefaultClusterFactory().createCluster(settings.getClusterSettings(), settings.getServerSettings(),
                 settings.getConnectionPoolSettings(), getStreamFactory(settings, false), getStreamFactory(settings, true),
                 settings.getCredential(), getCommandListener(settings.getCommandListeners()), settings.getApplicationName(),
-                mongoDriverInformation, settings.getCompressorList(), settings.getServerApi().orElse(null));
+                mongoDriverInformation, settings.getCompressorList(), settings.getServerApi());
     }
 
     private static StreamFactory getStreamFactory(final MongoClientSettings settings, final boolean isHeartbeat) {
