@@ -71,12 +71,33 @@ public class DataKeyOptions {
      * Gets the master key document
      *
      * <p>
-     * The masterKey identifies a KMS-specific key used to encrypt the new data key. If the kmsProvider is "aws" it is required and
-     * must have the following fields:
+     * The masterKey identifies a KMS-specific key used to encrypt the new data key.
+     * </p>
+     * <p>
+     *     If the kmsProvider is "aws" the master key is required and must contain the following fields:
      * </p>
      * <ul>
      *   <li>region: a String containing the AWS region in which to locate the master key</li>
      *   <li>key: a String containing the Amazon Resource Name (ARN) to the AWS customer master key</li>
+     * </ul>
+     * <p>
+     *     If the kmsProvider is "azure" the master key is required and must contain the following fields:
+     * </p>
+     * <ul>
+     *   <li>keyVaultEndpoint: a String with the host name and an optional port. Example: "example.vault.azure.net".</li>
+     *   <li>keyName: a String</li>
+     *   <li>keyVersion: an optional String, the specific version of the named key, defaults to using the key's primary version.</li>
+     * </ul>
+     * <p>
+     *     If the kmsProvider is "gcp" the master key is required and must contain the following fields:
+     * </p>
+     * <ul>
+     *   <li>projectId: a String</li>
+     *   <li>location: String</li>
+     *   <li>keyRing: String</li>
+     *   <li>keyName: String</li>
+     *   <li>keyVersion: an optional String, the specific version of the named key, defaults to using the key's primary version.</li>
+     *   <li>endpoint: an optional String, with the host with optional port. Defaults to "cloudkms.googleapis.com".</li>
      * </ul>
      * <p>
      * If the kmsProvider is "local" the masterKey is not applicable.

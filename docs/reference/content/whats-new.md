@@ -7,6 +7,13 @@ title = "What's New"
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
+# What's new in 4.2
+
+This release fully supports all MongoDB releases from versions 2.6 to 4.4. Key new features of the 4.2 Java driver release include:
+
+* Client-side field level encryption has been expanded to support Azure and GCP Keystores.
+* Added support to cache Kerberos tickets so that they can be re-used for multiple authentication requests.
+
 # What's new in 4.1
 
 This release fully supports all MongoDB releases from versions 2.6 to 4.4. Key new features of the 4.1 Java driver release include:
@@ -280,7 +287,7 @@ The 3.6 release adds support for [change streams](http://dochub.mongodb.org/core
 ### Retryable writes
 
 The 3.6 release adds support for retryable writes using the `retryWrites` option in 
-[`MongoClientOptions`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientOptions" >}}).
+[`MongoClientOptions`]({{< apiref "mongodb-driver-legacy" "com/mongodb/MongoClientOptions" >}}).
 
 ### Compression
 
@@ -297,7 +304,7 @@ The 3.6 release adds support for [causally consistency](http://dochub.mongodb.or
 ### Application-configured server selection
 
 The 3.6 release adds support for application-configured control over server selection, using the `serverSelector` option in
-[`MongoClientOptions`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientOptions" >}}).
+[`MongoClientOptions`]({{< apiref "mongodb-driver-legacy" "com/mongodb/MongoClientOptions" >}}).
 
 ### POJO Codec improvements
 

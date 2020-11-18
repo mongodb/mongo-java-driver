@@ -66,4 +66,9 @@ final class AutomaticPojoCodec<T> extends PojoCodec<T> {
     ClassModel<T> getClassModel() {
         return pojoCodec.getClassModel();
     }
+
+    @Override
+    DiscriminatorLookup getDiscriminatorLookup() {
+        return pojoCodec.getDiscriminatorLookup();
+    }
 }

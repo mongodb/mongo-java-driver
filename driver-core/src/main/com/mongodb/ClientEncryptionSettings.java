@@ -125,7 +125,7 @@ public final class ClientEncryptionSettings {
      * <p>
      * The key vault namespace refers to a collection that contains all data keys used for encryption and decryption (aka the key vault
      * collection). Data keys are stored as documents in a special MongoDB collection. Data keys are protected with encryption by a KMS
-     * provider (AWS KMS or a local master key).
+     * provider (AWS, Azure, GCP KMS or a local master key).
      * </p>
      *
      * @return the key vault namespace, which may not be null

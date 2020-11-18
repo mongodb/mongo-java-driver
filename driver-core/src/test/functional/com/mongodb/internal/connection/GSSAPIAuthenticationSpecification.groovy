@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection
 
 import com.mongodb.ClusterFixture
+import com.mongodb.KerberosSubjectProvider
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoCredential
 import com.mongodb.MongoSecurityException
@@ -36,9 +37,10 @@ import javax.security.auth.Subject
 import javax.security.auth.login.LoginContext
 
 import static com.mongodb.AuthenticationMechanism.GSSAPI
-import static com.mongodb.ClusterFixture.getConnectionString
 import static com.mongodb.ClusterFixture.getCredential
+import static com.mongodb.ClusterFixture.getConnectionString
 import static com.mongodb.ClusterFixture.getSslSettings
+import static com.mongodb.MongoCredential.JAVA_SUBJECT_PROVIDER_KEY
 import static com.mongodb.MongoCredential.createGSSAPICredential
 import static com.mongodb.internal.connection.CommandHelper.executeCommand
 import static java.util.concurrent.TimeUnit.SECONDS
@@ -66,7 +68,7 @@ class GSSAPIAuthenticationSpecification extends Specification {
 
     def 'should authorize when successfully authenticated'() {
         given:
-        def connection = createConnection(async, getMongoCredential())
+        def connection = createConnection(async, credentials)
 
         when:
         openConnection(connection, async)
@@ -79,12 +81,15 @@ class GSSAPIAuthenticationSpecification extends Specification {
         connection?.close()
 
         where:
-        async << [true, false]
+        [async, credentials] << [
+                [true, false],
+                [getMongoCredential(), getMongoCredential().withMechanismProperty(JAVA_SUBJECT_PROVIDER_KEY, new KerberosSubjectProvider())]
+        ].combinations()
     }
 
     def 'should throw MongoSecurityException when authentication fails'() {
         given:
-        def connection = createConnection(async, createGSSAPICredential('wrongUserName'))
+        def connection = createConnection(async, credentials)
 
         when:
         openConnection(connection, async)
@@ -97,7 +102,12 @@ class GSSAPIAuthenticationSpecification extends Specification {
         connection?.close()
 
         where:
-        async << [true, false]
+        [async, credentials] << [
+                [true, false],
+                [createGSSAPICredential('wrongUserName'),
+                 createGSSAPICredential('wrongUserName')
+                         .withMechanismProperty(JAVA_SUBJECT_PROVIDER_KEY, new KerberosSubjectProvider())]
+        ].combinations()
     }
 
     def 'should authorize when successfully authenticated with Subject property'() {
