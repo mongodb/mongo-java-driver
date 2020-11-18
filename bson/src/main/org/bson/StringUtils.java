@@ -16,16 +16,14 @@
 
 package org.bson;
 
-import java.util.StringJoiner;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 final class StringUtils {
     @SafeVarargs
+    @SuppressWarnings("varargs")
     public static <T> String join(final String delimiter, final T... values) {
-        StringJoiner joiner = new StringJoiner(delimiter);
-        for (T v : values) {
-            joiner.add(String.valueOf(v));
-        }
-        return joiner.toString();
+        return Arrays.stream(values).map(String::valueOf).collect(Collectors.joining(delimiter));
     }
 
     private StringUtils() { }
