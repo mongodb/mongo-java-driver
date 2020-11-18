@@ -29,6 +29,7 @@ import com.mongodb.internal.bulk.DeleteRequest;
 import com.mongodb.internal.bulk.InsertRequest;
 import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
@@ -108,7 +109,7 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
                          final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-                         final ServerApi serverApi) {
+                         @Nullable final ServerApi serverApi) {
         return command(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi, true, null,
                 null);
     }
@@ -116,7 +117,7 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                          final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-                         final ServerApi serverApi,
+                         @Nullable final ServerApi serverApi,
                          final boolean responseExpected, final SplittablePayload payload,
                          final FieldNameValidator payloadFieldNameValidator) {
         return executeProtocol(new CommandProtocolImpl<T>(database, command, commandFieldNameValidator, readPreference,

@@ -95,7 +95,7 @@ class CryptConnection implements Connection {
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                          final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-                         final ServerApi serverApi, final boolean responseExpected, @Nullable final SplittablePayload payload,
+                         @Nullable final ServerApi serverApi, final boolean responseExpected, @Nullable final SplittablePayload payload,
                          @Nullable final FieldNameValidator payloadFieldNameValidator) {
 
         if (serverIsLessThanVersionFourDotTwo(wrapped.getDescription())) {
@@ -129,7 +129,7 @@ class CryptConnection implements Connection {
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
                          final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-                         final ServerApi serverApi) {
+                         @Nullable final ServerApi serverApi) {
         return command(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi, true, null,
                 null);
     }
