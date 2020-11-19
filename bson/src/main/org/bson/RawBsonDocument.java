@@ -226,17 +226,17 @@ public final class RawBsonDocument extends BsonDocument {
 
     @Override
     public Set<Entry<String, BsonValue>> entrySet() {
-        return toBsonDocument().entrySet();
+        return toBaseBsonDocument().entrySet();
     }
 
     @Override
     public Collection<BsonValue> values() {
-        return toBsonDocument().values();
+        return toBaseBsonDocument().values();
     }
 
     @Override
     public Set<String> keySet() {
-        return toBsonDocument().keySet();
+        return toBaseBsonDocument().keySet();
     }
 
     @Override
@@ -332,12 +332,12 @@ public final class RawBsonDocument extends BsonDocument {
 
     @Override
     public boolean equals(final Object o) {
-        return toBsonDocument().equals(o);
+        return toBaseBsonDocument().equals(o);
     }
 
     @Override
     public int hashCode() {
-        return toBsonDocument().hashCode();
+        return toBaseBsonDocument().hashCode();
     }
 
     @Override
@@ -349,7 +349,8 @@ public final class RawBsonDocument extends BsonDocument {
         return new BsonBinaryReader(new ByteBufferBsonInput(getByteBuffer()));
     }
 
-    private BsonDocument toBsonDocument() {
+    // Transform to an org.bson.BsonDocument instance
+    private BsonDocument toBaseBsonDocument() {
         BsonBinaryReader bsonReader = createReader();
         try {
             return new BsonDocumentCodec().decode(bsonReader, DecoderContext.builder().build());
