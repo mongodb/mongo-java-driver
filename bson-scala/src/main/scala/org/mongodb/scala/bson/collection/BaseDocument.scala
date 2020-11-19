@@ -242,7 +242,7 @@ private[bson] trait BaseDocument[T] extends Traversable[(String, BsonValue)] wit
   /**
    * Returns a copy of the underlying BsonDocument
    */
-  def toBsonDocument: BsonDocument = copyBsonDocument()
+  override def toBsonDocument: BsonDocument = copyBsonDocument()
 
   override def toBsonDocument[TDocument](documentClass: Class[TDocument], codecRegistry: CodecRegistry): BsonDocument =
     underlying
