@@ -97,17 +97,17 @@ abstract class AbstractByteBufBsonDocument extends BsonDocument {
 
     @Override
     public Set<Entry<String, BsonValue>> entrySet() {
-        return toBsonDocument().entrySet();
+        return toBaseBsonDocument().entrySet();
     }
 
     @Override
     public Collection<BsonValue> values() {
-        return toBsonDocument().values();
+        return toBaseBsonDocument().values();
     }
 
     @Override
     public Set<String> keySet() {
-        return toBsonDocument().keySet();
+        return toBaseBsonDocument().keySet();
     }
 
     @Override
@@ -205,19 +205,19 @@ abstract class AbstractByteBufBsonDocument extends BsonDocument {
 
     //AbstractBsonReader getBsonReader();
 
-    abstract BsonDocument toBsonDocument();
+    abstract BsonDocument toBaseBsonDocument();
 
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
-        return toBsonDocument().equals(o);
+        return toBaseBsonDocument().equals(o);
     }
 
     @Override
     public int hashCode() {
-        return toBsonDocument().hashCode();
+        return toBaseBsonDocument().hashCode();
     }
 
     private BsonValue deserializeBsonValue(final BsonReader bsonReader) {
@@ -226,7 +226,7 @@ abstract class AbstractByteBufBsonDocument extends BsonDocument {
 
     // see https://docs.oracle.com/javase/6/docs/platform/serialization/spec/output.html
     Object writeReplace() {
-        return toBsonDocument();
+        return toBaseBsonDocument();
     }
 
 }

@@ -26,6 +26,7 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
 import org.bson.json.JsonReader;
 import org.junit.Test;
 
@@ -129,6 +130,18 @@ public class DocumentTest {
         }
 
         assertEquals("{\"database\": {\"name\": \"MongoDB\"}}", customDocument.toJson(customDocumentCodec));
+    }
+
+    @Test
+    public void toBsonDocumentShouldCreateBsonDocument() {
+        BsonDocument expected = new BsonDocument()
+                .append("a", new BsonInt32(1))
+                .append("b", new BsonInt32(2))
+                .append("c", new BsonDocument("x", BsonBoolean.TRUE))
+                .append("d", new BsonArray(asList(new BsonDocument("y", BsonBoolean.FALSE), new BsonInt32(1))));
+
+        assertEquals(expected, document.toBsonDocument(BsonDocument.class, Bson.DEFAULT_CODEC_REGISTRY));
+        assertEquals(expected, document.toBsonDocument());
     }
 
     public class Name {

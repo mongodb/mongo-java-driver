@@ -110,7 +110,7 @@ public final class CommandMessage extends RequestMessage {
         BsonDocument commandBsonDocument;
 
         if (useOpMsg() && containsPayload()) {
-            commandBsonDocument = byteBufBsonDocument.toBsonDocument();
+            commandBsonDocument = byteBufBsonDocument.toBaseBsonDocument();
 
             int payloadStartPosition = getEncodingMetadata().getFirstDocumentPosition()
                     + byteBufBsonDocument.getSizeInBytes()
