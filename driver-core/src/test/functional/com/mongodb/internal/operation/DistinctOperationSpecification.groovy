@@ -326,9 +326,11 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         def binding = Stub(AsyncReadBinding)
         def source = Stub(AsyncConnectionSource)
         def connection = Mock(AsyncConnection)
+        binding.serverApi >> null
         binding.readPreference >> ReadPreference.primary()
         binding.getReadConnectionSource(_) >> { it[0].onResult(source, null) }
         binding.sessionContext >> sessionContext
+        source.serverApi >> null
         source.getConnection(_) >> { it[0].onResult(connection, null) }
         source.retain() >> source
         def commandDocument = new BsonDocument('distinct', new BsonString(getCollectionName()))
@@ -343,8 +345,8 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                  6, STANDALONE, 1000, 100000, 100000, [])
-        1 * connection.commandAsync(_, commandDocument, _, _, _, sessionContext, _) >> {
-            it[6].onResult(new BsonDocument('values', new BsonArrayWrapper([])), null)
+        1 * connection.commandAsync(_, commandDocument, _, _, _, sessionContext, _, _) >> {
+            it.last().onResult(new BsonDocument('values', new BsonArrayWrapper([])), null)
         }
         1 * connection.release()
 

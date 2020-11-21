@@ -17,10 +17,12 @@
 package com.mongodb.internal.binding;
 
 import com.mongodb.ReadPreference;
+import com.mongodb.ServerApi;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 
 import static org.bson.assertions.Assertions.notNull;
 
@@ -56,6 +58,12 @@ public final class AsyncSessionBinding implements AsyncReadWriteBinding {
     @Override
     public SessionContext getSessionContext() {
         return sessionContext;
+    }
+
+    @Override
+    @Nullable
+    public ServerApi getServerApi() {
+        return wrapped.getServerApi();
     }
 
     @Override
@@ -102,6 +110,12 @@ public final class AsyncSessionBinding implements AsyncReadWriteBinding {
         @Override
         public SessionContext getSessionContext() {
             return sessionContext;
+        }
+
+        @Override
+        @Nullable
+        public ServerApi getServerApi() {
+            return wrapped.getServerApi();
         }
 
         @Override

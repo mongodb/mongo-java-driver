@@ -75,7 +75,7 @@ class CommandHelperSpecification extends Specification {
         BsonDocument receivedDocument = null
         Throwable receivedException = null
         def latch1 = new CountDownLatch(1)
-        executeCommandAsync('admin', new BsonDocument('ismaster', new BsonInt32(1)), connection)
+        executeCommandAsync('admin', new BsonDocument('ismaster', new BsonInt32(1)), null, connection)
                 { document, exception -> receivedDocument = document; receivedException = exception; latch1.countDown() }
         latch1.await()
 
@@ -86,7 +86,7 @@ class CommandHelperSpecification extends Specification {
 
         when:
         def latch2 = new CountDownLatch(1)
-        executeCommandAsync('admin', new BsonDocument('non-existent-command', new BsonInt32(1)), connection)
+        executeCommandAsync('admin', new BsonDocument('non-existent-command', new BsonInt32(1)), null, connection)
                 { document, exception -> receivedDocument = document; receivedException = exception; latch2.countDown() }
         latch2.await()
 

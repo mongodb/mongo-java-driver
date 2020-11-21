@@ -176,7 +176,7 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
     private void initializeConnectionDescriptionAsync(final InternalConnection internalConnection,
                                                       final SingleResultCallback<InternalConnectionInitializationDescription> callback) {
         final long startTime = System.nanoTime();
-        executeCommandAsync("admin", createIsMasterCommand(authenticator, internalConnection), internalConnection,
+        executeCommandAsync("admin", createIsMasterCommand(authenticator, internalConnection), serverApi, internalConnection,
                 new SingleResultCallback<BsonDocument>() {
                     @Override
                     public void onResult(final BsonDocument isMasterResult, final Throwable t) {
@@ -220,7 +220,7 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
             return;
         }
 
-        executeCommandAsync("admin", new BsonDocument("getlasterror", new BsonInt32(1)),
+        executeCommandAsync("admin", new BsonDocument("getlasterror", new BsonInt32(1)), serverApi,
                 internalConnection,
                 new SingleResultCallback<BsonDocument>() {
                     @Override

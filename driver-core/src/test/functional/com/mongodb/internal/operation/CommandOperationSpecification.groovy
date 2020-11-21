@@ -59,40 +59,10 @@ class CommandOperationSpecification extends OperationFunctionalSpecification {
         result.getNumber('n').intValue() == 0
     }
 
-    def 'should execute write command'() {
-        when:
-        def result = new CommandWriteOperation<BsonDocument>(getNamespace().databaseName,
-                                                             new BsonDocument('findAndModify', new BsonString(getNamespace().fullName))
-                                                                     .append('query', new BsonDocument('_id', new BsonInt32(42)))
-                                                                     .append('update',
-                                                                             new BsonDocument('_id', new BsonInt32(42))
-                                                                                     .append('b', new BsonInt32(42))),
-                                                             new BsonDocumentCodec())
-                .execute(getBinding())
-
-        then:
-        result.containsKey('value')
-    }
-
-
-    def 'should execute write command asynchronously'() {
-        when:
-        def result = executeAsync(new CommandWriteOperation<BsonDocument>(getNamespace().databaseName,
-                                                             new BsonDocument('findAndModify', new BsonString(getNamespace().fullName))
-                                                                     .append('query', new BsonDocument('_id', new BsonInt32(42)))
-                                                                     .append('update',
-                                                                             new BsonDocument('_id', new BsonInt32(42))
-                                                                                     .append('b', new BsonInt32(42))),
-                                                             new BsonDocumentCodec()))
-
-        then:
-        result.containsKey('value')
-    }
-
     @Slow
     def 'should execute command larger than 16MB'() {
         when:
-        def result = new CommandWriteOperation<BsonDocument>(getNamespace().databaseName,
+        def result = new CommandReadOperation<>(getNamespace().databaseName,
                                                              new BsonDocument('findAndModify', new BsonString(getNamespace().fullName))
                                                                      .append('query', new BsonDocument('_id', new BsonInt32(42)))
                                                                      .append('update',

@@ -237,13 +237,13 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
                                     final SingleResultCallback<BsonDocument> callback) {
         BsonDocument startDocument = createSaslStartCommandDocument(outToken);
         appendSaslStartOptions(startDocument);
-        executeCommandAsync(getMongoCredential().getSource(), startDocument, connection, callback);
+        executeCommandAsync(getMongoCredential().getSource(), startDocument, getServerApi(), connection, callback);
     }
 
     private void sendSaslContinueAsync(final BsonInt32 conversationId, final byte[] outToken, final InternalConnection connection,
                                        final SingleResultCallback<BsonDocument> callback) {
-        executeCommandAsync(getMongoCredential().getSource(), createSaslContinueDocument(conversationId, outToken), connection,
-                callback);
+        executeCommandAsync(getMongoCredential().getSource(), createSaslContinueDocument(conversationId, outToken), getServerApi(),
+                connection, callback);
     }
 
     protected BsonDocument createSaslStartCommandDocument(final byte[] outToken) {

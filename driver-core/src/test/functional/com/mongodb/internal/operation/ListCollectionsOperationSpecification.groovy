@@ -465,10 +465,12 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         given:
         def connection = Mock(AsyncConnection)
         def connectionSource = Stub(AsyncConnectionSource) {
+            getServerApi() >> null
             getConnection(_) >> { it[0].onResult(connection, null) }
         }
         def readBinding = Stub(AsyncReadBinding) {
             getReadPreference() >> readPreference
+            getServerApi() >> null
             getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
         }
         def operation = new ListCollectionsOperation(helper.dbName, helper.decoder)
@@ -486,7 +488,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
         then:
         _ * connection.getDescription() >> helper.threeZeroConnectionDescription
-        1 * connection.commandAsync(helper.dbName, _, _, readPreference, _, _, _) >> { it[6].onResult(helper.commandResult, null) }
+        1 * connection.commandAsync(helper.dbName, _, _, readPreference, _, _, _, _) >> { it.last().onResult(helper.commandResult, null) }
 
         where:
         readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
