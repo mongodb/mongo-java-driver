@@ -16,7 +16,6 @@
 
 package com.mongodb
 
-import util.spock.annotations.Slow
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.internal.connection.TestCommandListener
 import org.bson.BsonBinarySubType
@@ -26,6 +25,7 @@ import org.bson.BsonTimestamp
 import org.bson.Document
 import org.junit.Assert
 import spock.lang.IgnoreIf
+import util.spock.annotations.Slow
 
 import java.util.concurrent.TimeUnit
 
@@ -51,7 +51,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         def clientSession = getMongoClient().startSession()
 
         expect:
-        clientSession.getOriginator() == getMongoClient()
+        clientSession.getOriginator() == getMongoClient().getDelegate();
         clientSession.isCausallyConsistent()
         clientSession.getOptions() == ClientSessionOptions.builder()
                 .defaultTransactionOptions(TransactionOptions.builder()

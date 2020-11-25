@@ -16,6 +16,7 @@
 
 package com.mongodb.client.internal;
 
+import com.mongodb.client.MongoClient;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
@@ -23,9 +24,9 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 class CollectionInfoRetriever {
 
-    private final SimpleMongoClient client;
+    private final MongoClient client;
 
-    CollectionInfoRetriever(final SimpleMongoClient client) {
+    CollectionInfoRetriever(final MongoClient client) {
         this.client = notNull("client", client);
     }
 
