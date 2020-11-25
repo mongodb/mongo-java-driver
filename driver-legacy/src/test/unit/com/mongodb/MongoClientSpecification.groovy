@@ -16,29 +16,27 @@
 
 package com.mongodb
 
-import com.mongodb.client.ClientSession
-import com.mongodb.client.internal.ChangeStreamIterableImpl
-import com.mongodb.client.internal.ListDatabasesIterableImpl
 import com.mongodb.client.internal.MongoClientImpl
-
 import com.mongodb.client.internal.MongoDatabaseImpl
 import com.mongodb.client.internal.TestOperationExecutor
 import com.mongodb.client.model.geojson.MultiPolygon
-import com.mongodb.internal.client.model.changestream.ChangeStreamLevel
+import com.mongodb.connection.ClusterSettings
 import com.mongodb.internal.connection.Cluster
 import org.bson.BsonDocument
 import org.bson.Document
-import org.bson.json.JsonObject
 import org.bson.codecs.ValueCodecProvider
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.internal.OverridableUuidRepresentationCodecRegistry
+import org.bson.json.JsonObject
 import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry
-import static com.mongodb.ReadPreference.primary
+import static com.mongodb.MongoCredential.createMongoX509Credential
 import static com.mongodb.ReadPreference.secondary
-import static com.mongodb.client.internal.TestHelper.execute
+import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
+import static com.mongodb.connection.ClusterConnectionMode.SINGLE
+import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static org.bson.UuidRepresentation.STANDARD
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
@@ -61,94 +59,254 @@ class MongoClientSpecification extends Specification {
         codecRegistry.get(JsonObject)
     }
 
-    def 'should use ListDatabasesIterableImpl correctly'() {
-        given:
-        def executor = new TestOperationExecutor([null, null])
-        def client = Spy(MongoClient) {
-            3 * createOperationExecutor() >> {
-                executor
-            }
-        }
-        def listDatabasesMethod = client.&listDatabases
-        def listDatabasesNamesMethod = client.&listDatabaseNames
-
-        when:
-        def listDatabasesIterable = execute(listDatabasesMethod, session)
-
-        then:
-        expect listDatabasesIterable, isTheSameAs(new ListDatabasesIterableImpl<>(session, Document,
-                getDefaultCodecRegistry(), primary(), executor, true))
-
-        when:
-        listDatabasesIterable = execute(listDatabasesMethod, session, BsonDocument)
-
-        then:
-        expect listDatabasesIterable, isTheSameAs(new ListDatabasesIterableImpl<>(session, BsonDocument,
-                getDefaultCodecRegistry(), primary(), executor, true))
-
-        when:
-        def listDatabaseNamesIterable = execute(listDatabasesNamesMethod, session)
-
-        then:
-        // listDatabaseNamesIterable is an instance of a MappingIterable, so have to get the mapped iterable inside it
-        expect listDatabaseNamesIterable.getMapped(), isTheSameAs(new ListDatabasesIterableImpl<>(session, BsonDocument,
-                getDefaultCodecRegistry(), primary(), executor, true).nameOnly(true))
+    def 'should construct with correct settings'() {
+        expect:
+        client.delegate.settings.clusterSettings == clusterSettings
+        client.credential == credential
 
         cleanup:
         client?.close()
 
         where:
-        session << [null, Stub(ClientSession)]
+        client | clusterSettings | credential
+        new MongoClient()             |
+                ClusterSettings.builder().build() |
+                null
+        new MongoClient('host:27018') |
+                ClusterSettings.builder().hosts([new ServerAddress('host:27018')]).mode(SINGLE).build() |
+                null
+        new MongoClient('host', 27018) |
+                ClusterSettings.builder().hosts([new ServerAddress('host:27018')]).mode(SINGLE).build() |
+                null
+        new MongoClient('mongodb://host:27018') |
+                ClusterSettings.builder().hosts([new ServerAddress('host:27018')]).mode(SINGLE).build() |
+                null
+        new MongoClient('mongodb://user:pwd@host:27018') |
+                ClusterSettings.builder().hosts([new ServerAddress('host:27018')]).mode(SINGLE).build() |
+                MongoCredential.createCredential('user', 'admin', 'pwd'.toCharArray())
+        new MongoClient('mongodb+srv://test3.test.build.10gen.cc') |
+                ClusterSettings.builder().srvHost('test3.test.build.10gen.cc').mode(MULTIPLE).build() |
+                null
+        new MongoClient('mongodb+srv://user:pwd@test3.test.build.10gen.cc') |
+                ClusterSettings.builder().srvHost('test3.test.build.10gen.cc').mode(MULTIPLE).build() |
+                MongoCredential.createCredential('user', 'admin', 'pwd'.toCharArray())
+        new MongoClient(new ConnectionString('mongodb://host:27018')) |
+                ClusterSettings.builder().hosts([new ServerAddress('host:27018')]).mode(SINGLE).build() |
+                null
+        new MongoClient(new ConnectionString('mongodb://user:pwd@host:27018')) |
+                ClusterSettings.builder().hosts([new ServerAddress('host:27018')]).mode(SINGLE).build() |
+                MongoCredential.createCredential('user', 'admin', 'pwd'.toCharArray())
+        new MongoClient(new ConnectionString('mongodb+srv://test3.test.build.10gen.cc')) |
+                ClusterSettings.builder().srvHost('test3.test.build.10gen.cc').mode(MULTIPLE).build() |
+                null
+        new MongoClient(MongoClientSettings.builder()
+                .applyConnectionString(new ConnectionString('mongodb://host:27018')).build()) |
+                ClusterSettings.builder().hosts([new ServerAddress('host:27018')]).mode(SINGLE).build() |
+                null
+        new MongoClient(new MongoClientURI('mongodb://host:27018')) |
+                ClusterSettings.builder().hosts([new ServerAddress('host:27018')]).mode(SINGLE).build() |
+                null
+        new MongoClient(new MongoClientURI('mongodb://host:27018/?replicaSet=rs0')) |
+                ClusterSettings.builder().hosts([new ServerAddress('host:27018')]).mode(MULTIPLE).requiredReplicaSetName('rs0')
+                        .build() |
+                null
+        new MongoClient(new MongoClientURI('mongodb://user:pwd@host:27018')) |
+                ClusterSettings.builder().hosts([new ServerAddress('host:27018')]).mode(SINGLE).build() |
+                MongoCredential.createCredential('user', 'admin', 'pwd'.toCharArray())
+        new MongoClient(new MongoClientURI('mongodb://host1:27018,host2:27018')) |
+                ClusterSettings.builder().hosts([new ServerAddress('host1:27018'), new ServerAddress('host2:27018')])
+                        .mode(MULTIPLE).build() |
+                null
+        new MongoClient(new MongoClientURI('mongodb+srv://test3.test.build.10gen.cc')) |
+                ClusterSettings.builder().srvHost('test3.test.build.10gen.cc').mode(MULTIPLE).build() |
+                null
+        new MongoClient('host:27018', MongoClientOptions.builder().serverSelectionTimeout(5).build()) |
+                ClusterSettings.builder().hosts([new ServerAddress('host:27018')]).mode(SINGLE)
+                        .serverSelectionTimeout(5, MILLISECONDS).build() |
+                null
+        new MongoClient(new ServerAddress('host:27018')) |
+                ClusterSettings.builder().hosts([new ServerAddress('host:27018')]).mode(SINGLE).build() |
+                null
+        new MongoClient(new ServerAddress('host:27018'), MongoClientOptions.builder().serverSelectionTimeout(5).build()) |
+                ClusterSettings.builder().hosts([new ServerAddress('host:27018')]).mode(SINGLE)
+                        .serverSelectionTimeout(5, MILLISECONDS).build() |
+                null
+        new MongoClient(new ServerAddress('host:27018'), createMongoX509Credential(),
+                MongoClientOptions.builder().serverSelectionTimeout(5).build()) |
+                ClusterSettings.builder().hosts([new ServerAddress('host:27018')]).mode(SINGLE)
+                        .serverSelectionTimeout(5, MILLISECONDS).build() |
+                createMongoX509Credential()
+        new MongoClient([new ServerAddress('host:27018')]) |
+                ClusterSettings.builder().hosts([new ServerAddress('host:27018')]).mode(MULTIPLE).build() |
+                null
+        new MongoClient([new ServerAddress('host:27018')], MongoClientOptions.builder().serverSelectionTimeout(5).build()) |
+                ClusterSettings.builder().hosts([new ServerAddress('host:27018')]).mode(MULTIPLE)
+                        .serverSelectionTimeout(5, MILLISECONDS).build() |
+                null
+        new MongoClient([new ServerAddress('host:27018')], createMongoX509Credential(),
+                MongoClientOptions.builder().serverSelectionTimeout(5).build()) |
+                ClusterSettings.builder().hosts([new ServerAddress('host:27018')]).mode(MULTIPLE)
+                        .serverSelectionTimeout(5, MILLISECONDS).build() |
+                createMongoX509Credential()
     }
 
-    def 'should create ChangeStreamIterable correctly'() {
-        given:
-        def executor = new TestOperationExecutor([])
-        def namespace = new MongoNamespace('admin', 'ignored')
-        def settings = MongoClientOptions.builder().build()
-        def codecRegistry = settings.getCodecRegistry()
-        def readPreference = settings.getReadPreference()
-        def readConcern = settings.getReadConcern()
+    def 'should wrap MongoDBDriverInformation with legacy information'() {
+        expect:
+        client.delegate.mongoDriverInformation.driverNames == mongoDriverInformation.driverNames
+        client.delegate.mongoDriverInformation.driverPlatforms == mongoDriverInformation.driverPlatforms
+        client.delegate.mongoDriverInformation.driverVersions == mongoDriverInformation.driverVersions
 
-        def client = Spy(MongoClient) {
-            3 * createOperationExecutor() >> {
-                executor
-            }
-        }
-        def watchMethod = client.&watch
-
-        when:
-        def changeStreamIterable = execute(watchMethod, session)
-
-        then:
-        expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl<>(session, namespace, codecRegistry,
-                readPreference, readConcern, executor, [], Document, ChangeStreamLevel.CLIENT, true),
-                ['codec'])
-
-        when:
-        changeStreamIterable = execute(watchMethod, session, [new Document('$match', 1)])
-
-        then:
-        expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl<>(session, namespace, codecRegistry,
-                readPreference, readConcern, executor, [new Document('$match', 1)], Document, ChangeStreamLevel.CLIENT,
-                true), ['codec'])
-
-        when:
-        changeStreamIterable = execute(watchMethod, session, [new Document('$match', 1)], BsonDocument)
-
-        then:
-        expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl<>(session, namespace, codecRegistry,
-                readPreference, readConcern, executor, [new Document('$match', 1)], BsonDocument,
-                ChangeStreamLevel.CLIENT, true), ['codec'])
+        cleanup:
+        client?.close()
 
         where:
-        session << [null, Stub(ClientSession)]
+        client | mongoDriverInformation
+        new MongoClient() |
+                MongoDriverInformation.builder().driverName('legacy').build()
+        new MongoClient('host:27018') |
+                MongoDriverInformation.builder().driverName('legacy').build()
+        new MongoClient('host', 27018) |
+                MongoDriverInformation.builder().driverName('legacy').build()
+        new MongoClient('mongodb://host:27018') |
+                MongoDriverInformation.builder().driverName('legacy').build()
+        new MongoClient(new ConnectionString('mongodb://host:27018')) |
+                MongoDriverInformation.builder().driverName('legacy').build()
+        new MongoClient(new ConnectionString('mongodb://host:27018'),
+                MongoDriverInformation.builder().driverName('test').driverPlatform('osx').driverVersion('1.0').build()) |
+                MongoDriverInformation.builder(
+                        MongoDriverInformation.builder().driverName('test').driverPlatform('osx').driverVersion('1.0').build())
+                        .driverName('legacy').build()
+        new MongoClient(MongoClientSettings.builder()
+                .applyConnectionString(new ConnectionString('mongodb://host:27018')).build()) |
+                MongoDriverInformation.builder().driverName('legacy').build()
+        new MongoClient(MongoClientSettings.builder()
+                .applyConnectionString(new ConnectionString('mongodb://host:27018')).build(),
+                MongoDriverInformation.builder().driverName('test').driverPlatform('osx').driverVersion('1.0').build()) |
+                MongoDriverInformation.builder(
+                        MongoDriverInformation.builder().driverName('test').driverPlatform('osx').driverVersion('1.0').build())
+                        .driverName('legacy').build()
+        new MongoClient(new MongoClientURI('mongodb://host:27018')) |
+                MongoDriverInformation.builder().driverName('legacy').build()
+        new MongoClient(new MongoClientURI('mongodb://host:27018'),
+                MongoDriverInformation.builder().driverName('test').driverPlatform('osx').driverVersion('1.0').build()) |
+                MongoDriverInformation.builder(
+                        MongoDriverInformation.builder().driverName('test').driverPlatform('osx').driverVersion('1.0').build())
+                        .driverName('legacy').build()
+        new MongoClient('host:27018', MongoClientOptions.builder().serverSelectionTimeout(5).build()) |
+                MongoDriverInformation.builder().driverName('legacy').build()
+        new MongoClient(new ServerAddress('host:27018')) |
+                MongoDriverInformation.builder().driverName('legacy').build()
+        new MongoClient(new ServerAddress('host:27018'), MongoClientOptions.builder().serverSelectionTimeout(5).build()) |
+                MongoDriverInformation.builder().driverName('legacy').build()
+        new MongoClient(new ServerAddress('host:27018'), createMongoX509Credential(),
+                MongoClientOptions.builder().serverSelectionTimeout(5).build()) |
+                MongoDriverInformation.builder().driverName('legacy').build()
+        new MongoClient(new ServerAddress('host:27018'), createMongoX509Credential(),
+                MongoClientOptions.builder().serverSelectionTimeout(5).build(),
+                MongoDriverInformation.builder().driverName('test').driverPlatform('osx').driverVersion('1.0').build()) |
+                MongoDriverInformation.builder(
+                        MongoDriverInformation.builder().driverName('test').driverPlatform('osx').driverVersion('1.0').build())
+                        .driverName('legacy').build()
+        new MongoClient([new ServerAddress('host:27018')]) |
+                MongoDriverInformation.builder().driverName('legacy').build()
+        new MongoClient([new ServerAddress('host:27018')], MongoClientOptions.builder().serverSelectionTimeout(5).build()) |
+                MongoDriverInformation.builder().driverName('legacy').build()
+        new MongoClient([new ServerAddress('host:27018')], MongoClientOptions.builder().serverSelectionTimeout(5).build()) |
+                MongoDriverInformation.builder().driverName('legacy').build()
+        new MongoClient([new ServerAddress('host:27018')], MongoClientOptions.builder().serverSelectionTimeout(5).build()) |
+                MongoDriverInformation.builder().driverName('legacy').build()
+        new MongoClient([new ServerAddress('host:27018')], createMongoX509Credential(),
+                MongoClientOptions.builder().serverSelectionTimeout(5).build()) |
+                MongoDriverInformation.builder().driverName('legacy').build()
+        new MongoClient([new ServerAddress('host:27018')], createMongoX509Credential(),
+                MongoClientOptions.builder().serverSelectionTimeout(5).build(),
+                MongoDriverInformation.builder().driverName('test').driverPlatform('osx').driverVersion('1.0').build()) |
+                MongoDriverInformation.builder(
+                        MongoDriverInformation.builder().driverName('test').driverPlatform('osx').driverVersion('1.0').build())
+                        .driverName('legacy').build()
+    }
+
+    def 'should preserve original options'() {
+        given:
+        def options = MongoClientOptions.builder().cursorFinalizerEnabled(false).build()
+
+        when:
+        def client = new MongoClient('localhost', options)
+
+        then:
+        client.mongoClientOptions == options
+
+        cleanup:
+        client?.close()
+    }
+
+    def 'should preserve original options from MongoClientURI'() {
+        given:
+        def builder = MongoClientOptions.builder().cursorFinalizerEnabled(false)
+
+        when:
+        def client = new MongoClient(new MongoClientURI('mongodb://localhost', builder))
+
+        then:
+        client.mongoClientOptions == builder.build()
+
+        cleanup:
+        client?.close()
+    }
+
+    def 'should manage cursor cleaning service if enabled'() {
+        when:
+        def client = new MongoClient('localhost', MongoClientOptions.builder().cursorFinalizerEnabled(true).build())
+
+        then:
+        client.cursorCleaningService != null
+
+        when:
+        client.close()
+
+        then:
+        client.cursorCleaningService.isShutdown()
+    }
+
+    def 'should not create cursor cleaning service if disabled'() {
+        when:
+        def client = new MongoClient('localhost', MongoClientOptions.builder().cursorFinalizerEnabled(false).build())
+
+        then:
+        client.cursorCleaningService == null
+
+        cleanup:
+        client?.close()
+    }
+
+    def 'should get specified options'() {
+        when:
+        def options = MongoClientOptions.builder().cursorFinalizerEnabled(false).build()
+        def client = new MongoClient('localhost', options)
+
+        then:
+        client.mongoClientOptions == options
+
+        cleanup:
+        client?.close()
+    }
+
+    def 'should get options from specified settings'() {
+        when:
+        def settings = MongoClientSettings.builder().writeConcern(WriteConcern.MAJORITY).build()
+        def client = new MongoClient(settings)
+
+        then:
+        client.mongoClientOptions == MongoClientOptions.builder(settings).build()
+
+        cleanup:
+        client?.close()
     }
 
     def 'should validate the ChangeStreamIterable pipeline data correctly'() {
         given:
         def executor = new TestOperationExecutor([])
-        def client = new MongoClientImpl(Stub(Cluster), MongoClientSettings.builder().build(), executor)
+        def client = new MongoClientImpl(Stub(Cluster), null, MongoClientSettings.builder().build(), executor)
 
         when:
         client.watch((Class) null)
@@ -178,9 +336,9 @@ class MongoClientSpecification extends Specification {
         def database = client.getDatabase('name')
 
         then:
-        expect database, isTheSameAs(new MongoDatabaseImpl('name', client.getDelegate().getCodecRegistry(), secondary(),
+        expect database, isTheSameAs(new MongoDatabaseImpl('name', client.getCodecRegistry(), secondary(),
                 WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, STANDARD,
-                client.getDelegate().getOperationExecutor()))
+                client.getOperationExecutor()))
     }
 
     def 'should create registry reflecting UuidRepresentation'() {

@@ -37,7 +37,7 @@ public class ClientEncryptionImpl implements ClientEncryption, Closeable {
 
     public ClientEncryptionImpl(final ClientEncryptionSettings options) {
         this.keyVaultClient = MongoClients.create(options.getKeyVaultMongoClientSettings());
-        this.crypt = Crypts.create(SimpleMongoClients.create(keyVaultClient), options);
+        this.crypt = Crypts.create(keyVaultClient, options);
         this.options = options;
     }
 

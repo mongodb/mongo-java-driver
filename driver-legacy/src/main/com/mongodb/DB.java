@@ -46,6 +46,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.mongodb.DBCollection.createWriteConcernException;
+import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -83,7 +84,7 @@ public class DB {
         this.name = name;
         this.executor = executor;
         this.collectionCache = new ConcurrentHashMap<String, DBCollection>();
-        this.commandCodec = MongoClient.getCommandCodec();
+        this.commandCodec = new DBObjectCodec(getDefaultCodecRegistry());
     }
 
     /**

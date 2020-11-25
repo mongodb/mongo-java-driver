@@ -93,6 +93,8 @@ public final class MongoClientSettings {
     private final UuidRepresentation uuidRepresentation;
 
     private final AutoEncryptionSettings autoEncryptionSettings;
+    private final boolean heartbeatSocketTimeoutSetExplicitly;
+    private final boolean heartbeatConnectTimeoutSetExplicitly;
 
     /**
      * Gets the default codec registry.  It includes the following providers:
@@ -163,6 +165,9 @@ public final class MongoClientSettings {
 
         private AutoEncryptionSettings autoEncryptionSettings;
 
+        private int heartbeatConnectTimeoutMS;
+        private int heartbeatSocketTimeoutMS;
+
         private Builder() {
         }
 
@@ -186,6 +191,12 @@ public final class MongoClientSettings {
             socketSettingsBuilder.applySettings(settings.getSocketSettings());
             connectionPoolSettingsBuilder.applySettings(settings.getConnectionPoolSettings());
             sslSettingsBuilder.applySettings(settings.getSslSettings());
+            if (settings.heartbeatConnectTimeoutSetExplicitly) {
+                heartbeatConnectTimeoutMS = settings.heartbeatSocketSettings.getConnectTimeout(MILLISECONDS);
+            }
+            if (settings.heartbeatSocketTimeoutSetExplicitly) {
+                heartbeatSocketTimeoutMS = settings.heartbeatSocketSettings.getReadTimeout(MILLISECONDS);
+            }
         }
 
         /**
@@ -476,6 +487,18 @@ public final class MongoClientSettings {
             return this;
         }
 
+        // Package-private to provide interop with MongoClientOptions
+        Builder heartbeatConnectTimeoutMS(final int heartbeatConnectTimeoutMS) {
+            this.heartbeatConnectTimeoutMS = heartbeatConnectTimeoutMS;
+            return this;
+        }
+
+        // Package-private to provide interop with MongoClientOptions
+        Builder heartbeatSocketTimeoutMS(final int heartbeatSocketTimeoutMS) {
+            this.heartbeatSocketTimeoutMS = heartbeatSocketTimeoutMS;
+            return this;
+        }
+
         /**
          * Build an instance of {@code MongoClientSettings}.
          *
@@ -742,10 +765,15 @@ public final class MongoClientSettings {
         compressorList = builder.compressorList;
         uuidRepresentation = builder.uuidRepresentation;
         autoEncryptionSettings = builder.autoEncryptionSettings;
-
-        SocketSettings.Builder heartbeatSocketSettingsBuilder = SocketSettings.builder()
-                .readTimeout(socketSettings.getConnectTimeout(MILLISECONDS), MILLISECONDS)
-                .connectTimeout(socketSettings.getConnectTimeout(MILLISECONDS), MILLISECONDS);
-        heartbeatSocketSettings = heartbeatSocketSettingsBuilder.build();
+        heartbeatSocketSettings = SocketSettings.builder()
+                .readTimeout(builder.heartbeatSocketTimeoutMS == 0
+                                ? socketSettings.getConnectTimeout(MILLISECONDS) : builder.heartbeatSocketTimeoutMS,
+                        MILLISECONDS)
+                .connectTimeout(builder.heartbeatConnectTimeoutMS == 0
+                                ? socketSettings.getConnectTimeout(MILLISECONDS) : builder.heartbeatConnectTimeoutMS,
+                        MILLISECONDS)
+                .build();
+        heartbeatSocketTimeoutSetExplicitly = builder.heartbeatSocketTimeoutMS != 0;
+        heartbeatConnectTimeoutSetExplicitly = builder.heartbeatConnectTimeoutMS != 0;
     }
 }

@@ -21,36 +21,27 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
-import com.mongodb.client.internal.ChangeStreamIterableImpl;
-import com.mongodb.client.internal.ListDatabasesIterableImpl;
-import com.mongodb.client.internal.MongoClientDelegate;
-import com.mongodb.client.internal.MongoDatabaseImpl;
-import com.mongodb.client.internal.SimpleMongoClient;
+import com.mongodb.client.internal.MongoClientImpl;
 import com.mongodb.client.internal.OperationExecutor;
 import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.ClusterConnectionMode;
+import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterSettings;
-import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadWriteBinding;
 import com.mongodb.internal.binding.SingleServerBinding;
-import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.connection.DefaultClusterFactory;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import com.mongodb.lang.Nullable;
-import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.io.Closeable;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -58,56 +49,63 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.stream.Collectors;
 
-import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.client.internal.Crypts.createCrypt;
 import static com.mongodb.internal.connection.ServerAddressHelper.createServerAddress;
-import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
 import static java.util.Collections.singletonList;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.bson.internal.CodecRegistryHelper.createRegistry;
 
 /**
  * <p>A MongoDB client with internal connection pooling. For most applications, you should have one MongoClient instance for the entire
  * JVM.
  * <p>The following are equivalent, and all connect to the local database running on the default port:</p>
  * <pre>
- * MongoClient mongoClient1 = new MongoClient();
- * MongoClient mongoClient1 = new MongoClient("localhost");
- * MongoClient mongoClient2 = new MongoClient("localhost", 27017);
- * MongoClient mongoClient4 = new MongoClient(new ServerAddress("localhost"));
- * MongoClient mongoClient5 = new MongoClient(new ServerAddress("localhost"), MongoClientOptions.builder().build());
+ * new MongoClient()
+ * new MongoClient("mongodb://localhost")
+ * new MongoClient("mongodb://localhost:27017");
+ * new MongoClient(MongoClientSettings.builder()
+ *   .applyConnectionString("mongodb://localhost")
+ *   .build())
  * </pre>
- * <p>You can connect to a <a href="http://www.mongodb.org/display/DOCS/Replica+Sets">replica set</a> using the Java driver by passing a
- * ServerAddress list to the MongoClient constructor. For example:</p>
+ * <p>You can connect to a <a href="https://docs.mongodb.com/manual/replication/">replica set</a> by passing a
+ * list of servers to a MongoClient constructor. For example:</p>
  * <pre>
- * MongoClient mongoClient = new MongoClient(Arrays.asList(
- *   new ServerAddress("localhost", 27017),
- *   new ServerAddress("localhost", 27018),
- *   new ServerAddress("localhost", 27019)));
+ * new MongoClient("mongodb://localhost:27017,localhost:27018,localhost:27019")
+ * new MongoClient(MongoClientSettings.builder()
+ *   .applyConnectionString("mongodb://localhost:27017,localhost:27018,localhost:27019")
+ *   .build())
  * </pre>
- * <p>You can connect to a sharded cluster using the same constructor.  MongoClient will auto-detect whether the servers are a list of
- * replica set members or a list of mongos servers.</p>
+ * <p>You can connect to a sharded cluster using the same constructor invocations.  MongoClient will auto-detect whether the servers are a
+ * list of replica set members or a list of mongos servers.</p>
  *
  * <p>By default, all read and write operations will be made on the primary, but it's possible to read from secondaries by changing the read
  * preference:</p>
  * <pre>
- * mongoClient.setReadPreference(ReadPreference.secondaryPreferred());
+ * new MongoClient("mongodb://localhost:27017,localhost:27018,localhost:27019?readPreference=primary")
+ * new MongoClient(MongoClientSettings.builder()
+ *   .applyConnectionString("mongodb://localhost:27017,localhost:27018,localhost:27019/?readPreference=primary")
+ *   .build())
+ * new MongoClient(MongoClientSettings.builder()
+ *   .applyConnectionString("mongodb://localhost:27017,localhost:27018,localhost:27019")
+ *   .readPreference(ReadPreference.primary())
+ *   .build())
  * </pre>
  * <p>By default, all write operations will wait for acknowledgment by the server, as the default write concern is {@code
- * WriteConcern.ACKNOWLEDGED}.</p>
+ * WriteConcern.ACKNOWLEDGED}.  It's possible to change this with a setting:</p>
+ * <pre>
+ * new MongoClient("mongodb://localhost:27017,localhost:27018,localhost:27019?w=majority")
+ * new MongoClient(MongoClientSettings.builder()
+ *   .applyConnectionString("mongodb://localhost:27017,localhost:27018,localhost:27019/?w=majority")
+ *   .build())
+ * new MongoClient(MongoClientSettings.builder()
+ *   .applyConnectionString("mongodb://localhost:27017,localhost:27018,localhost:27019")
+ *   .writeConcern(WriteConcern.MAJORITY)
+ *   .build())
+ * </pre>
+ * <p>In general, users of this class will pick up all of the default options specified in {@code MongoClientSettings}.
  *
- * <p>Note: This class supersedes the {@code Mongo} class.  While it extends {@code Mongo}, it differs from it in that the default write
- * concern is to wait for acknowledgment from the server of all write operations.  In addition, its constructors accept instances of {@code
- * MongoClientOptions} and {@code MongoClientURI}, which both also set the same default write concern.</p>
- *
- * <p>In general, users of this class will pick up all of the default options specified in {@code MongoClientOptions}.
- *
- * @see ReadPreference#primary()
- * @see com.mongodb.WriteConcern#ACKNOWLEDGED
- * @see MongoClientOptions
- * @see MongoClientURI
+ * @see ConnectionString
+ * @see MongoClientSettings
  * @since 2.10.0
  */
 public class MongoClient implements Closeable {
@@ -115,13 +113,12 @@ public class MongoClient implements Closeable {
     private final ConcurrentMap<String, DB> dbCache = new ConcurrentHashMap<>();
 
     private final MongoClientOptions options;
-    private final MongoCredential credential;
 
     private final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
 
     private final ConcurrentLinkedQueue<ServerCursorAndNamespace> orphanedCursors = new ConcurrentLinkedQueue<>();
     private final ExecutorService cursorCleaningService;
-    private final MongoClientDelegate delegate;
+    private final MongoClientImpl delegate;
 
     /**
      * Gets the default codec registry.  It includes the following providers:
@@ -142,6 +139,7 @@ public class MongoClient implements Closeable {
      *
      * @return the default codec registry
      * @see MongoClientOptions#getCodecRegistry()
+     * @see MongoClientSettings#getDefaultCodecRegistry()
      * @since 3.0
      */
     public static CodecRegistry getDefaultCodecRegistry() {
@@ -149,20 +147,97 @@ public class MongoClient implements Closeable {
     }
 
     /**
-     * Creates an instance based on a (single) mongodb node (localhost, default port).
+     * Creates an instance based on a (single) MongoDB server ({@code "mongodb://127.0.0.1:27017"}).
      */
     public MongoClient() {
-        this(new ServerAddress());
+        this(new ConnectionString("mongodb://127.0.0.1"));
     }
 
     /**
-     * Creates a MongoClient instance based on a (single) mongodb node.
+     * Creates a MongoClient instance based on a connection string.
      *
-     * @param host server to connect to in format host[:port]
+     * @param connectionString server to connect to in connection string format.  For backwards compatibility, the
+     * {@code "mongodb://"} prefix can be omitted
+     * @see ConnectionString
      */
-    public MongoClient(final String host) {
-        this(createServerAddress(host));
+    public MongoClient(final String connectionString) {
+        this(connectionString.contains("://")
+                ? new ConnectionString(connectionString) : new ConnectionString("mongodb://" + connectionString));
     }
+
+    /**
+     * Create a new client with the given connection string.
+     *
+     * <p>
+     * For each of the settings classed configurable via {@link MongoClientSettings}, the connection string is applied by calling the
+     * {@code applyConnectionString} method on an instance of setting's builder class, building the setting, and adding it to an instance of
+     * {@link com.mongodb.MongoClientSettings.Builder}.
+     * </p>
+     *
+     * @param connectionString the connection string
+     * @see com.mongodb.MongoClientSettings.Builder#applyConnectionString(ConnectionString)
+     * @since 4.2
+     */
+    public MongoClient(final ConnectionString connectionString) {
+        this(connectionString, null);
+    }
+
+    /**
+     * Create a new client with the given connection string.
+     *
+     * <p>
+     * For each of the settings classed configurable via {@link MongoClientSettings}, the connection string is applied by calling the
+     * {@code applyConnectionString} method on an instance of setting's builder class, building the setting, and adding it to an instance of
+     * {@link com.mongodb.MongoClientSettings.Builder}.
+     * </p>
+     *
+     * <p>Note: Intended for driver and library authors to associate extra driver metadata with the connections.</p>
+     *
+     * @param connectionString       the settings
+     * @param mongoDriverInformation any driver information to associate with the MongoClient
+     * @since 4.2
+     */
+    public MongoClient(final ConnectionString connectionString,
+                       @Nullable final MongoDriverInformation mongoDriverInformation) {
+        this(MongoClientSettings.builder().applyConnectionString(connectionString).build(), mongoDriverInformation);
+    }
+
+    /**
+     * Create a new client with the given client settings.
+     *
+     * @param settings the settings
+     * @since 4.2
+     */
+    public MongoClient(final MongoClientSettings settings) {
+        this(settings, null);
+    }
+
+    /**
+     * Creates a new client with the given client settings.
+     *
+     * <p>Note: Intended for driver and library authors to associate extra driver metadata with the connections.</p>
+     *
+     * @param settings               the settings
+     * @param mongoDriverInformation any driver information to associate with the MongoClient
+     * @since 4.2
+     */
+    public MongoClient(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation) {
+        this(settings, null, mongoDriverInformation);
+    }
+
+    private MongoClient(final MongoClientSettings settings,
+                       @Nullable final MongoClientOptions options,
+                       @Nullable final MongoDriverInformation mongoDriverInformation) {
+        delegate = new MongoClientImpl(settings, wrapMongoDriverInformation(mongoDriverInformation));
+        this.options = options != null ? options : MongoClientOptions.builder(settings).build();
+        cursorCleaningService = this.options.isCursorFinalizerEnabled() ? createCursorCleaningService() : null;
+    }
+
+    private static MongoDriverInformation wrapMongoDriverInformation(@Nullable final MongoDriverInformation mongoDriverInformation) {
+        return (mongoDriverInformation == null ? MongoDriverInformation.builder() : MongoDriverInformation.builder(mongoDriverInformation))
+                .driverName("legacy").build();
+    }
+
 
     /**
      * Creates an instance based on a (single) mongodb node (default port).
@@ -202,20 +277,20 @@ public class MongoClient implements Closeable {
      * @see com.mongodb.ServerAddress
      */
     public MongoClient(final ServerAddress addr, final MongoClientOptions options) {
-        this(createCluster(addr, null, options, null), options, null);
+        this(addr, null, options);
     }
 
     /**
      * Creates an instance based on a (single) mongo node using a given server address, credential, and options
      *
-     * @param addr            the database address
-     * @param credential      the credential used to authenticate all connections
-     * @param options         default options
+     * @param addr       the database address
+     * @param credential the credential used to authenticate all connections
+     * @param options    default options
      * @see com.mongodb.ServerAddress
-     * @since 3.6.0
+     * @since 3.6
      */
-    public MongoClient(final ServerAddress addr, final MongoCredential credential, final MongoClientOptions options) {
-        this(createCluster(addr, credential, options, null), options, credential);
+    public MongoClient(final ServerAddress addr, @Nullable final MongoCredential credential, final MongoClientOptions options) {
+        this(addr, credential, options, null);
     }
 
     /**
@@ -233,7 +308,7 @@ public class MongoClient implements Closeable {
      * @see MongoClientOptions#getLocalThreshold()
      */
     public MongoClient(final List<ServerAddress> seeds) {
-        this(seeds, new MongoClientOptions.Builder().build());
+        this(seeds, MongoClientOptions.builder().build());
     }
 
     /**
@@ -247,13 +322,13 @@ public class MongoClient implements Closeable {
      * The servers to randomly select from are further limited by the local threshold.  See
      * {@link MongoClientOptions#getLocalThreshold()}</p>
      *
-     * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of mongod
-     *              servers in the same replica set or a list of mongos servers in the same sharded cluster.
+     * @param seeds   Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of
+     *                mongod servers in the same replica set or a list of mongos servers in the same sharded cluster.
      * @param options the options
      * @see MongoClientOptions#getLocalThreshold()
      */
     public MongoClient(final List<ServerAddress> seeds, final MongoClientOptions options) {
-        this(createCluster(seeds, null, options, null), options, null);
+        this(seeds, null, options);
     }
 
     /**
@@ -267,15 +342,15 @@ public class MongoClient implements Closeable {
      * The servers to randomly select from are further limited by the local threshold.  See
      * {@link MongoClientOptions#getLocalThreshold()}</p>
      *
-     * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of mongod
-     *              servers in the same replica set or a list of mongos servers in the same sharded cluster.
+     * @param seeds      Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of
+     *                   mongod servers in the same replica set or a list of mongos servers in the same sharded cluster.
      * @param credential the credential used to authenticate all connections
-     * @param options         the options
+     * @param options    the options
      * @see MongoClientOptions#getLocalThreshold()
-     * @since 3.6.0
+     * @since 3.6
      */
-    public MongoClient(final List<ServerAddress> seeds, final MongoCredential credential, final MongoClientOptions options) {
-        this(createCluster(seeds, credential, options, null), options, credential);
+    public MongoClient(final List<ServerAddress> seeds, @Nullable final MongoCredential credential, final MongoClientOptions options) {
+        this(seeds, credential, options, null);
     }
 
     /**
@@ -286,7 +361,7 @@ public class MongoClient implements Closeable {
      * @throws MongoException if theres a failure
      */
     public MongoClient(final MongoClientURI uri) {
-        this(createCluster(uri, null), uri.getOptions(), uri.getCredentials());
+        this(uri, null);
     }
 
     /**
@@ -294,13 +369,25 @@ public class MongoClient implements Closeable {
      *
      * <p>Note: Intended for driver and library authors to associate extra driver metadata with the connections.</p>
      *
-     * @param uri the URI
+     * @param uri                    the URI
      * @param mongoDriverInformation any driver information to associate with the MongoClient
      * @throws MongoException if theres a failure
      * @since 3.4
      */
-    public MongoClient(final MongoClientURI uri, final MongoDriverInformation mongoDriverInformation) {
-        this(createCluster(uri, mongoDriverInformation), uri.getOptions(), uri.getCredentials());
+    public MongoClient(final MongoClientURI uri, @Nullable final MongoDriverInformation mongoDriverInformation) {
+        this(uri.getOptions().asMongoClientSettings(
+                uri.getProxied().isSrvProtocol()
+                        ? null : uri.getProxied().getHosts().stream().map(ServerAddress::new).collect(Collectors.toList()),
+                uri.getProxied().isSrvProtocol()
+                        ? uri.getProxied().getHosts().get(0) : null,
+                getClusterConnectionMode(uri.getProxied()),
+                uri.getCredentials()),
+                uri.getOptions(),
+                mongoDriverInformation);
+    }
+
+    private static ClusterConnectionMode getClusterConnectionMode(final ConnectionString connectionString) {
+        return ClusterSettings.builder().applyConnectionString(connectionString).build().getMode();
     }
 
     /**
@@ -308,16 +395,17 @@ public class MongoClient implements Closeable {
      *
      * <p>Note: Intended for driver and library authors to associate extra driver metadata with the connections.</p>
      *
-     * @param addr            the database address
-     * @param credential      the credential used to authenticate all connections
-     * @param options         default options
+     * @param addr                   the database address
+     * @param credential             the credential used to authenticate all connections
+     * @param options                default options
      * @param mongoDriverInformation any driver information to associate with the MongoClient
      * @see com.mongodb.ServerAddress
      * @since 3.6
      */
-    public MongoClient(final ServerAddress addr, final MongoCredential credential, final MongoClientOptions options,
-                       final MongoDriverInformation mongoDriverInformation) {
-        this(createCluster(addr, credential, options, mongoDriverInformation), options, credential);
+    public MongoClient(final ServerAddress addr, @Nullable final MongoCredential credential, final MongoClientOptions options,
+                       @Nullable final MongoDriverInformation mongoDriverInformation) {
+        this(options.asMongoClientSettings(singletonList(addr), null, ClusterConnectionMode.SINGLE, credential), options,
+                mongoDriverInformation);
     }
 
     /**
@@ -325,27 +413,17 @@ public class MongoClient implements Closeable {
      *
      * <p>Note: Intended for driver and library authors to associate extra driver metadata with the connections.</p>
      *
-     * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of mongod
-     *              servers in the same replica set or a list of mongos servers in the same sharded cluster.
-     * @param credential      the credential used to authenticate all connections
-     * @param options         the options
+     * @param seeds                  Put as many servers as you can in the list and the system will figure out the rest.  This can either
+     *                               be a list of mongod servers in the same replica set or a list of mongos servers in the same sharded
+     *                               cluster.
+     * @param credential             the credential used to authenticate all connections
+     * @param options                the options
      * @param mongoDriverInformation any driver information to associate with the MongoClient
      * @since 3.6
      */
-    public MongoClient(final List<ServerAddress> seeds, final MongoCredential credential, final MongoClientOptions options,
-                       final MongoDriverInformation mongoDriverInformation) {
-        this(createCluster(seeds, credential, options, mongoDriverInformation), options, credential);
-    }
-
-    MongoClient(final Cluster cluster, final MongoClientOptions options, @Nullable final MongoCredential credential) {
-        this.options = options;
-        this.credential = credential;
-
-        AutoEncryptionSettings autoEncryptionSettings = options.getAutoEncryptionSettings();
-        this.delegate = new MongoClientDelegate(cluster, createRegistry(options.getCodecRegistry(), options.getUuidRepresentation()), this,
-                autoEncryptionSettings == null ? null : createCrypt(asSimpleMongoClient(), autoEncryptionSettings));
-
-        cursorCleaningService = options.isCursorFinalizerEnabled() ? createCursorCleaningService() : null;
+    public MongoClient(final List<ServerAddress> seeds, @Nullable final MongoCredential credential, final MongoClientOptions options,
+                       @Nullable final MongoDriverInformation mongoDriverInformation) {
+        this(options.asMongoClientSettings(seeds, null, ClusterConnectionMode.MULTIPLE, credential), options, mongoDriverInformation);
     }
 
     /**
@@ -367,18 +445,18 @@ public class MongoClient implements Closeable {
      */
     @Nullable
     public MongoCredential getCredential() {
-        return credential;
+        return delegate.getSettings().getCredential();
     }
 
     /**
      * Get a list of the database names
      *
-     * @mongodb.driver.manual reference/command/listDatabases List Databases
      * @return an iterable containing all the names of all the databases
+     * @mongodb.driver.manual reference/command/listDatabases List Databases
      * @since 3.0
      */
     public MongoIterable<String> listDatabaseNames() {
-        return createListDatabaseNamesIterable(null);
+        return delegate.listDatabaseNames();
     }
 
     /**
@@ -386,22 +464,12 @@ public class MongoClient implements Closeable {
      *
      * @param clientSession the client session with which to associate this operation
      * @return an iterable containing all the names of all the databases
-     * @since 3.6
      * @mongodb.server.release 3.6
      * @mongodb.driver.manual reference/command/listDatabases List Databases
+     * @since 3.6
      */
     public MongoIterable<String> listDatabaseNames(final ClientSession clientSession) {
-        notNull("clientSession", clientSession);
-        return createListDatabaseNamesIterable(clientSession);
-    }
-
-    private MongoIterable<String> createListDatabaseNamesIterable(@Nullable final ClientSession clientSession) {
-        return createListDatabasesIterable(clientSession, BsonDocument.class).nameOnly(true).map(new Function<BsonDocument, String>() {
-            @Override
-            public String apply(final BsonDocument result) {
-                return result.getString("name").getValue();
-            }
-        });
+        return delegate.listDatabaseNames(clientSession);
     }
 
     /**
@@ -411,7 +479,7 @@ public class MongoClient implements Closeable {
      * @since 3.0
      */
     public ListDatabasesIterable<Document> listDatabases() {
-        return listDatabases(Document.class);
+        return delegate.listDatabases();
     }
 
     /**
@@ -423,7 +491,7 @@ public class MongoClient implements Closeable {
      * @since 3.0
      */
     public <T> ListDatabasesIterable<T> listDatabases(final Class<T> clazz) {
-        return createListDatabasesIterable(null, clazz);
+        return delegate.listDatabases(clazz);
     }
 
     /**
@@ -431,32 +499,27 @@ public class MongoClient implements Closeable {
      *
      * @param clientSession the client session with which to associate this operation
      * @return the list of databases
-     * @since 3.6
      * @mongodb.server.release 3.6
+     * @since 3.6
      */
     public ListDatabasesIterable<Document> listDatabases(final ClientSession clientSession) {
-        return listDatabases(clientSession, Document.class);
+        return delegate.listDatabases(clientSession);
     }
 
     /**
      * Gets the list of databases
      *
      * @param clientSession the client session with which to associate this operation
-     * @param clazz the class to cast the database documents to
-     * @param <T>   the type of the class to use instead of {@code Document}.
+     * @param clazz         the class to cast the database documents to
+     * @param <T>           the type of the class to use instead of {@code Document}.
      * @return the list of databases
-     * @since 3.6
      * @mongodb.server.release 3.6
+     * @since 3.6
      */
     public <T> ListDatabasesIterable<T> listDatabases(final ClientSession clientSession, final Class<T> clazz) {
-        notNull("clientSession", clientSession);
-        return createListDatabasesIterable(clientSession, clazz);
+        return delegate.listDatabases(clientSession, clazz);
     }
 
-    private <T> ListDatabasesIterable<T> createListDatabasesIterable(@Nullable final ClientSession clientSession, final Class<T> clazz) {
-        return new ListDatabasesIterableImpl<T>(clientSession, clazz, delegate.getCodecRegistry(), ReadPreference.primary(),
-                createOperationExecutor(), getMongoClientOptions().getRetryReads());
-    }
 
     /**
      * @param databaseName the name of the database to retrieve
@@ -465,12 +528,7 @@ public class MongoClient implements Closeable {
      * @see MongoNamespace#checkDatabaseNameValidity(String)
      */
     public MongoDatabase getDatabase(final String databaseName) {
-        MongoClientOptions clientOptions = getMongoClientOptions();
-        return new MongoDatabaseImpl(databaseName, delegate.getCodecRegistry(), clientOptions.getReadPreference(),
-                clientOptions.getWriteConcern(), clientOptions.getRetryWrites(), clientOptions.getRetryReads(),
-                clientOptions.getReadConcern(),
-                clientOptions.getUuidRepresentation(),
-                createOperationExecutor());
+        return delegate.getDatabase(databaseName);
     }
 
     /**
@@ -482,7 +540,7 @@ public class MongoClient implements Closeable {
      * @since 3.8
      */
     public ClientSession startSession() {
-        return startSession(ClientSessionOptions.builder().build());
+        return delegate.startSession();
     }
 
     /**
@@ -495,23 +553,19 @@ public class MongoClient implements Closeable {
      * @since 3.6
      */
     public ClientSession startSession(final ClientSessionOptions options) {
-        ClientSession clientSession = createClientSession(notNull("options", options));
-        if (clientSession == null) {
-            throw new MongoClientException("Sessions are not supported by the MongoDB cluster to which this client is connected");
-        }
-        return clientSession;
+        return delegate.startSession(options);
     }
 
     /**
      * Creates a change stream for this client.
      *
      * @return the change stream iterable
-     * @since 3.8
      * @mongodb.server.release 4.0
      * @mongodb.driver.dochub core/changestreams Change Streams
+     * @since 3.8
      */
     public ChangeStreamIterable<Document> watch() {
-        return watch(Collections.<Bson>emptyList());
+        return delegate.watch();
     }
 
     /**
@@ -520,25 +574,25 @@ public class MongoClient implements Closeable {
      * @param resultClass the class to decode each document into
      * @param <TResult>   the target document type of the iterable.
      * @return the change stream iterable
-     * @since 3.8
      * @mongodb.server.release 4.0
      * @mongodb.driver.dochub core/changestreams Change Streams
+     * @since 3.8
      */
     public <TResult> ChangeStreamIterable<TResult> watch(final Class<TResult> resultClass) {
-        return watch(Collections.<Bson>emptyList(), resultClass);
+        return delegate.watch(resultClass);
     }
 
     /**
      * Creates a change stream for this client.
      *
-     * @param pipeline    the aggregation pipeline to apply to the change stream
+     * @param pipeline the aggregation pipeline to apply to the change stream
      * @return the change stream iterable
-     * @since 3.8
      * @mongodb.server.release 4.0
      * @mongodb.driver.dochub core/changestreams Change Streams
+     * @since 3.8
      */
     public ChangeStreamIterable<Document> watch(final List<? extends Bson> pipeline) {
-        return watch(pipeline, Document.class);
+        return delegate.watch(pipeline);
     }
 
     /**
@@ -548,12 +602,12 @@ public class MongoClient implements Closeable {
      * @param resultClass the class to decode each document into
      * @param <TResult>   the target document type of the iterable.
      * @return the change stream iterable
-     * @since 3.8
      * @mongodb.server.release 4.0
      * @mongodb.driver.dochub core/changestreams Change Streams
+     * @since 3.8
      */
     public <TResult> ChangeStreamIterable<TResult> watch(final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
-        return createChangeStreamIterable(null, pipeline, resultClass);
+        return delegate.watch(pipeline, resultClass);
     }
 
     /**
@@ -561,59 +615,77 @@ public class MongoClient implements Closeable {
      *
      * @param clientSession the client session with which to associate this operation
      * @return the change stream iterable
-     * @since 3.8
      * @mongodb.server.release 4.0
      * @mongodb.driver.dochub core/changestreams Change Streams
+     * @since 3.8
      */
     public ChangeStreamIterable<Document> watch(final ClientSession clientSession) {
-        return watch(clientSession, Collections.<Bson>emptyList(), Document.class);
+        return delegate.watch(clientSession);
     }
 
     /**
      * Creates a change stream for this client.
      *
      * @param clientSession the client session with which to associate this operation
-     * @param resultClass the class to decode each document into
-     * @param <TResult>   the target document type of the iterable.
+     * @param resultClass   the class to decode each document into
+     * @param <TResult>     the target document type of the iterable.
      * @return the change stream iterable
-     * @since 3.8
      * @mongodb.server.release 4.0
      * @mongodb.driver.dochub core/changestreams Change Streams
+     * @since 3.8
      */
     public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final Class<TResult> resultClass) {
-        return watch(clientSession, Collections.<Bson>emptyList(), resultClass);
+        return delegate.watch(clientSession, resultClass);
     }
 
     /**
      * Creates a change stream for this client.
      *
      * @param clientSession the client session with which to associate this operation
-     * @param pipeline    the aggregation pipeline to apply to the change stream
+     * @param pipeline      the aggregation pipeline to apply to the change stream
      * @return the change stream iterable
-     * @since 3.8
      * @mongodb.server.release 4.0
      * @mongodb.driver.dochub core/changestreams Change Streams
+     * @since 3.8
      */
     public ChangeStreamIterable<Document> watch(final ClientSession clientSession, final List<? extends Bson> pipeline) {
-        return watch(clientSession, pipeline, Document.class);
+        return delegate.watch(clientSession, pipeline);
     }
 
     /**
      * Creates a change stream for this client.
      *
      * @param clientSession the client session with which to associate this operation
-     * @param pipeline    the aggregation pipeline to apply to the change stream
-     * @param resultClass the class to decode each document into
-     * @param <TResult>   the target document type of the iterable.
+     * @param pipeline      the aggregation pipeline to apply to the change stream
+     * @param resultClass   the class to decode each document into
+     * @param <TResult>     the target document type of the iterable.
      * @return the change stream iterable
-     * @since 3.8
      * @mongodb.server.release 4.0
      * @mongodb.driver.dochub core/changestreams Change Streams
+     * @since 3.8
      */
     public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final List<? extends Bson> pipeline,
                                                          final Class<TResult> resultClass) {
-        notNull("clientSession", clientSession);
-        return createChangeStreamIterable(clientSession, pipeline, resultClass);
+        return delegate.watch(clientSession, pipeline, resultClass);
+    }
+
+    /**
+     * Gets the current cluster description.
+     *
+     * <p>
+     * This method will not block, meaning that it may return a {@link ClusterDescription} whose {@code clusterType} is unknown
+     * and whose {@link com.mongodb.connection.ServerDescription}s are all in the connecting state.  If the application requires
+     * notifications after the driver has connected to a member of the cluster, it should register a {@link ClusterListener} via
+     * the {@link ClusterSettings} in {@link com.mongodb.MongoClientSettings}.
+     * </p>
+     *
+     * @return the current cluster description
+     * @see ClusterSettings.Builder#addClusterListener(ClusterListener)
+     * @see com.mongodb.MongoClientSettings.Builder#applyToClusterSettings(com.mongodb.Block)
+     * @since 4.2
+     */
+    public ClusterDescription getClusterDescription() {
+        return delegate.getClusterDescription();
     }
 
     /**
@@ -668,7 +740,7 @@ public class MongoClient implements Closeable {
             return db;
         }
 
-        db = new DB(this, dbName, createOperationExecutor());
+        db = new DB(this, dbName, getOperationExecutor());
         DB temp = dbCache.putIfAbsent(dbName, db);
         if (temp != null) {
             return temp;
@@ -704,68 +776,6 @@ public class MongoClient implements Closeable {
                 + '}';
     }
 
-    private static Cluster createCluster(final MongoClientURI mongoURI, @Nullable final MongoDriverInformation mongoDriverInformation) {
-        return createCluster(
-                getClusterSettings(ClusterSettings.builder().applyConnectionString(mongoURI.getProxied()), mongoURI.getOptions()),
-                mongoURI.getCredentials(), mongoURI.getOptions(), mongoDriverInformation);
-    }
-
-    private static Cluster createCluster(final List<ServerAddress> seedList,
-                                         @Nullable final MongoCredential credential, final MongoClientOptions options,
-                                         @Nullable final MongoDriverInformation mongoDriverInformation) {
-        return createCluster(getClusterSettings(seedList, options, ClusterConnectionMode.MULTIPLE), credential, options,
-                mongoDriverInformation);
-    }
-
-    private static Cluster createCluster(final ServerAddress serverAddress, @Nullable final MongoCredential credential,
-                                         final MongoClientOptions options, @Nullable final MongoDriverInformation mongoDriverInformation) {
-        return createCluster(getClusterSettings(singletonList(serverAddress), options, getSingleServerClusterMode(options)),
-                credential, options, mongoDriverInformation);
-    }
-
-    private static Cluster createCluster(final ClusterSettings clusterSettings, @Nullable final MongoCredential credential,
-                                         final MongoClientOptions options, @Nullable final MongoDriverInformation mongoDriverInformation) {
-        return new DefaultClusterFactory().createCluster(clusterSettings,
-                options.getServerSettings(),
-                options.getConnectionPoolSettings(),
-                new SocketStreamFactory(options.getSocketSettings(),
-                        options.getSslSettings()),
-                new SocketStreamFactory(options.getHeartbeatSocketSettings(),
-                        options.getSslSettings()),
-                credential,
-                getCommandListener(options.getCommandListeners()),
-                options.getApplicationName(),
-                wrapMongoDriverInformation(mongoDriverInformation),
-                options.getCompressorList());
-    }
-
-    private static MongoDriverInformation wrapMongoDriverInformation(@Nullable final MongoDriverInformation mongoDriverInformation) {
-        return (mongoDriverInformation == null ? MongoDriverInformation.builder() : MongoDriverInformation.builder(mongoDriverInformation))
-                .driverName("legacy").build();
-    }
-
-    private static ClusterSettings getClusterSettings(final ClusterSettings.Builder builder, final MongoClientOptions options) {
-        builder.requiredReplicaSetName(options.getRequiredReplicaSetName())
-                .serverSelectionTimeout(options.getServerSelectionTimeout(), MILLISECONDS)
-                .localThreshold(options.getLocalThreshold(), MILLISECONDS)
-                .serverSelector(options.getServerSelector());
-        for (ClusterListener clusterListener: options.getClusterListeners()) {
-            builder.addClusterListener(clusterListener);
-        }
-        return builder.build();
-    }
-
-    private static ClusterSettings getClusterSettings(final List<ServerAddress> seedList, final MongoClientOptions options,
-                                                      final ClusterConnectionMode clusterConnectionMode) {
-        return getClusterSettings(ClusterSettings.builder()
-                .hosts(new ArrayList<ServerAddress>(seedList))
-                .mode(clusterConnectionMode), options);
-    }
-
-    MongoClientDelegate getDelegate() {
-        return delegate;
-    }
-
     Cluster getCluster() {
         return delegate.getCluster();
     }
@@ -782,29 +792,27 @@ public class MongoClient implements Closeable {
         return bufferProvider;
     }
 
+    @Nullable
+    ExecutorService getCursorCleaningService() {
+        return cursorCleaningService;
+    }
+
     void addOrphanedCursor(final ServerCursor serverCursor, final MongoNamespace namespace) {
         orphanedCursors.add(new ServerCursorAndNamespace(serverCursor, namespace));
     }
 
     // Leave as package-protected so that unit tests can spy on it.
-    OperationExecutor createOperationExecutor() {
+    OperationExecutor getOperationExecutor() {
         return delegate.getOperationExecutor();
     }
 
-    @Nullable
-    private ClientSession createClientSession(final ClientSessionOptions clientSessionOptions) {
-        return delegate.createClientSession(clientSessionOptions, options.getReadConcern(), options.getWriteConcern(),
-                options.getReadPreference());
+    MongoClientImpl getDelegate() {
+        return delegate;
     }
 
     private ExecutorService createCursorCleaningService() {
         ScheduledExecutorService newTimer = Executors.newSingleThreadScheduledExecutor(new DaemonThreadFactory("CleanCursors"));
-        newTimer.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                cleanCursors();
-            }
-        }, 1, 1, SECONDS);
+        newTimer.scheduleAtFixedRate(this::cleanCursors, 1, 1, SECONDS);
         return newTimer;
     }
 
@@ -830,14 +838,6 @@ public class MongoClient implements Closeable {
         }
     }
 
-    private static ClusterConnectionMode getSingleServerClusterMode(final MongoClientOptions options) {
-        if (options.getRequiredReplicaSetName() == null) {
-            return ClusterConnectionMode.SINGLE;
-        } else {
-            return ClusterConnectionMode.MULTIPLE;
-        }
-    }
-
     private static class ServerCursorAndNamespace {
         private final ServerCursor serverCursor;
         private final MongoNamespace namespace;
@@ -846,33 +846,5 @@ public class MongoClient implements Closeable {
             this.serverCursor = serverCursor;
             this.namespace = namespace;
         }
-    }
-
-    private SimpleMongoClient asSimpleMongoClient() {
-        return new SimpleMongoClient() {
-            @Override
-            public MongoDatabase getDatabase(final String databaseName) {
-                return MongoClient.this.getDatabase(databaseName);
-            }
-
-            @Override
-            public void close() {
-                MongoClient.this.close();
-            }
-        };
-    }
-
-    private <TResult> ChangeStreamIterable<TResult> createChangeStreamIterable(@Nullable final ClientSession clientSession,
-                                                                               final List<? extends Bson> pipeline,
-                                                                               final Class<TResult> resultClass) {
-        MongoClientOptions clientOptions = getMongoClientOptions();
-        return new ChangeStreamIterableImpl<TResult>(clientSession, "admin", delegate.getCodecRegistry(),
-                clientOptions.getReadPreference(), clientOptions.getReadConcern(), createOperationExecutor(),
-                pipeline, resultClass, ChangeStreamLevel.CLIENT, clientOptions.getRetryReads());
-    }
-
-
-    static DBObjectCodec getCommandCodec() {
-        return new DBObjectCodec(getDefaultCodecRegistry());
     }
 }
