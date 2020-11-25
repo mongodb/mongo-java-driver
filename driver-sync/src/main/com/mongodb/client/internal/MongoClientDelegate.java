@@ -54,21 +54,13 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAny;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAnyPrimaryOrSecondary;
 
-/**
- * This class is not part of the public API and may be removed or changed at any time.
- */
-public class MongoClientDelegate {
+final class MongoClientDelegate {
     private final Cluster cluster;
     private final ServerSessionPool serverSessionPool;
     private final Object originator;
     private final OperationExecutor operationExecutor;
     private final Crypt crypt;
     private final CodecRegistry codecRegistry;
-
-    public MongoClientDelegate(final Cluster cluster, final CodecRegistry codecRegistry,
-                               final Object originator, @Nullable final Crypt crypt) {
-        this(cluster, codecRegistry, originator, null, crypt);
-    }
 
     MongoClientDelegate(final Cluster cluster, final CodecRegistry codecRegistry,
                         final Object originator, @Nullable final OperationExecutor operationExecutor,

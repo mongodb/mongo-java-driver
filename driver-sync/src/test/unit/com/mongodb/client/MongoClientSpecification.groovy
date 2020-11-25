@@ -65,7 +65,7 @@ class MongoClientSpecification extends Specification {
                 .retryWrites(true)
                 .codecRegistry(codecRegistry)
                 .build()
-        def client = new MongoClientImpl(Stub(Cluster), settings, new TestOperationExecutor([]))
+        def client = new MongoClientImpl(Stub(Cluster), null, settings, new TestOperationExecutor([]))
 
         when:
         def database = client.getDatabase('name')
@@ -81,7 +81,7 @@ class MongoClientSpecification extends Specification {
     def 'should use ListDatabasesIterableImpl correctly'() {
         given:
         def executor = new TestOperationExecutor([null, null])
-        def client = new MongoClientImpl(Stub(Cluster), MongoClientSettings.builder().build(), executor)
+        def client = new MongoClientImpl(Stub(Cluster), null, MongoClientSettings.builder().build(), executor)
         def listDatabasesMethod = client.&listDatabases
         def listDatabasesNamesMethod = client.&listDatabaseNames
 
@@ -126,7 +126,7 @@ class MongoClientSpecification extends Specification {
         def codecRegistry = settings.getCodecRegistry()
         def readPreference = settings.getReadPreference()
         def readConcern = settings.getReadConcern()
-        def client = new MongoClientImpl(Stub(Cluster), settings, executor)
+        def client = new MongoClientImpl(Stub(Cluster), null, settings, executor)
         def watchMethod = client.&watch
 
         when:
@@ -160,7 +160,7 @@ class MongoClientSpecification extends Specification {
     def 'should validate the ChangeStreamIterable pipeline data correctly'() {
         given:
         def executor = new TestOperationExecutor([])
-        def client = new MongoClientImpl(Stub(Cluster), MongoClientSettings.builder().build(), executor)
+        def client = new MongoClientImpl(Stub(Cluster), null, MongoClientSettings.builder().build(), executor)
 
         when:
         client.watch((Class) null)
@@ -189,7 +189,7 @@ class MongoClientSpecification extends Specification {
             }
         }
         def settings = MongoClientSettings.builder().build()
-        def client = new MongoClientImpl(cluster, settings, new TestOperationExecutor([]))
+        def client = new MongoClientImpl(cluster, null, settings, new TestOperationExecutor([]))
 
         expect:
         client.getClusterDescription() == clusterDescription
@@ -204,7 +204,7 @@ class MongoClientSpecification extends Specification {
                 .build()
 
         when:
-        def client = new MongoClientImpl(Stub(Cluster), settings, new TestOperationExecutor([]))
+        def client = new MongoClientImpl(Stub(Cluster), null, settings, new TestOperationExecutor([]))
         def registry = client.getCodecRegistry()
 
         then:

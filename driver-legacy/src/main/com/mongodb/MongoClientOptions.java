@@ -18,6 +18,7 @@ package com.mongodb;
 
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
@@ -28,15 +29,17 @@ import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerMonitorListener;
 import com.mongodb.lang.Nullable;
+import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.ServerSelector;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import javax.net.ssl.SSLContext;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -72,7 +75,6 @@ public class MongoClientOptions {
 
     private final int connectTimeout;
     private final int socketTimeout;
-    private final boolean socketKeepAlive;
     private final boolean sslEnabled;
     private final boolean sslInvalidHostNameAllowed;
     private final SSLContext sslContext;
@@ -108,7 +110,6 @@ public class MongoClientOptions {
         maxConnectionLifeTime = builder.maxConnectionLifeTime;
         connectTimeout = builder.connectTimeout;
         socketTimeout = builder.socketTimeout;
-        socketKeepAlive = builder.socketKeepAlive;
         readPreference = builder.readPreference;
         writeConcern = builder.writeConcern;
         retryWrites = builder.retryWrites;
@@ -196,6 +197,72 @@ public class MongoClientOptions {
      */
     public static Builder builder(final MongoClientOptions options) {
         return new Builder(options);
+    }
+
+    /**
+     * Creates a builder instance from a {@code MongoClientSettings} instance.
+     *
+     * @param settings the settings to from which to initialize the builder
+     * @return a builder
+     * @since 4.2
+     */
+    public static Builder builder(final MongoClientSettings settings) {
+        return new Builder(settings);
+    }
+
+    /**
+     * Translate this instance into {@link MongoClientSettings}.
+     *
+     * @param hosts                 the seed list of hosts to connect to, which must be null if srvHost is not
+     * @param srvHost               the SRV host name, which must be null if hosts is not
+     * @param clusterConnectionMode the connection mode
+     * @param credential            the credential, which may be null
+     * @return the settings
+     * @see MongoClientSettings
+     * @since 4.2
+     */
+    public MongoClientSettings asMongoClientSettings(@Nullable final List<ServerAddress> hosts,
+                                                     @Nullable final String srvHost,
+                                                     final ClusterConnectionMode clusterConnectionMode,
+                                                     @Nullable final MongoCredential credential) {
+        MongoClientSettings.Builder mongoClientSettingsBuilder = MongoClientSettings.builder();
+
+        Optional.ofNullable(credential).ifPresent(mongoClientSettingsBuilder::credential);
+        Optional.ofNullable(autoEncryptionSettings).ifPresent(mongoClientSettingsBuilder::autoEncryptionSettings);
+        commandListeners.forEach(mongoClientSettingsBuilder::addCommandListener);
+
+        mongoClientSettingsBuilder
+                .writeConcern(writeConcern)
+                .readConcern(readConcern)
+                .applicationName(applicationName)
+                .readPreference(readPreference)
+                .codecRegistry(codecRegistry)
+                .compressorList(compressorList)
+                .uuidRepresentation(uuidRepresentation)
+                .retryReads(retryReads)
+                .retryWrites(retryWrites)
+                .applyToServerSettings(builder -> builder.applySettings(serverSettings))
+                .applyToConnectionPoolSettings(builder -> builder.applySettings(connectionPoolSettings))
+                .applyToSocketSettings(builder -> builder.applySettings(socketSettings))
+                .heartbeatConnectTimeoutMS(heartbeatConnectTimeout)
+                .heartbeatSocketTimeoutMS(heartbeatSocketTimeout)
+                .applyToSslSettings(builder -> builder.applySettings(sslSettings))
+                .applyToClusterSettings(builder -> {
+                    builder.mode(clusterConnectionMode);
+                    if (srvHost != null) {
+                        builder.srvHost(srvHost);
+                    }
+                    if (hosts != null) {
+                        builder.hosts(hosts);
+                    }
+                    builder.serverSelectionTimeout(serverSelectionTimeout, MILLISECONDS);
+                    builder.localThreshold(getLocalThreshold(), MILLISECONDS);
+                    clusterListeners.forEach(builder::addClusterListener);
+                    builder.requiredReplicaSetName(requiredReplicaSetName);
+                    builder.serverSelector(serverSelector);
+                });
+
+        return mongoClientSettingsBuilder.build();
     }
 
     /**
@@ -739,9 +806,6 @@ public class MongoClientOptions {
         if (minConnectionsPerHost != that.minConnectionsPerHost) {
             return false;
         }
-        if (socketKeepAlive != that.socketKeepAlive) {
-            return false;
-        }
         if (socketTimeout != that.socketTimeout) {
             return false;
         }
@@ -829,7 +893,6 @@ public class MongoClientOptions {
         result = 31 * result + maxConnectionLifeTime;
         result = 31 * result + connectTimeout;
         result = 31 * result + socketTimeout;
-        result = 31 * result + (socketKeepAlive ? 1 : 0);
         result = 31 * result + (sslEnabled ? 1 : 0);
         result = 31 * result + (sslInvalidHostNameAllowed ? 1 : 0);
         result = 31 * result + (sslContext != null ? sslContext.hashCode() : 0);
@@ -870,7 +933,6 @@ public class MongoClientOptions {
                + ", maxConnectionLifeTime=" + maxConnectionLifeTime
                + ", connectTimeout=" + connectTimeout
                + ", socketTimeout=" + socketTimeout
-               + ", socketKeepAlive=" + socketKeepAlive
                + ", sslEnabled=" + sslEnabled
                + ", sslInvalidHostNamesAllowed=" + sslInvalidHostNameAllowed
                + ", sslContext=" + sslContext
@@ -911,7 +973,7 @@ public class MongoClientOptions {
         private boolean retryWrites = true;
         private boolean retryReads = true;
         private ReadConcern readConcern = ReadConcern.DEFAULT;
-        private CodecRegistry codecRegistry = MongoClient.getDefaultCodecRegistry();
+        private CodecRegistry codecRegistry = MongoClientSettings.getDefaultCodecRegistry();
         private UuidRepresentation uuidRepresentation = UuidRepresentation.UNSPECIFIED;
         private ServerSelector serverSelector;
         private int minConnectionsPerHost;
@@ -922,7 +984,6 @@ public class MongoClientOptions {
         private int maxConnectionLifeTime;
         private int connectTimeout = 1000 * 10;
         private int socketTimeout = 0;
-        private boolean socketKeepAlive = true;
         private boolean sslEnabled = false;
         private boolean sslInvalidHostNameAllowed = false;
         private SSLContext sslContext;
@@ -989,6 +1050,44 @@ public class MongoClientOptions {
             autoEncryptionSettings = options.getAutoEncryptionSettings();
         }
 
+        Builder(final MongoClientSettings settings) {
+            applicationName = settings.getApplicationName();
+            compressorList = settings.getCompressorList();
+            minConnectionsPerHost = settings.getConnectionPoolSettings().getMinSize();
+            maxConnectionsPerHost = settings.getConnectionPoolSettings().getMaxSize();
+            serverSelectionTimeout = (int) settings.getClusterSettings().getServerSelectionTimeout(MILLISECONDS);
+            maxWaitTime = (int) settings.getConnectionPoolSettings().getMaxWaitTime(MILLISECONDS);
+            maxConnectionIdleTime = (int) settings.getConnectionPoolSettings().getMaxConnectionIdleTime(MILLISECONDS);
+            maxConnectionLifeTime = (int) settings.getConnectionPoolSettings().getMaxConnectionLifeTime(MILLISECONDS);
+            connectTimeout = settings.getSocketSettings().getConnectTimeout(MILLISECONDS);
+            socketTimeout = settings.getSocketSettings().getReadTimeout(MILLISECONDS);
+            readPreference = settings.getReadPreference();
+            writeConcern = settings.getWriteConcern();
+            retryWrites = settings.getRetryWrites();
+            retryReads = settings.getRetryReads();
+            readConcern = settings.getReadConcern();
+            codecRegistry = settings.getCodecRegistry();
+            uuidRepresentation = settings.getUuidRepresentation();
+            ServerSelector serverSelector = settings.getClusterSettings().getServerSelector();
+            this.serverSelector = serverSelector instanceof CompositeServerSelector
+                    ? ((CompositeServerSelector) serverSelector).getServerSelectors().get(0) : null;
+            sslEnabled = settings.getSslSettings().isEnabled();
+            sslInvalidHostNameAllowed = settings.getSslSettings().isInvalidHostNameAllowed();
+            sslContext = settings.getSslSettings().getContext();
+            heartbeatFrequency = (int) settings.getServerSettings().getHeartbeatFrequency(MILLISECONDS);
+            minHeartbeatFrequency = (int) settings.getServerSettings().getMinHeartbeatFrequency(MILLISECONDS);
+            heartbeatConnectTimeout = settings.getHeartbeatSocketSettings().getConnectTimeout(MILLISECONDS);
+            heartbeatSocketTimeout = settings.getHeartbeatSocketSettings().getReadTimeout(MILLISECONDS);
+            localThreshold = (int) settings.getClusterSettings().getLocalThreshold(MILLISECONDS);
+            requiredReplicaSetName = settings.getClusterSettings().getRequiredReplicaSetName();
+            clusterListeners.addAll(settings.getClusterSettings().getClusterListeners());
+            commandListeners.addAll(settings.getCommandListeners());
+            connectionPoolListeners.addAll(settings.getConnectionPoolSettings().getConnectionPoolListeners());
+            serverListeners.addAll(settings.getServerSettings().getServerListeners());
+            serverMonitorListeners.addAll(settings.getServerSettings().getServerMonitorListeners());
+            autoEncryptionSettings = settings.getAutoEncryptionSettings();
+        }
+
         /**
          * Sets the logical name of the application using this MongoClient.  The application name may be used by the client to identify
          * the application to the server, for use in server logs, slow query logs, and profile collection.
@@ -1000,10 +1099,10 @@ public class MongoClientOptions {
          * @see #getApplicationName()
          * @since 3.4
          */
-        public Builder applicationName(final String applicationName) {
+        public Builder applicationName(@Nullable final String applicationName) {
             if (applicationName != null) {
                 isTrueArgument("applicationName UTF-8 encoding length <= 128",
-                        applicationName.getBytes(Charset.forName("UTF-8")).length <= 128);
+                        applicationName.getBytes(StandardCharsets.UTF_8).length <= 128);
             }
             this.applicationName = applicationName;
             return this;

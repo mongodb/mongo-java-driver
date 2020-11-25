@@ -16,6 +16,7 @@
 
 package com.mongodb
 
+import com.mongodb.connection.ClusterSettings
 import com.mongodb.connection.ConnectionPoolSettings
 import com.mongodb.connection.ServerSettings
 import com.mongodb.connection.SocketSettings
@@ -27,13 +28,14 @@ import com.mongodb.event.ServerListener
 import com.mongodb.event.ServerMonitorListener
 import com.mongodb.selector.ServerSelector
 import org.bson.UuidRepresentation
+import org.bson.codecs.configuration.CodecRegistry
 import spock.lang.Specification
 
 import javax.net.ssl.SSLContext
-import javax.net.ssl.SSLContextSpi
-import java.security.Provider
 
 import static com.mongodb.CustomMatchers.isTheSameAs
+import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
+import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 import static spock.util.matcher.HamcrestSupport.expect
@@ -55,7 +57,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.getConnectionsPerHost() == 100
         options.getConnectTimeout() == 10000
         options.getReadPreference() == ReadPreference.primary()
-        options.getServerSelector() == null;
+        options.getServerSelector() == null
         !options.isSslEnabled()
         !options.isSslInvalidHostNameAllowed()
         options.getSslContext() == null
@@ -79,7 +81,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.serverSettings == ServerSettings.builder().heartbeatFrequency(10000, MILLISECONDS)
                                                 .minHeartbeatFrequency(500, MILLISECONDS)
                                                 .build()
-        options.sslSettings == SslSettings.builder().build();
+        options.sslSettings == SslSettings.builder().build()
         options.compressorList == []
         options.getAutoEncryptionSettings() == null
     }
@@ -154,16 +156,24 @@ class MongoClientOptionsSpecification extends Specification {
         given:
         def encoderFactory = new MyDBEncoderFactory()
         def serverSelector = Mock(ServerSelector)
+        def commandListener = Mock(CommandListener)
+        def clusterListener = Mock(ClusterListener)
+        def serverListener = Mock(ServerListener)
+        def serverMonitorListener = Mock(ServerMonitorListener)
         def autoEncryptionSettings = AutoEncryptionSettings.builder()
                 .keyVaultNamespace('admin.keys')
                 .kmsProviders(['local': ['key': new byte[64]]])
                 .build()
+        def codecRegistry = Mock(CodecRegistry)
+
+        when:
         def options = MongoClientOptions.builder()
                                         .applicationName('appName')
                                         .readPreference(ReadPreference.secondary())
                                         .retryWrites(true)
                                         .retryReads(false)
                                         .writeConcern(WriteConcern.JOURNALED)
+                                        .readConcern(ReadConcern.MAJORITY)
                                         .minConnectionsPerHost(30)
                                         .connectionsPerHost(500)
                                         .connectTimeout(100)
@@ -187,12 +197,19 @@ class MongoClientOptionsSpecification extends Specification {
                                         .dbEncoderFactory(encoderFactory)
                                         .compressorList([MongoCompressor.createZlibCompressor()])
                                         .autoEncryptionSettings(autoEncryptionSettings)
+                                        .codecRegistry(codecRegistry)
+                                        .addCommandListener(commandListener)
+                                        .addClusterListener(clusterListener)
+                                        .addServerListener(serverListener)
+                                        .addServerMonitorListener(serverMonitorListener)
+                                        .uuidRepresentation(UuidRepresentation.C_SHARP_LEGACY)
                                         .build()
 
-        expect:
+        then:
         options.getApplicationName() == 'appName'
         options.getReadPreference() == ReadPreference.secondary()
         options.getWriteConcern() == WriteConcern.JOURNALED
+        options.getReadConcern() == ReadConcern.MAJORITY
         options.getServerSelector() == serverSelector
         options.getRetryWrites()
         !options.getRetryReads()
@@ -219,26 +236,147 @@ class MongoClientOptionsSpecification extends Specification {
         options.getServerSettings().getHeartbeatFrequency(MILLISECONDS) == 5
         options.getServerSettings().getMinHeartbeatFrequency(MILLISECONDS) == 11
 
-        options.connectionPoolSettings == ConnectionPoolSettings.builder().maxSize(500).minSize(30)
-                                                                .maxWaitTime(200, MILLISECONDS).maxConnectionLifeTime(400, MILLISECONDS)
-                                                                .maxConnectionIdleTime(300, MILLISECONDS).build()
-        options.socketSettings == SocketSettings.builder().connectTimeout(100, MILLISECONDS).readTimeout(700, MILLISECONDS)
-                                                .build()
-        options.heartbeatSocketSettings == SocketSettings.builder().connectTimeout(15, MILLISECONDS).readTimeout(20, MILLISECONDS)
-                                                         .build()
-        options.serverSettings == ServerSettings.builder().minHeartbeatFrequency(11, MILLISECONDS).heartbeatFrequency(5, MILLISECONDS)
-                                                .build()
-        options.sslSettings == SslSettings.builder().enabled(true).invalidHostNameAllowed(true)
+        def connectionPoolSettings = ConnectionPoolSettings.builder().maxSize(500).minSize(30)
+                .maxWaitTime(200, MILLISECONDS).maxConnectionLifeTime(400, MILLISECONDS)
+                .maxConnectionIdleTime(300, MILLISECONDS).build()
+        def socketSettings = SocketSettings.builder().connectTimeout(100, MILLISECONDS)
+                .readTimeout(700, MILLISECONDS)
+                .build()
+        def heartbeatSocketSettings = SocketSettings.builder().connectTimeout(15, MILLISECONDS)
+                .readTimeout(20, MILLISECONDS)
+                .build()
+        def serverSettings = ServerSettings.builder().minHeartbeatFrequency(11, MILLISECONDS)
+                .heartbeatFrequency(5, MILLISECONDS)
+                .addServerListener(serverListener)
+                .addServerMonitorListener(serverMonitorListener)
+                .build()
+        def sslSettings = SslSettings.builder().enabled(true).invalidHostNameAllowed(true)
                 .context(SSLContext.getDefault()).build()
+
+        options.connectionPoolSettings == connectionPoolSettings
+        options.socketSettings == socketSettings
+        options.heartbeatSocketSettings == heartbeatSocketSettings
+        options.serverSettings == serverSettings
+        options.sslSettings == sslSettings
         options.compressorList == [MongoCompressor.createZlibCompressor()]
         options.getAutoEncryptionSettings() == autoEncryptionSettings
+        options.getClusterListeners() == [clusterListener]
+        options.getCommandListeners() == [commandListener]
+        options.getServerListeners() == [serverListener]
+        options.getServerMonitorListeners() == [serverMonitorListener]
+        options.getUuidRepresentation() == UuidRepresentation.C_SHARP_LEGACY
+
+        when:
+        def credential = MongoCredential.createCredential('user1', 'app1', 'pwd'.toCharArray())
+        def settings = options.asMongoClientSettings([new ServerAddress('host1')], null, SINGLE,
+                credential)
+
+        then:
+        settings.credential == credential
+        settings.readPreference == ReadPreference.secondary()
+        settings.applicationName == 'appName'
+        settings.writeConcern == WriteConcern.JOURNALED
+        settings.retryWrites
+        !settings.retryReads
+        settings.autoEncryptionSettings == autoEncryptionSettings
+        settings.codecRegistry == codecRegistry
+        settings.commandListeners == [commandListener]
+        settings.compressorList == [MongoCompressor.createZlibCompressor()]
+        settings.readConcern == ReadConcern.MAJORITY
+        settings.uuidRepresentation == UuidRepresentation.C_SHARP_LEGACY
+
+        settings.clusterSettings == ClusterSettings.builder()
+                .hosts([new ServerAddress('host1')])
+                .mode(SINGLE)
+                .requiredReplicaSetName('test')
+                .serverSelector(serverSelector)
+                .serverSelectionTimeout(150, MILLISECONDS)
+                .localThreshold(25, MILLISECONDS)
+                .addClusterListener(clusterListener)
+                .build()
+        settings.serverSettings == serverSettings
+        settings.connectionPoolSettings == connectionPoolSettings
+        settings.serverSettings == serverSettings
+        settings.socketSettings == socketSettings
+        settings.heartbeatSocketSettings == heartbeatSocketSettings
+
+        when:
+        def optionsFromSettings = MongoClientOptions.builder(settings).build()
+
+        then:
+        optionsFromSettings.getApplicationName() == 'appName'
+        optionsFromSettings.getReadPreference() == ReadPreference.secondary()
+        optionsFromSettings.getWriteConcern() == WriteConcern.JOURNALED
+        optionsFromSettings.getReadConcern() == ReadConcern.MAJORITY
+        optionsFromSettings.getServerSelector() == serverSelector
+        optionsFromSettings.getRetryWrites()
+        !optionsFromSettings.getRetryReads()
+        optionsFromSettings.getServerSelectionTimeout() == 150
+        optionsFromSettings.getMaxWaitTime() == 200
+        optionsFromSettings.getMaxConnectionIdleTime() == 300
+        optionsFromSettings.getMaxConnectionLifeTime() == 400
+        optionsFromSettings.getMinConnectionsPerHost() == 30
+        optionsFromSettings.getConnectionsPerHost() == 500
+        optionsFromSettings.getConnectTimeout() == 100
+        optionsFromSettings.getSocketTimeout() == 700
+        optionsFromSettings.isSslEnabled()
+        optionsFromSettings.isSslInvalidHostNameAllowed()
+        optionsFromSettings.getSslContext() == SSLContext.getDefault()
+        optionsFromSettings.getHeartbeatFrequency() == 5
+        optionsFromSettings.getMinHeartbeatFrequency() == 11
+        optionsFromSettings.getHeartbeatConnectTimeout() == 15
+        optionsFromSettings.getHeartbeatSocketTimeout() == 20
+        optionsFromSettings.getLocalThreshold() == 25
+        optionsFromSettings.getRequiredReplicaSetName() == 'test'
+        optionsFromSettings.getServerSettings().getHeartbeatFrequency(MILLISECONDS) == 5
+        optionsFromSettings.getServerSettings().getMinHeartbeatFrequency(MILLISECONDS) == 11
+        optionsFromSettings.connectionPoolSettings == connectionPoolSettings
+        optionsFromSettings.socketSettings == socketSettings
+        optionsFromSettings.heartbeatSocketSettings == heartbeatSocketSettings
+        optionsFromSettings.serverSettings == serverSettings
+        optionsFromSettings.sslSettings == sslSettings
+        optionsFromSettings.compressorList == [MongoCompressor.createZlibCompressor()]
+        optionsFromSettings.getAutoEncryptionSettings() == autoEncryptionSettings
+        optionsFromSettings.getClusterListeners() == [clusterListener]
+        optionsFromSettings.getCommandListeners() == [commandListener]
+        optionsFromSettings.getServerListeners() == [serverListener]
+        optionsFromSettings.getServerMonitorListeners() == [serverMonitorListener]
+        optionsFromSettings.getUuidRepresentation() == UuidRepresentation.C_SHARP_LEGACY
     }
 
-    //  Can't use a Stub for this since SSLContext.getSocketFactory is a final method
-    class SSLContextSubClass extends SSLContext {
-        protected SSLContextSubClass(final SSLContextSpi contextSpi, final Provider provider) {
-            super(contextSpi, provider, 'Default')
-        }
+    def 'should create settings with SRV protocol'() {
+        when:
+        MongoClientOptions.builder().build().asMongoClientSettings(null, 'test3.test.build.10gen.cc', SINGLE, null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        MongoClientOptions.builder().build().asMongoClientSettings([new ServerAddress('host1'), new ServerAddress('host2')],
+                'test3.test.build.10gen.cc', MULTIPLE, null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        MongoClientOptions.builder().build().asMongoClientSettings(null, 'test3.test.build.10gen.cc:27018', MULTIPLE, null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        MongoClientOptions.builder().build().asMongoClientSettings(null, 'test3.test.build.10gen.cc:27017',
+                MULTIPLE, null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        def settings = MongoClientOptions.builder().build().asMongoClientSettings(null, 'test3.test.build.10gen.cc',
+                MULTIPLE, null)
+
+        then:
+        settings.clusterSettings == ClusterSettings.builder().srvHost('test3.test.build.10gen.cc').build()
     }
 
     def 'should be easy to create new options from existing'() {
@@ -592,7 +730,7 @@ class MongoClientOptionsSpecification extends Specification {
                         'maxConnectionIdleTime', 'maxConnectionLifeTime', 'maxConnectionsPerHost', 'maxWaitTime', 'minConnectionsPerHost',
                         'minHeartbeatFrequency', 'readConcern', 'readPreference', 'requiredReplicaSetName', 'retryReads', 'retryWrites',
                         'serverListeners', 'serverMonitorListeners', 'serverSelectionTimeout', 'serverSelector',
-                        'socketKeepAlive', 'socketTimeout', 'sslContext', 'sslEnabled', 'sslInvalidHostNameAllowed',
+                        'socketTimeout', 'sslContext', 'sslEnabled', 'sslInvalidHostNameAllowed',
                         'uuidRepresentation', 'writeConcern']
 
         then:
