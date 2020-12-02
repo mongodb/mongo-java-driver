@@ -351,7 +351,7 @@ MongoClient mongoClient = MongoClients.create("mongodb://<username>:<password>@<
 ### MongoCredential
 
 To specify the mechanism using the *MongoCredential* class, use the
-[createAwsCredential()`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoCredential.html#createAwsCredential(java.lang.String,char%5B%5D)" >}})
+[`createAwsCredential()`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoCredential.html#createAwsCredential(java.lang.String,char%5B%5D)" >}})
 method. Your code to instantiate a `MongoClient` should resemble the following:
 
 ```java
@@ -366,7 +366,7 @@ MongoClient mongoClient = MongoClients.create(
 ```
 
 If you need to specify an AWS session token, use the
-[applyConnectionString()`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientSettings.Builder.html#applyConnectionString(com.mongodb.ConnectionString)" >}})
+[`applyConnectionString()`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientSettings.Builder.html#applyConnectionString(com.mongodb.ConnectionString)" >}})
 method to specify a connection string that specifies the `authMechanism` 
 and `AWS_SESSION_TOKEN` parameter values.
 
