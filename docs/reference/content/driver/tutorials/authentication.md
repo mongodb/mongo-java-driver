@@ -306,6 +306,81 @@ See the MongoDB server [x.509 tutorial]({{<docsref "tutorial/configure-x509-clie
 for more information about determining the subject
 name from the certificate.
 
+## MONGODB-AWS
+
+{{% note %}}
+The MONGODB-AWS authentication mechanism is only available in MongoDB
+versions 4.4 and later.
+{{% /note %}}
+
+The MONGODB-AWS authentication mechanism uses your Amazon Web Services
+Identity and Access Management (AWS IAM) credentials to authenticate your
+user.
+
+The following code snippets show how to specify the authentication mechanism,
+using the following placeholders:
+
+* `username` - value of your `AWS_ACCESS_KEY_ID`
+* `password` - value your `AWS_SECRET_ACCESS_KEY`
+* `hostname` - network address of your MongoDB server, accessible by your client
+* `port` - port number of your MongoDB server
+* `authenticationDb` - MongoDB database that contains your user's
+  authentication data. If you omit this parameter, the driver uses the
+  default value `admin`.
+* `awsSessionToken` - value of your `AWS_SESSION_TOKEN` *(optional)*
+
+### Connection String
+
+To specify the mechanism using a *connection string*, assign the 
+`authMechanism` parameter the value `MONGODB-AWS` in your connection string.
+Your code to instantiate a `MongoClient` should resemble the following:
+
+```java
+MongoClient mongoClient = MongoClients.create("mongodb://<username>:<password>@<hostname>:<port>/?authSource=<authenticationDb>&authMechanism=MONGODB-AWS");
+```
+
+If you need to specify an AWS session token, include it in the
+`authMechanismProperties` parameter as follows using the format
+`AWS_SESSION_TOKEN:<awsSessionToken>`. Your code to instantiate a 
+`MongoClient` with a session token should resemble the following:
+
+```java
+MongoClient mongoClient = MongoClients.create("mongodb://<username>:<password>@<hostname>:<port>/?authSource=<authenticationDb>&authMechanism=MONGODB-AWS&authMechanismProperties=AWS_SESSION_TOKEN:<awsSessionToken>");
+```
+
+### MongoCredential
+
+To specify the mechanism using the *MongoCredential* class, use the
+[createAwsCredential()`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoCredential.html#createAwsCredential(java.lang.String,char%5B%5D)" >}})
+method. Your code to instantiate a `MongoClient` should resemble the following:
+
+```java
+MongoCredential credential = MongoCredential.createAwsCredential("<username>", "<password>");
+
+MongoClient mongoClient = MongoClients.create(
+    MongoClientSettings.builder()
+        .applyToClusterSettings(builder ->
+            builder.hosts(Arrays.asList(new ServerAddress("<hostname>", "<port>"))))
+        .credential(credential)
+        .build());
+```
+
+If you need to specify an AWS session token, use the
+[applyConnectionString()`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientSettings.Builder.html#applyConnectionString(com.mongodb.ConnectionString)" >}})
+method to specify a connection string that specifies the `authMechanism` 
+and `AWS_SESSION_TOKEN` parameter values.
+
+```java
+MongoCredential credential = MongoCredential.createAwsCredential("<username>", "<password>");
+String connectionString = "mongodb://<hostname>:<port>/?authSource=<authenticationDb>&authMechanism=MONGODB-AWS&AWS_SESSION_TOKEN:<awsSessionToken>");
+
+MongoClient mongoClient = MongoClients.create(
+    MongoClientSettings.builder()
+        .applyConnectionString(connectionString)
+        .credential(credential)
+        .build());
+```
+
 ## Kerberos (GSSAPI) {#gssapi}
 
 [MongoDB Enterprise](http://www.mongodb.com/products/mongodb-enterprise) supports proxy
