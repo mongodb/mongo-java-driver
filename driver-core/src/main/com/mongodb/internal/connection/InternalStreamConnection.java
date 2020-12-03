@@ -145,37 +145,36 @@ public class InternalStreamConnection implements InternalConnection {
         isTrue("Open already called", stream == null, callback);
         try {
             stream = streamFactory.create(serverId.getAddress());
+            stream.openAsync(new AsyncCompletionHandler<Void>() {
+                @Override
+                public void completed(final Void aVoid) {
+                    connectionInitializer.initializeAsync(InternalStreamConnection.this, new SingleResultCallback<ConnectionDescription>() {
+                        @Override
+                        public void onResult(final ConnectionDescription result, final Throwable t) {
+                            if (t != null) {
+                                close();
+                                callback.onResult(null, t);
+                            } else {
+                                description = result;
+                                opened.set(true);
+                                sendCompressor = findSendCompressor(description);
+                                if (LOGGER.isInfoEnabled()) {
+                                    LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
+                                }
+                                callback.onResult(null, null);
+                            }
+                        }
+                    });
+                }
+
+                @Override
+                public void failed(final Throwable t) {
+                    callback.onResult(null, t);
+                }
+            });
         } catch (Throwable t) {
             callback.onResult(null, t);
-            return;
         }
-        stream.openAsync(new AsyncCompletionHandler<Void>() {
-            @Override
-            public void completed(final Void aVoid) {
-                connectionInitializer.initializeAsync(InternalStreamConnection.this, new SingleResultCallback<ConnectionDescription>() {
-                    @Override
-                    public void onResult(final ConnectionDescription result, final Throwable t) {
-                        if (t != null) {
-                            close();
-                            callback.onResult(null, t);
-                        } else {
-                            description = result;
-                            opened.set(true);
-                            sendCompressor = findSendCompressor(description);
-                            if (LOGGER.isInfoEnabled()) {
-                                LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
-                            }
-                            callback.onResult(null, null);
-                        }
-                    }
-                });
-            }
-
-            @Override
-            public void failed(final Throwable t) {
-                callback.onResult(null, t);
-            }
-        });
     }
 
     private Map<Byte, Compressor> createCompressorMap(final List<MongoCompressor> compressorList) {
