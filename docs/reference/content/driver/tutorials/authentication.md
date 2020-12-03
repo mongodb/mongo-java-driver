@@ -38,7 +38,7 @@ An authentication credential is represented as an instance of the
 [`MongoCredential`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoCredential.html" >}}) class. The [`MongoCredential`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoCredential.html" >}}) class includes static
 factory methods for each of the supported authentication mechanisms.
 
-You can also use a [`MongoClientURI`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientURI.html" >}}) and pass it to a 
+You can also use a [`MongoClientURI`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientURI.html" >}}) and pass it to a
 [`MongoClient()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoClient.html" >}}) constructor that takes a `MongoClientURI` parameter.
 
 ## Default Authentication Mechanism
@@ -67,7 +67,7 @@ and then construct a MongoClient with that credential.  Using the new (since 3.7
 ```java
 MongoClient mongoClient = MongoClients.create(
         MongoClientSettings.builder()
-                .applyToClusterSettings(builder -> 
+                .applyToClusterSettings(builder ->
                         builder.hosts(Arrays.asList(new ServerAddress("host1", 27017))))
                 .credential(credential)
                 .build());
@@ -155,8 +155,8 @@ MongoClient mongoClient = new MongoClient(uri);
 
 ### SCRAM-SHA-1
 
-To explicitly create a credential of type [`SCRAM-SHA-1`]({{<docsref "core/security-scram/" >}}), use the 
-[`createScramSha1Credential`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoCredential.html#createScramSha1Credential(java.lang.String,java.lang.String,char[])" >}}) 
+To explicitly create a credential of type [`SCRAM-SHA-1`]({{<docsref "core/security-scram/" >}}), use the
+[`createScramSha1Credential`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoCredential.html#createScramSha1Credential(java.lang.String,java.lang.String,char[])" >}})
 method:
 
 ```java
@@ -172,7 +172,7 @@ and then construct a MongoClient with that credential.  Using the new (since 3.7
 ```java
 MongoClient mongoClient = MongoClients.create(
         MongoClientSettings.builder()
-                .applyToClusterSettings(builder -> 
+                .applyToClusterSettings(builder ->
                         builder.hosts(Arrays.asList(new ServerAddress("host1", 27017))))
                 .credential(credential)
                 .build());
@@ -223,7 +223,7 @@ and then construct a MongoClient with that credential.  Using the new (since 3.7
 ```java
 MongoClient mongoClient = MongoClients.create(
         MongoClientSettings.builder()
-                .applyToClusterSettings(builder -> 
+                .applyToClusterSettings(builder ->
                         builder.hosts(Arrays.asList(new ServerAddress("host1", 27017))))
                 .credential(credential)
                 .build());
@@ -276,7 +276,7 @@ and then construct a MongoClient with that credential.  Using the new (since 3.7
 ```java
 MongoClient mongoClient = MongoClients.create(
         MongoClientSettings.builder()
-                .applyToClusterSettings(builder -> 
+                .applyToClusterSettings(builder ->
                         builder.hosts(Arrays.asList(new ServerAddress("host1", 27017))))
                 .credential(credential)
                 .build());
@@ -290,7 +290,7 @@ MongoClient mongoClient = new MongoClient(new ServerAddress("host1", 27017), cre
 ```
 
 Or use a connection string that explicitly specifies the `authMechanism=MONGODB-X509`. Using the new MongoClient API:
-                                                                                      
+
 ```java
 MongoClient mongoClient = MongoClients.create("mongodb://subjectName@host1/?authMechanism=MONGODB-X509&ssl=true");
 ```
@@ -331,7 +331,7 @@ using the following placeholders:
 
 ### Connection String
 
-To specify the mechanism using a *connection string*, assign the 
+To specify the mechanism using a *connection string*, assign the
 `authMechanism` parameter the value `MONGODB-AWS` in your connection string.
 Your code to instantiate a `MongoClient` should resemble the following:
 
@@ -341,7 +341,7 @@ MongoClient mongoClient = MongoClients.create("mongodb://<username>:<password>@<
 
 If you need to specify an AWS session token, include it in the
 `authMechanismProperties` parameter as follows using the format
-`AWS_SESSION_TOKEN:<awsSessionToken>`. Your code to instantiate a 
+`AWS_SESSION_TOKEN:<awsSessionToken>`. Your code to instantiate a
 `MongoClient` with a session token should resemble the following:
 
 ```java
@@ -355,7 +355,7 @@ To specify the mechanism using the *MongoCredential* class, use the
 method. Your code to instantiate a `MongoClient` should resemble the following:
 
 ```java
-MongoCredential credential = MongoCredential.createAwsCredential("<username>", "<password>");
+MongoCredential credential = MongoCredential.createAwsCredential("<username>", "<password>".toCharArray());
 
 MongoClient mongoClient = MongoClients.create(
     MongoClientSettings.builder()
@@ -365,14 +365,21 @@ MongoClient mongoClient = MongoClients.create(
         .build());
 ```
 
-If you need to specify an AWS session token, use the
-[`applyConnectionString()`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientSettings.Builder.html#applyConnectionString(com.mongodb.ConnectionString)" >}})
-method to specify a connection string that specifies the `authMechanism` 
-and `AWS_SESSION_TOKEN` parameter values.
+If you need to specify an AWS session token, you can add it using one of
+the following choices:
+
+#### Specify your AWS Session Token in a Connection String
+
+If you prefer to pass the AWS session token in the connection string, you
+specify your authentication mechanism in the `authMechanism` parameter
+and your session token in the `authMechanismProperties` parameter. Then,
+add it to your `MongoClientSettings` by calling the
+[`applyConnectionString()`]({{ "mongodb-driver-core" "com/mongodb/MongoClientSettings.Builder.html#applyConnectionString(com.mongodb.ConnectionString)" >}})
+method as follows:
 
 ```java
-MongoCredential credential = MongoCredential.createAwsCredential("<username>", "<password>");
-String connectionString = "mongodb://<hostname>:<port>/?authSource=<authenticationDb>&authMechanism=MONGODB-AWS&AWS_SESSION_TOKEN:<awsSessionToken>");
+MongoCredential credential = MongoCredential.createAwsCredential("<username>", "<password>".toCharArray());
+String connectionString = "mongodb://<hostname>:<port>/?authSource=<authenticationDb>&authMechanism=MONGODB-AWS&authMechanismProperties=AWS_SESSION_TOKEN:<awsSessionToken>");
 
 MongoClient mongoClient = MongoClients.create(
     MongoClientSettings.builder()
@@ -380,6 +387,24 @@ MongoClient mongoClient = MongoClients.create(
         .credential(credential)
         .build());
 ```
+
+#### Specify your AWS Session Token in a MongoCredential
+
+You can include your AWS session token in your `MongoCredential` instance by
+specifying it in a call to the
+[`withMechanismProperty()`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoCredential.html#withMechanismProperty(java.lang.String,T)" >}})
+method as shown below:
+
+```java
+MongoCredential.createAwsCredential("<username>", "<password>".toCharArray()) .withMechanismProperty("AWS_SESSION_TOKEN", "<awsSessionToken>")
+```
+
+#### Specify your AWS Session Token in an Environment Variable
+
+In your client execution environment, set an environment variable called
+`AWS_SESSION_TOKEN` and assign your token to it. The value is
+automatically picked up by your MongoClient when you specify the
+`MONGODB-AWS` authentication mechanism.
 
 ## Kerberos (GSSAPI) {#gssapi}
 
@@ -400,7 +425,7 @@ and then construct a MongoClient with that credential.  Using the new (since 3.7
 ```java
 MongoClient mongoClient = MongoClients.create(
         MongoClientSettings.builder()
-                .applyToClusterSettings(builder -> 
+                .applyToClusterSettings(builder ->
                         builder.hosts(Arrays.asList(new ServerAddress("host1", 27017))))
                 .credential(credential)
                 .build());
@@ -413,7 +438,7 @@ MongoClient mongoClient = new MongoClient(new ServerAddress("host1", 27017), cre
 ```
 
 Or use a connection string that explicitly specifies the `authMechanism=GSSAPI`. Using the new MongoClient API:
-                                                                                      
+
 ```java
 MongoClient mongoClient = MongoClients.create("mongodb://username%40REALM.ME@host1/?authMechanism=GSSAPI");
 ```
@@ -466,13 +491,13 @@ mongodb://username%40MYREALM.com@myserver/?authMechanism=GSSAPI&authMechanismPro
 ```
 
 {{% note %}}
-On Windows, Oracle's JRE uses [LSA](https://msdn.microsoft.com/en-us/library/windows/desktop/aa378326.aspx) rather than 
+On Windows, Oracle's JRE uses [LSA](https://msdn.microsoft.com/en-us/library/windows/desktop/aa378326.aspx) rather than
 [SSPI](https://msdn.microsoft.com/en-us/library/windows/desktop/aa380493.aspx) in its implementation of GSSAPI, which limits
-interoperability with Windows Active Directory and in particular the ability to implement single sign-on. 
+interoperability with Windows Active Directory and in particular the ability to implement single sign-on.
 
-- [JDK-8054026](https://bugs.openjdk.java.net/browse/JDK-8054026) 
-- [JDK-6722928](https://bugs.openjdk.java.net/browse/JDK-6722928) 
-- [SO 23427343](https://stackoverflow.com/questions/23427343/cannot-retrieve-tgt-despite-allowtgtsessionkey-registry-entry)    
+- [JDK-8054026](https://bugs.openjdk.java.net/browse/JDK-8054026)
+- [JDK-6722928](https://bugs.openjdk.java.net/browse/JDK-6722928)
+- [SO 23427343](https://stackoverflow.com/questions/23427343/cannot-retrieve-tgt-despite-allowtgtsessionkey-registry-entry)
 {{% /note %}}
 
 
@@ -494,7 +519,7 @@ and then construct a MongoClient with that credential.  Using the new (since 3.7
 ```java
 MongoClient mongoClient = MongoClients.create(
         MongoClientSettings.builder()
-                .applyToClusterSettings(builder -> 
+                .applyToClusterSettings(builder ->
                         builder.hosts(Arrays.asList(new ServerAddress("host1", 27017))))
                 .credential(credential)
                 .build());
@@ -507,7 +532,7 @@ MongoClient mongoClient = new MongoClient(new ServerAddress("host1", 27017), cre
 ```
 
 Or use a connection string that explicitly specifies the `authMechanism=PLAIN`.  Using the new MongoClient API:
-                                                                                      
+
 ```java
 MongoClient mongoClient = MongoClients.create("mongodb://user1@host1/?authSource=$external&authMechanism=PLAIN");
 ```
