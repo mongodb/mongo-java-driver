@@ -16,7 +16,7 @@
 
 package com.mongodb.client.model.expressions;
 
-import jdk.nashorn.internal.ir.annotations.Immutable;
+import com.mongodb.annotations.Immutable;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
