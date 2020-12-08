@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,63 +16,58 @@
 
 package com.mongodb.reactivestreams.client.internal;
 
-import com.mongodb.internal.async.client.AsyncListDatabasesIterable;
+import com.mongodb.internal.async.AsyncBatchCursor;
+import com.mongodb.internal.operation.AsyncReadOperation;
+import com.mongodb.lang.Nullable;
+import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.ListDatabasesPublisher;
 import org.bson.conversions.Bson;
-import org.reactivestreams.Publisher;
-import org.reactivestreams.Subscriber;
 
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+final class ListDatabasesPublisherImpl<T> extends BatchCursorPublisher<T> implements ListDatabasesPublisher<T> {
 
-final class ListDatabasesPublisherImpl<TResult> implements ListDatabasesPublisher<TResult> {
+    private long maxTimeMS;
+    private Bson filter;
+    private Boolean nameOnly;
+    private Boolean authorizedDatabasesOnly;
 
-    private final AsyncListDatabasesIterable<TResult> wrapped;
-
-    ListDatabasesPublisherImpl(final AsyncListDatabasesIterable<TResult> wrapped) {
-        this.wrapped = notNull("wrapped", wrapped);
+    ListDatabasesPublisherImpl(
+            @Nullable final ClientSession clientSession,
+            final MongoOperationPublisher<T> mongoOperationPublisher) {
+        super(clientSession, mongoOperationPublisher);
     }
 
-    @Override
-    public ListDatabasesPublisher<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
+    public ListDatabasesPublisherImpl<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
-        wrapped.maxTime(maxTime, timeUnit);
+        this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
-    @Override
-    public ListDatabasesPublisher<TResult> filter(final Bson filter) {
-        wrapped.filter(filter);
+    public ListDatabasesPublisherImpl<T> batchSize(final int batchSize) {
+        super.batchSize(batchSize);
         return this;
     }
 
-    @Override
-    public ListDatabasesPublisher<TResult> nameOnly(final Boolean nameOnly) {
-        wrapped.nameOnly(nameOnly);
+    public ListDatabasesPublisherImpl<T> filter(@Nullable final Bson filter) {
+        this.filter = filter;
         return this;
     }
 
-    @Override
-    public ListDatabasesPublisher<TResult> authorizedDatabasesOnly(final Boolean authorizedDatabasesOnly) {
-        wrapped.authorizedDatabasesOnly(authorizedDatabasesOnly);
+    public ListDatabasesPublisherImpl<T> nameOnly(@Nullable final Boolean nameOnly) {
+        this.nameOnly = nameOnly;
         return this;
     }
 
-    @Override
-    public ListDatabasesPublisher<TResult> batchSize(final int batchSize) {
-        wrapped.batchSize(batchSize);
+    public ListDatabasesPublisherImpl<T> authorizedDatabasesOnly(@Nullable final Boolean authorizedDatabasesOnly) {
+        this.authorizedDatabasesOnly = authorizedDatabasesOnly;
         return this;
     }
 
-    @Override
-    public Publisher<TResult> first() {
-        return Publishers.publish(wrapped::first);
-    }
-
-    @Override
-    public void subscribe(final Subscriber<? super TResult> s) {
-        Publishers.publish(wrapped).subscribe(s);
+    AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation() {
+        return getOperations().listDatabases(getDocumentClass(), filter, nameOnly, maxTimeMS, authorizedDatabasesOnly);
     }
 }

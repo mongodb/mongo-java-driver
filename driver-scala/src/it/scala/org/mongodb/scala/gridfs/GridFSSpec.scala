@@ -28,6 +28,7 @@ import org.bson.{ BsonArray, BsonBinary, BsonInt32 }
 import org.mongodb.scala._
 import org.mongodb.scala.bson.collection.mutable
 import org.mongodb.scala.bson.{ BsonDocument, BsonInt64, BsonObjectId, BsonString }
+import org.mongodb.scala.model.Indexes.ascending
 import org.reactivestreams.Publisher
 import org.scalatest.Inspectors.forEvery
 
@@ -263,7 +264,7 @@ class GridFSSpec extends RequiresMongoDBISpec with FuturesSpec {
               val documents: List[Document] = processChunks(dataItem.getArray("documents", new BsonArray))
               getChunksCount(new BsonDocument) should equal(documents.size)
 
-              val actualDocuments: Seq[Document] = chunksCollection.map(_.find()).get.futureValue
+              val actualDocuments: Seq[Document] = chunksCollection.map(_.find().sort(ascending("n"))).get.futureValue
 
               for ((expected, actual) <- documents zip actualDocuments) {
                 objectId should equal(actual.get[BsonObjectId]("files_id").get.getValue())

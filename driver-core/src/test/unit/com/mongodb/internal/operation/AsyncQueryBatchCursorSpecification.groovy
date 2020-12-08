@@ -137,10 +137,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         connectionSource.getCount() == 0
 
         then:
-        nextBatch(cursor) == null
-
-        then:
-        connectionSource.getCount() == 0
+        cursor.isClosed()
 
         when:
         nextBatch(cursor)

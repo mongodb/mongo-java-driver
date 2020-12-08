@@ -20,9 +20,7 @@ import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
-import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.test.CollectionHelper;
-import com.mongodb.reactivestreams.client.Fixture.ObservableSubscriber;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
@@ -31,6 +29,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import reactor.core.publisher.Mono;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,13 +40,14 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
-import static com.mongodb.internal.async.client.Fixture.getMongoClientBuilderFromConnectionString;
 import static com.mongodb.reactivestreams.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.reactivestreams.client.Fixture.getMongoClient;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static com.mongodb.reactivestreams.client.Fixture.getMongoClientBuilderFromConnectionString;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
@@ -80,13 +80,9 @@ public class ClientSideEncryptionSessionTest {
         MongoDatabase keyVaultDatabase = client.getDatabase("keyvault");
         MongoCollection<BsonDocument> dataKeys = keyVaultDatabase.getCollection("datakeys", BsonDocument.class)
                 .withWriteConcern(WriteConcern.MAJORITY);
-        ObservableSubscriber<Void> subscriber = new ObservableSubscriber<>();
-        dataKeys.drop().subscribe(subscriber);
-        subscriber.await(5, SECONDS);
+        Mono.from(dataKeys.drop()).block(TIMEOUT_DURATION);
 
-        ObservableSubscriber<InsertOneResult> insertOneSubscriber = new ObservableSubscriber<>();
-        dataKeys.insertOne(bsonDocumentFromPath("external-key.json")).subscribe(insertOneSubscriber);
-        insertOneSubscriber.await(5, SECONDS);
+        Mono.from(dataKeys.insertOne(bsonDocumentFromPath("external-key.json"))).block(TIMEOUT_DURATION);
 
         /* Step 2: create encryption objects. */
         Map<String, Map<String, Object>> kmsProviders = new HashMap<>();
@@ -128,39 +124,28 @@ public class ClientSideEncryptionSessionTest {
     public void testWithExplicitSession() throws Throwable {
         BsonString unencryptedValue = new BsonString("test");
 
-        ObservableSubscriber<ClientSession> sessionSubscriber = new ObservableSubscriber<>();
-        clientEncrypted.startSession().subscribe(sessionSubscriber);
-        sessionSubscriber.await(5, SECONDS);
-        try (ClientSession clientSession = sessionSubscriber.getReceived().get(0)) {
+        try (ClientSession clientSession = Mono.from(clientEncrypted.startSession()).block(TIMEOUT_DURATION)) {
+            assertNotNull(clientSession);
             if (useTransaction) {
                 clientSession.startTransaction();
             }
             MongoCollection<BsonDocument> autoEncryptedCollection = clientEncrypted.getDatabase(getDefaultDatabaseName())
                     .getCollection(COLLECTION_NAME, BsonDocument.class);
-            ObservableSubscriber<InsertOneResult> insertOneResultSubscriber = new ObservableSubscriber<>();
-            autoEncryptedCollection.insertOne(clientSession, new BsonDocument().append("encrypted", new BsonString("test")))
-                    .subscribe(insertOneResultSubscriber);
-            insertOneResultSubscriber.await(5, SECONDS);
 
-            ObservableSubscriber<BsonDocument> documentSubscriber = new ObservableSubscriber<>();
-            autoEncryptedCollection.find(clientSession).first().subscribe(documentSubscriber);
-            documentSubscriber.await(5, SECONDS);
-            BsonDocument unencryptedDocument = documentSubscriber.getReceived().get(0);
+            Mono.from(autoEncryptedCollection.insertOne(clientSession, new BsonDocument().append("encrypted", new BsonString("test"))))
+                    .block(TIMEOUT_DURATION);
+
+            BsonDocument unencryptedDocument = Mono.from(autoEncryptedCollection.find(clientSession).first()).block(TIMEOUT_DURATION);
             assertEquals(unencryptedValue, unencryptedDocument.getString("encrypted"));
 
             if (useTransaction) {
-                ObservableSubscriber<Void> commitSubscriber = new ObservableSubscriber<>();
-                clientSession.commitTransaction().subscribe(commitSubscriber);
-                commitSubscriber.await(5, SECONDS);
+                Mono.from(clientSession.commitTransaction()).block(TIMEOUT_DURATION);
             }
         }
 
         MongoCollection<BsonDocument> encryptedCollection = client.getDatabase(getDefaultDatabaseName())
                 .getCollection(COLLECTION_NAME, BsonDocument.class);
-        ObservableSubscriber<BsonDocument> documentSubscriber = new ObservableSubscriber<>();
-        encryptedCollection.find().first().subscribe(documentSubscriber);
-        documentSubscriber.await(5, SECONDS);
-        BsonDocument encryptedDocument = documentSubscriber.getReceived().get(0);
+        BsonDocument encryptedDocument = Mono.from(encryptedCollection.find().first()).block(TIMEOUT_DURATION);
         assertTrue(encryptedDocument.isBinary("encrypted"));
         assertEquals(6, encryptedDocument.getBinary("encrypted").getType());
     }

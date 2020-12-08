@@ -99,7 +99,6 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
         expect:
         nextBatch().size() == 10
-        !nextBatch()
     }
 
     def 'should not retain connection and source after cursor is exhausted on first batch'() {
@@ -155,6 +154,9 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         def total = 0
         while (next) {
             total += next.size()
+            if (cursor.isClosed()) {
+                break
+            }
             next = nextBatch()
         }
 

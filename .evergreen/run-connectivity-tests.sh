@@ -25,4 +25,5 @@ for MONGODB_URI in $@; do
     ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --info --rerun-tasks driver-sync:test --tests ConnectivityTest
     ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --info --rerun-tasks driver-core:test --tests ConnectivityTest
     ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --info --rerun-tasks driver-legacy:test --tests ConnectivityTest
+    ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --info --rerun-tasks driver-reactive-streams:test --tests ConnectivityTest
 done

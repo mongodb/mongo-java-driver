@@ -541,6 +541,9 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
     }
 
     def asyncCursorToList(AsyncBatchCursor cursor) {
+        if (cursor.isClosed()) {
+            return []
+        }
         def callback = new FutureResultCallback()
         cursor.next(callback)
         def next = callback.get();

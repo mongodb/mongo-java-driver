@@ -163,6 +163,12 @@
         <Bug pattern="RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"/>
     </Match>
 
+    <Match>
+        <Class name="~com.mongodb.reactivestreams.client.internal.crypt.*"/>
+        <Method name="retain"/>
+        <Bug pattern="RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"/>
+    </Match>
+
     <!-- Caused by Java 11 generating a null check on try with resources.
          See https://github.com/spotbugs/spotbugs/issues/756 for details. -->
     <Match>

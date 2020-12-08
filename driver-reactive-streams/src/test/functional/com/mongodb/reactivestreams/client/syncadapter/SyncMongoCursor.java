@@ -35,10 +35,9 @@ import static com.mongodb.ClusterFixture.TIMEOUT;
 
 class SyncMongoCursor<T> implements MongoCursor<T> {
     private static final Object COMPLETED = new Object();
-
+    private final BlockingDeque<Object> results = new LinkedBlockingDeque<>();
     private volatile Subscription subscription;
     private volatile T next;
-    private final BlockingDeque<Object> results = new LinkedBlockingDeque<>();
 
     SyncMongoCursor(final Publisher<T> publisher) {
         CountDownLatch latch = new CountDownLatch(1);

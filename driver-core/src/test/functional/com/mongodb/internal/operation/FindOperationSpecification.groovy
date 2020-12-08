@@ -273,9 +273,13 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         }()
         def hasAnotherBatch = {
             if (async) {
-                def futureResultCallback = new FutureResultCallback()
-                cursor.next(futureResultCallback)
-                futureResultCallback.get() != null
+                if (cursor.isClosed()) {
+                    false
+                } else {
+                    def futureResultCallback = new FutureResultCallback()
+                    cursor.next(futureResultCallback)
+                    futureResultCallback.get() != null
+                }
             } else {
                 cursor.hasNext()
             }

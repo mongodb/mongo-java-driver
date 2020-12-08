@@ -60,7 +60,7 @@ import static java.util.Objects.requireNonNull;
 
 class SyncMongoCollection<T> implements MongoCollection<T> {
 
-    private com.mongodb.reactivestreams.client.MongoCollection<T> wrapped;
+    private final com.mongodb.reactivestreams.client.MongoCollection<T> wrapped;
 
     SyncMongoCollection(final com.mongodb.reactivestreams.client.MongoCollection<T> wrapped) {
         this.wrapped = wrapped;
@@ -316,7 +316,7 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
     @Override
     public MapReduceIterable<T> mapReduce(final ClientSession clientSession, final String mapFunction, final String reduceFunction) {
         return new SyncMapReduceIterable<>(wrapped.mapReduce(unwrap(clientSession), mapFunction, reduceFunction,
-                wrapped.getDocumentClass()));
+                                                             wrapped.getDocumentClass()));
     }
 
     @Override

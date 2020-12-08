@@ -49,6 +49,7 @@ ext {
     snappyVersion = '1.1.4'
     zstdVersion = '1.3.8-3'
     mongoCryptVersion = '1.1.0-beta1'
+    projectReactorVersion = 'Californium-SR21'
     gitVersion = getGitVersion()
 }
 
