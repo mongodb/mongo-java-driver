@@ -214,18 +214,23 @@ final class CommandOperationHelper {
             connection.release();
         }
 
-        final MongoException originalException = exception;
-        return withReleasableConnection(binding, originalException, (source1, connection1) -> {
+        return retryCommand(binding, database, commandCreator, decoder, transformer, exception);
+    }
+
+    private static <D, T> T retryCommand(final ReadBinding binding, final String database, final CommandCreator commandCreator,
+                                         final Decoder<D> decoder, final CommandReadTransformer<D, T> transformer,
+                                         final MongoException originalException) {
+        return withReleasableConnection(binding, originalException, (source, connection) -> {
             try {
-                if (!canRetryRead(source1.getServerDescription(), connection1.getDescription(), binding.getSessionContext())) {
+                if (!canRetryRead(source.getServerDescription(), connection.getDescription(), binding.getSessionContext())) {
                     throw originalException;
                 }
-                BsonDocument retryCommand = commandCreator.create(source1.getServerDescription(), connection1.getDescription());
+                BsonDocument retryCommand = commandCreator.create(source.getServerDescription(), connection.getDescription());
                 logRetryExecute(retryCommand.getFirstKey(), originalException);
-                return executeCommand(database, retryCommand, decoder, source1, connection1, binding.getReadPreference(), transformer,
-                        binding.getSessionContext(), source1.getServerApi());
+                return executeCommand(database, retryCommand, decoder, source, connection, binding.getReadPreference(), transformer,
+                        binding.getSessionContext(), source.getServerApi());
             } finally {
-                connection1.release();
+                connection.release();
             }
         });
     }
