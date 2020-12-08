@@ -22,7 +22,6 @@ import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.crypt.capi.MongoCryptException;
 import com.mongodb.lang.Nullable;
-import com.mongodb.reactivestreams.client.Fixture.ObservableSubscriber;
 import com.mongodb.reactivestreams.client.vault.ClientEncryption;
 import com.mongodb.reactivestreams.client.vault.ClientEncryptions;
 import org.bson.BsonBinary;
@@ -33,6 +32,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import reactor.core.publisher.Mono;
 
 import java.net.ConnectException;
 import java.util.ArrayList;
@@ -40,13 +40,13 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.ClusterFixture.TIMEOUT;
+import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static com.mongodb.ClusterFixture.hasEncryptionTestsEnabled;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
@@ -246,19 +246,16 @@ public class ClientEncryptionCustomEndpointTest {
     private void testEndpoint(final ClientEncryption clientEncryption,
                               @Nullable final Class<? extends RuntimeException> exceptionClass,
                               @Nullable final Class<? extends RuntimeException> wrappedExceptionClass,
-                              @Nullable final String messageContainedInException) throws Throwable {
+                              @Nullable final String messageContainedInException) {
         try {
-            ObservableSubscriber<BsonBinary> dataKeySubscriber = new ObservableSubscriber<>();
-            clientEncryption.createDataKey(provider, new DataKeyOptions().masterKey(masterKey)).subscribe(dataKeySubscriber);
-
-            BsonBinary dataKeyId = dataKeySubscriber.get(TIMEOUT, TimeUnit.SECONDS).get(0);
-
+            BsonBinary dataKeyId = Mono.from(clientEncryption.createDataKey(provider, new DataKeyOptions().masterKey(masterKey)))
+                    .block(TIMEOUT_DURATION);
             assertNull("Expected exception, but encryption succeeded", exceptionClass);
 
-            ObservableSubscriber<BsonBinary> encryptSubscriber = new ObservableSubscriber<>();
-            clientEncryption.encrypt(new BsonString("test"), new EncryptOptions("AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic")
-                    .keyId(dataKeyId)).subscribe(encryptSubscriber);
-            encryptSubscriber.await(TIMEOUT, TimeUnit.SECONDS);
+            assertNotNull(dataKeyId);
+            Mono.from(clientEncryption.encrypt(new BsonString("test"),
+                                               new EncryptOptions("AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic")
+                    .keyId(dataKeyId))).block(TIMEOUT_DURATION);
         } catch (Exception e) {
             if (exceptionClass == null) {
                 throw e;

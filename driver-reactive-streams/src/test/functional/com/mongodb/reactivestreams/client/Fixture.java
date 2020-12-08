@@ -17,31 +17,34 @@
 package com.mongodb.reactivestreams.client;
 
 import com.mongodb.ClusterFixture;
+import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
+import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoTimeoutException;
+import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerVersion;
+import com.mongodb.connection.StreamFactoryFactory;
+import com.mongodb.connection.TlsChannelStreamFactoryFactory;
+import com.mongodb.reactivestreams.client.internal.MongoClientImpl;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
+import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.ClusterFixture.TIMEOUT;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static com.mongodb.ClusterFixture.getSslSettings;
+import static java.lang.Thread.sleep;
 
 /**
  * Helper class for asynchronous tests.
  */
 public final class Fixture {
-    private static MongoClient mongoClient;
+    private static MongoClientImpl mongoClient;
     private static ServerVersion serverVersion;
     private static ClusterType clusterType;
 
@@ -50,7 +53,7 @@ public final class Fixture {
 
     public static synchronized MongoClient getMongoClient() {
         if (mongoClient == null) {
-            mongoClient = MongoClients.create(getMongoClientSettings());
+            mongoClient = (MongoClientImpl) MongoClients.create(getMongoClientSettings());
             serverVersion = getServerVersion();
             clusterType = getClusterType();
             Runtime.getRuntime().addShutdownHook(new ShutdownHook());
@@ -74,47 +77,69 @@ public final class Fixture {
         return getMongoClient().getDatabase(getDefaultDatabaseName());
     }
 
-    public static MongoCollection<Document> initializeCollection(final MongoNamespace namespace) throws Throwable {
+    public static MongoCollection<Document> initializeCollection(final MongoNamespace namespace) {
         MongoDatabase database = getMongoClient().getDatabase(namespace.getDatabaseName());
         try {
-            ObservableSubscriber<Document> subscriber = new ObservableSubscriber<Document>();
-            database.runCommand(new Document("drop", namespace.getCollectionName())).subscribe(subscriber);
-            subscriber.await(10, SECONDS);
+            Mono.from(database.runCommand(new Document("drop", namespace.getCollectionName()))).block(TIMEOUT_DURATION);
         } catch (MongoCommandException e) {
             if (!e.getErrorMessage().contains("ns not found")) {
                 throw e;
             }
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
         }
         return database.getCollection(namespace.getCollectionName());
     }
 
-    public static void dropDatabase(final String name) throws Throwable {
+    public static void dropDatabase(final String name) {
         if (name == null) {
             return;
         }
         try {
-            ObservableSubscriber<Document> subscriber = new ObservableSubscriber<Document>();
-            getMongoClient().getDatabase(name).runCommand(new Document("dropDatabase", 1)).subscribe(subscriber);
-            subscriber.await(10, SECONDS);
+            Mono.from(getMongoClient().getDatabase(name).runCommand(new Document("dropDatabase", 1))).block(TIMEOUT_DURATION);
         } catch (MongoCommandException e) {
             if (!e.getErrorMessage().contains("ns not found")) {
                 throw e;
+            }
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
+    }
+
+    public static void drop(final MongoNamespace namespace) {
+        try {
+            Mono.from(getMongoClient().getDatabase(namespace.getDatabaseName())
+                              .runCommand(new Document("drop", namespace.getCollectionName()))).block(TIMEOUT_DURATION);
+        } catch (MongoCommandException e) {
+            if (!e.getErrorMessage().contains("ns not found")) {
+                throw e;
+            }
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
+    }
+
+    public static synchronized void waitForLastServerSessionPoolRelease() {
+        if (mongoClient != null) {
+            long startTime = System.currentTimeMillis();
+            int sessionInUseCount = getSessionInUseCount();
+            while (sessionInUseCount > 0) {
+                try {
+                    if (System.currentTimeMillis() > startTime + TIMEOUT_DURATION.toMillis()) {
+                        throw new MongoTimeoutException("Timed out waiting for server session pool in use count to drop to 0.  Now at: "
+                                                                + sessionInUseCount);
+                    }
+                    sleep(10);
+                    sessionInUseCount = getSessionInUseCount();
+                } catch (InterruptedException e) {
+                    throw new MongoInterruptedException("Interrupted", e);
+                }
             }
         }
     }
 
-    public static void drop(final MongoNamespace namespace) throws Throwable {
-        try {
-            ObservableSubscriber<Document> subscriber = new ObservableSubscriber<Document>();
-            getMongoClient().getDatabase(namespace.getDatabaseName())
-                    .runCommand(new Document("drop", namespace.getCollectionName()))
-                    .subscribe(subscriber);
-            subscriber.await(20, SECONDS);
-        } catch (MongoCommandException e) {
-            if (!e.getErrorMessage().contains("ns not found")) {
-                throw e;
-            }
-        }
+    private static int getSessionInUseCount() {
+        return mongoClient.getServerSessionPool().getInUseCount();
     }
 
     public static boolean serverVersionAtLeast(final int majorVersion, final int minorVersion) {
@@ -125,6 +150,25 @@ public final class Fixture {
     public static boolean isReplicaSet() {
         getMongoClient();
         return clusterType == ClusterType.REPLICA_SET;
+    }
+
+    public static StreamFactoryFactory getStreamFactoryFactory() {
+        if (getSslSettings().isEnabled()) {
+            return new TlsChannelStreamFactoryFactory();
+        } else {
+            return AsynchronousSocketChannelStreamFactoryFactory.builder().build();
+        }
+    }
+
+    public static synchronized ConnectionString getConnectionString() {
+        return ClusterFixture.getConnectionString();
+    }
+
+    public static MongoClientSettings.Builder getMongoClientBuilderFromConnectionString() {
+        MongoClientSettings.Builder builder = MongoClientSettings.builder()
+                .applyConnectionString(getConnectionString());
+        builder.streamFactoryFactory(getStreamFactoryFactory());
+        return builder;
     }
 
     @SuppressWarnings("unchecked")
@@ -146,169 +190,20 @@ public final class Fixture {
     }
 
     private static Document runAdminCommand(final Bson command) {
-        ObservableSubscriber<Document> subscriber = new ObservableSubscriber<Document>();
-        getMongoClient().getDatabase("admin")
-                .runCommand(command)
-                .subscribe(subscriber);
-        try {
-            return subscriber.get(TIMEOUT, SECONDS).get(0);
-        } catch (Throwable t) {
-            if (t instanceof RuntimeException) {
-                throw (RuntimeException) t;
-            }
-            throw new RuntimeException(t);
-        }
+        return Mono.from(getMongoClient().getDatabase("admin")
+                .runCommand(command)).block(TIMEOUT_DURATION);
     }
 
     static class ShutdownHook extends Thread {
         @Override
         public void run() {
             try {
-                dropDatabase(com.mongodb.client.Fixture.getDefaultDatabaseName());
-            } catch (Throwable e) {
+                dropDatabase(getDefaultDatabaseName());
+            } catch (Exception e) {
                 // ignore
             }
             mongoClient.close();
             mongoClient = null;
         }
     }
-
-    public static class ObservableSubscriber<T> implements Subscriber<T> {
-        private final List<T> received;
-        private final List<Throwable> errors;
-        private final CountDownLatch latch;
-        private volatile Subscription subscription;
-        private volatile boolean completed;
-
-        public ObservableSubscriber() {
-            this.received = new ArrayList<T>();
-            this.errors = new ArrayList<Throwable>();
-            this.latch = new CountDownLatch(1);
-        }
-
-        @Override
-        public void onSubscribe(final Subscription s) {
-            subscription = s;
-        }
-
-        @Override
-        public void onNext(final T t) {
-            received.add(t);
-        }
-
-        @Override
-        public void onError(final Throwable t) {
-            errors.add(t);
-            onComplete();
-        }
-
-        @Override
-        public void onComplete() {
-            completed = true;
-            latch.countDown();
-        }
-
-        public Subscription getSubscription() {
-            return subscription;
-        }
-
-        public List<T> getReceived() {
-            return received;
-        }
-
-        public List<Throwable> getErrors() {
-            return errors;
-        }
-
-        public boolean isCompleted() {
-            return completed;
-        }
-
-        public List<T> get(final long timeout, final TimeUnit unit) throws Throwable {
-            return await(timeout, unit).getReceived();
-        }
-
-        public ObservableSubscriber<T> await(final long timeout, final TimeUnit unit) throws Throwable {
-            return await(Integer.MAX_VALUE, timeout, unit);
-        }
-
-        public ObservableSubscriber<T> await(final int request, final long timeout, final TimeUnit unit) throws Throwable {
-            subscription.request(request);
-            if (!latch.await(timeout, unit)) {
-                throw new MongoTimeoutException("Publisher onComplete timed out");
-            }
-            if (!errors.isEmpty()) {
-                throw errors.get(0);
-            }
-            return this;
-        }
-    }
-
-    public static class CountingSubscriber<T> implements Subscriber<T> {
-        private int counter = 0;
-        private Throwable error;
-        private final CountDownLatch latch = new CountDownLatch(1);
-        private volatile Subscription subscription;
-        private volatile boolean completed;
-
-        @Override
-        public void onSubscribe(final Subscription s) {
-            subscription = s;
-        }
-
-        @Override
-        public void onNext(final T t) {
-            counter += 1;
-        }
-
-        @Override
-        public void onError(final Throwable t) {
-            error = t;
-            onComplete();
-        }
-
-        @Override
-        public void onComplete() {
-            completed = true;
-            latch.countDown();
-        }
-
-        public Subscription getSubscription() {
-            return subscription;
-        }
-
-        public int getCount() {
-            return counter;
-        }
-
-        public Throwable getError() {
-            return error;
-        }
-
-        public boolean isCompleted() {
-            return completed;
-        }
-
-        public int get(final long timeout, final TimeUnit unit) throws Throwable {
-            subscription.request(Integer.MAX_VALUE);
-            return await(timeout, unit).getCount();
-        }
-
-        public CountingSubscriber<T> await(final long timeout, final TimeUnit unit) throws Throwable {
-            if (!latch.await(timeout, unit)) {
-                if (!isCompleted()) {
-                    subscription.cancel();
-                }
-                throw new MongoTimeoutException("Publisher onComplete timed out");
-            }
-            if (!isCompleted()) {
-                subscription.cancel();
-            }
-            if (error != null) {
-                throw error;
-            }
-            return this;
-        }
-    }
-
 }

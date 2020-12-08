@@ -32,13 +32,14 @@ import com.mongodb.internal.session.SessionContext;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-class ClientSessionBinding implements AsyncReadWriteBinding {
+public class ClientSessionBinding implements AsyncReadWriteBinding {
     private final AsyncClusterAwareReadWriteBinding wrapped;
     private final AsyncClientSession session;
     private final boolean ownsSession;
     private final ClientSessionContext sessionContext;
 
-    ClientSessionBinding(final AsyncClientSession session, final boolean ownsSession, final AsyncClusterAwareReadWriteBinding wrapped) {
+    public  ClientSessionBinding(final AsyncClientSession session, final boolean ownsSession,
+                                 final AsyncClusterAwareReadWriteBinding wrapped) {
         this.wrapped = notNull("wrapped", (wrapped));
         this.ownsSession = ownsSession;
         this.session = notNull("session", session);

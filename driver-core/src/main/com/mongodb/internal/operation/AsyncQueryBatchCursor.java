@@ -197,6 +197,12 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
                 results = null;
             }
             firstBatch = null;
+            ServerCursor localCursor = getServerCursor();
+            if (localCursor == null) {
+                synchronized (this) {
+                    isClosed = true;
+                }
+            }
             callback.onResult(results, null);
         } else {
             ServerCursor localCursor = getServerCursor();

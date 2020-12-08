@@ -17,7 +17,6 @@
 package com.mongodb.internal.async.client
 
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.internal.async.AsyncBatchCursor
 import com.mongodb.internal.async.SingleResultCallback
 
 import java.util.concurrent.TimeUnit
@@ -48,21 +47,5 @@ class TestHelper {
         } else {
             method.call(*opArgs)
         }
-    }
-
-    static <T> void execute(final AsyncMongoIterable method) {
-        method.batchCursor(new SingleResultCallback<AsyncBatchCursor>() {
-            @Override
-            void onResult(final AsyncBatchCursor result, final Throwable t) {
-            }
-        })
-    }
-
-    static <T> AsyncMongoIterable<T> createIterable(final Closure<T> method, AsyncClientSession session, ... args) {
-        List opArgs = (args != null) ? args : []
-        if (session != null) {
-            opArgs = [session, *opArgs]
-        }
-        method.call(*opArgs)
     }
 }

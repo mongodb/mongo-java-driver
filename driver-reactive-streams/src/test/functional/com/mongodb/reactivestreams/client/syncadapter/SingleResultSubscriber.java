@@ -28,9 +28,9 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.ClusterFixture.TIMEOUT;
 
 class SingleResultSubscriber<T> implements Subscriber<T> {
+    private final CountDownLatch latch = new CountDownLatch(1);
     private volatile T result;
     private volatile Throwable exception;
-    private final CountDownLatch latch = new CountDownLatch(1);
 
     @Nullable
     T get() {

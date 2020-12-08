@@ -33,7 +33,7 @@ import org.bson.BsonTimestamp;
 import java.util.concurrent.TimeUnit;
 
 class SyncChangeStreamIterable<T> extends SyncMongoIterable<ChangeStreamDocument<T>> implements ChangeStreamIterable<T> {
-    private ChangeStreamPublisher<T> wrapped;
+    private final ChangeStreamPublisher<T> wrapped;
 
     SyncChangeStreamIterable(final ChangeStreamPublisher<T> wrapped) {
         super(wrapped);

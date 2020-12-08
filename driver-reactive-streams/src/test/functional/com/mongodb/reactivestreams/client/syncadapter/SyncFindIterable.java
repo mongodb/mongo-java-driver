@@ -26,7 +26,7 @@ import org.bson.conversions.Bson;
 import java.util.concurrent.TimeUnit;
 
 class SyncFindIterable<T> extends SyncMongoIterable<T> implements FindIterable<T> {
-    private com.mongodb.reactivestreams.client.FindPublisher<T> wrapped;
+    private final com.mongodb.reactivestreams.client.FindPublisher<T> wrapped;
 
     SyncFindIterable(final FindPublisher<T> wrapped) {
         super(wrapped);

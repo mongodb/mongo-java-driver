@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model.vault;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
 
 /**
@@ -57,6 +58,7 @@ public class EncryptOptions {
      *
      * @return the key identifier
      */
+    @Nullable
     public BsonBinary getKeyId() {
         return keyId;
     }
@@ -70,6 +72,7 @@ public class EncryptOptions {
      *
      * @return the alternate name
      */
+    @Nullable
     public String getKeyAltName() {
         return keyAltName;
     }

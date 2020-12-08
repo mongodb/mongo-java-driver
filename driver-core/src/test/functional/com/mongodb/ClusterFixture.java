@@ -67,6 +67,7 @@ import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DocumentCodec;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -100,6 +101,7 @@ public final class ClusterFixture {
     private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
     private static final int COMMAND_NOT_FOUND_ERROR_CODE = 59;
     public static final long TIMEOUT = 60L;
+    public static final Duration TIMEOUT_DURATION = Duration.ofMinutes(1);
 
     private static ConnectionString connectionString;
     private static Cluster cluster;
@@ -584,6 +586,10 @@ public final class ClusterFixture {
 
     public static <T> void loopCursor(final AsyncBatchCursor<T> batchCursor, final Block<T> block,
                                       final SingleResultCallback<Void> callback) {
+        if (batchCursor.isClosed()) {
+            callback.onResult(null, null);
+            return;
+        }
         batchCursor.next(new SingleResultCallback<List<T>>() {
             @Override
             public void onResult(final List<T> results, final Throwable t) {

@@ -22,12 +22,16 @@ dependencies {
     api project(path: ':driver-core', configuration: 'default')
 
     api 'org.reactivestreams:reactive-streams:1.0.2'
+    implementation platform("io.projectreactor:reactor-bom:$projectReactorVersion")
+    implementation 'io.projectreactor:reactor-core'
 
     testImplementation project(':bson').sourceSets.test.output
     testImplementation project(':driver-sync')
     testImplementation project(':driver-sync').sourceSets.test.output
     testImplementation project(':driver-core').sourceSets.test.output
     testImplementation 'org.reactivestreams:reactive-streams-tck:1.0.2'
+    testImplementation 'io.projectreactor:reactor-test'
+    testImplementation 'org.mockito:mockito-junit-jupiter:3.5.13'
 }
 
 sourceSets {

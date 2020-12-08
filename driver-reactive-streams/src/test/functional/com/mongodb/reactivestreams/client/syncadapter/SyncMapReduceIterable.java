@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("deprecation")
 class SyncMapReduceIterable<T> extends SyncMongoIterable<T> implements MapReduceIterable<T> {
-    private MapReducePublisher<T> wrapped;
+    private final MapReducePublisher<T> wrapped;
 
     SyncMapReduceIterable(final MapReducePublisher<T> wrapped) {
         super(wrapped);

@@ -16,11 +16,9 @@
 
 package com.mongodb.reactivestreams.client.gridfs
 
-import com.mongodb.Block
 import com.mongodb.MongoGridFSException
 import com.mongodb.client.gridfs.model.GridFSFile
 import com.mongodb.client.gridfs.model.GridFSUploadOptions
-import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.reactivestreams.client.FunctionalSpecification
 import com.mongodb.reactivestreams.client.MongoClients
 import com.mongodb.reactivestreams.client.MongoCollection
@@ -34,6 +32,8 @@ import org.bson.types.ObjectId
 import org.reactivestreams.Publisher
 import org.reactivestreams.Subscriber
 import org.reactivestreams.Subscription
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import spock.lang.Unroll
 
 import java.nio.ByteBuffer
@@ -41,26 +41,22 @@ import java.nio.channels.Channels
 import java.nio.channels.WritableByteChannel
 import java.security.SecureRandom
 
+import static com.mongodb.ClusterFixture.TIMEOUT_DURATION
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Updates.unset
-import static com.mongodb.internal.async.client.Fixture.getMongoClientBuilderFromConnectionString
-import static com.mongodb.reactivestreams.client.Fixture.ObservableSubscriber
 import static com.mongodb.reactivestreams.client.Fixture.getDefaultDatabaseName
 import static com.mongodb.reactivestreams.client.Fixture.getMongoClient
+import static com.mongodb.reactivestreams.client.Fixture.getMongoClientBuilderFromConnectionString
 import static com.mongodb.reactivestreams.client.MongoClients.getDefaultCodecRegistry
-import static com.mongodb.reactivestreams.client.internal.Publishers.publishAndFlatten
 import static java.util.Arrays.asList
-import static java.util.concurrent.TimeUnit.MILLISECONDS
-import static java.util.concurrent.TimeUnit.MINUTES
-import static java.util.concurrent.TimeUnit.SECONDS
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries
 
 class GridFSPublisherSpecification extends FunctionalSpecification {
-    protected MongoDatabase mongoDatabase;
-    protected MongoCollection<GridFSFile> filesCollection;
-    protected MongoCollection<Document> chunksCollection;
-    protected GridFSBucket gridFSBucket;
+    protected MongoDatabase mongoDatabase
+    protected MongoCollection<GridFSFile> filesCollection
+    protected MongoCollection<Document> chunksCollection
+    protected GridFSBucket gridFSBucket
     def singleChunkString = 'GridFS'
     def multiChunkString = singleChunkString.padLeft(1024 * 255 * 5)
 
@@ -110,9 +106,9 @@ class GridFSPublisherSpecification extends FunctionalSpecification {
         concatByteBuffers(data) == contentBytes
 
         where:
-        description           | multiChunk | chunkCount
-        'a small file'        | false      | 1
-        'a large file'        | true       | 5
+        description    | multiChunk | chunkCount
+        'a small file' | false      | 1
+        'a large file' | true       | 5
     }
 
     def 'should round trip with small chunks'() {
@@ -144,23 +140,17 @@ class GridFSPublisherSpecification extends FunctionalSpecification {
         def options = new GridFSUploadOptions().chunkSizeBytes(contentBytes.length)
 
         when:
-        def publisher = gridFSBucket.uploadFromPublisher('myFile',
+        def fileId = Mono.from(gridFSBucket.uploadFromPublisher('myFile',
                 createPublisher(ByteBuffer.wrap(contentBytes), ByteBuffer.wrap(contentBytes),
-                        ByteBuffer.wrap(contentBytes)), options)
-
-        def subscriber = new ObservableSubscriber()
-        publisher.subscribe(subscriber)
-        def fileId = subscriber.await(1, 60, SECONDS).getReceived().get(0)
+                        ByteBuffer.wrap(contentBytes)), options)).block(TIMEOUT_DURATION)
 
         then:
         run(filesCollection.&countDocuments) == 1
         run(chunksCollection.&countDocuments) == 3
 
         when:
-        subscriber = new ObservableSubscriber()
-        publisher = gridFSBucket.downloadToPublisher(fileId as ObjectId).bufferSizeBytes(contentBytes.length * 3)
-        publisher.subscribe(subscriber)
-        def data = subscriber.await(1, 60, SECONDS).getReceived().get(0)
+        def data = Mono.from(gridFSBucket.downloadToPublisher(fileId as ObjectId).bufferSizeBytes(contentBytes.length * 3))
+                .block(TIMEOUT_DURATION)
 
         then:
         data.array() == concatByteBuffers([ByteBuffer.wrap(contentBytes), ByteBuffer.wrap(contentBytes),
@@ -172,22 +162,15 @@ class GridFSPublisherSpecification extends FunctionalSpecification {
         def contentBytes = singleChunkString.getBytes()
 
         when:
-        def publisher = gridFSBucket.uploadFromPublisher('myFile',
-                createPublisher(ByteBuffer.wrap(contentBytes), ByteBuffer.wrap(contentBytes)))
-
-        def subscriber = new ObservableSubscriber()
-        publisher.subscribe(subscriber)
-        def fileId = subscriber.await(1, 60, SECONDS).getReceived().get(0)
+        def fileId = Mono.from(gridFSBucket.uploadFromPublisher('myFile',
+                createPublisher(ByteBuffer.wrap(contentBytes), ByteBuffer.wrap(contentBytes)))).block(TIMEOUT_DURATION)
 
         then:
         run(filesCollection.&countDocuments) == 1
         run(chunksCollection.&countDocuments) == 1
 
         when:
-        subscriber = new ObservableSubscriber()
-        publisher = gridFSBucket.downloadToPublisher(fileId as ObjectId)
-        publisher.subscribe(subscriber)
-        def data = subscriber.await(1, 30, SECONDS).getReceived().get(0)
+        def data = Mono.from(gridFSBucket.downloadToPublisher(fileId as ObjectId)).block(TIMEOUT_DURATION)
 
         then:
         data.array() == concatByteBuffers([ByteBuffer.wrap(contentBytes), ByteBuffer.wrap(contentBytes)])
@@ -197,8 +180,8 @@ class GridFSPublisherSpecification extends FunctionalSpecification {
         given:
         def contentSize = 1024 * 1024 * 5
         def chunkSize = 1024 * 1024
-        def contentBytes = new byte[contentSize];
-        new SecureRandom().nextBytes(contentBytes);
+        def contentBytes = new byte[contentSize]
+        new SecureRandom().nextBytes(contentBytes)
         def options = new GridFSUploadOptions().chunkSizeBytes(chunkSize)
 
         when:
@@ -304,7 +287,7 @@ class GridFSPublisherSpecification extends FunctionalSpecification {
         ex.getMessage() == errorMessage
     }
 
-    def 'should use custom uploadOptions when uploading' () {
+    def 'should use custom uploadOptions when uploading'() {
         given:
         def chunkSize = 20
         def metadata = new Document('archived', false)
@@ -457,6 +440,7 @@ class GridFSPublisherSpecification extends FunctionalSpecification {
         def data = (0..1024).collect { ByteBuffer.wrap(contentBytes) }
         def subscriber = new Subscriber<ObjectId>() {
             Subscription subscription
+
             @Override
             void onSubscribe(final Subscription s) {
                 subscription = s
@@ -492,29 +476,6 @@ class GridFSPublisherSpecification extends FunctionalSpecification {
         run(filesCollection.&countDocuments) == 0
     }
 
-    def 'should error if requested is less than 1'() {
-        given:
-        def contentBytes = multiChunkString.getBytes()
-        when:
-        def publisher = gridFSBucket.uploadFromPublisher('myFile', createPublisher(ByteBuffer.wrap(contentBytes)))
-
-        def subscriber = new ObservableSubscriber()
-        publisher.subscribe(subscriber)
-        subscriber.await(0, 60, SECONDS)
-
-        then:
-        thrown(IllegalArgumentException)
-
-        when:
-        subscriber = new ObservableSubscriber()
-        publisher = gridFSBucket.downloadToPublisher(new ObjectId())
-        publisher.subscribe(subscriber)
-        subscriber.await(0, 60, SECONDS).getReceived().get(0)
-
-        then:
-        thrown(IllegalArgumentException)
-    }
-
     def retry(Integer times, Closure<Boolean> closure) {
         def result = closure.call()
         if (!result && times > 0) {
@@ -527,41 +488,26 @@ class GridFSPublisherSpecification extends FunctionalSpecification {
     }
 
     def run(Closure<?> operation, ... args) {
-        run(MINUTES.toMillis(1), operation, *args)
+        Mono.from(operation.call(args)).block(TIMEOUT_DURATION)
     }
 
     def runAndCollect(Closure<?> operation, ... args) {
-        runAndCollect(MINUTES.toMillis(1), operation, *args)
-    }
-
-    def run(long timeout, Closure<?> operation, ... args) {
-        def result = runAndCollect(timeout, operation, args)
-        result != null && !result.isEmpty() ? result.get(0) : result
-    }
-
-    def runAndCollect(long timeout, Closure<?> operation, ... args) {
-        def subscriber = new ObservableSubscriber()
-        operation.call(args).subscribe(subscriber)
-        subscriber.get(timeout, MILLISECONDS)
+        Flux.from(operation.call(args)).collectList().block(TIMEOUT_DURATION)
     }
 
     byte[] concatByteBuffers(List<ByteBuffer> buffers) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream()
         WritableByteChannel channel = Channels.newChannel(outputStream)
-        for (ByteBuffer buffer: buffers) {
+        for (ByteBuffer buffer : buffers) {
             channel.write(buffer)
         }
         outputStream.close()
         channel.close()
         outputStream.toByteArray()
     }
+
     def createPublisher(final ByteBuffer... byteBuffers) {
-        publishAndFlatten(new Block<SingleResultCallback<List<ByteBuffer>>>() {
-            @Override
-            void apply(final SingleResultCallback<List<ByteBuffer>> callback) {
-                callback.onResult(asList(byteBuffers), null)
-            }
-        })
+        Flux.fromIterable(asList(byteBuffers))
     }
 }
 

@@ -16,10 +16,9 @@
 
 package com.mongodb.reactivestreams.client.gridfs;
 
-import com.mongodb.internal.async.client.gridfs.AsyncGridFSBuckets;
 import com.mongodb.reactivestreams.client.MongoDatabase;
-import com.mongodb.reactivestreams.client.internal.GridFSBucketImpl;
 import com.mongodb.reactivestreams.client.internal.MongoDatabaseImpl;
+import com.mongodb.reactivestreams.client.internal.gridfs.GridFSBucketImpl;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -42,12 +41,7 @@ public final class GridFSBuckets {
      */
     public static GridFSBucket create(final MongoDatabase database) {
         notNull("database", database);
-        if (database instanceof MongoDatabaseImpl) {
-            return new GridFSBucketImpl(AsyncGridFSBuckets.create(((MongoDatabaseImpl) database)
-                    .getWrapped()));
-        } else {
-            throw new IllegalArgumentException("GridFS requires the concrete MongoDatabaseImpl implementation.");
-        }
+        return new GridFSBucketImpl(database);
     }
 
     /**
@@ -62,12 +56,7 @@ public final class GridFSBuckets {
     public static GridFSBucket create(final MongoDatabase database, final String bucketName) {
         notNull("database", database);
         notNull("bucketName", bucketName);
-        if (database instanceof MongoDatabaseImpl) {
-            return new GridFSBucketImpl(AsyncGridFSBuckets.create(((MongoDatabaseImpl) database)
-                            .getWrapped(), bucketName));
-        } else {
-            throw new IllegalArgumentException("GridFS requires the concrete MongoDatabaseImpl implementation.");
-        }
+        return new GridFSBucketImpl(database, bucketName);
     }
 
     private GridFSBuckets() {
