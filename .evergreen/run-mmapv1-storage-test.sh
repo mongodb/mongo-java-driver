@@ -7,7 +7,7 @@ set -o errexit  # Exit the script with error if any of the commands fail
 #       JDK                     Set the version of java to be used.  Java versions can be set from the java toolchain /opt/java
 #                               "jdk5", "jdk6", "jdk7", "jdk8", "jdk9"
 
-JDK=${JDK:-jdk}
+JDK=${JDK:-jdk8}
 
 ############################################
 #            Main Program                  #
