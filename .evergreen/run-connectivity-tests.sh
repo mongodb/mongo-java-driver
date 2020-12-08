@@ -9,7 +9,7 @@ set -o errexit  # Exit the script with error if any of the commands fail
 # Support arguments:
 #       Pass as many MongoDB URIS as arguments to this script as required
 
-JDK=${JDK:-jdk}
+JDK=${JDK:-jdk8}
 
 ############################################
 #            Main Program                  #

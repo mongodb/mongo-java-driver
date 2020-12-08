@@ -24,7 +24,7 @@ set -o errexit  # Exit the script with error if any of the commands fail
 AUTH=${AUTH:-noauth}
 SSL=${SSL:-nossl}
 MONGODB_URI=${MONGODB_URI:-}
-JDK=${JDK:-jdk}
+JDK=${JDK:-jdk8}
 TOPOLOGY=${TOPOLOGY:-server}
 COMPRESSOR=${COMPRESSOR:-}
 STREAM_TYPE=${STREAM_TYPE:-nio2}
