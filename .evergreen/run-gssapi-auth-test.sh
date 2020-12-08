@@ -12,7 +12,7 @@ set -o errexit  # Exit the script with error if any of the commands fail
 #       KEYTAB_BASE64           The BASE64-encoded keytab
 #       PROJECT_DIRECTORY       The project directory
 
-JDK=${JDK:-jdk}
+JDK=${JDK:-jdk8}
 
 ############################################
 #            Main Program                  #
