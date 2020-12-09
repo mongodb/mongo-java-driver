@@ -474,10 +474,8 @@ class GridFSPublisherSpecification extends FunctionalSpecification {
         subscriber.subscription.cancel()
 
         then:
-        if (!subscriber.completed) {
-            retry(50) { run(chunksCollection.&countDocuments) == 0 }
-            run(filesCollection.&countDocuments) == 0
-        }
+        retry(50) { subscriber.completed || run(chunksCollection.&countDocuments) == 0 }
+        subscriber.completed || run(filesCollection.&countDocuments) == 0
     }
 
     def retry(Integer times, Closure<Boolean> closure) {
