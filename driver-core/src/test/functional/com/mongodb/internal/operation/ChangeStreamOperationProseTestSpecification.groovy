@@ -34,6 +34,7 @@ import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.getAsyncCluster
 import static com.mongodb.ClusterFixture.getCluster
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.internal.connection.ServerHelper.waitForLastRelease
@@ -79,7 +80,7 @@ class ChangeStreamOperationProseTestSpecification extends OperationFunctionalSpe
     // Test that the ChangeStream will automatically resume one time on a resumable error (including not master)
     // with the initial pipeline and options, except for the addition/update of a resumeToken.
     //
-    @IgnoreIf({ !serverVersionAtLeast([4, 0, 0]) })
+    @IgnoreIf({ !serverVersionAtLeast([4, 0, 0]) && !isDiscoverableReplicaSet() })
     def 'should resume after single getMore Error'() {
         given:
         def helper = getHelper()
