@@ -45,7 +45,6 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 
 import java.util.List;
-import java.util.Objects;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -195,10 +194,9 @@ final class CommandOperationHelper {
                                                  final CommandCreator commandCreator, final Decoder<D> decoder,
                                                  final CommandReadTransformer<D, T> transformer, final boolean retryReads,
                                                  final Connection connection) {
-        BsonDocument command = null;
+        BsonDocument command = commandCreator.create(source.getServerDescription(), connection.getDescription());
         MongoException exception;
         try {
-            command = commandCreator.create(source.getServerDescription(), connection.getDescription());
             return executeCommand(database, command, decoder, source, connection, binding.getReadPreference(), transformer,
                     binding.getSessionContext(), binding.getServerApi());
         } catch (MongoException e) {
@@ -206,7 +204,7 @@ final class CommandOperationHelper {
 
             if (!shouldAttemptToRetryRead(retryReads, e)) {
                 if (retryReads) {
-                    logUnableToRetry(Objects.requireNonNull(command).getFirstKey(), e);
+                    logUnableToRetry(command.getFirstKey(), e);
                 }
                 throw exception;
             }
