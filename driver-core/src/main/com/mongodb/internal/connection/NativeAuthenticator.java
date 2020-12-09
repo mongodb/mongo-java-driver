@@ -60,7 +60,7 @@ class NativeAuthenticator extends Authenticator {
     void authenticateAsync(final InternalConnection connection, final ConnectionDescription connectionDescription,
                            final SingleResultCallback<Void> callback) {
         SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-        executeCommandAsync(getMongoCredential().getSource(), getNonceCommand(), connection,
+        executeCommandAsync(getMongoCredential().getSource(), getNonceCommand(), getServerApi(), connection,
                             new SingleResultCallback<BsonDocument>() {
                                 @Override
                                 public void onResult(final BsonDocument nonceResult, final Throwable t) {
@@ -70,7 +70,7 @@ class NativeAuthenticator extends Authenticator {
                                         executeCommandAsync(getMongoCredential().getSource(),
                                                             getAuthCommand(getUserNameNonNull(), getPasswordNonNull(),
                                                                            ((BsonString) nonceResult.get("nonce")).getValue()),
-                                                            connection,
+                                                            getServerApi(), connection,
                                                             new SingleResultCallback<BsonDocument>() {
                                                                 @Override
                                                                 public void onResult(final BsonDocument result, final Throwable t) {

@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
+import com.mongodb.ServerApi;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -95,11 +96,13 @@ public interface AsyncConnection extends ReferenceCounted {
      * @param readPreference       the read preference that was applied to get this connection, or null if this is a write operation
      * @param commandResultDecoder the decoder for the result
      * @param sessionContext       the session context
+     * @param serverApi            the server api, which may be null
      * @param callback             the callback to be passed the write result
      * @since 3.6
      */
     <T> void commandAsync(String database, BsonDocument command, FieldNameValidator fieldNameValidator, ReadPreference readPreference,
-                          Decoder<T> commandResultDecoder, SessionContext sessionContext, SingleResultCallback<T> callback);
+                          Decoder<T> commandResultDecoder, SessionContext sessionContext, ServerApi serverApi,
+                          SingleResultCallback<T> callback);
 
     /**
      * Executes the command, consuming as much of the {@code SplittablePayload} as possible.
@@ -111,6 +114,7 @@ public interface AsyncConnection extends ReferenceCounted {
      * @param readPreference            the read preference that was applied to get this connection, or null if this is a write operation
      * @param commandResultDecoder      the decoder for the result
      * @param sessionContext            the session context
+     * @param serverApi                 the server api, which may be null
      * @param responseExpected          true if a response from the server is expected
      * @param payload                   the splittable payload to incorporate with the command
      * @param payloadFieldNameValidator the field name validator for the payload documents
@@ -119,8 +123,8 @@ public interface AsyncConnection extends ReferenceCounted {
      */
     <T> void commandAsync(String database, BsonDocument command, FieldNameValidator commandFieldNameValidator,
                           ReadPreference readPreference, Decoder<T> commandResultDecoder, SessionContext sessionContext,
-                          boolean responseExpected, SplittablePayload payload, FieldNameValidator payloadFieldNameValidator,
-                          SingleResultCallback<T> callback);
+                          ServerApi serverApi, boolean responseExpected, SplittablePayload payload,
+                          FieldNameValidator payloadFieldNameValidator, SingleResultCallback<T> callback);
 
     /**
      * Execute the query asynchronously.
