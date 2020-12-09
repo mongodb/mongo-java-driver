@@ -79,7 +79,7 @@ if [ "$TOPOLOGY" == "sharded_cluster" ]; then
             export TRANSACTION_URI="${MONGODB_URI}"
         fi
     fi
-    
+
      if [ "$AUTH" = "auth" ]; then
        export MONGODB_URI="mongodb://bob:pwd123@localhost:27017/?authSource=admin"
      else
@@ -111,6 +111,11 @@ if [ "$SAFE_FOR_MULTI_MONGOS" == "true" ]; then
     export TRANSACTION_URI="-Dorg.mongodb.test.transaction.uri=${TRANSACTION_URI}"
 fi
 
+# For now it's sufficient to hard-code the API version to "1", since it's the only API version
+if [ ! -z "$REQUIRE_API_VERSION" ]; then
+  export API_VERSION="-Dorg.mongodb.test.api.version=1"
+fi
+
 echo "Running $AUTH tests over $SSL for $TOPOLOGY and connecting to $MONGODB_URI"
 
 echo "Running tests with ${JDK}"
@@ -124,5 +129,5 @@ else
               -Dorg.mongodb.test.awsAccessKeyId=${AWS_ACCESS_KEY_ID} -Dorg.mongodb.test.awsSecretAccessKey=${AWS_SECRET_ACCESS_KEY} \
               -Dorg.mongodb.test.azureTenantId=${AZURE_TENANT_ID} -Dorg.mongodb.test.azureClientId=${AZURE_CLIENT_ID} -Dorg.mongodb.test.azureClientSecret=${AZURE_CLIENT_SECRET} \
               -Dorg.mongodb.test.gcpEmail=${GCP_EMAIL} -Dorg.mongodb.test.gcpPrivateKey=${GCP_PRIVATE_KEY} \
-              ${TRANSACTION_URI} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} --stacktrace --info --continue test
+              ${TRANSACTION_URI} ${API_VERSION} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} --stacktrace --info --continue test
 fi
