@@ -332,6 +332,7 @@ class GridFSObservableSpec extends RequiresMongoDBISpec with FuturesSpec with Be
 
     val observer = new SubscriptionObserver[ObjectId] {
       var s: Option[Subscription] = None
+      var completed: Boolean = false
       def subscription(): Subscription = s.get
       override def onSubscribe(subscription: Subscription): Unit =
         s = Some(subscription)
@@ -340,7 +341,7 @@ class GridFSObservableSpec extends RequiresMongoDBISpec with FuturesSpec with Be
 
       override def onError(e: Throwable): Unit = {}
 
-      override def onComplete(): Unit = {}
+      override def onComplete(): Unit = completed = true
     }
     gridFSBucket
       .uploadFromObservable("myFile", Observable(List.fill(1024)(ByteBuffer.wrap(contentBytes))))
@@ -353,8 +354,10 @@ class GridFSObservableSpec extends RequiresMongoDBISpec with FuturesSpec with Be
 
     observer.subscription().unsubscribe()
 
-    retry(50)(() => chunksCollection.countDocuments().futureValue should equal(0))
-    filesCollection.countDocuments().futureValue should equal(0)
+    if (!observer.completed) {
+      retry(50)(() => chunksCollection.countDocuments().futureValue should equal(0))
+      filesCollection.countDocuments().futureValue should equal(0)
+    }
   }
 
   @tailrec
