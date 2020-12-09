@@ -440,6 +440,7 @@ class GridFSPublisherSpecification extends FunctionalSpecification {
         def data = (0..1024).collect { ByteBuffer.wrap(contentBytes) }
         def subscriber = new Subscriber<ObjectId>() {
             Subscription subscription
+            boolean completed = false
 
             @Override
             void onSubscribe(final Subscription s) {
@@ -456,6 +457,7 @@ class GridFSPublisherSpecification extends FunctionalSpecification {
 
             @Override
             void onComplete() {
+                completed = true
             }
         }
 
@@ -472,8 +474,10 @@ class GridFSPublisherSpecification extends FunctionalSpecification {
         subscriber.subscription.cancel()
 
         then:
-        retry(50) { run(chunksCollection.&countDocuments) == 0 }
-        run(filesCollection.&countDocuments) == 0
+        if (!subscriber.completed) {
+            retry(50) { run(chunksCollection.&countDocuments) == 0 }
+            run(filesCollection.&countDocuments) == 0
+        }
     }
 
     def retry(Integer times, Closure<Boolean> closure) {
