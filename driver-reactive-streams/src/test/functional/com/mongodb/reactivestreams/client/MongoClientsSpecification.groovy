@@ -24,16 +24,19 @@ import com.mongodb.WriteConcern
 import com.mongodb.reactivestreams.client.internal.MongoClientImpl
 import org.bson.Document
 import reactor.core.publisher.Mono
+import spock.lang.IgnoreIf
 import spock.lang.Unroll
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION
 import static com.mongodb.ClusterFixture.connectionString
 import static com.mongodb.ClusterFixture.getCredential
 import static com.mongodb.ClusterFixture.getSslSettings
+import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.secondaryPreferred
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
+@IgnoreIf({ getServerApi() != null })
 class MongoClientsSpecification extends FunctionalSpecification {
 
     def 'should connect'() {

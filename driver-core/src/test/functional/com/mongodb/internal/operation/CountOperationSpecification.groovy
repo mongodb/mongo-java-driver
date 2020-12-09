@@ -390,6 +390,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         def source = Stub(AsyncConnectionSource)
         def connection = Mock(AsyncConnection)
         binding.readPreference >> ReadPreference.primary()
+        binding.serverApi >> null
         binding.getReadConnectionSource(_) >> { it[0].onResult(source, null) }
         binding.sessionContext >> sessionContext
         source.getConnection(_) >> { it[0].onResult(connection, null) }
@@ -405,8 +406,8 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                 6, STANDALONE, 1000, 100000, 100000, [])
-        1 * connection.commandAsync(_, commandDocument, _, _, _, sessionContext, _) >> {
-            it[6].onResult(new BsonDocument('n', new BsonInt64(42)), null)
+        1 * connection.commandAsync(_, commandDocument, _, _, _, sessionContext, _, _) >> {
+            it[7].onResult(new BsonDocument('n', new BsonInt64(42)), null)
         }
         1 * connection.release()
 

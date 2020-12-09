@@ -51,10 +51,9 @@ public final class CommandHelper {
         }
     }
 
-    static void executeCommandAsync(final String database, final BsonDocument command, final InternalConnection internalConnection,
-                                    final SingleResultCallback<BsonDocument> callback) {
-        // TODO: async versioned API
-        internalConnection.sendAndReceiveAsync(getCommandMessage(database, command, internalConnection, null), new BsonDocumentCodec(),
+    static void executeCommandAsync(final String database, final BsonDocument command, final @Nullable ServerApi serverApi,
+                                    final InternalConnection internalConnection, final SingleResultCallback<BsonDocument> callback) {
+        internalConnection.sendAndReceiveAsync(getCommandMessage(database, command, internalConnection, serverApi), new BsonDocumentCodec(),
                 NoOpSessionContext.INSTANCE, new SingleResultCallback<BsonDocument>() {
                     @Override
                     public void onResult(final BsonDocument result, final Throwable t) {

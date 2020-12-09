@@ -16,10 +16,12 @@
 
 package com.mongodb.internal.binding;
 
+import com.mongodb.ServerApi;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 
 /**
  * A source of connections to a single MongoDB server.
@@ -43,6 +45,9 @@ public interface AsyncConnectionSource extends ReferenceCounted {
      * @since 3.6
      */
     SessionContext getSessionContext();
+
+    @Nullable
+    ServerApi getServerApi();
 
     /**
      * Gets a connection from this source.
