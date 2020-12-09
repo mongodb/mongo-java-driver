@@ -141,7 +141,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
         expect:
         nextBatch().size() == 1
-        !nextBatch()
+        cursor.isClosed() || !nextBatch() && cursor.isClosed()
     }
 
     def 'should exhaust multiple batches with limit'() {
