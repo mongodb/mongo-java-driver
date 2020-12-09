@@ -64,7 +64,7 @@ public class OperationExecutorImpl implements OperationExecutor {
                 .flatMap(binding -> {
                     if (session != null && session.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
                         binding.release();
-                        throw new MongoClientException("Read preference in a transaction must be primary");
+                        return Mono.error(new MongoClientException("Read preference in a transaction must be primary"));
                     } else {
                         return Mono.<T>create(sink -> operation.executeAsync(binding, sinkToCallback(sink)))
                                 .doOnTerminate(binding::release)
