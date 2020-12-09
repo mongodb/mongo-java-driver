@@ -682,12 +682,14 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         given:
         def changeStream
         def binding = Stub(AsyncReadBinding) {
+            getServerApi() >> null
             getSessionContext() >> Stub(SessionContext) {
                 getReadConcern() >> ReadConcern.DEFAULT
                 getOperationTime() >> new BsonTimestamp()
             }
             getReadConnectionSource(_) >> {
                 it.last().onResult(Stub(AsyncConnectionSource) {
+                    getServerApi() >> null
                     getConnection(_) >> {
                         it.last().onResult(Stub(AsyncConnection) {
                             commandAsync(*_) >> {

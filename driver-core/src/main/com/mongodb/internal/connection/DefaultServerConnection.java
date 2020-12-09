@@ -128,18 +128,19 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
                                  final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                                 final SessionContext sessionContext, final SingleResultCallback<T> callback) {
-        commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, true, null, null,
-                callback);
+                                 final SessionContext sessionContext, final ServerApi serverApi, final SingleResultCallback<T> callback) {
+        commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi,
+                true, null, null, callback);
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                                  final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                                 final SessionContext sessionContext, final boolean responseExpected, final SplittablePayload payload,
-                                 final FieldNameValidator payloadFieldNameValidator, final SingleResultCallback<T> callback) {
+                                 final SessionContext sessionContext, final ServerApi serverApi, final boolean responseExpected,
+                                 final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
+                                 final SingleResultCallback<T> callback) {
         executeProtocolAsync(new CommandProtocolImpl<T>(database, command, commandFieldNameValidator, readPreference,
-                commandResultDecoder, responseExpected, payload,  payloadFieldNameValidator, clusterConnectionMode, null),
+                commandResultDecoder, responseExpected, payload,  payloadFieldNameValidator, clusterConnectionMode, serverApi),
                 sessionContext, callback);
     }
 

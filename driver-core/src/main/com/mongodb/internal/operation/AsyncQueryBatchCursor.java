@@ -248,7 +248,8 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
             connection.commandAsync(namespace.getDatabaseName(), asGetMoreCommandDocument(cursor.getId()), NO_OP_FIELD_NAME_VALIDATOR,
                     ReadPreference.primary(), CommandResultDocumentCodec.create(decoder, "nextBatch"),
-                    connectionSource.getSessionContext(), new CommandResultSingleResultCallback(connection, cursor, callback, tryNext));
+                    connectionSource.getSessionContext(), null /* spec requires no server api for getMore */,
+                    new CommandResultSingleResultCallback(connection, cursor, callback, tryNext));
 
         } else {
             connection.getMoreAsync(namespace, cursor.getId(), getNumberToReturn(limit, batchSize, count.get()),
@@ -299,7 +300,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
             connection.commandAsync(namespace.getDatabaseName(), asKillCursorsCommandDocument(localCursor), NO_OP_FIELD_NAME_VALIDATOR,
                     ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.getSessionContext(),
-                    new SingleResultCallback<BsonDocument>() {
+                    connectionSource.getServerApi(), new SingleResultCallback<BsonDocument>() {
                         @Override
                         public void onResult(final BsonDocument result, final Throwable t) {
                             connection.release();

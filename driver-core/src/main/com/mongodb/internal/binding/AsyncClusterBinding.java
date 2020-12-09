@@ -19,6 +19,7 @@ package com.mongodb.internal.binding;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
+import com.mongodb.ServerApi;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.AsyncConnection;
@@ -30,6 +31,7 @@ import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.selector.ServerAddressSelector;
 import com.mongodb.internal.selector.WritableServerSelector;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -44,6 +46,8 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
     private final Cluster cluster;
     private final ReadPreference readPreference;
     private final ReadConcern readConcern;
+    @Nullable
+    private final ServerApi serverApi;
 
     /**
      * Creates an instance.
@@ -51,12 +55,15 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
      * @param cluster        a non-null Cluster which will be used to select a server to bind to
      * @param readPreference a non-null ReadPreference for read operations
      * @param readConcern    a non-null read concern
+     * @param serverApi      a server API, which may be null
      * @since 3.8
      */
-    public AsyncClusterBinding(final Cluster cluster, final ReadPreference readPreference, final ReadConcern readConcern) {
+    public AsyncClusterBinding(final Cluster cluster, final ReadPreference readPreference, final ReadConcern readConcern,
+                               @Nullable final ServerApi serverApi) {
         this.cluster = notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
         this.readConcern = (notNull("readConcern", readConcern));
+        this.serverApi = serverApi;
     }
 
     @Override
@@ -78,6 +85,12 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
     @Override
     public SessionContext getSessionContext() {
         return new ReadConcernAwareNoOpSessionContext(readConcern);
+    }
+
+    @Override
+    @Nullable
+    public ServerApi getServerApi() {
+        return serverApi;
     }
 
     @Override
@@ -127,6 +140,12 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
         @Override
         public SessionContext getSessionContext() {
             return new ReadConcernAwareNoOpSessionContext(readConcern);
+        }
+
+        @Override
+        @Nullable
+        public ServerApi getServerApi() {
+            return serverApi;
         }
 
         @Override
