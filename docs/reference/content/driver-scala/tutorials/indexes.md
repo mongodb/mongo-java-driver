@@ -13,7 +13,7 @@ pre = "<i class='fa'></i>"
 [Indexes]({{<docsref "indexes" >}}) support the efficient execution of queries in MongoDB. To create an [index]({{<docsref "indexes" >}}) on a field or fields, pass an index specification document to the [`MongoCollection.createIndex()`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoCollection.html#createIndex(key:org.mongodb.scala.bson.conversions.Bson,options:org.mongodb.scala.model.IndexOptions):org.mongodb.scala.SingleObservable[String]" >}}) method.
 
 The MongoDB Scala Driver provides
-the [`Indexes`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/model/Indexes.html" >}}) class that
+the [`Indexes`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/model/Indexes$.html" >}}) class that
 includes helper methods to create index specification
 documents for the various MongoDB Index key types.
 

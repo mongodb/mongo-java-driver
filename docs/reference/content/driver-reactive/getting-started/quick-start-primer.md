@@ -45,10 +45,7 @@ For more information about reactive streams go to: [http://www.reactive-streams.
 ## Subscribers
 
 The MongoDB Reactive Streams Driver API mirrors the Sync driver API and any methods that cause network IO return a `Publisher<T>`, 
-where `T` is the type of response for the operation.  
-The exception to that rule is for methods in the async driver that return a `Void` value in the callback. 
-In [reactive streams](http://www.reactive-streams.org) this is forbidden, so in those circumstances we
-return a [`Success`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/Success.html" >}}) on the operation.
+where `T` is the type of response for the operation.
 
 {{% note %}}
 All [`Publishers`](http://www.reactive-streams.org/reactive-streams-1.0.1-javadoc/?org/reactivestreams/Publisher.html) returned 

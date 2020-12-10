@@ -35,7 +35,7 @@ Many simple Scala types are supported and they will be marshaled into their corr
 To create a codec for your case class use the `Macros` object helper methods. Unless there is a good reason you should use the 
 `Macros.createCodecProvider` method to create a [`CodecProvider`]({{< apiref "bson" "org/bson/codecs/configuration/CodecProvider.html" >}}). 
 A `CodecProvider` will pass the configured [`CodecRegistry`]({{< apiref "bson" "org/bson/codecs/configuration/CodecRegistry.html" >}}) to the 
-underlying [`Codec`]({{< apiref "bson" "org/bson/codecs/configuration/Codec.html" >}}) and provide access to all the configured codecs.
+underlying [`Codec`]({{< apiref "bson" "org/bson/codecs/Codec.html" >}}) and provide access to all the configured codecs.
 
 To create a `CodecProvider` all you need to do is to set the case class type when calling `createCodecProvider` like so:
 
@@ -102,7 +102,7 @@ val personCodecProvider = Macros.createCodecProviderIgnoreNone[Person]()
 
 ## Alternative field names
 
-The [`BsonProperty`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/bson/annotations$$BsonProperty" >}}) annotation can be used to configure a the bson 
+The [`BsonProperty`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/bson/annotations/BsonProperty" >}}) annotation can be used to configure a the bson 
 field key to be used for a given property. In the following example uses the `BsonProperty` annotation to change how the `firstName` 
 property is stored:
 
