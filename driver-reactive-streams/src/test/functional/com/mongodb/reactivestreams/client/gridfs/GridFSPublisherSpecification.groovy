@@ -40,6 +40,7 @@ import java.nio.ByteBuffer
 import java.nio.channels.Channels
 import java.nio.channels.WritableByteChannel
 import java.security.SecureRandom
+import java.time.Duration
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION
 import static com.mongodb.client.model.Filters.eq
@@ -433,14 +434,14 @@ class GridFSPublisherSpecification extends FunctionalSpecification {
 
     def 'should cleanup when unsubscribing'() {
         given:
-        def contentSize = 1024 * 1024
+        def contentSize = 1024
         def contentBytes = new byte[contentSize]
         new SecureRandom().nextBytes(contentBytes)
         def options = new GridFSUploadOptions().chunkSizeBytes(1024)
         def data = (0..1024).collect { ByteBuffer.wrap(contentBytes) }
+        def publisher = createPublisher(*data).delayElements(Duration.ofMillis(1000))
         def subscriber = new Subscriber<ObjectId>() {
             Subscription subscription
-            boolean completed = false
 
             @Override
             void onSubscribe(final Subscription s) {
@@ -457,12 +458,11 @@ class GridFSPublisherSpecification extends FunctionalSpecification {
 
             @Override
             void onComplete() {
-                completed = true
             }
         }
 
         when:
-        gridFSBucket.uploadFromPublisher('myFile', createPublisher(*data), options)
+        gridFSBucket.uploadFromPublisher('myFile', publisher, options)
                 .subscribe(subscriber)
         subscriber.subscription.request(1)
 
@@ -474,8 +474,8 @@ class GridFSPublisherSpecification extends FunctionalSpecification {
         subscriber.subscription.cancel()
 
         then:
-        retry(50) { subscriber.completed || run(chunksCollection.&countDocuments) == 0 }
-        subscriber.completed || run(filesCollection.&countDocuments) == 0
+        retry(50) { run(chunksCollection.&countDocuments) == 0 }
+        run(filesCollection.&countDocuments) == 0
     }
 
     def retry(Integer times, Closure<Boolean> closure) {
