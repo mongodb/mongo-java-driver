@@ -44,15 +44,8 @@ public class SingleConnectionBinding implements ReadWriteBinding {
     private final ServerDescription readServerDescription;
     private final ServerDescription writeServerDescription;
     private int count = 1;
-
-    /**
-     * Create a new binding with the given cluster.
-     *
-     * @param cluster     a non-null Cluster which will be used to select a server to bind to
-     */
-    public SingleConnectionBinding(final Cluster cluster) {
-        this(cluster, primary());
-    }
+    @Nullable
+    private final ServerApi serverApi;
 
     /**
      * Create a new binding with the given cluster.
@@ -60,7 +53,8 @@ public class SingleConnectionBinding implements ReadWriteBinding {
      * @param cluster     a non-null Cluster which will be used to select a server to bind to
      * @param readPreference the readPreference for reads, if not primary a separate connection will be used for reads
      */
-    public SingleConnectionBinding(final Cluster cluster, final ReadPreference readPreference) {
+    public SingleConnectionBinding(final Cluster cluster, final ReadPreference readPreference, @Nullable final ServerApi serverApi) {
+        this.serverApi = serverApi;
         notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
         ServerTuple writeServerTuple = cluster.selectServer(new WritableServerSelector());
@@ -115,7 +109,7 @@ public class SingleConnectionBinding implements ReadWriteBinding {
     @Override
     @Nullable
     public ServerApi getServerApi() {
-        return null;
+        return serverApi;
     }
 
     @Override
@@ -147,7 +141,7 @@ public class SingleConnectionBinding implements ReadWriteBinding {
 
         @Override
         public ServerApi getServerApi() {
-            return null;  // TODO
+            return serverApi;
         }
 
         @Override

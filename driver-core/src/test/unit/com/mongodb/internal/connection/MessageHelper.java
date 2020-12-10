@@ -33,6 +33,7 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageSize;
 
 final class MessageHelper {
@@ -98,6 +99,10 @@ final class MessageHelper {
 
     public static String decodeCommandAsJson(final BsonInput bsonInput) {
         return decodeCommand(bsonInput).toJson();
+    }
+
+    public static String getApiVersionField() {
+        return getServerApi() == null ? "" : ", \"apiVersion\": \"" + getServerApi().getVersion().getValue() + "\"";
     }
 
     private static ByteBuf encodeJson(final String json) {
