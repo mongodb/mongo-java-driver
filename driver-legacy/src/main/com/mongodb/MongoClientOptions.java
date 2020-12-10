@@ -231,6 +231,7 @@ public class MongoClientOptions {
 
         Optional.ofNullable(credential).ifPresent(mongoClientSettingsBuilder::credential);
         Optional.ofNullable(autoEncryptionSettings).ifPresent(mongoClientSettingsBuilder::autoEncryptionSettings);
+        Optional.ofNullable(serverApi).ifPresent(mongoClientSettingsBuilder::serverApi);
         commandListeners.forEach(mongoClientSettingsBuilder::addCommandListener);
 
         mongoClientSettingsBuilder
@@ -1088,6 +1089,7 @@ public class MongoClientOptions {
             readConcern = settings.getReadConcern();
             codecRegistry = settings.getCodecRegistry();
             uuidRepresentation = settings.getUuidRepresentation();
+            serverApi = settings.getServerApi();
             ServerSelector serverSelector = settings.getClusterSettings().getServerSelector();
             this.serverSelector = serverSelector instanceof CompositeServerSelector
                     ? ((CompositeServerSelector) serverSelector).getServerSelectors().get(0) : null;
@@ -1393,6 +1395,21 @@ public class MongoClientOptions {
          */
         public Builder uuidRepresentation(final UuidRepresentation uuidRepresentation) {
             this.uuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
+            return this;
+        }
+
+        /**
+         * Sets the server API to use when sending commands to the server.
+         * <p>
+         * This is required for some MongoDB deployments.
+         * </p>
+         *
+         * @param serverApi the server API, which may not be null
+         * @return this
+         * @since 4.3
+         */
+        public Builder serverApi(final ServerApi serverApi) {
+            this.serverApi = notNull("serverApi", serverApi);
             return this;
         }
 
