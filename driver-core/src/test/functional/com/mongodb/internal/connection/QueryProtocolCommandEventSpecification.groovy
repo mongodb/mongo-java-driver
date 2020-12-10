@@ -41,6 +41,7 @@ import spock.lang.Shared
 
 import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
+import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.internal.connection.ProtocolTestHelper.execute
 import static org.bson.BsonDocument.parse
@@ -54,12 +55,12 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
 
     def setupSpec() {
         nettyConnection = new InternalStreamConnectionFactory(new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                getCredentialWithCache(), null, null, [], null, null)
+                getCredentialWithCache(), null, null, [], null, getServerApi())
                 .create(new ServerId(new ClusterId(), getPrimary()))
         nettyConnection.open()
 
         nioConnection = new InternalStreamConnectionFactory(new AsynchronousSocketChannelStreamFactory(SocketSettings.builder().build(),
-                getSslSettings()), getCredentialWithCache(), null, null, [], null, null)
+                getSslSettings()), getCredentialWithCache(), null, null, [], null, getServerApi())
                 .create(new ServerId(new ClusterId(), getPrimary()))
         nioConnection.open()
     }
