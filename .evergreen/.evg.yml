@@ -1448,12 +1448,13 @@ buildvariants:
   tasks:
     - name: "plain-auth-test"
 
-- matrix_name: "aws-auth-test"
-  matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk11"], version: ["4.4", "latest"], os: "ubuntu" }
-  display_name: "MONGODB-AWS Auth test ${version} ${jdk}"
-  run_on: ubuntu1804-test
-  tasks:
-    - name: "aws-auth-test"
+# JAVA-3906
+#- matrix_name: "aws-auth-test"
+#  matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk11"], version: ["4.4", "latest"], os: "ubuntu" }
+#  display_name: "MONGODB-AWS Auth test ${version} ${jdk}"
+#  run_on: ubuntu1804-test
+#  tasks:
+#    - name: "aws-auth-test"
 
 - matrix_name: "ocsp-test"
   matrix_spec: { auth: "noauth", ssl: "ssl", jdk: "jdk11", version: ["4.4", "latest"], os: "ubuntu" }
