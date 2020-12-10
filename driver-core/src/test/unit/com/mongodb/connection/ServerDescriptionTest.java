@@ -24,7 +24,6 @@ import org.bson.types.ObjectId;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -40,11 +39,11 @@ import static com.mongodb.connection.ServerType.UNKNOWN;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class ServerDescriptionTest {
