@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit
 
 import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
+import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.connection.ServerConnectionState.CONNECTED
 import static com.mongodb.connection.ServerConnectionState.CONNECTING
@@ -199,8 +200,8 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
                 new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder()
                         .connectTimeout(500, TimeUnit.MILLISECONDS)
                         .build(),
-                        getSslSettings()), getCredentialWithCache(), null, null, [], null, null),
-                new TestConnectionPool(), null)
+                        getSslSettings()), getCredentialWithCache(), null, null, [], null, getServerApi()),
+                new TestConnectionPool(), getServerApi())
         serverMonitor.start()
         serverMonitor
     }

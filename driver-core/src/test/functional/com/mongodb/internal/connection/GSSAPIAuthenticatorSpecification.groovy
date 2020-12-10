@@ -30,6 +30,7 @@ import javax.security.auth.login.LoginContext
 
 import static com.mongodb.AuthenticationMechanism.GSSAPI
 import static com.mongodb.ClusterFixture.getPrimary
+import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.MongoCredential.JAVA_SUBJECT_PROVIDER_KEY
 
@@ -46,7 +47,7 @@ class GSSAPIAuthenticatorSpecification extends Specification {
         def credentialWithCache = new MongoCredentialWithCache(credential)
         def streamFactory = new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings())
         def internalConnection = new InternalStreamConnectionFactory(streamFactory, credentialWithCache, null,
-                null, Collections.<MongoCompressor> emptyList(), null,)
+                null, Collections.<MongoCompressor> emptyList(), getServerApi(),)
                 .create(new ServerId(new ClusterId(), getPrimary()))
 
         when:

@@ -35,6 +35,7 @@ import java.util.concurrent.ExecutionException;
 
 import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.internal.connection.MessageHelper.buildSuccessfulReply;
+import static com.mongodb.internal.connection.MessageHelper.getApiVersionField;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -108,7 +109,7 @@ public class X509AuthenticatorNoUserNameTest {
     private void validateMessages() {
         List<BsonInput> sent = connection.getSent();
         String command = MessageHelper.decodeCommandAsJson(sent.get(0));
-        assertEquals("{\"authenticate\": 1, \"mechanism\": \"MONGODB-X509\"}", command);
+        assertEquals("{\"authenticate\": 1, \"mechanism\": \"MONGODB-X509\"" + getApiVersionField() + "}", command);
     }
 
     private MongoCredentialWithCache getCredentialWithCache() {
