@@ -16,7 +16,7 @@
 
 package org.mongodb.scala
 
-import com.mongodb.MongoClientSettings
+import com.mongodb.ClusterFixture.getServerApi
 import com.mongodb.connection.ServerVersion
 import org.mongodb.scala.bson.BsonString
 import org.scalatest._
@@ -59,15 +59,20 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
   }
   val connectionString: ConnectionString = ConnectionString(mongoClientURI)
 
-  def mongoClientSettingsBuilder: MongoClientSettings.Builder =
-    MongoClientSettings.builder().applyConnectionString(connectionString)
+  def mongoClientSettingsBuilder: MongoClientSettings.Builder = {
+    val builder = MongoClientSettings.builder().applyConnectionString(connectionString)
+    if (getServerApi != null) {
+      builder.serverApi(getServerApi)
+    }
+    builder
+  }
 
   val mongoClientSettings: MongoClientSettings = mongoClientSettingsBuilder.build()
 
-  def mongoClient(): MongoClient = MongoClient(mongoClientURI)
+  def mongoClient(): MongoClient = MongoClient(mongoClientSettings)
 
   def isMongoDBOnline(): Boolean = {
-    Try(Await.result(MongoClient(mongoClientURI).listDatabaseNames().toFuture(), WAIT_DURATION)).isSuccess
+    Try(Await.result(MongoClient(mongoClientSettings).listDatabaseNames().toFuture(), WAIT_DURATION)).isSuccess
   }
 
   def hasSingleHost(): Boolean = {
