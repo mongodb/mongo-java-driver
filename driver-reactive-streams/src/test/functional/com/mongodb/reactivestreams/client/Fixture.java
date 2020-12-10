@@ -37,6 +37,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.ClusterFixture.getSslSettings;
 import static java.lang.Thread.sleep;
 
@@ -66,7 +67,11 @@ public final class Fixture {
     }
 
     public static MongoClientSettings.Builder getMongoClientSettingsBuilder() {
-        return MongoClientSettings.builder().applyConnectionString(ClusterFixture.getConnectionString());
+        MongoClientSettings.Builder builder = MongoClientSettings.builder();
+        if (getServerApi() != null) {
+            builder.serverApi(getServerApi());
+        }
+        return builder.applyConnectionString(ClusterFixture.getConnectionString());
     }
 
     public static String getDefaultDatabaseName() {
@@ -168,6 +173,9 @@ public final class Fixture {
         MongoClientSettings.Builder builder = MongoClientSettings.builder()
                 .applyConnectionString(getConnectionString());
         builder.streamFactoryFactory(getStreamFactoryFactory());
+        if (getServerApi() != null) {
+            builder.serverApi(getServerApi());
+        }
         return builder;
     }
 
