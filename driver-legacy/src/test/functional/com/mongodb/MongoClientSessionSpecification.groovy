@@ -34,6 +34,7 @@ import static Fixture.getMongoClientURI
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.Fixture.getMongoClient
+import static com.mongodb.Fixture.getOptions
 
 class MongoClientSessionSpecification extends FunctionalSpecification {
 
@@ -243,7 +244,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
     def 'should use a default session'() {
         given:
         def commandListener = new TestCommandListener()
-        def optionsBuilder = MongoClientOptions.builder()
+        def optionsBuilder = MongoClientOptions.builder(getOptions())
                 .addCommandListener(commandListener)
         def client = new MongoClient(getMongoClientURI(optionsBuilder))
 
@@ -303,7 +304,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
     def 'should not use an implicit session for an unacknowledged write'() {
         given:
         def commandListener = new TestCommandListener()
-        def optionsBuilder = MongoClientOptions.builder()
+        def optionsBuilder = MongoClientOptions.builder(getOptions())
                 .addCommandListener(commandListener)
         def mongoClientURI = getMongoClientURI(optionsBuilder)
         def client = new MongoClient(mongoClientURI)

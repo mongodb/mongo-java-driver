@@ -19,12 +19,14 @@ package com.mongodb;
 import org.bson.Document;
 import org.junit.Test;
 
+import static com.mongodb.client.Fixture.getMongoClientSettings;
+
 public class ConnectivityTest {
 
     // the test succeeds if no exception is thrown, and fail otherwise
     @Test
     public void testConnectivity() {
-        MongoClient client = new MongoClient(Fixture.getMongoClientURI());
+        MongoClient client = new MongoClient(getMongoClientSettings());
 
         try {
             // test that a command that doesn't require auth completes normally
