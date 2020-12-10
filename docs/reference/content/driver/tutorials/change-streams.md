@@ -108,7 +108,7 @@ In the following example the change stream prints out all changes it observes, f
 - First it uses a [`$match`]({{< docsref "reference/operator/aggregation/match/" >}}) stage to filter for documents where the `operationType` 
 is either an `insert`, `update`, `replace` or `delete`.
 
-- Then, it sets the `fullDocument` to [`FullDocument.UPDATE_LOOKUP`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/FullDocument.html#UPDATE_LOOKUP" >}}),
+- Then, it sets the `fullDocument` to [`FullDocument.UPDATE_LOOKUP`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/changestream/FullDocument.html#UPDATE_LOOKUP" >}}),
 so that the document after the update is included in the results.
 
 ```java

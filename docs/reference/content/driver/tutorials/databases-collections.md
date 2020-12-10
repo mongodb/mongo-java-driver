@@ -40,7 +40,7 @@ For more information on connecting to running MongoDB deployments, see
 
 ## Access a Database
 
-Once you have a `MongoClient` instance connected to a MongoDB deployment, use its [`getDatabase()`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClient.html#getDatabase(java.lang.String)" >}}) method to access a database.
+Once you have a `MongoClient` instance connected to a MongoDB deployment, use its [`getDatabase()`]({{< apiref "mongodb-driver-sync" "com/mongodb/MongoClient.html#getDatabase(java.lang.String)" >}}) method to access a database.
 
 Specify the name of the database to the `getDatabase()` method. If a database does not exist, MongoDB creates the database when you first store data for that database.
 

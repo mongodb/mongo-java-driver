@@ -27,7 +27,7 @@ the [ismaster]({{<docsref "reference/command/isMaster/" >}}) command response.
 import org.mongodb.scala._
 ```
 
-To specify compression with [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ConnectionString$.html" >}}), specify `compressors` as part of the connection
+To specify compression with [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/package$$ConnectionString$.html" >}}), specify `compressors` as part of the connection
 string, as in:
 
 ```scala

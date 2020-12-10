@@ -11,7 +11,7 @@ title = "Connect to MongoDB"
 ## Connect to MongoDB
 
 Use [`MongoClients.create()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoClients.html" >}}) (as of the 3.7 release), or 
-[`MongoClient()`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClient .html" >}}) for the legacy MongoClient API, to make a connection to a running MongoDB instance.
+[`MongoClient()`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClient.html" >}}) for the legacy MongoClient API, to make a connection to a running MongoDB instance.
 
 {{% note class="important" %}}
 The following examples are not meant to provide an exhaustive list

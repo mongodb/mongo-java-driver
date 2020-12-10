@@ -12,7 +12,7 @@ title = "TLS/SSL"
 
 The Java driver supports TLS/SSL connections to MongoDB servers using
 the underlying support for TLS/SSL provided by the JDK. 
-You can configure the driver to use TLS/SSL either with [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ConnectionString$.html" >}}) or with
+You can configure the driver to use TLS/SSL either with [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/package$$ConnectionString$.html" >}}) or with
 [`MongoClientSettings`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoClientSettings$.html" >}}).
 
 ## MongoClient API (since 3.7)
@@ -23,7 +23,7 @@ You can configure the driver to use TLS/SSL either with [`ConnectionString`]({{<
 import org.mongodb.scala._
 ```
 
-To specify TLS/SSL with [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ConnectionString$.html" >}}), specify `ssl=true` as part of the connection
+To specify TLS/SSL with [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/package$$ConnectionString$.html" >}}), specify `ssl=true` as part of the connection
 string, as in:
 
 ```scala

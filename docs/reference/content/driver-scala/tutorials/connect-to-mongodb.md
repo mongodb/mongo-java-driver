@@ -88,7 +88,7 @@ To connect to a [replica set]({{<docsref "replication/" >}}), you must specify o
 MongoDB will auto-discover the primary and the secondaries.
 {{% /note %}}
 
-- You can specify the members using a [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ConnectionString$.html" >}}):
+- You can specify the members using a [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/package$$ConnectionString$.html" >}}):
 
   - To specify at least two members of the replica set:
 
@@ -122,7 +122,7 @@ or instances to a `MongoClients` create method.
 
 To connect to a single `mongos` instance:
 
-- You can specify the hostname and the port in a [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ConnectionString$.html" >}})
+- You can specify the hostname and the port in a [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/package$$ConnectionString$.html" >}})
 
 ```scala
 val mongoClient = MongoClient( "mongodb://localhost:27017" )
@@ -136,7 +136,7 @@ val mongoClient = MongoClient()
 
 To connect to multiple `mongos` instances:
 
-- You can specify the [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ConnectionString$.html" >}}) with their hostnames and ports:
+- You can specify the [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/package$$ConnectionString$.html" >}}) with their hostnames and ports:
 
     ```scala
     val mongoClient = MongoClient("mongodb://host1:27017,host2:27017")

@@ -171,7 +171,7 @@ For read operations on [replica sets]({{<docsref "replication/" >}}) or [sharded
                                          .build())
       ```
 
-  - Via [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ConnectionString$.html" >}}), as in the following example:
+  - Via [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/package$$ConnectionString$.html" >}}), as in the following example:
 
       ```scala
       val mongoClient = MongoClient("mongodb://host1:27017,host2:27017/?readPreference=secondary")
@@ -214,7 +214,7 @@ For read operations on [replica sets]({{<docsref "replication/" >}}) or [sharded
                                      .build())
       ```
 
-  - Via [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ConnectionString$.html" >}}), as in the following example:
+  - Via [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/package$$ConnectionString$.html" >}}), as in the following example:
 
       ```scala
       val mongoClient = MongoClient("mongodb://host1:27017,host2:27017/?readConcernLevel=majority")

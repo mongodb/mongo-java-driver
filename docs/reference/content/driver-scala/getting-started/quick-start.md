@@ -90,7 +90,7 @@ val mongoClient: MongoClient = MongoClient(
     .build())
 ```
 
-- You can specify the [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ConnectionString$.html" >}}):
+- You can specify the [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/package$$ConnectionString$.html" >}}):
 
 ```scala
 val mongoClient: MongoClient = MongoClient("mongodb://hostOne:27017")
