@@ -31,6 +31,7 @@ import spock.lang.Shared
 
 import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
+import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.internal.connection.ProtocolTestHelper.execute
 
@@ -40,7 +41,7 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
 
     def setupSpec() {
         connection = new InternalStreamConnectionFactory(new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                getCredentialWithCache(), null, null, [], null, null)
+                getCredentialWithCache(), null, null, [], null, getServerApi())
                 .create(new ServerId(new ClusterId(), getPrimary()))
         connection.open();
     }
@@ -66,7 +67,7 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
         cleanup:
         // force acknowledgement
         new CommandProtocolImpl(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
-                NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec())
+                NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(), getServerApi())
                 .sessionContext(NoOpSessionContext.INSTANCE)
                 .execute(connection)
 

@@ -274,14 +274,14 @@ class ServerSessionPoolSpecification extends Specification {
         1 * connection.command('admin',
                 new BsonDocument('endSessions', new BsonArray(sessions*.getIdentifier())),
                 { it instanceof NoOpFieldNameValidator }, primaryPreferred(),
-                { it instanceof BsonDocumentCodec }, NoOpSessionContext.INSTANCE, null) >> new BsonDocument()
+                { it instanceof BsonDocumentCodec }, NoOpSessionContext.INSTANCE, getServerApi()) >> new BsonDocument()
         1 * connection.release()
 
         1 * cluster.selectServer(_)  >> new ServerTuple(server, connectedDescription.serverDescriptions[0])
         1 * connection.command('admin',
                 new BsonDocument('endSessions', new BsonArray([oneOverBatchSizeSession.getIdentifier()])),
                 { it instanceof NoOpFieldNameValidator }, primaryPreferred(),
-                { it instanceof BsonDocumentCodec }, NoOpSessionContext.INSTANCE, null) >> new BsonDocument()
+                { it instanceof BsonDocumentCodec }, NoOpSessionContext.INSTANCE, getServerApi()) >> new BsonDocument()
         1 * connection.release()
     }
 }

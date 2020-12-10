@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import static com.mongodb.ClusterFixture.getServerApi;
+import static com.mongodb.internal.connection.MessageHelper.getApiVersionField;
 import static org.junit.Assert.assertEquals;
 
 public class PlainAuthenticatorUnitTest {
@@ -71,7 +72,9 @@ public class PlainAuthenticatorUnitTest {
         String command = MessageHelper.decodeCommandAsJson(sent.get(0));
         String expectedCommand = "{\"saslStart\": 1, "
                                  + "\"mechanism\": \"PLAIN\", "
-                                 + "\"payload\": {\"$binary\": {\"base64\": \"dXNlcgB1c2VyAHBlbmNpbA==\", \"subType\": \"00\"}}}";
+                                 + "\"payload\": {\"$binary\": {\"base64\": \"dXNlcgB1c2VyAHBlbmNpbA==\", \"subType\": \"00\"}}"
+                                 + getApiVersionField()
+                                 + "}";
 
         assertEquals(expectedCommand, command);
     }

@@ -22,6 +22,7 @@ import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
@@ -47,6 +48,12 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
                         final ReadPreference readPreference, final Decoder<T> commandResultDecoder) {
         this(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, true, null, null,
                 ClusterConnectionMode.MULTIPLE, null);
+    }
+
+    CommandProtocolImpl(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
+                        final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final @Nullable ServerApi serverApi) {
+        this(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, true, null, null,
+                ClusterConnectionMode.MULTIPLE, serverApi);
     }
 
     CommandProtocolImpl(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,

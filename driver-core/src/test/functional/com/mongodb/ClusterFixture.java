@@ -301,7 +301,7 @@ public final class ClusterFixture {
     }
 
     public static SingleConnectionBinding getSingleConnectionBinding() {
-        return new SingleConnectionBinding(getCluster(), ReadPreference.primary());
+        return new SingleConnectionBinding(getCluster(), ReadPreference.primary(), getServerApi());
     }
 
     public static AsyncSingleConnectionBinding getAsyncSingleConnectionBinding() {

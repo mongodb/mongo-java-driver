@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation
 
-import util.spock.annotations.Slow
 import com.mongodb.MongoCursorNotFoundException
 import com.mongodb.MongoTimeoutException
 import com.mongodb.OperationFunctionalSpecification
@@ -35,6 +34,7 @@ import org.bson.BsonTimestamp
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
+import util.spock.annotations.Slow
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -578,7 +578,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
                 def response = connection.command(getDatabaseName(), findCommand,
                         OperationFunctionalSpecification.NO_OP_FIELD_NAME_VALIDATOR, readPreference,
                         CommandResultDocumentCodec.create(new DocumentCodec(), 'firstBatch'),
-                        connectionSource.sessionContext, null)
+                        connectionSource.sessionContext, connectionSource.getServerApi())
                 cursorDocumentToQueryResult(response.getDocument('cursor'), connection.getDescription().getServerAddress())
             } else {
                 connection.query(getNamespace(), filter, null, 0, limit, batchSize,
