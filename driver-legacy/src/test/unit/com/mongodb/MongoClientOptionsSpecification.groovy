@@ -84,6 +84,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.sslSettings == SslSettings.builder().build()
         options.compressorList == []
         options.getAutoEncryptionSettings() == null
+        options.getServerApi() == null
     }
 
     @SuppressWarnings('UnnecessaryObjectReferences')
@@ -165,6 +166,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .kmsProviders(['local': ['key': new byte[64]]])
                 .build()
         def codecRegistry = Mock(CodecRegistry)
+        def serverApi = ServerApi.builder().version(ServerApiVersion.V1).build()
 
         when:
         def options = MongoClientOptions.builder()
@@ -203,6 +205,7 @@ class MongoClientOptionsSpecification extends Specification {
                                         .addServerListener(serverListener)
                                         .addServerMonitorListener(serverMonitorListener)
                                         .uuidRepresentation(UuidRepresentation.C_SHARP_LEGACY)
+                                        .serverApi(serverApi)
                                         .build()
 
         then:
@@ -265,6 +268,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.getServerListeners() == [serverListener]
         options.getServerMonitorListeners() == [serverMonitorListener]
         options.getUuidRepresentation() == UuidRepresentation.C_SHARP_LEGACY
+        options.getServerApi() == serverApi
 
         when:
         def credential = MongoCredential.createCredential('user1', 'app1', 'pwd'.toCharArray())
@@ -284,6 +288,7 @@ class MongoClientOptionsSpecification extends Specification {
         settings.compressorList == [MongoCompressor.createZlibCompressor()]
         settings.readConcern == ReadConcern.MAJORITY
         settings.uuidRepresentation == UuidRepresentation.C_SHARP_LEGACY
+        settings.serverApi == serverApi
 
         settings.clusterSettings == ClusterSettings.builder()
                 .hosts([new ServerAddress('host1')])
@@ -342,6 +347,7 @@ class MongoClientOptionsSpecification extends Specification {
         optionsFromSettings.getServerListeners() == [serverListener]
         optionsFromSettings.getServerMonitorListeners() == [serverMonitorListener]
         optionsFromSettings.getUuidRepresentation() == UuidRepresentation.C_SHARP_LEGACY
+        optionsFromSettings.getServerApi() == serverApi
     }
 
     def 'should create settings with SRV protocol'() {
@@ -417,6 +423,7 @@ class MongoClientOptionsSpecification extends Specification {
                         .keyVaultNamespace('admin.keys')
                         .kmsProviders(['local': ['key': new byte[64]]])
                         .build())
+                .serverApi(ServerApi.builder().version(ServerApiVersion.V1).build())
                 .build()
 
         then:
