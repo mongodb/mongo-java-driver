@@ -18,14 +18,18 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoInternalException;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
 final class ExplainHelper {
 
-    static BsonDocument asExplainCommand(final BsonDocument command, final ExplainVerbosity explainVerbosity) {
-        return new BsonDocument("explain", command)
-               .append("verbosity", getVerbosityAsString(explainVerbosity));
+    static BsonDocument asExplainCommand(final BsonDocument command, @Nullable final ExplainVerbosity explainVerbosity) {
+        BsonDocument explainCommand = new BsonDocument("explain", command);
+        if (explainVerbosity != null) {
+            explainCommand.append("verbosity", getVerbosityAsString(explainVerbosity));
+        }
+        return explainCommand;
     }
 
     private static BsonString getVerbosityAsString(final ExplainVerbosity explainVerbosity) {

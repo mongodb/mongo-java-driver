@@ -88,7 +88,7 @@ public final class SyncOperations<TDocument> {
         return operations.findFirst(filter, resultClass, options);
     }
 
-    public <TResult> ReadOperation<BatchCursor<TResult>> find(final Bson filter, final Class<TResult> resultClass,
+    public <TResult> ExplainableReadOperation<BatchCursor<TResult>> find(final Bson filter, final Class<TResult> resultClass,
                                                               final FindOptions options) {
         return operations.find(filter, resultClass, options);
     }
