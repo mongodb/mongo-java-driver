@@ -97,7 +97,7 @@ public class ServerDescriptionTest {
         assertNull(serverDescription.getElectionId());
         assertNull(serverDescription.getSetVersion());
         assertNull(serverDescription.getLastWriteDate());
-        assertTrue(serverDescription.getLastUpdateTime(TimeUnit.NANOSECONDS) > currentNanoTime);
+        assertTrue(serverDescription.getLastUpdateTime(TimeUnit.NANOSECONDS) >= currentNanoTime);
         assertNull(serverDescription.getLogicalSessionTimeoutMinutes());
         assertNull(serverDescription.getException());
     }
