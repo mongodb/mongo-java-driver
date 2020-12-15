@@ -25,6 +25,9 @@ import com.mongodb.lang.Nullable;
 import com.mongodb.session.ServerSession;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
+import reactor.core.publisher.Mono;
+
+import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 
 class SyncClientSession implements ClientSession {
     private final com.mongodb.reactivestreams.client.ClientSession wrapped;
@@ -131,16 +134,12 @@ class SyncClientSession implements ClientSession {
 
     @Override
     public void commitTransaction() {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.commitTransaction().subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.commitTransaction()).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void abortTransaction() {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.abortTransaction().subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.abortTransaction()).block(TIMEOUT_DURATION);
     }
 
     @Override

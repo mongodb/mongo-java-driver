@@ -20,8 +20,11 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
 import org.bson.conversions.Bson;
+import reactor.core.publisher.Mono;
 
 import java.util.concurrent.TimeUnit;
+
+import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 
 class SyncAggregateIterable<T> extends SyncMongoIterable<T> implements AggregateIterable<T> {
     private final AggregatePublisher<T> wrapped;
@@ -33,9 +36,7 @@ class SyncAggregateIterable<T> extends SyncMongoIterable<T> implements Aggregate
 
     @Override
     public void toCollection() {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.toCollection().subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.toCollection()).block(TIMEOUT_DURATION);
     }
 
     @Override

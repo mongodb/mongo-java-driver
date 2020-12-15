@@ -22,8 +22,11 @@ import com.mongodb.client.model.MapReduceAction;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.MapReducePublisher;
 import org.bson.conversions.Bson;
+import reactor.core.publisher.Mono;
 
 import java.util.concurrent.TimeUnit;
+
+import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 
 @SuppressWarnings("deprecation")
 class SyncMapReduceIterable<T> extends SyncMongoIterable<T> implements MapReduceIterable<T> {
@@ -36,9 +39,7 @@ class SyncMapReduceIterable<T> extends SyncMongoIterable<T> implements MapReduce
 
     @Override
     public void toCollection() {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.toCollection().subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.toCollection()).block(TIMEOUT_DURATION);
     }
 
     @Override

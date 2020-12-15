@@ -20,9 +20,12 @@ import com.mongodb.Function;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Mono;
 
 import java.util.Collection;
 import java.util.function.Consumer;
+
+import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 
 abstract class SyncMongoIterable<T> implements MongoIterable<T> {
     private final Publisher<T> wrapped;
@@ -43,9 +46,7 @@ abstract class SyncMongoIterable<T> implements MongoIterable<T> {
 
     @Override
     public T first() {
-        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
-        wrapped.subscribe(subscriber);
-        return subscriber.get();
+        return Mono.from(wrapped).block(TIMEOUT_DURATION);
     }
 
     @Override

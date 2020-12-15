@@ -26,9 +26,11 @@ import com.mongodb.client.MongoIterable;
 import com.mongodb.connection.ClusterDescription;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static java.util.Objects.requireNonNull;
 
 public class SyncMongoClient implements MongoClient {
@@ -45,20 +47,12 @@ public class SyncMongoClient implements MongoClient {
 
     @Override
     public ClientSession startSession() {
-        SingleResultSubscriber<com.mongodb.reactivestreams.client.ClientSession> subscriber = createSubscriber();
-        wrapped.startSession().subscribe(subscriber);
-        return new SyncClientSession(requireNonNull(subscriber.get()), this);
-    }
-
-    private <TResult> SingleResultSubscriber<TResult> createSubscriber() {
-        return new SingleResultSubscriber<>();
+        return new SyncClientSession(requireNonNull(Mono.from(wrapped.startSession()).block(TIMEOUT_DURATION)), this);
     }
 
     @Override
     public ClientSession startSession(final ClientSessionOptions options) {
-        SingleResultSubscriber<com.mongodb.reactivestreams.client.ClientSession> subscriber = createSubscriber();
-        wrapped.startSession(options).subscribe(subscriber);
-        return new SyncClientSession(requireNonNull(subscriber.get()), this);
+        return new SyncClientSession(requireNonNull(Mono.from(wrapped.startSession(options)).block(TIMEOUT_DURATION)), this);
     }
 
     @Override
