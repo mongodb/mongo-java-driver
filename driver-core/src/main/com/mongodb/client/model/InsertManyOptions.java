@@ -25,7 +25,7 @@ import com.mongodb.lang.Nullable;
  * @mongodb.driver.manual tutorial/insert-documents/ Insert Tutorial
  * @mongodb.driver.manual reference/command/insert/ Insert Command
  */
-public final class InsertManyOptions {
+public class InsertManyOptions {
     private boolean ordered = true;
     private Boolean bypassDocumentValidation;
 
