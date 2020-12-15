@@ -43,6 +43,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.mongodb.ClusterFixture.TIMEOUT;
 import static java.util.Collections.emptyList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -130,7 +131,7 @@ public class TestCommandListener implements CommandListener {
     private List<CommandEvent> getCommandStartedEvents(final int maxEvents) {
         lock.lock();
         try {
-            List<CommandEvent> commandStartedEvents = new ArrayList<CommandEvent>();
+            List<CommandEvent> commandStartedEvents = new ArrayList<>();
             for (CommandEvent cur : getEvents()) {
                 if (cur instanceof CommandStartedEvent) {
                     commandStartedEvents.add(cur);
@@ -150,7 +151,7 @@ public class TestCommandListener implements CommandListener {
         try {
             while (!hasCompletedEvents(numEvents)) {
                 try {
-                    if (!commandCompletedCondition.await(10, TimeUnit.SECONDS)) {
+                    if (!commandCompletedCondition.await(TIMEOUT, TimeUnit.SECONDS)) {
                         throw new MongoTimeoutException("Timeout waiting for event");
                     }
                 } catch (InterruptedException e) {
@@ -168,7 +169,7 @@ public class TestCommandListener implements CommandListener {
         try {
             while (!hasCompletedEvents(1)) {
                 try {
-                    if (!commandCompletedCondition.await(10, TimeUnit.SECONDS)) {
+                    if (!commandCompletedCondition.await(TIMEOUT, TimeUnit.SECONDS)) {
                         throw new MongoTimeoutException("Timeout waiting for event");
                     }
                 } catch (InterruptedException e) {
