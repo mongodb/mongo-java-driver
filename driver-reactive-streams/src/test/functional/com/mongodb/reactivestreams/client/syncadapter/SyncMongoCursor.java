@@ -16,99 +16,33 @@
 
 package com.mongodb.reactivestreams.client.syncadapter;
 
-import com.mongodb.MongoInterruptedException;
-import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.client.MongoCursor;
 import org.reactivestreams.Publisher;
-import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
+import reactor.core.publisher.Flux;
 
-import java.util.NoSuchElementException;
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.TimeUnit;
-
-import static com.mongodb.ClusterFixture.TIMEOUT;
+import java.util.Iterator;
 
 class SyncMongoCursor<T> implements MongoCursor<T> {
-    private static final Object COMPLETED = new Object();
-    private final BlockingDeque<Object> results = new LinkedBlockingDeque<>();
-    private volatile Subscription subscription;
-    private volatile T next;
+    private final Iterator<T> iterator;
 
     SyncMongoCursor(final Publisher<T> publisher) {
-        CountDownLatch latch = new CountDownLatch(1);
-        publisher.subscribe(new Subscriber<T>() {
-            @Override
-            public void onSubscribe(final Subscription s) {
-                subscription = s;
-                subscription.request(Long.MAX_VALUE);
-                latch.countDown();
-            }
-
-            @Override
-            public void onNext(final T t) {
-                results.addLast(t);
-            }
-
-            @Override
-            public void onError(final Throwable t) {
-                results.addLast(t);
-            }
-
-            @Override
-            public void onComplete() {
-                results.addLast(COMPLETED);
-            }
-        });
-        try {
-            if (!latch.await(TIMEOUT, TimeUnit.SECONDS)) {
-                throw new MongoTimeoutException("Timeout waiting for subscription");
-            }
-        } catch (InterruptedException e) {
-            throw new MongoInterruptedException("Interrupted awaiting latch", e);
-        }
+        iterator = Flux.from(publisher).toIterable().iterator();
     }
 
     @Override
     public void close() {
-        subscription.cancel();
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public boolean hasNext() {
-        if (next != null) {
-            return true;
-        }
-        try {
-            Object first = results.pollFirst(TIMEOUT, TimeUnit.SECONDS);
-            if (first == null) {
-                throw new MongoTimeoutException("Time out waiting for result from cursor");
-            } else if (first instanceof Throwable) {
-                throw translateError((Throwable) first);
-            } else if (first == COMPLETED) {
-                return false;
-            } else {
-                next = (T) first;
-                return true;
-            }
-        } catch (InterruptedException e) {
-            throw new MongoInterruptedException("Interrupted waiting for next result", e);
-        }
+        return iterator.hasNext();
     }
 
     @Override
     public T next() {
-        if (!hasNext()) {
-            throw new NoSuchElementException();
-        }
-        T retVal = next;
-        next = null;
-        return retVal;
+        return iterator.next();
     }
 
     @Override
@@ -131,10 +65,4 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
         throw new UnsupportedOperationException();
     }
 
-    private RuntimeException translateError(final Throwable throwable) {
-        if (throwable instanceof RuntimeException) {
-            return (RuntimeException) throwable;
-        }
-        return new RuntimeException(throwable);
-    }
 }
