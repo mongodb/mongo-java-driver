@@ -26,7 +26,7 @@ import com.mongodb.lang.Nullable;
  * @mongodb.driver.manual tutorial/insert-documents/ Insert Tutorial
  * @mongodb.driver.manual reference/command/insert/ Insert Command
  */
-public final class InsertOneOptions {
+public class InsertOneOptions {
     private Boolean bypassDocumentValidation;
 
     /**
