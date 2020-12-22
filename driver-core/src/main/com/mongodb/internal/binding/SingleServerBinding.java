@@ -22,7 +22,7 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.NoOpSessionContext;
-import com.mongodb.internal.connection.Server;
+import com.mongodb.internal.connection.ServerTuple;
 import com.mongodb.internal.selector.ServerAddressSelector;
 import com.mongodb.internal.session.SessionContext;
 
@@ -86,16 +86,17 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
     }
 
     private final class SingleServerBindingConnectionSource extends AbstractReferenceCounted implements ConnectionSource {
-        private final Server server;
+        private final ServerDescription serverDescription;
 
         private SingleServerBindingConnectionSource() {
             SingleServerBinding.this.retain();
-            server = cluster.selectServer(new ServerAddressSelector(serverAddress));
+            ServerTuple serverTuple = cluster.selectServer(new ServerAddressSelector(serverAddress));
+            serverDescription = serverTuple.getServerDescription();
         }
 
         @Override
         public ServerDescription getServerDescription() {
-            return server.getDescription();
+            return serverDescription;
         }
 
         @Override
@@ -105,7 +106,7 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
 
         @Override
         public Connection getConnection() {
-            return cluster.selectServer(new ServerAddressSelector(serverAddress)).getConnection();
+            return cluster.selectServer(new ServerAddressSelector(serverAddress)).getServer().getConnection();
         }
 
         @Override

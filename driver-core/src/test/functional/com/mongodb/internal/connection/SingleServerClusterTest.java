@@ -108,7 +108,7 @@ public class SingleServerClusterTest {
             public List<ServerDescription> select(final ClusterDescription clusterDescription) {
                 return getPrimaries(clusterDescription);
             }
-        });
+        }).getServer();
 
         // then
         assertTrue(server.getDescription().isOk());

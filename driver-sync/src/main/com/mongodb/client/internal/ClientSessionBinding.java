@@ -26,7 +26,7 @@ import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadWriteBinding;
 import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.connection.Server;
+import com.mongodb.internal.connection.ServerTuple;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.session.ClientSessionContext;
 import com.mongodb.internal.session.SessionContext;
@@ -106,8 +106,8 @@ public class ClientSessionBinding implements ReadWriteBinding {
     private ServerAddress pinServer() {
         ServerAddress pinnedServerAddress = session.getPinnedServerAddress();
         if (pinnedServerAddress == null) {
-            Server server = wrapped.getCluster().selectServer(new ReadPreferenceServerSelector(wrapped.getReadPreference()));
-            pinnedServerAddress = server.getDescription().getAddress();
+            ServerTuple serverTuple = wrapped.getCluster().selectServer(new ReadPreferenceServerSelector(wrapped.getReadPreference()));
+            pinnedServerAddress = serverTuple.getServerDescription().getAddress();
             session.setPinnedServerAddress(pinnedServerAddress);
         }
         return pinnedServerAddress;

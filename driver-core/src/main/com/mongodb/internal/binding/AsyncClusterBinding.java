@@ -25,6 +25,7 @@ import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
 import com.mongodb.internal.connection.Server;
+import com.mongodb.internal.connection.ServerTuple;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.selector.ServerAddressSelector;
 import com.mongodb.internal.selector.WritableServerSelector;
@@ -96,13 +97,13 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
 
     private void getAsyncClusterBindingConnectionSource(final ServerSelector serverSelector,
                                                         final SingleResultCallback<AsyncConnectionSource> callback) {
-        cluster.selectServerAsync(serverSelector, new SingleResultCallback<Server>() {
+        cluster.selectServerAsync(serverSelector, new SingleResultCallback<ServerTuple>() {
             @Override
-            public void onResult(final Server result, final Throwable t) {
+            public void onResult(final ServerTuple result, final Throwable t) {
                 if (t != null) {
                     callback.onResult(null, t);
                 } else {
-                    callback.onResult(new AsyncClusterBindingConnectionSource(result), null);
+                    callback.onResult(new AsyncClusterBindingConnectionSource(result.getServer(), result.getServerDescription()), null);
                 }
             }
         });
@@ -110,15 +111,17 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
 
     private final class AsyncClusterBindingConnectionSource extends AbstractReferenceCounted implements AsyncConnectionSource {
         private final Server server;
+        private final ServerDescription serverDescription;
 
-        private AsyncClusterBindingConnectionSource(final Server server) {
+        private AsyncClusterBindingConnectionSource(final Server server, final ServerDescription serverDescription) {
             this.server = server;
+            this.serverDescription = serverDescription;
             AsyncClusterBinding.this.retain();
         }
 
         @Override
         public ServerDescription getServerDescription() {
-            return server.getDescription();
+            return serverDescription;
         }
 
         @Override

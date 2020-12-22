@@ -92,14 +92,14 @@ abstract class BaseCluster implements Cluster {
     }
 
     @Override
-    public Server selectServer(final ServerSelector serverSelector) {
+    public ServerTuple selectServer(final ServerSelector serverSelector) {
         isTrue("open", !isClosed());
 
         try {
             CountDownLatch currentPhase = phase.get();
             ClusterDescription curDescription = description;
             ServerSelector compositeServerSelector = getCompositeServerSelector(serverSelector);
-            Server server = selectRandomServer(compositeServerSelector, curDescription);
+            ServerTuple serverTuple = selectRandomServer(compositeServerSelector, curDescription);
 
             boolean selectionFailureLogged = false;
 
@@ -110,8 +110,8 @@ abstract class BaseCluster implements Cluster {
             while (true) {
                 throwIfIncompatible(curDescription);
 
-                if (server != null) {
-                    return server;
+                if (serverTuple != null) {
+                    return serverTuple;
                 }
 
                 if (curTimeNanos - startTimeNanos > maxWaitTimeNanos) {
@@ -131,7 +131,7 @@ abstract class BaseCluster implements Cluster {
 
                 currentPhase = phase.get();
                 curDescription = description;
-                server = selectRandomServer(compositeServerSelector, curDescription);
+                serverTuple = selectRandomServer(compositeServerSelector, curDescription);
             }
 
         } catch (InterruptedException e) {
@@ -140,7 +140,7 @@ abstract class BaseCluster implements Cluster {
     }
 
     @Override
-    public void selectServerAsync(final ServerSelector serverSelector, final SingleResultCallback<Server> callback) {
+    public void selectServerAsync(final ServerSelector serverSelector, final SingleResultCallback<ServerTuple> callback) {
         isTrue("open", !isClosed());
 
         if (LOGGER.isTraceEnabled()) {
@@ -294,12 +294,12 @@ abstract class BaseCluster implements Cluster {
                     return true;
                 }
 
-                Server server = selectRandomServer(request.compositeSelector, description);
-                if (server != null) {
+                ServerTuple serverTuple = selectRandomServer(request.compositeSelector, description);
+                if (serverTuple != null) {
                     if (LOGGER.isTraceEnabled()) {
-                        LOGGER.trace(format("Asynchronously selected server %s", server.getDescription().getAddress()));
+                        LOGGER.trace(format("Asynchronously selected server %s", serverTuple.getServerDescription().getAddress()));
                     }
-                    request.onResult(server, null);
+                    request.onResult(serverTuple, null);
                     return true;
                 }
                 if (prevPhase == null) {
@@ -335,7 +335,7 @@ abstract class BaseCluster implements Cluster {
     }
 
 
-    private Server selectRandomServer(final ServerSelector serverSelector, final ClusterDescription clusterDescription) {
+    private ServerTuple selectRandomServer(final ServerSelector serverSelector, final ClusterDescription clusterDescription) {
         List<ServerDescription> serverDescriptions = serverSelector.select(clusterDescription);
         if (!serverDescriptions.isEmpty()) {
             return getRandomServer(new ArrayList<ServerDescription>(serverDescriptions));
@@ -353,12 +353,13 @@ abstract class BaseCluster implements Cluster {
     }
 
     // gets a random server that still exists in the cluster.  Returns null if there are none.
-    private ClusterableServer getRandomServer(final List<ServerDescription> serverDescriptions) {
+    private ServerTuple getRandomServer(final List<ServerDescription> serverDescriptions) {
         while (!serverDescriptions.isEmpty()) {
             int serverPos = getRandom().nextInt(serverDescriptions.size());
-            ClusterableServer server = getServer(serverDescriptions.get(serverPos).getAddress());
+            ServerDescription serverDescription = serverDescriptions.get(serverPos);
+            Server server = getServer(serverDescription.getAddress());
             if (server != null) {
-                return server;
+                return new ServerTuple(server, serverDescription);
             } else {
                 serverDescriptions.remove(serverPos);
             }
@@ -419,22 +420,22 @@ abstract class BaseCluster implements Cluster {
         private final ServerSelector originalSelector;
         private final ServerSelector compositeSelector;
         private final long maxWaitTimeNanos;
-        private final SingleResultCallback<Server> callback;
+        private final SingleResultCallback<ServerTuple> callback;
         private final long startTimeNanos = System.nanoTime();
         private CountDownLatch phase;
 
         ServerSelectionRequest(final ServerSelector serverSelector, final ServerSelector compositeSelector,
                                final long maxWaitTimeNanos,
-                               final SingleResultCallback<Server> callback) {
+                               final SingleResultCallback<ServerTuple> callback) {
             this.originalSelector = serverSelector;
             this.compositeSelector = compositeSelector;
             this.maxWaitTimeNanos = maxWaitTimeNanos;
             this.callback = callback;
         }
 
-        void onResult(final Server server, final Throwable t) {
+        void onResult(final ServerTuple serverTuple, final Throwable t) {
             try {
-                callback.onResult(server, t);
+                callback.onResult(serverTuple, t);
             } catch (Throwable tr) {
                 // ignore
             }
