@@ -62,9 +62,9 @@ public class SingleConnectionBinding implements ReadWriteBinding {
     public SingleConnectionBinding(final Cluster cluster, final ReadPreference readPreference) {
         notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
-        writeServer = cluster.selectServer(new WritableServerSelector());
+        writeServer = cluster.selectServer(new WritableServerSelector()).getServer();
         writeConnection = writeServer.getConnection();
-        readServer = cluster.selectServer(new ReadPreferenceServerSelector(readPreference));
+        readServer = cluster.selectServer(new ReadPreferenceServerSelector(readPreference)).getServer();
         readConnection = readServer.getConnection();
     }
 
