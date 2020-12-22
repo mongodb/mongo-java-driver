@@ -18,12 +18,17 @@ package com.mongodb.internal.async.client
 
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
+import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.connection.ServerConnectionState
+import com.mongodb.connection.ServerDescription
+import com.mongodb.connection.ServerType
 import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding
 import com.mongodb.internal.binding.AsyncClusterBinding
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.connection.Cluster
 import com.mongodb.internal.connection.Server
+import com.mongodb.internal.connection.ServerTuple
 import com.mongodb.internal.session.ClientSessionContext
 import spock.lang.Specification
 
@@ -167,7 +172,11 @@ class ClientSessionBindingSpecification extends Specification {
     private AsyncClusterAwareReadWriteBinding createStubBinding() {
         def cluster = Mock(Cluster) {
             selectServerAsync(_, _) >> {
-                it[1].onResult(Stub(Server), null)
+                it[1].onResult(new ServerTuple(Stub(Server), ServerDescription.builder()
+                        .type(ServerType.STANDALONE)
+                        .state(ServerConnectionState.CONNECTED)
+                        .address(new ServerAddress())
+                        .build()), null)
             }
         }
         new AsyncClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT)

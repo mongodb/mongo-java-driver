@@ -153,7 +153,7 @@ public class ServerSessionPool {
                     }
                     return Collections.emptyList();
                 }
-            }).getConnection();
+            }).getServer().getConnection();
 
             connection.command("admin",
                     new BsonDocument("endSessions", new BsonArray(identifiers)), new NoOpFieldNameValidator(),

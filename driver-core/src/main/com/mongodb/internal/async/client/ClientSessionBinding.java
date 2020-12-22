@@ -25,7 +25,7 @@ import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
 import com.mongodb.internal.connection.AsyncConnection;
-import com.mongodb.internal.connection.Server;
+import com.mongodb.internal.connection.ServerTuple;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.session.ClientSessionContext;
 import com.mongodb.internal.session.SessionContext;
@@ -76,13 +76,13 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
     private void getPinnedConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
         if (session.getPinnedServerAddress() == null) {
             wrapped.getCluster().selectServerAsync(
-                    new ReadPreferenceServerSelector(wrapped.getReadPreference()), new SingleResultCallback<Server>() {
+                    new ReadPreferenceServerSelector(wrapped.getReadPreference()), new SingleResultCallback<ServerTuple>() {
                         @Override
-                        public void onResult(final Server server, final Throwable t) {
+                        public void onResult(final ServerTuple serverTuple, final Throwable t) {
                             if (t != null) {
                                 callback.onResult(null, t);
                             } else {
-                                session.setPinnedServerAddress(server.getDescription().getAddress());
+                                session.setPinnedServerAddress(serverTuple.getServerDescription().getAddress());
                                 wrapped.getConnectionSource(session.getPinnedServerAddress(), new WrappingCallback(callback));
                             }
                         }
