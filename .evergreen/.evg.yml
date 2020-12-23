@@ -714,6 +714,13 @@ tasks:
             TOPOLOGY: "server"
         - func: "run reactive streams tck tests"
 
+    - name: "accept-api-version-2-test"
+      commands:
+        - func: "bootstrap mongo-orchestration"
+          vars:
+            ORCHESTRATION_FILE: "versioned-api-testing.json"
+        - func: "run tests"
+
     - name: "plain-auth-test"
       commands:
         - func: "run plain auth test"
@@ -1470,6 +1477,13 @@ buildvariants:
   run_on: ubuntu1804-test
   tasks:
     - name: "aws-auth-test"
+
+- matrix_name: "accept-api-version-2-test"
+  matrix_spec: { ssl: "nossl", auth: "noauth", jdk: "jdk11", version: ["latest"], topology: "standalone", os: "linux" }
+  display_name: "Accept API Version 2"
+  run_on: ubuntu1804-test
+  tasks:
+    - name: "accept-api-version-2-test"
 
 - matrix_name: "ocsp-test"
   matrix_spec: { auth: "noauth", ssl: "ssl", jdk: "jdk11", version: ["4.4", "latest"], os: "ubuntu" }
