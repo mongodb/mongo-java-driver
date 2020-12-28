@@ -21,51 +21,80 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.timeout.ReadTimeoutException;
 
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 
 /**
- * Passes a {@link ReadTimeoutException} if the time between a {@link #scheduleTimeout} and {@link #removeTimeout} is longer than the set
- * timeout.
+ * Passes a {@link ReadTimeoutException} if the time between a {@link #scheduleTimeout} and returned {@link TimeoutHandle#cancel()}
+ * is longer than the set timeout.
  */
 final class ReadTimeoutHandler extends ChannelInboundHandlerAdapter {
     private final long readTimeout;
-    private volatile ScheduledFuture<?> timeout;
 
     ReadTimeoutHandler(final long readTimeout) {
         isTrueArgument("readTimeout must be greater than zero.", readTimeout > 0);
         this.readTimeout = readTimeout;
     }
 
-    void scheduleTimeout(final ChannelHandlerContext ctx, final int additionalTimeout) {
-        isTrue("Handler called from the eventLoop", ctx.channel().eventLoop().inEventLoop());
-        if (timeout == null) {
-            timeout = ctx.executor().schedule(new ReadTimeoutTask(ctx), readTimeout + additionalTimeout, TimeUnit.MILLISECONDS);
-        }
+    TimeoutHandle scheduleTimeout(final ChannelHandlerContext ctx, final int additionalTimeout) {
+        final SimpleTimeoutHandle timeoutHandle = new SimpleTimeoutHandle();
+        scheduleTimeout(timeoutHandle, ctx, additionalTimeout);
+        return timeoutHandle;
     }
 
-    void removeTimeout(final ChannelHandlerContext ctx) {
+    TimeoutHandle scheduleTimeout(final ExecutorService executor, final ChannelHandlerContext ctx, final int additionalTimeout) {
+        final SimpleTimeoutHandle timeoutHandle = new SimpleTimeoutHandle();
+        executor.submit(() -> scheduleTimeout(timeoutHandle, ctx, additionalTimeout));
+        return timeoutHandle;
+    }
+
+    private void scheduleTimeout(final SimpleTimeoutHandle timeoutHandle, final ChannelHandlerContext ctx, final int additionalTimeout) {
         isTrue("Handler called from the eventLoop", ctx.channel().eventLoop().inEventLoop());
-        if (timeout != null) {
-            timeout.cancel(false);
-            timeout = null;
+
+        final ReadTimeoutTask task = new ReadTimeoutTask(timeoutHandle, ctx);
+        final ScheduledFuture<?> timeout = ctx.executor().schedule(task, readTimeout + additionalTimeout, TimeUnit.MILLISECONDS);
+        timeoutHandle.assignTimeout(timeout);
+    }
+
+    private static final class SimpleTimeoutHandle implements TimeoutHandle {
+        private AtomicBoolean cancelled = new AtomicBoolean(false);
+        private ScheduledFuture<?> timeout = null;
+
+        @Override
+        public void cancel() {
+            cancelled.set(true);
+            if (timeout != null) {
+                timeout.cancel(false);
+            }
+        }
+
+        private boolean isCancelled() {
+            return cancelled.get();
+        }
+
+        private void assignTimeout(final ScheduledFuture<?> timeout) {
+            this.timeout = timeout;
         }
     }
 
     private static final class ReadTimeoutTask implements Runnable {
 
+        private final SimpleTimeoutHandle timeoutHandle;
         private final ChannelHandlerContext ctx;
 
-        ReadTimeoutTask(final ChannelHandlerContext ctx) {
+        ReadTimeoutTask(final SimpleTimeoutHandle timeoutHandle, final ChannelHandlerContext ctx) {
+            this.timeoutHandle = timeoutHandle;
             this.ctx = ctx;
         }
 
         @Override
         public void run() {
-            if (ctx.channel().isOpen()) {
+            if (!timeoutHandle.isCancelled() && ctx.channel().isOpen()) {
                 try {
                     ctx.fireExceptionCaught(ReadTimeoutException.INSTANCE);
                     ctx.close();
