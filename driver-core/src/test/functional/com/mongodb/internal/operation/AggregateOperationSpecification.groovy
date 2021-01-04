@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.operation
 
-import com.mongodb.ExplainVerbosity
+
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
@@ -342,8 +342,8 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     def 'should be able to explain an empty pipeline'() {
         given:
         def operation = new AggregateOperation(getNamespace(), [], new BsonDocumentCodec())
-        operation = async ? operation.asExplainableOperationAsync(ExplainVerbosity.QUERY_PLANNER) :
-                            operation.asExplainableOperation(ExplainVerbosity.QUERY_PLANNER)
+        operation = async ? operation.asAsyncExplainableOperation(QUERY_PLANNER, new BsonDocumentCodec()) :
+                            operation.asExplainableOperation(QUERY_PLANNER, new BsonDocumentCodec())
 
         when:
         def result = execute(operation, async)

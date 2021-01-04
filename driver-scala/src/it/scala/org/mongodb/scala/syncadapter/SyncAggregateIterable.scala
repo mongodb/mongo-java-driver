@@ -15,14 +15,18 @@
  */
 package org.mongodb.scala.syncadapter
 
-import java.util.concurrent.TimeUnit
+import com.mongodb.ExplainVerbosity
 
+import java.util.concurrent.TimeUnit
 import com.mongodb.client.AggregateIterable
 import com.mongodb.client.model.Collation
+import org.bson.Document
 import org.bson.conversions.Bson
 import org.mongodb.scala.AggregateObservable
+import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 
 import scala.concurrent.duration.Duration
+import scala.reflect.ClassTag
 
 case class SyncAggregateIterable[T](wrapped: AggregateObservable[T])
     extends SyncMongoIterable[T]
@@ -68,4 +72,20 @@ case class SyncAggregateIterable[T](wrapped: AggregateObservable[T])
     wrapped.hint(hint)
     this
   }
+
+  override def explain(): Document = wrapped.explain().toFuture().get()
+
+  override def explain(verbosity: ExplainVerbosity): Document = wrapped.explain(verbosity).toFuture().get()
+
+  override def explain[E](explainResultClass: Class[E]): E =
+    wrapped
+      .explain[E]()(DefaultsTo.overrideDefault[E, org.mongodb.scala.Document], ClassTag(explainResultClass))
+      .toFuture()
+      .get()
+
+  override def explain[E](explainResultClass: Class[E], verbosity: ExplainVerbosity): E =
+    wrapped
+      .explain[E](verbosity)(DefaultsTo.overrideDefault[E, org.mongodb.scala.Document], ClassTag(explainResultClass))
+      .toFuture()
+      .get()
 }

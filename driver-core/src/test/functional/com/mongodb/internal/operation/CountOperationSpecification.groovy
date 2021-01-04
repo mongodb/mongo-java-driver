@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation
 
-import com.mongodb.ExplainVerbosity
 import com.mongodb.MongoException
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoNamespace
@@ -51,7 +50,6 @@ import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
-import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand
@@ -220,21 +218,6 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         where:
         [async, strategy] << [[true, false], [CountStrategy.AGGREGATE, CountStrategy.COMMAND]].combinations()
     }
-
-    @IgnoreIf({ !serverVersionAtLeast(3, 0) || isSharded() })
-    def 'should explain'() {
-        when:
-        def operation = new CountOperation(getNamespace(), strategy)
-                .filter(new BsonDocument('a', new BsonInt32(1)))
-                .asExplainableOperation(ExplainVerbosity.QUERY_PLANNER)
-
-        then:
-        execute(operation, async).getNumber('ok').intValue() == 1
-
-        where:
-        [async, strategy] << [[true, false], [CountStrategy.AGGREGATE, CountStrategy.COMMAND]].combinations()
-    }
-
 
     def 'should use the ReadBindings readPreference to set slaveOK'() {
         when:
