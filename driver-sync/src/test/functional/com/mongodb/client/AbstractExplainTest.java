@@ -26,9 +26,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
-import static junit.framework.TestCase.assertFalse;
-import static junit.framework.TestCase.assertNotNull;
-import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public abstract class AbstractExplainTest {
 
