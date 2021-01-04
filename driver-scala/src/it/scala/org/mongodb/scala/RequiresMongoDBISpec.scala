@@ -17,7 +17,6 @@
 package org.mongodb.scala
 
 import com.mongodb.ClusterFixture.getServerApi
-import com.mongodb.MongoClientSettings
 import com.mongodb.connection.ServerVersion
 import org.mongodb.scala.bson.BsonString
 import org.scalatest._
@@ -61,13 +60,11 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
   val connectionString: ConnectionString = ConnectionString(mongoClientURI)
 
   def mongoClientSettingsBuilder: MongoClientSettings.Builder = {
-    val builder = MongoClientSettings.builder()
+    val builder = MongoClientSettings.builder().applyConnectionString(connectionString)
     if (getServerApi != null) {
-      builder.serverApi(getServerApi);
+      builder.serverApi(getServerApi)
     }
     builder
-      .applyConnectionString(connectionString)
-      .codecRegistry(MongoClient.DEFAULT_CODEC_REGISTRY)
   }
 
   val mongoClientSettings: MongoClientSettings = mongoClientSettingsBuilder.build()
