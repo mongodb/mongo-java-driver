@@ -20,15 +20,18 @@ import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.model.Filters;
 import org.bson.BsonDocument;
+import org.bson.BsonInt32;
 import org.bson.Document;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 public abstract class AbstractExplainTest {
 
@@ -48,8 +51,13 @@ public abstract class AbstractExplainTest {
 
     @Test
     public void testExplain() {
-        FindIterable<BsonDocument> iterable = client.getDatabase(getDefaultDatabaseName())
-                .getCollection("explainTest", BsonDocument.class).find()
+        assumeTrue(serverVersionAtLeast(3, 0));
+
+        MongoCollection<BsonDocument> collection = client.getDatabase(getDefaultDatabaseName())
+                .getCollection("explainTest", BsonDocument.class);
+        collection.insertOne(new BsonDocument("_id", new BsonInt32(1)));
+
+        FindIterable<BsonDocument> iterable = collection.find()
                 .filter(Filters.eq("_id", 1));
 
         Document explainDocument = iterable.explain();
