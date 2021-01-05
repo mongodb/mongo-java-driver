@@ -18,7 +18,6 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.connection.ServerDescription;
 
 /**
  * A logical connection to a MongoDB server.
@@ -27,13 +26,6 @@ import com.mongodb.connection.ServerDescription;
  */
 @ThreadSafe
 public interface Server {
-    /**
-     * Gets the description of this server.  Implementations of this method should not block if the server has not yet been successfully
-     * contacted, but rather return immediately a @code{ServerDescription} in a @code{ServerConnectionState.CONNECTING} state.
-     *
-     * @return the description of this server
-     */
-    ServerDescription getDescription();
 
     /**
      * <p>Gets a connection to this server.  The connection should be released after the caller is done with it.</p>
