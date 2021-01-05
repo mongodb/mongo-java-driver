@@ -103,15 +103,15 @@ public class SingleServerClusterTest {
         setUpCluster(getPrimary());
 
         // when
-        Server server = cluster.selectServer(new ServerSelector() {
+        ServerTuple serverTuple = cluster.selectServer(new ServerSelector() {
             @Override
             public List<ServerDescription> select(final ClusterDescription clusterDescription) {
                 return getPrimaries(clusterDescription);
             }
-        }).getServer();
+        });
 
         // then
-        assertTrue(server.getDescription().isOk());
+        assertTrue(serverTuple.getServerDescription().isOk());
     }
 
     @Test

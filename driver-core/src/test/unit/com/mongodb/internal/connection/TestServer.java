@@ -90,7 +90,6 @@ public class TestServer implements ClusterableServer {
         return connectCount;
     }
 
-    @Override
     public ServerDescription getDescription() {
         return description;
     }
