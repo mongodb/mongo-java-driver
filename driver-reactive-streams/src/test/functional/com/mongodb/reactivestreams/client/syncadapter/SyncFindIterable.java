@@ -17,13 +17,19 @@
 package com.mongodb.reactivestreams.client.syncadapter;
 
 import com.mongodb.CursorType;
+import com.mongodb.ExplainVerbosity;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.FindPublisher;
+import org.bson.Document;
 import org.bson.conversions.Bson;
+import reactor.core.publisher.Mono;
 
 import java.util.concurrent.TimeUnit;
+
+import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static java.util.Objects.requireNonNull;
 
 class SyncFindIterable<T> extends SyncMongoIterable<T> implements FindIterable<T> {
     private final com.mongodb.reactivestreams.client.FindPublisher<T> wrapped;
@@ -158,5 +164,25 @@ class SyncFindIterable<T> extends SyncMongoIterable<T> implements FindIterable<T
     public FindIterable<T> allowDiskUse(@Nullable final java.lang.Boolean allowDiskUse) {
         wrapped.allowDiskUse(allowDiskUse);
         return this;
+    }
+
+    @Override
+    public Document explain() {
+        return requireNonNull(Mono.from(wrapped.explain()).block(TIMEOUT_DURATION));
+    }
+
+    @Override
+    public Document explain(final ExplainVerbosity verbosity) {
+        return requireNonNull(Mono.from(wrapped.explain(verbosity)).block(TIMEOUT_DURATION));
+    }
+
+    @Override
+    public <E> E explain(final Class<E> explainResultClass) {
+        return requireNonNull(Mono.from(wrapped.explain(explainResultClass)).block(TIMEOUT_DURATION));
+    }
+
+    @Override
+    public <E> E explain(final Class<E> explainResultClass, final ExplainVerbosity verbosity) {
+        return requireNonNull(Mono.from(wrapped.explain(explainResultClass, verbosity)).block(TIMEOUT_DURATION));
     }
 }

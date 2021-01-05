@@ -17,6 +17,7 @@
 package com.mongodb.client.internal;
 
 import com.mongodb.CursorType;
+import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
@@ -25,9 +26,10 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.operation.BatchCursor;
-import com.mongodb.internal.operation.ReadOperation;
+import com.mongodb.internal.operation.ExplainableReadOperation;
 import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.lang.Nullable;
+import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -41,6 +43,7 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
 
     private final Class<TResult> resultClass;
     private final FindOptions findOptions;
+    private final CodecRegistry codecRegistry;
 
     private Bson filter;
 
@@ -58,6 +61,7 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
         this.resultClass = notNull("resultClass", resultClass);
         this.filter = notNull("filter", filter);
         this.findOptions = new FindOptions();
+        this.codecRegistry = codecRegistry;
     }
 
     @Override
@@ -202,7 +206,33 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
         }
     }
 
-    public ReadOperation<BatchCursor<TResult>> asReadOperation() {
+    @Override
+    public Document explain() {
+        return executeExplain(Document.class, null);
+    }
+
+    @Override
+    public Document explain(final ExplainVerbosity verbosity) {
+        return executeExplain(Document.class, notNull("verbosity", verbosity));
+    }
+
+    @Override
+    public <E> E explain(final Class<E> explainDocumentClass) {
+        return executeExplain(explainDocumentClass, null);
+    }
+
+    @Override
+    public <E> E explain(final Class<E> explainResultClass, final ExplainVerbosity verbosity) {
+        return executeExplain(explainResultClass, notNull("verbosity", verbosity));
+    }
+
+    private <E> E executeExplain(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity) {
+        notNull("explainDocumentClass", explainResultClass);
+        return getExecutor().execute(asReadOperation().asExplainableOperation(verbosity, codecRegistry.get(explainResultClass)),
+                getReadPreference(), getReadConcern(), getClientSession());
+    }
+
+    public ExplainableReadOperation<BatchCursor<TResult>> asReadOperation() {
         return operations.find(filter, resultClass, findOptions);
     }
 }
