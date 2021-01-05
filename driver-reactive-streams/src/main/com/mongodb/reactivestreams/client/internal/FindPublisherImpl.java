@@ -17,14 +17,18 @@
 package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.CursorType;
+import com.mongodb.ExplainVerbosity;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.client.model.FindOptions;
+import com.mongodb.internal.operation.AsyncExplainableReadOperation;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.FindPublisher;
+import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.reactivestreams.Publisher;
 
 import java.util.concurrent.TimeUnit;
 
@@ -172,9 +176,36 @@ final class FindPublisherImpl<T> extends BatchCursorPublisher<T> implements Find
         return this;
     }
 
+    @Override
+    public Publisher<Document> explain() {
+        return publishExplain(Document.class, null);
+    }
 
     @Override
-    AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation() {
+    public Publisher<Document> explain(final ExplainVerbosity verbosity) {
+        return publishExplain(Document.class, notNull("verbosity", verbosity));
+    }
+
+    @Override
+    public <E> Publisher<E> explain(final Class<E> explainResultClass) {
+        return publishExplain(explainResultClass, null);
+    }
+
+    @Override
+    public <E> Publisher<E> explain(final Class<E> explainResultClass, final ExplainVerbosity verbosity) {
+        return publishExplain(explainResultClass, notNull("verbosity", verbosity));
+    }
+
+    private <E> Publisher<E> publishExplain(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity) {
+        notNull("explainDocumentClass", explainResultClass);
+        return getMongoOperationPublisher().createReadOperationMono(() ->
+                        asAsyncReadOperation().asAsyncExplainableOperation(verbosity,
+                                getCodecRegistry().get(explainResultClass)),
+                getClientSession());
+    }
+
+    @Override
+    AsyncExplainableReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation() {
         return getOperations().find(filter, getDocumentClass(), findOptions);
     }
 

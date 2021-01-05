@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.DBObjects.toDBObject;
+import static com.mongodb.MongoClient.getDefaultCodecRegistry;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -339,9 +339,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      */
     @Deprecated
     public DBObject explain() {
-        return toDBObject(executor.execute(getQueryOperation(collection.getObjectCodec())
-                                           .asExplainableOperation(),
-                                           getReadPreference(), getReadConcern()));
+        return executor.execute(getQueryOperation(collection.getObjectCodec())
+                        .asExplainableOperation(null, getDefaultCodecRegistry().get(DBObject.class)),
+                getReadPreference(), getReadConcern());
     }
 
     /**
