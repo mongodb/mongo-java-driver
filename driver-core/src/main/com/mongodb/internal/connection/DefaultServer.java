@@ -125,12 +125,6 @@ class DefaultServer implements ClusterableServer {
     }
 
     @Override
-    public ServerDescription getDescription() {
-        isTrue("open", !isClosed());
-        return description;
-    }
-
-    @Override
     public void resetToConnecting() {
         serverStateListener.stateChanged(new ChangeEvent<>(description, ServerDescription.builder()
                 .state(CONNECTING).address(serverId.getAddress()).build()));

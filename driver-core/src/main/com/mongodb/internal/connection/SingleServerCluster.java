@@ -30,6 +30,7 @@ import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 
 import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -55,7 +56,8 @@ public final class SingleServerCluster extends BaseCluster {
         // In other words, we are leaking a reference to "this" from the constructor.
         synchronized (this) {
             this.server = createServer(settings.getHosts().get(0), new DefaultServerDescriptionChangedListener());
-            publishDescription(server.getDescription());
+            publishDescription(ServerDescription.builder().state(CONNECTING).address(settings.getHosts().get(0))
+                    .build());
         }
     }
 
