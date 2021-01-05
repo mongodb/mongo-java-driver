@@ -328,7 +328,7 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
   /**
    * Explain the execution plan for this operation with the given verbosity level
    *
-   * @tparam ExplainResult The type of the result 
+   * @tparam ExplainResult The type of the result
    * @param verbosity the verbosity of the explanation
    * @return the execution plan
    * @since 4.2
