@@ -16,8 +16,10 @@
 
 package com.mongodb.reactivestreams.client;
 
+import com.mongodb.ExplainVerbosity;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
+import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
 
@@ -135,4 +137,50 @@ public interface AggregatePublisher<TResult> extends Publisher<TResult> {
      * @since 1.8
      */
     Publisher<TResult> first();
+
+    /**
+     * Explain the execution plan for this operation with the server's default verbosity level
+     *
+     * @return the execution plan
+     * @since 4.2
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.6
+     */
+    Publisher<Document> explain();
+
+    /**
+     * Explain the execution plan for this operation with the given verbosity level
+     *
+     * @param verbosity the verbosity of the explanation
+     * @return the execution plan
+     * @since 4.2
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.6
+     */
+    Publisher<Document> explain(ExplainVerbosity verbosity);
+
+    /**
+     * Explain the execution plan for this operation with the server's default verbosity level
+     *
+     * @param <E> the type of the document class
+     * @param explainResultClass the document class to decode into
+     * @return the execution plan
+     * @since 4.2
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.6
+     */
+    <E> Publisher<E> explain(Class<E> explainResultClass);
+
+    /**
+     * Explain the execution plan for this operation with the given verbosity level
+     *
+     * @param <E> the type of the document class
+     * @param explainResultClass the document class to decode into
+     * @param verbosity            the verbosity of the explanation
+     * @return the execution plan
+     * @since 4.2
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.6
+     */
+    <E> Publisher<E> explain(Class<E> explainResultClass, ExplainVerbosity verbosity);
 }

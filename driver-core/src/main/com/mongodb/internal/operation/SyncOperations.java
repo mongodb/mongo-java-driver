@@ -104,11 +104,14 @@ public final class SyncOperations<TDocument> {
         return operations.distinct(fieldName, filter, resultClass, maxTimeMS, collation);
     }
 
-    public <TResult> ReadOperation<BatchCursor<TResult>> aggregate(final List<? extends Bson> pipeline, final Class<TResult> resultClass,
-                                                                   final long maxTimeMS, final long maxAwaitTimeMS, final Integer batchSize,
-                                                                   final Collation collation, final Bson hint, final String comment,
-                                                                   final Boolean allowDiskUse,
-                                                                   final AggregationLevel aggregationLevel) {
+    public <TResult> ExplainableReadOperation<BatchCursor<TResult>> aggregate(final List<? extends Bson> pipeline,
+                                                                              final Class<TResult> resultClass,
+                                                                              final long maxTimeMS, final long maxAwaitTimeMS,
+                                                                              final Integer batchSize,
+                                                                              final Collation collation, final Bson hint,
+                                                                              final String comment,
+                                                                              final Boolean allowDiskUse,
+                                                                              final AggregationLevel aggregationLevel) {
         return operations.aggregate(pipeline, resultClass, maxTimeMS, maxAwaitTimeMS, batchSize, collation, hint, comment, allowDiskUse,
                 aggregationLevel);
     }

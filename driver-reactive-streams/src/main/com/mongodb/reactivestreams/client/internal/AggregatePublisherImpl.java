@@ -16,11 +16,13 @@
 
 package com.mongodb.reactivestreams.client.internal;
 
+import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.FindOptions;
+import com.mongodb.internal.operation.AggregateOperation;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.internal.operation.AsyncWriteOperation;
 import com.mongodb.lang.Nullable;
@@ -28,6 +30,7 @@ import com.mongodb.reactivestreams.client.AggregatePublisher;
 import com.mongodb.reactivestreams.client.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
+import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
 
@@ -117,6 +120,34 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
     }
 
     @Override
+    public Publisher<Document> explain() {
+        return publishExplain(Document.class, null);
+    }
+
+    @Override
+    public Publisher<Document> explain(final ExplainVerbosity verbosity) {
+        return publishExplain(Document.class, notNull("verbosity", verbosity));
+    }
+
+    @Override
+    public <E> Publisher<E> explain(final Class<E> explainResultClass) {
+        return publishExplain(explainResultClass, null);
+    }
+
+    @Override
+    public <E> Publisher<E> explain(final Class<E> explainResultClass, final ExplainVerbosity verbosity) {
+        return publishExplain(explainResultClass, notNull("verbosity", verbosity));
+    }
+
+    private <E> Publisher<E> publishExplain(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity) {
+        notNull("explainDocumentClass", explainResultClass);
+        return getMongoOperationPublisher().createReadOperationMono(() ->
+                        asAggregateOperation().asAsyncExplainableOperation(verbosity,
+                                getCodecRegistry().get(explainResultClass)),
+                getClientSession());
+    }
+
+    @Override
     AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation() {
         MongoNamespace outNamespace = getOutNamespace();
 
@@ -133,10 +164,14 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
 
             return new WriteOperationThenCursorReadOperation<>(aggregateToCollectionOperation, findOperation);
         } else {
-            return getOperations()
-                    .aggregate(pipeline, getDocumentClass(), maxTimeMS, maxAwaitTimeMS,
-                               getBatchSize(), collation, hint, comment, allowDiskUse, aggregationLevel);
+            return asAggregateOperation();
         }
+    }
+
+    private AggregateOperation<T> asAggregateOperation() {
+        return getOperations()
+                .aggregate(pipeline, getDocumentClass(), maxTimeMS, maxAwaitTimeMS,
+                        getBatchSize(), collation, hint, comment, allowDiskUse, aggregationLevel);
     }
 
     private AsyncWriteOperation<Void> getAggregateToCollectionOperation() {

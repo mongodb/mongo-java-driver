@@ -202,16 +202,16 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
             @Override
             public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
                 validateReadConcernAndCollation(connectionDescription, sessionContext.getReadConcern(), collation);
-                return getCommand(connectionDescription, sessionContext);
+                return getCommand(sessionContext);
             }
         };
     }
 
-    private BsonDocument getCommand(final ConnectionDescription description, final SessionContext sessionContext) {
+    BsonDocument getCommand(final SessionContext sessionContext) {
         BsonDocument commandDocument = new BsonDocument("aggregate", aggregateTarget.create());
 
         appendReadConcernToCommand(sessionContext, commandDocument);
-        commandDocument.put("pipeline", pipelineCreator.create(description, sessionContext));
+        commandDocument.put("pipeline", pipelineCreator.create());
         if (maxTimeMS > 0) {
             commandDocument.put("maxTimeMS", maxTimeMS > Integer.MAX_VALUE
                     ? new BsonInt64(maxTimeMS) : new BsonInt32((int) maxTimeMS));
@@ -270,7 +270,7 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     }
 
     interface PipelineCreator {
-        BsonArray create(ConnectionDescription connectionDescription, SessionContext sessionContext);
+        BsonArray create();
     }
 
     private static AggregateTarget defaultAggregateTarget(final AggregationLevel aggregationLevel, final String collectionName) {
@@ -289,7 +289,7 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     private static PipelineCreator defaultPipelineCreator(final List<BsonDocument> pipeline) {
         return new PipelineCreator() {
             @Override
-            public BsonArray create(final ConnectionDescription connectionDescription, final SessionContext sessionContext) {
+            public BsonArray create() {
                 return new BsonArray(pipeline);
             }
         };

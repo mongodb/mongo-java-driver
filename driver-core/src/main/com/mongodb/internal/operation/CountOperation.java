@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -30,7 +29,6 @@ import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.CountStrategy;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformer;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformerAsync;
 import com.mongodb.internal.session.SessionContext;
@@ -52,7 +50,6 @@ import static com.mongodb.internal.operation.CommandOperationHelper.executeComma
 import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandAsync;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
-import static com.mongodb.internal.operation.ExplainHelper.asExplainCommand;
 import static com.mongodb.internal.operation.OperationHelper.validateReadConcernAndCollation;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 
@@ -285,40 +282,6 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
                 }
             });
         }
-    }
-
-    /**
-     * Gets an operation whose execution explains this operation.
-     *
-     * @param explainVerbosity the explain verbosity
-     * @return a read operation that when executed will explain this operation
-     */
-    public ReadOperation<BsonDocument> asExplainableOperation(final ExplainVerbosity explainVerbosity) {
-        if (countStrategy.equals(CountStrategy.COMMAND)) {
-            return createExplainableOperation(explainVerbosity);
-        } else {
-            return getAggregateOperation().asExplainableOperation(explainVerbosity);
-        }
-    }
-
-    /**
-     * Gets an operation whose execution explains this operation.
-     *
-     * @param explainVerbosity the explain verbosity
-     * @return a read operation that when executed will explain this operation
-     */
-    public AsyncReadOperation<BsonDocument> asExplainableOperationAsync(final ExplainVerbosity explainVerbosity) {
-        if (countStrategy.equals(CountStrategy.COMMAND)) {
-            return createExplainableOperation(explainVerbosity);
-        } else {
-            return getAggregateOperation().asExplainableOperationAsync(explainVerbosity);
-        }
-    }
-
-    private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
-        return new CommandReadOperation<BsonDocument>(namespace.getDatabaseName(),
-                asExplainCommand(getCommand(NoOpSessionContext.INSTANCE), explainVerbosity),
-                new BsonDocumentCodec());
     }
 
     private CommandReadTransformer<BsonDocument, Long> transformer() {

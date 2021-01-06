@@ -16,13 +16,12 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.WriteConcern;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.client.model.AggregationLevel;
@@ -343,19 +342,6 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
     public AggregateToCollectionOperation hint(final BsonDocument hint) {
         this.hint = hint;
         return this;
-    }
-
-    /**
-     * Gets an operation whose execution explains this operation.
-     *
-     * @param explainVerbosity the explain verbosity
-     * @return a read operation that when executed will explain this operation
-     */
-    public ReadOperation<BsonDocument> asExplainableOperation(final ExplainVerbosity explainVerbosity) {
-        return new AggregateExplainOperation(namespace, pipeline)
-                .allowDiskUse(allowDiskUse)
-                .maxTime(maxTimeMS, TimeUnit.MILLISECONDS)
-                .hint(hint);
     }
 
     @Override

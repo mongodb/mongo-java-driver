@@ -17,12 +17,11 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.client.model.Collation;
+import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.internal.async.AsyncAggregateResponseBatchCursor;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.client.model.Collation;
-import com.mongodb.client.model.changestream.FullDocument;
-import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ConnectionSource;
@@ -30,7 +29,6 @@ import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.operation.OperationHelper.AsyncCallableWithSource;
 import com.mongodb.internal.operation.OperationHelper.CallableWithSource;
-import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -404,7 +402,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
     private AggregateOperationImpl.PipelineCreator getPipelineCreator() {
         return new AggregateOperationImpl.PipelineCreator() {
             @Override
-            public BsonArray create(final ConnectionDescription description, final SessionContext sessionContext) {
+            public BsonArray create() {
                 List<BsonDocument> changeStreamPipeline = new ArrayList<BsonDocument>();
                 BsonDocument changeStream = new BsonDocument();
                 if (fullDocument != FullDocument.DEFAULT) {

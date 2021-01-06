@@ -1260,8 +1260,8 @@ public class DBCollection {
                                                          .allowDiskUse(options.getAllowDiskUse())
                                                          .collation(options.getCollation())
                                                          .retryReads(retryReads);
-        return new CommandResult(executor.execute(operation.asExplainableOperation(ExplainVerbosity.QUERY_PLANNER), primaryPreferred(),
-                getReadConcern()));
+        return new CommandResult(executor.execute(operation.asExplainableOperation(ExplainVerbosity.QUERY_PLANNER, new BsonDocumentCodec()),
+                primaryPreferred(), getReadConcern()));
     }
 
     @SuppressWarnings("unchecked")
