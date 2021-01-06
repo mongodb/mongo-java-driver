@@ -28,6 +28,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertFalse;
@@ -74,7 +75,7 @@ public abstract class AbstractExplainTest {
         assertFalse(explainDocument.containsKey("executionStats"));
 
         BsonDocument explainBsonDocument = iterable.explain(BsonDocument.class);
-        assertNotNull(explainDocument);
+        assertNotNull(explainBsonDocument);
         assertTrue(explainBsonDocument.containsKey("queryPlanner"));
         assertTrue(explainBsonDocument.containsKey("executionStats"));
 
@@ -85,7 +86,7 @@ public abstract class AbstractExplainTest {
     }
 
     @Test
-    public void testExplainOfAggregate() {
+    public void testExplainOfAggregateWithNewResponseStructure() {
         // Aggregate explain is supported on earlier versions, but the structure of the response on which we're asserting in this test
         // changed radically in 4.2.
         assumeTrue(serverVersionAtLeast(4, 2));
@@ -109,7 +110,7 @@ public abstract class AbstractExplainTest {
         assertFalse(explainDocument.containsKey("executionStats"));
 
         BsonDocument explainBsonDocument = iterable.explain(BsonDocument.class);
-        assertNotNull(explainDocument);
+        assertNotNull(explainBsonDocument);
         assertTrue(explainBsonDocument.containsKey("queryPlanner"));
         assertTrue(explainBsonDocument.containsKey("executionStats"));
 
@@ -117,5 +118,32 @@ public abstract class AbstractExplainTest {
         assertNotNull(explainBsonDocument);
         assertTrue(explainBsonDocument.containsKey("queryPlanner"));
         assertFalse(explainBsonDocument.containsKey("executionStats"));
+    }
+
+    @Test
+    public void testExplainOfAggregateWithOldResponseStructure() {
+        // Aggregate explain is supported on earlier versions, but the structure of the response on which we're asserting in this test
+        // changed radically in 4.2. So here we just assert that we got a non-error respinse
+        assumeTrue(serverVersionLessThan(4, 2));
+
+        MongoCollection<BsonDocument> collection = client.getDatabase(getDefaultDatabaseName())
+                .getCollection("explainTest", BsonDocument.class);
+        collection.drop();
+        collection.insertOne(new BsonDocument("_id", new BsonInt32(1)));
+
+        AggregateIterable<BsonDocument> iterable = collection
+                .aggregate(singletonList(Aggregates.match(Filters.eq("_id", 1))));
+
+        Document explainDocument = iterable.explain();
+        assertNotNull(explainDocument);
+
+        explainDocument = iterable.explain(ExplainVerbosity.QUERY_PLANNER);
+        assertNotNull(explainDocument);
+
+        BsonDocument explainBsonDocument = iterable.explain(BsonDocument.class);
+        assertNotNull(explainBsonDocument);
+
+        explainBsonDocument = iterable.explain(BsonDocument.class, ExplainVerbosity.QUERY_PLANNER);
+        assertNotNull(explainBsonDocument);
     }
 }
