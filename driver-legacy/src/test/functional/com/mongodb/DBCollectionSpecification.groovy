@@ -700,7 +700,7 @@ class DBCollectionSpecification extends Specification {
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
                 collection.getDefaultDBObjectCodec()).retryReads(true).collation(collation)
-                .asExplainableOperation(ExplainVerbosity.QUERY_PLANNER))
+                .asExplainableOperation(ExplainVerbosity.QUERY_PLANNER, new BsonDocumentCodec()))
 
         when: // Inherits from DB
         db.setReadConcern(ReadConcern.MAJORITY)
@@ -709,7 +709,7 @@ class DBCollectionSpecification extends Specification {
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
                 collection.getDefaultDBObjectCodec()).retryReads(true).collation(collation)
-                .asExplainableOperation(ExplainVerbosity.QUERY_PLANNER))
+                .asExplainableOperation(ExplainVerbosity.QUERY_PLANNER, new BsonDocumentCodec()))
 
         when:
         collection.setReadConcern(ReadConcern.LOCAL)
@@ -718,7 +718,7 @@ class DBCollectionSpecification extends Specification {
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
                 collection.getDefaultDBObjectCodec()).retryReads(true).collation(collation)
-                .asExplainableOperation(ExplainVerbosity.QUERY_PLANNER))
+                .asExplainableOperation(ExplainVerbosity.QUERY_PLANNER, new BsonDocumentCodec()))
     }
 
     def 'update should create the correct UpdateOperation'() {

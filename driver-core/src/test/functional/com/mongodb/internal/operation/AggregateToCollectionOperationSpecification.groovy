@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.operation
 
-import com.mongodb.ExplainVerbosity
+
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoNamespace
@@ -41,7 +41,6 @@ import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
-import static QueryOperationHelper.getKeyPattern
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.executeAsync
@@ -326,27 +325,6 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
 
         then:
         getCollectionHelper(aggregateCollectionNamespace).count() == 1
-
-        where:
-        async << [true, false]
-    }
-
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) || (serverVersionAtLeast(4, 1) && isSharded()) })
-    def 'should apply $hint'() {
-        given:
-        def hint = new BsonDocument('a', new BsonInt32(1))
-        collectionHelper.createIndex(hint)
-
-        def operation = new AggregateToCollectionOperation(getNamespace(),
-                [Aggregates.out('outputCollection').toBsonDocument(BsonDocument, registry)], ACKNOWLEDGED)
-                .hint(hint)
-
-        when:
-        execute(operation, async)
-        BsonDocument explainPlan = execute(operation.asExplainableOperation(ExplainVerbosity.QUERY_PLANNER), async)
-
-        then:
-        getKeyPattern(explainPlan.getArray('stages').get(0).asDocument().getDocument('$cursor')) == hint
 
         where:
         async << [true, false]
