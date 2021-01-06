@@ -124,6 +124,7 @@ public abstract class AbstractExplainTest {
     public void testExplainOfAggregateWithOldResponseStructure() {
         // Aggregate explain is supported on earlier versions, but the structure of the response on which we're asserting in this test
         // changed radically in 4.2. So here we just assert that we got a non-error respinse
+        assumeTrue(serverVersionAtLeast(3, 6));
         assumeTrue(serverVersionLessThan(4, 2));
 
         MongoCollection<BsonDocument> collection = client.getDatabase(getDefaultDatabaseName())

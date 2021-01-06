@@ -106,14 +106,10 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
 
     @Test
     public void testExplain() {
+        assumeTrue(serverVersionAtLeast(3, 6));
         List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
-        pipeline.add(new BasicDBObject("$out", "aggCollection"));
-        CommandResult out = collection.explainAggregate(pipeline, AggregationOptions.builder()
-            .allowDiskUse(true)
-            .build());
-        assertTrue(out.keySet()
-                      .iterator()
-                      .hasNext());
+        CommandResult out = collection.explainAggregate(pipeline, AggregationOptions.builder().build());
+        assertTrue(out.keySet().iterator().hasNext());
     }
 
     @Test(expected = IllegalArgumentException.class)
