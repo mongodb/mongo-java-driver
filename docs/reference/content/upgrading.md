@@ -40,7 +40,7 @@ process is as seamless as possible.  Breaking changes are as follows:
     integers).
   * The default BSON representation of `java.util.UUID` values has changed from `JAVA_LEGACY` to `UNSPECIFIED`.  Applications that
     store or retrieve UUID values must explicitly specify which representation to use, via the `uuidRepresentation` property of
-    `MongoClientSettings` (or `MongoClientOptions` for the legacy driver).
+    `MongoClientSettings`.
   * The connection pool no longer enforces any restrictions on the size of the wait queue of threads or asynchronous tasks that
     require a connection to MongoDB.  It is up to the application to throttle requests sufficiently rather than rely on the driver to
     throw a `MongoWaitQueueFullException`.

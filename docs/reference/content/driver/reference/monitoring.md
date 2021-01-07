@@ -49,7 +49,7 @@ The driver implements the
 [command monitoring specification](https://github.com/mongodb/specifications/blob/master/source/command-monitoring/command-monitoring.rst),
 allowing an application to be notified when a command starts and when it either succeeds or fails.
 
-An application registers command listeners with a `MongoClient` by configuring `MongoClientOptions` with instances of classes
+An application registers command listeners with a `MongoClient` by configuring `MongoClientSettings` with instances of classes
 that implement the [`CommandListener`]({{< apiref "mongodb-driver-core" "com/mongodb/event/CommandListener" >}}) interface. Consider the following, somewhat
 simplistic, implementation of the `CommandListener` interface:
  
@@ -113,7 +113,7 @@ The driver implements the
 [SDAM Monitoring specification](https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-monitoring.rst),
 allowing an application to be notified when the driver detects changes to the topology of the MongoDB cluster to which it is connected.
 
-An application registers listeners with a `MongoClient` by configuring  `MongoClientOptions` with instances of classes that
+An application registers listeners with a `MongoClient` by configuring `MongoClientSettings` with instances of classes that
 implement any of the [`ClusterListener`]({{< apiref "mongodb-driver-core" "com/mongodb/event/ClusterListener" >}}),
  [`ServerListener`]({{< apiref "mongodb-driver-core" "com/mongodb/event/ServerListener" >}}),
 or [`ServerMonitorListener`]({{< apiref "mongodb-driver-core" "com/mongodb/event/ServerMonitorListener" >}}) interfaces.
@@ -194,7 +194,7 @@ and when that MongoClient is closed.  In addition, it will print a message when 
 
 The driver supports monitoring of connection pool-related events.
 
-An application registers listeners with a `MongoClient` by configuring `MongoClientOptions` with instances of classes that
+An application registers listeners with a `MongoClient` by configuring `MongoClientSettings` with instances of classes that
 implement the [`ConnectionPoolListener`]({{< apiref "mongodb-driver-core" "com/mongodb/event/ConnectionPoolListener" >}}) interface.
 
 Consider the following, simplistic, example of a connection pool listener:
