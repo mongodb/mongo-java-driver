@@ -178,6 +178,19 @@ collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery"))
                 .forEach(printConsumer);
 ```
 
+
+### Explain
+
+To [explain]({{< docsref "reference/command/explain/" >}}) a find operation, call the 
+[`FindIterable.explain()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/FindIterable.html#explain()" >}}) method:
+
+```java
+Document explainResult = collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery"))).explain();
+System.out.println(explainResult.toJson(JsonWriterSettings.builder().indent(true).build()));
+```
+
+The driver supports explain of find operations starting with MongoDB 3.0.
+
 ## MongoIterable
 
 The [`MongoIterable`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoIterable.html" >}}) interface provides helper methods to access the results of an operation:
