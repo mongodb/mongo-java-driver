@@ -21,7 +21,7 @@ release.
 The driver will negotiate which, if any, compression algorithm is used based on capabilities advertised by the server in
 the [ismaster]({{<docsref "reference/command/isMaster/" >}}) command response. 
 
-### Specify compression via `MongoClientURI`
+### Specify compression via `ConnectionString`
 
 ```java
 import com.mongodb.ConnectionString;
