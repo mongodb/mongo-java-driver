@@ -30,6 +30,7 @@ import com.mongodb.crypt.capi.MongoKeyDecryptor;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.lang.Nullable;
+import com.mongodb.reactivestreams.client.MongoClient;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
@@ -52,6 +53,8 @@ public class Crypt implements Closeable {
     private final KeyRetriever keyRetriever;
     private final KeyManagementService keyManagementService;
     private final boolean bypassAutoEncryption;
+    @Nullable
+    private final MongoClient internalClient;
 
     /**
      * Create an instance to use for explicit encryption and decryption, and data key creation.
@@ -61,7 +64,7 @@ public class Crypt implements Closeable {
      * @param keyManagementService the key management service
      */
     Crypt(final MongoCrypt mongoCrypt, final KeyRetriever keyRetriever, final KeyManagementService keyManagementService) {
-        this(mongoCrypt, null, null, keyRetriever, keyManagementService, false);
+        this(mongoCrypt, null, null, keyRetriever, keyManagementService, false, null);
     }
 
     /**
@@ -78,13 +81,15 @@ public class Crypt implements Closeable {
           @Nullable final CommandMarker commandMarker,
           final KeyRetriever keyRetriever,
           final KeyManagementService keyManagementService,
-          final boolean bypassAutoEncryption) {
+          final boolean bypassAutoEncryption,
+          @Nullable final MongoClient internalClient) {
         this.mongoCrypt = mongoCrypt;
         this.collectionInfoRetriever = collectionInfoRetriever;
         this.commandMarker = commandMarker;
         this.keyRetriever = keyRetriever;
         this.keyManagementService = keyManagementService;
         this.bypassAutoEncryption = bypassAutoEncryption;
+        this.internalClient = internalClient;
     }
 
     /**
@@ -169,12 +174,14 @@ public class Crypt implements Closeable {
 
     @Override
     public void close() {
-        mongoCrypt.close();
-        if (commandMarker != null) {
-            commandMarker.close();
+        //noinspection EmptyTryBlock
+        try (MongoCrypt mongoCrypt = this.mongoCrypt;
+             CommandMarker commandMarker = this.commandMarker;
+             MongoClient internalClient = this.internalClient;
+             KeyManagementService keyManagementService = this.keyManagementService
+        ) {
+            // just using try-with-resources to ensure they all get closed, even in the case of exceptions
         }
-        keyRetriever.close();
-        keyManagementService.close();
     }
 
     private Mono<RawBsonDocument> executeStateMachine(final Supplier<MongoCryptContext> cryptContextSupplier) {
