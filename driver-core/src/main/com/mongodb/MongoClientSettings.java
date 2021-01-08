@@ -477,12 +477,23 @@ public final class MongoClientSettings {
         /**
          * Sets the auto-encryption settings
          *
+         * A separate, internal {@code MongoClient} is created if any of the following are true:
+         *
+         * <ul>
+         *    <li>{@code AutoEncryptionSettings.keyVaultClient} is not passed</li>
+         *    <li>{@code AutoEncryptionSettings.bypassAutomaticEncryption} is {@code false}</li>
+         * </ul>
+         *
+         * If an internal {@code MongoClient} is created, it is configured with the same
+         * options as the parent {@code MongoClient} except {@code minPoolSize} is set to {@code 0}
+         * and {@code AutoEncryptionSettings} is omitted.
+         *
          * @param autoEncryptionSettings the auto-encryption settings
          * @return this
          * @since 3.11
          * @see #getAutoEncryptionSettings()
          */
-        public Builder autoEncryptionSettings(final AutoEncryptionSettings autoEncryptionSettings) {
+        public Builder autoEncryptionSettings(@Nullable final AutoEncryptionSettings autoEncryptionSettings) {
             this.autoEncryptionSettings = autoEncryptionSettings;
             return this;
         }

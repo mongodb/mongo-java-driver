@@ -21,20 +21,17 @@ import com.mongodb.ReadConcern;
 import com.mongodb.client.MongoClient;
 import org.bson.BsonDocument;
 
-import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-class KeyRetriever implements Closeable {
+class KeyRetriever {
     private final MongoClient client;
-    private final boolean ownsClient;
     private final MongoNamespace namespace;
 
-    KeyRetriever(final MongoClient client, final boolean ownsClient, final MongoNamespace namespace) {
+    KeyRetriever(final MongoClient client, final MongoNamespace namespace) {
         this.client = notNull("client", client);
-        this.ownsClient = ownsClient;
         this.namespace = notNull("namespace", namespace);
     }
 
@@ -42,12 +39,5 @@ class KeyRetriever implements Closeable {
         return client.getDatabase(namespace.getDatabaseName()).getCollection(namespace.getCollectionName(), BsonDocument.class)
                 .withReadConcern(ReadConcern.MAJORITY)
                 .find(keyFilter).into(new ArrayList<BsonDocument>());
-    }
-
-    @Override
-    public void close() {
-        if (ownsClient) {
-            client.close();
-        }
     }
 }
