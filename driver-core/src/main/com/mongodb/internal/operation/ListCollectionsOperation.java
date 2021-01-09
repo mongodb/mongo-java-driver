@@ -21,10 +21,10 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
-import com.mongodb.internal.async.AsyncBatchCursor;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.async.AsyncBatchCursor;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ConnectionSource;
@@ -56,7 +56,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandAsync;
+import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandAsyncWithConnection;
 import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandWithConnection;
 import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceError;
 import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
@@ -262,22 +262,22 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                 if (t != null) {
                     errHandlingCallback.onResult(null, t);
                 } else {
-                    final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = releasingCallback(errHandlingCallback,
-                                                                                                        source, connection);
                     if (serverIsAtLeastVersionThreeDotZero(connection.getDescription())) {
-                        executeCommandAsync(binding, databaseName, getCommandCreator(), createCommandDecoder(),
-                                asyncTransformer(), retryReads,
+                        executeCommandAsyncWithConnection(binding, source, databaseName, getCommandCreator(), createCommandDecoder(),
+                                asyncTransformer(), retryReads, connection,
                                 new SingleResultCallback<AsyncBatchCursor<T>>() {
                                     @Override
                                     public void onResult(final AsyncBatchCursor<T> result, final Throwable t) {
                                         if (t != null && !isNamespaceError(t)) {
-                                            wrappedCallback.onResult(null, t);
+                                            errHandlingCallback.onResult(null, t);
                                         } else {
-                                            wrappedCallback.onResult(result != null ? result : emptyAsyncCursor(source), null);
+                                            errHandlingCallback.onResult(result != null ? result : emptyAsyncCursor(source), null);
                                         }
                                     }
                                 });
                     } else {
+                        final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = releasingCallback(errHandlingCallback,
+                                source, connection);
                         connection.queryAsync(getNamespace(), asQueryDocument(connection.getDescription(), binding.getReadPreference()),
                                 null, 0, 0, batchSize, binding.getReadPreference().isSlaveOk(), false, false, false, false, false,
                                 new BsonDocumentCodec(), new SingleResultCallback<QueryResult<BsonDocument>>() {
