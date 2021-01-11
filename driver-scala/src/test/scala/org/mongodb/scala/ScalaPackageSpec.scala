@@ -141,7 +141,7 @@ class ScalaPackageSpec extends BaseSpec {
     scalaCredential5 should equal(javaCredential5)
   }
 
-  it should "implicitly convert to org.Bson.document with type fidelity" in {
+  it should "implicitly convert to org.bson.document with type fidelity" in {
 
     val bsonDocument = Document(
       "null" -> BsonNull(),

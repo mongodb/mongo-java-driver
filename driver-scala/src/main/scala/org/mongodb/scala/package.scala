@@ -16,17 +16,13 @@
 
 package org.mongodb
 
-import org.bson.codecs.{ BsonDocumentCodec, DecoderContext, DocumentCodec, EncoderContext }
-import org.bson.{ BsonBinaryReader, BsonBinaryWriter, ByteBufNIO }
-import org.bson.io.{ BasicOutputBuffer, ByteBufferBsonInput }
-import org.bson.json.{ JsonMode, JsonWriterSettings }
-
-import _root_.scala.language.implicitConversions
-import _root_.scala.reflect.ClassTag
+import org.bson.BsonDocumentReader
+import org.bson.codecs.{ DecoderContext, DocumentCodec }
 import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.internal.WriteConcernImplicits
 
-import java.nio.ByteBuffer
+import _root_.scala.language.implicitConversions
+import _root_.scala.reflect.ClassTag
 
 /**
  * The MongoDB Scala Driver package
@@ -402,15 +398,9 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
   implicit def documentToUntypedDocument(doc: Document): org.bson.Document =
     bsonDocumentToUntypedDocument(doc.underlying)
 
+  private lazy val DOCUMENT_CODEC = new DocumentCodec()
   implicit def bsonDocumentToUntypedDocument(doc: BsonDocument): org.bson.Document = {
-    val writer: BsonBinaryWriter = new BsonBinaryWriter(new BasicOutputBuffer())
-    new BsonDocumentCodec().encode(writer, doc, EncoderContext.builder().build())
-
-    val buffer: BasicOutputBuffer = writer.getBsonOutput.asInstanceOf[BasicOutputBuffer];
-    val reader: BsonBinaryReader =
-      new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(buffer.toByteArray))))
-
-    new DocumentCodec().decode(reader, DecoderContext.builder().build())
+    DOCUMENT_CODEC.decode(new BsonDocumentReader(doc), DecoderContext.builder().build())
   }
 
 }
