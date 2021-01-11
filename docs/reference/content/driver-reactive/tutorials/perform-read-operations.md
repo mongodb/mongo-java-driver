@@ -173,7 +173,7 @@ collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery"))
 ### Explain
 
 To [explain]({{< docsref "reference/command/explain/" >}}) a find operation, call the
-[`FindIterable.explain()`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/client/FindIterable.html#explain()" >}}) 
+[`FindPublisher.explain()`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/FindPublisher.html#explain()" >}}) 
 method:
 
 ```java

@@ -159,7 +159,7 @@ collection.find(and(gte("stars", 2), lt("stars", 5), equal("categories", "Bakery
 ### Explain
 
 To [explain]({{< docsref "reference/command/explain/" >}}) a find operation, call the
-[`FindIterable.explain()`]({{< apiref "mongo-scala-driver" "com/mongodb/client/FindIterable.html#explain()" >}})
+[`FindObservable.explain()`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/FindObservable.html#explain()" >}})
 method:
 
 ```scala
@@ -254,7 +254,7 @@ For example, in the following, the `collWithReadConcern` instance has an AVAILAB
 
 ```scala
 val collWithReadConcern = collection.withReadConcern(ReadConcern.AVAILABLE)
-```
+```              
 
 You can build `MongoClientSettings`, `MongoDatabase`, or `MongoCollection` to include a combination of read concern, read preference, and [write concern]({{<docsref "reference/write-concern" >}}).
 

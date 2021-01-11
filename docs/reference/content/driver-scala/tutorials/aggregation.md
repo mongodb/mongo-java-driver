@@ -90,7 +90,7 @@ collection.aggregate(
 ### Explain an Aggregation
 
 To [explain]({{< docsref "reference/command/explain/" >}}) an aggregation pipeline, call the
-[`AggregateIterable.explain()`]({{< apiref "mongo-scala-driver" "com/mongodb/client/AggregateIterable.html#explain()" >}})
+[`AggregateObservable.explain()`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/AggregateObservable.html#explain()" >}})
 method:
 
 ```java

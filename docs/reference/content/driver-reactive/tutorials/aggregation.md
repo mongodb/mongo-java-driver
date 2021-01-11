@@ -97,7 +97,8 @@ collection.aggregate(
 ### Explain an Aggregation
 
 To [explain]({{< docsref "reference/command/explain/" >}}) an aggregation pipeline, call the
-[`AggregateIterable.explain()`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/client/AggregateIterable.html#explain()" >}}) 
+[`AggregatePublisher.explain()`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/AggregatePublisher.html#explain()" 
+> >}}) 
 method:
 
 ```java
