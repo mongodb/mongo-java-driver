@@ -100,3 +100,20 @@ collection.aggregate(
       )
 ).forEach(printBlock);
 ```
+
+### Explain an Aggregation
+
+To [explain]({{< docsref "reference/command/explain/" >}}) an aggregation pipeline, call the
+[`AggregateIterable.explain()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/AggregateIterable.html#explain()" >}}) method:
+
+```java
+Document explainResult = collection.aggregate(
+      Arrays.asList(
+              Aggregates.match(Filters.eq("categories", "Bakery")),
+              Aggregates.group("$stars", Accumulators.sum("count", 1))))
+      .explain();
+System.out.println(explainResult.toJson(JsonWriterSettings.builder().indent(true).build()));
+```
+
+The driver supports explain of aggregation pipelines starting with MongoDB 3.6.
+
