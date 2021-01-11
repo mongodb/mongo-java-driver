@@ -170,6 +170,20 @@ collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery"))
           .subscribe(new PrintDocumentSubscriber());
 ```
 
+### Explain
+
+To [explain]({{< docsref "reference/command/explain/" >}}) a find operation, call the
+[`FindPublisher.explain()`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/FindPublisher.html#explain()" >}}) 
+method:
+
+```java
+collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery")))
+          .explain()
+          .subscribe(new PrintDocumentSubscriber());
+```
+
+The driver supports explain of find operations starting with MongoDB 3.0.
+
 ## Read Preference
 
 For read operations on [replica sets]({{<docsref "replication/" >}}) or [sharded clusters]({{<docsref "sharding/" >}}), applications can configure the [read preference]({{<docsref "reference/read-preference" >}}) at three levels:
