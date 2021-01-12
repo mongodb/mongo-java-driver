@@ -146,7 +146,7 @@ class ScalaPackageSpec extends BaseSpec {
     val bsonDocument = Document(
       "null" -> BsonNull(),
       "int32" -> BsonInt32(32),
-      "int64" -> BsonInt64(64L),
+      "int64" -> BsonInt64(Long.MaxValue),
       "decimal128" -> BsonDecimal128(128),
       "boolean" -> BsonBoolean(true),
       "date" -> BsonDateTime(123456789),
