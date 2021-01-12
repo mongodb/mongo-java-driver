@@ -26,7 +26,7 @@ import org.bson.codecs.{ Codec, DecoderContext, EncoderContext }
 import org.bson.io.{ BasicOutputBuffer, ByteBufferBsonInput, OutputBuffer }
 import org.bson.types.ObjectId
 import org.mongodb.scala.bson.BaseSpec
-import org.mongodb.scala.bson.annotations.BsonProperty
+import org.mongodb.scala.bson.annotations.{ BsonIgnore, BsonProperty }
 import org.mongodb.scala.bson.codecs.Macros.{ createCodecProvider, createCodecProviderIgnoreNone }
 import org.mongodb.scala.bson.codecs.Registry.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.bson.collection.immutable.Document
@@ -43,6 +43,7 @@ class MacrosSpec extends BaseSpec {
   case class SeqOfStrings(name: String, value: Seq[String])
   case class RecursiveSeq(name: String, value: Seq[RecursiveSeq])
   case class AnnotatedClass(@BsonProperty("annotated_name") name: String)
+  case class IgnoredFieldClass(name: String, @BsonIgnore meta: String = "ignored_default")
 
   case class Binary(binary: Array[Byte]) {
 
@@ -102,6 +103,11 @@ class MacrosSpec extends BaseSpec {
   sealed class Tree
   case class Branch(@BsonProperty("l1") b1: Tree, @BsonProperty("r1") b2: Tree, value: Int) extends Tree
   case class Leaf(value: Int) extends Tree
+
+  sealed trait WithIgnored
+  case class MetaIgnoredField(data: String, @BsonIgnore meta: Seq[String] = Vector("ignore_me")) extends WithIgnored
+  case class LeafCountIgnoredField(branchCount: Int, @BsonIgnore leafCount: Int = 100) extends WithIgnored
+  case class ContainsIgnoredField(list: Seq[WithIgnored])
 
   case class ContainsADT(name: String, tree: Tree)
   case class ContainsSeqADT(name: String, trees: Seq[Tree])
@@ -267,6 +273,23 @@ class MacrosSpec extends BaseSpec {
       ContainsStream("Bob", Stream("Tom", "Charlie")),
       """{name: "Bob", friends: ["Tom","Charlie"]}""",
       Macros.createCodecProvider(classOf[ContainsStream])
+    )
+  }
+
+  it should "be able to ignore fields" in {
+    roundTrip(
+      IgnoredFieldClass("Bob", "singer"),
+      IgnoredFieldClass("Bob"),
+      """{name: "Bob"}""",
+      classOf[IgnoredFieldClass]
+    )
+
+    roundTrip(
+      ContainsIgnoredField(Vector(MetaIgnoredField("Bob", List("singer")), LeafCountIgnoredField(1, 10))),
+      ContainsIgnoredField(Vector(MetaIgnoredField("Bob"), LeafCountIgnoredField(1))),
+      """{"list" : [{"_t" : "MetaIgnoredField", "data" : "Bob" }, {"_t" : "LeafCountIgnoredField", "branchCount": 1}]}""",
+      classOf[ContainsIgnoredField],
+      classOf[WithIgnored]
     )
   }
 
@@ -657,6 +680,15 @@ class MacrosSpec extends BaseSpec {
     roundTripCodec(value, Document(expected), codec)
   }
 
+  def roundTrip[T](value: T, decodedValue: T, expected: String, provider: CodecProvider, providers: CodecProvider*)(
+      implicit ct: ClassTag[T]
+  ): Unit = {
+    val codecProviders: util.List[CodecProvider] = (provider +: providers).asJava
+    val registry = CodecRegistries.fromRegistries(CodecRegistries.fromProviders(codecProviders), DEFAULT_CODEC_REGISTRY)
+    val codec = registry.get(ct.runtimeClass).asInstanceOf[Codec[T]]
+    roundTripCodec(value, decodedValue, Document(expected), codec)
+  }
+
   def roundTripCodec[T](value: T, expected: Document, codec: Codec[T]): Unit = {
     val encoded = encode(codec, value)
     val actual = decode(documentCodec, encoded)
@@ -664,6 +696,18 @@ class MacrosSpec extends BaseSpec {
 
     val roundTripped = decode(codec, encode(codec, value))
     assert(roundTripped == value, s"Round Tripped case class: ($roundTripped) did not equal the original: ($value)")
+  }
+
+  def roundTripCodec[T](value: T, decodedValue: T, expected: Document, codec: Codec[T]): Unit = {
+    val encoded = encode(codec, value)
+    val actual = decode(documentCodec, encoded)
+    assert(expected == actual, s"Encoded document: (${actual.toJson()}) did not equal: (${expected.toJson()})")
+
+    val roundTripped = decode(codec, encode(codec, value))
+    assert(
+      roundTripped == decodedValue,
+      s"Round Tripped case class: ($roundTripped) did not equal the expected: ($decodedValue)"
+    )
   }
 
   def encode[T](codec: Codec[T], value: T): OutputBuffer = {
