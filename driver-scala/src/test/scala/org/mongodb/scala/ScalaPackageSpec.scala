@@ -17,15 +17,14 @@
 package org.mongodb.scala
 
 import java.util.concurrent.TimeUnit
-
 import _root_.scala.concurrent.duration.Duration
-
 import com.mongodb.{ MongoCredential => JMongoCredential }
-
+import org.bson.BsonDocumentWrapper
+import org.bson.codecs.DocumentCodec
 import org.mongodb.scala
-import org.mongodb.scala.bson.BsonString
+import org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
+import org.mongodb.scala.bson._
 import org.mongodb.scala.model._
-import org.scalatest.{ FlatSpec, Matchers }
 
 class ScalaPackageSpec extends BaseSpec {
 
@@ -66,9 +65,9 @@ class ScalaPackageSpec extends BaseSpec {
 
   it should "be able to create Documents" in {
     val doc = Document("a" -> BsonString("1"))
-    val doc2 = org.mongodb.scala.bson.collection.Document("a" -> BsonString("1"))
+    val doc2 = collection.Document("a" -> BsonString("1"))
 
-    doc shouldBe a[org.mongodb.scala.bson.collection.immutable.Document]
+    doc shouldBe a[collection.immutable.Document]
     doc should equal(doc2)
   }
 
@@ -140,5 +139,34 @@ class ScalaPackageSpec extends BaseSpec {
     val scalaCredential5 = MongoCredential.createGSSAPICredential("userName")
     val javaCredential5 = JMongoCredential.createGSSAPICredential("userName")
     scalaCredential5 should equal(javaCredential5)
+  }
+
+  it should "implicitly convert to org.bson.document with type fidelity" in {
+
+    val bsonDocument = Document(
+      "null" -> BsonNull(),
+      "int32" -> BsonInt32(32),
+      "int64" -> BsonInt64(Long.MaxValue),
+      "decimal128" -> BsonDecimal128(128.1),
+      "boolean" -> BsonBoolean(true),
+      "date" -> BsonDateTime(123456789),
+      "double" -> BsonDouble(1.1),
+      "string" -> BsonString("String"),
+      "minKey" -> BsonMinKey(),
+      "maxKey" -> BsonMaxKey(),
+      "javaScript" -> BsonJavaScript("function () {}"),
+      "objectId" -> BsonObjectId(),
+      "codeWithScope" -> BsonJavaScriptWithScope("function () {}", Document()),
+      "regex" -> BsonRegularExpression("/(.*)/"),
+      "symbol" -> BsonSymbol(Symbol("sym")),
+      "timestamp" -> BsonTimestamp(),
+      "undefined" -> BsonUndefined(),
+      "binary" -> BsonBinary(Array[Byte](128.toByte)),
+      "array" -> BsonArray(List("a", "b", "c")),
+      "document" -> Document("a" -> 1, "b" -> List(1, 2, 3))
+    )
+
+    val document: org.bson.Document = bsonDocument
+    BsonDocumentWrapper.asBsonDocument(document, DEFAULT_CODEC_REGISTRY) should equal(bsonDocument.underlying)
   }
 }
