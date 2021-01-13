@@ -28,7 +28,6 @@ that can be found with the driver source on github.
 - The following import statements:
 
 ```java
-import com.mongodb.Block;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoCollection;
@@ -220,18 +219,10 @@ To query the collection, you can use the collection's [`find()`]({{< apiref "mon
 
 The following example prints all the Person instances in the collection:
 ```java
-Block<Person> printBlock = new Block<Person>() {
-    @Override
-    public void apply(final Person person) {
-        System.out.println(person);
-    }
-};
-
-collection.find().forEach(printBlock);
+collection.find().forEach(System.out::println);
 ```
 
-The example uses the [`forEach`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoIterable.html#forEach(com.mongodb.Block)" >}}) method on the ``FindIterable`` 
-object to apply a block to each Person and outputs the following:
+The example outputs the following:
 
 ```bash
 Person{id='591dbc2550852fa685b3ad17', name='Ada Byron', age=20, address=Address{street='St James Square', city='London', zip='W1'}}
@@ -272,7 +263,7 @@ Person{id='591dbc2550852fa685b3ad1a', name='Timothy Berners-Lee', age=61,
 The following example returns and prints everyone where ``"age" > 30``:
 
 ```java
-collection.find(gt("age", 30)).forEach(printBlock);
+collection.find(gt("age", 30)).forEach(System.out::println);
 ```
 
 ## Update Documents

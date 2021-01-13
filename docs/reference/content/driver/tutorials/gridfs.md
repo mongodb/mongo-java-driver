@@ -23,7 +23,6 @@ that can be found with the driver source on github.
 Include the following import statements:
 
 ```java
-import com.mongodb.Block;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
@@ -138,23 +137,15 @@ To find the files stored in the `GridFSBucket` use the [`find`]({{< apiref "mong
 The following example prints out the filename of each file stored:
 
 ```java
-gridFSBucket.find().forEach(
-  new Block<GridFSFile>() {
-    public void apply(final GridFSFile gridFSFile) {
-        System.out.println(gridFSFile.getFilename());
-    }
-});
+gridFSBucket.find()
+        .forEach(gridFSFile -> System.out.println(gridFSFile.getFilename()));
 ```
 
 You can also provide a custom filter to limit the results returned. The following example prints out the filenames of all files with a "image/png" value set as the contentType in the user defined metadata document:
 
 ```java
-gridFSBucket.find(eq("metadata.contentType", "image/png")).forEach(
-  new Block<GridFSFile>() {
-      public void apply(final GridFSFile gridFSFile) {
-          System.out.println(gridFSFile.getFilename());
-      }
-  });
+gridFSBucket.find(eq("metadata.contentType", "image/png"))
+        .forEach(gridFSFile -> System.out.println(gridFSFile.getFilename()));
 ```
 
 ## Download from GridFS
