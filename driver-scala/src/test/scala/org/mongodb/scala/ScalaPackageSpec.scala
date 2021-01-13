@@ -147,7 +147,7 @@ class ScalaPackageSpec extends BaseSpec {
       "null" -> BsonNull(),
       "int32" -> BsonInt32(32),
       "int64" -> BsonInt64(Long.MaxValue),
-      "decimal128" -> BsonDecimal128(128),
+      "decimal128" -> BsonDecimal128(128.1),
       "boolean" -> BsonBoolean(true),
       "date" -> BsonDateTime(123456789),
       "double" -> BsonDouble(1.1),
