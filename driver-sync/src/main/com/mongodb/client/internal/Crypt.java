@@ -221,12 +221,12 @@ class Crypt implements Closeable {
 
     @Override
     public void close() {
-        mongoCrypt.close();
-        if (commandMarker != null) {
-            commandMarker.close();
-        }
-        if (internalClient != null) {
-            internalClient.close();
+        //noinspection EmptyTryBlock
+        try (MongoCrypt mongoCrypt = this.mongoCrypt;
+             CommandMarker commandMarker = this.commandMarker;
+             MongoClient internalClient = this.internalClient
+        ) {
+            // just using try-with-resources to ensure they all get closed, even in the case of exceptions
         }
     }
 

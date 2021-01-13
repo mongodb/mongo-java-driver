@@ -174,14 +174,14 @@ public class Crypt implements Closeable {
 
     @Override
     public void close() {
-        mongoCrypt.close();
-        if (commandMarker != null) {
-            commandMarker.close();
+        //noinspection EmptyTryBlock
+        try (MongoCrypt mongoCrypt = this.mongoCrypt;
+             CommandMarker commandMarker = this.commandMarker;
+             MongoClient internalClient = this.internalClient;
+             KeyManagementService keyManagementService = this.keyManagementService
+        ) {
+            // just using try-with-resources to ensure they all get closed, even in the case of exceptions
         }
-        if (internalClient != null) {
-            internalClient.close();
-        }
-        keyManagementService.close();
     }
 
     private Mono<RawBsonDocument> executeStateMachine(final Supplier<MongoCryptContext> cryptContextSupplier) {
