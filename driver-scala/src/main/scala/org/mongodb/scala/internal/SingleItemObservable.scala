@@ -25,15 +25,18 @@ private[scala] case class SingleItemObservable[A](item: A) extends SingleObserva
       new Subscription {
         @volatile
         private var subscribed: Boolean = true
+        @volatile
+        private var completed: Boolean = false
 
         override def isUnsubscribed: Boolean = !subscribed
 
         override def request(n: Long): Unit = {
           require(n > 0L, s"Number requested must be greater than zero: $n")
 
-          if (subscribed) {
+          if (subscribed && !completed) {
             observer.onNext(item)
             observer.onComplete()
+            completed = true
           }
         }
 
