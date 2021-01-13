@@ -24,7 +24,6 @@ to resume if it encounters a potentially recoverable error.
 - Include the following import statements:
 
 ```java
-import com.mongodb.Block;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoClient;
 
@@ -35,17 +34,6 @@ import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
-```
-
-- Include the following code which the examples in the tutorials will use to print the results of the change stream:
-
-```java
-Block<ChangeStreamDocument<Document>> printBlock = new Block<>() {
-    @Override
-    public void apply(final ChangeStreamDocument<Document> changeStreamDocument) {
-        System.out.println(changeStreamDocument);
-    }
-};
 ```
 
 ## Connect to a MongoDB Deployment
@@ -70,7 +58,7 @@ To create a change stream use one of the [`MongoCollection.watch()`]({{< apiref 
 In the following example, the change stream prints out all changes it observes.
 
 ```java
-collection.watch().forEach(printBlock);
+collection.watch().forEach(System.out::println);
 ```
 
 ## Watch the database
@@ -81,7 +69,7 @@ create such a change stream use one of the [`MongoDatabase.watch()`]({{< apiref 
 In the following example, the change stream prints out all the changes it observes on the given database.
 
 ```java
-database.watch().forEach(printBlock);
+database.watch().forEach(System.out::println);
 ```
 
 ## Watch all databases
@@ -94,7 +82,7 @@ In the following example, the change stream prints out all the changes it observ
 connected
 
 ```java
-mongoClient.watch().forEach(printBlock);
+mongoClient.watch().forEach(System.out::println);
 ```
 
 ## Filtering content
@@ -113,5 +101,6 @@ so that the document after the update is included in the results.
 
 ```java
 collection.watch(asList(Aggregates.match(Filters.in("operationType", asList("insert", "update", "replace", "delete")))))
-        .fullDocument(FullDocument.UPDATE_LOOKUP).forEach(printBlock);
+        .fullDocument(FullDocument.UPDATE_LOOKUP)
+        .forEach(System.out::println);
 ```
