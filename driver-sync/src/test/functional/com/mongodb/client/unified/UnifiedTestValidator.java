@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static org.junit.Assume.assumeTrue;
 import static util.JsonPoweredTestHelper.getTestDocument;
 import static util.JsonPoweredTestHelper.getTestFiles;
 
@@ -51,8 +50,6 @@ public class UnifiedTestValidator extends UnifiedTest {
 
     @Before
     public void setUp() {
-        // TODO: remove after https://jira.mongodb.org/browse/JAVA-3871 is fixed
-        assumeTrue(!(fileDescription.equals("poc-change-streams") && testDescription.equals("Test consecutive resume")));
         super.setUp();
     }
 

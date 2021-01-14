@@ -64,7 +64,12 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
         return resumeableOperation(new Function<AggregateResponseBatchCursor<RawBsonDocument>, Boolean>() {
             @Override
             public Boolean apply(final AggregateResponseBatchCursor<RawBsonDocument> queryBatchCursor) {
-                return queryBatchCursor.hasNext();
+                try {
+                    return queryBatchCursor.hasNext();
+                } catch (RuntimeException e) {
+                    cachePostBatchResumeToken(queryBatchCursor);
+                    throw e;
+                }
             }
         });
     }
@@ -74,9 +79,11 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
         return resumeableOperation(new Function<AggregateResponseBatchCursor<RawBsonDocument>, List<T>>() {
             @Override
             public List<T> apply(final AggregateResponseBatchCursor<RawBsonDocument> queryBatchCursor) {
-                List<T> results = convertResults(queryBatchCursor.next());
-                cachePostBatchResumeToken(queryBatchCursor);
-                return results;
+                try {
+                    return convertResults(queryBatchCursor.next());
+                } finally {
+                    cachePostBatchResumeToken(queryBatchCursor);
+                }
             }
         });
     }
@@ -86,9 +93,11 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
         return resumeableOperation(new Function<AggregateResponseBatchCursor<RawBsonDocument>, List<T>>() {
             @Override
             public List<T> apply(final AggregateResponseBatchCursor<RawBsonDocument> queryBatchCursor) {
-                List<T> results = convertResults(queryBatchCursor.tryNext());
-                cachePostBatchResumeToken(queryBatchCursor);
-                return results;
+                try {
+                    return convertResults(queryBatchCursor.tryNext());
+                } finally {
+                    cachePostBatchResumeToken(queryBatchCursor);
+                }
             }
         });
     }

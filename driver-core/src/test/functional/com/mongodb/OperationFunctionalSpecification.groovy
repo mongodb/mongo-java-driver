@@ -157,21 +157,32 @@ class OperationFunctionalSpecification extends Specification {
     }
 
     def next(cursor, boolean async, int minimumCount) {
+        next(cursor, async, false, minimumCount)
+    }
+
+    def next(cursor, boolean async, boolean callHasNextBeforeNext, int minimumCount) {
         List<BsonDocument> retVal = []
 
         while (retVal.size() < minimumCount) {
-            retVal.addAll(next(cursor, async))
+            retVal.addAll(doNext(cursor, async, callHasNextBeforeNext))
         }
 
         retVal
     }
 
     def next(cursor, boolean async) {
+        doNext(cursor, async, false)
+    }
+
+    def doNext(cursor, boolean async, boolean callHasNextBeforeNext) {
         if (async) {
             def futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
             cursor.next(futureResultCallback)
             futureResultCallback.get(TIMEOUT, TimeUnit.SECONDS)
         } else {
+            if (callHasNextBeforeNext) {
+                cursor.hasNext()
+            }
             cursor.next()
         }
     }

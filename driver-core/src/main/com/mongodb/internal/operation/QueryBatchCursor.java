@@ -100,6 +100,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         this.decoder = notNull("decoder", decoder);
         if (result != null) {
             this.operationTime = result.getTimestamp(OPERATION_TIME, null);
+            this.postBatchResumeToken = getPostBatchResumeTokenFromResponse(result);
         }
         if (firstQueryResult.getCursor() != null) {
             notNull("connectionSource", connectionSource);
