@@ -35,7 +35,6 @@ import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -44,7 +43,6 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.ReadTimeoutException;
-import io.netty.util.concurrent.EventExecutor;
 import org.bson.ByteBuf;
 
 import javax.net.ssl.SSLContext;
@@ -58,6 +56,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.internal.connection.SslHelper.enableHostNameVerification;
 import static com.mongodb.internal.connection.SslHelper.enableSni;
@@ -67,7 +67,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * A Stream implementation based on Netty 4.0.
  */
 final class NettyStream implements Stream {
-    private static final String READ_HANDLER_NAME = "ReadTimeoutHandler";
+    private static final String INBOUND_BUFFER_HANDLER_NAME = "InboundBufferHandler";
     private final ServerAddress address;
     private final SocketSettings settings;
     private final SslSettings sslSettings;
@@ -81,6 +81,7 @@ final class NettyStream implements Stream {
     private final LinkedList<io.netty.buffer.ByteBuf> pendingInboundBuffers = new LinkedList<io.netty.buffer.ByteBuf>();
     private volatile PendingReader pendingReader;
     private volatile Throwable pendingException;
+    private final int readTimeoutMs;
 
     NettyStream(final ServerAddress address, final SocketSettings settings, final SslSettings sslSettings, final EventLoopGroup workerGroup,
                 final Class<? extends SocketChannel> socketChannelClass, final ByteBufAllocator allocator) {
@@ -90,6 +91,7 @@ final class NettyStream implements Stream {
         this.workerGroup = workerGroup;
         this.socketChannelClass = socketChannelClass;
         this.allocator = allocator;
+        this.readTimeoutMs = settings.getReadTimeout(MILLISECONDS);
     }
 
     @Override
@@ -154,11 +156,7 @@ final class NettyStream implements Stream {
                         engine.setSSLParameters(sslParameters);
                         ch.pipeline().addFirst("ssl", new SslHandler(engine, false));
                     }
-                    int readTimeout = settings.getReadTimeout(MILLISECONDS);
-                    if (readTimeout > 0) {
-                        ch.pipeline().addLast(READ_HANDLER_NAME, new ReadTimeoutHandler(readTimeout));
-                    }
-                    ch.pipeline().addLast(new InboundBufferHandler());
+                    ch.pipeline().addLast(INBOUND_BUFFER_HANDLER_NAME, new InboundBufferHandler());
                 }
             });
             final ChannelFuture channelFuture = bootstrap.connect(nextAddress);
@@ -186,7 +184,7 @@ final class NettyStream implements Stream {
     @Override
     public ByteBuf read(final int numBytes, final int additionalTimeout) throws IOException {
         FutureAsyncCompletionHandler<ByteBuf> future = new FutureAsyncCompletionHandler<ByteBuf>();
-        readAsync(numBytes, future, additionalTimeout);
+        readAsync(numBytes, future, additionalTimeout, null);
         return future.get();
     }
 
@@ -211,18 +209,19 @@ final class NettyStream implements Stream {
 
     @Override
     public void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler) {
-        readAsync(numBytes, handler, 0);
+        readAsync(numBytes, handler, 0, null);
     }
 
-    private void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler, final int additionalTimeout) {
-        final TimeoutHandle timeoutHandle = scheduleReadTimeout(additionalTimeout);
+    private void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler, final int additionalTimeout,
+                           final PendingReader pendingReaderToReuse) {
         ByteBuf buffer = null;
-        Throwable exceptionResult = null;
+        Throwable exceptionResult;
         synchronized (this) {
             exceptionResult = pendingException;
             if (exceptionResult == null) {
                 if (!hasBytesAvailable(numBytes)) {
-                    pendingReader = new PendingReader(numBytes, handler, timeoutHandle);
+                    pendingReader = (pendingReaderToReuse != null) ? pendingReaderToReuse
+                        : new PendingReader(numBytes, handler, scheduleReadTimeout(additionalTimeout));
                 } else {
                     CompositeByteBuf composite = allocator.compositeBuffer(pendingInboundBuffers.size());
                     int bytesNeeded = numBytes;
@@ -246,12 +245,17 @@ final class NettyStream implements Stream {
                 }
             }
         }
+
+        if ((exceptionResult != null || buffer != null)
+            && (pendingReaderToReuse != null)
+            && (pendingReaderToReuse.timeoutFuture != null)) {
+            pendingReaderToReuse.timeoutFuture.cancel(false);
+        }
+
         if (exceptionResult != null) {
-            timeoutHandle.cancel();
             handler.failed(exceptionResult);
         }
         if (buffer != null) {
-            timeoutHandle.cancel();
             handler.completed(buffer);
         }
     }
@@ -282,9 +286,7 @@ final class NettyStream implements Stream {
         }
 
         if (localPendingReader != null) {
-            final TimeoutCancellingHandler timeoutCancellingHandler =
-                    new TimeoutCancellingHandler(localPendingReader.timeoutHandle, localPendingReader.handler);
-            readAsync(localPendingReader.numBytes, timeoutCancellingHandler);
+            readAsync(localPendingReader.numBytes, localPendingReader.handler, 0, localPendingReader);
         }
     }
 
@@ -360,12 +362,12 @@ final class NettyStream implements Stream {
     private static final class PendingReader {
         private final int numBytes;
         private final AsyncCompletionHandler<ByteBuf> handler;
-        private final TimeoutHandle timeoutHandle;
+        private final Future<?> timeoutFuture;
 
-        private PendingReader(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler, final TimeoutHandle timeoutHandle) {
+        private PendingReader(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler, final Future<?> timeoutFuture) {
             this.numBytes = numBytes;
             this.handler = handler;
-            this.timeoutHandle = timeoutHandle;
+            this.timeoutFuture = timeoutFuture;
         }
     }
 
@@ -449,45 +451,38 @@ final class NettyStream implements Stream {
         }
     }
 
-    private TimeoutHandle scheduleReadTimeout(final int additionalTimeout) {
-        if (isClosed) {
-            return TimeoutHandle.NOOP;
+    private Future<?> scheduleReadTimeout(final int additionalTimeout) {
+        if (isClosed || readTimeoutMs <= 0) {
+            return null;
         }
-        ChannelHandler timeoutHandler = channel.pipeline().get(READ_HANDLER_NAME);
-        if (timeoutHandler != null) {
-            final ReadTimeoutHandler readTimeoutHandler = (ReadTimeoutHandler) timeoutHandler;
-            final ChannelHandlerContext handlerContext = channel.pipeline().context(timeoutHandler);
-            EventExecutor executor = handlerContext.executor();
 
-            if (executor.inEventLoop()) {
-                return readTimeoutHandler.scheduleTimeout(handlerContext, additionalTimeout);
-            } else {
-                return readTimeoutHandler.scheduleTimeout(executor, handlerContext, additionalTimeout);
-            }
+        final ChannelHandlerContext ctx = channel.pipeline().context(INBOUND_BUFFER_HANDLER_NAME);
+        if (ctx != null) {
+            final ReadTimeoutTask task = new ReadTimeoutTask(ctx);
+            return ctx.executor().schedule(task, readTimeoutMs + additionalTimeout, TimeUnit.MILLISECONDS);
         } else {
-            return TimeoutHandle.NOOP;
+            return null;
         }
     }
 
-    private static final class TimeoutCancellingHandler implements AsyncCompletionHandler<ByteBuf> {
-        private final TimeoutHandle timeoutHandle;
-        private final AsyncCompletionHandler<ByteBuf> delegate;
+    private static final class ReadTimeoutTask implements Runnable {
 
-        private TimeoutCancellingHandler(final TimeoutHandle timeoutHandle, final AsyncCompletionHandler<ByteBuf> delegate) {
-            this.timeoutHandle = timeoutHandle;
-            this.delegate = delegate;
+        private final ChannelHandlerContext ctx;
+
+        ReadTimeoutTask(final ChannelHandlerContext ctx) {
+            this.ctx = ctx;
         }
 
         @Override
-        public void completed(final ByteBuf byteBuf) {
-            timeoutHandle.cancel();
-            delegate.completed(byteBuf);
-        }
-
-        @Override
-        public void failed(final Throwable t) {
-            timeoutHandle.cancel();
-            delegate.failed(t);
+        public void run() {
+            if (ctx.channel().isOpen()) {
+                try {
+                    ctx.fireExceptionCaught(ReadTimeoutException.INSTANCE);
+                    ctx.close();
+                } catch (Throwable t) {
+                    ctx.fireExceptionCaught(t);
+                }
+            }
         }
     }
 }
