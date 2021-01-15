@@ -44,7 +44,6 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.ReadTimeoutException;
-import io.netty.util.concurrent.EventExecutor;
 import org.bson.ByteBuf;
 
 import javax.net.ssl.SSLContext;
@@ -59,15 +58,47 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.internal.connection.SslHelper.enableHostNameVerification;
 import static com.mongodb.internal.connection.SslHelper.enableSni;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * A Stream implementation based on Netty 4.0.
+ * Just like it is for the {@link java.nio.channels.AsynchronousSocketChannel},
+ * concurrent pending<sup>1</sup> readers
+ * (whether {@linkplain #read(int, int) synchronous} or {@linkplain #readAsync(int, AsyncCompletionHandler, int) asynchronous})
+ * are not supported by {@link NettyStream}.
+ * However, this class does not have a fail-fast mechanism checking for such situations.
+ * <hr>
+ * <sup>1</sup>We cannot simply say that read methods are not allowed be run concurrently because strictly speaking they are allowed,
+ * as explained below.
+ * <pre>{@code
+ * NettyStream stream = ...;
+ * stream.readAsync(1, new AsyncCompletionHandler<ByteBuf>() {//inv1
+ *  @Override
+ *  public void completed(ByteBuf o) {
+ *      stream.readAsync(//inv2
+ *              1, ...);//ret2
+ *  }
+ *
+ *  @Override
+ *  public void failed(Throwable t) {
+ *  }
+ * });//ret1
+ * }</pre>
+ * Arrows on the diagram below represent happens-before relations.
+ * <pre>{@code
+ * int1 -> inv2 -> ret2
+ *      \--------> ret1
+ * }</pre>
+ * As shown on the diagram, the method {@link #readAsync(int, AsyncCompletionHandler)} runs concurrently with
+ * itself in the example above. However, there are no concurrent pending readers because the second operation
+ * is invoked after the first operation has completed reading despite the method has not returned yet.
  */
 final class NettyStream implements Stream {
     private static final String READ_HANDLER_NAME = "ReadTimeoutHandler";
+    private static final int NO_SCHEDULE_TIMEOUT = -1;
     private final ServerAddress address;
     private final SocketSettings settings;
     private final SslSettings sslSettings;
@@ -79,8 +110,8 @@ final class NettyStream implements Stream {
     private volatile Channel channel;
 
     private final LinkedList<io.netty.buffer.ByteBuf> pendingInboundBuffers = new LinkedList<io.netty.buffer.ByteBuf>();
-    private volatile PendingReader pendingReader;
-    private volatile Throwable pendingException;
+    private PendingReader pendingReader;
+    private Throwable pendingException;
 
     NettyStream(final ServerAddress address, final SocketSettings settings, final SslSettings sslSettings, final EventLoopGroup workerGroup,
                 final Class<? extends SocketChannel> socketChannelClass, final ByteBufAllocator allocator) {
@@ -185,6 +216,7 @@ final class NettyStream implements Stream {
 
     @Override
     public ByteBuf read(final int numBytes, final int additionalTimeout) throws IOException {
+        isTrueArgument("additionalTimeout must not be negative", additionalTimeout >= 0);
         FutureAsyncCompletionHandler<ByteBuf> future = new FutureAsyncCompletionHandler<ByteBuf>();
         readAsync(numBytes, future, additionalTimeout);
         return future.get();
@@ -214,6 +246,12 @@ final class NettyStream implements Stream {
         readAsync(numBytes, handler, 0);
     }
 
+    /**
+     * @param additionalTimeout Must be equal to {@link #NO_SCHEDULE_TIMEOUT} when the method is called by a Netty channel handler.
+     *                          A timeout is scheduled only by the public read methods. Taking into account that concurrent pending readers
+     *                          are not allowed, there must not be a situation when threads attempt to schedule a timeout
+     *                          before the previous one is removed or completed.
+     */
     private void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler, final int additionalTimeout) {
         scheduleReadTimeout(additionalTimeout);
         ByteBuf buffer = null;
@@ -282,7 +320,8 @@ final class NettyStream implements Stream {
         }
 
         if (localPendingReader != null) {
-            readAsync(localPendingReader.numBytes, localPendingReader.handler);
+            //if there is a pending reader, then the reader has scheduled a timeout and we should not attempt to schedule another one
+            readAsync(localPendingReader.numBytes, localPendingReader.handler, NO_SCHEDULE_TIMEOUT);
         }
     }
 
@@ -446,6 +485,9 @@ final class NettyStream implements Stream {
     }
 
     private void scheduleReadTimeout(final int additionalTimeout) {
+        if (additionalTimeout == NO_SCHEDULE_TIMEOUT) {
+            return;
+        }
         adjustTimeout(false, additionalTimeout);
     }
 
@@ -460,31 +502,10 @@ final class NettyStream implements Stream {
             ChannelHandler timeoutHandler = channel.pipeline().get(READ_HANDLER_NAME);
             if (timeoutHandler != null) {
                 final ReadTimeoutHandler readTimeoutHandler = (ReadTimeoutHandler) timeoutHandler;
-                final ChannelHandlerContext handlerContext = channel.pipeline().context(timeoutHandler);
-                EventExecutor executor = handlerContext.executor();
-
                 if (disable) {
-                    if (executor.inEventLoop()) {
-                        readTimeoutHandler.removeTimeout(handlerContext);
-                    } else {
-                        executor.submit(new Runnable() {
-                            @Override
-                            public void run() {
-                                readTimeoutHandler.removeTimeout(handlerContext);
-                            }
-                        });
-                    }
+                    readTimeoutHandler.removeTimeout();
                 } else {
-                    if (executor.inEventLoop()) {
-                        readTimeoutHandler.scheduleTimeout(handlerContext, additionalTimeout);
-                    } else {
-                        executor.submit(new Runnable() {
-                            @Override
-                            public void run() {
-                                readTimeoutHandler.scheduleTimeout(handlerContext, additionalTimeout);
-                            }
-                        });
-                    }
+                    readTimeoutHandler.scheduleTimeout(additionalTimeout);
                 }
             }
     }
