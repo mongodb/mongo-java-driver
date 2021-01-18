@@ -79,7 +79,7 @@ To upload data into GridFS, you can upload from an `InputStream` or write data t
 
 ### UploadFromStream
 
-The [`GridFSBucket.uploadFromStream`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/gridfs/GridFSBucket.html#openUploadStream(java.lang.String,com.mongodb.client.gridfs.model.GridFSUploadOptions)" >}}) method reads the contents of an [`InputStream`](http://docs.oracle.com/javase/8/docs/api/index.html?java/io/InputStream.html) and saves it to the `GridFSBucket`.  
+The [`GridFSBucket.uploadFromStream`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/gridfs/GridFSBucket.html#openUploadStream(java.lang.String,com.mongodb.client.gridfs.model.GridFSUploadOptions)" >}}) method reads the contents of an [`InputStream`]({{< javaseref "api/java/io/InputStream.html" >}}) and saves it to the `GridFSBucket`.  
 
 You can use the [`GridFSUploadOptions`]({{< apiref "mongodb-driver-core" "com/mongodb/client/gridfs/model/GridFSUploadOptions" >}}) to configure the chunk size or include additional metadata.
 
@@ -104,7 +104,7 @@ try {
 ### OpenUploadStream
 
 You can write data to a [`GridFSUploadStream`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/gridfs/GridFSUploadStream.html" >}}) which extends
- [`OutputStream`](http://docs.oracle.com/javase/8/docs/api/index.html?java/io/OutputStream.html). The 
+ [`OutputStream`]({{< javaseref "api/java/io/OutputStream.html" >}}). The 
  [`GridFSBucket.openUploadStream `]({{< apiref "mongodb-driver-sync" "com/mongodb/client/gridfs/GridFSBucket.html#openUploadStream(java.lang.String,com.mongodb.client.gridfs.model.GridFSUploadOptions)" >}}) 
  method returns a [`GridFSUploadStream`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/gridfs/GridFSUploadStream.html" >}}).
 
@@ -154,7 +154,7 @@ There are various ways to download data from GridFS.
 
 ### DownloadToStream
 
-The [`downloadToStream`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/gridfs/GridFSBucket.html#downloadToStream(org.bson.types.ObjectId,java.io.OutputStream)" >}}) method reads the contents from MongoDB and writes the data directly to the provided [`OutputStream`](http://docs.oracle.com/javase/8/docs/api/index.html?java/io/OutputStream.html).
+The [`downloadToStream`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/gridfs/GridFSBucket.html#downloadToStream(org.bson.types.ObjectId,java.io.OutputStream)" >}}) method reads the contents from MongoDB and writes the data directly to the provided [`OutputStream`]({{< javaseref "api/java/io/OutputStream.html" >}}).
 
 To download a file by its file `_id`, pass the `_id` to the method. The
 following example downloads a file by its file `_id` into the provided
@@ -193,7 +193,7 @@ try {
 ### OpenDownloadStream
 
  
-The [`openDownloadStream`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/gridfs/GridFSBucket.html#openDownloadStream(org.bson.types.ObjectId)" >}}) method returns a [`GridFSDownloadStream`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/gridfs/GridFSDownloadStream.html" >}}) which extends [`InputStream`](http://docs.oracle.com/javase/8/docs/api/index.html?java/io/InputStream.html).
+The [`openDownloadStream`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/gridfs/GridFSBucket.html#openDownloadStream(org.bson.types.ObjectId)" >}}) method returns a [`GridFSDownloadStream`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/gridfs/GridFSDownloadStream.html" >}}) which extends [`InputStream`]({{< javaseref "api/java/io/InputStream.html" >}}).
 
 The following example reads from the `GridFSBucket` via the returned `InputStream`:
 
