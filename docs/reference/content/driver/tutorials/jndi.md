@@ -10,7 +10,7 @@ title = "JNDI"
 
 ## Java Naming and Directory Interface (JNDI)
 
-The driver includes a [JNDI](http://docs.oracle.com/javase/8/docs/technotes/guides/jndi/index.html) ObjectFactory implementation,
+The driver includes a [JNDI]({{< javaseref "technotes/guides/jndi/index.html" >}}) ObjectFactory implementation,
 [`MongoClientFactory`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoClientFactory" >}}) ([`legacy version`]({{< apiref "mongodb-driver-legacy" "com/mongodb/client/jndi/MongoClientFactory" >}})), that returns `MongoClient` instances based on a
 [connection string](http://docs.mongodb.org/manual/reference/connection-string/).
 

@@ -10,7 +10,7 @@ title = "Monitoring"
 
 # JMX Monitoring
 
-The driver uses [JMX](http://docs.oracle.com/javase/8/docs/technotes/guides/jmx/) to create
+The driver uses [JMX]({{< javaseref "technotes/guides/jmx/" >}}) to create
 [MXBeans](http://docs.oracle.com/javase/tutorial/jmx/mbeans/mxbeans.html) that allow an
 application or end user to monitor various aspects of the driver.
 
