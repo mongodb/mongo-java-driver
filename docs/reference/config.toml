@@ -6,6 +6,9 @@ canonifyURLs = false
 disableHugoGeneratorInject = true
 disableKinds = ["section", "taxonomy", "taxonomyTerm", "404"]
 
+[params]
+  javaSeDocsUri = "https://docs.oracle.com/javase/8/docs/"
+
 [blackfriday]
   plainIdAnchors = true
 
