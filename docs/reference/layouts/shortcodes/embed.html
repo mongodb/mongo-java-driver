@@ -1,5 +1,0 @@
-{{$file := printf "embed/%s" (.Get 0) }}
-{{ $page := .Site.GetPage "page" $file }}
-{{ with $page }}
-    {{ .Content | markdownify }}
-{{ end }}
