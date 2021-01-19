@@ -102,7 +102,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * is invoked after the first operation has completed reading despite the method has not returned yet.
  */
 final class NettyStream implements Stream {
-    private static final int NO_SCHEDULE_TIMEOUT = -1;
+    private static final byte NO_SCHEDULE_TIME = 0;
     private final ServerAddress address;
     private final SocketSettings settings;
     private final SslSettings sslSettings;
@@ -119,13 +119,14 @@ final class NettyStream implements Stream {
     private PendingReader pendingReader;
     private Throwable pendingException;
     /* The fields readTimeoutTask, readTimeoutMillis are each written only in the ChannelInitializer.initChannel method
-     * (in addition to the write of the default value), and read only when NettyStream users read data,
-     * or Netty event loop handles incoming data. Since actions done by the ChannelInitializer.initChannel method
+     * (in addition to the write of the default value and the write by variable initializers),
+     * and read only when NettyStream users read data, or Netty event loop handles incoming data.
+     * Since actions done by the ChannelInitializer.initChannel method
      * are ordered (in the happens-before order) before user read actions and before event loop actions that handle incoming data,
      * these fields can be plain.*/
     @Nullable
     private ReadTimeoutTask readTimeoutTask;
-    private long readTimeoutMillis;
+    private long readTimeoutMillis = NO_SCHEDULE_TIME;
 
     NettyStream(final ServerAddress address, final SocketSettings settings, final SslSettings sslSettings, final EventLoopGroup workerGroup,
                 final Class<? extends SocketChannel> socketChannelClass, final ByteBufAllocator allocator) {
@@ -202,18 +203,14 @@ final class NettyStream implements Stream {
                     }
 
                     int readTimeout = settings.getReadTimeout(MILLISECONDS);
-                    final long readTimeoutMillis;
-                    if (readTimeout > 0) {
+                    if (readTimeout > NO_SCHEDULE_TIME) {
                         readTimeoutMillis = readTimeout;
                         /* We need at least one handler before (in the inbound evaluation order) the InboundBufferHandler,
                          * so that we can fire exception events (they are inbound events) using its context and the InboundBufferHandler
                          * receives them. SslHandler is not always present, so adding a NOOP handler.*/
                         pipeline.addLast(new ChannelInboundHandlerAdapter());
                         readTimeoutTask = new ReadTimeoutTask(pipeline.lastContext());
-                    } else {
-                        readTimeoutMillis = NO_SCHEDULE_TIMEOUT;
                     }
-                    NettyStream.this.readTimeoutMillis = readTimeoutMillis;
 
                     pipeline.addLast(new InboundBufferHandler());
                 }
@@ -275,7 +272,7 @@ final class NettyStream implements Stream {
     /**
      * @param numBytes Must be equal to {@link #pendingReader}{@code .numBytes} when called by a Netty channel handler.
      * @param handler Must be equal to {@link #pendingReader}{@code .handler} when called by a Netty channel handler.
-     * @param readTimeoutMillis Must be equal to {@link #NO_SCHEDULE_TIMEOUT} when called by a Netty channel handler.
+     * @param readTimeoutMillis Must be equal to {@link #NO_SCHEDULE_TIME} when called by a Netty channel handler.
      *                          Timeouts may be scheduled only by the public read methods. Taking into account that concurrent pending
      *                          readers are not allowed, there must not be a situation when threads attempt to schedule a timeout
      *                          before the previous one is either cancelled or completed.
@@ -355,7 +352,7 @@ final class NettyStream implements Stream {
 
         if (localPendingReader != null) {
             //timeouts may be scheduled only by the public read methods
-            readAsync(localPendingReader.numBytes, localPendingReader.handler, NO_SCHEDULE_TIMEOUT);
+            readAsync(localPendingReader.numBytes, localPendingReader.handler, NO_SCHEDULE_TIME);
         }
     }
 
@@ -529,15 +526,15 @@ final class NettyStream implements Stream {
     }
 
     private static long combinedTimeout(final long timeout, final int additionalTimeout) {
-        if (timeout == NO_SCHEDULE_TIMEOUT || additionalTimeout == NO_SCHEDULE_TIMEOUT) {
-            return NO_SCHEDULE_TIMEOUT;
+        if (timeout == NO_SCHEDULE_TIME) {
+            return NO_SCHEDULE_TIME;
         } else {
             return Math.addExact(timeout, additionalTimeout);
         }
     }
 
     private static ScheduledFuture<?> scheduleReadTimeout(@Nullable final ReadTimeoutTask readTimeoutTask, final long timeoutMillis) {
-        if (timeoutMillis == NO_SCHEDULE_TIMEOUT) {
+        if (timeoutMillis == NO_SCHEDULE_TIME) {
             return null;
         } else {
             //assert readTimeoutTask != null : "readTimeoutTask must be initialized if read timeouts are enabled";
