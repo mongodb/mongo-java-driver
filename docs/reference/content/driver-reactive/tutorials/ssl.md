@@ -91,4 +91,4 @@ MongoClientSettings settings = MongoClientSettings.builder()
 ```
 
 ## Common TLS/SSL Configuration Tasks
-See [Java Driver Common TLS/SSL Configuration Tasks]({{< relref "driver/tutorials/ssl.md#common-tls-ssl-configuration-tasks" >}}).
+{{< embed "common-tls.md" >}}
