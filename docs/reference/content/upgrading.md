@@ -12,6 +12,9 @@ title = "Upgrade Considerations"
 The 4.2 release is a minor release as per the definition of [semantic versioning](https://semver.org). As such, there are no breaking
 changes in this release for users upgrading from the 4.1 release.
 
+Note that in this release the Reactive Streams driver has taken an implementation dependency on 
+[Project Reactor](https://projectreactor. io/).  The minimum supported Project Reactor version is *Californium-SR21*.
+
 # Upgrading to the 4.1 Driver
 
 The 4.1 release is a minor release as per the definition of [semantic versioning](https://semver.org). As such, there are no breaking

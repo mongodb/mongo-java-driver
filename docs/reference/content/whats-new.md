@@ -11,6 +11,8 @@ title = "What's New"
 
 This release fully supports all MongoDB releases from versions 2.6 to 4.4. New features of the 4.2 Java driver release include:
 
+* The Reactive Streams driver now utilizes [Project Reactor](https://projectreactor.io/) internally. Project reactor follows 
+  the Reactive Streams specification and has greatly simplified the implementation of the driver.
 * Added support for Azure and GCP key stores to client-side field level encryption.
 * Added support for caching Kerberos tickets so that they can be re-used for multiple authentication requests.
 * Added support for constructing legacy `com.mongodb.MongoClient` instances with `MongoClientSettings` or `ConnectionString` as 
