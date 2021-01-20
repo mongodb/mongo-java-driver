@@ -66,9 +66,8 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
             public Boolean apply(final AggregateResponseBatchCursor<RawBsonDocument> queryBatchCursor) {
                 try {
                     return queryBatchCursor.hasNext();
-                } catch (RuntimeException e) {
+                } finally {
                     cachePostBatchResumeToken(queryBatchCursor);
-                    throw e;
                 }
             }
         });
