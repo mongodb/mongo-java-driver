@@ -9,10 +9,17 @@ title = "What's New"
 
 # What's new in 4.2
 
-This release fully supports all MongoDB releases from versions 2.6 to 4.4. Key new features of the 4.2 Java driver release include:
+This release fully supports all MongoDB releases from versions 2.6 to 4.4. New features of the 4.2 Java driver release include:
 
-* Client-side field level encryption has been expanded to support Azure and GCP Keystores.
-* Added support to cache Kerberos tickets so that they can be re-used for multiple authentication requests.
+* Added support for Azure and GCP key stores to client-side field level encryption.
+* Added support for caching Kerberos tickets so that they can be re-used for multiple authentication requests.
+* Added support for constructing legacy `com.mongodb.MongoClient` instances with `MongoClientSettings` or `ConnectionString` as 
+  the configuration, instead of `MongoClientOptions` or `MongoClientURI`.
+* Added support for `explain` of `find` and `aggregate` commands.
+* Added a `JsonObject` class to make encoding from and decoding to JSON more efficient by avoiding an intermediate `Map` representation.
+* Added a `BsonRepresentation` annotation that allows `ObjectId` BSON values to be represented as `String`s in POJO classes. 
+* Added support for the `BsonIgnore` annotation in Scala case classes.
+* Added a `Filters.empty()` method.
 
 # What's new in 4.1
 
