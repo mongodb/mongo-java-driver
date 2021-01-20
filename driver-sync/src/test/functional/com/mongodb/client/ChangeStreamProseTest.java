@@ -370,6 +370,8 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
             // use reflection to access the postBatchResumeToken
             AggregateResponseBatchCursor<?> batchCursor = getBatchCursor(cursor);
 
+            assertNotNull(batchCursor.getPostBatchResumeToken());
+
             // resume token should be null before iteration
             assertNull(cursor.getResumeToken());
 
