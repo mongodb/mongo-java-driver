@@ -189,7 +189,7 @@ final class NettyStream implements Stream {
             bootstrap.handler(new ChannelInitializer<SocketChannel>() {
                 @Override
                 public void initChannel(final SocketChannel ch) {
-                    final ChannelPipeline pipeline = ch.pipeline();
+                    ChannelPipeline pipeline = ch.pipeline();
                     if (sslSettings.isEnabled()) {
                         SSLEngine engine = getSslContext().createSSLEngine(address.getHost(), address.getPort());
                         engine.setUseClientMode(true);
@@ -282,15 +282,10 @@ final class NettyStream implements Stream {
         Throwable exceptionResult = null;
         synchronized (this) {
             exceptionResult = pendingException;
-            PendingReader pendingReader = this.pendingReader;
             if (exceptionResult == null) {
                 if (!hasBytesAvailable(numBytes)) {
                     if (pendingReader == null) {//called by a public read method
                         pendingReader = new PendingReader(numBytes, handler, scheduleReadTimeout(readTimeoutTask, readTimeoutMillis));
-                        this.pendingReader = pendingReader;
-                    } else {//called by a Netty channel handler
-                        //assert pendingReader.numBytes == numBytes : "Concurrent pending readers are not allowed";
-                        //assert pendingReader.handler == handler : "Concurrent pending readers are not allowed";
                     }
                 } else {
                     CompositeByteBuf composite = allocator.compositeBuffer(pendingInboundBuffers.size());
