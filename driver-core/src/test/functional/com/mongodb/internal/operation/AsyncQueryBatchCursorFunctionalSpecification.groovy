@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.operation
 
-import util.spock.annotations.Slow
+
 import com.mongodb.MongoCursorNotFoundException
 import com.mongodb.MongoException
 import com.mongodb.MongoTimeoutException
@@ -40,6 +40,7 @@ import org.bson.BsonTimestamp
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
+import util.spock.annotations.Slow
 
 import java.util.concurrent.CountDownLatch
 
@@ -51,6 +52,7 @@ import static com.mongodb.ClusterFixture.getReadConnectionSource
 import static com.mongodb.ClusterFixture.getReferenceCountAfterTimeout
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.internal.connection.ServerHelper.waitForLastRelease
 import static com.mongodb.internal.connection.ServerHelper.waitForRelease
 import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToQueryResult
@@ -60,6 +62,7 @@ import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.fail
 
+@IgnoreIf({ isSharded() && serverVersionLessThan(3, 2) })
 class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecification {
     AsyncConnectionSource connectionSource
     AsyncQueryBatchCursor<Document> cursor
