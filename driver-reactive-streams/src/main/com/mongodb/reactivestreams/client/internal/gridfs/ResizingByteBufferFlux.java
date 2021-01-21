@@ -16,13 +16,13 @@
 
 package com.mongodb.reactivestreams.client.internal.gridfs;
 
+import com.mongodb.lang.NonNull;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
 import reactor.core.CoreSubscriber;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
-import reactor.util.annotation.NonNull;
 
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
