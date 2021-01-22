@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-11-05T17:02:38.69">
+<meta name="date" content="2021-01-22T12:53:38.96">
 <link rel="shortcut icon" href="/mongo-java-driver/4.2/img/favicon.png">
 
     <title>Text Search</title><link rel="stylesheet" href="/mongo-java-driver/4.2/lib/bootstrap.css" type="text/css" />
@@ -337,8 +337,7 @@ perform text search, MongoDB uses a <a href="http://docs.mongodb.org/manual/core
 
 <li><p>Include the following import statements:</p>
 
-<pre><code class="language-java"> import com.mongodb.Block;
- import com.mongodb.client.MongoClients;
+<pre><code class="language-java"> import com.mongodb.client.MongoClients;
  import com.mongodb.client.MongoClient;
  import com.mongodb.client.MongoCollection;
  import com.mongodb.client.MongoDatabase;
@@ -349,16 +348,6 @@ perform text search, MongoDB uses a <a href="http://docs.mongodb.org/manual/core
  import com.mongodb.client.model.TextSearchOptions;
  import com.mongodb.client.model.Projections;
  import org.bson.Document;
-</code></pre></li>
-
-<li><p>Include the following code which the examples in the tutorials will use to print the results of the text search:</p>
-
-<pre><code class="language-java"> Block&lt;Document&gt; printBlock = new Block&lt;Document&gt;() {
-        @Override
-        public void apply(final Document document) {
-            System.out.println(document.toJson());
-        }
-    };
 </code></pre></li>
 </ul>
 
@@ -413,7 +402,8 @@ System.out.println(&quot;Text search matches: &quot; + matchCount);
 
 <pre><code class="language-java">collection.find(Filters.text(&quot;bakery cafe&quot;))
                        .projection(Projections.metaTextScore(&quot;score&quot;))
-                       .sort(Sorts.metaTextScore(&quot;score&quot;)).forEach(printBlock);
+                       .sort(Sorts.metaTextScore(&quot;score&quot;))
+                       .forEach(doc -&gt; System.out.println(doc.toJson()));
 </code></pre>
 
 <h3 id="specify-a-text-search-option">Specify a Text Search Option</h3>

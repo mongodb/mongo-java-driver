@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-11-05T17:02:38.67">
+<meta name="date" content="2021-01-22T12:53:38.95">
 <link rel="shortcut icon" href="/mongo-java-driver/4.2/img/favicon.png">
 
     <title>Aggregation</title><link rel="stylesheet" href="/mongo-java-driver/4.2/lib/bootstrap.css" type="text/css" />
@@ -412,6 +412,24 @@ Aggregates.group(&quot;$stars&quot;, Accumulators.sum(&quot;count&quot;, 1))
   )
 ).printResults()
 </code></pre>
+
+<h3 id="explain-an-aggregation">Explain an Aggregation</h3>
+
+<p>To <a href="http://docs.mongodb.org/manual/reference/command/explain/
+">explain</a> an aggregation pipeline, call the
+<a href="/mongo-java-driver/4.2/apidocs/mongo-scala-driver/org/mongodb/scala/AggregateObservable.html#explain()
+"><code>AggregateObservable.explain()</code></a>
+method:</p>
+
+<pre><code class="language-java">collection.aggregate(
+      Arrays.asList(
+              Aggregates.match(Filters.eq(&quot;categories&quot;, &quot;Bakery&quot;)),
+              Aggregates.group(&quot;$stars&quot;, Accumulators.sum(&quot;count&quot;, 1))))
+      .explain()
+      .printResults()
+</code></pre>
+
+<p>The driver supports explain of aggregation pipelines starting with MongoDB 3.6.</p>
 <div id="btnv"><div class="pull-left">
   <a class="navigation prev" href="/mongo-java-driver/4.2/driver-scala/tutorials/perform-write-operations/">
       <i class="fa fa-long-arrow-left"> </i> Write Operations
@@ -432,6 +450,7 @@ Aggregates.group(&quot;$stars&quot;, Accumulators.sum(&quot;count&quot;, 1))
 <li><a href="#perform-aggregation">Perform Aggregation</a>
 <ul>
 <li><a href="#use-aggregation-expressions">Use Aggregation Expressions</a></li>
+<li><a href="#explain-an-aggregation">Explain an Aggregation</a></li>
 </ul></li>
 </ul></li>
 </ul>

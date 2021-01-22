@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-11-05T17:02:38.63">
+<meta name="date" content="2021-01-22T12:53:38.92">
 <link rel="shortcut icon" href="/mongo-java-driver/4.2/img/favicon.png">
 
     <title>Geospatial Search</title><link rel="stylesheet" href="/mongo-java-driver/4.2/lib/bootstrap.css" type="text/css" />
@@ -327,8 +327,7 @@
 
 <li><p>Include the following import statements:</p>
 
-<pre><code class="language-java"> import com.mongodb.Block;
- import com.mongodb.client.MongoClients;
+<pre><code class="language-java"> import com.mongodb.client.MongoClients;
  import com.mongodb.client.MongoClient;
  import com.mongodb.client.MongoCollection;
  import com.mongodb.client.MongoDatabase;
@@ -337,16 +336,6 @@
  import com.mongodb.client.model.Indexes;
  import com.mongodb.client.model.Filters;
  import org.bson.Document;
-</code></pre></li>
-
-<li><p>Include the following code which the examples in the tutorials will use to print the results of the geospatial search:</p>
-
-<pre><code class="language-java"> Block&lt;Document&gt; printBlock = new Block&lt;Document&gt;() {
-        @Override
-        public void apply(final Document document) {
-            System.out.println(document.toJson());
-        }
-    };
 </code></pre></li>
 </ul>
 
@@ -385,7 +374,8 @@ collection.createIndex(Indexes.geo2dsphere(&quot;contact.location&quot;));
 <p>The following example returns documents that are at least 1000 meters from and at most 5000 meters from the specified GeoJSON point <code>com.mongodb.client.model.geojson.Point</code>, sorted from nearest to farthest:</p>
 
 <pre><code class="language-java">Point refPoint = new Point(new Position(-73.9667, 40.78));
-collection.find(Filters.near(&quot;contact.location&quot;, refPoint, 5000.0, 1000.0)).forEach(printBlock);
+collection.find(Filters.near(&quot;contact.location&quot;, refPoint, 5000.0, 1000.0))
+        .forEach(doc -&gt; System.out.println(doc.toJson()));
 </code></pre>
 <div id="btnv"><div class="pull-left">
   <a class="navigation prev" href="/mongo-java-driver/4.2/driver/tutorials/text-search/">

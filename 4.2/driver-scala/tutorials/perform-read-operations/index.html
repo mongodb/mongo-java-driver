@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-11-05T17:02:38.64">
+<meta name="date" content="2021-01-22T12:53:38.93">
 <link rel="shortcut icon" href="/mongo-java-driver/4.2/img/favicon.png">
 
     <title>Read Operations</title><link rel="stylesheet" href="/mongo-java-driver/4.2/lib/bootstrap.css" type="text/css" />
@@ -481,6 +481,21 @@ see the <a href="/mongo-java-driver/4.2/driver-scala/tutorials/text-search/">Tex
           .printResults()
 </code></pre>
 
+<h3 id="explain">Explain</h3>
+
+<p>To <a href="http://docs.mongodb.org/manual/reference/command/explain/
+">explain</a> a find operation, call the
+<a href="/mongo-java-driver/4.2/apidocs/mongo-scala-driver/org/mongodb/scala/FindObservable.html#explain()
+"><code>FindObservable.explain()</code></a>
+method:</p>
+
+<pre><code class="language-scala">collection.find(and(gte(&quot;stars&quot;, 2), lt(&quot;stars&quot;, 5), eq(&quot;categories&quot;, &quot;Bakery&quot;)))
+          .explain()
+          .printResults()
+</code></pre>
+
+<p>The driver supports explain of find operations starting with MongoDB 3.0.</p>
+
 <h2 id="read-preference">Read Preference</h2>
 
 <p>For read operations on <a href="http://docs.mongodb.org/manual/replication/
@@ -627,6 +642,7 @@ see the <a href="/mongo-java-driver/4.2/driver-scala/tutorials/text-search/">Tex
 <li><a href="#projections">Projections</a></li>
 <li><a href="#sorts">Sorts</a></li>
 <li><a href="#sort-with-projections">Sort with Projections</a></li>
+<li><a href="#explain">Explain</a></li>
 </ul></li>
 <li><a href="#read-preference">Read Preference</a></li>
 <li><a href="#read-concern">Read Concern</a></li>

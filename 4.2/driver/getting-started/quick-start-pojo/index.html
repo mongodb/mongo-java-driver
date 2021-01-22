@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-11-05T17:02:38.6">
+<meta name="date" content="2021-01-22T12:53:38.9">
 <link rel="shortcut icon" href="/mongo-java-driver/4.2/img/favicon.png">
 
     <title>Quick Start - POJOs</title><link rel="stylesheet" href="/mongo-java-driver/4.2/lib/bootstrap.css" type="text/css" />
@@ -339,9 +339,8 @@ that can be found with the driver source on github.</p>
 <li><p>The following import statements:</p></li>
 </ul>
 
-<pre><code class="language-java">import com.mongodb.Block;
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientURI;
+<pre><code class="language-java">import com.mongodb.MongoClient;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.DeleteResult;
@@ -539,19 +538,10 @@ collection.insertMany(people);
 
 <p>The following example prints all the Person instances in the collection:</p>
 
-<pre><code class="language-java">Block&lt;Person&gt; printBlock = new Block&lt;Person&gt;() {
-    @Override
-    public void apply(final Person person) {
-        System.out.println(person);
-    }
-};
-
-collection.find().forEach(printBlock);
+<pre><code class="language-java">collection.find().forEach(System.out::println);
 </code></pre>
 
-<p>The example uses the <a href="/mongo-java-driver/4.2/apidocs/mongodb-driver-sync/com/mongodb/client/MongoIterable.html#forEach(com.mongodb.Block)
-"><code>forEach</code></a> method on the <code>FindIterable</code>
-object to apply a block to each Person and outputs the following:</p>
+<p>The example outputs the following:</p>
 
 <pre><code class="language-bash">Person{id='591dbc2550852fa685b3ad17', name='Ada Byron', age=20, address=Address{street='St James Square', city='London', zip='W1'}}
 Person{id='591dbc2550852fa685b3ad18', name='Charles Babbage', age=45, address=Address{street='5 Devonshire Street', city='London', zip='W11'}}
@@ -594,7 +584,7 @@ System.out.println(somebody);
 
 <p>The following example returns and prints everyone where <code>&quot;age&quot; &gt; 30</code>:</p>
 
-<pre><code class="language-java">collection.find(gt(&quot;age&quot;, 30)).forEach(printBlock);
+<pre><code class="language-java">collection.find(gt(&quot;age&quot;, 30)).forEach(System.out::println);
 </code></pre>
 
 <h2 id="update-documents">Update Documents</h2>

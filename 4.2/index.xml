@@ -242,7 +242,7 @@ import org.mongodb.scala._ import org.mongodb.scala.model.geojson._ import org.m
       <description>Geospatial Search To support geospatial queries, MongoDB provides various geospatial indexes as well as geospatial query operators.
 Prerequisites  The example below requires a restaurants collection in the test database. To create and populate the collection, follow the directions in github.
  Include the following import statements:
-import com.mongodb.Block; import com.mongodb.client.MongoClients; import com.mongodb.client.MongoClient; import com.mongodb.client.MongoCollection; import com.mongodb.client.MongoDatabase; import com.mongodb.client.MongoCursor; import com.mongodb.client.model.geojson.*; import com.mongodb.client.model.Indexes; import com.mongodb.client.model.Filters; import org.bson.Document;  Include the following code which the examples in the tutorials will use to print the results of the geospatial search:</description>
+import com.mongodb.client.MongoClients; import com.mongodb.client.MongoClient; import com.mongodb.client.MongoCollection; import com.mongodb.client.MongoDatabase; import com.mongodb.client.MongoCursor; import com.mongodb.client.model.geojson.*; import com.mongodb.client.model.Indexes; import com.mongodb.client.model.Filters; import org.bson.Document;   Connect to a MongoDB Deployment Connect to a MongoDB deployment and declare and define a MongoDatabase instance.</description>
     </item>
     
     <item>
@@ -320,8 +320,8 @@ Prerequisites  The example below requires a restaurants collection in the test d
       <pubDate>Thu, 09 Jun 2016 12:47:43 -0400</pubDate>
       
       <guid>/mongo-java-driver/4.2/whats-new/</guid>
-      <description>What&amp;rsquo;s new in 4.2 This release fully supports all MongoDB releases from versions 2.6 to 4.4. Key new features of the 4.2 Java driver release include:
- Client-side field level encryption has been expanded to support Azure and GCP Keystores. Added support to cache Kerberos tickets so that they can be re-used for multiple authentication requests.  What&amp;rsquo;s new in 4.1 This release fully supports all MongoDB releases from versions 2.</description>
+      <description>What&amp;rsquo;s new in 4.2 This release fully supports all MongoDB releases from versions 2.6 to 4.4. New features of the 4.2 Java driver release include:
+ The Reactive Streams driver now utilizes Project Reactor internally. Project reactor follows the Reactive Streams specification and has greatly simplified the implementation of the driver. Added support for Azure and GCP key stores to client-side field level encryption. Added support for caching Kerberos tickets so that they can be re-used for multiple authentication requests.</description>
     </item>
     
     <item>
@@ -357,7 +357,7 @@ import org.mongodb.scala._ import org.mongodb.scala.model.Aggregates._ import or
       <description>Aggregation Framework The aggregation pipeline is a framework for data aggregation, modeled on the concept of data processing pipelines.
 Prerequisites  The example below requires a restaurants collection in the test database. To create and populate the collection, follow the directions in github.
  Include the following import statements:
-import com.mongodb.Block; import com.mongodb.client.MongoClients; import com.mongodb.client.MongoClient; import com.mongodb.client.MongoCollection; import com.mongodb.client.MongoDatabase; import com.mongodb.client.model.Aggregates; import com.mongodb.client.model.Accumulators; import com.mongodb.client.model.Projections; import com.mongodb.client.model.Filters; import org.bson.Document;  Include the following code which the examples in the tutorials will use to print the results of the aggregation:</description>
+import com.mongodb.client.MongoClients; import com.mongodb.client.MongoClient; import com.mongodb.client.MongoCollection; import com.mongodb.client.MongoDatabase; import com.mongodb.client.model.Aggregates; import com.mongodb.client.model.Accumulators; import com.mongodb.client.model.Projections; import com.mongodb.client.model.Filters; import org.bson.Document;   Connect to a MongoDB Deployment Connect to a MongoDB deployment and declare and define a MongoDatabase and a MongoCollection instances.</description>
     </item>
     
     <item>
@@ -534,8 +534,8 @@ Default Authentication Mechanism In MongoDB 3.0, MongoDB changed the default aut
       <description>Authentication The Java driver supports all MongoDB authentication mechanisms, including those only available in the MongoDB Enterprise Edition.
 MongoCredential import com.mongodb.MongoCredential;  New MongoClient API (since 3.7):
 import com.mongodb.ConnectionString; import com.mongodb.client.MongoClients; import com.mongodb.client.MongoClient;  Legacy MongoClient API:
-import com.mongodb.MongoClient; import com.mongodb.MongoClientURI;  An authentication credential is represented as an instance of the MongoCredential class. The MongoCredential class includes static factory methods for each of the supported authentication mechanisms.
-You can also use a MongoClientURI and pass it to a MongoClient() constructor that takes a MongoClientURI parameter.</description>
+import com.mongodb.MongoClient; import com.mongodb.ConnectionString;  An authentication credential is represented as an instance of the MongoCredential class. The MongoCredential class includes static factory methods for each of the supported authentication mechanisms.
+You can also use a ConnectionString and pass it to a MongoClient() constructor that takes a ConnectionString parameter.</description>
     </item>
     
     <item>
@@ -566,8 +566,9 @@ val mongoClient: MongoClient = MongoClient(&amp;quot;mongodb://localhost/?ssl=tr
       <pubDate>Sun, 29 May 2016 22:05:03 -0400</pubDate>
       
       <guid>/mongo-java-driver/4.2/driver/tutorials/ssl/</guid>
-      <description>TLS/SSL The Java driver supports TLS/SSL connections to MongoDB servers using the underlying support for TLS/SSL provided by the JDK. You can configure the driver to use TLS/SSL either with ConnectionString or with MongoClientSettings. With the legacy MongoClient API you can use either MongoClientURI or MongoClientOptions.
-MongoClient API (since 3.7) Specify TLS/SSL via ConnectionString com.mongodb.client.MongoClients; com.mongodb.client.MongoClient;  To specify TLS/SSL with ConnectionString, specify ssl=true as part of the connection string, as in:</description>
+      <description>TLS/SSL The Java driver supports TLS/SSL connections to MongoDB servers using the underlying support for TLS/SSL provided by the JDK. You can configure the driver to use TLS/SSL either with ConnectionString or with MongoClientSettings.
+MongoClient API (since 3.7) Specify TLS/SSL via ConnectionString com.mongodb.client.MongoClients; com.mongodb.client.MongoClient;  To specify TLS/SSL with ConnectionString, specify ssl=true as part of the connection string, as in:
+MongoClient mongoClient = MongoClients.create(&amp;quot;mongodb://localhost/?ssl=true&amp;quot;);  Specify TLS/SSL via MongoClientSettings import com.</description>
     </item>
     
     <item>
@@ -927,7 +928,8 @@ Field Updates This section describes update operators that apply to the value of
       
       <guid>/mongo-java-driver/4.2/upgrading/</guid>
       <description>Upgrading to the 4.2 Driver The 4.2 release is a minor release as per the definition of semantic versioning. As such, there are no breaking changes in this release for users upgrading from the 4.1 release.
-Upgrading to the 4.1 Driver The 4.1 release is a minor release as per the definition of semantic versioning. As such, there are no breaking changes in this release for users upgrading from the 4.</description>
+Note that in this release the Reactive Streams driver has taken an implementation dependency on Project Reactor. The minimum supported Project Reactor version is Californium-SR23.
+Upgrading to the 4.1 Driver The 4.1 release is a minor release as per the definition of semantic versioning.</description>
     </item>
     
     <item>
@@ -1067,7 +1069,7 @@ Bugs / Feature Requests If you think you’ve found a bug or want to see a new f
       <guid>/mongo-java-driver/4.2/driver-reactive/getting-started/installation/</guid>
       <description> Installation The recommended way to get started using one of the drivers in your project is with a dependency management system.
  MongoDB Reactive Streams Driver The Reactive Streams implementation for asynchronous stream processing with non-blocking back pressure.
-&amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.mongodb&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;mongodb-driver-reactivestreams&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;4.2.0-beta1&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; &amp;lt;/dependencies&amp;gt;    dependencies { compile &#39;org.mongodb:mongodb-driver-reactivestreams:4.2.0-beta1&#39; }    libraryDependencies += &#34;org.mongodb&#34; %% &#34;mongodb-driver-reactivestreams&#34; % &#34;4.2.0-beta1&#34;  </description>
+&amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.mongodb&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;mongodb-driver-reactivestreams&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;4.2.0&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; &amp;lt;/dependencies&amp;gt;    dependencies { compile &#39;org.mongodb:mongodb-driver-reactivestreams:4.2.0&#39; }    libraryDependencies += &#34;org.mongodb&#34; %% &#34;mongodb-driver-reactivestreams&#34; % &#34;4.2.0&#34;  </description>
     </item>
     
     <item>
@@ -1078,7 +1080,7 @@ Bugs / Feature Requests If you think you’ve found a bug or want to see a new f
       <guid>/mongo-java-driver/4.2/driver-scala/getting-started/installation/</guid>
       <description>Installation The recommended way to get started using one of the drivers in your project is with a dependency management system.
  MongoDB Scala Driver The Reactive Streams based Scala implementation for asynchronous stream processing with non-blocking back pressure.
-Scala 2.12 &amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.mongodb.scala&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;mongo-scala-driver&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;4.2.0-beta1_2.12&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; &amp;lt;/dependencies&amp;gt;    dependencies { compile &#39;org.mongodb.scala:mongo-scala-driver:4.2.0-beta1_2.12&#39; }    libraryDependencies += &#34;org.mongodb.scala&#34; %% &#34;mongo-scala-driver&#34; % &#34;4.2.0-beta1&#34;  Scala 2.11 &amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.</description>
+Scala 2.12 &amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.mongodb.scala&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;mongo-scala-driver&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;4.2.0_2.12&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; &amp;lt;/dependencies&amp;gt;    dependencies { compile &#39;org.mongodb.scala:mongo-scala-driver:4.2.0_2.12&#39; }    libraryDependencies += &#34;org.mongodb.scala&#34; %% &#34;mongo-scala-driver&#34; % &#34;4.2.0&#34;  Scala 2.11 &amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.</description>
     </item>
     
     <item>

@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-11-05T17:02:38.57">
+<meta name="date" content="2021-01-22T12:53:38.88">
 <link rel="shortcut icon" href="/mongo-java-driver/4.2/img/favicon.png">
 
     <title>Change Streams</title><link rel="stylesheet" href="/mongo-java-driver/4.2/lib/bootstrap.css" type="text/css" />
@@ -332,8 +332,7 @@ to resume if it encounters a potentially recoverable error.</p>
 <li><p>Include the following import statements:</p></li>
 </ul>
 
-<pre><code class="language-java">import com.mongodb.Block;
-import com.mongodb.client.MongoClients;
+<pre><code class="language-java">import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoClient;
 
 import com.mongodb.client.MongoCollection;
@@ -343,18 +342,6 @@ import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
-</code></pre>
-
-<ul>
-<li>Include the following code which the examples in the tutorials will use to print the results of the change stream:</li>
-</ul>
-
-<pre><code class="language-java">Block&lt;ChangeStreamDocument&lt;Document&gt;&gt; printBlock = new Block&lt;&gt;() {
-    @Override
-    public void apply(final ChangeStreamDocument&lt;Document&gt; changeStreamDocument) {
-        System.out.println(changeStreamDocument);
-    }
-};
 </code></pre>
 
 <h2 id="connect-to-a-mongodb-deployment">Connect to a MongoDB Deployment</h2>
@@ -378,7 +365,7 @@ MongoCollection&lt;Document&gt; collection = database.getCollection(&quot;restau
 
 <p>In the following example, the change stream prints out all changes it observes.</p>
 
-<pre><code class="language-java">collection.watch().forEach(printBlock);
+<pre><code class="language-java">collection.watch().forEach(System.out::println);
 </code></pre>
 
 <h2 id="watch-the-database">Watch the database</h2>
@@ -389,7 +376,7 @@ create such a change stream use one of the <a href="/mongo-java-driver/4.2/apido
 
 <p>In the following example, the change stream prints out all the changes it observes on the given database.</p>
 
-<pre><code class="language-java">database.watch().forEach(printBlock);
+<pre><code class="language-java">database.watch().forEach(System.out::println);
 </code></pre>
 
 <h2 id="watch-all-databases">Watch all databases</h2>
@@ -402,7 +389,7 @@ in a MongoDB deployment. To create such a change stream use one of the
 <p>In the following example, the change stream prints out all the changes it observes on the deployment to which the <code>MongoClient</code> is
 connected</p>
 
-<pre><code class="language-java">mongoClient.watch().forEach(printBlock);
+<pre><code class="language-java">mongoClient.watch().forEach(System.out::println);
 </code></pre>
 
 <h2 id="filtering-content">Filtering content</h2>
@@ -425,7 +412,8 @@ so that the document after the update is included in the results.</p></li>
 </ul>
 
 <pre><code class="language-java">collection.watch(asList(Aggregates.match(Filters.in(&quot;operationType&quot;, asList(&quot;insert&quot;, &quot;update&quot;, &quot;replace&quot;, &quot;delete&quot;)))))
-        .fullDocument(FullDocument.UPDATE_LOOKUP).forEach(printBlock);
+        .fullDocument(FullDocument.UPDATE_LOOKUP)
+        .forEach(System.out::println);
 </code></pre>
 <div id="btnv"><div class="pull-left">
   <a class="navigation prev" href="/mongo-java-driver/4.2/driver/tutorials/aggregation/">

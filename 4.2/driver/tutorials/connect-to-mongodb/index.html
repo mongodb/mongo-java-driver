@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-11-05T17:02:38.76">
+<meta name="date" content="2021-01-22T12:53:39.01">
 <link rel="shortcut icon" href="/mongo-java-driver/4.2/img/favicon.png">
 
     <title>Connect to MongoDB</title><link rel="stylesheet" href="/mongo-java-driver/4.2/lib/bootstrap.css" type="text/css" />
@@ -319,15 +319,16 @@
 
 <p>Use <a href="/mongo-java-driver/4.2/apidocs/mongodb-driver-sync/com/mongodb/client/MongoClients.html
 "><code>MongoClients.create()</code></a> (as of the 3.7 release), or
-<a href="/mongo-java-driver/4.2/apidocs/mongodb-driver-core/com/mongodb/MongoClient.html
-"><code>MongoClient()</code></a> for the legacy MongoClient API, to make a connection to a running MongoDB instance.</p>
+<a href="/mongo-java-driver/4.2/apidocs/mongodb-driver-legacy/com/mongodb/MongoClient.html
+"><code>MongoClient()</code></a> for the legacy MongoClient API, to make a
+connection to a running MongoDB instance.</p>
 
 <div class="admonition important">
 <h5 class="admonition-title">important</h5>
 <p>The following examples are not meant to provide an exhaustive list
 of ways to instantiate <code>MongoClient</code>. For a complete list of MongoClients factory methods, see the
 <a href="/mongo-java-driver/4.2/apidocs/mongodb-driver-sync/com/mongodb/client/MongoClients.html"><code>MongoClients API documentation</code></a>, or for the legacy MongoClient API see
-the <a href="/mongo-java-driver/4.2/apidocs/mongodb-driver-sync/com/mongodb/client/MongoClient.html"><code>MongoClient() API documentation</code></a>.</p>
+the <a href="/mongo-java-driver/4.2/apidocs/mongodb-driver-legacy/com/mongodb/MongoClient.html"><code>MongoClient() API documentation</code></a>.</p>
 
 </div>
 
@@ -360,7 +361,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.ConnectionString;
 import com.mongodb.ServerAddress;
 import com.mongodb.MongoCredential;
-import com.mongodb.MongoClientOptions;
+import com.mongodb.MongoClientSettings;
 
 import java.util.Arrays;
 </code></pre>
@@ -368,10 +369,9 @@ import java.util.Arrays;
 <p>or for the legacy MongoClient API:</p>
 
 <pre><code class="language-java">import com.mongodb.MongoClient;
-import com.mongodb.MongoClientURI;
 import com.mongodb.ServerAddress;
 import com.mongodb.MongoCredential;
-import com.mongodb.MongoClientOptions;
+import com.mongodb.MongoClientSettings;
 
 import java.util.Arrays;
 </code></pre>
@@ -586,31 +586,19 @@ connect to a MongoDB instance running on localhost on port <code>27017</code>:</
 <li><p>You can explicitly specify the hostname to connect to a MongoDB
 instance running on the specified host on port <code>27017</code>:</p>
 
-<pre><code class="language-java">MongoClient mongoClient = new MongoClient( &quot;host1&quot; );
+<pre><code class="language-java">MongoClient mongoClient = new MongoClient(&quot;mongodb://host1&quot;);
 </code></pre></li>
 
 <li><p>You can connect to the Unix domain socket (requires the <code>jnr.unixsocket</code> library):</p>
 
-<pre><code class="language-java">MongoClient mongoClient = new MongoClient( &quot;/tmp/mongodb-27017.sock&quot; );
+<pre><code class="language-java">MongoClient mongoClient = new MongoClient(&quot;mongodb://%2Ftmp%2Fmongodb-27107.sock&quot;);
 </code></pre></li>
 
 <li><p>You can explicitly specify the hostname and the port:</p>
 
-<pre><code class="language-java">MongoClient mongoClient = new MongoClient( &quot;host1&quot; , 27017 );
-</code></pre></li>
-
-<li><p>You can specify the
-<a href="/mongo-java-driver/4.2/apidocs/mongodb-driver-core/com/mongodb/MongoClientURI.html
-"><code>MongoClientURI</code></a> connection string.</p>
-
-<pre><code class="language-java">MongoClient mongoClient = new MongoClient(new MongoClientURI(&quot;mongodb://host1:27017&quot;));
+<pre><code class="language-java">MongoClient mongoClient = new MongoClient(&quot;mongodb://host1:27017&quot;);
 </code></pre></li>
 </ul>
-
-<p>Unix domain socket connections via the connection string (requires the <code>jnr.unixsocket</code> library and the path to be urlencoded):</p>
-
-<pre><code class="language-java">  MongoClient mongoClient = new MongoClient(new MongoClientURI(&quot;mongodb://%2Ftmp%2Fmongodb-27107.sock&quot;));
-</code></pre>
 
 <h2 id="connect-to-a-replica-set-1">Connect to a Replica Set</h2>
 
@@ -626,21 +614,17 @@ instance running on the specified host on port <code>27017</code>:</p>
 
 
 <ul>
-<li><p>You can specify the members using the <a href="/mongo-java-driver/4.2/apidocs/mongodb-driver-core/com/mongodb/MongoClientURI.html
-"><code>MongoClientURI</code></a> connection string:</p>
+<li><p>You can specify the members using a connection string:</p>
 
 <ul>
 <li><p>To specify at least two members of the replica set:</p>
 
-<pre><code class="language-java">MongoClient mongoClient = new MongoClient(
-    new MongoClientURI(&quot;mongodb://host1:27017,host2:27017,host3:27017&quot;));
+<pre><code class="language-java">MongoClient mongoClient = new MongoClient(&quot;mongodb://host1:27017,host2:27017,host3:27017&quot;);
 </code></pre></li>
 
 <li><p>With at least one member of the replica set and the <code>replicaSet</code> option:</p>
 
-<pre><code class="language-java">MongoClient mongoClient = new MongoClient(
-    new MongoClientURI(
-      &quot;mongodb://host1:27017,host2:27017,host3:27017/?replicaSet=myReplicaSet&quot;));
+<pre><code class="language-java">MongoClient mongoClient = new MongoClient(&quot;mongodb://host1:27017,host2:27017,host3:27017/?replicaSet=myReplicaSet&quot;);
 </code></pre></li>
 </ul></li>
 
@@ -648,9 +632,13 @@ instance running on the specified host on port <code>27017</code>:</p>
 "><code>ServerAddress</code></a>:</p>
 
 <pre><code class="language-java">MongoClient mongoClient = new MongoClient(
-Arrays.asList(new ServerAddress(&quot;host1&quot;, 27017),
-              new ServerAddress(&quot;host2&quot;, 27017),
-              new ServerAddress(&quot;host3&quot;, 27017)));
+        MongoClientSettings.builder()
+                .applyToClusterSettings(builder -&gt; 
+                        builder.hosts(Arrays.asList(
+                                new ServerAddress(&quot;host1&quot;, 27017),
+                                new ServerAddress(&quot;host2&quot;, 27017),
+                                new ServerAddress(&quot;host3&quot;, 27017))))
+                .build());
 </code></pre></li>
 </ul>
 
@@ -663,68 +651,50 @@ or instances to the <code>MongoClient</code> constructor.</p>
 <p>To connect to a single <code>mongos</code> instance:</p>
 
 <ul>
-<li><p>You can specify the hostname and the port (or you can omit the
+<li><p>You can specify the hostname and the port in a connection string (or you can omit the
 parameters if <code>mongos</code> is running on <code>localhost</code> and port
 <code>27017</code>)</p>
 
-<pre><code class="language-java">MongoClient mongoClient = new MongoClient( &quot;localhost&quot; , 27017 );
-</code></pre></li>
-
-<li><p>You can specify the <a href="/mongo-java-driver/4.2/apidocs/mongodb-driver-core/com/mongodb/MongoClientURI.html
-"><code>MongoClientURI</code></a> connection string:</p>
-
-<pre><code class="language-java">MongoClient mongoClient = new MongoClient(new MongoClientURI(&quot;mongodb://localhost:27017&quot;));
+<pre><code class="language-java">MongoClient mongoClient = new MongoClient(&quot;mongodb://localhost:27017&quot;);
 </code></pre></li>
 </ul>
 
 <p>To connect to multiple <code>mongos</code> instances:</p>
 
 <ul>
-<li><p>You can specify the <a href="/mongo-java-driver/4.2/apidocs/mongodb-driver-core/com/mongodb/MongoClientURI.html
-"><code>MongoClientURI</code></a> connection string with their hostnames and ports:</p>
+<li><p>You can specify the connection string with their hostnames and ports:</p>
 
-<pre><code class="language-java">MongoClient mongoClient = new MongoClient(
-   new MongoClientURI(&quot;mongodb://host1:27017,host2:27017&quot;));
-</code></pre></li>
-
-<li><p>You can specify a list of the <code>mongos</code> instances&rsquo;
-<a href="/mongo-java-driver/4.2/apidocs/mongodb-driver-core/com/mongodb/ServerAddress.html
-"><code>ServerAddress</code></a>:</p>
-
-<pre><code class="language-java">MongoClient mongoClient = new MongoClient(
-   Arrays.asList(new ServerAddress(&quot;host1&quot;, 27017),
-                 new ServerAddress(&quot;host2&quot;, 27017)));
+<pre><code class="language-java">MongoClient mongoClient = new MongoClient(&quot;mongodb://host1:27017,host2:27017&quot;);
 </code></pre></li>
 </ul>
 
 <h2 id="connection-options-1">Connection Options</h2>
 
 <p>You can specify the connection settings using either the
-<code>MongoClientURI</code> or <code>MongoClientOptions</code> or both.</p>
+<code>ConnectionString</code> or <code>MongoClientSettings</code> or both.</p>
 
 <p>For example, you can specify TLS/SSL and authentication setting in the
-<code>MongoClientURI</code> connection string:</p>
+<code>ConnectionString</code>:</p>
 
-<pre><code class="language-java">MongoClientURI uri = new MongoClientURI(&quot;mongodb://user1:pwd1@host1/?authSource=db1&amp;ssl=true&quot;);
-MongoClient mongoClient = new MongoClient(uri);
+<pre><code class="language-java">MongoClient mongoClient = new MongoClient(&quot;mongodb://user1:pwd1@host1/?authSource=db1&amp;ssl=true&quot;);
 </code></pre>
 
-<p>You can also use <code>MongoClientOptions</code> to specify TLS/SSL and the
+<p>You can also use <code>MongoClientSettings</code> to specify TLS/SSL and the
 <code>MongoCredential</code> for the authentication information:</p>
 
-<pre><code class="language-java">
- String user; // the user name
+<pre><code class="language-java"> String user; // the user name
  String database; // the name of the database in which the user is defined
  char[] password; // the password as a character array
- // ...
 
  MongoCredential credential = MongoCredential.createCredential(user, database, password);
 
- MongoClientOptions options = MongoClientOptions.builder().sslEnabled(true).build();
+ MongoClientSettings settings = MongoClientSettings.builder()
+                .applyToClusterSettings(builder -&gt; builder.hosts(Arrays.asList(new ServerAddress(&quot;host1&quot;, 27017))))
+                .applyToSslSettings(builder -&gt; builder.enabled(true))
+                .credential(credential)
+                .build(); 
 
- MongoClient mongoClient = new MongoClient(new ServerAddress(&quot;host1&quot;, 27017),
-                                           Arrays.asList(credential),
-                                           options);
+ MongoClient mongoClient = new MongoClient(settings);
 </code></pre>
 <div id="btnv"><div class="pull-left">
   <a class="navigation prev" href="/mongo-java-driver/4.2/driver/getting-started/quick-start-pojo/">

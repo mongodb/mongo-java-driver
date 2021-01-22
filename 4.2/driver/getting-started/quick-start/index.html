@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-11-05T17:02:38.97">
+<meta name="date" content="2021-01-22T12:53:39.15">
 <link rel="shortcut icon" href="/mongo-java-driver/4.2/img/favicon.png">
 
     <title>Quick Start</title><link rel="stylesheet" href="/mongo-java-driver/4.2/lib/bootstrap.css" type="text/css" />
@@ -345,7 +345,7 @@ import com.mongodb.client.MongoClient;
 <p>Legacy MongoClient API:</p>
 
 <pre><code class="language-java">import com.mongodb.MongoClient;
-import com.mongodb.MongoClientURI;
+import com.mongodb.ConnectionString;
 </code></pre>
 
 <p>And the common elements between the legacy and new APIs:</p>
@@ -357,7 +357,6 @@ import com.mongodb.client.MongoCollection;
 
 import org.bson.Document;
 import java.util.Arrays;
-import com.mongodb.Block;
 
 import com.mongodb.client.MongoCursor;
 import static com.mongodb.client.model.Filters.*;
@@ -451,24 +450,14 @@ to make a connection to a running MongoDB instance.</p>
 <li>You can explicitly specify the hostname to connect to a MongoDB instance running on the specified host on port <code>27017</code>:</li>
 </ul>
 
-<pre><code class="language-java">MongoClient mongoClient = new MongoClient( &quot;hostOne&quot; );
+<pre><code class="language-java">MongoClient mongoClient = new MongoClient(&quot;mongodb://hostOne&quot;);
 </code></pre>
 
 <ul>
-<li>You can explicitly specify the hostname and the port:</li>
+<li>You can explicitly specify the hostname and port:</li>
 </ul>
 
-<pre><code class="language-java">MongoClient mongoClient = new MongoClient( &quot;hostOne&quot; , 27018 );
-</code></pre>
-
-<ul>
-<li>You can specify the
-<a href="/mongo-java-driver/4.2/apidocs/mongodb-driver-core/com/mongodb/MongoClientURI.html
-"><code>MongoClientURI</code></a> connection string:</li>
-</ul>
-
-<pre><code class="language-java"> MongoClientURI connectionString = new MongoClientURI(&quot;mongodb://hostOne:27017,hostTwo:27017&quot;);
- MongoClient mongoClient = new MongoClient(connectionString);
+<pre><code class="language-java">MongoClient mongoClient = new MongoClient(&quot;mongodb://hostOne:27018&quot;);
 </code></pre>
 
 <p>The connection string mostly follows <a href="http://tools.ietf.org/html/rfc3986">RFC 3986</a>, with the exception of the domain name. For MongoDB,
@@ -704,23 +693,15 @@ System.out.println(myDoc.toJson());
 
 <p>The following example returns and prints all documents where <code>&quot;i&quot; &gt; 50</code>:</p>
 
-<pre><code class="language-java">Block&lt;Document&gt; printBlock = new Block&lt;Document&gt;() {
-     @Override
-     public void apply(final Document document) {
-         System.out.println(document.toJson());
-     }
-};
-
-collection.find(gt(&quot;i&quot;, 50)).forEach(printBlock);
+<pre><code class="language-java">collection.find(gt(&quot;i&quot;, 50))
+        .forEach(doc -&gt; System.out.println(doc.toJson()));
 </code></pre>
-
-<p>The example uses the <a href="/mongo-java-driver/4.2/apidocs/mongodb-driver-sync/com/mongodb/client/MongoIterable.html#forEach(com.mongodb.Block)
-"><code>forEach</code></a> method on the <code>FindIterable</code> object to apply a block to each document.</p>
 
 <p>To specify a filter for a range, such as <code>50 &lt; i &lt;= 100</code>, you can use the <a href="/mongo-java-driver/4.2/apidocs/mongodb-driver-core/com/mongodb/client/model/Filters.html#and(org.bson.conversions.Bson...)
 "><code>and</code></a> helper:</p>
 
-<pre><code class="language-java">collection.find(and(gt(&quot;i&quot;, 50), lte(&quot;i&quot;, 100))).forEach(printBlock);
+<pre><code class="language-java">collection.find(and(gt(&quot;i&quot;, 50), lte(&quot;i&quot;, 100)))
+        .forEach(doc -&gt; System.out.println(doc.toJson()));
 </code></pre>
 
 <h2 id="update-documents">Update Documents</h2>

@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-11-05T17:02:38.66">
+<meta name="date" content="2021-01-22T12:53:38.94">
 <link rel="shortcut icon" href="/mongo-java-driver/4.2/img/favicon.png">
 
     <title>What&#39;s New</title><link rel="stylesheet" href="/mongo-java-driver/4.2/lib/bootstrap.css" type="text/css" />
@@ -317,11 +317,20 @@
 
 <h1 id="what-s-new-in-4-2">What&rsquo;s new in 4.2</h1>
 
-<p>This release fully supports all MongoDB releases from versions 2.6 to 4.4. Key new features of the 4.2 Java driver release include:</p>
+<p>This release fully supports all MongoDB releases from versions 2.6 to 4.4. New features of the 4.2 Java driver release include:</p>
 
 <ul>
-<li>Client-side field level encryption has been expanded to support Azure and GCP Keystores.</li>
-<li>Added support to cache Kerberos tickets so that they can be re-used for multiple authentication requests.</li>
+<li>The Reactive Streams driver now utilizes <a href="https://projectreactor.io/">Project Reactor</a> internally. Project reactor follows
+the Reactive Streams specification and has greatly simplified the implementation of the driver.</li>
+<li>Added support for Azure and GCP key stores to client-side field level encryption.</li>
+<li>Added support for caching Kerberos tickets so that they can be re-used for multiple authentication requests.</li>
+<li>Added support for constructing legacy <code>com.mongodb.MongoClient</code> instances with <code>MongoClientSettings</code> or <code>ConnectionString</code> as
+the configuration, instead of <code>MongoClientOptions</code> or <code>MongoClientURI</code>.</li>
+<li>Added support for <code>explain</code> of <code>find</code> and <code>aggregate</code> commands.</li>
+<li>Added a <code>JsonObject</code> class to make encoding from and decoding to JSON more efficient by avoiding an intermediate <code>Map</code> representation.</li>
+<li>Added a <code>BsonRepresentation</code> annotation that allows <code>ObjectId</code> BSON values to be represented as <code>String</code>s in POJO classes.</li>
+<li>Added support for the <code>BsonIgnore</code> annotation in Scala case classes.</li>
+<li>Added a <code>Filters.empty()</code> method.</li>
 </ul>
 
 <h1 id="what-s-new-in-4-1">What&rsquo;s new in 4.1</h1>

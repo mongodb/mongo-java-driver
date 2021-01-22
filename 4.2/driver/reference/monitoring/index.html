@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-11-05T17:02:38.92">
+<meta name="date" content="2021-01-22T12:53:39.11">
 <link rel="shortcut icon" href="/mongo-java-driver/4.2/img/favicon.png">
 
     <title>Monitoring</title><link rel="stylesheet" href="/mongo-java-driver/4.2/lib/bootstrap.css" type="text/css" />
@@ -317,7 +317,8 @@
 
 <h1 id="jmx-monitoring">JMX Monitoring</h1>
 
-<p>The driver uses <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/jmx/">JMX</a> to create
+<p>The driver uses <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/jmx/
+">JMX</a> to create
 <a href="http://docs.oracle.com/javase/tutorial/jmx/mbeans/mxbeans.html">MXBeans</a> that allow an
 application or end user to monitor various aspects of the driver.</p>
 
@@ -357,7 +358,7 @@ application has multiple <code>MongoClient</code> instances connected to the sam
 <a href="https://github.com/mongodb/specifications/blob/master/source/command-monitoring/command-monitoring.rst">command monitoring specification</a>,
 allowing an application to be notified when a command starts and when it either succeeds or fails.</p>
 
-<p>An application registers command listeners with a <code>MongoClient</code> by configuring <code>MongoClientOptions</code> with instances of classes
+<p>An application registers command listeners with a <code>MongoClient</code> by configuring <code>MongoClientSettings</code> with instances of classes
 that implement the <a href="/mongo-java-driver/4.2/apidocs/mongodb-driver-core/com/mongodb/event/CommandListener.html
 "><code>CommandListener</code></a> interface. Consider the following, somewhat
 simplistic, implementation of the <code>CommandListener</code> interface:</p>
@@ -419,7 +420,7 @@ another message upon either successful completion or failure of each command.</p
 <a href="https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-monitoring.rst">SDAM Monitoring specification</a>,
 allowing an application to be notified when the driver detects changes to the topology of the MongoDB cluster to which it is connected.</p>
 
-<p>An application registers listeners with a <code>MongoClient</code> by configuring  <code>MongoClientOptions</code> with instances of classes that
+<p>An application registers listeners with a <code>MongoClient</code> by configuring <code>MongoClientSettings</code> with instances of classes that
 implement any of the <a href="/mongo-java-driver/4.2/apidocs/mongodb-driver-core/com/mongodb/event/ClusterListener.html
 "><code>ClusterListener</code></a>,
  <a href="/mongo-java-driver/4.2/apidocs/mongodb-driver-core/com/mongodb/event/ServerListener.html
@@ -503,7 +504,7 @@ and when that MongoClient is closed.  In addition, it will print a message when 
 
 <p>The driver supports monitoring of connection pool-related events.</p>
 
-<p>An application registers listeners with a <code>MongoClient</code> by configuring <code>MongoClientOptions</code> with instances of classes that
+<p>An application registers listeners with a <code>MongoClient</code> by configuring <code>MongoClientSettings</code> with instances of classes that
 implement the <a href="/mongo-java-driver/4.2/apidocs/mongodb-driver-core/com/mongodb/event/ConnectionPoolListener.html
 "><code>ConnectionPoolListener</code></a> interface.</p>
 

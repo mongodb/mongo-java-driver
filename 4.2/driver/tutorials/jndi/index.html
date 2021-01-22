@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-11-05T17:02:38.91">
+<meta name="date" content="2021-01-22T12:53:39.11">
 <link rel="shortcut icon" href="/mongo-java-driver/4.2/img/favicon.png">
 
     <title>JNDI</title><link rel="stylesheet" href="/mongo-java-driver/4.2/lib/bootstrap.css" type="text/css" />
@@ -317,7 +317,8 @@
 
 <h2 id="java-naming-and-directory-interface-jndi">Java Naming and Directory Interface (JNDI)</h2>
 
-<p>The driver includes a <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/jndi/index.html">JNDI</a> ObjectFactory implementation,
+<p>The driver includes a <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/jndi/index.html
+">JNDI</a> ObjectFactory implementation,
 <a href="/mongo-java-driver/4.2/apidocs/mongodb-driver-sync/com/mongodb/client/MongoClientFactory.html
 "><code>MongoClientFactory</code></a> (<a href="/mongo-java-driver/4.2/apidocs/mongodb-driver-legacy/com/mongodb/client/jndi/MongoClientFactory.html
 "><code>legacy version</code></a>), that returns <code>MongoClient</code> instances based on a
@@ -338,7 +339,7 @@
 
 <pre><code>&lt;module xmlns=&quot;urn:jboss:module:1.3&quot; name=&quot;org.mongodb&quot;&gt;
    &lt;resources&gt;
-       &lt;resource-root path=&quot;mongodb-driver-sync-4.2.0-beta1.jar&quot;/&gt;
+       &lt;resource-root path=&quot;mongodb-driver-sync-4.2.0.jar&quot;/&gt;
    &lt;/resources&gt;
    &lt;dependencies&gt;
        &lt;module name=&quot;javax.api&quot;/&gt;
@@ -364,7 +365,7 @@ connection string for the MongoDB cluster.</p>
 </code></pre></li>
 </ol>
 
-<p>A MongoClient instance will be accessible via the JNDI name <code>java:global/LocalMongoClient</code>.</p>
+<p>A MongoClient instance will be accessible via the JNDI name <code>java:global/MyMongoClient</code>.</p>
 
 <h3 id="tomcat">Tomcat</h3>
 

@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-11-05T17:02:38.88">
+<meta name="date" content="2021-01-22T12:53:39.09">
 <link rel="shortcut icon" href="/mongo-java-driver/4.2/img/favicon.png">
 
     <title>Upgrade Considerations</title><link rel="stylesheet" href="/mongo-java-driver/4.2/lib/bootstrap.css" type="text/css" />
@@ -320,6 +320,9 @@
 <p>The 4.2 release is a minor release as per the definition of <a href="https://semver.org">semantic versioning</a>. As such, there are no breaking
 changes in this release for users upgrading from the 4.1 release.</p>
 
+<p>Note that in this release the Reactive Streams driver has taken an implementation dependency on
+<a href="https://projectreactor.io/">Project Reactor</a>.  The minimum supported Project Reactor version is <em>Californium-SR23</em>.</p>
+
 <h1 id="upgrading-to-the-4-1-driver">Upgrading to the 4.1 Driver</h1>
 
 <p>The 4.1 release is a minor release as per the definition of <a href="https://semver.org">semantic versioning</a>. As such, there are no breaking
@@ -349,7 +352,7 @@ creates more readable JSON documents at the cost of a loss of some BSON type inf
 integers).</li>
 <li>The default BSON representation of <code>java.util.UUID</code> values has changed from <code>JAVA_LEGACY</code> to <code>UNSPECIFIED</code>.  Applications that
 store or retrieve UUID values must explicitly specify which representation to use, via the <code>uuidRepresentation</code> property of
-<code>MongoClientSettings</code> (or <code>MongoClientOptions</code> for the legacy driver).</li>
+<code>MongoClientSettings</code>.</li>
 <li>The connection pool no longer enforces any restrictions on the size of the wait queue of threads or asynchronous tasks that
 require a connection to MongoDB.  It is up to the application to throttle requests sufficiently rather than rely on the driver to
 throw a <code>MongoWaitQueueFullException</code>.</li>
