@@ -54,7 +54,7 @@ which will render as:
 This example creates a filter that selects all documents where the value of the `qty` field is either `5` or `20`:
 
 ```java
-in("qty", 5, 15)
+in("qty", 5, 20)
 ```
 
 This example creates a filter that selects all documents because the predicate is empty:
