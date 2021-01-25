@@ -154,7 +154,10 @@
                 "$limit": 1
               }
             ]
-          }
+          },
+          "expectError": {
+            "errorCodeName": "APIStrictError"
+          }	  
         }
       ],
       "expectEvents": [
