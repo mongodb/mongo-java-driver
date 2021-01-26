@@ -35,7 +35,7 @@ public class QueryResult<T> {
     private final long cursorId;
     private final ServerAddress serverAddress;
     @Nullable
-    private ServerCursor serverCursor;//intentionally plain, we depend on ServerCursor being immutable
+    private ServerCursor serverCursor; //intentionally plain, we depend on ServerCursor being immutable
 
     /**
      * Construct an instance.
@@ -75,13 +75,13 @@ public class QueryResult<T> {
         } else {
             /* Actions r and w cause executions to have data race, which is benign because ServerCursor is immutable.
              * See https://docs.oracle.com/javase/specs/jls/se8/html/jls-17.html#jls-17.5.1
-             * and https://shipilev.net/blog/2016/close-encounters-of-jmm-kind/#wishful-benign-is-resilient */
-            ServerCursor localServerCursor = serverCursor;//r
+             * and https://shipilev.net/blog/2016/close-encounters-of-jmm-kind/#wishful-benign-is-resilient. */
+            ServerCursor localServerCursor = serverCursor; //r
             if (localServerCursor == null) {
                 localServerCursor = new ServerCursor(cursorId, serverAddress);
-                serverCursor = localServerCursor;//w
+                serverCursor = localServerCursor; //w
             }
-            return localServerCursor;//must read from the local variable for correctness
+            return localServerCursor; //must read from the local variable for correctness
         }
     }
 
