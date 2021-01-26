@@ -21,8 +21,10 @@ import com.mongodb.MongoCredential;
 import com.mongodb.MongoException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
+import com.mongodb.ServerApi;
 import com.mongodb.SubjectProvider;
 import com.mongodb.lang.NonNull;
+import com.mongodb.lang.Nullable;
 import org.ietf.jgss.GSSCredential;
 import org.ietf.jgss.GSSException;
 import org.ietf.jgss.GSSManager;
@@ -48,8 +50,8 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
     private static final String SERVICE_NAME_DEFAULT_VALUE = "mongodb";
     private static final Boolean CANONICALIZE_HOST_NAME_DEFAULT_VALUE = false;
 
-    GSSAPIAuthenticator(final MongoCredentialWithCache credential) {
-        super(credential);
+    GSSAPIAuthenticator(final MongoCredentialWithCache credential, final @Nullable ServerApi serverApi) {
+        super(credential, serverApi);
 
         if (getMongoCredential().getAuthenticationMechanism() != GSSAPI) {
             throw new MongoException("Incorrect mechanism: " + getMongoCredential().getMechanism());

@@ -32,6 +32,7 @@ import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.AssumptionViolatedException;
 import org.junit.Before;
@@ -39,7 +40,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,6 +59,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
+import static util.JsonPoweredTestHelper.getTestDocument;
+import static util.JsonPoweredTestHelper.getTestFiles;
 
 @RunWith(Parameterized.class)
 public abstract class UnifiedTest {
@@ -81,6 +88,31 @@ public abstract class UnifiedTest {
         this.context.push(ContextElement.ofTest(definition));
     }
 
+    @NotNull
+    protected static Collection<Object[]> getTestData(final String directory) throws URISyntaxException, IOException {
+        List<Object[]> data = new ArrayList<>();
+        for (File file : getTestFiles("/" + directory + "/")) {
+            BsonDocument fileDocument = getTestDocument(file);
+
+            for (BsonValue cur : fileDocument.getArray("tests")) {
+                data.add(UnifiedTest.createTestData(fileDocument, cur.asDocument()));
+            }
+        }
+        return data;
+    }
+
+    @NotNull
+    private static Object[] createTestData(final BsonDocument fileDocument, final BsonDocument testDocument) {
+        return new Object[]{
+                fileDocument.getString("description").getValue(),
+                testDocument.getString("description").getValue(),
+                fileDocument.getString("schemaVersion").getValue(),
+                fileDocument.getArray("runOnRequirements", null),
+                fileDocument.getArray("createEntities", new BsonArray()),
+                fileDocument.getArray("initialData", new BsonArray()),
+                testDocument};
+    }
+
     protected abstract MongoClient createMongoClient(MongoClientSettings settings);
 
     @Nullable
@@ -90,7 +122,7 @@ public abstract class UnifiedTest {
 
     @Before
     public void setUp() {
-        assertTrue(schemaVersion.startsWith("1.0"));
+        assertTrue(schemaVersion.startsWith("1.0") || schemaVersion.startsWith("1.1"));
         if (runOnRequirements != null) {
             assumeTrue("Run-on requirements not met", runOnRequirementsMet(runOnRequirements, getServerVersion()));
         }
@@ -202,16 +234,32 @@ public abstract class UnifiedTest {
                 return crudHelper.executeInsertOne(operation);
             case "insertMany":
                 return crudHelper.executeInsertMany(operation);
+            case "updateOne":
+                return crudHelper.executeUpdateOne(operation);
+            case "updateMany":
+                return crudHelper.executeUpdateMany(operation);
             case "replaceOne":
                 return crudHelper.executeReplaceOne(operation);
             case "deleteOne":
                 return crudHelper.executeDeleteOne(operation);
+            case "deleteMany":
+                return crudHelper.executeDeleteMany(operation);
             case "aggregate":
                 return crudHelper.executeAggregate(operation);
             case "find":
                 return crudHelper.executeFind(operation);
+            case "distinct":
+                return crudHelper.executeDistinct(operation);
+            case "countDocuments":
+                return crudHelper.executeCountDocuments(operation);
+            case "estimatedDocumentCount":
+                return crudHelper.executeEstimatedDocumentCount(operation);
             case "findOneAndUpdate":
                 return crudHelper.executeFindOneAndUpdate(operation);
+            case "findOneAndReplace":
+                return crudHelper.executeFindOneAndReplace(operation);
+            case "findOneAndDelete":
+                return crudHelper.executeFindOneAndDelete(operation);
             case "listDatabases":
                 return crudHelper.executeListDatabases(operation);
             case "dropCollection":
@@ -238,6 +286,8 @@ public abstract class UnifiedTest {
                 return gridFSHelper.executeDownload(operation);
             case "upload":
                 return gridFSHelper.executeUpload(operation);
+            case "runCommand":
+                return crudHelper.executeRunCommand(operation);
             default:
                 throw new UnsupportedOperationException("Unsupported test operation: " + name);
         }

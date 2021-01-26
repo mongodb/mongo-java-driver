@@ -16,9 +16,11 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.ServerApi;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerSettings;
+import com.mongodb.lang.Nullable;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -28,19 +30,23 @@ class DefaultServerMonitorFactory implements ServerMonitorFactory {
     private final ClusterClock clusterClock;
     private final InternalConnectionFactory internalConnectionFactory;
     private final ConnectionPool connectionPool;
+    @Nullable
+    private final ServerApi serverApi;
 
     DefaultServerMonitorFactory(final ServerId serverId, final ServerSettings settings,
                                 final ClusterClock clusterClock, final InternalConnectionFactory internalConnectionFactory,
-                                final ConnectionPool connectionPool) {
+                                final ConnectionPool connectionPool, final @Nullable ServerApi serverApi) {
         this.serverId = notNull("serverId", serverId);
         this.settings = notNull("settings", settings);
         this.clusterClock = notNull("clusterClock", clusterClock);
         this.internalConnectionFactory = notNull("internalConnectionFactory", internalConnectionFactory);
         this.connectionPool = notNull("connectionPool", connectionPool);
+        this.serverApi = serverApi;
     }
 
     @Override
     public ServerMonitor create(final ChangeListener<ServerDescription> serverStateListener) {
-        return new DefaultServerMonitor(serverId, settings, clusterClock, serverStateListener, internalConnectionFactory, connectionPool);
+        return new DefaultServerMonitor(serverId, settings, clusterClock, serverStateListener, internalConnectionFactory, connectionPool,
+                serverApi);
     }
 }

@@ -255,9 +255,11 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         given:
         def connection = Mock(Connection)
         def connectionSource = Stub(ConnectionSource) {
+            getServerApi() >> null
             getConnection() >> connection
         }
         def readBinding = Stub(ReadBinding) {
+            getServerApi() >> null
             getReadConnectionSource() >> connectionSource
             getReadPreference() >> readPreference
         }
@@ -276,7 +278,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
         then:
         _ * connection.getDescription() >> helper.threeZeroConnectionDescription
-        1 * connection.command(_, _, _, readPreference, _, _) >> helper.commandResult
+        1 * connection.command(_, _, _, readPreference, _, _, null) >> helper.commandResult
         1 * connection.release()
 
         where:

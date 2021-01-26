@@ -44,7 +44,7 @@ class CommandHelperSpecification extends Specification {
 
     def setup() {
         connection = new InternalStreamConnectionFactory(new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                getCredentialWithCache(), null, null, [], null)
+                getCredentialWithCache(), null, null, [], null, null)
                 .create(new ServerId(new ClusterId(), getPrimary()))
         connection.open()
     }
@@ -63,7 +63,7 @@ class CommandHelperSpecification extends Specification {
         clusterClock.advance(new BsonDocument('clusterTime', new BsonTimestamp(42L)))
 
         when:
-        executeCommand('admin', new BsonDocument('ismaster', new BsonInt32(1)), clusterClock, connection)
+        executeCommand('admin', new BsonDocument('ismaster', new BsonInt32(1)), clusterClock, null, connection)
 
         then:
         1 * connection.sendAndReceive(_, _, ) { it instanceof ClusterClockAdvancingSessionContext }
