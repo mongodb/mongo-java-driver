@@ -18,14 +18,29 @@ package com.mongodb.internal.binding;
 
 /**
  * An interface for reference-counted objects.
+ * <p>
+ * The recommended usage pattern:
+ * <pre>{@code
+ * ReferenceCounted resource = new ...;
+ * //there is no need to call resource.retain() as ReferenceCounted objects are created as retained (the getCount method returns 1)
+ * try {
+ *     //Use the resource.
+ *     //If the resource is passed as a method argument,
+ *     //it is the responsibility of the receiver to call the retain and the corresponding release methods,
+ *     //if the receiver stores the resource for later use.
+ * } finally {
+ *     resource.release();
+ * }
+ * }</pre>
  *
  * @since 3.0
  */
 public interface ReferenceCounted {
     /**
-     * Gets the current reference count, which starts at 0.
+     * Gets the current reference count.
      *
-     * @return the current count, which must be greater than or equal to 0
+     * @return the current count, which must be greater than or equal to 0.
+     * Returns 1 for a newly created object.
      */
     int getCount();
 
