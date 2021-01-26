@@ -19,7 +19,9 @@ package com.mongodb.internal.connection;
 import com.mongodb.AuthenticationMechanism;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
+import com.mongodb.ServerApi;
 import com.mongodb.internal.authentication.SaslPrep;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -53,17 +55,18 @@ class ScramShaAuthenticator extends SaslAuthenticator {
     private static final int RANDOM_LENGTH = 24;
     private static final byte[] INT_1 = new byte[]{0, 0, 0, 1};
 
-    ScramShaAuthenticator(final MongoCredentialWithCache credential) {
-        this(credential, new DefaultRandomStringGenerator(), getAuthenicationHashGenerator(credential.getAuthenticationMechanism()));
+    ScramShaAuthenticator(final MongoCredentialWithCache credential, final @Nullable ServerApi serverApi) {
+        this(credential, new DefaultRandomStringGenerator(), getAuthenicationHashGenerator(credential.getAuthenticationMechanism()),
+                serverApi);
     }
 
     ScramShaAuthenticator(final MongoCredentialWithCache credential, final RandomStringGenerator randomStringGenerator) {
-        this(credential, randomStringGenerator, getAuthenicationHashGenerator(credential.getAuthenticationMechanism()));
+        this(credential, randomStringGenerator, getAuthenicationHashGenerator(credential.getAuthenticationMechanism()), null);
     }
 
     ScramShaAuthenticator(final MongoCredentialWithCache credential, final RandomStringGenerator randomStringGenerator,
-                          final AuthenticationHashGenerator authenticationHashGenerator) {
-        super(credential);
+                          final AuthenticationHashGenerator authenticationHashGenerator, final @Nullable ServerApi serverApi) {
+        super(credential, serverApi);
         this.randomStringGenerator = randomStringGenerator;
         this.authenticationHashGenerator = authenticationHashGenerator;
     }

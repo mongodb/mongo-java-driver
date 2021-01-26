@@ -46,7 +46,7 @@ class GSSAPIAuthenticatorSpecification extends Specification {
         def credentialWithCache = new MongoCredentialWithCache(credential)
         def streamFactory = new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings())
         def internalConnection = new InternalStreamConnectionFactory(streamFactory, credentialWithCache, null,
-                null, Collections.<MongoCompressor>emptyList(), null)
+                null, Collections.<MongoCompressor> emptyList(), null,)
                 .create(new ServerId(new ClusterId(), getPrimary()))
 
         when:

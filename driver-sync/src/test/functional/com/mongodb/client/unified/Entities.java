@@ -20,6 +20,8 @@ import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadConcernLevel;
+import com.mongodb.ServerApi;
+import com.mongodb.ServerApiVersion;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
@@ -176,6 +178,18 @@ final class Entities {
                                     throw new UnsupportedOperationException("Unsupported uri option: " + key);
                             }
                         });
+                    }
+                    if (entity.containsKey("serverApi")) {
+                        BsonDocument serverApiDocument = entity.getDocument("serverApi");
+                        String apiVersion = serverApiDocument.getString("version").getValue();
+                        ServerApi.Builder serverApiBuilder = ServerApi.builder().version(ServerApiVersion.findByValue(apiVersion));
+                        if (serverApiDocument.containsKey("deprecationErrors")) {
+                            serverApiBuilder.deprecationErrors(serverApiDocument.getBoolean("deprecationErrors").getValue());
+                        }
+                        if (serverApiDocument.containsKey("strict")) {
+                            serverApiBuilder.strict(serverApiDocument.getBoolean("strict").getValue());
+                        }
+                        clientSettingsBuilder.serverApi(serverApiBuilder.build());
                     }
                     clients.put(id, mongoClientSupplier.apply(clientSettingsBuilder.build()));
                     break;

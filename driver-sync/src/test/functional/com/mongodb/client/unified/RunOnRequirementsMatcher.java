@@ -21,8 +21,11 @@ import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 
+import java.util.Map;
+
+import static com.mongodb.ClusterFixture.getServerParameters;
 import static com.mongodb.JsonTestServerVersionChecker.getMaxServerVersionForField;
-import static com.mongodb.JsonTestServerVersionChecker.getMinServerVersionForField;
+import static com.mongodb.JsonTestServerVersionChecker.getMinServerVersion;
 import static com.mongodb.JsonTestServerVersionChecker.topologyMatches;
 
 final class RunOnRequirementsMatcher {
@@ -30,21 +33,43 @@ final class RunOnRequirementsMatcher {
         for (BsonValue cur : runOnRequirements) {
             boolean requirementMet = true;
             BsonDocument requirement = cur.asDocument();
-            if (requirement.containsKey("minServerVersion")
-                    && serverVersion.compareTo(getMinServerVersionForField("minServerVersion", requirement)) < 0) {
-                requirementMet = false;
-            }
-            if (requirement.containsKey("maxServerVersion")
-                    && serverVersion.compareTo(getMaxServerVersionForField("maxServerVersion", requirement)) > 0) {
-                requirementMet = false;
-            }
 
-            if (requirement.containsKey("topologies")) {
-                BsonArray topologyTypes = requirement.getArray("topologies");
-                if (!topologyMatches(topologyTypes)) {
-                    requirementMet = false;
+            requirementLoop:
+            for (Map.Entry<String, BsonValue> curRequirement : requirement.entrySet()) {
+                switch (curRequirement.getKey()) {
+                    case "minServerVersion":
+                        if (serverVersion.compareTo(getMinServerVersion(curRequirement.getValue().asString().getValue())) < 0) {
+                            requirementMet = false;
+                            break requirementLoop;
+                        }
+                        break;
+                    case "maxServerVersion":
+                        if (serverVersion.compareTo(getMaxServerVersionForField(curRequirement.getValue().asString().getValue())) > 0) {
+                            requirementMet = false;
+                            break requirementLoop;
+                        }
+                        break;
+                    case "topologies":
+                        BsonArray topologyTypes = curRequirement.getValue().asArray();
+                        if (!topologyMatches(topologyTypes)) {
+                            requirementMet = false;
+                            break requirementLoop;
+                        }
+                        break;
+                    case "serverParameters":
+                        BsonDocument serverParameters = getServerParameters();
+                        for (Map.Entry<String, BsonValue> curParameter: curRequirement.getValue().asDocument().entrySet()) {
+                            if (!serverParameters.get(curParameter.getKey()).equals(curParameter.getValue())) {
+                                requirementMet = false;
+                                break requirementLoop;
+                            }
+                        }
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("Unsupported runOnRequirement: " + curRequirement.getKey());
                 }
             }
+
             if (requirementMet) {
                 return true;
             }
@@ -52,6 +77,6 @@ final class RunOnRequirementsMatcher {
         return false;
     }
 
-    private RunOnRequirementsMatcher(){
+    private RunOnRequirementsMatcher() {
     }
 }

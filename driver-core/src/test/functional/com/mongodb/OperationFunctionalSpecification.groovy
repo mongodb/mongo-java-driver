@@ -76,6 +76,7 @@ import static com.mongodb.internal.operation.OperationUnitSpecification.getMaxWi
 class OperationFunctionalSpecification extends Specification {
 
     def setup() {
+        ServerHelper.checkPool(getPrimary())
         CollectionHelper.drop(getNamespace())
     }
 
@@ -284,6 +285,7 @@ class OperationFunctionalSpecification extends Specification {
             getConnection() >> {
                 connection
             }
+            getServerApi() >> null
             getServerDescription() >> {
                 def builder = ServerDescription.builder().address(Stub(ServerAddress)).state(ServerConnectionState.CONNECTED)
                 if (new ServerVersion(serverVersion).compareTo(new ServerVersion(3, 6)) >= 0) {
@@ -295,6 +297,7 @@ class OperationFunctionalSpecification extends Specification {
         def readBinding = Stub(ReadBinding) {
             getReadConnectionSource() >> connectionSource
             getReadPreference() >> readPreference
+            getServerApi() >> null
             getSessionContext() >> Stub(SessionContext) {
                 hasSession() >> true
                 hasActiveTransaction() >> activeTransaction
@@ -303,6 +306,7 @@ class OperationFunctionalSpecification extends Specification {
         }
         def writeBinding = Stub(WriteBinding) {
             getWriteConnectionSource() >> connectionSource
+            getServerApi() >> null
             getSessionContext() >> Stub(SessionContext) {
                 hasSession() >> true
                 hasActiveTransaction() >> activeTransaction
@@ -317,8 +321,8 @@ class OperationFunctionalSpecification extends Specification {
         if (checkCommand) {
             1 * connection.command(*_) >> {
                 assert it[1] == expectedCommand
-                if (it.size() == 9) {
-                    SplittablePayload payload = it[7]
+                if (it.size() == 10) {
+                    SplittablePayload payload = it[8]
                     payload.setPosition(payload.size())
                 }
                 result
@@ -330,7 +334,7 @@ class OperationFunctionalSpecification extends Specification {
             }
         }
 
-        0 * connection.command(_, _, _, _, _, _) >> {
+        0 * connection.command(_, _, _, _, _, _, null) >> {
             // Unexpected Command
             result
         }
@@ -360,6 +364,7 @@ class OperationFunctionalSpecification extends Specification {
 
         def connectionSource = Stub(AsyncConnectionSource) {
             getConnection(_) >> { it[0].onResult(connection, null) }
+            getServerApi() >> null
             getServerDescription() >> {
                 def builder = ServerDescription.builder().address(Stub(ServerAddress)).state(ServerConnectionState.CONNECTED)
                 if (new ServerVersion(serverVersion).compareTo(new ServerVersion(3, 6)) >= 0) {
@@ -371,6 +376,7 @@ class OperationFunctionalSpecification extends Specification {
         def readBinding = Stub(AsyncReadBinding) {
             getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
             getReadPreference() >> readPreference
+            getServerApi() >> null
             getSessionContext() >> Stub(SessionContext) {
                 hasSession() >> true
                 hasActiveTransaction() >> activeTransaction
@@ -379,6 +385,7 @@ class OperationFunctionalSpecification extends Specification {
         }
         def writeBinding = Stub(AsyncWriteBinding) {
             getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+            getServerApi() >> null
             getSessionContext() >> Stub(SessionContext) {
                 hasSession() >> true
                 hasActiveTransaction() >> activeTransaction
@@ -454,9 +461,11 @@ class OperationFunctionalSpecification extends Specification {
                     connection
                 }
             }
+            getServerApi() >> null
         }
         def writeBinding = Stub(WriteBinding) {
             getWriteConnectionSource() >> connectionSource
+            getServerApi() >> null
             getSessionContext() >> Stub(SessionContext) {
                 hasSession() >> true
                 hasActiveTransaction() >> false
