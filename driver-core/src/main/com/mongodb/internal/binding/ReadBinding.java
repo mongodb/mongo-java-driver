@@ -17,7 +17,9 @@
 package com.mongodb.internal.binding;
 
 import com.mongodb.ReadPreference;
+import com.mongodb.ServerApi;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 
 /**
  * A factory of connection sources to servers that can be read from and that satisfy the specified read preference.
@@ -45,6 +47,9 @@ public interface ReadBinding extends ReferenceCounted {
      * @since 3.6
      */
     SessionContext getSessionContext();
+
+    @Nullable
+    ServerApi getServerApi();
 
     @Override
     ReadBinding retain();

@@ -24,6 +24,7 @@ import com.mongodb.MongoNodeIsRecoveringException;
 import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ReadPreference;
+import com.mongodb.ServerApi;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -220,7 +221,7 @@ final class CommandOperationHelper {
         try {
             command = commandCreator.create(source.getServerDescription(), connection.getDescription());
             return executeCommand(database, command, decoder, source, connection, binding.getReadPreference(), transformer,
-                    binding.getSessionContext());
+                    binding.getSessionContext(), binding.getServerApi());
         } catch (MongoException e) {
             exception = e;
 
@@ -245,7 +246,7 @@ final class CommandOperationHelper {
                     BsonDocument retryCommand = commandCreator.create(source.getServerDescription(), connection.getDescription());
                     logRetryExecute(retryCommand.getFirstKey(), originalException);
                     return executeCommand(database, retryCommand, decoder, source, connection, binding.getReadPreference(), transformer,
-                            binding.getSessionContext());
+                            binding.getSessionContext(), source.getServerApi());
                 } finally {
                     connection.release();
                 }
@@ -283,7 +284,8 @@ final class CommandOperationHelper {
                                 final Decoder<BsonDocument> decoder, final Connection connection,
                                 final CommandWriteTransformer<BsonDocument, T> transformer) {
         notNull("binding", binding);
-        return executeWriteCommand(database, command, decoder, connection, primary(), transformer, binding.getSessionContext());
+        return executeWriteCommand(database, command, decoder, connection, primary(), transformer, binding.getSessionContext(),
+                binding.getServerApi());
     }
 
     static <T> T executeCommand(final WriteBinding binding, final String database, final BsonDocument command,
@@ -291,7 +293,7 @@ final class CommandOperationHelper {
                                 final Connection connection, final CommandWriteTransformer<BsonDocument, T> transformer) {
         notNull("binding", binding);
         return executeWriteCommand(database, command, fieldNameValidator, decoder, connection, primary(), transformer,
-                binding.getSessionContext());
+                binding.getSessionContext(), binding.getServerApi());
     }
 
     static <D, T> T executeCommand(final WriteBinding binding, final String database, final BsonDocument command,
@@ -314,7 +316,7 @@ final class CommandOperationHelper {
                                        final Connection connection) {
         notNull("binding", binding);
         return executeWriteCommand(database, command, new BsonDocumentCodec(), connection, primary(),
-                binding.getSessionContext());
+                binding.getSessionContext(), binding.getServerApi());
     }
 
     /* Private Read Connection Source Helpers */
@@ -324,7 +326,7 @@ final class CommandOperationHelper {
                                         final ConnectionSource source, final Connection connection,
                                         final ReadPreference readPreference) {
         return executeCommand(database, command, fieldNameValidator, decoder, source, connection,
-                readPreference, new IdentityReadTransformer<T>(), source.getSessionContext());
+                readPreference, new IdentityReadTransformer<T>(), source.getSessionContext(), source.getServerApi());
     }
 
     /* Private Connection Helpers */
@@ -332,43 +334,49 @@ final class CommandOperationHelper {
     private static <D, T> T executeCommand(final String database, final BsonDocument command,
                                            final Decoder<D> decoder, final ConnectionSource source, final Connection connection,
                                            final ReadPreference readPreference,
-                                           final CommandReadTransformer<D, T> transformer, final SessionContext sessionContext) {
+                                           final CommandReadTransformer<D, T> transformer, final SessionContext sessionContext,
+                                           final ServerApi serverApi) {
         return executeCommand(database, command, new NoOpFieldNameValidator(), decoder, source, connection,
-                readPreference, transformer, sessionContext);
+                readPreference, transformer, sessionContext, serverApi);
     }
 
     private static <D, T> T executeCommand(final String database, final BsonDocument command,
                                            final FieldNameValidator fieldNameValidator, final Decoder<D> decoder,
                                            final ConnectionSource source, final Connection connection, final ReadPreference readPreference,
-                                           final CommandReadTransformer<D, T> transformer, final SessionContext sessionContext) {
+                                           final CommandReadTransformer<D, T> transformer, final SessionContext sessionContext,
+                                           final ServerApi serverApi) {
 
-        return transformer.apply(connection.command(database, command, fieldNameValidator, readPreference, decoder, sessionContext),
-                source, connection);
+        return transformer.apply(connection.command(database, command, fieldNameValidator, readPreference, decoder, sessionContext,
+                serverApi), source, connection);
     }
 
     /* Private Connection Helpers */
 
     private static <T> T executeWriteCommand(final String database, final BsonDocument command,
                                              final Decoder<T> decoder, final Connection connection,
-                                             final ReadPreference readPreference, final SessionContext sessionContext) {
+                                             final ReadPreference readPreference, final SessionContext sessionContext,
+                                             final ServerApi serverApi) {
         return executeWriteCommand(database, command, new NoOpFieldNameValidator(), decoder, connection,
-                readPreference, new IdentityWriteTransformer<T>(), sessionContext);
+                readPreference, new IdentityWriteTransformer<T>(), sessionContext, serverApi);
     }
 
     private static <D, T> T executeWriteCommand(final String database, final BsonDocument command,
                                                 final Decoder<D> decoder, final Connection connection,
                                                 final ReadPreference readPreference,
-                                                final CommandWriteTransformer<D, T> transformer, final SessionContext sessionContext) {
+                                                final CommandWriteTransformer<D, T> transformer, final SessionContext sessionContext,
+                                                final ServerApi serverApi) {
         return executeWriteCommand(database, command, new NoOpFieldNameValidator(), decoder, connection,
-                readPreference, transformer, sessionContext);
+                readPreference, transformer, sessionContext, serverApi);
     }
 
     private static <D, T> T executeWriteCommand(final String database, final BsonDocument command,
                                                 final FieldNameValidator fieldNameValidator, final Decoder<D> decoder,
                                                 final Connection connection, final ReadPreference readPreference,
-                                                final CommandWriteTransformer<D, T> transformer, final SessionContext sessionContext) {
+                                                final CommandWriteTransformer<D, T> transformer, final SessionContext sessionContext,
+                                                final ServerApi serverApi) {
 
-        return transformer.apply(connection.command(database, command, fieldNameValidator, readPreference, decoder, sessionContext),
+        return transformer.apply(connection.command(database, command, fieldNameValidator, readPreference, decoder, sessionContext,
+                serverApi),
                 connection);
     }
 
@@ -710,7 +718,7 @@ final class CommandOperationHelper {
                 try {
                     command = commandCreator.create(source.getServerDescription(), connection.getDescription());
                     return transformer.apply(connection.command(database, command, fieldNameValidator, readPreference,
-                            commandResultDecoder, binding.getSessionContext()), connection);
+                            commandResultDecoder, binding.getSessionContext(), binding.getServerApi()), connection);
                 } catch (MongoException e) {
                     exception = e;
                     if (!shouldAttemptToRetryWrite(command, e, connection.getDescription().getMaxWireVersion())) {
@@ -739,7 +747,7 @@ final class CommandOperationHelper {
                             logRetryExecute(retryCommand.getFirstKey(), originalException);
                             try {
                                 return transformer.apply(connection.command(database, retryCommand, fieldNameValidator,
-                                        readPreference, commandResultDecoder, binding.getSessionContext()),
+                                        readPreference, commandResultDecoder, binding.getSessionContext(), binding.getServerApi()),
                                         connection);
                             } catch (MongoException e) {
                                 addRetryableWriteErrorLabel(e, connection.getDescription().getMaxWireVersion());

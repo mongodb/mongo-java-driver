@@ -22,21 +22,14 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
-import org.bson.BsonValue;
 import org.junit.Before;
 import org.junit.runners.Parameterized;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
-import static util.JsonPoweredTestHelper.getTestDocument;
-import static util.JsonPoweredTestHelper.getTestFiles;
-
-public class UnifiedTestValidator extends UnifiedTest {
+public class    UnifiedTestValidator extends UnifiedTest {
     private final String fileDescription;
     private final String testDescription;
 
@@ -60,23 +53,6 @@ public class UnifiedTestValidator extends UnifiedTest {
 
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
-        List<Object[]> data = new ArrayList<Object[]>();
-
-        for (File file : getTestFiles("/unified-test-format/")) {
-            BsonDocument fileDocument = getTestDocument(file);
-
-            for (BsonValue cur : fileDocument.getArray("tests")) {
-                BsonDocument testDocument = cur.asDocument();
-                data.add(new Object[]{
-                        fileDocument.getString("description").getValue(),
-                        testDocument.getString("description").getValue(),
-                        fileDocument.getString("schemaVersion").getValue(),
-                        fileDocument.getArray("runOnRequirements", null),
-                        fileDocument.getArray("createEntities", new BsonArray()),
-                        fileDocument.getArray("initialData", new BsonArray()),
-                        testDocument});
-            }
-        }
-        return data;
+        return getTestData("unified-test-format");
     }
 }

@@ -103,7 +103,7 @@ class ScramSha256AuthenticationSpecification extends Specification {
         when:
         new CommandReadOperation<Document>('admin',
                 new BsonDocumentWrapper<Document>(new Document('dbstats', 1), new DocumentCodec()), new DocumentCodec())
-                .execute(new ClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT))
+                .execute(new ClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, null))
 
         then:
         noExceptionThrown()
@@ -144,7 +144,7 @@ class ScramSha256AuthenticationSpecification extends Specification {
         when:
         new CommandReadOperation<Document>('admin',
                 new BsonDocumentWrapper<Document>(new Document('dbstats', 1), new DocumentCodec()), new DocumentCodec())
-                .execute(new ClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT))
+                .execute(new ClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, null))
 
         then:
         thrown(MongoSecurityException)
@@ -184,7 +184,7 @@ class ScramSha256AuthenticationSpecification extends Specification {
         when:
         new CommandReadOperation<Document>('admin',
                 new BsonDocumentWrapper<Document>(new Document('dbstats', 1), new DocumentCodec()), new DocumentCodec())
-                .execute(new ClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT))
+                .execute(new ClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, null))
 
         then:
         noExceptionThrown()

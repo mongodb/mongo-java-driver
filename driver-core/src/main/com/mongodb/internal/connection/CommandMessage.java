@@ -19,9 +19,11 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
+import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonBoolean;
@@ -66,32 +68,34 @@ public final class CommandMessage extends RequestMessage {
     private final FieldNameValidator payloadFieldNameValidator;
     private final boolean responseExpected;
     private final ClusterConnectionMode clusterConnectionMode;
+    private final ServerApi serverApi;
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-                   final ReadPreference readPreference, final MessageSettings settings) {
+                   final ReadPreference readPreference, final MessageSettings settings, final @Nullable ServerApi serverApi) {
         this(namespace, command, commandFieldNameValidator, readPreference, settings, true, null, null,
-                MULTIPLE);
+                MULTIPLE, serverApi);
     }
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-                   final ReadPreference readPreference, final MessageSettings settings, final boolean exhaustAllowed) {
+                   final ReadPreference readPreference, final MessageSettings settings, final boolean exhaustAllowed,
+                   final @Nullable ServerApi serverApi) {
         this(namespace, command, commandFieldNameValidator, readPreference, settings, true, exhaustAllowed, null, null,
-                MULTIPLE);
+                MULTIPLE, serverApi);
     }
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings, final boolean responseExpected,
                    final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
-                   final ClusterConnectionMode clusterConnectionMode) {
+                   final ClusterConnectionMode clusterConnectionMode, final @Nullable ServerApi serverApi) {
         this(namespace, command, commandFieldNameValidator, readPreference, settings, responseExpected, false, payload,
-                payloadFieldNameValidator, clusterConnectionMode);
+                payloadFieldNameValidator, clusterConnectionMode, serverApi);
     }
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings,
                    final boolean responseExpected, final boolean exhaustAllowed,
                    final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
-                   final ClusterConnectionMode clusterConnectionMode) {
+                   final ClusterConnectionMode clusterConnectionMode, final @Nullable ServerApi serverApi) {
         super(namespace.getFullName(), getOpCode(settings), settings);
         this.namespace = namespace;
         this.command = command;
@@ -102,6 +106,7 @@ public final class CommandMessage extends RequestMessage {
         this.payload = payload;
         this.payloadFieldNameValidator = payloadFieldNameValidator;
         this.clusterConnectionMode = clusterConnectionMode;
+        this.serverApi = serverApi;
     }
 
     BsonDocument getCommandDocument(final ByteBufferBsonOutput bsonOutput) {
@@ -177,8 +182,16 @@ public final class CommandMessage extends RequestMessage {
             commandStartPosition = bsonOutput.getPosition();
 
             if (payload == null) {
-                addDocument(getCommandToEncode(), bsonOutput, commandFieldNameValidator, null);
+                List<BsonElement> elements = null;
+                if (serverApi != null) {
+                    elements = new ArrayList<>(3);
+                    addServerApiElements(elements);
+                }
+                addDocument(getCommandToEncode(), bsonOutput, commandFieldNameValidator, elements);
             } else {
+                // We're not concerned with adding ServerApi elements here.  The only reason we do it for OP_QUERY-based commands is that
+                // OP_QUERY is always used for the handshake, and we have to pass ServerApi elements in the handshake.  Other than that,
+                // all servers that support ServerApi also support OP_MSG, so this code path should never be hit.
                 addDocumentWithPayload(bsonOutput, messageStartPosition);
             }
         }
@@ -271,8 +284,13 @@ public final class CommandMessage extends RequestMessage {
             if (firstMessageInTransaction) {
                 extraElements.add(new BsonElement("startTransaction", BsonBoolean.TRUE));
                 addReadConcernDocument(extraElements, sessionContext);
+                if (serverApi != null) {
+                    addServerApiElements(extraElements);
+                }
             }
             extraElements.add(new BsonElement("autocommit", BsonBoolean.FALSE));
+        } else if (serverApi != null) {
+            addServerApiElements(extraElements);
         }
         if (readPreference != null) {
             if (!readPreference.equals(primary())) {
@@ -282,6 +300,16 @@ public final class CommandMessage extends RequestMessage {
             }
         }
         return extraElements;
+    }
+
+    private void addServerApiElements(final List<BsonElement> extraElements) {
+        extraElements.add(new BsonElement("apiVersion", new BsonString(serverApi.getVersion().getValue())));
+        if (serverApi.getStrict().isPresent()) {
+            extraElements.add(new BsonElement("apiStrict", BsonBoolean.valueOf(serverApi.getStrict().get())));
+        }
+        if (serverApi.getDeprecationErrors().isPresent()) {
+            extraElements.add(new BsonElement("apiDeprecationErrors", BsonBoolean.valueOf(serverApi.getDeprecationErrors().get())));
+        }
     }
 
     private void checkServerVersionForTransactionSupport() {

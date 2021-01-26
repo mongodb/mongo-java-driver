@@ -25,6 +25,7 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.ServerApi;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
@@ -60,17 +61,20 @@ final class MongoClientDelegate {
     private final Object originator;
     private final OperationExecutor operationExecutor;
     private final Crypt crypt;
+    @Nullable
+    private final ServerApi serverApi;
     private final CodecRegistry codecRegistry;
 
     MongoClientDelegate(final Cluster cluster, final CodecRegistry codecRegistry,
                         final Object originator, @Nullable final OperationExecutor operationExecutor,
-                        @Nullable final Crypt crypt) {
+                        @Nullable final Crypt crypt, @Nullable final ServerApi serverApi) {
         this.cluster = cluster;
         this.codecRegistry = codecRegistry;
-        this.serverSessionPool = new ServerSessionPool(cluster);
+        this.serverSessionPool = new ServerSessionPool(cluster, serverApi);
         this.originator = originator;
         this.operationExecutor = operationExecutor == null ? new DelegateOperationExecutor() : operationExecutor;
         this.crypt = crypt;
+        this.serverApi = serverApi;
     }
 
     public OperationExecutor getOperationExecutor() {
@@ -206,7 +210,7 @@ final class MongoClientDelegate {
         ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, final ReadConcern readConcern,
                                              @Nullable final ClientSession session, final boolean ownsSession) {
             ClusterAwareReadWriteBinding readWriteBinding = new ClusterBinding(cluster,
-                    getReadPreferenceForBinding(readPreference, session), readConcern);
+                    getReadPreferenceForBinding(readPreference, session), readConcern, serverApi);
 
             if (crypt != null) {
                 readWriteBinding = new CryptBinding(readWriteBinding, crypt);

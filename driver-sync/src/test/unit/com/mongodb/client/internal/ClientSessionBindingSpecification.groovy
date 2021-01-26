@@ -151,6 +151,6 @@ class ClientSessionBindingSpecification extends Specification {
 
     private ReadWriteBinding createStubBinding() {
         def cluster = Stub(Cluster)
-        new ClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT)
+        new ClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, null)
     }
 }

@@ -76,7 +76,7 @@ class CryptConnectionSpecification extends Specification {
                 new BsonDocumentWrapper(new Document('find', 'test')
                         .append('filter', new Document('ssid', '555-55-5555')), codec),
                 new NoOpFieldNameValidator(), ReadPreference.primary(), codec,
-                NoOpSessionContext.INSTANCE)
+                NoOpSessionContext.INSTANCE, null)
 
         then:
         _ * wrappedConnection.getDescription() >> {
@@ -88,7 +88,7 @@ class CryptConnectionSpecification extends Specification {
              encryptedCommand
         }
         1 * wrappedConnection.command('db', encryptedCommand, _ as NoOpFieldNameValidator, ReadPreference.primary(),
-                _ as RawBsonDocumentCodec, NoOpSessionContext.INSTANCE, true, null, null) >> {
+                _ as RawBsonDocumentCodec, NoOpSessionContext.INSTANCE, null, true, null, null) >> {
             encryptedResponse
         }
         1 * crypt.decrypt(encryptedResponse) >> {
@@ -122,7 +122,7 @@ class CryptConnectionSpecification extends Specification {
         def response = cryptConnection.command('db',
                 new BsonDocumentWrapper(new Document('insert', 'test'), codec),
                 new NoOpFieldNameValidator(), ReadPreference.primary(), new BsonDocumentCodec(),
-                NoOpSessionContext.INSTANCE, true,
+                NoOpSessionContext.INSTANCE, null, true,
                 payload,
                 new NoOpFieldNameValidator())
 
@@ -141,7 +141,7 @@ class CryptConnectionSpecification extends Specification {
             encryptedCommand
         }
         1 * wrappedConnection.command('db', encryptedCommand, _ as NoOpFieldNameValidator, ReadPreference.primary(),
-                _ as RawBsonDocumentCodec, NoOpSessionContext.INSTANCE, true, null, null) >> {
+                _ as RawBsonDocumentCodec, NoOpSessionContext.INSTANCE, null, true, null, null) >> {
             encryptedResponse
         }
         1 * crypt.decrypt(encryptedResponse) >> {
@@ -177,7 +177,7 @@ class CryptConnectionSpecification extends Specification {
         def response = cryptConnection.command('db',
                 new BsonDocumentWrapper(new Document('insert', 'test'), codec),
                 new NoOpFieldNameValidator(), ReadPreference.primary(), new BsonDocumentCodec(),
-                NoOpSessionContext.INSTANCE, true,
+                NoOpSessionContext.INSTANCE, null, true,
                 payload,
                 new NoOpFieldNameValidator())
 
@@ -195,7 +195,7 @@ class CryptConnectionSpecification extends Specification {
             encryptedCommand
         }
         1 * wrappedConnection.command('db', encryptedCommand, _ as NoOpFieldNameValidator, ReadPreference.primary(),
-                _ as RawBsonDocumentCodec, NoOpSessionContext.INSTANCE, true, null, null) >> {
+                _ as RawBsonDocumentCodec, NoOpSessionContext.INSTANCE, null, true, null, null) >> {
             encryptedResponse
         }
         1 * crypt.decrypt(encryptedResponse) >> {

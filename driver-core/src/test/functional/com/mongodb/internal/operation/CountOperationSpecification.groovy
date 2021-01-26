@@ -353,6 +353,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         def source = Stub(ConnectionSource)
         def connection = Mock(Connection)
         binding.readPreference >> ReadPreference.primary()
+        binding.serverApi >> null
         binding.readConnectionSource >> source
         binding.sessionContext >> sessionContext
         source.connection >> connection
@@ -368,7 +369,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                 6, STANDALONE, 1000, 100000, 100000, [])
-        1 * connection.command(_, commandDocument, _, _, _, sessionContext) >>
+        1 * connection.command(_, commandDocument, _, _, _, sessionContext, null) >>
                 new BsonDocument('n', new BsonInt64(42))
         1 * connection.release()
 

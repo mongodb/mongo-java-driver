@@ -79,7 +79,7 @@ public final class MongoClientImpl implements MongoClient {
                             @Nullable final Closeable externalResourceCloser) {
         this.settings = notNull("settings", settings);
         this.cluster = notNull("cluster", cluster);
-        this.serverSessionPool = new ServerSessionPool(cluster);
+        this.serverSessionPool = new ServerSessionPool(cluster, settings.getServerApi());
         this.clientSessionHelper = new ClientSessionHelper(this, serverSessionPool);
         AutoEncryptionSettings autoEncryptSettings = settings.getAutoEncryptionSettings();
         this.crypt = autoEncryptSettings != null ? Crypts.createCrypt(this, autoEncryptSettings) : null;

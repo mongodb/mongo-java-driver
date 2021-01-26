@@ -44,6 +44,7 @@ import static com.mongodb.ClusterFixture.getCredential;
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.getPrimary;
 import static com.mongodb.ClusterFixture.getSecondary;
+import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.ClusterFixture.getSslSettings;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimaries;
 import static java.util.Collections.singletonList;
@@ -70,7 +71,7 @@ public class SingleServerClusterTest {
                         streamFactory, streamFactory, getCredential(),
 
                         null, null, null,
-                        Collections.<MongoCompressor>emptyList()));
+                        Collections.<MongoCompressor>emptyList(), getServerApi()));
     }
 
     @After
@@ -124,7 +125,7 @@ public class SingleServerClusterTest {
 
         // when
         BsonDocument result = connection.command(getDefaultDatabaseName(), new BsonDocument("count", new BsonString(collectionName)),
-                new NoOpFieldNameValidator(), ReadPreference.primary(), new BsonDocumentCodec(), NoOpSessionContext.INSTANCE);
+                new NoOpFieldNameValidator(), ReadPreference.primary(), new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, null);
 
         // then
         assertEquals(new BsonDouble(1.0).intValue(), result.getNumber("ok").intValue());

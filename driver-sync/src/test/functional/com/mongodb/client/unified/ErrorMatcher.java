@@ -33,7 +33,7 @@ import static org.junit.Assert.assertTrue;
 
 final class ErrorMatcher {
     private static final Set<String> EXPECTED_ERROR_FIELDS = new HashSet<>(
-            asList("isError", "expectError", "isClientError", "errorCodeName",
+            asList("isError", "expectError", "isClientError", "errorCodeName", "errorContains",
                     "isClientError", "errorLabelsOmit", "errorLabelsContain", "expectResult"));
 
     private final AssertionContext context;
@@ -55,6 +55,14 @@ final class ErrorMatcher {
             assertEquals(context.getMessage("Exception must be of type MongoClientException or IllegalArgumentException"),
                     expectedError.getBoolean("isClientError").getValue(),
                     e instanceof MongoClientException || e instanceof IllegalArgumentException);
+        }
+        if (expectedError.containsKey("errorContains")) {
+            assertTrue("Exception must be of type MongoCommandException when checking for error codes",
+                    e instanceof MongoCommandException);
+            MongoCommandException mongoCommandException = (MongoCommandException) e;
+            String errorContains = expectedError.getString("errorContains").getValue();
+            assertTrue("Error message does not contain expected string: " + errorContains,
+                    mongoCommandException.getErrorMessage().contains(errorContains));
         }
         if (expectedError.containsKey("errorCodeName")) {
             assertTrue(context.getMessage("Exception must be of type MongoCommandException when checking for error codes"),

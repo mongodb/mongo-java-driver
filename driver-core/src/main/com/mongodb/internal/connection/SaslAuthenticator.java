@@ -20,6 +20,7 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
+import com.mongodb.ServerApi;
 import com.mongodb.SubjectProvider;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.diagnostics.logging.Logger;
@@ -48,8 +49,8 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
     public static final Logger LOGGER = Loggers.getLogger("authenticator");
     private static final String SUBJECT_PROVIDER_CACHE_KEY = "SUBJECT_PROVIDER";
 
-    SaslAuthenticator(final MongoCredentialWithCache credential) {
-        super(credential);
+    SaslAuthenticator(final MongoCredentialWithCache credential, final @Nullable ServerApi serverApi) {
+        super(credential, serverApi);
     }
 
     public void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription) {
@@ -224,11 +225,12 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
     private BsonDocument sendSaslStart(final byte[] outToken, final InternalConnection connection) {
         BsonDocument startDocument = createSaslStartCommandDocument(outToken);
         appendSaslStartOptions(startDocument);
-        return executeCommand(getMongoCredential().getSource(), startDocument, connection);
+        return executeCommand(getMongoCredential().getSource(), startDocument, getServerApi(), connection);
     }
 
     private BsonDocument sendSaslContinue(final BsonInt32 conversationId, final byte[] outToken, final InternalConnection connection) {
-        return executeCommand(getMongoCredential().getSource(), createSaslContinueDocument(conversationId, outToken), connection);
+        return executeCommand(getMongoCredential().getSource(), createSaslContinueDocument(conversationId, outToken), getServerApi(),
+                connection);
     }
 
     private void sendSaslStartAsync(final byte[] outToken, final InternalConnection connection,
