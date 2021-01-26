@@ -199,7 +199,7 @@ If no top-level `_id` field is specified in the document, MongoDB automatically 
 {{% /note %}}
 
 {{% note class="important" %}}
-In the API all methods returning a `Publisher` are "cold" streams meaning that nothing happens until they are Subscribed to.
+In the API all methods returning a `Publisher` are "cold" streams meaning that nothing happens until they are subscribed to.
 
 The example below does nothing:
 
