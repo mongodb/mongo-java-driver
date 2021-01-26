@@ -49,12 +49,15 @@ where `T` is the type of response for the operation.
 
 {{% note %}}
 All [`Publishers`](http://www.reactive-streams.org/reactive-streams-1.0.1-javadoc/?org/reactivestreams/Publisher.html) returned 
-from the API are cold, meaning that nothing happens until they are subscribed to. So just creating a
-`Publisher` won't cause any network IO, it's not until `Publisher.subscribe` is called that the driver executes the operation.
+from the API are [cold](https://projectreactor.io/docs/core/release/reference/#reactor.hotCold), meaning that nothing happens until 
+they are subscribed to. So just creating a `Publisher` won't cause any network IO. It's not until `Publisher.subscribe` is called that 
+the driver executes the operation.
 
-Publishers in this implementation are unicast. Each [`Subscription`](http://www.reactive-streams.org/reactive-streams-1.0.1-javadoc/?org/reactivestreams/Subscription.html) 
-to a `Publisher` relates to a single MongoDB operation and its ['Subscriber'](http://www.reactive-streams.org/reactive-streams-1.0.
-1-javadoc/?org/reactivestreams/Subscriber.html) will receive its own specific set of results.
+Publishers in this implementation are unicast. Each
+[`Subscription`](http://www.reactive-streams.org/reactive-streams-1.0.1-javadoc/?org/reactivestreams/Subscription.html) to a `Publisher` 
+relates to a single MongoDB operation and its 
+['Subscriber'](http://www.reactive-streams.org/reactive-streams-1.0.1-javadoc/?org/reactivestreams/Subscriber.html) will receive its own 
+specific set of results.
 {{% /note %}}
 
 
