@@ -171,7 +171,7 @@ passed back to the user.
 {{% /note %}}
 
 {{% note class="important" %}}
-In the API all methods returning a `Observables` are "cold" streams meaning that nothing happens until they are Subscribed to.
+In the API all methods returning a `Observables` are "cold" streams meaning that nothing happens until they are subscribed to.
 
 The example below does nothing:
 
