@@ -19,6 +19,7 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
+import com.mongodb.lang.Nullable;
 
 import java.util.List;
 
@@ -33,6 +34,8 @@ public class QueryResult<T> {
     private final List<T> results;
     private final long cursorId;
     private final ServerAddress serverAddress;
+    @Nullable
+    private ServerCursor serverCursor;//intentionally plain, we depend on ServerCursor being immutable
 
     /**
      * Construct an instance.
@@ -61,10 +64,25 @@ public class QueryResult<T> {
     /**
      * Gets the cursor.
      *
-     * @return the cursor, which may be null if it's been exhausted
+     * @return the cursor, which may be null if it's been exhausted.
+     * The method returns references to {@linkplain ServerCursor#equals(Object) equal} objects when called multiple times,
+     * but may return different references.
      */
+    @Nullable
     public ServerCursor getCursor() {
-        return cursorId == 0 ? null : new ServerCursor(cursorId, serverAddress);
+        if (cursorId == 0) {
+            return null;
+        } else {
+            /* Actions r and w cause executions to have data race, which is benign because ServerCursor is immutable.
+             * See https://docs.oracle.com/javase/specs/jls/se8/html/jls-17.html#jls-17.5.1
+             * and https://shipilev.net/blog/2016/close-encounters-of-jmm-kind/#wishful-benign-is-resilient */
+            ServerCursor localServerCursor = serverCursor;//r
+            if (localServerCursor == null) {
+                localServerCursor = new ServerCursor(cursorId, serverAddress);
+                serverCursor = localServerCursor;//w
+            }
+            return localServerCursor;//must read from the local variable for correctness
+        }
     }
 
     /**
