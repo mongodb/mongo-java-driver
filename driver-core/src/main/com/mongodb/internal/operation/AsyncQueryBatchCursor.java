@@ -70,6 +70,9 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     private final AtomicInteger count = new AtomicInteger();
     private volatile BsonDocument postBatchResumeToken;
     private final BsonTimestamp operationTime;
+    /**
+     * May be true for a tailable cursor.
+     */
     private final boolean firstBatchEmpty;
     private final int maxWireVersion;
 
@@ -190,12 +193,10 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         if (isClosed()) {
             callback.onResult(null, new MongoException(format("%s called after the cursor was closed.",
                     tryNext ? "tryNext()" : "next()")));
-        } else if (firstBatch != null && (tryNext || !firstBatch.getResults().isEmpty())) {
-            // May be empty for a tailable cursor
-            List<T> results = firstBatch.getResults();
-            if (tryNext && results.isEmpty()) {
-                results = null;
-            }
+        } else if (firstBatch != null && (tryNext || !firstBatchEmpty)) {
+            List<T> results = tryNext && firstBatchEmpty
+                    ? null
+                    : firstBatch.getResults();
             firstBatch = null;
             ServerCursor localCursor = getServerCursor();
             if (localCursor == null) {
