@@ -108,8 +108,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         given:
         def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
                 .storageEngineOptions(new BsonDocument('wiredTiger',
-                                                       new BsonDocument('configString', new BsonString('block_compressor=zlib')))
-                                              .append('mmapv1', new BsonDocument()))
+                                                       new BsonDocument('configString', new BsonString('block_compressor=zlib'))))
 
         when:
         execute(operation, async)
@@ -123,6 +122,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         async << [true, false]
     }
 
+    @IgnoreIf( {serverVersionAtLeast(4, 2) })
     def 'should set flags for use power of two sizes'() {
         given:
         assert !collectionNameExists(getCollectionName())
@@ -195,7 +195,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         false     | 0                       | false
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 2) || serverVersionAtLeast(4, 2)})
     def 'should allow indexOptionDefaults'() {
         given:
         assert !collectionNameExists(getCollectionName())

@@ -52,6 +52,7 @@ import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -969,6 +970,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     @Category(Slow.class)
     public void testParallelScan() throws UnknownHostException {
         assumeThat(isSharded(), is(false));
+        assumeThat(serverVersionLessThan("4.2"), is(true));
 
         Set<Integer> ids = new HashSet<Integer>();
         List<BasicDBObject> documents = new ArrayList<BasicDBObject>(2000);

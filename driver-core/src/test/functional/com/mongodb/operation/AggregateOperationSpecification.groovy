@@ -354,7 +354,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         def result = execute(operation, async)
 
         then:
-        result.containsKey('stages')
+        result.containsKey('stages') || result.containsKey('queryPlanner')
 
         where:
         async << [true, false]
@@ -377,7 +377,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         [async, options] << [[true, false], [defaultCollation, null, Collation.builder().build()]].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) || serverVersionAtLeast(4, 2) })
     def 'should apply $hint'() {
         given:
         def index = new BsonDocument('a', new BsonInt32(1))

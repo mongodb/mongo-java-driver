@@ -351,6 +351,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         ].combinations()
     }
 
+    @IgnoreIf( {serverVersionAtLeast(4, 2) })
     def '$max should limit items returned'() {
         given:
         (1..100).each {
@@ -370,6 +371,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
+    @IgnoreIf( {serverVersionAtLeast(4, 2) })
     def '$min should limit items returned'() {
         given:
         (1..100).each {

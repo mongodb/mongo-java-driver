@@ -320,6 +320,7 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testMax() {
+        assumeFalse(serverVersionAtLeast(4, 2));
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
                      .addSpecial("$max", new BasicDBObject("x", 4)), 4);
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
@@ -328,6 +329,7 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testMin() {
+        assumeFalse(serverVersionAtLeast(4, 2));
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
                      .addSpecial("$min", new BasicDBObject("x", 4)), 6);
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())

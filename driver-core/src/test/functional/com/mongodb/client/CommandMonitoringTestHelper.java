@@ -193,9 +193,12 @@ public final class CommandMonitoringTestHelper {
             if (response.containsKey("writeErrors")) {
                 for (BsonValue bsonValue : response.getArray("writeErrors")) {
                     BsonDocument cur = bsonValue.asDocument();
-                    cur.put("code", new BsonInt32(42));
-                    cur.put("errmsg", new BsonString(""));
-                    cur.remove("codeName");
+                    BsonDocument newWriteErrorDocument =
+                            new BsonDocument().append("index", cur.get("index"))
+                                    .append("code", new BsonInt32(42))
+                                    .append("errmsg", new BsonString(""));
+                    cur.clear();
+                    cur.putAll(newWriteErrorDocument);
                 }
             }
             if (actual.getCommandName().equals("update")) {
