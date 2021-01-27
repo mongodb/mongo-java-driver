@@ -15,6 +15,17 @@
  */
 
 /**
- * This packages contains classes for the reactive stream client implementation
+ * This packages contains classes for the reactive stream client implementation.
+ * <p>
+ * All API {@link org.reactivestreams.Publisher}s are
+ * <a href="https://projectreactor.io/docs/core/release/reference/#reactor.hotCold">cold</a>,
+ * meaning that nothing happens until they are subscribed to.
+ * So just creating a {@link org.reactivestreams.Publisher} won’t cause any network IO.
+ * It’s not until {@link org.reactivestreams.Publisher#subscribe(org.reactivestreams.Subscriber)} is called that the driver executes the
+ * operation.
+ * <p>
+ * All API {@link org.reactivestreams.Publisher}s are unicast.
+ * Each {@link org.reactivestreams.Subscription} to a {@link org.reactivestreams.Publisher} relates to a single MongoDB operation and its
+ * {@link org.reactivestreams.Subscriber} will receive its own specific set of results.
  */
 package com.mongodb.reactivestreams.client;
