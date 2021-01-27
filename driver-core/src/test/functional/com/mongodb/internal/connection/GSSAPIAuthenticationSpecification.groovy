@@ -54,7 +54,7 @@ class GSSAPIAuthenticationSpecification extends Specification {
 
         when:
         openConnection(connection, async)
-        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), connection)
+        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), null, connection)
 
         then:
         thrown(MongoCommandException)
@@ -72,7 +72,7 @@ class GSSAPIAuthenticationSpecification extends Specification {
 
         when:
         openConnection(connection, async)
-        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), connection)
+        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), null, connection)
 
         then:
         true
@@ -93,7 +93,7 @@ class GSSAPIAuthenticationSpecification extends Specification {
 
         when:
         openConnection(connection, async)
-        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), connection)
+        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), null, connection)
 
         then:
         thrown(MongoSecurityException)
@@ -124,7 +124,7 @@ class GSSAPIAuthenticationSpecification extends Specification {
         when:
         def connection = createConnection(async, getMongoCredential(subject))
         openConnection(connection, async)
-        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), connection)
+        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), null, connection)
 
         then:
         true
@@ -167,7 +167,7 @@ class GSSAPIAuthenticationSpecification extends Specification {
         when:
         def connection = createConnection(async, getMongoCredential(saslClientProperties))
         openConnection(connection, async)
-        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), connection)
+        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), null, connection)
 
         then:
         true
@@ -204,7 +204,7 @@ class GSSAPIAuthenticationSpecification extends Specification {
     }
 
     private static Authenticator createAuthenticator(final MongoCredential credential) {
-        credential == null ? null : new GSSAPIAuthenticator(new MongoCredentialWithCache(credential))
+        credential == null ? null : new GSSAPIAuthenticator(new MongoCredentialWithCache(credential), null)
     }
 
     private static void openConnection(final InternalConnection connection, final boolean async) {

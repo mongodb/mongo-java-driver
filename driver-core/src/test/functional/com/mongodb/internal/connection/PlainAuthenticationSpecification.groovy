@@ -49,7 +49,7 @@ class PlainAuthenticationSpecification extends Specification {
 
         when:
         openConnection(connection, async)
-        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), connection)
+        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), null, connection)
 
         then:
         thrown(MongoCommandException)
@@ -67,7 +67,7 @@ class PlainAuthenticationSpecification extends Specification {
 
         when:
         openConnection(connection, async)
-        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), connection)
+        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), null, connection)
 
         then:
         true
@@ -85,7 +85,7 @@ class PlainAuthenticationSpecification extends Specification {
 
         when:
         openConnection(connection, async)
-        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), connection)
+        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), null, connection)
 
         then:
         thrown(MongoSecurityException)
@@ -110,7 +110,7 @@ class PlainAuthenticationSpecification extends Specification {
     }
 
     private static Authenticator createAuthenticator(final MongoCredential credential) {
-        credential == null ? null : new PlainAuthenticator(new MongoCredentialWithCache(credential))
+        credential == null ? null : new PlainAuthenticator(new MongoCredentialWithCache(credential), null)
     }
 
     private static void openConnection(final InternalConnection connection, final boolean async) {
