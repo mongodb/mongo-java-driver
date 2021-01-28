@@ -42,8 +42,10 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionFourDotFour;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static com.mongodb.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.operation.DocumentHelper.putIfTrue;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
@@ -581,21 +583,23 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
 
     private BsonDocument getCommand(final ConnectionDescription description) {
         BsonDocument outputDocument = new BsonDocument(getAction(), new BsonString(getCollectionName()));
-        outputDocument.append("sharded", BsonBoolean.valueOf(isSharded()));
-        outputDocument.append("nonAtomic", BsonBoolean.valueOf(isNonAtomic()));
+        if (description != null && !serverIsAtLeastVersionFourDotFour(description)) {
+            putIfTrue(outputDocument, "sharded", isSharded());
+            putIfTrue(outputDocument, "nonAtomic", isNonAtomic());
+        }
         if (getDatabaseName() != null) {
             outputDocument.put("db", new BsonString(getDatabaseName()));
         }
         BsonDocument commandDocument = new BsonDocument("mapreduce", new BsonString(namespace.getCollectionName()))
-                                           .append("map", getMapFunction())
-                                           .append("reduce", getReduceFunction())
-                                           .append("out", outputDocument)
-                                           .append("query", asValueOrNull(getFilter()))
-                                           .append("sort", asValueOrNull(getSort()))
-                                           .append("finalize", asValueOrNull(getFinalizeFunction()))
-                                           .append("scope", asValueOrNull(getScope()))
-                                           .append("verbose", BsonBoolean.valueOf(isVerbose()));
-        putIfNotZero(commandDocument, "limit", getLimit());
+                .append("map", getMapFunction())
+                .append("reduce", getReduceFunction())
+                .append("out", outputDocument);
+
+        putIfNotNull(commandDocument, "query", getFilter());
+        putIfNotNull(commandDocument, "sort", getSort());
+        putIfNotNull(commandDocument, "finalize", getFinalizeFunction());
+        putIfNotNull(commandDocument, "scope", getScope());
+        putIfTrue(commandDocument, "verbose", isVerbose());      putIfNotZero(commandDocument, "limit", getLimit());
         putIfNotZero(commandDocument, "maxTimeMS", getMaxTime(MILLISECONDS));
         putIfTrue(commandDocument, "jsMode", isJsMode());
         if (bypassDocumentValidation != null && description != null && serverIsAtLeastVersionThreeDotTwo(description)) {

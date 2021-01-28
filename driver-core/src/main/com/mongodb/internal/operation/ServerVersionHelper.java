@@ -45,6 +45,10 @@ public final class ServerVersionHelper {
         return serverIsAtLeastVersion(description, new ServerVersion(4, 0));
     }
 
+    public static boolean serverIsAtLeastVersionFourDotFour(final ConnectionDescription description) {
+        return serverIsAtLeastVersion(description, new ServerVersion(4, 4));
+    }
+
     private static boolean serverIsAtLeastVersion(final ConnectionDescription description, final ServerVersion serverVersion) {
         return description.getServerVersion().compareTo(serverVersion) >= 0;
     }
