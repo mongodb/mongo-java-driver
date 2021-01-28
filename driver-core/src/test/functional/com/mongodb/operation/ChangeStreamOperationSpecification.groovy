@@ -390,6 +390,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         waitForLastRelease(getCluster())
     }
 
+    @IgnoreIf({ serverVersionAtLeast([4, 2, 0]) })
     def 'should throw if the _id field is projected out'() {
         given:
         def helper = getHelper()
