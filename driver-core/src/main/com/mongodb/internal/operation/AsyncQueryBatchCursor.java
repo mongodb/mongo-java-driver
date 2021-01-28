@@ -79,8 +79,8 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     /* protected by `this` */
     private boolean isOperationInProgress = false;
     private boolean isClosed = false;
-    private boolean isClosePending = false;
     /* protected by `this` */
+    private volatile boolean isClosePending = false;
 
     AsyncQueryBatchCursor(final QueryResult<T> firstBatch, final int limit, final int batchSize, final long maxTimeMS,
                           final Decoder<T> decoder, final AsyncConnectionSource connectionSource, final AsyncConnection connection) {
@@ -338,7 +338,13 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     private void handleGetMoreQueryResult(final AsyncConnection connection, final SingleResultCallback<List<T>> callback,
                                           final QueryResult<T> result, final boolean tryNext) {
         cursor.set(result.getCursor());
-        if (!tryNext && result.getResults().isEmpty() && result.getCursor() != null) {
+        if (isClosePending) {
+            try {
+                endOperationInProgress();
+            } finally {
+                callback.onResult(null, null);
+            }
+        } else if (!tryNext && result.getResults().isEmpty() && result.getCursor() != null) {
             getMore(connection, result.getCursor(), callback, false);
         } else {
             count.addAndGet(result.getResults().size());
