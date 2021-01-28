@@ -23,6 +23,7 @@ import org.bson.conversions.Bson
 
 import static com.mongodb.client.model.Filters.and
 import static com.mongodb.client.model.Filters.eq
+import static com.mongodb.client.model.Filters.text
 import static com.mongodb.client.model.Projections.elemMatch
 import static com.mongodb.client.model.Projections.exclude
 import static com.mongodb.client.model.Projections.excludeId
@@ -32,21 +33,21 @@ import static com.mongodb.client.model.Projections.metaTextScore
 import static com.mongodb.client.model.Projections.slice
 
 class ProjectionFunctionalSpecification extends OperationFunctionalSpecification {
-    def a = new Document('_id', 1).append('x', 1).append('y', [new Document('a', 1).append('b', 2),
-                                                               new Document('a', 2).append('b', 3),
-                                                               new Document('a', 3).append('b', 4)])
-    def aYSlice1 = new Document('_id', 1).append('x', 1).append('y', [new Document('a', 1).append('b', 2)])
-    def aYSlice12 = new Document('_id', 1).append('x', 1).append('y', [new Document('a', 2).append('b', 3),
-                                                                       new Document('a', 3).append('b', 4)])
-    def aNoY = new Document('_id', 1).append('x', 1)
+    def a = new Document('_id', 1).append('x', 'coffee').append('y', [new Document('a', 1).append('b', 2),
+                                                                      new Document('a', 2).append('b', 3),
+                                                                      new Document('a', 3).append('b', 4)])
+    def aYSlice1 = new Document('_id', 1).append('x', 'coffee').append('y', [new Document('a', 1).append('b', 2)])
+    def aYSlice12 = new Document('_id', 1).append('x', 'coffee').append('y', [new Document('a', 2).append('b', 3),
+                                                                              new Document('a', 3).append('b', 4)])
+    def aNoY = new Document('_id', 1).append('x', 'coffee')
     def aId = new Document('_id', 1)
-    def aNoId = new Document().append('x', 1).append('y', [new Document('a', 1).append('b', 2),
-                                                           new Document('a', 2).append('b', 3),
-                                                           new Document('a', 3).append('b', 4)])
-    def aWithScore = new Document('_id', 1).append('x', 1).append('y', [new Document('a', 1).append('b', 2),
-                                                                        new Document('a', 2).append('b', 3),
-                                                                        new Document('a', 3).append('b', 4)])
-                                           .append('score', 0.0)
+    def aNoId = new Document().append('x', 'coffee').append('y', [new Document('a', 1).append('b', 2),
+                                                                  new Document('a', 2).append('b', 3),
+                                                                  new Document('a', 3).append('b', 4)])
+    def aWithScore = new Document('_id', 1).append('x', 'coffee').append('y', [new Document('a', 1).append('b', 2),
+                                                                               new Document('a', 2).append('b', 3),
+                                                                               new Document('a', 3).append('b', 4)])
+            .append('score', 1.0)
 
     def setup() {
         getCollectionHelper().insertDocuments(a)
@@ -74,7 +75,7 @@ class ProjectionFunctionalSpecification extends OperationFunctionalSpecification
         find(exclude(['x', 'y', 'x'])) == [aId]
     }
 
-    def 'excludeId'() {
+    def 'excludeId helper'() {
         expect:
         find(excludeId()) == [aNoId]
     }
@@ -98,10 +99,10 @@ class ProjectionFunctionalSpecification extends OperationFunctionalSpecification
 
     def 'metaTextScore'() {
         given:
-        getCollectionHelper().createIndex(new Document('y', 'text'))
+        getCollectionHelper().createIndex(new Document('x', 'text'))
 
         expect:
-        find(metaTextScore('score')) == [aWithScore]
+        find(text('coffee'), metaTextScore('score')) == [aWithScore]
     }
 
     def 'combine fields'() {

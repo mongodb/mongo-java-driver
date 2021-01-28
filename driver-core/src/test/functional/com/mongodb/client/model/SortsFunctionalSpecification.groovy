@@ -27,13 +27,13 @@ import static com.mongodb.client.model.Sorts.orderBy
 
 class SortsFunctionalSpecification extends OperationFunctionalSpecification {
     def a = new Document('_id', 1).append('x', 1)
-                                  .append('y', 'b')
+                                  .append('y', 'bear')
 
     def b = new Document('_id', 2).append('x', 1)
-                                  .append('y', 'a')
+                                  .append('y', 'albatross')
 
     def c = new Document('_id', 3).append('x', 2)
-                                  .append('y', 'c')
+                                  .append('y', 'cat')
 
     def setup() {
         getCollectionHelper().insertDocuments(a, b, c)
@@ -44,7 +44,11 @@ class SortsFunctionalSpecification extends OperationFunctionalSpecification {
     }
 
     def 'find'(Bson sort, Bson projection) {
-        getCollectionHelper().find(new Document(), sort, projection)
+        find(new Document(), sort, projection)
+    }
+
+    def 'find'(Bson filter, Bson sort, Bson projection) {
+        getCollectionHelper().find(filter, sort, projection)
     }
 
     def 'ascending'() {
@@ -66,7 +70,8 @@ class SortsFunctionalSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().createIndex(new Document('y', 'text'))
 
         expect:
-        find(metaTextScore('score'), new Document('score', new Document('$meta', 'textScore')))*.containsKey('score')
+        find(new Document('$text', new Document('$search', 'bear')), metaTextScore('score'),
+                new Document('score', new Document('$meta', 'textScore')))*.containsKey('score')
     }
 
     def 'orderBy'() {
