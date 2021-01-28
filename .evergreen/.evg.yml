@@ -395,6 +395,10 @@ axes:
   - id: version
     display_name: MongoDB Version
     values:
+      - id: "4.4"
+        display_name: "4.4"
+        variables:
+          VERSION: "4.4"
       - id: "4.2"
         display_name: "4.2"
         variables:
@@ -530,14 +534,14 @@ buildvariants:
 
 - matrix_name: "tests-jdk6-secure"
   matrix_spec:  { auth: "auth", ssl: "ssl", jdk: "jdk6", version: "*", topology: "*", os: "*" }
-  exclude_spec: { auth: "auth", ssl: "ssl", jdk: "jdk6", version: ["4.0", "4.2"], topology: "*", os: "*" }
+  exclude_spec: { auth: "auth", ssl: "ssl", jdk: "jdk6", version: ["4.0", "4.2", "4.4"], topology: "*", os: "*" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
      - name: "test"
 
 - matrix_name: "tests-jdk8-secure"
-  matrix_spec: { auth: "auth", ssl: "ssl", jdk: "jdk8", version: ["4.0", "4.2"], topology: "*", os: "*" }
+  matrix_spec: { auth: "auth", ssl: "ssl", jdk: "jdk8", version: ["4.0", "4.2", "4.4"], topology: "*", os: "*" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
