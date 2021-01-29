@@ -58,6 +58,7 @@ public class AggregatePublisherImplTest extends TestHelper {
 
         AggregateOperation<Document> expectedOperation = new AggregateOperation<>(NAMESPACE, pipeline,
                                                                                   getDefaultCodecRegistry().get(Document.class))
+                .batchSize(Integer.MAX_VALUE)
                 .retryReads(true);
 
         // default input should be as expected

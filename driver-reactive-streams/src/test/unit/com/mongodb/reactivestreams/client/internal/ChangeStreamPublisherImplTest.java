@@ -55,6 +55,7 @@ public class ChangeStreamPublisherImplTest extends TestHelper {
 
         ChangeStreamOperation<ChangeStreamDocument<Document>> expectedOperation =
                 new ChangeStreamOperation<>(NAMESPACE, FullDocument.DEFAULT, pipeline, codec)
+                        .batchSize(Integer.MAX_VALUE)
                         .retryReads(true);
 
         // default input should be as expected

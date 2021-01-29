@@ -26,11 +26,8 @@ import com.mongodb.reactivestreams.client.ClientSession;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -38,7 +35,6 @@ import static com.mongodb.assertions.Assertions.notNull;
 abstract class BatchCursorPublisher<T> implements Publisher<T> {
     private final ClientSession clientSession;
     private final MongoOperationPublisher<T> mongoOperationPublisher;
-
     private Integer batchSize;
 
     BatchCursorPublisher(@Nullable final ClientSession clientSession, final MongoOperationPublisher<T> mongoOperationPublisher) {
@@ -116,44 +112,8 @@ abstract class BatchCursorPublisher<T> implements Publisher<T> {
 
     @Override
     public void subscribe(final Subscriber<? super T> subscriber) {
-        batchCursor()
-                .flatMapMany(batchCursor -> {
-                    AtomicBoolean inProgress = new AtomicBoolean(false);
-                    if (batchSize != null) {
-                        batchCursor.setBatchSize(batchSize);
-                    }
-                    return Flux.create((FluxSink<T> sink) ->
-                        sink.onRequest(value -> recurseCursor(sink, batchCursor, inProgress)), FluxSink.OverflowStrategy.BUFFER)
-                    .doOnCancel(batchCursor::close);
-                })
-                .subscribe(subscriber);
-    }
-
-    void recurseCursor(final FluxSink<T> sink, final BatchCursor<T> batchCursor, final AtomicBoolean inProgress){
-        if (!sink.isCancelled() && sink.requestedFromDownstream() > 0 && inProgress.compareAndSet(false, true)) {
-            if (batchCursor.isClosed()) {
-                sink.complete();
-            } else {
-                Mono.from(batchCursor.next())
-                        .doOnCancel(batchCursor::close)
-                        .doOnError((e) -> {
-                            batchCursor.close();
-                            sink.error(e);
-                        })
-                        .doOnSuccess(results -> {
-                            if (results != null) {
-                                results.forEach(sink::next);
-                            }
-                            if (batchCursor.isClosed()) {
-                                sink.complete();
-                            } else {
-                                inProgress.compareAndSet(true, false);
-                                recurseCursor(sink, batchCursor, inProgress);
-                            }
-                        })
-                        .subscribe();
-            }
-        }
+        Integer originalBatchSize = getBatchSize();
+        new BatchCursorFlux<>(this, originalBatchSize, () -> batchSize = originalBatchSize).subscribe(subscriber);
     }
 
     public Mono<BatchCursor<T>> batchCursor() {
