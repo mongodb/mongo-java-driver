@@ -50,7 +50,7 @@ public class BatchCursorFluxTest {
 
     @Before
     public void setUp() {
-        commandListener = new TestCommandListener(singletonList("commandStartedEvent"), singletonList("insert"));
+        commandListener = new TestCommandListener(singletonList("commandStartedEvent"), asList("insert", "killCursors"));
         MongoClientSettings mongoClientSettings = getMongoClientBuilderFromConnectionString().addCommandListener(commandListener).build();
         client = MongoClients.create(mongoClientSettings);
         collection = client.getDatabase(getDefaultDatabaseName()).getCollection(getClass().getName());
