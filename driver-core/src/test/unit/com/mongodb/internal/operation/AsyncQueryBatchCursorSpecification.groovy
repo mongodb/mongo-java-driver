@@ -626,7 +626,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         cursor.close()
 
         then:
-        connectionSource.getCount() == 1
+        connectionSource.getCount() == 0
 
         where:
         serverVersion                | commandAsync | exception
