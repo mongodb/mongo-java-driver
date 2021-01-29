@@ -35,6 +35,7 @@ import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.async.ResourcePreservingCallback.resourcePreservingCallback;
 
 /**
  * A simple ReadWriteBinding implementation that supplies write connection sources bound to a possibly different primary each time, and a
@@ -150,7 +151,12 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
 
         @Override
         public void getConnection(final SingleResultCallback<AsyncConnection> callback) {
-            server.getConnectionAsync(callback);
+            SingleResultCallback<AsyncConnection> clusterBindingPreservingCallback = resourcePreservingCallback(this, callback);
+            try {
+                server.getConnectionAsync(clusterBindingPreservingCallback);
+            } catch (Throwable t) {
+                clusterBindingPreservingCallback.onResult(null, t);
+            }
         }
 
         public AsyncConnectionSource retain() {

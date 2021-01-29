@@ -51,6 +51,11 @@ public interface AsyncConnectionSource extends ReferenceCounted {
 
     /**
      * Gets a connection from this source.
+     * <p>
+     * Implementations must {@link #retain()} {@code this} {@link AsyncConnectionSource} so that it does not
+     * accidentally become unreferenced concurrently with still being accessed for the purpose of the method;
+     * implementations must {@link #release()} {@code this} {@link AsyncConnectionSource}
+     * once it is no longer needed for the purpose of the method.
      *
      * @param callback the to be passed the connection
      */

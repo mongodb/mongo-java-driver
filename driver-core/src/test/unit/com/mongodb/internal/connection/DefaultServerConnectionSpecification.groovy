@@ -41,9 +41,11 @@ import spock.lang.Specification
 
 import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.CustomMatchers.compare
+import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.connection.ServerType.SHARD_ROUTER
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback
+import static spock.util.matcher.HamcrestSupport.expect
 
 class DefaultServerConnectionSpecification extends Specification {
     def namespace = new MongoNamespace('test', 'test')
@@ -211,7 +213,7 @@ class DefaultServerConnectionSpecification extends Specification {
 
         then:
         1 * executor.executeAsync({ compare(new InsertProtocol(namespace, true, insertRequest), it) }, internalConnection,
-                callback)
+                {expect callback, isTheSameAs(it.wrapped)})
     }
 
     def 'should execute update protocol asynchronously'() {
@@ -225,7 +227,7 @@ class DefaultServerConnectionSpecification extends Specification {
 
         then:
         1 * executor.executeAsync({ compare(new UpdateProtocol(namespace, true, updateRequest), it) },
-                                  internalConnection, callback)
+                                  internalConnection, {expect callback, isTheSameAs(it.wrapped)})
     }
 
     def 'should execute delete protocol asynchronously'() {
@@ -239,7 +241,7 @@ class DefaultServerConnectionSpecification extends Specification {
 
         then:
         1 * executor.executeAsync({ compare(new DeleteProtocol(namespace, true, deleteRequest), it) }, internalConnection,
-                callback)
+                {expect callback, isTheSameAs(it.wrapped)})
     }
 
     def 'should execute command protocol asynchronously'() {
@@ -257,7 +259,7 @@ class DefaultServerConnectionSpecification extends Specification {
         then:
         1 * executor.executeAsync({
             compare(new CommandProtocolImpl('test', command, validator, ReadPreference.primary(), codec, getServerApi()), it)
-        }, internalConnection, NoOpSessionContext.INSTANCE, callback)
+        }, internalConnection, NoOpSessionContext.INSTANCE, {expect callback, isTheSameAs(it.wrapped)})
     }
 
     def 'should execute query protocol asynchronously'() {
@@ -281,7 +283,7 @@ class DefaultServerConnectionSpecification extends Specification {
                                                .partial(true)
                                                .oplogReplay(false)
                                        , it)
-                             }, internalConnection, callback)
+                             }, internalConnection, {expect callback, isTheSameAs(it.wrapped)})
 
         where:
         slaveOk << [true, false]
@@ -309,7 +311,7 @@ class DefaultServerConnectionSpecification extends Specification {
                                                .partial(true)
                                                .oplogReplay(false)
                                        , it)
-                             }, internalConnection, callback)
+                             }, internalConnection, {expect callback, isTheSameAs(it.wrapped)})
 
         where:
         connectionDescription           | expectedSlaveOk
@@ -327,7 +329,8 @@ class DefaultServerConnectionSpecification extends Specification {
         connection.getMoreAsync(namespace, 1000L, 1, codec, callback)
 
         then:
-        1 * executor.executeAsync({ compare(new GetMoreProtocol(namespace, 1000L, 1, codec), it) }, internalConnection, callback)
+        1 * executor.executeAsync({ compare(new GetMoreProtocol(namespace, 1000L, 1, codec), it) }, internalConnection,
+                {expect callback, isTheSameAs(it.wrapped)})
     }
 
     def 'should execute kill cursor protocol asynchronously'() {
@@ -339,6 +342,7 @@ class DefaultServerConnectionSpecification extends Specification {
         connection.killCursorAsync(namespace, [5], callback)
 
         then:
-        1 * executor.executeAsync({ compare(new KillCursorProtocol(namespace, [5]), it) }, internalConnection, callback)
+        1 * executor.executeAsync({ compare(new KillCursorProtocol(namespace, [5]), it) }, internalConnection,
+                {expect callback, isTheSameAs(it.wrapped)})
     }
 }

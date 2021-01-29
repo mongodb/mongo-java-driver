@@ -40,6 +40,12 @@ import java.util.List;
  * <p> Implementations of this class are thread safe.  </p>
  *
  * <p> This interface is not stable. While methods will not be removed, new ones may be added. </p>
+ * <p>
+ * <b>{@code *Async} methods</b><br>
+ * Implementations of any {@code *Async} method must {@link #retain()} {@code this} {@link AsyncConnection} so that it does not
+ * accidentally become unreferenced concurrently with still being accessed for the purpose of the method;
+ * implementations must {@link #release()} {@code this} {@link AsyncConnection}
+ * once it is no longer needed for the purpose of the method.
  *
  * @since 3.0
  */

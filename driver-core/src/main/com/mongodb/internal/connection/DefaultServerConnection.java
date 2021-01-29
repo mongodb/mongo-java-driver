@@ -39,6 +39,7 @@ import java.util.List;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.async.ResourcePreservingCallback.resourcePreservingCallback;
 
 public class DefaultServerConnection extends AbstractReferenceCounted implements Connection, AsyncConnection {
     private static final Logger LOGGER = Loggers.getLogger("connection");
@@ -210,21 +211,21 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
     }
 
     private <T> void executeProtocolAsync(final LegacyProtocol<T> protocol, final SingleResultCallback<T> callback) {
-        SingleResultCallback<T> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
+        SingleResultCallback<T> connectionPreservingCallback = resourcePreservingCallback(this, errorHandlingCallback(callback, LOGGER));
         try {
-            protocolExecutor.executeAsync(protocol, this.wrapped, errHandlingCallback);
+            protocolExecutor.executeAsync(protocol, this.wrapped, connectionPreservingCallback);
         } catch (Throwable t) {
-            errHandlingCallback.onResult(null, t);
+            connectionPreservingCallback.onResult(null, t);
         }
     }
 
     private <T> void executeProtocolAsync(final CommandProtocol<T> protocol, final SessionContext sessionContext,
                                           final SingleResultCallback<T> callback) {
-        SingleResultCallback<T> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
+        SingleResultCallback<T> connectionPreservingCallback = resourcePreservingCallback(this, errorHandlingCallback(callback, LOGGER));
         try {
-            protocolExecutor.executeAsync(protocol, this.wrapped, sessionContext, errHandlingCallback);
+            protocolExecutor.executeAsync(protocol, this.wrapped, sessionContext, connectionPreservingCallback);
         } catch (Throwable t) {
-            errHandlingCallback.onResult(null, t);
+            connectionPreservingCallback.onResult(null, t);
         }
     }
 }
