@@ -247,15 +247,13 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         connectionSource().getConnection(new SingleResultCallback<AsyncConnection>() {
             @Override
             public void onResult(final AsyncConnection connection, final Throwable t) {
-                try {
-                    if (t != null) {
-                        endOperationInProgress();
-                        callback.onResult(null, t);
-                    } else {
+                if (t != null) {
+                    endOperationInProgress();
+                    callback.onResult(null, t);
+                } else {
+                    try {
                         getMore(connection, cursor, callback, tryNext);
-                    }
-                } finally {
-                    if (connection != null) {
+                    } finally {
                         connection.release();
                     }
                 }
@@ -297,12 +295,10 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
             connectionSource().getConnection(new SingleResultCallback<AsyncConnection>() {
                 @Override
                 public void onResult(final AsyncConnection connection, final Throwable t) {
-                    try {
-                        if (connection != null) {
+                    if (connection != null) {
+                        try {
                             killCursorAsynchronouslyAndReleaseConnectionAndSource(connection, localCursor);
-                        }
-                    } finally {
-                        if (connection != null) {
+                        } finally {
                             connection.release();
                         }
                     }
@@ -402,21 +398,22 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
 
         @Override
         public void onResult(final BsonDocument result, final Throwable t) {
-            try {
-                if (t != null) {
-                    Throwable translatedException = t instanceof MongoCommandException
-                            ? translateCommandException((MongoCommandException) t, cursor)
-                            : t;
-                    endOperationInProgress();
-                    callback.onResult(null, translatedException);
-                } else {
+            if (t != null) {
+                connection.release();
+                Throwable translatedException = t instanceof MongoCommandException
+                        ? translateCommandException((MongoCommandException) t, cursor)
+                        : t;
+                endOperationInProgress();
+                callback.onResult(null, translatedException);
+            } else {
+                try {
                     QueryResult<T> queryResult = getMoreCursorDocumentToQueryResult(result.getDocument(CURSOR),
                             connection.getDescription().getServerAddress());
                     postBatchResumeToken = getPostBatchResumeTokenFromResponse(result);
                     handleGetMoreQueryResult(connection, callback, queryResult, tryNext);
+                } finally {
+                    connection.release();
                 }
-            } finally {
-                connection.release();
             }
         }
     }
@@ -435,15 +432,16 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
 
         @Override
         public void onResult(final QueryResult<T> result, final Throwable t) {
-            try {
-                if (t != null) {
-                    endOperationInProgress();
-                    callback.onResult(null, t);
-                } else {
-                    handleGetMoreQueryResult(connection, callback, result, tryNext);
-                }
-            } finally {
+            if (t != null) {
                 connection.release();
+                endOperationInProgress();
+                callback.onResult(null, t);
+            } else {
+                try {
+                    handleGetMoreQueryResult(connection, callback, result, tryNext);
+                } finally {
+                    connection.release();
+                }
             }
         }
     }
