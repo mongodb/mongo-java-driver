@@ -119,19 +119,19 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
 
     @Override
     public void close() {
-        boolean killCursor = false;
+        boolean doClose = false;
 
         synchronized (this) {
             if (isOperationInProgress) {
                 isClosePending = true;
-            } else {
-                killCursor = !isClosed;
+            } else if (!isClosed) {
                 isClosed = true;
                 isClosePending = false;
+                doClose = true;
             }
         }
 
-        if (killCursor) {
+        if (doClose) {
             killCursorOnClose();
         }
     }
@@ -340,6 +340,10 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         cursor.set(result.getCursor());
         if (isClosePending) {
             try {
+                connection.release();
+                if (result.getCursor() == null) {
+                    connectionSource.release();
+                }
                 endOperationInProgress();
             } finally {
                 callback.onResult(null, null);
