@@ -60,6 +60,7 @@ public final class FindOptions {
     public FindOptions() {
     }
 
+    //CHECKSTYLE:OFF
     FindOptions(
             final int batchSize, final int limit, final Bson projection, final long maxTimeMS, final long maxAwaitTimeMS, final int skip,
             final Bson sort, final CursorType cursorType, final boolean noCursorTimeout, final boolean oplogReplay, final boolean partial,
@@ -86,6 +87,7 @@ public final class FindOptions {
         this.showRecordId = showRecordId;
         this.allowDiskUse = allowDiskUse;
     }
+    //CHECKSTYLE:ON
 
     public FindOptions withBatchSize(final int batchSize) {
         return new FindOptions(batchSize, limit, projection, maxTimeMS, maxAwaitTimeMS, skip, sort, cursorType, noCursorTimeout,
