@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicLong;
 class BatchCursorFlux<T> implements Publisher<T> {
 
     private final BatchCursorPublisher<T> batchCursorPublisher;
+    @Nullable
     private final Integer originalBatchSize;
     private final Runnable resetBatchSize;
     private final AtomicBoolean inProgress = new AtomicBoolean(false);
@@ -48,10 +49,10 @@ class BatchCursorFlux<T> implements Publisher<T> {
     public void subscribe(final Subscriber<? super T> subscriber) {
         Flux.<T>create(sink -> {
             this.sink = sink;
-            sink.onRequest(l -> {
-                if (demandDelta.addAndGet(l) > 0 && inProgress.compareAndSet(false, true)) {
+            sink.onRequest(demand -> {
+                if (calculateDemand(demand) > 0 && inProgress.compareAndSet(false, true)) {
                     if (batchCursor == null) {
-                        batchCursorPublisher.batchSize(calculateBatchSize());
+                        batchCursorPublisher.batchSize(calculateBatchSize(sink.requestedFromDownstream()));
                         batchCursorPublisher.batchCursor().subscribe(bc -> {
                             batchCursor = bc;
                             inProgress.set(false);
@@ -70,7 +71,7 @@ class BatchCursorFlux<T> implements Publisher<T> {
         .subscribe(subscriber);
     }
 
-    void closeCursor() {
+    private void closeCursor() {
         if (batchCursor != null && !batchCursor.isClosed()) {
             batchCursor.close();
         }
@@ -81,7 +82,7 @@ class BatchCursorFlux<T> implements Publisher<T> {
             if (batchCursor.isClosed()) {
                 sink.complete();
             } else {
-                batchCursor.setBatchSize(calculateBatchSize());
+                batchCursor.setBatchSize(calculateBatchSize(sink.requestedFromDownstream()));
                 Mono.from(batchCursor.next())
                         .doOnCancel(this::closeCursor)
                         .doOnError((e) -> {
@@ -91,7 +92,7 @@ class BatchCursorFlux<T> implements Publisher<T> {
                         .doOnSuccess(results -> {
                             if (results != null) {
                                 results.forEach(sink::next);
-                                demandDelta.addAndGet(-results.size());
+                                calculateDemand(-results.size());
                             }
                             if (batchCursor.isClosed()) {
                                 sink.complete();
@@ -105,14 +106,23 @@ class BatchCursorFlux<T> implements Publisher<T> {
         }
     }
 
+    synchronized long calculateDemand(final long demand) {
+        long originalDelta = demandDelta.get();
+        long newDelta = demandDelta.addAndGet(demand);
+        if (demand > 0 && newDelta < originalDelta) {
+            demandDelta.set(Long.MAX_VALUE);
+            return Long.MAX_VALUE;
+        }
+        return newDelta;
+    }
 
-    int calculateBatchSize() {
+    int calculateBatchSize(final long demand) {
         if (originalBatchSize != null) {
             return originalBatchSize;
-        } else if (sink.requestedFromDownstream() > Integer.MAX_VALUE) {
+        } else if (demand > Integer.MAX_VALUE) {
             return Integer.MAX_VALUE;
         }
-        return Math.max(2, (int) sink.requestedFromDownstream());
+        return Math.max(2, (int) demand);
     }
 
 }

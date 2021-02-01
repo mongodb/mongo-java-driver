@@ -24,9 +24,11 @@ import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.TestSubscriber;
 import org.bson.Document;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -40,15 +42,23 @@ import static com.mongodb.reactivestreams.client.Fixture.getMongoClientBuilderFr
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 
+import org.junit.jupiter.api.Test;
+
+@ExtendWith(MockitoExtension.class)
 public class BatchCursorFluxTest {
 
     private MongoClient client;
     private TestCommandListener commandListener;
     private MongoCollection<Document> collection;
 
-    @Before
+    @Mock
+    private BatchCursorPublisher<Document> batchCursorPublisher;
+
+    @BeforeEach
     public void setUp() {
         commandListener = new TestCommandListener(singletonList("commandStartedEvent"), asList("insert", "killCursors"));
         MongoClientSettings mongoClientSettings = getMongoClientBuilderFromConnectionString().addCommandListener(commandListener).build();
@@ -57,13 +67,16 @@ public class BatchCursorFluxTest {
         drop(collection.getNamespace());
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
-        if (collection != null) {
-            drop(collection.getNamespace());
-        }
-        if (client != null) {
-            client.close();
+        try {
+            if (collection != null) {
+                drop(collection.getNamespace());
+            }
+        } finally {
+            if (client != null) {
+                client.close();
+            }
         }
     }
 
@@ -109,6 +122,7 @@ public class BatchCursorFluxTest {
         assertCommandNames(singletonList("find"));
 
         subscriber.requestMore(101);
+        subscriber.assertReceivedOnNext(docs);
         subscriber.assertNoErrors();
         subscriber.assertTerminalEvent();
         assertCommandNames(asList("find", "getMore"));
@@ -137,6 +151,7 @@ public class BatchCursorFluxTest {
         assertCommandNames(asList("find", "getMore"));
 
         subscriber.requestMore(25);
+        subscriber.assertReceivedOnNext(docs);
         subscriber.assertNoErrors();
         subscriber.assertTerminalEvent();
         assertCommandNames(asList("find", "getMore"));
@@ -161,8 +176,8 @@ public class BatchCursorFluxTest {
         assertCommandNames(asList("find", "getMore"));
 
         subscriber.requestMore(40);
-        subscriber.assertNoErrors();
         subscriber.assertReceivedOnNext(docs);
+        subscriber.assertNoErrors();
         subscriber.assertTerminalEvent();
         assertCommandNames(asList("find", "getMore", "getMore"));
     }
@@ -199,8 +214,8 @@ public class BatchCursorFluxTest {
         assertCommandNames(singletonList("find"));
 
         subscriber.requestMore(200);
-        subscriber.assertNoErrors();
         subscriber.assertReceivedOnNext(docs);
+        subscriber.assertNoErrors();
         subscriber.assertTerminalEvent();
         assertCommandNames(asList("find", "getMore"));
 
@@ -212,13 +227,51 @@ public class BatchCursorFluxTest {
         subscriber.requestMore(Long.MAX_VALUE);
         subscriber.assertNoErrors();
         subscriber.assertReceivedOnNext(docs);
-        assertCommandNames(singletonList("find"));
         subscriber.assertTerminalEvent();
+        assertCommandNames(singletonList("find"));
     }
 
+    @Test
+    public void testCalculateDemand() {
+        BatchCursorFlux<Document> batchCursorFlux = new BatchCursorFlux<>(batchCursorPublisher, 10, () -> {
+        });
+
+        assertAll("Calculating demand",
+                () -> assertEquals(0, batchCursorFlux.calculateDemand(0)),
+                () -> assertEquals(10, batchCursorFlux.calculateDemand(10)),
+                () -> assertEquals(0, batchCursorFlux.calculateDemand(-10)),
+                () -> assertEquals(Integer.MAX_VALUE, batchCursorFlux.calculateDemand(Integer.MAX_VALUE)),
+                () -> assertEquals(Long.MAX_VALUE, batchCursorFlux.calculateDemand(Long.MAX_VALUE)),
+                () -> assertEquals(Long.MAX_VALUE, batchCursorFlux.calculateDemand(1)),
+                () -> assertEquals(0, batchCursorFlux.calculateDemand(-Long.MAX_VALUE))
+        );
+    }
+
+    @Test
+    public void testCalculateBatchSize() {
+        BatchCursorFlux<Document> batchCursorFluxWithBatchSize = new BatchCursorFlux<>(batchCursorPublisher, 10, () -> {
+        });
+        BatchCursorFlux<Document> batchCursorFluxNoSetBatchSize = new BatchCursorFlux<>(batchCursorPublisher, null, () -> {
+        });
+
+        assertAll("Calculating batch size with set batch size",
+                () -> assertEquals(10, batchCursorFluxWithBatchSize.calculateBatchSize(100)),
+                () -> assertEquals(10, batchCursorFluxWithBatchSize.calculateBatchSize(Long.MAX_VALUE)),
+                () -> assertEquals(10, batchCursorFluxWithBatchSize.calculateBatchSize(1))
+        );
+
+        assertAll("Calculating batch size with dynamic batch size",
+                () -> assertEquals(2, batchCursorFluxNoSetBatchSize.calculateBatchSize(1)),
+                () -> assertEquals(1000, batchCursorFluxNoSetBatchSize.calculateBatchSize(1000)),
+                () -> assertEquals(Integer.MAX_VALUE, batchCursorFluxNoSetBatchSize.calculateBatchSize(Integer.MAX_VALUE)),
+                () -> assertEquals(Integer.MAX_VALUE, batchCursorFluxNoSetBatchSize.calculateBatchSize(Long.MAX_VALUE))
+        );
+    }
+
+
     private void assertCommandNames(final List<String> commandNames) {
-        assertArrayEquals(commandNames.toArray(),
-                commandListener.getCommandStartedEvents().stream().map(CommandEvent::getCommandName).toArray());
+        assertIterableEquals(commandNames,
+                commandListener.getCommandStartedEvents().stream().map(CommandEvent::getCommandName).collect(Collectors.toList()));
     }
 
     private List<Document> createDocs(final int amount) {
