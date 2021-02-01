@@ -60,6 +60,38 @@ public final class FindOptions {
     public FindOptions() {
     }
 
+    FindOptions(
+            final int batchSize, final int limit, final Bson projection, final long maxTimeMS, final long maxAwaitTimeMS, final int skip,
+            final Bson sort, final CursorType cursorType, final boolean noCursorTimeout, final boolean oplogReplay, final boolean partial,
+            final Collation collation, final String comment, final Bson hint, final String hintString, final Bson max, final Bson min,
+            final boolean returnKey, final boolean showRecordId, final Boolean allowDiskUse) {
+        this.batchSize = batchSize;
+        this.limit = limit;
+        this.projection = projection;
+        this.maxTimeMS = maxTimeMS;
+        this.maxAwaitTimeMS = maxAwaitTimeMS;
+        this.skip = skip;
+        this.sort = sort;
+        this.cursorType = cursorType;
+        this.noCursorTimeout = noCursorTimeout;
+        this.oplogReplay = oplogReplay;
+        this.partial = partial;
+        this.collation = collation;
+        this.comment = comment;
+        this.hint = hint;
+        this.hintString = hintString;
+        this.max = max;
+        this.min = min;
+        this.returnKey = returnKey;
+        this.showRecordId = showRecordId;
+        this.allowDiskUse = allowDiskUse;
+    }
+
+    public FindOptions withBatchSize(final int batchSize) {
+        return new FindOptions(batchSize, limit, projection, maxTimeMS, maxAwaitTimeMS, skip, sort, cursorType, noCursorTimeout,
+                oplogReplay, partial, collation, comment, hint, hintString, max, min, returnKey, showRecordId, allowDiskUse);
+    }
+
     /**
      * Gets the limit to apply.  The default is null.
      *

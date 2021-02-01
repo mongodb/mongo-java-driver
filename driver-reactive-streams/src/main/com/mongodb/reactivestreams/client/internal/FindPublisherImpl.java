@@ -207,9 +207,7 @@ final class FindPublisherImpl<T> extends BatchCursorPublisher<T> implements Find
 
     @Override
     AsyncExplainableReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
-        int originalBatchSize = findOptions.getBatchSize();
-        FindOperation<T> operation = getOperations().find(filter, getDocumentClass(), findOptions.batchSize(initialBatchSize));
-        findOptions.batchSize(originalBatchSize);
+        FindOperation<T> operation = getOperations().find(filter, getDocumentClass(), findOptions.withBatchSize(initialBatchSize));
         return operation;
     }
 
