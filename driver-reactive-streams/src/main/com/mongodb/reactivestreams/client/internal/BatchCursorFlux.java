@@ -16,7 +16,6 @@
 
 package com.mongodb.reactivestreams.client.internal;
 
-import com.mongodb.lang.Nullable;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
@@ -29,20 +28,13 @@ import java.util.concurrent.atomic.AtomicLong;
 class BatchCursorFlux<T> implements Publisher<T> {
 
     private final BatchCursorPublisher<T> batchCursorPublisher;
-    @Nullable
-    private final Integer originalBatchSize;
-    private final Runnable resetBatchSize;
     private final AtomicBoolean inProgress = new AtomicBoolean(false);
     private final AtomicLong demandDelta = new AtomicLong(0);
     private BatchCursor<T> batchCursor;
     private FluxSink<T> sink;
 
-    BatchCursorFlux(final BatchCursorPublisher<T> batchCursorPublisher,
-                    @Nullable final Integer originalBatchSize,
-                    final Runnable resetBatchSize) {
+    BatchCursorFlux(final BatchCursorPublisher<T> batchCursorPublisher) {
         this.batchCursorPublisher = batchCursorPublisher;
-        this.originalBatchSize = originalBatchSize;
-        this.resetBatchSize = resetBatchSize;
     }
 
     @Override
@@ -52,13 +44,12 @@ class BatchCursorFlux<T> implements Publisher<T> {
             sink.onRequest(demand -> {
                 if (calculateDemand(demand) > 0 && inProgress.compareAndSet(false, true)) {
                     if (batchCursor == null) {
-                        batchCursorPublisher.batchSize(calculateBatchSize(sink.requestedFromDownstream()));
-                        batchCursorPublisher.batchCursor().subscribe(bc -> {
+                        int batchSize = calculateBatchSize(sink.requestedFromDownstream());
+                        batchCursorPublisher.batchCursor(batchSize).subscribe(bc -> {
                             batchCursor = bc;
                             inProgress.set(false);
                             recurseCursor();
                         }, sink::error);
-                        resetBatchSize.run();
                     } else {
                         inProgress.set(false);
                         recurseCursor();
@@ -117,8 +108,9 @@ class BatchCursorFlux<T> implements Publisher<T> {
     }
 
     int calculateBatchSize(final long demand) {
-        if (originalBatchSize != null) {
-            return originalBatchSize;
+        Integer setBatchSize = batchCursorPublisher.getBatchSize();
+        if (setBatchSize != null) {
+            return setBatchSize;
         } else if (demand > Integer.MAX_VALUE) {
             return Integer.MAX_VALUE;
         }

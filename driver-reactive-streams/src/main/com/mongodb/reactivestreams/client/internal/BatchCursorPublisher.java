@@ -42,10 +42,10 @@ abstract class BatchCursorPublisher<T> implements Publisher<T> {
         this.mongoOperationPublisher = notNull("mongoOperationPublisher", mongoOperationPublisher);
     }
 
-    abstract AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation();
+    abstract AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(int initialBatchSize);
 
     AsyncReadOperation<AsyncBatchCursor<T>> asAsyncFirstReadOperation() {
-        return asAsyncReadOperation();
+        return asAsyncReadOperation(1);
     }
 
     @Nullable
@@ -112,12 +112,11 @@ abstract class BatchCursorPublisher<T> implements Publisher<T> {
 
     @Override
     public void subscribe(final Subscriber<? super T> subscriber) {
-        Integer originalBatchSize = getBatchSize();
-        new BatchCursorFlux<>(this, originalBatchSize, () -> batchSize = originalBatchSize).subscribe(subscriber);
+        new BatchCursorFlux<>(this).subscribe(subscriber);
     }
 
-    public Mono<BatchCursor<T>> batchCursor() {
-        return batchCursor(this::asAsyncReadOperation);
+    public Mono<BatchCursor<T>> batchCursor(final int initialBatchSize) {
+        return batchCursor(() -> asAsyncReadOperation(initialBatchSize));
     }
 
     Mono<BatchCursor<T>> batchCursor(final Supplier<AsyncReadOperation<AsyncBatchCursor<T>>> supplier) {

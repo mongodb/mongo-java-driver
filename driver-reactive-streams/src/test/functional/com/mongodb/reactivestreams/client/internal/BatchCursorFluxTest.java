@@ -45,6 +45,7 @@ import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
+import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
 
@@ -233,8 +234,7 @@ public class BatchCursorFluxTest {
 
     @Test
     public void testCalculateDemand() {
-        BatchCursorFlux<Document> batchCursorFlux = new BatchCursorFlux<>(batchCursorPublisher, 10, () -> {
-        });
+        BatchCursorFlux<Document> batchCursorFlux = new BatchCursorFlux<>(batchCursorPublisher);
 
         assertAll("Calculating demand",
                 () -> assertEquals(0, batchCursorFlux.calculateDemand(0)),
@@ -249,23 +249,24 @@ public class BatchCursorFluxTest {
 
     @Test
     public void testCalculateBatchSize() {
-        BatchCursorFlux<Document> batchCursorFluxWithBatchSize = new BatchCursorFlux<>(batchCursorPublisher, 10, () -> {
-        });
-        BatchCursorFlux<Document> batchCursorFluxNoSetBatchSize = new BatchCursorFlux<>(batchCursorPublisher, null, () -> {
-        });
+        BatchCursorFlux<Document> batchCursorFlux = new BatchCursorFlux<>(batchCursorPublisher);
 
-        assertAll("Calculating batch size with set batch size",
-                () -> assertEquals(10, batchCursorFluxWithBatchSize.calculateBatchSize(100)),
-                () -> assertEquals(10, batchCursorFluxWithBatchSize.calculateBatchSize(Long.MAX_VALUE)),
-                () -> assertEquals(10, batchCursorFluxWithBatchSize.calculateBatchSize(1))
-        );
-
+        when(batchCursorPublisher.getBatchSize()).thenReturn(null);
         assertAll("Calculating batch size with dynamic batch size",
-                () -> assertEquals(2, batchCursorFluxNoSetBatchSize.calculateBatchSize(1)),
-                () -> assertEquals(1000, batchCursorFluxNoSetBatchSize.calculateBatchSize(1000)),
-                () -> assertEquals(Integer.MAX_VALUE, batchCursorFluxNoSetBatchSize.calculateBatchSize(Integer.MAX_VALUE)),
-                () -> assertEquals(Integer.MAX_VALUE, batchCursorFluxNoSetBatchSize.calculateBatchSize(Long.MAX_VALUE))
+                () -> assertEquals(2, batchCursorFlux.calculateBatchSize(1)),
+                () -> assertEquals(1000, batchCursorFlux.calculateBatchSize(1000)),
+                () -> assertEquals(Integer.MAX_VALUE, batchCursorFlux.calculateBatchSize(Integer.MAX_VALUE)),
+                () -> assertEquals(Integer.MAX_VALUE, batchCursorFlux.calculateBatchSize(Long.MAX_VALUE))
         );
+
+
+        when(batchCursorPublisher.getBatchSize()).thenReturn(10);
+        assertAll("Calculating batch size with set batch size",
+                () -> assertEquals(10, batchCursorFlux.calculateBatchSize(100)),
+                () -> assertEquals(10, batchCursorFlux.calculateBatchSize(Long.MAX_VALUE)),
+                () -> assertEquals(10, batchCursorFlux.calculateBatchSize(1))
+        );
+
     }
 
 
