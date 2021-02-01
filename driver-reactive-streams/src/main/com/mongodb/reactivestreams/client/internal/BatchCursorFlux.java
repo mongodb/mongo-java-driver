@@ -68,7 +68,7 @@ class BatchCursorFlux<T> implements Publisher<T> {
         }
     }
 
-    void recurseCursor(){
+    private void recurseCursor(){
         if (!sink.isCancelled() && sink.requestedFromDownstream() > 0 && inProgress.compareAndSet(false, true)) {
             if (batchCursor.isClosed()) {
                 sink.complete();
