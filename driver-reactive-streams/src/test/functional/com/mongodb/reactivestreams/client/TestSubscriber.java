@@ -28,8 +28,6 @@ import java.util.function.Supplier;
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 
 public class TestSubscriber<T> implements Subscriber<T> {
-
-    private static final int DEFAULT_MAX_RETRIES = 10;
     private final CountDownLatch latch = new CountDownLatch(1);
     private final ArrayList<T> onNextEvents = new ArrayList<>();
     private final ArrayList<Throwable> onErrorEvents = new ArrayList<>();
@@ -130,7 +128,7 @@ public class TestSubscriber<T> implements Subscriber<T> {
      * @throws AssertionError if the sequence of items observed does not exactly match {@code items}
      */
     public void assertReceivedOnNext(final List<T> items) {
-        if (!retry(() -> getOnNextEvents().size() == items.size())) {
+        if (!waitFor(() -> getOnNextEvents().size() == items.size())) {
             throw new AssertionError("Number of items does not match. Provided: " + items.size() + "  Actual: " + getOnNextEvents().size());
         }
 
@@ -159,7 +157,7 @@ public class TestSubscriber<T> implements Subscriber<T> {
             //noinspection ResultOfMethodCallIgnored
             latch.await(TIMEOUT_DURATION.toMillis(), TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
-            // ignore
+            Thread.currentThread().interrupt();
         }
 
         if (onErrorEvents.size() > 1) {
@@ -200,7 +198,8 @@ public class TestSubscriber<T> implements Subscriber<T> {
             throw new AssertionError("Unexpected onError events: " + getOnErrorEvents().size(), getOnErrorEvents().get(0));
         }
     }
-    private boolean retry(final Supplier<Boolean> check) {
+
+    private boolean waitFor(final Supplier<Boolean> check) {
         int retry = 0;
         long totalSleepTimeMS = 0;
         while (totalSleepTimeMS < TIMEOUT_DURATION.toMillis()) {
@@ -213,6 +212,7 @@ public class TestSubscriber<T> implements Subscriber<T> {
             try {
                 Thread.sleep(sleepTimeMS);
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 return false;
             }
         }

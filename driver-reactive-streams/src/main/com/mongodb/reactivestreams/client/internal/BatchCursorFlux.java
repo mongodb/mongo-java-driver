@@ -63,7 +63,7 @@ class BatchCursorFlux<T> implements Publisher<T> {
     }
 
     private void closeCursor() {
-        if (batchCursor != null && !batchCursor.isClosed()) {
+        if (batchCursor != null) {
             batchCursor.close();
         }
     }
@@ -97,14 +97,11 @@ class BatchCursorFlux<T> implements Publisher<T> {
         }
     }
 
-    synchronized long calculateDemand(final long demand) {
-        long originalDelta = demandDelta.get();
-        long newDelta = demandDelta.addAndGet(demand);
-        if (demand > 0 && newDelta < originalDelta) {
-            demandDelta.set(Long.MAX_VALUE);
-            return Long.MAX_VALUE;
-        }
-        return newDelta;
+    long calculateDemand(final long demand) {
+        return demandDelta.accumulateAndGet(demand, (originalValue, update) -> {
+            long newValue = originalValue + update;
+            return update > 0 && newValue < originalValue ? Long.MAX_VALUE : newValue;
+        });
     }
 
     int calculateBatchSize(final long demand) {
