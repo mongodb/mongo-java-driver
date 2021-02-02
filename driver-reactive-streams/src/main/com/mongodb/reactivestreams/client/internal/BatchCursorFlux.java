@@ -94,6 +94,8 @@ class BatchCursorFlux<T> implements Publisher<T> {
                         })
                         .subscribe();
                 }
+        } else if (sink.isCancelled()) {
+            closeCursor();
         }
     }
 
