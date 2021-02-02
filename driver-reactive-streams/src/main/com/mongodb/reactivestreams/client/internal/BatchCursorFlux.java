@@ -77,8 +77,11 @@ class BatchCursorFlux<T> implements Publisher<T> {
                 Mono.from(batchCursor.next())
                         .doOnCancel(this::closeCursor)
                         .doOnError((e) -> {
-                            closeCursor();
-                            sink.error(e);
+                            try {
+                                closeCursor();
+                            } finally {
+                                sink.error(e);
+                            }
                         })
                         .doOnSuccess(results -> {
                             if (results != null) {
