@@ -30,7 +30,7 @@ class BatchCursorFlux<T> implements Publisher<T> {
     private final BatchCursorPublisher<T> batchCursorPublisher;
     private final AtomicBoolean inProgress = new AtomicBoolean(false);
     private final AtomicLong demandDelta = new AtomicLong(0);
-    private BatchCursor<T> batchCursor;
+    private volatile BatchCursor<T> batchCursor;
     private FluxSink<T> sink;
 
     BatchCursorFlux(final BatchCursorPublisher<T> batchCursorPublisher) {
