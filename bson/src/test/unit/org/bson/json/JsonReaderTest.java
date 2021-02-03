@@ -968,6 +968,18 @@ public class JsonReaderTest {
             return null;
         });
     }
+
+    // testing that JsonReader uses internal UuidStringValidator, as UUID.fromString accepts this UUID
+    @Test(expected = JsonParseException.class)
+    public void testInvalidUuid() {
+        // first hyphen out of place
+        String json = "{ \"$uuid\" : \"73ff-d26444b-34c6-990e8e-7d1dfc035d4\"}}";
+        testStringAndStream(json, bsonReader -> {
+            bsonReader.readBinaryData();
+            return null;
+        });
+    }
+
     @Test
     public void testUuidConstructor() {
         String json = "UUID(\"b5f21e0c-2a0d-42d6-ad03-d827008d8ab6\")";

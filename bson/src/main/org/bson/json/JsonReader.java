@@ -1208,6 +1208,7 @@ public class JsonReader extends AbstractBsonReader {
         String uuidString = readStringFromExtendedJson();
         verifyToken(JsonTokenType.END_OBJECT);
         try {
+            UuidStringValidator.validate(uuidString);
             return new BsonBinary(UUID.fromString(uuidString));
         } catch (IllegalArgumentException e) {
             throw new JsonParseException(e);
