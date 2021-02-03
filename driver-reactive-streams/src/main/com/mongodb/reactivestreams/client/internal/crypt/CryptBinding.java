@@ -95,7 +95,8 @@ public class CryptBinding implements AsyncClusterAwareReadWriteBinding {
 
     @Override
     public AsyncReadWriteBinding retain() {
-        return wrapped.retain();
+        wrapped.retain();
+        return this;
     }
 
     @Override
