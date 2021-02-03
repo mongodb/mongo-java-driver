@@ -101,7 +101,7 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
 
         int connectionCount = connectionPoolListener.countEvents(com.mongodb.event.ConnectionAddedEvent.class);
 
-        BatchCursor<Document> cursor = ((FindPublisherImpl<Document>) collection.find().batchSize(2)).batchCursor()
+        BatchCursor<Document> cursor = ((FindPublisherImpl<Document>) collection.find().batchSize(2)).batchCursor(2)
                 .block(TIMEOUT_DURATION);
         assertNotNull(cursor);
         assertEquals(asList(documents.get(0), documents.get(1)), Mono.from(cursor.next()).block(TIMEOUT_DURATION));
