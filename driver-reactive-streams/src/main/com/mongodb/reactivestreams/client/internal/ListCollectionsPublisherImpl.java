@@ -59,8 +59,8 @@ final class ListCollectionsPublisherImpl<T> extends BatchCursorPublisher<T> impl
         return this;
     }
 
-    AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation() {
+    AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
         return getOperations().listCollections(getNamespace().getDatabaseName(), getDocumentClass(), filter, collectionNamesOnly,
-                                               getBatchSize(), maxTimeMS);
+                initialBatchSize, maxTimeMS);
     }
 }

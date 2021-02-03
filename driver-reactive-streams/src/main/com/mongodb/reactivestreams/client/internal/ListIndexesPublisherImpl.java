@@ -48,7 +48,7 @@ final class ListIndexesPublisherImpl<T> extends BatchCursorPublisher<T> implemen
         return this;
     }
 
-    AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation() {
-        return getOperations().listIndexes(getDocumentClass(), getBatchSize(), maxTimeMS);
+    AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
+        return getOperations().listIndexes(getDocumentClass(), initialBatchSize, maxTimeMS);
     }
 }

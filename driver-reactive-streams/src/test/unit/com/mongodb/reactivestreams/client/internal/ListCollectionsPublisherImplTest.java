@@ -44,6 +44,7 @@ public class ListCollectionsPublisherImplTest extends TestHelper {
 
         ListCollectionsOperation<String> expectedOperation = new ListCollectionsOperation<>(DATABASE_NAME,
                                                                                             getDefaultCodecRegistry().get(String.class))
+                .batchSize(Integer.MAX_VALUE)
                 .nameOnly(true).retryReads(true);
 
         // default input should be as expected

@@ -23,6 +23,7 @@ import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.operation.AsyncExplainableReadOperation;
 import com.mongodb.internal.operation.AsyncReadOperation;
+import com.mongodb.internal.operation.FindOperation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.FindPublisher;
@@ -199,14 +200,15 @@ final class FindPublisherImpl<T> extends BatchCursorPublisher<T> implements Find
     private <E> Publisher<E> publishExplain(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity) {
         notNull("explainDocumentClass", explainResultClass);
         return getMongoOperationPublisher().createReadOperationMono(() ->
-                        asAsyncReadOperation().asAsyncExplainableOperation(verbosity,
+                        asAsyncReadOperation(0).asAsyncExplainableOperation(verbosity,
                                 getCodecRegistry().get(explainResultClass)),
                 getClientSession());
     }
 
     @Override
-    AsyncExplainableReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation() {
-        return getOperations().find(filter, getDocumentClass(), findOptions);
+    AsyncExplainableReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
+        FindOperation<T> operation = getOperations().find(filter, getDocumentClass(), findOptions.withBatchSize(initialBatchSize));
+        return operation;
     }
 
     @Override
