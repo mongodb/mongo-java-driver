@@ -48,7 +48,13 @@ class BatchCursorFlux<T> implements Publisher<T> {
                         batchCursorPublisher.batchCursor(batchSize).subscribe(bc -> {
                             batchCursor = bc;
                             inProgress.set(false);
-                            recurseCursor();
+
+                            // Handle any cancelled subscriptions that happen during the time it takes to get the batchCursor
+                            if (sink.isCancelled()) {
+                                closeCursor();
+                            } else {
+                                recurseCursor();
+                            }
                         }, sink::error);
                     } else {
                         inProgress.set(false);
@@ -97,8 +103,6 @@ class BatchCursorFlux<T> implements Publisher<T> {
                         })
                         .subscribe();
                 }
-        } else if (sink.isCancelled()) {
-            closeCursor();
         }
     }
 
