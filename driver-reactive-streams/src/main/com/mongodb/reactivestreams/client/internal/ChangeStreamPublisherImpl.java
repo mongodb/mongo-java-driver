@@ -114,8 +114,8 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
     public <TDocument> Publisher<TDocument> withDocumentClass(final Class<TDocument> clazz) {
         return new BatchCursorPublisher<TDocument>(getClientSession(), getMongoOperationPublisher().withDocumentClass(clazz)) {
             @Override
-            AsyncReadOperation<AsyncBatchCursor<TDocument>> asAsyncReadOperation() {
-                return createChangeStreamOperation(getMongoOperationPublisher().getCodecRegistry().get(clazz));
+            AsyncReadOperation<AsyncBatchCursor<TDocument>> asAsyncReadOperation(final int initialBatchSize) {
+                return createChangeStreamOperation(getMongoOperationPublisher().getCodecRegistry().get(clazz), initialBatchSize);
             }
         };
     }
@@ -133,14 +133,14 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
     }
 
     @Override
-    AsyncReadOperation<AsyncBatchCursor<ChangeStreamDocument<T>>> asAsyncReadOperation() {
-        return createChangeStreamOperation(codec);
+    AsyncReadOperation<AsyncBatchCursor<ChangeStreamDocument<T>>> asAsyncReadOperation(final int initialBatchSize) {
+        return createChangeStreamOperation(codec, initialBatchSize);
     }
 
-    private <S> AsyncReadOperation<AsyncBatchCursor<S>> createChangeStreamOperation(final Codec<S> codec) {
+    private <S> AsyncReadOperation<AsyncBatchCursor<S>> createChangeStreamOperation(final Codec<S> codec, final int initialBatchSize) {
         return new ChangeStreamOperation<>(getNamespace(), fullDocument,
                                            createBsonDocumentList(pipeline), codec, changeStreamLevel)
-                .batchSize(getBatchSize())
+                .batchSize(initialBatchSize)
                 .collation(collation)
                 .maxAwaitTime(maxAwaitTimeMS, MILLISECONDS)
                 .resumeAfter(resumeToken)

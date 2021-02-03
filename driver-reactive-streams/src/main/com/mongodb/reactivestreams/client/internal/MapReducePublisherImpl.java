@@ -191,11 +191,13 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
     }
 
     @Override
-    AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation() {
+    AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
         if (inline) {
+            // initialBatchSize is ignored for map reduce operations.
             return createMapReduceInlineOperation();
         } else {
-            return new WriteOperationThenCursorReadOperation<>(createMapReduceToCollectionOperation(), createFindOperation());
+            return new WriteOperationThenCursorReadOperation<>(createMapReduceToCollectionOperation(),
+                    createFindOperation(initialBatchSize));
         }
     }
 
@@ -213,13 +215,9 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
                                                                                         bypassDocumentValidation, collation));
     }
 
-    private AsyncReadOperation<AsyncBatchCursor<T>> createFindOperation() {
+    private AsyncReadOperation<AsyncBatchCursor<T>> createFindOperation(final int initialBatchSize) {
         String dbName = databaseName != null ? databaseName : getNamespace().getDatabaseName();
-        FindOptions findOptions = new FindOptions().collation(collation);
-        Integer batchSize = getBatchSize();
-        if (batchSize != null) {
-            findOptions.batchSize(batchSize);
-        }
+        FindOptions findOptions = new FindOptions().collation(collation).batchSize(initialBatchSize);
         return getOperations().find(new MongoNamespace(dbName, collectionName), new BsonDocument(), getDocumentClass(), findOptions);
     }
 

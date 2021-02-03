@@ -22,51 +22,25 @@ import org.reactivestreams.Subscription;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-public class TestSubscriber<T> implements Subscriber<T> {
+import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 
-    private final Subscriber<T> delegate;
+public class TestSubscriber<T> implements Subscriber<T> {
     private final CountDownLatch latch = new CountDownLatch(1);
-    private final ArrayList<T> onNextEvents = new ArrayList<T>();
-    private final ArrayList<Throwable> onErrorEvents = new ArrayList<Throwable>();
-    private final ArrayList<Void> onCompleteEvents = new ArrayList<Void>();
+    private final ArrayList<T> onNextEvents = new ArrayList<>();
+    private final ArrayList<Throwable> onErrorEvents = new ArrayList<>();
+    private final ArrayList<Void> onCompleteEvents = new ArrayList<>();
 
     private Subscription subscription;
 
-    public TestSubscriber(final Subscriber<T> delegate) {
-        this.delegate = delegate;
-    }
-
     public TestSubscriber() {
-        this(new Subscriber<T>() {
-
-            @Override
-            public void onSubscribe(final Subscription subscription) {
-                // do nothing
-            }
-
-            @Override
-            public void onNext(final T result) {
-                // do nothing
-            }
-
-            @Override
-            public void onComplete() {
-                // do nothing
-            }
-
-            @Override
-            public void onError(final Throwable e) {
-                // do nothing
-            }
-        });
     }
 
     @Override
     public void onSubscribe(final Subscription subscription) {
         this.subscription = subscription;
-        delegate.onSubscribe(subscription);
     }
 
     /**
@@ -83,7 +57,6 @@ public class TestSubscriber<T> implements Subscriber<T> {
     @Override
     public void onNext(final T result) {
         onNextEvents.add(result);
-        delegate.onNext(result);
     }
 
     /**
@@ -99,7 +72,6 @@ public class TestSubscriber<T> implements Subscriber<T> {
     public void onError(final Throwable e) {
         try {
             onErrorEvents.add(e);
-            delegate.onError(e);
         } finally {
             latch.countDown();
         }
@@ -115,7 +87,6 @@ public class TestSubscriber<T> implements Subscriber<T> {
     public void onComplete() {
         try {
             onCompleteEvents.add(null);
-            delegate.onComplete();
         } finally {
             latch.countDown();
         }
@@ -151,22 +122,13 @@ public class TestSubscriber<T> implements Subscriber<T> {
     }
 
     /**
-     * Returns the subscription to the this {@link Subscriber}.
-     *
-     * @return the subscription or null if not subscribed to
-     */
-    public Subscription getSubscription() {
-        return subscription;
-    }
-
-    /**
      * Assert that a particular sequence of items was received by this {@link Subscriber} in order.
      *
      * @param items the sequence of items expected to have been observed
      * @throws AssertionError if the sequence of items observed does not exactly match {@code items}
      */
     public void assertReceivedOnNext(final List<T> items) {
-        if (tryMultipleTimes(items.size(), () -> getOnNextEvents().size() != items.size())) {
+        if (!waitFor(() -> getOnNextEvents().size() == items.size())) {
             throw new AssertionError("Number of items does not match. Provided: " + items.size() + "  Actual: " + getOnNextEvents().size());
         }
 
@@ -185,28 +147,19 @@ public class TestSubscriber<T> implements Subscriber<T> {
         }
     }
 
-    private boolean tryMultipleTimes(final int noTimes, final Supplier<Boolean> test) {
-        int counter = noTimes;
-        while (counter > 0){
-            if (test.get()) {
-                return true;
-            }
-            counter--;
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                return false;
-            }
-        }
-        return false;
-    }
-
     /**
      * Assert that a single terminal event occurred, either {@link #onComplete} or {@link #onError}.
      *
      * @throws AssertionError if not exactly one terminal event notification was received
      */
     public void assertTerminalEvent() {
+        try {
+            //noinspection ResultOfMethodCallIgnored
+            latch.await(TIMEOUT_DURATION.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
         if (onErrorEvents.size() > 1) {
             throw new AssertionError("Too many onError events: " + onErrorEvents.size());
         }
@@ -242,20 +195,28 @@ public class TestSubscriber<T> implements Subscriber<T> {
      */
     public void assertNoErrors() {
         if (onErrorEvents.size() > 0) {
-            // can't use AssertionError because (message, cause) doesn't exist until Java 7
-            throw new RuntimeException("Unexpected onError events: " + getOnErrorEvents().size(), getOnErrorEvents().get(0));
+            throw new AssertionError("Unexpected onError events: " + getOnErrorEvents().size(), getOnErrorEvents().get(0));
         }
     }
 
-    /**
-     * Assert that this {@link Subscriber} has received an {@code onError} notification.
-     *
-     * @throws AssertionError if this {@link Subscriber} did not received an {@link #onError} notifications
-     */
-    public void assertErrored() {
-        if (onErrorEvents.size() == 0) {
-            // can't use AssertionError because (message, cause) doesn't exist until Java 7
-            throw new RuntimeException("No onError events");
+    private boolean waitFor(final Supplier<Boolean> check) {
+        int retry = 0;
+        long totalSleepTimeMS = 0;
+        while (totalSleepTimeMS < TIMEOUT_DURATION.toMillis()) {
+            retry++;
+            if (check.get()) {
+                return true;
+            }
+            long sleepTimeMS = 100 + (100 * (long) Math.pow(retry, 2));
+            totalSleepTimeMS += sleepTimeMS;
+            try {
+                Thread.sleep(sleepTimeMS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            }
         }
+        return false;
     }
+
 }
