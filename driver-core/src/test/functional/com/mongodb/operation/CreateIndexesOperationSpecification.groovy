@@ -39,6 +39,7 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.serverVersionGreaterThan
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class CreateIndexesOperationSpecification extends OperationFunctionalSpecification {
@@ -291,6 +292,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
+    @IgnoreIf({ serverVersionGreaterThan('4.4') })
     def 'should be able to create a geoHaystack indexes'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(),
