@@ -128,6 +128,8 @@ public final class Indexes {
     }
 
     /**
+     * @deprecated Prefer {@link Indexes#geo2dsphere(String...)}
+     *
      * Create an index key for a geohaystack index on the given field.
      *
      * <p>

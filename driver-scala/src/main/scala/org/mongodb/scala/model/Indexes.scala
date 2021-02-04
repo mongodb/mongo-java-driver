@@ -75,6 +75,8 @@ object Indexes {
   def geo2d(fieldName: String): Bson = JIndexes.geo2d(fieldName)
 
   /**
+   * @deprecated Prefer [[geo2dsphere]]
+   *
    * Create an index key for a geohaystack index on the given field.
    *
    * <p>
