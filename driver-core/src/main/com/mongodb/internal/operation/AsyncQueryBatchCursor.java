@@ -69,15 +69,15 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     private volatile int batchSize;
     private final AtomicInteger count = new AtomicInteger();
     private volatile BsonDocument postBatchResumeToken;
-    private volatile BsonTimestamp operationTime;
-    private volatile boolean firstBatchEmpty;
-    private volatile int maxWireVersion = 0;
+    private final BsonTimestamp operationTime;
+    private final boolean firstBatchEmpty;
+    private final int maxWireVersion;
 
     /* protected by `this` */
     private boolean isOperationInProgress = false;
     private boolean isClosed = false;
-    private boolean isClosePending = false;
     /* protected by `this` */
+    private volatile boolean isClosePending = false;
 
     AsyncQueryBatchCursor(final QueryResult<T> firstBatch, final int limit, final int batchSize, final long maxTimeMS,
                           final Decoder<T> decoder, final AsyncConnectionSource connectionSource, final AsyncConnection connection) {
@@ -100,6 +100,8 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         if (result != null) {
             this.operationTime = result.getTimestamp(OPERATION_TIME, null);
             this.postBatchResumeToken = getPostBatchResumeTokenFromResponse(result);
+        } else {
+            this.operationTime = null;
         }
 
         firstBatchEmpty = firstBatch.getResults().isEmpty();
@@ -109,26 +111,24 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
                 killCursor(connection);
             }
         }
-        if (connection != null) {
-            this.maxWireVersion = connection.getDescription().getMaxWireVersion();
-        }
+        this.maxWireVersion = connection == null ? 0 : connection.getDescription().getMaxWireVersion();
     }
 
     @Override
     public void close() {
-        boolean killCursor = false;
+        boolean doClose = false;
 
         synchronized (this) {
             if (isOperationInProgress) {
                 isClosePending = true;
-            } else {
-                killCursor = !isClosed;
+            } else if (!isClosed) {
                 isClosed = true;
                 isClosePending = false;
+                doClose = true;
             }
         }
 
-        if (killCursor) {
+        if (doClose) {
             killCursorOnClose();
         }
     }
@@ -336,7 +336,17 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     private void handleGetMoreQueryResult(final AsyncConnection connection, final SingleResultCallback<List<T>> callback,
                                           final QueryResult<T> result, final boolean tryNext) {
         cursor.set(result.getCursor());
-        if (!tryNext && result.getResults().isEmpty() && result.getCursor() != null) {
+        if (isClosePending) {
+            try {
+                connection.release();
+                if (result.getCursor() == null) {
+                    connectionSource.release();
+                }
+                endOperationInProgress();
+            } finally {
+                callback.onResult(null, null);
+            }
+        } else if (!tryNext && result.getResults().isEmpty() && result.getCursor() != null) {
             getMore(connection, result.getCursor(), callback, false);
         } else {
             count.addAndGet(result.getResults().size());
