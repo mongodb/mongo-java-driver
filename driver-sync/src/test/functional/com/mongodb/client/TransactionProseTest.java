@@ -34,6 +34,7 @@ import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
 // See https://github.com/mongodb/specifications/blob/master/source/transactions/tests/README.rst#mongos-pinning-prose-tests
@@ -44,6 +45,8 @@ public class TransactionProseTest {
     @Before
     public void setUp() {
         assumeTrue(canRunTests());
+        assumeNotNull(getMultiMongosConnectionString());
+
         MongoClientSettings.Builder builder = MongoClientSettings.builder()
                 .applyConnectionString(getMultiMongosConnectionString());
 
