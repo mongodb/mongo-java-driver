@@ -63,7 +63,7 @@ public class ClientSideEncryptionAutoEncryptionSettingsTour {
            }});
         }};
 
-        String keyVaultNamespace = "admin.datakeys";
+        String keyVaultNamespace = "keyvault.datakeys";
         ClientEncryptionSettings clientEncryptionSettings = ClientEncryptionSettings.builder()
                 .keyVaultMongoClientSettings(MongoClientSettings.builder()
                         .applyConnectionString(new ConnectionString("mongodb://localhost"))

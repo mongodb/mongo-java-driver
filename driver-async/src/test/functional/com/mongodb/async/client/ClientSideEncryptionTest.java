@@ -156,8 +156,8 @@ public class ClientSideEncryptionTest {
             callback.get(30, TimeUnit.SECONDS);
         }
 
-        /* Insert data into the "admin.datakeys" key vault. */
-        collection = getMongoClient().getDatabase("admin").getCollection("datakeys", BsonDocument.class)
+        /* Insert data into the "keyvault.datakeys" key vault. */
+        collection = getMongoClient().getDatabase("keyvault").getCollection("datakeys", BsonDocument.class)
                 .withWriteConcern(WriteConcern.MAJORITY);
         callback = new FutureResultCallback<Void>();
         collection.drop(callback);
@@ -224,7 +224,7 @@ public class ClientSideEncryptionTest {
             }
         }
 
-        String keyVaultNamespace = "admin.datakeys";
+        String keyVaultNamespace = "keyvault.datakeys";
         if (cryptOptions.containsKey("keyVaultNamespace")) {
             keyVaultNamespace = cryptOptions.getString("keyVaultNamespace").getValue();
         }

@@ -74,8 +74,8 @@ public class ClientSideEncryptionExternalKeyVaultTest {
 
         /* Step 1: get unencrypted client and recreate keys collection */
         client = getMongoClient();
-        MongoDatabase admin = client.getDatabase("admin");
-        MongoCollection<BsonDocument> datakeys = admin.getCollection("datakeys", BsonDocument.class)
+        MongoDatabase keyvaultDatabase = client.getDatabase("keyvault");
+        MongoCollection<BsonDocument> datakeys = keyvaultDatabase.getCollection("datakeys", BsonDocument.class)
                 .withWriteConcern(WriteConcern.MAJORITY);
         FutureResultCallback<Void> voidCallback = new FutureResultCallback<Void>();
         datakeys.drop(voidCallback);

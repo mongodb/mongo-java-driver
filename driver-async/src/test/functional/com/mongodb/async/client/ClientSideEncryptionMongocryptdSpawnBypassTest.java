@@ -40,7 +40,7 @@ import static org.junit.Assume.assumeTrue;
 public class ClientSideEncryptionMongocryptdSpawnBypassTest extends DatabaseTestCase {
     private final File pidFile;
     private final Map<String, Map<String, Object>> kmsProviders;
-    private final MongoNamespace keyVaultNamespace = new MongoNamespace("admin.datakeys");
+    private final MongoNamespace keyVaultNamespace = new MongoNamespace("keyvault.datakeys");
 
     public ClientSideEncryptionMongocryptdSpawnBypassTest() throws IOException {
         assumeFalse(isNotAtLeastJava8());

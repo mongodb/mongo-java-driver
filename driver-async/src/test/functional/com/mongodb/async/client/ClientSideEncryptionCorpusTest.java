@@ -101,8 +101,8 @@ public class ClientSideEncryptionCorpusTest {
         documentCallback.get();
 
         // Step 3: Drop and create keyvault.datakeys
-        MongoDatabase adminDatabase = client.getDatabase("admin");
-        MongoCollection<BsonDocument> dataKeysCollection = adminDatabase.getCollection("datakeys", BsonDocument.class)
+        MongoDatabase keyvaultDatabase = client.getDatabase("keyvault");
+        MongoCollection<BsonDocument> dataKeysCollection = keyvaultDatabase.getCollection("datakeys", BsonDocument.class)
                 .withWriteConcern(WriteConcern.MAJORITY);
 
         voidCallback = new FutureResultCallback<Void>();
@@ -150,7 +150,7 @@ public class ClientSideEncryptionCorpusTest {
         ClientEncryptionSettings clientEncryptionSettings = ClientEncryptionSettings.builder().
                 keyVaultMongoClientSettings(getMongoClientSettings()).
                 kmsProviders(kmsProviders).
-                keyVaultNamespace("admin.datakeys").build();
+                keyVaultNamespace("keyvault.datakeys").build();
         clientEncryption = ClientEncryptions.create(clientEncryptionSettings);
     }
 
