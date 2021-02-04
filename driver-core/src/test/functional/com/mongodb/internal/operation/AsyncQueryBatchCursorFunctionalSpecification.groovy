@@ -35,6 +35,7 @@ import com.mongodb.internal.connection.QueryResult
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.BsonNull
 import org.bson.BsonString
 import org.bson.BsonTimestamp
 import org.bson.Document
@@ -304,6 +305,29 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         true      | 0
         true      | 100
         false     | 0
+    }
+
+    @Slow
+    def 'should unblock if closed while waiting for more data from tailable cursor'() {
+        given:
+        collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
+        collectionHelper.insertDocuments(new DocumentCodec(), Document.parse('{}'))
+        def firstBatch = executeQuery(new BsonDocument('_id', BsonNull.VALUE), 0, 1, true, true);
+
+        when:
+        cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 1, 500, new DocumentCodec(), connectionSource, connection)
+        Thread.start {
+            Thread.sleep(SECONDS.toMillis(2))
+            cursor.close()
+        }
+        def batch = nextBatch()
+
+        then:
+        cursor.isClosed()
+        batch == null
+        //both connection and connectionSource have reference count 1 when we pass them to the AsyncQueryBatchCursor constructor
+        connection.getCount() == 1
+        waitForRelease(connectionSource, 1)
     }
 
     def 'should respect limit'() {

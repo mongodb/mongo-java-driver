@@ -30,6 +30,7 @@ import org.bson.RawBsonDocument;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.ChangeStreamBatchCursorHelper.isRetryableError;
@@ -44,12 +45,7 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
 
     private volatile BsonDocument resumeToken;
     private volatile AsyncAggregateResponseBatchCursor<RawBsonDocument> wrapped;
-
-    /* protected by `this` */
-    private boolean isClosed = false;
-    private boolean isOperationInProgress = false;
-    private boolean isClosePending = false;
-    /* protected by `this` */
+    private final AtomicBoolean isClosed;
 
     AsyncChangeStreamBatchCursor(final ChangeStreamOperation<T> changeStreamOperation,
                                  final AsyncAggregateResponseBatchCursor<RawBsonDocument> wrapped,
@@ -62,6 +58,7 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
         binding.retain();
         this.resumeToken = resumeToken;
         this.maxWireVersion = maxWireVersion;
+        isClosed = new AtomicBoolean();
     }
 
     AsyncAggregateResponseBatchCursor<RawBsonDocument> getWrapped() {
@@ -94,21 +91,12 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
 
     @Override
     public void close() {
-        boolean closeCursor = false;
-
-        synchronized (this) {
-            if (isOperationInProgress) {
-                isClosePending = true;
-            } else {
-                closeCursor = !isClosed;
-                isClosed = true;
-                isClosePending = false;
+        if (isClosed.compareAndSet(false, true)) {
+            try {
+                wrapped.close();
+            } finally {
+                binding.release();
             }
-        }
-
-        if (closeCursor) {
-            wrapped.close();
-            binding.release();
         }
     }
 
@@ -124,9 +112,7 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
 
     @Override
     public boolean isClosed() {
-        synchronized (this) {
-            return isClosed;
-        }
+        return isClosed.get();
     }
 
     @Override
@@ -152,17 +138,6 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
     private void cachePostBatchResumeToken(final AsyncAggregateResponseBatchCursor<RawBsonDocument> queryBatchCursor) {
         if (queryBatchCursor.getPostBatchResumeToken() != null) {
             resumeToken = queryBatchCursor.getPostBatchResumeToken();
-        }
-    }
-
-    private void endOperationInProgress() {
-        boolean closePending = false;
-        synchronized (this) {
-            isOperationInProgress = false;
-            closePending = this.isClosePending;
-        }
-        if (closePending) {
-            close();
         }
     }
 
@@ -203,25 +178,20 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
 
     private void resumeableOperation(final AsyncBlock asyncBlock, final SingleResultCallback<List<RawBsonDocument>> callback,
                                      final boolean tryNext) {
-        synchronized (this) {
-            if (isClosed) {
-                callback.onResult(null, new MongoException(format("%s called after the cursor was closed.",
-                        tryNext ? "tryNext()" : "next()")));
-                return;
-            }
-            isOperationInProgress = true;
+        if (isClosed.get()) {
+            callback.onResult(null, new MongoException(format("%s called after the cursor was closed.",
+                    tryNext ? "tryNext()" : "next()")));
+            return;
         }
         asyncBlock.apply(wrapped, new SingleResultCallback<List<RawBsonDocument>>() {
             @Override
             public void onResult(final List<RawBsonDocument> result, final Throwable t) {
                 if (t == null) {
-                    endOperationInProgress();
                     callback.onResult(result, null);
                 } else if (isRetryableError(t, maxWireVersion)) {
                     wrapped.close();
                     retryOperation(asyncBlock, callback, tryNext);
                 } else {
-                    endOperationInProgress();
                     callback.onResult(null, t);
                 }
             }
