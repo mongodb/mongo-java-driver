@@ -378,6 +378,7 @@ public class IndexOptions {
      * @mongodb.driver.manual core/geohaystack/ geoHaystack Indexes
      */
     @Nullable
+    @Deprecated
     public Double getBucketSize() {
         return bucketSize;
     }
@@ -389,6 +390,7 @@ public class IndexOptions {
      * @return this
      * @mongodb.driver.manual core/geohaystack/ geoHaystack Indexes
      */
+    @Deprecated
     public IndexOptions bucketSize(@Nullable final Double bucketSize) {
         this.bucketSize = bucketSize;
         return this;

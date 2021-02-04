@@ -397,6 +397,7 @@ public class IndexRequest {
      * @return the specified the number of units within which to group the location values for geoHaystack Indexes
      * @mongodb.driver.manual core/geohaystack/ geoHaystack Indexes
      */
+    @Deprecated
     public Double getBucketSize() {
         return bucketSize;
     }
@@ -408,6 +409,7 @@ public class IndexRequest {
      * @return this
      * @mongodb.driver.manual core/geohaystack/ geoHaystack Indexes
      */
+    @Deprecated
     public IndexRequest bucketSize(final Double bucketSize) {
         this.bucketSize = bucketSize;
         return this;

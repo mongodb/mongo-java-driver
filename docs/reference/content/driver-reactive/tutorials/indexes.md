@@ -163,23 +163,6 @@ collection.createIndex(Indexes.geo2dsphere("contact.location"))
           .subscribe(new PrintToStringSubscriber<String>());
 ```
 
-### geoHaystack
-
-To create a specification for a [`geoHaystack` index]({{<docsref "core/geohaystack/" >}}), use the [`Indexes.geoHaystack`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Indexes.html#geoHaystack(java.lang.String,org.bson.conversions.Bson)" >}}) method. `geoHaystack` indexes can improve performance on queries that use flat geometries.
-
-The following example creates a `geoHaystack` index on the `contact.location` field and an ascending index on the `stars` field:
-
-```java
-IndexOptions haystackOption = new IndexOptions().bucketSize(1.0);
-collection.createIndex(
-            Indexes.geoHaystack("contact.location", Indexes.ascending("stars")),
-            haystackOption)
-        .subscribe(new PrintToStringSubscriber<String>());
-```
-
-
-To query a haystack index, use the [`geoSearch`]({{<docsref "reference/command/geoSearch" >}}) command.
-
 ## IndexOptions
 
 ```java

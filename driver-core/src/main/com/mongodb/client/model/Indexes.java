@@ -141,6 +141,7 @@ public final class Indexes {
      * @return the index specification
      * @mongodb.driver.manual core/geohaystack geoHaystack index
      */
+    @Deprecated
     public static Bson geoHaystack(final String fieldName, final Bson additional) {
         notNull("fieldName", fieldName);
         return compoundIndex(new BsonDocument(fieldName, new BsonString("geoHaystack")), additional);
