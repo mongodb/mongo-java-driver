@@ -61,6 +61,7 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getCluster
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.serverVersionGreaterThan
 import static com.mongodb.CursorType.NonTailable
 import static com.mongodb.CursorType.Tailable
 import static com.mongodb.CursorType.TailableAwait
@@ -697,7 +698,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         ].combinations()
     }
 
-
+    @IgnoreIf({ serverVersionGreaterThan('4.4') && isSharded() })
     def 'should explain with $explain modifier'() {
         given:
         def operation = new FindOperation<BsonDocument>(getNamespace(), new BsonDocumentCodec())
