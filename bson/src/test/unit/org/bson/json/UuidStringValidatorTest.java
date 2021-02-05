@@ -20,7 +20,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.bson.json.UuidStringValidator.validate;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class UuidStringValidatorTest {
 
@@ -49,7 +50,7 @@ public class UuidStringValidatorTest {
             "88888888-8888-8888-8888-888888888888",
             "99999999-9999-9999-9999-999999999999"})
     public void testValidUuidStrings(final String uuidString) {
-        validate(uuidString);
+        assertDoesNotThrow(() -> validate(uuidString));
     }
 
     @ParameterizedTest
@@ -97,11 +98,6 @@ public class UuidStringValidatorTest {
             "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa:a",
             "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa:"})
     public void testInvalidUuidStrings(final String uuidString) {
-        try {
-            validate(uuidString);
-            fail("Should have failed to validate " + uuidString);
-        } catch (IllegalArgumentException e) {
-            // expected
-        }
+        assertThrows(IllegalArgumentException.class, () -> validate(uuidString));
     }
 }
