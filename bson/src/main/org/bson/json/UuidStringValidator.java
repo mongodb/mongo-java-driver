@@ -22,13 +22,10 @@ final class UuidStringValidator {
     private static final BitSet HEX_CHARS;
 
     static {
-        BitSet hexChars = new BitSet(256);
-
-        hexChars.set('0', '9' + 1);
-        hexChars.set('A', 'F' + 1);
-        hexChars.set('a', 'f' + 1);
-
-        HEX_CHARS = hexChars;
+        HEX_CHARS = new BitSet(256);
+        HEX_CHARS.set('0', '9' + 1);
+        HEX_CHARS.set('A', 'F' + 1);
+        HEX_CHARS.set('a', 'f' + 1);
     }
 
     private static void validateFourHexChars(final String str, final int startPos) {
