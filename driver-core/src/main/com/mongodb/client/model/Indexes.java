@@ -128,8 +128,6 @@ public final class Indexes {
     }
 
     /**
-     * @deprecated Prefer {@link Indexes#geo2dsphere(String...)}
-     *
      * Create an index key for a geohaystack index on the given field.
      *
      * <p>
@@ -142,6 +140,7 @@ public final class Indexes {
      * @param additional the additional field that forms the geoHaystack index key
      * @return the index specification
      * @mongodb.driver.manual core/geohaystack geoHaystack index
+     * @deprecated geoHaystack is deprecated in MongoDB 4.4, prefer {@link Indexes#geo2dsphere(String...)}
      */
     @Deprecated
     public static Bson geoHaystack(final String fieldName, final Bson additional) {
