@@ -117,20 +117,3 @@ This example specifies a 2d index on the `points` field:
 ```scala
 geo2d("points")
 ```
-
-
-#### geoHaystack
-
-To specify a [geoHaystack]({{< docsref "core/geohaystack/" >}}) index key, use the `geoHaystack` method.
-
-{{% note class="important"%}}
-For queries that use spherical geometry, a 2dsphere index is a better option than a haystack index. 2dsphere indexes allow field reordering; 
-geoHaystack indexes require the first field to be the location field. Also, geoHaystack indexes are only usable via commands and so always 
-return all results at once.
-{{% /note %}}
-
-This example specifies a geoHaystack index on the `position` field and an ascending index on the `type` field:
-
-```scala
-geoHaystack("position", ascending("type"))
-```
