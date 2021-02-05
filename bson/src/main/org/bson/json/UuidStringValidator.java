@@ -44,10 +44,11 @@ final class UuidStringValidator {
         }
     }
 
-    // UUID strings must be in the form 73ffd264-44b3-4c69-90e8-e7d1dfc035d4, but UUID.fromString fails to detect hyphens in the wrong
-    // positions.  For example, it will parse 73ff-d26444b-34c6-990e8e-7d1dfc035d4 (same as previous value but with hyphens in the wrong
-    // positions), but return a UUID that is not equal to the one it returns for the string with the hyphens in the correct positions.
-    // Given that, in order to comply with the Extended JSON specification, we add our own validation before calling UUID.fromString.
+    // UUID strings must be in the form 73ffd264-44b3-4c69-90e8-e7d1dfc035d4, but UUID.fromString fails to fully validate against that
+    // form, even though the Javadoc claims that it does  For example, it will parse 73ff-d26444b-34c6-990e8e-7d1dfc035d4 (same as previous
+    // value but with hyphens in the wrong positions), but return a UUID that is not equal to the one it returns for the string with the
+    // hyphens in the correct positions. Given that, in order to comply with the Extended JSON specification, we add our own validation
+    // before calling UUID.fromString.
     static void validate(final String uuidString) {
         if (uuidString.length() != 36) {
             throw new IllegalArgumentException(String.format("UUID string \"%s\" must be 36 characters", uuidString));
