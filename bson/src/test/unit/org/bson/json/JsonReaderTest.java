@@ -967,73 +967,17 @@ public class JsonReaderTest {
             assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
             return null;
         });
+    }
 
-        // wrong length
-        json = "{ \"$uuid\" : \"b5f21e0c2-a0d-42d6-ad03-d827008d8ab\"}}";
-        testStringAndStream(json, bsonReader -> {
-            try {
-                bsonReader.readBinaryData();
-                fail("Should fail to parse NumberDecimal constructor with a string");
-            } catch (JsonParseException e) {
-                // all good
-            }
-            return null;
-        });
-
+    // testing that JsonReader uses internal UuidStringValidator, as UUID.fromString accepts this UUID
+    @Test
+    public void testInvalidUuid() {
         // first hyphen out of place
-        json = "{ \"$uuid\" : \"b5f21e0c2-a0d-42d6-ad03-d827008d8ab6\"}}";
+        String json = "{ \"$uuid\" : \"73ff-d26444b-34c6-990e8e-7d1dfc035d4\"}}";
         testStringAndStream(json, bsonReader -> {
             try {
                 bsonReader.readBinaryData();
-                fail("Should fail to parse NumberDecimal constructor with a string");
-            } catch (JsonParseException e) {
-                // all good
-            }
-            return null;
-        });
-
-        // second hyphen out of place
-        json = "{ \"$uuid\" : \"b5f21e0c-2a0-d42d6-ad03-d827008d8ab6\"}}";
-        testStringAndStream(json, bsonReader -> {
-            try {
-                bsonReader.readBinaryData();
-                fail("Should fail to parse NumberDecimal constructor with a string");
-            } catch (JsonParseException e) {
-                // all good
-            }
-            return null;
-        });
-
-        // third hyphen out of place
-        json = "{ \"$uuid\" : \"b5f21e0c-2a0d-42d6ad-03-d827008d8ab6\"}}";
-        testStringAndStream(json, bsonReader -> {
-            try {
-                bsonReader.readBinaryData();
-                fail("Should fail to parse NumberDecimal constructor with a string");
-            } catch (JsonParseException e) {
-                // all good
-            }
-            return null;
-        });
-
-        // fourth hyphen out of place
-        json = "{ \"$uuid\" : \"b5f21e0c-2a0d-42d6-ad03d82700-8d8ab6\"}}";
-        testStringAndStream(json, bsonReader -> {
-            try {
-                bsonReader.readBinaryData();
-                fail("Should fail to parse NumberDecimal constructor with a string");
-            } catch (JsonParseException e) {
-                // all good
-            }
-            return null;
-        });
-
-        // too many hyphens
-        json = "{ \"$uuid\" : \"b5f21e0c-2a0d-42d6-ad03-d827008d8ab-\"}}";
-        testStringAndStream(json, bsonReader -> {
-            try {
-                bsonReader.readBinaryData();
-                fail("Should fail to parse NumberDecimal constructor with a string");
+                fail("Should fail to parse invalid UIUD");
             } catch (JsonParseException e) {
                 // all good
             }

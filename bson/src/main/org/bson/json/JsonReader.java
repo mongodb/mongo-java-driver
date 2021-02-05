@@ -1208,45 +1208,10 @@ public class JsonReader extends AbstractBsonReader {
         String uuidString = readStringFromExtendedJson();
         verifyToken(JsonTokenType.END_OBJECT);
         try {
-            validateHyphens(uuidString);
+            UuidStringValidator.validate(uuidString);
             return new BsonBinary(UUID.fromString(uuidString));
         } catch (IllegalArgumentException e) {
             throw new JsonParseException(e);
-        }
-    }
-
-    // UUID strings must be in the form 73ffd264-44b3-4c69-90e8-e7d1dfc035d4, but UUID.fromString fails to detect hyphens in the wrong
-    // positions.  For example, it will parse 73ff-d26444b-34c6-990e8e-7d1dfc035d4 (same as previous value but with hyphens in the wrong
-    // positions), but return a UUID that is not equal to the one it returns for the string with the hyphens in the correct positions.
-    // Given that, in order to comply with the Extended JSON specification, we add our own validation before calling UUID.fromString.
-    private void validateHyphens(final String uuidString) {
-        if (uuidString.length() != 36) {
-            throw new IllegalArgumentException(String.format("UUID string \"%s\" must be 36 characters", uuidString));
-        }
-
-        int dash1 = uuidString.indexOf('-', 0);
-        if (dash1 != 8) {
-            throw new IllegalArgumentException(String.format("First dash in UUID string \"%s\" must be at position 8", uuidString));
-        }
-
-        int dash2 = uuidString.indexOf('-', dash1 + 1);
-        if (dash2 != 13) {
-            throw new IllegalArgumentException(String.format("Second dash in UUID string \"%s\" must be at position 13", uuidString));
-        }
-
-        int dash3 = uuidString.indexOf('-', dash2 + 1);
-        if (dash3 != 18) {
-            throw new IllegalArgumentException(String.format("Third dash in UUID string \"%s\" must be at position 19", uuidString));
-        }
-
-        int dash4 = uuidString.indexOf('-', dash3 + 1);
-        if (dash4 != 23) {
-            throw new IllegalArgumentException(String.format("Fourth dash in UUID string \"%s\" must be at position 23", uuidString));
-        }
-
-        int dash5 = uuidString.indexOf('-', dash4 + 1);
-        if (dash5 != -1) {
-            throw new IllegalArgumentException(String.format("Too many dashes in UUID string \"%s\"", uuidString));
         }
     }
 
