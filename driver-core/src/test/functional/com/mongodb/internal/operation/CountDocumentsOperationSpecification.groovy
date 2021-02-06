@@ -32,7 +32,6 @@ import com.mongodb.internal.binding.AsyncReadBinding
 import com.mongodb.internal.binding.ConnectionSource
 import com.mongodb.internal.binding.ReadBinding
 import com.mongodb.internal.bulk.IndexRequest
-import com.mongodb.internal.client.model.CountStrategy
 import com.mongodb.internal.connection.AsyncConnection
 import com.mongodb.internal.connection.Connection
 import com.mongodb.internal.session.SessionContext
@@ -56,7 +55,7 @@ import static com.mongodb.internal.operation.OperationReadConcernHelper.appendRe
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 
-class CountOperationSpecification extends OperationFunctionalSpecification {
+class CountDocumentsOperationSpecification extends OperationFunctionalSpecification {
 
     private documents
 
@@ -73,7 +72,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should have the correct defaults'() {
         when:
-        CountOperation operation = new CountOperation(getNamespace())
+        CountDocumentsOperation operation = new CountDocumentsOperation(getNamespace())
 
         then:
         operation.getFilter() == null
@@ -89,7 +88,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         def hint = new BsonString('hint')
 
         when:
-        CountOperation operation = new CountOperation(getNamespace())
+        CountDocumentsOperation operation = new CountDocumentsOperation(getNamespace())
                 .maxTime(10, MILLISECONDS)
                 .filter(filter)
                 .hint(hint)
@@ -106,10 +105,10 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should get the count'() {
         expect:
-        execute(new CountOperation(getNamespace(), strategy), async) == documents.size()
+        execute(new CountDocumentsOperation(getNamespace()), async) == documents.size()
 
         where:
-        [async, strategy] << [[true, false], [CountStrategy.AGGREGATE, CountStrategy.COMMAND]].combinations()
+        async << [true, false]
     }
 
     def 'should return 0 if no collection'() {
@@ -117,10 +116,10 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().drop()
 
         then:
-        execute(new CountOperation(getNamespace(), strategy), async) == 0
+        execute(new CountDocumentsOperation(getNamespace()), async) == 0
 
         where:
-        [async, strategy] << [[true, false], [CountStrategy.AGGREGATE, CountStrategy.COMMAND]].combinations()
+        async << [true, false]
     }
 
     def 'should return 0 if empty collection'() {
@@ -129,15 +128,15 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().create()
 
         then:
-        execute(new CountOperation(getNamespace(), strategy), async) == 0
+        execute(new CountDocumentsOperation(getNamespace()), async) == 0
 
         where:
-        [async, strategy] << [[true, false], [CountStrategy.AGGREGATE, CountStrategy.COMMAND]].combinations()
+        async << [true, false]
     }
 
     def 'should throw execution timeout exception from execute'() {
         given:
-        def operation = new CountOperation(getNamespace(), strategy).maxTime(1, SECONDS)
+        def operation = new CountDocumentsOperation(getNamespace()).maxTime(1, SECONDS)
         enableMaxTimeFailPoint()
 
         when:
@@ -150,29 +149,29 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         disableMaxTimeFailPoint()
 
         where:
-        [async, strategy] << [[false, false], [CountStrategy.AGGREGATE, CountStrategy.COMMAND]].combinations()
+        async << [true, false]
     }
 
     def 'should use limit with the count'() {
         when:
-        def operation = new CountOperation(getNamespace(), strategy).limit(1)
+        def operation = new CountDocumentsOperation(getNamespace()).limit(1)
 
         then:
         execute(operation, async) == 1
 
         where:
-        [async, strategy] << [[true, false], [CountStrategy.AGGREGATE, CountStrategy.COMMAND]].combinations()
+        async << [true, false]
     }
 
     def 'should use skip with the count'() {
         when:
-        def operation = new CountOperation(getNamespace(), strategy).skip(documents.size() - 2)
+        def operation = new CountDocumentsOperation(getNamespace()).skip(documents.size() - 2)
 
         then:
         execute(operation, async)
 
         where:
-        [async, strategy] << [[true, false], [CountStrategy.AGGREGATE, CountStrategy.COMMAND]].combinations()
+        async << [true, false]
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 6) })
@@ -181,7 +180,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         def indexDefinition = new BsonDocument('y', new BsonInt32(1))
         new CreateIndexesOperation(getNamespace(), [new IndexRequest(indexDefinition).sparse(true)])
                 .execute(getBinding())
-        def operation = new CountOperation(getNamespace(), strategy).hint(indexDefinition)
+        def operation = new CountDocumentsOperation(getNamespace()).hint(indexDefinition)
 
         when:
         def count = execute(operation, async)
@@ -190,22 +189,21 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         count == 1
 
         where:
-        [async, strategy] << [[true, false], [CountStrategy.AGGREGATE, CountStrategy.COMMAND]].combinations()
+        async << [true, false]
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'should support hints that are bson documents or strings'() {
         expect:
-        execute(new CountOperation(getNamespace(), strategy).hint(hint), async) == 5
+        execute(new CountDocumentsOperation(getNamespace()).hint(hint), async) == 5
 
         where:
-        [async, strategy, hint] << [[true, false], [CountStrategy.AGGREGATE, CountStrategy.COMMAND],
-                                    [new BsonString('_id_'), BsonDocument.parse('{_id: 1}')]].combinations()
+        [async, hint] << [[true, false], [new BsonString('_id_'), BsonDocument.parse('{_id: 1}')]].combinations()
     }
 
     def 'should throw with bad hint'() {
         given:
-        def operation = new CountOperation(getNamespace(), strategy)
+        def operation = new CountDocumentsOperation(getNamespace())
                 .filter(new BsonDocument('a', new BsonInt32(1)))
                 .hint(new BsonString('BAD HINT'))
 
@@ -216,57 +214,25 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         thrown(MongoException)
 
         where:
-        [async, strategy] << [[true, false], [CountStrategy.AGGREGATE, CountStrategy.COMMAND]].combinations()
+        async << [true, false]
     }
 
     def 'should use the ReadBindings readPreference to set slaveOK'() {
         when:
-        def operation = new CountOperation(helper.namespace, CountStrategy.COMMAND)
+        def operation = new CountDocumentsOperation(helper.namespace)
                 .filter(BsonDocument.parse('{a: 1}'))
 
         then:
-        testOperationSlaveOk(operation, [3, 4, 0], readPreference, async, helper.commandResult)
+        testOperationSlaveOk(operation, [3, 4, 0], readPreference, async, helper.cursorResult)
 
         where:
         [async, readPreference] << [[true, false], [ReadPreference.primary(), ReadPreference.secondary()]].combinations()
     }
 
-    def 'should create the expected command'() {
-        when:
-        def filter = new BsonDocument('filter', new BsonInt32(1))
-        def hint = new BsonDocument('hint', new BsonInt32(1))
-        def operation = new CountOperation(helper.namespace, CountStrategy.COMMAND)
-        def expectedCommand = new BsonDocument('count', new BsonString(helper.namespace.getCollectionName()))
-
-        then:
-        testOperation(operation, [3, 4, 0], expectedCommand, async, helper.commandResult)
-
-        when:
-        operation.filter(filter)
-                .limit(20)
-                .skip(30)
-                .hint(hint)
-                .maxTime(10, MILLISECONDS)
-                .collation(defaultCollation)
-
-         expectedCommand.append('query', filter)
-                .append('limit', new BsonInt64(20))
-                .append('skip', new BsonInt64(30))
-                .append('hint', hint)
-                .append('maxTimeMS', new BsonInt64(10))
-                .append('collation', defaultCollation.asDocument())
-
-        then:
-        testOperation(operation, [3, 4, 0], expectedCommand, async, helper.commandResult)
-
-        where:
-        async << [true, false]
-    }
-
     def 'should create the expected aggregation command'() {
         when:
         def filter = new BsonDocument('filter', new BsonInt32(1))
-        def operation = new CountOperation(helper.namespace, CountStrategy.AGGREGATE)
+        def operation = new CountDocumentsOperation(helper.namespace)
         def pipeline = [BsonDocument.parse('{ $match: {}}'), BsonDocument.parse('{$group: {_id: 1, n: {$sum: 1}}}')]
         def expectedCommand = new BsonDocument('aggregate', new BsonString(helper.namespace.getCollectionName()))
                 .append('pipeline', new BsonArray(pipeline))
@@ -301,7 +267,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should throw an exception when using an unsupported ReadConcern'() {
         given:
-        def operation = new CountOperation(helper.namespace, strategy)
+        def operation = new CountDocumentsOperation(helper.namespace)
 
         when:
         testOperationThrows(operation, [3, 0, 0], readConcern, async)
@@ -311,13 +277,12 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         exception.getMessage().startsWith('ReadConcern not supported by wire version:')
 
         where:
-        [async, strategy, readConcern] << [[true, false], [CountStrategy.AGGREGATE, CountStrategy.COMMAND],
-                                           [ReadConcern.MAJORITY, ReadConcern.LOCAL]].combinations()
+        [async, readConcern] << [[true, false], [ReadConcern.MAJORITY, ReadConcern.LOCAL]].combinations()
     }
 
     def 'should throw an exception when using an unsupported Collation'() {
         given:
-        def operation = new CountOperation(helper.namespace, strategy).collation(defaultCollation)
+        def operation = new CountDocumentsOperation(helper.namespace).collation(defaultCollation)
 
         when:
         testOperationThrows(operation, [3, 2, 0], async)
@@ -327,14 +292,14 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         exception.getMessage().startsWith('Collation not supported by wire version:')
 
         where:
-        [async, strategy] << [[true, false], [CountStrategy.AGGREGATE, CountStrategy.COMMAND]].combinations()
+        async << [true, false]
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should support collation'() {
         given:
         getCollectionHelper().insertDocuments(BsonDocument.parse('{str: "foo"}'))
-        def operation = new CountOperation(namespace, strategy).filter(BsonDocument.parse('{str: "FOO"}'))
+        def operation = new CountDocumentsOperation(namespace).filter(BsonDocument.parse('{str: "FOO"}'))
                 .collation(caseInsensitiveCollation)
 
         when:
@@ -344,7 +309,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         result == 1
 
         where:
-        [async, strategy] << [[true, false], [CountStrategy.AGGREGATE, CountStrategy.COMMAND]].combinations()
+        async << [true, false]
     }
 
     def 'should add read concern to command'() {
@@ -358,10 +323,13 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         binding.sessionContext >> sessionContext
         source.connection >> connection
         source.retain() >> source
-        def commandDocument = new BsonDocument('count', new BsonString(getCollectionName()))
+        def pipeline = new BsonArray([BsonDocument.parse('{ $match: {}}'), BsonDocument.parse('{$group: {_id: 1, n: {$sum: 1}}}')])
+        def commandDocument = new BsonDocument('aggregate', new BsonString(getCollectionName()))
+                .append('pipeline', pipeline)
+                .append('cursor', new BsonDocument())
         appendReadConcernToCommand(sessionContext, commandDocument)
 
-        def operation = new CountOperation(getNamespace())
+        def operation = new CountDocumentsOperation(getNamespace())
 
         when:
         operation.execute(binding)
@@ -370,7 +338,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                 6, STANDALONE, 1000, 100000, 100000, [])
         1 * connection.command(_, commandDocument, _, _, _, sessionContext, null) >>
-                new BsonDocument('n', new BsonInt64(42))
+                helper.cursorResult
         1 * connection.release()
 
         where:
@@ -395,10 +363,13 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         binding.sessionContext >> sessionContext
         source.getConnection(_) >> { it[0].onResult(connection, null) }
         source.retain() >> source
-        def commandDocument = new BsonDocument('count', new BsonString(getCollectionName()))
+        def pipeline = new BsonArray([BsonDocument.parse('{ $match: {}}'), BsonDocument.parse('{$group: {_id: 1, n: {$sum: 1}}}')])
+        def commandDocument = new BsonDocument('aggregate', new BsonString(getCollectionName()))
+                .append('pipeline', pipeline)
+                .append('cursor', new BsonDocument())
         appendReadConcernToCommand(sessionContext, commandDocument)
 
-        def operation = new CountOperation(getNamespace())
+        def operation = new CountDocumentsOperation(getNamespace())
 
         when:
         executeAsync(operation, binding)
@@ -407,7 +378,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                 6, STANDALONE, 1000, 100000, 100000, [])
         1 * connection.commandAsync(_, commandDocument, _, _, _, sessionContext, _, _) >> {
-            it[7].onResult(new BsonDocument('n', new BsonInt64(42)), null)
+            it[7].onResult(helper.cursorResult, null)
         }
         1 * connection.release()
 
@@ -424,7 +395,6 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     def helper = [
         dbName: 'db',
         namespace: new MongoNamespace('db', 'coll'),
-        commandResult: BsonDocument.parse('{ok: 1.0, n: 10}'),
         cursorResult: BsonDocument.parse('{ok: 1.0}')
                 .append('cursor', new BsonDocument('id', new BsonInt64(0)).append('ns', new BsonString('db.coll'))
                 .append('firstBatch', new BsonArrayWrapper([BsonDocument.parse('{n: 10}') ]))),

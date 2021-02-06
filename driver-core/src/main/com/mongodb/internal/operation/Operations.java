@@ -28,6 +28,7 @@ import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.DropIndexOptions;
+import com.mongodb.client.model.EstimatedDocumentCountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
@@ -50,7 +51,6 @@ import com.mongodb.internal.bulk.InsertRequest;
 import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.bulk.WriteRequest;
 import com.mongodb.internal.client.model.AggregationLevel;
-import com.mongodb.internal.client.model.CountStrategy;
 import com.mongodb.internal.client.model.FindOptions;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -127,8 +127,8 @@ public final class Operations<TDocument> {
         return retryReads;
     }
 
-    public CountOperation count(final Bson filter, final CountOptions options, final CountStrategy countStrategy) {
-        CountOperation operation = new CountOperation(namespace, countStrategy)
+    public CountDocumentsOperation countDocuments(final Bson filter, final CountOptions options) {
+        CountDocumentsOperation operation = new CountDocumentsOperation(namespace)
                 .retryReads(retryReads)
                 .filter(toBsonDocument(filter))
                 .skip(options.getSkip())
@@ -141,6 +141,12 @@ public final class Operations<TDocument> {
             operation.hint(new BsonString(options.getHintString()));
         }
         return operation;
+    }
+
+    public EstimatedDocumentCountOperation estimatedDocumentCount(final EstimatedDocumentCountOptions options) {
+        return new EstimatedDocumentCountOperation(namespace)
+                .retryReads(retryReads)
+                .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS);
     }
 
     public <TResult> FindOperation<TResult> findFirst(final Bson filter, final Class<TResult> resultClass,

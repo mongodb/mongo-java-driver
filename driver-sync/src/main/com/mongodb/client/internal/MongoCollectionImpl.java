@@ -59,7 +59,6 @@ import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.internal.bulk.WriteRequest;
-import com.mongodb.internal.client.model.CountStrategy;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.operation.IndexHelper;
 import com.mongodb.internal.operation.RenameCollectionOperation;
@@ -82,7 +81,6 @@ import static com.mongodb.internal.bulk.WriteRequest.Type.DELETE;
 import static com.mongodb.internal.bulk.WriteRequest.Type.INSERT;
 import static com.mongodb.internal.bulk.WriteRequest.Type.REPLACE;
 import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE;
-import static com.mongodb.internal.client.model.CountOptionsHelper.fromEstimatedDocumentCountOptions;
 import static java.util.Collections.singletonList;
 import static org.bson.internal.CodecRegistryHelper.createRegistry;
 
@@ -189,7 +187,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public long countDocuments(final Bson filter, final CountOptions options) {
-        return executeCount(null, filter, options, CountStrategy.AGGREGATE);
+        return executeCount(null, filter, options);
     }
 
     @Override
@@ -205,7 +203,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     @Override
     public long countDocuments(final ClientSession clientSession, final Bson filter, final CountOptions options) {
         notNull("clientSession", clientSession);
-        return executeCount(clientSession, filter, options, CountStrategy.AGGREGATE);
+        return executeCount(clientSession, filter, options);
     }
 
     @Override
@@ -215,12 +213,11 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public long estimatedDocumentCount(final EstimatedDocumentCountOptions options) {
-        return executeCount(null, new BsonDocument(), fromEstimatedDocumentCountOptions(options), CountStrategy.COMMAND);
+        return executor.execute(operations.estimatedDocumentCount(options), readPreference, readConcern, null);
     }
 
-    private long executeCount(@Nullable final ClientSession clientSession, final Bson filter, final CountOptions options,
-                              final CountStrategy countStrategy) {
-        return executor.execute(operations.count(filter, options, countStrategy), readPreference, readConcern, clientSession);
+    private long executeCount(@Nullable final ClientSession clientSession, final Bson filter, final CountOptions options) {
+        return executor.execute(operations.countDocuments(filter, options), readPreference, readConcern, clientSession);
     }
 
     @Override

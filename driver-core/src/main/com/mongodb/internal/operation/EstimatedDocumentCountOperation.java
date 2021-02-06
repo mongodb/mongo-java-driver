@@ -17,7 +17,6 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.client.model.Collation;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
@@ -26,7 +25,6 @@ import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransfor
 import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
-import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 
@@ -36,88 +34,28 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.CommandOperationHelper.executeCommand;
 import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandAsync;
-import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
-import static com.mongodb.internal.operation.OperationHelper.validateReadConcernAndCollation;
+import static com.mongodb.internal.operation.OperationHelper.validateReadConcern;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 
-public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
+public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
     private final MongoNamespace namespace;
     private boolean retryReads;
-    private BsonDocument filter;
-    private BsonValue hint;
-    private long skip;
-    private long limit;
     private long maxTimeMS;
-    private Collation collation;
 
-    public CountOperation(final MongoNamespace namespace) {
+    public EstimatedDocumentCountOperation(final MongoNamespace namespace) {
         this.namespace = notNull("namespace", namespace);
     }
 
-    public BsonDocument getFilter() {
-        return filter;
-    }
-
-    public CountOperation filter(final BsonDocument filter) {
-        this.filter = filter;
-        return this;
-    }
-
-    public CountOperation retryReads(final boolean retryReads) {
+    public EstimatedDocumentCountOperation retryReads(final boolean retryReads) {
         this.retryReads = retryReads;
         return this;
     }
 
-    public boolean getRetryReads() {
-        return retryReads;
-    }
-
-    public BsonValue getHint() {
-        return hint;
-    }
-
-    public CountOperation hint(final BsonValue hint) {
-        this.hint = hint;
-        return this;
-    }
-
-    public long getLimit() {
-        return limit;
-    }
-
-    public CountOperation limit(final long limit) {
-        this.limit = limit;
-        return this;
-    }
-
-    public long getSkip() {
-        return skip;
-    }
-
-    public CountOperation skip(final long skip) {
-        this.skip = skip;
-        return this;
-    }
-
-    public long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
-    }
-
-    public CountOperation maxTime(final long maxTime, final TimeUnit timeUnit) {
+    public EstimatedDocumentCountOperation maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
-        return this;
-    }
-
-    public Collation getCollation() {
-        return collation;
-    }
-
-    public CountOperation collation(final Collation collation) {
-        this.collation = collation;
         return this;
     }
 
@@ -129,8 +67,8 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Long> callback) {
-        executeCommandAsync(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()), DECODER,
-                asyncTransformer(), retryReads, callback);
+        executeCommandAsync(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
+                DECODER, asyncTransformer(), retryReads, callback);
     }
 
     private CommandReadTransformer<BsonDocument, Long> transformer() {
@@ -143,7 +81,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
 
     private CommandCreator getCommandCreator(final SessionContext sessionContext) {
         return (serverDescription, connectionDescription) -> {
-            validateReadConcernAndCollation(connectionDescription, sessionContext.getReadConcern(), collation);
+            validateReadConcern(connectionDescription, sessionContext.getReadConcern());
             return getCommand(sessionContext);
         };
     }
@@ -152,16 +90,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
         BsonDocument document = new BsonDocument("count", new BsonString(namespace.getCollectionName()));
 
         appendReadConcernToCommand(sessionContext, document);
-
-        putIfNotNull(document, "query", filter);
-        putIfNotZero(document, "limit", limit);
-        putIfNotZero(document, "skip", skip);
-        putIfNotNull(document, "hint", hint);
         putIfNotZero(document, "maxTimeMS", maxTimeMS);
-
-        if (collation != null) {
-            document.put("collation", collation.asDocument());
-        }
         return document;
     }
 }
