@@ -55,7 +55,6 @@ import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.bulk.WriteRequest;
-import com.mongodb.internal.client.model.CountStrategy;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.internal.operation.AsyncWriteOperation;
 import com.mongodb.internal.operation.CommandReadOperation;
@@ -82,7 +81,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.client.model.CountOptionsHelper.fromEstimatedDocumentCountOptions;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.bson.internal.CodecRegistryHelper.createRegistry;
@@ -279,14 +277,12 @@ public final class MongoOperationPublisher<T> {
 
 
     Publisher<Long> estimatedDocumentCount(final EstimatedDocumentCountOptions options) {
-        return createReadOperationMono(() -> operations.count(new BsonDocument(),
-                                                              fromEstimatedDocumentCountOptions(notNull("options", options)),
-                                                              CountStrategy.COMMAND), null);
+        return createReadOperationMono(() -> operations.estimatedDocumentCount(notNull("options", options)), null);
     }
 
     Publisher<Long> countDocuments(@Nullable final ClientSession clientSession, final Bson filter, final CountOptions options) {
-        return createReadOperationMono(() -> operations.count(notNull("filter", filter), notNull("options", options),
-                                                              CountStrategy.AGGREGATE), clientSession);
+        return createReadOperationMono(() -> operations.countDocuments(notNull("filter", filter), notNull("options", options)
+        ), clientSession);
     }
 
     Publisher<BulkWriteResult> bulkWrite(

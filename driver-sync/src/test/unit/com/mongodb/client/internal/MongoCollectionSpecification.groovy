@@ -64,13 +64,13 @@ import com.mongodb.internal.bulk.IndexRequest
 import com.mongodb.internal.bulk.InsertRequest
 import com.mongodb.internal.bulk.UpdateRequest
 import com.mongodb.internal.client.model.AggregationLevel
-import com.mongodb.internal.client.model.CountStrategy
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel
 import com.mongodb.internal.operation.BatchCursor
-import com.mongodb.internal.operation.CountOperation
+import com.mongodb.internal.operation.CountDocumentsOperation
 import com.mongodb.internal.operation.CreateIndexesOperation
 import com.mongodb.internal.operation.DropCollectionOperation
 import com.mongodb.internal.operation.DropIndexOperation
+import com.mongodb.internal.operation.EstimatedDocumentCountOperation
 import com.mongodb.internal.operation.FindAndDeleteOperation
 import com.mongodb.internal.operation.FindAndReplaceOperation
 import com.mongodb.internal.operation.FindAndUpdateOperation
@@ -221,13 +221,13 @@ class MongoCollectionSpecification extends Specification {
         def filter = new BsonDocument()
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED, true,
                 true, readConcern, JAVA_LEGACY, executor)
-        def expectedOperation = new CountOperation(namespace, CountStrategy.AGGREGATE).filter(filter).retryReads(true)
+        def expectedOperation = new CountDocumentsOperation(namespace).filter(filter).retryReads(true)
 
         def countMethod = collection.&countDocuments
 
         when:
         execute(countMethod, session)
-        def operation = executor.getReadOperation() as CountOperation
+        def operation = executor.getReadOperation() as CountDocumentsOperation
 
         then:
         executor.getClientSession() == session
@@ -236,7 +236,7 @@ class MongoCollectionSpecification extends Specification {
         when:
         filter = new BsonDocument('a', new BsonInt32(1))
         execute(countMethod, session, filter)
-        operation = executor.getReadOperation() as CountOperation
+        operation = executor.getReadOperation() as CountDocumentsOperation
 
         then:
         executor.getClientSession() == session
@@ -246,7 +246,7 @@ class MongoCollectionSpecification extends Specification {
         def hint = new BsonDocument('hint', new BsonInt32(1))
         execute(countMethod, session, filter, new CountOptions().hint(hint).skip(10).limit(100)
                 .maxTime(100, MILLISECONDS).collation(collation))
-        operation = executor.getReadOperation() as CountOperation
+        operation = executor.getReadOperation() as CountDocumentsOperation
 
         then:
         executor.getClientSession() == session
@@ -262,14 +262,14 @@ class MongoCollectionSpecification extends Specification {
         def executor = new TestOperationExecutor([1L, 2L])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED, true,
                 true, readConcern, JAVA_LEGACY, executor)
-        def expectedOperation = new CountOperation(namespace, CountStrategy.COMMAND).filter(new BsonDocument())
+        def expectedOperation = new EstimatedDocumentCountOperation(namespace)
                 .retryReads(true)
 
         def countMethod = collection.&estimatedDocumentCount
 
         when:
         execute(countMethod, session)
-        def operation = executor.getReadOperation() as CountOperation
+        def operation = executor.getReadOperation() as EstimatedDocumentCountOperation
 
         then:
         executor.getClientSession() == session
@@ -277,7 +277,7 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         execute(countMethod, session, new EstimatedDocumentCountOptions().maxTime(100, MILLISECONDS))
-        operation = executor.getReadOperation() as CountOperation
+        operation = executor.getReadOperation() as EstimatedDocumentCountOperation
 
         then:
         executor.getClientSession() == session

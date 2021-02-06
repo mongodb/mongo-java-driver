@@ -35,7 +35,7 @@ import com.mongodb.internal.bulk.WriteRequest;
 import com.mongodb.internal.operation.AggregateOperation;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.CommandReadOperation;
-import com.mongodb.internal.operation.CountOperation;
+import com.mongodb.internal.operation.CountDocumentsOperation;
 import com.mongodb.internal.operation.CreateCollectionOperation;
 import com.mongodb.internal.operation.CreateIndexesOperation;
 import com.mongodb.internal.operation.DropCollectionOperation;
@@ -336,15 +336,15 @@ public final class CollectionHelper<T> {
     }
 
     public long count(final ReadBinding binding) {
-        return new CountOperation(namespace).execute(binding);
+        return new CountDocumentsOperation(namespace).execute(binding);
     }
 
     public long count(final AsyncReadWriteBinding binding) throws Throwable {
-        return executeAsync(new CountOperation(namespace), binding);
+        return executeAsync(new CountDocumentsOperation(namespace), binding);
     }
 
     public long count(final Bson filter) {
-        return new CountOperation(namespace).filter(toBsonDocument(filter)).execute(getBinding());
+        return new CountDocumentsOperation(namespace).filter(toBsonDocument(filter)).execute(getBinding());
     }
 
     public BsonDocument wrap(final Document document) {
