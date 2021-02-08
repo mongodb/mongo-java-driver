@@ -34,6 +34,7 @@ import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.EstimatedDocumentCountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
@@ -64,6 +65,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
@@ -767,16 +769,21 @@ final class UnifiedCrudHelper {
 
     public OperationResult executeEstimatedDocumentCount(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+
+        EstimatedDocumentCountOptions options = new EstimatedDocumentCountOptions();
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             //noinspection SwitchStatementWithTooFewBranches
             switch (cur.getKey()) {
+                case "maxTimeMS":
+                    options.maxTime(cur.getValue().asNumber().intValue(), TimeUnit.MILLISECONDS);
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
 
         return resultOf(() ->
-                new BsonInt64(collection.estimatedDocumentCount()));
+                new BsonInt64(collection.estimatedDocumentCount(options)));
     }
 }

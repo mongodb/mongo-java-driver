@@ -62,18 +62,16 @@ public class ReadConcernTest {
 
         Mono.from(mongoClient.getDatabase(getDefaultDatabaseName()).getCollection("test")
                 .withReadConcern(ReadConcern.LOCAL)
-                .estimatedDocumentCount())
+                .find())
                 .block(TIMEOUT_DURATION);
 
         List<CommandEvent> events = commandListener.getCommandStartedEvents();
 
-        BsonDocument commandDocument = new BsonDocument("count", new BsonString("test"))
+        BsonDocument commandDocument = new BsonDocument("find", new BsonString("test"))
                 .append("readConcern", ReadConcern.LOCAL.asDocument())
-                .append("query", new BsonDocument());
-        if (serverVersionAtLeast(3, 6)) {
-            commandDocument.put("$db", new BsonString(getDefaultDatabaseName()));
-        }
-        assertEventsEquality(singletonList(new CommandStartedEvent(1, null, getDefaultDatabaseName(), "count", commandDocument)), events);
+                .append("filter", new BsonDocument());
+
+        assertEventsEquality(singletonList(new CommandStartedEvent(1, null, getDefaultDatabaseName(), "find", commandDocument)), events);
     }
 
     private boolean canRunTests() {
