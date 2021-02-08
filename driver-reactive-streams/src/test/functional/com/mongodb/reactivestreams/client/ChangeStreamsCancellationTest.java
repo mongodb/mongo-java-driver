@@ -23,7 +23,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 
-import static com.mongodb.reactivestreams.client.Fixture.dropDatabase;
+import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static com.mongodb.reactivestreams.client.Fixture.drop;
 import static com.mongodb.reactivestreams.client.Fixture.getDefaultDatabase;
 import static com.mongodb.reactivestreams.client.Fixture.isReplicaSet;
 import static com.mongodb.reactivestreams.client.Fixture.serverVersionAtLeast;
@@ -32,25 +33,24 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public class ChangeStreamsCancellationTest {
 
-    private MongoDatabase database;
+    private MongoCollection<Document> collection;
 
     @BeforeEach
     public void setup() {
         assumeTrue(isReplicaSet() && serverVersionAtLeast(3, 6));
-        database = getDefaultDatabase();
+        collection = getDefaultDatabase().getCollection("changeStreamsCancellationTest");
     }
 
     @AfterEach
     public void tearDown() {
-        if (database != null) {
-            dropDatabase(database.getName());
+        if (collection != null) {
+            drop(collection.getNamespace());
         }
     }
 
     @Test
     public void testCancelReleasesSessions() {
-        MongoCollection<Document> collection = database.getCollection("changeStreamsCancellationTest");
-        Mono.from(collection.insertOne(new Document()));
+        Mono.from(collection.insertOne(new Document())).block(TIMEOUT_DURATION);
 
         TestSubscriber<ChangeStreamDocument<Document>> subscriber = new TestSubscriber<>();
         subscriber.doOnSubscribe(sub -> {
