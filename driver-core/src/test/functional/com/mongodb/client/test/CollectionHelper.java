@@ -378,6 +378,7 @@ public final class CollectionHelper<T> {
                                           WriteConcern.ACKNOWLEDGED).execute(getBinding());
     }
 
+    @SuppressWarnings("deprecation")
     public void createIndex(final Bson key, final Double bucketSize) {
         new CreateIndexesOperation(namespace, asList(new IndexRequest(key.toBsonDocument(Document.class, registry))
                 .bucketSize(bucketSize)), WriteConcern.ACKNOWLEDGED).execute(getBinding());
