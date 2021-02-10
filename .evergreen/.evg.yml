@@ -54,7 +54,7 @@ functions:
 
            export MONGO_ORCHESTRATION_HOME="$DRIVERS_TOOLS/.evergreen/orchestration"
            export MONGODB_BINARIES="$DRIVERS_TOOLS/mongodb/bin"
-           export UPLOAD_BUCKET="${project}"
+           export UPLOAD_BUCKET="${upload_bucket:-$project}"
            export PROJECT_DIRECTORY="$(pwd)"
 
            cat <<EOT > expansion.yml
