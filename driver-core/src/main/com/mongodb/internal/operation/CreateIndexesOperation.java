@@ -240,6 +240,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
         });
     }
 
+    @SuppressWarnings("deprecation")
     private BsonDocument getIndex(final IndexRequest request) {
         BsonDocument index = new BsonDocument();
         index.append("key", request.getKeys());
