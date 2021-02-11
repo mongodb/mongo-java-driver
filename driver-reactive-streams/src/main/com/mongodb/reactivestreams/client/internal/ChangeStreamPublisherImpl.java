@@ -112,12 +112,18 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
 
     @Override
     public <TDocument> Publisher<TDocument> withDocumentClass(final Class<TDocument> clazz) {
-        return new BatchCursorPublisher<TDocument>(getClientSession(), getMongoOperationPublisher().withDocumentClass(clazz)) {
+        BatchCursorPublisher<TDocument> result = new BatchCursorPublisher<TDocument>(
+                getClientSession(), getMongoOperationPublisher().withDocumentClass(clazz)) {
             @Override
             AsyncReadOperation<AsyncBatchCursor<TDocument>> asAsyncReadOperation(final int initialBatchSize) {
                 return createChangeStreamOperation(getMongoOperationPublisher().getCodecRegistry().get(clazz), initialBatchSize);
             }
         };
+        Integer batchSize = getBatchSize();
+        if (batchSize != null) {
+            result.batchSize(batchSize);
+        }
+        return result;
     }
 
     @Override
