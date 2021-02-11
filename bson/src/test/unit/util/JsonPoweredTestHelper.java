@@ -66,7 +66,7 @@ public final class JsonPoweredTestHelper {
     /**
      * @param resourcePath             The {@linkplain Class#getResource(String) name of a resource} representing
      *                                 a directory with test files.
-     * @param excludedRelativeSubpaths Sub-paths relative to the {@code resourcePath} directory to excluded from the results.
+     * @param excludedRelativeSubpaths Sub-paths relative to the {@code resourcePath} directory to exclude from the results.
      * @return A collection with unspecified mutability and element order.
      */
     public static Collection<Path> getTestFiles(final String resourcePath, final Path... excludedRelativeSubpaths)
