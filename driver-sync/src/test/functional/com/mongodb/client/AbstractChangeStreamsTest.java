@@ -40,9 +40,10 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import util.JsonPoweredTestHelper;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -252,8 +253,8 @@ public abstract class AbstractChangeStreamsTest {
 
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
-        List<Object[]> data = new ArrayList<Object[]>();
-        for (File file : JsonPoweredTestHelper.getTestFiles("/change-streams")) {
+        List<Object[]> data = new ArrayList<>();
+        for (Path file : JsonPoweredTestHelper.getTestFiles("/change-streams", Paths.get("unified"))) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             MongoNamespace namespace = new MongoNamespace(testDocument.getString("database_name").getValue(),
                     testDocument.getString("collection_name").getValue());
@@ -262,7 +263,7 @@ public abstract class AbstractChangeStreamsTest {
                     testDocument.getString("collection2_name").getValue()) : null;
 
             for (BsonValue test : testDocument.getArray("tests")) {
-                data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
+                data.add(new Object[]{file.getFileName().toString(), test.asDocument().getString("description").getValue(),
                         namespace, namespace2, test.asDocument(), skipTest(testDocument, test.asDocument())});
             }
         }
