@@ -17,8 +17,11 @@
 package com.mongodb.client.internal;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.internal.connection.SslHelper;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -38,9 +41,10 @@ class KeyManagementService {
 
     public InputStream stream(final String host, final ByteBuffer message) throws IOException {
         ServerAddress serverAddress = host.contains(":") ? new ServerAddress(host) : new ServerAddress(host, defaultPort);
-        Socket socket = sslContext.getSocketFactory().createSocket();
+        SSLSocket socket = (SSLSocket) sslContext.getSocketFactory().createSocket();
 
         try {
+            enableHostNameVerification(socket);
             socket.setSoTimeout(timeoutMillis);
             socket.connect(serverAddress.getSocketAddress(), timeoutMillis);
         } catch (IOException e) {
@@ -66,6 +70,15 @@ class KeyManagementService {
             closeSocket(socket);
             throw e;
         }
+    }
+
+    private void enableHostNameVerification(final SSLSocket socket) {
+        SSLParameters sslParameters = socket.getSSLParameters();
+        if (sslParameters == null) {
+            sslParameters = new SSLParameters();
+        }
+        SslHelper.enableHostNameVerification(sslParameters);
+        socket.setSSLParameters(sslParameters);
     }
 
     public int getDefaultPort() {
