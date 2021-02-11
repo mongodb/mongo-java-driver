@@ -19,6 +19,7 @@ package com.mongodb.reactivestreams.client.syncadapter;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.client.MongoCursor;
+import com.mongodb.lang.Nullable;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 
@@ -27,8 +28,11 @@ import java.util.Iterator;
 class SyncMongoCursor<T> implements MongoCursor<T> {
     private final Iterator<T> iterator;
 
-    SyncMongoCursor(final Publisher<T> publisher) {
-        iterator = Flux.from(publisher).toIterable().iterator();
+    SyncMongoCursor(final Publisher<T> publisher, final @Nullable Integer batchSize) {
+        iterator = (batchSize == null
+                ? Flux.from(publisher).toIterable()
+                : Flux.from(publisher).toIterable(batchSize))
+                .iterator();
     }
 
     @Override
