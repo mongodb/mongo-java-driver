@@ -20,8 +20,11 @@ import com.mongodb.MongoSocketOpenException;
 import com.mongodb.MongoSocketReadException;
 import com.mongodb.MongoSocketWriteException;
 import com.mongodb.ServerAddress;
+import com.mongodb.internal.connection.SslHelper;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -42,14 +45,15 @@ class KeyManagementService {
     }
 
     public InputStream stream(final String host, final ByteBuffer message) {
-        Socket socket;
+        SSLSocket socket;
         try {
-            socket = sslContext.getSocketFactory().createSocket();
+            socket = (SSLSocket) sslContext.getSocketFactory().createSocket();
         } catch (IOException e) {
             throw new MongoSocketOpenException("Exception opening connection to Key Management Service", new ServerAddress(host, port), e);
         }
 
         try {
+            enableHostNameVerification(socket);
             socket.setSoTimeout(timeoutMillis);
             socket.connect(new InetSocketAddress(InetAddress.getByName(host), port), timeoutMillis);
         } catch (IOException e) {
@@ -77,6 +81,15 @@ class KeyManagementService {
             throw new MongoSocketReadException("Exception receiving message from Key Management Service",
                     new ServerAddress(host, port), e);
         }
+    }
+
+    private void enableHostNameVerification(final SSLSocket socket) {
+        SSLParameters sslParameters = socket.getSSLParameters();
+        if (sslParameters == null) {
+            sslParameters = new SSLParameters();
+        }
+        SslHelper.enableHostNameVerification(sslParameters);
+        socket.setSSLParameters(sslParameters);
     }
 
     public int getPort() {
