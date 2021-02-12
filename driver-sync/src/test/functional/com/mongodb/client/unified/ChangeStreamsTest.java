@@ -42,6 +42,6 @@ public final class ChangeStreamsTest extends UnifiedTest {
 
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
-        return getTestData("change-streams/unified");
+        return getTestData("unified-test-format/change-streams");
     }
 }

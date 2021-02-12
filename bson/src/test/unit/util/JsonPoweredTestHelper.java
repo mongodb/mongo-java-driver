@@ -29,63 +29,28 @@ import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public final class JsonPoweredTestHelper {
-    private static final String JSON_FILE_NAME_SUFFIX = ".json";
 
     public static BsonDocument getTestDocument(final File file) throws IOException {
         return new BsonDocumentCodec().decode(new JsonReader(getFileAsString(file)), DecoderContext.builder().build());
-    }
-
-    public static BsonDocument getTestDocument(final Path file) throws IOException {
-        return getTestDocument(file.toFile());
     }
 
     public static BsonDocument getTestDocument(final String resourcePath) throws IOException, URISyntaxException {
         return getTestDocument(new File(JsonPoweredTestHelper.class.getResource(resourcePath).toURI()));
     }
 
-    /**
-     * @see #getTestFiles(String, Path...)
-     */
-    public static Collection<File> getTestFiles(final String resourcePath) throws URISyntaxException, IOException {
-        return getTestFiles(resourcePath, (Path[]) null)
-                .stream()
-                .map(Path::toFile)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * @param resourcePath             The {@linkplain Class#getResource(String) name of a resource} representing
-     *                                 a directory with test files.
-     * @param excludedRelativeSubpaths Sub-paths relative to the {@code resourcePath} directory to exclude from the results.
-     * @return A collection with unspecified mutability and element order.
-     */
-    public static Collection<Path> getTestFiles(final String resourcePath, final Path... excludedRelativeSubpaths)
-            throws URISyntaxException, IOException {
+    public static List<File> getTestFiles(final String resourcePath) throws URISyntaxException {
         URL resource = JsonPoweredTestHelper.class.getResource(resourcePath);
         if (resource == null) {
             return Collections.emptyList();
         } else {
-            Path start = Paths.get(resource.toURI());
-            List<Path> excluded = excludedRelativeSubpaths == null ? Collections.emptyList() : Stream.of(excludedRelativeSubpaths)
-                    .map(start::resolve)
-                    .collect(Collectors.toList());
-            try (Stream<Path> files = Files.walk(start)) {
-                return files
-                        .filter(path -> !Files.isDirectory(path))
-                        .filter(path -> path.getNameCount() > 0 && path.getFileName().toString().endsWith(JSON_FILE_NAME_SUFFIX))
-                        .filter(path -> excluded.stream().noneMatch(path::startsWith))
-                        .collect(Collectors.toList());
-            }
+            List<File> files = new ArrayList<>();
+            addFilesFromDirectory(new File(resource.toURI()), files);
+            return files;
         }
     }
 
@@ -103,6 +68,20 @@ public final class JsonPoweredTestHelper {
             reader.close();
         }
         return stringBuilder.toString();
+    }
+
+    private static void addFilesFromDirectory(final File directory, final List<File> files) {
+        String[] fileNames = directory.list();
+        if (fileNames != null) {
+            for (String fileName : fileNames) {
+                File file = new File(directory, fileName);
+                if (file.isDirectory()) {
+                    addFilesFromDirectory(file, files);
+                } else if (file.getName().endsWith(".json")) {
+                    files.add(file);
+                }
+            }
+        }
     }
 
     private JsonPoweredTestHelper() {
