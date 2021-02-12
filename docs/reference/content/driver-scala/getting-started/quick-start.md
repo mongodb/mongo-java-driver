@@ -127,7 +127,7 @@ val collection: MongoCollection[Document] = database.getCollection("test")
 
 ## Create a Document
 
-To create the document using the Scala driver, use the [`Document`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/bson/collection/immutable/Document">}} class.
+To create the document using the Scala driver, use the [`Document`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/bson/collection/immutable/Document">}}) class.
 
 For example, consider the following JSON document:
 
