@@ -43,7 +43,6 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
-
 public class BatchCursorPublisherErrorTest {
 
     private MongoCollection<Document> collection;
@@ -86,7 +85,9 @@ public class BatchCursorPublisherErrorTest {
     <T> void assertErrorHandling(final Publisher<T> publisher) {
         TestSubscriber<T> subscriber = new TestSubscriber<>();
         subscriber.doOnSubscribe(sub -> sub.request(5));
-        subscriber.doOnNext(t -> { throw new RuntimeException("Some user error"); });
+        subscriber.doOnNext(t -> {
+            throw new RuntimeException("Some user error");
+        });
         publisher.subscribe(subscriber);
         assertDoesNotThrow(Fixture::waitForLastServerSessionPoolRelease);
         subscriber.assertNoTerminalEvent();
