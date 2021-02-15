@@ -27,10 +27,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public final class JsonPoweredTestHelper {
@@ -44,14 +42,9 @@ public final class JsonPoweredTestHelper {
     }
 
     public static List<File> getTestFiles(final String resourcePath) throws URISyntaxException {
-        URL resource = JsonPoweredTestHelper.class.getResource(resourcePath);
-        if (resource == null) {
-            return Collections.emptyList();
-        } else {
-            List<File> files = new ArrayList<>();
-            addFilesFromDirectory(new File(resource.toURI()), files);
-            return files;
-        }
+        List<File> files = new ArrayList<File>();
+        addFilesFromDirectory(new File(JsonPoweredTestHelper.class.getResource(resourcePath).toURI()), files);
+        return files;
     }
 
     private static String getFileAsString(final File file) throws IOException {
