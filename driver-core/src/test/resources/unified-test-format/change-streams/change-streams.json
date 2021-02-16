@@ -1,0 +1,10 @@
+{
+  "description": "change-streams",
+  "schemaVersion": "1.0",
+  "createEntities": [
+  ],
+  "initialData": [
+  ],
+  "tests": [
+  ]
+}

@@ -22,28 +22,17 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
-import org.junit.Before;
 import org.junit.runners.Parameterized;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-public class UnifiedTestValidator extends UnifiedTest {
-    private final String fileDescription;
-    private final String testDescription;
-
-    public UnifiedTestValidator(final String fileDescription, final String testDescription, final String schemaVersion,
-                                @Nullable final BsonArray runOnRequirements, final BsonArray entities, final BsonArray initialData,
-                                final BsonDocument definition) {
+public final class ChangeStreamsTest extends UnifiedTest {
+    public ChangeStreamsTest(final String fileDescription, final String testDescription,
+                             final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
+                             final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
-        this.fileDescription = fileDescription;
-        this.testDescription = testDescription;
-    }
-
-    @Before
-    public void setUp() {
-        super.setUp();
     }
 
     @Override
@@ -53,6 +42,6 @@ public class UnifiedTestValidator extends UnifiedTest {
 
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/valid-pass");
+        return getTestData("unified-test-format/change-streams");
     }
 }
