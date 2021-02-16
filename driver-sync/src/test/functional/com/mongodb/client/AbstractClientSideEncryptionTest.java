@@ -203,6 +203,15 @@ public abstract class AbstractClientSideEncryptionTest {
                 kmsProviderMap.put("accessKeyId", System.getProperty("org.mongodb.test.awsAccessKeyId"));
                 kmsProviderMap.put("secretAccessKey", System.getProperty("org.mongodb.test.awsSecretAccessKey"));
                 kmsProvidersMap.put("aws", kmsProviderMap);
+            } else if (kmsProviderKey.equals("awsTemporary")) {
+                kmsProviderMap.put("accessKeyId", System.getProperty("org.mongodb.test.tmpAwsAccessKeyId"));
+                kmsProviderMap.put("secretAccessKey", System.getProperty("org.mongodb.test.tmpAwsSecretAccessKey"));
+                kmsProviderMap.put("sessionToken", System.getProperty("org.mongodb.test.tmpAwsSessionToken"));
+                kmsProvidersMap.put("aws", kmsProviderMap);
+            } else if (kmsProviderKey.equals("awsTemporaryNoSessionToken")) {
+                kmsProviderMap.put("accessKeyId", System.getProperty("org.mongodb.test.tmpAwsAccessKeyId"));
+                kmsProviderMap.put("secretAccessKey", System.getProperty("org.mongodb.test.tmpAwsSecretAccessKey"));
+                kmsProvidersMap.put("aws", kmsProviderMap);
             } else if (kmsProviderKey.equals("azure")) {
                 kmsProviderMap.put("tenantId", System.getProperty("org.mongodb.test.azureTenantId"));
                 kmsProviderMap.put("clientId", System.getProperty("org.mongodb.test.azureClientId"));
