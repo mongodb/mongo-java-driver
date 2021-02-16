@@ -2,9 +2,105 @@
   "description": "change-streams",
   "schemaVersion": "1.0",
   "createEntities": [
+    {
+      "client": {
+        "id": "client0",
+        "observeEvents": [
+        ],
+        "ignoreCommandMonitoringEvents": [
+        ]
+      }
+    },
+    {
+      "database": {
+        "id": "database0",
+        "client": "client0",
+        "databaseName": "database0"
+      }
+    },
+    {
+      "collection": {
+        "id": "collection0",
+        "database": "database0",
+        "collectionName": "collection0"
+      }
+    }
   ],
   "initialData": [
+    {
+      "collectionName": "collection0",
+      "databaseName": "database0",
+      "documents": [
+      ]
+    }
   ],
   "tests": [
+    {
+      "description": "Test array truncation",
+      "runOnRequirements": [
+        {
+          "minServerVersion": "4.7",
+          "topologies": [
+            "replicaset"
+          ]
+        }
+      ],
+      "operations": [
+        {
+          "name": "insertOne",
+          "object": "collection0",
+          "arguments": {
+            "document": {
+              "_id": "d",
+              "x": ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
+            }
+          }
+        },
+        {
+          "name": "createChangeStream",
+          "object": "collection0",
+          "saveResultAsEntity": "changeStream0"
+        },
+        {
+          "name": "aggregate",
+          "object": "collection0",
+          "arguments": {
+            "pipeline": [
+              {
+                "$match": {
+                  "_id": "d"
+                }
+              },
+              {
+                "$project": {
+                  "x": {
+                    "$slice": ["$x", 9]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "iterateUntilDocumentOrError",
+          "object": "changeStream0",
+          "expectResult": {
+            "operationType": "update",
+            "ns": {
+              "db": "database0",
+              "coll": "collection0"
+            },
+            "updateDescription": {
+              "truncatedArrays": [
+                {
+                  "field": "x",
+                  "newSize": 9
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
   ]
 }
