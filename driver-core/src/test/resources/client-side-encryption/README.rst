@@ -147,8 +147,72 @@ Then for each element in ``tests``:
 
 #. Create a **new** MongoClient using ``clientOptions``.
 
-   #. If ``autoEncryptOpts`` includes ``aws``, ``azure``, and/or ``gcp`` as a KMS provider, pass in credentials from the environment.
-   #. If ``autoEncryptOpts`` does not include ``keyVaultNamespace``, default it to ``keyvault.datakeys``.
+   #. If ``autoEncryptOpts`` includes ``aws``, ``awsTemporary``, ``awsTemporaryNoSessionToken``,
+      ``azure``, and/or ``gcp`` as a KMS provider, pass in credentials from the environment.
+
+      - ``awsTemporary``, and ``awsTemporaryNoSessionToken`` require temporary
+        AWS credentials. These can be retrieved using the csfle `set-temp-creds.sh
+        <https://github.com/mongodb-labs/drivers-evergreen-tools/tree/master/.evergreen/csfle>`_
+        script.
+
+      - ``aws``, ``awsTemporary``, and ``awsTemporaryNoSessionToken`` are
+        mutually exclusive.
+
+        ``aws`` should be substituted with:
+
+        .. code:: javascript
+
+           "aws": {
+                "accessKeyId": <set from environment>,
+                "secretAccessKey": <set from environment>
+           }
+
+        ``awsTemporary`` should be substituted with:
+
+        .. code:: javascript
+
+           "aws": {
+                "accessKeyId": <set from environment>,
+                "secretAccessKey": <set from environment>
+                "sessionToken": <set from environment>
+           }
+
+        ``awsTemporaryNoSessionToken`` should be substituted with:
+
+        .. code:: javascript
+
+           "aws": {
+               "accessKeyId": <set from environment>,
+               "secretAccessKey": <set from environment>
+           }
+
+        ``gcp`` should be substituted with:
+
+        .. code:: javascript
+
+           "gcp": {
+               "email": <set from environment>,
+               "privateKey": <set from environment>,
+           }
+
+        ``azure`` should be substituted with:
+
+        .. code:: javascript
+
+           "azure": {
+               "tenantId": <set from environment>,
+               "clientId": <set from environment>,
+               "clientSecret": <set from environment>,
+           }
+
+        ``local`` should be substituted with:
+
+        .. code:: javascript
+
+           "local": { "key": <base64 decoding of LOCAL_MASTERKEY> }
+
+   #. If ``autoEncryptOpts`` does not include ``keyVaultNamespace``, default it
+      to ``keyvault.datakeys``.
 
 #. For each element in ``operations``:
 
@@ -318,7 +382,7 @@ For each KMS provider (``aws``, ``azure``, ``gcp``, and ``local``), referred to 
 
    - Expect the return value to be a BSON binary subtype 6, referred to as ``encrypted``.
    - Use ``client_encrypted`` to insert ``{ _id: "<provider_name>", "value": <encrypted> }`` into ``db.coll``.
-   - Use ``client_encrypted`` to run a find querying with ``_id`` of "<provider_name>" and expect ``value`` to be "hello local".
+   - Use ``client_encrypted`` to run a find querying with ``_id`` of "<provider_name>" and expect ``value`` to be "hello <provider_name>".
 
 #. Call ``client_encryption.encrypt()`` with the value "hello <provider_name>", the algorithm ``AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic``, and the ``key_alt_name`` of ``<provider_name>_altname``.
 
@@ -770,3 +834,177 @@ The following tests that setting ``bypassAutoEncryption=true`` really does bypas
 #. Use ``client_encrypted`` to insert the document ``{"unencrypted": "test"}`` into ``db.coll``. Expect this to succeed. 
 
 #. Validate that mongocryptd was not spawned. Create a MongoClient to localhost:27021 (or whatever was passed via ``--port``) with serverSelectionTimeoutMS=1000. Run an ``isMaster`` command and ensure it fails with a server selection timeout.
+
+Deadlock tests
+~~~~~~~~~~~~~~
+
+.. _Connection Monitoring and Pooling: /source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst
+
+The following tests only apply to drivers that have implemented a connection pool (see the `Connection Monitoring and Pooling`_ specification).
+
+There are multiple parameterized test cases. Before each test case, perform the setup.
+
+Setup
+`````
+
+Create a ``MongoClient`` for setup operations named ``client_test``.
+
+Create a ``MongoClient`` for key vault operations with ``maxPoolSize=1`` named ``client_keyvault``. Capture command started events.
+
+Using ``client_test``, drop the collections ``keyvault.datakeys`` and ``db.coll``.
+
+Insert the document `external/external-key.json <../external/external-key.json>`_ into ``keyvault.datakeys`` with majority write concern.
+
+Create a collection ``db.coll`` configured with a JSON schema `external/external-schema.json <../external/external-schema.json>`_ as the validator, like so:
+
+.. code:: typescript
+
+   {"create": "coll", "validator": {"$jsonSchema": <json_schema>}}
+
+Create a ``ClientEncryption`` object, named ``client_encryption`` configured with:
+- ``keyVaultClient``=``client_test``
+- ``keyVaultNamespace``="keyvault.datakeys"
+- ``kmsProviders``=``{ "local": { "key": <base64 decoding of LOCAL_MASTERKEY> } }``
+
+Use ``client_encryption`` to encrypt the value "string0" with ``algorithm``="AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic" and ``keyAltName``="local". Store the result in a variable named ``ciphertext``.
+
+Proceed to run the test case.
+
+Each test case configures a ``MongoClient`` with automatic encryption (named ``client_encrypted``).
+
+Each test must assert the number of unique ``MongoClient``s created. This can be accomplished by capturing ``TopologyOpeningEvent``, or by checking command started events for a client identifier (not possible in all drivers).
+
+Running a test case
+```````````````````
+- Create a ``MongoClient`` named ``client_encrypted`` configured as follows:
+   - Set ``AutoEncryptionOpts``:
+      - ``keyVaultNamespace="keyvault.datakeys"``
+      - ``kmsProviders``=``{ "local": { "key": <base64 decoding of LOCAL_MASTERKEY> } }``
+      - Append ``TestCase.AutoEncryptionOpts`` (defined below)
+   - Capture command started events.
+   - Set ``maxPoolSize=TestCase.MaxPoolSize``
+- If the testcase sets ``AutoEncryptionOpts.bypassAutoEncryption=true``:
+   - Use ``client_test`` to insert ``{ "_id": 0, "encrypted": <ciphertext> }`` into ``db.coll``.
+- Otherwise:
+   - Use ``client_encrypted`` to insert ``{ "_id": 0, "encrypted": "string0" }``.
+- Use ``client_encrypted`` to run a ``findOne`` operation on ``db.coll``, with the filter ``{ "_id": 0 }``.
+- Expect the result to be ``{ "_id": 0, "encrypted": "string0" }``.
+- Check captured events against ``TestCase.Expectations``.
+- Check the number of unique ``MongoClient``s created is equal to ``TestCase.ExpectedNumberOfClients``.
+
+Case 1
+``````
+- MaxPoolSize: 1
+- AutoEncryptionOpts:
+   - bypassAutoEncryption=false
+   - keyVaultClient=unset
+- Expectations:
+   - Expect ``client_encrypted`` to have captured four ``CommandStartedEvent``:
+      - a listCollections to "db".
+      - a find on "keyvault".
+      - an insert on "db".
+      - a find on "db"
+- ExpectedNumberOfClients: 2
+
+Case 2
+``````
+- MaxPoolSize: 1
+- AutoEncryptionOpts:
+   - bypassAutoEncryption=false
+   - keyVaultClient=client_keyvault
+- Expectations:
+   - Expect ``client_encrypted`` to have captured three ``CommandStartedEvent``:
+      - a listCollections to "db".
+      - an insert on "db".
+      - a find on "db"
+   - Expect ``client_keyvault`` to have captured one ``CommandStartedEvent``:
+      - a find on "keyvault".
+- ExpectedNumberOfClients: 2
+
+Case 3
+``````
+- MaxPoolSize: 1
+- AutoEncryptionOpts:
+   - bypassAutoEncryption=true
+   - keyVaultClient=unset
+- Expectations:
+   - Expect ``client_encrypted`` to have captured three ``CommandStartedEvent``:
+      - a find on "db"
+      - a find on "keyvault".
+- ExpectedNumberOfClients: 2
+
+Case 4
+``````
+- MaxPoolSize: 1
+- AutoEncryptionOpts:
+   - bypassAutoEncryption=true
+   - keyVaultClient=client_keyvault
+- Expectations:
+   - Expect ``client_encrypted`` to have captured two ``CommandStartedEvent``:
+      - a find on "db"
+   - Expect ``client_keyvault`` to have captured one ``CommandStartedEvent``:
+      - a find on "keyvault".
+- ExpectedNumberOfClients: 1
+
+Case 5
+``````
+Drivers that do not support an unlimited maximum pool size MUST skip this test.
+
+- MaxPoolSize: 0
+- AutoEncryptionOpts:
+   - bypassAutoEncryption=false
+   - keyVaultClient=unset
+- Expectations:
+   - Expect ``client_encrypted`` to have captured five ``CommandStartedEvent``:
+      - a listCollections to "db".
+      - a listCollections to "keyvault".
+      - a find on "keyvault".
+      - an insert on "db".
+      - a find on "db"
+- ExpectedNumberOfClients: 1
+
+Case 6
+``````
+Drivers that do not support an unlimited maximum pool size MUST skip this test.
+
+- MaxPoolSize: 0
+- AutoEncryptionOpts:
+   - bypassAutoEncryption=false
+   - keyVaultClient=client_keyvault
+- Expectations:
+   - Expect ``client_encrypted`` to have captured three ``CommandStartedEvent``:
+      - a listCollections to "db".
+      - an insert on "db".
+      - a find on "db"
+   - Expect ``client_keyvault`` to have captured one ``CommandStartedEvent``:
+      - a find on "keyvault".
+- ExpectedNumberOfClients: 1
+
+Case 7
+``````
+Drivers that do not support an unlimited maximum pool size MUST skip this test.
+
+- MaxPoolSize: 0
+- AutoEncryptionOpts:
+   - bypassAutoEncryption=true
+   - keyVaultClient=unset
+- Expectations:
+   - Expect ``client_encrypted`` to have captured three ``CommandStartedEvent``:
+      - a find on "db"
+      - a find on "keyvault".
+- ExpectedNumberOfClients: 1
+
+Case 8
+``````
+Drivers that do not support an unlimited maximum pool size MUST skip this test.
+
+- MaxPoolSize: 0
+- AutoEncryptionOpts:
+   - bypassAutoEncryption=true
+   - keyVaultClient=client_keyvault
+- Expectations:
+   - Expect ``client_encrypted`` to have captured two ``CommandStartedEvent``:
+      - a find on "db"
+   - Expect ``client_keyvault`` to have captured one ``CommandStartedEvent``:
+      - a find on "keyvault".
+- ExpectedNumberOfClients: 1
