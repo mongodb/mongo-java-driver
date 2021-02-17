@@ -5,10 +5,8 @@
     {
       "client": {
         "id": "client0",
-        "observeEvents": [
-        ],
-        "ignoreCommandMonitoringEvents": [
-        ]
+        "observeEvents": [],
+        "ignoreCommandMonitoringEvents": []
       }
     },
     {
@@ -30,8 +28,7 @@
     {
       "collectionName": "collection0",
       "databaseName": "database0",
-      "documents": [
-      ]
+      "documents": []
     }
   ],
   "tests": [
@@ -51,8 +48,17 @@
           "object": "collection0",
           "arguments": {
             "document": {
-              "_id": "d",
-              "x": ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
+              "_id": 1,
+              "a": 1,
+              "array": [
+                "foo",
+                {
+                  "a": "bar"
+                },
+                1,
+                2,
+                3
+              ]
             }
           }
         },
@@ -62,20 +68,21 @@
           "saveResultAsEntity": "changeStream0"
         },
         {
-          "name": "aggregate",
+          "name": "updateOne",
           "object": "collection0",
           "arguments": {
-            "pipeline": [
+            "filter": {
+              "_id": 1
+            },
+            "update": [
               {
-                "$match": {
-                  "_id": "d"
-                }
-              },
-              {
-                "$project": {
-                  "x": {
-                    "$slice": ["$x", 9]
-                  }
+                "$set": {
+                  "array": [
+                    "foo",
+                    {
+                      "a": "bar"
+                    }
+                  ]
                 }
               }
             ]
@@ -91,10 +98,12 @@
               "coll": "collection0"
             },
             "updateDescription": {
+              "updatedFields": {},
+              "removedFields": [],
               "truncatedArrays": [
                 {
-                  "field": "x",
-                  "newSize": 9
+                  "field": "array",
+                  "newSize": 2
                 }
               ]
             }

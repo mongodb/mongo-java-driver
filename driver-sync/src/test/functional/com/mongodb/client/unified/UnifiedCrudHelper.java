@@ -326,10 +326,6 @@ final class UnifiedCrudHelper {
     OperationResult executeUpdateOne(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments");
-        BsonDocument filter = arguments.getDocument("filter");
-        BsonDocument update = arguments.getDocument("update");
-        UpdateOptions options = getUpdateOptions(arguments);
-
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
                 case "filter":
@@ -339,8 +335,13 @@ final class UnifiedCrudHelper {
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
-        return resultOf(() ->
-                toExpected(collection.updateOne(filter, update, options)));
+        BsonDocument filter = arguments.getDocument("filter");
+        UpdateOptions options = getUpdateOptions(arguments);
+        BsonValue update = arguments.get("update");
+        UpdateResult updateResult = update.isArray()
+                ? collection.updateOne(filter, update.asArray().stream().map(BsonValue::asDocument).collect(toList()), options)
+                : collection.updateOne(filter, update.asDocument(), options);
+        return resultOf(() -> toExpected(updateResult));
     }
 
     OperationResult executeUpdateMany(final BsonDocument operation) {
