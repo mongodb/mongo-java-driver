@@ -39,28 +39,26 @@ public final class UpdateDescription {
     /**
      * Creates a new instance
      *
-     * @param removedFields the list of fields that have been removed.
-     * @param updatedFields the updated fields
-     * @deprecated Not part of the public API since 4.3, may be removed in the future.
+     * @param removedFields See {@link #UpdateDescription(List, BsonDocument, List)}.
+     * @param updatedFields See {@link #UpdateDescription(List, BsonDocument, List)}.
+     * @see #UpdateDescription(List, BsonDocument, List)
      */
-    @Deprecated
     public UpdateDescription(@Nullable final List<String> removedFields,
                              @Nullable final BsonDocument updatedFields) {
         this(removedFields, updatedFields, null);
     }
 
     /**
-     * Not part of the public API.
-     *
      * @param removedFields   Names of the fields that were removed.
      * @param updatedFields   Information about the updated fields.
      * @param truncatedArrays Information about the updated fields of the {@linkplain org.bson.BsonType#ARRAY array} type
      *                        when the changes are reported as truncations.
      */
     @BsonCreator
-    public UpdateDescription(@Nullable @BsonProperty("removedFields") final List<String> removedFields,
-                      @Nullable @BsonProperty("updatedFields") final BsonDocument updatedFields,
-                      @Nullable @BsonProperty("truncatedArrays") final List<TruncatedArray> truncatedArrays) {
+    public UpdateDescription(
+            @Nullable @BsonProperty("removedFields") final List<String> removedFields,
+            @Nullable @BsonProperty("updatedFields") final BsonDocument updatedFields,
+            @Nullable @BsonProperty("truncatedArrays") final List<TruncatedArray> truncatedArrays) {
         this.removedFields = removedFields;
         this.updatedFields = updatedFields;
         this.truncatedArrays = truncatedArrays;
@@ -78,6 +76,25 @@ public final class UpdateDescription {
 
     /**
      * Returns information about the updated fields excluding the fields reported via {@link #getTruncatedArrays()}.
+     * <p>
+     * Despite {@linkplain org.bson.BsonType#ARRAY array} fields reported via {@link #getTruncatedArrays()} being excluded from the
+     * information returned by this method, changes to fields of the elements of the array values may be reported via this method.
+     * For example, given the original field {@code "arrayField": ["foo", {"a": "bar"}, 1, 2, 3]}
+     * and the updated field {@code "arrayField": ["foo", {"a": "bar", "b": 3}]}, the following is how such a change may be reported:
+     * <table>
+     *   <tr>
+     *     <th>Method</th>
+     *     <th>Result</th>
+     *   </tr>
+     *   <tr>
+     *     <td>{@link #getUpdatedFields()}</td>
+     *     <td>{"arrayField.1.b": 3}</td>
+     *   </tr>
+     *   <tr>
+     *     <td>{@link #getTruncatedArrays()}</td>
+     *     <td>{"field": "arrayField", "newSize": 2}</td>
+     *   </tr>
+     * </table>
      *
      * @return {@code updatedFields}.
      * @see #getTruncatedArrays()

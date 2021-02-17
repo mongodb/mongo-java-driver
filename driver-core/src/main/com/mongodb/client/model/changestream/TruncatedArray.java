@@ -35,8 +35,6 @@ public final class TruncatedArray {
     private final int newSize;
 
     /**
-     * Not part of the public API.
-     *
      * @param field   The name of the field that was truncated.
      * @param newSize The size of the new field value.
      */
