@@ -139,21 +139,39 @@ public final class ClientEncryptionSettings {
      * Gets the map of KMS provider properties.
      *
      * <p>
-     * Multiple KMS providers may be specified. Initially, two KMS providers are supported: "aws" and "local". The kmsProviders map
-     * values differ by provider:
+     * Multiple KMS providers may be specified. The following KMS providers are supported: "aws", "azure", "gcp" and "local". The
+     * kmsProviders map values differ by provider:
      * </p>
      * <p>
      * For "aws", the properties are:
      * </p>
      * <ul>
-     *     <li>accessKeyId: a String containing the AWS access key identifier</li>
-     *     <li>secretAccessKey: a String the AWS secret access key</li>
+     *     <li>accessKeyId: a String, the AWS access key identifier</li>
+     *     <li>secretAccessKey: a String, the AWS secret access key</li>
+     *     <li>sessionToken: an optional String, the AWS session token</li>
+     * </ul>
+     * <p>
+     * For "azure", the properties are:
+     * </p>
+     * <ul>
+     *     <li>tenantId: a String, the tenant Id</li>
+     *     <li>clientId: a String, the client Id</li>
+     *     <li>clientSecret: a String, the clientSecret</li>
+     *     <li>identityPlatformEndpoint: an optional String, the identity platform endpoint. Defaults to login.microsoftonline.com</li>
+     * </ul>
+     * <p>
+     * For "gcp", the properties are:
+     * </p>
+     * <ul>
+     *     <li>email: a String, the email address</li>
+     *     <li>privateKey: a byte[] or base 64 encoded String, the private key</li>
+     *     <li>endpoint: an optional String, the endpoint. Defaults to oauth2.googleapis.com</li>
      * </ul>
      * <p>
      * For "local", the properties are:
      * </p>
      * <ul>
-     *     <li>key: &lt;byte array of length 96&gt;</li>
+     *     <li>key: byte[] of length 96, the local key</li>
      * </ul>
      *
      * @return map of KMS provider properties
