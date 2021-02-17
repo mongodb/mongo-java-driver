@@ -17,7 +17,7 @@ set -o errexit  # Exit the script with error if any of the commands fail
 #       AWS_SECRET_ACCESS_KEY       The AWS secret access key for client-side encryption
 #       AWS_TEMP_ACCESS_KEY_ID      The temporary AWS access key identifier for client-side encryption
 #       AWS_TEMP_SECRET_ACCESS_KEY  The temporary AWS secret access key for client-side encryption
-#       AWS_TEMP_SESSION_TOKEN      The temporary AWS secret access key for client-side encryption
+#       AWS_TEMP_SESSION_TOKEN      The temporary AWS session token for client-side encryption
 #       AZURE_TENANT_ID             The Azure tenant identifier for client-side encryption
 #       AZURE_CLIENT_ID             The Azure client identifier for client-side encryption
 #       AZURE_CLIENT_SECRET         The Azure client secret for client-side encryption
