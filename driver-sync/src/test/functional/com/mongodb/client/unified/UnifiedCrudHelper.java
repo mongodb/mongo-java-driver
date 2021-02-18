@@ -693,22 +693,25 @@ final class UnifiedCrudHelper {
 
     public OperationResult executeChangeStream(final BsonDocument operation) {
         String entityName = operation.getString("object").getValue();
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+        List<BsonDocument> pipeline = arguments.getArray("pipeline").stream().map(BsonValue::asDocument).collect(toList());
         ChangeStreamIterable<BsonDocument> iterable;
         if (entities.hasCollection(entityName)) {
-            iterable = entities.getCollection(entityName).watch();
+            iterable = entities.getCollection(entityName).watch(pipeline);
         } else if (entities.hasDatabase(entityName)) {
-            iterable = entities.getDatabase(entityName).watch(BsonDocument.class);
+            iterable = entities.getDatabase(entityName).watch(pipeline, BsonDocument.class);
         } else if (entities.hasClient(entityName)) {
-            iterable = entities.getClient(entityName).watch(BsonDocument.class);
+            iterable = entities.getClient(entityName).watch(pipeline, BsonDocument.class);
         } else {
             throw new UnsupportedOperationException("No entity found for id: " + entityName);
         }
 
-        for (Map.Entry<String, BsonValue> cur : operation.getDocument("arguments", new BsonDocument()).entrySet()) {
-            //noinspection SwitchStatementWithTooFewBranches
+        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
                 case "batchSize":
                     iterable.batchSize(cur.getValue().asNumber().intValue());
+                    break;
+                case "pipeline":
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
