@@ -4,9 +4,7 @@
   "createEntities": [
     {
       "client": {
-        "id": "client0",
-        "observeEvents": [],
-        "ignoreCommandMonitoringEvents": []
+        "id": "client0"
       }
     },
     {
@@ -65,6 +63,9 @@
         {
           "name": "createChangeStream",
           "object": "collection0",
+          "arguments": {
+            "pipeline": []
+          },
           "saveResultAsEntity": "changeStream0"
         },
         {
