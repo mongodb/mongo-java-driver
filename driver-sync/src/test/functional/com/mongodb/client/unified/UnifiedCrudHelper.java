@@ -336,8 +336,8 @@ final class UnifiedCrudHelper {
             }
         }
         BsonDocument filter = arguments.getDocument("filter");
-        UpdateOptions options = getUpdateOptions(arguments);
         BsonValue update = arguments.get("update");
+        UpdateOptions options = getUpdateOptions(arguments);
         UpdateResult updateResult = update.isArray()
                 ? collection.updateOne(filter, update.asArray().stream().map(BsonValue::asDocument).collect(toList()), options)
                 : collection.updateOne(filter, update.asDocument(), options);
