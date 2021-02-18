@@ -16,7 +16,7 @@ For asynchronous operations there are three interfaces [`Observable`]({{< apiref
 
 {{% note %}}
 The MongoDB Scala driver is now built upon the MongoDB Reactive Streams driver and is an implementation of the 
-[reactive streams](http://www.reactive-streams.org) specification. Observerables are implementations of Publishers and Observers are implementations of Subscribers.
+[reactive streams](http://www.reactive-streams.org) specification. Observables are implementations of Publishers and Observers are implementations of Subscribers.
 
 Class naming convention:
 

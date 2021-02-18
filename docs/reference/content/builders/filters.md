@@ -175,7 +175,7 @@ The evaluation operator methods include:
 
 - `mod`: Performs a modulo operation on the value of a field and selects documents with a specified result.
 - `regex`: Selects documents where values match a specified regular expression.
-- `text`: Selects documemts matching a full-text search expression.
+- `text`: Selects documents matching a full-text search expression.
 - `where`: Matches documents that satisfy a JavaScript expression.
 
 #### Examples
