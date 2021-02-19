@@ -154,18 +154,19 @@ public final class ClientEncryptionSettings {
      * For "azure", the properties are:
      * </p>
      * <ul>
-     *     <li>tenantId: a String, the tenant Id</li>
-     *     <li>clientId: a String, the client Id</li>
-     *     <li>clientSecret: a String, the clientSecret</li>
-     *     <li>identityPlatformEndpoint: an optional String, the identity platform endpoint. Defaults to login.microsoftonline.com</li>
+     *     <li>tenantId: a String, the tenantId that identifies the organization for the account.</li>
+     *     <li>clientId: a String, the clientId to authenticate a registered application.</li>
+     *     <li>clientSecret: a String, the client secret to authenticate a registered application.</li>
+     *     <li>identityPlatformEndpoint: optional String, a host with optional port. e.g. "example.com" or "example.com:443".
+     *     Generally used for private Azure instances.</li>
      * </ul>
      * <p>
      * For "gcp", the properties are:
      * </p>
      * <ul>
-     *     <li>email: a String, the email address</li>
-     *     <li>privateKey: a byte[] or base 64 encoded String, the private key</li>
-     *     <li>endpoint: an optional String, the endpoint. Defaults to oauth2.googleapis.com</li>
+     *     <li>email: a String, the service account email to authenticate.</li>
+     *     <li>privateKey: a String or byte[], the encoded PKCS#8 encrypted key</li>
+     *     <li>endPoint: optional String, a host with optional port. e.g. "example.com" or "example.com:443".</li>
      * </ul>
      * <p>
      * For "local", the properties are:
