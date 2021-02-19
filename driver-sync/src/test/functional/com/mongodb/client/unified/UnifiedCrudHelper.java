@@ -744,7 +744,7 @@ final class UnifiedCrudHelper {
 
         return resultOf(() -> {
             BsonDocumentWriter bsonDocumentWriter = new BsonDocumentWriter(new BsonDocument());
-            changeStreamDocumentCodec.encode(bsonDocumentWriter, cursor.next(), EncoderContext.DEFAULT_CONTEXT);
+            changeStreamDocumentCodec.encode(bsonDocumentWriter, cursor.next(), EncoderContext.builder().build());
             return bsonDocumentWriter.getDocument();
         });
     }
