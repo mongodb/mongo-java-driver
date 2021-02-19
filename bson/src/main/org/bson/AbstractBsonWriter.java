@@ -712,7 +712,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
      */
     protected void throwInvalidContextType(final String methodName, final BsonContextType actualContextType,
                                            final BsonContextType... validContextTypes) {
-        String validContextTypesString = StringUtils.join(" or ", Arrays.asList(validContextTypes));
+        String validContextTypesString = StringUtils.join(" or ", validContextTypes);
         throw new BsonInvalidOperationException(format("%s can only be called when ContextType is %s, "
                                                        + "not when ContextType is %s.",
                                                        methodName, validContextTypesString, actualContextType));
@@ -742,7 +742,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
             }
         }
 
-        String validStatesString = StringUtils.join(" or ", Arrays.asList(validStates));
+        String validStatesString = StringUtils.join(" or ", validStates);
         throw new BsonInvalidOperationException(format("%s can only be called when State is %s, not when State is %s",
                                                        methodName, validStatesString, state));
     }

@@ -20,7 +20,6 @@ import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
 import static java.lang.String.format;
-import static java.util.Arrays.asList;
 
 /**
  * Abstract base class for BsonReader implementations.
@@ -649,7 +648,7 @@ public abstract class AbstractBsonReader implements BsonReader {
      */
     protected void throwInvalidContextType(final String methodName, final BsonContextType actualContextType,
                                            final BsonContextType... validContextTypes) {
-        String validContextTypesString = StringUtils.join(" or ", asList(validContextTypes));
+        String validContextTypesString = StringUtils.join(" or ", validContextTypes);
         String message = format("%s can only be called when ContextType is %s, not when ContextType is %s.",
                                 methodName, validContextTypesString, actualContextType);
         throw new BsonInvalidOperationException(message);
@@ -663,7 +662,7 @@ public abstract class AbstractBsonReader implements BsonReader {
      * @throws BsonInvalidOperationException when the method called is not valid for the current state.
      */
     protected void throwInvalidState(final String methodName, final State... validStates) {
-        String validStatesString = StringUtils.join(" or ", asList(validStates));
+        String validStatesString = StringUtils.join(" or ", validStates);
         String message = format("%s can only be called when State is %s, not when State is %s.",
                                 methodName, validStatesString, state);
         throw new BsonInvalidOperationException(message);
