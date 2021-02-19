@@ -205,38 +205,40 @@ public final class AutoEncryptionSettings {
      * Gets the map of KMS provider properties.
      *
      * <p>
-     * Multiple KMS providers may be specified. The kmsProviders map values differ by provider:
+     * Multiple KMS providers may be specified. The following KMS providers are supported: "aws", "azure", "gcp" and "local". The
+     * kmsProviders map values differ by provider:
      * </p>
      * <p>
      * For "aws", the properties are:
      * </p>
      * <ul>
-     *     <li>accessKeyId: a String containing the AWS access key identifier</li>
-     *     <li>secretAccessKey: a String the AWS secret access key</li>
+     *     <li>accessKeyId: a String, the AWS access key identifier</li>
+     *     <li>secretAccessKey: a String, the AWS secret access key</li>
+     *     <li>sessionToken: an optional String, the AWS session token</li>
      * </ul>
      * <p>
      * For "azure", the properties are:
      * </p>
      * <ul>
-     *     <li>tenantId: a String with the tenantId that identifies the organization for the account.</li>
-     *     <li>clientId: a String with the clientId to authenticate a registered application.</li>
-     *     <li>clientSecret: a String with the client secret to authenticate a registered application.</li>
-     *     <li>identityPlatformEndpoint: optional String with a host with optional port. e.g. "example.com" or "example.com:443".
+     *     <li>tenantId: a String, the tenantId that identifies the organization for the account.</li>
+     *     <li>clientId: a String, the clientId to authenticate a registered application.</li>
+     *     <li>clientSecret: a String, the client secret to authenticate a registered application.</li>
+     *     <li>identityPlatformEndpoint: optional String, a host with optional port. e.g. "example.com" or "example.com:443".
      *     Generally used for private Azure instances.</li>
      * </ul>
      * <p>
      * For "gcp", the properties are:
      * </p>
      * <ul>
-     *     <li>email: a String with the service account email to authenticate.</li>
-     *     <li>privateKey: a String or byte[] with the encoded PKCS#8 encrypted key</li>
-     *     <li>endPoint: optional String with a host with optional port. e.g. "example.com" or "example.com:443".</li>
+     *     <li>email: a String, the service account email to authenticate.</li>
+     *     <li>privateKey: a String or byte[], the encoded PKCS#8 encrypted key</li>
+     *     <li>endPoint: optional String, a host with optional port. e.g. "example.com" or "example.com:443".</li>
      * </ul>
      * <p>
      * For "local", the properties are:
      * </p>
      * <ul>
-     *     <li>key: &lt;byte array of length 96&gt;</li>
+     *     <li>key: byte[] of length 96, the local key</li>
      * </ul>
      *
      * @return map of KMS provider properties
