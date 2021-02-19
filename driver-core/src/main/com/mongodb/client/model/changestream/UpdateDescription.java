@@ -16,14 +16,16 @@
 
 package com.mongodb.client.model.changestream;
 
+import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+
+import static java.util.Collections.emptyList;
 
 /**
  * The update description for changed fields in a {@code $changeStream} operation.
@@ -33,7 +35,6 @@ import java.util.Objects;
 public final class UpdateDescription {
     private final List<String> removedFields;
     private final BsonDocument updatedFields;
-    @Nullable
     private final List<TruncatedArray> truncatedArrays;
 
     /**
@@ -53,6 +54,7 @@ public final class UpdateDescription {
      * @param updatedFields   Information about the updated fields.
      * @param truncatedArrays Information about the updated fields of the {@linkplain org.bson.BsonType#ARRAY array} type
      *                        when the changes are reported as truncations.
+     *                        If {@code null}, then {@link #getTruncatedArrays()} returns an {@linkplain List#isEmpty() empty} {@link List}.
      */
     @BsonCreator
     public UpdateDescription(
@@ -61,7 +63,7 @@ public final class UpdateDescription {
             @Nullable @BsonProperty("truncatedArrays") final List<TruncatedArray> truncatedArrays) {
         this.removedFields = removedFields;
         this.updatedFields = updatedFields;
-        this.truncatedArrays = truncatedArrays;
+        this.truncatedArrays = truncatedArrays == null ? emptyList() : truncatedArrays;
     }
 
     /**
@@ -109,9 +111,10 @@ public final class UpdateDescription {
      * when the changes are reported as truncations.
      *
      * @return {@code truncatedArrays}.
+     * There are no guarantees on the mutability of the {@code List} returned.
      * @see #getUpdatedFields()
      */
-    @Nullable
+    @NonNull
     public List<TruncatedArray> getTruncatedArrays() {
         return truncatedArrays;
     }
@@ -140,8 +143,7 @@ public final class UpdateDescription {
         UpdateDescription that = (UpdateDescription) o;
         return Objects.equals(removedFields, that.removedFields)
                 && Objects.equals(updatedFields, that.updatedFields)
-                && (Objects.equals(truncatedArrays, that.truncatedArrays)
-                        || (isNullOrEmpty(truncatedArrays) && isNullOrEmpty(that.truncatedArrays)));
+                && Objects.equals(truncatedArrays, that.truncatedArrays);
     }
 
     @Override
@@ -156,9 +158,5 @@ public final class UpdateDescription {
                 + ", updatedFields=" + updatedFields
                 + ", truncatedArrays=" + truncatedArrays
                 + "}";
-    }
-
-    private boolean isNullOrEmpty(@Nullable final Collection<?> c) {
-        return c == null || c.isEmpty();
     }
 }

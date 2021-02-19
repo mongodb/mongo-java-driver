@@ -199,6 +199,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
          email: 'alice@10gen.com'
       },
       removedFields: ['phoneNumber']
+      "truncatedArrays": []
    }
 }
 ''',
