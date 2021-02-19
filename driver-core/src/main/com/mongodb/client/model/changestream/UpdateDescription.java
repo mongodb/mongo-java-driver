@@ -55,6 +55,7 @@ public final class UpdateDescription {
      * @param truncatedArrays Information about the updated fields of the {@linkplain org.bson.BsonType#ARRAY array} type
      *                        when the changes are reported as truncations.
      *                        If {@code null}, then {@link #getTruncatedArrays()} returns an {@linkplain List#isEmpty() empty} {@link List}.
+     * @since 4.3
      */
     @BsonCreator
     public UpdateDescription(
@@ -113,6 +114,7 @@ public final class UpdateDescription {
      * @return {@code truncatedArrays}.
      * There are no guarantees on the mutability of the {@code List} returned.
      * @see #getUpdatedFields()
+     * @since 4.3
      */
     @NonNull
     public List<TruncatedArray> getTruncatedArrays() {
