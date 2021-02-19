@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-09-24T10:33:55">
+<meta name="date" content="2021-02-19T13:02:27.61">
 <link rel="shortcut icon" href="/mongo-java-driver/4.0/img/favicon.png">
 
     <title>Macros</title><link rel="stylesheet" href="/mongo-java-driver/4.0/lib/bootstrap.css" type="text/css" />
@@ -393,7 +393,7 @@ Hierarchical modelling can be achieve by using a sealed trait or class and havin
 "><code>CodecProvider</code></a>.
 A <code>CodecProvider</code> will pass the configured <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/configuration/CodecRegistry.html
 "><code>CodecRegistry</code></a> to the
-underlying <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/Codec.html
+underlying <a href="/mongo-java-driver/4.0/apidocs/bson/org/bson/codecs/configuration/Codec.html
 "><code>Codec</code></a> and provide access to all the configured codecs.</p>
 
 <p>To create a <code>CodecProvider</code> all you need to do is to set the case class type when calling <code>createCodecProvider</code> like so:</p>
@@ -454,7 +454,7 @@ val personCodecProvider = Macros.createCodecProviderIgnoreNone[Person]()
 
 <h2 id="alternative-field-names">Alternative field names</h2>
 
-<p>The <a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/bson/annotations/BsonProperty.html
+<p>The <a href="/mongo-java-driver/4.0/apidocs/mongo-scala-driver/org/mongodb/scala/bson/annotations$$BsonProperty.html
 "><code>BsonProperty</code></a> annotation can be used to configure a the bson
 field key to be used for a given property. In the following example uses the <code>BsonProperty</code> annotation to change how the <code>firstName</code>
 property is stored:</p>

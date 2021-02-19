@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-10-14T15:19:44.38">
+<meta name="date" content="2021-02-19T13:00:09.06">
 <link rel="shortcut icon" href="/mongo-java-driver/4.1/img/favicon.png">
 
     <title>Connect to MongoDB</title><link rel="stylesheet" href="/mongo-java-driver/4.1/lib/bootstrap.css" type="text/css" />
@@ -411,7 +411,7 @@ instance running on the specified host on port <code>27017</code>:</p>
 
 
 <ul>
-<li><p>You can specify the members using a <a href="/mongo-java-driver/4.1/apidocs/mongo-scala-driver/org/mongodb/scala/package$$ConnectionString$.html
+<li><p>You can specify the members using a <a href="/mongo-java-driver/4.1/apidocs/mongo-scala-driver/org/mongodb/scala/ConnectionString$.html
 "><code>ConnectionString</code></a>:</p>
 
 <ul>
@@ -452,7 +452,7 @@ or instances to a <code>MongoClients</code> create method.</p>
 <p>To connect to a single <code>mongos</code> instance:</p>
 
 <ul>
-<li>You can specify the hostname and the port in a <a href="/mongo-java-driver/4.1/apidocs/mongo-scala-driver/org/mongodb/scala/package$$ConnectionString$.html
+<li>You can specify the hostname and the port in a <a href="/mongo-java-driver/4.1/apidocs/mongo-scala-driver/org/mongodb/scala/ConnectionString$.html
 "><code>ConnectionString</code></a></li>
 </ul>
 
@@ -467,7 +467,7 @@ or instances to a <code>MongoClients</code> create method.</p>
 <p>To connect to multiple <code>mongos</code> instances:</p>
 
 <ul>
-<li><p>You can specify the <a href="/mongo-java-driver/4.1/apidocs/mongo-scala-driver/org/mongodb/scala/package$$ConnectionString$.html
+<li><p>You can specify the <a href="/mongo-java-driver/4.1/apidocs/mongo-scala-driver/org/mongodb/scala/ConnectionString$.html
 "><code>ConnectionString</code></a> with their hostnames and ports:</p>
 
 <pre><code class="language-scala">val mongoClient = MongoClient(&quot;mongodb://host1:27017,host2:27017&quot;)

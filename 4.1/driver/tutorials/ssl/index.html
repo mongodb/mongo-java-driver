@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-10-14T15:19:44.37">
+<meta name="date" content="2021-02-19T13:00:09.06">
 <link rel="shortcut icon" href="/mongo-java-driver/4.1/img/favicon.png">
 
     <title>TLS/SSL</title><link rel="stylesheet" href="/mongo-java-driver/4.1/lib/bootstrap.css" type="text/css" />
@@ -323,9 +323,9 @@ You can configure the driver to use TLS/SSL either with <a href="/mongo-java-dri
 "><code>ConnectionString</code></a> or with
 <a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-core/com/mongodb/MongoClientSettings.html
 "><code>MongoClientSettings</code></a>.
-With the legacy MongoClient API you can use either <a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-legacy/com/mongodb/MongoClientURI.html
+With the legacy MongoClient API you can use either <a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-core/com/mongodb/MongoClientURI.html
 "><code>MongoClientURI</code></a> or
-<a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-legacy/com/mongodb/MongoClientOptions.html
+<a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-core/com/mongodb/MongoClientOptions.html
 "><code>MongoClientOptions</code></a>.</p>
 
 <h2 id="mongoclient-api-since-3-7">MongoClient API (since 3.7)</h2>
@@ -391,7 +391,7 @@ MongoClient client = MongoClients.create(settings);
 import com.mongodb.MongoClient;
 </code></pre>
 
-<p>To specify TLS/SSL with <a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-legacy/com/mongodb/MongoClientURI.html
+<p>To specify TLS/SSL with <a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-core/com/mongodb/MongoClientURI.html
 "><code>MongoClientURI</code></a>, specify <code>ssl=true</code> as part of the connection
 string, as in:</p>
 
@@ -405,7 +405,7 @@ MongoClient mongoClient = new MongoClient(uri);
 import com.mongodb.MongoClient;
 </code></pre>
 
-<p>To specify TLS/SSL with with <a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-legacy/com/mongodb/MongoClientOptions.html
+<p>To specify TLS/SSL with with <a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-core/com/mongodb/MongoClientOptions.html
 "><code>MongoClientOptions</code></a>, set the <code>sslEnabled</code> property to <code>true</code>, as in:</p>
 
 <pre><code class="language-java">MongoClientOptions options = MongoClientOptions.builder()
@@ -422,7 +422,7 @@ import com.mongodb.MongoClient;
 </code></pre>
 
 <p>To specify the <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLContext.html"><code>javax.net.ssl.SSLContext</code></a> with
-<a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-legacy/com/mongodb/MongoClientOptions.html
+<a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-core/com/mongodb/MongoClientOptions.html
 "><code>MongoClientOptions</code></a>, set the <code>sslContext</code> property, as in:</p>
 
 <pre><code class="language-java">SSLContext sslContext = ...
@@ -452,7 +452,7 @@ this in <code>MongoClientSettings</code>](/mongo-java-driver/4.1/apidocs/mongodb
         .build();
 </code></pre>
 
-<p>or, with the legacy <code>MongoClientOptions</code>](/mongo-java-driver/4.1/apidocs/mongodb-driver-legacy/com/mongodb/MongoClientOptions.html
+<p>or, with the legacy <code>MongoClientOptions</code>](/mongo-java-driver/4.1/apidocs/mongodb-driver-core/com/mongodb/MongoClientOptions.html
 ), using the <code>sslInvalidHostNameAllowed</code> property:</p>
 
 <pre><code class="language-java">MongoClientOptions.builder()

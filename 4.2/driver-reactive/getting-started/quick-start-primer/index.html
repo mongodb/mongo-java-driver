@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2021-01-26T16:05:28.72">
+<meta name="date" content="2021-02-19T13:45:15.01">
 <link rel="shortcut icon" href="/mongo-java-driver/4.2/img/favicon.png">
 
     <title>Quick Start Primer</title><link rel="stylesheet" href="/mongo-java-driver/4.2/lib/bootstrap.css" type="text/css" />
@@ -360,15 +360,12 @@ where <code>T</code> is the type of response for the operation.</p>
 <div class="admonition note">
 <h5 class="admonition-title">Note</h5>
 <p>All <a href="http://www.reactive-streams.org/reactive-streams-1.0.1-javadoc/?org/reactivestreams/Publisher.html"><code>Publishers</code></a> returned
-from the API are <a href="https://projectreactor.io/docs/core/release/reference/#reactor.hotCold">cold</a>, meaning that nothing happens until
-they are subscribed to. So just creating a <code>Publisher</code> won&rsquo;t cause any network IO. It&rsquo;s not until <code>Publisher.subscribe</code> is called that
-the driver executes the operation.</p>
+from the API are cold, meaning that no I/O happens until they are subscribed to and the subscription makes a request. So just creating a
+<code>Publisher</code> won&rsquo;t cause any network IO. It&rsquo;s not until <code>Subscription.request()</code> is called that the driver executes the operation.</p>
 
-<p>Publishers in this implementation are unicast. Each
-<a href="http://www.reactive-streams.org/reactive-streams-1.0.1-javadoc/?org/reactivestreams/Subscription.html"><code>Subscription</code></a> to a <code>Publisher</code>
-relates to a single MongoDB operation and its
-<a href="http://www.reactive-streams.org/reactive-streams-1.0.1-javadoc/?org/reactivestreams/Subscriber.html">&lsquo;Subscriber&rsquo;</a> will receive its own
-specific set of results.</p>
+<p>Publishers in this implementation are unicast. Each <a href="http://www.reactive-streams.org/reactive-streams-1.0.1-javadoc/?org/reactivestreams/Subscription.html"><code>Subscription</code></a>
+to a <code>Publisher</code> relates to a single MongoDB operation and its <a href="http://www.reactive-streams.org/reactive-streams-1.0.1-javadoc/?org/reactivestreams/Subscriber.html">&lsquo;Subscriber&rsquo;</a><br />
+will receive its own specific set of results.</p>
 
 </div>
 
@@ -400,11 +397,11 @@ the database before going on to the next example.</p></li>
 
 <li><p>PrintToStringSubscriber</p>
 
-<p>An implementation of the <code>ConsumerSubscriber</code> that prints the string version of the <code>result</code> on <code>Subscriber.onNext()</code>.</p></li>
+<p>An implementation of the <code>ConsumerSubscriber</code> that prints the string version of the <code>result</code> on <code>Subsbcriber.onNext()</code>.</p></li>
 
 <li><p>PrintDocumentSubscriber</p>
 
-<p>An implementation of the <code>ConsumerSubscriber</code> that prints the json version of a <code>Document</code> on <code>Subscriber.onNext()</code>.</p></li>
+<p>An implementation of the <code>ConsumerSubscriber</code> that prints the json version of a <code>Document</code> on <code>Subsbcriber.onNext()</code>.</p></li>
 </ol>
 
 <h2 id="blocking-and-non-blocking-examples">Blocking and non blocking examples</h2>

@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2019-11-05T13:59:54.72">
+<meta name="date" content="2021-02-19T13:36:50.99">
 <link rel="shortcut icon" href="/mongo-java-driver/3.11/img/favicon.png">
 
     <title>Client Side Encryption</title><link rel="stylesheet" href="/mongo-java-driver/3.11/lib/bootstrap.css" type="text/css" />
@@ -271,6 +271,13 @@ unauthorized parties, including server administrators, cannot read the encrypted
 
 <div class="admonition important">
 <h5 class="admonition-title">important</h5>
+<p>Support for client side encryption is in beta.  Backwards-breaking changes may be made before the final release.</p>
+
+</div>
+
+
+<div class="admonition important">
+<h5 class="admonition-title">important</h5>
 <p>Java 8 is the minimum required version that supports Async client side encryption.</p>
 
 </div>
@@ -297,7 +304,7 @@ See the <a href="/mongo-java-driver/3.11/driver-async/getting-started/installati
     &lt;dependency&gt;
         &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
         &lt;artifactId&gt;mongodb-crypt&lt;/artifactId&gt;
-        &lt;version&gt;1.0.1&lt;/version&gt;
+        &lt;version&gt;1.0.0-beta4&lt;/version&gt;
     &lt;/dependency&gt;
 &lt;/dependencies&gt;
 
@@ -306,14 +313,14 @@ See the <a href="/mongo-java-driver/3.11/driver-async/getting-started/installati
 <section class="gradle hidden">
 <pre><code>
   dependencies {
-      compile 'org.mongodb:mongodb-crypt:1.0.1'
+      compile 'org.mongodb:mongodb-crypt:1.0.0-beta4'
   }
 
 </code></pre>
 </section>
 <section class="downloadInfo small">
     <p><strong>Note:</strong> You can also download the <code>mongodb-crypt</code> jar
-        <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongodb-crypt/1.0.1" target="_blank">directly</a>
+        <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongodb-crypt/1.0.0-beta4" target="_blank">directly</a>
         from sonatype.</a></p></section>
 
 <h3 id="mongocryptd-configuration">mongocryptd configuration</h3>
@@ -531,36 +538,14 @@ AutoEncryptionSettings autoEncryptionSettings = AutoEncryptionSettings.builder()
 <script type="text/javascript" src="/mongo-java-driver/3.11/js/java.js"></script>
 
 
-<script>
-/* eslint-disable */
-// Delighted
-!function(e,t,r,n,a){if(!e[a]){for(var i=e[a]=[],s=0;s<r.length;s++){var c=r[s];i[c]=i[c]||function(e){return function(){var t=Array.prototype.slice.call(arguments);i.push([e,t])}}(c)}i.SNIPPET_VERSION="1.0.1";var o=t.createElement("script");o.type="text/javascript",o.async=!0,o.src="https://d2yyd1h5u9mauk.cloudfront.net/integrations/web/v1/library/"+n+"/"+a+".js";var l=t.getElementsByTagName("script")[0];l.parentNode.insertBefore(o,l)}}(window,document,["survey","reset","config","init","set","get","event","identify","track","page","screen","group","alias"],"Dk30CC86ba0nATlK","delighted");
-
-// Segment
-!function(){var analytics=window.analytics=window.analytics||[];if(!analytics.initialize)if(analytics.invoked)window.console&&console.error&&console.error("Segment snippet included twice.");else{analytics.invoked=!0;analytics.methods=["trackSubmit","trackClick","trackLink","trackForm","pageview","identify","reset","group","track","ready","alias","debug","page","once","off","on"];analytics.factory=function(t){return function(){var e=Array.prototype.slice.call(arguments);e.unshift(t);analytics.push(e);return analytics}};for(var t=0;t<analytics.methods.length;t++){var e=analytics.methods[t];analytics[e]=analytics.factory(e)}analytics.load=function(t,e){var n=document.createElement("script");n.type="text/javascript";n.async=!0;n.src="https://cdn.segment.com/analytics.js/v1/"+t+"/analytics.min.js";var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(n,a);analytics._loadOptions=e};analytics.SNIPPET_VERSION="4.1.0";
-        analytics.load("aGhVvyxnPWlyP71vVl9ZjGWxAtoVGLXX");
-    }}();
-
-delighted.survey({
-    minTimeOnPage: 180,
-    sampleFactor: 0.1
-});
-
-// Update Segment
-analytics.page({
-    path: location.pathname,
-    url: location.href
-});
-</script>
-
-<noscript><iframe src="//www.googletagmanager.com/ns.html?id=UA-7301842-14"
+<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-K75Z5Q"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push(
 {'gtm.start': new Date().getTime(),event:'gtm.js'}
 );var f=d.getElementsByTagName(s)[0],
 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','UA-7301842-14');</script>
+})(window,document,'script','dataLayer','GTM-K75Z5Q');</script>
 
 
 <script type="text/javascript">

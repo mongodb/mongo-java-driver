@@ -19,7 +19,7 @@
       <guid>/mongo-java-driver/3.11/driver-async/tutorials/client-side-encryption/</guid>
       <description>Client Side Encryption New in MongoDB 4.2 client side encryption allows administrators and developers to encrypt specific data fields in addition to other MongoDB encryption features.
 With field level encryption, developers can encrypt fields client side without any server-side configuration or directives. Client-side field level encryption supports workloads where applications must guarantee that unauthorized parties, including server administrators, cannot read the encrypted data.
-important Java 8 is the minimum required version that supports Async client side encryption.</description>
+important Support for client side encryption is in beta.</description>
     </item>
     
     <item>
@@ -30,7 +30,7 @@ important Java 8 is the minimum required version that supports Async client side
       <guid>/mongo-java-driver/3.11/driver/tutorials/client-side-encryption/</guid>
       <description>Client Side Encryption New in MongoDB 4.2 client side encryption allows administrators and developers to encrypt specific data fields in addition to other MongoDB encryption features.
 With field level encryption, developers can encrypt fields client side without any server-side configuration or directives. Client-side field level encryption supports workloads where applications must guarantee that unauthorized parties, including server administrators, cannot read the encrypted data.
-Installation The recommended way to get started using field level encryption in your project is with a dependency management system.</description>
+important Support for client side encryption is in beta.</description>
     </item>
     
     <item>

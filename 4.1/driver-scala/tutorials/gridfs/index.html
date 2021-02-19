@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-10-14T15:19:44.28">
+<meta name="date" content="2021-02-19T13:00:08.96">
 <link rel="shortcut icon" href="/mongo-java-driver/4.1/img/favicon.png">
 
     <title>GridFS</title><link rel="stylesheet" href="/mongo-java-driver/4.1/lib/bootstrap.css" type="text/css" />
@@ -443,7 +443,7 @@ val fileId: BsonObjectId = gridFSBucket.uploadFromObservable(&quot;mongodb-tutor
 </code></pre>
 
 <p>If you don&rsquo;t know the <code>_id</code> of the file but know the filename, then you can pass the filename to the <a href="/mongo-java-driver/4.1/apidocs/mongo-scala-driver/org/mongodb/scala/gridfs/GridFSBucket.html#downloadToObservable(filename:String,options:org.mongodb.scala.gridfs.GridFSDownloadOptions):org.mongodb.scala.gridfs.GridFSDownloadObservable
-"><code>downloadToObservable</code></a> method. By default, it will download the latest version of the file. Use the <a href="/mongo-java-driver/4.1/apidocs/mongo-scala-driver/org/mongodb/scala/gridfs/model/index.html#GridFSDownloadOptions=com.mongodb.client.gridfs.model.GridFSDownloadOptions
+"><code>downloadToObservable</code></a> method. By default, it will download the latest version of the file. Use the <a href="/mongo-java-driver/4.1/apidocs/mongo-scala-driver/org/mongodb/scala/gridfs/model/GridFSDownloadOptions.html
 "><code>GridFSDownloadOptions</code></a> to configure which version to download.</p>
 
 <p>The following example downloads the original version of the file named &ldquo;mongodb-tutorial&rdquo;:</p>

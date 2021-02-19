@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2020-10-14T15:19:44.38">
+<meta name="date" content="2021-02-19T13:00:09.07">
 <link rel="shortcut icon" href="/mongo-java-driver/4.1/img/favicon.png">
 
     <title>Connect to MongoDB</title><link rel="stylesheet" href="/mongo-java-driver/4.1/lib/bootstrap.css" type="text/css" />
@@ -319,7 +319,7 @@
 
 <p>Use <a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-sync/com/mongodb/client/MongoClients.html
 "><code>MongoClients.create()</code></a> (as of the 3.7 release), or
-<a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-core/com/mongodb/MongoClient.html
+<a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-core/com/mongodb/MongoClient .html
 "><code>MongoClient()</code></a> for the legacy MongoClient API, to make a connection to a running MongoDB instance.</p>
 
 <div class="admonition important">
@@ -600,7 +600,7 @@ instance running on the specified host on port <code>27017</code>:</p>
 </code></pre></li>
 
 <li><p>You can specify the
-<a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-legacy/com/mongodb/MongoClientURI.html
+<a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-core/com/mongodb/MongoClientURI.html
 "><code>MongoClientURI</code></a> connection string.</p>
 
 <pre><code class="language-java">MongoClient mongoClient = new MongoClient(new MongoClientURI(&quot;mongodb://host1:27017&quot;));
@@ -626,7 +626,7 @@ instance running on the specified host on port <code>27017</code>:</p>
 
 
 <ul>
-<li><p>You can specify the members using the <a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-legacy/com/mongodb/MongoClientURI.html
+<li><p>You can specify the members using the <a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-core/com/mongodb/MongoClientURI.html
 "><code>MongoClientURI</code></a> connection string:</p>
 
 <ul>
@@ -670,7 +670,7 @@ parameters if <code>mongos</code> is running on <code>localhost</code> and port
 <pre><code class="language-java">MongoClient mongoClient = new MongoClient( &quot;localhost&quot; , 27017 );
 </code></pre></li>
 
-<li><p>You can specify the <a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-legacy/com/mongodb/MongoClientURI.html
+<li><p>You can specify the <a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-core/com/mongodb/MongoClientURI.html
 "><code>MongoClientURI</code></a> connection string:</p>
 
 <pre><code class="language-java">MongoClient mongoClient = new MongoClient(new MongoClientURI(&quot;mongodb://localhost:27017&quot;));
@@ -680,7 +680,7 @@ parameters if <code>mongos</code> is running on <code>localhost</code> and port
 <p>To connect to multiple <code>mongos</code> instances:</p>
 
 <ul>
-<li><p>You can specify the <a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-legacy/com/mongodb/MongoClientURI.html
+<li><p>You can specify the <a href="/mongo-java-driver/4.1/apidocs/mongodb-driver-core/com/mongodb/MongoClientURI.html
 "><code>MongoClientURI</code></a> connection string with their hostnames and ports:</p>
 
 <pre><code class="language-java">MongoClient mongoClient = new MongoClient(
