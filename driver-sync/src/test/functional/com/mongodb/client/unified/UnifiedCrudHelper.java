@@ -49,17 +49,24 @@ import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
+import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.bson.BsonDocumentWriter;
 import org.bson.BsonElement;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.bson.codecs.BsonCodecProvider;
+import org.bson.codecs.Codec;
+import org.bson.codecs.EncoderContext;
+import org.bson.codecs.ValueCodecProvider;
+import org.bson.codecs.configuration.CodecRegistries;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -68,11 +75,15 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
 final class UnifiedCrudHelper {
     private final Entities entities;
+    private final Codec<ChangeStreamDocument<BsonDocument>> changeStreamDocumentCodec = ChangeStreamDocument.createCodec(
+            BsonDocument.class,
+            CodecRegistries.fromProviders(asList(new BsonCodecProvider(), new ValueCodecProvider())));
 
     UnifiedCrudHelper(final Entities entities) {
         this.entities = entities;
@@ -719,20 +730,23 @@ final class UnifiedCrudHelper {
         }
 
         return resultOf(() -> {
-            MongoCursor<BsonDocument> cursor = iterable.withDocumentClass(BsonDocument.class).cursor();
-            entities.addChangeStream(operation.getString("saveResultAsEntity").getValue(), cursor);
+            entities.addChangeStream(operation.getString("saveResultAsEntity").getValue(), iterable.cursor());
             return null;
         });
     }
 
     public OperationResult executeIterateUntilDocumentOrError(final BsonDocument operation) {
-        MongoCursor<BsonDocument> cursor = entities.getChangeStream(operation.getString("object").getValue());
+        MongoCursor<ChangeStreamDocument<BsonDocument>> cursor = entities.getChangeStream(operation.getString("object").getValue());
 
         if (operation.containsKey("arguments")) {
             throw new UnsupportedOperationException("Unexpected arguments");
         }
 
-        return resultOf(cursor::next);
+        return resultOf(() -> {
+            BsonDocumentWriter bsonDocumentWriter = new BsonDocumentWriter(new BsonDocument());
+            changeStreamDocumentCodec.encode(bsonDocumentWriter, cursor.next(), EncoderContext.DEFAULT_CONTEXT);
+            return bsonDocumentWriter.getDocument();
+        });
     }
 
     public OperationResult executeRunCommand(final BsonDocument operation) {

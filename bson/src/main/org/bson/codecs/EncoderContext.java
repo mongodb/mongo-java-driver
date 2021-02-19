@@ -25,8 +25,10 @@ import org.bson.BsonWriter;
  * @since 3.0
  */
 public final class EncoderContext {
-
-    private static final EncoderContext DEFAULT_CONTEXT = EncoderContext.builder().build();
+    /**
+     * The default immutable {@link EncoderContext}. Its method {@link #isEncodingCollectibleDocument()} returns {@code false}.
+     */
+    public static final EncoderContext DEFAULT_CONTEXT = EncoderContext.builder().build();
 
     private final boolean encodingCollectibleDocument;
 
