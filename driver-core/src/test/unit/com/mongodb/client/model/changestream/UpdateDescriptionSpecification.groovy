@@ -31,7 +31,7 @@ class UpdateDescriptionSpecification extends Specification {
         then:
         description.getRemovedFields() == removedFields
         description.getUpdatedFields() == updatedFields
-        description.getTruncatedArrays() == (truncatedArrays ? truncatedArrays : emptyList())
+        description.getTruncatedArrays() == (truncatedArrays ?: emptyList())
 
         where:
         removedFields | updatedFields                | truncatedArrays
