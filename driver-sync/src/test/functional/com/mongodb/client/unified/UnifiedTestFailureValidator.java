@@ -60,7 +60,7 @@ public class UnifiedTestFailureValidator extends UnifiedTest {
                 exception = e;
             }
         }
-        assertNotNull("Excepted exception but not was thrown", exception);
+        assertNotNull("Expected exception but not was thrown", exception);
     }
 
     @Override
