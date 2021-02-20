@@ -85,6 +85,7 @@ public final class UpdateDescription {
      * For example, given the original field {@code "arrayField": ["foo", {"a": "bar"}, 1, 2, 3]}
      * and the updated field {@code "arrayField": ["foo", {"a": "bar", "b": 3}]}, the following is how such a change may be reported:
      * <table>
+     *   <caption>An example showing how the aforementioned change may be reported</caption>
      *   <tr>
      *     <th>Method</th>
      *     <th>Result</th>
