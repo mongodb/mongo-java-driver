@@ -30,35 +30,37 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-public class UnifiedTestFailureValidator extends UnifiedTest {
-    private final String fileDescription;
-    private final String testDescription;
-    private Throwable setupException;
+import static org.junit.Assert.assertNotNull;
 
-    public UnifiedTestFailureValidator(final String fileDescription, final String testDescription, final String schemaVersion,
-                                       @Nullable final BsonArray runOnRequirements, final BsonArray entities, final BsonArray initialData,
-                                       final BsonDocument definition) {
+public class UnifiedTestFailureValidator extends UnifiedTest {
+    private Throwable exception;
+
+    public UnifiedTestFailureValidator(@SuppressWarnings("unused") final String fileDescription,
+                                       @SuppressWarnings("unused") final String testDescription,
+                                       final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
+                                       final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
-        this.fileDescription = fileDescription;
-        this.testDescription = testDescription;
     }
 
     @Before
     public void setUp() {
         try {
             super.setUp();
-        } catch (Throwable e) {
-            setupException = e;
+        } catch (AssertionError | RuntimeException e) {
+            exception = e;
         }
     }
 
-    @Test(expected = Throwable.class)
+    @Test
     public void shouldPassAllOutcomes() {
-        if (setupException != null) {
-            throw new AssertionError("Setup failed (expected)", setupException);
-        } else {
-            super.shouldPassAllOutcomes();
+        if (exception == null) {
+            try {
+                super.shouldPassAllOutcomes();
+            } catch (AssertionError | RuntimeException e) {
+                exception = e;
+            }
         }
+        assertNotNull("Excepted exception but not was thrown", exception);
     }
 
     @Override
