@@ -31,6 +31,7 @@ import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
+import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -61,7 +62,7 @@ final class Entities {
     private final Map<String, BsonDocument> sessionIdentifiers = new HashMap<>();
     private final Map<String, GridFSBucket> buckets = new HashMap<>();
     private final Map<String, TestCommandListener> clientCommandListeners = new HashMap<>();
-    private final Map<String, MongoCursor<BsonDocument>> changeStreams = new HashMap<>();
+    private final Map<String, MongoCursor<ChangeStreamDocument<BsonDocument>>> changeStreams = new HashMap<>();
 
     public void addResult(final String id, final BsonValue result) {
         results.put(id, result);
@@ -71,11 +72,11 @@ final class Entities {
         return getEntity(id, results, "result");
     }
 
-    public void addChangeStream(final String id, final MongoCursor<BsonDocument> cursor) {
+    public void addChangeStream(final String id, final MongoCursor<ChangeStreamDocument<BsonDocument>> cursor) {
         changeStreams.put(id, cursor);
     }
 
-    public MongoCursor<BsonDocument> getChangeStream(final String id) {
+    public MongoCursor<ChangeStreamDocument<BsonDocument>> getChangeStream(final String id) {
         return getEntity(id, changeStreams, "change streams");
     }
 
