@@ -227,7 +227,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         nextDoc.getFullDocument() == BsonDocument.parse('{ _id : 2, x : 3 }')
         nextDoc.getNamespace() == helper.getNamespace()
         nextDoc.getOperationType() == OperationType.UPDATE
-        nextDoc.getUpdateDescription() == new UpdateDescription(['y'], BsonDocument.parse('{x : 3}'))
+        nextDoc.getUpdateDescription() == new UpdateDescription(['y'], BsonDocument.parse('{x : 3}'), null)
 
         cleanup:
         cursor?.close()
