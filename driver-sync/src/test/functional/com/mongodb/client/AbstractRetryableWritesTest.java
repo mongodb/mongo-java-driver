@@ -139,20 +139,16 @@ public abstract class AbstractRetryableWritesTest {
         BsonDocument operation = definition.getDocument("operation");
         BsonDocument outcome = definition.getDocument("outcome");
 
-        BsonDocument result = new BsonDocument();
-        boolean wasException = false;
         try {
-            result = helper.getOperationResults(operation);
+            BsonDocument result = helper.getOperationResults(operation);
+            assertFalse("Expected error but instead got result: " + result.toJson(),
+                    outcome.getBoolean("error", BsonBoolean.FALSE).getValue());
+            assertEquals(outcome.getDocument("result", new BsonDocument()), result.getDocument("result", new BsonDocument()));
         } catch (RuntimeException e) {
-            wasException = true;
+            if (!outcome.getBoolean("error", BsonBoolean.FALSE).getValue()) {
+                throw e;
+            }
             assertExceptionState(e, outcome.get("result", new BsonNull()), operation.getString("name").getValue());
-        }
-
-        if (outcome.getBoolean("error", BsonBoolean.FALSE).getValue()) {
-            assertEquals("Expected an error to be thrown", outcome.containsKey("error"), wasException);
-        } else {
-            BsonDocument fixedExpectedResult = outcome.getDocument("result", new BsonDocument());
-            assertEquals(fixedExpectedResult, result.getDocument("result", new BsonDocument()));
         }
 
         if (outcome.containsKey("collection")) {
