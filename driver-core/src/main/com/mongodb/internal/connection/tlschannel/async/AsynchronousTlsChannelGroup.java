@@ -436,7 +436,11 @@ public class AsynchronousTlsChannelGroup {
             RegisteredSocket socket = (RegisteredSocket) key.attachment();
             int pending = socket.pendingOps.getAndSet(0);
             if (pending != 0) {
-                key.interestOps(key.interestOps() | pending);
+                try {
+                    key.interestOps(key.interestOps() | pending);
+                } catch (CancelledKeyException e) {
+                    // can happen when channels are closed with pending operations
+                }
             }
         }
     }
