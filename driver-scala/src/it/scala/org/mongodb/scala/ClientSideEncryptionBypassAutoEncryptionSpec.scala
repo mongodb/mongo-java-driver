@@ -28,7 +28,6 @@ import scala.collection.JavaConverters._
 class ClientSideEncryptionBypassAutoEncryptionSpec extends RequiresMongoDBISpec with FuturesSpec {
 
   "ClientSideEncryption" should "be able to bypass auto encryption" in withDatabase { db =>
-    assume(false) //  JAVA-3881
     assume(serverVersionAtLeast(List(4, 1, 0)))
 
     val localMasterKey = new Array[Byte](96)
