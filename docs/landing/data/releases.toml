@@ -1,8 +1,8 @@
-current = "4.2.1"
+current = "4.2.2"
 
 [[versions]]
   status = "current"
-  version = "4.2.1"
+  version = "4.2.2"
   docs = "./4.2"
   api = "./4.2/apidocs"
 
