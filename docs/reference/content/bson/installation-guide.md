@@ -22,4 +22,4 @@ This library comprehensively supports [BSON](http://www.bsonspec.org),
 the data storage and network transfer format that MongoDB uses for "documents".
 BSON is short for Binary [JSON](http://json.org/), is a binary-encoded serialization of JSON-like documents.
 
-{{< install artifactId="bson" version="4.2.1" >}}
+{{< install artifactId="bson" version="4.2.2" >}}
