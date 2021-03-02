@@ -67,8 +67,11 @@ public class OperationExecutorImpl implements OperationExecutor {
                         return Mono.error(new MongoClientException("Read preference in a transaction must be primary"));
                     } else {
                         return Mono.<T>create(sink -> operation.executeAsync(binding, (result, t) -> {
-                            binding.release();
-                            sinkToCallback(sink).onResult(result, t);
+                            try {
+                                binding.release();
+                            } finally {
+                                sinkToCallback(sink).onResult(result, t);
+                            }
                         })).doOnError((t) -> {
                             labelException(session, t);
                             unpinServerAddressOnTransientTransactionError(session, t);
@@ -88,8 +91,11 @@ public class OperationExecutorImpl implements OperationExecutor {
                 .switchIfEmpty(Mono.fromCallable(() -> getReadWriteBinding(ReadPreference.primary(), readConcern, session, false)))
                 .flatMap(binding ->
                         Mono.<T>create(sink -> operation.executeAsync(binding, (result, t) -> {
-                            binding.release();
-                            sinkToCallback(sink).onResult(result, t);
+                            try {
+                                binding.release();
+                            } finally {
+                                sinkToCallback(sink).onResult(result, t);
+                            }
                         })).doOnError((t) -> {
                             labelException(session, t);
                             unpinServerAddressOnTransientTransactionError(session, t);
