@@ -134,6 +134,7 @@ public class MongoClient implements Closeable {
      * <li>{@link com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider}</li>
      * <li>{@link com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider}</li>
      * <li>{@link org.bson.codecs.jsr310.Jsr310CodecProvider}</li>
+     * <li>{@link org.bson.codecs.JsonObjectCodecProvider}</li>
      * <li>{@link org.bson.codecs.BsonCodecProvider}</li>
      * </ul>
      *
