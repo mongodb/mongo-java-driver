@@ -353,6 +353,7 @@ functions:
         script: |
           ${PREPARE_SHELL}
           cd ${DRIVERS_TOOLS}/.evergreen/auth_aws
+          . ./activate_venv.sh
           mongo aws_e2e_regular_aws.js
     - command: shell.exec
       type: test
@@ -376,6 +377,7 @@ functions:
         script: |
           ${PREPARE_SHELL}
           cd ${DRIVERS_TOOLS}/.evergreen/auth_aws
+          . ./activate_venv.sh
           mongo aws_e2e_assume_role.js
     - command: shell.exec
       type: test
@@ -404,6 +406,7 @@ functions:
         script: |
           ${PREPARE_SHELL}
           cd ${DRIVERS_TOOLS}/.evergreen/auth_aws
+          . ./activate_venv.sh
           mongo aws_e2e_ec2.js
     - command: shell.exec
       type: test
@@ -462,7 +465,7 @@ functions:
         script: |
           ${PREPARE_SHELL}
           cd ${DRIVERS_TOOLS}/.evergreen/auth_aws
-
+          . ./activate_venv.sh
           cat <<EOF > setup.js
           const mongo_binaries = "$MONGODB_BINARIES";
           const project_dir = "$PROJECT_DIRECTORY";
@@ -1478,13 +1481,12 @@ buildvariants:
   tasks:
     - name: "plain-auth-test"
 
-# JAVA-3906
-#- matrix_name: "aws-auth-test"
-#  matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk11"], version: ["4.4", "latest"], os: "ubuntu" }
-#  display_name: "MONGODB-AWS Auth test ${version} ${jdk}"
-#  run_on: ubuntu1804-test
-#  tasks:
-#    - name: "aws-auth-test"
+- matrix_name: "aws-auth-test"
+  matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk11"], version: ["4.4", "latest"], os: "ubuntu" }
+  display_name: "MONGODB-AWS Auth test ${version} ${jdk}"
+  run_on: ubuntu1804-test
+  tasks:
+    - name: "aws-auth-test"
 
 - matrix_name: "accept-api-version-2-test"
   matrix_spec: { ssl: "nossl", auth: "noauth", jdk: "jdk11", version: ["latest"], topology: "standalone", os: "linux" }
