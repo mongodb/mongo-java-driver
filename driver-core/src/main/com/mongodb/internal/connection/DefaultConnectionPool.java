@@ -45,6 +45,7 @@ import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -320,7 +321,13 @@ class DefaultConnectionPool implements ConnectionPool {
                             if (LOGGER.isDebugEnabled()) {
                                 LOGGER.debug(format("Ensuring minimum pooled connections to %s", serverId.getAddress()));
                             }
-                            pool.ensureMinSize(settings.getMinSize(), true);
+                            pool.ensureMinSize(settings.getMinSize(), newConnection -> {
+                                if (!newConnection.opened()) {
+                                    newConnection.open();
+                                    connectionPoolListener.connectionReady(new ConnectionReadyEvent(getId(newConnection)));
+                                }
+                                return Optional.of(newConnection);
+                            });
                         }
                     } catch (MongoInterruptedException e) {
                         // don't log interruptions due to the shutdownNow call on the ExecutorService
@@ -580,16 +587,11 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
-        public UsageTrackingInternalConnection create(final boolean initialize) {
+        public UsageTrackingInternalConnection create() {
             UsageTrackingInternalConnection internalConnection =
             new UsageTrackingInternalConnection(internalConnectionFactory.create(serverId), generation.get());
             ConnectionId id = getId(internalConnection);
             connectionCreated(connectionPoolListener, id);
-            if (initialize) {
-                internalConnection.open();
-                connectionPoolListener.connectionReady(new ConnectionReadyEvent(id));
-            }
-
             return internalConnection;
         }
 

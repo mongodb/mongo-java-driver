@@ -16,11 +16,13 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.Function;
 import com.mongodb.MongoException;
 import com.mongodb.MongoTimeoutException;
 import org.junit.Test;
 
 import java.io.Closeable;
+import java.util.Optional;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertEquals;
@@ -141,20 +143,20 @@ public class ConcurrentPoolTest {
     public void testEnsureMinSize() {
         pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
 
-        pool.ensureMinSize(0, false);
+        pool.ensureMinSize(0, null);
         assertEquals(0, pool.getAvailableCount());
 
-        pool.ensureMinSize(1, false);
+        pool.ensureMinSize(1, null);
         assertEquals(1, pool.getAvailableCount());
 
-        pool.ensureMinSize(1, false);
+        pool.ensureMinSize(1, null);
         assertEquals(1, pool.getAvailableCount());
 
         pool.get();
-        pool.ensureMinSize(1, false);
+        pool.ensureMinSize(1, null);
         assertEquals(0, pool.getAvailableCount());
 
-        pool.ensureMinSize(4, false);
+        pool.ensureMinSize(4, null);
         assertEquals(3, pool.getAvailableCount());
     }
 
@@ -162,7 +164,7 @@ public class ConcurrentPoolTest {
     public void whenEnsuringMinSizeShouldNotInitializePooledItemIfNotRequested() {
         pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
 
-        pool.ensureMinSize(1, false);
+        pool.ensureMinSize(1, null);
         assertFalse(pool.get().isInitialized());
     }
 
@@ -170,7 +172,7 @@ public class ConcurrentPoolTest {
     public void whenEnsuringMinSizeShouldInitializePooledItemIfRequested() {
         pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
 
-        pool.ensureMinSize(1, true);
+        pool.ensureMinSize(1, TestCloseable.initializeAction);
         assertTrue(pool.get().isInitialized());
     }
 
@@ -179,7 +181,7 @@ public class ConcurrentPoolTest {
         pool = new ConcurrentPool<TestCloseable>(1, new TestItemFactory(true));
 
         try {
-            pool.ensureMinSize(1, true);
+            pool.ensureMinSize(1, TestCloseable.initializeAction);
             fail();
         } catch (MongoException e) {
             // expected
@@ -232,11 +234,11 @@ public class ConcurrentPoolTest {
         }
 
         @Override
-        public TestCloseable create(final boolean initialize) {
+        public TestCloseable create() {
             if (shouldThrowOnCreate) {
                 throw new MongoException("This is a journey");
             }
-            return new TestCloseable(initialize);
+            return new TestCloseable();
         }
 
         @Override
@@ -251,12 +253,16 @@ public class ConcurrentPoolTest {
     }
 
     static class TestCloseable implements Closeable {
+        private static final Function<TestCloseable, Optional<TestCloseable>> initializeAction = connection -> {
+            connection.initialized = true;
+            return Optional.of(connection);
+        };
+
         private boolean closed;
         private ConcurrentPool.Prune shouldPrune;
-        private final boolean initialized;
+        private boolean initialized;
 
-        TestCloseable(final boolean initialize) {
-            this.initialized = initialize;
+        TestCloseable() {
         }
 
         @Override

@@ -16,12 +16,15 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.Function;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.internal.connection.ConcurrentLinkedDeque.RemovalReportingIterator;
+import com.mongodb.lang.Nullable;
 
 import java.util.Iterator;
+import java.util.Optional;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -59,7 +62,7 @@ public class ConcurrentPool<T> implements Pool<T> {
      * @param <T>
      */
     public interface ItemFactory<T> {
-        T create(boolean initialize);
+        T create();
 
         void close(T t);
 
@@ -143,7 +146,8 @@ public class ConcurrentPool<T> implements Pool<T> {
 
         T t = available.pollLast();
         if (t == null) {
-            t = createNewAndReleasePermitIfFailure(false);
+            t = createNewAndReleasePermitIfFailure(null);
+            assert t != null : "new item must not be null if postCreate is null";
         }
 
         return t;
@@ -167,25 +171,53 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
     }
 
-    public void ensureMinSize(final int minSize, final boolean initialize) {
+    /**
+     * Try to populate this pool with items so that {@link #getCount()} is not smaller than {@code minSize}.
+     * The {@code postCreate} action returning an {@linkplain Optional#isEmpty() empty} result causes this method to return.
+     *
+     * @param postCreate A transforming action applied to non-{@code null} new items.
+     *                   This action may return an item as is, may modify the item,
+     *                   or return a (potentially {@linkplain Optional#isEmpty() empty}) reference to different object / throw an
+     *                   {@link Exception}. In the latter case the action must release
+     *                   resources associated with the item if they cannot be releases via the returned reference.
+     */
+    public void ensureMinSize(final int minSize, @Nullable final Function<? super T, ? extends Optional<? extends T>> postCreate) {
         while (getCount() < minSize) {
-            if (!acquirePermit(10, TimeUnit.MILLISECONDS)) {
+            if (!acquirePermit(0, TimeUnit.MILLISECONDS)) {
                 break;
             }
-            release(createNewAndReleasePermitIfFailure(initialize));
+            T newItem = createNewAndReleasePermitIfFailure(postCreate);
+            if (newItem == null) {
+                break;
+            } else {
+                release(newItem);
+            }
         }
     }
 
-    private T createNewAndReleasePermitIfFailure(final boolean initialize) {
+    /**
+     * If this method returns {@code null} or throws an {@link Exception}, then before doing so it releases a permit.
+     *
+     * @param postCreate See {@link #ensureMinSize(int, Function)}.
+     * @return Either a {@linkplain ItemFactory#create() new} non-{@code null} item if {@code postCreate} is {@code null},
+     * or the result of {@linkplain Function#apply(Object) applying} {@code postCreate} to the new item
+     * (this result may be {@linkplain Optional#isEmpty() empty}, in which case the method returns {@code null}).
+     */
+    @Nullable
+    private T createNewAndReleasePermitIfFailure(@Nullable final Function<? super T, ? extends Optional<? extends T>> postCreate) {
+        boolean failure = true;
         try {
-            T newMember = itemFactory.create(initialize);
+            T newMember = itemFactory.create();
             if (newMember == null) {
                 throw new MongoInternalException("The factory for the pool created a null item");
             }
+            newMember = postCreate == null ? newMember : postCreate.apply(newMember).orElse(null);
+            failure = newMember == null;
             return newMember;
-        } catch (RuntimeException e) {
-            permits.release();
-            throw e;
+        } finally {
+            if (failure) {
+                permits.release();
+            }
         }
     }
 
