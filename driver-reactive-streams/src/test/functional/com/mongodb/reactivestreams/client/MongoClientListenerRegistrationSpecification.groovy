@@ -23,6 +23,7 @@ import com.mongodb.event.ServerListener
 import com.mongodb.event.ServerMonitorListener
 import org.bson.Document
 import reactor.core.publisher.Mono
+import spock.lang.Ignore
 
 import java.util.concurrent.TimeUnit
 
@@ -30,6 +31,7 @@ import static com.mongodb.ClusterFixture.TIMEOUT_DURATION
 
 class MongoClientListenerRegistrationSpecification extends FunctionalSpecification {
 
+    @Ignore
     def 'should register event listeners'() {
         given:
         def clusterListener = Mock(ClusterListener) {
