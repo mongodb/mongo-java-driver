@@ -18,7 +18,7 @@ package org.mongodb.scala
 /**
  * This package contains the Key Vault API
  *
- * @note: support for client-side encryption should be considered as beta.  Backwards-breaking changes may be made before the final
+ * @note support for client-side encryption should be considered as beta.  Backwards-breaking changes may be made before the final
  * release.
  * @since 2.7
  */

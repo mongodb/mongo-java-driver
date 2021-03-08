@@ -33,7 +33,7 @@ object Projections {
 
   /**
    * Creates a projection of a field whose value is computed from the given expression.  Projection with an expression is only supported
-   * using the \$project aggregation pipeline stage.
+   * using the `\$project` aggregation pipeline stage.
    *
    * @param fieldName     the field name
    * @param  expression   the expression
@@ -70,7 +70,7 @@ object Projections {
 
   /**
    * Creates a projection that includes for the given field only the first element of an array that matches the query filter.  This is
-   * referred to as the positional \$ operator.
+   * referred to as the positional `\$` operator.
    *
    * @param fieldName the field name whose value is the array
    * @return the projection
@@ -90,7 +90,7 @@ object Projections {
   def elemMatch(fieldName: String, filter: Bson): Bson = JProjections.elemMatch(fieldName, filter)
 
   /**
-   * Creates a \$meta projection to the given field name for the given meta field name.
+   * Creates a `\$meta` projection to the given field name for the given meta field name.
    *
    * @param fieldName the field name
    * @param metaFieldName the meta field name
