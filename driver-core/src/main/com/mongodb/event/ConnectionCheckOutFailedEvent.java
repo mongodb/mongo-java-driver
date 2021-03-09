@@ -75,6 +75,16 @@ public final class ConnectionCheckOutFailedEvent {
         return serverId;
     }
 
+    /**
+     * Gets the reason for the check out failure.
+     *
+     * @return the reason
+     * @since 4.3
+     */
+    public Reason getReason() {
+        return reason;
+    }
+
     @Override
     public String toString() {
         return "ConnectionCheckOutFailedEvent{"

@@ -216,6 +216,7 @@ public abstract class AbstractConnectionPoolTest {
                 } else if (type.equals("ConnectionCheckOutFailed")) {
                     ConnectionCheckOutFailedEvent actualEvent = getNextEvent(actualEventsIterator, ConnectionCheckOutFailedEvent.class);
                     assertEquals(serverAddress, actualEvent.getServerId().getAddress());
+                    assertReasonMatch(expectedEvent, actualEvent);
                 } else if (type.equals("ConnectionCheckedOut")) {
                     ConnectionCheckedOutEvent actualEvent = getNextEvent(actualEventsIterator, ConnectionCheckedOutEvent.class);
                     assertConnectionIdMatch(expectedEvent, actualEvent.getConnectionId());
@@ -250,6 +251,27 @@ public abstract class AbstractConnectionPoolTest {
                 break;
             default:
                 fail("Unexpected reason to close connection " + connectionClosedEvent.getReason());
+        }
+    }
+
+    private void assertReasonMatch(final BsonDocument expectedEvent, final ConnectionCheckOutFailedEvent connectionCheckOutFailedEvent) {
+        if (!expectedEvent.containsKey("reason")) {
+            return;
+        }
+
+        String expectedReason = expectedEvent.getString("reason").getValue();
+        switch (connectionCheckOutFailedEvent.getReason()) {
+            case TIMEOUT:
+                assertEquals(expectedReason, "timeout");
+                break;
+            case CONNECTION_ERROR:
+                assertEquals(expectedReason, "connectionError");
+                break;
+            case POOL_CLOSED:
+                assertEquals(expectedReason, "poolClosed");
+                break;
+            default:
+                fail("Unexpected reason to fail connection check out " + connectionCheckOutFailedEvent.getReason());
         }
     }
 
