@@ -174,7 +174,7 @@ trait ObservableImplicits {
     val observable = obs
 
     /**
-     * Collects the [[Observable]] results and converts to a scala.concurrent.Future`.
+     * Collects the [[Observable]] results and converts to a `scala.concurrent.Future`.
      *
      * Automatically subscribes to the `Observable` and uses the [[Observable.collect]] method to aggregate the results.
      *
