@@ -1,11 +1,11 @@
 /*
- * Copyright 2016-present MongoDB, Inc.
+ * Copyright 2008-present MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,13 +14,19 @@
  * limitations under the License.
  */
 
+buildscript {
+    repositories {
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:6.1.0'
+    }
+}
+
 apply plugin: 'application'
+apply plugin: 'com.github.johnrengelman.shadow'
 
 mainClassName = "com.mongodb.workload.WorkloadExecutor"
-
-run {
-    systemProperties System.getProperties()
-}
 
 sourceSets {
     main {
@@ -34,13 +40,21 @@ sourceSets {
 }
 
 dependencies {
-    api project(':driver-sync')
-
+    implementation project(':driver-sync')
+    implementation project(':driver-core').sourceSets.test.output
     implementation project(':driver-sync').sourceSets.test.output
-
     implementation 'ch.qos.logback:logback-classic:1.1.1'
+    implementation(platform("org.junit:junit-bom:5.6.2")) // TODO: grab BOM version from parent
+    implementation('org.junit.jupiter:junit-jupiter')
+    implementation('org.junit.vintage:junit-vintage-engine')
 }
 
 javadoc {
     enabled = false
+}
+
+jar {
+    manifest {
+        attributes "Main-Class": "com.mongodb.workload.WorkloadExecutor"
+    }
 }
