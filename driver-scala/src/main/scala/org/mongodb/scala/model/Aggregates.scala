@@ -31,10 +31,10 @@ import org.mongodb.scala.bson.conversions.Bson
 object Aggregates {
 
   /**
-   * Creates an \$addFields pipeline stage
+   * Creates an `\$addFields` pipeline stage
    *
    * @param fields the fields to add
-   * @return the \$addFields pipeline stage
+   * @return the `\$addFields` pipeline stage
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/addFields/ \$addFields]]
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
@@ -42,13 +42,13 @@ object Aggregates {
   def addFields(fields: Field[_]*): Bson = JAggregates.addFields(fields.asJava)
 
   /**
-   * Creates a \$bucket pipeline stage
+   * Creates a `\$bucket` pipeline stage
    *
    * @param groupBy    the criteria to group By
    * @param boundaries the boundaries of the buckets
    * @tparam TExpression the groupBy expression type
    * @tparam TBoundary    the boundary type
-   * @return the \$bucket pipeline stage
+   * @return the `\$bucket` pipeline stage
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/bucket/ \$bucket]]
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
@@ -57,14 +57,14 @@ object Aggregates {
     JAggregates.bucket(groupBy, boundaries.asJava)
 
   /**
-   * Creates a \$bucket pipeline stage
+   * Creates a `\$bucket` pipeline stage
    *
    * @param groupBy    the criteria to group By
    * @param boundaries the boundaries of the buckets
-   * @param options    the optional values for the \$bucket stage
+   * @param options    the optional values for the `\$bucket` stage
    * @tparam TExpression the groupBy expression type
    * @tparam TBoundary    the boundary type
-   * @return the \$bucket pipeline stage
+   * @return the `\$bucket` pipeline stage
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/bucket/ \$bucket]]
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
@@ -73,12 +73,12 @@ object Aggregates {
     JAggregates.bucket(groupBy, boundaries.asJava, options)
 
   /**
-   * Creates a \$bucketAuto pipeline stage
+   * Creates a `\$bucketAuto` pipeline stage
    *
    * @param groupBy    the criteria to group By
    * @param buckets the number of the buckets
    * @tparam TExpression the groupBy expression type
-   * @return the \$bucketAuto pipeline stage
+   * @return the `\$bucketAuto` pipeline stage
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/bucketAuto/ \$bucketAuto]]
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
@@ -87,13 +87,13 @@ object Aggregates {
     JAggregates.bucketAuto(groupBy, buckets)
 
   /**
-   * Creates a \$bucketAuto pipeline stage
+   * Creates a `\$bucketAuto` pipeline stage
    *
    * @param groupBy    the criteria to group By
    * @param buckets the number of the buckets
-   * @param options the optional values for the \$bucketAuto stage
+   * @param options the optional values for the `\$bucketAuto` stage
    * @tparam TExpression the groupBy expression type
-   * @return the \$bucketAuto pipeline stage
+   * @return the `\$bucketAuto` pipeline stage
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/bucketAuto/ \$bucketAuto]]
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
@@ -102,9 +102,9 @@ object Aggregates {
     JAggregates.bucketAuto(groupBy, buckets, options)
 
   /**
-   * Creates a \$count pipeline stage using the field name "count" to store the result
+   * Creates a `\$count` pipeline stage using the field name "count" to store the result
    *
-   * @return the \$count pipeline stage
+   * @return the `\$count` pipeline stage
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/count/ \$count]]
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
@@ -112,10 +112,10 @@ object Aggregates {
   def count(): Bson = JAggregates.count()
 
   /**
-   * Creates a \$count pipeline stage using the named field to store the result
+   * Creates a `\$count` pipeline stage using the named field to store the result
    *
    * @param field the field in which to store the count
-   * @return the \$count pipeline stage
+   * @return the `\$count` pipeline stage
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/count/ \$count]]
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
@@ -145,7 +145,7 @@ object Aggregates {
   def filter(filter: Bson): Bson = `match`(filter) //scalastyle:ignore
 
   /**
-   * Creates a \$facet pipeline stage
+   * Creates a `\$facet` pipeline stage
    *
    * @param facets the facets to use
    * @return the new pipeline stage
@@ -156,7 +156,7 @@ object Aggregates {
   def facet(facets: Facet*): Bson = JAggregates.facet(facets.asJava)
 
   /**
-   * Creates a \$graphLookup pipeline stage for the specified filter
+   * Creates a `\$graphLookup` pipeline stage for the specified filter
    *
    * @param from             the collection to query
    * @param startWith        the expression to start the graph lookup with
@@ -164,7 +164,7 @@ object Aggregates {
    * @param connectToField   the to field
    * @param as               name of field in output document
    * @tparam TExpression the expression type
-   * @return the \$graphLookup pipeline stage
+   * @return the `\$graphLookup` pipeline stage
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/graphLookup/ \$graphLookup]]
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
@@ -188,7 +188,7 @@ object Aggregates {
    * @param as               name of field in output document
    * @param options          optional values for the graphLookup
    * @tparam TExpression the expression type
-   * @return the \$graphLookup pipeline stage
+   * @return the `\$graphLookup` pipeline stage
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/graphLookup/ \$graphLookup]]
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
@@ -214,11 +214,11 @@ object Aggregates {
   def project(projection: Bson): Bson = JAggregates.project(projection)
 
   /**
-   * Creates a \$replaceRoot pipeline stage
+   * Creates a `\$replaceRoot` pipeline stage
    *
    * @param value the new root value
    * @tparam TExpression the new root type
-   * @return the \$replaceRoot pipeline stage
+   * @return the `\$replaceRoot` pipeline stage
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/replaceRoot/ \$replaceRoot]]
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
@@ -226,16 +226,16 @@ object Aggregates {
   def replaceRoot[TExpression](value: TExpression): Bson = JAggregates.replaceRoot(value)
 
   /**
-   * Creates a $replaceRoot pipeline stage
+   * Creates a `\$replaceRoot` pipeline stage
    *
-   * With \$replaceWith, you can promote an embedded document to the top-level.
+   * With `\$replaceWith`, you can promote an embedded document to the top-level.
    * You can also specify a new document as the replacement.
    *
-   * The \$replaceWith is an alias for [[replaceRoot]].</p>
+   * The `\$replaceWith` is an alias for [[replaceRoot]].</p>
    *
    * @param value the new root value
    * @tparam TExpression the new root type
-   * @return the \$replaceRoot pipeline stage
+   * @return the `\$replaceRoot` pipeline stage
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/replaceWith/ \$replaceWith]]
    * @since 2.7
    */
@@ -245,18 +245,17 @@ object Aggregates {
    * Creates a `\$sort` pipeline stage for the specified sort specification
    *
    * @param sort the sort specification
-   * @return the `\$sort` pipeline stage
    * @see Sorts
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/sort/#sort-aggregation \$sort]]
    */
   def sort(sort: Bson): Bson = JAggregates.sort(sort)
 
   /**
-   * Creates a \$sortByCount pipeline stage for the specified filter
+   * Creates a `\$sortByCount` pipeline stage for the specified filter
    *
    * @param filter the filter specification
    * @tparam TExpression the expression type
-   * @return the \$sortByCount pipeline stage
+   * @return the `\$sortByCount` pipeline stage
    * @see Sorts
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/sortByCount \$sortByCount]]
    * @since 1.2
@@ -436,7 +435,7 @@ object Aggregates {
    *
    * @param collection    the name of the collection in the same database to perform the union with.
    * @param pipeline      the pipeline to run on the union.
-   * @return the \$unionWith` pipeline stage
+   * @return the `\$unionWith``pipeline stage
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/unionWith/]]
    */
   def unionWith(collection: String, pipeline: Bson*): Bson =
