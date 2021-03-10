@@ -284,6 +284,7 @@ public final class Entities {
                 String key = eventDocument.getString("id").getValue();
                 BsonArray eventList = eventDocument.getArray("events");
                 List<BsonDocument> eventDocumentList = synchronizedList(new ArrayList<>());
+                putEntity(key, eventDocumentList, eventsMap);
 
                 if (eventList.stream()
                         .map(value -> value.asString().getValue())
@@ -292,7 +293,6 @@ public final class Entities {
                             .map(value -> value.asString().getValue())
                             .collect(Collectors.toSet()),
                             eventDocumentList));
-                    putEntity(key, eventDocumentList, eventsMap);
                 }
                 if (eventList.stream()
                         .map(value -> value.asString().getValue())
@@ -303,7 +303,6 @@ public final class Entities {
                                             .map(value -> value.asString().getValue())
                                             .collect(Collectors.toSet()),
                                             eventDocumentList)));
-                    putEntity(key, eventDocumentList, eventsMap);
                 }
             }
         }
