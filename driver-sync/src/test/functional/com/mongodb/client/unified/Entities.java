@@ -198,7 +198,7 @@ public final class Entities {
     }
 
     public BsonDocument getSessionIdentifier(final String id) {
-        return getEntity(id, sessionIdentifiers, "session identifier");
+        return getEntity(id + "-identifier", sessionIdentifiers, "session identifier");
     }
 
     public GridFSBucket getBucket(final String id) {
@@ -206,7 +206,7 @@ public final class Entities {
     }
 
     public TestCommandListener getClientCommandListener(final String id) {
-        return getEntity(id, clientCommandListeners, "command listener");
+        return getEntity(id + "-listener", clientCommandListeners, "command listener");
     }
 
     private <T> T getEntity(final String id, final Map<String, T> entities, final String type) {
@@ -275,7 +275,7 @@ public final class Entities {
                             .map(type -> type.asString().getValue()).collect(Collectors.toList()),
                     ignoreCommandMonitoringEvents);
             clientSettingsBuilder.addCommandListener(testCommandListener);
-            putEntity(id, testCommandListener, clientCommandListeners);
+            putEntity(id + "-listener", testCommandListener, clientCommandListeners);
         }
         if (entity.containsKey("storeEventsAsEntities")) {
             BsonArray storeEventsAsEntitiesArray = entity.getArray("storeEventsAsEntities");
@@ -401,7 +401,7 @@ public final class Entities {
         }
         ClientSession session = client.startSession(optionsBuilder.build());
         putEntity(id, session, sessions);
-        putEntity(id, session.getServerSession().getIdentifier(), sessionIdentifiers);
+        putEntity(id + "-identifier", session.getServerSession().getIdentifier(), sessionIdentifiers);
     }
 
     private void initBucket(final BsonDocument entity, final String id) {
