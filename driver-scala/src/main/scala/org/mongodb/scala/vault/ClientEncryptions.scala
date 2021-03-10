@@ -22,7 +22,7 @@ import com.mongodb.reactivestreams.client.vault.{ ClientEncryptions => JClientEn
 /**
  * Factory for ClientEncryption implementations.
  *
- * @note: support for client-side encryption should be considered as beta.  Backwards-breaking changes may be made before the final
+ * @note support for client-side encryption should be considered as beta.  Backwards-breaking changes may be made before the final
  * release.
  * @since 2.7
  */

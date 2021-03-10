@@ -29,7 +29,7 @@ import org.mongodb.scala.model.vault.{ DataKeyOptions, EncryptOptions }
  *
  * Used to create data encryption keys, and to explicitly encrypt and decrypt values when auto-encryption is not an option.
  *
- * @note: support for client-side encryption should be considered as beta.  Backwards-breaking changes may be made before the final
+ * @note support for client-side encryption should be considered as beta.  Backwards-breaking changes may be made before the final
  * release.
  * @since 2.7
  */
