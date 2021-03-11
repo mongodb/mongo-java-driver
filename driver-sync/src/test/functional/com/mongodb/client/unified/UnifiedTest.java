@@ -314,7 +314,7 @@ public abstract class UnifiedTest {
         while (!terminateLoop()) {
             for (BsonValue cur : arguments.getArray("operations")) {
                 try {
-                    assertOperation(cur.asDocument());
+                    assertOperation(cur.asDocument().clone());
                     numSuccessfulOperations++;
                 } catch (AssertionError e) {
                     if (storeFailures) {
