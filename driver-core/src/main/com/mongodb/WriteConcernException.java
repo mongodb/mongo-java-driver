@@ -26,6 +26,15 @@ import static java.lang.String.format;
 /**
  * An exception representing an error reported due to a write failure.
  *
+ * <p>
+ * This class is effectively deprecated. It is only thrown with use of the long-deprecated MongoClient.getDB method and
+ * associated methods, so when using non-deprecated execution paths it should not be caught. Instead, there are two other exceptions that
+ * can be caught: for single-document writes, a {@link MongoWriteConcernException}; for bulk writes, a {@link MongoBulkWriteException}
+ * with a non-null {@link com.mongodb.bulk.WriteConcernError} property.
+ * </p>
+ *
+ * @see MongoWriteConcernException
+ * @see MongoBulkWriteException
  */
 public class WriteConcernException extends MongoServerException {
 

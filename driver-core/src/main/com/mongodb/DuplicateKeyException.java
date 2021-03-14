@@ -19,9 +19,21 @@ package com.mongodb;
 import org.bson.BsonDocument;
 
 /**
- * Subclass of {@link WriteConcernException} representing a duplicate key exception
+ * A subclass of {@link WriteConcernException} representing a duplicate key exception
+ *
+ * <p>
+ * This class is effectively deprecated. It is only thrown with use of the long-deprecated MongoClient.getDB method and associated
+ * methods, so when using non-deprecated execution paths it should not be caught.  Instead, there are two other exceptions that can be
+ * caught. For single-document inserts, a {@link MongoWriteException} is thrown with a {@link WriteError} in the category
+ * {@link ErrorCategory#DUPLICATE_KEY}. For bulk inserts, a {@link MongoBulkWriteException} is thrown where one or more of the
+ * {@link WriteError}'s in the list of errors is in the category {@link ErrorCategory#DUPLICATE_KEY}.
+ * </p>
  *
  * @since 2.12
+ * @see MongoWriteException
+ * @see MongoBulkWriteException
+ * @see WriteError
+ * @see ErrorCategory#DUPLICATE_KEY
  */
 public class DuplicateKeyException extends WriteConcernException {
 
