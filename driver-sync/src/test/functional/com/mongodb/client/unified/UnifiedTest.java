@@ -30,6 +30,8 @@ import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.bson.BsonDouble;
+import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
 import org.jetbrains.annotations.NotNull;
@@ -88,6 +90,10 @@ public abstract class UnifiedTest {
         this.context.push(ContextElement.ofTest(definition));
     }
 
+    public Entities getEntities() {
+        return entities;
+    }
+
     @NotNull
     protected static Collection<Object[]> getTestData(final String directory) throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<>();
@@ -122,7 +128,7 @@ public abstract class UnifiedTest {
 
     @Before
     public void setUp() {
-        assertTrue(schemaVersion.startsWith("1.0") || schemaVersion.startsWith("1.1"));
+        assertTrue(schemaVersion.startsWith("1.0") || schemaVersion.startsWith("1.1") || schemaVersion.startsWith("1.2"));
         if (runOnRequirements != null) {
             assumeTrue("Run-on requirements not met", runOnRequirementsMet(runOnRequirements, getServerVersion()));
         }
@@ -288,9 +294,74 @@ public abstract class UnifiedTest {
                 return gridFSHelper.executeUpload(operation);
             case "runCommand":
                 return crudHelper.executeRunCommand(operation);
+            case "loop":
+                return loop(operation);
             default:
                 throw new UnsupportedOperationException("Unsupported test operation: " + name);
         }
+    }
+
+    private OperationResult loop(final BsonDocument operation) {
+        BsonDocument arguments = operation.getDocument("arguments");
+
+        int numIterations = 0;
+        int numSuccessfulOperations = 0;
+        boolean storeFailures = arguments.containsKey("storeFailuresAsEntity");
+        boolean storeErrors = arguments.containsKey("storeErrorsAsEntity");
+        BsonArray failureDescriptionDocuments = new BsonArray();
+        BsonArray errorDescriptionDocuments = new BsonArray();
+
+        while (!terminateLoop()) {
+            for (BsonValue cur : arguments.getArray("operations")) {
+                try {
+                    assertOperation(cur.asDocument().clone());
+                    numSuccessfulOperations++;
+                } catch (AssertionError e) {
+                    if (storeFailures) {
+                        failureDescriptionDocuments.add(createDocumentFromException(e));
+                    } else if (storeErrors) {
+                        errorDescriptionDocuments.add(createDocumentFromException(e));
+                    } else {
+                        throw e;
+                    }
+                    break;
+                } catch (RuntimeException e) {
+                    if (storeErrors) {
+                        errorDescriptionDocuments.add(createDocumentFromException(e));
+                    } else if (storeFailures) {
+                        failureDescriptionDocuments.add(createDocumentFromException(e));
+                    } else {
+                        throw e;
+                    }
+                    break;
+                }
+            }
+            numIterations++;
+        }
+
+        if (arguments.containsKey("storeSuccessesAsEntity")) {
+            entities.addSuccessCount(arguments.getString("storeSuccessesAsEntity").getValue(), numSuccessfulOperations);
+        }
+        if (arguments.containsKey("storeIterationsAsEntity")) {
+            entities.addIterationCount(arguments.getString("storeIterationsAsEntity").getValue(), numIterations);
+        }
+        if (storeFailures) {
+            entities.addFailureDocuments(arguments.getString("storeFailuresAsEntity").getValue(), failureDescriptionDocuments);
+        }
+        if (storeErrors) {
+            entities.addErrorDocuments(arguments.getString("storeErrorsAsEntity").getValue(), errorDescriptionDocuments);
+        }
+
+        return OperationResult.NONE;
+    }
+
+    private BsonDocument createDocumentFromException(final Throwable throwable) {
+        return new BsonDocument("error", new BsonString(throwable.toString()))
+                .append("time", new BsonDouble(System.currentTimeMillis() / 1000.0));
+    }
+
+    protected boolean terminateLoop() {
+        return true;
     }
 
     private OperationResult executeFailPoint(final BsonDocument operation) {
