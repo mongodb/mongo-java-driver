@@ -53,6 +53,7 @@ import java.util.List;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.bson.codecs.BsonValueCodecProvider.getClassForBsonType;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
@@ -62,6 +63,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 public final class ProtocolHelper {
     private static final Logger PROTOCOL_EVENT_LOGGER = Loggers.getLogger("protocol.event");
     private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());
+    private static final int NO_ERROR_CODE = -1;
 
     private static WriteConcernResult createWriteResult(final BsonDocument result) {
         BsonBoolean updatedExisting = result.getBoolean("updatedExisting", BsonBoolean.FALSE);
@@ -226,8 +228,10 @@ public final class ProtocolHelper {
         }
     }
 
-    private static final List<Integer> NOT_MASTER_CODES = asList(10107, 13435);
+    private static final List<Integer> NOT_PRIMARY_CODES = asList(10107, 13435, 10058);
+    private static final List<String> NOT_PRIMARY_MESSAGES = singletonList("not master");
     private static final List<Integer> RECOVERING_CODES = asList(11600, 11602, 13436, 189, 91);
+    private static final List<String> RECOVERING_MESSAGES = asList("not master or secondary", "node is recovering");
     public static MongoException createSpecialException(final BsonDocument response, final ServerAddress serverAddress,
                                                         final String errorMessageFieldName) {
         if (response == null) {
@@ -237,10 +241,9 @@ public final class ProtocolHelper {
         String errorMessage = getErrorMessage(response, errorMessageFieldName);
         if (ErrorCategory.fromErrorCode(errorCode) == ErrorCategory.EXECUTION_TIMEOUT) {
             return new MongoExecutionTimeoutException(errorCode, errorMessage, response);
-        } else if (errorMessage.contains("not master or secondary") || errorMessage.contains("node is recovering")
-                || RECOVERING_CODES.contains(errorCode)) {
+        } else if (isNodeIsRecoveringError(errorCode, errorMessage)) {
             return new MongoNodeIsRecoveringException(response, serverAddress);
-        } else if (errorMessage.contains("not master") || NOT_MASTER_CODES.contains(errorCode)) {
+        } else if (isNotPrimaryError(errorCode, errorMessage)) {
             return new MongoNotPrimaryException(response, serverAddress);
         } else if (response.containsKey("writeConcernError")) {
             return createSpecialException(response.getDocument("writeConcernError"), serverAddress, "errmsg");
@@ -249,6 +252,15 @@ public final class ProtocolHelper {
         }
     }
 
+    private static boolean isNotPrimaryError(final int errorCode, final String errorMessage) {
+        return NOT_PRIMARY_CODES.contains(errorCode)
+                || (errorCode == NO_ERROR_CODE && NOT_PRIMARY_MESSAGES.stream().anyMatch(errorMessage::contains));
+    }
+
+    private static boolean isNodeIsRecoveringError(final int errorCode, final String errorMessage) {
+        return RECOVERING_CODES.contains(errorCode)
+                || (errorCode == NO_ERROR_CODE && (RECOVERING_MESSAGES.stream().anyMatch(errorMessage::contains)));
+    }
 
 
     private static boolean hasWriteError(final BsonDocument response) {
