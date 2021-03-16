@@ -25,8 +25,8 @@ import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.SocketSettings;
-import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.connection.SslSettings;
+import com.mongodb.connection.StreamFactory;
 import com.mongodb.event.ConnectionCheckOutFailedEvent;
 import com.mongodb.event.ConnectionCheckOutStartedEvent;
 import com.mongodb.event.ConnectionCheckedInEvent;
@@ -62,7 +62,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -139,9 +138,7 @@ public abstract class AbstractConnectionPoolTest {
                 ServerId serverId = new ServerId(new ClusterId(), ClusterFixture.getPrimary());
                 pool = new ConnectionIdAdjustingConnectionPool(new DefaultConnectionPool(serverId,
                         new InternalStreamConnectionFactory(
-                                new SocketStreamFactory(
-                                        SocketSettings.builder().build(),
-                                        SslSettings.builder().enabled(false).build()),
+                                createStreamFactory(SocketSettings.builder().build(), SslSettings.builder().enabled(false).build()),
                                 ClusterFixture.getCredentialWithCache(),
                                 fileName + ": " + description,
                                 MongoDriverInformation.builder().build(),
@@ -438,6 +435,8 @@ public abstract class AbstractConnectionPoolTest {
     }
 
     protected abstract Callable<Exception> createCallable(BsonDocument operation);
+
+    protected abstract StreamFactory createStreamFactory(SocketSettings socketSettings, SslSettings sslSettings);
 
     protected Map<String, InternalConnection> getConnectionMap() {
         return connectionMap;

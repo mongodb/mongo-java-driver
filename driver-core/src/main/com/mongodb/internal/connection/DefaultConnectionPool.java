@@ -18,7 +18,6 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
-import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ConnectionDescription;
@@ -40,6 +39,7 @@ import com.mongodb.event.ConnectionPoolClosedEvent;
 import com.mongodb.event.ConnectionPoolCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionReadyEvent;
+import com.mongodb.internal.Timeout;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.ConcurrentPool.Prune;
 import com.mongodb.internal.session.SessionContext;
@@ -51,7 +51,6 @@ import org.bson.codecs.Decoder;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -74,7 +73,6 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 @SuppressWarnings("deprecation")
 class DefaultConnectionPool implements ConnectionPool {
     private static final Logger LOGGER = Loggers.getLogger("connection");
-    private static final int MAX_CONNECTING = 2;
 
     private final ConcurrentPool<UsageTrackingInternalConnection> pool;
     private final ConnectionPoolSettings settings;
@@ -99,7 +97,7 @@ class DefaultConnectionPool implements ConnectionPool {
         maintenanceTask = createMaintenanceTask();
         sizeMaintenanceTimer = createMaintenanceTimer();
         connectionPoolCreated(connectionPoolListener, serverId, settings);
-        openConcurrencyLimiter = new OpenConcurrencyLimiter();
+        openConcurrencyLimiter = new OpenConcurrencyLimiter(2);
     }
 
     @Override
@@ -117,22 +115,19 @@ class DefaultConnectionPool implements ConnectionPool {
 
     @Override
     public InternalConnection get(final long timeoutValue, final TimeUnit timeUnit) {
+        connectionPoolListener.connectionCheckOutStarted(new ConnectionCheckOutStartedEvent(serverId));
         Timeout timeout = Timeout.startNow(timeoutValue, timeUnit);
-        PooledConnection pooledConnection;
         try {
-            connectionPoolListener.connectionCheckOutStarted(new ConnectionCheckOutStartedEvent(serverId));
-            pooledConnection = getPooledConnection(timeout);
-        } catch (Throwable t) {
-            checkOutFailed(t, null);
-            throw t;
+            PooledConnection connection = getPooledConnection(timeout);
+            if (!connection.opened()) {
+                connection = openConcurrencyLimiter.openOrGetAvailableAndSilentlyCloseSpecified(connection, true, timeout);
+            }
+            connectionPoolListener.connectionCheckedOut(new ConnectionCheckedOutEvent(getId(connection)));
+            return connection;
+        } catch (RuntimeException e) {
+            checkOutFailed(e, null);
+            throw e;
         }
-        if (!pooledConnection.opened()) {
-            pooledConnection = openConcurrencyLimiter.openOrGetAvailableAndPruneSpecified(pooledConnection, true, timeout);
-        }
-        connectionPoolListener.connectionCheckedOut(
-                new ConnectionCheckedOutEvent(pooledConnection.getDescription().getConnectionId()));
-
-        return pooledConnection;
     }
 
     @Override
@@ -140,49 +135,43 @@ class DefaultConnectionPool implements ConnectionPool {
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(format("Asynchronously getting a connection from the pool for server %s", serverId));
         }
-
-        final SingleResultCallback<InternalConnection> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-        PooledConnection connection = null;
-
+        connectionPoolListener.connectionCheckOutStarted(new ConnectionCheckOutStartedEvent(serverId));
+        final Timeout timeout = Timeout.startNow(settings.getMaxWaitTime(NANOSECONDS));
+        final SingleResultCallback<InternalConnection> eventSendingCallback = (result, failure) -> {
+            SingleResultCallback<InternalConnection> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
+            if (failure == null) {
+                connectionPoolListener.connectionCheckedOut(new ConnectionCheckedOutEvent(getId(result)));
+                errHandlingCallback.onResult(result, null);
+            } else {
+                checkOutFailed(failure, null);
+                errHandlingCallback.onResult(null, failure);
+            }
+        };
+        PooledConnection immediateConnection = null;
         try {
-            connectionPoolListener.connectionCheckOutStarted(new ConnectionCheckOutStartedEvent(serverId));
-            connection = getPooledConnection(Timeout.IMMEDIATE);
+            immediateConnection = getPooledConnection(Timeout.immediate());
         } catch (MongoTimeoutException e) {
             // fall through
-        } catch (Throwable t) {
-            checkOutFailed(t, null);
-            callback.onResult(null, t);
+        } catch (RuntimeException e) {
+            eventSendingCallback.onResult(null, e);
             return;
         }
-
-        if (connection != null) {
-            if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace(format("Asynchronously opening pooled connection %s to server %s",
-                                           connection.getDescription().getConnectionId(), serverId));
-            }
-            openAsync(connection, errHandlingCallback);
+        if (immediateConnection != null) {
+            openAsync(immediateConnection, eventSendingCallback, timeout);
         } else {
-            final Timeout timeout = Timeout.startNow(settings.getMaxWaitTime(NANOSECONDS));
-            getAsyncGetter().submit(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        if (timeout.remainingNanos() <= 0) {
-                            errHandlingCallback.onResult(null, createTimeoutException());
-                        } else {
-                            PooledConnection connection = getPooledConnection(timeout);
-                            openAsync(connection, errHandlingCallback);
-                        }
-                    } catch (MongoTimeoutException e) {
-                        Exception exception = new MongoTimeoutException(format("Timeout waiting for a pooled connection after %d %s",
-                                settings.getMaxWaitTime(MILLISECONDS), MILLISECONDS));
-                        checkOutFailed(exception, null);
-                        errHandlingCallback.onResult(null, exception);
-                    } catch (Throwable t) {
-                        checkOutFailed(t, null);
-                        errHandlingCallback.onResult(null, t);
-                    }
+            getAsyncGetter().execute(() -> {
+                if (timeout.expired()) {
+                    eventSendingCallback.onResult(null, createTimeoutException(timeout));
+                    return;
                 }
+                PooledConnection connection;
+                try {
+                    connection = getPooledConnection(timeout);
+                } catch (RuntimeException e) {
+                    eventSendingCallback.onResult(null, e);
+                    return;
+                }
+                openAsync(connection, eventSendingCallback, timeout);
             });
         }
     }
@@ -202,41 +191,21 @@ class DefaultConnectionPool implements ConnectionPool {
     }
 
     private void openAsync(final PooledConnection pooledConnection,
-                           final SingleResultCallback<InternalConnection> callback) {
+                           final SingleResultCallback<InternalConnection> callback,
+                           final Timeout timeout) {
         if (pooledConnection.opened()) {
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(format("Pooled connection %s to server %s is already open",
-                                           pooledConnection.getDescription().getConnectionId(), serverId));
+                        getId(pooledConnection), serverId));
             }
-            connectionPoolListener.connectionCheckedOut(
-                    new ConnectionCheckedOutEvent(pooledConnection.getDescription().getConnectionId()));
             callback.onResult(pooledConnection, null);
         } else {
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(format("Pooled connection %s to server %s is not yet open",
-                                           pooledConnection.getDescription().getConnectionId(), serverId));
+                        getId(pooledConnection), serverId));
             }
-            pooledConnection.openAsync(new SingleResultCallback<Void>() {
-                @Override
-                public void onResult(final Void result, final Throwable t) {
-                    if (t != null) {
-                        if (LOGGER.isTraceEnabled()) {
-                            LOGGER.trace(format("Pooled connection %s to server %s failed to open",
-                                                       pooledConnection.getDescription().getConnectionId(), serverId));
-                        }
-                        checkOutFailed(null, Reason.CONNECTION_ERROR);
-                        pool.release(pooledConnection.wrapped, true);
-                    } else {
-                        if (LOGGER.isTraceEnabled()) {
-                            LOGGER.trace(format("Pooled connection %s to server %s is now open",
-                                                       pooledConnection.getDescription().getConnectionId(), serverId));
-                        }
-                        connectionPoolListener.connectionCheckedOut(
-                                new ConnectionCheckedOutEvent(pooledConnection.getDescription().getConnectionId()));
-                        callback.onResult(pooledConnection, null);
-                    }
-                }
-            });
+            getAsyncGetter().execute(() -> openConcurrencyLimiter.openOrGetAvailableAndSilentlyCloseSpecified(
+                    pooledConnection, true, timeout, callback));
         }
     }
 
@@ -290,13 +259,13 @@ class DefaultConnectionPool implements ConnectionPool {
     private PooledConnection getPooledConnection(final Timeout timeout) throws MongoTimeoutException {
         boolean externalTimeoutException = false;
         try {
-            UsageTrackingInternalConnection internalConnection = pool.get(timeout.remainingNanos(), TimeUnit.NANOSECONDS);
+            UsageTrackingInternalConnection internalConnection = pool.get(timeout.remainingNanosOrInfinite(), TimeUnit.NANOSECONDS);
             while (shouldPrune(internalConnection)) {
                 pool.release(internalConnection, true);
-                long remainingNanos = timeout.remainingNanos();
-                if (remainingNanos <= 0) {
+                long remainingNanos = timeout.remainingNanosOrInfinite();
+                if (Timeout.expired(remainingNanos)) {
                     externalTimeoutException = true;
-                    throw createTimeoutException();
+                    throw createTimeoutException(timeout);
                 }
                 internalConnection = pool.get(remainingNanos, TimeUnit.NANOSECONDS);
             }
@@ -308,16 +277,16 @@ class DefaultConnectionPool implements ConnectionPool {
             if (externalTimeoutException) {
                 throw externalOrInternalTimeoutException;
             } else {
-                MongoTimeoutException timeoutException = createTimeoutException();
+                MongoTimeoutException timeoutException = createTimeoutException(timeout);
                 timeoutException.addSuppressed(externalOrInternalTimeoutException);
                 throw timeoutException;
             }
         }
     }
 
-    private MongoTimeoutException createTimeoutException() {
-        return new MongoTimeoutException(format("Timed out after %d ms while waiting for a connection to server %s.",
-                                                settings.getMaxWaitTime(MILLISECONDS), serverId.getAddress()));
+    private MongoTimeoutException createTimeoutException(final Timeout timeout) {
+        return new MongoTimeoutException(format("Timed out after %s while waiting for a connection to server %s.",
+                                                timeout.duration(MILLISECONDS), serverId.getAddress()));
     }
 
     ConcurrentPool<UsageTrackingInternalConnection> getPool() {
@@ -344,11 +313,12 @@ class DefaultConnectionPool implements ConnectionPool {
                                 LOGGER.debug(format("Ensuring minimum pooled connections to %s", serverId.getAddress()));
                             }
                             pool.ensureMinSize(settings.getMinSize(), newConnection -> {
+                                PooledConnection pooledConnection = new PooledConnection(newConnection);
                                 if (!newConnection.opened()) {
-                                    openConcurrencyLimiter.openOrGetAvailableAndPruneSpecified(
-                                            new PooledConnection(newConnection), false, Timeout.IMMEDIATE);
+                                    pooledConnection = openConcurrencyLimiter.openOrGetAvailableAndSilentlyCloseSpecified(
+                                            pooledConnection, false, Timeout.immediate());
                                 }
-                                return Optional.of(newConnection);
+                                return Optional.of(pooledConnection.wrapped);
                             });
                         }
                     } catch (MongoInterruptedException | MongoTimeoutException e) {
@@ -467,23 +437,34 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Override
         public void open() {
-            isTrue("open", !isClosed.get());
-            wrapped.open();
-            connectionPoolListener.connectionReady(new ConnectionReadyEvent(getDescription().getConnectionId()));
+            assert !isClosed.get();
+            try {
+                wrapped.open();
+                handleOpenSuccess();
+            } catch (RuntimeException e) {
+                try {
+                    throw e;
+                } finally {
+                    closeAndHandleOpenFailure();
+                }
+            }
         }
 
         @Override
         public void openAsync(final SingleResultCallback<Void> callback) {
-            isTrue("open", !isClosed.get());
-            wrapped.openAsync(new SingleResultCallback<Void>() {
-                @Override
-                public void onResult(final Void result, final Throwable t) {
-                    if (t != null) {
-                        checkOutFailed(null, Reason.CONNECTION_ERROR);
-                        callback.onResult(null, t);
-                    } else {
-                        connectionPoolListener.connectionReady(new ConnectionReadyEvent(getDescription().getConnectionId()));
-                        callback.onResult(result, null);
+            assert !isClosed.get();
+            wrapped.openAsync((nullResult, failure) -> {
+                if (failure == null) {
+                    try {
+                        handleOpenSuccess();
+                    } finally {
+                        callback.onResult(nullResult, null);
+                    }
+                } else {
+                    try {
+                        closeAndHandleOpenFailure();
+                    } finally {
+                        callback.onResult(null, failure);
                     }
                 }
             });
@@ -513,16 +494,40 @@ class DefaultConnectionPool implements ConnectionPool {
             }
         }
 
+        void release() {
+            if (!isClosed.getAndSet(true)) {
+                pool.release(wrapped);
+            }
+        }
+
         /**
-         * Close this connection without sending a {@link ConnectionClosedEvent}.
+         * {@linkplain ConcurrentPool#release(Object, boolean) Prune} this connection without sending a {@link ConnectionClosedEvent}.
          * This method must be used if and only if {@link ConnectionCreatedEvent} was not emitted for the connection.
          */
         void closeSilently() {
-            try {
-                wrapped.setCloseSilently();
-            } finally {
+            if (!isClosed.getAndSet(true)) {
+                try {
+                    wrapped.setCloseSilently();
+                } finally {
+                    pool.release(wrapped, true);
+                }
+            }
+        }
+
+        private void closeAndHandleOpenFailure() {
+            if (!isClosed.getAndSet(true)) {
+                if (LOGGER.isTraceEnabled()) {
+                    LOGGER.trace(format("Pooled connection %s to server %s failed to open", getId(this), serverId));
+                }
                 pool.release(wrapped, true);
             }
+        }
+
+        private void handleOpenSuccess() {
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace(format("Pooled connection %s to server %s is now open", getId(this), serverId));
+            }
+            connectionPoolListener.connectionReady(new ConnectionReadyEvent(getId(this)));
         }
 
         @Override
@@ -703,83 +708,6 @@ class DefaultConnectionPool implements ConnectionPool {
     }
 
     /**
-     * A <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/doc-files/ValueBased.html">value-based</a> class
-     * useful for tracking timeouts.
-     */
-    @Immutable
-    private static final class Timeout {
-        static final Timeout INFINITE = new Timeout(-1, 0);
-        static final Timeout IMMEDIATE = new Timeout(0, 0);
-        /**
-         * {@link Long#MAX_VALUE} / 2.
-         */
-        static final long MAX_DURATION_NANOS = Long.MAX_VALUE / 2;
-
-        private final long durationNanos;
-        private final long startNanos;
-
-        private Timeout(final long durationNanos, final long startNanos) {
-            assert durationNanos <= MAX_DURATION_NANOS : durationNanos;
-            this.durationNanos = durationNanos;
-            this.startNanos = startNanos;
-        }
-
-        /**
-         * @see #startNow(long)
-         */
-        static Timeout startNow(final long duration, final TimeUnit unit) {
-            return startNow(unit.toNanos(duration));
-        }
-
-        /**
-         * Returns an object equal to {@link #INFINITE} if {@code durationNanos} is either negative
-         * or is greater than {@link #MAX_DURATION_NANOS},
-         * equal to {@link #IMMEDIATE} if {@code durationNanos} is 0,
-         * otherwise an object that represents the specified {@code durationNanos}.
-         */
-        static Timeout startNow(final long durationNanos) {
-            if (durationNanos < 0 || MAX_DURATION_NANOS < durationNanos) {
-                return INFINITE;
-            } else if (durationNanos == 0) {
-                return IMMEDIATE;
-            } else {
-                return new Timeout(durationNanos, System.nanoTime());
-            }
-        }
-
-        /**
-         * Returns 0 for objects equal to {@link #INFINITE}/{@link #IMMEDIATE}, 0 or a positive value for others.
-         */
-        private long elapsedNanos() {
-            return durationNanos <= 0 ? 0 : System.nanoTime() - startNanos;
-        }
-
-        /**
-         * Returns 0 for objects equal to {@link #INFINITE}/{@link #IMMEDIATE}, 0 or a positive value for others.
-         */
-        long remainingNanos() {
-            return durationNanos <= 0 ? 0 : Math.max(0, durationNanos - elapsedNanos());
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            final Timeout other = (Timeout) o;
-            return durationNanos == other.durationNanos && startNanos == other.startNanos;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(durationNanos, startNanos);
-        }
-    }
-
-    /**
      * Package-private methods are thread-safe,
      * and only they should be called outside of the {@link OpenConcurrencyLimiter}'s code.
      */
@@ -787,50 +715,90 @@ class DefaultConnectionPool implements ConnectionPool {
     private final class OpenConcurrencyLimiter {
         private final Lock lock;
         private final Condition condition;
+        private final int maxPermits;
         private int permits;
         private final Deque<MutableReference<PooledConnection>> desiredConnectionSlots;
 
-        OpenConcurrencyLimiter() {
+        OpenConcurrencyLimiter(final int maxConnecting) {
             lock = new ReentrantLock(true);
             condition = lock.newCondition();
-            permits = MAX_CONNECTING;
+            maxPermits = maxConnecting;
+            permits = maxPermits;
             desiredConnectionSlots = new LinkedList<>();
         }
 
         /**
-         * Returns either {@linkplain InternalConnection#opened() opened} {@code connection} that is specified,
-         * or a different opened connection if {@code tryGetAvailable} is {@code true} and
-         * one becomes available while waiting for a permit to open the specified {@code connection}.
-         * If a different connection is returned, then the specified {@code connection} is
-         * {@linkplain PooledConnection#closeSilently() silently closed}.
-         * This method emits {@link ConnectionCreatedEvent} if and only if it acquires a permit to open the specified {@code connection}.
-         * @throws MongoTimeoutException If timed out.
+         * @see #openOrGetAvailableAndSilentlyCloseSpecified(PooledConnection, boolean, Timeout, SingleResultCallback)
          */
-        PooledConnection openOrGetAvailableAndPruneSpecified(
-                final PooledConnection connection, final boolean tryGetAvailable, final Timeout timeout)
-                throws MongoTimeoutException {
+        PooledConnection openOrGetAvailableAndSilentlyCloseSpecified(
+                final PooledConnection connection, final boolean tryGetAvailable, final Timeout timeout) throws MongoTimeoutException {
+            PooledConnection result = openOrGetAvailableAndSilentlyCloseSpecified(connection, tryGetAvailable, timeout, null);
+            assert result != null;
+            return result;
+        }
+
+        /**
+         * Regardless of the {@code asyncCallback}, this method has a synchronous phase.
+         * In this phase it tries to synchronously acquire a permit to open the {@code connection}
+         * or get a different {@linkplain PooledConnection#opened() opened} connection if {@code tryGetAvailable} is {@code true} and
+         * one becomes available while waiting for a permit.
+         * The first synchronous phase has one of the following outcomes:
+         * <ol>
+         *     <li>A {@link MongoTimeoutException} or a different {@link Exception} is thrown<sup>1</sup>.</li>
+         *     <li>An opened connection different from the specified one is returned<sup>1</sup>,
+         *     and the specified {@code connection} is {@linkplain PooledConnection#closeSilently() silently closed}.
+         *     </li>
+         *     <li>A permit is acquired, {@link #connectionCreated(ConnectionPoolListener, ConnectionId)} is reported
+         *     and an attempt to open the specified {@code connection} is made. This is the second phase in which
+         *     the {@code connection} is {@linkplain PooledConnection#open() opened synchronously} if {@code asyncCallback} is null,
+         *     or {@linkplain PooledConnection#openAsync(SingleResultCallback) opened asynchronously} otherwise.
+         *     The attempt to open the {@code connection} has one of the following outcomes
+         *     combined with releasing the acquired permit:</li>
+         *     <ol>
+         *         <li>A {@link MongoTimeoutException} or a different {@link Exception} is thrown<sup>1</sup>
+         *         and the {@code connection} is {@linkplain PooledConnection#closeAndHandleOpenFailure() closed}.</li>
+         *         <li>The specified {@code connection}, which is now opened, is returned<sup>1</sup>.</li>
+         *     </ol>
+         * </ol>
+         * <hr>
+         * <sup>1</sup> Throwing and returning behavior depends on the value if {@code asyncCallback}:
+         * <ul>
+         *     <li>if {@code null}, then the words "return"/"throw" mean usual {@code return}/{@code throw} in Java;</li>
+         *     <li>otherwise "return"/"throw" mean calling
+         *     {@code asyncCallback.}{@link SingleResultCallback#onResult(Object, Throwable) onResult(result, failure)}
+         *     and passing either a {@link PooledConnection} or an {@link Exception}.</li>
+         * </ul>
+         *
+         * @param timeout Applies only to the first synchronous phase.
+         * @return If {@code asyncCallback} is {@code null}, then an {@linkplain PooledConnection#opened() opened} connection which is
+         * either the specified {@code connection} or a different one; otherwise returns {@code null}.
+         * @throws MongoTimeoutException If {@code asyncCallback} is {@code null} and the method timed out;
+         * otherwise does not throw this exception.
+         */
+        @Nullable
+        PooledConnection openOrGetAvailableAndSilentlyCloseSpecified(
+                final PooledConnection connection, final boolean tryGetAvailable, final Timeout timeout,
+                @Nullable final SingleResultCallback<InternalConnection> asyncCallback) throws MongoTimeoutException {
             PooledConnection availableConnection;
-            try {
+            try {//phase one, synchronous
                 availableConnection = acquirePermitOrGetAvailableOpenConnection(tryGetAvailable, timeout);
             } catch (RuntimeException e) {
-                checkOutFailed(e, null);
-                throw e;
+                try {
+                    return throwException(e, asyncCallback);
+                } finally {
+                    connection.closeSilently();
+                }
             }
             if (availableConnection != null) {
-                if (LOGGER.isTraceEnabled()) {
-                    LOGGER.trace(format("Received opened connection [%s] to server %s", getId(availableConnection), serverId.getAddress()));
-                }
-                connection.closeSilently();
-                return availableConnection;
-            } else {//acquired a permit
                 try {
-                    connectionCreated(//a connection is considered created only when it is ready to be open
-                            connectionPoolListener, getId(connection));
-                    open(connection);
+                    return returnValue(availableConnection, asyncCallback);
                 } finally {
-                    releasePermit();
+                    connection.closeSilently();
                 }
-                return connection;
+            } else {//acquired a permit, phase two
+                connectionCreated(//a connection is considered created only when it is ready to be open
+                        connectionPoolListener, getId(connection));
+                return openAndReleasePermit(connection, asyncCallback);
             }
         }
 
@@ -849,11 +817,11 @@ class DefaultConnectionPool implements ConnectionPool {
                 if (tryGetAvailable) {
                     addLastDesiredConnectionSlot();
                 }
-                long remainingNanos = timeout.remainingNanos();
+                long remainingNanos = timeout.remainingNanosOrInfinite();
                 while (permits == 0
                         && (availableConnection = tryGetAvailable ? tryGetAndRemoveFirstDesiredConnectionSlot() : null) == null) {
-                    if (remainingNanos <= 0L) {
-                        throw createTimeoutException();
+                    if (Timeout.expired(remainingNanos)) {
+                        throw createTimeoutException(timeout);
                     }
                     remainingNanos = awaitNanos(remainingNanos);
                 }
@@ -862,6 +830,10 @@ class DefaultConnectionPool implements ConnectionPool {
                     permits--;
                 } else {
                     assert availableConnection.opened();
+                    if (LOGGER.isTraceEnabled()) {
+                        LOGGER.trace(format("Received opened connection [%s] to server %s",
+                                getId(availableConnection), serverId.getAddress()));
+                    }
                 }
                 return availableConnection;
             } finally {
@@ -878,7 +850,7 @@ class DefaultConnectionPool implements ConnectionPool {
         private void releasePermit() {
             lock();
             try {
-                assert permits < MAX_CONNECTING : permits;
+                assert permits < maxPermits : permits;
                 permits++;
                 condition.signal();
             } finally {
@@ -904,7 +876,7 @@ class DefaultConnectionPool implements ConnectionPool {
             assert !desiredConnectionSlots.isEmpty();
             PooledConnection connection = desiredConnectionSlots.removeLast().reference;
             if (connection != null) {
-                pool.release(connection.wrapped);
+                connection.release();
             }
         }
 
@@ -929,27 +901,61 @@ class DefaultConnectionPool implements ConnectionPool {
             }
         }
 
-        private void open(final PooledConnection connection) {
-            boolean success = false;
-            try {
-                connection.open();
-                success = true;
-            } finally {
-                if (!success) {
-                    pool.release(connection.wrapped, true);
-                    checkOutFailed(null, Reason.CONNECTION_ERROR);
+        @Nullable
+        private PooledConnection openAndReleasePermit(
+                final PooledConnection connection,
+                @Nullable final SingleResultCallback<InternalConnection> callback) {
+            if (callback == null) {
+                try {
+                    connection.open();
+                    return connection;
+                } finally {
+                    releasePermit();
                 }
+            } else {
+                connection.openAsync((nullResult, failure) -> {
+                    try {
+                        releasePermit();
+                    } finally {
+                        if (failure == null) {
+                            callback.onResult(connection, null);
+                        } else {
+                            callback.onResult(null, failure);
+                        }
+                    }
+                });
+                return null;
+            }
+        }
+
+        @Nullable
+        private <T> T returnValue(T value, @Nullable SingleResultCallback<? super T> callback) {
+            if (callback == null) {
+                return value;
+            } else {
+                callback.onResult(value, null);
+                return null;
+            }
+        }
+
+        @Nullable
+        private <T> T throwException(RuntimeException e, @Nullable SingleResultCallback<? super T> callback) throws RuntimeException {
+            if (callback == null) {
+                throw e;
+            } else {
+                callback.onResult(null, e);
+                return null;
             }
         }
 
         private void lock() {
-            tryLock(Timeout.INFINITE);
+            tryLock(Timeout.infinite());
         }
 
         private void tryLock(final Timeout timeout) throws MongoTimeoutException {
             boolean success;
             try {
-                if (timeout.equals(Timeout.INFINITE)) {
+                if (timeout.isInfinite()) {
                     lock.lock();
                     success = true;
                 } else {
@@ -960,13 +966,24 @@ class DefaultConnectionPool implements ConnectionPool {
                 throw new RuntimeException(e);
             }
             if (!success) {
-                throw createTimeoutException();
+                throw createTimeoutException(timeout);
             }
         }
 
+        /**
+         * Returns {@code timeoutNanos} if {@code timeoutNanos} is negative, otherwise returns 0 or a positive value.
+         *
+         * @param timeoutNanos Use a negative value for an infinite timeout,
+         *                     in which case {@link Condition#awaitNanos(long)} is called with {@link Long#MAX_VALUE}.
+         */
         private long awaitNanos(final long timeoutNanos) {
             try {
-                return condition.awaitNanos(timeoutNanos);
+                if (timeoutNanos < 0) {
+                    condition.awaitNanos(Long.MAX_VALUE);
+                    return timeoutNanos;
+                } else {
+                    return Math.max(0, condition.awaitNanos(timeoutNanos));
+                }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new RuntimeException(e);

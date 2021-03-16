@@ -17,6 +17,10 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.async.FutureResultCallback;
+import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
+import com.mongodb.connection.SocketSettings;
+import com.mongodb.connection.SslSettings;
+import com.mongodb.connection.StreamFactory;
 import com.mongodb.internal.async.SingleResultCallback;
 import org.bson.BsonDocument;
 import org.junit.runner.RunWith;
@@ -80,5 +84,10 @@ public class ConnectionPoolAsyncTest extends AbstractConnectionPoolTest {
         } else {
             throw new UnsupportedOperationException("Operation " + name + " not supported");
         }
+    }
+
+    @Override
+    protected StreamFactory createStreamFactory(final SocketSettings socketSettings, final SslSettings sslSettings) {
+        return new AsynchronousSocketChannelStreamFactory(socketSettings, sslSettings);
     }
 }

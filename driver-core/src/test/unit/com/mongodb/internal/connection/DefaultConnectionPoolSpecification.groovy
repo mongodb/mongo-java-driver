@@ -205,7 +205,7 @@ class DefaultConnectionPoolSpecification extends Specification {
                 .addConnectionPoolListener(listener).build())
 
         when:
-        selectConnectionAsync(pool)
+        selectConnectionAsyncAndGet(pool)
 
         then:
         1 * listener.connectionCreated { it.connectionId.serverId == SERVER_ID }
