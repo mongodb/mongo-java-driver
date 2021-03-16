@@ -21,6 +21,8 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.unified.Entities;
 import com.mongodb.client.unified.UnifiedTest;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt64;
@@ -39,8 +41,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 public class WorkloadExecutor {
-    private static volatile boolean terminateLoop;
+    private static final Logger LOGGER = Loggers.getLogger("workload-executor");
     private static final CountDownLatch terminationLatch = new CountDownLatch(1);
+    private static volatile boolean terminateLoop;
 
     public static void main(String[] args) throws IOException {
         if (args.length != 2) {
@@ -51,18 +54,18 @@ public class WorkloadExecutor {
         String pathToWorkloadFile = args[0];
         String pathToResultsDirectory = args[1];
 
-        System.out.println("Max memory (GB): " + (Runtime.getRuntime().maxMemory() / 1_073_741_824.0));
-        System.out.println("Path to workload file: '" + pathToWorkloadFile + "'");
-        System.out.println("Path to results directory: '" + pathToResultsDirectory + "'");
+        LOGGER.info("Max memory (GB): " + (Runtime.getRuntime().maxMemory() / 1_073_741_824.0));
+        LOGGER.info("Path to workload file: '" + pathToWorkloadFile + "'");
+        LOGGER.info("Path to results directory: '" + pathToResultsDirectory + "'");
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            System.out.println("Running shutdown hook");
+            LOGGER.info("Running shutdown hook");
             terminateLoop = true;
             try {
                 if (!terminationLatch.await(1, TimeUnit.MINUTES)) {
-                    System.err.println("Terminating after waiting for 1 minute for results to be written");
+                    LOGGER.warn("Terminating after waiting for 1 minute for results to be written");
                 } else {
-                    System.out.println("Terminating.");
+                    LOGGER.info("Terminating.");
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -76,8 +79,7 @@ public class WorkloadExecutor {
             fileDocument = new BsonDocumentCodec().decode(new JsonReader(reader), DecoderContext.builder().build());
         }
 
-        System.out.println(fileDocument.toJson(JsonWriterSettings.builder().indent(true).build()));
-        System.out.println();
+        LOGGER.info("Executing workload: " + fileDocument.toJson(JsonWriterSettings.builder().indent(true).build()));
 
         BsonArray testArray = fileDocument.getArray("tests");
         if (testArray.size() != 1) {
@@ -156,9 +158,10 @@ public class WorkloadExecutor {
     }
 
     private static void writeFile(final BsonDocument document, final Path path) throws IOException {
-        System.out.println("Writing file: '" + path.toFile().getAbsolutePath());
+        LOGGER.info("Writing file: '" + path.toFile().getAbsolutePath());
         Files.deleteIfExists(path);
         String json = document.toJson(JsonWriterSettings.builder().indent(true).build());
+        LOGGER.debug("File contents: " + json);
         Files.write(path, (json + "\n").getBytes(StandardCharsets.UTF_8));
     }
 }
