@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.ClusterFixture;
+import com.mongodb.JsonTestServerVersionChecker;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
@@ -74,6 +75,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static java.lang.String.format;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeNotNull;
 
 // Implementation of
@@ -88,6 +90,7 @@ public abstract class AbstractConnectionPoolTest {
     private final String fileName;
     private final String description;
     private final BsonDocument definition;
+    private final boolean skipTest;
     private ConnectionPoolSettings settings;
     private final Map<String, ExecutorService> executorServiceMap = new HashMap<String, ExecutorService>();
     private final Map<String, Future<Exception>> futureMap = new HashMap<String, Future<Exception>>();
@@ -99,14 +102,17 @@ public abstract class AbstractConnectionPoolTest {
     private final Map<String, InternalConnection> connectionMap = new HashMap<String, InternalConnection>();
     private ConnectionPool pool;
 
-    public AbstractConnectionPoolTest(final String fileName, final String description, final BsonDocument definition) {
+    public AbstractConnectionPoolTest(
+            final String fileName, final String description, final BsonDocument definition, final boolean skipTest) {
         this.fileName = fileName;
         this.description = description;
         this.definition = definition;
+        this.skipTest = skipTest;
     }
 
     @Before
     public void setUp() {
+        assumeFalse(skipTest);
         ConnectionPoolSettings.Builder settingsBuilder = ConnectionPoolSettings.builder()
                 .maintenanceFrequency(1, TimeUnit.MILLISECONDS);
         BsonDocument poolOptions = definition.getDocument("poolOptions", new BsonDocument());
@@ -451,7 +457,12 @@ public abstract class AbstractConnectionPoolTest {
         List<Object[]> data = new ArrayList<Object[]>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/connection-monitoring-and-pooling")) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
-            data.add(new Object[]{file.getName(), testDocument.getString("description").getValue(), testDocument});
+            data.add(new Object[]{
+                    file.getName(),
+                    testDocument.getString("description").getValue(),
+                    testDocument,
+                    JsonTestServerVersionChecker.skipTest(testDocument, BsonDocument.parse("{}"))
+            });
         }
         return data;
     }

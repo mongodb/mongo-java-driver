@@ -33,8 +33,8 @@ import java.util.concurrent.Callable;
 @RunWith(Parameterized.class)
 public class ConnectionPoolTest extends AbstractConnectionPoolTest {
 
-    public ConnectionPoolTest(final String fileName, final String description, final BsonDocument definition) {
-        super(fileName, description, definition);
+    public ConnectionPoolTest(final String fileName, final String description, final BsonDocument definition, final boolean skipTest) {
+        super(fileName, description, definition, skipTest);
     }
 
     @Override
