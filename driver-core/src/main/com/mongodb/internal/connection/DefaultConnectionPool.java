@@ -818,8 +818,11 @@ class DefaultConnectionPool implements ConnectionPool {
                     addLastDesiredConnectionSlot();
                 }
                 long remainingNanos = timeout.remainingNanosOrInfinite();
-                while (permits == 0
-                        && (availableConnection = tryGetAvailable ? tryGetAndRemoveFirstDesiredConnectionSlot() : null) == null) {
+                while (permits == 0) {
+                    availableConnection = tryGetAvailable ? tryGetAndRemoveFirstDesiredConnectionSlot() : null;
+                    if (availableConnection != null) {
+                        break;
+                    }
                     if (Timeout.expired(remainingNanos)) {
                         throw createTimeoutException(timeout);
                     }
@@ -929,7 +932,7 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Nullable
-        private <T> T returnValue(T value, @Nullable SingleResultCallback<? super T> callback) {
+        private <T> T returnValue(final T value, @Nullable final SingleResultCallback<? super T> callback) {
             if (callback == null) {
                 return value;
             } else {
@@ -939,7 +942,8 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Nullable
-        private <T> T throwException(RuntimeException e, @Nullable SingleResultCallback<? super T> callback) throws RuntimeException {
+        private <T> T throwException(final RuntimeException e, @Nullable final SingleResultCallback<? super T> callback)
+                throws RuntimeException {
             if (callback == null) {
                 throw e;
             } else {

@@ -172,7 +172,7 @@ public class ConcurrentPoolTest {
     public void whenEnsuringMinSizeShouldInitializePooledItemIfRequested() {
         pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
 
-        pool.ensureMinSize(1, TestCloseable.initializeAction);
+        pool.ensureMinSize(1, TestCloseable.INIT_ACTION);
         assertTrue(pool.get().isInitialized());
     }
 
@@ -181,7 +181,7 @@ public class ConcurrentPoolTest {
         pool = new ConcurrentPool<TestCloseable>(1, new TestItemFactory(true));
 
         try {
-            pool.ensureMinSize(1, TestCloseable.initializeAction);
+            pool.ensureMinSize(1, TestCloseable.INIT_ACTION);
             fail();
         } catch (MongoException e) {
             // expected
@@ -253,7 +253,7 @@ public class ConcurrentPoolTest {
     }
 
     static class TestCloseable implements Closeable {
-        private static final Function<TestCloseable, Optional<TestCloseable>> initializeAction = connection -> {
+        private static final Function<TestCloseable, Optional<TestCloseable>> INIT_ACTION = connection -> {
             connection.initialized = true;
             return Optional.of(connection);
         };

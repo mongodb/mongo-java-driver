@@ -1,3 +1,18 @@
+/*
+ * Copyright 2008-present MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.mongodb.internal;
 
 import com.mongodb.annotations.Immutable;
@@ -5,6 +20,7 @@ import com.mongodb.annotations.Immutable;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
@@ -28,7 +44,7 @@ public final class Timeout {
      * @see #startNow(long)
      */
     public static Timeout startNow(final long duration, final TimeUnit unit) {
-        return startNow(unit.toNanos(duration));
+        return startNow(notNull("unit", unit).toNanos(duration));
     }
 
     /**
@@ -65,8 +81,8 @@ public final class Timeout {
      * Returns duration as per {@link #startNow(long)}.
      * The duration is converted to the specified {@code unit} via {@link TimeUnit#convert(long, TimeUnit)}.
      */
-    public long duration(TimeUnit unit) {
-        return unit.convert(durationNanos, NANOSECONDS);
+    public long duration(final TimeUnit unit) {
+        return notNull("unit", unit).convert(durationNanos, NANOSECONDS);
     }
 
     /**
@@ -151,9 +167,9 @@ public final class Timeout {
 
     @Override
     public String toString() {
-        return "Timeout{" +
-                "durationNanos=" + durationNanos +
-                ", startNanos=" + startNanos +
-                '}';
+        return "Timeout{"
+                + "durationNanos=" + durationNanos
+                + ", startNanos=" + startNanos
+                + '}';
     }
 }
