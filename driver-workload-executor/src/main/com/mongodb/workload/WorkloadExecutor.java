@@ -16,110 +16,152 @@
 
 package com.mongodb.workload;
 
-import com.mongodb.client.JsonPoweredCrudTestHelper;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.unified.Entities;
+import com.mongodb.client.unified.UnifiedTest;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
-import org.bson.BsonInt32;
-import org.bson.BsonValue;
+import org.bson.BsonInt64;
+import org.bson.codecs.BsonDocumentCodec;
+import org.bson.codecs.DecoderContext;
+import org.bson.json.JsonReader;
 import org.bson.json.JsonWriterSettings;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
-/**
- * A workload executor for the driver.  It will execute the provided workload in a loop, until the process is terminated.
- *
- * The following system properties are supported:
- *
- *  org.mongodb.test.uri: the connection string required to connect to the cluster under test
- *  org.mongodb.workload.spec: a JSON representation of the the workload
- *  org.mongodb.workload.output.directory: the output directory in which to write the results.json
- */
 public class WorkloadExecutor {
-    private static volatile boolean done;
-    private static final AtomicInteger numSuccesses = new AtomicInteger();
-    private static final AtomicInteger numFailures = new AtomicInteger();
-    private static final AtomicInteger numErrors = new AtomicInteger();
+    private static final Logger LOGGER = Loggers.getLogger("workload-executor");
+    private static final CountDownLatch terminationLatch = new CountDownLatch(1);
+    private static volatile boolean terminateLoop;
 
-    /**
-     * The main entry point
-     *
-     * @param args no arguments are expected
-     */
-    public static void main(String[] args) {
-        String outputDirectory =
-                System.getProperty("org.mongodb.workload.output.directory", System.getProperty("user.dir"));
-        
+    public static void main(String[] args) throws IOException {
+        if (args.length != 2) {
+            System.out.println("Usage: AstrolabeTestRunner <path to workload spec JSON file> <path to results directory>");
+            System.exit(1);
+        }
+
+        String pathToWorkloadFile = args[0];
+        String pathToResultsDirectory = args[1];
+
+        LOGGER.info("Max memory (GB): " + (Runtime.getRuntime().maxMemory() / 1_073_741_824.0));
+        LOGGER.info("Path to workload file: '" + pathToWorkloadFile + "'");
+        LOGGER.info("Path to results directory: '" + pathToResultsDirectory + "'");
+
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            LOGGER.info("Running shutdown hook");
+            terminateLoop = true;
             try {
-                done = true;
-                writeResults(outputDirectory);
-            } catch (IOException e) {
+                if (!terminationLatch.await(1, TimeUnit.MINUTES)) {
+                    LOGGER.warn("Terminating after waiting for 1 minute for results to be written");
+                } else {
+                    LOGGER.info("Terminating.");
+                }
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }));
 
-        String connectionString = System.getProperty("org.mongodb.test.uri", "mongodb://localhost");
 
-        MongoClient mongoClient = MongoClients.create(connectionString);
+        BsonDocument fileDocument;
 
-        String workloadSpec = System.getProperty("org.mongodb.workload.spec");
-        if (workloadSpec == null) {
-            throw new IllegalArgumentException("'org.mongodb.workload.spec' system property is required");
+        try (FileReader reader = new FileReader(pathToWorkloadFile)) {
+            fileDocument = new BsonDocumentCodec().decode(new JsonReader(reader), DecoderContext.builder().build());
         }
-        BsonDocument workload = BsonDocument.parse(workloadSpec);
 
-        MongoDatabase database = mongoClient.getDatabase(workload.getString("database").getValue());
-        MongoCollection<BsonDocument> collection = database.getCollection(workload.getString("collection").getValue(),
-                BsonDocument.class);
+        LOGGER.info("Executing workload: " + fileDocument.toJson(JsonWriterSettings.builder().indent(true).build()));
 
-        JsonPoweredCrudTestHelper helper = new JsonPoweredCrudTestHelper("Workload executor", database, collection);
+        BsonArray testArray = fileDocument.getArray("tests");
+        if (testArray.size() != 1) {
+            throw new IllegalArgumentException("Expected exactly one test");
+        }
+        BsonDocument testDocument = testArray.get(0).asDocument();
 
-        BsonArray operations = workload.getArray("operations");
+        UnifiedTest unifiedTest = new UnifiedTest(fileDocument.getString("schemaVersion").getValue(),
+                fileDocument.getArray("runOnRequirements", null),
+                fileDocument.getArray("createEntities", new BsonArray()),
+                fileDocument.getArray("initialData", new BsonArray()),
+                testDocument) {
 
-        outer:
-        while (!done) {
-            for (BsonValue cur : operations.getValues()) {
-                try {
-                    if (done) {
-                        break outer;
-                    }
-                    BsonDocument operation = cur.asDocument().clone();
-                    BsonValue expectedResult = operation.get("result");
-                    BsonDocument resultDocument = helper.getOperationResults(operation);
-
-                    if (expectedResult != null && !resultDocument.get("result").equals(expectedResult)) {
-                        numFailures.incrementAndGet();
-                    } else {
-                        numSuccesses.incrementAndGet();
-                    }
-                } catch (Exception e) {
-                    numErrors.incrementAndGet();
-                    e.printStackTrace();
-                }
+            @Override
+            protected MongoClient createMongoClient(final MongoClientSettings settings) {
+                return MongoClients.create(settings);
             }
+
+            @Override
+            protected boolean terminateLoop() {
+                return terminateLoop;
+            }
+        };
+
+        try {
+            unifiedTest.setUp();
+            unifiedTest.shouldPassAllOutcomes();
+            Entities entities = unifiedTest.getEntities();
+
+            long iterationCount = -1;
+            if (entities.hasIterationCount("iterations")) {
+                iterationCount = entities.getIterationCount("iterations");
+            }
+
+            long successCount = -1;
+            if (entities.hasSuccessCount("successes")) {
+                successCount = entities.getSuccessCount("successes");
+            }
+
+            BsonArray errorDocuments = null;
+            long errorCount = 0;
+            if (entities.hasErrorDocuments("errors")) {
+                errorDocuments = entities.getErrorDocuments("errors");
+                errorCount = errorDocuments.size();
+            }
+
+            BsonArray failureDocuments = null;
+            long failureCount = 0;
+            if (entities.hasFailureDocuments("failures")) {
+                failureDocuments = entities.getFailureDocuments("failures");
+                failureCount = failureDocuments.size();
+            }
+
+            BsonArray eventDocuments = new BsonArray();
+            if (entities.hasEvents("events")) {
+                eventDocuments = new BsonArray(entities.getEvents("events"));
+            }
+
+            BsonDocument eventsDocument = new BsonDocument()
+                    .append("events", eventDocuments)
+                    .append("errors", errorDocuments == null ? new BsonArray() : errorDocuments)
+                    .append("failures", failureDocuments == null ? new BsonArray() : failureDocuments);
+
+            BsonDocument resultsDocument = new BsonDocument()
+                    .append("numErrors", new BsonInt64(errorCount))
+                    .append("numFailures", new BsonInt64(failureCount))
+                    .append("numSuccesses", new BsonInt64(successCount))
+                    .append("numIterations", new BsonInt64(iterationCount));
+
+            writeFile(eventsDocument, Paths.get(pathToResultsDirectory, "events.json"));
+            writeFile(resultsDocument, Paths.get(pathToResultsDirectory, "results.json"));
+        } finally {
+            unifiedTest.cleanUp();
+            terminationLatch.countDown();
         }
     }
 
-    private static void writeResults(final String outputDirectory) throws IOException {
-        BsonDocument resultsDocument = new BsonDocument()
-                .append("numSuccesses", new BsonInt32(numSuccesses.intValue()))
-                .append("numFailures", new BsonInt32(numFailures.intValue()))
-                .append("numErrors", new BsonInt32(numErrors.intValue()));
-
-        try (BufferedWriter writer = new BufferedWriter(
-                new OutputStreamWriter(new FileOutputStream(new File(outputDirectory, "results.json"))))) {
-            writer.write(resultsDocument.toJson(JsonWriterSettings.builder().indent(true).build()));
-            writer.newLine();
-            writer.flush();
-        }
+    private static void writeFile(final BsonDocument document, final Path path) throws IOException {
+        LOGGER.info("Writing file: '" + path.toFile().getAbsolutePath());
+        Files.deleteIfExists(path);
+        String json = document.toJson(JsonWriterSettings.builder().indent(true).build());
+        LOGGER.debug("File contents: " + json);
+        Files.write(path, (json + "\n").getBytes(StandardCharsets.UTF_8));
     }
 }
