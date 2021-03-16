@@ -44,7 +44,7 @@ dependencies {
     implementation project(':driver-core').sourceSets.test.output
     implementation project(':driver-sync').sourceSets.test.output
     implementation 'ch.qos.logback:logback-classic:1.1.1'
-    implementation(platform("org.junit:junit-bom:5.6.2")) // TODO: grab BOM version from parent
+    implementation(platform("org.junit:junit-bom:$junitBomVersion"))
     implementation('org.junit.jupiter:junit-jupiter')
     implementation('org.junit.vintage:junit-vintage-engine')
 }
