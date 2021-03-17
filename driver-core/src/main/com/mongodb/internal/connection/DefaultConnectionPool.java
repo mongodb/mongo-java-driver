@@ -44,6 +44,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.ConcurrentPool.Prune;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.thread.DaemonThreadFactory;
+import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
@@ -125,8 +126,7 @@ class DefaultConnectionPool implements ConnectionPool {
             connectionPoolListener.connectionCheckedOut(new ConnectionCheckedOutEvent(getId(connection)));
             return connection;
         } catch (RuntimeException e) {
-            checkOutFailed(e, null);
-            throw e;
+            throw checkOutFailed(e);
         }
     }
 
@@ -143,8 +143,7 @@ class DefaultConnectionPool implements ConnectionPool {
                 connectionPoolListener.connectionCheckedOut(new ConnectionCheckedOutEvent(getId(result)));
                 errHandlingCallback.onResult(result, null);
             } else {
-                checkOutFailed(failure, null);
-                errHandlingCallback.onResult(null, failure);
+                errHandlingCallback.onResult(null, checkOutFailed(failure));
             }
         };
         PooledConnection immediateConnection = null;
@@ -177,17 +176,23 @@ class DefaultConnectionPool implements ConnectionPool {
     }
 
     /**
-     * Must not throw {@link Exception}s.
+     * Sends {@link ConnectionCheckOutFailedEvent}
+     * and returns a {@link RuntimeException} that is reported as the cause of a checkout failure.
      */
-    private void checkOutFailed(@Nullable final Throwable t, @Nullable final Reason reason) {
+    private RuntimeException checkOutFailed(final Throwable t) {
+        Throwable result = t;
         if (t instanceof MongoTimeoutException) {
             connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, Reason.TIMEOUT));
+        } else if (t instanceof MongoOpenConnectionInternalException) {
+            connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, Reason.CONNECTION_ERROR));
+            result = t.getCause();
+            assert result != null;
         } else if (t instanceof IllegalStateException && t.getMessage().equals("The pool is closed")) {
             connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, Reason.POOL_CLOSED));
         } else {
-            connectionPoolListener.connectionCheckOutFailed(
-                    new ConnectionCheckOutFailedEvent(serverId, reason == null ? Reason.UNKNOWN : reason));
+            connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, Reason.UNKNOWN));
         }
+        return result instanceof RuntimeException ? (RuntimeException) result : new RuntimeException(result);
     }
 
     private void openAsync(final PooledConnection pooledConnection,
@@ -443,7 +448,7 @@ class DefaultConnectionPool implements ConnectionPool {
                 handleOpenSuccess();
             } catch (RuntimeException e) {
                 try {
-                    throw e;
+                    throw new MongoOpenConnectionInternalException(e);
                 } finally {
                     closeAndHandleOpenFailure();
                 }
@@ -464,7 +469,7 @@ class DefaultConnectionPool implements ConnectionPool {
                     try {
                         closeAndHandleOpenFailure();
                     } finally {
-                        callback.onResult(null, failure);
+                        callback.onResult(null, new MongoOpenConnectionInternalException(failure));
                     }
                 }
             });
@@ -502,7 +507,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
         /**
          * {@linkplain ConcurrentPool#release(Object, boolean) Prune} this connection without sending a {@link ConnectionClosedEvent}.
-         * This method must be used if and only if {@link ConnectionCreatedEvent} was not emitted for the connection.
+         * This method must be used if and only if {@link ConnectionCreatedEvent} was not sent for the connection.
          */
         void closeSilently() {
             if (!isClosed.getAndSet(true)) {
@@ -637,6 +642,14 @@ class DefaultConnectionPool implements ConnectionPool {
         public ServerDescription getInitialServerDescription() {
             isTrue("open", !isClosed.get());
             return wrapped.getInitialServerDescription();
+        }
+    }
+
+    private static final class MongoOpenConnectionInternalException extends RuntimeException {
+        private static final long serialVersionUID = 1;
+
+        MongoOpenConnectionInternalException(@NonNull final Throwable cause) {
+            super(null, cause);
         }
     }
 

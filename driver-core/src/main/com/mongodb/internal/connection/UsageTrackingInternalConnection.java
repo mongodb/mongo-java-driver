@@ -212,7 +212,7 @@ class UsageTrackingInternalConnection implements InternalConnection {
     }
 
     /**
-     * This method must be used if and only if {@link ConnectionCreatedEvent} was not emitted for the connection.
+     * This method must be used if and only if {@link ConnectionCreatedEvent} was not sent for the connection.
      *
      * @see #isCloseSilently()
      */
