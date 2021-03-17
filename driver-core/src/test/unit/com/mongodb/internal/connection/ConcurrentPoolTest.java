@@ -16,13 +16,12 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.Function;
 import com.mongodb.MongoException;
 import com.mongodb.MongoTimeoutException;
 import org.junit.Test;
 
 import java.io.Closeable;
-import java.util.Optional;
+import java.util.function.UnaryOperator;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertEquals;
@@ -253,9 +252,9 @@ public class ConcurrentPoolTest {
     }
 
     static class TestCloseable implements Closeable {
-        private static final Function<TestCloseable, Optional<TestCloseable>> INIT_ACTION = connection -> {
+        private static final UnaryOperator<TestCloseable> INIT_ACTION = connection -> {
             connection.initialized = true;
-            return Optional.of(connection);
+            return connection;
         };
 
         private boolean closed;

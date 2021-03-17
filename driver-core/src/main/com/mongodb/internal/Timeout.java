@@ -78,14 +78,6 @@ public final class Timeout {
     }
 
     /**
-     * Returns duration as per {@link #startNow(long)}.
-     * The duration is converted to the specified {@code unit} via {@link TimeUnit#convert(long, TimeUnit)}.
-     */
-    public long duration(final TimeUnit unit) {
-        return notNull("unit", unit).convert(durationNanos, NANOSECONDS);
-    }
-
-    /**
      * Returns 0 or a positive value.
      * Must not be called on {@linkplain #isInfinite() infinite} or {@linkplain #isImmediate() immediate} timeouts.
      */
@@ -101,7 +93,7 @@ public final class Timeout {
      * @throws UnsupportedOperationException If the timeout is {@linkplain #isInfinite() infinite}.
      * @see #remainingNanosOrInfinite()
      */
-    public long remainingNanos() {
+    public long remainingNanos() throws UnsupportedOperationException {
         if (isInfinite()) {
             throw new UnsupportedOperationException();
         }
@@ -128,6 +120,7 @@ public final class Timeout {
     /**
      * Returns {@code true} if and only if {@code remainingNanos} is 0.
      *
+     * @see #remainingNanos()
      * @see #expired()
      */
     public static boolean expired(final long remainingNanos) {
@@ -165,11 +158,31 @@ public final class Timeout {
         return Objects.hash(durationNanos, startNanos);
     }
 
+    /**
+     * This method is useful for debugging.
+     *
+     * @see #toUserString()
+     */
     @Override
     public String toString() {
         return "Timeout{"
                 + "durationNanos=" + durationNanos
                 + ", startNanos=" + startNanos
                 + '}';
+    }
+
+    /**
+     * Returns a user-friendly representation. Examples: 1500 ms, infinite, 0 ms (immediate).
+     *
+     * @see #toString()
+     */
+    public String toUserString() {
+        if (isInfinite()) {
+            return "infinite";
+        } else if (isImmediate()) {
+            return "0 ms (immediate)";
+        } else {
+            return NANOSECONDS.toMillis(durationNanos) + " ms";
+        }
     }
 }

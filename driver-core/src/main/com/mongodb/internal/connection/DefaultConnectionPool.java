@@ -52,7 +52,7 @@ import org.bson.codecs.Decoder;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -74,6 +74,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 @SuppressWarnings("deprecation")
 class DefaultConnectionPool implements ConnectionPool {
     private static final Logger LOGGER = Loggers.getLogger("connection");
+    private static final Executor SAME_THREAD_EXECUTOR = Runnable::run;
 
     private final ConcurrentPool<UsageTrackingInternalConnection> pool;
     private final ConnectionPoolSettings settings;
@@ -121,7 +122,7 @@ class DefaultConnectionPool implements ConnectionPool {
         try {
             PooledConnection connection = getPooledConnection(timeout);
             if (!connection.opened()) {
-                connection = openConcurrencyLimiter.openOrGetAvailableAndSilentlyCloseSpecified(connection, true, timeout);
+                connection = openConcurrencyLimiter.openOrGetAvailableAndSilentlyCloseSpecified(connection, timeout);
             }
             connectionPoolListener.connectionCheckedOut(new ConnectionCheckedOutEvent(getId(connection)));
             return connection;
@@ -136,8 +137,8 @@ class DefaultConnectionPool implements ConnectionPool {
             LOGGER.trace(format("Asynchronously getting a connection from the pool for server %s", serverId));
         }
         connectionPoolListener.connectionCheckOutStarted(new ConnectionCheckOutStartedEvent(serverId));
-        final Timeout timeout = Timeout.startNow(settings.getMaxWaitTime(NANOSECONDS));
-        final SingleResultCallback<InternalConnection> eventSendingCallback = (result, failure) -> {
+        Timeout timeout = Timeout.startNow(settings.getMaxWaitTime(NANOSECONDS));
+        SingleResultCallback<InternalConnection> eventSendingCallback = (result, failure) -> {
             SingleResultCallback<InternalConnection> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
             if (failure == null) {
                 connectionPoolListener.connectionCheckedOut(new ConnectionCheckedOutEvent(getId(result)));
@@ -156,7 +157,7 @@ class DefaultConnectionPool implements ConnectionPool {
             return;
         }
         if (immediateConnection != null) {
-            openAsync(immediateConnection, eventSendingCallback, timeout);
+            openIfNeededAndCompleteCallback(immediateConnection, timeout, eventSendingCallback, getAsyncGetter());
         } else {
             getAsyncGetter().execute(() -> {
                 if (timeout.expired()) {
@@ -170,7 +171,7 @@ class DefaultConnectionPool implements ConnectionPool {
                     eventSendingCallback.onResult(null, e);
                     return;
                 }
-                openAsync(connection, eventSendingCallback, timeout);
+                openIfNeededAndCompleteCallback(connection, timeout, eventSendingCallback, SAME_THREAD_EXECUTOR);
             });
         }
     }
@@ -195,9 +196,11 @@ class DefaultConnectionPool implements ConnectionPool {
         return result instanceof RuntimeException ? (RuntimeException) result : new RuntimeException(result);
     }
 
-    private void openAsync(final PooledConnection pooledConnection,
-                           final SingleResultCallback<InternalConnection> callback,
-                           final Timeout timeout) {
+    private void openIfNeededAndCompleteCallback(
+            final PooledConnection pooledConnection,
+            final Timeout timeout,
+            final SingleResultCallback<InternalConnection> callback,
+            final Executor executor) {
         if (pooledConnection.opened()) {
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(format("Pooled connection %s to server %s is already open",
@@ -209,8 +212,7 @@ class DefaultConnectionPool implements ConnectionPool {
                 LOGGER.trace(format("Pooled connection %s to server %s is not yet open",
                         getId(pooledConnection), serverId));
             }
-            getAsyncGetter().execute(() -> openConcurrencyLimiter.openOrGetAvailableAndSilentlyCloseSpecified(
-                    pooledConnection, true, timeout, callback));
+            executor.execute(() -> openConcurrencyLimiter.openOrGetAvailableAndSilentlyCloseSpecified(pooledConnection, timeout, callback));
         }
     }
 
@@ -291,7 +293,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
     private MongoTimeoutException createTimeoutException(final Timeout timeout) {
         return new MongoTimeoutException(format("Timed out after %s while waiting for a connection to server %s.",
-                                                timeout.duration(MILLISECONDS), serverId.getAddress()));
+                                                timeout.toUserString(), serverId.getAddress()));
     }
 
     ConcurrentPool<UsageTrackingInternalConnection> getPool() {
@@ -320,10 +322,9 @@ class DefaultConnectionPool implements ConnectionPool {
                             pool.ensureMinSize(settings.getMinSize(), newConnection -> {
                                 PooledConnection pooledConnection = new PooledConnection(newConnection);
                                 if (!newConnection.opened()) {
-                                    pooledConnection = openConcurrencyLimiter.openOrGetAvailableAndSilentlyCloseSpecified(
-                                            pooledConnection, false, Timeout.immediate());
+                                    pooledConnection = openConcurrencyLimiter.openImmediatelyOrSilentlyClose(pooledConnection);
                                 }
-                                return Optional.of(pooledConnection.wrapped);
+                                return pooledConnection.wrapped;
                             });
                         }
                     } catch (MongoInterruptedException | MongoTimeoutException e) {
@@ -740,12 +741,21 @@ class DefaultConnectionPool implements ConnectionPool {
             desiredConnectionSlots = new LinkedList<>();
         }
 
-        /**
-         * @see #openOrGetAvailableAndSilentlyCloseSpecified(PooledConnection, boolean, Timeout, SingleResultCallback)
-         */
         PooledConnection openOrGetAvailableAndSilentlyCloseSpecified(
-                final PooledConnection connection, final boolean tryGetAvailable, final Timeout timeout) throws MongoTimeoutException {
-            PooledConnection result = openOrGetAvailableAndSilentlyCloseSpecified(connection, tryGetAvailable, timeout, null);
+                final PooledConnection connection, final Timeout timeout) throws MongoTimeoutException {
+            PooledConnection result = openOrGetAvailableAndSilentlyCloseSpecified(connection, true, timeout, null);
+            assert result != null;
+            return result;
+        }
+
+        void openOrGetAvailableAndSilentlyCloseSpecified(
+                final PooledConnection connection, final Timeout timeout, final SingleResultCallback<InternalConnection> asyncCallback) {
+            PooledConnection result = openOrGetAvailableAndSilentlyCloseSpecified(connection, true, timeout, asyncCallback);
+            assert result == null;
+        }
+
+        PooledConnection openImmediatelyOrSilentlyClose(final PooledConnection connection) throws MongoTimeoutException {
+            PooledConnection result = openOrGetAvailableAndSilentlyCloseSpecified(connection, false, Timeout.immediate(), null);
             assert result != null;
             return result;
         }
@@ -768,13 +778,13 @@ class DefaultConnectionPool implements ConnectionPool {
          *     The attempt to open the {@code connection} has one of the following outcomes
          *     combined with releasing the acquired permit:</li>
          *     <ol>
-         *         <li>A {@link MongoTimeoutException} or a different {@link Exception} is thrown<sup>1</sup>
+         *         <li>An {@link Exception} is thrown<sup>1</sup>
          *         and the {@code connection} is {@linkplain PooledConnection#closeAndHandleOpenFailure() closed}.</li>
          *         <li>The specified {@code connection}, which is now opened, is returned<sup>1</sup>.</li>
          *     </ol>
          * </ol>
          * <hr>
-         * <sup>1</sup> Throwing and returning behavior depends on the value if {@code asyncCallback}:
+         * <sup>1</sup> Throwing and returning behavior depends on the value of {@code asyncCallback}:
          * <ul>
          *     <li>if {@code null}, then the words "return"/"throw" mean usual {@code return}/{@code throw} in Java;</li>
          *     <li>otherwise "return"/"throw" mean calling
@@ -789,7 +799,7 @@ class DefaultConnectionPool implements ConnectionPool {
          * otherwise does not throw this exception.
          */
         @Nullable
-        PooledConnection openOrGetAvailableAndSilentlyCloseSpecified(
+        private PooledConnection openOrGetAvailableAndSilentlyCloseSpecified(
                 final PooledConnection connection, final boolean tryGetAvailable, final Timeout timeout,
                 @Nullable final SingleResultCallback<InternalConnection> asyncCallback) throws MongoTimeoutException {
             PooledConnection availableConnection;

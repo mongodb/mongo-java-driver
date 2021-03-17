@@ -163,6 +163,7 @@ public abstract class AbstractConnectionPoolTest {
     }
 
     @After
+    @SuppressWarnings("try")
     public void tearDown() {
         try (ConnectionPool autoCloseable = pool) {
             disableFailPoint();
