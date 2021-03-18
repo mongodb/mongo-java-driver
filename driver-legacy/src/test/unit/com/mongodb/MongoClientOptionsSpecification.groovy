@@ -85,6 +85,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.compressorList == []
         options.getAutoEncryptionSettings() == null
         options.getServerApi() == null
+        options.getTimeout(MILLISECONDS) == null
     }
 
     @SuppressWarnings('UnnecessaryObjectReferences')
@@ -737,7 +738,7 @@ class MongoClientOptionsSpecification extends Specification {
                         'maxConnectionIdleTime', 'maxConnectionLifeTime', 'maxConnectionsPerHost', 'maxWaitTime', 'minConnectionsPerHost',
                         'minHeartbeatFrequency', 'readConcern', 'readPreference', 'requiredReplicaSetName', 'retryReads', 'retryWrites',
                         'serverApi', 'serverListeners', 'serverMonitorListeners', 'serverSelectionTimeout', 'serverSelector',
-                        'socketTimeout', 'sslContext', 'sslEnabled', 'sslInvalidHostNameAllowed',
+                        'socketTimeout', 'sslContext', 'sslEnabled', 'sslInvalidHostNameAllowed', 'timeout',
                         'uuidRepresentation', 'writeConcern']
 
         then:

@@ -39,11 +39,13 @@ import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.jsr310.Jsr310CodecProvider;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Arrays.asList;
@@ -96,6 +98,7 @@ public final class MongoClientSettings {
     private final AutoEncryptionSettings autoEncryptionSettings;
     private final boolean heartbeatSocketTimeoutSetExplicitly;
     private final boolean heartbeatConnectTimeoutSetExplicitly;
+    private final Long timeoutMS;
 
     /**
      * Gets the default codec registry.  It includes the following providers:
@@ -153,7 +156,7 @@ public final class MongoClientSettings {
         private ReadConcern readConcern = ReadConcern.DEFAULT;
         private CodecRegistry codecRegistry = MongoClientSettings.getDefaultCodecRegistry();
         private StreamFactoryFactory streamFactoryFactory;
-        private List<CommandListener> commandListeners = new ArrayList<CommandListener>();
+        private List<CommandListener> commandListeners = new ArrayList<>();
 
         private final ClusterSettings.Builder clusterSettingsBuilder = ClusterSettings.builder();
         private final SocketSettings.Builder socketSettingsBuilder = SocketSettings.builder();
@@ -170,6 +173,7 @@ public final class MongoClientSettings {
 
         private int heartbeatConnectTimeoutMS;
         private int heartbeatSocketTimeoutMS;
+        private Long timeoutMS;
 
         private Builder() {
         }
@@ -177,8 +181,8 @@ public final class MongoClientSettings {
         private Builder(final MongoClientSettings settings) {
             notNull("settings", settings);
             applicationName = settings.getApplicationName();
-            commandListeners = new ArrayList<CommandListener>(settings.getCommandListeners());
-            compressorList = new ArrayList<MongoCompressor>(settings.getCompressorList());
+            commandListeners = new ArrayList<>(settings.getCommandListeners());
+            compressorList = new ArrayList<>(settings.getCompressorList());
             codecRegistry = settings.getCodecRegistry();
             readPreference = settings.getReadPreference();
             writeConcern = settings.getWriteConcern();
@@ -188,6 +192,7 @@ public final class MongoClientSettings {
             credential = settings.getCredential();
             uuidRepresentation = settings.getUuidRepresentation();
             serverApi = settings.getServerApi();
+            timeoutMS = settings.getTimeout(MILLISECONDS);
             streamFactoryFactory = settings.getStreamFactoryFactory();
             autoEncryptionSettings = settings.getAutoEncryptionSettings();
             clusterSettingsBuilder.applySettings(settings.getClusterSettings());
@@ -242,6 +247,7 @@ public final class MongoClientSettings {
             if (connectionString.getWriteConcern() != null) {
                 writeConcern = connectionString.getWriteConcern();
             }
+            timeoutMS = connectionString.getTimeout();
             return this;
         }
 
@@ -425,7 +431,7 @@ public final class MongoClientSettings {
          */
         public Builder commandListenerList(final List<CommandListener> commandListeners) {
             notNull("commandListeners", commandListeners);
-            this.commandListeners = new ArrayList<CommandListener>(commandListeners);
+            this.commandListeners = new ArrayList<>(commandListeners);
             return this;
         }
 
@@ -442,7 +448,7 @@ public final class MongoClientSettings {
         public Builder applicationName(@Nullable final String applicationName) {
             if (applicationName != null) {
                 isTrueArgument("applicationName UTF-8 encoding length <= 128",
-                        applicationName.getBytes(Charset.forName("UTF-8")).length <= 128);
+                        applicationName.getBytes(StandardCharsets.UTF_8).length <= 128);
             }
             this.applicationName = applicationName;
             return this;
@@ -459,7 +465,7 @@ public final class MongoClientSettings {
          */
         public Builder compressorList(final List<MongoCompressor> compressorList) {
             notNull("compressorList", compressorList);
-            this.compressorList = new ArrayList<MongoCompressor>(compressorList);
+            this.compressorList = new ArrayList<>(compressorList);
             return this;
         }
 
@@ -514,6 +520,38 @@ public final class MongoClientSettings {
          */
         public Builder autoEncryptionSettings(@Nullable final AutoEncryptionSettings autoEncryptionSettings) {
             this.autoEncryptionSettings = autoEncryptionSettings;
+            return this;
+        }
+
+        /**
+         * Sets the time limit for the full execution of an operation.
+         *
+         * <ul>
+         *   <li>{@code null} means that the timeout mechanism will defer to using:
+         *    <ul>
+         *        <li>{@code serverSelectionTimeoutMS}: How long the driver will wait for server selection to succeed before throwing an
+         *        exception.</li>
+         *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
+         *        available</li>
+         *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
+         *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
+         *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.</li>
+         *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
+         *   </ul>
+         *   </li>
+         *   <li>{@code 0} means infinite timeout.</li>
+         *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+         * </ul>
+         *
+         * @param timeout the timeout
+         * @param timeUnit the time unit
+         * @return this
+         * @since 4.x
+         * @see #getTimeout
+         */
+        public Builder timeout(final long timeout, final TimeUnit timeUnit) {
+            isTrueArgument("timeoutMS must be >= 0", timeout >= 0);
+            this.timeoutMS = MILLISECONDS.convert(timeout, timeUnit);
             return this;
         }
 
@@ -694,6 +732,38 @@ public final class MongoClientSettings {
     }
 
     /**
+     * The time limit for the full execution of an operation.
+     *
+     * <p>If set the following deprecated options will be ignored:
+     * {@code serverSelectionTimeoutMS}, {@code socketTimeoutMS}, {@code wTimeoutMS}, {@code maxTimeMS}, {@code maxCommitTimeMS}</p>
+     *
+     * <ul>
+     *   <li>{@code null} means that the timeout mechanism will defer to using:
+     *    <ul>
+     *        <li>{@code serverSelectionTimeoutMS}: How long the driver will wait for server selection to succeed before throwing an
+     *        exception.</li>
+     *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
+     *        available</li>
+     *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
+     *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
+     *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.</li>
+     *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
+     *   </ul>
+     *   </li>
+     *   <li>{@code 0} means infinite timeout.</li>
+     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+     * </ul>
+     *
+     * @param timeUnit the time unit
+     * @return the timeout in the given time unit
+     * @since 4.x
+     */
+    @Nullable
+    public Long getTimeout(final TimeUnit timeUnit) {
+        return timeoutMS == null ? null : timeUnit.convert(timeoutMS, MILLISECONDS);
+    }
+
+    /**
      * Gets the auto-encryption settings.
      * <p>
      * Client side encryption enables an application to specify what fields in a collection must be
@@ -788,6 +858,7 @@ public final class MongoClientSettings {
     }
 
     private MongoClientSettings(final Builder builder) {
+        isTrue("timeoutMS > 0 ", builder.timeoutMS == null || builder.timeoutMS >= 0);
         readPreference = builder.readPreference;
         writeConcern = builder.writeConcern;
         retryWrites = builder.retryWrites;
@@ -817,5 +888,6 @@ public final class MongoClientSettings {
                 .build();
         heartbeatSocketTimeoutSetExplicitly = builder.heartbeatSocketTimeoutMS != 0;
         heartbeatConnectTimeoutSetExplicitly = builder.heartbeatConnectTimeoutMS != 0;
+        timeoutMS = builder.timeoutMS;
     }
 }

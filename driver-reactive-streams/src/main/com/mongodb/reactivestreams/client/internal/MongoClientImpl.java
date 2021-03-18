@@ -44,6 +44,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static org.bson.internal.CodecRegistryHelper.createRegistry;
@@ -78,6 +79,9 @@ public final class MongoClientImpl implements MongoClient {
                             @Nullable final OperationExecutor executor,
                             @Nullable final Closeable externalResourceCloser) {
         this.settings = notNull("settings", settings);
+        if (settings.getTimeout(TimeUnit.MILLISECONDS) != null) {
+            throw new UnsupportedOperationException("The MongoDB Reactive Streams driver does not support timeoutMS");
+        }
         this.cluster = notNull("cluster", cluster);
         this.serverSessionPool = new ServerSessionPool(cluster, settings.getServerApi());
         this.clientSessionHelper = new ClientSessionHelper(this, serverSessionPool);

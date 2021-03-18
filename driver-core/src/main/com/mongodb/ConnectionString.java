@@ -116,8 +116,11 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code sslInvalidHostNameAllowed=true|false}: Whether to allow invalid host names for TLS connections.</li>
  * <li>{@code tlsAllowInvalidHostnames=true|false}: Whether to allow invalid host names for TLS connections. Supersedes the
  * sslInvalidHostNameAllowed option</li>
- * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li>
- * <li>{@code socketTimeoutMS=ms}: How long a send or receive on a socket can take before timing out.</li>
+ * <li>{@code timeoutMS=ms}: Time limit for the full execution of an operation.</li>
+ * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.
+ *     Deprecated use {@code timeoutMS} instead.</li>
+ * <li>{@code socketTimeoutMS=ms}: How long a send or receive on a socket can take before timing out.
+ *     Deprecated use {@code timeoutMS} instead</li>
  * <li>{@code maxIdleTimeMS=ms}: Maximum idle time of a pooled connection. A connection that exceeds this limit will be closed</li>
  * <li>{@code maxLifeTimeMS=ms}: Maximum life time of a pooled connection. A connection that exceeds this limit will be closed</li>
  * </ul>
@@ -125,7 +128,7 @@ import static java.util.Collections.unmodifiableList;
  * <ul>
  * <li>{@code maxPoolSize=n}: The maximum number of connections in the connection pool.</li>
  * <li>{@code waitQueueTimeoutMS=ms}: The maximum wait time in milliseconds that a thread may wait for a connection to
- * become available.</li>
+ *     become available. Deprecated use {@code timeoutMS} instead.</li>
  * </ul>
  * <p>Write concern configuration:</p>
  * <ul>
@@ -153,6 +156,7 @@ import static java.util.Collections.unmodifiableList;
  * <ul>
  * <li>The driver adds { wtimeout : ms } to all write commands. Implies {@code safe=true}.</li>
  * <li>Used in combination with {@code w}</li>
+ * <li>Deprecated use {@code timeoutMS} instead.</li>
  * </ul>
  * </li>
  * </ul>
@@ -262,6 +266,7 @@ public class ConnectionString {
     private Integer maxConnectionIdleTime;
     private Integer maxConnectionLifeTime;
     private Integer connectTimeout;
+    private Long timeout;
     private Integer socketTimeout;
     private Boolean sslEnabled;
     private Boolean sslInvalidHostnameAllowed;
@@ -403,23 +408,26 @@ public class ConnectionString {
 
         credential = createCredentials(combinedOptionsMaps, userName, password);
         warnOnUnsupportedOptions(combinedOptionsMaps);
+        warnDeprecatedTimeouts(combinedOptionsMaps);
     }
 
-    private static final Set<String> GENERAL_OPTIONS_KEYS = new LinkedHashSet<String>();
-    private static final Set<String> AUTH_KEYS = new HashSet<String>();
-    private static final Set<String> READ_PREFERENCE_KEYS = new HashSet<String>();
-    private static final Set<String> WRITE_CONCERN_KEYS = new HashSet<String>();
-    private static final Set<String> COMPRESSOR_KEYS = new HashSet<String>();
-    private static final Set<String> ALL_KEYS = new HashSet<String>();
+    private static final Set<String> GENERAL_OPTIONS_KEYS = new LinkedHashSet<>();
+    private static final Set<String> AUTH_KEYS = new HashSet<>();
+    private static final Set<String> READ_PREFERENCE_KEYS = new HashSet<>();
+    private static final Set<String> WRITE_CONCERN_KEYS = new HashSet<>();
+    private static final Set<String> COMPRESSOR_KEYS = new HashSet<>();
+    private static final Set<String> ALL_KEYS = new HashSet<>();
+    private static final Set<String> DEPRECATED_TIMEOUT_KEYS = new HashSet<>();
 
     static {
         GENERAL_OPTIONS_KEYS.add("minpoolsize");
         GENERAL_OPTIONS_KEYS.add("maxpoolsize");
+        GENERAL_OPTIONS_KEYS.add("timeoutms");
+        GENERAL_OPTIONS_KEYS.add("sockettimeoutms");
         GENERAL_OPTIONS_KEYS.add("waitqueuetimeoutms");
         GENERAL_OPTIONS_KEYS.add("connecttimeoutms");
         GENERAL_OPTIONS_KEYS.add("maxidletimems");
         GENERAL_OPTIONS_KEYS.add("maxlifetimems");
-        GENERAL_OPTIONS_KEYS.add("sockettimeoutms");
 
         // Order matters here: Having tls after ssl means than the tls option will supersede the ssl option when both are set
         GENERAL_OPTIONS_KEYS.add("ssl");
@@ -471,6 +479,10 @@ public class ConnectionString {
         ALL_KEYS.addAll(READ_PREFERENCE_KEYS);
         ALL_KEYS.addAll(WRITE_CONCERN_KEYS);
         ALL_KEYS.addAll(COMPRESSOR_KEYS);
+
+        DEPRECATED_TIMEOUT_KEYS.add("sockettimeoutms");
+        DEPRECATED_TIMEOUT_KEYS.add("waitqueuetimeoutms");
+        DEPRECATED_TIMEOUT_KEYS.add("wtimeoutms");
     }
 
     // Any options contained in the connection string completely replace the corresponding options specified in TXT records,
@@ -486,12 +498,20 @@ public class ConnectionString {
 
 
     private void warnOnUnsupportedOptions(final Map<String, List<String>> optionsMap) {
-        for (final String key : optionsMap.keySet()) {
-            if (!ALL_KEYS.contains(key)) {
-                if (LOGGER.isWarnEnabled()) {
-                    LOGGER.warn(format("Connection string contains unsupported option '%s'.", key));
-                }
-            }
+        if (LOGGER.isWarnEnabled()) {
+            optionsMap.keySet()
+                    .stream()
+                    .filter(k -> !ALL_KEYS.contains(k))
+                    .forEach(k -> LOGGER.warn(format("Connection string contains unsupported option '%s'.", k)));
+        }
+    }
+
+    private void warnDeprecatedTimeouts(final Map<String, List<String>> optionsMap) {
+        if (LOGGER.isWarnEnabled()) {
+            optionsMap.keySet()
+                    .stream()
+                    .filter(DEPRECATED_TIMEOUT_KEYS::contains)
+                    .forEach(k -> LOGGER.warn(format("Use of deprecated timeout option: '%s'. Prefer 'timeoutMS' instead.", k)));
         }
     }
 
@@ -504,53 +524,81 @@ public class ConnectionString {
             if (value == null) {
                 continue;
             }
-            if (key.equals("maxpoolsize")) {
-                maxConnectionPoolSize = parseInteger(value, "maxpoolsize");
-            } else if (key.equals("minpoolsize")) {
-                minConnectionPoolSize = parseInteger(value, "minpoolsize");
-            } else if (key.equals("maxidletimems")) {
-                maxConnectionIdleTime = parseInteger(value, "maxidletimems");
-            } else if (key.equals("maxlifetimems")) {
-                maxConnectionLifeTime = parseInteger(value, "maxlifetimems");
-            } else if (key.equals("waitqueuetimeoutms")) {
-                maxWaitTime = parseInteger(value, "waitqueuetimeoutms");
-            } else if (key.equals("connecttimeoutms")) {
-                connectTimeout = parseInteger(value, "connecttimeoutms");
-            } else if (key.equals("sockettimeoutms")) {
-                socketTimeout = parseInteger(value, "sockettimeoutms");
-            } else if (key.equals("tlsallowinvalidhostnames")) {
-                sslInvalidHostnameAllowed = parseBoolean(value, "tlsAllowInvalidHostnames");
-                tlsAllowInvalidHostnamesSet = true;
-            } else if (key.equals("sslinvalidhostnameallowed")) {
-                sslInvalidHostnameAllowed = parseBoolean(value, "sslinvalidhostnameallowed");
-                tlsAllowInvalidHostnamesSet = true;
-            } else if (key.equals("tlsinsecure")) {
-                sslInvalidHostnameAllowed = parseBoolean(value, "tlsinsecure");
-                tlsInsecureSet = true;
-            } else if (key.equals("ssl")) {
-                initializeSslEnabled("ssl", value);
-            } else if (key.equals("tls")) {
-                initializeSslEnabled("tls", value);
-            } else if (key.equals("replicaset")) {
-                requiredReplicaSetName = value;
-            } else if (key.equals("readconcernlevel")) {
-                readConcern = new ReadConcern(ReadConcernLevel.fromString(value));
-            } else if (key.equals("serverselectiontimeoutms")) {
-                serverSelectionTimeout = parseInteger(value, "serverselectiontimeoutms");
-            } else if (key.equals("localthresholdms")) {
-                localThreshold = parseInteger(value, "localthresholdms");
-            } else if (key.equals("heartbeatfrequencyms")) {
-                heartbeatFrequency = parseInteger(value, "heartbeatfrequencyms");
-            } else if (key.equals("appname")) {
-                applicationName = value;
-            } else if (key.equals("retrywrites")) {
-                retryWrites = parseBoolean(value, "retrywrites");
-            } else if (key.equals("retryreads")) {
-                retryReads = parseBoolean(value, "retryreads");
-            } else if (key.equals("uuidrepresentation")) {
-                uuidRepresentation = createUuidRepresentation(value);
-            } else if (key.equals("directconnection")) {
-                directConnection = parseBoolean(value, "directconnection");
+            switch (key) {
+                case "maxpoolsize":
+                    maxConnectionPoolSize = parseInteger(value, "maxpoolsize");
+                    break;
+                case "minpoolsize":
+                    minConnectionPoolSize = parseInteger(value, "minpoolsize");
+                    break;
+                case "maxidletimems":
+                    maxConnectionIdleTime = parseInteger(value, "maxidletimems");
+                    break;
+                case "maxlifetimems":
+                    maxConnectionLifeTime = parseInteger(value, "maxlifetimems");
+                    break;
+                case "waitqueuetimeoutms":
+                    maxWaitTime = parseInteger(value, "waitqueuetimeoutms");
+                    break;
+                case "timeoutms":
+                    timeout = parseLong(value, "timeoutms");
+                    break;
+                case "connecttimeoutms":
+                    connectTimeout = parseInteger(value, "connecttimeoutms");
+                    break;
+                case "sockettimeoutms":
+                    socketTimeout = parseInteger(value, "sockettimeoutms");
+                    break;
+                case "tlsallowinvalidhostnames":
+                    sslInvalidHostnameAllowed = parseBoolean(value, "tlsAllowInvalidHostnames");
+                    tlsAllowInvalidHostnamesSet = true;
+                    break;
+                case "sslinvalidhostnameallowed":
+                    sslInvalidHostnameAllowed = parseBoolean(value, "sslinvalidhostnameallowed");
+                    tlsAllowInvalidHostnamesSet = true;
+                    break;
+                case "tlsinsecure":
+                    sslInvalidHostnameAllowed = parseBoolean(value, "tlsinsecure");
+                    tlsInsecureSet = true;
+                    break;
+                case "ssl":
+                    initializeSslEnabled("ssl", value);
+                    break;
+                case "tls":
+                    initializeSslEnabled("tls", value);
+                    break;
+                case "replicaset":
+                    requiredReplicaSetName = value;
+                    break;
+                case "readconcernlevel":
+                    readConcern = new ReadConcern(ReadConcernLevel.fromString(value));
+                    break;
+                case "serverselectiontimeoutms":
+                    serverSelectionTimeout = parseInteger(value, "serverselectiontimeoutms");
+                    break;
+                case "localthresholdms":
+                    localThreshold = parseInteger(value, "localthresholdms");
+                    break;
+                case "heartbeatfrequencyms":
+                    heartbeatFrequency = parseInteger(value, "heartbeatfrequencyms");
+                    break;
+                case "appname":
+                    applicationName = value;
+                    break;
+                case "retrywrites":
+                    retryWrites = parseBoolean(value, "retrywrites");
+                    break;
+                case "retryreads":
+                    retryReads = parseBoolean(value, "retryreads");
+                    break;
+                case "uuidrepresentation":
+                    uuidRepresentation = createUuidRepresentation(value);
+                    break;
+                case "directconnection":
+                    directConnection = parseBoolean(value, "directconnection");
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -976,6 +1024,15 @@ public class ConnectionString {
         }
     }
 
+    private long parseLong(final String input, final String key) {
+        try {
+            return Long.parseLong(input);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(format("The connection string contains an invalid value for '%s'. "
+                    + "'%s' is not a valid long", key, input));
+        }
+    }
+
     private List<String> parseHosts(final List<String> rawHosts) {
         if (rawHosts.size() == 0){
             throw new IllegalArgumentException("The connection string must contain at least one host");
@@ -1241,6 +1298,37 @@ public class ConnectionString {
     }
 
     /**
+     * The time limit for the full execution of an operation.
+     *
+     * <p>If set the following deprecated options will be ignored:
+     * {@code serverSelectionTimeoutMS}, {@code socketTimeoutMS}, {@code wTimeoutMS}, {@code maxTimeMS}, {@code maxCommitTimeMS}</p>
+     *
+     * <ul>
+     *   <li>{@code null} means that the timeout mechanism will defer to using:
+     *    <ul>
+     *        <li>{@code serverSelectionTimeoutMS}: How long the driver will wait for server selection to succeed before throwing an
+     *        exception.</li>
+     *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
+     *        available</li>
+     *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
+     *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
+     *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.</li>
+     *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
+     *   </ul>
+     *   </li>
+     *   <li>{@code 0} means infinite timeout.</li>
+     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+     * </ul>
+     *
+     * @return the time limit for the full execution of an operation or null.
+     * @since 4.x
+     */
+    @Nullable
+    public Long getTimeout() {
+        return timeout;
+    }
+
+    /**
      * Gets the socket connect timeout specified in the connection string.
      * @return the socket connect timeout
      */
@@ -1386,6 +1474,7 @@ public class ConnectionString {
                 && Objects.equals(maxConnectionIdleTime, that.maxConnectionIdleTime)
                 && Objects.equals(maxConnectionLifeTime, that.maxConnectionLifeTime)
                 && Objects.equals(connectTimeout, that.connectTimeout)
+                && Objects.equals(timeout, that.timeout)
                 && Objects.equals(socketTimeout, that.socketTimeout)
                 && Objects.equals(sslEnabled, that.sslEnabled)
                 && Objects.equals(sslInvalidHostnameAllowed, that.sslInvalidHostnameAllowed)
@@ -1402,7 +1491,7 @@ public class ConnectionString {
     public int hashCode() {
         return Objects.hash(credential, isSrvProtocol, hosts, database, collection, directConnection, readPreference,
                 writeConcern, retryWrites, retryReads, readConcern, minConnectionPoolSize, maxConnectionPoolSize, maxWaitTime,
-                maxConnectionIdleTime, maxConnectionLifeTime, connectTimeout, socketTimeout, sslEnabled, sslInvalidHostnameAllowed,
+                maxConnectionIdleTime, maxConnectionLifeTime, connectTimeout, timeout, socketTimeout, sslEnabled, sslInvalidHostnameAllowed,
                 requiredReplicaSetName, serverSelectionTimeout, localThreshold, heartbeatFrequency, applicationName, compressorList,
                 uuidRepresentation);
     }
