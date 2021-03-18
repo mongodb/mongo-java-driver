@@ -702,13 +702,13 @@ public final class DocumentationSamples extends DatabaseTestCase {
     }
 
     @Test
-    public void testWatch() {
+    public void testWatch() throws InterruptedException {
         assumeTrue(isDiscoverableReplicaSet() && serverVersionAtLeast(3, 6));
 
         final MongoCollection<Document> inventory = collection;
         final AtomicBoolean stop = new AtomicBoolean(false);
 
-        new Thread(new Runnable() {
+        Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 while (!stop.get()) {
@@ -721,8 +721,8 @@ public final class DocumentationSamples extends DatabaseTestCase {
                     collection.deleteOne(new Document("username", "alice"));
                 }
             }
-        }).start();
-
+        });
+        thread.start();
 
         // Start Changestream Example 1
         MongoCursor<ChangeStreamDocument<Document>> cursor = inventory.watch().iterator();
@@ -756,6 +756,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         cursor.close();
 
         stop.set(true);
+        thread.join();
     }
 
     @Test
