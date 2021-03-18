@@ -431,15 +431,11 @@ class DefaultConnectionPoolSpecification extends Specification {
 
     def selectConnectionAsync(DefaultConnectionPool pool) {
         def serverLatch = new ConnectionLatch()
-        SingleResultCallback<InternalConnection> callback = new SingleResultCallback<InternalConnection>() {
-            @Override
-            void onResult(InternalConnection result, Throwable t) {
-                serverLatch.connection = result
-                serverLatch.throwable = t
-                serverLatch.latch.countDown()
-            }
+        pool.getAsync { InternalConnection result, Throwable e ->
+            serverLatch.connection = result
+            serverLatch.throwable = e
+            serverLatch.latch.countDown()
         }
-        pool.getAsync(callback)
         serverLatch
     }
 
