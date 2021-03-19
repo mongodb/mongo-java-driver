@@ -21,12 +21,14 @@ import org.bson.BasicBSONObject;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
+import org.bson.UuidRepresentation;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.Encoder;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
+import org.bson.internal.CodecRegistryHelper;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.OutputBuffer;
 import org.bson.json.JsonMode;
@@ -220,10 +222,15 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
         return Arrays.hashCode(toBson(canonicalizeBSONObject(this)));
     }
 
+    /**
+     * Convert the object to its BSON representation, using the {@code STANDARD} representation for UUID.  This is safe to do in the context
+     * of this class because currently this method is only used for equality and hash code, and is not passed to any other parts of the
+     * library.
+     */
     private static byte[] toBson(final DBObject dbObject) {
         OutputBuffer outputBuffer = new BasicOutputBuffer();
-        DBObjectCodec.getDefaultRegistry().get(DBObject.class).encode(new BsonBinaryWriter(outputBuffer), dbObject,
-                EncoderContext.builder().build());
+        CodecRegistryHelper.createRegistry(DBObjectCodec.getDefaultRegistry(), UuidRepresentation.STANDARD)
+                .get(DBObject.class).encode(new BsonBinaryWriter(outputBuffer), dbObject, EncoderContext.builder().build());
         return outputBuffer.toByteArray();
     }
 
