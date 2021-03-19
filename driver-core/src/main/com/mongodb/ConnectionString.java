@@ -1312,7 +1312,7 @@ public class ConnectionString {
      *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
      *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
      *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
-     *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS/>cursor.maxTimeMS</a>.</li>
+     *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS"/>cursor.maxTimeMS</a>.</li>
      *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
      *        See: {@link TransactionOptions#getMaxCommitTime}.</li>
      *   </ul>
