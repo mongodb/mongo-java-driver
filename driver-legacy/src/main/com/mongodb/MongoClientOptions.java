@@ -760,10 +760,10 @@ public class MongoClientOptions {
      * The time limit for the full execution of an operation.
      *
      * <p>If set the following deprecated options will be ignored:
-     * {@code serverSelectionTimeoutMS}, {@code socketTimeoutMS}, {@code wTimeoutMS}, {@code maxTimeMS}, {@code maxCommitTimeMS}</p>
+     * {@code waitQueueTimeoutMS}, {@code socketTimeoutMS}, {@code wTimeoutMS}, {@code maxTimeMS} and {@code maxCommitTimeMS}</p>
      *
      * <ul>
-     *   <li>{@code null} means that the timeout mechanism will defer to using:
+     *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
      *    <ul>
      *        <li>{@code serverSelectionTimeoutMS}: How long the driver will wait for server selection to succeed before throwing an
      *        exception.</li>
@@ -771,8 +771,10 @@ public class MongoClientOptions {
      *        available</li>
      *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
      *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
-     *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.</li>
+     *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
+     *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS/>cursor.maxTimeMS</a>.</li>
      *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
+     *        See: {@link TransactionOptions#getMaxCommitTime}.</li>
      *   </ul>
      *   </li>
      *   <li>{@code 0} means infinite timeout.</li>
@@ -1669,7 +1671,7 @@ public class MongoClientOptions {
          * Sets the time limit for the full execution of an operation.
          *
          * <ul>
-         *   <li>{@code null} means that the timeout mechanism will defer to using:
+         *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
          *    <ul>
          *        <li>{@code serverSelectionTimeoutMS}: How long the driver will wait for server selection to succeed before throwing an
          *        exception.</li>
@@ -1677,8 +1679,10 @@ public class MongoClientOptions {
          *        available</li>
          *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
          *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
-         *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.</li>
+         *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
+         *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS/>cursor.maxTimeMS</a>.</li>
          *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
+         *        See: {@link TransactionOptions#getMaxCommitTime}.</li>
          *   </ul>
          *   </li>
          *   <li>{@code 0} means infinite timeout.</li>

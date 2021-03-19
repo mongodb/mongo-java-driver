@@ -157,7 +157,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.getStreamFactoryFactory() == streamFactoryFactory
         settings.getCompressorList() == [MongoCompressor.createZlibCompressor()]
         settings.getUuidRepresentation() == UuidRepresentation.STANDARD
-        settings.getTimeout(TimeUnit.MILLISECONDS) == 1000000
+        settings.getTimeout(TimeUnit.MILLISECONDS) == 1_000_000
     }
 
     def 'should be easy to create new settings from existing'() {

@@ -117,10 +117,9 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code tlsAllowInvalidHostnames=true|false}: Whether to allow invalid host names for TLS connections. Supersedes the
  * sslInvalidHostNameAllowed option</li>
  * <li>{@code timeoutMS=ms}: Time limit for the full execution of an operation.</li>
- * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.
- *     Deprecated use {@code timeoutMS} instead.</li>
+ * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li>
  * <li>{@code socketTimeoutMS=ms}: How long a send or receive on a socket can take before timing out.
- *     Deprecated use {@code timeoutMS} instead</li>
+ *     Deprecated, use {@code timeoutMS} instead.</li>
  * <li>{@code maxIdleTimeMS=ms}: Maximum idle time of a pooled connection. A connection that exceeds this limit will be closed</li>
  * <li>{@code maxLifeTimeMS=ms}: Maximum life time of a pooled connection. A connection that exceeds this limit will be closed</li>
  * </ul>
@@ -128,7 +127,7 @@ import static java.util.Collections.unmodifiableList;
  * <ul>
  * <li>{@code maxPoolSize=n}: The maximum number of connections in the connection pool.</li>
  * <li>{@code waitQueueTimeoutMS=ms}: The maximum wait time in milliseconds that a thread may wait for a connection to
- *     become available. Deprecated use {@code timeoutMS} instead.</li>
+ *     become available. Deprecated, use {@code timeoutMS} instead.</li>
  * </ul>
  * <p>Write concern configuration:</p>
  * <ul>
@@ -156,7 +155,7 @@ import static java.util.Collections.unmodifiableList;
  * <ul>
  * <li>The driver adds { wtimeout : ms } to all write commands. Implies {@code safe=true}.</li>
  * <li>Used in combination with {@code w}</li>
- * <li>Deprecated use {@code timeoutMS} instead.</li>
+ * <li>Deprecated, use {@code timeoutMS} instead.</li>
  * </ul>
  * </li>
  * </ul>
@@ -1301,10 +1300,10 @@ public class ConnectionString {
      * The time limit for the full execution of an operation.
      *
      * <p>If set the following deprecated options will be ignored:
-     * {@code serverSelectionTimeoutMS}, {@code socketTimeoutMS}, {@code wTimeoutMS}, {@code maxTimeMS}, {@code maxCommitTimeMS}</p>
+     * {@code waitQueueTimeoutMS}, {@code socketTimeoutMS}, {@code wTimeoutMS}, {@code maxTimeMS} and {@code maxCommitTimeMS}</p>
      *
      * <ul>
-     *   <li>{@code null} means that the timeout mechanism will defer to using:
+     *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
      *    <ul>
      *        <li>{@code serverSelectionTimeoutMS}: How long the driver will wait for server selection to succeed before throwing an
      *        exception.</li>
@@ -1312,8 +1311,10 @@ public class ConnectionString {
      *        available</li>
      *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
      *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
-     *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.</li>
+     *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
+     *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS/>cursor.maxTimeMS</a>.</li>
      *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
+     *        See: {@link TransactionOptions#getMaxCommitTime}.</li>
      *   </ul>
      *   </li>
      *   <li>{@code 0} means infinite timeout.</li>
