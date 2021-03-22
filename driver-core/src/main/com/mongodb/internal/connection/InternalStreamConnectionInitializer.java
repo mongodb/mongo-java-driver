@@ -21,6 +21,7 @@ import com.mongodb.MongoCredential;
 import com.mongodb.MongoException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerApi;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ServerDescription;
@@ -44,14 +45,17 @@ import static com.mongodb.internal.connection.DescriptionHelper.createServerDesc
 import static java.lang.String.format;
 
 public class InternalStreamConnectionInitializer implements InternalConnectionInitializer {
+    private ClusterConnectionMode clusterConnectionMode;
     private final Authenticator authenticator;
     private final BsonDocument clientMetadataDocument;
     private final List<MongoCompressor> requestedCompressors;
     private final boolean checkSaslSupportedMechs;
     private final ServerApi serverApi;
 
-    public InternalStreamConnectionInitializer(final Authenticator authenticator, final BsonDocument clientMetadataDocument,
-                                               final List<MongoCompressor> requestedCompressors, final @Nullable ServerApi serverApi) {
+    public InternalStreamConnectionInitializer(final ClusterConnectionMode clusterConnectionMode, final Authenticator authenticator,
+                                               final BsonDocument clientMetadataDocument, final List<MongoCompressor> requestedCompressors,
+                                               final @Nullable ServerApi serverApi) {
+        this.clusterConnectionMode = clusterConnectionMode;
         this.authenticator = authenticator;
         this.clientMetadataDocument = clientMetadataDocument;
         this.requestedCompressors = notNull("requestedCompressors", requestedCompressors);
@@ -60,10 +64,17 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
     }
 
     @Override
-    public InternalConnectionInitializationDescription initialize(final InternalConnection internalConnection) {
+    public InternalConnectionInitializationDescription startHandshake(final InternalConnection internalConnection) {
         notNull("internalConnection", internalConnection);
 
-        InternalConnectionInitializationDescription description = initializeConnectionDescription(internalConnection);
+        return initializeConnectionDescription(internalConnection);
+    }
+
+    public InternalConnectionInitializationDescription completeHandshake(final InternalConnection internalConnection,
+                                                                         final InternalConnectionInitializationDescription description) {
+        notNull("internalConnection", internalConnection);
+        notNull("description", description);
+
         authenticate(internalConnection, description.getConnectionDescription());
         return completeConnectionDescriptionInitialization(internalConnection, description);
     }
@@ -118,8 +129,8 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
         }
         long elapsedTime = System.nanoTime() - start;
 
-        ConnectionDescription connectionDescription = createConnectionDescription(internalConnection.getDescription().getConnectionId(),
-                isMasterResult);
+        ConnectionDescription connectionDescription = createConnectionDescription(clusterConnectionMode,
+                internalConnection.getDescription().getConnectionId(), isMasterResult);
         ServerDescription serverDescription = createServerDescription(internalConnection.getDescription().getServerAddress(),
                 isMasterResult, elapsedTime);
         setSpeculativeAuthenticateResponse(isMasterResult);
@@ -191,7 +202,8 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
                             }
                         } else {
                             ConnectionId connectionId = internalConnection.getDescription().getConnectionId();
-                            ConnectionDescription connectionDescription = createConnectionDescription(connectionId, isMasterResult);
+                            ConnectionDescription connectionDescription = createConnectionDescription(clusterConnectionMode, connectionId,
+                                    isMasterResult);
                             ServerDescription serverDescription =
                                     createServerDescription(internalConnection.getDescription().getServerAddress(), isMasterResult,
                                             System.nanoTime() - startTime);

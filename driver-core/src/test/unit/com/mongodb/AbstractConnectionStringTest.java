@@ -205,6 +205,9 @@ public abstract class AbstractConnectionStringTest extends TestCase {
                         assertEquals(expected, connectionString.getCredential().getMechanismProperty(cur, (Boolean) null).booleanValue());
                     }
                 }
+            } else if (option.getKey().toLowerCase().equals("loadbalanced")) {
+                Boolean expected = option.getValue().asBoolean().getValue();
+                assertEquals(expected, connectionString.isLoadBalanced());
             } else {
                 assertTrue(String.format("Unsupported option '%s' in '%s'", option.getKey(), input), false);
             }

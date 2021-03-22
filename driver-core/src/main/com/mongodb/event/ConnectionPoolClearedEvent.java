@@ -17,6 +17,7 @@
 package com.mongodb.event;
 
 import com.mongodb.connection.ServerId;
+import org.bson.types.ObjectId;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -27,6 +28,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public final class ConnectionPoolClearedEvent {
     private final ServerId serverId;
+    private final ObjectId serviceId;
 
     /**
      * Constructs a new instance of the event.
@@ -34,7 +36,19 @@ public final class ConnectionPoolClearedEvent {
      * @param serverId the server id
      */
     public ConnectionPoolClearedEvent(final ServerId serverId) {
+        this(serverId, null);
+    }
+
+    /**
+     * Constructs a new instance of the event.
+     *
+     * @param serverId the server id
+     * @param serviceId the service id
+     * @since 4.3
+     */
+    public ConnectionPoolClearedEvent(final ServerId serverId, final ObjectId serviceId) {
         this.serverId = notNull("serverId", serverId);
+        this.serviceId = serviceId;
     }
 
     /**
@@ -46,10 +60,26 @@ public final class ConnectionPoolClearedEvent {
         return serverId;
     }
 
+    /**
+     * Gets the service id.
+     *
+     * <p>
+     *     When connected to a load balancer, in some cases the driver clears only a subset of connections in the pool, based on the
+     *     service id reported on the connection on which the error occurred.
+     * </p>
+     *
+     * @return the service id
+     * @since 4.3
+     */
+    public ObjectId getServiceId() {
+        return serviceId;
+    }
+
     @Override
     public String toString() {
         return "ConnectionPoolClearedEvent{"
-                       + "serverId=" + serverId
-                       + '}';
+                + "serverId=" + serverId
+                + ", serviceId=" + serviceId
+                + '}';
     }
 }

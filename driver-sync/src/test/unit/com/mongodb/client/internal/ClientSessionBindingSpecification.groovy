@@ -19,6 +19,9 @@ package com.mongodb.client.internal
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.client.ClientSession
+import com.mongodb.connection.ClusterConnectionMode
+import com.mongodb.connection.ClusterDescription
+import com.mongodb.connection.ClusterType
 import com.mongodb.internal.binding.ClusterBinding
 import com.mongodb.internal.binding.ConnectionSource
 import com.mongodb.internal.binding.ReadWriteBinding
@@ -43,7 +46,15 @@ class ClientSessionBindingSpecification extends Specification {
     def 'should return the session context from the connection source'() {
         given:
         def session = Stub(ClientSession)
-        def wrappedBinding = Mock(ClusterBinding)
+        def wrappedBinding = Mock(ClusterBinding) {
+            getCluster() >> {
+                Mock(Cluster) {
+                    getDescription() >> {
+                        new ClusterDescription(ClusterConnectionMode.SINGLE, ClusterType.STANDALONE, [])
+                    }
+                }
+            }
+        }
         def binding = new ClientSessionBinding(session, false, wrappedBinding)
 
         when:

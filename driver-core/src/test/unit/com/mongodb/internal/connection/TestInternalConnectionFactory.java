@@ -38,8 +38,8 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
     private final List<TestInternalConnection> createdConnections = new ArrayList<TestInternalConnection>();
 
     @Override
-    public InternalConnection create(final ServerId serverId) {
-        TestInternalConnection connection = new TestInternalConnection(serverId);
+    public InternalConnection create(final ServerId serverId, final ConnectionGenerationSupplier connectionGenerationSupplier) {
+        TestInternalConnection connection = new TestInternalConnection(serverId, connectionGenerationSupplier);
         createdConnections.add(connection);
         return connection;
     }
@@ -54,11 +54,18 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
 
     class TestInternalConnection implements InternalConnection {
         private final ConnectionId connectionId;
+        private final int generation;
         private boolean closed;
         private boolean opened;
 
-        TestInternalConnection(final ServerId serverId) {
+        TestInternalConnection(final ServerId serverId, final ConnectionGenerationSupplier connectionGenerationSupplier) {
             this.connectionId = new ConnectionId(serverId, incrementingId.incrementAndGet(), null);
+            this.generation = connectionGenerationSupplier.getGeneration();
+        }
+
+        @Override
+        public int getGeneration() {
+            return generation;
         }
 
         public void open() {

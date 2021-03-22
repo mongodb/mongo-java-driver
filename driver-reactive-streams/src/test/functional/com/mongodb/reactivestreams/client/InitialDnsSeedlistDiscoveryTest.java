@@ -33,6 +33,7 @@ import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.Document;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -63,20 +64,35 @@ import static org.junit.Assume.assumeTrue;
 public class InitialDnsSeedlistDiscoveryTest {
 
     private final String filename;
+    private final String parentDirectory;
     private final String uri;
     private final List<String> seeds;
     private final List<ServerAddress> hosts;
     private final boolean isError;
     private final BsonDocument options;
 
-    public InitialDnsSeedlistDiscoveryTest(final String filename, final String uri, final List<String> seeds,
+    public InitialDnsSeedlistDiscoveryTest(final String filename, final String parentDirectory, final String uri, final List<String> seeds,
                                            final List<ServerAddress> hosts, final boolean isError, final BsonDocument options) {
         this.filename = filename;
+        this.parentDirectory = parentDirectory;
         this.uri = uri;
         this.seeds = seeds;
         this.hosts = hosts;
         this.isError = isError;
         this.options = options;
+    }
+
+
+    @Before
+    public void setUp() {
+        if (parentDirectory.equals("replica-set")) {
+            assumeTrue(isDiscoverableReplicaSet());
+        } else if (parentDirectory.equals("load-balanced")) {
+            // TODO: un-skip these once reactive driver is supported
+            assumeTrue(false);
+        } else {
+            fail("Unexpected parent directory: " + parentDirectory);
+        }
     }
 
     @Test
@@ -159,7 +175,6 @@ public class InitialDnsSeedlistDiscoveryTest {
         final ConnectionString connectionString = new ConnectionString(uri);
         final SslSettings sslSettings = getSslSettings(connectionString);
 
-        assumeTrue("It's not a replica set", isDiscoverableReplicaSet());
         assumeTrue("SSL settings don't match", getSslSettings().isEnabled() == sslSettings.isEnabled());
 
         MongoClientSettings settings = MongoClientSettings.builder()
@@ -211,6 +226,7 @@ public class InitialDnsSeedlistDiscoveryTest {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             data.add(new Object[]{
                     file.getName(),
+                    file.getParentFile().getName(),
                     testDocument.getString("uri").getValue(),
                     toStringList(testDocument.getArray("seeds")),
                     toServerAddressList(testDocument.getArray("hosts")),

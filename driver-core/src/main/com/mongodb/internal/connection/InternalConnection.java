@@ -78,9 +78,7 @@ public interface InternalConnection extends BufferProvider {
      *
      * @return the generation.
      */
-    default int getGeneration() {
-        throw new UnsupportedOperationException();
-    }
+    int getGeneration();
 
     /**
      * Send a command message to the server.
@@ -147,4 +145,10 @@ public interface InternalConnection extends BufferProvider {
      * @param callback the callback to invoke on completion
      */
     void receiveMessageAsync(int responseTo, SingleResultCallback<ResponseBuffers> callback);
+
+    default void markAsPinned(Connection.PinningMode pinningMode) {
+    }
+
+    default void unmarkAsPinned(final Connection.PinningMode pinningMode) {
+    }
 }

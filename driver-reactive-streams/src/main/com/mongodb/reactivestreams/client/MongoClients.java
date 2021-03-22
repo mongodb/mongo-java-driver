@@ -21,6 +21,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.MongoInternalException;
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.connection.TlsChannelStreamFactoryFactory;
@@ -107,6 +108,9 @@ public final class MongoClients {
      * @since 1.8
      */
     public static MongoClient create(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation) {
+        if (settings.getClusterSettings().getMode() == ClusterConnectionMode.LOAD_BALANCED) {
+            throw new UnsupportedOperationException("The reactive streams driver doesn't yet support load balanced mode");
+        }
         if (settings.getStreamFactoryFactory() == null) {
             if (settings.getSslSettings().isEnabled()) {
                 return createWithTlsChannel(settings, mongoDriverInformation);

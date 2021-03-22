@@ -22,12 +22,16 @@ import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.event.ConnectionCheckOutFailedEvent;
 import com.mongodb.event.ConnectionClosedEvent;
+import com.mongodb.event.ConnectionPoolClearedEvent;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.bson.types.ObjectId;
 
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 final class EventMatcher {
     private final ValueMatcher valueMatcher;
@@ -52,6 +56,16 @@ final class EventMatcher {
             if (expected.containsKey("commandName")) {
                 assertEquals(context.getMessage("Command names must be equal"),
                         expected.getString("commandName").getValue(), actual.getCommandName());
+            }
+
+            if (expected.containsKey("hasServiceId")) {
+                boolean hasServiceId = expected.getBoolean("hasServiceId").getValue();
+                ObjectId serviceId = actual.getConnectionDescription().getServiceId();
+                if (hasServiceId) {
+                    assertNotNull(context.getMessage("Expected serviceId"), serviceId);
+                } else {
+                    assertNull(context.getMessage("Expected no serviceId"), serviceId);
+                }
             }
 
             if (actual.getClass().equals(CommandStartedEvent.class)) {
@@ -94,7 +108,19 @@ final class EventMatcher {
 
             assertEquals(context.getMessage("Expected event type to match"), eventType, getEventType(actual.getClass()));
 
-            if (actual.getClass().equals(ConnectionCheckOutFailedEvent.class)) {
+            if (actual.getClass().equals(ConnectionPoolClearedEvent.class)) {
+                BsonDocument expected = expectedEventDocument.getDocument(eventType);
+                ConnectionPoolClearedEvent connectionPoolClearedEvent = (ConnectionPoolClearedEvent) actual;
+                if (expected.containsKey("hasServiceId")) {
+                    boolean hasServiceId = expected.getBoolean("hasServiceId").getValue();
+                    ObjectId serviceId = connectionPoolClearedEvent.getServiceId();
+                    if (hasServiceId) {
+                        assertNotNull(context.getMessage("Expected serviceId"), serviceId);
+                    } else {
+                        assertNull(context.getMessage("Expected no serviceId"), serviceId);
+                    }
+                }
+            } else if (actual.getClass().equals(ConnectionCheckOutFailedEvent.class)) {
                 BsonDocument expected = expectedEventDocument.getDocument(eventType);
                 ConnectionCheckOutFailedEvent actualEvent = (ConnectionCheckOutFailedEvent) actual;
                 if (expected.containsKey("reason")) {

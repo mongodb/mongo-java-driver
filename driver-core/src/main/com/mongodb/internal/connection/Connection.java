@@ -168,4 +168,14 @@ public interface Connection extends ReferenceCounted {
      * @param cursors   the cursors
      */
     void killCursor(MongoNamespace namespace, List<Long> cursors);
+
+
+    enum PinningMode {
+        CURSOR,
+        TRANSACTION
+    }
+
+    void markAsPinned(PinningMode pinningMode);
+
+    void unmarkAsPinned(PinningMode pinningMode);
 }

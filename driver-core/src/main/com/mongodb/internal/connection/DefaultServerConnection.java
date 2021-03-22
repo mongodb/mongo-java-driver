@@ -192,6 +192,16 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
     }
 
     @Override
+    public void markAsPinned(final PinningMode pinningMode) {
+        wrapped.markAsPinned(pinningMode);
+    }
+
+    @Override
+    public void unmarkAsPinned(final PinningMode pinningMode) {
+        wrapped.unmarkAsPinned(pinningMode);
+    }
+
+    @Override
     public void killCursorAsync(final MongoNamespace namespace, final List<Long> cursors, final SingleResultCallback<Void> callback) {
         executeProtocolAsync(new KillCursorProtocol(namespace, cursors), callback);
     }

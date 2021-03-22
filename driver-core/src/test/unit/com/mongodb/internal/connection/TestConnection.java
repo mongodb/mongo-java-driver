@@ -169,6 +169,16 @@ class TestConnection implements Connection, AsyncConnection {
     }
 
     @Override
+    public void markAsPinned(final PinningMode pinningMode) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void unmarkAsPinned(final PinningMode pinningMode) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public void killCursorAsync(final MongoNamespace namespace, final List<Long> cursors, final SingleResultCallback<Void> callback) {
         executeEnqueuedLegacyProtocolAsync(callback);
     }

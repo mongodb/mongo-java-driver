@@ -407,7 +407,7 @@ final class OperationHelper {
         if (serverIsLessThanVersionThreeDotSix(connectionDescription)) {
             LOGGER.debug("retryWrites set to true but the server does not support retryable writes.");
             return false;
-        } else if (serverDescription.getLogicalSessionTimeoutMinutes() == null) {
+        } else if (serverDescription.getLogicalSessionTimeoutMinutes() == null && serverDescription.getType() != ServerType.LOAD_BALANCER) {
             LOGGER.debug("retryWrites set to true but the server does not have 3.6 feature compatibility enabled.");
             return false;
         } else if (connectionDescription.getServerType().equals(ServerType.STANDALONE)) {
@@ -461,10 +461,10 @@ final class OperationHelper {
     }
 
     static <T> BatchCursor<T> cursorDocumentToBatchCursor(final BsonDocument cursorDocument, final Decoder<T> decoder,
-                                                          final ConnectionSource source, final int batchSize) {
+                                                          final ConnectionSource source, final Connection connection, final int batchSize) {
         return new QueryBatchCursor<T>(OperationHelper.<T>cursorDocumentToQueryResult(cursorDocument,
                 source.getServerDescription().getAddress()),
-                0, batchSize, decoder, source);
+                0, batchSize, 0, decoder, source, connection);
     }
 
     static <T> AsyncBatchCursor<T> cursorDocumentToAsyncBatchCursor(final BsonDocument cursorDocument, final Decoder<T> decoder,

@@ -16,10 +16,11 @@
 
 package com.mongodb.internal.session;
 
+import com.mongodb.ClientSessionOptions;
 import com.mongodb.ServerAddress;
+import com.mongodb.internal.binding.ReferenceCounted;
 import com.mongodb.lang.Nullable;
 import com.mongodb.session.ClientSession;
-import com.mongodb.ClientSessionOptions;
 import com.mongodb.session.ServerSession;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
@@ -37,6 +38,7 @@ public class BaseClientSessionImpl implements ClientSession {
     private BsonTimestamp operationTime;
     private ServerAddress pinnedServerAddress;
     private BsonDocument recoveryToken;
+    private ReferenceCounted transactionContext;
     private volatile boolean closed;
 
     public BaseClientSessionImpl(final ServerSessionPool serverSessionPool, final Object originator, final ClientSessionOptions options) {
@@ -58,6 +60,30 @@ public class BaseClientSessionImpl implements ClientSession {
     public void setPinnedServerAddress(@Nullable final ServerAddress address) {
         isTrue("pinned mongos null check", address == null || pinnedServerAddress == null);
         pinnedServerAddress = address;
+    }
+
+    @Override
+    public Object getTransactionContext() {
+        return transactionContext;
+    }
+
+    @Override
+    public void setTransactionContext(final ServerAddress address, final Object transactionContext) {
+        if (!(transactionContext instanceof ReferenceCounted)) {
+            throw new AssertionError("transactionContext must be an instance of ReferenceCounted");
+        }
+        pinnedServerAddress = address;
+        this.transactionContext = (ReferenceCounted) transactionContext;
+        this.transactionContext.retain();
+    }
+
+    @Override
+    public void clearTransactionContext() {
+        pinnedServerAddress = null;
+        if (transactionContext != null) {
+            transactionContext.release();
+            transactionContext = null;
+        }
     }
 
     @Override
@@ -140,7 +166,7 @@ public class BaseClientSessionImpl implements ClientSession {
         if (!closed) {
             closed = true;
             serverSessionPool.release(serverSession);
-            pinnedServerAddress = null;
+            clearTransactionContext();
         }
     }
 }

@@ -109,7 +109,7 @@ class SimpleSessionContext implements SessionContext {
     }
 
     @Override
-    public void unpinServerAddress() {
+    public void clearTransactionContext() {
         throw new UnsupportedOperationException();
     }
 

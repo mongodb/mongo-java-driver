@@ -38,12 +38,10 @@ class UsageTrackingInternalConnection implements InternalConnection {
     private volatile long openedAt;
     private volatile long lastUsedAt;
     private volatile boolean closeSilently;
-    private final int generation;
     private final InternalConnection wrapped;
 
-    UsageTrackingInternalConnection(final InternalConnection wrapped, final int generation) {
+    UsageTrackingInternalConnection(final InternalConnection wrapped) {
         this.wrapped = wrapped;
-        this.generation = generation;
         openedAt = Long.MAX_VALUE;
         lastUsedAt = openedAt;
     }
@@ -190,7 +188,7 @@ class UsageTrackingInternalConnection implements InternalConnection {
 
     @Override
     public int getGeneration() {
-        return generation;
+        return wrapped.getGeneration();
     }
 
     /**

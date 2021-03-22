@@ -57,6 +57,35 @@ public interface ClientSession extends Closeable {
     void setPinnedServerAddress(ServerAddress address);
 
     /**
+     * Gets the transaction context.
+     *
+     * <p>For internal use only </p>
+     *
+     * @return the transaction context
+     */
+    @Nullable
+    Object getTransactionContext();
+
+    /**
+     * Sets the transaction context.
+     *
+     * <p>For internal use only </p>
+     * <p>Implementations may place additional restrictions on the type of the transaction context</p>
+     *
+     * @param address the server address
+     * @param transactionContext the transaction context, which may be null
+     */
+    void setTransactionContext(ServerAddress address, Object transactionContext);
+
+    /**
+     * Clears the transaction context.
+     *
+     * <p>For internal use only </p>
+     *
+     */
+    void clearTransactionContext();
+
+    /**
      * Get the recovery token from the latest outcome in a sharded transaction.
      * For internal use only.
      *

@@ -38,6 +38,12 @@ public enum ClusterType {
     SHARDED,
 
     /**
+     * A load-balanced cluster, connected via a single load balancer
+     *
+     * @since 4.3
+     */
+    LOAD_BALANCED,
+    /**
      * The cluster type is not yet known.
      */
     UNKNOWN

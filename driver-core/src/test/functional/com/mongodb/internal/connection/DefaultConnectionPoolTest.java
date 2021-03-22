@@ -442,8 +442,9 @@ public class DefaultConnectionPoolTest {
 
     private static ControllableConnectionFactory newControllableConnectionFactory(final ExecutorService asyncOpenExecutor) {
         AtomicLong openDurationMillisHandle = new AtomicLong(0);
-        InternalConnectionFactory connectionFactory = serverId -> {
+        InternalConnectionFactory connectionFactory = (serverId, connectionGenerationSupplier) -> {
             InternalConnection connection = mock(InternalConnection.class, withSettings().stubOnly());
+            when(connection.getGeneration()).thenReturn(connectionGenerationSupplier.getGeneration());
             when(connection.getDescription()).thenReturn(new ConnectionDescription(serverId));
             AtomicBoolean open = new AtomicBoolean(false);
             when(connection.opened()).thenAnswer(invocation -> open.get());

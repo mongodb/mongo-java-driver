@@ -17,7 +17,22 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.connection.ServerId;
+import org.bson.types.ObjectId;
 
 interface InternalConnectionFactory {
-    InternalConnection create(ServerId serverId);
+    default InternalConnection create(ServerId serverId) {
+        return create(serverId, new ConnectionGenerationSupplier() {
+            @Override
+            public int getGeneration() {
+                return 0;
+            }
+
+            @Override
+            public int getGeneration(final ObjectId serviceId) {
+                return 0;
+            }
+        });
+    }
+
+    InternalConnection create(ServerId serverId, ConnectionGenerationSupplier connectionGenerationSupplier);
 }

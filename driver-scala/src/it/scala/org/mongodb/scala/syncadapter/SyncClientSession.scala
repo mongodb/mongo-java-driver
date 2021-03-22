@@ -71,4 +71,11 @@ case class SyncClientSession(wrapped: ClientSession, originator: Object) extends
 
   override def withTransaction[T](transactionBody: TransactionBody[T], options: TransactionOptions) =
     throw new UnsupportedOperationException
+
+  override def getTransactionContext: AnyRef = wrapped.getTransactionContext
+
+  override def setTransactionContext(address: ServerAddress, transactionContext: Any): Unit =
+    wrapped.setTransactionContext(address, transactionContext)
+
+  override def clearTransactionContext(): Unit = wrapped.clearTransactionContext()
 }

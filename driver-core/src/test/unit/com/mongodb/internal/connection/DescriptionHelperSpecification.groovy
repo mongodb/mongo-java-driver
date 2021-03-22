@@ -19,6 +19,7 @@ package com.mongodb.internal.connection
 import com.mongodb.ServerAddress
 import com.mongodb.Tag
 import com.mongodb.TagSet
+import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
@@ -51,8 +52,8 @@ class DescriptionHelperSpecification extends Specification {
     def 'connection description should reflect ismaster result'() {
         def connectionId = new ConnectionId(new ServerId(new ClusterId(), serverAddress))
         expect:
-        createConnectionDescription(connectionId,
-                                    parse('''{
+        createConnectionDescription(ClusterConnectionMode.SINGLE, connectionId,
+                parse('''{
                                           ismaster : true,
                                           maxBsonObjectSize : 16777216,
                                           maxMessageSizeBytes : 48000000,
@@ -64,7 +65,7 @@ class DescriptionHelperSpecification extends Specification {
                                           }''')) ==
         new ConnectionDescription(connectionId, 6, ServerType.STANDALONE, 1000, 16777216, 48000000, [])
 
-        createConnectionDescription(connectionId,
+        createConnectionDescription(ClusterConnectionMode.SINGLE, connectionId,
                 parse('''{
                                           ismaster : true,
                                           maxBsonObjectSize : 16777216,
@@ -83,7 +84,7 @@ class DescriptionHelperSpecification extends Specification {
     def 'connection description should reflect ismaster result with compressors'() {
         def connectionId = new ConnectionId(new ServerId(new ClusterId(), serverAddress))
         expect:
-        createConnectionDescription(connectionId,
+        createConnectionDescription(ClusterConnectionMode.SINGLE, connectionId,
                 parse('''{
                                           ismaster : true,
                                           maxBsonObjectSize : 16777216,

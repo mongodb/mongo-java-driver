@@ -48,11 +48,14 @@ import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
+import org.bson.types.ObjectId;
 
 import java.util.Deque;
 import java.util.LinkedList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -86,12 +89,16 @@ class DefaultConnectionPool implements ConnectionPool {
     private final ConcurrentPool<UsageTrackingInternalConnection> pool;
     private final ConnectionPoolSettings settings;
     private final AtomicInteger generation = new AtomicInteger(0);
-    private final AtomicInteger lastPrunedGeneration = new AtomicInteger(0);
     private final ScheduledExecutorService sizeMaintenanceTimer;
     private ExecutorService asyncGetter;
     private final Runnable maintenanceTask;
     private final ConnectionPoolListener connectionPoolListener;
     private final ServerId serverId;
+    private final AtomicInteger numPinnedToCursor = new AtomicInteger(0);
+    private final AtomicInteger numPinnedToTransaction = new AtomicInteger(0);
+
+    private final Map<ObjectId, ServerStats> serverStatsMap = new HashMap<>();
+    private final ConnectionGenerationSupplier connectionGenerationSupplier;
     private volatile boolean closed;
     private final OpenConcurrencyLimiter openConcurrencyLimiter;
 
@@ -107,6 +114,17 @@ class DefaultConnectionPool implements ConnectionPool {
         sizeMaintenanceTimer = createMaintenanceTimer();
         connectionPoolCreated(connectionPoolListener, serverId, settings);
         openConcurrencyLimiter = new OpenConcurrencyLimiter(MAX_CONNECTING);
+        connectionGenerationSupplier = new ConnectionGenerationSupplier() {
+            @Override
+            public int getGeneration() {
+                return generation.get();
+            }
+
+            @Override
+            public int getGeneration(final ObjectId serviceId) {
+                return getGenerationFromServerStats(serviceId);
+            }
+        };
     }
 
     @Override
@@ -242,6 +260,12 @@ class DefaultConnectionPool implements ConnectionPool {
         connectionPoolListener.connectionPoolCleared(new ConnectionPoolClearedEvent(serverId));
     }
 
+    public void invalidate(final ObjectId serviceId) {
+        LOGGER.debug("Invalidating the connection pool for server id " + serviceId);
+        incrementGenerationInServerStats(serviceId);
+        connectionPoolListener.connectionPoolCleared(new ConnectionPoolClearedEvent(this.serverId, serviceId));
+    }
+
     @Override
     public void close() {
         if (!closed) {
@@ -293,8 +317,19 @@ class DefaultConnectionPool implements ConnectionPool {
     }
 
     private MongoTimeoutException createTimeoutException(final Timeout timeout) {
-        return new MongoTimeoutException(format("Timed out after %s while waiting for a connection to server %s.",
-                                                timeout.toUserString(), serverId.getAddress()));
+        int numPinnedToCursor = this.numPinnedToCursor.get();
+        int numPinnedToTransaction = this.numPinnedToTransaction.get();
+        if (numPinnedToCursor == 0 && numPinnedToTransaction == 0) {
+            return new MongoTimeoutException(format("Timed out after %s ms while waiting for a connection to server %s.",
+                    timeout.toUserString(), serverId.getAddress()));
+        } else {
+            int numOtherInUse = pool.getInUseCount() - numPinnedToCursor - numPinnedToTransaction;
+            return new MongoTimeoutException(format("Timed out after %s ms while waiting for a connection to server %s. Details: "
+                    + "maxPoolSize: %d, connections in use by cursors: %d, connections in use by transactions: %d, "
+                    + "connections in use by other operations: %d",
+                    timeout.toUserString(), serverId.getAddress(),
+                    settings.getMaxSize(), numPinnedToCursor, numPinnedToTransaction, numOtherInUse));
+        }
     }
 
     ConcurrentPool<UsageTrackingInternalConnection> getPool() {
@@ -308,14 +343,12 @@ class DefaultConnectionPool implements ConnectionPool {
                 @Override
                 public synchronized void run() {
                     try {
-                        int curGeneration = generation.get();
-                        if (shouldPrune() || curGeneration > lastPrunedGeneration.get()) {
+                        if (shouldPrune()) {
                             if (LOGGER.isDebugEnabled()) {
                                 LOGGER.debug(format("Pruning pooled connections to %s", serverId.getAddress()));
                             }
                             pool.prune();
                         }
-                        lastPrunedGeneration.set(curGeneration);
                         if (shouldEnsureMinSize()) {
                             if (LOGGER.isDebugEnabled()) {
                                 LOGGER.debug(format("Ensuring minimum pooled connections to %s", serverId.getAddress()));
@@ -363,7 +396,15 @@ class DefaultConnectionPool implements ConnectionPool {
     }
 
     private boolean fromPreviousGeneration(final UsageTrackingInternalConnection connection) {
-        return generation.get() > connection.getGeneration();
+        int generation = connection.getGeneration();
+        if (generation == -1) {
+            return false;
+        }
+        if (connection.getDescription().getServiceId() != null) {
+            return getGenerationFromServerStats(connection.getDescription().getServiceId()) > generation;
+        } else {
+            return this.generation.get() > generation;
+        }
     }
 
     private boolean expired(final long startTime, final long curTime, final long maxTime) {
@@ -508,6 +549,9 @@ class DefaultConnectionPool implements ConnectionPool {
                 if (LOGGER.isTraceEnabled()) {
                     LOGGER.trace(format("Pooled connection %s to server %s failed to open", getId(this), serverId));
                 }
+                if (wrapped.getDescription().getServiceId() != null) {
+                    invalidate(wrapped.getDescription().getServiceId());
+                }
                 pool.release(wrapped, true);
             }
         }
@@ -621,6 +665,34 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
+        public void markAsPinned(final Connection.PinningMode pinningMode) {
+            switch (pinningMode) {
+                case CURSOR:
+                    numPinnedToCursor.incrementAndGet();
+                    break;
+                case TRANSACTION:
+                    numPinnedToTransaction.incrementAndGet();
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported pinning mode: " + pinningMode);
+            }
+        }
+
+        @Override
+        public void unmarkAsPinned(final Connection.PinningMode pinningMode) {
+            switch (pinningMode) {
+                case CURSOR:
+                    numPinnedToCursor.decrementAndGet();
+                    break;
+                case TRANSACTION:
+                    numPinnedToTransaction.decrementAndGet();
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported pinning mode: " + pinningMode);
+            }
+        }
+
+        @Override
         public ConnectionDescription getDescription() {
             return wrapped.getDescription();
         }
@@ -654,7 +726,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Override
         public UsageTrackingInternalConnection create() {
-            return new UsageTrackingInternalConnection(internalConnectionFactory.create(serverId), generation.get());
+            return new UsageTrackingInternalConnection(internalConnectionFactory.create(serverId, connectionGenerationSupplier));
         }
 
         @Override
@@ -671,6 +743,9 @@ class DefaultConnectionPool implements ConnectionPool {
                 }
             }
             connection.close();
+            if (connection.getDescription().getServiceId() != null) {
+                removeConnectionFromServerStats(connection.getDescription().getServiceId());
+            }
         }
 
         private String getReasonStringForClosing(final UsageTrackingInternalConnection connection) {
@@ -783,6 +858,9 @@ class DefaultConnectionPool implements ConnectionPool {
                         connectionPoolListener, getId(connection));
                 try {
                     connection.open();
+                    if (connection.getDescription().getServiceId() != null) {
+                        addConnectionToServerStats(connection.getDescription().getServiceId());
+                    }
                 } finally {
                     releasePermit();
                 }
@@ -995,6 +1073,65 @@ class DefaultConnectionPool implements ConnectionPool {
         private T reference;
 
         private MutableReference() {
+        }
+    }
+
+    private ServerStats getServerStats(final ObjectId serviceId) {
+        ServerStats serverStats = serverStatsMap.get(serviceId);
+        if (serverStats == null) {
+            serverStats = new ServerStats();
+            serverStatsMap.put(serviceId, serverStats);
+        }
+        return serverStats;
+    }
+
+    private synchronized void addConnectionToServerStats(final ObjectId serviceId) {
+        ServerStats serverStats = getServerStats(serviceId);
+        serverStats.incrementCount();
+    }
+
+    private synchronized void removeConnectionFromServerStats(final ObjectId serviceId) {
+        ServerStats serverStats = serverStatsMap.get(serviceId);
+        // assert not null
+        serverStats.decrementCount();
+        if (serverStats.getConnectionCount() == 0) {
+            serverStatsMap.remove(serviceId);
+        }
+    }
+
+    private synchronized void incrementGenerationInServerStats(final ObjectId serviceId) {
+        ServerStats serverStats = getServerStats(serviceId);
+        // assert not null
+        serverStats.incrementGeneration();
+    }
+
+    private synchronized int getGenerationFromServerStats(final ObjectId serviceId) {
+        ServerStats serverStats = getServerStats(serviceId);
+        return serverStats.getGeneration();
+    }
+
+    private static class ServerStats {
+        private int generation;
+        private int connectionCount;
+
+        void incrementCount() {
+            connectionCount++;
+        }
+
+        void decrementCount() {
+            connectionCount--;
+        }
+
+        void incrementGeneration() {
+            generation++;
+        }
+
+        public int getGeneration() {
+            return generation;
+        }
+
+        public int getConnectionCount() {
+            return connectionCount;
         }
     }
 }
