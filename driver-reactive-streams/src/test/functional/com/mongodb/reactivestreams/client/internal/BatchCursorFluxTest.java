@@ -16,6 +16,8 @@
 package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.MongoClientSettings;
+import com.mongodb.client.model.changestream.ChangeStreamDocument;
+import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.reactivestreams.client.FindPublisher;
@@ -23,12 +25,21 @@ import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.TestSubscriber;
+import org.bson.BsonArray;
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonObjectId;
+import org.bson.BsonString;
+import org.bson.BsonTimestamp;
+import org.bson.BsonValue;
 import org.bson.Document;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -39,12 +50,17 @@ import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.reactivestreams.client.Fixture.drop;
 import static com.mongodb.reactivestreams.client.Fixture.getMongoClientBuilderFromConnectionString;
+import static com.mongodb.reactivestreams.client.Fixture.isReplicaSet;
+import static com.mongodb.reactivestreams.client.Fixture.serverVersionAtLeast;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
@@ -269,6 +285,21 @@ public class BatchCursorFluxTest {
 
     }
 
+    @Test
+    @DisplayName("ChangeStreamPublisher for a collection must complete after dropping the collection")
+    void changeStreamPublisherCompletesAfterDroppingCollection() {
+        assumeTrue(isReplicaSet() && serverVersionAtLeast(4, 0));
+        TestSubscriber<ChangeStreamDocument<Document>> subscriber = new TestSubscriber<>();
+        subscriber.doOnSubscribe(subscription -> {
+            subscription.request(Long.MAX_VALUE);
+        });
+        collection.watch()
+                .startAtOperationTime(ensureExists(client, collection))
+                .subscribe(subscriber);
+        Mono.from(collection.drop()).block(TIMEOUT_DURATION);
+        subscriber.assertTerminalEvent();
+        subscriber.assertNoErrors();
+    }
 
     private void assertCommandNames(final List<String> commandNames) {
         assertIterableEquals(commandNames,
@@ -282,4 +313,35 @@ public class BatchCursorFluxTest {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * This method ensures that the server considers the specified {@code collection} existing for the purposes of, e.g.,
+     * {@link MongoCollection#drop()}, instead of replying with
+     * {@code "errmsg": "ns not found", "code": 26, "codeName": "NamespaceNotFound"}.
+     *
+     * @return {@code operationTime} starting at which the {@code collection} is guaranteed to exist.
+     */
+    private static BsonTimestamp ensureExists(final MongoClient client , final MongoCollection<Document> collection) {
+        BsonObjectId insertedId = Mono.from(collection.insertOne(Document.parse("{}")))
+                .map(insertOneResult -> {
+                    assertTrue(insertOneResult.wasAcknowledged());
+                    return insertOneResult;
+                })
+                .map(InsertOneResult::getInsertedId)
+                .map(BsonValue::asObjectId)
+                .block(TIMEOUT_DURATION);
+        BsonArray deleteStatements = new BsonArray();
+        deleteStatements.add(new BsonDocument()
+                .append("q", new BsonDocument()
+                        .append("_id", insertedId))
+                .append("limit", new BsonInt32(1)));
+        Publisher<Document> deletePublisher = client.getDatabase(collection.getNamespace().getDatabaseName())
+                .runCommand(new BsonDocument()
+                        .append("delete", new BsonString(collection.getNamespace().getCollectionName()))
+                        .append("deletes", deleteStatements));
+        BsonTimestamp operationTime = Mono.from(deletePublisher)
+                .map(doc -> doc.get("operationTime", BsonTimestamp.class))
+                .block(TIMEOUT_DURATION);
+        assertNotNull(operationTime);
+        return operationTime;
+    }
 }
