@@ -59,7 +59,6 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.when;
 
@@ -322,10 +321,6 @@ public class BatchCursorFluxTest {
      */
     private static BsonTimestamp ensureExists(final MongoClient client, final MongoCollection<Document> collection) {
         BsonObjectId insertedId = Mono.from(collection.insertOne(Document.parse("{}")))
-                .map(insertOneResult -> {
-                    assertTrue(insertOneResult.wasAcknowledged());
-                    return insertOneResult;
-                })
                 .map(InsertOneResult::getInsertedId)
                 .map(BsonValue::asObjectId)
                 .block(TIMEOUT_DURATION);
