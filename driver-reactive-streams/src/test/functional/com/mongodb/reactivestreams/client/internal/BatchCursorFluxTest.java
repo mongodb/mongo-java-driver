@@ -320,7 +320,7 @@ public class BatchCursorFluxTest {
      *
      * @return {@code operationTime} starting at which the {@code collection} is guaranteed to exist.
      */
-    private static BsonTimestamp ensureExists(final MongoClient client , final MongoCollection<Document> collection) {
+    private static BsonTimestamp ensureExists(final MongoClient client, final MongoCollection<Document> collection) {
         BsonObjectId insertedId = Mono.from(collection.insertOne(Document.parse("{}")))
                 .map(insertOneResult -> {
                     assertTrue(insertOneResult.wasAcknowledged());
