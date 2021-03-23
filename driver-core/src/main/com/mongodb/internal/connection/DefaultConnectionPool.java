@@ -320,11 +320,9 @@ class DefaultConnectionPool implements ConnectionPool {
                                 LOGGER.debug(format("Ensuring minimum pooled connections to %s", serverId.getAddress()));
                             }
                             pool.ensureMinSize(settings.getMinSize(), newConnection -> {
-                                PooledConnection pooledConnection = new PooledConnection(newConnection);
                                 if (!newConnection.opened()) {
-                                    pooledConnection = openConcurrencyLimiter.openImmediatelyOrSilentlyClose(pooledConnection);
+                                    openConcurrencyLimiter.openImmediatelyOrSilentlyClose(new PooledConnection(newConnection));
                                 }
-                                return pooledConnection.wrapped;
                             });
                         }
                     } catch (MongoInterruptedException | MongoTimeoutException e) {

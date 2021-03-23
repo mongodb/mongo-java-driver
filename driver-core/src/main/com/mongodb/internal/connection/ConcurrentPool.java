@@ -20,12 +20,11 @@ import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.internal.connection.ConcurrentLinkedDeque.RemovalReportingIterator;
-import com.mongodb.lang.Nullable;
 
 import java.util.Iterator;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.function.UnaryOperator;
+import java.util.function.Consumer;
 
 /**
  * A concurrent pool implementation.
@@ -145,8 +144,7 @@ public class ConcurrentPool<T> implements Pool<T> {
 
         T t = available.pollLast();
         if (t == null) {
-            t = createNewAndReleasePermitIfFailure(null);
-            assert t != null : "new item must not be null if postCreate is null";
+            t = createNewAndReleasePermitIfFailure(noInit -> {});
         }
 
         return t;
@@ -174,45 +172,33 @@ public class ConcurrentPool<T> implements Pool<T> {
      * Try to populate this pool with items so that {@link #getCount()} is not smaller than {@code minSize}.
      * The {@code postCreate} action throwing a exception causes this method to stop and re-throw that exception.
      *
-     * @param postCreate A transforming action applied to non-{@code null} new items.
-     *                   This action may return an item as is, may modify the item,
-     *                   or throw an {@link Exception}. In the latter case the action must release
-     *                   resources associated with the item.
+     * @param initialize An action applied to non-{@code null} new items.
+     *                   If this action throws an {@link Exception}, it must release resources associated with the item.
      */
-    public void ensureMinSize(final int minSize, @Nullable final UnaryOperator<T> postCreate) {
+    public void ensureMinSize(final int minSize, final Consumer<T> initialize) {
         while (getCount() < minSize) {
             if (!acquirePermit(0, TimeUnit.MILLISECONDS)) {
                 break;
             }
-            T newItem = createNewAndReleasePermitIfFailure(postCreate);
+            T newItem = createNewAndReleasePermitIfFailure(initialize);
             release(newItem);
         }
     }
 
     /**
-     * If this method returns {@code null} or throws an {@link Exception}, then before doing so it releases a permit.
-     *
-     * @param postCreate See {@link #ensureMinSize(int, UnaryOperator)}.
-     * @return Either a {@linkplain ItemFactory#create() new} non-{@code null} item if {@code postCreate} is {@code null},
-     * or the result of {@linkplain UnaryOperator#apply(Object) applying} {@code postCreate} to the new item.
+     * @param initialize See {@link #ensureMinSize(int, Consumer)}.
      */
-    private T createNewAndReleasePermitIfFailure(@Nullable final UnaryOperator<T> postCreate) {
-        boolean failure = true;
+    private T createNewAndReleasePermitIfFailure(final Consumer<T> initialize) {
         try {
             T newMember = itemFactory.create();
             if (newMember == null) {
                 throw new MongoInternalException("The factory for the pool created a null item");
             }
-            newMember = postCreate == null ? newMember : postCreate.apply(newMember);
-            if (newMember == null) {
-                throw new MongoInternalException("The post create operator for the pool created a null item");
-            }
-            failure = false;
+            initialize.accept(newMember);
             return newMember;
-        } finally {
-            if (failure) {
-                permits.release();
-            }
+        } catch (RuntimeException e) {
+            permits.release();
+            throw e;
         }
     }
 

@@ -21,7 +21,7 @@ import com.mongodb.MongoTimeoutException;
 import org.junit.Test;
 
 import java.io.Closeable;
-import java.util.function.UnaryOperator;
+import java.util.function.Consumer;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertEquals;
@@ -141,21 +141,21 @@ public class ConcurrentPoolTest {
     @Test
     public void testEnsureMinSize() {
         pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
-
-        pool.ensureMinSize(0, null);
+        Consumer<TestCloseable> noInit = x -> {};
+        pool.ensureMinSize(0, noInit);
         assertEquals(0, pool.getAvailableCount());
 
-        pool.ensureMinSize(1, null);
+        pool.ensureMinSize(1, noInit);
         assertEquals(1, pool.getAvailableCount());
 
-        pool.ensureMinSize(1, null);
+        pool.ensureMinSize(1, noInit);
         assertEquals(1, pool.getAvailableCount());
 
         pool.get();
-        pool.ensureMinSize(1, null);
+        pool.ensureMinSize(1, noInit);
         assertEquals(0, pool.getAvailableCount());
 
-        pool.ensureMinSize(4, null);
+        pool.ensureMinSize(4, noInit);
         assertEquals(3, pool.getAvailableCount());
     }
 
@@ -252,9 +252,8 @@ public class ConcurrentPoolTest {
     }
 
     static class TestCloseable implements Closeable {
-        private static final UnaryOperator<TestCloseable> INIT_ACTION = connection -> {
+        private static final Consumer<TestCloseable> INIT_ACTION = connection -> {
             connection.initialized = true;
-            return connection;
         };
 
         private boolean closed;
