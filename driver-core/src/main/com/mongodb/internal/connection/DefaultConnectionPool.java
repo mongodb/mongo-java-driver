@@ -63,6 +63,10 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.mongodb.assertions.Assertions.assertFalse;
+import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.assertNull;
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -186,8 +190,7 @@ class DefaultConnectionPool implements ConnectionPool {
             connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, Reason.TIMEOUT));
         } else if (t instanceof MongoOpenConnectionInternalException) {
             connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, Reason.CONNECTION_ERROR));
-            result = t.getCause();
-            assert result != null;
+            result = assertNotNull(t.getCause());
         } else if (t instanceof IllegalStateException && t.getMessage().equals("The pool is closed")) {
             connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, Reason.POOL_CLOSED));
         } else {
@@ -441,7 +444,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Override
         public void open() {
-            assert !isClosed.get();
+            assertFalse(isClosed.get());
             try {
                 wrapped.open();
                 handleOpenSuccess();
@@ -456,7 +459,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Override
         public void openAsync(final SingleResultCallback<Void> callback) {
-            assert !isClosed.get();
+            assertFalse(isClosed.get());
             wrapped.openAsync((nullResult, failure) -> {
                 if (failure == null) {
                     try {
@@ -742,20 +745,18 @@ class DefaultConnectionPool implements ConnectionPool {
         PooledConnection openOrGetAvailableAndSilentlyCloseSpecified(
                 final PooledConnection connection, final Timeout timeout) throws MongoTimeoutException {
             PooledConnection result = openOrGetAvailableAndSilentlyCloseSpecified(connection, true, timeout, null);
-            assert result != null;
-            return result;
+            return assertNotNull(result);
         }
 
         void openOrGetAvailableAndSilentlyCloseSpecified(
                 final PooledConnection connection, final Timeout timeout, final SingleResultCallback<InternalConnection> asyncCallback) {
             PooledConnection result = openOrGetAvailableAndSilentlyCloseSpecified(connection, true, timeout, asyncCallback);
-            assert result == null;
+            assertNull(result);
         }
 
-        PooledConnection openImmediatelyOrSilentlyClose(final PooledConnection connection) throws MongoTimeoutException {
+        void openImmediatelyOrSilentlyClose(final PooledConnection connection) throws MongoTimeoutException {
             PooledConnection result = openOrGetAvailableAndSilentlyCloseSpecified(connection, false, Timeout.immediate(), null);
-            assert result != null;
-            return result;
+            assertTrue(result == connection);
         }
 
         /**
@@ -850,10 +851,10 @@ class DefaultConnectionPool implements ConnectionPool {
                     remainingNanos = awaitNanos(remainingNanos);
                 }
                 if (availableConnection == null) {
-                    assert permits > 0 : permits;
+                    assertTrue(permits > 0);
                     permits--;
                 } else {
-                    assert availableConnection.opened();
+                    assertTrue(availableConnection.opened());
                     if (LOGGER.isTraceEnabled()) {
                         LOGGER.trace(format("Received opened connection [%s] to server %s",
                                 getId(availableConnection), serverId.getAddress()));
@@ -874,7 +875,7 @@ class DefaultConnectionPool implements ConnectionPool {
         private void releasePermit() {
             lock();
             try {
-                assert permits < maxPermits : permits;
+                assertTrue(permits < maxPermits);
                 permits++;
                 condition.signal();
             } finally {
@@ -888,7 +889,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Nullable
         private PooledConnection tryGetAndRemoveFirstDesiredConnectionSlot() {
-            assert !desiredConnectionSlots.isEmpty();
+            assertFalse(desiredConnectionSlots.isEmpty());
             PooledConnection result = desiredConnectionSlots.peekFirst().reference;
             if (result != null) {
                 desiredConnectionSlots.removeFirst();
@@ -897,7 +898,7 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         private void removeLastDesiredConnectionSlot() {
-            assert !desiredConnectionSlots.isEmpty();
+            assertFalse(desiredConnectionSlots.isEmpty());
             PooledConnection connection = desiredConnectionSlots.removeLast().reference;
             if (connection != null) {
                 connection.release();

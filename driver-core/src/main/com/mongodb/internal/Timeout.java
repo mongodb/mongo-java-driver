@@ -20,6 +20,7 @@ import com.mongodb.annotations.Immutable;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -82,7 +83,7 @@ public final class Timeout {
      * Must not be called on {@linkplain #isInfinite() infinite} or {@linkplain #isImmediate() immediate} timeouts.
      */
     private long elapsedNanos() {
-        assert !(isInfinite() || isImmediate());
+        assertFalse(isInfinite() || isImmediate());
         return System.nanoTime() - startNanos;
     }
 
