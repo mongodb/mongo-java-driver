@@ -81,6 +81,7 @@ public class ConcurrentPool<T> implements Pool<T> {
 
     /**
      * Return an instance of T to the pool.  This method simply calls {@code release(t, false)}
+     * Must not throw {@link Exception}s.
      *
      * @param t item to return to the pool
      */
@@ -91,6 +92,7 @@ public class ConcurrentPool<T> implements Pool<T> {
 
     /**
      * call done when you are done with an object from the pool if there is room and the object is ok will get added
+     * Must not throw {@link Exception}s.
      *
      * @param t     item to return to the pool
      * @param prune true if the item should be closed, false if it should be put back in the pool
@@ -223,6 +225,7 @@ public class ConcurrentPool<T> implements Pool<T> {
 
     /**
      * Clears the pool of all objects.
+     * Must not throw {@link Exception}s.
      */
     @Override
     public void close() {
@@ -260,7 +263,9 @@ public class ConcurrentPool<T> implements Pool<T> {
         return buf.toString();
     }
 
-    // swallow exceptions from ItemFactory.close()
+    /**
+     * Must not throw {@link Exception}s, so swallow exceptions from {@link ItemFactory#close(Object)}.
+     */
     private void close(final T t) {
         try {
             itemFactory.close(t);
