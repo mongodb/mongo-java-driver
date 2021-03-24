@@ -765,8 +765,6 @@ public class MongoClientOptions {
      * <ul>
      *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
      *    <ul>
-     *        <li>{@code serverSelectionTimeoutMS}: How long the driver will wait for server selection to succeed before throwing an
-     *        exception.</li>
      *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
      *        available</li>
      *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
@@ -1673,8 +1671,6 @@ public class MongoClientOptions {
          * <ul>
          *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
          *    <ul>
-         *        <li>{@code serverSelectionTimeoutMS}: How long the driver will wait for server selection to succeed before throwing an
-         *        exception.</li>
          *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
          *        available</li>
          *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
