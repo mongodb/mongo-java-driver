@@ -49,9 +49,9 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
 
     private volatile BsonDocument resumeToken;
     /**
-     * {@code null} {@linkplain AtomicReference#get() value} combined with {@link #isClosed} being {@code false}
-     * represents a situation in which the wrapped object was closed by {@code this} and {@code this} stayed open.
-     * This happens as a result of {@linkplain ChangeStreamBatchCursorHelper#isRetryableError(Throwable, int) retryable errors}.
+     * {@linkplain ChangeStreamBatchCursorHelper#isRetryableError(Throwable, int) Retryable errors} can result in
+     * {@code wrapped} containing {@code null} and {@link #isClosed} being {@code false}.
+     * This represents a situation in which the wrapped object was closed by {@code this} but {@code this} remained open.
      */
     private final AtomicReference<AsyncAggregateResponseBatchCursor<RawBsonDocument>> wrapped;
     private final AtomicBoolean isClosed;
@@ -150,16 +150,16 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
     }
 
     /**
-     * This method guarantees that the {@code wrapped} argument is closed even if
+     * This method guarantees that the {@code newValue} argument is closed even if
      * {@link #setWrappedOrCloseIt(AsyncAggregateResponseBatchCursor)} is called concurrently with or after (in the happens-before order)
      * the method {@link #close()}.
      */
-    private void setWrappedOrCloseIt(final AsyncAggregateResponseBatchCursor<RawBsonDocument> wrapped) {
+    private void setWrappedOrCloseIt(final AsyncAggregateResponseBatchCursor<RawBsonDocument> newValue) {
         if (isClosed()) {
             assertNull(this.wrapped.get());
-            wrapped.close();
+            newValue.close();
         } else {
-            assertNull(this.wrapped.getAndSet(wrapped));
+            assertNull(this.wrapped.getAndSet(newValue));
             if (isClosed()) {
                 nullifyAndCloseWrapped();
             }

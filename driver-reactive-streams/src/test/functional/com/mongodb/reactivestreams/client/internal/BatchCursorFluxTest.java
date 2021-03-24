@@ -28,7 +28,6 @@ import com.mongodb.reactivestreams.client.TestSubscriber;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
-import org.bson.BsonObjectId;
 import org.bson.BsonString;
 import org.bson.BsonTimestamp;
 import org.bson.BsonValue;
@@ -320,9 +319,8 @@ public class BatchCursorFluxTest {
      * @return {@code operationTime} starting at which the {@code collection} is guaranteed to exist.
      */
     private static BsonTimestamp ensureExists(final MongoClient client, final MongoCollection<Document> collection) {
-        BsonObjectId insertedId = Mono.from(collection.insertOne(Document.parse("{}")))
+        BsonValue insertedId = Mono.from(collection.insertOne(Document.parse("{}")))
                 .map(InsertOneResult::getInsertedId)
-                .map(BsonValue::asObjectId)
                 .block(TIMEOUT_DURATION);
         BsonArray deleteStatements = new BsonArray();
         deleteStatements.add(new BsonDocument()
