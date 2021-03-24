@@ -41,7 +41,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -114,6 +114,14 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         this.maxWireVersion = connection == null ? 0 : connection.getDescription().getMaxWireVersion();
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * From the perspective of the code external to this class, this method is idempotent as required by its specification.
+     * However, if this method sets {@link #isClosePending},
+     * then it must be called by {@code this} again to release resources.
+     * This behavior does not violate externally observable idempotence because this method is allowed to release resources "eventually".
+     */
     @Override
     public void close() {
         boolean doClose = false;
@@ -145,24 +153,20 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
 
     @Override
     public void setBatchSize(final int batchSize) {
-        synchronized (this) {
-            isTrue("open", !isClosed);
-        }
+        assertFalse(isClosed());
         this.batchSize = batchSize;
     }
 
     @Override
     public int getBatchSize() {
-        synchronized (this) {
-            isTrue("open", !isClosed);
-        }
+        assertFalse(isClosed());
         return batchSize;
     }
 
     @Override
     public boolean isClosed() {
         synchronized (this) {
-            return isClosed;
+            return isClosed || isClosePending;
         }
     }
 
@@ -197,23 +201,18 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
                 results = null;
             }
             firstBatch = null;
-            ServerCursor localCursor = getServerCursor();
-            if (localCursor == null) {
-                synchronized (this) {
-                    isClosed = true;
-                }
+            if (getServerCursor() == null) {
+                close();
             }
             callback.onResult(results, null);
         } else {
             ServerCursor localCursor = getServerCursor();
             if (localCursor == null) {
-                synchronized (this) {
-                    isClosed = true;
-                }
+                close();
                 callback.onResult(null, null);
             } else {
                 synchronized (this) {
-                    if (isClosed) {
+                    if (isClosed()) {
                         callback.onResult(null, new MongoException(format("%s called after the cursor was closed.",
                                 tryNext ? "tryNext()" : "next()")));
                         return;

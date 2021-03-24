@@ -26,6 +26,19 @@ import static java.lang.String.format;
 /**
  * An exception representing an error reported due to a write failure.
  *
+ * <p>Only thrown when using the legacy deprecated API, which is accessed via {@code com.mongodb.MongoClient.getDB}.</p>
+ *
+ * <p>For application using the {@code MongoCollection}-based API, write failures can be determined via:</p>
+ * <ul>
+ *   <li>
+ *       Single document writes: a {@link MongoWriteException} is thrown.
+ *   </li>
+ *   <li>
+ *       Bulk document writes: A {@link MongoBulkWriteException} is thrown.
+ *   </li>
+ * </ul>
+ * @see MongoWriteConcernException
+ * @see MongoBulkWriteException
  */
 public class WriteConcernException extends MongoServerException {
 

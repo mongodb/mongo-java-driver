@@ -19,9 +19,27 @@ package com.mongodb;
 import org.bson.BsonDocument;
 
 /**
- * Subclass of {@link WriteConcernException} representing a duplicate key exception
+ * The legacy {@link WriteConcernException}, thrown when trying to insert or update a document containing a duplicate key.
+ *
+ * <p>Only thrown when using the legacy deprecated API, which is accessed via {@code com.mongodb.MongoClient.getDB}.</p>
+ *
+ * <p>For application using the {@code MongoCollection}-based API, duplicate key exceptions can be determined via:</p>
+ * <ul>
+ *   <li>
+ *       Single document inserts or updates: a {@link MongoWriteException} is thrown with a {@link WriteError} in the category
+ *       {@link ErrorCategory#DUPLICATE_KEY}.
+ *   </li>
+ *   <li>
+ *       Bulk document inserts or updates: A {@link MongoBulkWriteException} is thrown where one or more of the {@link WriteError}'s in the
+ *       list of errors is in the category {@link ErrorCategory#DUPLICATE_KEY}.
+ *   </li>
+ * </ul>
  *
  * @since 2.12
+ * @see MongoWriteException
+ * @see MongoBulkWriteException
+ * @see WriteError
+ * @see ErrorCategory#DUPLICATE_KEY
  */
 public class DuplicateKeyException extends WriteConcernException {
 

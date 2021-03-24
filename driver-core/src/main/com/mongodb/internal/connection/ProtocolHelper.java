@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.DuplicateKeyException;
 import com.mongodb.ErrorCategory;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
@@ -25,8 +24,6 @@ import com.mongodb.MongoNodeIsRecoveringException;
 import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.MongoQueryException;
 import com.mongodb.ServerAddress;
-import com.mongodb.WriteConcernException;
-import com.mongodb.WriteConcernResult;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
@@ -35,7 +32,6 @@ import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
 import org.bson.BsonBinaryReader;
-import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonReader;
@@ -64,13 +60,6 @@ public final class ProtocolHelper {
     private static final Logger PROTOCOL_EVENT_LOGGER = Loggers.getLogger("protocol.event");
     private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());
     private static final int NO_ERROR_CODE = -1;
-
-    private static WriteConcernResult createWriteResult(final BsonDocument result) {
-        BsonBoolean updatedExisting = result.getBoolean("updatedExisting", BsonBoolean.FALSE);
-
-        return WriteConcernResult.acknowledged(result.getNumber("n", new BsonInt32(0)).intValue(),
-                                               updatedExisting.getValue(), result.get("upserted"));
-    }
 
 
     static boolean isCommandOk(final BsonDocument response) {
@@ -260,25 +249,6 @@ public final class ProtocolHelper {
     private static boolean isNodeIsRecoveringError(final int errorCode, final String errorMessage) {
         return RECOVERING_CODES.contains(errorCode)
                 || (errorCode == NO_ERROR_CODE && (RECOVERING_MESSAGES.stream().anyMatch(errorMessage::contains)));
-    }
-
-
-    private static boolean hasWriteError(final BsonDocument response) {
-        String err = WriteConcernException.extractErrorMessage(response);
-        return err != null && err.length() > 0;
-    }
-
-    private static void throwWriteException(final BsonDocument result, final ServerAddress serverAddress) {
-        MongoException specialException = createSpecialException(result, serverAddress, "err");
-        if (specialException != null) {
-            throw specialException;
-        }
-        int code = WriteConcernException.extractErrorCode(result);
-        if (ErrorCategory.fromErrorCode(code) == ErrorCategory.DUPLICATE_KEY) {
-            throw new DuplicateKeyException(result, serverAddress, createWriteResult(result));
-        } else {
-            throw new WriteConcernException(result, serverAddress, createWriteResult(result));
-        }
     }
 
     static void sendCommandStartedEvent(final RequestMessage message, final String databaseName, final String commandName,

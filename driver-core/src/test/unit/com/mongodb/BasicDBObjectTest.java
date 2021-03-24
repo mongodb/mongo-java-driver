@@ -30,6 +30,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.UUID;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.not;
@@ -216,6 +217,15 @@ public class BasicDBObjectTest {
 
         assertEquality(new BasicDBObject("a", first), new BasicDBObject("a", second));
         assertEquality(new BasicDBObject("a", first), new BasicBSONObject("a", third));
+    }
+
+    @Test
+    public void testUuid() {
+        UUID uuid = UUID.randomUUID();
+        BasicDBObject dbo1 = new BasicDBObject("_id", uuid);
+        BasicDBObject dbo2 = new BasicDBObject("_id", uuid);
+
+        assertEquality(dbo1, dbo2);
     }
 
     void assertEquality(final BSONObject x, final BSONObject y) {
