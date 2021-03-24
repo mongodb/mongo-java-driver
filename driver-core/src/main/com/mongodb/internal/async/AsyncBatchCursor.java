@@ -65,12 +65,24 @@ public interface AsyncBatchCursor<T> extends Closeable {
     int getBatchSize();
 
     /**
-     * Return true if the AsyncBatchCursor has been closed
+     * Implementations of {@link AsyncBatchCursor} are allowed to close themselves, see {@link #close()} for more details.
      *
-     * @return true if the AsyncBatchCursor has been closed
+     * @return {@code true} if {@code this} has been closed or has closed itself.
      */
     boolean isClosed();
 
+    /**
+     * Implementations of {@link AsyncBatchCursor} are allowed to close themselves synchronously via methods
+     * {@link #next(SingleResultCallback)}/{@link #tryNext(SingleResultCallback)}.
+     * Self-closing behavior is discouraged because it introduces an additional burden on code that uses {@link AsyncBatchCursor}.
+     * To help making such code simpler, this method is required to be idempotent.
+     * <p>
+     * Another quirk is that this method is allowed to release resources "eventually",
+     * i.e., not before (in the happens before order) returning.
+     * Nevertheless, {@link #isClosed()} called after (in the happens-before order) {@link #close()} must return {@code true}.
+     *
+     * @see #close()
+     */
     @Override
     void close();
 }
