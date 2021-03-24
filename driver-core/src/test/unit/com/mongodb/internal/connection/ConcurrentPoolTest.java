@@ -163,7 +163,7 @@ public class ConcurrentPoolTest {
     public void whenEnsuringMinSizeShouldNotInitializePooledItemIfNotRequested() {
         pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
 
-        pool.ensureMinSize(1, null);
+        pool.ensureMinSize(1, noInit -> {});
         assertFalse(pool.get().isInitialized());
     }
 
