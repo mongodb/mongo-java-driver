@@ -65,7 +65,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
-import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -731,85 +730,102 @@ class DefaultConnectionPool implements ConnectionPool {
             desiredConnectionSlots = new LinkedList<>();
         }
 
-        PooledConnection openOrGetAvailable(
-                final PooledConnection connection, final Timeout timeout) throws MongoTimeoutException {
-            PooledConnection result = openOrSilentlyCloseAndGetAvailable(connection, true, timeout, null);
-            return assertNotNull(result);
-        }
-
-        void openAsyncOrGetAvailable(
-                final PooledConnection connection, final Timeout timeout, final SingleResultCallback<InternalConnection> callback) {
-            PooledConnection result = openOrSilentlyCloseAndGetAvailable(connection, true, timeout, callback);
-            assertNull(result);
+        PooledConnection openOrGetAvailable(final PooledConnection connection, final Timeout timeout) throws MongoTimeoutException {
+            return openOrGetAvailable(connection, true, timeout);
         }
 
         void openImmediately(final PooledConnection connection) throws MongoTimeoutException {
-            PooledConnection result = openOrSilentlyCloseAndGetAvailable(connection, false, Timeout.immediate(), null);
+            PooledConnection result = openOrGetAvailable(connection, false, Timeout.immediate());
             assertTrue(result == connection);
         }
 
         /**
-         * Regardless of the {@code callback}, this method has a synchronous phase.
-         * In this phase it tries to synchronously acquire a permit to open the {@code connection}
+         * This method can be thought of as operating in two phases.
+         * In the first phase it tries to synchronously acquire a permit to open the {@code connection}
          * or get a different {@linkplain PooledConnection#opened() opened} connection if {@code tryGetAvailable} is {@code true} and
          * one becomes available while waiting for a permit.
-         * The first synchronous phase has one of the following outcomes:
+         * The first phase has one of the following outcomes:
          * <ol>
-         *     <li>A {@link MongoTimeoutException} or a different {@link Exception} is thrown<sup>1</sup>.</li>
-         *     <li>An opened connection different from the specified one is returned<sup>1</sup>,
+         *     <li>A {@link MongoTimeoutException} or a different {@link Exception} is thrown.</li>
+         *     <li>An opened connection different from the specified one is returned,
          *     and the specified {@code connection} is {@linkplain PooledConnection#closeSilently() silently closed}.
          *     </li>
          *     <li>A permit is acquired, {@link #connectionCreated(ConnectionPoolListener, ConnectionId)} is reported
          *     and an attempt to open the specified {@code connection} is made. This is the second phase in which
-         *     the {@code connection} is {@linkplain PooledConnection#open() opened synchronously} if {@code callback} is null,
-         *     or {@linkplain PooledConnection#openAsync(SingleResultCallback) opened asynchronously} otherwise.
+         *     the {@code connection} is {@linkplain PooledConnection#open() opened synchronously}.
          *     The attempt to open the {@code connection} has one of the following outcomes
          *     combined with releasing the acquired permit:</li>
          *     <ol>
-         *         <li>An {@link Exception} is thrown<sup>1</sup>
+         *         <li>An {@link Exception} is thrown
          *         and the {@code connection} is {@linkplain PooledConnection#closeAndHandleOpenFailure() closed}.</li>
-         *         <li>The specified {@code connection}, which is now opened, is returned<sup>1</sup>.</li>
+         *         <li>The specified {@code connection}, which is now opened, is returned.</li>
          *     </ol>
          * </ol>
-         * <hr>
-         * <sup>1</sup> Throwing and returning behavior depends on the value of {@code callback}:
-         * <ul>
-         *     <li>if {@code null}, then the words "return"/"throw" mean usual {@code return}/{@code throw} in Java;</li>
-         *     <li>otherwise "return"/"throw" mean calling
-         *     {@code callback.}{@link SingleResultCallback#onResult(Object, Throwable) onResult(result, failure)}
-         *     and passing either a {@link PooledConnection} or an {@link Exception}.</li>
-         * </ul>
          *
-         * @param timeout Applies only to the first synchronous phase.
-         * @return If {@code callback} is {@code null}, then an {@linkplain PooledConnection#opened() opened} connection which is
-         * either the specified {@code connection} or a different one; otherwise returns {@code null}.
-         * @throws MongoTimeoutException If {@code callback} is {@code null} and the method timed out;
-         * otherwise does not throw this exception.
+         * @param timeout Applies only to the first phase.
+         * @return An {@linkplain PooledConnection#opened() opened} connection which is
+         * either the specified {@code connection} or a different one.
+         * @throws MongoTimeoutException If the first phase timed out.
          */
-        @Nullable
-        private PooledConnection openOrSilentlyCloseAndGetAvailable(
-                final PooledConnection connection, final boolean tryGetAvailable, final Timeout timeout,
-                @Nullable final SingleResultCallback<InternalConnection> callback) throws MongoTimeoutException {
+        private PooledConnection openOrGetAvailable(
+                final PooledConnection connection, final boolean tryGetAvailable, final Timeout timeout) throws MongoTimeoutException {
             PooledConnection availableConnection;
-            try {//phase one, synchronous
-                availableConnection = acquirePermitOrGetAvailableOpenConnection(tryGetAvailable, timeout);
+            try {//phase one
+                availableConnection = acquirePermitOrGetAvailableOpenedConnection(tryGetAvailable, timeout);
             } catch (RuntimeException e) {
-                try {
-                    return throwException(e, callback);
-                } finally {
-                    connection.closeSilently();
-                }
+                connection.closeSilently();
+                throw e;
             }
             if (availableConnection != null) {
-                try {
-                    return returnValue(availableConnection, callback);
-                } finally {
-                    connection.closeSilently();
-                }
+                connection.closeSilently();
+                return availableConnection;
             } else {//acquired a permit, phase two
                 connectionCreated(//a connection is considered created only when it is ready to be open
                         connectionPoolListener, getId(connection));
-                return openAndReleasePermit(connection, callback);
+                try {
+                    connection.open();
+                } finally {
+                    releasePermit();
+                }
+                return connection;
+            }
+        }
+
+        /**
+         * This method is similar to {@link #openOrGetAvailable(PooledConnection, boolean, Timeout)} with the following differences:
+         * <ul>
+         *     <li>It does not have the {@code tryGetAvailable} parameter and acts as if this parameter were {@code true}.</li>
+         *     <li>While the first phase is still synchronous, the {@code connection} is
+         *     {@linkplain PooledConnection#openAsync(SingleResultCallback) opened asynchronously} in the second phase.</li>
+         *     <li>Instead of returning a result or throwing an exception via Java {@code return}/{@code throw} statements,
+         *     it calls {@code callback.}{@link SingleResultCallback#onResult(Object, Throwable) onResult(result, failure)}
+         *     and passes either a {@link PooledConnection} or an {@link Exception}.</li>
+         * </ul>
+         */
+        void openAsyncOrGetAvailable(
+                final PooledConnection connection, final Timeout timeout, final SingleResultCallback<InternalConnection> callback) {
+            PooledConnection availableConnection;
+            try {//phase one
+                availableConnection = acquirePermitOrGetAvailableOpenedConnection(true, timeout);
+            } catch (RuntimeException e) {
+                connection.closeSilently();
+                callback.onResult(null, e);
+                return;
+            }
+            if (availableConnection != null) {
+                connection.closeSilently();
+                callback.onResult(availableConnection, null);
+            } else {//acquired a permit, phase two
+                connectionCreated(//a connection is considered created only when it is ready to be open
+                        connectionPoolListener, getId(connection));
+                connection.openAsync((nullResult, failure) -> {
+                    releasePermit();
+                    if (failure != null) {
+                        callback.onResult(null, failure);
+                    } else {
+                        callback.onResult(connection, null);
+                    }
+                });
             }
         }
 
@@ -820,7 +836,7 @@ class DefaultConnectionPool implements ConnectionPool {
          * @throws MongoTimeoutException If timed out.
          */
         @Nullable
-        private PooledConnection acquirePermitOrGetAvailableOpenConnection(final boolean tryGetAvailable, final Timeout timeout)
+        private PooledConnection acquirePermitOrGetAvailableOpenedConnection(final boolean tryGetAvailable, final Timeout timeout)
                 throws MongoTimeoutException {
             PooledConnection availableConnection = null;
             tryLock(timeout);
@@ -912,54 +928,6 @@ class DefaultConnectionPool implements ConnectionPool {
                 return false;
             } finally {
                 lock.unlock();
-            }
-        }
-
-        @Nullable
-        private PooledConnection openAndReleasePermit(
-                final PooledConnection connection,
-                @Nullable final SingleResultCallback<InternalConnection> callback) {
-            if (callback == null) {
-                try {
-                    connection.open();
-                    return connection;
-                } finally {
-                    releasePermit();
-                }
-            } else {
-                connection.openAsync((nullResult, failure) -> {
-                    try {
-                        releasePermit();
-                    } finally {
-                        if (failure == null) {
-                            callback.onResult(connection, null);
-                        } else {
-                            callback.onResult(null, failure);
-                        }
-                    }
-                });
-                return null;
-            }
-        }
-
-        @Nullable
-        private <T> T returnValue(final T value, @Nullable final SingleResultCallback<? super T> callback) {
-            if (callback == null) {
-                return value;
-            } else {
-                callback.onResult(value, null);
-                return null;
-            }
-        }
-
-        @Nullable
-        private <T> T throwException(final RuntimeException e, @Nullable final SingleResultCallback<? super T> callback)
-                throws RuntimeException {
-            if (callback == null) {
-                throw e;
-            } else {
-                callback.onResult(null, e);
-                return null;
             }
         }
 
