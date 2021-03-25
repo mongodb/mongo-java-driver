@@ -23,12 +23,13 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.test.CollectionHelper;
-import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
+import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonDouble;
 import org.bson.BsonString;
@@ -52,6 +53,7 @@ import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.getServerVersion;
 import static com.mongodb.client.Fixture.getMongoClient;
+import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.unified.RunOnRequirementsMatcher.runOnRequirementsMet;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
@@ -121,20 +123,20 @@ public abstract class UnifiedTest {
 
     protected abstract MongoClient createMongoClient(MongoClientSettings settings);
 
-    @Nullable
-    protected StreamFactoryFactory getStreamFactoryFactory() {
-        return null;
-    }
-
     @Before
     public void setUp() {
-        assertTrue(schemaVersion.startsWith("1.0") || schemaVersion.startsWith("1.1") || schemaVersion.startsWith("1.2"));
+        assertTrue(schemaVersion.startsWith("1.0")
+                || schemaVersion.startsWith("1.1")
+                || schemaVersion.startsWith("1.2")
+                || schemaVersion.startsWith("1.3"));
         if (runOnRequirements != null) {
-            assumeTrue("Run-on requirements not met", runOnRequirementsMet(runOnRequirements, getServerVersion()));
+            assumeTrue("Run-on requirements not met",
+                    runOnRequirementsMet(runOnRequirements, getMongoClientSettings(), getServerVersion()));
         }
         if (definition.containsKey("runOnRequirements")) {
             assumeTrue("Run-on requirements not met",
-                    runOnRequirementsMet(definition.getArray("runOnRequirements", new BsonArray()), getServerVersion()));
+                    runOnRequirementsMet(definition.getArray("runOnRequirements", new BsonArray()), getMongoClientSettings(),
+                            getServerVersion()));
         }
         if (definition.containsKey("skipReason")) {
             throw new AssumptionViolatedException(definition.getString("skipReason").getValue());
@@ -170,8 +172,16 @@ public abstract class UnifiedTest {
         for (BsonValue cur : operation.getArray("expectEvents")) {
             BsonDocument curClientEvents = cur.asDocument();
             String client = curClientEvents.getString("client").getValue();
-            TestCommandListener listener = entities.getClientCommandListener(client);
-            eventMatcher.assertEventsEquality(client, curClientEvents.getArray("events"), listener.getEvents());
+            String eventType = curClientEvents.getString("eventType", new BsonString("command")).getValue();
+            if (eventType.equals("command")) {
+                TestCommandListener listener = entities.getClientCommandListener(client);
+                eventMatcher.assertCommandEventsEquality(client, curClientEvents.getArray("events"), listener.getEvents());
+            } else if (eventType.equals("cmap")) {
+                TestConnectionPoolListener listener = entities.getConnectionPoolListener(client);
+                eventMatcher.assertConnectionPoolEventsEquality(client, curClientEvents.getArray("events"), listener.getEvents());
+            } else {
+                throw new UnsupportedOperationException("Unexpected event type: " + eventType);
+            }
         }
     }
 
@@ -191,14 +201,16 @@ public abstract class UnifiedTest {
     private void assertOperation(final BsonDocument operation) {
         OperationResult result = executeOperation(operation);
         context.push(ContextElement.ofOperation(operation, result));
-        if (operation.containsKey("expectResult")) {
-            assertNotNull(context.getMessage("The operation expects a result but an exception occurred"), result.getResult());
-            valueMatcher.assertValuesMatch(operation.get("expectResult"), result.getResult());
-        } else if (operation.containsKey("expectError")) {
-            assertNotNull(context.getMessage("The operation expects an error but no exception was thrown"), result.getException());
-            errorMatcher.assertErrorsMatch(operation.getDocument("expectError"), result.getException());
-        } else {
-            assertNull(context.getMessage("The operation expects no error but an exception occurred"), result.getException());
+        if (!operation.getBoolean("ignoreResultAndError", BsonBoolean.FALSE).getValue()) {
+            if (operation.containsKey("expectResult")) {
+                assertNotNull(context.getMessage("The operation expects a result but an exception occurred"), result.getResult());
+                valueMatcher.assertValuesMatch(operation.get("expectResult"), result.getResult());
+            } else if (operation.containsKey("expectError")) {
+                assertNotNull(context.getMessage("The operation expects an error but no exception was thrown"), result.getException());
+                errorMatcher.assertErrorsMatch(operation.getDocument("expectError"), result.getException());
+            } else {
+                assertNull(context.getMessage("The operation expects no error but an exception occurred"), result.getException());
+            }
         }
         context.pop();
     }
@@ -224,6 +236,8 @@ public abstract class UnifiedTest {
                 return executeAssertSameLsidOnLastTwoCommands(operation);
             case "assertDifferentLsidOnLastTwoCommands":
                 return executeAssertDifferentLsidOnLastTwoCommands(operation);
+            case "assertNumberConnectionsCheckedOut":
+                return executeAssertNumberConnectionsCheckedOut(operation);
             case "assertSessionTransactionState":
                 return executeAssertSessionTransactionState(operation);
             case "assertCollectionExists":
@@ -268,6 +282,10 @@ public abstract class UnifiedTest {
                 return crudHelper.executeFindOneAndDelete(operation);
             case "listDatabases":
                 return crudHelper.executeListDatabases(operation);
+            case "listCollections":
+                return crudHelper.executeListCollections(operation);
+            case "listIndexes":
+                return crudHelper.executeListIndexes(operation);
             case "dropCollection":
                 return crudHelper.executeDropCollection(operation);
             case "createCollection":
@@ -282,8 +300,12 @@ public abstract class UnifiedTest {
                 return crudHelper.executeAbortTransaction(operation);
             case "withTransaction":
                 return crudHelper.executeWithTransaction(operation, this::assertOperation);
+            case "createFindCursor":
+                return crudHelper.createFindCursor(operation);
             case "createChangeStream":
-                return crudHelper.executeChangeStream(operation);
+                return crudHelper.createChangeStreamCursor(operation);
+            case "close":
+                return crudHelper.close(operation);
             case "iterateUntilDocumentOrError":
                 return crudHelper.executeIterateUntilDocumentOrError(operation);
             case "delete":
@@ -411,6 +433,14 @@ public abstract class UnifiedTest {
         ClientSession session = entities.getSession(operation.getDocument("arguments").getString("session").getValue());
         assertNotNull(session.getServerSession());
         assertEquals(expected, session.getPinnedServerAddress() != null);
+        return OperationResult.NONE;
+    }
+
+    private OperationResult executeAssertNumberConnectionsCheckedOut(final BsonDocument operation) {
+        TestConnectionPoolListener listener = entities.getConnectionPoolListener(
+                operation.getDocument("arguments").getString("client").getValue());
+        assertEquals(context.getMessage("Number of checked out connections must match expected"),
+                operation.getDocument("arguments").getNumber("connections").intValue(), listener.getNumConnectionsCheckedOut());
         return OperationResult.NONE;
     }
 

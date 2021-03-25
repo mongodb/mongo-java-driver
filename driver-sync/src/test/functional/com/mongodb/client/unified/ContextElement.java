@@ -52,12 +52,21 @@ abstract class ContextElement {
         return new OutcomeMatchingContextElement(namespace, expectedOutcome, actualOutcome);
     }
 
-    static ContextElement ofEvents(final String client, final BsonArray expectedEvents, final List<CommandEvent> actualEvents) {
-        return new EventsMatchingContextElement(client, expectedEvents, actualEvents);
+    static ContextElement ofCommandEvents(final String client, final BsonArray expectedEvents, final List<CommandEvent> actualEvents) {
+        return new CommandEventsMatchingContextElement(client, expectedEvents, actualEvents);
     }
 
-    static ContextElement ofEvent(final BsonDocument expected, final CommandEvent actual, final int eventPosition) {
-        return new EventMatchingContextElement(expected, actual, eventPosition);
+    static ContextElement ofCommandEvent(final BsonDocument expected, final CommandEvent actual, final int eventPosition) {
+        return new CommandEventMatchingContextElement(expected, actual, eventPosition);
+    }
+
+    public static ContextElement ofConnectionPoolEvents(final String client, final BsonArray expectedEvents,
+                                                        final List<Object> actualEvents) {
+        return new ConnectionPoolEventsMatchingContextElement(client, expectedEvents, actualEvents);
+    }
+
+    public static ContextElement ofConnectionPoolEvent(final BsonDocument expected, final Object actual, final int eventPosition) {
+        return new ConnectionPoolEventMatchingContextElement(expected, actual, eventPosition);
     }
 
 
@@ -162,12 +171,12 @@ abstract class ContextElement {
         }
     }
 
-    private static class EventsMatchingContextElement extends ContextElement {
+    private static class CommandEventsMatchingContextElement extends ContextElement {
         private final String client;
         private final BsonArray expectedEvents;
         private final List<CommandEvent> actualEvents;
 
-        EventsMatchingContextElement(final String client, final BsonArray expectedEvents, final List<CommandEvent> actualEvents) {
+        CommandEventsMatchingContextElement(final String client, final BsonArray expectedEvents, final List<CommandEvent> actualEvents) {
             this.client = client;
             this.expectedEvents = expectedEvents;
             this.actualEvents = actualEvents;
@@ -181,18 +190,18 @@ abstract class ContextElement {
                     + new BsonDocument("events", expectedEvents).toJson(JsonWriterSettings.builder().indent(true).build()) + "\n"
                     + "   Actual events:\n"
                     + new BsonDocument("events", new BsonArray(actualEvents.stream()
-                    .map(ContextElement::eventToDocument).collect(Collectors.toList())))
+                    .map(ContextElement::commandEventToDocument).collect(Collectors.toList())))
                     .toJson(JsonWriterSettings.builder().indent(true).build())
                     + "\n";
         }
     }
 
-    private static class EventMatchingContextElement extends ContextElement {
+    private static class CommandEventMatchingContextElement extends ContextElement {
         private final BsonDocument expectedEvent;
         private final CommandEvent actualEvent;
         private final int eventPosition;
 
-        EventMatchingContextElement(final BsonDocument expectedEvent, final CommandEvent actualEvent, final int eventPosition) {
+        CommandEventMatchingContextElement(final BsonDocument expectedEvent, final CommandEvent actualEvent, final int eventPosition) {
             this.expectedEvent = expectedEvent;
             this.actualEvent = actualEvent;
             this.eventPosition = eventPosition;
@@ -203,11 +212,11 @@ abstract class ContextElement {
             return "Event Matching Context\n"
                     + "   event position: " + eventPosition + "\n"
                     + "   expected event: " + expectedEvent + "\n"
-                    + "   actual event:   " + eventToDocument(actualEvent) + "\n";
+                    + "   actual event:   " + commandEventToDocument(actualEvent) + "\n";
         }
     }
 
-    private static BsonDocument eventToDocument(final CommandEvent event) {
+    private static BsonDocument commandEventToDocument(final CommandEvent event) {
         if (event instanceof CommandStartedEvent) {
             CommandStartedEvent commandStartedEvent = (CommandStartedEvent) event;
             return new BsonDocument("commandStartedEvent",
@@ -226,5 +235,53 @@ abstract class ContextElement {
         } else {
             throw new UnsupportedOperationException("Unsupported command event: " + event.getClass().getName());
         }
+    }
+
+    private static class ConnectionPoolEventsMatchingContextElement extends ContextElement {
+        private final String client;
+        private final BsonArray expectedEvents;
+        private final List<Object> actualEvents;
+
+        ConnectionPoolEventsMatchingContextElement(final String client, final BsonArray expectedEvents, final List<Object> actualEvents) {
+            this.client = client;
+            this.expectedEvents = expectedEvents;
+            this.actualEvents = actualEvents;
+        }
+
+        @Override
+        public String toString() {
+            return "Events MatchingContext: \n"
+                    + "   client: '" + client + "\n"
+                    + "   Expected events:\n"
+                    + new BsonDocument("events", expectedEvents).toJson(JsonWriterSettings.builder().indent(true).build()) + "\n"
+                    + "   Actual events:\n"
+                    + new BsonDocument("events", new BsonArray(actualEvents.stream()
+                    .map(ContextElement::connectionPoolEventToDocument).collect(Collectors.toList())))
+                    .toJson(JsonWriterSettings.builder().indent(true).build())
+                    + "\n";
+        }
+    }
+    private static class ConnectionPoolEventMatchingContextElement extends ContextElement {
+        private final BsonDocument expectedEvent;
+        private final Object actualEvent;
+        private final int eventPosition;
+
+        ConnectionPoolEventMatchingContextElement(final BsonDocument expectedEvent, final Object actualEvent, final int eventPosition) {
+            this.expectedEvent = expectedEvent;
+            this.actualEvent = actualEvent;
+            this.eventPosition = eventPosition;
+        }
+
+        @Override
+        public String toString() {
+            return "Event Matching Context\n"
+                    + "   event position: " + eventPosition + "\n"
+                    + "   expected event: " + expectedEvent + "\n"
+                    + "   actual event:   " + connectionPoolEventToDocument(actualEvent) + "\n";
+        }
+    }
+
+    private static BsonDocument connectionPoolEventToDocument(final Object event) {
+        return new BsonDocument(event.getClass().getSimpleName(), new BsonDocument());
     }
 }

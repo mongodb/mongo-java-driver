@@ -16,6 +16,7 @@
 
 package com.mongodb.client.unified;
 
+import com.mongodb.MongoClientSettings;
 import com.mongodb.connection.ServerVersion;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -30,7 +31,8 @@ import static com.mongodb.JsonTestServerVersionChecker.getMinServerVersion;
 import static com.mongodb.JsonTestServerVersionChecker.topologyMatches;
 
 final class RunOnRequirementsMatcher {
-    public static boolean runOnRequirementsMet(final BsonArray runOnRequirements, final ServerVersion serverVersion) {
+    public static boolean runOnRequirementsMet(final BsonArray runOnRequirements, final MongoClientSettings clientSettings,
+                                               final ServerVersion serverVersion) {
         for (BsonValue cur : runOnRequirements) {
             boolean requirementMet = true;
             BsonDocument requirement = cur.asDocument();
@@ -53,6 +55,12 @@ final class RunOnRequirementsMatcher {
                     case "topologies":
                         BsonArray topologyTypes = curRequirement.getValue().asArray();
                         if (!topologyMatches(topologyTypes)) {
+                            requirementMet = false;
+                            break requirementLoop;
+                        }
+                        break;
+                    case "auth":
+                        if (curRequirement.getValue().asBoolean().getValue() == (clientSettings.getCredential() == null)) {
                             requirementMet = false;
                             break requirementLoop;
                         }
