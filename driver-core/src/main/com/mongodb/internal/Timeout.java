@@ -34,6 +34,7 @@ public final class Timeout {
     private static final Timeout IMMEDIATE = new Timeout(0, 0);
 
     private final long durationNanos;
+
     private final long startNanos;
 
     private Timeout(final long durationNanos, final long startNanos) {
@@ -56,9 +57,9 @@ public final class Timeout {
      */
     public static Timeout startNow(final long durationNanos) {
         if (durationNanos < 0 || durationNanos == Long.MAX_VALUE) {
-            return INFINITE;
+            return infinite();
         } else if (durationNanos == 0) {
-            return IMMEDIATE;
+            return immediate();
         } else {
             return new Timeout(durationNanos, System.nanoTime());
         }
@@ -79,12 +80,64 @@ public final class Timeout {
     }
 
     /**
-     * Returns 0 or a positive value.
      * Must not be called on {@linkplain #isInfinite() infinite} or {@linkplain #isImmediate() immediate} timeouts.
+     * <p>
+     * Returns {@code currentNanos} - {@link #startNanos}:
+     * <ul>
+     *     <li>
+     *         A negative value means either of the following
+     *         <ol>
+     *             <li>the clock from which {@code currentNanos} was read jumped backwards,
+     *             in which case the behaviour of this class is undefined;</li>
+     *             <li>(n * 2<sup>63</sup> - 1; (n + 1) * 2<sup>63</sup>)<sup>(*)</sup> nanoseconds has elapsed,
+     *             in which case the timeout has expired.</li>
+     *         </ol>
+     *     </li>
+     *     <li>
+     *         0 means either of the following
+     *         <ol>
+     *             <li>0 nanoseconds has elapsed;</li>
+     *             <li>(n + 1) * 2<sup>63</sup><sup>(*)</sup> nanoseconds has elapsed,
+     *             in which case the timeout has expired.</li>
+     *         </ol>
+     *         Since it is impossible to differentiate the former from the latter, and the former is much more likely to happen in practice,
+     *         this class interprets 0 value as 0 elapsed nanoseconds.
+     *     </li>
+     *     <li>
+     *         A positive value means either of the following
+     *         <ol>
+     *             <li>this exact number of nanoseconds has elapsed;</li>
+     *             <li>((n + 1) * 2<sup>63</sup>; (n + 2) * 2<sup>63</sup> - 1]<sup>(*)</sup> nanoseconds has elapsed,
+     *             in which case the timeout has expired.</li>
+     *         </ol>
+     *         Since it is impossible to differentiate the former from the latter, and the former is much more likely to happen in practice,
+     *         this class interprets a positive value as the exact number of elapsed nanoseconds.
+     *     </li>
+     * </ul>
+     * <hr>
+     * <sup>(*)</sup> n is positive and odd.
      */
-    private long elapsedNanos() {
+    private long elapsedNanos(final long currentNanos) {
         assertFalse(isInfinite() || isImmediate());
-        return System.nanoTime() - startNanos;
+        return currentNanos - startNanos;
+    }
+
+    /**
+     * Is package-access for the purpose of testing and must not be used for any other purpose outside of this class.
+     * <p>
+     * Returns 0 or a positive value.
+     * 0 means that the timeout has expired.
+     * <p>
+     * Must not be called on {@linkplain #isInfinite() infinite} timeouts.
+     */
+    long remainingNanos(final long currentNanos) {
+        assertFalse(isInfinite());
+        if (isImmediate()) {
+            return 0;
+        } else {
+            long elapsedNanos = elapsedNanos(currentNanos);
+            return elapsedNanos < 0 ? 0 : Math.max(0, durationNanos - elapsedNanos);
+        }
     }
 
     /**
@@ -98,7 +151,7 @@ public final class Timeout {
         if (isInfinite()) {
             throw new UnsupportedOperationException();
         }
-        return isImmediate() ? 0 : Math.max(0, durationNanos - elapsedNanos());
+        return remainingNanos(System.nanoTime());
     }
 
     /**
@@ -185,5 +238,19 @@ public final class Timeout {
         } else {
             return NANOSECONDS.toMillis(durationNanos) + " ms";
         }
+    }
+
+    /**
+     * Is package-access for the purpose of testing and must not be used for any other purpose outside of this class.
+     */
+    long durationNanos() {
+        return durationNanos;
+    }
+
+    /**
+     * Is package-access for the purpose of testing and must not be used for any other purpose outside of this class.
+     */
+    long startNanos() {
+        return startNanos;
     }
 }
