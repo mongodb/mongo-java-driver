@@ -878,7 +878,7 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         private void releasePermit() {
-            lock();
+            lock.lock();
             try {
                 assertTrue(permits < maxPermits);
                 permits++;
@@ -911,7 +911,7 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         boolean tryHandOver(final PooledConnection openConnection) {
-            lock();
+            lock.lock();
             try {
                 for (//iterate from first (head) to last (tail)
                         MutableReference<PooledConnection> desiredConnectionSlot : desiredConnectionSlots) {
@@ -931,15 +931,15 @@ class DefaultConnectionPool implements ConnectionPool {
             }
         }
 
-        private void lock() {
-            tryLock(Timeout.infinite());
-        }
-
+        /**
+         * @param timeout If {@linkplain Timeout#isInfinite() infinite},
+         *                then the lock is {@linkplain Lock#lockInterruptibly() acquired interruptibly}.
+         */
         private void tryLock(final Timeout timeout) throws MongoTimeoutException {
             boolean success;
             try {
                 if (timeout.isInfinite()) {
-                    lock.lock();
+                    lock.lockInterruptibly();
                     success = true;
                 } else {
                     success = lock.tryLock(timeout.remainingNanos(), TimeUnit.NANOSECONDS);
