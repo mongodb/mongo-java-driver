@@ -21,7 +21,9 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
-import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.assertTrue;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
@@ -34,7 +36,6 @@ public final class Timeout {
     private static final Timeout IMMEDIATE = new Timeout(0, 0);
 
     private final long durationNanos;
-
     private final long startNanos;
 
     private Timeout(final long durationNanos, final long startNanos) {
@@ -46,7 +47,8 @@ public final class Timeout {
      * @see #startNow(long)
      */
     public static Timeout startNow(final long duration, final TimeUnit unit) {
-        return startNow(notNull("unit", unit).toNanos(duration));
+        assertNotNull(unit);
+        return startNow(unit.toNanos(duration));
     }
 
     /**
@@ -131,54 +133,63 @@ public final class Timeout {
      * Must not be called on {@linkplain #isInfinite() infinite} timeouts.
      */
     long remainingNanos(final long currentNanos) {
-        assertFalse(isInfinite());
-        if (isImmediate()) {
-            return 0;
-        } else {
-            long elapsedNanos = elapsedNanos(currentNanos);
-            return elapsedNanos < 0 ? 0 : Math.max(0, durationNanos - elapsedNanos);
-        }
+        assertFalse(isInfinite() || isImmediate());
+        long elapsedNanos = elapsedNanos(currentNanos);
+        return elapsedNanos < 0 ? 0 : Math.max(0, durationNanos - elapsedNanos);
     }
 
     /**
-     * Returns 0 or a positive value.
+     * Returns 0 or a positive value converted to the specified {@code unit}s.
      * Use {@link #expired(long)} to check if the returned value signifies that a timeout is expired.
      *
+     * @param unit If not {@link TimeUnit#NANOSECONDS}, then coarsening conversion is done that may result in returning a value
+     *             that represents a longer time duration than is actually remaining (this is done to prevent treating a timeout as
+     *             {@linkplain #expired(long) expired} when it is not). Consequently, one should specify {@code unit} as small as
+     *             practically possible. Such rounding up happens if and only if the remaining time cannot be
+     *             represented exactly as an integral number of the {@code unit}s specified. It may result in
+     *             {@link #expired()} returning {@code true} and after that (in the happens-before order)
+     *             {@link #expired(long) expired}{@code (}{@link #remaining(TimeUnit) remaining(...)}{@code )}
+     *             returning {@code false}. If such a discrepancy is observed,
+     *             the result of the {@link #expired()} method should be preferred.
+     *
      * @throws UnsupportedOperationException If the timeout is {@linkplain #isInfinite() infinite}.
-     * @see #remainingNanosOrInfinite()
+     * @see #remainingOrInfinite(TimeUnit)
      */
-    public long remainingNanos() throws UnsupportedOperationException {
+    public long remaining(final TimeUnit unit) throws UnsupportedOperationException {
+        assertNotNull(unit);
         if (isInfinite()) {
             throw new UnsupportedOperationException();
         }
-        return remainingNanos(System.nanoTime());
+        return isImmediate() ? 0 : convertRoundUp(remainingNanos(System.nanoTime()), unit);
     }
 
     /**
      * Returns a negative value for {@linkplain #isInfinite() infinite} timeouts, otherwise 0 or a positive value.
      * Use {@link #expired(long)} to check if the returned value signifies that a timeout is expired.
      *
-     * @see #remainingNanos()
+     * @see #remaining(TimeUnit)
      */
-    public long remainingNanosOrInfinite() {
-        return isInfinite() ? -1 : remainingNanos();
+    public long remainingOrInfinite(final TimeUnit unit) {
+        assertNotNull(unit);
+        return isInfinite() ? -1 : remaining(unit);
     }
 
     /**
      * @see #expired(long)
      */
     public boolean expired() {
-        return expired(remainingNanosOrInfinite());
+        return expired(remainingOrInfinite(NANOSECONDS));
     }
 
     /**
-     * Returns {@code true} if and only if {@code remainingNanos} is 0.
+     * Returns {@code true} if and only if the {@code remaining} time is 0 (the time unit is irrelevant).
      *
-     * @see #remainingNanos()
+     * @see #remaining(TimeUnit)
+     * @see #remainingOrInfinite(TimeUnit)
      * @see #expired()
      */
-    public static boolean expired(final long remainingNanos) {
-        return remainingNanos == 0;
+    public static boolean expired(final long remaining) {
+        return remaining == 0;
     }
 
     /**
@@ -236,7 +247,7 @@ public final class Timeout {
         } else if (isImmediate()) {
             return "0 ms (immediate)";
         } else {
-            return NANOSECONDS.toMillis(durationNanos) + " ms";
+            return convertRoundUp(durationNanos, MILLISECONDS) + " ms";
         }
     }
 
@@ -252,5 +263,18 @@ public final class Timeout {
      */
     long startNanos() {
         return startNanos;
+    }
+
+    /**
+     * Is package-access for the purpose of testing and must not be used for any other purpose outside of this class.
+     */
+    static long convertRoundUp(final long nonNegativeNanos, final TimeUnit unit) {
+        assertTrue(nonNegativeNanos >= 0);
+        if (unit == NANOSECONDS) {
+            return nonNegativeNanos;
+        } else {
+            long trimmed = unit.convert(nonNegativeNanos, NANOSECONDS);
+            return NANOSECONDS.convert(trimmed, unit) < nonNegativeNanos ? trimmed + 1 : trimmed;
+        }
     }
 }

@@ -24,6 +24,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -82,14 +83,14 @@ final class TimeoutTest {
     @Test
     void remainingNanosTrivialCases() {
         assertAll(
-                () -> assertThrows(UnsupportedOperationException.class, Timeout.infinite()::remainingNanos),
-                () -> assertTrue(Timeout.infinite().remainingNanosOrInfinite() < 0),
-                () -> assertEquals(0, Timeout.immediate().remainingNanos()),
-                () -> assertEquals(0, Timeout.immediate().remainingNanosOrInfinite()));
+                () -> assertThrows(UnsupportedOperationException.class, () -> Timeout.infinite().remaining(NANOSECONDS)),
+                () -> assertTrue(Timeout.infinite().remainingOrInfinite(NANOSECONDS) < 0),
+                () -> assertEquals(0, Timeout.immediate().remaining(NANOSECONDS)),
+                () -> assertEquals(0, Timeout.immediate().remainingOrInfinite(NANOSECONDS)));
     }
 
     @ParameterizedTest
-    @ValueSource(longs = {0, 1, 7, Long.MAX_VALUE / 2, Long.MAX_VALUE - 1})
+    @ValueSource(longs = {1, 7, Long.MAX_VALUE / 2, Long.MAX_VALUE - 1})
     void remainingNanos(final long durationNanos) {
         Timeout timeout = Timeout.startNow(durationNanos);
         long startNanos = timeout.startNanos();
@@ -115,6 +116,18 @@ final class TimeoutTest {
                 () -> assertFalse(Timeout.expired(Long.MAX_VALUE)));
     }
 
+    @Test
+    void convertRoundUp() {
+        assertAll(
+                () -> assertEquals(1, Timeout.convertRoundUp(1, NANOSECONDS)),
+                () -> assertEquals(0, Timeout.convertRoundUp(0, TimeUnit.MILLISECONDS)),
+                () -> assertEquals(1, Timeout.convertRoundUp(1, TimeUnit.MILLISECONDS)),
+                () -> assertEquals(1, Timeout.convertRoundUp(999_999, TimeUnit.MILLISECONDS)),
+                () -> assertEquals(1, Timeout.convertRoundUp(1_000_000, TimeUnit.MILLISECONDS)),
+                () -> assertEquals(2, Timeout.convertRoundUp(1_000_001, TimeUnit.MILLISECONDS)),
+                () -> assertEquals(1, Timeout.convertRoundUp(1, TimeUnit.DAYS)));
+    }
+
     @ParameterizedTest
     @ValueSource(longs = {1, 7, 10, 100, 1000})
     void usesRealClock(final long durationNanos) {
@@ -125,7 +138,7 @@ final class TimeoutTest {
         assertTrue(timeout.startNanos() - startNanosUpperBound <= 0, "started too late");
         while (!timeout.expired()) {
             long remainingNanosUpperBound = Math.max(0, durationNanos - (System.nanoTime() - startNanosUpperBound));
-            long remainingNanos = timeout.remainingNanos();
+            long remainingNanos = timeout.remaining(NANOSECONDS);
             long remainingNanosLowerBound = Math.max(0, durationNanos - (System.nanoTime() - startNanosLowerBound));
             assertTrue(remainingNanos >= remainingNanosLowerBound, "remaining nanos is too low");
             assertTrue(remainingNanos <= remainingNanosUpperBound, "remaining nanos is too high");

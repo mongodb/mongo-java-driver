@@ -270,15 +270,15 @@ class DefaultConnectionPool implements ConnectionPool {
     private PooledConnection getPooledConnection(final Timeout timeout) throws MongoTimeoutException {
         boolean externalTimeoutException = false;
         try {
-            UsageTrackingInternalConnection internalConnection = pool.get(timeout.remainingNanosOrInfinite(), TimeUnit.NANOSECONDS);
+            UsageTrackingInternalConnection internalConnection = pool.get(timeout.remainingOrInfinite(NANOSECONDS), NANOSECONDS);
             while (shouldPrune(internalConnection)) {
                 pool.release(internalConnection, true);
-                long remainingNanos = timeout.remainingNanosOrInfinite();
+                long remainingNanos = timeout.remainingOrInfinite(NANOSECONDS);
                 if (Timeout.expired(remainingNanos)) {
                     externalTimeoutException = true;
                     throw createTimeoutException(timeout);
                 }
-                internalConnection = pool.get(remainingNanos, TimeUnit.NANOSECONDS);
+                internalConnection = pool.get(remainingNanos, NANOSECONDS);
             }
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(format("Got connection [%s] to server %s", getId(internalConnection), serverId.getAddress()));
@@ -844,7 +844,7 @@ class DefaultConnectionPool implements ConnectionPool {
                 if (tryGetAvailable) {
                     expressDesireToGetAvailableConnection();
                 }
-                long remainingNanos = timeout.remainingNanosOrInfinite();
+                long remainingNanos = timeout.remainingOrInfinite(NANOSECONDS);
                 while (permits == 0) {
                     availableConnection = tryGetAvailable ? tryGetAvailableConnection() : null;
                     if (availableConnection != null) {
@@ -942,7 +942,7 @@ class DefaultConnectionPool implements ConnectionPool {
                     lock.lockInterruptibly();
                     success = true;
                 } else {
-                    success = lock.tryLock(timeout.remainingNanos(), TimeUnit.NANOSECONDS);
+                    success = lock.tryLock(timeout.remaining(NANOSECONDS), NANOSECONDS);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
