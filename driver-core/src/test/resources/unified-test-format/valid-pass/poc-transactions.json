@@ -277,9 +277,6 @@
                       "name": "x_1",
                       "key": {
                         "x": 1
-                      },
-                      "ns": {
-                        "$$unsetOrMatches": "transaction-tests.test"
                       }
                     }
                   ],
