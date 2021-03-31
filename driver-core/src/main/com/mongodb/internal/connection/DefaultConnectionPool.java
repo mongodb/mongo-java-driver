@@ -200,11 +200,8 @@ class DefaultConnectionPool implements ConnectionPool {
         return result instanceof RuntimeException ? (RuntimeException) result : new RuntimeException(result);
     }
 
-    private void openAsync(
-            final PooledConnection pooledConnection,
-            final Timeout timeout,
-            final Executor executor,
-            final SingleResultCallback<InternalConnection> callback) {
+    private void openAsync(final PooledConnection pooledConnection, final Timeout timeout, final Executor executor,
+                           final SingleResultCallback<InternalConnection> callback) {
         if (pooledConnection.opened()) {
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(format("Pooled connection %s to server %s is already open",
@@ -323,11 +320,8 @@ class DefaultConnectionPool implements ConnectionPool {
                             if (LOGGER.isDebugEnabled()) {
                                 LOGGER.debug(format("Ensuring minimum pooled connections to %s", serverId.getAddress()));
                             }
-                            pool.ensureMinSize(settings.getMinSize(), newConnection -> {
-                                if (!newConnection.opened()) {
-                                    openConcurrencyLimiter.openImmediately(new PooledConnection(newConnection));
-                                }
-                            });
+                            pool.ensureMinSize(settings.getMinSize(), newConnection ->
+                                    openConcurrencyLimiter.openImmediately(new PooledConnection(newConnection)));
                         }
                     } catch (MongoInterruptedException | MongoTimeoutException e) {
                         //complete the maintenance task
@@ -638,6 +632,11 @@ class DefaultConnectionPool implements ConnectionPool {
         }
     }
 
+    /**
+     * This internal exception is used to express an exceptional situation encountered when opening a connection.
+     * It exists because it allows consolidating the code that sends events for exceptional situations in a
+     * {@linkplain #checkOutFailed(Throwable) single place}, it must not be observable by an external code.
+     */
     private static final class MongoOpenConnectionInternalException extends RuntimeException {
         private static final long serialVersionUID = 1;
 
@@ -946,7 +945,7 @@ class DefaultConnectionPool implements ConnectionPool {
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new RuntimeException(e);
+                throw new MongoInterruptedException(null, e);
             }
             if (!success) {
                 throw createTimeoutException(timeout);
@@ -962,6 +961,7 @@ class DefaultConnectionPool implements ConnectionPool {
         private long awaitNanos(final long timeoutNanos) {
             try {
                 if (timeoutNanos < 0) {
+                    //noinspection ResultOfMethodCallIgnored
                     condition.awaitNanos(Long.MAX_VALUE);
                     return timeoutNanos;
                 } else {
@@ -969,7 +969,7 @@ class DefaultConnectionPool implements ConnectionPool {
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new RuntimeException(e);
+                throw new MongoInterruptedException(null, e);
             }
         }
     }
