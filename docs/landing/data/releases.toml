@@ -1,6 +1,11 @@
 current = "4.2.2"
 
 [[versions]]
+version = "4.3.0-beta1"
+docs = "./4.3"
+api = "./4.3/apidocs"
+
+[[versions]]
   status = "current"
   version = "4.2.2"
   docs = "./4.2"

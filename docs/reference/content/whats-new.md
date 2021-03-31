@@ -7,6 +7,15 @@ title = "What's New"
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
+# What's new in 4.3
+
+This release fully supports all MongoDB releases from versions 2.6 to 4.4. It also supports some features of the next release of MongoDB.
+
+New features of the 4.3 Java driver release include:
+
+* Added support for the MongoDB Versioned API.  See the 
+  [`ServerApi`]({{< apiref "mongodb-driver-core" "com/mongodb/ServerApi.html" >}}) API documentation for details.
+
 # What's new in 4.2
 
 This release fully supports all MongoDB releases from versions 2.6 to 4.4. New features of the 4.2 Java driver release include:
