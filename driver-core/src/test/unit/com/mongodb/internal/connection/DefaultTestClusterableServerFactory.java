@@ -23,6 +23,7 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.event.ServerListener;
+import com.mongodb.internal.inject.SameObjectProvider;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,8 +33,7 @@ public class DefaultTestClusterableServerFactory implements ClusterableServerFac
     private final ClusterId clusterId;
     private final ClusterConnectionMode clusterConnectionMode;
     private final ServerListenerFactory serverListenerFactory;
-    private final Map<ServerAddress, TestServerMonitorFactory> serverAddressToServerMonitorFactoryMap =
-            new HashMap<ServerAddress, TestServerMonitorFactory>();
+    private final Map<ServerAddress, TestServerMonitor> serverAddressToServerMonitorMap = new HashMap<>();
 
     public DefaultTestClusterableServerFactory(final ClusterId clusterId, final ClusterConnectionMode clusterConnectionMode,
                                                final ServerListenerFactory serverListenerFactory) {
@@ -45,17 +45,23 @@ public class DefaultTestClusterableServerFactory implements ClusterableServerFac
     @Override
     public ClusterableServer create(final ServerAddress serverAddress,
                                     final ServerDescriptionChangedListener serverDescriptionChangedListener,
-                                    final ServerListener serverListener, final ClusterClock clusterClock) {
+                                    final ServerListener ignored, final ClusterClock clusterClock) {
+        ServerId serverId = new ServerId(clusterId, serverAddress);
         if (clusterConnectionMode == ClusterConnectionMode.LOAD_BALANCED) {
-            return new LoadBalancedServer(new ServerId(clusterId, serverAddress), new TestConnectionPool(),
+            return new LoadBalancedServer(serverId, new TestConnectionPool(),
                     new TestConnectionFactory(), serverListenerFactory.create(serverAddress), clusterClock);
         } else {
-            TestServerMonitorFactory serverMonitorFactory = new TestServerMonitorFactory(new ServerId(clusterId, serverAddress));
-            serverAddressToServerMonitorFactoryMap.put(serverAddress, serverMonitorFactory);
-
-            return new DefaultServer(new ServerId(clusterId, serverAddress), clusterConnectionMode, new TestConnectionPool(),
-                    new TestConnectionFactory(), serverMonitorFactory, serverDescriptionChangedListener,
-                    serverListenerFactory.create(serverAddress), null, clusterClock);
+            SameObjectProvider<SdamServerDescriptionManager> sdamProvider = SameObjectProvider.uninitialized();
+            TestServerMonitor serverMonitor = new TestServerMonitor(sdamProvider);
+            serverAddressToServerMonitorMap.put(serverAddress, serverMonitor);
+            ConnectionPool connectionPool = new TestConnectionPool();
+            ServerListener serverListener = serverListenerFactory.create(serverAddress);
+            SdamServerDescriptionManager sdam = new DefaultSdamServerDescriptionManager(serverId, serverDescriptionChangedListener,
+                    serverListener, serverMonitor, connectionPool);
+            sdamProvider.initialize(sdam);
+            serverMonitor.start();
+            return new DefaultServer(serverId, clusterConnectionMode, connectionPool, new TestConnectionFactory(), serverMonitor, sdam,
+                    serverListener, null, clusterClock);
         }
     }
 
@@ -66,7 +72,7 @@ public class DefaultTestClusterableServerFactory implements ClusterableServerFac
 
 
     public void sendNotification(final ServerAddress serverAddress, final ServerDescription serverDescription) {
-        serverAddressToServerMonitorFactoryMap.get(serverAddress).sendNotification(serverDescription);
+        serverAddressToServerMonitorMap.get(serverAddress).updateServerDescription(serverDescription);
     }
 
 }

@@ -33,7 +33,6 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.connection.ClusterSettings;
-import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.ServerType;
@@ -42,6 +41,7 @@ import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.ConnectionPoolClearedEvent;
+import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.lang.Nullable;
@@ -67,6 +67,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.getConnectionString;
@@ -74,6 +75,7 @@ import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
 import static com.mongodb.ClusterFixture.isDataLakeTest;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.ClusterFixture.setDirectConnection;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
 import static com.mongodb.client.Fixture.getMongoClient;
@@ -99,6 +101,7 @@ public abstract class AbstractUnifiedTest {
     private final BsonArray data;
     private final BsonDocument definition;
     private final boolean skipTest;
+    private final boolean createSessions;
     private JsonPoweredCrudTestHelper helper;
     private final TestCommandListener commandListener;
     private final TestConnectionPoolListener connectionPoolListener;
@@ -116,8 +119,14 @@ public abstract class AbstractUnifiedTest {
 
     private static final long MIN_HEARTBEAT_FREQUENCY_MS = 50L;
 
+    /**
+     * @param createSessions {@code true} means that {@code session0}, {@code session1} {@link ClientSession}s must be created as specified
+     *                       <a href="https://github.com/mongodb/specifications/blob/master/source/transactions/tests/README.rst#use-as-integration-tests">here</a>,
+     *                       otherwise these sessions are not created.
+     *
+     */
     public AbstractUnifiedTest(final String filename, final String description, final String databaseName, final String collectionName,
-                               final BsonArray data, final BsonDocument definition, final boolean skipTest) {
+                               final BsonArray data, final BsonDocument definition, final boolean skipTest, final boolean createSessions) {
         this.filename = filename;
         this.description = description;
         this.databaseName = databaseName;
@@ -128,6 +137,7 @@ public abstract class AbstractUnifiedTest {
         this.connectionPoolListener = new TestConnectionPoolListener();
         this.serverListener = new TestServerListener();
         this.skipTest = skipTest;
+        this.createSessions = createSessions;
     }
 
     protected abstract MongoClient createMongoClient(MongoClientSettings settings);
@@ -178,13 +188,13 @@ public abstract class AbstractUnifiedTest {
         MongoClientSettings.Builder builder = getMongoClientSettingsBuilder()
                 .applyConnectionString(connectionString)
                 .addCommandListener(commandListener)
-                .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
-                    @Override
-                    public void apply(final ClusterSettings.Builder builder) {
-                        if (clientOptions.containsKey("serverSelectionTimeoutMS")) {
-                            builder.serverSelectionTimeout(clientOptions.getNumber("serverSelectionTimeoutMS").longValue(),
-                                    MILLISECONDS);
-                        }
+                .applyToClusterSettings(clusterSettingsBuilder -> {
+                    if (clientOptions.containsKey("serverSelectionTimeoutMS")) {
+                        clusterSettingsBuilder.serverSelectionTimeout(
+                                clientOptions.getNumber("serverSelectionTimeoutMS").longValue(), MILLISECONDS);
+                    }
+                    if (clientOptions.containsKey("directConnection")) {
+                        setDirectConnection(clusterSettingsBuilder);
                     }
                 })
                 .applyToSocketSettings(new Block<SocketSettings.Builder>() {
@@ -201,10 +211,10 @@ public abstract class AbstractUnifiedTest {
                 .readPreference(getReadPreference(clientOptions))
                 .retryWrites(clientOptions.getBoolean("retryWrites", BsonBoolean.FALSE).getValue())
                 .retryReads(false)
-                .applyToConnectionPoolSettings(new Block<ConnectionPoolSettings.Builder>() {
-                    @Override
-                    public void apply(final ConnectionPoolSettings.Builder builder) {
-                        builder.addConnectionPoolListener(connectionPoolListener);
+                .applyToConnectionPoolSettings(poolSettingsBuilder -> {
+                    poolSettingsBuilder.addConnectionPoolListener(connectionPoolListener);
+                    if (clientOptions.containsKey("minPoolSize")) {
+                        poolSettingsBuilder.minSize(clientOptions.getInt32("minPoolSize").getValue());
                     }
                 })
                 .applyToServerSettings(new Block<ServerSettings.Builder>() {
@@ -249,14 +259,14 @@ public abstract class AbstractUnifiedTest {
         helper = new JsonPoweredCrudTestHelper(description, database, database.getCollection(collectionName, BsonDocument.class),
                 null, mongoClient);
 
-        if (serverVersionAtLeast(3, 6)) {
+        sessionsMap = new HashMap<>();
+        lsidMap = new HashMap<>();
+        if (createSessions && serverVersionAtLeast(3, 6)) {
             ClientSession sessionZero = createSession("session0");
             ClientSession sessionOne = createSession("session1");
 
-            sessionsMap = new HashMap<String, ClientSession>();
             sessionsMap.put("session0", sessionZero);
             sessionsMap.put("session1", sessionOne);
-            lsidMap = new HashMap<String, BsonDocument>();
             lsidMap.put("session0", sessionZero.getServerSession().getIdentifier());
             lsidMap.put("session1", sessionOne.getServerSession().getIdentifier());
         }
@@ -480,12 +490,16 @@ public abstract class AbstractUnifiedTest {
                     } else if (operationName.equals("waitForEvent")) {
                         String event = operation.getDocument("arguments").getString("event").getValue();
                         int count = operation.getDocument("arguments").getNumber("count").intValue();
+                        long timeoutMillis = TimeUnit.SECONDS.toMillis(5);
                         switch (event) {
                             case "PoolClearedEvent":
-                                connectionPoolListener.waitForEvent(ConnectionPoolClearedEvent.class, count, 5, SECONDS);
+                                connectionPoolListener.waitForEvent(ConnectionPoolClearedEvent.class, count, timeoutMillis, MILLISECONDS);
+                                break;
+                            case "PoolReadyEvent":
+                                connectionPoolListener.waitForEvent(ConnectionPoolReadyEvent.class, count, timeoutMillis, MILLISECONDS);
                                 break;
                             case "ServerMarkedUnknownEvent":
-                                serverListener.waitForEvent(ServerType.UNKNOWN, count, 5, SECONDS);
+                                serverListener.waitForEvent(ServerType.UNKNOWN, count, timeoutMillis, MILLISECONDS);
                                 break;
                             default:
                                 throw new UnsupportedOperationException("Unsupported event type: " + event);
@@ -497,6 +511,9 @@ public abstract class AbstractUnifiedTest {
                         switch (event) {
                             case "PoolClearedEvent":
                                 actualCount = connectionPoolListener.countEvents(ConnectionPoolClearedEvent.class);
+                                break;
+                            case "PoolReadyEvent":
+                                actualCount = connectionPoolListener.countEvents(ConnectionPoolReadyEvent.class);
                                 break;
                             case "ServerMarkedUnknownEvent":
                                 actualCount = serverListener.countEvents(ServerType.UNKNOWN);

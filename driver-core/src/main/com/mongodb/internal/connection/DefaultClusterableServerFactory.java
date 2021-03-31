@@ -29,10 +29,12 @@ import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.ServerListener;
+import com.mongodb.internal.inject.SameObjectProvider;
 import com.mongodb.lang.Nullable;
 
-import java.util.Collections;
 import java.util.List;
+
+import static java.util.Collections.emptyList;
 
 public class DefaultClusterableServerFactory implements ClusterableServerFactory {
     private final ClusterId clusterId;
@@ -74,22 +76,23 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
                                     final ServerDescriptionChangedListener serverDescriptionChangedListener,
                                     final ServerListener serverListener,
                                     final ClusterClock clusterClock) {
-        ConnectionPool connectionPool = new DefaultConnectionPool(new ServerId(clusterId, serverAddress),
+        ServerId serverId = new ServerId(clusterId, serverAddress);
+        SameObjectProvider<SdamServerDescriptionManager> sdamProvider = SameObjectProvider.uninitialized();
+        ServerMonitor serverMonitor = new DefaultServerMonitor(serverId, serverSettings, clusterClock,
+                // no credentials, compressor list, or command listener for the server monitor factory
+                new InternalStreamConnectionFactory(clusterSettings.getMode(), heartbeatStreamFactory, null, applicationName,
+                        mongoDriverInformation, emptyList(), null, serverApi),
+                serverApi, sdamProvider);
+        ConnectionPool connectionPool = new DefaultConnectionPool(serverId,
                 new InternalStreamConnectionFactory(clusterSettings.getMode(), streamFactory, credential, applicationName,
-                        mongoDriverInformation, compressorList, commandListener, serverApi), connectionPoolSettings);
-
-        connectionPool.start();
-
-        // no credentials, compressor list, or command listener for the server monitor factory
-        ServerMonitorFactory serverMonitorFactory =
-            new DefaultServerMonitorFactory(new ServerId(clusterId, serverAddress), serverSettings, clusterClock,
-                    new InternalStreamConnectionFactory(clusterSettings.getMode(), heartbeatStreamFactory, null,
-                            applicationName, mongoDriverInformation, Collections.<MongoCompressor>emptyList(), null, serverApi),
-                    connectionPool, serverApi);
-
-        return new DefaultServer(new ServerId(clusterId, serverAddress), clusterSettings.getMode(), connectionPool,
-                new DefaultConnectionFactory(), serverMonitorFactory, serverDescriptionChangedListener, serverListener, commandListener,
-                clusterClock);
+                        mongoDriverInformation, compressorList, commandListener, serverApi),
+                connectionPoolSettings, sdamProvider);
+        SdamServerDescriptionManager sdam = new DefaultSdamServerDescriptionManager(serverId, serverDescriptionChangedListener,
+                serverListener, serverMonitor, connectionPool);
+        sdamProvider.initialize(sdam);
+        serverMonitor.start();
+        return new DefaultServer(serverId, clusterSettings.getMode(), connectionPool, new DefaultConnectionFactory(), serverMonitor,
+                sdam, serverListener, commandListener, clusterClock);
     }
 
     @Override

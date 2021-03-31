@@ -66,12 +66,6 @@ public class TestServer implements ClusterableServer {
     }
 
     @Override
-    public void invalidate(final ConnectionState connectionState, final Throwable reason, final int connectionGeneration,
-                           final int maxWireVersion) {
-        invalidate();
-    }
-
-    @Override
     public void close() {
         isClosed = true;
     }

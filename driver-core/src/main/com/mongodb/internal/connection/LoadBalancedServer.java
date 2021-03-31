@@ -83,12 +83,6 @@ public class LoadBalancedServer implements ClusterableServer {
         // no op
     }
 
-    @Override
-    public void invalidate(final ConnectionState connectionState, final Throwable reason, final int connectionGeneration,
-                           final int maxWireVersion) {
-        // no op
-    }
-
 
     private void invalidate(final Throwable t, final ObjectId serviceId, final int generation) {
         if (!isClosed()) {

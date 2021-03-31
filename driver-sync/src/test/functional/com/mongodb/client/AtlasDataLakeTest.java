@@ -41,7 +41,7 @@ import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 public class AtlasDataLakeTest extends AbstractUnifiedTest {
     public AtlasDataLakeTest(final String filename, final String description, final String databaseName, final String collectionName,
                              final BsonArray data, final BsonDocument definition, final boolean skipTest) {
-        super(filename, description, databaseName, collectionName, data, definition, skipTest || !isDataLakeTest());
+        super(filename, description, databaseName, collectionName, data, definition, skipTest || !isDataLakeTest(), true);
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")

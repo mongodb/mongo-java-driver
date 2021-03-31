@@ -16,19 +16,24 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
+import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.internal.connection.ConcurrentLinkedDeque.RemovalReportingIterator;
 import com.mongodb.lang.Nullable;
 
 import java.util.Iterator;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
-import static com.mongodb.assertions.Assertions.assertFalse;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.assertTrue;
 
 /**
  * A concurrent pool implementation.
@@ -36,13 +41,13 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * <p>This class should not be considered a part of the public API.</p>
  */
 public class ConcurrentPool<T> implements Pool<T> {
+    private static final String POOL_CLOSED_MESSAGE = "The pool is closed";
 
     private final int maxSize;
     private final ItemFactory<T> itemFactory;
 
     private final ConcurrentLinkedDeque<T> available = new ConcurrentLinkedDeque<T>();
-    private final Semaphore permits;
-    private volatile boolean closed;
+    private final StateAndPermits stateAndPermits;
 
     public enum Prune {
         /**
@@ -80,7 +85,7 @@ public class ConcurrentPool<T> implements Pool<T> {
     public ConcurrentPool(final int maxSize, final ItemFactory<T> itemFactory) {
         this.maxSize = maxSize;
         this.itemFactory = itemFactory;
-        permits = new Semaphore(maxSize, true);
+        stateAndPermits = new StateAndPermits(maxSize);
     }
 
     /**
@@ -106,7 +111,7 @@ public class ConcurrentPool<T> implements Pool<T> {
         if (t == null) {
             throw new IllegalArgumentException("Can not return a null item to the pool");
         }
-        if (closed) {
+        if (stateAndPermits.closed()) {
             close(t);
             return;
         }
@@ -117,11 +122,11 @@ public class ConcurrentPool<T> implements Pool<T> {
             available.addLast(t);
         }
 
-        releasePermit();
+        stateAndPermits.releasePermit();
     }
 
     /**
-     * Gets an object from the pool.  This method will block until a permit is available.
+     * Is equivalent to {@link #get(long, TimeUnit)} called with an infinite timeout.
      *
      * @return An object from the pool.
      */
@@ -131,20 +136,19 @@ public class ConcurrentPool<T> implements Pool<T> {
     }
 
     /**
-     * Gets an object from the pool - will block if none are available
+     * Gets an object from the pool. Blocks until an object is available, or the specified {@code timeout} expires,
+     * or the pool is {@linkplain #close() closed}/{@linkplain #pause(Supplier) paused}.
      *
-     * @param timeout  negative - forever 0        - return immediately no matter what positive ms to wait
+     * @param timeout See {@link com.mongodb.internal.Timeout#startNow(long, TimeUnit)}.
      * @param timeUnit the time unit of the timeout
      * @return An object from the pool, or null if can't get one in the given waitTime
      * @throws MongoTimeoutException if the timeout has been exceeded
      */
     @Override
     public T get(final long timeout, final TimeUnit timeUnit) {
-        if (closed) {
-            throw new IllegalStateException("The pool is closed");
-        }
+        stateAndPermits.throwIfClosedOrPaused();
 
-        if (!acquirePermit(timeout, timeUnit)) {
+        if (!stateAndPermits.acquirePermitFair(timeout, timeUnit)) {
             throw new MongoTimeoutException(String.format("Timeout waiting for a pooled item after %d %s", timeout, timeUnit));
         }
 
@@ -162,13 +166,13 @@ public class ConcurrentPool<T> implements Pool<T> {
      * and returns {@code null} instead of throwing {@link MongoTimeoutException}.
      */
     @Nullable
-    T getImmediately() {
-        assertFalse(closed);
+    T getImmediateUnfair() {
+        stateAndPermits.throwIfClosedOrPaused();
         T element = null;
-        if (acquirePermit(0, NANOSECONDS)) {
+        if (stateAndPermits.acquirePermitImmediateUnfair()) {
             element = available.pollLast();
             if (element == null) {
-                permits.release();
+                stateAndPermits.releasePermit();
             }
         }
         return element;
@@ -202,8 +206,9 @@ public class ConcurrentPool<T> implements Pool<T> {
      *                   if an exception is thrown; otherwise the action must not release the item.
      */
     public void ensureMinSize(final int minSize, final Consumer<T> initialize) {
+        stateAndPermits.throwIfClosedOrPaused();
         while (getCount() < minSize) {
-            if (!acquirePermit(0, TimeUnit.MILLISECONDS)) {
+            if (!stateAndPermits.acquirePermitFair(0, TimeUnit.MILLISECONDS)) {
                 break;
             }
             T newItem = createNewAndReleasePermitIfFailure();
@@ -220,28 +225,18 @@ public class ConcurrentPool<T> implements Pool<T> {
             }
             return newMember;
         } catch (RuntimeException e) {
-            permits.release();
+            stateAndPermits.releasePermit();
             throw e;
         }
     }
 
-    protected boolean acquirePermit(final long timeout, final TimeUnit timeUnit) {
-        try {
-            if (closed) {
-                return false;
-            } else if (timeout >= 0) {
-                return permits.tryAcquire(timeout, timeUnit);
-            } else {
-                permits.acquire();
-                return true;
-            }
-        } catch (InterruptedException e) {
-            throw new MongoInterruptedException("Interrupted acquiring a permit to retrieve an item from the pool ", e);
-        }
-    }
-
-    protected void releasePermit() {
-        permits.release();
+    /**
+     * Is package-access for the purpose of testing and must not be used for any other purpose outside of this class.
+     *
+     * @param timeout See {@link com.mongodb.internal.Timeout#startNow(long, TimeUnit)}.
+     */
+    boolean acquirePermit(final long timeout, final TimeUnit timeUnit) {
+        return stateAndPermits.acquirePermitFair(timeout, timeUnit);
     }
 
     /**
@@ -250,12 +245,13 @@ public class ConcurrentPool<T> implements Pool<T> {
      */
     @Override
     public void close() {
-        closed = true;
-        Iterator<T> iter = available.iterator();
-        while (iter.hasNext()) {
-            T t = iter.next();
-            close(t);
-            iter.remove();
+        if (stateAndPermits.close()) {
+            Iterator<T> iter = available.iterator();
+            while (iter.hasNext()) {
+                T t = iter.next();
+                close(t);
+                iter.remove();
+            }
         }
     }
 
@@ -264,7 +260,7 @@ public class ConcurrentPool<T> implements Pool<T> {
     }
 
     public int getInUseCount() {
-        return maxSize - permits.availablePermits();
+        return maxSize - stateAndPermits.permits();
     }
 
     public int getAvailableCount() {
@@ -292,6 +288,196 @@ public class ConcurrentPool<T> implements Pool<T> {
             itemFactory.close(t);
         } catch (RuntimeException e) {
             // ItemFactory.close() really should not throw
+        }
+    }
+
+    void ready() {
+        stateAndPermits.ready();
+    }
+
+    void pause(final Supplier<MongoException> causeSupplier) {
+        stateAndPermits.pause(causeSupplier);
+    }
+
+    /**
+     * @see #isPoolClosedException(Throwable)
+     */
+    static IllegalStateException poolClosedException() {
+        return new IllegalStateException(POOL_CLOSED_MESSAGE);
+    }
+
+    /**
+     * @see #poolClosedException()
+     */
+    static boolean isPoolClosedException(final Throwable e) {
+        return e instanceof IllegalStateException && POOL_CLOSED_MESSAGE.equals(e.getMessage());
+    }
+
+    /**
+     * Package-access methods are thread-safe,
+     * and only they should be called outside of the {@link StateAndPermits}'s code.
+     */
+    @ThreadSafe
+    private static final class StateAndPermits {
+        private final ReadWriteLock lock;
+        private final Condition permitAvailableOrClosedOrPausedCondition;
+        private volatile boolean paused;
+        private volatile boolean closed;
+        private final int maxPermits;
+        private volatile int permits;
+        @Nullable
+        private Supplier<MongoException> causeSupplier;
+
+        StateAndPermits(final int maxPermits) {
+            lock = new ReentrantReadWriteLock(true);
+            permitAvailableOrClosedOrPausedCondition = lock.writeLock().newCondition();
+            paused = false;
+            closed = false;
+            this.maxPermits = maxPermits;
+            permits = maxPermits;
+            causeSupplier = null;
+        }
+
+        int permits() {
+            return permits;
+        }
+
+        boolean acquirePermitImmediateUnfair() {
+            if (!lock.writeLock().tryLock()) { // unfair
+                lock.writeLock().lock();
+            }
+            try {
+                throwIfClosedOrPaused();
+                if (permits > 0) {
+                    //noinspection NonAtomicOperationOnVolatileField
+                    permits--;
+                    return true;
+                } else {
+                    return false;
+                }
+            } finally {
+                lock.writeLock().unlock();
+            }
+        }
+
+        /**
+         * @param timeout See {@link com.mongodb.internal.Timeout#startNow(long, TimeUnit)}.
+         */
+        boolean acquirePermitFair(final long timeout, final TimeUnit unit) throws MongoInterruptedException {
+            long remainingNanos = unit.toNanos(timeout);
+            try {
+                // preserve the eager InterruptedException behavior of `Semaphore.tryAcquire(long, TimeUnit)`
+                lock.writeLock().lockInterruptibly();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new MongoInterruptedException(null, e);
+            }
+            try {
+                while (permits == 0) {
+                    throwIfClosedOrPaused();
+                    try {
+                        if (timeout < 0 || remainingNanos == Long.MAX_VALUE) {
+                            permitAvailableOrClosedOrPausedCondition.await();
+                        } else if (remainingNanos >= 0) {
+                            remainingNanos = permitAvailableOrClosedOrPausedCondition.awaitNanos(remainingNanos);
+                        } else {
+                            return false;
+                        }
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        throw new MongoInterruptedException(null, e);
+                    }
+                }
+                assertTrue(permits > 0);
+                throwIfClosedOrPaused();
+                //noinspection NonAtomicOperationOnVolatileField
+                permits--;
+                return true;
+            } finally {
+                lock.writeLock().unlock();
+            }
+        }
+
+        void releasePermit() {
+            lock.writeLock().lock();
+            try {
+                assertTrue(permits < maxPermits);
+                //noinspection NonAtomicOperationOnVolatileField
+                permits++;
+                permitAvailableOrClosedOrPausedCondition.signal();
+            } finally {
+                lock.writeLock().unlock();
+            }
+        }
+
+        void pause(final Supplier<MongoException> causeSupplier) {
+            lock.writeLock().lock();
+            try {
+                if (!paused) {
+                    this.paused = true;
+                    permitAvailableOrClosedOrPausedCondition.signalAll();
+                }
+                this.causeSupplier = assertNotNull(causeSupplier);
+            } finally {
+                lock.writeLock().unlock();
+            }
+        }
+
+        void ready() {
+            if (paused) {
+                lock.writeLock().lock();
+                try {
+                    this.paused = false;
+                    this.causeSupplier = null;
+                } finally {
+                    lock.writeLock().unlock();
+                }
+            }
+        }
+
+        /**
+         * @return {@code true} if and only if the state changed as a result of the operation.
+         */
+        boolean close() {
+            if (!closed) {
+                lock.writeLock().lock();
+                try {
+                    if (!closed) {
+                        closed = true;
+                        permitAvailableOrClosedOrPausedCondition.signalAll();
+                        return true;
+                    }
+                } finally {
+                    lock.writeLock().unlock();
+                }
+            }
+            return false;
+        }
+
+        /**
+         * @throws IllegalStateException If and only if {@linkplain #close() closed}.
+         * @throws MongoException If and only if {@linkplain #pause(Supplier) paused}
+         * and not {@linkplain #close() closed}. The exception is specified via the {@link #pause(Supplier)} method
+         * and may be a subtype of {@link MongoException}.
+         */
+        void throwIfClosedOrPaused() {
+            if (closed) {
+                throw ConcurrentPool.poolClosedException();
+            }
+            if (paused) {
+                lock.readLock().lock();
+                try {
+                    if (paused) {
+                        throw assertNotNull(assertNotNull(causeSupplier).get());
+                    }
+                } finally {
+                    lock.readLock().unlock();
+                }
+            }
+        }
+
+        boolean closed() {
+            return closed;
         }
     }
 }

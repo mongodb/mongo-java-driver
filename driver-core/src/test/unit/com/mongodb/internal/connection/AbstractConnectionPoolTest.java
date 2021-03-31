@@ -38,12 +38,16 @@ import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.event.ConnectionPoolClearedEvent;
 import com.mongodb.event.ConnectionPoolClosedEvent;
 import com.mongodb.event.ConnectionPoolCreatedEvent;
+import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.event.ConnectionReadyEvent;
+import com.mongodb.event.ServerListener;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.inject.SameObjectProvider;
 import com.mongodb.internal.operation.CommandReadOperation;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
@@ -74,11 +78,13 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.mongodb.assertions.Assertions.assertFalse;
 import static java.lang.String.format;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeNotNull;
+import static org.mockito.Mockito.mock;
 
 // Implementation of
 // https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst
@@ -115,8 +121,7 @@ public abstract class AbstractConnectionPoolTest {
     @Before
     public void setUp() {
         assumeFalse(skipTest);
-        ConnectionPoolSettings.Builder settingsBuilder = ConnectionPoolSettings.builder()
-                .maintenanceFrequency(1, TimeUnit.MILLISECONDS);
+        ConnectionPoolSettings.Builder settingsBuilder = ConnectionPoolSettings.builder();
         BsonDocument poolOptions = definition.getDocument("poolOptions", new BsonDocument());
 
         if (poolOptions.containsKey("maxPoolSize")) {
@@ -131,6 +136,18 @@ public abstract class AbstractConnectionPoolTest {
         if (poolOptions.containsKey("waitQueueTimeoutMS")) {
             settingsBuilder.maxWaitTime(poolOptions.getNumber("waitQueueTimeoutMS").intValue(), TimeUnit.MILLISECONDS);
         }
+        if (poolOptions.containsKey("backgroundThreadIntervalMS")) {
+            long intervalMillis = poolOptions.getNumber("backgroundThreadIntervalMS").longValue();
+            assertFalse(intervalMillis == 0);
+            if (intervalMillis < 0) {
+                settingsBuilder.maintenanceInitialDelay(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+            } else {
+                /* We are allowed to pick an interval smaller than the one requested, which is what happens when we specify frequency,
+                 * a.k.a. period, instead of an interval. */
+                settingsBuilder.maintenanceFrequency(
+                        poolOptions.getNumber("backgroundThreadIntervalMS").longValue(), TimeUnit.MILLISECONDS);
+            }
+        }
 
         listener = new TestConnectionPoolListener();
         settingsBuilder.addConnectionPoolListener(listener);
@@ -139,22 +156,26 @@ public abstract class AbstractConnectionPoolTest {
         switch (style) {
             case UNIT: {
                 ServerId serverId = new ServerId(new ClusterId(), new ServerAddress("host1"));
-                pool = new DefaultConnectionPool(serverId, new TestInternalConnectionFactory(), settings);
+                pool = new DefaultConnectionPool(serverId, new TestInternalConnectionFactory(), settings,
+                        SameObjectProvider.initialized(mock(SdamServerDescriptionManager.class)));
                 break;
             }
             case INTEGRATION: {
                 ServerId serverId = new ServerId(new ClusterId(), ClusterFixture.getPrimary());
+                SameObjectProvider<SdamServerDescriptionManager> sdamProvider = SameObjectProvider.uninitialized();
                 pool = new ConnectionIdAdjustingConnectionPool(new DefaultConnectionPool(serverId,
                         new InternalStreamConnectionFactory(
                                 ClusterConnectionMode.SINGLE,
                                 createStreamFactory(SocketSettings.builder().build(), ClusterFixture.getSslSettings()),
                                 ClusterFixture.getCredentialWithCache(),
-                                fileName + ": " + description,
+                                poolOptions.getString("appName", new BsonString(fileName + ": " + description)).getValue(),
                                 MongoDriverInformation.builder().build(),
                                 Collections.emptyList(),
                                 new TestCommandListener(),
                                 ClusterFixture.getServerApi()),
-                        settings));
+                        settings, sdamProvider));
+                sdamProvider.initialize(new DefaultSdamServerDescriptionManager(serverId, mock(ServerDescriptionChangedListener.class),
+                        mock(ServerListener.class), mock(ServerMonitor.class), pool));
                 setFailPoint();
                 break;
             }
@@ -162,13 +183,12 @@ public abstract class AbstractConnectionPoolTest {
                 throw new AssertionError(format("Style %s is not implemented", style));
             }
         }
-        pool.start();
     }
 
     @After
     @SuppressWarnings("try")
     public void tearDown() {
-        try (ConnectionPool autoCloseable = pool) {
+        try (ConnectionPool unused = pool) {
             disableFailPoint();
         } finally {
             for (ExecutorService cur : executorServiceMap.values()) {
@@ -202,9 +222,13 @@ public abstract class AbstractConnectionPoolTest {
                 } else if (name.equals("waitForEvent")) {
                     Class<?> eventClass = getEventClass(operation.getString("event").getValue());
                     assumeNotNull(eventClass);
-                    listener.waitForEvent(eventClass, operation.getNumber("count").intValue(), 5, TimeUnit.SECONDS);
+                    long timeoutMillis = operation.getNumber("timeout", new BsonInt64(TimeUnit.SECONDS.toMillis(5)))
+                            .longValue();
+                    listener.waitForEvent(eventClass, operation.getNumber("count").intValue(), timeoutMillis, TimeUnit.MILLISECONDS);
                 } else if (name.equals("clear")) {
                     pool.invalidate();
+                } else if (name.equals("ready")) {
+                    pool.ready();
                 } else if (name.equals("close")) {
                     pool.close();
                 } else if (name.equals("checkOut") || name.equals("checkIn")) {
@@ -249,6 +273,9 @@ public abstract class AbstractConnectionPoolTest {
                     assertEquals(settings, actualEvent.getSettings());
                 } else if (type.equals("ConnectionPoolCleared")) {
                     ConnectionPoolClearedEvent actualEvent = getNextEvent(actualEventsIterator, ConnectionPoolClearedEvent.class);
+                    assertAddressMatch(expectedEvent, actualEvent.getServerId().getAddress());
+                } else if (type.equals("ConnectionPoolReady")) {
+                    ConnectionPoolReadyEvent actualEvent = getNextEvent(actualEventsIterator, ConnectionPoolReadyEvent.class);
                     assertAddressMatch(expectedEvent, actualEvent.getServerId().getAddress());
                 } else if (type.equals("ConnectionPoolClosed")) {
                     ConnectionPoolClosedEvent actualEvent = getNextEvent(actualEventsIterator, ConnectionPoolClosedEvent.class);
@@ -405,6 +432,8 @@ public abstract class AbstractConnectionPoolTest {
             return ConnectionClosedEvent.class;
         } else if (type.equals("ConnectionPoolCleared")) {
             return ConnectionPoolClearedEvent.class;
+        } else if (type.equals("ConnectionPoolReady")) {
+            return ConnectionPoolReadyEvent.class;
         } else if (type.equals("ConnectionReady")) {
             return ConnectionReadyEvent.class;
         } else if (type.equals("ConnectionCheckOutStarted")) {
@@ -426,8 +455,8 @@ public abstract class AbstractConnectionPoolTest {
         return expectedType.cast(next);
     }
 
-    private static BsonDocument executeAdminCommand(final BsonDocument command) {
-        return new CommandReadOperation<>("admin", command, new BsonDocumentCodec()).execute(ClusterFixture.getBinding());
+    private static void executeAdminCommand(final BsonDocument command) {
+        new CommandReadOperation<>("admin", command, new BsonDocumentCodec()).execute(ClusterFixture.getBinding());
     }
 
     private void setFailPoint() {
@@ -500,11 +529,6 @@ public abstract class AbstractConnectionPoolTest {
         }
 
         @Override
-        public void start() {
-            pool.start();
-        }
-
-        @Override
         public InternalConnection get() {
             InternalConnection result = pool.get();
             updateConnectionIdLocalValueAdjustment(result);
@@ -532,6 +556,11 @@ public abstract class AbstractConnectionPoolTest {
         }
 
         @Override
+        public void invalidate(@Nullable final Throwable cause) {
+            pool.invalidate(cause);
+        }
+
+        @Override
         public void invalidate() {
             pool.invalidate();
         }
@@ -539,6 +568,11 @@ public abstract class AbstractConnectionPoolTest {
         @Override
         public void invalidate(final ObjectId serviceId, final int generation) {
             pool.invalidate(serviceId, generation);
+        }
+
+        @Override
+        public void ready() {
+            pool.ready();
         }
 
         @Override

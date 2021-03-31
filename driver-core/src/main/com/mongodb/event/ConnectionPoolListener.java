@@ -46,12 +46,21 @@ public interface ConnectionPoolListener extends EventListener {
     }
 
     /**
-     * Invoked when a connection pool is cleared. The default implementation does nothing.
+     * Invoked when a connection pool is cleared and paused. The default implementation does nothing.
      *
      * @param event the event
      * @since 4.0
      */
     default void connectionPoolCleared(ConnectionPoolClearedEvent event) {
+    }
+
+    /**
+     * Invoked when a connection pool is ready. The default implementation does nothing.
+     *
+     * @param event the event
+     * @since 4.3
+     */
+    default void connectionPoolReady(ConnectionPoolReadyEvent event) {
     }
 
     /**

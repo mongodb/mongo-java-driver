@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.MongoConnectionPoolClearedException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ConnectionDescription;
@@ -25,8 +26,11 @@ import com.mongodb.connection.ServerId;
 import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.internal.Timeout;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.inject.OptionalProvider;
+import com.mongodb.internal.inject.SameObjectProvider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -100,9 +104,9 @@ public class DefaultConnectionPoolTest {
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
                         .maxWaitTime(50, MILLISECONDS)
-                        .build());
-        provider.start();
-
+                        .build(),
+                mockSdamProvider());
+        provider.ready();
         provider.get();
 
         // when
@@ -123,8 +127,9 @@ public class DefaultConnectionPoolTest {
                         .maxSize(1)
                         .maintenanceInitialDelay(5, MINUTES)
                         .maxConnectionLifeTime(50, MILLISECONDS)
-                        .build());
-        provider.start();
+                        .build(),
+                mockSdamProvider());
+        provider.ready();
 
         // when
         provider.get().close();
@@ -143,8 +148,9 @@ public class DefaultConnectionPoolTest {
                 connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
-                        .maxConnectionLifeTime(20, MILLISECONDS).build());
-        provider.start();
+                        .maxConnectionLifeTime(20, MILLISECONDS).build(),
+                mockSdamProvider());
+        provider.ready();
 
         // when
         InternalConnection connection = provider.get();
@@ -163,8 +169,9 @@ public class DefaultConnectionPoolTest {
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
                         .maintenanceInitialDelay(5, MINUTES)
-                        .maxConnectionIdleTime(50, MILLISECONDS).build());
-        provider.start();
+                        .maxConnectionIdleTime(50, MILLISECONDS).build(),
+                mockSdamProvider());
+        provider.ready();
 
         // when
         provider.get().close();
@@ -184,8 +191,9 @@ public class DefaultConnectionPoolTest {
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
                         .maintenanceInitialDelay(5, MINUTES)
-                        .maxConnectionLifeTime(20, MILLISECONDS).build());
-        provider.start();
+                        .maxConnectionLifeTime(20, MILLISECONDS).build(),
+                mockSdamProvider());
+        provider.ready();
 
         // when
         provider.get().close();
@@ -205,8 +213,9 @@ public class DefaultConnectionPoolTest {
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
                         .maintenanceInitialDelay(5, MINUTES)
-                        .maxConnectionLifeTime(20, MILLISECONDS).build());
-        provider.start();
+                        .maxConnectionLifeTime(20, MILLISECONDS).build(),
+                mockSdamProvider());
+        provider.ready();
 
         // when
         provider.get().close();
@@ -228,9 +237,10 @@ public class DefaultConnectionPoolTest {
                         .maxSize(10)
                         .maxConnectionLifeTime(1, MILLISECONDS)
                         .maintenanceInitialDelay(5, MINUTES)
-                        .build());
+                        .build(),
+                mockSdamProvider());
+        provider.ready();
         provider.get().close();
-        provider.start();
 
 
         // when
@@ -243,43 +253,61 @@ public class DefaultConnectionPoolTest {
 
     @ParameterizedTest
     @MethodSource("concurrentUsageArguments")
-    public void concurrentUsage(final int minSize, final int maxSize, final int concurrentUsersCount,
-                                final boolean checkoutSync, final boolean checkoutAsync, final float invalidateProb)
+    @Tag("Slow")
+    public void concurrentUsage(final int minSize, final int maxSize, final boolean limitConnectionLifeIdleTime,
+                                final int concurrentUsersCount,
+                                final boolean checkoutSync, final boolean checkoutAsync,
+                                final float invalidateAndReadyProb, final float invalidateProb, final float readyProb)
             throws InterruptedException {
         ControllableConnectionFactory controllableConnFactory = newControllableConnectionFactory(cachedExecutor);
-        provider = new DefaultConnectionPool(SERVER_ID, controllableConnFactory.factory, ConnectionPoolSettings.builder()
-                .minSize(minSize)
-                .maxSize(maxSize)
-                .maxWaitTime(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS)
-                .maintenanceInitialDelay(0, NANOSECONDS)
-                .maintenanceFrequency(100, MILLISECONDS)
-                .build());
-        assertUseConcurrently(provider, concurrentUsersCount, checkoutSync, checkoutAsync, invalidateProb,
+        provider = new DefaultConnectionPool(SERVER_ID, controllableConnFactory.factory,
+                ConnectionPoolSettings.builder()
+                    .minSize(minSize)
+                    .maxSize(maxSize)
+                    .maxWaitTime(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS)
+                    .maintenanceInitialDelay(0, NANOSECONDS)
+                    .maintenanceFrequency(100, MILLISECONDS)
+                    .maxConnectionLifeTime(limitConnectionLifeIdleTime ? 350 : 0, MILLISECONDS)
+                    .maxConnectionIdleTime(limitConnectionLifeIdleTime ? 50 : 0, MILLISECONDS)
+                    .build(),
+                mockSdamProvider());
+        provider.ready();
+        assertUseConcurrently(provider, concurrentUsersCount,
+                checkoutSync, checkoutAsync,
+                invalidateAndReadyProb, invalidateProb, readyProb,
                 cachedExecutor, SECONDS.toNanos(10));
     }
 
     private static Stream<Arguments> concurrentUsageArguments() {
-        return Stream.of(
-                Arguments.of(0, 1, 8, true, false, 0.02f),
-                Arguments.of(0, 1, 8, false, true, 0.02f),
-                Arguments.of(Math.min(3, MAX_CONNECTING), MAX_CONNECTING, 8, true, true, 0f),
-                Arguments.of(MAX_CONNECTING + 5, MAX_CONNECTING + 5, 2 * (MAX_CONNECTING + 5), true, true, 0.02f),
-                Arguments.of(Math.min(3, MAX_CONNECTING), MAX_CONNECTING + 5, 2 * (MAX_CONNECTING + 5), true, true, 0.9f));
+        return Stream.of(// variants marked with (*) have proved their usefulness by detecting bugs
+                Arguments.of(0, 1, true, 8, true, false, 0.02f, 0, 0),
+                Arguments.of(0, 1, false, 8, false, true, 0.02f, 0, 0), // (*)
+                Arguments.of(MAX_CONNECTING, MAX_CONNECTING, true, 8, true, true, 0, 0, 0),
+                Arguments.of(MAX_CONNECTING + 1, MAX_CONNECTING + 5, true, 2 * (MAX_CONNECTING + 5), true, true, 0.02f, 0, 0),
+                Arguments.of(MAX_CONNECTING + 5, MAX_CONNECTING + 5, false, 2 * (MAX_CONNECTING + 5), true, true, 0.02f, 0, 0), // (*)
+                Arguments.of(MAX_CONNECTING + 1, MAX_CONNECTING + 5, false, 2 * (MAX_CONNECTING + 5), true, true, 0.3f, 0.1f, 0.1f),
+                Arguments.of(MAX_CONNECTING + 1, MAX_CONNECTING + 5, true, 2 * (MAX_CONNECTING + 5), true, true, 0, 0.5f, 0.05f));
     }
 
     @Test
+    @Tag("Slow")
     public void callbackShouldNotBlockCheckoutIfOpenAsyncWorksNotInCurrentThread() throws InterruptedException, TimeoutException {
         int maxAvailableConnections = 7;
         ControllableConnectionFactory controllableConnFactory = newControllableConnectionFactory(cachedExecutor);
         TestConnectionPoolListener listener = new TestConnectionPoolListener();
-        provider = new DefaultConnectionPool(SERVER_ID, controllableConnFactory.factory, ConnectionPoolSettings.builder()
-                .maxSize(MAX_CONNECTING + maxAvailableConnections)
-                .addConnectionPoolListener(listener)
-                .maxWaitTime(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS)
-                .maintenanceInitialDelay(MAX_VALUE, NANOSECONDS)
-                .build());
+        provider = new DefaultConnectionPool(SERVER_ID, controllableConnFactory.factory,
+                ConnectionPoolSettings.builder()
+                    .maxSize(MAX_CONNECTING + maxAvailableConnections)
+                    .addConnectionPoolListener(listener)
+                    .maxWaitTime(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS)
+                    .maintenanceInitialDelay(MAX_VALUE, NANOSECONDS)
+                    .build(),
+                mockSdamProvider());
+        provider.ready();
         acquireOpenPermits(provider, MAX_CONNECTING, InfiniteCheckoutEmulation.INFINITE_CALLBACK, controllableConnFactory, listener);
-        assertUseConcurrently(provider, 2 * maxAvailableConnections, true, true, 0.02f,
+        assertUseConcurrently(provider, 2 * maxAvailableConnections,
+                true, true,
+                0.02f, 0, 0,
                 cachedExecutor, SECONDS.toNanos(10));
     }
 
@@ -295,20 +323,24 @@ public class DefaultConnectionPoolTest {
      * since there are no permits to open available, the hand-over mechanism is the only way to get a connection.
      */
     @Test
+    @Tag("Slow")
     public void checkoutHandOverMechanism() throws InterruptedException, TimeoutException {
         int openConnectionsCount = 5_000;
         int maxConcurrentlyHandedOver = 7;
         ControllableConnectionFactory controllableConnFactory = newControllableConnectionFactory(cachedExecutor);
         TestConnectionPoolListener listener = new TestConnectionPoolListener();
-        provider = new DefaultConnectionPool(SERVER_ID, controllableConnFactory.factory, ConnectionPoolSettings.builder()
-                .maxSize(MAX_CONNECTING
-                        + openConnectionsCount
-                        /* This wiggle room is needed to open opportunities to create new connections from the standpoint of
-                         * the max pool size, and then check that no connections were created nonetheless. */
-                        + maxConcurrentlyHandedOver)
-                .addConnectionPoolListener(listener)
-                .maintenanceInitialDelay(MAX_VALUE, NANOSECONDS)
-                .build());
+        provider = new DefaultConnectionPool(SERVER_ID, controllableConnFactory.factory,
+                ConnectionPoolSettings.builder()
+                    .maxSize(MAX_CONNECTING
+                            + openConnectionsCount
+                            /* This wiggle room is needed to open opportunities to create new connections from the standpoint of
+                             * the max pool size, and then check that no connections were created nonetheless. */
+                            + maxConcurrentlyHandedOver)
+                    .addConnectionPoolListener(listener)
+                    .maintenanceInitialDelay(MAX_VALUE, NANOSECONDS)
+                    .build(),
+                mockSdamProvider());
+        provider.ready();
         List<InternalConnection> connections = new ArrayList<>();
         for (int i = 0; i < openConnectionsCount; i++) {
             connections.add(provider.get(0, NANOSECONDS));
@@ -357,43 +389,68 @@ public class DefaultConnectionPoolTest {
     }
 
     private static void assertUseConcurrently(final DefaultConnectionPool pool, final int concurrentUsersCount,
-                                              final boolean sync, final boolean async, final float invalidateProb,
+                                              final boolean sync, final boolean async,
+                                              final float invalidateAndReadyProb, final float invalidateProb, final float readyProb,
                                               final ExecutorService executor, final long durationNanos) throws InterruptedException {
         try {
-            useConcurrently(pool, concurrentUsersCount, sync, async, invalidateProb, executor, durationNanos);
+            useConcurrently(pool, concurrentUsersCount,
+                    sync, async,
+                    invalidateAndReadyProb, invalidateProb, readyProb,
+                    executor, durationNanos);
         } catch (TimeoutException | ExecutionException e) {
             throw new AssertionError(e);
         }
     }
 
     private static void useConcurrently(final DefaultConnectionPool pool, final int concurrentUsersCount,
-                                        final boolean checkoutSync, final boolean checkoutAsync, final float invalidateProb,
+                                        final boolean checkoutSync, final boolean checkoutAsync,
+                                        final float invalidateAndReadyProb, final float invalidateProb, final float readyProb,
                                         final ExecutorService executor, final long durationNanos)
             throws ExecutionException, InterruptedException, TimeoutException {
-        assertTrue(invalidateProb >= 0 && invalidateProb <= 1);
-        Runnable spontaneouslyInvalidate = () -> {
+        assertTrue(invalidateAndReadyProb >= 0 && invalidateAndReadyProb <= 1);
+        Runnable spontaneouslyInvalidateReady = () -> {
+            if (ThreadLocalRandom.current().nextFloat() < invalidateAndReadyProb) {
+                pool.invalidate();
+                pool.ready();
+            }
             if (ThreadLocalRandom.current().nextFloat() < invalidateProb) {
                 pool.invalidate();
+            }
+            if (ThreadLocalRandom.current().nextFloat() < readyProb) {
+                pool.ready();
             }
         };
         Collection<Future<?>> tasks = new ArrayList<>();
         Timeout duration = Timeout.startNow(durationNanos);
         for (int i = 0; i < concurrentUsersCount; i++) {
-            if ((checkoutSync && checkoutAsync) ? i % 2 == 0 : checkoutSync) {//check out synchronously
+            if ((checkoutSync && checkoutAsync) ? i % 2 == 0 : checkoutSync) {//check out synchronously and check in
                 tasks.add(executor.submit(() -> {
                     while (!(duration.expired() || Thread.currentThread().isInterrupted())) {
-                        spontaneouslyInvalidate.run();
-                        pool.get(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS).close();
+                        spontaneouslyInvalidateReady.run();
+                        InternalConnection conn = null;
+                        try {
+                            conn = pool.get(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS);
+                        } catch (MongoConnectionPoolClearedException e) {
+                            // expected because we spontaneously invalidate `pool`
+                        } finally {
+                            if (conn != null) {
+                                conn.close();
+                            }
+                        }
                     }
                 }));
-            } else if (checkoutAsync) {//check out asynchronously
+            } else if (checkoutAsync) {//check out asynchronously and check in
                 tasks.add(executor.submit(() -> {
                     while (!(duration.expired() || Thread.currentThread().isInterrupted())) {
-                        spontaneouslyInvalidate.run();
+                        spontaneouslyInvalidateReady.run();
                         CompletableFuture<InternalConnection> futureCheckOutCheckIn = new CompletableFuture<>();
                         pool.getAsync((conn, t) -> {
                             if (t != null) {
-                                futureCheckOutCheckIn.completeExceptionally(t);
+                                if (t instanceof MongoConnectionPoolClearedException) {
+                                    futureCheckOutCheckIn.complete(null); // expected because we spontaneously invalidate `pool`
+                                } else {
+                                    futureCheckOutCheckIn.completeExceptionally(t);
+                                }
                             } else {
                                 conn.close();
                                 futureCheckOutCheckIn.complete(null);
@@ -472,6 +529,9 @@ public class DefaultConnectionPoolTest {
             long openDurationMillis = openDurationMillisHandle.get();
             Runnable doOpen = () -> {
                 sleepMillis(openDurationMillis);
+                if (ThreadLocalRandom.current().nextFloat() < 0.2) { // add a bit more randomness
+                    sleepMillis(ThreadLocalRandom.current().nextInt(7, 15));
+                }
                 open.set(true);
             };
             doAnswer(invocation -> {
@@ -489,6 +549,10 @@ public class DefaultConnectionPoolTest {
             return connection;
         };
         return new ControllableConnectionFactory(connectionFactory, openDurationMillisHandle);
+    }
+
+    private OptionalProvider<SdamServerDescriptionManager> mockSdamProvider() {
+        return SameObjectProvider.initialized(mock(SdamServerDescriptionManager.class));
     }
 
     private static class ControllableConnectionFactory {

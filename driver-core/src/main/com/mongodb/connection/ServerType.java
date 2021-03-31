@@ -25,98 +25,71 @@ public enum ServerType {
     /**
      * A standalone mongod server.
      */
-    STANDALONE {
-        @Override
-        public ClusterType getClusterType() {
-            return ClusterType.STANDALONE;
-        }
-    },
+    STANDALONE(ClusterType.STANDALONE, true),
 
     /**
      * A replica set primary.
      */
-    REPLICA_SET_PRIMARY {
-        @Override
-        public ClusterType getClusterType() {
-            return ClusterType.REPLICA_SET;
-        }
-    },
+    REPLICA_SET_PRIMARY(ClusterType.REPLICA_SET, true),
 
     /**
      * A replica set secondary.
      */
-    REPLICA_SET_SECONDARY {
-        @Override
-        public ClusterType getClusterType() {
-            return ClusterType.REPLICA_SET;
-        }
-    },
+    REPLICA_SET_SECONDARY(ClusterType.REPLICA_SET, true),
 
     /**
      * A replica set arbiter.
      */
-    REPLICA_SET_ARBITER {
-        @Override
-        public ClusterType getClusterType() {
-            return ClusterType.REPLICA_SET;
-        }
-    },
+    REPLICA_SET_ARBITER(ClusterType.REPLICA_SET, false),
 
     /**
      * A replica set member that is none of the other types (a passive, for example).
      */
-    REPLICA_SET_OTHER {
-        @Override
-        public ClusterType getClusterType() {
-            return ClusterType.REPLICA_SET;
-        }
-    },
+    REPLICA_SET_OTHER(ClusterType.REPLICA_SET, false),
 
     /**
      * A replica set member that does not report a set name or a hosts list
      */
-    REPLICA_SET_GHOST {
-        @Override
-        public ClusterType getClusterType() {
-            return ClusterType.REPLICA_SET;
-        }
-    },
+    REPLICA_SET_GHOST(ClusterType.REPLICA_SET, false),
 
     /**
      * A router to a sharded cluster, i.e. a mongos server.
      */
-    SHARD_ROUTER {
-        @Override
-        public ClusterType getClusterType() {
-            return ClusterType.SHARDED;
-        }
-    },
+    SHARD_ROUTER(ClusterType.SHARDED, true),
 
     /**
      *
      */
-    LOAD_BALANCER {
-        @Override
-        public ClusterType getClusterType() {
-            return ClusterType.LOAD_BALANCED;
-        }
-    },
+    LOAD_BALANCER(ClusterType.LOAD_BALANCED, true),
 
     /**
      * The server type is not yet known.
      */
-    UNKNOWN {
-        @Override
-        public ClusterType getClusterType() {
-            return ClusterType.UNKNOWN;
-        }
-    };
+    UNKNOWN(ClusterType.UNKNOWN, false);
+
+    private final ClusterType clusterType;
+    private final boolean dataBearing;
+
+    ServerType(final ClusterType clusterType, final boolean dataBearing) {
+        this.clusterType = clusterType;
+        this.dataBearing = dataBearing;
+    }
 
     /**
      * The type of the cluster to which this server belongs
      *
      * @return the cluster type
      */
-    public abstract ClusterType getClusterType();
-}
+    public ClusterType getClusterType() {
+        return clusterType;
+    }
 
+    /**
+     * A server type from which a client can receive data.
+     *
+     * @return Whether or not a server may bear data.
+     */
+    public boolean isDataBearing() {
+        return dataBearing;
+    }
+}

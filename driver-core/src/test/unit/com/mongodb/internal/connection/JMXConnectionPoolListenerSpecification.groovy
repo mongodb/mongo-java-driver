@@ -20,6 +20,7 @@ import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionPoolSettings
 import com.mongodb.connection.ServerId
+import com.mongodb.internal.inject.SameObjectProvider
 import com.mongodb.management.JMXConnectionPoolListener
 import spock.lang.Specification
 import spock.lang.Subject
@@ -42,8 +43,8 @@ class JMXConnectionPoolListenerSpecification extends Specification {
         given:
         provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                 ConnectionPoolSettings.builder().minSize(0).maxSize(5)
-                        .addConnectionPoolListener(jmxListener).build())
-        provider.start();
+                        .addConnectionPoolListener(jmxListener).build(), mockSdamProvider())
+        provider.ready()
 
         when:
         provider.get()
@@ -67,8 +68,7 @@ class JMXConnectionPoolListenerSpecification extends Specification {
         when:
         provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                 ConnectionPoolSettings.builder().minSize(0).maxSize(5)
-                        .addConnectionPoolListener(jmxListener).build())
-        provider.start();
+                        .addConnectionPoolListener(jmxListener).build(), mockSdamProvider())
 
         then:
         ManagementFactory.getPlatformMBeanServer().isRegistered(
@@ -82,8 +82,7 @@ class JMXConnectionPoolListenerSpecification extends Specification {
         given:
         provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                 ConnectionPoolSettings.builder().minSize(0).maxSize(5)
-                        .addConnectionPoolListener(jmxListener).build())
-        provider.start();
+                        .addConnectionPoolListener(jmxListener).build(), mockSdamProvider())
 
         when:
         provider.close()
@@ -165,5 +164,9 @@ class JMXConnectionPoolListenerSpecification extends Specification {
         'cluster?Id'  | '"cluster\\?Id"'      | 'host?name'  | '"host\\?name"'  | 'client? description'  | '"client\\? description"'
         'cluster\\Id' | '"cluster\\\\Id"'     | 'host\\name' | '"host\\\\name"' | 'client\\ description' | '"client\\\\ description"'
         'cluster\nId' | '"cluster\\nId"'      | 'host\nname' | '"host\\nname"'  | 'client\n description' | '"client\\n description"'
+    }
+
+    private mockSdamProvider() {
+        SameObjectProvider.initialized(Mock(SdamServerDescriptionManager))
     }
 }

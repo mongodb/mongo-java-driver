@@ -17,18 +17,34 @@
 package com.mongodb.client;
 
 import com.mongodb.Block;
+import com.mongodb.ClusterFixture;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoInterruptedException;
 import com.mongodb.connection.ServerSettings;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.event.ConnectionPoolClearedEvent;
+import com.mongodb.event.ConnectionPoolListener;
+import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
+import com.mongodb.event.ServerHeartbeatFailedEvent;
 import com.mongodb.event.ServerHeartbeatSucceededEvent;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerMonitorListener;
+import com.mongodb.internal.Timeout;
+import com.mongodb.lang.Nullable;
+import org.bson.BsonArray;
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonString;
 import org.bson.Document;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.configureFailPoint;
@@ -36,14 +52,24 @@ import static com.mongodb.ClusterFixture.disableFailPoint;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static java.util.Arrays.asList;
 import static java.util.Collections.synchronizedList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.bson.BsonDocument.parse;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
+/**
+ * See
+ * <a href="https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-tests.rst">Server Discovery And Monitoring—Test Plan</a>.
+ */
 public class ServerDiscoveryAndMonitoringProseTests {
+    private static final Logger LOGGER = Loggers.getLogger(ServerDiscoveryAndMonitoringProseTests.class.getSimpleName());
+    private static final long TEST_WAIT_TIMEOUT_MILLIS = SECONDS.toMillis(5);
 
     @Test
     @SuppressWarnings("try")
@@ -121,6 +147,110 @@ public class ServerDiscoveryAndMonitoringProseTests {
 
         } finally {
             disableFailPoint("failCommand");
+        }
+    }
+
+    /**
+     * See
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-tests.rst#connection-pool-management">Connection Pool Management</a>.
+     */
+    @Test
+    @SuppressWarnings("try")
+    public void testConnectionPoolManagement() throws InterruptedException {
+        assumeTrue(serverVersionAtLeast(4, 3));
+        BlockingQueue<Object> events = new SynchronousQueue<>(true);
+        ServerMonitorListener serverMonitorListener = new ServerMonitorListener() {
+            @Override
+            public void serverHeartbeatSucceeded(final ServerHeartbeatSucceededEvent event) {
+                put(events, event);
+            }
+
+            @Override
+            public void serverHeartbeatFailed(final ServerHeartbeatFailedEvent event) {
+                put(events, event);
+            }
+        };
+        ConnectionPoolListener connectionPoolListener = new ConnectionPoolListener() {
+            @Override
+            public void connectionPoolReady(final ConnectionPoolReadyEvent event) {
+                put(events, event);
+            }
+
+            @Override
+            public void connectionPoolCleared(final ConnectionPoolClearedEvent event) {
+                put(events, event);
+            }
+        };
+        String appName = "SDAMPoolManagementTest";
+        MongoClientSettings clientSettings = getMongoClientSettingsBuilder()
+                .applicationName(appName)
+                .applyToClusterSettings(ClusterFixture::setDirectConnection)
+                .applyToServerSettings(builder -> builder
+                        .heartbeatFrequency(100, TimeUnit.MILLISECONDS)
+                        .addServerMonitorListener(serverMonitorListener))
+                .applyToConnectionPoolSettings(builder -> builder
+                        .addConnectionPoolListener(connectionPoolListener))
+                .build();
+        try (MongoClient unused = MongoClients.create(clientSettings)) {
+            /* Note that ServerHeartbeatSucceededEvent type is sometimes allowed but never required.
+             * This is because DefaultServerMonitor does not send such events in situations when a server check happens as part
+             * of a connection handshake. */
+            assertPoll(events, ServerHeartbeatSucceededEvent.class, ConnectionPoolReadyEvent.class);
+            configureFailPoint(new BsonDocument()
+                    .append("configureFailPoint", new BsonString("failCommand"))
+                    .append("mode", new BsonDocument()
+                            .append("times", new BsonInt32(2)))
+                    .append("data", new BsonDocument()
+                            .append("failCommands", new BsonArray(asList(new BsonString("isMaster"), new BsonString("hello"))))
+                            .append("errorCode", new BsonInt32(1234))
+                            .append("appName", new BsonString(appName))));
+            assertPoll(events, ServerHeartbeatSucceededEvent.class, ServerHeartbeatFailedEvent.class);
+            assertPoll(events, null, ConnectionPoolClearedEvent.class);
+            assertPoll(events, ServerHeartbeatSucceededEvent.class, ConnectionPoolReadyEvent.class);
+        } finally {
+            disableFailPoint("failCommand");
+        }
+    }
+
+    private static void assertPoll(final BlockingQueue<?> queue, @Nullable final Class<?> allowed, final Class<?> required)
+            throws InterruptedException {
+        assertPoll(queue, allowed, required, Timeout.startNow(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS));
+    }
+
+    private static void assertPoll(final BlockingQueue<?> queue, @Nullable final Class<?> allowed, final Class<?> required,
+                                   final Timeout timeout) throws InterruptedException {
+        while (true) {
+            Object element;
+            if (timeout.isImmediate()) {
+                element = queue.poll();
+            } else if (timeout.isInfinite()) {
+                element = queue.take();
+            } else {
+                element = queue.poll(timeout.remaining(NANOSECONDS), NANOSECONDS);
+            }
+            if (element != null) {
+                if (LOGGER.isInfoEnabled()) {
+                    LOGGER.info("Polled " + element.toString());
+                }
+                Class<?> elementClass = element.getClass();
+                if (required.isAssignableFrom(elementClass)) {
+                    return;
+                } else {
+                    assertTrue(String.format("allowed %s, required %s, actual %s", allowed, required, elementClass),
+                            allowed != null && allowed.isAssignableFrom(elementClass));
+                }
+            }
+            if (timeout.expired()) {
+                fail("required " + required);
+            }
+        }
+    }
+
+    private static <E> void put(final BlockingQueue<E> q, final E e) {
+        try {
+            q.put(e);
+        } catch (InterruptedException t) {
+            throw new MongoInterruptedException(null, t);
         }
     }
 }
