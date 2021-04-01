@@ -20,7 +20,6 @@ import java.util.EventListener;
 
 /**
  * A listener for connection pool-related events.
- * Methods of this interface must not throw {@link Exception}s.
  *
  * @since 3.5
  */
