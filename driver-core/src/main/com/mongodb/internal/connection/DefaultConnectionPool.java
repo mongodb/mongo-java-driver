@@ -78,6 +78,10 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 class DefaultConnectionPool implements ConnectionPool {
     private static final Logger LOGGER = Loggers.getLogger("connection");
     private static final Executor SAME_THREAD_EXECUTOR = Runnable::run;
+    /**
+     * Is package-access for the purpose of testing and must not be used for any other purpose outside of this class.
+     */
+    static final int MAX_CONNECTING = 2;
 
     private final ConcurrentPool<UsageTrackingInternalConnection> pool;
     private final ConnectionPoolSettings settings;
@@ -102,7 +106,7 @@ class DefaultConnectionPool implements ConnectionPool {
         maintenanceTask = createMaintenanceTask();
         sizeMaintenanceTimer = createMaintenanceTimer();
         connectionPoolCreated(connectionPoolListener, serverId, settings);
-        openConcurrencyLimiter = new OpenConcurrencyLimiter(2);
+        openConcurrencyLimiter = new OpenConcurrencyLimiter(MAX_CONNECTING);
     }
 
     @Override
@@ -265,31 +269,31 @@ class DefaultConnectionPool implements ConnectionPool {
     }
 
     private PooledConnection getPooledConnection(final Timeout timeout) throws MongoTimeoutException {
-        boolean externalTimeoutException = false;
         try {
             UsageTrackingInternalConnection internalConnection = pool.get(timeout.remainingOrInfinite(NANOSECONDS), NANOSECONDS);
             while (shouldPrune(internalConnection)) {
                 pool.release(internalConnection, true);
-                long remainingNanos = timeout.remainingOrInfinite(NANOSECONDS);
-                if (Timeout.expired(remainingNanos)) {
-                    externalTimeoutException = true;
-                    throw createTimeoutException(timeout);
-                }
-                internalConnection = pool.get(remainingNanos, NANOSECONDS);
+                internalConnection = pool.get(timeout.remainingOrInfinite(NANOSECONDS), NANOSECONDS);
             }
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(format("Got connection [%s] to server %s", getId(internalConnection), serverId.getAddress()));
             }
             return new PooledConnection(internalConnection);
         } catch (MongoTimeoutException e) {
-            if (externalTimeoutException) {
-                throw e;
-            } else {
-                MongoTimeoutException timeoutException = createTimeoutException(timeout);
-                timeoutException.initCause(e);
-                throw timeoutException;
-            }
+            MongoTimeoutException timeoutException = createTimeoutException(timeout);
+            timeoutException.initCause(e);
+            throw timeoutException;
         }
+    }
+
+    @Nullable
+    private PooledConnection getPooledConnectionImmediately() {
+        UsageTrackingInternalConnection internalConnection = pool.getImmediately();
+        while (internalConnection != null && shouldPrune(internalConnection)) {
+            pool.release(internalConnection, true);
+            internalConnection = pool.getImmediately();
+        }
+        return internalConnection == null ? null : new PooledConnection(internalConnection);
     }
 
     private MongoTimeoutException createTimeoutException(final Timeout timeout) {
@@ -476,8 +480,8 @@ class DefaultConnectionPool implements ConnectionPool {
                 }
                 if (wrapped.isClosed() || shouldPrune(wrapped)) {
                     pool.release(wrapped, true);
-                } else if (!openConcurrencyLimiter.tryHandOver(new PooledConnection(wrapped))) {
-                    pool.release(wrapped);
+                } else {
+                    openConcurrencyLimiter.tryHandOverOrRelease(wrapped);
                 }
             }
         }
@@ -841,6 +845,19 @@ class DefaultConnectionPool implements ConnectionPool {
             tryLock(timeout);
             try {
                 if (tryGetAvailable) {
+                    /* An attempt to get an available opened connection from the pool (must be done while holding the lock)
+                     * happens here at most once to prevent the race condition in the following execution
+                     * (actions are specified in the execution total order,
+                     * which by definition exists if an execution is either sequentially consistent or linearizable):
+                     * 1. Thread#1 starts checking out and gets a non-opened connection.
+                     * 2. Thread#2 checks in a connection. Tries to hand it over, but there are no threads desiring to get one.
+                     * 3. Thread#1 executes the current code. Expresses the desire to get a connection via the hand-over mechanism,
+                     *   but thread#2 has already tried handing over and released its connection to the pool.
+                     * As a result, thread#1 is waiting for a permit to open a connection despite one being available in the pool.*/
+                    availableConnection = getPooledConnectionImmediately();
+                    if (availableConnection != null) {
+                        return availableConnection;
+                    }
                     expressDesireToGetAvailableConnection();
                 }
                 long remainingNanos = timeout.remainingOrInfinite(NANOSECONDS);
@@ -857,12 +874,6 @@ class DefaultConnectionPool implements ConnectionPool {
                 if (availableConnection == null) {
                     assertTrue(permits > 0);
                     permits--;
-                } else {
-                    assertTrue(availableConnection.opened());
-                    if (LOGGER.isTraceEnabled()) {
-                        LOGGER.trace(format("Received opened connection [%s] to server %s",
-                                getId(availableConnection), serverId.getAddress()));
-                    }
                 }
                 return availableConnection;
             } finally {
@@ -897,6 +908,10 @@ class DefaultConnectionPool implements ConnectionPool {
             PooledConnection result = desiredConnectionSlots.peekFirst().reference;
             if (result != null) {
                 desiredConnectionSlots.removeFirst();
+                assertTrue(result.opened());
+                if (LOGGER.isTraceEnabled()) {
+                    LOGGER.trace(format("Received opened connection [%s] to server %s", getId(result), serverId.getAddress()));
+                }
             }
             return result;
         }
@@ -909,22 +924,26 @@ class DefaultConnectionPool implements ConnectionPool {
             }
         }
 
-        boolean tryHandOver(final PooledConnection openConnection) {
+        /**
+         * The hand-over mechanism is needed to prevent other threads doing checkout from stealing newly released connections
+         * from threads that are waiting for a permit to open a connection.
+         */
+        void tryHandOverOrRelease(final UsageTrackingInternalConnection openConnection) {
             lock.lock();
             try {
                 for (//iterate from first (head) to last (tail)
                         MutableReference<PooledConnection> desiredConnectionSlot : desiredConnectionSlots) {
                     if (desiredConnectionSlot.reference == null) {
-                        desiredConnectionSlot.reference = openConnection;
+                        desiredConnectionSlot.reference = new PooledConnection(openConnection);
                         condition.signal();
                         if (LOGGER.isTraceEnabled()) {
                             LOGGER.trace(format("Handed over opened connection [%s] to server %s",
                                     getId(openConnection), serverId.getAddress()));
                         }
-                        return true;
+                        return;
                     }
                 }
-                return false;
+                pool.release(openConnection);
             } finally {
                 lock.unlock();
             }

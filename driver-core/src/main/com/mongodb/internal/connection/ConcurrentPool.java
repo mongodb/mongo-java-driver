@@ -20,11 +20,15 @@ import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.internal.connection.ConcurrentLinkedDeque.RemovalReportingIterator;
+import com.mongodb.lang.Nullable;
 
 import java.util.Iterator;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+
+import static com.mongodb.assertions.Assertions.assertFalse;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * A concurrent pool implementation.
@@ -150,6 +154,24 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
 
         return t;
+    }
+
+    /**
+     * This method is similar to {@link #get(long, TimeUnit)} with 0 timeout.
+     * The difference is that it never creates a new element
+     * and returns {@code null} instead of throwing {@link MongoTimeoutException}.
+     */
+    @Nullable
+    T getImmediately() {
+        assertFalse(closed);
+        T element = null;
+        if (acquirePermit(0, NANOSECONDS)) {
+            element = available.pollLast();
+            if (element == null) {
+                permits.release();
+            }
+        }
+        return element;
     }
 
     public void prune() {
