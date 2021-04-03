@@ -28,6 +28,9 @@ interface ConnectionPool extends Closeable {
 
     InternalConnection get();
 
+    /**
+     * @param timeout See {@link com.mongodb.internal.Timeout#startNow(long, TimeUnit)}.
+     */
     InternalConnection get(long timeout, TimeUnit timeUnit);
 
     void getAsync(SingleResultCallback<InternalConnection> callback);

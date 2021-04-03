@@ -44,6 +44,9 @@ public final class Timeout {
     }
 
     /**
+     * Converts the specified {@code duration} from {@code unit}s to {@link TimeUnit#NANOSECONDS} via {@link TimeUnit#toNanos(long)}
+     * and then acts identically to {@link #startNow(long)}.
+     *
      * @see #startNow(long)
      */
     public static Timeout startNow(final long duration, final TimeUnit unit) {
@@ -164,7 +167,8 @@ public final class Timeout {
     }
 
     /**
-     * Returns a negative value for {@linkplain #isInfinite() infinite} timeouts, otherwise 0 or a positive value.
+     * Returns a negative value for {@linkplain #isInfinite() infinite} timeouts,
+     * otherwise behaves identically to {@link #remaining(TimeUnit)}.
      * Use {@link #expired(long)} to check if the returned value signifies that a timeout is expired.
      *
      * @see #remaining(TimeUnit)
