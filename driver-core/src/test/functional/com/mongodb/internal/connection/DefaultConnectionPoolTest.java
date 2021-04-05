@@ -19,6 +19,7 @@ package com.mongodb.internal.connection;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerId;
 import com.mongodb.event.ConnectionCreatedEvent;
@@ -30,7 +31,9 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -265,7 +268,7 @@ public class DefaultConnectionPoolTest {
     /**
      * The idea of this test is as follows:
      * <ol>
-     *     <li>Check out as many connections as the pool allows
+     *     <li>Check out some connections from the pool
      *     ({@link DefaultConnectionPool#MAX_CONNECTING} connections must not be checked out to make the next step possible).</li>
      *     <li>Acquire all permits to open a connection and leave them acquired.</li>
      *     <li>Check in the checked out connections and concurrently check them out again.</li>
@@ -280,7 +283,11 @@ public class DefaultConnectionPoolTest {
         ControllableConnectionFactory controllableConnFactory = newControllableConnectionFactory(cachedExecutor);
         TestConnectionPoolListener listener = new TestConnectionPoolListener();
         provider = new DefaultConnectionPool(SERVER_ID, controllableConnFactory.factory, ConnectionPoolSettings.builder()
-                .maxSize(MAX_CONNECTING + openConnectionsCount + maxConcurrentlyHandedOver)
+                .maxSize(MAX_CONNECTING
+                        + openConnectionsCount
+                        /* This wiggle room is needed to open opportunities to create new connections from the standpoint of
+                         * the max pool size, and then check that no connections were created nonetheless. */
+                        + maxConcurrentlyHandedOver)
                 .addConnectionPoolListener(listener)
                 .maintenanceInitialDelay(MAX_VALUE, NANOSECONDS)
                 .build());
@@ -290,16 +297,23 @@ public class DefaultConnectionPoolTest {
         }
         acquireOpenPermits(provider, MAX_CONNECTING, InfiniteCheckoutEmulation.INFINITE_OPEN, controllableConnFactory, listener);
         int previousIdx = 0;
+        // concurrently check in / check out and assert the hand-over mechanism works
         for (int idx = 0; idx < connections.size(); idx += maxConcurrentlyHandedOver) {
-            Collection<Future<?>> handedOverFutures = new ArrayList<>();
-            Collection<Future<?>> receivedFutures = new ArrayList<>();
+            Collection<Future<ConnectionId>> handedOverFutures = new ArrayList<>();
+            Collection<Future<ConnectionId>> receivedFutures = new ArrayList<>();
             while (previousIdx < idx) {
                 int currentIdx = previousIdx;
                 previousIdx++;
-                Runnable checkIn = () -> handedOverFutures.add(cachedExecutor.submit(() ->
-                        connections.get(currentIdx).close()));
-                Runnable checkOut = () -> receivedFutures.add(cachedExecutor.submit(() ->
-                        provider.get(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS), null));
+                Runnable checkIn = () -> handedOverFutures.add(cachedExecutor.submit(() -> {
+                    InternalConnection connection = connections.get(currentIdx);
+                    ConnectionId connectionId = connection.getDescription().getConnectionId();
+                    connections.get(currentIdx).close();
+                    return connectionId;
+                }));
+                Runnable checkOut = () -> receivedFutures.add(cachedExecutor.submit(() -> {
+                    InternalConnection connection = provider.get(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS);
+                    return connection.getDescription().getConnectionId();
+                }));
                 if (ThreadLocalRandom.current().nextBoolean()) {
                     checkIn.run();
                     checkOut.run();
@@ -309,12 +323,15 @@ public class DefaultConnectionPoolTest {
                 }
             }
             try {
-                for (Future<?> handedOverFuture : handedOverFutures) {
-                    handedOverFuture.get(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS);
+                Set<ConnectionId> handedOver = new HashSet<>();
+                Set<ConnectionId> received = new HashSet<>();
+                for (Future<ConnectionId> handedOverFuture : handedOverFutures) {
+                    handedOver.add(handedOverFuture.get(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS));
                 }
-                for (Future<?> receivedFuture : receivedFutures) {
-                    receivedFuture.get(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS);
+                for (Future<ConnectionId> receivedFuture : receivedFutures) {
+                    received.add(receivedFuture.get(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS));
                 }
+                assertEquals(handedOver, received);
             } catch (TimeoutException | ExecutionException e) {
                 throw new AssertionError(e);
             }
