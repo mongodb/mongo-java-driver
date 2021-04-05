@@ -134,7 +134,7 @@ class DefaultConnectionPool implements ConnectionPool {
             connectionPoolListener.connectionCheckedOut(new ConnectionCheckedOutEvent(getId(connection)));
             return connection;
         } catch (RuntimeException e) {
-            throw checkOutFailed(e);
+            throw (RuntimeException) checkOutFailed(e);
         }
     }
 
@@ -187,9 +187,10 @@ class DefaultConnectionPool implements ConnectionPool {
 
     /**
      * Sends {@link ConnectionCheckOutFailedEvent}
-     * and returns a {@link RuntimeException} that is reported as the cause of a checkout failure.
+     * and returns {@code t} if it is not {@link MongoOpenConnectionInternalException},
+     * or returns {@code t.}{@linkplain MongoOpenConnectionInternalException#getCause() getCause()} otherwise.
      */
-    private RuntimeException checkOutFailed(final Throwable t) {
+    private Throwable checkOutFailed(final Throwable t) {
         Throwable result = t;
         if (t instanceof MongoTimeoutException) {
             connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, Reason.TIMEOUT));
@@ -201,7 +202,7 @@ class DefaultConnectionPool implements ConnectionPool {
         } else {
             connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, Reason.UNKNOWN));
         }
-        return result instanceof RuntimeException ? (RuntimeException) result : new RuntimeException(result);
+        return result;
     }
 
     private void openAsync(final PooledConnection pooledConnection, final Timeout timeout, final Executor executor,
@@ -274,9 +275,6 @@ class DefaultConnectionPool implements ConnectionPool {
             while (shouldPrune(internalConnection)) {
                 pool.release(internalConnection, true);
                 internalConnection = pool.get(timeout.remainingOrInfinite(NANOSECONDS), NANOSECONDS);
-            }
-            if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace(format("Got connection [%s] to server %s", getId(internalConnection), serverId.getAddress()));
             }
             return new PooledConnection(internalConnection);
         } catch (MongoTimeoutException e) {
