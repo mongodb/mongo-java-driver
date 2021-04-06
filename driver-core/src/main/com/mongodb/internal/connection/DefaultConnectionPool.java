@@ -278,9 +278,7 @@ class DefaultConnectionPool implements ConnectionPool {
             }
             return new PooledConnection(internalConnection);
         } catch (MongoTimeoutException e) {
-            MongoTimeoutException timeoutException = createTimeoutException(timeout);
-            timeoutException.initCause(e);
-            throw timeoutException;
+            throw createTimeoutException(timeout);
         }
     }
 
