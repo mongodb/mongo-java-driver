@@ -45,6 +45,16 @@ public final class Polygon extends Geometry {
     /**
      * Construct an instance with the given coordinates.
      *
+     * @param exterior the exterior ring of the polygon
+     * @param holes    optional interior rings of the polygon
+     */
+    public Polygon(final List<Position> exterior, final List<List<Position>> holes) {
+        this(new PolygonCoordinates(exterior, holes));
+    }
+
+    /**
+     * Construct an instance with the given coordinates.
+     *
      * @param coordinates the coordinates
      */
     public Polygon(final PolygonCoordinates coordinates) {
