@@ -22,6 +22,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonValue;
 
 import java.util.Map;
+import java.util.Objects;
 
 import static com.mongodb.ClusterFixture.getServerParameters;
 import static com.mongodb.JsonTestServerVersionChecker.getMaxServerVersionForField;
@@ -59,7 +60,7 @@ final class RunOnRequirementsMatcher {
                     case "serverParameters":
                         BsonDocument serverParameters = getServerParameters();
                         for (Map.Entry<String, BsonValue> curParameter: curRequirement.getValue().asDocument().entrySet()) {
-                            if (!serverParameters.get(curParameter.getKey()).equals(curParameter.getValue())) {
+                            if (!Objects.equals(serverParameters.get(curParameter.getKey()), curParameter.getValue())) {
                                 requirementMet = false;
                                 break requirementLoop;
                             }
