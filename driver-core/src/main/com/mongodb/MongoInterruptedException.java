@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
+
 /**
  * A non-checked exception indicating that the driver has been interrupted by a call to Thread.interrupt.
  *
@@ -31,7 +33,7 @@ public class MongoInterruptedException extends MongoException {
      * @param message the message
      * @param e the cause
      */
-    public MongoInterruptedException(final String message, final Exception e) {
+    public MongoInterruptedException(@Nullable final String message, final Exception e) {
         super(message, e);
     }
 }
