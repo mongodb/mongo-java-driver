@@ -20,6 +20,7 @@ import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
 import org.bson.ByteBuf;
@@ -36,6 +37,7 @@ class UsageTrackingInternalConnection implements InternalConnection {
     private static final Logger LOGGER = Loggers.getLogger("connection");
     private volatile long openedAt;
     private volatile long lastUsedAt;
+    private volatile boolean closeSilently;
     private final int generation;
     private final InternalConnection wrapped;
 
@@ -207,5 +209,24 @@ class UsageTrackingInternalConnection implements InternalConnection {
      */
     long getLastUsedAt() {
         return lastUsedAt;
+    }
+
+    /**
+     * This method must be used if and only if {@link ConnectionCreatedEvent} was not sent for the connection.
+     * Must not throw {@link Exception}s.
+     *
+     * @see #isCloseSilently()
+     */
+    void setCloseSilently() {
+        closeSilently = true;
+    }
+
+    /**
+     * Must not throw {@link Exception}s.
+     *
+     * @see #setCloseSilently()
+     */
+    boolean isCloseSilently() {
+        return closeSilently;
     }
 }

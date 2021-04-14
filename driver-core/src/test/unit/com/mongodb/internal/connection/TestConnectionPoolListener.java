@@ -80,7 +80,8 @@ public class TestConnectionPoolListener implements ConnectionPoolListener {
                 return;
             }
             if (!condition.await(time, unit)) {
-                throw new TimeoutException("Timed out waiting for " + count + " events of type " + eventClass);
+                throw new TimeoutException("Timed out waiting for " + count + " events of type " + eventClass
+                        + ". The count after timing out is " + countEvents(eventClass));
             }
         } finally {
             waitingForEventClass = null;

@@ -16,6 +16,10 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.connection.SocketSettings;
+import com.mongodb.connection.SocketStreamFactory;
+import com.mongodb.connection.SslSettings;
+import com.mongodb.connection.StreamFactory;
 import org.bson.BsonDocument;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -29,8 +33,8 @@ import java.util.concurrent.Callable;
 @RunWith(Parameterized.class)
 public class ConnectionPoolTest extends AbstractConnectionPoolTest {
 
-    public ConnectionPoolTest(final String fileName, final String description, final BsonDocument definition) {
-        super(fileName, description, definition);
+    public ConnectionPoolTest(final String fileName, final String description, final BsonDocument definition, final boolean skipTest) {
+        super(fileName, description, definition, skipTest);
     }
 
     @Override
@@ -67,5 +71,10 @@ public class ConnectionPoolTest extends AbstractConnectionPoolTest {
         } else {
             throw new UnsupportedOperationException("Operation " + name + " not supported");
         }
+    }
+
+    @Override
+    protected StreamFactory createStreamFactory(final SocketSettings socketSettings, final SslSettings sslSettings) {
+        return new SocketStreamFactory(socketSettings, sslSettings);
     }
 }
