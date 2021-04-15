@@ -144,7 +144,7 @@ public abstract class AbstractConnectionPoolTest {
                 ServerId serverId = new ServerId(new ClusterId(), ClusterFixture.getPrimary());
                 pool = new ConnectionIdAdjustingConnectionPool(new DefaultConnectionPool(serverId,
                         new InternalStreamConnectionFactory(
-                                createStreamFactory(SocketSettings.builder().build(), SslSettings.builder().enabled(false).build()),
+                                createStreamFactory(SocketSettings.builder().build(), ClusterFixture.getSslSettings()),
                                 ClusterFixture.getCredentialWithCache(),
                                 fileName + ": " + description,
                                 MongoDriverInformation.builder().build(),

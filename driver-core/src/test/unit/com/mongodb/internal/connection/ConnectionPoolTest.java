@@ -20,6 +20,8 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactory;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import org.bson.BsonDocument;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -32,6 +34,7 @@ import java.util.concurrent.Callable;
 @SuppressWarnings("deprecation")
 @RunWith(Parameterized.class)
 public class ConnectionPoolTest extends AbstractConnectionPoolTest {
+    private static final Logger LOGGER = Loggers.getLogger(ConnectionPoolTest.class.getSimpleName());
 
     public ConnectionPoolTest(final String fileName, final String description, final BsonDocument definition, final boolean skipTest) {
         super(fileName, description, definition, skipTest);
@@ -51,6 +54,7 @@ public class ConnectionPoolTest extends AbstractConnectionPoolTest {
                         }
                         return null;
                     } catch (Exception e) {
+                        LOGGER.error("", e);
                         return e;
                     }
                 }

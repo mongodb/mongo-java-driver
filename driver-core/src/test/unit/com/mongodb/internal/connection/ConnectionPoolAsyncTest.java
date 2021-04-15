@@ -21,6 +21,9 @@ import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactory;
+import com.mongodb.connection.TlsChannelStreamFactoryFactory;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.async.SingleResultCallback;
 import org.bson.BsonDocument;
 import org.junit.runner.RunWith;
@@ -34,6 +37,7 @@ import java.util.concurrent.Callable;
 @SuppressWarnings("deprecation")
 @RunWith(Parameterized.class)
 public class ConnectionPoolAsyncTest extends AbstractConnectionPoolTest {
+    private static final Logger LOGGER = Loggers.getLogger(ConnectionPoolAsyncTest.class.getSimpleName());
 
     public ConnectionPoolAsyncTest(final String fileName, final String description, final BsonDocument definition, final boolean skipTest) {
         super(fileName, description, definition, skipTest);
@@ -64,6 +68,7 @@ public class ConnectionPoolAsyncTest extends AbstractConnectionPoolTest {
                         callback.get();
                         return null;
                     } catch (Exception e) {
+                        LOGGER.error("", e);
                         return e;
                     }
                 }
@@ -88,6 +93,11 @@ public class ConnectionPoolAsyncTest extends AbstractConnectionPoolTest {
 
     @Override
     protected StreamFactory createStreamFactory(final SocketSettings socketSettings, final SslSettings sslSettings) {
-        return new AsynchronousSocketChannelStreamFactory(socketSettings, sslSettings);
+        if (sslSettings.isEnabled()) {
+            return new TlsChannelStreamFactoryFactory().create(socketSettings, sslSettings);
+        } else {
+            return new AsynchronousSocketChannelStreamFactory(socketSettings, sslSettings);
+        }
+
     }
 }
