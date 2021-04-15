@@ -150,7 +150,7 @@ public abstract class AbstractConnectionPoolTest {
                                 MongoDriverInformation.builder().build(),
                                 Collections.emptyList(),
                                 new TestCommandListener(),
-                                null),
+                                ClusterFixture.getServerApi()),
                         settings));
                 setFailPoint();
                 break;
