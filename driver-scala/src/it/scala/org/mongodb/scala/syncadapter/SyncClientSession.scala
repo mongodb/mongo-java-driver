@@ -54,6 +54,8 @@ case class SyncClientSession(wrapped: ClientSession, originator: Object) extends
 
   override def notifyMessageSent: Boolean = wrapped.notifyMessageSent
 
+  override def notifyNonCommitOperationInitiated(): Unit = wrapped.notifyNonCommitOperationInitiated()
+
   override def getTransactionOptions: TransactionOptions = wrapped.getTransactionOptions
 
   override def startTransaction(): Unit = wrapped.startTransaction()

@@ -38,6 +38,7 @@ import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.binding.ReadWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.Cluster;
+import com.mongodb.internal.operation.CommitTransactionOperation;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.ServerSessionPool;
@@ -163,6 +164,10 @@ final class MongoClientDelegate {
         @Override
         public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern,
                              @Nullable final ClientSession session) {
+            if (session != null) {
+                session.notifyNonCommitOperationInitiated();
+            }
+
             ClientSession actualClientSession = getClientSession(session);
             ReadBinding binding = getReadBinding(readPreference, readConcern, actualClientSession,
                     session == null && actualClientSession != null);
@@ -183,6 +188,10 @@ final class MongoClientDelegate {
 
         @Override
         public <T> T execute(final WriteOperation<T> operation, final ReadConcern readConcern, @Nullable final ClientSession session) {
+            if (session != null && !(operation instanceof CommitTransactionOperation)) {
+                session.notifyNonCommitOperationInitiated();
+            }
+
             ClientSession actualClientSession = getClientSession(session);
             WriteBinding binding = getWriteBinding(readConcern, actualClientSession,
                     session == null && actualClientSession != null);

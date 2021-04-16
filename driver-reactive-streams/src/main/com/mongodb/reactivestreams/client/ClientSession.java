@@ -47,6 +47,14 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
     boolean notifyMessageSent();
 
     /**
+     * Notify the client session that command execution is being initiated. This should be called before server selection occurs.
+     * <p>
+     * For internal use only
+     * </p>
+     */
+    void notifyNonCommitOperationInitiated();
+
+    /**
      * Gets the transaction options.  Only call this method of the session has an active transaction
      *
      * @return the transaction options

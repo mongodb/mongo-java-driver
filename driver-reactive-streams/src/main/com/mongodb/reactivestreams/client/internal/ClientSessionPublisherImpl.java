@@ -75,6 +75,13 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
     }
 
     @Override
+    public void notifyNonCommitOperationInitiated() {
+        if (transactionState == TransactionState.COMMITTED) {
+            setPinnedServerAddress(null);
+        }
+    }
+
+    @Override
     public TransactionOptions getTransactionOptions() {
         isTrue("in transaction", transactionState == TransactionState.IN || transactionState == TransactionState.COMMITTED);
         return transactionOptions;
@@ -186,9 +193,11 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
                     new AbortTransactionOperation(transactionOptions.getWriteConcern())
                             .recoveryToken(getRecoveryToken()),
                     readConcern, this)
-                    .doOnError(MongoException.class, this::unpinServerAddressOnError)
                     .onErrorResume(Throwable.class, (e) -> Mono.empty())
-                    .doOnTerminate(() ->  cleanupTransaction(TransactionState.ABORTED));
+                    .doOnTerminate(() -> {
+                        setPinnedServerAddress(null);
+                        cleanupTransaction(TransactionState.ABORTED);
+                    });
         }
     }
 

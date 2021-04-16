@@ -76,6 +76,14 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         }
     }
 
+
+    @Override
+    public void notifyNonCommitOperationInitiated() {
+        if (transactionState == TransactionState.COMMITTED) {
+            setPinnedServerAddress(null);
+        }
+    }
+
     @Override
     public TransactionOptions getTransactionOptions() {
         isTrue("in transaction", transactionState == TransactionState.IN || transactionState == TransactionState.COMMITTED);
@@ -163,10 +171,9 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                         readConcern, this);
             }
         } catch (Exception e) {
-            if (e instanceof MongoException) {
-                unpinServerAddressOnError((MongoException) e);
-            }
+            // ignore exceptions from abort
         } finally {
+            setPinnedServerAddress(null);
             cleanupTransaction(TransactionState.ABORTED);
         }
     }
