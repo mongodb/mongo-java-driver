@@ -132,4 +132,5 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
      * @mongodb.server.release 4.0
      * @since 3.11
      */
-    <T> T withTransaction(TransactionBody<T> transactionBody, TransactionOptions options);}
+    <T> T withTransaction(TransactionBody<T> transactionBody, TransactionOptions options);
+}

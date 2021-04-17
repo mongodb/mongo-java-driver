@@ -128,8 +128,6 @@ public abstract class UnifiedTest {
 
     @Before
     public void setUp() {
-//        assumeTrue(definition.getString("description").getValue().equals("unpin when a non-transaction operation uses a session"));
-        
         assertTrue(schemaVersion.startsWith("1.0") || schemaVersion.startsWith("1.1") || schemaVersion.startsWith("1.2"));
         if (runOnRequirements != null) {
             assumeTrue("Run-on requirements not met", runOnRequirementsMet(runOnRequirements, getServerVersion()));
