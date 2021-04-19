@@ -28,6 +28,8 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.TransactionBody;
 import com.mongodb.internal.operation.AbortTransactionOperation;
 import com.mongodb.internal.operation.CommitTransactionOperation;
+import com.mongodb.internal.operation.ReadOperation;
+import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.BaseClientSessionImpl;
 import com.mongodb.internal.session.ServerSessionPool;
 
@@ -79,8 +81,9 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
 
 
     @Override
-    public void notifyNonCommitOperationInitiated() {
-        if (transactionState != TransactionState.IN) {
+    public void notifyOperationInitiated(final Object operation) {
+        assertTrue(operation instanceof ReadOperation || operation instanceof WriteOperation);
+        if (!(hasActiveTransaction() || operation instanceof CommitTransactionOperation)) {
             assertTrue(getPinnedServerAddress() == null
                     || (transactionState != TransactionState.ABORTED && transactionState != TransactionState.NONE));
             setPinnedServerAddress(null);

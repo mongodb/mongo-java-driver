@@ -69,8 +69,9 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
      *      For internal use only
      *  </p>
      *
+     * @param operation the operation
      */
-    void notifyNonCommitOperationInitiated();
+    void notifyOperationInitiated(Object operation);
 
     /**
      * Gets the transaction options.  Only call this method of the session has an active transaction

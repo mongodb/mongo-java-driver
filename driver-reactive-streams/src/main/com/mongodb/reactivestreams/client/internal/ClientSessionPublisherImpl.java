@@ -27,6 +27,8 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.client.AsyncClientSession;
 import com.mongodb.internal.operation.AbortTransactionOperation;
 import com.mongodb.internal.operation.CommitTransactionOperation;
+import com.mongodb.internal.operation.ReadOperation;
+import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.BaseClientSessionImpl;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.reactivestreams.client.ClientSession;
@@ -37,6 +39,7 @@ import reactor.core.publisher.MonoSink;
 
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -75,8 +78,11 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
     }
 
     @Override
-    public void notifyNonCommitOperationInitiated() {
-        if (transactionState == TransactionState.COMMITTED) {
+    public void notifyOperationInitiated(final Object operation) {
+        assertTrue(operation instanceof ReadOperation || operation instanceof WriteOperation);
+        if (!(hasActiveTransaction() || operation instanceof CommitTransactionOperation)) {
+            assertTrue(getPinnedServerAddress() == null
+                    || (transactionState != TransactionState.ABORTED && transactionState != TransactionState.NONE));
             setPinnedServerAddress(null);
         }
     }

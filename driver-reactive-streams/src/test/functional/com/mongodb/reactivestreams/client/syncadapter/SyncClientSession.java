@@ -118,8 +118,8 @@ class SyncClientSession implements ClientSession {
     }
 
     @Override
-    public void notifyNonCommitOperationInitiated() {
-        wrapped.notifyNonCommitOperationInitiated();
+    public void notifyOperationInitiated(final Object operation) {
+        wrapped.notifyOperationInitiated(operation);
     }
 
     @Override

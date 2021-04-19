@@ -29,7 +29,6 @@ import com.mongodb.internal.binding.AsyncClusterBinding;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.internal.operation.AsyncWriteOperation;
-import com.mongodb.internal.operation.CommitTransactionOperation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.internal.crypt.Crypt;
@@ -60,7 +59,7 @@ public class OperationExecutorImpl implements OperationExecutor {
         notNull("readConcern", readConcern);
 
         if (session != null) {
-            session.notifyNonCommitOperationInitiated();
+            session.notifyOperationInitiated(operation);
         }
 
           return clientSessionHelper.withClientSession(session, this)
@@ -92,8 +91,8 @@ public class OperationExecutorImpl implements OperationExecutor {
         notNull("operation", operation);
         notNull("readConcern", readConcern);
 
-        if (session != null && !(operation instanceof CommitTransactionOperation)) {
-            session.notifyNonCommitOperationInitiated();
+        if (session != null) {
+            session.notifyOperationInitiated(operation);
         }
 
         return clientSessionHelper.withClientSession(session, this)
