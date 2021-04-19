@@ -28,11 +28,14 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.TransactionBody;
 import com.mongodb.internal.operation.AbortTransactionOperation;
 import com.mongodb.internal.operation.CommitTransactionOperation;
+import com.mongodb.internal.operation.ReadOperation;
+import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.BaseClientSessionImpl;
 import com.mongodb.internal.session.ServerSessionPool;
 
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -73,6 +76,17 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                 cleanupTransaction(TransactionState.NONE);
             }
             return false;
+        }
+    }
+
+
+    @Override
+    public void notifyOperationInitiated(final Object operation) {
+        assertTrue(operation instanceof ReadOperation || operation instanceof WriteOperation);
+        if (!(hasActiveTransaction() || operation instanceof CommitTransactionOperation)) {
+            assertTrue(getPinnedServerAddress() == null
+                    || (transactionState != TransactionState.ABORTED && transactionState != TransactionState.NONE));
+            setPinnedServerAddress(null);
         }
     }
 
@@ -163,10 +177,9 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                         readConcern, this);
             }
         } catch (Exception e) {
-            if (e instanceof MongoException) {
-                unpinServerAddressOnError((MongoException) e);
-            }
+            // ignore exceptions from abort
         } finally {
+            setPinnedServerAddress(null);
             cleanupTransaction(TransactionState.ABORTED);
         }
     }

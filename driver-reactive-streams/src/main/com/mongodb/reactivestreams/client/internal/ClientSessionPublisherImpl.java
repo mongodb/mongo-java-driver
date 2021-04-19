@@ -26,6 +26,8 @@ import com.mongodb.WriteConcern;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.client.AsyncClientSession;
 import com.mongodb.internal.operation.AbortTransactionOperation;
+import com.mongodb.internal.operation.AsyncReadOperation;
+import com.mongodb.internal.operation.AsyncWriteOperation;
 import com.mongodb.internal.operation.CommitTransactionOperation;
 import com.mongodb.internal.session.BaseClientSessionImpl;
 import com.mongodb.internal.session.ServerSessionPool;
@@ -37,6 +39,7 @@ import reactor.core.publisher.MonoSink;
 
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -71,6 +74,16 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
                 cleanupTransaction(TransactionState.NONE);
             }
             return false;
+        }
+    }
+
+    @Override
+    public void notifyOperationInitiated(final Object operation) {
+        assertTrue(operation instanceof AsyncReadOperation || operation instanceof AsyncWriteOperation);
+        if (!(hasActiveTransaction() || operation instanceof CommitTransactionOperation)) {
+            assertTrue(getPinnedServerAddress() == null
+                    || (transactionState != TransactionState.ABORTED && transactionState != TransactionState.NONE));
+            setPinnedServerAddress(null);
         }
     }
 
@@ -186,9 +199,11 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
                     new AbortTransactionOperation(transactionOptions.getWriteConcern())
                             .recoveryToken(getRecoveryToken()),
                     readConcern, this)
-                    .doOnError(MongoException.class, this::unpinServerAddressOnError)
                     .onErrorResume(Throwable.class, (e) -> Mono.empty())
-                    .doOnTerminate(() ->  cleanupTransaction(TransactionState.ABORTED));
+                    .doOnTerminate(() -> {
+                        setPinnedServerAddress(null);
+                        cleanupTransaction(TransactionState.ABORTED);
+                    });
         }
     }
 

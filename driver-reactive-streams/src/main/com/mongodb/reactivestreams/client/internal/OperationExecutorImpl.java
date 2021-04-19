@@ -57,6 +57,11 @@ public class OperationExecutorImpl implements OperationExecutor {
         notNull("operation", operation);
         notNull("readPreference", readPreference);
         notNull("readConcern", readConcern);
+
+        if (session != null) {
+            session.notifyOperationInitiated(operation);
+        }
+
           return clientSessionHelper.withClientSession(session, this)
                 .map(clientSession -> getReadWriteBinding(readPreference, readConcern, clientSession,
                                                               session == null && clientSession != null))
@@ -85,6 +90,11 @@ public class OperationExecutorImpl implements OperationExecutor {
             @Nullable final ClientSession session) {
         notNull("operation", operation);
         notNull("readConcern", readConcern);
+
+        if (session != null) {
+            session.notifyOperationInitiated(operation);
+        }
+
         return clientSessionHelper.withClientSession(session, this)
                 .map(clientSession -> getReadWriteBinding(ReadPreference.primary(), readConcern, clientSession,
                                                               session == null && clientSession != null))
