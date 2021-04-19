@@ -10,7 +10,7 @@ title = "Quick Start"
 
 # MongoDB Scala Driver Quick Start
 
-The following code snippets come from the [`QuickTour.java`]({{< srcref "driver-scala/src/it/tour/QuickTour.java" >}}) example code
+The following code snippets come from the [`QuickTour.java`]({{< srcref "driver-scala/src/it/tour/QuickTour.scala" >}}) example code
 that can be found with the Scala driver source on github.
 
 {{% note %}}
