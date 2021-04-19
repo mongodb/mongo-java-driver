@@ -33,6 +33,7 @@ import com.mongodb.internal.session.ServerSessionPool;
 
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -79,7 +80,9 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
 
     @Override
     public void notifyNonCommitOperationInitiated() {
-        if (transactionState == TransactionState.COMMITTED) {
+        if (transactionState != TransactionState.IN) {
+            assertTrue(getPinnedServerAddress() == null
+                    || (transactionState != TransactionState.ABORTED && transactionState != TransactionState.NONE));
             setPinnedServerAddress(null);
         }
     }
