@@ -163,6 +163,10 @@ final class MongoClientDelegate {
         @Override
         public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern,
                              @Nullable final ClientSession session) {
+            if (session != null) {
+                session.notifyOperationInitiated(operation);
+            }
+
             ClientSession actualClientSession = getClientSession(session);
             ReadBinding binding = getReadBinding(readPreference, readConcern, actualClientSession,
                     session == null && actualClientSession != null);
@@ -183,6 +187,10 @@ final class MongoClientDelegate {
 
         @Override
         public <T> T execute(final WriteOperation<T> operation, final ReadConcern readConcern, @Nullable final ClientSession session) {
+            if (session != null) {
+                session.notifyOperationInitiated(operation);
+            }
+
             ClientSession actualClientSession = getClientSession(session);
             WriteBinding binding = getWriteBinding(readConcern, actualClientSession,
                     session == null && actualClientSession != null);
