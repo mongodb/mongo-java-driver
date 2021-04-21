@@ -137,7 +137,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
 
     @Slow
     def 'should allow update larger than 16MB'() {
-        // small enough so the update document is 16MB, but enough to push the the request as a whole over 16MB
+        // small enough so the update document is 16MB, but enough to push the request as a whole over 16MB
         def binary = new BsonBinary(new byte[16 * 1024 * 1024 - 24])
         given:
         def operation = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, false,

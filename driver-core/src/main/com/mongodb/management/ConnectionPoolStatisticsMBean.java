@@ -54,7 +54,7 @@ public interface ConnectionPoolStatisticsMBean {
     int getMaxSize();
 
     /**
-     * Gets the current size of the pool, including idle and and in-use members.
+     * Gets the current size of the pool, including idle and in-use members.
      *
      * @return the size
      */
