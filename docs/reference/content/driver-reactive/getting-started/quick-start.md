@@ -11,7 +11,7 @@ title = "Quick Start"
 # MongoDB Reactive Streams Driver Quick Start
 
 The following code snippets come from the [`QuickTour.java`]({{< srcref "driver-reactive-streams/src/examples/reactivestreams/tour/QuickTour.java" >}}) example code
-that can be found with the reactive streams driver source on github.
+that can be found with the reactive streams driver source on GitHub.
 
 {{% note %}}
 See the [installation guide]({{< relref "driver-reactive/getting-started/installation.md" >}}) for instructions on how to install the MongoDB Reactive Streams Java Driver.

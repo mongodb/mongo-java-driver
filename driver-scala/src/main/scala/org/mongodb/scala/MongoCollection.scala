@@ -640,7 +640,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * Removes at most one document from the collection that matches the given filter.  If no documents match, the collection is not
    * modified.
    *
-   * @param filter the query filter to apply the the delete operation
+   * @param filter the query filter to apply the delete operation
    * @return a Observable with a single element the DeleteResult or with an com.mongodb.MongoException
    */
   def deleteOne(filter: Bson): SingleObservable[DeleteResult] = wrapped.deleteOne(filter)
@@ -649,7 +649,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * Removes at most one document from the collection that matches the given filter.  If no documents match, the collection is not
    * modified.
    *
-   * @param filter the query filter to apply the the delete operation
+   * @param filter the query filter to apply the delete operation
    * @param options the options to apply to the delete operation
    * @return a Observable with a single element the DeleteResult or with an com.mongodb.MongoException
    * @since 1.2
@@ -662,7 +662,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * modified.
    *
    * @param clientSession the client session with which to associate this operation
-   * @param filter the query filter to apply the the delete operation
+   * @param filter the query filter to apply the delete operation
    * @return a Observable with a single element the DeleteResult or with an com.mongodb.MongoException
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
@@ -675,7 +675,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * modified.
    *
    * @param clientSession the client session with which to associate this operation
-   * @param filter the query filter to apply the the delete operation
+   * @param filter the query filter to apply the delete operation
    * @param options the options to apply to the delete operation
    * @return a Observable with a single element the DeleteResult or with an com.mongodb.MongoException
    * @since 2.2
@@ -687,7 +687,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
    *
-   * @param filter the query filter to apply the the delete operation
+   * @param filter the query filter to apply the delete operation
    * @return a Observable with a single element the DeleteResult or with an com.mongodb.MongoException
    */
   def deleteMany(filter: Bson): SingleObservable[DeleteResult] = wrapped.deleteMany(filter)
@@ -695,7 +695,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
    *
-   * @param filter the query filter to apply the the delete operation
+   * @param filter the query filter to apply the delete operation
    * @param options the options to apply to the delete operation
    * @return a Observable with a single element the DeleteResult or with an com.mongodb.MongoException
    * @since 1.2
@@ -707,7 +707,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
    *
    * @param clientSession the client session with which to associate this operation
-   * @param filter the query filter to apply the the delete operation
+   * @param filter the query filter to apply the delete operation
    * @return a Observable with a single element the DeleteResult or with an com.mongodb.MongoException
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
@@ -719,7 +719,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
    *
    * @param clientSession the client session with which to associate this operation
-   * @param filter the query filter to apply the the delete operation
+   * @param filter the query filter to apply the delete operation
    * @param options the options to apply to the delete operation
    * @return a Observable with a single element the DeleteResult or with an com.mongodb.MongoException
    * @since 2.2
@@ -732,7 +732,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * Replace a document in the collection according to the specified arguments.
    *
    * [[http://docs.mongodb.org/manual/tutorial/modify-documents/#replace-the-document Replace]]
-   * @param filter      the query filter to apply the the replace operation
+   * @param filter      the query filter to apply the replace operation
    * @param replacement the replacement document
    * @return a Observable with a single element the UpdateResult
    */
@@ -744,7 +744,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    *
    * [[http://docs.mongodb.org/manual/tutorial/modify-documents/#replace-the-document Replace]]
    * @param clientSession the client session with which to associate this operation
-   * @param filter      the query filter to apply the the replace operation
+   * @param filter      the query filter to apply the replace operation
    * @param replacement the replacement document
    * @return a Observable with a single element the UpdateResult
    * @since 2.2
@@ -757,7 +757,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * Replace a document in the collection according to the specified arguments.
    *
    * [[http://docs.mongodb.org/manual/tutorial/modify-documents/#replace-the-document Replace]]
-   * @param filter      the query filter to apply the the replace operation
+   * @param filter      the query filter to apply the replace operation
    * @param replacement the replacement document
    * @param options     the options to apply to the replace operation
    * @return a Observable with a single element the UpdateResult
@@ -770,7 +770,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    *
    * [[http://docs.mongodb.org/manual/tutorial/modify-documents/#replace-the-document Replace]]
    * @param clientSession the client session with which to associate this operation
-   * @param filter      the query filter to apply the the replace operation
+   * @param filter      the query filter to apply the replace operation
    * @param replacement the replacement document
    * @param options     the options to apply to the replace operation
    * @return a Observable with a single element the UpdateResult
@@ -1115,7 +1115,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Atomically find a document and replace it.
    *
-   * @param filter      the query filter to apply the the replace operation
+   * @param filter      the query filter to apply the replace operation
    * @param replacement the replacement document
    * @return a Observable with a single element the document that was replaced.  Depending on the value of the `returnOriginal`
    *         property, this will either be the document as it was before the update or as it is after the update.  If no documents matched the
@@ -1127,7 +1127,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Atomically find a document and replace it.
    *
-   * @param filter      the query filter to apply the the replace operation
+   * @param filter      the query filter to apply the replace operation
    * @param replacement the replacement document
    * @param options     the options to apply to the operation
    * @return a Observable with a single element the document that was replaced.  Depending on the value of the `returnOriginal`
@@ -1145,7 +1145,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * Atomically find a document and replace it.
    *
    * @param clientSession the client session with which to associate this operation
-   * @param filter      the query filter to apply the the replace operation
+   * @param filter      the query filter to apply the replace operation
    * @param replacement the replacement document
    * @return a Observable with a single element the document that was replaced.  Depending on the value of the `returnOriginal`
    *         property, this will either be the document as it was before the update or as it is after the update.  If no documents matched the
@@ -1160,7 +1160,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * Atomically find a document and replace it.
    *
    * @param clientSession the client session with which to associate this operation
-   * @param filter      the query filter to apply the the replace operation
+   * @param filter      the query filter to apply the replace operation
    * @param replacement the replacement document
    * @param options     the options to apply to the operation
    * @return a Observable with a single element the document that was replaced.  Depending on the value of the `returnOriginal`

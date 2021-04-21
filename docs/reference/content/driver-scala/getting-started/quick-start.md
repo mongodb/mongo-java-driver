@@ -11,7 +11,7 @@ title = "Quick Start"
 # MongoDB Scala Driver Quick Start
 
 The following code snippets come from the [`QuickTour.java`]({{< srcref "driver-scala/src/it/tour/QuickTour.scala" >}}) example code
-that can be found with the Scala driver source on github.
+that can be found with the Scala driver source on GitHub.
 
 {{% note %}}
 See the [installation guide]({{< relref "driver-scala/getting-started/installation.md" >}}) for instructions on how to install the MongoDB Scala Driver.

@@ -93,7 +93,7 @@ do block on the results of one example before starting the next, so as to ensure
     An implementation of the `ConsumerSubscriber` that prints the json version of a `Document` on `Subscriber.onNext()`.
 
 
-##  Blocking and non blocking examples
+##  Blocking and non-blocking examples
 
 As our subscribers contain a latch that is only released when the `onComplete` method of the `Subscriber` is called, we can use that latch 
 to block on by calling the `await` method.  Below are two examples using our auto-requesting `PrintDocumentSubscriber`.  

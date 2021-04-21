@@ -578,7 +578,7 @@ The corpus test exhaustively enumerates all ways to encrypt all BSON value types
        - If ``kms`` is ``gcp`` set the key_alt_name to "gcp".
 
      If ``allowed`` is true, copy the field and encrypted value to ``corpus_copied``.
-     If ``allowed`` is false. verify that an exception is thrown. Copy the unencrypted value to to ``corpus_copied``.
+     If ``allowed`` is false. verify that an exception is thrown. Copy the unencrypted value to ``corpus_copied``.
 
 
 6. Using ``client_encrypted``, insert ``corpus_copied`` into ``db.coll``.

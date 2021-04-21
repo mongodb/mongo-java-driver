@@ -143,7 +143,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     /**
      * Checks if there is another object available.
      *
-     * <p><em>Note</em>: Automatically turns cursors of type Tailable to TailableAwait. For non blocking tailable cursors see
+     * <p><em>Note</em>: Automatically turns cursors of type Tailable to TailableAwait. For non-blocking tailable cursors see
      * {@link #tryNext }.</p>
      *
      * @return true if there is another object available
@@ -171,7 +171,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     /**
      * Returns the object the cursor is at and moves the cursor ahead by one.
      *
-     * <p><em>Note</em>: Automatically turns cursors of type Tailable to TailableAwait. For non blocking tailable cursors see
+     * <p><em>Note</em>: Automatically turns cursors of type Tailable to TailableAwait. For non-blocking tailable cursors see
      * {@link #tryNext }.</p>
      *
      * @return the next element

@@ -12,7 +12,7 @@ title = "Quick Start"
 
 {{% note %}}
 The following code snippets come from the [`QuickTour.java`]({{< srcref "driver-sync/src/examples/tour/QuickTour.java" >}}) example code
-that can be found with the driver source on github.
+that can be found with the driver source on GitHub.
 {{% /note %}}
 
 ## Prerequisites

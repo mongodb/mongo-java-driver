@@ -29,7 +29,7 @@ application has multiple `MongoClient` instances connected to the same MongoDB s
 - `port`: the port on which the server is listening
 - `minSize`: the minimum allowed size of the pool, including idle and in-use members
 - `maxSize`: the maximum allowed size of the pool, including idle and in-use members
-- `size`: the current size of the pool, including idle and and in-use members
+- `size`: the current size of the pool, including idle and in-use members
 - `checkedOutCount`: the current count of connections that are currently in use
 
 

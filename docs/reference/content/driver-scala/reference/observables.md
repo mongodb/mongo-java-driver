@@ -10,7 +10,7 @@ title = "Observables"
 
 ## Observables
 
-The MongoDB Scala Driver is an asynchronous and non blocking driver. Using the `Observable` model asynchronous events become simple, composable operations, freed from the complexity of nested callbacks.  
+The MongoDB Scala Driver is an asynchronous and non-blocking driver. Using the `Observable` model asynchronous events become simple, composable operations, freed from the complexity of nested callbacks.  
 
 For asynchronous operations there are three interfaces [`Observable`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/Observable.html" >}}), [`Subscription`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/Subscription.html" >}}) and [`Observer`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/Observer.html" >}}).
 

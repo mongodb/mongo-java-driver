@@ -33,7 +33,7 @@ MongoDB project, please report it according to the [instructions here](http://do
 We are happy to accept contributions to help improve the driver.
 We will guide user contributions to ensure they meet the standards of the codebase.
 Please ensure that any pull requests include documentation, tests and also pass
-a the gradle checks.
+Gradle checks.
 
 To get started check out the source and work on a branch:
 

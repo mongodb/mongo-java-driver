@@ -32,7 +32,7 @@ val mongoClient: MongoClient = MongoClient("mongodb://localhost/?ssl=true")
 
 ### Specify TLS/SSL via `MongoClientSettings`
 
-To specify TLS/SSL with with [`MongoClientSettings`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoClientSettings$.html" >}}), set the `enabled` property to 
+To specify TLS/SSL with [`MongoClientSettings`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoClientSettings$.html" >}}), set the `enabled` property to 
 `true`, as in:
 
 ```scala
@@ -190,7 +190,7 @@ An application will need to set several JVM system properties to set up OCSP sta
 -  `com.sun.net.ssl.checkRevocation`:
    When set to `true`, this enables revocation checking. If this property is not set to `true`, then the connection will be allowed to proceed regardless of the presence or status of the revocation information.
 
-To configure an application to use OCSP stapling, the application must already be set up to connect to a server using TLS, and the server must be set up to staple an OCSP response to the certificate it returns as part of the the TLS handshake.
+To configure an application to use OCSP stapling, the application must already be set up to connect to a server using TLS, and the server must be set up to staple an OCSP response to the certificate it returns as part of the TLS handshake.
 
 For more information on configuring a Java application to use OCSP, please
 refer to the [`Client-Driven OCSP and OCSP Stapling`]({{< javaseref "technotes/guides/security/jsse/ocsp.html" >}}).
