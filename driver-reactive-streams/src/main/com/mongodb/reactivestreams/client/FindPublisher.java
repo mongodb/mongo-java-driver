@@ -226,7 +226,7 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
     /**
      * Sets the number of documents to return per batch.
      *
-     * <p>Overrides the {@link org.reactivestreams.Subscription#request(long)} value for setting the batch size, allowing for fine grained
+     * <p>Overrides the {@link org.reactivestreams.Subscription#request(long)} value for setting the batch size, allowing for fine-grained
      * control over the underlying cursor.</p>
      *
      * @param batchSize the batch size

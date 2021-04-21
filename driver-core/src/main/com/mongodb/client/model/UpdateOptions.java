@@ -58,7 +58,7 @@ public class UpdateOptions {
     }
 
     /**
-     * Gets the the bypass document level validation flag
+     * Gets the bypass document level validation flag
      *
      * @return the bypass document level validation flag
      * @since 3.2

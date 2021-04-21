@@ -29,7 +29,7 @@ import scala.concurrent.duration.Duration
  * Observable for change streams.
  *
  * '''Note:''' The `ChangeStreamDocument` class will not be applicable for all change stream outputs.
- * If using custom pipelines that radically change the result, the the [[ChangeStreamObservable#withDocumentClass]] method should be used
+ * If using custom pipelines that radically change the result, the [[ChangeStreamObservable#withDocumentClass]] method should be used
  * to provide an alternative document format.
  *
  * @param wrapped the underlying java ChangeStreamIterable

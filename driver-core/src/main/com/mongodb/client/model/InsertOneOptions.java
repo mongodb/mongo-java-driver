@@ -30,7 +30,7 @@ public final class InsertOneOptions {
     private Boolean bypassDocumentValidation;
 
     /**
-     * Gets the the bypass document level validation flag
+     * Gets the bypass document level validation flag
      *
      * @return the bypass document level validation flag
      */

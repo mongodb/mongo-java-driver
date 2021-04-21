@@ -424,7 +424,7 @@ public final class MongoClientSettings {
         }
 
         /**
-         * Sets the the command listeners
+         * Sets the command listeners
          *
          * @param commandListeners the list of command listeners
          * @return this

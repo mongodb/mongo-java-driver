@@ -180,14 +180,14 @@ public abstract class AbstractBsonReader implements BsonReader {
     protected abstract Decimal128 doReadDecimal128();
 
     /**
-     * Handles the logic to read Javascript functions
+     * Handles the logic to read JavaScript functions
      *
      * @return the String value
      */
     protected abstract String doReadJavaScript();
 
     /**
-     * Handles the logic to read scoped Javascript functions
+     * Handles the logic to read scoped JavaScript functions
      *
      * @return the String value
      */
