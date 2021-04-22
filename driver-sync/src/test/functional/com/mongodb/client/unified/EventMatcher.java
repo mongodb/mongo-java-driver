@@ -21,15 +21,7 @@ import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.event.ConnectionCheckOutFailedEvent;
-import com.mongodb.event.ConnectionCheckOutStartedEvent;
-import com.mongodb.event.ConnectionCheckedInEvent;
-import com.mongodb.event.ConnectionCheckedOutEvent;
 import com.mongodb.event.ConnectionClosedEvent;
-import com.mongodb.event.ConnectionCreatedEvent;
-import com.mongodb.event.ConnectionPoolClearedEvent;
-import com.mongodb.event.ConnectionPoolClosedEvent;
-import com.mongodb.event.ConnectionPoolCreatedEvent;
-import com.mongodb.event.ConnectionReadyEvent;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 
@@ -99,44 +91,36 @@ final class EventMatcher {
             BsonDocument expectedEventDocument = expectedEventDocuments.get(i).asDocument();
             String eventType = expectedEventDocument.getFirstKey();
             context.push(ContextElement.ofConnectionPoolEvent(expectedEventDocument, actual, i));
-            BsonDocument expected = expectedEventDocument.getDocument(eventType);
 
-            if (actual.getClass().equals(ConnectionPoolCreatedEvent.class)) {
-                assertEquals(context.getMessage("Expected ConnectionPoolOpenedEvent"), eventType, "poolCreatedEvent");
-            } else if (actual.getClass().equals(ConnectionPoolClearedEvent.class)) {
-                assertEquals(context.getMessage("Expected ConnectionPoolClearedEvent"), eventType, "poolClearedEvent");
-            } else if (actual.getClass().equals(ConnectionPoolClosedEvent.class)) {
-                assertEquals(context.getMessage("Expected ConnectionPoolClosedEvent"), eventType, "poolClosedEvent");
-            } else if (actual.getClass().equals(ConnectionCheckOutStartedEvent.class)) {
-                assertEquals(context.getMessage("Expected ConnectionCheckOutStartedEvent"), eventType, "connectionCheckOutStartedEvent");
-            } else if (actual.getClass().equals(ConnectionCheckedOutEvent.class)) {
-                assertEquals(context.getMessage("Expected ConnectionCheckedOutEvent"), eventType, "connectionCheckedOutEvent");
-            } else if (actual.getClass().equals(ConnectionCheckOutFailedEvent.class)) {
-                assertEquals(context.getMessage("Expected ConnectionCheckOutFailedEvent"), eventType, "connectionCheckOutFailedEvent");
+            assertEquals(context.getMessage("Expected event type to match"), eventType, getEventType(actual.getClass()));
+
+            if (actual.getClass().equals(ConnectionCheckOutFailedEvent.class)) {
+                BsonDocument expected = expectedEventDocument.getDocument(eventType);
                 ConnectionCheckOutFailedEvent actualEvent = (ConnectionCheckOutFailedEvent) actual;
                 if (expected.containsKey("reason")) {
-                    assertEquals(context.getMessage(""), expected.getString("reason").getValue(),
+                    assertEquals(context.getMessage("Expected reason to match"), expected.getString("reason").getValue(),
                             getReasonString(actualEvent.getReason()));
                 }
-            } else if (actual.getClass().equals(ConnectionCheckedInEvent.class)) {
-                assertEquals(context.getMessage("Expected ConnectionCheckedInEvent"), eventType, "connectionCheckedInEvent");
-            } else if (actual.getClass().equals(ConnectionCreatedEvent.class)) {
-                assertEquals(context.getMessage("Expected ConnectionCreatedEvent"), eventType, "connectionCreatedEvent");
-            } else if (actual.getClass().equals(ConnectionReadyEvent.class)) {
-                assertEquals(context.getMessage("Expected ConnectionReadyEvent"), eventType, "connectionReadyEvent");
             } else if (actual.getClass().equals(ConnectionClosedEvent.class)) {
-                assertEquals(context.getMessage("Expected ConnectionClosedEvent"), eventType, "connectionClosedEvent");
+                BsonDocument expected = expectedEventDocument.getDocument(eventType);
                 ConnectionClosedEvent actualEvent = (ConnectionClosedEvent) actual;
                 if (expected.containsKey("reason")) {
-                    assertEquals(context.getMessage(""), expected.getString("reason").getValue(),
+                    assertEquals(context.getMessage("Expected reason to match"), expected.getString("reason").getValue(),
                             getReasonString(actualEvent.getReason()));
                 }
-            } else {
-                throw new UnsupportedOperationException("Unsupported event type: " + actual.getClass());
             }
             context.pop();
         }
         context.pop();
+    }
+
+    private String getEventType(final Class<?> eventClass) {
+        String eventClassName = eventClass.getSimpleName();
+        if (eventClassName.startsWith("ConnectionPool")) {
+            return eventClassName.replace("ConnectionPool", "pool");
+        } else {
+            return eventClassName.replace("Connection", "connection");
+        }
     }
 
     public static String getReasonString(final ConnectionCheckOutFailedEvent.Reason reason) {
