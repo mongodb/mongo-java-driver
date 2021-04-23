@@ -159,6 +159,8 @@ public class InitialDnsSeedlistDiscoveryTest {
                     assertTrue(true);
                 } else if (entry.getKey().equals("directConnection")) {
                     assertEquals(entry.getValue().asBoolean().getValue(), connectionString.isDirectConnection());
+                } else if (entry.getKey().equals("loadBalanced")) {
+                    assertEquals(entry.getValue().asBoolean().getValue(), connectionString.isLoadBalanced());
                 } else {
                     throw new UnsupportedOperationException("No support configured yet for " + entry.getKey());
                 }
