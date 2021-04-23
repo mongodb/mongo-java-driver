@@ -39,9 +39,10 @@ public class LoadBalancerTest extends UnifiedTest {
                             final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
                             final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
-        // Reactive streams driver can't implement this test because the underlying cursor is closed on error, which
-        // breaks assumption in the test that closing the cursor is something that happens under user control
+        // Reactive streams driver can't implement these tests because the underlying cursor is closed on error, which
+        // breaks assumption in the tests that closing the cursor is something that happens under user control
         assumeFalse(testDescription.equals("pinned connections are not returned after an network error during getMore"));
+        assumeFalse(testDescription.equals("pinned connections are not returned to the pool after a non-network error on getMore"));
         // Reactive streams driver can't implement this test because there is no way to tell that a change stream cursor
         // that has not yet received any results has even initiated the change stream
         assumeFalse(testDescription.equals("change streams pin to a connection"));
