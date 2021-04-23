@@ -438,7 +438,7 @@ final class OperationHelper {
         if (serverIsLessThanVersionThreeDotSix(connectionDescription)) {
             LOGGER.debug("retryReads set to true but the server does not support retryable reads.");
             return false;
-        } else if (serverDescription.getLogicalSessionTimeoutMinutes() == null) {
+        } else if (serverDescription.getLogicalSessionTimeoutMinutes() == null && serverDescription.getType() != ServerType.LOAD_BALANCER) {
             LOGGER.debug("retryReads set to true but the server does not have 3.6 feature compatibility enabled.");
             return false;
         } else if (serverDescription.getType() != ServerType.STANDALONE && !sessionContext.hasSession()) {
