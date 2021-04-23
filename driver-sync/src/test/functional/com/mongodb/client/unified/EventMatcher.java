@@ -114,7 +114,7 @@ final class EventMatcher {
         context.pop();
     }
 
-    private String getEventType(final Class<?> eventClass) {
+    private static String getEventType(final Class<?> eventClass) {
         String eventClassName = eventClass.getSimpleName();
         if (eventClassName.startsWith("ConnectionPool")) {
             return eventClassName.replace("ConnectionPool", "pool");
