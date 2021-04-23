@@ -51,6 +51,7 @@ import com.mongodb.event.ConnectionPoolCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionReadyEvent;
 import com.mongodb.internal.connection.TestCommandListener;
+import com.mongodb.internal.connection.TestConnectionPoolListener;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -74,7 +75,9 @@ import java.util.stream.Collectors;
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static com.mongodb.client.unified.EventMatcher.getReasonString;
 import static com.mongodb.client.unified.UnifiedCrudHelper.asReadConcern;
+import static com.mongodb.client.unified.UnifiedCrudHelper.asReadPreference;
 import static com.mongodb.client.unified.UnifiedCrudHelper.asWriteConcern;
 import static java.util.Collections.synchronizedList;
 import static java.util.Objects.requireNonNull;
@@ -90,7 +93,9 @@ public final class Entities {
     private final Map<String, BsonDocument> sessionIdentifiers = new HashMap<>();
     private final Map<String, GridFSBucket> buckets = new HashMap<>();
     private final Map<String, TestCommandListener> clientCommandListeners = new HashMap<>();
-    private final Map<String, MongoCursor<ChangeStreamDocument<BsonDocument>>> changeStreams = new HashMap<>();
+    private final Map<String, TestConnectionPoolListener> clientConnectionPoolListeners = new HashMap<>();
+    private final Map<String, MongoCursor<ChangeStreamDocument<BsonDocument>>> changeStreamCursors = new HashMap<>();
+    private final Map<String, MongoCursor<BsonDocument>> cursors = new HashMap<>();
     private final Map<String, Long> successCounts = new HashMap<>();
     private final Map<String, Long> iterationCounts = new HashMap<>();
     private final Map<String, BsonArray> errorDocumentsMap = new HashMap<>();
@@ -161,12 +166,24 @@ public final class Entities {
         return getEntity(id, results, "result");
     }
 
-    public void addChangeStream(final String id, final MongoCursor<ChangeStreamDocument<BsonDocument>> cursor) {
-        putEntity(id, cursor, changeStreams);
+    public void addChangeStreamCursor(final String id, final MongoCursor<ChangeStreamDocument<BsonDocument>> cursor) {
+        putEntity(id, cursor, changeStreamCursors);
     }
 
-    public MongoCursor<ChangeStreamDocument<BsonDocument>> getChangeStream(final String id) {
-        return getEntity(id, changeStreams, "change streams");
+    public MongoCursor<ChangeStreamDocument<BsonDocument>> getChangeStreamCursor(final String id) {
+        return getEntity(id, changeStreamCursors, "change stream cursors");
+    }
+
+    public boolean hasCursor(final String id) {
+        return cursors.containsKey(id);
+    }
+
+    public void addCursor(final String id, final MongoCursor<BsonDocument> cursor) {
+        putEntity(id, cursor, cursors);
+    }
+
+    public MongoCursor<BsonDocument> getCursor(final String id) {
+        return getEntity(id, cursors, "cursors");
     }
 
     public boolean hasClient(final String id) {
@@ -206,7 +223,11 @@ public final class Entities {
     }
 
     public TestCommandListener getClientCommandListener(final String id) {
-        return getEntity(id + "-listener", clientCommandListeners, "command listener");
+        return getEntity(id + "-command-listener", clientCommandListeners, "command listener");
+    }
+
+    public TestConnectionPoolListener getConnectionPoolListener(final String id) {
+        return getEntity(id + "-connection-pool-listener", clientConnectionPoolListeners, "connection pool listener");
     }
 
     private <T> T getEntity(final String id, final Map<String, T> entities, final String type) {
@@ -275,7 +296,21 @@ public final class Entities {
                             .map(type -> type.asString().getValue()).collect(Collectors.toList()),
                     ignoreCommandMonitoringEvents);
             clientSettingsBuilder.addCommandListener(testCommandListener);
-            putEntity(id + "-listener", testCommandListener, clientCommandListeners);
+            putEntity(id + "-command-listener", testCommandListener, clientCommandListeners);
+
+            TestConnectionPoolListener testConnectionPoolListener = new TestConnectionPoolListener(
+                    entity.getArray("observeEvents").stream()
+                            .map(type -> type.asString().getValue()).collect(Collectors.toList()));
+            clientSettingsBuilder.applyToConnectionPoolSettings(builder ->
+                    builder.addConnectionPoolListener(testConnectionPoolListener));
+            putEntity(id + "-connection-pool-listener", testConnectionPoolListener, clientConnectionPoolListeners);
+        } else {
+            // Regardless of whether events are observed, we still need to track some info about the pool in order to implement
+            // the assertNumberConnectionsCheckedOut operation
+            TestConnectionPoolListener testConnectionPoolListener = new TestConnectionPoolListener();
+            clientSettingsBuilder.applyToConnectionPoolSettings(builder ->
+                    builder.addConnectionPoolListener(testConnectionPoolListener));
+            putEntity(id + "-connection-pool-listener", testConnectionPoolListener, clientConnectionPoolListeners);
         }
         if (entity.containsKey("storeEventsAsEntities")) {
             BsonArray storeEventsAsEntitiesArray = entity.getArray("storeEventsAsEntities");
@@ -326,6 +361,16 @@ public final class Entities {
                     case "w":
                         clientSettingsBuilder.writeConcern(new WriteConcern(value.asInt32().intValue()));
                         break;
+                    case "maxPoolSize":
+                        clientSettingsBuilder.applyToConnectionPoolSettings(builder -> builder.maxSize(value.asNumber().intValue()));
+                        break;
+                    case "waitQueueTimeoutMS":
+                        clientSettingsBuilder.applyToConnectionPoolSettings(builder ->
+                                builder.maxWaitTime(value.asNumber().longValue(), TimeUnit.MILLISECONDS));
+                        break;
+                    case "appname":
+                        clientSettingsBuilder.applicationName(value.asString().getValue());
+                        break;
                     default:
                         throw new UnsupportedOperationException("Unsupported uri option: " + key);
                 }
@@ -370,10 +415,12 @@ public final class Entities {
                 BsonDocument.class);
         if (entity.containsKey("collectionOptions")) {
             for (Map.Entry<String, BsonValue> entry : entity.getDocument("collectionOptions").entrySet()) {
-                //noinspection SwitchStatementWithTooFewBranches
                 switch (entry.getKey()) {
                     case "readConcern":
                         collection = collection.withReadConcern(asReadConcern(entry.getValue().asDocument()));
+                        break;
+                    case "readPreference":
+                        collection = collection.withReadPreference(asReadPreference(entry.getValue().asDocument()));
                         break;
                     default:
                         throw new UnsupportedOperationException("Unsupported collection option: " + entry.getKey());
@@ -429,6 +476,15 @@ public final class Entities {
     }
 
     public void close() {
+        for (MongoCursor<ChangeStreamDocument<BsonDocument>> cursor : changeStreamCursors.values()) {
+             cursor.close();
+        }
+        for (MongoCursor<BsonDocument> cursor : cursors.values()) {
+            cursor.close();
+        }
+        for (ClientSession session : sessions.values()) {
+            session.close();
+        }
         for (MongoClient client : clients.values()) {
             client.close();
         }
@@ -556,36 +612,6 @@ public final class Entities {
             if (enabledEvents.contains("ConnectionClosedEvent")) {
                 eventDocumentList.add(createEventDocument("ConnectionClosedEvent", event.getConnectionId())
                         .append("reason", new BsonString(getReasonString(event.getReason()))));
-            }
-        }
-
-        private String getReasonString(final ConnectionCheckOutFailedEvent.Reason reason) {
-            switch (reason) {
-                case POOL_CLOSED:
-                    return "poolClosed";
-                case TIMEOUT:
-                    return "timeout";
-                case CONNECTION_ERROR:
-                    return "connectionError";
-                case UNKNOWN:
-                    return "unknown";
-                default:
-                    throw new IllegalStateException("Unexpected reason " + reason);
-            }
-        }
-
-        private String getReasonString(final ConnectionClosedEvent.Reason reason) {
-            switch (reason) {
-                case POOL_CLOSED:
-                    return "poolClosed";
-                case STALE:
-                    return "stale";
-                case IDLE:
-                    return "idle";
-                case ERROR:
-                    return "error";
-                default:
-                    throw new IllegalStateException("Unknown reason " + reason);
             }
         }
 

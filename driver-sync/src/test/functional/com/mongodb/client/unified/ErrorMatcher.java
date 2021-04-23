@@ -20,6 +20,7 @@ import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
+import com.mongodb.MongoSocketException;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 
@@ -54,15 +55,12 @@ final class ErrorMatcher {
         if (expectedError.containsKey("isClientError")) {
             assertEquals(context.getMessage("Exception must be of type MongoClientException or IllegalArgumentException"),
                     expectedError.getBoolean("isClientError").getValue(),
-                    e instanceof MongoClientException || e instanceof IllegalArgumentException);
+                    e instanceof MongoClientException || e instanceof IllegalArgumentException || e instanceof MongoSocketException);
         }
         if (expectedError.containsKey("errorContains")) {
-            assertTrue(context.getMessage("Exception must be of type MongoCommandException when checking for error codes"),
-                    e instanceof MongoCommandException);
-            MongoCommandException mongoCommandException = (MongoCommandException) e;
             String errorContains = expectedError.getString("errorContains").getValue();
             assertTrue(context.getMessage("Error message does not contain expected string: " + errorContains),
-                    mongoCommandException.getErrorMessage().contains(errorContains));
+                    e.getMessage().contains(errorContains));
         }
         if (expectedError.containsKey("errorCode")) {
             assertTrue(context.getMessage("Exception must be of type MongoCommandException when checking for error codes"),
