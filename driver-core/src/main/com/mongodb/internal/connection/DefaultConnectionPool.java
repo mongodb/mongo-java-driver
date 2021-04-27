@@ -733,10 +733,10 @@ class DefaultConnectionPool implements ConnectionPool {
          * one becomes available while waiting for a permit.
          * The first phase has one of the following outcomes:
          * <ol>
-         *     <li>A {@link MongoTimeoutException} or a different {@link Exception} is thrown.</li>
+         *     <li>A {@link MongoTimeoutException} or a different {@link Exception} is thrown,
+         *     and the specified {@code connection} is {@linkplain PooledConnection#closeSilently() silently closed}.</li>
          *     <li>An opened connection different from the specified one is returned,
-         *     and the specified {@code connection} is {@linkplain PooledConnection#closeSilently() silently closed}.
-         *     </li>
+         *     and the specified {@code connection} is {@linkplain PooledConnection#closeSilently() silently closed}.</li>
          *     <li>A permit is acquired, {@link #connectionCreated(ConnectionPoolListener, ConnectionId)} is reported
          *     and an attempt to open the specified {@code connection} is made. This is the second phase in which
          *     the {@code connection} is {@linkplain PooledConnection#open() opened synchronously}.
