@@ -177,6 +177,13 @@ public final class Assertions {
         return false;
     }
 
+    /**
+     * @throws AssertionError If {@code value} is {@code true}.
+     */
+    public static void fail() throws AssertionError {
+        throw new AssertionError();
+    }
+
     private Assertions() {
     }
 }
