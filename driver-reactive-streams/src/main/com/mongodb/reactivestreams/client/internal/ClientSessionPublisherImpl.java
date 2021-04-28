@@ -83,7 +83,7 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
         if (!(hasActiveTransaction() || operation instanceof CommitTransactionOperation)) {
             assertTrue(getPinnedServerAddress() == null
                     || (transactionState != TransactionState.ABORTED && transactionState != TransactionState.NONE));
-            setPinnedServerAddress(null);
+            clearTransactionContext();
         }
     }
 
@@ -118,7 +118,7 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
         if (!writeConcern.isAcknowledged()) {
             throw new MongoClientException("Transactions do not support unacknowledged write concern");
         }
-        setPinnedServerAddress(null);
+        clearTransactionContext();
     }
 
     @Override
@@ -172,7 +172,7 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
                         commitInProgress = false;
                         transactionState = TransactionState.COMMITTED;
                     })
-                    .doOnError(MongoException.class, this::unpinServerAddressOnError);
+                    .doOnError(MongoException.class, this::clearTransactionContextOnError);
         }
     }
 
@@ -201,15 +201,15 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
                     readConcern, this)
                     .onErrorResume(Throwable.class, (e) -> Mono.empty())
                     .doOnTerminate(() -> {
-                        setPinnedServerAddress(null);
+                        clearTransactionContext();
                         cleanupTransaction(TransactionState.ABORTED);
                     });
         }
     }
 
-    private void unpinServerAddressOnError(final MongoException e) {
+    private void clearTransactionContextOnError(final MongoException e) {
         if (e.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL) || e.hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
-            setPinnedServerAddress(null);
+            clearTransactionContext();
         }
     }
 

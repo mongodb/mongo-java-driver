@@ -40,21 +40,28 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.selector.ServerSelector;
 import org.bson.BsonTimestamp;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.internal.event.EventListenerHelper.createServerListener;
 import static com.mongodb.internal.event.EventListenerHelper.getClusterListener;
 import static java.lang.String.format;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 @ThreadSafe
 public final class LoadBalancedCluster implements Cluster {
@@ -64,44 +71,58 @@ public final class LoadBalancedCluster implements Cluster {
     private final ClusterSettings settings;
     private final ClusterClock clusterClock = new ClusterClock();
     private final ClusterListener clusterListener;
-    private volatile ClusterDescription description;
-    private volatile ClusterableServer server;
+    private ClusterDescription description;
+    private ClusterableServer server;
     private final AtomicBoolean closed = new AtomicBoolean();
     private final DnsSrvRecordMonitor dnsSrvRecordMonitor;
     private volatile MongoException srvResolutionException;
     private volatile boolean srvRecordResolvedToMultipleHosts;
-    private final CountDownLatch latch = new CountDownLatch(1);
+    private volatile boolean initializationCompleted;
+    private List<ServerSelectionRequest> waitQueue = new LinkedList<>();
+    private Thread waitQueueHandler;
+    private final Lock lock = new ReentrantLock(true);
+    private final Condition condition = lock.newCondition();
 
     public LoadBalancedCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory,
                                final DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory) {
-        LOGGER.info(format("Cluster created with settings %s", settings.getShortDescription()));
+        LOGGER.info(format("Cluster created with id %s and settings %s", clusterId, settings.getShortDescription()));
 
         this.clusterId = clusterId;
         this.settings = settings;
         this.clusterListener = getClusterListener(settings);
-        this.description = new ClusterDescription(settings.getMode(), ClusterType.UNKNOWN, Collections.emptyList(), settings,
+        this.description = new ClusterDescription(settings.getMode(), ClusterType.UNKNOWN, emptyList(), settings,
                 serverFactory.getSettings());
 
         if (settings.getSrvHost() == null) {
             dnsSrvRecordMonitor = null;
             assertTrue(settings.getHosts().size() == 1);
             init(clusterId, serverFactory, settings.getHosts().get(0));
-            latch.countDown();
+            initializationCompleted = true;
         } else {
             notNull("dnsSrvRecordMonitorFactory", dnsSrvRecordMonitorFactory);
             dnsSrvRecordMonitor = dnsSrvRecordMonitorFactory.create(settings.getSrvHost(), new DnsSrvRecordInitializer() {
-                private volatile boolean initialized;
 
                 @Override
                 public void initialize(final Collection<ServerAddress> hosts) {
-                    if (hosts.size() != 1) {
-                        srvRecordResolvedToMultipleHosts = true;
-                    } else {
-                        init(clusterId, serverFactory, hosts.iterator().next());
+                    LOGGER.info("SRV resolution completed with hosts: " + hosts);
+
+                    List<ServerSelectionRequest> localWaitQueue;
+                    lock.lock();
+                    try {
+                        srvResolutionException = null;
+                        if (hosts.size() != 1) {
+                            srvRecordResolvedToMultipleHosts = true;
+                        } else {
+                            init(clusterId, serverFactory, hosts.iterator().next());
+                        }
+                        initializationCompleted = true;
+                        localWaitQueue = waitQueue;
+                        waitQueue = emptyList();
+                        condition.signalAll();
+                    } finally {
+                        lock.unlock();
                     }
-                    srvResolutionException = null;
-                    initialized = true;
-                    latch.countDown();
+                    localWaitQueue.forEach(request -> handleServerSelectionRequest(request));
                 }
 
                 @Override
@@ -111,7 +132,7 @@ public final class LoadBalancedCluster implements Cluster {
 
                 @Override
                 public ClusterType getClusterType() {
-                    return initialized ? ClusterType.LOAD_BALANCED : ClusterType.UNKNOWN;
+                    return initializationCompleted ? ClusterType.LOAD_BALANCED : ClusterType.UNKNOWN;
                 }
             });
             dnsSrvRecordMonitor.start();
@@ -134,8 +155,7 @@ public final class LoadBalancedCluster implements Cluster {
                         .address(host)
                         .build()),
                 settings, serverFactory.getSettings());
-        server = serverFactory.create(settings.getHosts().get(0), event -> { }, createServerListener(serverFactory.getSettings()),
-                clusterClock);
+        server = serverFactory.create(host, event -> { }, createServerListener(serverFactory.getSettings()), clusterClock);
 
         clusterListener.clusterDescriptionChanged(new ClusterDescriptionChangedEvent(clusterId, description, initialDescription));
     }
@@ -160,6 +180,7 @@ public final class LoadBalancedCluster implements Cluster {
 
     @Override
     public ClusterableServer getServer(final ServerAddress serverAddress) {
+        isTrue("open", !isClosed());
         waitForSrv();
         return server;
     }
@@ -181,44 +202,65 @@ public final class LoadBalancedCluster implements Cluster {
         isTrue("open", !isClosed());
         waitForSrv();
         if (srvRecordResolvedToMultipleHosts) {
-            throw new MongoClientException("In load balancing mode, the host must resolve to a single SRV record, but instead it resolved "
-                    + "to multiple hosts");
+            throw createResolvedToMultipleHostsException();
         }
         return new ServerTuple(server, description.getServerDescriptions().get(0));
     }
 
+
     private void waitForSrv() {
+        if (initializationCompleted) {
+            return;
+        }
+        lock.lock();
         try {
-            if (!latch.await(settings.getServerSelectionTimeout(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS)) {
-                MongoException localSrvResolutionException = srvResolutionException;
-                if (localSrvResolutionException == null) {
-                    throw new MongoTimeoutException(format("Timed out after %d ms while waiting to resolve SRV records for %s.",
-                            settings.getServerSelectionTimeout(MILLISECONDS), settings.getSrvHost()));
-                } else {
-                    throw new MongoTimeoutException(format("Timed out after %d ms while waiting to resolve SRV records for %s. "
-                                    + "Resolution exception was '%s'",
-                            settings.getServerSelectionTimeout(MILLISECONDS), settings.getSrvHost(), localSrvResolutionException));
+            long remainingTimeNanos = getMaxWaitTimeNanos();
+            while (!initializationCompleted) {
+                if (remainingTimeNanos <= 0) {
+                    throw createTimeoutException();
                 }
+                remainingTimeNanos = condition.awaitNanos(remainingTimeNanos);
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new MongoInterruptedException(format("Interrupted while resolving SRV records for %s", settings.getSrvHost()), e);
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public void selectServerAsync(final ServerSelector serverSelector, final SingleResultCallback<ServerTuple> callback) {
-        isTrue("open", !isClosed());
-        // TODO: wait on SRV
-        callback.onResult(selectServer(serverSelector), null);
+        if (isClosed()) {
+            callback.onResult(null, createShutdownException());
+            return;
+        }
+
+        ServerSelectionRequest serverSelectionRequest = new ServerSelectionRequest(getMaxWaitTimeNanos(), callback);
+        if (initializationCompleted) {
+            handleServerSelectionRequest(serverSelectionRequest);
+        } else {
+            notifyWaitQueueHandler(serverSelectionRequest);
+        }
+    }
+
+    private MongoClientException createShutdownException() {
+        return new MongoClientException("Shutdown in progress");
     }
 
     @Override
     public void close() {
         if (!closed.getAndSet(true)) {
+            LOGGER.info(format("Cluster closed with id %s", clusterId));
             clusterListener.clusterClosed(new ClusterClosedEvent(clusterId));
             if (dnsSrvRecordMonitor != null) {
                 dnsSrvRecordMonitor.close();
+            }
+            lock.lock();
+            try {
+                condition.signalAll();
+            } finally {
+                lock.unlock();
             }
         }
     }
@@ -226,5 +268,145 @@ public final class LoadBalancedCluster implements Cluster {
     @Override
     public boolean isClosed() {
         return closed.get();
+    }
+
+    private void handleServerSelectionRequest(final ServerSelectionRequest serverSelectionRequest) {
+        assertTrue(initializationCompleted);
+        if (srvRecordResolvedToMultipleHosts) {
+            serverSelectionRequest.onError(createResolvedToMultipleHostsException());
+        } else {
+            serverSelectionRequest.onSuccess(new ServerTuple(server, description.getServerDescriptions().get(0)));
+        }
+    }
+
+    private MongoClientException createResolvedToMultipleHostsException() {
+        return new MongoClientException("In load balancing mode, the host must resolve to a single SRV record, but instead it resolved "
+                + "to multiple hosts");
+    }
+
+    private MongoTimeoutException createTimeoutException() {
+        MongoException localSrvResolutionException = srvResolutionException;
+        if (localSrvResolutionException == null) {
+            return new MongoTimeoutException(format("Timed out after %d ms while waiting to resolve SRV records for %s.",
+                    settings.getServerSelectionTimeout(MILLISECONDS), settings.getSrvHost()));
+        } else {
+            return new MongoTimeoutException(format("Timed out after %d ms while waiting to resolve SRV records for %s. "
+                            + "Resolution exception was '%s'",
+                    settings.getServerSelectionTimeout(MILLISECONDS), settings.getSrvHost(), localSrvResolutionException));
+        }
+    }
+
+    private long getMaxWaitTimeNanos() {
+        if (settings.getServerSelectionTimeout(NANOSECONDS) < 0) {
+            return Long.MAX_VALUE;
+        }
+        return settings.getServerSelectionTimeout(NANOSECONDS);
+    }
+
+    private void notifyWaitQueueHandler(final ServerSelectionRequest request) {
+        lock.lock();
+        try {
+            if (isClosed()) {
+                request.onError(createShutdownException());
+                return;
+            }
+            if (initializationCompleted) {
+                handleServerSelectionRequest(request);
+                return;
+            }
+
+            waitQueue.add(request);
+
+            if (waitQueueHandler == null) {
+                waitQueueHandler = new Thread(new WaitQueueHandler(), "cluster-" + clusterId.getValue());
+                waitQueueHandler.setDaemon(true);
+                waitQueueHandler.start();
+            } else {
+                condition.signalAll();
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private final class WaitQueueHandler implements Runnable {
+        public void run() {
+            List<ServerSelectionRequest> timeoutList = new ArrayList<>();
+            while (!(isClosed() || initializationCompleted)) {
+                lock.lock();
+                try {
+                    if (isClosed() || initializationCompleted) {
+                        break;
+                    }
+                    long waitTimeNanos = Long.MAX_VALUE;
+                    long curTimeNanos = System.nanoTime();
+
+                    for (Iterator<ServerSelectionRequest> iterator = waitQueue.iterator(); iterator.hasNext();) {
+                        ServerSelectionRequest next = iterator.next();
+                        long remainingTime = next.getRemainingTime(curTimeNanos);
+                        if (remainingTime <= 0) {
+                            timeoutList.add(next);
+                            iterator.remove();
+                        } else {
+                            waitTimeNanos = Math.min(remainingTime, waitTimeNanos);
+                        }
+                    }
+                    if (timeoutList.isEmpty()) {
+                        try {
+                            //noinspection ResultOfMethodCallIgnored
+                            condition.await(waitTimeNanos, NANOSECONDS);
+                        } catch (InterruptedException e) {
+                            fail();
+                        }
+                    }
+                } finally {
+                    lock.unlock();
+                }
+
+                timeoutList.forEach(request -> request.onError(createTimeoutException()));
+                timeoutList.clear();
+            }
+
+            List<ServerSelectionRequest> shutdownList;
+            lock.lock();
+            try {
+                shutdownList = new ArrayList<>(waitQueue);
+                waitQueue.clear();
+            } finally {
+                lock.unlock();
+            }
+            shutdownList.forEach(request -> request.onError(createTimeoutException()));
+        }
+    }
+
+    private static final class ServerSelectionRequest {
+        private final long maxWaitTimeNanos;
+        private final long startTimeNanos = System.nanoTime();
+        private final SingleResultCallback<ServerTuple> callback;
+
+        private ServerSelectionRequest(final long maxWaitTimeNanos, final SingleResultCallback<ServerTuple> callback) {
+            this.maxWaitTimeNanos = maxWaitTimeNanos;
+            this.callback = callback;
+        }
+
+        long getRemainingTime(final long curTimeNanos) {
+            return startTimeNanos + maxWaitTimeNanos - curTimeNanos;
+        }
+
+        public void onSuccess(final ServerTuple serverTuple) {
+            try {
+                callback.onResult(serverTuple, null);
+            } catch (Exception e) {
+                LOGGER.warn("Unanticipated exception thrown from callback", e);
+            }
+        }
+
+        public void onError(final Throwable exception) {
+            try {
+                callback.onResult(null, exception);
+            } catch (Exception e) {
+                LOGGER.warn("Unanticipated exception thrown from callback", e);
+            }
+        }
     }
 }

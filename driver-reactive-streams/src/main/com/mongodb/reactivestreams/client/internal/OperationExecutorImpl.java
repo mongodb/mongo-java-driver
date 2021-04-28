@@ -126,7 +126,7 @@ public class OperationExecutorImpl implements OperationExecutor {
             @Nullable final Throwable throwable) {
         if (session != null && throwable instanceof MongoException
                 && ((MongoException) throwable).hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)) {
-            session.setPinnedServerAddress(null);
+            session.clearTransactionContext();
         }
     }
 

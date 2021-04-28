@@ -59,6 +59,14 @@ public class FutureResultCallback<T> implements SingleResultCallback<T>, Future<
         return result.isDone();
     }
 
+    public boolean wasResultAnException() {
+        return result.hasError();
+    }
+
+    public boolean wasInvokedMultipleTimes() {
+        return result.wasInvokedMultipleTimes();
+    }
+
     @Override
     public T get() {
         return get(TIMEOUT, TimeUnit.SECONDS);

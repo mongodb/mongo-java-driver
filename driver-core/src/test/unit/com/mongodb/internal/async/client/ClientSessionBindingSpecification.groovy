@@ -20,6 +20,9 @@ import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.connection.ClusterConnectionMode
+import com.mongodb.connection.ClusterDescription
+import com.mongodb.connection.ClusterType
 import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
@@ -49,7 +52,15 @@ class ClientSessionBindingSpecification extends Specification {
     def 'should return the session context from the connection source'() {
         given:
         def session = Stub(AsyncClientSession)
-        def wrappedBinding = Mock(AsyncClusterAwareReadWriteBinding)
+        def wrappedBinding = Mock(AsyncClusterAwareReadWriteBinding) {
+            getCluster() >> {
+                Mock(Cluster) {
+                    getDescription() >> {
+                        new ClusterDescription(ClusterConnectionMode.MULTIPLE, ClusterType.REPLICA_SET, [])
+                    }
+                }
+            }
+        }
         def binding = new ClientSessionBinding(session, false, wrappedBinding)
 
         when:
@@ -177,6 +188,9 @@ class ClientSessionBindingSpecification extends Specification {
                         .state(ServerConnectionState.CONNECTED)
                         .address(new ServerAddress())
                         .build()), null)
+            }
+            getDescription() >> {
+                new ClusterDescription(ClusterConnectionMode.MULTIPLE, ClusterType.REPLICA_SET, [])
             }
         }
         new AsyncClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, null)

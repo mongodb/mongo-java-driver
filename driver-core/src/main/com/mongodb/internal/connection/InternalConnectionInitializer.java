@@ -25,6 +25,9 @@ interface InternalConnectionInitializer {
     InternalConnectionInitializationDescription finishHandshake(InternalConnection internalConnection,
                                                                 InternalConnectionInitializationDescription description);
 
-    void initializeAsync(InternalConnection internalConnection, SingleResultCallback<InternalConnectionInitializationDescription> callback);
+    void startHandshakeAsync(InternalConnection internalConnection,
+                             SingleResultCallback<InternalConnectionInitializationDescription> callback);
 
+    void finishHandshakeAsync(InternalConnection internalConnection, InternalConnectionInitializationDescription description,
+                              SingleResultCallback<InternalConnectionInitializationDescription> callback);
 }

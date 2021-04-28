@@ -192,24 +192,35 @@ public class InternalStreamConnection implements InternalConnection {
             stream.openAsync(new AsyncCompletionHandler<Void>() {
                 @Override
                 public void completed(final Void aVoid) {
-                    connectionInitializer.initializeAsync(InternalStreamConnection.this,
-                            new SingleResultCallback<InternalConnectionInitializationDescription>() {
-                                @Override
-                                public void onResult(final InternalConnectionInitializationDescription result, final Throwable t) {
-                                    if (t != null) {
+                    connectionInitializer.startHandshakeAsync(InternalStreamConnection.this,
+                            (initialResult, initialException) -> {
+                                    if (initialException != null) {
                                         close();
-                                        callback.onResult(null, t);
+                                        callback.onResult(null, initialException);
                                     } else {
-                                        description = result.getConnectionDescription();
-                                        initialServerDescription = result.getServerDescription();
-                                        opened.set(true);
-                                        sendCompressor = findSendCompressor(description);
-                                        if (LOGGER.isInfoEnabled()) {
-                                            LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
+                                        description = initialResult.getConnectionDescription();
+                                        initialServerDescription = initialResult.getServerDescription();
+                                        if (clusterConnectionMode == ClusterConnectionMode.LOAD_BALANCED) {
+                                            generation = connectionGenerationSupplier.getGeneration(description.getServiceId());
                                         }
-                                        callback.onResult(null, null);
+                                        connectionInitializer.finishHandshakeAsync(InternalStreamConnection.this,
+                                                initialResult, (completedResult, completedException) ->  {
+                                                        if (completedException != null) {
+                                                            close();
+                                                            callback.onResult(null, completedException);
+                                                        } else {
+                                                            description = completedResult.getConnectionDescription();
+                                                            initialServerDescription = completedResult.getServerDescription();
+                                                            opened.set(true);
+                                                            sendCompressor = findSendCompressor(description);
+                                                            if (LOGGER.isInfoEnabled()) {
+                                                                LOGGER.info(format("Opened connection [%s] to %s",
+                                                                        getId(), serverId.getAddress()));
+                                                            }
+                                                            callback.onResult(null, null);
+                                                        }
+                                                });
                                     }
-                                }
                             });
                 }
 

@@ -28,6 +28,8 @@ import com.mongodb.connection.ServerConnectionState;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerType;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.ServerClosedEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.event.ServerListener;
@@ -40,9 +42,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 
 @ThreadSafe
 public class LoadBalancedServer implements ClusterableServer {
+    private static final Logger LOGGER = Loggers.getLogger("connection");
     private final AtomicBoolean closed = new AtomicBoolean();
     private final ServerId serverId;
     private final ConnectionPool connectionPool;
@@ -128,7 +132,18 @@ public class LoadBalancedServer implements ClusterableServer {
 
     @Override
     public void getConnectionAsync(final SingleResultCallback<AsyncConnection> callback) {
-        throw new UnsupportedOperationException();
+        isTrue("open", !isClosed());
+        connectionPool.getAsync(new SingleResultCallback<InternalConnection>() {
+            @Override
+            public void onResult(final InternalConnection result, final Throwable t) {
+                if (t != null) {
+                    callback.onResult(null, t);
+                } else {
+                    callback.onResult(connectionFactory.createAsync(result, new LoadBalancedServerProtocolExecutor(),
+                            ClusterConnectionMode.LOAD_BALANCED), null);
+                }
+            }
+        });
     }
 
     private class LoadBalancedServerProtocolExecutor implements ProtocolExecutor {
@@ -149,10 +164,29 @@ public class LoadBalancedServer implements ClusterableServer {
             }
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public <T> void executeAsync(final CommandProtocol<T> protocol, final InternalConnection connection,
                                      final SessionContext sessionContext, final SingleResultCallback<T> callback) {
-            throw new UnsupportedOperationException();
+            protocol.sessionContext(new ClusterClockAdvancingSessionContext(sessionContext, clusterClock));
+            protocol.executeAsync(connection, errorHandlingCallback(new SingleResultCallback<T>() {
+                @Override
+                public void onResult(final T result, final Throwable t) {
+                    if (t != null) {
+                        if (t instanceof MongoWriteConcernWithResponseException) {
+                            callback.onResult((T) ((MongoWriteConcernWithResponseException) t).getResponse(), null);
+                        } else {
+                            invalidate(t, connection.getDescription().getServiceId(), connection.getGeneration());
+                            if (t instanceof MongoSocketException && sessionContext.hasSession()) {
+                                sessionContext.markSessionDirty();
+                            }
+                            callback.onResult(null, t);
+                        }
+                    } else {
+                        callback.onResult(result, null);
+                    }
+                }
+            }, LOGGER));
         }
     }
 }
