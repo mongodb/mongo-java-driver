@@ -51,11 +51,13 @@ import org.bson.codecs.Decoder;
 import org.bson.types.ObjectId;
 
 import java.util.Deque;
-import java.util.LinkedList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Executor;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -69,6 +71,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -471,6 +474,7 @@ class DefaultConnectionPool implements ConnectionPool {
     private class PooledConnection implements InternalConnection {
         private final UsageTrackingInternalConnection wrapped;
         private final AtomicBoolean isClosed = new AtomicBoolean();
+        private Set<Connection.PinningMode> pinningModes;  // What synchronization is needed?
 
         PooledConnection(final UsageTrackingInternalConnection wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
@@ -511,6 +515,7 @@ class DefaultConnectionPool implements ConnectionPool {
         public void close() {
             // All but the first call is a no-op
             if (!isClosed.getAndSet(true)) {
+                unmarkAsPinned();
                 connectionPoolListener.connectionCheckedIn(new ConnectionCheckedInEvent(getId(wrapped)));
                 if (LOGGER.isTraceEnabled()) {
                     LOGGER.trace(format("Checked in connection [%s] to server %s", getId(wrapped), serverId.getAddress()));
@@ -665,7 +670,14 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
-        public void markAsPinned(final Connection.PinningMode pinningMode) {
+        public synchronized void markAsPinned(final Connection.PinningMode pinningMode) {
+            assertNotNull(pinningMode);
+            if (pinningModes == null) {
+                pinningModes = new HashSet<>(2);
+            } else {
+                assertFalse(pinningModes.contains(pinningMode));
+            }
+            pinningModes.add(pinningMode);
             switch (pinningMode) {
                 case CURSOR:
                     numPinnedToCursor.incrementAndGet();
@@ -674,21 +686,25 @@ class DefaultConnectionPool implements ConnectionPool {
                     numPinnedToTransaction.incrementAndGet();
                     break;
                 default:
-                    throw new UnsupportedOperationException("Unsupported pinning mode: " + pinningMode);
+                    fail();
             }
         }
 
-        @Override
-        public void unmarkAsPinned(final Connection.PinningMode pinningMode) {
-            switch (pinningMode) {
-                case CURSOR:
-                    numPinnedToCursor.decrementAndGet();
-                    break;
-                case TRANSACTION:
-                    numPinnedToTransaction.decrementAndGet();
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Unsupported pinning mode: " + pinningMode);
+        synchronized void unmarkAsPinned() {
+            if (pinningModes != null) {
+                for (Connection.PinningMode pinningMode : pinningModes) {
+                    switch (pinningMode) {
+                        case CURSOR:
+                            numPinnedToCursor.decrementAndGet();
+                            break;
+                        case TRANSACTION:
+                            numPinnedToTransaction.decrementAndGet();
+                            break;
+                        default:
+                            fail();
+                    }
+                }
+                pinningModes = null;
             }
         }
 

@@ -160,7 +160,6 @@ public class ClientSessionBinding implements ReadWriteBinding {
             super.release();
             if (getCount() == 0) {
                 if (pinnedConnection != null) {
-                    pinnedConnection.unmarkAsPinned(Connection.PinningMode.TRANSACTION);
                     pinnedConnection.release();
                 }
             }

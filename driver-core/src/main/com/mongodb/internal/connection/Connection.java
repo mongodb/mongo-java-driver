@@ -176,6 +176,4 @@ public interface Connection extends ReferenceCounted {
     }
 
     void markAsPinned(PinningMode pinningMode);
-
-    void unmarkAsPinned(PinningMode pinningMode);
 }

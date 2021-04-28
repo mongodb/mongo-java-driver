@@ -148,7 +148,4 @@ public interface InternalConnection extends BufferProvider {
 
     default void markAsPinned(Connection.PinningMode pinningMode) {
     }
-
-    default void unmarkAsPinned(final Connection.PinningMode pinningMode) {
-    }
 }

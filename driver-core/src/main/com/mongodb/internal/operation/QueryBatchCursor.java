@@ -41,7 +41,7 @@ import org.bson.codecs.Decoder;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.CursorHelper.getNumberToReturn;
@@ -113,11 +113,12 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         firstBatchEmpty = firstQueryResult.getResults().isEmpty();
 
         if (connection != null) {
+
             this.maxWireVersion = connection.getDescription().getMaxWireVersion();
             if (limitReached()) {
                 killCursor(connection);
             } else {
-                assertTrue(connection != null);
+                assertNotNull(connectionSource);
                 if (connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER) {
                     this.connection = connection.retain();
                     this.connection.markAsPinned(Connection.PinningMode.CURSOR);
@@ -195,7 +196,6 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
                     connectionSource.release();
                 }
                 if (connection != null) {
-                    connection.unmarkAsPinned(Connection.PinningMode.CURSOR);
                     connection.release();
                 }
             }

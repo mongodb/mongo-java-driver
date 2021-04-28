@@ -200,9 +200,4 @@ class CryptConnection implements Connection {
     public void markAsPinned(final PinningMode pinningMode) {
         wrapped.markAsPinned(pinningMode);
     }
-
-    @Override
-    public void unmarkAsPinned(final PinningMode pinningMode) {
-        wrapped.unmarkAsPinned(pinningMode);
-    }
 }
