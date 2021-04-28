@@ -38,7 +38,7 @@ interface ConnectionPool extends Closeable {
 
     void invalidate();
 
-    void invalidate(ObjectId serviceId);
+    void invalidate(ObjectId serviceId, int generation);
 
     void close();
 

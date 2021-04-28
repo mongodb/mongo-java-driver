@@ -537,8 +537,8 @@ public abstract class AbstractConnectionPoolTest {
         }
 
         @Override
-        public void invalidate(final ObjectId serviceId) {
-            pool.invalidate(serviceId);
+        public void invalidate(final ObjectId serviceId, final int generation) {
+            pool.invalidate(serviceId, generation);
         }
 
         @Override

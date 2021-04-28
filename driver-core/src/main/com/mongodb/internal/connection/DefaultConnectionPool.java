@@ -263,10 +263,14 @@ class DefaultConnectionPool implements ConnectionPool {
         connectionPoolListener.connectionPoolCleared(new ConnectionPoolClearedEvent(serverId));
     }
 
-    public void invalidate(final ObjectId serviceId) {
-        LOGGER.debug("Invalidating the connection pool for server id " + serviceId);
-        incrementGenerationInServerStats(serviceId);
-        connectionPoolListener.connectionPoolCleared(new ConnectionPoolClearedEvent(this.serverId, serviceId));
+    public void invalidate(final ObjectId serviceId, final int generation) {
+        if (generation == -1) {
+            return;
+        }
+        if (incrementGenerationInServerStats(serviceId, generation)) {
+            LOGGER.debug("Invalidating the connection pool for server id " + serviceId);
+            connectionPoolListener.connectionPoolCleared(new ConnectionPoolClearedEvent(this.serverId, serviceId));
+        }
     }
 
     @Override
@@ -555,7 +559,7 @@ class DefaultConnectionPool implements ConnectionPool {
                     LOGGER.trace(format("Pooled connection %s to server %s failed to open", getId(this), serverId));
                 }
                 if (wrapped.getDescription().getServiceId() != null) {
-                    invalidate(wrapped.getDescription().getServiceId());
+                    invalidate(wrapped.getDescription().getServiceId(), wrapped.getGeneration());
                 }
                 pool.release(wrapped, true);
             }
@@ -1115,10 +1119,16 @@ class DefaultConnectionPool implements ConnectionPool {
         }
     }
 
-    private synchronized void incrementGenerationInServerStats(final ObjectId serviceId) {
+    private synchronized boolean incrementGenerationInServerStats(final ObjectId serviceId, final int generation) {
         ServerStats serverStats = getServerStats(serviceId);
-        // assert not null
-        serverStats.incrementGeneration();
+        assertNotNull(serverStats);
+        assertFalse(generation > serverStats.getGeneration());
+        if (generation == serverStats.getGeneration()) {
+            serverStats.incrementGeneration();
+            return true;
+        } else {
+            return false;
+        }
     }
 
     private synchronized int getGenerationFromServerStats(final ObjectId serviceId) {
