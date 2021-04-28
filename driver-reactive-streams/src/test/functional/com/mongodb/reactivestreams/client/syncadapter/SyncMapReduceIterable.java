@@ -123,6 +123,7 @@ class SyncMapReduceIterable<T> extends SyncMongoIterable<T> implements MapReduce
     @Override
     public MapReduceIterable<T> batchSize(final int batchSize) {
         wrapped.batchSize(batchSize);
+        super.batchSize(batchSize);
         return this;
     }
 
