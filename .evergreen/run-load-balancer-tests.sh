@@ -41,7 +41,44 @@ echo "Running $AUTH tests over $SSL and connecting to $SINGLE_MONGOS_LB_URI"
 echo "Running tests with ${JDK}"
 ./gradlew -version
 
+# Disabling errexit so that both gradle command will run.
+# Then we exit with non-zero if either of them exited with non-zero
+
+set +o errexit
+
 ./gradlew -PjdkHome=/opt/java/${JDK} \
   -Dorg.mongodb.test.uri=${SINGLE_MONGOS_LB_URI} \
   -Dorg.mongodb.test.transaction.uri=${MULTI_MONGOS_LB_URI} \
-  ${GRADLE_EXTRA_VARS} --stacktrace --info --continue driver-sync:test --tests LoadBalancerTest
+  ${GRADLE_EXTRA_VARS} --stacktrace --info --continue driver-sync:test \
+  --tests LoadBalancerTest \
+  --tests RetryableReadsTest \
+  --tests RetryableWritesTest \
+  --tests VersionedApiTest \
+  --tests ChangeStreamsTest \
+  --tests UnifiedCrudTest \
+  --tests UnifiedTransactionsTest \
+  --tests InitialDnsSeedlistDiscoveryTest
+first=$?
+echo $first
+
+./gradlew -PjdkHome=/opt/java/${JDK} \
+  -Dorg.mongodb.test.uri=${SINGLE_MONGOS_LB_URI} \
+  -Dorg.mongodb.test.transaction.uri=${MULTI_MONGOS_LB_URI} \
+  ${GRADLE_EXTRA_VARS} --stacktrace --info --continue driver-reactive-stream:test \
+  --tests LoadBalancerTest \
+  --tests RetryableReadsTest \
+  --tests RetryableWritesTest \
+  --tests VersionedApiTest \
+  --tests ChangeStreamsTest \
+  --tests UnifiedCrudTest \
+  --tests UnifiedTransactionsTest \
+  --tests InitialDnsSeedlistDiscoveryTest
+second=$?
+
+if [ $first -ne 0 ]; then
+   exit $first
+elif [ $second -ne 0 ]; then
+   exit $second
+else
+   exit 0
+fi
