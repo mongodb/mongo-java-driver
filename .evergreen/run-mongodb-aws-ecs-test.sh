@@ -21,6 +21,8 @@ MONGODB_URI="$1"
 
 echo "Running MONGODB-AWS ECS authentication tests"
 
+apt update
+
 if ! which java ; then
     echo "Installing java..."
     apt install openjdk-11-jdk -y
