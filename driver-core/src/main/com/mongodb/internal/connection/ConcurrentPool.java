@@ -150,7 +150,7 @@ public class ConcurrentPool<T> implements Pool<T> {
 
         T t = available.pollLast();
         if (t == null) {
-            t = createNewAndReleasePermitIfFailure(noInit -> {});
+            t = createNewAndReleasePermitIfFailure();
         }
 
         return t;
@@ -197,28 +197,27 @@ public class ConcurrentPool<T> implements Pool<T> {
      * The {@code postCreate} action throwing a exception causes this method to stop and re-throw that exception.
      *
      * @param initialize An action applied to non-{@code null} new items.
-     *                   If this action throws an {@link Exception}, it must release resources associated with the item.
+     *                   If an exception is thrown by the action, the action must treat the provided item as if obtained via
+     *                   a {@link #get(long, TimeUnit) get…} method, {@linkplain #release(Object, boolean) releasing} it
+     *                   if an exception is thrown; otherwise the action must not release the item.
      */
     public void ensureMinSize(final int minSize, final Consumer<T> initialize) {
         while (getCount() < minSize) {
             if (!acquirePermit(0, TimeUnit.MILLISECONDS)) {
                 break;
             }
-            T newItem = createNewAndReleasePermitIfFailure(initialize);
+            T newItem = createNewAndReleasePermitIfFailure();
+            initialize.accept(newItem);
             release(newItem);
         }
     }
 
-    /**
-     * @param initialize See {@link #ensureMinSize(int, Consumer)}.
-     */
-    private T createNewAndReleasePermitIfFailure(final Consumer<T> initialize) {
+    private T createNewAndReleasePermitIfFailure() {
         try {
             T newMember = itemFactory.create();
             if (newMember == null) {
                 throw new MongoInternalException("The factory for the pool created a null item");
             }
-            initialize.accept(newMember);
             return newMember;
         } catch (RuntimeException e) {
             permits.release();
