@@ -827,7 +827,7 @@ class DefaultConnectionPool implements ConnectionPool {
                 throws MongoTimeoutException {
             PooledConnection availableConnection = null;
             boolean expressedDesireToGetAvailableConnection = false;
-            tryLock(timeout);
+            lockInterruptibly(lock);
             try {
                 if (tryGetAvailable) {
                     /* An attempt to get an available opened connection from the pool (must be done while holding the lock)
@@ -935,25 +935,12 @@ class DefaultConnectionPool implements ConnectionPool {
             }
         }
 
-        /**
-         * @param timeout If {@linkplain Timeout#isInfinite() infinite},
-         *                then the lock is {@linkplain Lock#lockInterruptibly() acquired interruptibly}.
-         */
-        private void tryLock(final Timeout timeout) throws MongoTimeoutException {
-            boolean success;
+        private void lockInterruptibly(final Lock lock) throws MongoInterruptedException {
             try {
-                if (timeout.isInfinite()) {
-                    lock.lockInterruptibly();
-                    success = true;
-                } else {
-                    success = lock.tryLock(timeout.remaining(NANOSECONDS), NANOSECONDS);
-                }
+                lock.lockInterruptibly();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new MongoInterruptedException(null, e);
-            }
-            if (!success) {
-                throw createTimeoutException(timeout);
             }
         }
 
