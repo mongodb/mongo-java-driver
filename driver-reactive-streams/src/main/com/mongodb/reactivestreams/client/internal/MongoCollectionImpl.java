@@ -43,6 +43,7 @@ import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.internal.client.model.AggregationLevel;
+import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
@@ -214,6 +215,11 @@ final class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
+    public <TResult> FindPublisher<TResult> find(final Bson filter, final Class<TResult> resultClass, final FindOptions findOptions) {
+        return new FindPublisherImpl<>(null, mongoOperationPublisher.withDocumentClass(resultClass), filter, findOptions);
+    }
+
+    @Override
     public FindPublisher<T> find(final ClientSession clientSession) {
         return find(clientSession, new BsonDocument(), getDocumentClass());
     }
@@ -232,6 +238,12 @@ final class MongoCollectionImpl<T> implements MongoCollection<T> {
     public <TResult> FindPublisher<TResult> find(final ClientSession clientSession, final Bson filter, final Class<TResult> resultClass) {
         return new FindPublisherImpl<>(notNull("clientSession", clientSession),
                                        mongoOperationPublisher.withDocumentClass(resultClass), filter);
+    }
+
+    @Override
+    public <TResult> FindPublisher<TResult> find(final ClientSession clientSession, final Bson filter, final Class<TResult> resultClass, final FindOptions findOptions) {
+        return new FindPublisherImpl<>(notNull("clientSession", clientSession),
+                                       mongoOperationPublisher.withDocumentClass(resultClass), filter, findOptions);
     }
 
     @Override

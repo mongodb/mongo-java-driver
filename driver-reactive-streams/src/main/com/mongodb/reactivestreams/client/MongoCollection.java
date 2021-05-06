@@ -43,6 +43,7 @@ import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
+import com.mongodb.internal.client.model.FindOptions;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -404,6 +405,8 @@ public interface MongoCollection<TDocument> {
      */
     <TResult> FindPublisher<TResult> find(Bson filter, Class<TResult> clazz);
 
+    <TResult> FindPublisher<TResult> find(Bson filter, Class<TResult> clazz, FindOptions findOptions);
+
     /**
      * Finds all documents in the collection.
      *
@@ -453,6 +456,8 @@ public interface MongoCollection<TDocument> {
      * @since 1.7
      */
     <TResult> FindPublisher<TResult> find(ClientSession clientSession, Bson filter, Class<TResult> clazz);
+
+    <TResult> FindPublisher<TResult> find(ClientSession clientSession, Bson filter, Class<TResult> clazz, FindOptions findOptions);
 
     /**
      * Aggregates documents according to the specified aggregation pipeline.

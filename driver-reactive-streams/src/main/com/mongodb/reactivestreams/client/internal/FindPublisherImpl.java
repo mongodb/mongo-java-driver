@@ -47,6 +47,13 @@ final class FindPublisherImpl<T> extends BatchCursorPublisher<T> implements Find
         this.findOptions = new FindOptions();
     }
 
+    FindPublisherImpl(@Nullable final ClientSession clientSession, final MongoOperationPublisher<T> mongoOperationPublisher,
+            final Bson filter, final FindOptions findOptions) {
+        super(clientSession, mongoOperationPublisher);
+        this.filter = notNull("filter", filter);
+        this.findOptions = notNull("findOptions", findOptions);
+    }
+
     @Override
     public FindPublisher<T> filter(@Nullable final Bson filter) {
         this.filter = filter;
