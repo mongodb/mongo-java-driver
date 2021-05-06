@@ -48,7 +48,6 @@ import org.bson.BsonString
 import org.bson.ByteBuf
 import org.bson.ByteBufNIO
 import org.bson.codecs.BsonDocumentCodec
-import org.bson.types.ObjectId
 import spock.lang.Specification
 
 import java.nio.ByteBuffer
@@ -97,18 +96,6 @@ class InternalStreamConnectionSpecification extends Specification {
         startHandshake(_) >> { internalConnectionInitializationDescription }
         completeHandshake(_, _) >> { internalConnectionInitializationDescription }
         initializeAsync(_, _) >> { it[1].onResult(internalConnectionInitializationDescription, null) }
-    }
-
-    private static class TestConnectionGenerationSupplier implements ConnectionGenerationSupplier {
-        @Override
-        int getGeneration() {
-            0;
-        }
-
-        @Override
-        int getGeneration(final ObjectId serviceId) {
-            0;
-        }
     }
 
     def getConnection() {

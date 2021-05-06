@@ -65,6 +65,7 @@ class AwsAuthenticationSpecification extends Specification {
     private static InternalStreamConnection createConnection(final boolean async, final MongoCredential credential) {
         new InternalStreamConnection(ClusterConnectionMode.SINGLE,
                 new ServerId(new ClusterId(), new ServerAddress(getConnectionString().getHosts().get(0))),
+                new TestConnectionGenerationSupplier(),
                 async ? new AsynchronousSocketChannelStreamFactory(SocketSettings.builder().build(), getSslSettings())
                         : new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()), [], null,
                 new InternalStreamConnectionInitializer(ClusterConnectionMode.SINGLE, createAuthenticator(credential), null, [], null))
