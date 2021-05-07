@@ -37,15 +37,6 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
     ServerAddress getPinnedServerAddress();
 
     /**
-     * Pin the server address of the mongos on this session.
-     *
-     * @param address the server address to pin to this session
-     * @mongodb.server.release 4.2
-     * @since 3.11
-     */
-    void setPinnedServerAddress(@Nullable ServerAddress address);
-
-    /**
      * Returns true if there is an active transaction on this session, and false otherwise
      *
      * @return true if there is an active transaction on this session
