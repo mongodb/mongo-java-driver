@@ -422,6 +422,9 @@ public final class Entities {
                     case "readPreference":
                         collection = collection.withReadPreference(asReadPreference(entry.getValue().asDocument()));
                         break;
+                    case "writeConcern":
+                        collection = collection.withWriteConcern(asWriteConcern(entry.getValue().asDocument()));
+                        break;
                     default:
                         throw new UnsupportedOperationException("Unsupported collection option: " + entry.getKey());
                 }
