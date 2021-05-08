@@ -122,17 +122,9 @@ public abstract class AbstractCrudTest {
         assumeFalse(definition.getString("description").getValue().startsWith("Deprecated count"));
 
         BsonDocument expectedOutcome = definition.getDocument("outcome", null);
-        // check if v1 test
-        if (definition.containsKey("operation")) {
-            runOperation(expectedOutcome, definition.getDocument("operation"),
-                    expectedOutcome != null && expectedOutcome.containsKey("result") && expectedOutcome.isDocument("result")
-                            ? expectedOutcome.get("result") : null);
-        } else {  // v2 test
-            BsonArray operations = definition.getArray("operations");
-            for (BsonValue operation : operations) {
-                runOperation(expectedOutcome, operation.asDocument(), operation.asDocument().get("result", null));
-            }
-        }
+        runOperation(expectedOutcome, definition.getDocument("operation"),
+                expectedOutcome != null && expectedOutcome.containsKey("result") && expectedOutcome.isDocument("result")
+                        ? expectedOutcome.get("result") : null);
     }
 
     private void runOperation(final BsonDocument expectedOutcome, final BsonDocument operation, final BsonValue expectedResult) {
