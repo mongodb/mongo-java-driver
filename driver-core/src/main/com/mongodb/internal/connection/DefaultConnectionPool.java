@@ -83,6 +83,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 @SuppressWarnings("deprecation")
 class DefaultConnectionPool implements ConnectionPool {
     private static final Logger LOGGER = Loggers.getLogger("connection");
+    private static final int NOT_INITIALIZED_GENERATION = -1;
     private static final Executor SAME_THREAD_EXECUTOR = Runnable::run;
     /**
      * Is package-access for the purpose of testing and must not be used for any other purpose outside of this class.
@@ -264,7 +265,7 @@ class DefaultConnectionPool implements ConnectionPool {
     }
 
     public void invalidate(final ObjectId serviceId, final int generation) {
-        if (generation == -1) {
+        if (generation == NOT_INITIALIZED_GENERATION) {
             return;
         }
         if (incrementGenerationInServerStats(serviceId, generation)) {
@@ -404,7 +405,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
     private boolean fromPreviousGeneration(final UsageTrackingInternalConnection connection) {
         int generation = connection.getGeneration();
-        if (generation == -1) {
+        if (generation == NOT_INITIALIZED_GENERATION) {
             return false;
         }
         ObjectId serviceId = connection.getDescription().getServiceId();
