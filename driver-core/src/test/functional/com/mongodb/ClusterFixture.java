@@ -82,7 +82,6 @@ import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimar
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getSecondaries;
 import static com.mongodb.internal.connection.DescriptionHelper.enableServiceIdManufacturing;
 import static java.lang.String.format;
-import static java.lang.Thread.sleep;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
@@ -439,11 +438,7 @@ public final class ClusterFixture {
     public static ServerAddress getPrimary() {
         List<ServerDescription> serverDescriptions = getPrimaries(getCluster().getDescription());
         while (serverDescriptions.isEmpty()) {
-            try {
-                sleep(100);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+            sleep(100);
             serverDescriptions = getPrimaries(getCluster().getDescription());
         }
         return serverDescriptions.get(0).getAddress();
@@ -452,11 +447,7 @@ public final class ClusterFixture {
     public static ServerAddress getSecondary() {
         List<ServerDescription> serverDescriptions = getSecondaries(getCluster().getDescription());
         while (serverDescriptions.isEmpty()) {
-            try {
-                sleep(100);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+            sleep(100);
             serverDescriptions = getSecondaries(getCluster().getDescription());
         }
         return serverDescriptions.get(0).getAddress();
@@ -553,6 +544,15 @@ public final class ClusterFixture {
             } catch (MongoCommandException e) {
                 // ignore
             }
+        }
+    }
+
+    public static void sleep(final long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
         }
     }
 
@@ -697,15 +697,11 @@ public final class ClusterFixture {
         long startTime = System.currentTimeMillis();
         int count = referenceCounted.getCount();
         while (count > target) {
-            try {
-                if (System.currentTimeMillis() > startTime + 5000) {
-                    return count;
-                }
-                sleep(10);
-                count = referenceCounted.getCount();
-            } catch (InterruptedException e) {
-                throw new MongoInterruptedException("Interrupted", e);
+            if (System.currentTimeMillis() > startTime + 5000) {
+                return count;
             }
+            sleep(10);
+            count = referenceCounted.getCount();
         }
         return count;
     }
