@@ -95,8 +95,7 @@ class DefaultConnectionPool implements ConnectionPool {
     private final Runnable maintenanceTask;
     private final ConnectionPoolListener connectionPoolListener;
     private final ServerId serverId;
-    private final LongAdder numPinnedToCursor = new LongAdder();
-    private final LongAdder numPinnedToTransaction = new LongAdder();
+    private final PinnedStateManager pinnedStateManager = new PinnedStateManager();
     private final ServiceStateManager serviceStateManager = new ServiceStateManager();
     private final ConnectionGenerationSupplier connectionGenerationSupplier;
     private volatile boolean closed;
@@ -323,8 +322,8 @@ class DefaultConnectionPool implements ConnectionPool {
     }
 
     private MongoTimeoutException createTimeoutException(final Timeout timeout) {
-        int numPinnedToCursor = this.numPinnedToCursor.intValue();
-        int numPinnedToTransaction = this.numPinnedToTransaction.intValue();
+        int numPinnedToCursor = pinnedStateManager.getNumPinnedToCursor();
+        int numPinnedToTransaction = pinnedStateManager.getNumPinnedToTransaction();
         if (numPinnedToCursor == 0 && numPinnedToTransaction == 0) {
             return new MongoTimeoutException(format("Timed out after %s while waiting for a connection to server %s.",
                     timeout.toUserString(), serverId.getAddress()));
@@ -691,31 +690,13 @@ class DefaultConnectionPool implements ConnectionPool {
             // In this case, the cursor pinning is subsumed by the transaction pinning.
             if (this.pinningMode == null) {
                 this.pinningMode = pinningMode;
-                switch (pinningMode) {
-                    case CURSOR:
-                        numPinnedToCursor.increment();
-                        break;
-                    case TRANSACTION:
-                        numPinnedToTransaction.increment();
-                        break;
-                    default:
-                        fail();
-                }
+                pinnedStateManager.increment(pinningMode);
             }
         }
 
         synchronized void unmarkAsPinned() {
             if (pinningMode != null) {
-                switch (pinningMode) {
-                    case CURSOR:
-                        numPinnedToCursor.decrement();
-                        break;
-                    case TRANSACTION:
-                        numPinnedToTransaction.decrement();
-                        break;
-                    default:
-                        fail();
-                }
+                pinnedStateManager.decrement(pinningMode);
             }
         }
 
@@ -1162,6 +1143,45 @@ class DefaultConnectionPool implements ConnectionPool {
             public int getGeneration() {
                 return generation.get();
             }
+        }
+    }
+
+    private static final class PinnedStateManager {
+        private final LongAdder numPinnedToCursor = new LongAdder();
+        private final LongAdder numPinnedToTransaction = new LongAdder();
+
+        void increment(final Connection.PinningMode pinningMode) {
+            switch (pinningMode) {
+                case CURSOR:
+                    numPinnedToCursor.increment();
+                    break;
+                case TRANSACTION:
+                    numPinnedToTransaction.increment();
+                    break;
+                default:
+                    fail();
+            }
+        }
+
+        void decrement(final Connection.PinningMode pinningMode) {
+            switch (pinningMode) {
+                case CURSOR:
+                    numPinnedToCursor.decrement();
+                    break;
+                case TRANSACTION:
+                    numPinnedToTransaction.decrement();
+                    break;
+                default:
+                    fail();
+            }
+        }
+
+        int getNumPinnedToCursor() {
+            return numPinnedToCursor.intValue();
+        }
+
+        int getNumPinnedToTransaction() {
+            return numPinnedToTransaction.intValue();
         }
     }
 }
