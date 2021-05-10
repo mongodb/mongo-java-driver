@@ -28,6 +28,8 @@ import java.util.List;
 
 public interface InternalConnection extends BufferProvider {
 
+    int NOT_INITIALIZED_GENERATION = -1;
+
     /**
      * Gets the description of this connection.
      *
@@ -76,7 +78,7 @@ public interface InternalConnection extends BufferProvider {
     /**
      * Gets the generation of this connection.  This can be used by connection pools to track whether the connection is stale.
      *
-     * @return the generation.
+     * @return the generation
      */
     int getGeneration();
 
