@@ -675,7 +675,7 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
-        public synchronized void markAsPinned(final Connection.PinningMode pinningMode) {
+        public void markAsPinned(final Connection.PinningMode pinningMode) {
             assertNotNull(pinningMode);
             // if the connection is already pinned for some other mode, the additional mode can be ignored.
             // The typical case is the connection is first pinned for a transaction, then pinned for a cursor withing that transaction
@@ -686,7 +686,7 @@ class DefaultConnectionPool implements ConnectionPool {
             }
         }
 
-        synchronized void unmarkAsPinned() {
+        void unmarkAsPinned() {
             if (pinningMode != null) {
                 pinnedStateManager.decrement(pinningMode);
             }

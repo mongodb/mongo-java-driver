@@ -111,7 +111,7 @@ public class InternalStreamConnection implements InternalConnection {
     private volatile Map<Byte, Compressor> compressorMap;
     private volatile boolean hasMoreToCome;
     private volatile int responseTo;
-    private volatile int generation = NOT_INITIALIZED_GENERATION;
+    private int generation = NOT_INITIALIZED_GENERATION;
 
     public InternalStreamConnection(final ClusterConnectionMode clusterConnectionMode, final ServerId serverId,
                                     final ConnectionGenerationSupplier connectionGenerationSupplier,
