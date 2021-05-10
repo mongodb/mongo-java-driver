@@ -113,7 +113,6 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         firstBatchEmpty = firstQueryResult.getResults().isEmpty();
 
         if (connection != null) {
-
             this.maxWireVersion = connection.getDescription().getMaxWireVersion();
             if (limitReached()) {
                 killCursor(connection);
@@ -192,12 +191,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             try {
                 killCursor();
             } finally {
-                if (connectionSource != null) {
-                    connectionSource.release();
-                }
-                if (connection != null) {
-                    connection.release();
-                }
+                releaseConnectionAndSource();
             }
         }
     }
@@ -378,14 +372,18 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
     private void releaseConnectionAndSourceIfNoServerCursor() {
         if (serverCursor == null) {
-            if (connectionSource != null) {
-                connectionSource.release();
-                connectionSource = null;
-            }
-            if (connection != null) {
-                connection.release();
-                connection = null;
-            }
+            releaseConnectionAndSource();
+        }
+    }
+
+    private void releaseConnectionAndSource() {
+        if (connectionSource != null) {
+            connectionSource.release();
+            connectionSource = null;
+        }
+        if (connection != null) {
+            connection.release();
+            connection = null;
         }
     }
 
