@@ -269,10 +269,6 @@ public final class ClusterSettings {
 
             if (loadBalanced != null && loadBalanced) {
                 mode(ClusterConnectionMode.LOAD_BALANCED);
-                if (connectionString.getHosts().size() != 1) {
-                    throw new IllegalArgumentException("A single host name must be provided in the connection string when load balanced "
-                            + "mode is specified");
-                }
                 if (connectionString.isSrvProtocol()) {
                     srvHost(connectionString.getHosts().get(0));
                 } else {
