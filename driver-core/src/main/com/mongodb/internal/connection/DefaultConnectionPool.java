@@ -479,7 +479,7 @@ class DefaultConnectionPool implements ConnectionPool {
     private class PooledConnection implements InternalConnection {
         private final UsageTrackingInternalConnection wrapped;
         private final AtomicBoolean isClosed = new AtomicBoolean();
-        private Set<Connection.PinningMode> pinningModes;  // What synchronization is needed?
+        private Set<Connection.PinningMode> pinningModes;
 
         PooledConnection(final UsageTrackingInternalConnection wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
