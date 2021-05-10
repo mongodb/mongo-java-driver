@@ -52,11 +52,10 @@ import org.bson.types.ObjectId;
 
 import java.util.Deque;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -100,8 +99,7 @@ class DefaultConnectionPool implements ConnectionPool {
     private final ServerId serverId;
     private final LongAdder numPinnedToCursor = new LongAdder();
     private final LongAdder numPinnedToTransaction = new LongAdder();
-
-    private final Map<ObjectId, ServiceStats> serverStatsMap = new HashMap<>();
+    private final ServiceStateManager serviceStateManager = new ServiceStateManager();
     private final ConnectionGenerationSupplier connectionGenerationSupplier;
     private volatile boolean closed;
     private final OpenConcurrencyLimiter openConcurrencyLimiter;
@@ -126,7 +124,9 @@ class DefaultConnectionPool implements ConnectionPool {
 
             @Override
             public int getGeneration(@NonNull final ObjectId serviceId) {
-                return getGenerationFromServiceStats(serviceId);
+                synchronized (DefaultConnectionPool.this) {
+                    return serviceStateManager.getGeneration(serviceId);
+                }
             }
         };
     }
@@ -268,7 +268,7 @@ class DefaultConnectionPool implements ConnectionPool {
         if (generation == InternalConnection.NOT_INITIALIZED_GENERATION) {
             return;
         }
-        if (incrementGenerationInServiceStats(serviceId, generation)) {
+        if (serviceStateManager.incrementGeneration(serviceId, generation)) {
             LOGGER.debug("Invalidating the connection pool for server id " + serviceId);
             connectionPoolListener.connectionPoolCleared(new ConnectionPoolClearedEvent(this.serverId, serviceId));
         }
@@ -410,7 +410,11 @@ class DefaultConnectionPool implements ConnectionPool {
         }
         ObjectId serviceId = connection.getDescription().getServiceId();
         if (serviceId != null) {
-            return getGenerationFromServiceStats(serviceId) > generation;
+            int result;
+            synchronized (this) {
+                result = serviceStateManager.getGeneration(serviceId);
+            }
+            return result > generation;
         } else {
             return this.generation.get() > generation;
         }
@@ -498,7 +502,9 @@ class DefaultConnectionPool implements ConnectionPool {
                 connectionCreated(connectionPoolListener, wrapped.getDescription().getConnectionId());
                 wrapped.open();
                 if (getDescription().getServiceId() != null) {
-                    addConnectionToServiceStats(getDescription().getServiceId());
+                    synchronized (DefaultConnectionPool.this) {
+                        serviceStateManager.addConnection(getDescription().getServiceId());
+                    }
                 }
             } catch (RuntimeException e) {
                 closeAndHandleOpenFailure();
@@ -770,7 +776,9 @@ class DefaultConnectionPool implements ConnectionPool {
             }
             connection.close();
             if (connection.getDescription().getServiceId() != null) {
-                removeConnectionFromServiceStats(connection.getDescription().getServiceId());
+                synchronized (DefaultConnectionPool.this) {
+                    serviceStateManager.removeConnection(connection.getDescription().getServiceId());
+                }
             }
         }
 
@@ -1097,68 +1105,68 @@ class DefaultConnectionPool implements ConnectionPool {
         }
     }
 
-    private ServiceStats getServiceStats(final ObjectId serviceId) {
-        ServiceStats serviceStats = serverStatsMap.get(serviceId);
-        if (serviceStats == null) {
-            serviceStats = new ServiceStats();
-            serverStatsMap.put(serviceId, serviceStats);
-        }
-        return serviceStats;
-    }
+    private static final class ServiceStateManager {
+        private final ConcurrentHashMap<ObjectId, ServiceState> stateByServiceId = new ConcurrentHashMap<>();
 
-    private synchronized void addConnectionToServiceStats(final ObjectId serviceId) {
-        ServiceStats serviceStats = getServiceStats(serviceId);
-        serviceStats.incrementCount();
-    }
-
-    private synchronized void removeConnectionFromServiceStats(final ObjectId serviceId) {
-        ServiceStats serviceStats = serverStatsMap.get(serviceId);
-        assertNotNull(serviceStats);
-        serviceStats.decrementCount();
-        if (serviceStats.getConnectionCount() == 0) {
-            serverStatsMap.remove(serviceId);
-        }
-    }
-
-    private synchronized boolean incrementGenerationInServiceStats(final ObjectId serviceId, final int generation) {
-        ServiceStats serviceStats = getServiceStats(serviceId);
-        assertNotNull(serviceStats);
-        assertFalse(generation > serviceStats.getGeneration());
-        if (generation == serviceStats.getGeneration()) {
-            serviceStats.incrementGeneration();
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    private synchronized int getGenerationFromServiceStats(@NonNull final ObjectId serviceId) {
-        ServiceStats serviceStats = getServiceStats(serviceId);
-        return serviceStats.getGeneration();
-    }
-
-    private static class ServiceStats {
-        private int generation;
-        private int connectionCount;
-
-        void incrementCount() {
-            connectionCount++;
+        void addConnection(final ObjectId serviceId) {
+            stateByServiceId.compute(serviceId, (k, v) -> {
+                if (v == null) {
+                    v = new ServiceState();
+                }
+                v.incrementConnectionCount();
+                return v;
+            });
         }
 
-        void decrementCount() {
-            connectionCount--;
+        /**
+         * Removes the mapping from {@code serviceId} to a {@link ServiceState} if its connection count reaches 0.
+         * This is done to prevent memory leaks.
+         * <p>
+         * This method must be called once for any connection for which {@link #addConnection(ObjectId)} was called.
+         */
+        void removeConnection(final ObjectId serviceId) {
+            stateByServiceId.compute(serviceId, (k, v) -> {
+                assertNotNull(v);
+                return v.decrementAndGetConnectionCount() == 0 ? null : v;
+            });
         }
 
-        void incrementGeneration() {
-            generation++;
+        /**
+         * This method must not be called after calling {@link #removeConnection(ObjectId)} for any connection.
+         * With this restriction, we still may use {@code expectedGeneration} to avoid incrementing the generation
+         * if {@code expectedGeneration} is outdated, despite the generation not growing monotonically for any given service
+         * due to method {@link #removeConnection(ObjectId)} removing {@link ServiceState} when the connection count reaches 0.
+         */
+        boolean incrementGeneration(final ObjectId serviceId, final int expectedGeneration) {
+            ServiceState state = stateByServiceId.get(serviceId);
+            assertNotNull(state);
+            return state.incrementGeneration(expectedGeneration);
         }
 
-        public int getGeneration() {
-            return generation;
+        int getGeneration(final ObjectId serviceId) {
+            ServiceState state = stateByServiceId.get(serviceId);
+            return state == null ? 0 : state.getGeneration();
         }
 
-        public int getConnectionCount() {
-            return connectionCount;
+        private static final class ServiceState {
+            private final AtomicInteger generation = new AtomicInteger();
+            private final AtomicInteger connectionCount = new AtomicInteger();
+
+            void incrementConnectionCount() {
+                connectionCount.incrementAndGet();
+            }
+
+            int decrementAndGetConnectionCount() {
+                return connectionCount.decrementAndGet();
+            }
+
+            boolean incrementGeneration(final int expectedGeneration) {
+                return generation.compareAndSet(expectedGeneration, expectedGeneration + 1);
+            }
+
+            public int getGeneration() {
+                return generation.get();
+            }
         }
     }
 }
