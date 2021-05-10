@@ -328,11 +328,11 @@ class DefaultConnectionPool implements ConnectionPool {
         int numPinnedToCursor = this.numPinnedToCursor.get();
         int numPinnedToTransaction = this.numPinnedToTransaction.get();
         if (numPinnedToCursor == 0 && numPinnedToTransaction == 0) {
-            return new MongoTimeoutException(format("Timed out after %s ms while waiting for a connection to server %s.",
+            return new MongoTimeoutException(format("Timed out after %s while waiting for a connection to server %s.",
                     timeout.toUserString(), serverId.getAddress()));
         } else {
             int numOtherInUse = pool.getInUseCount() - numPinnedToCursor - numPinnedToTransaction;
-            return new MongoTimeoutException(format("Timed out after %s ms while waiting for a connection to server %s. Details: "
+            return new MongoTimeoutException(format("Timed out after %s while waiting for a connection to server %s. Details: "
                     + "maxPoolSize: %d, connections in use by cursors: %d, connections in use by transactions: %d, "
                     + "connections in use by other operations: %d",
                     timeout.toUserString(), serverId.getAddress(),
