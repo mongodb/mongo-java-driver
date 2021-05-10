@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.connection.ServerId;
+import com.mongodb.lang.NonNull;
 import org.bson.types.ObjectId;
 
 interface InternalConnectionFactory {
@@ -28,7 +29,7 @@ interface InternalConnectionFactory {
             }
 
             @Override
-            public int getGeneration(final ObjectId serviceId) {
+            public int getGeneration(@NonNull final ObjectId serviceId) {
                 return 0;
             }
         });

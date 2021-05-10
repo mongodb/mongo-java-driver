@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.lang.NonNull;
 import org.bson.types.ObjectId;
 
 class TestConnectionGenerationSupplier implements ConnectionGenerationSupplier {
@@ -25,7 +26,7 @@ class TestConnectionGenerationSupplier implements ConnectionGenerationSupplier {
     }
 
     @Override
-    public int getGeneration(final ObjectId serviceId) {
+    public int getGeneration(@NonNull final ObjectId serviceId) {
         return 0;
     }
 }

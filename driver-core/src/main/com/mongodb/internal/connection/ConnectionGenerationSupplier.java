@@ -16,10 +16,11 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.lang.NonNull;
 import org.bson.types.ObjectId;
 
 interface ConnectionGenerationSupplier {
     int getGeneration();
 
-    int getGeneration(ObjectId serviceId);
+    int getGeneration(@NonNull ObjectId serviceId);
 }

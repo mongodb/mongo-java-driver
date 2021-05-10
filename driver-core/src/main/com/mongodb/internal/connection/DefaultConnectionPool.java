@@ -124,7 +124,7 @@ class DefaultConnectionPool implements ConnectionPool {
             }
 
             @Override
-            public int getGeneration(final ObjectId serviceId) {
+            public int getGeneration(@NonNull final ObjectId serviceId) {
                 return getGenerationFromServerStats(serviceId);
             }
         };
