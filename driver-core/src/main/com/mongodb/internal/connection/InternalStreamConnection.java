@@ -166,7 +166,7 @@ public class InternalStreamConnection implements InternalConnection {
                 generation = connectionGenerationSupplier.getGeneration(assertNotNull(description.getServiceId()));
             }
 
-            initializationDescription = connectionInitializer.completeHandshake(this, initializationDescription);
+            initializationDescription = connectionInitializer.finishHandshake(this, initializationDescription);
             description = initializationDescription.getConnectionDescription();
             initialServerDescription = initializationDescription.getServerDescription();
             opened.set(true);

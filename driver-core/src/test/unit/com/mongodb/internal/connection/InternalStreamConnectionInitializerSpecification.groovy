@@ -61,7 +61,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         when:
         enqueueSuccessfulReplies(false, null)
         def description = initializer.startHandshake(internalConnection)
-        description = initializer.completeHandshake(internalConnection, description)
+        description = initializer.finishHandshake(internalConnection, description)
         def connectionDescription = description.connectionDescription
         def serverDescription = description.serverDescription
 
@@ -94,7 +94,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         when:
         enqueueSuccessfulReplies(false, 123)
         def internalDescription = initializer.startHandshake(internalConnection)
-        def connectionDescription = initializer.completeHandshake(internalConnection, internalDescription).connectionDescription
+        def connectionDescription = initializer.finishHandshake(internalConnection, internalDescription).connectionDescription
 
         then:
         connectionDescription == getExpectedConnectionDescription(connectionDescription.connectionId.localValue, 123)
@@ -107,7 +107,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         when:
         enqueueSuccessfulRepliesWithConnectionIdIsIsMasterResponse(false, 123)
         def internalDescription = initializer.startHandshake(internalConnection)
-        def connectionDescription = initializer.completeHandshake(internalConnection, internalDescription).connectionDescription
+        def connectionDescription = initializer.finishHandshake(internalConnection, internalDescription).connectionDescription
 
         then:
         connectionDescription == getExpectedConnectionDescription(connectionDescription.connectionId.localValue, 123)
@@ -150,7 +150,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         enqueueSuccessfulReplies(false, null)
 
         def internalDescription = initializer.startHandshake(internalConnection)
-        def connectionDescription = initializer.completeHandshake(internalConnection, internalDescription).connectionDescription
+        def connectionDescription = initializer.finishHandshake(internalConnection, internalDescription).connectionDescription
 
         then:
         connectionDescription
@@ -183,7 +183,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         enqueueSuccessfulReplies(true, null)
 
         def internalDescription = initializer.startHandshake(internalConnection)
-        def connectionDescription = initializer.completeHandshake(internalConnection, internalDescription).connectionDescription
+        def connectionDescription = initializer.finishHandshake(internalConnection, internalDescription).connectionDescription
 
         then:
         connectionDescription
@@ -224,7 +224,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
             latch.await()
         } else {
             def internalDescription = initializer.startHandshake(internalConnection)
-            initializer.completeHandshake(internalConnection, internalDescription)
+            initializer.finishHandshake(internalConnection, internalDescription)
         }
 
         then:
@@ -257,7 +257,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
             latch.await()
         } else {
             def internalDescription = initializer.startHandshake(internalConnection)
-            initializer.completeHandshake(internalConnection, internalDescription)
+            initializer.finishHandshake(internalConnection, internalDescription)
         }
 
         then:
@@ -423,7 +423,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
             futureCallback.get()
         } else {
             def internalDescription = initializer.startHandshake(connection)
-            initializer.completeHandshake(connection, internalDescription)
+            initializer.finishHandshake(connection, internalDescription)
         }
     }
 

@@ -70,8 +70,8 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
         return initializeConnectionDescription(internalConnection);
     }
 
-    public InternalConnectionInitializationDescription completeHandshake(final InternalConnection internalConnection,
-                                                                         final InternalConnectionInitializationDescription description) {
+    public InternalConnectionInitializationDescription finishHandshake(final InternalConnection internalConnection,
+                                                                       final InternalConnectionInitializationDescription description) {
         notNull("internalConnection", internalConnection);
         notNull("description", description);
 

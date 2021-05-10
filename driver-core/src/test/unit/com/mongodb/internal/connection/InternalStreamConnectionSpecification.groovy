@@ -94,7 +94,7 @@ class InternalStreamConnectionSpecification extends Specification {
     }
     def initializer = Mock(InternalConnectionInitializer) {
         startHandshake(_) >> { internalConnectionInitializationDescription }
-        completeHandshake(_, _) >> { internalConnectionInitializationDescription }
+        finishHandshake(_, _) >> { internalConnectionInitializationDescription }
         initializeAsync(_, _) >> { it[1].onResult(internalConnectionInitializationDescription, null) }
     }
 
