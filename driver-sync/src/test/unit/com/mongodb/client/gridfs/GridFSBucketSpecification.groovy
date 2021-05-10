@@ -33,8 +33,6 @@ import com.mongodb.client.internal.OperationExecutor
 import com.mongodb.client.internal.TestOperationExecutor
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
-import com.mongodb.operation.BatchCursor
-import com.mongodb.operation.FindOperation
 import com.mongodb.internal.operation.BatchCursor
 import com.mongodb.internal.operation.FindOperation
 import org.bson.BsonDocument
@@ -53,6 +51,7 @@ import static com.mongodb.ReadPreference.secondary
 import static org.bson.UuidRepresentation.JAVA_LEGACY
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
+import static com.mongodb.client.internal.TestHelper.CSOT_FACTORY_TIMEOUT
 
 @SuppressWarnings('ClosureAsLastMethodParameter')
 class GridFSBucketSpecification extends Specification {
@@ -61,7 +60,8 @@ class GridFSBucketSpecification extends Specification {
     def registry = MongoClientSettings.getDefaultCodecRegistry()
     def database = databaseWithExecutor(Stub(OperationExecutor))
     def databaseWithExecutor(OperationExecutor executor) {
-        new MongoDatabaseImpl('test', registry, primary(), WriteConcern.ACKNOWLEDGED, false, false, readConcern, JAVA_LEGACY, executor)
+        new MongoDatabaseImpl('test', registry, primary(), WriteConcern.ACKNOWLEDGED, false, false, readConcern, JAVA_LEGACY,
+                60000, executor)
     }
 
     def 'should return the correct bucket name'() {
@@ -156,7 +156,7 @@ class GridFSBucketSpecification extends Specification {
         given:
         def defaultChunkSizeBytes = 255 * 1024
         def database = new MongoDatabaseImpl('test', fromProviders(new DocumentCodecProvider()), secondary(), WriteConcern.ACKNOWLEDGED,
-                false, false, readConcern, JAVA_LEGACY, new TestOperationExecutor([]))
+                false, false, readConcern, JAVA_LEGACY, null, new TestOperationExecutor([]))
 
         when:
         def gridFSBucket = new GridFSBucketImpl(database)
@@ -584,7 +584,8 @@ class GridFSBucketSpecification extends Specification {
 
         then:
         executor.getReadPreference() == primary()
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation<GridFSFile>(new MongoNamespace('test.fs.files'), decoder)
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation<GridFSFile>(CSOT_FACTORY_TIMEOUT,
+                new MongoNamespace('test.fs.files'), decoder)
                 .filter(new BsonDocument()))
 
         when:
@@ -594,7 +595,8 @@ class GridFSBucketSpecification extends Specification {
 
         then:
         executor.getReadPreference() == secondary()
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation<GridFSFile>(new MongoNamespace('test.fs.files'), decoder)
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation<GridFSFile>(CSOT_FACTORY_TIMEOUT,
+                new MongoNamespace('test.fs.files'), decoder)
                 .filter(filter).slaveOk(true))
     }
 

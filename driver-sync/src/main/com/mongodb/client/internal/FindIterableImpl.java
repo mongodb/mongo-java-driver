@@ -24,6 +24,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.ClientSideOperationTimeoutFactories;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.ExplainableReadOperation;
@@ -46,17 +47,21 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
     private final CodecRegistry codecRegistry;
 
     private Bson filter;
+    private long maxTimeMS;
+    private long maxAwaitTimeMS;
 
     FindIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
                      final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                     final ReadConcern readConcern, final OperationExecutor executor, final Bson filter) {
-        this(clientSession, namespace, documentClass, resultClass, codecRegistry, readPreference, readConcern, executor, filter, true);
+                     final ReadConcern readConcern, final OperationExecutor executor, final Bson filter, @Nullable final Long timeoutMS) {
+        this(clientSession, namespace, documentClass, resultClass, codecRegistry, readPreference, readConcern, executor, filter, true,
+                timeoutMS);
     }
 
     FindIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
                      final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                     final ReadConcern readConcern, final OperationExecutor executor, final Bson filter, final boolean retryReads) {
-        super(clientSession, executor, readConcern, readPreference, retryReads);
+                     final ReadConcern readConcern, final OperationExecutor executor, final Bson filter, final boolean retryReads,
+                     @Nullable final Long timeoutMS) {
+        super(clientSession, executor, readConcern, readPreference, retryReads, timeoutMS);
         this.operations = new SyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry, retryReads);
         this.resultClass = notNull("resultClass", resultClass);
         this.filter = notNull("filter", filter);
@@ -82,17 +87,18 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
         return this;
     }
 
+    @Deprecated
     @Override
-    public FindIterable<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
+    public FindIterableImpl<TDocument, TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
-        findOptions.maxTime(maxTime, timeUnit);
+        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
     @Override
-    public FindIterable<TResult> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
+    public FindIterableImpl<TDocument, TResult> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
-        findOptions.maxAwaitTime(maxAwaitTime, timeUnit);
+        this.maxAwaitTimeMS = TimeUnit.MILLISECONDS.convert(maxAwaitTime, timeUnit);
         return this;
     }
 
@@ -197,8 +203,12 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
     @Nullable
     @Override
     public TResult first() {
-        BatchCursor<TResult> batchCursor = getExecutor().execute(operations.findFirst(filter, resultClass, findOptions),
-                getReadPreference(), getReadConcern(), getClientSession());
+        BatchCursor<TResult> batchCursor =
+                getExecutor().execute(operations.findFirst(
+                        ClientSideOperationTimeoutFactories.create(getTimeoutMS(), maxTimeMS, maxAwaitTimeMS),
+                        filter, resultClass, findOptions),
+                getReadPreference(), getReadConcern(),
+                getClientSession());
         try {
             return batchCursor.hasNext() ? batchCursor.next().iterator().next() : null;
         } finally {
@@ -233,6 +243,7 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
     }
 
     public ExplainableReadOperation<BatchCursor<TResult>> asReadOperation() {
-        return operations.find(filter, resultClass, findOptions);
+        return operations.find(ClientSideOperationTimeoutFactories.create(getTimeoutMS(), maxTimeMS, maxAwaitTimeMS), filter,
+                               resultClass, findOptions);
     }
 }

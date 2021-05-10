@@ -16,7 +16,6 @@
 
 package com.mongodb.client.internal
 
-
 import com.mongodb.Function
 import com.mongodb.MongoNamespace
 import com.mongodb.client.ClientSession
@@ -33,6 +32,8 @@ import java.util.function.Consumer
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
+import static com.mongodb.client.internal.TestHelper.CSOT_FACTORY_MAX_TIME
+import static com.mongodb.client.internal.TestHelper.CSOT_FACTORY_NO_TIMEOUT
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
@@ -47,8 +48,9 @@ class ListIndexesIterableSpecification extends Specification {
     def 'should build the expected listIndexesOperation'() {
         given:
         def executor = new TestOperationExecutor([null, null]);
-        def listIndexesIterable = new ListIndexesIterableImpl<Document>(null, namespace, Document, codecRegistry, readPreference, executor)
-                .batchSize(100).maxTime(1000, MILLISECONDS)
+        def listIndexesIterable = new ListIndexesIterableImpl<Document>(null, namespace, Document, codecRegistry, readPreference,
+                executor, true, null)
+                .batchSize(100)
 
         when: 'default input should be as expected'
         listIndexesIterable.iterator()
@@ -57,20 +59,20 @@ class ListIndexesIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new ListIndexesOperation<Document>(namespace, new DocumentCodec())
-                .batchSize(100).maxTime(1000, MILLISECONDS).retryReads(true))
+        expect operation, isTheSameAs(new ListIndexesOperation<Document>(CSOT_FACTORY_NO_TIMEOUT, namespace, new DocumentCodec())
+                .batchSize(100).retryReads(true))
         readPreference == secondary()
 
         when: 'overriding initial options'
         listIndexesIterable.batchSize(99)
-                .maxTime(999, MILLISECONDS)
+                .maxTime(99, MILLISECONDS)
                 .iterator()
 
         operation = executor.getReadOperation() as ListIndexesOperation<Document>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new ListIndexesOperation<Document>(namespace, new DocumentCodec())
-                .batchSize(99).maxTime(999, MILLISECONDS).retryReads(true))
+        expect operation, isTheSameAs(new ListIndexesOperation<Document>(CSOT_FACTORY_MAX_TIME, namespace, new DocumentCodec())
+                .batchSize(99).retryReads(true))
     }
 
     def 'should use ClientSession'() {
@@ -80,7 +82,7 @@ class ListIndexesIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([batchCursor, batchCursor]);
         def listIndexesIterable = new ListIndexesIterableImpl<Document>(clientSession, namespace, Document, codecRegistry, readPreference,
-                executor)
+                executor, true, null)
 
         when:
         listIndexesIterable.first()
@@ -120,7 +122,8 @@ class ListIndexesIterableSpecification extends Specification {
             }
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
-        def mongoIterable = new ListIndexesIterableImpl<Document>(null, namespace, Document, codecRegistry, readPreference, executor)
+        def mongoIterable = new ListIndexesIterableImpl<Document>(null, namespace, Document, codecRegistry, readPreference, executor,
+                true, null)
 
         when:
         def results = mongoIterable.first()
@@ -164,7 +167,7 @@ class ListIndexesIterableSpecification extends Specification {
         when:
         def batchSize = 5
         def mongoIterable = new ListIndexesIterableImpl<Document>(null, namespace, Document, codecRegistry, readPreference,
-                Stub(OperationExecutor))
+                Stub(OperationExecutor), true, null)
 
         then:
         mongoIterable.getBatchSize() == null

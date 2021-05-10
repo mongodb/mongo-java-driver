@@ -889,7 +889,9 @@ final class UnifiedCrudHelper {
                 new BsonInt64(collection.countDocuments(filter)));
     }
 
-    public OperationResult executeEstimatedDocumentCount(final BsonDocument operation) {
+    public
+    @SuppressWarnings("deprecation")
+    OperationResult executeEstimatedDocumentCount(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
 

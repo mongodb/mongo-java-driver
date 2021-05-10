@@ -60,6 +60,7 @@ class GridFSFindIterableImpl implements GridFSFindIterable {
         return this;
     }
 
+    @Deprecated
     @Override
     public GridFSFindIterable maxTime(final long maxTime, final TimeUnit timeUnit) {
         underlying.maxTime(maxTime, timeUnit);

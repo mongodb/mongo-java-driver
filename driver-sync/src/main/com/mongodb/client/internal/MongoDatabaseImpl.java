@@ -33,6 +33,7 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateViewOptions;
 import com.mongodb.client.model.IndexOptionDefaults;
 import com.mongodb.client.model.ValidationOptions;
+import com.mongodb.internal.ClientSideOperationTimeoutFactories;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.operation.CommandReadOperation;
@@ -49,9 +50,12 @@ import org.bson.conversions.Bson;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.bson.internal.CodecRegistryHelper.createRegistry;
 
 /**
@@ -65,12 +69,15 @@ public class MongoDatabaseImpl implements MongoDatabase {
     private final boolean retryWrites;
     private final boolean retryReads;
     private final ReadConcern readConcern;
+    private final UuidRepresentation uuidRepresentation;
+    @Nullable
+    private final Long timeoutMS;
     private final OperationExecutor executor;
-    private UuidRepresentation uuidRepresentation;
 
     public MongoDatabaseImpl(final String name, final CodecRegistry codecRegistry, final ReadPreference readPreference,
                              final WriteConcern writeConcern, final boolean retryWrites, final boolean retryReads,
-                             final ReadConcern readConcern, final UuidRepresentation uuidRepresentation, final OperationExecutor executor) {
+                             final ReadConcern readConcern, final UuidRepresentation uuidRepresentation,
+                             @Nullable final Long timeoutMS, final OperationExecutor executor) {
         checkDatabaseNameValidity(name);
         this.name = notNull("name", name);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
@@ -80,6 +87,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
         this.retryReads = retryReads;
         this.readConcern = notNull("readConcern", readConcern);
         this.uuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
+        this.timeoutMS = timeoutMS;
         this.executor = notNull("executor", executor);
     }
 
@@ -108,28 +116,43 @@ public class MongoDatabaseImpl implements MongoDatabase {
         return readConcern;
     }
 
+    @Nullable
+    @Override
+    public Long getTimeout(final TimeUnit timeUnit) {
+        return timeoutMS == null ? null : notNull("timeUnit", timeUnit).convert(timeoutMS, MILLISECONDS);
+    }
+
     @Override
     public MongoDatabase withCodecRegistry(final CodecRegistry codecRegistry) {
         return new MongoDatabaseImpl(name, createRegistry(codecRegistry, uuidRepresentation), readPreference, writeConcern, retryWrites,
-                retryReads, readConcern, uuidRepresentation, executor);
+                retryReads, readConcern, uuidRepresentation, timeoutMS, executor);
     }
 
     @Override
     public MongoDatabase withReadPreference(final ReadPreference readPreference) {
         return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern,
-                uuidRepresentation, executor);
+                uuidRepresentation, timeoutMS, executor);
     }
 
     @Override
     public MongoDatabase withWriteConcern(final WriteConcern writeConcern) {
         return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern,
-                uuidRepresentation, executor);
+                uuidRepresentation, timeoutMS, executor);
     }
 
     @Override
     public MongoDatabase withReadConcern(final ReadConcern readConcern) {
         return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern,
-                uuidRepresentation, executor);
+                uuidRepresentation, timeoutMS, executor);
+    }
+
+    @Override
+    public MongoDatabase withTimeout(final long timeout, final TimeUnit timeUnit) {
+        isTrueArgument("timeout >= 0", timeout >= 0);
+        notNull("timeUnit", timeUnit);
+        long timeoutMS = timeUnit.convert(timeout, TimeUnit.MILLISECONDS);
+        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern,
+                uuidRepresentation, timeoutMS, executor);
     }
 
     @Override
@@ -140,7 +163,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public <TDocument> MongoCollection<TDocument> getCollection(final String collectionName, final Class<TDocument> documentClass) {
         return new MongoCollectionImpl<>(new MongoNamespace(name, collectionName), documentClass, codecRegistry, readPreference,
-                writeConcern, retryWrites, retryReads, readConcern, uuidRepresentation, executor);
+                writeConcern, retryWrites, retryReads, readConcern, uuidRepresentation, timeoutMS, executor);
     }
 
     @Override
@@ -191,7 +214,8 @@ public class MongoDatabaseImpl implements MongoDatabase {
         if (clientSession != null && clientSession.hasActiveTransaction() && !readPreference.equals(ReadPreference.primary())) {
             throw new MongoClientException("Read preference in a transaction must be primary");
         }
-        return executor.execute(new CommandReadOperation<TResult>(getName(), toBsonDocument(command), codecRegistry.get(resultClass)),
+        return executor.execute(new CommandReadOperation<TResult>(ClientSideOperationTimeoutFactories.create(timeoutMS),
+                        getName(), toBsonDocument(command), codecRegistry.get(resultClass)),
                 readPreference, readConcern, clientSession);
     }
 
@@ -207,7 +231,8 @@ public class MongoDatabaseImpl implements MongoDatabase {
     }
 
     private void executeDrop(@Nullable final ClientSession clientSession) {
-        executor.execute(new DropDatabaseOperation(name, getWriteConcern()), readConcern, clientSession);
+        executor.execute(new DropDatabaseOperation(ClientSideOperationTimeoutFactories.create(timeoutMS), name,
+                                                   getWriteConcern()), readConcern, clientSession);
     }
 
     @Override
@@ -256,7 +281,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
                                                                                      final Class<TResult> resultClass,
                                                                                      final boolean collectionNamesOnly) {
         return new ListCollectionsIterableImpl<>(clientSession, name, collectionNamesOnly, resultClass, codecRegistry,
-                ReadPreference.primary(), executor, retryReads);
+                ReadPreference.primary(), executor, retryReads, timeoutMS);
     }
 
     @Override
@@ -283,7 +308,8 @@ public class MongoDatabaseImpl implements MongoDatabase {
 
     private void executeCreateCollection(@Nullable final ClientSession clientSession, final String collectionName,
                                          final CreateCollectionOptions createCollectionOptions) {
-        CreateCollectionOperation operation = new CreateCollectionOperation(name, collectionName, writeConcern)
+        CreateCollectionOperation operation = new CreateCollectionOperation(ClientSideOperationTimeoutFactories.create(timeoutMS), name,
+                                                                            collectionName, writeConcern)
                 .collation(createCollectionOptions.getCollation())
                 .capped(createCollectionOptions.isCapped())
                 .sizeInBytes(createCollectionOptions.getSizeInBytes())
@@ -401,20 +427,21 @@ public class MongoDatabaseImpl implements MongoDatabase {
                                                                          final List<? extends Bson> pipeline,
                                                                          final Class<TResult> resultClass) {
         return new AggregateIterableImpl<>(clientSession, name, Document.class, resultClass, codecRegistry,
-                readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.DATABASE, retryReads);
+                readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.DATABASE, retryReads, timeoutMS);
     }
 
     private <TResult> ChangeStreamIterable<TResult> createChangeStreamIterable(@Nullable final ClientSession clientSession,
                                                                                final List<? extends Bson> pipeline,
                                                                                final Class<TResult> resultClass) {
         return new ChangeStreamIterableImpl<>(clientSession, name, codecRegistry, readPreference, readConcern, executor,
-                pipeline, resultClass, ChangeStreamLevel.DATABASE, retryReads);
+                pipeline, resultClass, ChangeStreamLevel.DATABASE, retryReads, timeoutMS);
     }
 
     private void executeCreateView(@Nullable final ClientSession clientSession, final String viewName, final String viewOn,
                                    final List<? extends Bson> pipeline, final CreateViewOptions createViewOptions) {
         notNull("createViewOptions", createViewOptions);
-        executor.execute(new CreateViewOperation(name, viewName, viewOn, createBsonDocumentList(pipeline), writeConcern)
+        executor.execute(new CreateViewOperation(ClientSideOperationTimeoutFactories.create(timeoutMS), name, viewName, viewOn,
+                                                 createBsonDocumentList(pipeline), writeConcern)
                         .collation(createViewOptions.getCollation()),
                 readConcern, clientSession);
     }

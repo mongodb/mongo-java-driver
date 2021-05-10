@@ -22,6 +22,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.DistinctIterable;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.ClientSideOperationTimeoutFactories;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.SyncOperations;
@@ -41,20 +42,22 @@ class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult
 
     private Bson filter;
     private long maxTimeMS;
+
     private Collation collation;
 
     DistinctIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
                          final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                         final ReadConcern readConcern, final OperationExecutor executor, final String fieldName, final Bson filter) {
+                         final ReadConcern readConcern, final OperationExecutor executor, final String fieldName, final Bson filter,
+                         @Nullable final Long timeoutMS) {
         this(clientSession, namespace, documentClass, resultClass, codecRegistry, readPreference, readConcern, executor, fieldName,
-                filter, true);
+                filter, true, timeoutMS);
     }
 
     DistinctIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
                          final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
                          final ReadConcern readConcern, final OperationExecutor executor, final String fieldName, final Bson filter,
-                         final boolean retryReads) {
-        super(clientSession, executor, readConcern, readPreference, retryReads);
+                         final boolean retryReads, @Nullable final Long timeoutMS) {
+        super(clientSession, executor, readConcern, readPreference, retryReads, timeoutMS);
         this.operations = new SyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry, retryReads);
         this.resultClass = notNull("resultClass", resultClass);
         this.fieldName = notNull("mapFunction", fieldName);
@@ -67,6 +70,7 @@ class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult
         return this;
     }
 
+    @Deprecated
     @Override
     public DistinctIterable<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
@@ -88,6 +92,7 @@ class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult
 
     @Override
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
-        return operations.distinct(fieldName, filter, resultClass, maxTimeMS, collation);
+        return operations.distinct(ClientSideOperationTimeoutFactories.create(getTimeoutMS(), maxTimeMS), fieldName, filter, resultClass,
+                                   collation);
     }
 }

@@ -64,10 +64,13 @@ final class MongoClientDelegate {
     @Nullable
     private final ServerApi serverApi;
     private final CodecRegistry codecRegistry;
+    @Nullable
+    private final Long timeoutMS;
+
 
     MongoClientDelegate(final Cluster cluster, final CodecRegistry codecRegistry,
                         final Object originator, @Nullable final OperationExecutor operationExecutor,
-                        @Nullable final Crypt crypt, @Nullable final ServerApi serverApi) {
+                        @Nullable final Crypt crypt, @Nullable final ServerApi serverApi, @Nullable final Long timeoutMS) {
         this.cluster = cluster;
         this.codecRegistry = codecRegistry;
         this.serverSessionPool = new ServerSessionPool(cluster, serverApi);
@@ -75,6 +78,7 @@ final class MongoClientDelegate {
         this.operationExecutor = operationExecutor == null ? new DelegateOperationExecutor() : operationExecutor;
         this.crypt = crypt;
         this.serverApi = serverApi;
+        this.timeoutMS = timeoutMS;
     }
 
     public OperationExecutor getOperationExecutor() {
@@ -126,6 +130,11 @@ final class MongoClientDelegate {
 
     public ServerSessionPool getServerSessionPool() {
         return serverSessionPool;
+    }
+
+    @Nullable
+    public Long getTimeoutMS() {
+        return timeoutMS;
     }
 
     private ClusterDescription getConnectedClusterDescription() {
