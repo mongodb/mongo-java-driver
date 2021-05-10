@@ -53,14 +53,16 @@ import org.bson.codecs.ValueCodecProvider
 import org.bson.types.ObjectId
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.DEFAULT_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.MAX_TIME_MS_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.NO_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.TIMEOUT_DURATION
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand
-import static java.util.concurrent.TimeUnit.MILLISECONDS
-import static java.util.concurrent.TimeUnit.SECONDS
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
 class DistinctOperationSpecification extends OperationFunctionalSpecification {
@@ -75,11 +77,10 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should have the correct defaults'() {
         when:
-        DistinctOperation operation = new DistinctOperation(getNamespace(), 'name', stringDecoder)
+        DistinctOperation operation = new DistinctOperation(DEFAULT_CSOT_FACTORY, getNamespace(), 'name', stringDecoder)
 
         then:
         operation.getFilter() == null
-        operation.getMaxTime(MILLISECONDS) == 0
         operation.getCollation() == null
     }
 
@@ -88,14 +89,12 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         def filter = new BsonDocument('filter', new BsonInt32(1))
 
         when:
-        DistinctOperation operation = new DistinctOperation(getNamespace(), 'name', stringDecoder)
-                .maxTime(10, MILLISECONDS)
+        DistinctOperation operation = new DistinctOperation(DEFAULT_CSOT_FACTORY, getNamespace(), 'name', stringDecoder)
                 .filter(filter)
                 .collation(defaultCollation)
 
         then:
         operation.getFilter() == filter
-        operation.getMaxTime(MILLISECONDS) == 10
         operation.getCollation() == defaultCollation
     }
 
@@ -105,7 +104,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         Document sam = new Document('name', 'Sam').append('age', 21)
         Document pete2 = new Document('name', 'Pete').append('age', 25)
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
-        DistinctOperation operation = new DistinctOperation(getNamespace(), 'name', stringDecoder)
+        DistinctOperation operation = new DistinctOperation(DEFAULT_CSOT_FACTORY, getNamespace(), 'name', stringDecoder)
 
         when:
         def results = executeAndCollectBatchCursorResults(operation, async)
@@ -123,7 +122,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         Document sam = new Document('name', 'Sam').append('age', 21)
         Document pete2 = new Document('name', 'Pete').append('age', 25)
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
-        def operation = new DistinctOperation(getNamespace(), 'name', stringDecoder)
+        def operation = new DistinctOperation(DEFAULT_CSOT_FACTORY, getNamespace(), 'name', stringDecoder)
                 .filter(new BsonDocument('age', new BsonInt32(25)))
 
         when:
@@ -154,7 +153,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
                 .append('numberOfJobs', sam.numberOfJobs)
 
         getCollectionHelper().insertDocuments(new Document('worker', peteDocument), new Document('worker', samDocument));
-        DistinctOperation operation = new DistinctOperation(getNamespace(), 'worker', new WorkerCodec())
+        DistinctOperation operation = new DistinctOperation(DEFAULT_CSOT_FACTORY, getNamespace(), 'worker', new WorkerCodec())
 
         when:
         def results = executeAndCollectBatchCursorResults(operation, async)
@@ -173,7 +172,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         Document sam = new Document('name', 1)
         Document pete2 = new Document('name', new Document('earle', 'Jones'))
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
-        DistinctOperation operation = new DistinctOperation(getNamespace(), 'name', stringDecoder)
+        DistinctOperation operation = new DistinctOperation(DEFAULT_CSOT_FACTORY, getNamespace(), 'name', stringDecoder)
 
         when:
         execute(operation, async)
@@ -187,7 +186,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should throw execution timeout exception from execute'() {
         given:
-        def operation = new DistinctOperation(getNamespace(), 'name', stringDecoder).maxTime(1, SECONDS)
+        def operation = new DistinctOperation(csotFactory, getNamespace(), 'name', stringDecoder)
         enableMaxTimeFailPoint()
 
         when:
@@ -200,12 +199,12 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         disableMaxTimeFailPoint()
 
         where:
-        async << [true, false]
+        [async, csotFactory] << [[true, false], [MAX_TIME_MS_CSOT_FACTORY, DEFAULT_CSOT_FACTORY]].combinations()
     }
 
     def 'should use the ReadBindings readPreference to set slaveOK'() {
         when:
-        def operation = new DistinctOperation(helper.namespace, 'name', helper.decoder)
+        def operation = new DistinctOperation(DEFAULT_CSOT_FACTORY, helper.namespace, 'name', helper.decoder)
 
         then:
         testOperationSlaveOk(operation, [3, 4, 0], readPreference, async, helper.commandResult)
@@ -216,15 +215,14 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should create the expected command'() {
         when:
-        def operation = new DistinctOperation(helper.namespace, 'name', new BsonDocumentCodec())
+        def operation = new DistinctOperation(MAX_TIME_MS_CSOT_FACTORY, helper.namespace, 'name', new BsonDocumentCodec())
                 .filter(new BsonDocument('a', BsonBoolean.TRUE))
-                .maxTime(10, MILLISECONDS)
                 .collation(defaultCollation)
 
         def expectedCommand = new BsonDocument('distinct', new BsonString(helper.namespace.getCollectionName()))
                 .append('key', new BsonString('name'))
                 .append('query', operation.getFilter())
-                .append('maxTimeMS', new BsonInt64(operation.getMaxTime(MILLISECONDS)))
+                .append('maxTimeMS', new BsonInt64(TIMEOUT_DURATION.toMillis()))
                 .append('collation', defaultCollation.asDocument())
 
         then:
@@ -237,7 +235,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should throw an exception when using an unsupported ReadConcern'() {
         given:
-        def operation = new DistinctOperation(helper.namespace, 'name', helper.decoder)
+        def operation = new DistinctOperation(DEFAULT_CSOT_FACTORY, helper.namespace, 'name', helper.decoder)
 
         when:
         testOperationThrows(operation, [3, 0, 0], readConcern, async)
@@ -251,7 +249,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
     }
 
     def 'should throw an exception when using an unsupported Collation'() {
-        def operation = new DistinctOperation(helper.namespace, 'name', helper.decoder)
+        def operation = new DistinctOperation(DEFAULT_CSOT_FACTORY, helper.namespace, 'name', helper.decoder)
                 .collation(defaultCollation)
 
         when:
@@ -270,7 +268,8 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         given:
         def document = Document.parse('{str: "foo"}')
         getCollectionHelper().insertDocuments(document)
-        def operation = new DistinctOperation(namespace, 'str', stringDecoder).filter(BsonDocument.parse('{str: "FOO"}}'))
+        def operation = new DistinctOperation(DEFAULT_CSOT_FACTORY, namespace, 'str', stringDecoder)
+                .filter(BsonDocument.parse('{str: "FOO"}}'))
                 .collation(caseInsensitiveCollation)
 
         when:
@@ -298,7 +297,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
                 .append('key', new BsonString('str'))
         appendReadConcernToCommand(sessionContext, commandDocument)
 
-        def operation = new DistinctOperation<String>(getNamespace(), 'str', new StringCodec())
+        def operation = new DistinctOperation<String>(NO_CSOT_FACTORY, getNamespace(), 'str', new StringCodec())
 
         when:
         operation.execute(binding)
@@ -337,7 +336,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
                 .append('key', new BsonString('str'))
         appendReadConcernToCommand(sessionContext, commandDocument)
 
-        def operation = new DistinctOperation<String>(getNamespace(), 'str', new StringCodec())
+        def operation = new DistinctOperation<String>(NO_CSOT_FACTORY, getNamespace(), 'str', new StringCodec())
 
         when:
         executeAsync(operation, binding)

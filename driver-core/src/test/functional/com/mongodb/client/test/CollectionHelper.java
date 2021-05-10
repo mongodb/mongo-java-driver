@@ -66,6 +66,7 @@ import org.bson.conversions.Bson;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.mongodb.ClusterFixture.DEFAULT_CSOT_FACTORY;
 import static com.mongodb.ClusterFixture.executeAsync;
 import static com.mongodb.ClusterFixture.getBinding;
 import static java.util.Arrays.asList;
@@ -87,7 +88,8 @@ public final class CollectionHelper<T> {
     }
 
     public T isMaster() {
-        return new CommandReadOperation<T>("admin", BsonDocument.parse("{isMaster: 1}"), codec).execute(getBinding());
+        return new CommandReadOperation<T>(DEFAULT_CSOT_FACTORY, "admin", BsonDocument.parse("{isMaster: 1}"), codec
+        ).execute(getBinding());
     }
 
     public static void drop(final MongoNamespace namespace) {
@@ -95,7 +97,7 @@ public final class CollectionHelper<T> {
     }
 
     public static void drop(final MongoNamespace namespace, final WriteConcern writeConcern) {
-        new DropCollectionOperation(namespace, writeConcern).execute(getBinding());
+        new DropCollectionOperation(DEFAULT_CSOT_FACTORY, namespace, writeConcern).execute(getBinding());
     }
 
     public static void dropDatabase(final String name) {
@@ -107,7 +109,7 @@ public final class CollectionHelper<T> {
             return;
         }
         try {
-            new DropDatabaseOperation(name, writeConcern).execute(getBinding());
+            new DropDatabaseOperation(DEFAULT_CSOT_FACTORY, name, writeConcern).execute(getBinding());
         } catch (MongoCommandException e) {
             if (!e.getErrorMessage().contains("ns not found")) {
                 throw e;
@@ -141,7 +143,8 @@ public final class CollectionHelper<T> {
 
     public void create(final String collectionName, final CreateCollectionOptions options, final WriteConcern writeConcern) {
         drop(namespace, writeConcern);
-        CreateCollectionOperation operation = new CreateCollectionOperation(namespace.getDatabaseName(), collectionName, writeConcern)
+        CreateCollectionOperation operation = new CreateCollectionOperation(DEFAULT_CSOT_FACTORY, namespace.getDatabaseName(),
+                collectionName, writeConcern)
                 .capped(options.isCapped())
                 .sizeInBytes(options.getSizeInBytes())
                 .maxDocuments(options.getMaxDocuments());
@@ -168,8 +171,8 @@ public final class CollectionHelper<T> {
             BsonDocument command = new BsonDocument("killCursors", new BsonString(namespace.getCollectionName()))
                     .append("cursors", new BsonArray(singletonList(new BsonInt64(serverCursor.getId()))));
             try {
-                new CommandReadOperation<>(namespace.getDatabaseName(), command, new BsonDocumentCodec())
-                        .execute(getBinding());
+                new CommandReadOperation<>(DEFAULT_CSOT_FACTORY, namespace.getDatabaseName(), command, new BsonDocumentCodec()
+                ).execute(getBinding());
             } catch (Exception e) {
                 // Ignore any exceptions killing old cursors
             }
@@ -197,7 +200,8 @@ public final class CollectionHelper<T> {
         for (BsonDocument document : documents) {
             insertRequests.add(new InsertRequest(document));
         }
-        new InsertOperation(namespace, true, writeConcern, false, insertRequests).execute(binding);
+        new InsertOperation(DEFAULT_CSOT_FACTORY, namespace, true, writeConcern, false, insertRequests)
+                .execute(binding);
     }
 
     public void insertDocuments(final Document... documents) {
@@ -233,7 +237,7 @@ public final class CollectionHelper<T> {
     }
 
     public <D> List<D> find(final Codec<D> codec) {
-        BatchCursor<D> cursor = new FindOperation<D>(namespace, codec)
+        BatchCursor<D> cursor = new FindOperation<D>(DEFAULT_CSOT_FACTORY, namespace, codec)
                 .sort(new BsonDocument("_id", new BsonInt32(1)))
                 .execute(getBinding());
         List<D> results = new ArrayList<D>();
@@ -248,7 +252,7 @@ public final class CollectionHelper<T> {
     }
 
     public void updateOne(final Bson filter, final Bson update, final boolean isUpsert) {
-        new MixedBulkWriteOperation(namespace,
+        new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, namespace,
                                     singletonList(new UpdateRequest(filter.toBsonDocument(Document.class, registry),
                                                                     update.toBsonDocument(Document.class, registry),
                                                                     WriteRequest.Type.UPDATE)
@@ -258,7 +262,7 @@ public final class CollectionHelper<T> {
     }
 
     public void replaceOne(final Bson filter, final Bson update, final boolean isUpsert) {
-        new MixedBulkWriteOperation(namespace,
+        new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, namespace,
                 singletonList(new UpdateRequest(filter.toBsonDocument(Document.class, registry),
                         update.toBsonDocument(Document.class, registry),
                         WriteRequest.Type.REPLACE)
@@ -268,7 +272,7 @@ public final class CollectionHelper<T> {
     }
 
     public void deleteOne(final Bson filter) {
-        new MixedBulkWriteOperation(namespace,
+        new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, namespace,
                 singletonList(new DeleteRequest(filter.toBsonDocument(Document.class, registry))),
                 true, WriteConcern.ACKNOWLEDGED, false)
                 .execute(getBinding());
@@ -287,7 +291,7 @@ public final class CollectionHelper<T> {
         for (Bson cur : pipeline) {
             bsonDocumentPipeline.add(cur.toBsonDocument(Document.class, registry));
         }
-        BatchCursor<D> cursor = new AggregateOperation<D>(namespace, bsonDocumentPipeline, decoder)
+        BatchCursor<D> cursor = new AggregateOperation<D>(DEFAULT_CSOT_FACTORY, namespace, bsonDocumentPipeline, decoder)
                                 .execute(getBinding());
         List<D> results = new ArrayList<D>();
         while (cursor.hasNext()) {
@@ -322,8 +326,8 @@ public final class CollectionHelper<T> {
     }
 
     public <D> List<D> find(final BsonDocument filter, final BsonDocument sort, final BsonDocument projection, final Decoder<D> decoder) {
-        BatchCursor<D> cursor = new FindOperation<D>(namespace, decoder).filter(filter).sort(sort).projection(projection)
-                                                                        .execute(getBinding());
+        BatchCursor<D> cursor = new FindOperation<D>(DEFAULT_CSOT_FACTORY, namespace, decoder).filter(filter).sort(sort)
+                .projection(projection).execute(getBinding());
         List<D> results = new ArrayList<D>();
         while (cursor.hasNext()) {
             results.addAll(cursor.next());
@@ -336,15 +340,17 @@ public final class CollectionHelper<T> {
     }
 
     public long count(final ReadBinding binding) {
-        return new CountDocumentsOperation(namespace).execute(binding);
+        return new CountDocumentsOperation(DEFAULT_CSOT_FACTORY, namespace).execute(binding);
     }
 
     public long count(final AsyncReadWriteBinding binding) throws Throwable {
-        return executeAsync(new CountDocumentsOperation(namespace), binding);
+        return executeAsync(new CountDocumentsOperation(DEFAULT_CSOT_FACTORY, namespace), binding);
     }
 
     public long count(final Bson filter) {
-        return new CountDocumentsOperation(namespace).filter(toBsonDocument(filter)).execute(getBinding());
+        return new CountDocumentsOperation(DEFAULT_CSOT_FACTORY, namespace)
+                .filter(toBsonDocument(filter))
+                .execute(getBinding());
     }
 
     public BsonDocument wrap(final Document document) {
@@ -356,37 +362,40 @@ public final class CollectionHelper<T> {
     }
 
     public void createIndex(final BsonDocument key) {
-        new CreateIndexesOperation(namespace, asList(new IndexRequest(key)), WriteConcern.ACKNOWLEDGED).execute(getBinding());
-    }
-
-    public void createIndex(final Document key) {
-        new CreateIndexesOperation(namespace, asList(new IndexRequest(wrap(key))), WriteConcern.ACKNOWLEDGED).execute(getBinding());
-    }
-
-    public void createUniqueIndex(final Document key) {
-        new CreateIndexesOperation(namespace, asList(new IndexRequest(wrap(key)).unique(true)), WriteConcern.ACKNOWLEDGED)
+        new CreateIndexesOperation(DEFAULT_CSOT_FACTORY, namespace, asList(new IndexRequest(key)), WriteConcern.ACKNOWLEDGED)
                 .execute(getBinding());
     }
 
+    public void createIndex(final Document key) {
+        new CreateIndexesOperation(DEFAULT_CSOT_FACTORY, namespace, asList(new IndexRequest(wrap(key))), WriteConcern.ACKNOWLEDGED)
+                .execute(getBinding());
+    }
+
+    public void createUniqueIndex(final Document key) {
+        new CreateIndexesOperation(DEFAULT_CSOT_FACTORY, namespace, asList(new IndexRequest(wrap(key)).unique(true)),
+                WriteConcern.ACKNOWLEDGED).execute(getBinding());
+    }
+
     public void createIndex(final Document key, final String defaultLanguage) {
-        new CreateIndexesOperation(namespace, asList(new IndexRequest(wrap(key)).defaultLanguage(defaultLanguage)),
-                                          WriteConcern.ACKNOWLEDGED).execute(getBinding());
+        new CreateIndexesOperation(DEFAULT_CSOT_FACTORY, namespace, asList(new IndexRequest(wrap(key)).defaultLanguage(defaultLanguage)),
+                WriteConcern.ACKNOWLEDGED).execute(getBinding());
     }
 
     public void createIndex(final Bson key) {
-        new CreateIndexesOperation(namespace, asList(new IndexRequest(key.toBsonDocument(Document.class, registry))),
-                                          WriteConcern.ACKNOWLEDGED).execute(getBinding());
+        new CreateIndexesOperation(DEFAULT_CSOT_FACTORY, namespace, asList(new IndexRequest(key.toBsonDocument(Document.class, registry))),
+                WriteConcern.ACKNOWLEDGED).execute(getBinding());
     }
 
     @SuppressWarnings("deprecation")
     public void createIndex(final Bson key, final Double bucketSize) {
-        new CreateIndexesOperation(namespace, asList(new IndexRequest(key.toBsonDocument(Document.class, registry))
+        new CreateIndexesOperation(DEFAULT_CSOT_FACTORY, namespace, asList(new IndexRequest(key.toBsonDocument(Document.class, registry))
                 .bucketSize(bucketSize)), WriteConcern.ACKNOWLEDGED).execute(getBinding());
     }
 
     public List<BsonDocument> listIndexes(){
         List<BsonDocument> indexes = new ArrayList<BsonDocument>();
-        BatchCursor<BsonDocument> cursor = new ListIndexesOperation<BsonDocument>(namespace, new BsonDocumentCodec()).execute(getBinding());
+        BatchCursor<BsonDocument> cursor = new ListIndexesOperation<BsonDocument>(DEFAULT_CSOT_FACTORY, namespace, new BsonDocumentCodec())
+                .execute(getBinding());
         while (cursor.hasNext()) {
             indexes.addAll(cursor.next());
         }
@@ -395,7 +404,7 @@ public final class CollectionHelper<T> {
 
     public void killAllSessions() {
         try {
-            new CommandReadOperation<>("admin", new BsonDocument("killAllSessions", new BsonArray()),
+            new CommandReadOperation<>(DEFAULT_CSOT_FACTORY, "admin", new BsonDocument("killAllSessions", new BsonArray()),
                     new BsonDocumentCodec()).execute(getBinding());
         } catch (MongoCommandException e) {
             // ignore exception caused by killing the implicit session that the killAllSessions command itself is running in
@@ -404,7 +413,7 @@ public final class CollectionHelper<T> {
 
     public void renameCollection(final MongoNamespace newNamespace) {
         try {
-            new CommandReadOperation<>("admin",
+            new CommandReadOperation<>(DEFAULT_CSOT_FACTORY, "admin",
                     new BsonDocument("renameCollection", new BsonString(getNamespace().getFullName()))
                                 .append("to", new BsonString(newNamespace.getFullName())),
                     new BsonDocumentCodec()).execute(getBinding());
@@ -418,6 +427,7 @@ public final class CollectionHelper<T> {
     }
 
     public void runAdminCommand(final BsonDocument command) {
-        new CommandReadOperation<>("admin", command, new BsonDocumentCodec()).execute(getBinding());
+        new CommandReadOperation<>(DEFAULT_CSOT_FACTORY, "admin", command, new BsonDocumentCodec())
+                .execute(getBinding());
     }
 }

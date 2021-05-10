@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation
 
-
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
@@ -35,6 +34,7 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.Decoder
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.NO_CSOT_FACTORY
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.internal.operation.AsyncCommandOperationHelper.CommandReadTransformerAsync
 import static com.mongodb.internal.operation.AsyncCommandOperationHelper.CommandWriteTransformerAsync
@@ -53,7 +53,7 @@ class AsyncCommandOperationHelperSpecification extends Specification {
             getMaxWireVersion() >> getMaxWireVersionForServerVersion([4, 0, 0])
             getServerType() >> ServerType.REPLICA_SET_PRIMARY
         }
-        def commandCreator = { serverDesc, connectionDesc -> command }
+        def commandCreator = { csot, serverDesc, connectionDesc -> command }
         def callback = new SingleResultCallback() {
             def result
             def throwable
@@ -88,8 +88,8 @@ class AsyncCommandOperationHelperSpecification extends Specification {
         }
 
         when:
-        executeRetryableCommandAsync(asyncWriteBinding, dbName, primary(), new NoOpFieldNameValidator(), decoder,
-                commandCreator, FindAndModifyHelper.asyncTransformer(), callback)
+        executeRetryableCommandAsync(NO_CSOT_FACTORY.create(), asyncWriteBinding, dbName, primary(), new NoOpFieldNameValidator(),
+                decoder, commandCreator, FindAndModifyHelper.asyncTransformer(), callback)
 
         then:
         2 * connection.commandAsync(dbName, command, _, primary(), decoder, _, _, _) >> { it.last().onResult(results.poll(), null) }
@@ -117,7 +117,7 @@ class AsyncCommandOperationHelperSpecification extends Specification {
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeCommandAsync(asyncWriteBinding, dbName, command, connection, function, callback)
+        executeCommandAsync(NO_CSOT_FACTORY.create(), asyncWriteBinding, dbName, command, connection, function, callback)
 
         then:
         _ * connection.getDescription() >> connectionDescription
@@ -128,7 +128,7 @@ class AsyncCommandOperationHelperSpecification extends Specification {
         given:
         def dbName = 'db'
         def command = new BsonDocument()
-        def commandCreator = { serverDescription, connectionDescription -> command }
+        def commandCreator = { csot, serverDescription, connectionDescription -> command }
         def decoder = Stub(Decoder)
         def callback = Stub(SingleResultCallback)
         def function = Stub(CommandReadTransformerAsync)
@@ -145,7 +145,7 @@ class AsyncCommandOperationHelperSpecification extends Specification {
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeCommandAsync(asyncReadBinding, dbName, commandCreator, decoder, function, false, callback)
+        executeCommandAsync(NO_CSOT_FACTORY.create(), asyncReadBinding, dbName, commandCreator, decoder, function, false, callback)
 
         then:
         _ * connection.getDescription() >> connectionDescription

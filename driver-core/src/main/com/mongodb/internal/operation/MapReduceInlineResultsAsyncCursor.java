@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.connection.QueryResult;
 
 /**
@@ -29,8 +30,9 @@ class MapReduceInlineResultsAsyncCursor<T> extends AsyncSingleBatchQueryCursor<T
 
     private final MapReduceStatistics statistics;
 
-    MapReduceInlineResultsAsyncCursor(final QueryResult<T> queryResult, final MapReduceStatistics statistics) {
-        super(queryResult);
+    MapReduceInlineResultsAsyncCursor(final ClientSideOperationTimeout clientSideOperationTimeout, final QueryResult<T> queryResult,
+                                      final MapReduceStatistics statistics) {
+        super(clientSideOperationTimeout, queryResult);
         this.statistics = statistics;
     }
 

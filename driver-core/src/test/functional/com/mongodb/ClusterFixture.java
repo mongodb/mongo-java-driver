@@ -32,6 +32,8 @@ import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.connection.TlsChannelStreamFactoryFactory;
 import com.mongodb.connection.netty.NettyStreamFactory;
 import com.mongodb.connection.netty.NettyStreamFactoryFactory;
+import com.mongodb.internal.ClientSideOperationTimeoutFactories;
+import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncClusterBinding;
@@ -102,7 +104,19 @@ public final class ClusterFixture {
     private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
     private static final int COMMAND_NOT_FOUND_ERROR_CODE = 59;
     public static final long TIMEOUT = 60L;
-    public static final Duration TIMEOUT_DURATION = Duration.ofMinutes(1);
+    public static final Duration TIMEOUT_DURATION = Duration.ofSeconds(TIMEOUT);
+
+    public static final ClientSideOperationTimeoutFactory DEFAULT_CSOT_FACTORY =
+            ClientSideOperationTimeoutFactories.create(TIMEOUT_DURATION.toMillis());
+
+    public static final ClientSideOperationTimeoutFactory NO_CSOT_FACTORY =
+            ClientSideOperationTimeoutFactories.NO_TIMEOUT;
+
+    public static final ClientSideOperationTimeoutFactory MAX_TIME_MS_CSOT_FACTORY =
+            ClientSideOperationTimeoutFactories.create(null, TIMEOUT_DURATION.toMillis(), 0, 0);
+
+    public static final ClientSideOperationTimeoutFactory MAX_AWAIT_TIME_MS_CSOT_FACTORY =
+            ClientSideOperationTimeoutFactories.create(null, 999, 9999, 0);
 
     private static ConnectionString connectionString;
     private static Cluster cluster;
@@ -140,7 +154,7 @@ public final class ClusterFixture {
 
     public static ServerVersion getServerVersion() {
         if (serverVersion == null) {
-            serverVersion = getVersion(new CommandReadOperation<BsonDocument>("admin",
+            serverVersion = getVersion(new CommandReadOperation<>(DEFAULT_CSOT_FACTORY, "admin",
                     new BsonDocument("buildInfo", new BsonInt32(1)), new BsonDocumentCodec())
                     .execute(new ClusterBinding(getCluster(), ReadPreference.nearest(), ReadConcern.DEFAULT, getServerApi())));
         }
@@ -200,8 +214,8 @@ public final class ClusterFixture {
     }
 
     public static Document getServerStatus() {
-        return new CommandReadOperation<>("admin", new BsonDocument("serverStatus", new BsonInt32(1)), new DocumentCodec())
-                .execute(getBinding());
+        return new CommandReadOperation<>(DEFAULT_CSOT_FACTORY, "admin", new BsonDocument("serverStatus", new BsonInt32(1)),
+                new DocumentCodec()).execute(getBinding());
     }
 
     public static boolean supportsFsync() {
@@ -215,7 +229,7 @@ public final class ClusterFixture {
         @Override
         public void run() {
             if (cluster != null) {
-                new DropDatabaseOperation(getDefaultDatabaseName(), WriteConcern.ACKNOWLEDGED).execute(getBinding());
+                new DropDatabaseOperation(DEFAULT_CSOT_FACTORY, getDefaultDatabaseName(), WriteConcern.ACKNOWLEDGED).execute(getBinding());
                 cluster.close();
             }
         }
@@ -249,8 +263,9 @@ public final class ClusterFixture {
         Cluster cluster = createCluster(new ConnectionString(DEFAULT_URI),
                 new SocketStreamFactory(SocketSettings.builder().build(), SslSettings.builder().build()));
         try {
-            BsonDocument isMasterResult = new CommandReadOperation<BsonDocument>("admin",
-                    new BsonDocument("ismaster", new BsonInt32(1)), new BsonDocumentCodec()).execute(new ClusterBinding(cluster,
+            BsonDocument isMasterResult = new CommandReadOperation<BsonDocument>(DEFAULT_CSOT_FACTORY, "admin",
+                    new BsonDocument("ismaster", new BsonInt32(1)), new BsonDocumentCodec()
+            ).execute(new ClusterBinding(cluster,
                     ReadPreference.nearest(), ReadConcern.DEFAULT, getServerApi()));
             if (isMasterResult.containsKey("setName")) {
                 connectionString = new ConnectionString(DEFAULT_URI + "/?replicaSet="
@@ -465,10 +480,8 @@ public final class ClusterFixture {
 
     public static BsonDocument getServerParameters() {
         if (serverParameters == null) {
-            serverParameters = new CommandReadOperation<>("admin",
-                    new BsonDocument("getParameter", new BsonString("*")),
-                    new BsonDocumentCodec())
-                    .execute(getBinding());
+            serverParameters = new CommandReadOperation<>(DEFAULT_CSOT_FACTORY, "admin",
+                    new BsonDocument("getParameter", new BsonString("*")), new BsonDocumentCodec()).execute(getBinding());
         }
         return serverParameters;
     }
@@ -524,8 +537,8 @@ public final class ClusterFixture {
         boolean failsPointsSupported = true;
         if (!isSharded()) {
             try {
-                new CommandReadOperation<>("admin", failPointDocument, new BsonDocumentCodec())
-                        .execute(getBinding());
+                new CommandReadOperation<>(DEFAULT_CSOT_FACTORY, "admin", failPointDocument, new BsonDocumentCodec()
+                ).execute(getBinding());
             } catch (MongoCommandException e) {
                 if (e.getErrorCode() == COMMAND_NOT_FOUND_ERROR_CODE) {
                     failsPointsSupported = false;
@@ -540,7 +553,9 @@ public final class ClusterFixture {
             BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString(failPoint))
                     .append("mode", new BsonString("off"));
             try {
-                new CommandReadOperation<>("admin", failPointDocument, new BsonDocumentCodec()).execute(getBinding());
+                new CommandReadOperation<>(DEFAULT_CSOT_FACTORY, "admin",
+                        (clientSideOperationTimeout, serverDescription, connectionDescription) -> failPointDocument, new BsonDocumentCodec()
+                ).execute(getBinding());
             } catch (MongoCommandException e) {
                 // ignore
             }

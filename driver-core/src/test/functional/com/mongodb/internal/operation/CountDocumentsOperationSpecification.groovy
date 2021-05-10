@@ -45,6 +45,10 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.DEFAULT_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.MAX_TIME_MS_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.NO_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.TIMEOUT_DURATION
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.executeAsync
@@ -52,8 +56,6 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand
-import static java.util.concurrent.TimeUnit.MILLISECONDS
-import static java.util.concurrent.TimeUnit.SECONDS
 
 class CountDocumentsOperationSpecification extends OperationFunctionalSpecification {
 
@@ -72,11 +74,10 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
 
     def 'should have the correct defaults'() {
         when:
-        CountDocumentsOperation operation = new CountDocumentsOperation(getNamespace())
+        CountDocumentsOperation operation = new CountDocumentsOperation(DEFAULT_CSOT_FACTORY, getNamespace())
 
         then:
         operation.getFilter() == null
-        operation.getMaxTime(MILLISECONDS) == 0
         operation.getHint() == null
         operation.getLimit() == 0
         operation.getSkip() == 0
@@ -88,8 +89,7 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
         def hint = new BsonString('hint')
 
         when:
-        CountDocumentsOperation operation = new CountDocumentsOperation(getNamespace())
-                .maxTime(10, MILLISECONDS)
+        CountDocumentsOperation operation = new CountDocumentsOperation(DEFAULT_CSOT_FACTORY, getNamespace())
                 .filter(filter)
                 .hint(hint)
                 .limit(20)
@@ -97,7 +97,6 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
 
         then:
         operation.getFilter() == filter
-        operation.getMaxTime(MILLISECONDS) == 10
         operation.getHint() == hint
         operation.getLimit() == 20
         operation.getSkip() == 30
@@ -105,7 +104,7 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
 
     def 'should get the count'() {
         expect:
-        execute(new CountDocumentsOperation(getNamespace()), async) == documents.size()
+        execute(new CountDocumentsOperation(DEFAULT_CSOT_FACTORY, getNamespace()), async) == documents.size()
 
         where:
         async << [true, false]
@@ -116,7 +115,7 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
         getCollectionHelper().drop()
 
         then:
-        execute(new CountDocumentsOperation(getNamespace()), async) == 0
+        execute(new CountDocumentsOperation(DEFAULT_CSOT_FACTORY, getNamespace()), async) == 0
 
         where:
         async << [true, false]
@@ -128,7 +127,7 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
         getCollectionHelper().create()
 
         then:
-        execute(new CountDocumentsOperation(getNamespace()), async) == 0
+        execute(new CountDocumentsOperation(DEFAULT_CSOT_FACTORY, getNamespace()), async) == 0
 
         where:
         async << [true, false]
@@ -136,7 +135,7 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
 
     def 'should throw execution timeout exception from execute'() {
         given:
-        def operation = new CountDocumentsOperation(getNamespace()).maxTime(1, SECONDS)
+        def operation = new CountDocumentsOperation(csotFactory, getNamespace())
         enableMaxTimeFailPoint()
 
         when:
@@ -149,12 +148,12 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
         disableMaxTimeFailPoint()
 
         where:
-        async << [true, false]
+        [async, csotFactory] << [[true, false], [MAX_TIME_MS_CSOT_FACTORY, DEFAULT_CSOT_FACTORY]].combinations()
     }
 
     def 'should use limit with the count'() {
         when:
-        def operation = new CountDocumentsOperation(getNamespace()).limit(1)
+        def operation = new CountDocumentsOperation(DEFAULT_CSOT_FACTORY, getNamespace()).limit(1)
 
         then:
         execute(operation, async) == 1
@@ -165,7 +164,7 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
 
     def 'should use skip with the count'() {
         when:
-        def operation = new CountDocumentsOperation(getNamespace()).skip(documents.size() - 2)
+        def operation = new CountDocumentsOperation(DEFAULT_CSOT_FACTORY, getNamespace()).skip(documents.size() - 2)
 
         then:
         execute(operation, async)
@@ -178,9 +177,9 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
     def 'should use hint with the count'() {
         given:
         def indexDefinition = new BsonDocument('y', new BsonInt32(1))
-        new CreateIndexesOperation(getNamespace(), [new IndexRequest(indexDefinition).sparse(true)])
+        new CreateIndexesOperation(DEFAULT_CSOT_FACTORY, getNamespace(), [new IndexRequest(indexDefinition).sparse(true)])
                 .execute(getBinding())
-        def operation = new CountDocumentsOperation(getNamespace()).hint(indexDefinition)
+        def operation = new CountDocumentsOperation(DEFAULT_CSOT_FACTORY, getNamespace()).hint(indexDefinition)
 
         when:
         def count = execute(operation, async)
@@ -195,7 +194,7 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
     @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'should support hints that are bson documents or strings'() {
         expect:
-        execute(new CountDocumentsOperation(getNamespace()).hint(hint), async) == 5
+        execute(new CountDocumentsOperation(DEFAULT_CSOT_FACTORY, getNamespace()).hint(hint), async) == 5
 
         where:
         [async, hint] << [[true, false], [new BsonString('_id_'), BsonDocument.parse('{_id: 1}')]].combinations()
@@ -203,7 +202,7 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
 
     def 'should throw with bad hint'() {
         given:
-        def operation = new CountDocumentsOperation(getNamespace())
+        def operation = new CountDocumentsOperation(DEFAULT_CSOT_FACTORY, getNamespace())
                 .filter(new BsonDocument('a', new BsonInt32(1)))
                 .hint(new BsonString('BAD HINT'))
 
@@ -219,7 +218,7 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
 
     def 'should use the ReadBindings readPreference to set slaveOK'() {
         when:
-        def operation = new CountDocumentsOperation(helper.namespace)
+        def operation = new CountDocumentsOperation(DEFAULT_CSOT_FACTORY, helper.namespace)
                 .filter(BsonDocument.parse('{a: 1}'))
 
         then:
@@ -232,11 +231,12 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
     def 'should create the expected aggregation command'() {
         when:
         def filter = new BsonDocument('filter', new BsonInt32(1))
-        def operation = new CountDocumentsOperation(helper.namespace)
+        def operation = new CountDocumentsOperation(MAX_TIME_MS_CSOT_FACTORY, helper.namespace)
         def pipeline = [BsonDocument.parse('{ $match: {}}'), BsonDocument.parse('{$group: {_id: 1, n: {$sum: 1}}}')]
         def expectedCommand = new BsonDocument('aggregate', new BsonString(helper.namespace.getCollectionName()))
                 .append('pipeline', new BsonArray(pipeline))
                 .append('cursor', new BsonDocument())
+                .append('maxTimeMS', new BsonInt64(TIMEOUT_DURATION.toMillis()))
 
         then:
         testOperation(operation, [3, 4, 0], expectedCommand, async, helper.cursorResult)
@@ -246,7 +246,6 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
                 .limit(20)
                 .skip(30)
                 .hint(hint)
-                .maxTime(10, MILLISECONDS)
                 .collation(defaultCollation)
 
         expectedCommand = expectedCommand
@@ -254,7 +253,6 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
                                                    new BsonDocument('$skip', new BsonInt64(30)),
                                                    new BsonDocument('$limit', new BsonInt64(20)),
                                                    pipeline.last()]))
-                .append('maxTimeMS', new BsonInt32(10))
                 .append('collation', defaultCollation.asDocument())
                 .append('hint', hint)
 
@@ -267,7 +265,7 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
 
     def 'should throw an exception when using an unsupported ReadConcern'() {
         given:
-        def operation = new CountDocumentsOperation(helper.namespace)
+        def operation = new CountDocumentsOperation(DEFAULT_CSOT_FACTORY, helper.namespace)
 
         when:
         testOperationThrows(operation, [3, 0, 0], readConcern, async)
@@ -282,7 +280,7 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
 
     def 'should throw an exception when using an unsupported Collation'() {
         given:
-        def operation = new CountDocumentsOperation(helper.namespace).collation(defaultCollation)
+        def operation = new CountDocumentsOperation(DEFAULT_CSOT_FACTORY, helper.namespace).collation(defaultCollation)
 
         when:
         testOperationThrows(operation, [3, 2, 0], async)
@@ -299,7 +297,8 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
     def 'should support collation'() {
         given:
         getCollectionHelper().insertDocuments(BsonDocument.parse('{str: "foo"}'))
-        def operation = new CountDocumentsOperation(namespace).filter(BsonDocument.parse('{str: "FOO"}'))
+        def operation = new CountDocumentsOperation(DEFAULT_CSOT_FACTORY, namespace)
+                .filter(BsonDocument.parse('{str: "FOO"}'))
                 .collation(caseInsensitiveCollation)
 
         when:
@@ -329,7 +328,7 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
                 .append('cursor', new BsonDocument())
         appendReadConcernToCommand(sessionContext, commandDocument)
 
-        def operation = new CountDocumentsOperation(getNamespace())
+        def operation = new CountDocumentsOperation(NO_CSOT_FACTORY, getNamespace())
 
         when:
         operation.execute(binding)
@@ -369,7 +368,7 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
                 .append('cursor', new BsonDocument())
         appendReadConcernToCommand(sessionContext, commandDocument)
 
-        def operation = new CountDocumentsOperation(getNamespace())
+        def operation = new CountDocumentsOperation(NO_CSOT_FACTORY, getNamespace())
 
         when:
         executeAsync(operation, binding)

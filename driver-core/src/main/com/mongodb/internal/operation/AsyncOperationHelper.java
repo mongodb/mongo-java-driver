@@ -21,6 +21,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncConnectionSource;
@@ -50,109 +51,131 @@ import static java.util.Collections.singletonList;
 final class AsyncOperationHelper {
 
     interface AsyncCallableWithConnection {
-        void call(AsyncConnection connection, Throwable t);
+        void call(ClientSideOperationTimeout clientSideOperationTimeout, AsyncConnection connection, Throwable t);
     }
 
     interface AsyncCallableWithSource {
-        void call(AsyncConnectionSource source, Throwable t);
+        void call(ClientSideOperationTimeout clientSideOperationTimeout, AsyncConnectionSource source, Throwable t);
     }
 
     interface AsyncCallableWithConnectionAndSource {
-        void call(AsyncConnectionSource source, AsyncConnection connection, Throwable t);
+        void call(ClientSideOperationTimeout clientSideOperationTimeout, AsyncConnectionSource source, AsyncConnection connection,
+                  Throwable t);
     }
 
-    static void validateReadConcern(final AsyncConnection connection, final ReadConcern readConcern,
-                                    final AsyncCallableWithConnection callable) {
+    static void validateReadConcern(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncConnection connection,
+                                    final ReadConcern readConcern, final AsyncCallableWithConnection callable) {
         Throwable throwable = null;
         if (!serverIsAtLeastVersionThreeDotTwo(connection.getDescription()) && !readConcern.isServerDefault()) {
             throwable = new IllegalArgumentException(format("ReadConcern not supported by wire version: %s",
                     connection.getDescription().getMaxWireVersion()));
         }
-        callable.call(connection, throwable);
+        callable.call(clientSideOperationTimeout, connection, throwable);
     }
 
 
-    static void validateAllowDiskUse(final AsyncConnection connection, final Boolean allowDiskUse,
-                                     final AsyncCallableWithConnection callable) {
+    static void validateAllowDiskUse(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncConnection connection,
+                                     final Boolean allowDiskUse, final AsyncCallableWithConnection callable) {
         Optional<Throwable> throwable = OperationHelper.validateAllowDiskUse(connection.getDescription(), allowDiskUse);
-        callable.call(connection, throwable.orElse(null));
+        callable.call(clientSideOperationTimeout, connection, throwable.orElse(null));
     }
 
-    static void validateCollation(final AsyncConnection connection, final Collation collation,
-                                  final AsyncCallableWithConnection callable) {
+    static void validateCollation(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                  final AsyncConnectionSource source,
+                                  final AsyncConnection connection,
+                                  final Collation collation,
+                                  final AsyncCallableWithConnectionAndSource callable) {
         Throwable throwable = null;
         if (!serverIsAtLeastVersionThreeDotFour(connection.getDescription()) && collation != null) {
             throwable = new IllegalArgumentException(format("Collation not supported by wire version: %s",
                     connection.getDescription().getMaxWireVersion()));
         }
-        callable.call(connection, throwable);
+        callable.call(clientSideOperationTimeout, source, connection, throwable);
     }
 
-    static void validateWriteRequests(final AsyncConnection connection, final Boolean bypassDocumentValidation,
-                                      final List<? extends WriteRequest> requests, final WriteConcern writeConcern,
-                                      final AsyncCallableWithConnection callable) {
+    static void validateCollation(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncConnection connection,
+                                  final Collation collation, final AsyncCallableWithConnection callable) {
+        Throwable throwable = null;
+        if (!serverIsAtLeastVersionThreeDotFour(connection.getDescription()) && collation != null) {
+            throwable = new IllegalArgumentException(format("Collation not supported by wire version: %s",
+                    connection.getDescription().getMaxWireVersion()));
+        }
+        callable.call(clientSideOperationTimeout, connection, throwable);
+    }
+
+    static void validateWriteRequests(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncConnection connection,
+                                      final Boolean bypassDocumentValidation, final List<? extends WriteRequest> requests,
+                                      final WriteConcern writeConcern, final AsyncCallableWithConnection callable) {
         try {
             OperationHelper.validateWriteRequests(connection.getDescription(), bypassDocumentValidation, requests, writeConcern);
-            callable.call(connection, null);
+            callable.call(clientSideOperationTimeout, connection, null);
         } catch (Throwable t) {
-            callable.call(connection, t);
+            callable.call(clientSideOperationTimeout, connection, t);
         }
     }
 
-    static void validateIndexRequestCollations(final AsyncConnection connection, final List<IndexRequest> requests,
+    static void validateIndexRequestCollations(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                               final AsyncConnection connection, final List<IndexRequest> requests,
                                                final AsyncCallableWithConnection callable) {
         boolean calledTheCallable = false;
         for (IndexRequest request : requests) {
             if (request.getCollation() != null) {
                 calledTheCallable = true;
-                validateCollation(connection, request.getCollation(), callable);
+                validateCollation(clientSideOperationTimeout, connection, request.getCollation(), callable);
                 break;
             }
         }
         if (!calledTheCallable) {
-            callable.call(connection, null);
+            callable.call(clientSideOperationTimeout, connection, null);
         }
     }
 
-    static void validateFindOptions(final AsyncConnection connection, final ReadConcern readConcern,
-                                    final Collation collation, final Boolean allowDiskUse,
+    static void validateFindOptions(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncConnection connection,
+                                    final ReadConcern readConcern, final Collation collation, final Boolean allowDiskUse,
                                     final AsyncCallableWithConnection callable) {
-        validateReadConcernAndCollation(connection, readConcern, collation, (connection1, t) -> {
-            if (t != null) {
-                callable.call(connection1, t);
-            } else {
-                validateAllowDiskUse(connection1, allowDiskUse, callable);
-            }
-        });
+        validateReadConcernAndCollation(clientSideOperationTimeout, connection, readConcern, collation,
+                (clientSideOperationTimeout1, connection1, t) -> {
+                    if (t != null) {
+                        callable.call(clientSideOperationTimeout1, connection1, t);
+                    } else {
+                        validateAllowDiskUse(clientSideOperationTimeout1, connection1, allowDiskUse, callable);
+                    }
+                });
     }
 
-    static void validateFindOptions(final AsyncConnectionSource source, final AsyncConnection connection, final ReadConcern readConcern,
+    static void validateFindOptions(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncConnectionSource source,
+                                    final AsyncConnection connection, final ReadConcern readConcern,
                                     final Collation collation, final Boolean allowDiskUse,
                                     final AsyncCallableWithConnectionAndSource callable) {
-        validateFindOptions(connection, readConcern, collation, allowDiskUse, (connection1, t) -> callable.call(source, connection1, t));
+        validateFindOptions(clientSideOperationTimeout, connection, readConcern, collation, allowDiskUse,
+                (clientSideOperationTimeout1, connection1, t) -> callable.call(clientSideOperationTimeout1, source, connection1, t));
     }
 
-    static void validateReadConcernAndCollation(final AsyncConnection connection, final ReadConcern readConcern,
+    static void validateReadConcernAndCollation(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                final AsyncConnection connection, final ReadConcern readConcern,
                                                 final Collation collation, final AsyncCallableWithConnection callable) {
-        validateReadConcern(connection, readConcern, (connection1, t) -> {
+        validateReadConcern(clientSideOperationTimeout, connection, readConcern, (clientSideOperationTimeout1, connection1, t) -> {
             if (t != null) {
-                callable.call(connection1, t);
+                callable.call(clientSideOperationTimeout1, connection1, t);
             } else {
-                validateCollation(connection1, collation, callable);
+                validateCollation(clientSideOperationTimeout1, connection1, collation, callable);
             }
         });
     }
 
 
-    static <T> AsyncBatchCursor<T> createEmptyAsyncBatchCursor(final MongoNamespace namespace, final ServerAddress serverAddress) {
-        return new AsyncSingleBatchQueryCursor<>(new QueryResult<>(namespace, Collections.emptyList(), 0L, serverAddress));
+    static <T> AsyncBatchCursor<T> createEmptyAsyncBatchCursor(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                               final MongoNamespace namespace, final ServerAddress serverAddress) {
+        return new AsyncSingleBatchQueryCursor<>(clientSideOperationTimeout, new QueryResult<>(namespace, Collections.emptyList(), 0L,
+                serverAddress));
     }
 
-    static <T> AsyncBatchCursor<T> cursorDocumentToAsyncBatchCursor(final BsonDocument cursorDocument, final Decoder<T> decoder,
+    static <T> AsyncBatchCursor<T> cursorDocumentToAsyncBatchCursor(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                                    final BsonDocument cursorDocument, final Decoder<T> decoder,
                                                                     final AsyncConnectionSource source, final AsyncConnection connection,
                                                                     final int batchSize) {
-        return new AsyncQueryBatchCursor<>(OperationHelper.cursorDocumentToQueryResult(cursorDocument,
-                source.getServerDescription().getAddress()), 0, batchSize, 0, decoder, source, connection, cursorDocument);
+        return new AsyncQueryBatchCursor<>(clientSideOperationTimeout, OperationHelper.cursorDocumentToQueryResult(cursorDocument,
+                source.getServerDescription().getAddress()), 0, batchSize, decoder, source, connection, cursorDocument);
     }
 
     static <T> SingleResultCallback<T> releasingCallback(final SingleResultCallback<T> wrapped, final AsyncConnectionSource source) {
@@ -175,40 +198,51 @@ final class AsyncOperationHelper {
         return new ReferenceCountedReleasingWrappedCallback<>(wrapped, asList(readBinding, connection, source));
     }
 
-    static void withAsyncConnection(final AsyncWriteBinding binding, final AsyncCallableWithConnection callable) {
-        binding.getWriteConnectionSource(errorHandlingCallback(new AsyncCallableWithConnectionCallback(callable), LOGGER));
+    static void withAsyncConnection(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncWriteBinding binding,
+                                    final AsyncCallableWithConnection callable) {
+        binding.getWriteConnectionSource(
+                errorHandlingCallback(new AsyncCallableWithConnectionCallback(clientSideOperationTimeout, callable), LOGGER));
     }
 
-    static void withAsyncConnection(final AsyncWriteBinding binding, final AsyncCallableWithConnectionAndSource callable) {
-        binding.getWriteConnectionSource(errorHandlingCallback(new AsyncCallableWithConnectionAndSourceCallback(callable), LOGGER));
+    static void withAsyncConnection(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncWriteBinding binding,
+                                    final AsyncCallableWithConnectionAndSource callable) {
+        binding.getWriteConnectionSource(
+                errorHandlingCallback(new AsyncCallableWithConnectionAndSourceCallback(clientSideOperationTimeout, callable), LOGGER));
     }
 
-    static void withAsyncReadConnection(final AsyncReadBinding binding, final AsyncCallableWithSource callable) {
-        binding.getReadConnectionSource(errorHandlingCallback(new AsyncCallableWithSourceCallback(callable), LOGGER));
+    static void withAsyncReadConnection(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncReadBinding binding,
+                                        final AsyncCallableWithSource callable) {
+        binding.getReadConnectionSource(
+                errorHandlingCallback(new AsyncCallableWithSourceCallback(clientSideOperationTimeout, callable), LOGGER));
     }
 
-    static void withAsyncReadConnection(final AsyncReadBinding binding, final AsyncCallableWithConnectionAndSource callable) {
-        binding.getReadConnectionSource(errorHandlingCallback(new AsyncCallableWithConnectionAndSourceCallback(callable), LOGGER));
+    static void withAsyncReadConnection(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncReadBinding binding,
+                                        final AsyncCallableWithConnectionAndSource callable) {
+        binding.getReadConnectionSource(
+                errorHandlingCallback(new AsyncCallableWithConnectionAndSourceCallback(clientSideOperationTimeout, callable), LOGGER));
     }
 
-    private static void withAsyncConnectionSourceCallableConnection(final AsyncConnectionSource source,
+    private static void withAsyncConnectionSourceCallableConnection(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                                    final AsyncConnectionSource source,
                                                                     final AsyncCallableWithConnection callable) {
         source.getConnection((connection, t) -> {
             source.release();
             if (t != null) {
-                callable.call(null, t);
+                callable.call(clientSideOperationTimeout, null, t);
             } else {
-                callable.call(connection, null);
+                callable.call(clientSideOperationTimeout, connection, null);
             }
         });
     }
 
-    private static void withAsyncConnectionSource(final AsyncConnectionSource source, final AsyncCallableWithSource callable) {
-        callable.call(source, null);
+    private static void withAsyncConnectionSource(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                  final AsyncConnectionSource source, final AsyncCallableWithSource callable) {
+        callable.call(clientSideOperationTimeout, source, null);
     }
 
-    private static void withAsyncConnectionSource(final AsyncConnectionSource source, final AsyncCallableWithConnectionAndSource callable) {
-        source.getConnection((result, t) -> callable.call(source, result, t));
+    private static void withAsyncConnectionSource(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                  final AsyncConnectionSource source, final AsyncCallableWithConnectionAndSource callable) {
+        source.getConnection((result, t) -> callable.call(clientSideOperationTimeout, source, result, t));
     }
 
     private static class ReferenceCountedReleasingWrappedCallback<T> implements SingleResultCallback<T> {
@@ -259,48 +293,57 @@ final class AsyncOperationHelper {
     }
 
     private static class AsyncCallableWithConnectionCallback implements SingleResultCallback<AsyncConnectionSource> {
+        private final ClientSideOperationTimeout clientSideOperationTimeout;
         private final AsyncCallableWithConnection callable;
-        AsyncCallableWithConnectionCallback(final AsyncCallableWithConnection callable) {
+        AsyncCallableWithConnectionCallback(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                            final AsyncCallableWithConnection callable) {
+            this.clientSideOperationTimeout = clientSideOperationTimeout;
             this.callable = callable;
         }
         @Override
         public void onResult(final AsyncConnectionSource source, final Throwable t) {
             if (t != null) {
-                callable.call(null, t);
+                callable.call(clientSideOperationTimeout, null, t);
             } else {
-                withAsyncConnectionSourceCallableConnection(source, callable);
+                withAsyncConnectionSourceCallableConnection(clientSideOperationTimeout, source, callable);
             }
         }
     }
 
     private static class AsyncCallableWithSourceCallback implements SingleResultCallback<AsyncConnectionSource> {
+        private final ClientSideOperationTimeout clientSideOperationTimeout;
         private final AsyncCallableWithSource callable;
-        AsyncCallableWithSourceCallback(final AsyncCallableWithSource callable) {
+        AsyncCallableWithSourceCallback(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                        final AsyncCallableWithSource callable) {
+            this.clientSideOperationTimeout = clientSideOperationTimeout;
             this.callable = callable;
         }
         @Override
         public void onResult(final AsyncConnectionSource source, final Throwable t) {
             if (t != null) {
-                callable.call(null, t);
+                callable.call(clientSideOperationTimeout, null, t);
             } else {
-                withAsyncConnectionSource(source, callable);
+                withAsyncConnectionSource(clientSideOperationTimeout, source, callable);
             }
         }
     }
 
     private static class AsyncCallableWithConnectionAndSourceCallback implements SingleResultCallback<AsyncConnectionSource> {
+        private final ClientSideOperationTimeout clientSideOperationTimeout;
         private final AsyncCallableWithConnectionAndSource callable;
 
-        AsyncCallableWithConnectionAndSourceCallback(final AsyncCallableWithConnectionAndSource callable) {
+        AsyncCallableWithConnectionAndSourceCallback(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                     final AsyncCallableWithConnectionAndSource callable) {
+            this.clientSideOperationTimeout = clientSideOperationTimeout;
             this.callable = callable;
         }
 
         @Override
         public void onResult(final AsyncConnectionSource source, final Throwable t) {
             if (t != null) {
-                callable.call(null, null, t);
+                callable.call(clientSideOperationTimeout, null, null, t);
             } else {
-                withAsyncConnectionSource(source, callable);
+                withAsyncConnectionSource(clientSideOperationTimeout, source, callable);
             }
         }
     }

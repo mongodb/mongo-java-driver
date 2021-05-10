@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation
 
-import util.spock.annotations.Slow
 import com.mongodb.MongoBulkWriteException
 import com.mongodb.MongoClientException
 import com.mongodb.MongoNamespace
@@ -47,7 +46,10 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import org.bson.types.ObjectId
 import spock.lang.IgnoreIf
+import util.spock.annotations.Slow
 
+import static com.mongodb.ClusterFixture.DEFAULT_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.NO_CSOT_FACTORY
 import static com.mongodb.ClusterFixture.configureFailPoint
 import static com.mongodb.ClusterFixture.disableFailPoint
 import static com.mongodb.ClusterFixture.disableOnPrimaryTransactionalWriteFailPoint
@@ -71,7 +73,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
     def 'should throw IllegalArgumentException for empty list of requests'() {
         when:
-        new MixedBulkWriteOperation(getNamespace(), [], true, ACKNOWLEDGED, false)
+        new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(), [], true, ACKNOWLEDGED, false)
 
         then:
         thrown(IllegalArgumentException)
@@ -79,7 +81,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
     def 'should have the expected passed values'() {
         when:
-        def operation = new MixedBulkWriteOperation(getNamespace(), requests, ordered, writeConcern, retryWrites)
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(), requests, ordered, writeConcern, retryWrites)
                 .bypassDocumentValidation(bypassValidation)
 
         then:
@@ -99,8 +101,8 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
     def 'when no document with the same id exists, should insert the document'() {
         given:
-        def operation = new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))],
-                ordered, ACKNOWLEDGED, false)
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
+                [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))], ordered, ACKNOWLEDGED, false)
 
         when:
         BulkWriteResult result = execute(operation, async)
@@ -119,7 +121,8 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         given:
         def document = new BsonDocument('_id', new BsonInt32(1))
         getCollectionHelper().insertDocuments(document)
-        def operation = new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(document)], ordered, ACKNOWLEDGED, false)
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(), [new InsertRequest(document)], ordered,
+                ACKNOWLEDGED, false)
 
         when:
         execute(operation, async)
@@ -134,8 +137,8 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
     def 'RawBsonDocument should not generate an _id'() {
         given:
-        def operation = new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(RawBsonDocument.parse('{_id: 1}'))],
-                ordered, ACKNOWLEDGED, false)
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
+                [new InsertRequest(RawBsonDocument.parse('{_id: 1}'))], ordered, ACKNOWLEDGED, false)
 
         when:
         BulkWriteResult result = execute(operation, async)
@@ -153,7 +156,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'when documents match the query, a remove of one should remove one of them'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('x', true), new Document('x', true))
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                                              [new DeleteRequest(new BsonDocument('x', BsonBoolean.TRUE)).multi(false)],
                                              ordered, ACKNOWLEDGED, false)
 
@@ -172,7 +175,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('x', true), new Document('x', true),
                                               new Document('x', false))
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                                              [new DeleteRequest(new BsonDocument('x', BsonBoolean.TRUE))],
                                              ordered, ACKNOWLEDGED, false)
 
@@ -190,7 +193,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'when multiple document match the query, update of one should update only one of them'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('x', true), new Document('x', true))
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                                              [new UpdateRequest(new BsonDocument('x', BsonBoolean.TRUE),
                                                                 new BsonDocument('$set', new BsonDocument('y', new BsonInt32(1))),
                                                                 UPDATE).multi(false)],
@@ -210,7 +213,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'when documents match the query, update multi should update all of them'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('x', true), new Document('x', true))
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                 [new UpdateRequest(new BsonDocument('x', BsonBoolean.TRUE),
                         new BsonDocument('$set', new BsonDocument('y', new BsonInt32(1))),
                         UPDATE).multi(true)], ordered, ACKNOWLEDGED, false)
@@ -230,7 +233,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         given:
         def id = new ObjectId()
         def query = new BsonDocument('_id', new BsonObjectId(id))
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                 [new UpdateRequest(query, new BsonDocument('$set', new BsonDocument('x', new BsonInt32(2))),
                         UPDATE).upsert(true)], ordered, ACKNOWLEDGED, false)
 
@@ -249,7 +252,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         def id = new ObjectId()
         def query = new BsonDocument('_id', new BsonObjectId(id))
         given:
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                                              [new UpdateRequest(query, new BsonDocument('$set', new BsonDocument('x', new BsonInt32(2))),
                                                                 UPDATE).upsert(true).multi(true)],
                                              ordered, ACKNOWLEDGED, false)
@@ -269,7 +272,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'when documents matches the query, update one with upsert should update only one of them'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('x', true), new Document('x', true))
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                                              [new UpdateRequest(new BsonDocument('x', BsonBoolean.TRUE),
                                                                 new BsonDocument('$set', new BsonDocument('y', new BsonInt32(1))),
                                                                 UPDATE).multi(false).upsert(true)],
@@ -289,7 +292,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'when documents match the query, update multi with upsert should update all of them'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('x', true), new Document('x', true))
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                                              [new UpdateRequest(new BsonDocument('x', BsonBoolean.TRUE),
                                                                 new BsonDocument('$set', new BsonDocument('y', new BsonInt32(1))),
                                                                 UPDATE).upsert(true).multi(true)],
@@ -309,7 +312,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'when updating with an empty document, update should throw IllegalArgumentException'() {
         given:
         def id = new ObjectId()
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                 [new UpdateRequest(new BsonDocument('_id', new BsonObjectId(id)), new BsonDocument(), UPDATE)],
                 true, ACKNOWLEDGED, false)
 
@@ -326,7 +329,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'when replacing with an empty document, update should not throw IllegalArgumentException'() {
         given:
         def id = new ObjectId()
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                 [new UpdateRequest(new BsonDocument('_id', new BsonObjectId(id)), new BsonDocument(), REPLACE)],
                 true, ACKNOWLEDGED, false)
 
@@ -343,7 +346,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'when updating with an invalid document, update should throw IllegalArgumentException'() {
         given:
         def id = new ObjectId()
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                 [new UpdateRequest(new BsonDocument('_id', new BsonObjectId(id)), new BsonDocument('a', new BsonInt32(1)), UPDATE)],
                 true, ACKNOWLEDGED, false)
 
@@ -360,7 +363,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'when a document contains a key with an illegal character, replacing a document with it should throw IllegalArgumentException'() {
         given:
         def id = new ObjectId()
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                                              [new UpdateRequest(new BsonDocument('_id', new BsonObjectId(id)),
                                                                 new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))),
                                                                 REPLACE)
@@ -380,7 +383,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'when no document matches the query, a replace with upsert should insert a document'() {
         given:
         def id = new ObjectId()
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                                              [new UpdateRequest(new BsonDocument('_id', new BsonObjectId(id)),
                                                                 new BsonDocument('_id', new BsonObjectId(id))
                                                                         .append('x', new BsonInt32(2)),
@@ -401,7 +404,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
     def 'when a custom _id is upserted it should be in the write result'() {
         given:
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                                              [new UpdateRequest(new BsonDocument('_id', new BsonInt32(0)),
                                                                 new BsonDocument('$set', new BsonDocument('a', new BsonInt32(0))),
                                                                 UPDATE)
@@ -433,7 +436,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'unacknowledged upserts with custom _id should not error'() {
         given:
         def binding = async ? getAsyncSingleConnectionBinding() : getSingleConnectionBinding()
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                                              [new UpdateRequest(new BsonDocument('_id', new BsonInt32(0)),
                                                                 new BsonDocument('$set', new BsonDocument('a', new BsonInt32(0))),
                                                                 UPDATE)
@@ -465,7 +468,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('x', true), new Document('x', true))
 
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                                              [new UpdateRequest(new BsonDocument('x', BsonBoolean.TRUE),
                                                                 new BsonDocument('y', new BsonInt32(1)).append('x', BsonBoolean.FALSE),
                                                                 REPLACE).upsert(true)],
@@ -486,7 +489,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'when a replacement document is 16MB, the document is still replaced'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1))
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                 [new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                         new BsonDocument('_id', new BsonInt32(1))
                                 .append('x', new BsonBinary(new byte[1024 * 1024 * 16 - 30])),
@@ -507,7 +510,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'when two update documents together exceed 16MB, the documents are still updated'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1), new Document('_id', 2))
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                                              [new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                                                                 new BsonDocument('_id', new BsonInt32(1))
                                                                         .append('x', new BsonBinary(new byte[1024 * 1024 * 16 - 30])),
@@ -533,7 +536,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'when documents together are just below the max message size, the documents are still inserted'() {
         given:
         def bsonBinary = new BsonBinary(new byte[16 * 1000 * 1000 - (getCollectionName().length() + 33)])
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                 [
                         new InsertRequest(new BsonDocument('_id', new BsonObjectId()).append('b', bsonBinary)),
                         new InsertRequest(new BsonDocument('_id', new BsonObjectId()).append('b', bsonBinary)),
@@ -554,7 +557,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'when documents together are just above the max message size, the documents are still inserted'() {
         given:
         def bsonBinary = new BsonBinary(new byte[16 * 1000 * 1000 - (getCollectionName().length() + 32)])
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                 [
                         new InsertRequest(new BsonDocument('_id', new BsonObjectId()).append('b', bsonBinary)),
                         new InsertRequest(new BsonDocument('_id', new BsonObjectId()).append('b', bsonBinary)),
@@ -575,7 +578,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'should handle multi-length runs of ordered insert, update, replace, and remove'() {
         given:
         getCollectionHelper().insertDocuments(getTestInserts())
-        def operation = new MixedBulkWriteOperation(getNamespace(), getTestWrites(), ordered, ACKNOWLEDGED, false)
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(), getTestWrites(), ordered, ACKNOWLEDGED, false)
 
         when:
         BulkWriteResult result = execute(operation, async)
@@ -598,12 +601,12 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'should handle multi-length runs of UNACKNOWLEDGED insert, update, replace, and remove'() {
         given:
         getCollectionHelper().insertDocuments(getTestInserts())
-        def operation = new MixedBulkWriteOperation(getNamespace(),  getTestWrites(), ordered, UNACKNOWLEDGED, false)
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),  getTestWrites(), ordered, UNACKNOWLEDGED, false)
         def binding = async ? getAsyncSingleConnectionBinding() : getSingleConnectionBinding()
 
         when:
         def result = execute(operation, binding)
-        execute(new InsertOperation(namespace, true, ACKNOWLEDGED, false,
+        execute(new InsertOperation(DEFAULT_CSOT_FACTORY, namespace, true, ACKNOWLEDGED, false,
                 [new InsertRequest(new BsonDocument('_id', new BsonInt32(9)))]), binding)
 
         then:
@@ -633,7 +636,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         (1..numberOfWrites).each {
             writes.add(new InsertRequest(new BsonDocument()))
         }
-        def operation = new MixedBulkWriteOperation(getNamespace(), writes, ordered, ACKNOWLEDGED, false)
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(), writes, ordered, ACKNOWLEDGED, false)
 
         when:
         execute(operation, binding)
@@ -656,7 +659,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
             writeOperations.add(upsert)
             writeOperations.add(new DeleteRequest(new BsonDocument('key', new BsonInt32(it))))
         }
-        def operation = new MixedBulkWriteOperation(getNamespace(), writeOperations, ordered, ACKNOWLEDGED, false)
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(), writeOperations, ordered, ACKNOWLEDGED, false)
 
         when:
         BulkWriteResult result = execute(operation, async)
@@ -671,7 +674,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
     def 'error details should have correct index on ordered write failure'() {
         given:
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                                              [new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
                                               new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                                                                 new BsonDocument('$set', new BsonDocument('x', new BsonInt32(3))),
@@ -694,7 +697,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'error details should have correct index on unordered write failure'() {
         given:
         getCollectionHelper().insertDocuments(getTestInserts())
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                                              [new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
                                               new UpdateRequest(new BsonDocument('_id', new BsonInt32(2)),
                                                                 new BsonDocument('$set', new BsonDocument('x', new BsonInt32(3))),
@@ -723,7 +726,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         for (int i = 0; i < 2000; i++) {
             inserts.add(new InsertRequest(new BsonDocument('_id', new BsonInt32(i))))
         }
-        def operation = new MixedBulkWriteOperation(getNamespace(), inserts, false, ACKNOWLEDGED, false)
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(), inserts, false, ACKNOWLEDGED, false)
 
         when:
         execute(operation, async)
@@ -745,7 +748,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         for (int i = 0; i < 2000; i++) {
             inserts.add(new InsertRequest(new BsonDocument('_id', new BsonInt32(i))))
         }
-        def operation = new MixedBulkWriteOperation(getNamespace(), inserts, true, ACKNOWLEDGED, false)
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(), inserts, true, ACKNOWLEDGED, false)
 
         when:
         execute(operation, async)
@@ -765,7 +768,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     @IgnoreIf({ !isDiscoverableReplicaSet() })
     def 'should throw bulk write exception with a write concern error when wtimeout is exceeded'() {
         given:
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                                              [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))],
                                              false, new WriteConcern(5, 1), false)
         when:
@@ -784,7 +787,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'when there is a duplicate key error and a write concern error, both should be reported'() {
         given:
         getCollectionHelper().insertDocuments(getTestInserts())
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                                              [new InsertRequest(new BsonDocument('_id', new BsonInt32(7))),
                                               new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))   // duplicate key
                                              ], false, new WriteConcern(4, 1), false)
@@ -807,7 +810,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'should throw on write concern error on multiple failpoint'() {
         given:
         getCollectionHelper().insertDocuments(getTestInserts())
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                 [new InsertRequest(new BsonDocument('_id', new BsonInt32(7))),
                  new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))   // duplicate key
                 ], false, ACKNOWLEDGED, true)
@@ -839,7 +842,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
     def 'should throw IllegalArgumentException when passed an empty bulk operation'() {
         when:
-        new MixedBulkWriteOperation(getNamespace(), [], ordered, UNACKNOWLEDGED, false)
+        new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(), [], ordered, UNACKNOWLEDGED, false)
 
         then:
         thrown(IllegalArgumentException)
@@ -851,7 +854,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def 'should throw if bypassDocumentValidation is set and writeConcern is UNACKNOWLEDGED'() {
         given:
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                 [new InsertRequest(BsonDocument.parse('{ level: 9 }'))], true, UNACKNOWLEDGED, false)
                 .bypassDocumentValidation(bypassDocumentValidation)
 
@@ -868,7 +871,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should throw if collation is set and write is UNACKNOWLEDGED'() {
         given:
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                 [new DeleteRequest(BsonDocument.parse('{ level: 9 }')).collation(defaultCollation)], true, UNACKNOWLEDGED, false)
 
         when:
@@ -888,8 +891,8 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         def collectionHelper = getCollectionHelper(namespace)
         collectionHelper.create(namespace.getCollectionName(), new CreateCollectionOptions().validationOptions(
                 new ValidationOptions().validator(gte('level', 10))))
-        def operation = new MixedBulkWriteOperation(namespace, [new InsertRequest(BsonDocument.parse('{ level: 9 }'))], ordered,
-                ACKNOWLEDGED, false)
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, namespace,
+                [new InsertRequest(BsonDocument.parse('{ level: 9 }'))], ordered, ACKNOWLEDGED, false)
 
         when:
         execute(operation, async)
@@ -924,7 +927,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
                 new ValidationOptions().validator(gte('level', 10))))
 
         collectionHelper.insertDocuments(BsonDocument.parse('{ x: true, level: 10}'))
-        def operation = new MixedBulkWriteOperation(namespace,
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, namespace,
                 [new UpdateRequest(BsonDocument.parse('{x: true}'), BsonDocument.parse('{$inc: {level: -1}}'), UPDATE).multi(false)],
                 ordered, ACKNOWLEDGED, false)
 
@@ -952,7 +955,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('x', 1), new Document('y', 1),
                 new Document('z', 1))
-        def operation = new MixedBulkWriteOperation(namespace, requests, false, ACKNOWLEDGED, false)
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, namespace, requests, false, ACKNOWLEDGED, false)
 
         when:
         execute(operation, async)
@@ -983,7 +986,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         def requests = [new DeleteRequest(BsonDocument.parse('{str: "FOO"}}')).collation(caseInsensitiveCollation),
                         new UpdateRequest(BsonDocument.parse('{str: "BAR"}}'), BsonDocument.parse('{str: "bar"}}'), REPLACE)
                                 .collation(caseInsensitiveCollation)]
-        def operation = new MixedBulkWriteOperation(namespace, requests, false, ACKNOWLEDGED, false)
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, namespace, requests, false, ACKNOWLEDGED, false)
 
         when:
         BulkWriteResult result = execute(operation, async)
@@ -1001,7 +1004,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         def testWrites = getTestWrites()
         Collections.shuffle(testWrites)
         getCollectionHelper().insertDocuments(getTestInserts())
-        def operation = new MixedBulkWriteOperation(getNamespace(), testWrites, true, ACKNOWLEDGED, true)
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(), testWrites, true, ACKNOWLEDGED, true)
 
         when:
         if (serverVersionAtLeast(3, 6) && isDiscoverableReplicaSet()) {
@@ -1044,7 +1047,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         given:
         def testWrites = getTestWrites()
         getCollectionHelper().insertDocuments(getTestInserts())
-        def operation = new MixedBulkWriteOperation(getNamespace(), testWrites, true, ACKNOWLEDGED, true)
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(), testWrites, true, ACKNOWLEDGED, true)
 
         when:
         enableOnPrimaryTransactionalWriteFailPoint(BsonDocument.parse(failPoint))
@@ -1069,7 +1072,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         given:
         def testWrites = getTestWrites()
         getCollectionHelper().insertDocuments(getTestInserts())
-        def operation = new MixedBulkWriteOperation(getNamespace(), testWrites, true, UNACKNOWLEDGED, true)
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(), testWrites, true, UNACKNOWLEDGED, true)
 
         when:
         enableOnPrimaryTransactionalWriteFailPoint(BsonDocument.parse(failPoint))
@@ -1093,7 +1096,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'should retry if the connection initially fails'() {
         when:
         def cannedResult = BsonDocument.parse('{ok: 1.0, n: 1}')
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(NO_CSOT_FACTORY, getNamespace(),
                 [new InsertRequest(BsonDocument.parse('{ level: 9 }'))], true, ACKNOWLEDGED, true)
         def expectedCommand = new BsonDocument('insert', new BsonString(getNamespace().getCollectionName()))
                 .append('ordered', BsonBoolean.TRUE)
@@ -1108,7 +1111,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
     def 'should throw original error when retrying and failing'() {
         given:
-        def operation = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
                 [new InsertRequest(BsonDocument.parse('{ level: 9 }'))], true, ACKNOWLEDGED, true)
         def originalException = new MongoSocketException('Some failure', new ServerAddress())
 
@@ -1143,7 +1146,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'should not request retryable write for multi updates or deletes'() {
         given:
-        def operation = new MixedBulkWriteOperation(getNamespace(), writes, true, ACKNOWLEDGED, true)
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, getNamespace(), writes, true, ACKNOWLEDGED, true)
 
         when:
         executeWithSession(operation, async)
@@ -1191,7 +1194,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
                         .multi(true)
                         .arrayFilters([BsonDocument.parse('{"i.b": 1}')]),
         ]
-        def operation = new MixedBulkWriteOperation(namespace, requests, true, ACKNOWLEDGED, false)
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, namespace, requests, true, ACKNOWLEDGED, false)
 
         when:
         execute(operation, async)
@@ -1213,7 +1216,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
                 new UpdateRequest(new BsonDocument(), BsonDocument.parse('{ $set: {"y.$[i].b": 2}}'), UPDATE)
                         .arrayFilters([BsonDocument.parse('{"i.b": 3}')])
         ]
-        def operation = new MixedBulkWriteOperation(namespace, requests, true, ACKNOWLEDGED, false)
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, namespace, requests, true, ACKNOWLEDGED, false)
 
         when:
         execute(operation, async)
@@ -1232,7 +1235,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
                 new UpdateRequest(new BsonDocument(), BsonDocument.parse('{ $set: {"y.$[i].b": 2}}'), UPDATE)
                         .arrayFilters([BsonDocument.parse('{"i.b": 3}')])
         ]
-        def operation = new MixedBulkWriteOperation(namespace, requests, true, UNACKNOWLEDGED, false)
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, namespace, requests, true, UNACKNOWLEDGED, false)
 
         when:
         execute(operation, async)
@@ -1251,7 +1254,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
                 new UpdateRequest(new BsonDocument(), BsonDocument.parse('{ $set: {"y.$[i].b": 2}}'), UPDATE)
                         .hint(BsonDocument.parse('{ _id: 1 }'))
         ]
-        def operation = new MixedBulkWriteOperation(namespace, requests, true, ACKNOWLEDGED, false)
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, namespace, requests, true, ACKNOWLEDGED, false)
 
         when:
         execute(operation, async)
@@ -1270,7 +1273,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
                 new UpdateRequest(new BsonDocument(), BsonDocument.parse('{ $set: {"y.$[i].b": 2}}'), UPDATE)
                         .hintString('_id')
         ]
-        def operation = new MixedBulkWriteOperation(namespace, requests, true, UNACKNOWLEDGED, false)
+        def operation = new MixedBulkWriteOperation(DEFAULT_CSOT_FACTORY, namespace, requests, true, UNACKNOWLEDGED, false)
 
         when:
         execute(operation, async)

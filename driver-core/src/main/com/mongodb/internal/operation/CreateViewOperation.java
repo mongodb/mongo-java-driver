@@ -18,9 +18,11 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoClientException;
 import com.mongodb.WriteConcern;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.ClientSideOperationTimeoutFactory;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.AsyncConnection;
@@ -35,15 +37,15 @@ import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.internal.operation.SyncCommandOperationHelper.executeCommand;
 import static com.mongodb.internal.operation.AsyncCommandOperationHelper.executeCommandAsync;
-import static com.mongodb.internal.operation.SyncCommandOperationHelper.writeConcernErrorTransformer;
 import static com.mongodb.internal.operation.AsyncCommandOperationHelper.writeConcernErrorTransformerAsync;
-import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.AsyncOperationHelper.releasingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncConnection;
-import static com.mongodb.internal.operation.SyncOperationHelper.withConnection;
+import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotFour;
+import static com.mongodb.internal.operation.SyncCommandOperationHelper.executeCommand;
+import static com.mongodb.internal.operation.SyncCommandOperationHelper.writeConcernErrorTransformer;
+import static com.mongodb.internal.operation.SyncOperationHelper.withConnection;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 
 /**
@@ -54,6 +56,7 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  * @mongodb.driver.manual reference/command/create Create
  */
 public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
+    private final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
     private final String databaseName;
     private final String viewName;
     private final String viewOn;
@@ -64,14 +67,17 @@ public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOper
     /**
      * Construct a new instance.
      *
+     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
      * @param databaseName the name of the database for the operation, which may not be null
      * @param viewName     the name of the collection to be created, which may not be null
      * @param viewOn       the name of the collection or view that backs this view, which may not be null
      * @param pipeline     the aggregation pipeline that defines the view, which may not be null
      * @param writeConcern the write concern, which may not be null
      */
-    public CreateViewOperation(final String databaseName, final String viewName, final String viewOn, final List<BsonDocument> pipeline,
+    public CreateViewOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final String databaseName,
+                               final String viewName, final String viewOn, final List<BsonDocument> pipeline,
                                final WriteConcern writeConcern) {
+        this.clientSideOperationTimeoutFactory = notNull("clientSideOperationTimeoutFactory", clientSideOperationTimeoutFactory);
         this.databaseName = notNull("databaseName", databaseName);
         this.viewName = notNull("viewName", viewName);
         this.viewOn = notNull("viewOn", viewOn);
@@ -146,13 +152,14 @@ public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOper
 
     @Override
     public Void execute(final WriteBinding binding) {
-        return withConnection(binding, new CallableWithConnection<Void>() {
+        return withConnection(clientSideOperationTimeoutFactory.create(), binding, new CallableWithConnection<Void>() {
             @Override
-            public Void call(final Connection connection) {
+            public Void call(final ClientSideOperationTimeout clientSideOperationTimeout, final Connection connection) {
                 if (!serverIsAtLeastVersionThreeDotFour(connection.getDescription())) {
                     throw createExceptionForIncompatibleServerVersion();
                 }
-                executeCommand(binding, databaseName, getCommand(connection.getDescription()), writeConcernErrorTransformer());
+                executeCommand(clientSideOperationTimeout, binding, databaseName, getCommand(connection.getDescription()), connection,
+                        writeConcernErrorTransformer());
                 return null;
             }
         });
@@ -160,9 +167,10 @@ public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOper
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withAsyncConnection(binding, new AsyncCallableWithConnection() {
+        withAsyncConnection(clientSideOperationTimeoutFactory.create(), binding, new AsyncCallableWithConnection() {
             @Override
-            public void call(final AsyncConnection connection, final Throwable t) {
+            public void call(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncConnection connection,
+                             final Throwable t) {
                 SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
                 if (t != null) {
                     errHandlingCallback.onResult(null, t);
@@ -172,7 +180,7 @@ public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOper
                     if (!serverIsAtLeastVersionThreeDotFour(connection.getDescription())) {
                         wrappedCallback.onResult(null, createExceptionForIncompatibleServerVersion());
                     }
-                    executeCommandAsync(binding, databaseName, getCommand(connection.getDescription()),
+                    executeCommandAsync(clientSideOperationTimeout, binding, databaseName, getCommand(connection.getDescription()),
                             connection, writeConcernErrorTransformerAsync(), wrappedCallback);
                 }
             }

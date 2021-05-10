@@ -18,6 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
+import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.bulk.WriteRequest;
 
@@ -37,19 +38,21 @@ public class UpdateOperation extends BaseWriteOperation {
     /**
      * Construct an instance.
      *
+     * @param clientSideOperationTimeoutFactory the client side operation factory
      * @param namespace     the database and collection namespace for the operation.
      * @param ordered       whether the updates are ordered.
      * @param writeConcern  the write concern for the operation.
      * @param updates       the update requests.
      */
-    public UpdateOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                           final List<UpdateRequest> updates) {
-        this(namespace, ordered, writeConcern, false, updates);
+    public UpdateOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+                           final boolean ordered, final WriteConcern writeConcern, final List<UpdateRequest> updates) {
+        this(clientSideOperationTimeoutFactory, namespace, ordered, writeConcern, false, updates);
     }
 
     /**
      * Construct an instance.
      *
+     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      * @param ordered whether the updates are ordered.
      * @param writeConcern the write concern for the operation.
@@ -57,9 +60,10 @@ public class UpdateOperation extends BaseWriteOperation {
      * @param updates the update requests.
      * @since 3.6
      */
-    public UpdateOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                           final boolean retryWrites, final List<UpdateRequest> updates) {
-        super(namespace, ordered, writeConcern, retryWrites);
+    public UpdateOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+                           final boolean ordered, final WriteConcern writeConcern, final boolean retryWrites,
+                           final List<UpdateRequest> updates) {
+        super(clientSideOperationTimeoutFactory, namespace, ordered, writeConcern, retryWrites);
         this.updates = notNull("update", updates);
         isTrueArgument("updateRequests not empty", !updates.isEmpty());
     }

@@ -19,12 +19,14 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.connection.QueryResult;
-import com.mongodb.internal.operation.SyncCommandOperationHelper.CommandReadTransformer;
 import com.mongodb.internal.operation.AsyncCommandOperationHelper.CommandReadTransformerAsync;
+import com.mongodb.internal.operation.SyncCommandOperationHelper.CommandReadTransformer;
 import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -33,11 +35,7 @@ import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 
-import java.util.concurrent.TimeUnit;
-
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
-import static com.mongodb.internal.operation.SyncCommandOperationHelper.executeCommand;
 import static com.mongodb.internal.operation.AsyncCommandOperationHelper.executeCommandAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceError;
 import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
@@ -46,16 +44,25 @@ import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToQue
 import static com.mongodb.internal.operation.OperationHelper.validateReadConcern;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionFiveDotZero;
+import static com.mongodb.internal.operation.SyncCommandOperationHelper.executeCommand;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
 public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
+    private final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
     private final MongoNamespace namespace;
     private boolean retryReads;
-    private long maxTimeMS;
 
-    public EstimatedDocumentCountOperation(final MongoNamespace namespace) {
+    /**
+     * Construct an instance.
+     *
+     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param namespace the database and collection namespace for the operation.
+     */
+    public EstimatedDocumentCountOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory,
+                                           final MongoNamespace namespace) {
+        this.clientSideOperationTimeoutFactory = notNull("clientSideOperationTimeoutFactory", clientSideOperationTimeoutFactory);
         this.namespace = notNull("namespace", namespace);
     }
 
@@ -64,16 +71,11 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
         return this;
     }
 
-    public EstimatedDocumentCountOperation maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
-        return this;
-    }
-
     @Override
     public Long execute(final ReadBinding binding) {
         try {
-            return executeCommand(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
+            return executeCommand(clientSideOperationTimeoutFactory.create(), binding, namespace.getDatabaseName(),
+                    getCommandCreator(binding.getSessionContext()),
                     CommandResultDocumentCodec.create(DECODER, singletonList("firstBatch")), transformer(), retryReads);
         } catch (MongoCommandException e) {
             return rethrowIfNotNamespaceError(e, 0L);
@@ -82,7 +84,8 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Long> callback) {
-        executeCommandAsync(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
+        executeCommandAsync(clientSideOperationTimeoutFactory.create(), binding, namespace.getDatabaseName(),
+                getCommandCreator(binding.getSessionContext()),
                 CommandResultDocumentCodec.create(DECODER, singletonList("firstBatch")), asyncTransformer(), retryReads,
                 (result, t) -> {
                     if (isNamespaceError(t)) {
@@ -94,11 +97,11 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
     }
 
     private CommandReadTransformer<BsonDocument, Long> transformer() {
-        return (result, source, connection) -> transformResult(result, connection.getDescription());
+        return (clientSideOperationTimeout, source, connection, result) -> transformResult(result, connection.getDescription());
     }
 
     private CommandReadTransformerAsync<BsonDocument, Long> asyncTransformer() {
-        return (result, source, connection) -> transformResult(result, connection.getDescription());
+        return (clientSideOperationTimeout, source, connection, result) -> transformResult(result, connection.getDescription());
     }
 
     private long transformResult(final BsonDocument result, final ConnectionDescription connectionDescription) {
@@ -112,17 +115,18 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
     }
 
     private CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return (serverDescription, connectionDescription) -> {
+        return (clientSideOperationTimeout, serverDescription, connectionDescription) -> {
             if (serverIsAtLeastVersionFiveDotZero(connectionDescription)) {
-                return getAggregateCommand(sessionContext);
+                return getAggregateCommand(clientSideOperationTimeout, sessionContext);
             } else {
                 validateReadConcern(connectionDescription, sessionContext.getReadConcern());
-                return getCountCommand(sessionContext);
+                return getCountCommand(clientSideOperationTimeout, sessionContext);
             }
         };
     }
 
-    private BsonDocument getAggregateCommand(final SessionContext sessionContext) {
+    private BsonDocument getAggregateCommand(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                             final SessionContext sessionContext) {
         BsonDocument document = new BsonDocument("aggregate", new BsonString(namespace.getCollectionName()))
                 .append("cursor", new BsonDocument())
                 .append("pipeline", new BsonArray(asList(
@@ -132,15 +136,16 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
                 ))));
 
         appendReadConcernToCommand(sessionContext, document);
-        putIfNotZero(document, "maxTimeMS", maxTimeMS);
+        putIfNotZero(document, "maxTimeMS", clientSideOperationTimeout.getMaxTimeMS());
         return document;
     }
 
-    private BsonDocument getCountCommand(final SessionContext sessionContext) {
+    private BsonDocument getCountCommand(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                         final SessionContext sessionContext) {
         BsonDocument document = new BsonDocument("count", new BsonString(namespace.getCollectionName()));
 
         appendReadConcernToCommand(sessionContext, document);
-        putIfNotZero(document, "maxTimeMS", maxTimeMS);
+        putIfNotZero(document, "maxTimeMS", clientSideOperationTimeout.getMaxTimeMS());
         return document;
     }
 }

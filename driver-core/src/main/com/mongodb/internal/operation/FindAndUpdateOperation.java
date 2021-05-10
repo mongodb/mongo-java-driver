@@ -21,11 +21,13 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.ClientSideOperationTimeoutFactory;
+import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.internal.validator.UpdateFieldNameValidator;
 import com.mongodb.lang.Nullable;
-import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -37,17 +39,14 @@ import org.bson.conversions.Bson;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.DocumentHelper.putIfTrue;
 import static com.mongodb.internal.operation.OperationHelper.validateCollation;
 import static com.mongodb.internal.operation.OperationHelper.validateHint;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * An operation that atomically finds and updates a single document.
@@ -62,7 +61,6 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
     private BsonDocument filter;
     private BsonDocument projection;
     private BsonDocument sort;
-    private long maxTimeMS;
     private boolean returnOriginal = true;
     private boolean upsert;
     private Boolean bypassDocumentValidation;
@@ -74,31 +72,35 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
     /**
      * Construct a new instance.
      *
+     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      * @param decoder   the decoder for the result documents.
      * @param update    the document containing update operators.
      */
-    public FindAndUpdateOperation(final MongoNamespace namespace, final Decoder<T> decoder, final BsonDocument update) {
-        this(namespace, WriteConcern.ACKNOWLEDGED, false, decoder, update);
+    public FindAndUpdateOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+                                  final Decoder<T> decoder, final BsonDocument update) {
+        this(clientSideOperationTimeoutFactory, namespace, WriteConcern.ACKNOWLEDGED, false, decoder, update);
     }
 
     /**
      * Construct a new instance.
      *
+     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
      * @param namespace    the database and collection namespace for the operation.
      * @param writeConcern the writeConcern for the operation
      * @param decoder      the decoder for the result documents.
      * @param update       the document containing update operators.
      * @since 3.2
      */
-    public FindAndUpdateOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final Decoder<T> decoder,
-                                  final BsonDocument update) {
-        this(namespace, writeConcern, false, decoder, update);
+    public FindAndUpdateOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+                                  final WriteConcern writeConcern, final Decoder<T> decoder, final BsonDocument update) {
+        this(clientSideOperationTimeoutFactory, namespace, writeConcern, false, decoder, update);
     }
 
     /**
      * Construct a new instance.
      *
+     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
      * @param namespace    the database and collection namespace for the operation.
      * @param writeConcern the writeConcern for the operation
      * @param retryWrites  if writes should be retried if they fail due to a network error.
@@ -106,9 +108,10 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
      * @param update       the document containing update operators.
      * @since 3.6
      */
-    public FindAndUpdateOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final boolean retryWrites,
-                                  final Decoder<T> decoder, final BsonDocument update) {
-        super(namespace, writeConcern, retryWrites, decoder);
+    public FindAndUpdateOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+                                  final WriteConcern writeConcern, final boolean retryWrites, final Decoder<T> decoder,
+                                  final BsonDocument update) {
+        super(clientSideOperationTimeoutFactory, namespace, writeConcern, retryWrites, decoder);
         this.update = notNull("update", update);
         this.updatePipeline = null;
     }
@@ -116,6 +119,7 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
     /**
      * Construct a new instance.
      *
+     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
      * @param namespace    the database and collection namespace for the operation.
      * @param writeConcern the writeConcern for the operation
      * @param retryWrites  if writes should be retried if they fail due to a network error.
@@ -124,9 +128,10 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
      * @since 3.11
      * @mongodb.server.release 4.2
      */
-    public FindAndUpdateOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final boolean retryWrites,
-                                  final Decoder<T> decoder, final List<BsonDocument> update) {
-        super(namespace, writeConcern, retryWrites, decoder);
+    public FindAndUpdateOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+                                  final WriteConcern writeConcern, final boolean retryWrites, final Decoder<T> decoder,
+                                  final List<BsonDocument> update) {
+        super(clientSideOperationTimeoutFactory, namespace, writeConcern, retryWrites, decoder);
         this.updatePipeline = update;
         this.update = null;
     }
@@ -194,30 +199,6 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
      */
     public FindAndUpdateOperation<T> projection(final BsonDocument projection) {
         this.projection = projection;
-        return this;
-    }
-
-    /**
-     * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
-     *
-     * @param timeUnit the time unit to return the result in
-     * @return the maximum execution time in the given time unit
-     */
-    public long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, MILLISECONDS);
-    }
-
-    /**
-     * Sets the maximum execution time on the server for this operation.
-     *
-     * @param maxTime  the max time
-     * @param timeUnit the time unit, which may not be null
-     * @return this
-     */
-    public FindAndUpdateOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
@@ -420,14 +401,15 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
     protected CommandCreator getCommandCreator(final SessionContext sessionContext) {
         return new CommandCreator() {
             @Override
-            public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
-                return createCommand(sessionContext, serverDescription, connectionDescription);
+            public BsonDocument create(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                       final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
+                return createCommand(sessionContext, clientSideOperationTimeout, serverDescription, connectionDescription);
             }
         };
     }
 
-    private BsonDocument createCommand(final SessionContext sessionContext, final ServerDescription serverDescription,
-                                       final ConnectionDescription connectionDescription) {
+    private BsonDocument createCommand(final SessionContext sessionContext, final ClientSideOperationTimeout clientSideOperationTimeout,
+                                       final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
         validateCollation(connectionDescription, collation);
         BsonDocument commandDocument = new BsonDocument("findAndModify", new BsonString(getNamespace().getCollectionName()));
         putIfNotNull(commandDocument, "query", getFilter());
@@ -435,7 +417,7 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
         putIfNotNull(commandDocument, "sort", getSort());
         commandDocument.put("new", new BsonBoolean(!isReturnOriginal()));
         putIfTrue(commandDocument, "upsert", isUpsert());
-        putIfNotZero(commandDocument, "maxTimeMS", getMaxTime(MILLISECONDS));
+        putIfNotZero(commandDocument, "maxTimeMS", clientSideOperationTimeout.getMaxTimeMS());
         if (getUpdatePipeline() != null) {
             commandDocument.put("update", new BsonArray(getUpdatePipeline()));
         } else {

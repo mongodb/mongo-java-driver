@@ -26,6 +26,7 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.DEFAULT_CSOT_FACTORY
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
@@ -36,7 +37,7 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast
 class RenameCollectionOperationSpecification extends OperationFunctionalSpecification {
 
     def cleanup() {
-        new DropCollectionOperation(new MongoNamespace(getDatabaseName(), 'newCollection')).execute(getBinding())
+        new DropCollectionOperation(DEFAULT_CSOT_FACTORY, new MongoNamespace(getDatabaseName(), 'newCollection')).execute(getBinding())
     }
 
     def 'should return rename a collection'() {
@@ -45,7 +46,8 @@ class RenameCollectionOperationSpecification extends OperationFunctionalSpecific
         assert collectionNameExists(getCollectionName())
 
         when:
-        new RenameCollectionOperation(getNamespace(), new MongoNamespace(getDatabaseName(), 'newCollection')).execute(getBinding())
+        new RenameCollectionOperation(DEFAULT_CSOT_FACTORY, getNamespace(), new MongoNamespace(getDatabaseName(), 'newCollection'))
+                .execute(getBinding())
 
         then:
         !collectionNameExists(getCollectionName())
@@ -59,7 +61,8 @@ class RenameCollectionOperationSpecification extends OperationFunctionalSpecific
         assert collectionNameExists(getCollectionName())
 
         when:
-        executeAsync(new RenameCollectionOperation(getNamespace(), new MongoNamespace(getDatabaseName(), 'newCollection')))
+        executeAsync(new RenameCollectionOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
+                new MongoNamespace(getDatabaseName(), 'newCollection')))
 
         then:
         !collectionNameExists(getCollectionName())
@@ -72,7 +75,7 @@ class RenameCollectionOperationSpecification extends OperationFunctionalSpecific
         assert collectionNameExists(getCollectionName())
 
         when:
-        new RenameCollectionOperation(getNamespace(), getNamespace()).execute(getBinding())
+        new RenameCollectionOperation(DEFAULT_CSOT_FACTORY, getNamespace(), getNamespace()).execute(getBinding())
 
         then:
         thrown(MongoServerException)
@@ -86,7 +89,7 @@ class RenameCollectionOperationSpecification extends OperationFunctionalSpecific
         assert collectionNameExists(getCollectionName())
 
         when:
-        executeAsync(new RenameCollectionOperation(getNamespace(), getNamespace()))
+        executeAsync(new RenameCollectionOperation(DEFAULT_CSOT_FACTORY, getNamespace(), getNamespace()))
 
         then:
         thrown(MongoServerException)
@@ -98,8 +101,8 @@ class RenameCollectionOperationSpecification extends OperationFunctionalSpecific
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
         assert collectionNameExists(getCollectionName())
-        def operation = new RenameCollectionOperation(getNamespace(), new MongoNamespace(getDatabaseName(), 'newCollection'),
-                new WriteConcern(5))
+        def operation = new RenameCollectionOperation(DEFAULT_CSOT_FACTORY, getNamespace(),
+                new MongoNamespace(getDatabaseName(), 'newCollection'), new WriteConcern(5))
 
         when:
         async ? executeAsync(operation) : operation.execute(getBinding())
@@ -115,7 +118,7 @@ class RenameCollectionOperationSpecification extends OperationFunctionalSpecific
 
 
     def collectionNameExists(String collectionName) {
-        def cursor = new ListCollectionsOperation(databaseName, new DocumentCodec()).execute(getBinding())
+        def cursor = new ListCollectionsOperation(DEFAULT_CSOT_FACTORY, databaseName, new DocumentCodec()).execute(getBinding())
         if (!cursor.hasNext()) {
             return false
         }

@@ -23,6 +23,7 @@ import spock.lang.Specification
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 
+@SuppressWarnings('deprecation')
 class FindOneAndUpdateOptionsSpecification extends Specification {
 
     def 'should have the expected defaults'() {

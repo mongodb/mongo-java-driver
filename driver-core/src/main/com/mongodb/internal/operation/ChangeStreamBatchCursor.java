@@ -21,6 +21,7 @@ import com.mongodb.MongoChangeStreamException;
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.operation.SyncOperationHelper.CallableWithSource;
@@ -131,6 +132,11 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
     }
 
     @Override
+    public ClientSideOperationTimeout getClientSideOperationTimeout() {
+        return wrapped.getClientSideOperationTimeout();
+    }
+
+    @Override
     public void remove() {
         throw new UnsupportedOperationException("Not implemented!");
     }
@@ -187,9 +193,9 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
             }
             wrapped.close();
 
-            withReadConnectionSource(binding, new CallableWithSource<Void>() {
+            withReadConnectionSource(wrapped.getClientSideOperationTimeout(), binding, new CallableWithSource<Void>() {
                 @Override
-                public Void call(final ConnectionSource source) {
+                public Void call(final ClientSideOperationTimeout clientSideOperationTimeout, final ConnectionSource source) {
                     changeStreamOperation.setChangeStreamOptionsForResume(resumeToken, source.getServerDescription().getMaxWireVersion());
                     return null;
                 }

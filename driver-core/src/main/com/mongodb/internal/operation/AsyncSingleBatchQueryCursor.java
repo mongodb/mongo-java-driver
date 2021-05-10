@@ -17,6 +17,7 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoException;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.QueryResult;
@@ -26,17 +27,24 @@ import java.util.List;
 import static com.mongodb.assertions.Assertions.isTrue;
 
 class AsyncSingleBatchQueryCursor<T> implements AsyncBatchCursor<T> {
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private volatile QueryResult<T> firstBatch;
     private volatile boolean closed;
 
-    AsyncSingleBatchQueryCursor(final QueryResult<T> firstBatch) {
-        this.firstBatch = firstBatch;
+    AsyncSingleBatchQueryCursor(final ClientSideOperationTimeout clientSideOperationTimeout, final QueryResult<T> firstBatch) {
         isTrue("Empty Cursor", firstBatch.getCursor() == null);
+        this.clientSideOperationTimeout = clientSideOperationTimeout;
+        this.firstBatch = firstBatch;
     }
 
     @Override
     public void close() {
         closed = true;
+    }
+
+    @Override
+    public ClientSideOperationTimeout getClientSideOperationTimeout() {
+        return clientSideOperationTimeout;
     }
 
     @Override

@@ -26,6 +26,7 @@ import com.mongodb.ServerCursor
 import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.client.model.CreateCollectionOptions
+import com.mongodb.internal.ClientSideOperationTimeoutFactories
 import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
@@ -45,6 +46,9 @@ import util.spock.annotations.Slow
 
 import java.util.concurrent.CountDownLatch
 
+import static com.mongodb.ClusterFixture.DEFAULT_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.MAX_TIME_MS_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.NO_CSOT_FACTORY
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getAsyncCluster
 import static com.mongodb.ClusterFixture.getBinding
@@ -99,7 +103,8 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should exhaust single batch'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(), 0, 0, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), executeQuery(), 0, 0, new DocumentCodec(),
+                connectionSource, connection)
 
         expect:
         nextBatch().size() == 10
@@ -107,7 +112,8 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should not retain connection and source after cursor is exhausted on first batch'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(), 0, 0, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), executeQuery(), 0, 0, new DocumentCodec(),
+                connectionSource, connection)
 
         when:
         nextBatch()
@@ -119,7 +125,8 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should not retain connection and source after cursor is exhausted on getMore'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(1, 0), 1, 1, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), executeQuery(1, 0), 1, 1, new DocumentCodec(),
+                connectionSource, connection)
 
         when:
         nextBatch()
@@ -131,8 +138,8 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should not retain connection and source after cursor is exhausted after first batch'() {
         when:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(10, 10), 10, 10, 0, new DocumentCodec(), connectionSource,
-                connection)
+        cursor = new AsyncQueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), executeQuery(10, 10), 10, 10, new DocumentCodec(),
+                connectionSource, connection)
 
         then:
         getReferenceCountAfterTimeout(connection, 1) == 1
@@ -141,7 +148,8 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should exhaust single batch with limit'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(1, 0), 1, 0, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), executeQuery(1, 0), 1, 0, new DocumentCodec(),
+                connectionSource, connection)
 
         expect:
         nextBatch().size() == 1
@@ -150,8 +158,8 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should exhaust multiple batches with limit'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(limit, batchSize), limit, batchSize, 0, new DocumentCodec(),
-                                                     connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), executeQuery(limit, batchSize), limit, batchSize,
+                new DocumentCodec(), connectionSource, connection)
 
         when:
         def next = nextBatch()
@@ -181,7 +189,8 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should exhaust multiple batches'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(3), 0, 2, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), executeQuery(3), 0, 2, new DocumentCodec(),
+                connectionSource, connection)
 
         expect:
         nextBatch().size() == 3
@@ -194,7 +203,8 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should respect batch size'() {
         when:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(3), 0, 2, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), executeQuery(3), 0, 2, new DocumentCodec(),
+                connectionSource, connection)
 
         then:
         cursor.batchSize == 2
@@ -209,7 +219,8 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should close when exhausted'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(), 0, 2, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), executeQuery(), 0, 2, new DocumentCodec(),
+                connectionSource, connection)
 
         when:
         cursor.close()
@@ -227,7 +238,8 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should close when not exhausted'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(3), 0, 2, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), executeQuery(3), 0, 2, new DocumentCodec(),
+                connectionSource, connection)
 
         when:
         cursor.close()
@@ -244,7 +256,8 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, false);
 
         when:
-        cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 2, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch, 0, 2, new DocumentCodec(),
+                connectionSource, connection)
         def latch = new CountDownLatch(1)
         Thread.start {
             sleep(500)
@@ -273,7 +286,8 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
 
         when:
-        cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 2, maxTimeMS, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(csotFactory.create(), firstBatch, 0, 2, new DocumentCodec(),
+                connectionSource, connection)
         def batch = nextBatch()
 
         then:
@@ -301,10 +315,10 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         }
 
         where:
-        awaitData | maxTimeMS
-        true      | 0
-        true      | 100
-        false     | 0
+        awaitData | csotFactory
+        true      | NO_CSOT_FACTORY
+        true      | ClientSideOperationTimeoutFactories.create(100)
+        false     | NO_CSOT_FACTORY
     }
 
     @Slow
@@ -315,7 +329,8 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         def firstBatch = executeQuery(new BsonDocument('_id', BsonNull.VALUE), 0, 1, true, true);
 
         when:
-        cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 1, 500, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(MAX_TIME_MS_CSOT_FACTORY.create(), firstBatch, 0, 1, new DocumentCodec(),
+                connectionSource, connection)
         Thread.start {
             Thread.sleep(SECONDS.toMillis(2))
             cursor.close()
@@ -332,7 +347,8 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should respect limit'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(6, 3), 6, 2, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), executeQuery(6, 3), 6, 2, new DocumentCodec(),
+                connectionSource, connection)
 
         expect:
         nextBatch().size() == 3
@@ -346,7 +362,8 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         given:
         def firstBatch = executeQuery(5)
 
-        cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 5, 0, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch, 5, 0, new DocumentCodec(),
+                connectionSource, connection)
 
         when:
         while (connection.getCount() > 1) {
@@ -365,7 +382,8 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         def firstBatch = executeQuery(2)
 
         when:
-        cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 2, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch, 0, 2, new DocumentCodec(),
+                connectionSource, connection)
 
         def latch = new CountDownLatch(1)
         def connection = getConnection(connectionSource)

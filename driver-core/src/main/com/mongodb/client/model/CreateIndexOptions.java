@@ -39,7 +39,9 @@ public class CreateIndexOptions {
      *
      * @param timeUnit the time unit to return the result in
      * @return the maximum execution time in the given time unit
+     * @deprecated prefer {@code MongoCollection.withTimeout(long, TimeUnit)} instead
      */
+    @Deprecated
     public long getMaxTime(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
@@ -51,7 +53,9 @@ public class CreateIndexOptions {
      * @param maxTime  the max time
      * @param timeUnit the time unit, which may not be null
      * @return this
+     * @deprecated prefer {@code MongoCollection.withTimeout(long, TimeUnit)} instead
      */
+    @Deprecated
     public CreateIndexOptions maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);

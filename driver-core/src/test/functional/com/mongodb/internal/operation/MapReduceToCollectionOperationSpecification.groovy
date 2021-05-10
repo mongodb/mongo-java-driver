@@ -37,18 +37,20 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.DEFAULT_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.MAX_TIME_MS_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.TIMEOUT_DURATION
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.ClusterFixture.serverVersionGreaterThan
 import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.client.model.Filters.gte
-import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpecification {
     def mapReduceInputNamespace = new MongoNamespace(getDatabaseName(), 'mapReduceInput')
     def mapReduceOutputNamespace = new MongoNamespace(getDatabaseName(), 'mapReduceOutput')
-    def mapReduceOperation = new MapReduceToCollectionOperation(mapReduceInputNamespace,
+    def mapReduceOperation = new MapReduceToCollectionOperation(DEFAULT_CSOT_FACTORY, mapReduceInputNamespace,
                                                                 new BsonJavaScript('function(){ emit( this.name , 1 ); }'),
                                                                 new BsonJavaScript('function(key, values){ return values.length; }'),
                                                                 mapReduceOutputNamespace.getCollectionName())
@@ -65,8 +67,8 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
     }
 
     def cleanup() {
-        new DropCollectionOperation(mapReduceInputNamespace).execute(getBinding())
-        new DropCollectionOperation(mapReduceOutputNamespace).execute(getBinding())
+        new DropCollectionOperation(DEFAULT_CSOT_FACTORY, mapReduceInputNamespace).execute(getBinding())
+        new DropCollectionOperation(DEFAULT_CSOT_FACTORY, mapReduceOutputNamespace).execute(getBinding())
     }
 
     def 'should have the correct defaults'() {
@@ -76,7 +78,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         def out = 'outCollection'
 
         when:
-        def operation =  new MapReduceToCollectionOperation(getNamespace(), mapF, reduceF, out)
+        def operation =  new MapReduceToCollectionOperation(DEFAULT_CSOT_FACTORY, getNamespace(), mapF, reduceF, out)
 
         then:
         operation.getMapFunction() == mapF
@@ -90,7 +92,6 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         operation.getLimit() == 0
         operation.getScope() == null
         operation.getSort() == null
-        operation.getMaxTime(MILLISECONDS) == 0
         operation.getBypassDocumentValidation() == null
         operation.getCollation() == null
         !operation.isJsMode()
@@ -113,7 +114,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         def writeConcern = WriteConcern.MAJORITY
 
         when:
-        def operation =  new MapReduceToCollectionOperation(getNamespace(), mapF, reduceF, out, writeConcern)
+        def operation =  new MapReduceToCollectionOperation(DEFAULT_CSOT_FACTORY, getNamespace(), mapF, reduceF, out, writeConcern)
                 .action(action)
                 .databaseName(dbName)
                 .finalizeFunction(finalizeF)
@@ -121,7 +122,6 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
                 .limit(10)
                 .scope(scope)
                 .sort(sort)
-                .maxTime(1, MILLISECONDS)
                 .bypassDocumentValidation(true)
                 .collation(defaultCollation)
 
@@ -136,7 +136,6 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         operation.getLimit() == 10
         operation.getScope() == scope
         operation.getSort() == sort
-        operation.getMaxTime(MILLISECONDS) == 1
         operation.getBypassDocumentValidation() == true
         operation.getCollation() == defaultCollation
     }
@@ -183,7 +182,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         getCollectionHelper().insertDocuments(new BsonDocument())
 
         when:
-        def operation = new MapReduceToCollectionOperation(mapReduceInputNamespace,
+        def operation = new MapReduceToCollectionOperation(DEFAULT_CSOT_FACTORY, mapReduceInputNamespace,
                 new BsonJavaScript('function(){ emit( "level" , 1 ); }'),
                 new BsonJavaScript('function(key, values){ return values.length; }'),
                 'collectionOut')
@@ -217,7 +216,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
     def 'should throw on write concern error'() {
         given:
         getCollectionHelper().insertDocuments(new BsonDocument())
-        def operation = new MapReduceToCollectionOperation(mapReduceInputNamespace,
+        def operation = new MapReduceToCollectionOperation(DEFAULT_CSOT_FACTORY, mapReduceInputNamespace,
                 new BsonJavaScript('function(){ emit( "level" , 1 ); }'),
                 new BsonJavaScript('function(key, values){ return values.length; }'),
                 'collectionOut', new WriteConcern(5))
@@ -249,8 +248,10 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         def dbName = 'dbName'
 
         when:
-        def operation =  new MapReduceToCollectionOperation(getNamespace(), mapF, reduceF, out, WriteConcern.MAJORITY)
+        def operation =  new MapReduceToCollectionOperation(MAX_TIME_MS_CSOT_FACTORY, getNamespace(), mapF, reduceF, out,
+                WriteConcern.MAJORITY)
         def expectedCommand = new BsonDocument('mapreduce', new BsonString(getCollectionName()))
+                .append('maxTimeMS', new BsonInt64(TIMEOUT_DURATION.toMillis()))
                 .append('map', mapF)
                 .append('reduce', reduceF)
                 .append('out', BsonDocument.parse('{replace: "outCollection"}'))
@@ -271,7 +272,6 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
                 .limit(10)
                 .scope(scope)
                 .sort(sort)
-                .maxTime(10, MILLISECONDS)
                 .bypassDocumentValidation(true)
                 .verbose(true)
 
@@ -282,7 +282,6 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
                 .append('scope', scope)
                 .append('verbose', BsonBoolean.TRUE)
                 .append('limit', new BsonInt32(10))
-                .append('maxTimeMS', new BsonInt64(10))
 
         if (includeCollation) {
             operation.collation(defaultCollation)
@@ -329,7 +328,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
 
         def document = Document.parse('{_id: 1, str: "foo"}')
         getCollectionHelper(mapReduceInputNamespace).insertDocuments(document)
-        def operation = new MapReduceToCollectionOperation(mapReduceInputNamespace,
+        def operation = new MapReduceToCollectionOperation(DEFAULT_CSOT_FACTORY, mapReduceInputNamespace,
                 new BsonJavaScript('function(){ emit( this._id, this.str ); }'),
                 new BsonJavaScript('function(key, values){ return values; }'),
                 'collectionOut')

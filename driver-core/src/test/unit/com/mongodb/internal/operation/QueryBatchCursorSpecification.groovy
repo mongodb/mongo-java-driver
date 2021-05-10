@@ -32,6 +32,10 @@ import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.DEFAULT_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.MAX_AWAIT_TIME_MS_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.NO_CSOT_FACTORY
+
 class QueryBatchCursorSpecification extends Specification {
     def 'should generate expected command with batchSize and maxTimeMS'() {
         given:
@@ -52,15 +56,15 @@ class QueryBatchCursorSpecification extends Specification {
 
         def namespace = new MongoNamespace(database, collection)
         def firstBatch = new QueryResult(namespace, [], cursorId, new ServerAddress())
-        def cursor = new QueryBatchCursor<Document>(firstBatch, 0, batchSize, maxTimeMS, new BsonDocumentCodec(), connectionSource,
-                                                    connection)
+        def cursor = new QueryBatchCursor<Document>(csotFactory.create(), firstBatch, 0, batchSize, new BsonDocumentCodec(),
+                connectionSource, connection, null)
         def expectedCommand = new BsonDocument('getMore': new BsonInt64(cursorId))
                 .append('collection', new BsonString(collection))
         if (batchSize != 0) {
             expectedCommand.append('batchSize', new BsonInt32(batchSize))
         }
         if (expectedMaxTimeFieldValue != null) {
-            expectedCommand.append('maxTimeMS', new BsonInt64(expectedMaxTimeFieldValue))
+            expectedCommand.append('maxTimeMS', new BsonInt64(expectedMaxTimeFieldValue as long))
         }
 
         def reply = new BsonDocument('ok', new BsonInt32(1))
@@ -79,10 +83,10 @@ class QueryBatchCursorSpecification extends Specification {
         1 * connection.release()
 
         where:
-        batchSize  | maxTimeMS  | expectedMaxTimeFieldValue
-        0          | 0          | null
-        2          | 0          | null
-        0          | 100        | 100
+        batchSize  | csotFactory                      | expectedMaxTimeFieldValue
+        0          | NO_CSOT_FACTORY                  | null
+        2          | NO_CSOT_FACTORY                  | null
+        0          | MAX_AWAIT_TIME_MS_CSOT_FACTORY   | 9999
     }
 
     def 'should handle exceptions when closing'() {
@@ -103,7 +107,8 @@ class QueryBatchCursorSpecification extends Specification {
 
         def namespace = new MongoNamespace('test', 'QueryBatchCursorSpecification')
         def firstBatch = new QueryResult(namespace, [], 42, serverAddress)
-        def cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, 100, new BsonDocumentCodec(), connectionSource, connection)
+        def cursor = new QueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch, 0, 2, new BsonDocumentCodec(),
+                connectionSource, connection)
 
         when:
         cursor.close()
@@ -133,7 +138,8 @@ class QueryBatchCursorSpecification extends Specification {
 
         def namespace = new MongoNamespace('test', 'QueryBatchCursorSpecification')
         def firstBatch = new QueryResult(namespace, [], 42, serverAddress)
-        def cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, 100, new BsonDocumentCodec(), connectionSource, connection)
+        def cursor = new QueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch, 0, 2, new BsonDocumentCodec(),
+                connectionSource, connection)
 
         when:
         cursor.close()

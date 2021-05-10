@@ -19,10 +19,11 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcernResult;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.operation.SyncCommandOperationHelper.CommandWriteTransformer;
 import com.mongodb.internal.operation.AsyncCommandOperationHelper.CommandWriteTransformerAsync;
+import com.mongodb.internal.operation.SyncCommandOperationHelper.CommandWriteTransformer;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -36,7 +37,8 @@ final class FindAndModifyHelper {
         return new CommandWriteTransformer<BsonDocument, T>() {
             @SuppressWarnings("unchecked")
             @Override
-            public T apply(final BsonDocument result, final Connection connection) {
+            public T apply(final ClientSideOperationTimeout clientSideOperationTimeout, final Connection connection,
+                           final BsonDocument result) {
                 return transformDocument(result, connection.getDescription().getServerAddress());
             }
         };
@@ -46,7 +48,8 @@ final class FindAndModifyHelper {
         return new CommandWriteTransformerAsync<BsonDocument, T>() {
             @SuppressWarnings("unchecked")
             @Override
-            public T apply(final BsonDocument result, final AsyncConnection connection) {
+            public T apply(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncConnection connection,
+                           final BsonDocument result) {
                 return transformDocument(result, connection.getDescription().getServerAddress());
             }
         };

@@ -19,6 +19,7 @@ package com.mongodb.internal.operation;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -31,7 +32,6 @@ import org.bson.BsonValue;
 import org.bson.codecs.Decoder;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.internal.operation.ExplainHelper.asExplainCommand;
 
@@ -46,27 +46,29 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
     private final AggregateOperationImpl<T> wrapped;
     /**
      * Construct a new instance.
-     *
+     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      * @param pipeline the aggregation pipeline.
      * @param decoder the decoder for the result documents.
      */
-    public AggregateOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline, final Decoder<T> decoder) {
-        this(namespace, pipeline, decoder, AggregationLevel.COLLECTION);
+    public AggregateOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+                              final List<BsonDocument> pipeline, final Decoder<T> decoder) {
+        this(clientSideOperationTimeoutFactory, namespace, pipeline, decoder, AggregationLevel.COLLECTION);
     }
 
     /**
      * Construct a new instance.
      *
+     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      * @param pipeline the aggregation pipeline.
      * @param decoder the decoder for the result documents.
      * @param aggregationLevel the aggregation level
      * @since 3.10
      */
-    public AggregateOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline, final Decoder<T> decoder,
-                              final AggregationLevel aggregationLevel) {
-        this.wrapped = new AggregateOperationImpl<T>(namespace, pipeline, decoder, aggregationLevel);
+    public AggregateOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+                              final List<BsonDocument> pipeline, final Decoder<T> decoder, final AggregationLevel aggregationLevel) {
+        this.wrapped = new AggregateOperationImpl<T>(clientSideOperationTimeoutFactory, namespace, pipeline, decoder, aggregationLevel);
     }
 
     /**
@@ -120,60 +122,6 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
      */
     public AggregateOperation<T> batchSize(final Integer batchSize) {
         wrapped.batchSize(batchSize);
-        return this;
-    }
-
-    /**
-     * The maximum amount of time for the server to wait on new documents to satisfy a tailable cursor
-     * query. This only applies to a TAILABLE_AWAIT cursor. When the cursor is not a TAILABLE_AWAIT cursor,
-     * this option is ignored.
-     *
-     * A zero value will be ignored.
-     *
-     * @param timeUnit the time unit to return the result in
-     * @return the maximum await execution time in the given time unit
-     * @mongodb.server.release 3.6
-     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
-     */
-    public long getMaxAwaitTime(final TimeUnit timeUnit) {
-        return wrapped.getMaxAwaitTime(timeUnit);
-    }
-
-    /**
-     * Sets the maximum await execution time on the server for this operation.
-     *
-     * @param maxAwaitTime  the max await time.  A value less than one will be ignored, and indicates that the driver should respect the
-     *                      server's default value
-     * @param timeUnit the time unit, which may not be null
-     * @return this
-     * @mongodb.server.release 3.6
-     */
-    public AggregateOperation<T> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
-        wrapped.maxAwaitTime(maxAwaitTime, timeUnit);
-        return this;
-    }
-
-    /**
-     * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
-     *
-     * @param timeUnit the time unit to return the result in
-     * @return the maximum execution time in the given time unit
-     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
-     */
-    public long getMaxTime(final TimeUnit timeUnit) {
-        return wrapped.getMaxTime(timeUnit);
-    }
-
-    /**
-     * Sets the maximum execution time on the server for this operation.
-     *
-     * @param maxTime  the max time
-     * @param timeUnit the time unit, which may not be null
-     * @return this
-     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
-     */
-    public AggregateOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        wrapped.maxTime(maxTime, timeUnit);
         return this;
     }
 
@@ -312,9 +260,9 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
      * @return a read operation that when executed will explain this operation
      */
     public <R> ReadOperation<R> asExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
-        return new CommandReadOperation<R>(getNamespace().getDatabaseName(),
-                asExplainCommand(wrapped.getCommand(NoOpSessionContext.INSTANCE), verbosity),
-                resultDecoder);
+        return new CommandReadOperation<R>(wrapped.getClientSideOperationTimeoutFactory(), getNamespace().getDatabaseName(),
+                asExplainCommand(wrapped.getCommand(wrapped.getClientSideOperationTimeoutFactory().create(), NoOpSessionContext.INSTANCE),
+                        verbosity), resultDecoder);
     }
 
     /**
@@ -325,9 +273,9 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
      */
     public <R> AsyncReadOperation<R> asAsyncExplainableOperation(@Nullable final ExplainVerbosity verbosity,
                                                                  final Decoder<R> resultDecoder) {
-        return new CommandReadOperation<R>(getNamespace().getDatabaseName(),
-                asExplainCommand(wrapped.getCommand(NoOpSessionContext.INSTANCE), verbosity),
-                resultDecoder);
+        return new CommandReadOperation<R>(wrapped.getClientSideOperationTimeoutFactory(), getNamespace().getDatabaseName(),
+                asExplainCommand(wrapped.getCommand(wrapped.getClientSideOperationTimeoutFactory().create(), NoOpSessionContext.INSTANCE),
+                        verbosity), resultDecoder);
     }
 
 
@@ -350,8 +298,6 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
                 + ", collation=" + getCollation()
                 + ", comment=" + getComment()
                 + ", hint=" + getHint()
-                + ", maxAwaitTimeMS=" + getMaxAwaitTime(TimeUnit.MILLISECONDS)
-                + ", maxTimeMS=" + getMaxTime(TimeUnit.MILLISECONDS)
                 + "}";
     }
 }

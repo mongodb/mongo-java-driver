@@ -24,12 +24,24 @@ import org.bson.BsonString;
 
 final class ExplainHelper {
 
+    // TODO REMOVE
     static BsonDocument asExplainCommand(final BsonDocument command, @Nullable final ExplainVerbosity explainVerbosity) {
         BsonDocument explainCommand = new BsonDocument("explain", command);
         if (explainVerbosity != null) {
             explainCommand.append("verbosity", getVerbosityAsString(explainVerbosity));
         }
         return explainCommand;
+    }
+
+    static CommandCreator asExplainCommandCreator(final CommandCreator commandCreator, @Nullable final ExplainVerbosity explainVerbosity) {
+        return (clientSideOperationTimeout, serverDescription, connectionDescription) -> {
+            BsonDocument explainCommand = new BsonDocument("explain",
+                    commandCreator.create(clientSideOperationTimeout, serverDescription, connectionDescription));
+            if (explainVerbosity != null) {
+                explainCommand.append("verbosity", getVerbosityAsString(explainVerbosity));
+            }
+            return explainCommand;
+        };
     }
 
     private static BsonString getVerbosityAsString(final ExplainVerbosity explainVerbosity) {

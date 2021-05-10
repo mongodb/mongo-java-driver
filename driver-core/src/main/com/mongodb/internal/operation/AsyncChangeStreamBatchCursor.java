@@ -18,6 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoChangeStreamException;
 import com.mongodb.MongoException;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.AsyncAggregateResponseBatchCursor;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -37,9 +38,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncReadConnection;
 import static com.mongodb.internal.operation.ChangeStreamBatchCursorHelper.isRetryableError;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncReadConnection;
 import static java.lang.String.format;
 
 final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
@@ -73,6 +74,11 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
     @NonNull
     AsyncAggregateResponseBatchCursor<RawBsonDocument> getWrapped() {
         return assertNotNull(wrapped.get());
+    }
+
+    @Override
+    public ClientSideOperationTimeout getClientSideOperationTimeout() {
+        return null;
     }
 
     @Override
@@ -251,9 +257,10 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
 
     private void retryOperation(final AsyncBlock asyncBlock, final SingleResultCallback<List<RawBsonDocument>> callback,
                                 final boolean tryNext) {
-        withAsyncReadConnection(binding, new AsyncCallableWithSource() {
+        withAsyncReadConnection(getClientSideOperationTimeout(), binding, new AsyncCallableWithSource() {
             @Override
-            public void call(final AsyncConnectionSource source, final Throwable t) {
+            public void call(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncConnectionSource source,
+                             final Throwable t) {
                 if (t != null) {
                     callback.onResult(null, t);
                 } else {

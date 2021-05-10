@@ -24,10 +24,11 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernException;
 import com.mongodb.WriteConcernResult;
-import com.mongodb.bulk.WriteConcernError;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.bulk.BulkWriteError;
 import com.mongodb.bulk.BulkWriteResult;
+import com.mongodb.bulk.WriteConcernError;
+import com.mongodb.internal.ClientSideOperationTimeoutFactory;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.bulk.WriteRequest;
@@ -51,6 +52,7 @@ import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE;
  * @since 3.0
  */
 public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteConcernResult>, WriteOperation<WriteConcernResult> {
+    private final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
     private final WriteConcern writeConcern;
     private final MongoNamespace namespace;
     private final boolean ordered;
@@ -60,25 +62,16 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
     /**
      * Construct an instance
      *
-     * @param namespace    the database and collection namespace for the operation.
-     * @param ordered      whether the writes are ordered.
-     * @param writeConcern the write concern for the operation.
-     */
-    public BaseWriteOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern) {
-        this(namespace, ordered, writeConcern, false);
-    }
-
-    /**
-     * Construct an instance
-     *
+     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
      * @param namespace    the database and collection namespace for the operation.
      * @param ordered      whether the writes are ordered.
      * @param writeConcern the write concern for the operation.
      * @param retryWrites   if writes should be retried if they fail due to a network error.
      * @since 3.6
      */
-    public BaseWriteOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                              final boolean retryWrites) {
+    public BaseWriteOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+                              final boolean ordered, final WriteConcern writeConcern, final boolean retryWrites) {
+        this.clientSideOperationTimeoutFactory = notNull("clientSideOperationTimeoutFactory", clientSideOperationTimeoutFactory);
         this.ordered = ordered;
         this.namespace = notNull("namespace", namespace);
         this.writeConcern = notNull("writeConcern", writeConcern);
@@ -176,8 +169,8 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
     }
 
     private MixedBulkWriteOperation getMixedBulkOperation() {
-        return new MixedBulkWriteOperation(namespace, getWriteRequests(), ordered, writeConcern, retryWrites)
-                .bypassDocumentValidation(bypassDocumentValidation);
+        return new MixedBulkWriteOperation(clientSideOperationTimeoutFactory, namespace, getWriteRequests(), ordered, writeConcern,
+                retryWrites).bypassDocumentValidation(bypassDocumentValidation);
     }
 
     private MongoException convertBulkWriteException(final MongoBulkWriteException e) {

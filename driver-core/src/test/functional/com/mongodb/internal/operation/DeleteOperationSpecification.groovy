@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation
 
-import util.spock.annotations.Slow
 import com.mongodb.MongoClientException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcernResult
@@ -28,7 +27,9 @@ import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
+import util.spock.annotations.Slow
 
+import static com.mongodb.ClusterFixture.DEFAULT_CSOT_FACTORY
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
@@ -38,7 +39,7 @@ class DeleteOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should throw IllegalArgumentException for empty list of requests'() {
         when:
-        new DeleteOperation(getNamespace(), true, ACKNOWLEDGED, true, [])
+        new DeleteOperation(DEFAULT_CSOT_FACTORY, getNamespace(), true, ACKNOWLEDGED, true, [])
 
         then:
         thrown(IllegalArgumentException)
@@ -47,7 +48,7 @@ class DeleteOperationSpecification extends OperationFunctionalSpecification {
     def 'should remove a document'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1))
-        def operation = new DeleteOperation(getNamespace(), true, ACKNOWLEDGED, false,
+        def operation = new DeleteOperation(DEFAULT_CSOT_FACTORY, getNamespace(), true, ACKNOWLEDGED, false,
                 [new DeleteRequest(new BsonDocument('_id', new BsonInt32(1)))])
 
         when:
@@ -67,7 +68,7 @@ class DeleteOperationSpecification extends OperationFunctionalSpecification {
         def smallerDoc = new BsonDocument('bytes', new BsonBinary(new byte[1024 * 16 + 1980]))
         def simpleDoc = new BsonDocument('_id', new BsonInt32(1))
         getCollectionHelper().insertDocuments(new BsonDocumentCodec(), simpleDoc)
-        def operation = new DeleteOperation(getNamespace(), true, ACKNOWLEDGED, false,
+        def operation = new DeleteOperation(DEFAULT_CSOT_FACTORY, getNamespace(), true, ACKNOWLEDGED, false,
                 [new DeleteRequest(bigDoc), new DeleteRequest(smallerDoc), new DeleteRequest(simpleDoc)])
 
         when:
@@ -83,7 +84,7 @@ class DeleteOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ serverVersionAtLeast(3, 4) })
     def 'should throw an exception when using an unsupported Collation'() {
         given:
-        def operation = new DeleteOperation(getNamespace(), false, ACKNOWLEDGED, false, requests)
+        def operation = new DeleteOperation(DEFAULT_CSOT_FACTORY, getNamespace(), false, ACKNOWLEDGED, false, requests)
 
         when:
         execute(operation, async)
@@ -107,7 +108,7 @@ class DeleteOperationSpecification extends OperationFunctionalSpecification {
         given:
         getCollectionHelper().insertDocuments(Document.parse('{str: "foo"}'))
         def requests = [new DeleteRequest(BsonDocument.parse('{str: "FOO"}}')).collation(caseInsensitiveCollation)]
-        def operation = new DeleteOperation(getNamespace(), false, ACKNOWLEDGED, false, requests)
+        def operation = new DeleteOperation(DEFAULT_CSOT_FACTORY, getNamespace(), false, ACKNOWLEDGED, false, requests)
 
         when:
         WriteConcernResult result = execute(operation, async)
@@ -123,7 +124,7 @@ class DeleteOperationSpecification extends OperationFunctionalSpecification {
     def 'should throw if collation is set and write is unacknowledged'() {
         given:
         def requests = [new DeleteRequest(BsonDocument.parse('{str: "FOO"}}')).collation(caseInsensitiveCollation)]
-        def operation = new DeleteOperation(getNamespace(), false, UNACKNOWLEDGED, false, requests)
+        def operation = new DeleteOperation(DEFAULT_CSOT_FACTORY, getNamespace(), false, UNACKNOWLEDGED, false, requests)
 
         when:
         execute(operation, async)
@@ -140,7 +141,7 @@ class DeleteOperationSpecification extends OperationFunctionalSpecification {
         given:
         getCollectionHelper().insertDocuments(Document.parse('{str: "foo"}'))
         def requests = [new DeleteRequest(BsonDocument.parse('{str: "foo"}}'))]
-        def operation = new DeleteOperation(getNamespace(), false, ACKNOWLEDGED, true, requests)
+        def operation = new DeleteOperation(DEFAULT_CSOT_FACTORY, getNamespace(), false, ACKNOWLEDGED, true, requests)
 
         when:
         WriteConcernResult result = executeWithSession(operation, async)

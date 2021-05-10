@@ -20,6 +20,7 @@ import com.mongodb.Function;
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerApi;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -38,7 +39,6 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
 import static com.mongodb.internal.operation.AsyncOperationHelper.releasingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncConnection;
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncReadConnection;
-import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.CommandOperationHelper.addRetryableWriteErrorLabel;
 import static com.mongodb.internal.operation.CommandOperationHelper.isRetryWritesEnabled;
 import static com.mongodb.internal.operation.CommandOperationHelper.logRetryExecute;
@@ -61,7 +61,7 @@ public final class AsyncCommandOperationHelper {
          * @param t the input object
          * @return the function result
          */
-        R apply(T t, AsyncConnection connection);
+        R apply(ClientSideOperationTimeout clientSideOperationTimeout, AsyncConnection connection, T t);
     }
 
     interface CommandReadTransformerAsync<T, R> {
@@ -72,37 +72,43 @@ public final class AsyncCommandOperationHelper {
          * @param t the input object
          * @return the function result
          */
-        R apply(T t, AsyncConnectionSource source, AsyncConnection connection);
+        R apply(ClientSideOperationTimeout clientSideOperationTimeout, AsyncConnectionSource source, AsyncConnection connection, T t);
     }
 
 
-    static void executeCommandAsync(final AsyncReadBinding binding,
+    static void executeCommandAsync(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                    final AsyncReadBinding binding,
                                     final String database,
                                     final CommandCreator commandCreator,
                                     final boolean retryReads,
                                     final SingleResultCallback<BsonDocument> callback) {
-        executeCommandAsync(binding, database, commandCreator, new BsonDocumentCodec(), retryReads, callback);
+        executeCommandAsync(clientSideOperationTimeout, binding, database, commandCreator, new BsonDocumentCodec(), retryReads, callback);
     }
 
-    static <T> void executeCommandAsync(final AsyncReadBinding binding,
+    static <T> void executeCommandAsync(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                        final AsyncReadBinding binding,
                                         final String database,
                                         final CommandCreator commandCreator,
                                         final Decoder<T> decoder,
                                         final boolean retryReads,
                                         final SingleResultCallback<T> callback) {
-        executeCommandAsync(binding, database, commandCreator, decoder, new IdentityTransformerAsync<>(), retryReads, callback);
+        executeCommandAsync(clientSideOperationTimeout, binding, database, commandCreator, decoder, new IdentityTransformerAsync<>(),
+                retryReads, callback);
     }
 
-    static <T> void executeCommandAsync(final AsyncReadBinding binding,
+    static <T> void executeCommandAsync(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                        final AsyncReadBinding binding,
                                         final String database,
                                         final CommandCreator commandCreator,
                                         final CommandReadTransformerAsync<BsonDocument, T> transformer,
                                         final boolean retryReads,
                                         final SingleResultCallback<T> callback) {
-        executeCommandAsync(binding, database, commandCreator, new BsonDocumentCodec(), transformer, retryReads, callback);
+        executeCommandAsync(clientSideOperationTimeout, binding, database, commandCreator, new BsonDocumentCodec(), transformer,
+                retryReads, callback);
     }
 
-    static <D, T> void executeCommandAsync(final AsyncReadBinding binding,
+    static <D, T> void executeCommandAsync(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                           final AsyncReadBinding binding,
                                            final String database,
                                            final CommandCreator commandCreator,
                                            final Decoder<D> decoder,
@@ -110,17 +116,18 @@ public final class AsyncCommandOperationHelper {
                                            final boolean retryReads,
                                            final SingleResultCallback<T> originalCallback) {
         final SingleResultCallback<T> errorHandlingCallback = errorHandlingCallback(originalCallback, LOGGER);
-        withAsyncReadConnection(binding, (source, connection, t) -> {
+        withAsyncReadConnection(clientSideOperationTimeout, binding, (clientSideOperationTimeout1, source, connection, t) -> {
             if (t != null) {
                 releasingCallback(errorHandlingCallback, source, connection).onResult(null, t);
             } else {
-                executeCommandAsyncWithConnection(binding, source, database, commandCreator, decoder, transformer,
-                        retryReads, connection, errorHandlingCallback);
+                executeCommandAsyncWithConnection(clientSideOperationTimeout1, binding, source, database, commandCreator, decoder,
+                        transformer, retryReads, connection, errorHandlingCallback);
             }
         });
     }
 
-    static <D, T> void executeCommandAsync(final AsyncReadBinding binding,
+    static <D, T> void executeCommandAsync(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                           final AsyncReadBinding binding,
                                            final String database,
                                            final CommandCreator commandCreator,
                                            final Decoder<D> decoder,
@@ -129,11 +136,12 @@ public final class AsyncCommandOperationHelper {
                                            final AsyncConnection connection,
                                            final SingleResultCallback<T> originalCallback) {
         final SingleResultCallback<T> errorHandlingCallback = errorHandlingCallback(originalCallback, LOGGER);
-        binding.getReadConnectionSource((source, t) -> executeCommandAsyncWithConnection(binding, source, database,
-                commandCreator, decoder, transformer, retryReads, connection, errorHandlingCallback));
+        binding.getReadConnectionSource((source, t) -> executeCommandAsyncWithConnection(clientSideOperationTimeout, binding, source,
+                database, commandCreator, decoder, transformer, retryReads, connection, errorHandlingCallback));
     }
 
-    static <D, T> void executeCommandAsyncWithConnection(final AsyncReadBinding binding,
+    static <D, T> void executeCommandAsyncWithConnection(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                         final AsyncReadBinding binding,
                                                          final AsyncConnectionSource source,
                                                          final String database,
                                                          final CommandCreator commandCreator,
@@ -143,10 +151,11 @@ public final class AsyncCommandOperationHelper {
                                                          final AsyncConnection connection,
                                                          final SingleResultCallback<T> callback) {
         try {
-            BsonDocument command = commandCreator.create(source.getServerDescription(), connection.getDescription());
+            BsonDocument command = commandCreator.create(clientSideOperationTimeout, source.getServerDescription(),
+                    connection.getDescription());
             connection.commandAsync(database, command, new NoOpFieldNameValidator(), binding.getReadPreference(), decoder,
                     binding.getSessionContext(), binding.getServerApi(),
-                    createCommandCallback(binding, source, connection, database, binding.getReadPreference(),
+                    createCommandCallback(clientSideOperationTimeout, binding, source, connection, database, binding.getReadPreference(),
                             command, commandCreator, new NoOpFieldNameValidator(), decoder, transformer, retryReads, callback));
         } catch (IllegalArgumentException e) {
             connection.release();
@@ -154,7 +163,8 @@ public final class AsyncCommandOperationHelper {
         }
     }
 
-    private static <T, R> SingleResultCallback<T> createCommandCallback(final AsyncReadBinding binding,
+    private static <T, R> SingleResultCallback<T> createCommandCallback(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                                        final AsyncReadBinding binding,
                                                                         final AsyncConnectionSource oldSource,
                                                                         final AsyncConnection oldConnection,
                                                                         final String database,
@@ -171,17 +181,18 @@ public final class AsyncCommandOperationHelper {
             public void onResult(final T result, final Throwable originalError) {
                 SingleResultCallback<R> releasingCallback = releasingCallback(callback, oldSource, oldConnection);
                 if (originalError != null) {
-                    checkRetryableException(originalError, releasingCallback);
+                    checkRetryableException(clientSideOperationTimeout, originalError, releasingCallback);
                 } else {
                     try {
-                        releasingCallback.onResult(transformer.apply(result, oldSource, oldConnection), null);
+                        releasingCallback.onResult(transformer.apply(clientSideOperationTimeout, oldSource, oldConnection, result), null);
                     } catch (Throwable transformError) {
-                        checkRetryableException(transformError, releasingCallback);
+                        checkRetryableException(clientSideOperationTimeout, transformError, releasingCallback);
                     }
                 }
             }
 
-            private void checkRetryableException(final Throwable originalError, final SingleResultCallback<R> callback) {
+            private void checkRetryableException(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                 final Throwable originalError, final SingleResultCallback<R> callback) {
                 if (!shouldAttemptToRetryRead(retryReads, originalError)) {
                     if (retryReads) {
                         logUnableToRetry(originalCommand.getFirstKey(), originalError);
@@ -190,51 +201,57 @@ public final class AsyncCommandOperationHelper {
                 } else {
                     oldSource.release();
                     oldConnection.release();
-                    retryableCommand(originalError);
+                    retryableCommand(clientSideOperationTimeout, originalError);
                 }
             }
 
-            private void retryableCommand(final Throwable originalError) {
-                withAsyncReadConnection(binding, (source, connection, t) -> {
+            private void retryableCommand(final ClientSideOperationTimeout clientSideOperationTimeout, final Throwable originalError) {
+                withAsyncReadConnection(clientSideOperationTimeout, binding, (clientSideOperationTimeout1, source, connection, t) -> {
                     if (t != null) {
                         callback.onResult(null, originalError);
                     } else if (!canRetryRead(source.getServerDescription(), connection.getDescription(),
                             binding.getSessionContext())) {
                         releasingCallback(callback, source, connection).onResult(null, originalError);
                     } else {
-                        BsonDocument retryCommand = commandCreator.create(source.getServerDescription(), connection.getDescription());
+                        BsonDocument retryCommand = commandCreator.create(clientSideOperationTimeout, source.getServerDescription(),
+                                connection.getDescription());
                         logRetryExecute(retryCommand.getFirstKey(), originalError);
                         connection.commandAsync(database, retryCommand, fieldNameValidator, readPreference,
                                 commandResultDecoder, binding.getSessionContext(),
-                                binding.getServerApi(), new TransformingReadResultCallback<>(transformer, source, connection,
-                                        releasingCallback(callback, source, connection)));
+                                binding.getServerApi(), new TransformingReadResultCallback<>(clientSideOperationTimeout, source,
+                                        connection, transformer, releasingCallback(callback, source, connection)));
                     }
                 });
             }
         };
     }
 
-    static void executeCommandAsync(final AsyncWriteBinding binding,
+    static void executeCommandAsync(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                    final AsyncWriteBinding binding,
                                     final String database,
                                     final BsonDocument command,
                                     final AsyncConnection connection,
                                     final SingleResultCallback<BsonDocument> callback) {
-        executeCommandAsync(binding, database, command, connection, new IdentityWriteTransformerAsync<>(), callback);
+        executeCommandAsync(clientSideOperationTimeout, binding, database, command, connection, new IdentityWriteTransformerAsync<>(),
+                callback);
     }
 
-    static <T> void executeCommandAsync(final AsyncWriteBinding binding,
+    static <T> void executeCommandAsync(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                        final AsyncWriteBinding binding,
                                         final String database,
                                         final BsonDocument command,
                                         final AsyncConnection connection,
                                         final CommandWriteTransformerAsync<BsonDocument, T> transformer,
                                         final SingleResultCallback<T> callback) {
         notNull("binding", binding);
-        executeCommandAsync(database, command, new BsonDocumentCodec(), connection, primary(), transformer,
+        executeCommandAsync(clientSideOperationTimeout, database, command, new BsonDocumentCodec(), connection, primary(), transformer,
                 binding.getSessionContext(), binding.getServerApi(), callback);
     }
 
     /* Async Connection Helpers */
-    private static <D, T> void executeCommandAsync(final String database, final BsonDocument command,
+    private static <D, T> void executeCommandAsync(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                   final String database,
+                                                   final BsonDocument command,
                                                    final Decoder<D> decoder, final AsyncConnection connection,
                                                    final ReadPreference readPreference,
                                                    final CommandWriteTransformerAsync<D, T> transformer,
@@ -246,26 +263,27 @@ public final class AsyncCommandOperationHelper {
                         callback.onResult(null, t);
                     } else {
                         try {
-                            T transformedResult = transformer.apply(result, connection);
+                            T transformedResult = transformer.apply(clientSideOperationTimeout, connection, result);
                             callback.onResult(transformedResult, null);
                         } catch (Exception e) {
                             callback.onResult(null, e);
                         }
                     }
                 });
-
     }
 
-    static <T, R> void executeRetryableCommandAsync(final AsyncWriteBinding binding, final String database,
+    static <T, R> void executeRetryableCommandAsync(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                    final AsyncWriteBinding binding, final String database,
                                                     final ReadPreference readPreference, final FieldNameValidator fieldNameValidator,
                                                     final Decoder<T> commandResultDecoder, final CommandCreator commandCreator,
                                                     final CommandWriteTransformerAsync<T, R> transformer,
                                                     final SingleResultCallback<R> originalCallback) {
-        executeRetryableCommandAsync(binding, database, readPreference, fieldNameValidator, commandResultDecoder, commandCreator,
-                transformer, noOpRetryCommandModifier(), originalCallback);
+        executeRetryableCommandAsync(clientSideOperationTimeout, binding, database, readPreference, fieldNameValidator,
+                commandResultDecoder, commandCreator, transformer, noOpRetryCommandModifier(), originalCallback);
     }
 
-    static <T, R> void executeRetryableCommandAsync(final AsyncWriteBinding binding, final String database,
+    static <T, R> void executeRetryableCommandAsync(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                    final AsyncWriteBinding binding, final String database,
                                                     final ReadPreference readPreference, final FieldNameValidator fieldNameValidator,
                                                     final Decoder<T> commandResultDecoder, final CommandCreator commandCreator,
                                                     final CommandWriteTransformerAsync<T, R> transformer,
@@ -281,12 +299,12 @@ public final class AsyncCommandOperationHelper {
                         releasingCallback(errorHandlingCallback, source).onResult(null, t12);
                     } else {
                         try {
-                            BsonDocument command = commandCreator.create(source.getServerDescription(),
+                            BsonDocument command = commandCreator.create(clientSideOperationTimeout, source.getServerDescription(),
                                     connection.getDescription());
                             connection.commandAsync(database, command, fieldNameValidator, readPreference,
                                     commandResultDecoder, binding.getSessionContext(),
-                                    binding.getServerApi(), createCommandCallback(binding, source, connection, database, readPreference,
-                                            command, fieldNameValidator, commandResultDecoder, transformer,
+                                    binding.getServerApi(), createCommandCallback(clientSideOperationTimeout, binding, source, connection,
+                                            database, readPreference, command, fieldNameValidator, commandResultDecoder, transformer,
                                             retryCommandModifier, errorHandlingCallback));
                         } catch (Throwable t1) {
                             releasingCallback(errorHandlingCallback, source, connection).onResult(null, t1);
@@ -297,7 +315,8 @@ public final class AsyncCommandOperationHelper {
         });
     }
 
-    private static <T, R> SingleResultCallback<T> createCommandCallback(final AsyncWriteBinding binding,
+    private static <T, R> SingleResultCallback<T> createCommandCallback(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                                        final AsyncWriteBinding binding,
                                                                         final AsyncConnectionSource oldSource,
                                                                         final AsyncConnection oldConnection,
                                                                         final String database,
@@ -316,7 +335,7 @@ public final class AsyncCommandOperationHelper {
                     checkRetryableException(originalError, releasingCallback);
                 } else {
                     try {
-                        releasingCallback.onResult(transformer.apply(result, oldConnection), null);
+                        releasingCallback.onResult(transformer.apply(clientSideOperationTimeout, oldConnection, result), null);
                     } catch (Throwable transformError) {
                         checkRetryableException(transformError, releasingCallback);
                     }
@@ -343,7 +362,7 @@ public final class AsyncCommandOperationHelper {
             private void retryableCommand(final Throwable originalError) {
                 final BsonDocument retryCommand = retryCommandModifier.apply(command);
                 logRetryExecute(retryCommand.getFirstKey(), originalError);
-                withAsyncConnection(binding, (source, connection, t) -> {
+                withAsyncConnection(clientSideOperationTimeout, binding, (clientSideOperationTimeout1, source, connection, t) -> {
                     if (t != null) {
                         callback.onResult(null, originalError);
                     } else if (!canRetryWrite(source.getServerDescription(), connection.getDescription(),
@@ -352,8 +371,8 @@ public final class AsyncCommandOperationHelper {
                     } else {
                         connection.commandAsync(database, retryCommand, fieldNameValidator, readPreference,
                                 commandResultDecoder, binding.getSessionContext(),
-                                binding.getServerApi(), new TransformingWriteResultCallback<>(transformer, connection,
-                                        releasingCallback(callback, source, connection)));
+                                binding.getServerApi(), new TransformingWriteResultCallback<>(clientSideOperationTimeout, connection,
+                                        transformer, releasingCallback(callback, source, connection)));
                     }
                 });
             }
@@ -361,7 +380,7 @@ public final class AsyncCommandOperationHelper {
     }
 
     static CommandWriteTransformerAsync<BsonDocument, Void> writeConcernErrorTransformerAsync() {
-        return (result, connection) -> {
+        return (clientSideOperationTimeout, connection, result) -> {
             WriteConcernHelper.throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),
                     connection.getDescription().getMaxWireVersion());
             return null;
@@ -370,29 +389,35 @@ public final class AsyncCommandOperationHelper {
 
     static class IdentityWriteTransformerAsync<T> implements CommandWriteTransformerAsync<T, T> {
         @Override
-        public T apply(final T t, final AsyncConnection connection) {
+        public T apply(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncConnection connection, final T t) {
             return t;
         }
     }
 
     static class IdentityTransformerAsync<T> implements CommandReadTransformerAsync<T, T> {
         @Override
-        public T apply(final T t, final AsyncConnectionSource source, final AsyncConnection connection) {
+        public T apply(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncConnectionSource source,
+                       final AsyncConnection connection, final T t) {
             return t;
         }
     }
 
     static class TransformingReadResultCallback<T, R> implements SingleResultCallback<T> {
-        private final CommandReadTransformerAsync<T, R> transformer;
+        private final ClientSideOperationTimeout clientSideOperationTimeout;
         private final AsyncConnectionSource source;
         private final AsyncConnection connection;
+        private final CommandReadTransformerAsync<T, R> transformer;
         private final SingleResultCallback<R> callback;
 
-        TransformingReadResultCallback(final CommandReadTransformerAsync<T, R> transformer, final AsyncConnectionSource source,
-                                       final AsyncConnection connection, final SingleResultCallback<R> callback) {
-            this.transformer = transformer;
+        TransformingReadResultCallback(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                       final AsyncConnectionSource source,
+                                       final AsyncConnection connection,
+                                       final CommandReadTransformerAsync<T, R> transformer,
+                                       final SingleResultCallback<R> callback) {
+            this.clientSideOperationTimeout = clientSideOperationTimeout;
             this.source = source;
             this.connection = connection;
+            this.transformer = transformer;
             this.callback = callback;
         }
 
@@ -402,7 +427,7 @@ public final class AsyncCommandOperationHelper {
                 callback.onResult(null, t);
             } else {
                 try {
-                    R transformedResult = transformer.apply(result, source, connection);
+                    R transformedResult = transformer.apply(clientSideOperationTimeout, source, connection, result);
                     callback.onResult(transformedResult, null);
                 } catch (Throwable transformError) {
                     callback.onResult(null, transformError);
@@ -412,14 +437,18 @@ public final class AsyncCommandOperationHelper {
     }
 
     static class TransformingWriteResultCallback<T, R> implements SingleResultCallback<T> {
-        private final CommandWriteTransformerAsync<T, R> transformer;
+        private final ClientSideOperationTimeout clientSideOperationTimeout;
         private final AsyncConnection connection;
+        private final CommandWriteTransformerAsync<T, R> transformer;
         private final SingleResultCallback<R> callback;
 
-        TransformingWriteResultCallback(final CommandWriteTransformerAsync<T, R> transformer,
-                                        final AsyncConnection connection, final SingleResultCallback<R> callback) {
-            this.transformer = transformer;
+        TransformingWriteResultCallback(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                        final AsyncConnection connection,
+                                        final CommandWriteTransformerAsync<T, R> transformer,
+                                        final SingleResultCallback<R> callback) {
+            this.clientSideOperationTimeout = clientSideOperationTimeout;
             this.connection = connection;
+            this.transformer = transformer;
             this.callback = callback;
         }
 
@@ -432,7 +461,7 @@ public final class AsyncCommandOperationHelper {
                 callback.onResult(null, t);
             } else {
                 try {
-                    R transformedResult = transformer.apply(result, connection);
+                    R transformedResult = transformer.apply(clientSideOperationTimeout, connection, result);
                     callback.onResult(transformedResult, null);
                 } catch (Throwable transformError) {
                     callback.onResult(null, transformError);

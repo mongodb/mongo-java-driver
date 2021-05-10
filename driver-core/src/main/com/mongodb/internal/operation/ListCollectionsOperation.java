@@ -23,6 +23,8 @@ import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncConnectionSource;
@@ -32,14 +34,12 @@ import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.QueryResult;
-import com.mongodb.internal.operation.SyncCommandOperationHelper.CommandReadTransformer;
 import com.mongodb.internal.operation.AsyncCommandOperationHelper.CommandReadTransformerAsync;
+import com.mongodb.internal.operation.SyncCommandOperationHelper.CommandReadTransformer;
 import org.bson.BsonArray;
-import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
 import org.bson.BsonInt32;
-import org.bson.BsonInt64;
 import org.bson.BsonRegularExpression;
 import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
@@ -49,29 +49,30 @@ import org.bson.codecs.DecoderContext;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.AsyncCommandOperationHelper.executeCommandAsyncWithConnection;
-import static com.mongodb.internal.operation.SyncCommandOperationHelper.executeCommandWithConnection;
+import static com.mongodb.internal.operation.AsyncOperationHelper.AsyncCallableWithConnectionAndSource;
+import static com.mongodb.internal.operation.AsyncOperationHelper.createEmptyAsyncBatchCursor;
+import static com.mongodb.internal.operation.AsyncOperationHelper.cursorDocumentToAsyncBatchCursor;
+import static com.mongodb.internal.operation.AsyncOperationHelper.releasingCallback;
+import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncReadConnection;
 import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceError;
 import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
 import static com.mongodb.internal.operation.CursorHelper.getCursorDocumentFromBatchSize;
-import static com.mongodb.internal.operation.AsyncOperationHelper.AsyncCallableWithConnectionAndSource;
-import static com.mongodb.internal.operation.SyncOperationHelper.CallableWithSource;
+import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
+import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
+import static com.mongodb.internal.operation.DocumentHelper.putIfTrue;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.AsyncOperationHelper.createEmptyAsyncBatchCursor;
-import static com.mongodb.internal.operation.SyncOperationHelper.createEmptyBatchCursor;
-import static com.mongodb.internal.operation.AsyncOperationHelper.cursorDocumentToAsyncBatchCursor;
-import static com.mongodb.internal.operation.SyncOperationHelper.cursorDocumentToBatchCursor;
-import static com.mongodb.internal.operation.AsyncOperationHelper.releasingCallback;
-import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncReadConnection;
-import static com.mongodb.internal.operation.SyncOperationHelper.withReadConnectionSource;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotZero;
+import static com.mongodb.internal.operation.SyncCommandOperationHelper.executeCommandWithConnection;
+import static com.mongodb.internal.operation.SyncOperationHelper.CallableWithSource;
+import static com.mongodb.internal.operation.SyncOperationHelper.createEmptyBatchCursor;
+import static com.mongodb.internal.operation.SyncOperationHelper.cursorDocumentToBatchCursor;
+import static com.mongodb.internal.operation.SyncOperationHelper.withReadConnectionSource;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 
@@ -84,21 +85,24 @@ import static java.util.Arrays.asList;
  * @since 3.0
  */
 public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+    private final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
     private final String databaseName;
     private final Decoder<T> decoder;
     private boolean retryReads;
     private BsonDocument filter;
     private int batchSize;
-    private long maxTimeMS;
     private boolean nameOnly;
 
     /**
      * Construct a new instance.
      *
+     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
      * @param databaseName the name of the database for the operation.
      * @param decoder the decoder to use for the results
      */
-    public ListCollectionsOperation(final String databaseName, final Decoder<T> decoder) {
+    public ListCollectionsOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final String databaseName,
+                                    final Decoder<T> decoder) {
+        this.clientSideOperationTimeoutFactory = notNull("clientSideOperationTimeoutFactory", clientSideOperationTimeoutFactory);
         this.databaseName = notNull("databaseName", databaseName);
         this.decoder = notNull("decoder", decoder);
     }
@@ -178,32 +182,6 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
     }
 
     /**
-     * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
-     *
-     * @param timeUnit the time unit to return the result in
-     * @return the maximum execution time in the given time unit
-     * @mongodb.driver.manual reference/operator/meta/maxTimeMS/ Max Time
-     */
-    public long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
-    }
-
-    /**
-     * Sets the maximum execution time on the server for this operation.
-     *
-     * @param maxTime  the max time
-     * @param timeUnit the time unit, which may not be null
-     * @return this
-     * @mongodb.driver.manual reference/operator/meta/maxTimeMS/ Max Time
-     */
-    public ListCollectionsOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
-        return this;
-    }
-
-    /**
      * Enables retryable reads if a read fails due to a network error.
      *
      * @param retryReads true if reads should be retried
@@ -227,24 +205,25 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return withReadConnectionSource(binding, new CallableWithSource<BatchCursor<T>>() {
+        return withReadConnectionSource(clientSideOperationTimeoutFactory.create(), binding, new CallableWithSource<BatchCursor<T>>() {
             @Override
-            public BatchCursor<T> call(final ConnectionSource source) {
+            public BatchCursor<T> call(final ClientSideOperationTimeout clientSideOperationTimeout, final ConnectionSource source) {
                 Connection connection = source.getConnection();
                 if (serverIsAtLeastVersionThreeDotZero(connection.getDescription())) {
                     try {
-                        return executeCommandWithConnection(binding, source, databaseName, getCommandCreator(), createCommandDecoder(),
-                                commandTransformer(), retryReads, connection);
+                        return executeCommandWithConnection(clientSideOperationTimeout, binding, source, databaseName,
+                                getCommandCreator(), createCommandDecoder(), commandTransformer(), retryReads, connection);
                     } catch (MongoCommandException e) {
-                        return rethrowIfNotNamespaceError(e, createEmptyBatchCursor(createNamespace(), decoder,
+                        return rethrowIfNotNamespaceError(e, createEmptyBatchCursor(clientSideOperationTimeout, createNamespace(), decoder,
                                 source.getServerDescription().getAddress(), batchSize));
                     }
                 } else {
                     try {
-                        return new ProjectingBatchCursor(new QueryBatchCursor<BsonDocument>(connection.query(getNamespace(),
-                                asQueryDocument(connection.getDescription(), binding.getReadPreference()), null, 0, 0, batchSize,
-                                binding.getReadPreference().isSlaveOk(), false, false, false, false, false,
-                                new BsonDocumentCodec()), 0, batchSize, new BsonDocumentCodec(), source));
+                        return new ProjectingBatchCursor(new QueryBatchCursor<BsonDocument>(clientSideOperationTimeout,
+                                connection.query(getNamespace(), asQueryDocument(clientSideOperationTimeout, connection.getDescription(),
+                                        binding.getReadPreference()), null, 0, 0, batchSize, binding.getReadPreference().isSlaveOk(),
+                                        false, false, false, false, false, new BsonDocumentCodec()), 0, batchSize,
+                                new BsonDocumentCodec(), source));
                     } finally {
                         connection.release();
                     }
@@ -255,30 +234,33 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        withAsyncReadConnection(binding, new AsyncCallableWithConnectionAndSource() {
+        withAsyncReadConnection(clientSideOperationTimeoutFactory.create(), binding, new AsyncCallableWithConnectionAndSource() {
             @Override
-            public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
+            public void call(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncConnectionSource source,
+                             final AsyncConnection connection, final Throwable t) {
                 SingleResultCallback<AsyncBatchCursor<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
                 if (t != null) {
                     errHandlingCallback.onResult(null, t);
                 } else {
                     if (serverIsAtLeastVersionThreeDotZero(connection.getDescription())) {
-                        executeCommandAsyncWithConnection(binding, source, databaseName, getCommandCreator(), createCommandDecoder(),
-                                asyncTransformer(), retryReads, connection,
+                        executeCommandAsyncWithConnection(clientSideOperationTimeout, binding, source, databaseName, getCommandCreator(),
+                                createCommandDecoder(), asyncTransformer(), retryReads, connection,
                                 new SingleResultCallback<AsyncBatchCursor<T>>() {
                                     @Override
                                     public void onResult(final AsyncBatchCursor<T> result, final Throwable t) {
                                         if (t != null && !isNamespaceError(t)) {
                                             errHandlingCallback.onResult(null, t);
                                         } else {
-                                            errHandlingCallback.onResult(result != null ? result : emptyAsyncCursor(source), null);
+                                            errHandlingCallback.onResult(result != null ? result
+                                                    : emptyAsyncCursor(clientSideOperationTimeout, source), null);
                                         }
                                     }
                                 });
                     } else {
                         final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = releasingCallback(errHandlingCallback,
                                 source, connection);
-                        connection.queryAsync(getNamespace(), asQueryDocument(connection.getDescription(), binding.getReadPreference()),
+                        connection.queryAsync(getNamespace(), asQueryDocument(clientSideOperationTimeout, connection.getDescription(),
+                                binding.getReadPreference()),
                                 null, 0, 0, batchSize, binding.getReadPreference().isSlaveOk(), false, false, false, false, false,
                                 new BsonDocumentCodec(), new SingleResultCallback<QueryResult<BsonDocument>>() {
                                     @Override
@@ -287,8 +269,8 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                                             wrappedCallback.onResult(null, t);
                                         } else {
                                             wrappedCallback.onResult(new ProjectingAsyncBatchCursor(
-                                                    new AsyncQueryBatchCursor<BsonDocument>(result, 0,
-                                                            batchSize, 0, new BsonDocumentCodec(), source, connection)
+                                                    new AsyncQueryBatchCursor<BsonDocument>(clientSideOperationTimeout, result, 0,
+                                                            batchSize, new BsonDocumentCodec(), source, connection)
                                             ), null);
                                         }
                                     }
@@ -299,8 +281,9 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
         });
     }
 
-    private AsyncBatchCursor<T> emptyAsyncCursor(final AsyncConnectionSource source) {
-        return createEmptyAsyncBatchCursor(createNamespace(), source.getServerDescription().getAddress());
+    private AsyncBatchCursor<T> emptyAsyncCursor(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                 final AsyncConnectionSource source) {
+        return createEmptyAsyncBatchCursor(clientSideOperationTimeout, createNamespace(), source.getServerDescription().getAddress());
     }
 
     private MongoNamespace createNamespace() {
@@ -310,9 +293,11 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
     private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {
         return new CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>>() {
             @Override
-            public AsyncBatchCursor<T> apply(final BsonDocument result, final AsyncConnectionSource source,
-                                             final AsyncConnection connection) {
-                return cursorDocumentToAsyncBatchCursor(result.getDocument("cursor"), decoder, source, connection, batchSize);
+            public AsyncBatchCursor<T> apply(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                             final AsyncConnectionSource source, final AsyncConnection connection,
+                                             final BsonDocument result) {
+                return cursorDocumentToAsyncBatchCursor(clientSideOperationTimeout, result.getDocument("cursor"), decoder, source,
+                        connection, batchSize);
             }
         };
     }
@@ -320,8 +305,9 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
     private CommandReadTransformer<BsonDocument, BatchCursor<T>> commandTransformer() {
         return new CommandReadTransformer<BsonDocument, BatchCursor<T>>() {
             @Override
-            public BatchCursor<T> apply(final BsonDocument result, final ConnectionSource source, final Connection connection) {
-                return cursorDocumentToBatchCursor(result.getDocument("cursor"), decoder, source, connection, batchSize);
+            public BatchCursor<T> apply(final ClientSideOperationTimeout clientSideOperationTimeout, final ConnectionSource source,
+                                        final Connection connection, final BsonDocument result) {
+                return cursorDocumentToBatchCursor(clientSideOperationTimeout, result.getDocument("cursor"), decoder, source, batchSize);
             }
         };
     }
@@ -333,28 +319,24 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
     private CommandCreator getCommandCreator() {
         return new CommandCreator() {
             @Override
-            public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
-                return getCommand();
+            public BsonDocument create(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                       final ServerDescription serverDescription,
+                                       final ConnectionDescription connectionDescription) {
+                BsonDocument command = new BsonDocument("listCollections", new BsonInt32(1))
+                        .append("cursor", getCursorDocumentFromBatchSize(batchSize == 0 ? null : batchSize));
+                putIfNotNull(command, "filter", filter);
+                putIfTrue(command, "nameOnly", nameOnly);
+                putIfNotZero(command, "maxTimeMS", clientSideOperationTimeout.getMaxTimeMS());
+                return command;
             }
         };
     }
 
-    private BsonDocument getCommand() {
-        BsonDocument command = new BsonDocument("listCollections", new BsonInt32(1))
-                .append("cursor", getCursorDocumentFromBatchSize(batchSize == 0 ? null : batchSize));
-        if (filter != null) {
-            command.append("filter", filter);
-        }
-        if (nameOnly) {
-            command.append("nameOnly", BsonBoolean.TRUE);
-        }
-        if (maxTimeMS > 0) {
-            command.put("maxTimeMS", new BsonInt64(maxTimeMS));
-        }
-        return command;
-    }
 
-    private BsonDocument asQueryDocument(final ConnectionDescription connectionDescription, final ReadPreference readPreference) {
+
+    private BsonDocument asQueryDocument(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                         final ConnectionDescription connectionDescription,
+                                         final ReadPreference readPreference) {
         BsonDocument document = new BsonDocument();
         BsonDocument transformedFilter = null;
         if (filter != null) {
@@ -380,9 +362,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
         if (connectionDescription.getServerType() == SHARD_ROUTER && !readPreference.equals(primary())) {
             document.put("$readPreference", readPreference.toDocument());
         }
-        if (maxTimeMS > 0) {
-            document.put("$maxTimeMS", new BsonInt64(maxTimeMS));
-        }
+        putIfNotZero(document, "$maxTimeMS", clientSideOperationTimeout.getMaxTimeMS());
         return document;
     }
 
@@ -442,6 +422,11 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
         public ServerAddress getServerAddress() {
             return delegate.getServerAddress();
         }
+
+        @Override
+        public ClientSideOperationTimeout getClientSideOperationTimeout() {
+            return delegate.getClientSideOperationTimeout();
+        }
     }
 
     private final class ProjectingAsyncBatchCursor implements AsyncBatchCursor<T> {
@@ -450,6 +435,11 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
 
         private ProjectingAsyncBatchCursor(final AsyncBatchCursor<BsonDocument> delegate) {
             this.delegate = delegate;
+        }
+
+        @Override
+        public ClientSideOperationTimeout getClientSideOperationTimeout() {
+            return delegate.getClientSideOperationTimeout();
         }
 
         @Override

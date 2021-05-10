@@ -20,6 +20,7 @@ import com.mongodb.Function;
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerApi;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -33,7 +34,6 @@ import org.bson.codecs.Decoder;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.CommandOperationHelper.addRetryableWriteErrorLabel;
 import static com.mongodb.internal.operation.CommandOperationHelper.isRetryWritesEnabled;
 import static com.mongodb.internal.operation.CommandOperationHelper.logRetryExecute;
@@ -44,6 +44,7 @@ import static com.mongodb.internal.operation.CommandOperationHelper.shouldAttemp
 import static com.mongodb.internal.operation.CommandOperationHelper.transformWriteException;
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
 import static com.mongodb.internal.operation.OperationHelper.canRetryWrite;
+import static com.mongodb.internal.operation.SyncOperationHelper.withConnection;
 import static com.mongodb.internal.operation.SyncOperationHelper.withReadConnectionSource;
 import static com.mongodb.internal.operation.SyncOperationHelper.withReleasableConnection;
 
@@ -57,7 +58,7 @@ public final class SyncCommandOperationHelper {
          * @param t the input object
          * @return the function result
          */
-        R apply(T t, ConnectionSource source, Connection connection);
+        R apply(ClientSideOperationTimeout clientSideOperationTimeout, ConnectionSource source, Connection connection, T t);
     }
 
     interface CommandWriteTransformer<T, R> {
@@ -68,25 +69,26 @@ public final class SyncCommandOperationHelper {
          * @param t the input object
          * @return the function result
          */
-        R apply(T t, Connection connection);
+        R apply(ClientSideOperationTimeout clientSideOperationTimeout, Connection connection, T t);
     }
 
     static class IdentityReadTransformer<T> implements CommandReadTransformer<T, T> {
         @Override
-        public T apply(final T t, final ConnectionSource source, final Connection connection) {
+        public T apply(final ClientSideOperationTimeout clientSideOperationTimeout,
+                       final ConnectionSource source, final Connection connection, final T t) {
             return t;
         }
     }
 
     static class IdentityWriteTransformer<T> implements CommandWriteTransformer<T, T> {
         @Override
-        public T apply(final T t, final Connection connection) {
+        public T apply(final ClientSideOperationTimeout clientSideOperationTimeout, final Connection connection, final T t) {
             return t;
         }
     }
 
     static CommandWriteTransformer<BsonDocument, Void> writeConcernErrorTransformer() {
-        return (result, connection) -> {
+        return (clientSideOperationTimeout, connection, result) -> {
             WriteConcernHelper.throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),
                     connection.getDescription().getMaxWireVersion());
             return null;
@@ -95,37 +97,45 @@ public final class SyncCommandOperationHelper {
 
     /* Read Binding Helpers */
 
-    static BsonDocument executeCommand(final ReadBinding binding, final String database, final CommandCreator commandCreator,
-                                       final boolean retryReads) {
-        return executeCommand(binding, database, commandCreator, new BsonDocumentCodec(), retryReads);
+    static BsonDocument executeCommand(final ClientSideOperationTimeout clientSideOperationTimeout, final ReadBinding binding,
+                                       final String database, final CommandCreator commandCreator, final boolean retryReads) {
+        return executeCommand(clientSideOperationTimeout, binding, database, commandCreator, new BsonDocumentCodec(), retryReads);
     }
 
-    static <T> T executeCommand(final ReadBinding binding, final String database, final CommandCreator commandCreator,
+    static <T> T executeCommand(final ClientSideOperationTimeout clientSideOperationTimeout, final ReadBinding binding,
+                                final String database, final CommandCreator commandCreator,
                                 final CommandReadTransformer<BsonDocument, T> transformer, final boolean retryReads) {
-        return executeCommand(binding, database, commandCreator, new BsonDocumentCodec(), transformer, retryReads);
+        return executeCommand(clientSideOperationTimeout, binding, database, commandCreator, new BsonDocumentCodec(), transformer,
+                retryReads);
     }
 
-    static <T> T executeCommand(final ReadBinding binding, final String database, final CommandCreator commandCreator,
-                                final Decoder<T> decoder, final boolean retryReads) {
-        return executeCommand(binding, database, commandCreator, decoder, new IdentityReadTransformer<>(), retryReads);
+    static <T> T executeCommand(final ClientSideOperationTimeout clientSideOperationTimeout, final ReadBinding binding,
+                                final String database, final CommandCreator commandCreator, final Decoder<T> decoder,
+                                final boolean retryReads) {
+        return executeCommand(clientSideOperationTimeout, binding, database, commandCreator, decoder, new IdentityReadTransformer<>(),
+                retryReads);
     }
 
-    static <D, T> T executeCommand(final ReadBinding binding, final String database, final CommandCreator commandCreator,
-                                   final Decoder<D> decoder, final CommandReadTransformer<D, T> transformer, final boolean retryReads) {
-        return withReadConnectionSource(binding, source -> executeCommandWithConnection(binding, source, database, commandCreator, decoder,
-                transformer, retryReads, source.getConnection()));
+    static <D, T> T executeCommand(final ClientSideOperationTimeout clientSideOperationTimeout, final ReadBinding binding,
+                                   final String database, final CommandCreator commandCreator, final Decoder<D> decoder,
+                                   final CommandReadTransformer<D, T> transformer, final boolean retryReads) {
+        return withReadConnectionSource(clientSideOperationTimeout, binding, (clientSideOperationTimeout1, source) ->
+                executeCommandWithConnection(clientSideOperationTimeout1, binding, source, database, commandCreator, decoder, transformer,
+                        retryReads, source.getConnection()));
     }
 
-    static <D, T> T executeCommandWithConnection(final ReadBinding binding, final ConnectionSource source, final String database,
+    static <D, T> T executeCommandWithConnection(final ClientSideOperationTimeout clientSideOperationTimeout, final ReadBinding binding,
+                                                 final ConnectionSource source, final String database,
                                                  final CommandCreator commandCreator, final Decoder<D> decoder,
                                                  final CommandReadTransformer<D, T> transformer, final boolean retryReads,
                                                  final Connection connection) {
         MongoException exception;
         try {
-            BsonDocument command = commandCreator.create(source.getServerDescription(), connection.getDescription());
+            BsonDocument command = commandCreator.create(clientSideOperationTimeout, source.getServerDescription(),
+                    connection.getDescription());
             try {
-                return executeCommand(database, command, decoder, source, connection, binding.getReadPreference(), transformer,
-                        binding.getSessionContext(), binding.getServerApi());
+                return executeCommand(clientSideOperationTimeout, database, command, decoder, source, connection,
+                        binding.getReadPreference(), transformer, binding.getSessionContext(), binding.getServerApi());
             } catch (MongoException e) {
                 exception = e;
 
@@ -140,21 +150,23 @@ public final class SyncCommandOperationHelper {
             connection.release();
         }
 
-        return retryCommand(binding, database, commandCreator, decoder, transformer, exception);
+        return retryCommand(clientSideOperationTimeout, binding, database, commandCreator, decoder, transformer, exception);
     }
 
-    private static <D, T> T retryCommand(final ReadBinding binding, final String database, final CommandCreator commandCreator,
-                                         final Decoder<D> decoder, final CommandReadTransformer<D, T> transformer,
-                                         final MongoException originalException) {
-        return withReleasableConnection(binding, originalException, (source, connection) -> {
+    private static <D, T> T retryCommand(final ClientSideOperationTimeout clientSideOperationTimeout, final ReadBinding binding,
+                                         final String database, final CommandCreator commandCreator, final Decoder<D> decoder,
+                                         final CommandReadTransformer<D, T> transformer, final MongoException originalException) {
+        return withReleasableConnection(clientSideOperationTimeout, binding, originalException,
+                (clientSideOperationTimeout1, source, connection) -> {
             try {
                 if (!canRetryRead(source.getServerDescription(), connection.getDescription(), binding.getSessionContext())) {
                     throw originalException;
                 }
-                BsonDocument retryCommand = commandCreator.create(source.getServerDescription(), connection.getDescription());
+                BsonDocument retryCommand = commandCreator.create(clientSideOperationTimeout1, source.getServerDescription(),
+                        connection.getDescription());
                 logRetryExecute(retryCommand.getFirstKey(), originalException);
-                return executeCommand(database, retryCommand, decoder, source, connection, binding.getReadPreference(), transformer,
-                        binding.getSessionContext(), source.getServerApi());
+                return executeCommand(clientSideOperationTimeout, database, retryCommand, decoder, source, connection,
+                        binding.getReadPreference(), transformer, binding.getSessionContext(), source.getServerApi());
             } finally {
                 connection.release();
             }
@@ -163,141 +175,144 @@ public final class SyncCommandOperationHelper {
 
 
     /* Write Binding Helpers */
-    static BsonDocument executeCommand(final WriteBinding binding, final String database, final BsonDocument command) {
-        return executeCommand(binding, database, command, new IdentityWriteTransformer<>());
+    static BsonDocument executeCommand(final ClientSideOperationTimeout clientSideOperationTimeout, final WriteBinding binding,
+                                       final String database, final CommandCreator commandCreator) {
+        return executeCommand(clientSideOperationTimeout, binding, database, commandCreator, new IdentityWriteTransformer<>());
     }
 
-    static <T> T executeCommand(final WriteBinding binding, final String database, final BsonDocument command,
-                                final Decoder<T> decoder) {
-        return executeCommand(binding, database, command, decoder, new IdentityWriteTransformer<>());
+    static <T> T executeCommand(final ClientSideOperationTimeout clientSideOperationTimeout, final WriteBinding binding,
+                                final String database, final CommandCreator commandCreator, final Decoder<T> decoder) {
+        return executeCommand(clientSideOperationTimeout, binding, database, commandCreator, decoder, new IdentityWriteTransformer<>());
     }
 
-    static <T> T executeCommand(final WriteBinding binding, final String database, final BsonDocument command,
+    static <T> T executeCommand(final ClientSideOperationTimeout clientSideOperationTimeout, final WriteBinding binding,
+                                final String database, final CommandCreator commandCreator,
                                 final CommandWriteTransformer<BsonDocument, T> transformer) {
-        return executeCommand(binding, database, command, new BsonDocumentCodec(), transformer);
+        return executeCommand(clientSideOperationTimeout, binding, database, commandCreator, new BsonDocumentCodec(), transformer);
     }
 
-    static <D, T> T executeCommand(final WriteBinding binding, final String database, final BsonDocument command,
-                                   final Decoder<D> decoder, final CommandWriteTransformer<D, T> transformer) {
-        return executeCommand(binding, database, command, new NoOpFieldNameValidator(), decoder, transformer);
+    static <D, T> T executeCommand(final ClientSideOperationTimeout clientSideOperationTimeout, final WriteBinding binding,
+                                   final String database, final CommandCreator commandCreator, final Decoder<D> decoder,
+                                   final CommandWriteTransformer<D, T> transformer) {
+        return executeCommand(clientSideOperationTimeout, binding, database, commandCreator, new NoOpFieldNameValidator(), decoder,
+                transformer);
     }
 
-    static <T> T executeCommand(final WriteBinding binding, final String database, final BsonDocument command,
-                                final Connection connection, final CommandWriteTransformer<BsonDocument, T> transformer) {
-        return executeCommand(binding, database, command, new BsonDocumentCodec(), connection, transformer);
-    }
-
-    static <T> T executeCommand(final WriteBinding binding, final String database, final BsonDocument command,
-                                final Decoder<BsonDocument> decoder, final Connection connection,
+    static <T> T executeCommand(final ClientSideOperationTimeout clientSideOperationTimeout, final WriteBinding binding,
+                                final String database, final BsonDocument command, final Connection connection,
                                 final CommandWriteTransformer<BsonDocument, T> transformer) {
-        notNull("binding", binding);
-        return executeWriteCommand(database, command, decoder, connection, primary(), transformer, binding.getSessionContext(),
-                binding.getServerApi());
+        return executeCommand(clientSideOperationTimeout, binding, database, command, new BsonDocumentCodec(), connection,
+                transformer);
     }
 
-    static <T> T executeCommand(final WriteBinding binding, final String database, final BsonDocument command,
-                                final FieldNameValidator fieldNameValidator, final Decoder<BsonDocument> decoder,
+    static <T> T executeCommand(final ClientSideOperationTimeout clientSideOperationTimeout, final WriteBinding binding,
+                                final String database, final BsonDocument command, final Decoder<BsonDocument> decoder,
                                 final Connection connection, final CommandWriteTransformer<BsonDocument, T> transformer) {
         notNull("binding", binding);
-        return executeWriteCommand(database, command, fieldNameValidator, decoder, connection, primary(), transformer,
+        return executeWriteCommand(clientSideOperationTimeout, database, command, decoder, connection, primary(), transformer,
                 binding.getSessionContext(), binding.getServerApi());
     }
 
-    static <D, T> T executeCommand(final WriteBinding binding, final String database, final BsonDocument command,
-                                   final FieldNameValidator fieldNameValidator, final Decoder<D> decoder,
-                                   final CommandWriteTransformer<D, T> transformer) {
-        return withReleasableConnection(binding, (source, connection) -> {
-            try {
-                return transformer.apply(executeCommand(database, command, fieldNameValidator, decoder,
-                        source, connection, primary()), connection);
-            } finally {
-                connection.release();
-            }
-        });
+    static <T> T executeCommand(final ClientSideOperationTimeout clientSideOperationTimeout, final WriteBinding binding,
+                                final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
+                                final Decoder<BsonDocument> decoder, final Connection connection,
+                                final CommandWriteTransformer<BsonDocument, T> transformer) {
+        notNull("binding", binding);
+        return executeWriteCommand(clientSideOperationTimeout, database, command, fieldNameValidator, decoder, connection, primary(),
+                transformer, binding.getSessionContext(), binding.getServerApi());
     }
 
-    static BsonDocument executeCommand(final WriteBinding binding, final String database, final BsonDocument command,
-                                       final Connection connection) {
+    static <D, T> T executeCommand(final ClientSideOperationTimeout clientSideOperationTimeout, final WriteBinding binding,
+                                   final String database, final CommandCreator commandCreator, final FieldNameValidator fieldNameValidator,
+                                   final Decoder<D> decoder, final CommandWriteTransformer<D, T> transformer) {
+        return withConnection(clientSideOperationTimeout, binding,
+                (clientSideOperationTimeout1, source, connection) ->
+                    transformer.apply(clientSideOperationTimeout1, connection, executeCommand(clientSideOperationTimeout1, database,
+                            commandCreator.create(clientSideOperationTimeout1, source.getServerDescription(),
+                                    connection.getDescription()), fieldNameValidator, decoder, source, connection, primary()))
+                );
+    }
+
+    static BsonDocument executeCommand(final ClientSideOperationTimeout clientSideOperationTimeout, final WriteBinding binding,
+                                       final String database, final BsonDocument command, final Connection connection) {
         notNull("binding", binding);
-        return executeWriteCommand(database, command, new BsonDocumentCodec(), connection, primary(),
+        return executeWriteCommand(clientSideOperationTimeout, database, command, new BsonDocumentCodec(), connection, primary(),
                 binding.getSessionContext(), binding.getServerApi());
     }
 
     /* Private Connection Helpers */
-    private static <T> T executeCommand(final String database, final BsonDocument command,
-                                        final FieldNameValidator fieldNameValidator, final Decoder<T> decoder,
-                                        final ConnectionSource source, final Connection connection,
-                                        final ReadPreference readPreference) {
-        return executeCommand(database, command, fieldNameValidator, decoder, source, connection,
-                readPreference, new IdentityReadTransformer<>(), source.getSessionContext(), source.getServerApi());
+    private static <T> T executeCommand(final ClientSideOperationTimeout clientSideOperationTimeout, final String database,
+                                        final BsonDocument command, final FieldNameValidator fieldNameValidator, final Decoder<T> decoder,
+                                        final ConnectionSource source, final Connection connection, final ReadPreference readPreference) {
+        return executeCommand(clientSideOperationTimeout, database, command, fieldNameValidator, decoder, source, connection,
+                readPreference, new IdentityReadTransformer<>(), source.getSessionContext(), source.getServerApi()
+        );
     }
 
-    private static <D, T> T executeCommand(final String database, final BsonDocument command,
-                                           final Decoder<D> decoder, final ConnectionSource source, final Connection connection,
-                                           final ReadPreference readPreference,
+    private static <D, T> T executeCommand(final ClientSideOperationTimeout clientSideOperationTimeout, final String database,
+                                           final BsonDocument command, final Decoder<D> decoder, final ConnectionSource source,
+                                           final Connection connection, final ReadPreference readPreference,
                                            final CommandReadTransformer<D, T> transformer, final SessionContext sessionContext,
                                            final ServerApi serverApi) {
-        return executeCommand(database, command, new NoOpFieldNameValidator(), decoder, source, connection,
+        return executeCommand(clientSideOperationTimeout, database, command, new NoOpFieldNameValidator(), decoder, source, connection,
                 readPreference, transformer, sessionContext, serverApi);
     }
 
-    private static <D, T> T executeCommand(final String database, final BsonDocument command,
-                                           final FieldNameValidator fieldNameValidator, final Decoder<D> decoder,
-                                           final ConnectionSource source, final Connection connection, final ReadPreference readPreference,
-                                           final CommandReadTransformer<D, T> transformer, final SessionContext sessionContext,
-                                           final ServerApi serverApi) {
-
-        return transformer.apply(connection.command(database, command, fieldNameValidator, readPreference, decoder, sessionContext,
-                serverApi), source, connection);
+    private static <D, T> T executeCommand(final ClientSideOperationTimeout clientSideOperationTimeout, final String database,
+                                           final BsonDocument command, final FieldNameValidator fieldNameValidator,
+                                           final Decoder<D> decoder, final ConnectionSource source, final Connection connection,
+                                           final ReadPreference readPreference, final CommandReadTransformer<D, T> transformer,
+                                           final SessionContext sessionContext, final ServerApi serverApi) {
+        return transformer.apply(clientSideOperationTimeout, source, connection, connection.command(database, command, fieldNameValidator,
+                readPreference, decoder, sessionContext, serverApi));
     }
 
-    private static <T> T executeWriteCommand(final String database, final BsonDocument command,
-                                             final Decoder<T> decoder, final Connection connection,
+    private static <T> T executeWriteCommand(final ClientSideOperationTimeout clientSideOperationTimeout, final String database,
+                                             final BsonDocument command, final Decoder<T> decoder, final Connection connection,
                                              final ReadPreference readPreference, final SessionContext sessionContext,
                                              final ServerApi serverApi) {
-        return executeWriteCommand(database, command, new NoOpFieldNameValidator(), decoder, connection,
+        return executeWriteCommand(clientSideOperationTimeout, database, command, new NoOpFieldNameValidator(), decoder, connection,
                 readPreference, new IdentityWriteTransformer<>(), sessionContext, serverApi);
     }
 
-    private static <D, T> T executeWriteCommand(final String database, final BsonDocument command,
-                                                final Decoder<D> decoder, final Connection connection,
-                                                final ReadPreference readPreference,
-                                                final CommandWriteTransformer<D, T> transformer, final SessionContext sessionContext,
-                                                final ServerApi serverApi) {
-        return executeWriteCommand(database, command, new NoOpFieldNameValidator(), decoder, connection,
+    private static <D, T> T executeWriteCommand(final ClientSideOperationTimeout clientSideOperationTimeout, final String database,
+                                                final BsonDocument command, final Decoder<D> decoder, final Connection connection,
+                                                final ReadPreference readPreference, final CommandWriteTransformer<D, T> transformer,
+                                                final SessionContext sessionContext, final ServerApi serverApi) {
+        return executeWriteCommand(clientSideOperationTimeout, database, command, new NoOpFieldNameValidator(), decoder, connection,
                 readPreference, transformer, sessionContext, serverApi);
     }
 
-    private static <D, T> T executeWriteCommand(final String database, final BsonDocument command,
-                                                final FieldNameValidator fieldNameValidator, final Decoder<D> decoder,
-                                                final Connection connection, final ReadPreference readPreference,
+    private static <D, T> T executeWriteCommand(final ClientSideOperationTimeout clientSideOperationTimeout, final String database,
+                                                final BsonDocument command, final FieldNameValidator fieldNameValidator,
+                                                final Decoder<D> decoder, final Connection connection, final ReadPreference readPreference,
                                                 final CommandWriteTransformer<D, T> transformer, final SessionContext sessionContext,
                                                 final ServerApi serverApi) {
-
-        return transformer.apply(connection.command(database, command, fieldNameValidator, readPreference, decoder, sessionContext,
-                serverApi),
-                connection);
+        return transformer.apply(clientSideOperationTimeout, connection, connection.command(database, command, fieldNameValidator,
+                readPreference, decoder, sessionContext, serverApi));
     }
 
     /* Retryable write helpers */
-    static <T, R> R executeRetryableCommand(final WriteBinding binding, final String database, final ReadPreference readPreference,
+    static <T, R> R executeRetryableCommand(final ClientSideOperationTimeout clientSideOperationTimeout, final WriteBinding binding,
+                                            final String database, final ReadPreference readPreference,
                                             final FieldNameValidator fieldNameValidator, final Decoder<T> commandResultDecoder,
                                             final CommandCreator commandCreator, final CommandWriteTransformer<T, R> transformer) {
-        return executeRetryableCommand(binding, database, readPreference, fieldNameValidator, commandResultDecoder, commandCreator,
-                transformer, noOpRetryCommandModifier());
+        return executeRetryableCommand(clientSideOperationTimeout, binding, database, readPreference, fieldNameValidator,
+                commandResultDecoder, commandCreator, transformer, noOpRetryCommandModifier());
     }
 
-    static <T, R> R executeRetryableCommand(final WriteBinding binding, final String database, final ReadPreference readPreference,
+    static <T, R> R executeRetryableCommand(final ClientSideOperationTimeout clientSideOperationTimeout, final WriteBinding binding,
+                                            final String database, final ReadPreference readPreference,
                                             final FieldNameValidator fieldNameValidator, final Decoder<T> commandResultDecoder,
                                             final CommandCreator commandCreator, final CommandWriteTransformer<T, R> transformer,
                                             final Function<BsonDocument, BsonDocument> retryCommandModifier) {
-        return withReleasableConnection(binding, (source, connection) -> {
+        return withReleasableConnection(clientSideOperationTimeout, binding, (clientSideOperationTimeout1, source, connection) -> {
             BsonDocument command = null;
             MongoException exception;
             try {
-                command = commandCreator.create(source.getServerDescription(), connection.getDescription());
-                return transformer.apply(connection.command(database, command, fieldNameValidator, readPreference,
-                        commandResultDecoder, binding.getSessionContext(), binding.getServerApi()), connection);
+                command = commandCreator.create(clientSideOperationTimeout1, source.getServerDescription(), connection.getDescription());
+                return transformer.apply(clientSideOperationTimeout1, connection, connection.command(database, command, fieldNameValidator,
+                        readPreference, commandResultDecoder, binding.getSessionContext(), binding.getServerApi()));
             } catch (MongoException e) {
                 exception = e;
                 if (!shouldAttemptToRetryWrite(command, e, connection.getDescription().getMaxWireVersion())) {
@@ -315,7 +330,8 @@ public final class SyncCommandOperationHelper {
             }
             final BsonDocument originalCommand = command;
             final MongoException originalException = exception;
-            return withReleasableConnection(binding, originalException, (source1, connection1) -> {
+            return withReleasableConnection(clientSideOperationTimeout, binding, originalException,
+                    (clientSideOperationTimeout2, source1, connection1) -> {
                 try {
                     if (!canRetryWrite(source1.getServerDescription(), connection1.getDescription(), binding.getSessionContext())) {
                         throw originalException;
@@ -323,9 +339,10 @@ public final class SyncCommandOperationHelper {
                     BsonDocument retryCommand = retryCommandModifier.apply(originalCommand);
                     logRetryExecute(retryCommand.getFirstKey(), originalException);
                     try {
-                        return transformer.apply(connection1.command(database, retryCommand, fieldNameValidator,
-                                readPreference, commandResultDecoder, binding.getSessionContext(), binding.getServerApi()),
-                                connection1);
+                        return transformer.apply(clientSideOperationTimeout2, connection1, connection1.command(database, retryCommand,
+                                fieldNameValidator, readPreference, commandResultDecoder, binding.getSessionContext(),
+                                binding.getServerApi())
+                        );
                     } catch (MongoException e) {
                         addRetryableWriteErrorLabel(e, connection1.getDescription().getMaxWireVersion());
                         throw e;

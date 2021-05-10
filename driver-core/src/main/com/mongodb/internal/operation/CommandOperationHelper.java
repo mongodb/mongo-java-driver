@@ -23,8 +23,6 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNodeIsRecoveringException;
 import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.MongoSocketException;
-import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.connection.ServerDescription;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
@@ -39,10 +37,6 @@ final class CommandOperationHelper {
 
     static Function<BsonDocument, BsonDocument> noOpRetryCommandModifier() {
         return command -> command;
-    }
-
-    interface CommandCreator {
-        BsonDocument create(ServerDescription serverDescription, ConnectionDescription connectionDescription);
     }
 
     /* Retryable helpers */

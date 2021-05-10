@@ -18,6 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
@@ -30,22 +31,29 @@ import org.bson.codecs.Decoder;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
 public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
+    private final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
     private final MongoNamespace namespace;
     private boolean retryReads;
     private BsonDocument filter;
     private BsonValue hint;
     private long skip;
     private long limit;
-    private long maxTimeMS;
     private Collation collation;
 
-    public CountDocumentsOperation(final MongoNamespace namespace) {
+    /**
+     * Construct an instance.
+     *
+     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param namespace the database and collection namespace for the operation.
+     */
+    public CountDocumentsOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory,
+                                   final MongoNamespace namespace) {
+        this.clientSideOperationTimeoutFactory = notNull("clientSideOperationTimeoutFactory", clientSideOperationTimeoutFactory);
         this.namespace = notNull("namespace", namespace);
     }
 
@@ -94,17 +102,6 @@ public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOp
         return this;
     }
 
-    public long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
-    }
-
-    public CountDocumentsOperation maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
-        return this;
-    }
-
     public Collation getCollation() {
         return collation;
     }
@@ -138,11 +135,10 @@ public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOp
     }
 
     private AggregateOperation<BsonDocument> getAggregateOperation() {
-        return new AggregateOperation<BsonDocument>(namespace, getPipeline(), DECODER)
+        return new AggregateOperation<BsonDocument>(clientSideOperationTimeoutFactory, namespace, getPipeline(), DECODER)
                 .retryReads(retryReads)
                 .collation(collation)
-                .hint(hint)
-                .maxTime(maxTimeMS, TimeUnit.MILLISECONDS);
+                .hint(hint);
     }
 
     private List<BsonDocument> getPipeline() {

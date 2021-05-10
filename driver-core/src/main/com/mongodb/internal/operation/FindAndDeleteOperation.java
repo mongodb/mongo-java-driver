@@ -21,8 +21,10 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.internal.validator.NoOpFieldNameValidator;
+import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -31,15 +33,10 @@ import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
 import org.bson.conversions.Bson;
 
-import java.util.concurrent.TimeUnit;
-
-import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.OperationHelper.validateCollation;
 import static com.mongodb.internal.operation.OperationHelper.validateHint;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * An operation that atomically finds and deletes a single document.
@@ -52,7 +49,6 @@ public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
     private BsonDocument filter;
     private BsonDocument projection;
     private BsonDocument sort;
-    private long maxTimeMS;
     private Collation collation;
     private Bson hint;
     private String hintString;
@@ -60,37 +56,42 @@ public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
     /**
      * Construct a new instance.
      *
+     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      * @param decoder   the decoder for the result documents.
      */
-    public FindAndDeleteOperation(final MongoNamespace namespace, final Decoder<T> decoder) {
-        this(namespace, WriteConcern.ACKNOWLEDGED, false, decoder);
+    public FindAndDeleteOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+                                  final Decoder<T> decoder) {
+        this(clientSideOperationTimeoutFactory, namespace, WriteConcern.ACKNOWLEDGED, false, decoder);
     }
 
     /**
      * Construct a new instance.
      *
+     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
      * @param namespace    the database and collection namespace for the operation.
      * @param writeConcern the writeConcern for the operation
      * @param decoder      the decoder for the result documents.
      * @since 3.2
      */
-    public FindAndDeleteOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final Decoder<T> decoder) {
-        this(namespace, writeConcern, false, decoder);
+    public FindAndDeleteOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+                                  final WriteConcern writeConcern, final Decoder<T> decoder) {
+        this(clientSideOperationTimeoutFactory, namespace, writeConcern, false, decoder);
     }
 
     /**
      * Construct a new instance.
      *
+     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
      * @param namespace    the database and collection namespace for the operation.
      * @param writeConcern the writeConcern for the operation
      * @param retryWrites  if writes should be retried if they fail due to a network error.
      * @param decoder      the decoder for the result documents.
      * @since 3.6
      */
-    public FindAndDeleteOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final boolean retryWrites,
-                                  final Decoder<T> decoder) {
-        super(namespace, writeConcern, retryWrites, decoder);
+    public FindAndDeleteOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+                                  final WriteConcern writeConcern, final boolean retryWrites, final Decoder<T> decoder) {
+        super(clientSideOperationTimeoutFactory, namespace, writeConcern, retryWrites, decoder);
     }
 
     /**
@@ -134,31 +135,6 @@ public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
      */
     public FindAndDeleteOperation<T> projection(final BsonDocument projection) {
         this.projection = projection;
-        return this;
-    }
-
-
-    /**
-     * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
-     *
-     * @param timeUnit the time unit to return the result in
-     * @return the maximum execution time in the given time unit
-     */
-    public long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, MILLISECONDS);
-    }
-
-    /**
-     * Sets the maximum execution time on the server for this operation.
-     *
-     * @param maxTime  the max time
-     * @param timeUnit the time unit, which may not be null
-     * @return this
-     */
-    public FindAndDeleteOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
@@ -257,20 +233,22 @@ public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
     protected CommandCreator getCommandCreator(final SessionContext sessionContext) {
         return new CommandCreator() {
             @Override
-            public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
-                return createCommand(sessionContext, serverDescription, connectionDescription);
+            public BsonDocument create(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                       final ServerDescription serverDescription,
+                                       final ConnectionDescription connectionDescription) {
+                return createCommand(sessionContext, clientSideOperationTimeout, serverDescription, connectionDescription);
             }
         };
     }
 
-    private BsonDocument createCommand(final SessionContext sessionContext, final ServerDescription serverDescription,
-                                       final ConnectionDescription connectionDescription) {
+    private BsonDocument createCommand(final SessionContext sessionContext, final ClientSideOperationTimeout clientSideOperationTimeout,
+                                       final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
         validateCollation(connectionDescription, collation);
         BsonDocument commandDocument = new BsonDocument("findAndModify", new BsonString(getNamespace().getCollectionName()));
         putIfNotNull(commandDocument, "query", getFilter());
         putIfNotNull(commandDocument, "fields", getProjection());
         putIfNotNull(commandDocument, "sort", getSort());
-        putIfNotZero(commandDocument, "maxTimeMS", getMaxTime(MILLISECONDS));
+        putIfNotZero(commandDocument, "maxTimeMS", clientSideOperationTimeout.getMaxTimeMS());
         commandDocument.put("remove", BsonBoolean.TRUE);
         addWriteConcernToCommand(connectionDescription, commandDocument, sessionContext);
         if (collation != null) {

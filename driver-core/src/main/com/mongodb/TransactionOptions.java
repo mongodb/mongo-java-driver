@@ -83,6 +83,7 @@ public final class TransactionOptions {
      */
     @Nullable
     public Long getMaxCommitTime(final TimeUnit timeUnit) {
+        // TODO CSOT deprecate & update for transactions. JAVA-4066 / JAVA-4067
         notNull("timeUnit", timeUnit);
         if (maxCommitTimeMS == null) {
             return null;
@@ -218,7 +219,9 @@ public final class TransactionOptions {
          * @return this
          * @mongodb.server.release 4.2
          * @since 3.11
+         * @deprecated prefer {@code MongoClientSettings.builder().timeout(long, TimeUnit)} instead
          */
+        @Deprecated
         public Builder maxCommitTime(@Nullable final Long maxCommitTime, final TimeUnit timeUnit) {
             if (maxCommitTime == null) {
                 this.maxCommitTimeMS = null;

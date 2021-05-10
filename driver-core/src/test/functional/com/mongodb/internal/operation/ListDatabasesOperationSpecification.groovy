@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation
 
-
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
@@ -35,12 +34,12 @@ import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.DEFAULT_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.MAX_TIME_MS_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.NO_CSOT_FACTORY
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
-import static com.mongodb.ClusterFixture.executeAsync
-import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
-import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class ListDatabasesOperationSpecification extends OperationFunctionalSpecification {
     def codec = new DocumentCodec()
@@ -48,7 +47,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
     def 'should return a list of database names'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1))
-        def operation = new ListDatabasesOperation(codec)
+        def operation = new ListDatabasesOperation(NO_CSOT_FACTORY, codec)
 
         when:
         def names = executeAndCollectBatchCursorResults(operation, async)*.get('name')
@@ -72,44 +71,28 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
         names.contains(getDatabaseName())
 
         where:
-        async << [true, false]
+        async << [false]
     }
 
     @IgnoreIf({ isSharded() })
     def 'should throw execution timeout exception from execute'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document())
-        def operation = new ListDatabasesOperation(codec).maxTime(1000, MILLISECONDS)
+        def operation = new ListDatabasesOperation(csotFactory, codec)
 
         enableMaxTimeFailPoint()
 
         when:
-        operation.execute(getBinding())
+        execute(operation, async)
 
         then:
         thrown(MongoExecutionTimeoutException)
 
         cleanup:
         disableMaxTimeFailPoint()
-    }
 
-
-    @IgnoreIf({ isSharded() })
-    def 'should throw execution timeout exception from executeAsync'() {
-        given:
-        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document())
-        def operation = new ListDatabasesOperation(codec).maxTime(1000, MILLISECONDS)
-
-        enableMaxTimeFailPoint()
-
-        when:
-        executeAsync(operation);
-
-        then:
-        thrown(MongoExecutionTimeoutException)
-
-        cleanup:
-        disableMaxTimeFailPoint()
+        where:
+        [async, csotFactory] << [[true, false], [MAX_TIME_MS_CSOT_FACTORY, DEFAULT_CSOT_FACTORY]].combinations()
     }
 
     def 'should use the ReadBindings readPreference to set slaveOK'() {
@@ -124,7 +107,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
             getReadPreference() >> readPreference
             getServerApi() >> null
         }
-        def operation = new ListDatabasesOperation(helper.decoder)
+        def operation = new ListDatabasesOperation(DEFAULT_CSOT_FACTORY, helper.decoder)
 
         when:
         operation.execute(readBinding)
@@ -149,7 +132,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
             getServerApi() >> null
             getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
         }
-        def operation = new ListDatabasesOperation(helper.decoder)
+        def operation = new ListDatabasesOperation(DEFAULT_CSOT_FACTORY, helper.decoder)
 
         when:
         operation.executeAsync(readBinding, Stub(SingleResultCallback))

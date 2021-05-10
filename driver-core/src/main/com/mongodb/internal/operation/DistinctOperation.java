@@ -17,11 +17,13 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.internal.async.AsyncBatchCursor;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.ClientSideOperationTimeoutFactory;
+import com.mongodb.internal.async.AsyncBatchCursor;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ConnectionSource;
@@ -29,26 +31,23 @@ import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.QueryResult;
-import com.mongodb.internal.operation.SyncCommandOperationHelper.CommandReadTransformer;
 import com.mongodb.internal.operation.AsyncCommandOperationHelper.CommandReadTransformerAsync;
+import com.mongodb.internal.operation.SyncCommandOperationHelper.CommandReadTransformer;
 import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 
-import java.util.concurrent.TimeUnit;
-
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
-import static com.mongodb.internal.operation.SyncCommandOperationHelper.executeCommand;
 import static com.mongodb.internal.operation.AsyncCommandOperationHelper.executeCommandAsync;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNullOrEmpty;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.validateReadConcernAndCollation;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
+import static com.mongodb.internal.operation.SyncCommandOperationHelper.executeCommand;
 
 /**
  * Finds the distinct values for a specified field across a single collection.
@@ -61,23 +60,25 @@ import static com.mongodb.internal.operation.OperationReadConcernHelper.appendRe
  */
 public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
     private static final String VALUES = "values";
-
+    private final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
     private final MongoNamespace namespace;
     private final String fieldName;
     private final Decoder<T> decoder;
     private boolean retryReads;
     private BsonDocument filter;
-    private long maxTimeMS;
     private Collation collation;
 
     /**
      * Construct an instance.
      *
+     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      * @param fieldName the name of the field to return distinct values.
      * @param decoder   the decoder for the result documents.
      */
-    public DistinctOperation(final MongoNamespace namespace, final String fieldName, final Decoder<T> decoder) {
+    public DistinctOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+                             final String fieldName, final Decoder<T> decoder) {
+        this.clientSideOperationTimeoutFactory = notNull("clientSideOperationTimeoutFactory", clientSideOperationTimeoutFactory);
         this.namespace = notNull("namespace", namespace);
         this.fieldName = notNull("fieldName", fieldName);
         this.decoder = notNull("decoder", decoder);
@@ -129,30 +130,6 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
     }
 
     /**
-     * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
-     *
-     * @param timeUnit the time unit to return the result in
-     * @return the maximum execution time in the given time unit
-     */
-    public long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
-    }
-
-    /**
-     * Sets the maximum execution time on the server for this operation.
-     *
-     * @param maxTime  the max time
-     * @param timeUnit the time unit, which may not be null
-     * @return this
-     */
-    public DistinctOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
-        return this;
-    }
-
-    /**
      * Returns the collation options
      *
      * @return the collation options
@@ -179,13 +156,14 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return executeCommand(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()), createCommandDecoder(),
-                transformer(), retryReads);
+        return executeCommand(clientSideOperationTimeoutFactory.create(), binding, namespace.getDatabaseName(),
+                getCommandCreator(binding.getSessionContext()), createCommandDecoder(), transformer(), retryReads);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        executeCommandAsync(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()), createCommandDecoder(),
+        executeCommandAsync(clientSideOperationTimeoutFactory.create(), binding, namespace.getDatabaseName(),
+                getCommandCreator(binding.getSessionContext()), createCommandDecoder(),
                 asyncTransformer(), retryReads, errorHandlingCallback(callback, LOGGER));
     }
 
@@ -201,9 +179,10 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
     private CommandReadTransformer<BsonDocument, BatchCursor<T>> transformer() {
         return new CommandReadTransformer<BsonDocument, BatchCursor<T>>() {
             @Override
-            public BatchCursor<T> apply(final BsonDocument result, final ConnectionSource source, final Connection connection) {
+            public BatchCursor<T> apply(final ClientSideOperationTimeout clientSideOperationTimeout, final ConnectionSource source,
+                                        final Connection connection, final BsonDocument result) {
                 QueryResult<T> queryResult = createQueryResult(result, connection.getDescription());
-                return new QueryBatchCursor<T>(queryResult, 0, 0, decoder, source);
+                return new QueryBatchCursor<T>(clientSideOperationTimeout, queryResult, 0, 0, decoder, source);
             }
         };
     }
@@ -211,10 +190,11 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
     private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {
         return new CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>>() {
             @Override
-            public AsyncBatchCursor<T> apply(final BsonDocument result, final AsyncConnectionSource source,
-                                             final AsyncConnection connection) {
+            public AsyncBatchCursor<T> apply(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                             final AsyncConnectionSource source, final AsyncConnection connection,
+                                              final BsonDocument result) {
                 QueryResult<T> queryResult = createQueryResult(result, connection.getDescription());
-                return new AsyncSingleBatchQueryCursor<T>(queryResult);
+                return new AsyncSingleBatchQueryCursor<T>(clientSideOperationTimeout, queryResult);
             }
         };
     }
@@ -222,19 +202,20 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
     private CommandCreator getCommandCreator(final SessionContext sessionContext) {
         return new CommandCreator() {
             @Override
-            public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
+            public BsonDocument create(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                       final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
                 validateReadConcernAndCollation(connectionDescription, sessionContext.getReadConcern(), collation);
-                return getCommand(sessionContext);
+                return getCommand(clientSideOperationTimeout, sessionContext);
             }
         };
     }
 
-    private BsonDocument getCommand(final SessionContext sessionContext) {
+    private BsonDocument getCommand(final ClientSideOperationTimeout clientSideOperationTimeout, final SessionContext sessionContext) {
         BsonDocument commandDocument = new BsonDocument("distinct", new BsonString(namespace.getCollectionName()));
         appendReadConcernToCommand(sessionContext, commandDocument);
         commandDocument.put("key", new BsonString(fieldName));
         putIfNotNullOrEmpty(commandDocument, "query", filter);
-        putIfNotZero(commandDocument, "maxTimeMS", maxTimeMS);
+        putIfNotZero(commandDocument, "maxTimeMS", clientSideOperationTimeout.getMaxTimeMS());
         if (collation != null) {
             commandDocument.put("collation", collation.asDocument());
         }

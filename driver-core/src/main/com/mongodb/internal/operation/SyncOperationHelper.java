@@ -21,6 +21,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -33,18 +34,20 @@ import org.bson.codecs.Decoder;
 import java.util.Collections;
 import java.util.List;
 
+import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToQueryResult;
+
 final class SyncOperationHelper {
 
     interface CallableWithConnection<T> {
-        T call(Connection connection);
+        T call(ClientSideOperationTimeout clientSideOperationTimeout, Connection connection);
     }
 
     interface CallableWithSource<T> {
-        T call(ConnectionSource source);
+        T call(ClientSideOperationTimeout clientSideOperationTimeout, ConnectionSource source);
     }
 
     interface CallableWithConnectionAndSource<T> {
-        T call(ConnectionSource source, Connection connection);
+        T call(ClientSideOperationTimeout clientSideOperationTimeout, ConnectionSource source, Connection connection);
     }
 
     static void validateReadConcern(final Connection connection, final ReadConcern readConcern) {
@@ -82,48 +85,52 @@ final class SyncOperationHelper {
         validateCollation(connection, collation);
     }
 
-    static <T> QueryBatchCursor<T> createEmptyBatchCursor(final MongoNamespace namespace, final Decoder<T> decoder,
+    static <T> QueryBatchCursor<T> createEmptyBatchCursor(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                          final MongoNamespace namespace, final Decoder<T> decoder,
                                                           final ServerAddress serverAddress, final int batchSize) {
-        return new QueryBatchCursor<>(new QueryResult<>(namespace, Collections.emptyList(), 0L,
+        return new QueryBatchCursor<>(clientSideOperationTimeout, new QueryResult<>(namespace, Collections.emptyList(), 0L,
                 serverAddress), 0, batchSize, decoder);
     }
 
-    static <T> BatchCursor<T> cursorDocumentToBatchCursor(final BsonDocument cursorDocument, final Decoder<T> decoder,
-                                                          final ConnectionSource source, final Connection connection, final int batchSize) {
-        return new QueryBatchCursor<T>(OperationHelper.<T>cursorDocumentToQueryResult(cursorDocument,
-                source.getServerDescription().getAddress()),
-                0, batchSize, 0, decoder, source, connection);
+    static <T> BatchCursor<T> cursorDocumentToBatchCursor(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                          final BsonDocument cursorDocument, final Decoder<T> decoder,
+                                                          final ConnectionSource source, final int batchSize) {
+        return new QueryBatchCursor<>(clientSideOperationTimeout, cursorDocumentToQueryResult(cursorDocument,
+                source.getServerDescription().getAddress()), 0, batchSize, decoder, source);
     }
 
-    static <T> T withConnection(final ReadBinding binding, final CallableWithConnection<T> callable) {
+    static <T> T withConnection(final ClientSideOperationTimeout clientSideOperationTimeout, final ReadBinding binding,
+                                final CallableWithConnection<T> callable) {
         ConnectionSource source = binding.getReadConnectionSource();
         try {
-            return withConnectionSource(source, callable);
+            return withConnectionSource(clientSideOperationTimeout, source, callable);
         } finally {
             source.release();
         }
     }
 
-    static <T> T withConnection(final ReadBinding binding, final CallableWithConnectionAndSource<T> callable) {
+    static <T> T withConnection(final ClientSideOperationTimeout clientSideOperationTimeout, final ReadBinding binding,
+                                final CallableWithConnectionAndSource<T> callable) {
         ConnectionSource source = binding.getReadConnectionSource();
         try {
-            return withConnectionSource(source, callable);
+            return withConnectionSource(clientSideOperationTimeout, source, callable);
         } finally {
             source.release();
         }
     }
 
-    static <T> T withReadConnectionSource(final ReadBinding binding, final CallableWithSource<T> callable) {
+    static <T> T withReadConnectionSource(final ClientSideOperationTimeout clientSideOperationTimeout, final ReadBinding binding,
+                                          final CallableWithSource<T> callable) {
         ConnectionSource source = binding.getReadConnectionSource();
         try {
-            return callable.call(source);
+            return callable.call(clientSideOperationTimeout, source);
         } finally {
             source.release();
         }
     }
 
-    static <T> T withReleasableConnection(final ReadBinding binding, final MongoException connectionException,
-                                          final CallableWithConnectionAndSource<T> callable) {
+    static <T> T withReleasableConnection(final ClientSideOperationTimeout clientSideOperationTimeout, final ReadBinding binding,
+                                          final MongoException connectionException, final CallableWithConnectionAndSource<T> callable) {
         ConnectionSource source = null;
         Connection connection;
         try {
@@ -136,32 +143,44 @@ final class SyncOperationHelper {
             throw connectionException;
         }
         try {
-            return callable.call(source, connection);
+            return callable.call(clientSideOperationTimeout, source, connection);
         } finally {
             source.release();
         }
     }
 
-    static <T> T withConnection(final WriteBinding binding, final CallableWithConnection<T> callable) {
+    static <T> T withConnection(final ClientSideOperationTimeout clientSideOperationTimeout, final WriteBinding binding,
+                                final CallableWithConnectionAndSource<T> callable) {
         ConnectionSource source = binding.getWriteConnectionSource();
         try {
-            return withConnectionSource(source, callable);
+            return withConnectionSource(clientSideOperationTimeout, source, callable);
         } finally {
             source.release();
         }
     }
 
-    static <T> T withReleasableConnection(final WriteBinding binding, final CallableWithConnectionAndSource<T> callable) {
+    static <T> T withConnection(final ClientSideOperationTimeout clientSideOperationTimeout, final WriteBinding binding,
+                                final CallableWithConnection<T> callable) {
         ConnectionSource source = binding.getWriteConnectionSource();
         try {
-            return callable.call(source, source.getConnection());
+            return withConnectionSource(clientSideOperationTimeout, source, callable);
         } finally {
             source.release();
         }
     }
 
-    static <T> T withReleasableConnection(final WriteBinding binding, final MongoException connectionException,
+    static <T> T withReleasableConnection(final ClientSideOperationTimeout clientSideOperationTimeout, final WriteBinding binding,
                                           final CallableWithConnectionAndSource<T> callable) {
+        ConnectionSource source = binding.getWriteConnectionSource();
+        try {
+            return callable.call(clientSideOperationTimeout, source, source.getConnection());
+        } finally {
+            source.release();
+        }
+    }
+
+    static <T> T withReleasableConnection(final ClientSideOperationTimeout clientSideOperationTimeout, final WriteBinding binding,
+                                          final MongoException connectionException, final CallableWithConnectionAndSource<T> callable) {
         ConnectionSource source = null;
         Connection connection;
         try {
@@ -174,25 +193,27 @@ final class SyncOperationHelper {
             throw connectionException;
         }
         try {
-            return callable.call(source, connection);
+            return callable.call(clientSideOperationTimeout, source, connection);
         } finally {
             source.release();
         }
     }
 
-    static <T> T withConnectionSource(final ConnectionSource source, final CallableWithConnection<T> callable) {
+    static <T> T withConnectionSource(final ClientSideOperationTimeout clientSideOperationTimeout, final ConnectionSource source,
+                                      final CallableWithConnection<T> callable) {
         Connection connection = source.getConnection();
         try {
-            return callable.call(connection);
+            return callable.call(clientSideOperationTimeout, connection);
         } finally {
             connection.release();
         }
     }
 
-    static <T> T withConnectionSource(final ConnectionSource source, final CallableWithConnectionAndSource<T> callable) {
+    static <T> T withConnectionSource(final ClientSideOperationTimeout clientSideOperationTimeout, final ConnectionSource source,
+                                      final CallableWithConnectionAndSource<T> callable) {
         Connection connection = source.getConnection();
         try {
-            return callable.call(source, connection);
+            return callable.call(clientSideOperationTimeout, source, connection);
         } finally {
             connection.release();
         }

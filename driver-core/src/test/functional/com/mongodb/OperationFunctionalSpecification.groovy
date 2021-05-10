@@ -63,6 +63,7 @@ import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
 
+import static com.mongodb.ClusterFixture.DEFAULT_CSOT_FACTORY
 import static com.mongodb.ClusterFixture.TIMEOUT
 import static com.mongodb.ClusterFixture.checkReferenceCountReachesTarget
 import static com.mongodb.ClusterFixture.executeAsync
@@ -74,7 +75,6 @@ import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.internal.operation.OperationUnitSpecification.getMaxWireVersionForServerVersion
 
 class OperationFunctionalSpecification extends Specification {
-
     def setup() {
         ServerHelper.checkPool(getPrimary())
         CollectionHelper.drop(getNamespace())
@@ -100,12 +100,14 @@ class OperationFunctionalSpecification extends Specification {
     }
 
     void acknowledgeWrite(final SingleConnectionBinding binding) {
-        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, false, [new InsertRequest(new BsonDocument())]).execute(binding)
+        new InsertOperation(DEFAULT_CSOT_FACTORY, getNamespace(), true, ACKNOWLEDGED, false, [new InsertRequest(new BsonDocument())])
+                .execute(binding)
         binding.release()
     }
 
     void acknowledgeWrite(final AsyncSingleConnectionBinding binding) {
-        executeAsync(new InsertOperation(getNamespace(), true, ACKNOWLEDGED, false, [new InsertRequest(new BsonDocument())]), binding)
+        executeAsync(new InsertOperation(DEFAULT_CSOT_FACTORY, getNamespace(), true, ACKNOWLEDGED, false,
+                [new InsertRequest(new BsonDocument())]), binding)
         binding.release()
     }
 
