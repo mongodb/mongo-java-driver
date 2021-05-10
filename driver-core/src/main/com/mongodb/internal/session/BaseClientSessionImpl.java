@@ -25,6 +25,7 @@ import com.mongodb.session.ServerSession;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
 
 public class BaseClientSessionImpl implements ClientSession {
@@ -69,9 +70,7 @@ public class BaseClientSessionImpl implements ClientSession {
 
     @Override
     public void setTransactionContext(final ServerAddress address, final Object transactionContext) {
-        if (!(transactionContext instanceof ReferenceCounted)) {
-            throw new AssertionError("transactionContext must be an instance of ReferenceCounted");
-        }
+        assertTrue(transactionContext instanceof ReferenceCounted);
         pinnedServerAddress = address;
         this.transactionContext = (ReferenceCounted) transactionContext;
         this.transactionContext.retain();
