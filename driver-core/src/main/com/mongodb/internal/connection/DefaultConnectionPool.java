@@ -1113,7 +1113,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
     private synchronized void removeConnectionFromServerStats(final ObjectId serviceId) {
         ServerStats serverStats = serverStatsMap.get(serviceId);
-        // assert not null
+        assertNotNull(serverStats);
         serverStats.decrementCount();
         if (serverStats.getConnectionCount() == 0) {
             serverStatsMap.remove(serviceId);
