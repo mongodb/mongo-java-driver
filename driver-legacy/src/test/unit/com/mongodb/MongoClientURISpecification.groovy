@@ -139,7 +139,8 @@ class MongoClientURISpecification extends Specification {
                 + 'retryWrites=true&'
                 + 'retryReads=true&'
                 + 'uuidRepresentation=csharpLegacy&'
-                + 'appName=app1')
+                + 'appName=app1&'
+                + 'timeoutMS=10000')
 
         when:
         def options = uri.getOptions()
@@ -164,6 +165,7 @@ class MongoClientURISpecification extends Specification {
         options.getRetryReads()
         options.getUuidRepresentation() == UuidRepresentation.C_SHARP_LEGACY
         options.getApplicationName() == 'app1'
+        options.getTimeout(MILLISECONDS) == 10000
     }
 
     def 'should have correct defaults for options'() {
@@ -181,6 +183,7 @@ class MongoClientURISpecification extends Specification {
         options.getRetryWrites()
         options.getRetryReads()
         options.getUuidRepresentation() == UuidRepresentation.UNSPECIFIED
+        options.getTimeout(MILLISECONDS) == null
     }
 
     def 'should apply default uri to options'() {
@@ -210,6 +213,7 @@ class MongoClientURISpecification extends Specification {
                 .requiredReplicaSetName('test')
                 .compressorList([MongoCompressor.createZlibCompressor()])
                 .uuidRepresentation(UuidRepresentation.C_SHARP_LEGACY)
+                .timeout(10000, MILLISECONDS)
 
         when:
         def options = new MongoClientURI('mongodb://localhost', optionsBuilder).getOptions()
@@ -240,6 +244,7 @@ class MongoClientURISpecification extends Specification {
         options.getServerSettings().getMinHeartbeatFrequency(MILLISECONDS) == 11
         options.compressorList == [MongoCompressor.createZlibCompressor()]
         options.getUuidRepresentation() == UuidRepresentation.C_SHARP_LEGACY
+        options.getTimeout(MILLISECONDS) == 10000
     }
 
     @Unroll

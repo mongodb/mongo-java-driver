@@ -39,8 +39,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Collections.unmodifiableList;
@@ -99,8 +102,10 @@ public class MongoClientOptions {
 
     private final AutoEncryptionSettings autoEncryptionSettings;
     private final ServerApi serverApi;
+    private final Long timeout;
 
     private MongoClientOptions(final Builder builder) {
+        isTrue("timeout > 0", builder.timeout == null || builder.timeout > 0);
         applicationName = builder.applicationName;
         compressorList = builder.compressorList;
         minConnectionsPerHost = builder.minConnectionsPerHost;
@@ -178,6 +183,7 @@ public class MongoClientOptions {
                 .invalidHostNameAllowed(sslInvalidHostNameAllowed)
                 .context(sslContext)
                 .build();
+        timeout = builder.timeout;
     }
 
     /**
@@ -750,6 +756,38 @@ public class MongoClientOptions {
         return autoEncryptionSettings;
     }
 
+    /**
+     * The time limit for the full execution of an operation.
+     *
+     * <p>If set the following deprecated options will be ignored:
+     * {@code waitQueueTimeoutMS}, {@code socketTimeoutMS}, {@code wTimeoutMS}, {@code maxTimeMS} and {@code maxCommitTimeMS}</p>
+     *
+     * <ul>
+     *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
+     *    <ul>
+     *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
+     *        available</li>
+     *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
+     *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
+     *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
+     *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS">cursor.maxTimeMS</a>.</li>
+     *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
+     *        See: {@link TransactionOptions#getMaxCommitTime}.</li>
+     *   </ul>
+     *   </li>
+     *   <li>{@code 0} means infinite timeout.</li>
+     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+     * </ul>
+     *
+     * @param timeUnit the time unit
+     * @return the timeout in the given time unit
+     * @since 4.x
+     */
+    @Nullable
+    public Long getTimeout(final TimeUnit timeUnit) {
+        return timeout == null ? null : timeUnit.convert(timeout, MILLISECONDS);
+    }
+
     ConnectionPoolSettings getConnectionPoolSettings() {
         return connectionPoolSettings;
     }
@@ -829,16 +867,16 @@ public class MongoClientOptions {
         if (sslInvalidHostNameAllowed != that.sslInvalidHostNameAllowed) {
             return false;
         }
-        if (sslContext != null ? !sslContext.equals(that.sslContext) : that.sslContext != null) {
+        if (!Objects.equals(sslContext, that.sslContext)) {
             return false;
         }
-        if (dbDecoderFactory != null ? !dbDecoderFactory.equals(that.dbDecoderFactory) : that.dbDecoderFactory != null) {
+        if (!Objects.equals(dbDecoderFactory, that.dbDecoderFactory)) {
             return false;
         }
-        if (dbEncoderFactory != null ? !dbEncoderFactory.equals(that.dbEncoderFactory) : that.dbEncoderFactory != null) {
+        if (!Objects.equals(dbEncoderFactory, that.dbEncoderFactory)) {
             return false;
         }
-        if (applicationName != null ? !applicationName.equals(that.applicationName) : that.applicationName != null) {
+        if (!Objects.equals(applicationName, that.applicationName)) {
             return false;
         }
         if (!readPreference.equals(that.readPreference)) {
@@ -862,7 +900,7 @@ public class MongoClientOptions {
         if (!uuidRepresentation.equals(that.uuidRepresentation)) {
             return false;
         }
-        if (serverSelector != null ? !serverSelector.equals(that.serverSelector) : that.serverSelector != null) {
+        if (!Objects.equals(serverSelector, that.serverSelector)) {
             return false;
         }
         if (!clusterListeners.equals(that.clusterListeners)) {
@@ -871,18 +909,19 @@ public class MongoClientOptions {
         if (!commandListeners.equals(that.commandListeners)) {
             return false;
         }
-        if (requiredReplicaSetName != null ? !requiredReplicaSetName.equals(that.requiredReplicaSetName)
-                : that.requiredReplicaSetName != null) {
+        if (!Objects.equals(requiredReplicaSetName, that.requiredReplicaSetName)) {
             return false;
         }
         if (!compressorList.equals(that.compressorList)) {
             return false;
         }
-        if (autoEncryptionSettings != null ? !autoEncryptionSettings.equals(that.autoEncryptionSettings)
-                : that.autoEncryptionSettings != null) {
+        if (!Objects.equals(autoEncryptionSettings, that.autoEncryptionSettings)) {
             return false;
         }
-        if (serverApi != null ? !serverApi.equals(that.serverApi) : that.serverApi != null) {
+        if (!Objects.equals(serverApi, that.serverApi)) {
+            return false;
+        }
+        if (!Objects.equals(timeout, that.timeout)) {
             return false;
         }
 
@@ -925,6 +964,7 @@ public class MongoClientOptions {
         result = 31 * result + compressorList.hashCode();
         result = 31 * result + (autoEncryptionSettings != null ? autoEncryptionSettings.hashCode() : 0);
         result = 31 * result + (serverApi != null ? serverApi.hashCode() : 0);
+        result = 31 * result + (timeout != null ? timeout.hashCode() : 0);
         return result;
     }
 
@@ -969,6 +1009,7 @@ public class MongoClientOptions {
                + ", heartbeatSocketSettings=" + heartbeatSocketSettings
                + ", autoEncryptionSettings="  + autoEncryptionSettings
                + ", serverApi=" + serverApi
+               + ", timeout=" + timeout
                + '}';
     }
 
@@ -979,11 +1020,11 @@ public class MongoClientOptions {
      */
     @NotThreadSafe
     public static class Builder {
-        private final List<ClusterListener> clusterListeners = new ArrayList<ClusterListener>();
-        private final List<CommandListener> commandListeners = new ArrayList<CommandListener>();
-        private final List<ConnectionPoolListener> connectionPoolListeners = new ArrayList<ConnectionPoolListener>();
-        private final List<ServerListener> serverListeners = new ArrayList<ServerListener>();
-        private final List<ServerMonitorListener> serverMonitorListeners = new ArrayList<ServerMonitorListener>();
+        private final List<ClusterListener> clusterListeners = new ArrayList<>();
+        private final List<CommandListener> commandListeners = new ArrayList<>();
+        private final List<ConnectionPoolListener> connectionPoolListeners = new ArrayList<>();
+        private final List<ServerListener> serverListeners = new ArrayList<>();
+        private final List<ServerMonitorListener> serverMonitorListeners = new ArrayList<>();
 
         private String applicationName;
         private List<MongoCompressor> compressorList = Collections.emptyList();
@@ -1019,6 +1060,7 @@ public class MongoClientOptions {
         private boolean cursorFinalizerEnabled = true;
         private AutoEncryptionSettings autoEncryptionSettings;
         private ServerApi serverApi;
+        private Long timeout;
 
         /**
          * Creates a Builder for MongoClientOptions.
@@ -1069,6 +1111,7 @@ public class MongoClientOptions {
             serverMonitorListeners.addAll(options.getServerMonitorListeners());
             autoEncryptionSettings = options.getAutoEncryptionSettings();
             serverApi = options.getServerApi();
+            timeout = options.getTimeout(MILLISECONDS);
         }
 
         Builder(final MongoClientSettings settings) {
@@ -1108,6 +1151,7 @@ public class MongoClientOptions {
             serverListeners.addAll(settings.getServerSettings().getServerListeners());
             serverMonitorListeners.addAll(settings.getServerSettings().getServerMonitorListeners());
             autoEncryptionSettings = settings.getAutoEncryptionSettings();
+            timeout = settings.getTimeout(MILLISECONDS);
         }
 
         /**
@@ -1142,7 +1186,7 @@ public class MongoClientOptions {
          */
         public Builder compressorList(final List<MongoCompressor> compressorList) {
             notNull("compressorList", compressorList);
-            this.compressorList = Collections.unmodifiableList(new ArrayList<MongoCompressor>(compressorList));
+            this.compressorList = Collections.unmodifiableList(new ArrayList<>(compressorList));
             return this;
         }
 
@@ -1507,10 +1551,7 @@ public class MongoClientOptions {
          * @see MongoClientOptions#getDbDecoderFactory()
          */
         public Builder dbDecoderFactory(final DBDecoderFactory dbDecoderFactory) {
-            if (dbDecoderFactory == null) {
-                throw new IllegalArgumentException("null is not a legal value");
-            }
-            this.dbDecoderFactory = dbDecoderFactory;
+            this.dbDecoderFactory = notNull("null is not a legal value", dbDecoderFactory);
             return this;
         }
 
@@ -1522,10 +1563,7 @@ public class MongoClientOptions {
          * @see MongoClientOptions#getDbEncoderFactory()
          */
         public Builder dbEncoderFactory(final DBEncoderFactory dbEncoderFactory) {
-            if (dbEncoderFactory == null) {
-                throw new IllegalArgumentException("null is not a legal value");
-            }
-            this.dbEncoderFactory = dbEncoderFactory;
+            this.dbEncoderFactory = notNull("null is not a legal value", dbEncoderFactory);
             return this;
         }
 
@@ -1624,6 +1662,37 @@ public class MongoClientOptions {
          */
         public Builder autoEncryptionSettings(final AutoEncryptionSettings autoEncryptionSettings) {
             this.autoEncryptionSettings = autoEncryptionSettings;
+            return this;
+        }
+
+        /**
+         * Sets the time limit for the full execution of an operation.
+         *
+         * <ul>
+         *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
+         *    <ul>
+         *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
+         *        available</li>
+         *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
+         *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
+         *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
+         *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS">cursor.maxTimeMS</a>.</li>
+         *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
+         *        See: {@link TransactionOptions#getMaxCommitTime}.</li>
+         *   </ul>
+         *   </li>
+         *   <li>{@code 0} means infinite timeout.</li>
+         *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+         * </ul>
+         *
+         * @param timeout the timeout
+         * @param timeUnit the time unit
+         * @return this
+         * @since 4.x
+         * @see #getTimeout
+         */
+        public Builder timeout(final long timeout, final TimeUnit timeUnit) {
+            this.timeout = MILLISECONDS.convert(timeout, timeUnit);
             return this;
         }
 

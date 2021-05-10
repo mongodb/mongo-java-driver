@@ -40,6 +40,7 @@ import org.mockito.Mock;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -213,6 +214,15 @@ public class MongoClientImplTest extends TestHelper {
                               clientSessionHelper.createClientSessionMono(options, OPERATION_EXECUTOR);
                       assertPublisherIsTheSameAs(expected, mongoClient.startSession(options), "with options");
                   });
+    }
+
+    @Test
+    void testTimeoutMSNotSupported() {
+        assertThrows(UnsupportedOperationException.class, () ->
+            new MongoClientImpl(MongoClientSettings.builder().timeout(0, TimeUnit.MILLISECONDS).build(),
+                    mock(Cluster.class),
+                    OPERATION_EXECUTOR)
+        );
     }
 
     private MongoClientImpl createMongoClient() {

@@ -20,6 +20,7 @@ import com.mongodb.lang.Nullable;
 import org.bson.UuidRepresentation;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -98,8 +99,10 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <li>{@code sslInvalidHostNameAllowed=true|false}: Whether to allow invalid host names for TLS connections.</li>
  * <li>{@code tlsAllowInvalidHostnames=true|false}: Whether to allow invalid host names for TLS connections. Supersedes the
  * sslInvalidHostNameAllowed option</li>
+ * <li>{@code timeoutMS=ms}: Time limit for the full execution of an operation.</li>
  * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li>
- * <li>{@code socketTimeoutMS=ms}: How long a send or receive on a socket can take before timing out.</li>
+ * <li>{@code socketTimeoutMS=ms}: How long a send or receive on a socket can take before timing out.
+ *     Deprecated, use {@code timeoutMS} instead.</li>
  * <li>{@code maxIdleTimeMS=ms}: Maximum idle time of a pooled connection. A connection that exceeds this limit will be closed</li>
  * <li>{@code maxLifeTimeMS=ms}: Maximum life time of a pooled connection. A connection that exceeds this limit will be closed</li>
  * </ul>
@@ -107,6 +110,8 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <p>Connection pool configuration:</p>
  * <ul>
  * <li>{@code maxPoolSize=n}: The maximum number of connections in the connection pool.</li>
+ * <li>{@code waitQueueTimeoutMS=ms}: The maximum wait time in milliseconds that a thread may wait for a connection to
+ *     become available. Deprecated, use {@code timeoutMS} instead.</li>
  * </ul>
  *
  * <p>Write concern configuration:</p>
@@ -135,6 +140,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  *      <ul>
  *          <li>The driver adds { wtimeout : ms } to all write commands. Implies {@code safe=true}.</li>
  *          <li>Used in combination with {@code w}</li>
+ *          <li>Deprecated, use {@code timeoutMS} instead.</li>
  *      </ul>
  *  </li>
  *  <li>{@code retryWrites=true|false}. If true the driver will retry supported write operations if they fail due to a network error.
@@ -416,6 +422,10 @@ public class MongoClientURI {
         UuidRepresentation uuidRepresentation = proxied.getUuidRepresentation();
         if (uuidRepresentation != null) {
             builder.uuidRepresentation(uuidRepresentation);
+        }
+        Long timeout = proxied.getTimeout();
+        if (timeout != null) {
+            builder.timeout(timeout, TimeUnit.MILLISECONDS);
         }
         return builder.build();
     }
