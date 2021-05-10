@@ -119,7 +119,6 @@ public final class ClusterFixture {
     static {
         Runtime.getRuntime().addShutdownHook(new ShutdownHook());
 
-        // TODO: this is a temporary workaround until we actually have a server to test against that supports load balanced mode
         ConnectionString defaultConnectionString = getConnectionStringFromSystemProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
         if (defaultConnectionString != null) {
             Boolean loadBalanced = defaultConnectionString.isLoadBalanced();
