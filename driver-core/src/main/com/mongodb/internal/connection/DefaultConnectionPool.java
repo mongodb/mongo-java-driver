@@ -121,9 +121,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
             @Override
             public int getGeneration(@NonNull final ObjectId serviceId) {
-                synchronized (DefaultConnectionPool.this) {
-                    return serviceStateManager.getGeneration(serviceId);
-                }
+                return serviceStateManager.getGeneration(serviceId);
             }
         };
     }
@@ -407,11 +405,7 @@ class DefaultConnectionPool implements ConnectionPool {
         }
         ObjectId serviceId = connection.getDescription().getServiceId();
         if (serviceId != null) {
-            int result;
-            synchronized (this) {
-                result = serviceStateManager.getGeneration(serviceId);
-            }
-            return result > generation;
+            return serviceStateManager.getGeneration(serviceId) > generation;
         } else {
             return this.generation.get() > generation;
         }
@@ -499,9 +493,7 @@ class DefaultConnectionPool implements ConnectionPool {
                 connectionCreated(connectionPoolListener, wrapped.getDescription().getConnectionId());
                 wrapped.open();
                 if (getDescription().getServiceId() != null) {
-                    synchronized (DefaultConnectionPool.this) {
-                        serviceStateManager.addConnection(getDescription().getServiceId());
-                    }
+                    serviceStateManager.addConnection(getDescription().getServiceId());
                 }
             } catch (RuntimeException e) {
                 closeAndHandleOpenFailure();
@@ -752,9 +744,7 @@ class DefaultConnectionPool implements ConnectionPool {
             }
             connection.close();
             if (connection.getDescription().getServiceId() != null) {
-                synchronized (DefaultConnectionPool.this) {
-                    serviceStateManager.removeConnection(connection.getDescription().getServiceId());
-                }
+                serviceStateManager.removeConnection(connection.getDescription().getServiceId());
             }
         }
 
@@ -1114,8 +1104,13 @@ class DefaultConnectionPool implements ConnectionPool {
          * due to method {@link #removeConnection(ObjectId)} removing {@link ServiceState} when the connection count reaches 0.
          */
         boolean incrementGeneration(final ObjectId serviceId, final int expectedGeneration) {
-            ServiceState state = stateByServiceId.get(serviceId);
-            assertNotNull(state);
+            ServiceState state = stateByServiceId.compute(serviceId, (k, v) -> {
+                if (v == null) {
+                    v = new ServiceState();
+                }
+                return v;
+
+            });
             return state.incrementGeneration(expectedGeneration);
         }
 
