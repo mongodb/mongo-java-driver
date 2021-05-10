@@ -407,8 +407,9 @@ class DefaultConnectionPool implements ConnectionPool {
         if (generation == -1) {
             return false;
         }
-        if (connection.getDescription().getServiceId() != null) {
-            return getGenerationFromServerStats(connection.getDescription().getServiceId()) > generation;
+        ObjectId serviceId = connection.getDescription().getServiceId();
+        if (serviceId != null) {
+            return getGenerationFromServerStats(serviceId) > generation;
         } else {
             return this.generation.get() > generation;
         }

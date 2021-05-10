@@ -60,6 +60,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -162,7 +163,7 @@ public class InternalStreamConnection implements InternalConnection {
             initialServerDescription = initializationDescription.getServerDescription();
 
             if (clusterConnectionMode == ClusterConnectionMode.LOAD_BALANCED) {
-                generation = connectionGenerationSupplier.getGeneration(description.getServiceId());
+                generation = connectionGenerationSupplier.getGeneration(assertNotNull(description.getServiceId()));
             }
 
             initializationDescription = connectionInitializer.completeHandshake(this, initializationDescription);

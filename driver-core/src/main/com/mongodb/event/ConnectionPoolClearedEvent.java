@@ -17,6 +17,7 @@
 package com.mongodb.event;
 
 import com.mongodb.connection.ServerId;
+import com.mongodb.lang.Nullable;
 import org.bson.types.ObjectId;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -27,7 +28,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 4.0
  */
 public final class ConnectionPoolClearedEvent {
-    private final ServerId serverId;
+    @Nullable private final ServerId serverId;
     private final ObjectId serviceId;
 
     /**
@@ -43,10 +44,10 @@ public final class ConnectionPoolClearedEvent {
      * Constructs a new instance of the event.
      *
      * @param serverId the server id
-     * @param serviceId the service id
+     * @param serviceId the service id, which may be null
      * @since 4.3
      */
-    public ConnectionPoolClearedEvent(final ServerId serverId, final ObjectId serviceId) {
+    public ConnectionPoolClearedEvent(final ServerId serverId, @Nullable final ObjectId serviceId) {
         this.serverId = notNull("serverId", serverId);
         this.serviceId = serviceId;
     }
@@ -68,9 +69,10 @@ public final class ConnectionPoolClearedEvent {
      *     service id reported on the connection on which the error occurred.
      * </p>
      *
-     * @return the service id
+     * @return the service id, which may be null
      * @since 4.3
      */
+    @Nullable
     public ObjectId getServiceId() {
         return serviceId;
     }
