@@ -1132,7 +1132,7 @@ class DefaultConnectionPool implements ConnectionPool {
         }
     }
 
-    private synchronized int getGenerationFromServerStats(final ObjectId serviceId) {
+    private synchronized int getGenerationFromServerStats(@NonNull final ObjectId serviceId) {
         ServerStats serverStats = getServerStats(serviceId);
         return serverStats.getGeneration();
     }
