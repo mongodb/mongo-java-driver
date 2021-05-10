@@ -25,8 +25,8 @@ import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.operation.OperationHelper.AsyncCallableWithConnection;
-import com.mongodb.internal.operation.OperationHelper.CallableWithConnection;
+import com.mongodb.internal.operation.AsyncOperationHelper.AsyncCallableWithConnection;
+import com.mongodb.internal.operation.SyncOperationHelper.CallableWithConnection;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
@@ -43,9 +43,9 @@ import static com.mongodb.internal.operation.CommandOperationHelper.writeConcern
 import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorWriteTransformer;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.OperationHelper.releasingCallback;
-import static com.mongodb.internal.operation.OperationHelper.withAsyncConnection;
-import static com.mongodb.internal.operation.OperationHelper.withConnection;
+import static com.mongodb.internal.operation.AsyncOperationHelper.releasingCallback;
+import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncConnection;
+import static com.mongodb.internal.operation.SyncOperationHelper.withConnection;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 
 /**

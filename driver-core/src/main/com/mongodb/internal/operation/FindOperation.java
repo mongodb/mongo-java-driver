@@ -35,7 +35,7 @@ import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.internal.connection.QueryResult;
-import com.mongodb.internal.operation.OperationHelper.CallableWithSource;
+import com.mongodb.internal.operation.SyncOperationHelper.CallableWithSource;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
@@ -53,6 +53,7 @@ import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.operation.AsyncOperationHelper.AsyncCallableWithConnectionAndSource;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformerAsync;
@@ -61,13 +62,9 @@ import static com.mongodb.internal.operation.CommandOperationHelper.executeComma
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNullOrEmpty;
 import static com.mongodb.internal.operation.ExplainHelper.asExplainCommand;
-import static com.mongodb.internal.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToQueryResult;
-import static com.mongodb.internal.operation.OperationHelper.releasingCallback;
 import static com.mongodb.internal.operation.OperationHelper.validateFindOptions;
-import static com.mongodb.internal.operation.OperationHelper.withAsyncReadConnection;
-import static com.mongodb.internal.operation.OperationHelper.withReadConnectionSource;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
 
@@ -649,7 +646,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return withReadConnectionSource(binding, new CallableWithSource<BatchCursor<T>>() {
+        return SyncOperationHelper.withReadConnectionSource(binding, new CallableWithSource<BatchCursor<T>>() {
             @Override
             public BatchCursor<T> call(final ConnectionSource source) {
                 Connection connection = source.getConnection();
@@ -663,7 +660,8 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                     }
                 } else {
                     try {
-                        validateFindOptions(connection, binding.getSessionContext().getReadConcern(), collation, allowDiskUse);
+                        SyncOperationHelper.validateFindOptions(connection, binding.getSessionContext().getReadConcern(), collation,
+                                allowDiskUse);
                         QueryResult<T> queryResult = connection.query(namespace,
                                 asDocument(connection.getDescription(), binding.getReadPreference()),
                                 projection,
@@ -688,7 +686,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        withAsyncReadConnection(binding, new AsyncCallableWithConnectionAndSource() {
+        AsyncOperationHelper.withAsyncReadConnection(binding, new AsyncCallableWithConnectionAndSource() {
             @Override
             public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
                 SingleResultCallback<AsyncBatchCursor<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
@@ -703,10 +701,9 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                                 asyncTransformer(), retryReads, connection, wrappedCallback);
                     } else {
                         final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback =
-                                releasingCallback(errHandlingCallback, source, connection);
-                        validateFindOptions(source, connection, binding.getSessionContext().getReadConcern(), collation,
-                                allowDiskUse,
-                                new AsyncCallableWithConnectionAndSource() {
+                                AsyncOperationHelper.releasingCallback(errHandlingCallback, source, connection);
+                        AsyncOperationHelper.validateFindOptions(source, connection, binding.getSessionContext().getReadConcern(),
+                                collation, allowDiskUse, new AsyncCallableWithConnectionAndSource() {
                                     @Override
                                     public void call(final AsyncConnectionSource source, final AsyncConnection connection, final
                                     Throwable t) {

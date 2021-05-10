@@ -52,11 +52,11 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
 import static com.mongodb.internal.operation.OperationHelper.canRetryWrite;
-import static com.mongodb.internal.operation.OperationHelper.releasingCallback;
-import static com.mongodb.internal.operation.OperationHelper.withAsyncConnection;
-import static com.mongodb.internal.operation.OperationHelper.withAsyncReadConnection;
-import static com.mongodb.internal.operation.OperationHelper.withReadConnectionSource;
-import static com.mongodb.internal.operation.OperationHelper.withReleasableConnection;
+import static com.mongodb.internal.operation.AsyncOperationHelper.releasingCallback;
+import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncConnection;
+import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncReadConnection;
+import static com.mongodb.internal.operation.SyncOperationHelper.withReadConnectionSource;
+import static com.mongodb.internal.operation.SyncOperationHelper.withReleasableConnection;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 

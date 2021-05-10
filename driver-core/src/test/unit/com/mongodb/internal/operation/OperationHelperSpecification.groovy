@@ -25,13 +25,9 @@ import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerId
-import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.bulk.DeleteRequest
-import com.mongodb.internal.bulk.IndexRequest
 import com.mongodb.internal.bulk.UpdateRequest
 import com.mongodb.internal.bulk.WriteRequest
-import com.mongodb.internal.connection.AsyncConnection
-import com.mongodb.internal.connection.Connection
 import com.mongodb.internal.session.SessionContext
 import org.bson.BsonDocument
 import spock.lang.Specification
@@ -41,43 +37,19 @@ import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.connection.ServerConnectionState.CONNECTED
 import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY
 import static com.mongodb.connection.ServerType.STANDALONE
-import static com.mongodb.internal.operation.OperationHelper.AsyncCallableWithConnection
-import static com.mongodb.internal.operation.OperationHelper.AsyncCallableWithConnectionAndSource
 import static com.mongodb.internal.operation.OperationHelper.isRetryableRead
 import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite
 import static com.mongodb.internal.operation.OperationHelper.validateCollation
 import static com.mongodb.internal.operation.OperationHelper.validateCollationAndWriteConcern
 import static com.mongodb.internal.operation.OperationHelper.validateFindOptions
-import static com.mongodb.internal.operation.OperationHelper.validateIndexRequestCollations
 import static com.mongodb.internal.operation.OperationHelper.validateReadConcern
 import static com.mongodb.internal.operation.OperationHelper.validateWriteRequests
 
 class OperationHelperSpecification extends Specification {
 
     def 'should accept valid read concern'() {
-        given:
-        def connection = Stub(Connection) {
-            getDescription() >> connectionDescription
-        }
-
         when:
-        validateReadConcern(connection, readConcern)
-
-        then:
-        notThrown(IllegalArgumentException)
-
-        when:
-        def asyncConnection = Stub(AsyncConnection) {
-            getDescription() >> connectionDescription
-        }
-        validateReadConcern(asyncConnection, readConcern, asyncCallableWithConnection)
-
-        then:
-        notThrown(IllegalArgumentException)
-
-        when:
-        def asyncConnectionSource = Stub(AsyncConnectionSource)
-        validateReadConcern(asyncConnectionSource, asyncConnection, readConcern, asyncCallableWithConnectionAndSource)
+        validateReadConcern(connectionDescription, readConcern)
 
         then:
         notThrown(IllegalArgumentException)
@@ -91,29 +63,8 @@ class OperationHelperSpecification extends Specification {
     }
 
     def 'should throw on invalid read concern'() {
-        given:
-        def connection = Stub(Connection) {
-            getDescription() >> connectionDescription
-        }
-
         when:
-        validateReadConcern(connection, readConcern)
-
-        then:
-        thrown(IllegalArgumentException)
-
-        when:
-        def asyncConnection = Stub(AsyncConnection) {
-            getDescription() >> connectionDescription
-        }
-        validateReadConcern(asyncConnection, readConcern, asyncCallableWithConnection)
-
-        then:
-        thrown(IllegalArgumentException)
-
-        when:
-        def asyncConnectionSource = Stub(AsyncConnectionSource)
-        validateReadConcern(asyncConnectionSource, asyncConnection, readConcern, asyncCallableWithConnectionAndSource)
+        validateReadConcern(connectionDescription, readConcern)
 
         then:
         thrown(IllegalArgumentException)
@@ -125,29 +76,8 @@ class OperationHelperSpecification extends Specification {
     }
 
     def 'should accept valid collation'() {
-        given:
-        def connection = Stub(Connection) {
-            getDescription() >> connectionDescription
-        }
-
         when:
-        validateCollation(connection, collation)
-
-        then:
-        notThrown(IllegalArgumentException)
-
-        when:
-        def asyncConnection = Stub(AsyncConnection) {
-            getDescription() >> connectionDescription
-        }
-        validateCollation(asyncConnection, collation, asyncCallableWithConnection)
-
-        then:
-        notThrown(IllegalArgumentException)
-
-        when:
-        def asyncConnactionSource = Stub(AsyncConnectionSource)
-        validateCollation(asyncConnactionSource, asyncConnection, collation, asyncCallableWithConnectionAndSource)
+        validateCollation(connectionDescription, collation)
 
         then:
         notThrown(IllegalArgumentException)
@@ -165,34 +95,13 @@ class OperationHelperSpecification extends Specification {
     }
 
     def 'should throw on invalid collation'() {
-        given:
-        def connection = Stub(Connection) {
-            getDescription() >> connectionDescription
-        }
-
         when:
-        validateCollation(connection, collation)
+        validateCollation(connectionDescription, collation)
 
         then:
         thrown(IllegalArgumentException)
 
         when:
-        def asyncConnection = Stub(AsyncConnection) {
-            getDescription() >> connectionDescription
-        }
-        validateCollation(asyncConnection, collation, asyncCallableWithConnection)
-
-        then:
-        thrown(IllegalArgumentException)
-
-        when:
-        validateCollationAndWriteConcern(connectionDescription, collation, UNACKNOWLEDGED)
-
-        then:
-        thrown(IllegalArgumentException)
-
-        when:
-
         validateCollationAndWriteConcern(threeSixConnectionDescription, collation, UNACKNOWLEDGED)
 
         then:
@@ -204,30 +113,8 @@ class OperationHelperSpecification extends Specification {
     }
 
     def 'should accept valid find options'() {
-        given:
-        def connection = Stub(Connection) {
-            getDescription() >> connectionDescription
-        }
-
         when:
-        validateFindOptions(connection, readConcern, collation, allowDiskUse)
-
-        then:
-        notThrown(IllegalArgumentException)
-
-        when:
-        def asyncConnection = Stub(AsyncConnection) {
-            getDescription() >> connectionDescription
-        }
-        validateFindOptions(asyncConnection, readConcern, collation, allowDiskUse, asyncCallableWithConnection)
-
-        then:
-        notThrown(IllegalArgumentException)
-
-        when:
-        def asyncConnactionSource = Stub(AsyncConnectionSource)
-        validateFindOptions(asyncConnactionSource, asyncConnection, readConcern, collation, allowDiskUse,
-                asyncCallableWithConnectionAndSource)
+        validateFindOptions(connectionDescription, readConcern, collation, allowDiskUse)
 
         then:
         notThrown(IllegalArgumentException)
@@ -239,30 +126,8 @@ class OperationHelperSpecification extends Specification {
     }
 
     def 'should throw on invalid find options'() {
-        given:
-        def connection = Stub(Connection) {
-            getDescription() >> connectionDescription
-        }
-
         when:
-        validateFindOptions(connection, readConcern, collation, allowDiskUse)
-
-        then:
-        thrown(IllegalArgumentException)
-
-        when:
-        def asyncConnection = Stub(AsyncConnection) {
-            getDescription() >> connectionDescription
-        }
-        validateFindOptions(asyncConnection, readConcern, collation, allowDiskUse, asyncCallableWithConnection)
-
-        then:
-        thrown(IllegalArgumentException)
-
-        when:
-        def asyncConnactionSource = Stub(AsyncConnectionSource)
-        validateFindOptions(asyncConnactionSource, asyncConnection, readConcern, collation, allowDiskUse,
-                asyncCallableWithConnectionAndSource)
+        validateFindOptions(connectionDescription, readConcern, collation, allowDiskUse)
 
         then:
         thrown(IllegalArgumentException)
@@ -281,15 +146,6 @@ class OperationHelperSpecification extends Specification {
         then:
         notThrown(IllegalArgumentException)
 
-        when:
-        def asyncConnection = Stub(AsyncConnection) {
-            getDescription() >> connectionDescription
-        }
-        validateWriteRequests(asyncConnection, bypassDocumentValidation, writeRequests, writeConcern, asyncCallableWithConnection)
-
-        then:
-        notThrown(IllegalArgumentException)
-
         where:
         connectionDescription          | bypassDocumentValidation | writeConcern   | writeRequests
         threeConnectionDescription     | null                     | ACKNOWLEDGED   | [new DeleteRequest(BsonDocument.parse('{a: "a"}}'))]
@@ -300,93 +156,6 @@ class OperationHelperSpecification extends Specification {
                                                                                       BsonDocument.parse('{$set: {a: "A"}}'),
                                                                                       WriteRequest.Type.REPLACE).collation(enCollation)]
     }
-
-    def 'should throw on invalid writeRequests'() {
-        given:
-        def asyncThreeTwoConnection = Stub(AsyncConnection) {
-            getDescription() >> threeTwoConnectionDescription
-        }
-        def writeRequests = [new DeleteRequest(BsonDocument.parse('{a: "a"}}'))]
-
-        when:
-        validateWriteRequests(asyncThreeTwoConnection, false, writeRequests, UNACKNOWLEDGED, asyncCallableWithConnection)
-
-        then:
-        thrown(MongoClientException)
-
-        when:
-        def writeRequestsWithCollation = [new DeleteRequest(BsonDocument.parse('{a: "a"}}'))
-                                            .collation(enCollation)]
-        validateWriteRequests(asyncThreeTwoConnection, false, writeRequestsWithCollation, ACKNOWLEDGED, asyncCallableWithConnection)
-
-        then:
-        thrown(IllegalArgumentException)
-
-        when:
-        def asyncThreeFourConnection = Stub(AsyncConnection) {
-            getDescription() >> threeFourConnectionDescription
-        }
-        validateWriteRequests(asyncThreeFourConnection, null, writeRequestsWithCollation, UNACKNOWLEDGED, asyncCallableWithConnection)
-
-        then:
-        thrown(MongoClientException)
-    }
-
-    def 'should accept valid indexRequests'() {
-        given:
-        def connection = Stub(Connection) {
-            getDescription() >> connectionDescription
-        }
-
-        when:
-        validateIndexRequestCollations(connection, indexRequests)
-
-        then:
-        notThrown(IllegalArgumentException)
-
-        when:
-        def asyncConnection = Stub(AsyncConnection) {
-            getDescription() >> connectionDescription
-        }
-        validateIndexRequestCollations(asyncConnection, indexRequests, asyncCallableWithConnection)
-
-        then:
-        notThrown(IllegalArgumentException)
-
-        where:
-        connectionDescription          | indexRequests
-        threeFourConnectionDescription | [new IndexRequest(BsonDocument.parse('{a: 1}}')).collation(enCollation)]
-        threeConnectionDescription     | [new IndexRequest(BsonDocument.parse('{a: 1}}'))]
-    }
-
-
-    def 'should throw on invalid indexRequests'() {
-        given:
-        def connection = Stub(Connection) {
-            getDescription() >> connectionDescription
-        }
-
-        when:
-        validateIndexRequestCollations(connection, indexRequests)
-
-        then:
-        thrown(IllegalArgumentException)
-
-        when:
-        def asyncConnection = Stub(AsyncConnection) {
-            getDescription() >> connectionDescription
-        }
-        validateIndexRequestCollations(asyncConnection, indexRequests, asyncCallableWithConnection)
-
-        then:
-        thrown(IllegalArgumentException)
-
-        where:
-        connectionDescription       | indexRequests
-        threeConnectionDescription  | [new IndexRequest(BsonDocument.parse('{a: 1}}')).collation(enCollation)]
-    }
-
-
 
     def 'should check if a valid retryable write'() {
         given:
@@ -466,23 +235,5 @@ class OperationHelperSpecification extends Specification {
             .state(CONNECTED).build()
 
     static Collation enCollation = Collation.builder().locale('en').build()
-
-    static asyncCallableWithConnection = new AsyncCallableWithConnection() {
-        @Override
-        void call(final AsyncConnection conn, final Throwable t) {
-            if (t != null) {
-                throw t
-            }
-        }
-    }
-
-    static asyncCallableWithConnectionAndSource = new AsyncCallableWithConnectionAndSource() {
-        @Override
-        void call(final AsyncConnectionSource source, final AsyncConnection conn, final Throwable t) {
-            if (t != null) {
-                throw t
-            }
-        }
-    }
 
 }

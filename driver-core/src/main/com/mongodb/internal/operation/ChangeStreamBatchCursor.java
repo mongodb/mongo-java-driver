@@ -23,7 +23,7 @@ import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadBinding;
-import com.mongodb.internal.operation.OperationHelper.CallableWithSource;
+import com.mongodb.internal.operation.SyncOperationHelper.CallableWithSource;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 import org.bson.RawBsonDocument;
@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.internal.operation.ChangeStreamBatchCursorHelper.isRetryableError;
-import static com.mongodb.internal.operation.OperationHelper.withReadConnectionSource;
+import static com.mongodb.internal.operation.SyncOperationHelper.withReadConnectionSource;
 
 final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     private final ReadBinding binding;

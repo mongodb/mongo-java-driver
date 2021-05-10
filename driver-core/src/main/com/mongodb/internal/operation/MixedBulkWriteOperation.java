@@ -52,21 +52,21 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
 import static com.mongodb.internal.bulk.WriteRequest.Type.INSERT;
 import static com.mongodb.internal.bulk.WriteRequest.Type.REPLACE;
 import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE;
+import static com.mongodb.internal.operation.AsyncOperationHelper.AsyncCallableWithConnection;
+import static com.mongodb.internal.operation.AsyncOperationHelper.AsyncCallableWithConnectionAndSource;
+import static com.mongodb.internal.operation.AsyncOperationHelper.ConnectionReleasingWrappedCallback;
+import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncConnection;
 import static com.mongodb.internal.operation.CommandOperationHelper.addRetryableWriteErrorLabel;
 import static com.mongodb.internal.operation.CommandOperationHelper.logRetryExecute;
 import static com.mongodb.internal.operation.CommandOperationHelper.logUnableToRetry;
 import static com.mongodb.internal.operation.CommandOperationHelper.shouldAttemptToRetryWrite;
 import static com.mongodb.internal.operation.CommandOperationHelper.transformWriteException;
-import static com.mongodb.internal.operation.OperationHelper.AsyncCallableWithConnection;
-import static com.mongodb.internal.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
-import static com.mongodb.internal.operation.OperationHelper.CallableWithConnectionAndSource;
-import static com.mongodb.internal.operation.OperationHelper.ConnectionReleasingWrappedCallback;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
 import static com.mongodb.internal.operation.OperationHelper.validateWriteRequests;
-import static com.mongodb.internal.operation.OperationHelper.withAsyncConnection;
-import static com.mongodb.internal.operation.OperationHelper.withReleasableConnection;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotSix;
+import static com.mongodb.internal.operation.SyncOperationHelper.CallableWithConnectionAndSource;
+import static com.mongodb.internal.operation.SyncOperationHelper.withReleasableConnection;
 
 /**
  * An operation to execute a series of write operations in bulk.
@@ -208,8 +208,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 if (t != null) {
                     errHandlingCallback.onResult(null, t);
                 } else {
-                    validateWriteRequests(connection, bypassDocumentValidation, writeRequests, getAppliedWriteConcern(binding),
-                            new AsyncCallableWithConnection() {
+                    AsyncOperationHelper.validateWriteRequests(connection, bypassDocumentValidation, writeRequests,
+                            getAppliedWriteConcern(binding), new AsyncCallableWithConnection() {
                                 @Override
                                 public void call(final AsyncConnection connection, final Throwable t1) {
                                     ConnectionReleasingWrappedCallback<BulkWriteResult> releasingCallback =

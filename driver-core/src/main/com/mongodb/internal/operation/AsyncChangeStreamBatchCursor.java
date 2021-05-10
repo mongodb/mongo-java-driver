@@ -23,7 +23,7 @@ import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadBinding;
-import com.mongodb.internal.operation.OperationHelper.AsyncCallableWithSource;
+import com.mongodb.internal.operation.AsyncOperationHelper.AsyncCallableWithSource;
 import com.mongodb.lang.NonNull;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
@@ -39,7 +39,7 @@ import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.ChangeStreamBatchCursorHelper.isRetryableError;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.OperationHelper.withAsyncReadConnection;
+import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncReadConnection;
 import static java.lang.String.format;
 
 final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
