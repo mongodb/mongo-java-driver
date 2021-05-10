@@ -28,10 +28,10 @@ import org.bson.BsonInt32;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommand;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandAsync;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorTransformer;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorWriteTransformer;
+import static com.mongodb.internal.operation.SyncCommandOperationHelper.executeCommand;
+import static com.mongodb.internal.operation.AsyncCommandOperationHelper.executeCommandAsync;
+import static com.mongodb.internal.operation.SyncCommandOperationHelper.writeConcernErrorTransformer;
+import static com.mongodb.internal.operation.AsyncCommandOperationHelper.writeConcernErrorTransformerAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.internal.operation.SyncOperationHelper.CallableWithConnection;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
@@ -105,7 +105,7 @@ public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOp
                     errHandlingCallback.onResult(null, t);
                 } else {
                     executeCommandAsync(binding, databaseName, getCommand(connection.getDescription()), connection,
-                            writeConcernErrorWriteTransformer(), releasingCallback(errHandlingCallback, connection));
+                            writeConcernErrorTransformerAsync(), releasingCallback(errHandlingCallback, connection));
 
                 }
             }

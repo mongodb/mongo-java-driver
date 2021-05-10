@@ -55,10 +55,10 @@ import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.AsyncCallableWithConnectionAndSource;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
-import static com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformer;
-import static com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformerAsync;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandAsyncWithConnection;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandWithConnection;
+import static com.mongodb.internal.operation.SyncCommandOperationHelper.CommandReadTransformer;
+import static com.mongodb.internal.operation.AsyncCommandOperationHelper.CommandReadTransformerAsync;
+import static com.mongodb.internal.operation.AsyncCommandOperationHelper.executeCommandAsyncWithConnection;
+import static com.mongodb.internal.operation.SyncCommandOperationHelper.executeCommandWithConnection;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNullOrEmpty;
 import static com.mongodb.internal.operation.ExplainHelper.asExplainCommand;
@@ -883,7 +883,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     }
 
     private CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return new CommandOperationHelper.CommandCreator() {
+        return new CommandCreator() {
             @Override
             public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
                 validateFindOptions(connectionDescription, sessionContext.getReadConcern(), collation, allowDiskUse);

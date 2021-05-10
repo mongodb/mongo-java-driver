@@ -22,6 +22,7 @@ import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import org.bson.BsonDocument;
 
+import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.CommandOperationHelper.noOpRetryCommandModifier;
 
 /**
@@ -59,10 +60,10 @@ public class AbortTransactionOperation extends TransactionOperation {
     }
 
     @Override
-    CommandOperationHelper.CommandCreator getCommandCreator() {
+    CommandCreator getCommandCreator() {
         final CommandOperationHelper.CommandCreator creator = super.getCommandCreator();
         if (recoveryToken != null) {
-            return new CommandOperationHelper.CommandCreator() {
+            return new CommandCreator() {
                 @Override
                 public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
                     return creator.create(serverDescription, connectionDescription).append("recoveryToken", recoveryToken);

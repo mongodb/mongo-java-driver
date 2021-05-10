@@ -30,8 +30,9 @@ import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.operation.AsyncCommandOperationHelper.executeRetryableCommandAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableCommand;
+import static com.mongodb.internal.operation.SyncCommandOperationHelper.executeRetryableCommand;
 import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
 
@@ -74,7 +75,7 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<T> callback) {
-        executeRetryableCommand(binding, getDatabaseName(), null, getFieldNameValidator(),
+        executeRetryableCommandAsync(binding, getDatabaseName(), null, getFieldNameValidator(),
                 CommandResultDocumentCodec.create(getDecoder(), "value"),
                 getCommandCreator(binding.getSessionContext()), FindAndModifyHelper.<T>asyncTransformer(), callback);
     }
