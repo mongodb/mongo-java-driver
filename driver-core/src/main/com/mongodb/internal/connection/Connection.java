@@ -175,5 +175,9 @@ public interface Connection extends ReferenceCounted {
         TRANSACTION
     }
 
-    void markAsPinned(PinningMode pinningMode);
+    /**
+     * Marks the connection as pinned. Used so that any pool timeout exceptions can include information about the pinned connections,
+     * and what they are pinned to.
+     */
+     void markAsPinned(PinningMode pinningMode);
 }
