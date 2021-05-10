@@ -51,8 +51,8 @@ import org.bson.codecs.Decoder;
 import org.bson.types.ObjectId;
 
 import java.util.Deque;
+import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -679,7 +679,7 @@ class DefaultConnectionPool implements ConnectionPool {
         public synchronized void markAsPinned(final Connection.PinningMode pinningMode) {
             assertNotNull(pinningMode);
             if (pinningModes == null) {
-                pinningModes = new HashSet<>(2);
+                pinningModes = EnumSet.noneOf(Connection.PinningMode.class);
             } else {
                 assertFalse(pinningModes.contains(pinningMode));
             }
