@@ -87,6 +87,7 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
    * @param duration the duration
    * @return this
    */
+  @deprecated("prefer `MongoCollection[T].withTimeout` instead")
   def maxTime(duration: Duration): FindObservable[TResult] = {
     wrapped.maxTime(duration.toMillis, TimeUnit.MILLISECONDS)
     this

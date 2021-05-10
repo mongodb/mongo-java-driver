@@ -52,6 +52,7 @@ case class DistinctObservable[TResult](private val wrapped: DistinctPublisher[TR
    * @param duration the duration
    * @return this
    */
+  @deprecated("prefer `MongoCollection[T].withTimeout` instead")
   def maxTime(duration: Duration): DistinctObservable[TResult] = {
     wrapped.maxTime(duration.toMillis, TimeUnit.MILLISECONDS)
     this

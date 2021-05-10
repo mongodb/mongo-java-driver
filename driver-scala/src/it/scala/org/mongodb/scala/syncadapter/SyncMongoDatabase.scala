@@ -24,6 +24,7 @@ import org.bson.conversions.Bson
 import org.mongodb.scala.MongoDatabase
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 
+import java.util.concurrent.TimeUnit
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
@@ -39,6 +40,9 @@ case class SyncMongoDatabase(wrapped: MongoDatabase) extends JMongoDatabase {
 
   override def getReadConcern: ReadConcern = wrapped.readConcern
 
+  override def getTimeout(timeUnit: TimeUnit): java.lang.Long =
+    wrapped.timeout.map(t => Long.box(timeUnit.convert(t.toMillis, TimeUnit.MILLISECONDS))).orNull
+
   override def withCodecRegistry(codecRegistry: CodecRegistry) =
     SyncMongoDatabase(wrapped.withCodecRegistry(codecRegistry))
 
@@ -47,6 +51,9 @@ case class SyncMongoDatabase(wrapped: MongoDatabase) extends JMongoDatabase {
   override def withWriteConcern(writeConcern: WriteConcern) = throw new UnsupportedOperationException
 
   override def withReadConcern(readConcern: ReadConcern) = throw new UnsupportedOperationException
+
+  override def withTimeout(timeout: Long, timeUnit: TimeUnit): JMongoDatabase =
+    SyncMongoDatabase(wrapped.withTimeout(timeout, timeUnit))
 
   override def getCollection(collectionName: String) =
     SyncMongoCollection[Document](wrapped.getCollection(collectionName))

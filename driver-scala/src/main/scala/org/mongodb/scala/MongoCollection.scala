@@ -17,7 +17,6 @@
 package org.mongodb.scala
 
 import java.util
-
 import com.mongodb.reactivestreams.client.{ MongoCollection => JMongoCollection }
 import org.bson.codecs.configuration.CodecRegistry
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
@@ -27,6 +26,7 @@ import org.mongodb.scala.result._
 import org.reactivestreams.Publisher
 
 import scala.collection.JavaConverters._
+import scala.concurrent.duration.{ Duration, MILLISECONDS }
 import scala.reflect.ClassTag
 
 // scalastyle:off number.of.methods file.size.limit
@@ -84,6 +84,28 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   lazy val readConcern: ReadConcern = wrapped.getReadConcern
 
   /**
+   * The time limit for the full execution of an operation.
+   *
+   * If not null the following deprecated options will be ignored:
+   *  `waitQueueTimeoutMS`, `socketTimeoutMS`, `wTimeoutMS`, `maxTimeMS` and `maxCommitTimeMS`
+   *
+   *   -`null` means that the timeout mechanism for operations will defer to using:
+   *      -`waitQueueTimeoutMS`: The maximum wait time in milliseconds that a thread may wait for a connection to become available
+   *      -`socketTimeoutMS`: How long a send or receive on a socket can take before timing out.
+   *      -`wTimeoutMS`: How long the server will wait for the write concern to be fulfilled before timing out.
+   *      -`maxTimeMS`: The cumulative time limit for processing operations on a cursor.
+   *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS">cursor.maxTimeMS</a>.
+   *      -`maxCommitTimeMS`: The maximum amount of time to allow a single `commitTransaction` command to execute.
+   *   -`0` means infinite timeout.
+   *   -`> 0` The time limit to use for the full execution of an operation.
+   *
+   * @return the optional timeout duration
+   * @since 4.x
+   */
+  lazy val timeout: Option[Duration] =
+    Option.apply(wrapped.getTimeout(MILLISECONDS)).map(t => Duration(t, MILLISECONDS))
+
+  /**
    * Create a new MongoCollection instance with a different default class to cast any documents returned from the database into..
    *
    * @tparam C   The type that the new collection will encode documents from and decode documents to
@@ -128,6 +150,19 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    */
   def withReadConcern(readConcern: ReadConcern): MongoCollection[TResult] =
     MongoCollection(wrapped.withReadConcern(readConcern))
+
+  /**
+   * Sets the time limit for the full execution of an operation.
+   *
+   * - `0` means infinite timeout.
+   * - `> 0` The time limit to use for the full execution of an operation.
+   *
+   * @param timeout the timeout, which must be greater than or equal to 0
+   * @return this
+   * @since 4.x
+   */
+  def withTimeout(timeout: Duration): MongoCollection[TResult] =
+    MongoCollection(wrapped.withTimeout(timeout.toMillis, MILLISECONDS))
 
   /**
    * Gets an estimate of the count of documents in a collection using collection metadata.

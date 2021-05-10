@@ -38,6 +38,7 @@ case class ListIndexesObservable[TResult](wrapped: ListIndexesPublisher[TResult]
    * @param duration the duration
    * @return this
    */
+  @deprecated("prefer `MongoCollection[T].withTimeout` instead")
   def maxTime(duration: Duration): ListIndexesObservable[TResult] = {
     wrapped.maxTime(duration.toMillis, TimeUnit.MILLISECONDS)
     this

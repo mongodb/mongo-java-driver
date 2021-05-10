@@ -56,6 +56,7 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
    * @param duration the duration
    * @return this
    */
+  @deprecated("prefer `MongoCollection[T].withTimeout` instead")
   def maxTime(duration: Duration): AggregateObservable[TResult] = {
     wrapped.maxTime(duration.toMillis, TimeUnit.MILLISECONDS)
     this
