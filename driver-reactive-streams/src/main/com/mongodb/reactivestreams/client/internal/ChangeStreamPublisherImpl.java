@@ -40,7 +40,6 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 
-
 final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStreamDocument<T>>
         implements ChangeStreamPublisher<T> {
 
@@ -99,8 +98,7 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
 
     @Override
     public ChangeStreamPublisher<T> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxAwaitTimeMS = MILLISECONDS.convert(maxAwaitTime, timeUnit);
+        this.maxAwaitTimeMS = MILLISECONDS.convert(maxAwaitTime, notNull("timeUnit", timeUnit));
         return this;
     }
 
@@ -138,11 +136,10 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
     }
 
     private <S> AsyncReadOperation<AsyncBatchCursor<S>> createChangeStreamOperation(final Codec<S> codec, final int initialBatchSize) {
-        return new ChangeStreamOperation<>(getNamespace(), fullDocument,
+        return new ChangeStreamOperation<>(getClientSideOperationTimeoutFactory(0, maxAwaitTimeMS), getNamespace(), fullDocument,
                                            createBsonDocumentList(pipeline), codec, changeStreamLevel)
                 .batchSize(initialBatchSize)
                 .collation(collation)
-                .maxAwaitTime(maxAwaitTimeMS, MILLISECONDS)
                 .resumeAfter(resumeToken)
                 .startAtOperationTime(startAtOperationTime)
                 .startAfter(startAfter)

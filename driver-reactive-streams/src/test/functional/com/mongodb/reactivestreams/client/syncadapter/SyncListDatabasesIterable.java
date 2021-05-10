@@ -31,6 +31,7 @@ class SyncListDatabasesIterable<T> extends SyncMongoIterable<T> implements ListD
         this.wrapped = wrapped;
     }
 
+    @Deprecated
     @Override
     public ListDatabasesIterable<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         wrapped.maxTime(maxTime, timeUnit);

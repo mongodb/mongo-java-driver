@@ -114,7 +114,9 @@ public interface MapReducePublisher<TResult> extends Publisher<TResult> {
      * @param timeUnit the time unit, which may not be null
      * @return this
      * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
+     * @deprecated prefer {@link MongoCollection#withTimeout(long, TimeUnit)} instead
      */
+    @Deprecated
     MapReducePublisher<TResult> maxTime(long maxTime, TimeUnit timeUnit);
 
     /**

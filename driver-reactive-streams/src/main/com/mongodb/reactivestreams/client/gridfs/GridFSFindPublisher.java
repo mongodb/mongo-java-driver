@@ -98,7 +98,9 @@ public interface GridFSFindPublisher extends Publisher<GridFSFile> {
      * @param timeUnit the time unit, which may not be null
      * @return this
      * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
+     * @deprecated prefer {@link GridFSBucket#withTimeout(long, TimeUnit)} instead
      */
+    @Deprecated
     GridFSFindPublisher maxTime(long maxTime, TimeUnit timeUnit);
 
     /**

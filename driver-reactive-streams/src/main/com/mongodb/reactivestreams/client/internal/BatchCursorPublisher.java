@@ -18,6 +18,7 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
+import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.internal.operation.Operations;
@@ -59,6 +60,14 @@ abstract class BatchCursorPublisher<T> implements Publisher<T> {
 
     Operations<T> getOperations() {
         return mongoOperationPublisher.getOperations();
+    }
+
+    ClientSideOperationTimeoutFactory getClientSideOperationTimeoutFactory(final long maxTimeMS) {
+        return mongoOperationPublisher.getClientSideOperationTimeoutFactory(maxTimeMS);
+    }
+
+    ClientSideOperationTimeoutFactory getClientSideOperationTimeoutFactory(final long maxTimeMS, final long maxAwaitTimeMS) {
+        return mongoOperationPublisher.getClientSideOperationTimeoutFactory(maxTimeMS, maxAwaitTimeMS);
     }
 
     MongoNamespace getNamespace() {

@@ -90,6 +90,7 @@ class SyncMapReduceIterable<T> extends SyncMongoIterable<T> implements MapReduce
         return this;
     }
 
+    @Deprecated
     @Override
     public MapReduceIterable<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         wrapped.maxTime(maxTime, timeUnit);

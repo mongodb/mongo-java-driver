@@ -67,7 +67,7 @@ import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-
+@SuppressWarnings("deprecation")
 public class MongoCollectionImplTest extends TestHelper {
     @Mock
     private ClientSession clientSession;

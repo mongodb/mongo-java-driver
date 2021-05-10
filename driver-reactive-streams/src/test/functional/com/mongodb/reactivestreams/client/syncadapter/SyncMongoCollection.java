@@ -56,6 +56,7 @@ import org.bson.conversions.Bson;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static java.util.Objects.requireNonNull;
@@ -99,6 +100,11 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
     }
 
     @Override
+    public Long getTimeout(final TimeUnit timeUnit) {
+        return wrapped.getTimeout(timeUnit);
+    }
+
+    @Override
     public <NewTDocument> MongoCollection<NewTDocument> withDocumentClass(final Class<NewTDocument> clazz) {
         return new SyncMongoCollection<>(wrapped.withDocumentClass(clazz));
     }
@@ -121,6 +127,11 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
     @Override
     public MongoCollection<T> withReadConcern(final ReadConcern readConcern) {
         return new SyncMongoCollection<>(wrapped.withReadConcern(readConcern));
+    }
+
+    @Override
+    public MongoCollection<T> withTimeout(final long timeout, final TimeUnit timeUnit) {
+        return new SyncMongoCollection<>(wrapped.withTimeout(timeout, timeUnit));
     }
 
     @Override

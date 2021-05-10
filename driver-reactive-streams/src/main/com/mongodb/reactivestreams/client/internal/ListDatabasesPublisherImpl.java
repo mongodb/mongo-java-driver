@@ -41,6 +41,7 @@ final class ListDatabasesPublisherImpl<T> extends BatchCursorPublisher<T> implem
         super(clientSession, mongoOperationPublisher);
     }
 
+    @Deprecated
     public ListDatabasesPublisherImpl<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
@@ -68,7 +69,8 @@ final class ListDatabasesPublisherImpl<T> extends BatchCursorPublisher<T> implem
     }
 
     AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
-// initialBatchSize is ignored for distinct operations.
-        return getOperations().listDatabases(getDocumentClass(), filter, nameOnly, maxTimeMS, authorizedDatabasesOnly);
+        // initialBatchSize is ignored for distinct operations.
+        return getOperations().listDatabases(getClientSideOperationTimeoutFactory(maxTimeMS), getDocumentClass(), filter, nameOnly,
+                authorizedDatabasesOnly);
     }
 }

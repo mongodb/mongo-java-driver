@@ -27,6 +27,7 @@ import com.mongodb.reactivestreams.client.ClientSession;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAny;
@@ -84,7 +85,8 @@ public class ClientSessionHelper {
                                             .readPreference(mongoClient.getSettings().getReadPreference())
                                             .build()))
                     .build();
-            return new ClientSessionPublisherImpl(serverSessionPool, mongoClient, mergedOptions, executor);
+            return new ClientSessionPublisherImpl(serverSessionPool, mongoClient, mergedOptions,
+                    mongoClient.getSettings().getTimeout(TimeUnit.MILLISECONDS), executor);
     }
 
     private List<ServerDescription> getServerDescriptionListToConsiderForSessionSupport(final ClusterDescription clusterDescription) {

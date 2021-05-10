@@ -43,6 +43,7 @@ final class ListCollectionsPublisherImpl<T> extends BatchCursorPublisher<T> impl
         this.collectionNamesOnly = collectionNamesOnly;
     }
 
+    @Deprecated
     public ListCollectionsPublisherImpl<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
@@ -60,7 +61,7 @@ final class ListCollectionsPublisherImpl<T> extends BatchCursorPublisher<T> impl
     }
 
     AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
-        return getOperations().listCollections(getNamespace().getDatabaseName(), getDocumentClass(), filter, collectionNamesOnly,
-                initialBatchSize, maxTimeMS);
+        return getOperations().listCollections(getClientSideOperationTimeoutFactory(maxTimeMS), getNamespace().getDatabaseName(),
+                getDocumentClass(), filter, collectionNamesOnly, initialBatchSize);
     }
 }

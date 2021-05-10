@@ -28,13 +28,14 @@ import reactor.core.publisher.Flux;
 
 import static com.mongodb.reactivestreams.client.MongoClients.getDefaultCodecRegistry;
 import static java.util.Arrays.asList;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ListCollectionsPublisherImplTest extends TestHelper {
 
     private static final String DATABASE_NAME = NAMESPACE.getDatabaseName();
 
+    @SuppressWarnings("deprecated")
     @DisplayName("Should build the expected ListCollectionsOperation")
     @Test
     void shouldBuildTheExpectedOperation() {
@@ -42,8 +43,8 @@ public class ListCollectionsPublisherImplTest extends TestHelper {
         ListCollectionsPublisher<String> publisher = new ListCollectionsPublisherImpl<>(null, createMongoOperationPublisher(executor)
                 .withDocumentClass(String.class), true);
 
-        ListCollectionsOperation<String> expectedOperation = new ListCollectionsOperation<>(DATABASE_NAME,
-                                                                                            getDefaultCodecRegistry().get(String.class))
+        ListCollectionsOperation<String> expectedOperation = new ListCollectionsOperation<>(CSOT_FACTORY_NO_TIMEOUT, DATABASE_NAME,
+                getDefaultCodecRegistry().get(String.class))
                 .batchSize(Integer.MAX_VALUE)
                 .nameOnly(true).retryReads(true);
 
@@ -56,12 +57,13 @@ public class ListCollectionsPublisherImplTest extends TestHelper {
         // Should apply settings
         publisher
                 .filter(new Document("filter", 1))
-                .maxTime(10, SECONDS)
+                .maxTime(99, MILLISECONDS)
                 .batchSize(100);
 
-        expectedOperation
+        expectedOperation = new ListCollectionsOperation<>(CSOT_FACTORY_MAX_TIME, DATABASE_NAME,
+                getDefaultCodecRegistry().get(String.class))
+                .nameOnly(true).retryReads(true)
                 .filter(new BsonDocument("filter", new BsonInt32(1)))
-                .maxTime(10, SECONDS)
                 .batchSize(100);
 
         Flux.from(publisher).blockFirst();

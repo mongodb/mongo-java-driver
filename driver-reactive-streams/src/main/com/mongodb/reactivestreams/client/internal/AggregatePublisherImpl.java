@@ -19,6 +19,8 @@ package com.mongodb.reactivestreams.client.internal;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.ClientSideOperationTimeoutFactories;
+import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.FindOptions;
@@ -72,6 +74,7 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
         return this;
     }
 
+    @Deprecated
     @Override
     public AggregatePublisher<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
@@ -152,12 +155,14 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
         MongoNamespace outNamespace = getOutNamespace();
 
         if (outNamespace != null) {
-            AsyncWriteOperation<Void> aggregateToCollectionOperation = getAggregateToCollectionOperation();
+            ClientSideOperationTimeoutFactory csotFactory =
+                    ClientSideOperationTimeoutFactories.shared(getClientSideOperationTimeoutFactory(maxTimeMS, maxAwaitTimeMS));
+            AsyncWriteOperation<Void> aggregateToCollectionOperation = getAggregateToCollectionOperation(csotFactory);
 
             FindOptions findOptions = new FindOptions().collation(collation).batchSize(initialBatchSize);
 
             AsyncReadOperation<AsyncBatchCursor<T>> findOperation =
-                    getOperations().find(outNamespace, new BsonDocument(), getDocumentClass(), findOptions);
+                    getOperations().find(csotFactory, outNamespace, new BsonDocument(), getDocumentClass(), findOptions);
 
             return new WriteOperationThenCursorReadOperation<>(aggregateToCollectionOperation, findOperation);
         } else {
@@ -167,13 +172,18 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
 
     private AggregateOperation<T> asAggregateOperation(final int initialBatchSize) {
         return getOperations()
-                .aggregate(pipeline, getDocumentClass(), maxTimeMS, maxAwaitTimeMS,
-                           initialBatchSize, collation, hint, comment, allowDiskUse, aggregationLevel);
+                .aggregate(getClientSideOperationTimeoutFactory(maxTimeMS), pipeline, getDocumentClass(), initialBatchSize, collation, hint,
+                        comment, allowDiskUse, aggregationLevel);
     }
 
     private AsyncWriteOperation<Void> getAggregateToCollectionOperation() {
-        return getOperations().aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint, comment,
-                                                     aggregationLevel);
+        return getAggregateToCollectionOperation(getClientSideOperationTimeoutFactory(maxTimeMS));
+    }
+
+    private AsyncWriteOperation<Void> getAggregateToCollectionOperation(
+            final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory) {
+        return getOperations().aggregateToCollection(clientSideOperationTimeoutFactory, pipeline, allowDiskUse,
+                bypassDocumentValidation, collation, hint, comment, aggregationLevel);
     }
 
     @Nullable

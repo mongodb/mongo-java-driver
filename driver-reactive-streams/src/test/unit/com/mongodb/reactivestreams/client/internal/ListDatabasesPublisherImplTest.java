@@ -28,11 +28,12 @@ import reactor.core.publisher.Flux;
 
 import static com.mongodb.reactivestreams.client.MongoClients.getDefaultCodecRegistry;
 import static java.util.Arrays.asList;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ListDatabasesPublisherImplTest extends TestHelper {
 
+    @SuppressWarnings("deprecated")
     @DisplayName("Should build the expected ListDatabasesOperation")
     @Test
     void shouldBuildTheExpectedOperation() {
@@ -41,7 +42,8 @@ public class ListDatabasesPublisherImplTest extends TestHelper {
         TestOperationExecutor executor = createOperationExecutor(asList(getBatchCursor(), getBatchCursor()));
         ListDatabasesPublisher<Document> publisher = new ListDatabasesPublisherImpl<>(null, createMongoOperationPublisher(executor));
 
-        ListDatabasesOperation<Document> expectedOperation = new ListDatabasesOperation<>(getDefaultCodecRegistry().get(Document.class))
+        ListDatabasesOperation<Document> expectedOperation = new ListDatabasesOperation<>(CSOT_FACTORY_TIMEOUT,
+                getDefaultCodecRegistry().get(Document.class))
                 .retryReads(true);
 
         // default input should be as expected
@@ -54,13 +56,14 @@ public class ListDatabasesPublisherImplTest extends TestHelper {
         publisher
                 .authorizedDatabasesOnly(true)
                 .filter(new Document("filter", 1))
-                .maxTime(10, SECONDS)
+                .maxTime(99, MILLISECONDS)
                 .batchSize(100);
 
-        expectedOperation
+        expectedOperation = new ListDatabasesOperation<>(CSOT_FACTORY_MAX_AWAIT_TIME,
+                getDefaultCodecRegistry().get(Document.class))
+                .retryReads(true)
                 .authorizedDatabasesOnly(true)
-                .filter(new BsonDocument("filter", new BsonInt32(1)))
-                .maxTime(10, SECONDS);
+                .filter(new BsonDocument("filter", new BsonInt32(1)));
 
         configureBatchCursor();
         Flux.from(publisher).blockFirst();

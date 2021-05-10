@@ -23,6 +23,7 @@ import com.mongodb.MongoInternalException;
 import com.mongodb.ReadConcern;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
+import com.mongodb.internal.ClientSideOperationTimeoutFactories;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.client.AsyncClientSession;
 import com.mongodb.internal.operation.AbortTransactionOperation;
@@ -31,6 +32,7 @@ import com.mongodb.internal.operation.AsyncWriteOperation;
 import com.mongodb.internal.operation.CommitTransactionOperation;
 import com.mongodb.internal.session.BaseClientSessionImpl;
 import com.mongodb.internal.session.ServerSessionPool;
+import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.MongoClient;
 import org.reactivestreams.Publisher;
@@ -46,6 +48,8 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements ClientSession, AsyncClientSession {
 
+    @Nullable
+    private final Long timeoutMS;
     private final OperationExecutor executor;
     private TransactionState transactionState = TransactionState.NONE;
     private boolean messageSentInCurrentTransaction;
@@ -53,8 +57,9 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
     private TransactionOptions transactionOptions;
 
     ClientSessionPublisherImpl(final ServerSessionPool serverSessionPool, final MongoClient mongoClient,
-            final ClientSessionOptions options, final OperationExecutor executor) {
+                               final ClientSessionOptions options, @Nullable final Long timeoutMS, final OperationExecutor executor) {
         super(serverSessionPool, mongoClient, options);
+        this.timeoutMS = timeoutMS;
         this.executor = executor;
     }
 
@@ -164,9 +169,11 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
             commitInProgress = true;
 
             return executor.execute(
-                    new CommitTransactionOperation(transactionOptions.getWriteConcern(), alreadyCommitted)
-                            .recoveryToken(getRecoveryToken())
-                            .maxCommitTime(transactionOptions.getMaxCommitTime(MILLISECONDS), MILLISECONDS),
+                    new CommitTransactionOperation(
+                            ClientSideOperationTimeoutFactories.withMaxCommitMS(timeoutMS,
+                                                                                transactionOptions.getMaxCommitTime(MILLISECONDS)),
+                            transactionOptions.getWriteConcern(), alreadyCommitted)
+                            .recoveryToken(getRecoveryToken()),
                     readConcern, this)
                     .doOnTerminate(() -> {
                         commitInProgress = false;
@@ -196,7 +203,10 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
                 throw new MongoInternalException("Invariant violated. Transaction options read concern can not be null");
             }
             return executor.execute(
-                    new AbortTransactionOperation(transactionOptions.getWriteConcern())
+                    new AbortTransactionOperation(
+                            ClientSideOperationTimeoutFactories.withMaxCommitMS(timeoutMS,
+                                                                                transactionOptions.getMaxCommitTime(MILLISECONDS)),
+                            transactionOptions.getWriteConcern())
                             .recoveryToken(getRecoveryToken()),
                     readConcern, this)
                     .onErrorResume(Throwable.class, (e) -> Mono.empty())

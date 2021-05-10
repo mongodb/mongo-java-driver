@@ -21,6 +21,8 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.ClientSideOperationTimeoutFactories;
+import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.bulk.IndexRequest;
@@ -72,7 +74,6 @@ public class TestHelper {
     TestHelper() {
     }
 
-
     static final MongoNamespace NAMESPACE = new MongoNamespace("db", "coll");
     static final Collation COLLATION = Collation.builder().locale("de").build();
 
@@ -93,11 +94,23 @@ public class TestHelper {
 
     static final CodecRegistry BSON_CODEC_REGISTRY = fromProviders(new BsonValueCodecProvider());
 
+    public static final long TIMEOUT_MS = 60000;
+    public static final ClientSideOperationTimeoutFactory CSOT_FACTORY_TIMEOUT =
+            ClientSideOperationTimeoutFactories.create(TIMEOUT_MS);
+    public static final ClientSideOperationTimeoutFactory CSOT_FACTORY_MAX_TIME =
+            ClientSideOperationTimeoutFactories.create(null, 99, 0, 0);
+    public static final ClientSideOperationTimeoutFactory CSOT_FACTORY_MAX_AWAIT_TIME =
+            ClientSideOperationTimeoutFactories.create(null, 0, 999L, 0);
+    public static final ClientSideOperationTimeoutFactory CSOT_FACTORY_MAX_TIME_AND_MAX_AWAIT_TIME =
+            ClientSideOperationTimeoutFactories.create(null, 99, 999L, 0);
+    public static final ClientSideOperationTimeoutFactory CSOT_FACTORY_NO_TIMEOUT =
+            ClientSideOperationTimeoutFactories.NO_TIMEOUT;
+
     static MongoOperationPublisher<Document> createMongoOperationPublisher(final OperationExecutor executor) {
         return new MongoOperationPublisher<>(NAMESPACE, Document.class,
                                              getDefaultCodecRegistry(), ReadPreference.primary(), ReadConcern.DEFAULT,
                                              WriteConcern.ACKNOWLEDGED, true, true,
-                                             UuidRepresentation.STANDARD, executor);
+                                             UuidRepresentation.STANDARD, null, executor);
     }
 
 

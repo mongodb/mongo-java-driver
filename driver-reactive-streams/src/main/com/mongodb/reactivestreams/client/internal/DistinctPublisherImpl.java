@@ -50,6 +50,7 @@ final class DistinctPublisherImpl<T> extends BatchCursorPublisher<T> implements 
         return this;
     }
 
+    @Deprecated
     @Override
     public DistinctPublisher<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
@@ -72,6 +73,6 @@ final class DistinctPublisherImpl<T> extends BatchCursorPublisher<T> implements 
     @Override
     AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
         // initialBatchSize is ignored for distinct operations.
-        return getOperations().distinct(fieldName, filter, getDocumentClass(), maxTimeMS, collation);
+        return getOperations().distinct(getClientSideOperationTimeoutFactory(maxTimeMS), fieldName, filter, getDocumentClass(), collation);
     }
 }

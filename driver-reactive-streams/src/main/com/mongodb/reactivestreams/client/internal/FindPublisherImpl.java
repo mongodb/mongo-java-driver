@@ -23,7 +23,6 @@ import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.operation.AsyncExplainableReadOperation;
 import com.mongodb.internal.operation.AsyncReadOperation;
-import com.mongodb.internal.operation.FindOperation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.FindPublisher;
@@ -39,6 +38,9 @@ final class FindPublisherImpl<T> extends BatchCursorPublisher<T> implements Find
     private final FindOptions findOptions;
 
     private Bson filter;
+    private long maxTimeMS = 0;
+    private long maxAwaitTimeMS = 0;
+
 
     FindPublisherImpl(@Nullable final ClientSession clientSession, final MongoOperationPublisher<T> mongoOperationPublisher,
             final Bson filter) {
@@ -65,17 +67,16 @@ final class FindPublisherImpl<T> extends BatchCursorPublisher<T> implements Find
         return this;
     }
 
+    @Deprecated
     @Override
     public FindPublisher<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        findOptions.maxTime(maxTime, timeUnit);
+        maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, notNull("timeUnit", timeUnit));
         return this;
     }
 
     @Override
     public FindPublisher<T> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        findOptions.maxAwaitTime(maxAwaitTime, timeUnit);
+        maxAwaitTimeMS = TimeUnit.MILLISECONDS.convert(maxAwaitTime, notNull("timeUnit", timeUnit));
         return this;
     }
 
@@ -207,12 +208,13 @@ final class FindPublisherImpl<T> extends BatchCursorPublisher<T> implements Find
 
     @Override
     AsyncExplainableReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
-        FindOperation<T> operation = getOperations().find(filter, getDocumentClass(), findOptions.withBatchSize(initialBatchSize));
-        return operation;
+        return getOperations().find(getClientSideOperationTimeoutFactory(maxTimeMS, maxAwaitTimeMS), filter, getDocumentClass(),
+                findOptions.withBatchSize(initialBatchSize));
     }
 
     @Override
     AsyncReadOperation<AsyncBatchCursor<T>> asAsyncFirstReadOperation() {
-        return getOperations().findFirst(filter, getDocumentClass(), findOptions);
+        return getOperations().findFirst(getClientSideOperationTimeoutFactory(maxTimeMS, maxAwaitTimeMS), filter, getDocumentClass(),
+                findOptions);
     }
 }

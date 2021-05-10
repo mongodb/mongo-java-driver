@@ -20,6 +20,8 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.MapReduceAction;
+import com.mongodb.internal.ClientSideOperationTimeoutFactories;
+import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -122,6 +124,7 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
         return this;
     }
 
+    @Deprecated
     @Override
     public MapReducePublisher<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
@@ -196,29 +199,37 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
             // initialBatchSize is ignored for map reduce operations.
             return createMapReduceInlineOperation();
         } else {
-            return new WriteOperationThenCursorReadOperation<>(createMapReduceToCollectionOperation(),
-                    createFindOperation(initialBatchSize));
+
+            ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory =
+                    ClientSideOperationTimeoutFactories.shared(getClientSideOperationTimeoutFactory(maxTimeMS));
+            return new WriteOperationThenCursorReadOperation<>(createMapReduceToCollectionOperation(clientSideOperationTimeoutFactory),
+                    createFindOperation(clientSideOperationTimeoutFactory, initialBatchSize));
         }
     }
 
     private WrappedMapReduceReadOperation<T> createMapReduceInlineOperation() {
-        return new WrappedMapReduceReadOperation<T>(getOperations().mapReduce(mapFunction, reduceFunction, finalizeFunction,
-                                                                              getDocumentClass(), filter, limit, maxTimeMS, jsMode, scope,
-                                                                              sort, verbose, collation));
+        return new WrappedMapReduceReadOperation<T>(getOperations().mapReduce(
+                getClientSideOperationTimeoutFactory(maxTimeMS), mapFunction, reduceFunction, finalizeFunction,
+                getDocumentClass(), filter, limit, jsMode, scope, sort, verbose, collation));
     }
 
     private WrappedMapReduceWriteOperation createMapReduceToCollectionOperation() {
-        return new WrappedMapReduceWriteOperation(getOperations().mapReduceToCollection(databaseName, collectionName, mapFunction,
-                                                                                        reduceFunction, finalizeFunction, filter, limit,
-                                                                                        maxTimeMS, jsMode, scope, sort, verbose, action,
-                                                                                        nonAtomic, sharded,
-                                                                                        bypassDocumentValidation, collation));
+        return createMapReduceToCollectionOperation(getClientSideOperationTimeoutFactory(maxTimeMS));
     }
 
-    private AsyncReadOperation<AsyncBatchCursor<T>> createFindOperation(final int initialBatchSize) {
+    private WrappedMapReduceWriteOperation createMapReduceToCollectionOperation(
+            final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory) {
+        return new WrappedMapReduceWriteOperation(getOperations().mapReduceToCollection(clientSideOperationTimeoutFactory, databaseName,
+                collectionName, mapFunction, reduceFunction, finalizeFunction, filter, limit, jsMode, scope, sort, verbose, action,
+                nonAtomic, sharded, bypassDocumentValidation, collation));
+    }
+
+    private AsyncReadOperation<AsyncBatchCursor<T>> createFindOperation(
+            final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final int initialBatchSize) {
         String dbName = databaseName != null ? databaseName : getNamespace().getDatabaseName();
         FindOptions findOptions = new FindOptions().collation(collation).batchSize(initialBatchSize);
-        return getOperations().find(new MongoNamespace(dbName, collectionName), new BsonDocument(), getDocumentClass(), findOptions);
+        return getOperations().find(clientSideOperationTimeoutFactory, new MongoNamespace(dbName, collectionName), new BsonDocument(),
+                getDocumentClass(), findOptions);
     }
 
     // this could be inlined, but giving it a name so that it's unit-testable

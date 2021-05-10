@@ -37,6 +37,7 @@ final class ListIndexesPublisherImpl<T> extends BatchCursorPublisher<T> implemen
         super(clientSession, mongoOperationPublisher);
     }
 
+    @Deprecated
     public ListIndexesPublisherImpl<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
@@ -49,6 +50,6 @@ final class ListIndexesPublisherImpl<T> extends BatchCursorPublisher<T> implemen
     }
 
     AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
-        return getOperations().listIndexes(getDocumentClass(), initialBatchSize, maxTimeMS);
+        return getOperations().listIndexes(getClientSideOperationTimeoutFactory(maxTimeMS), getDocumentClass(), initialBatchSize);
     }
 }

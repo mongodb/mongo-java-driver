@@ -93,13 +93,11 @@ public final class MongoClientImpl implements MongoClient {
             this.executor = executor;
         }
         this.externalResourceCloser = externalResourceCloser;
-        this.mongoOperationPublisher = new MongoOperationPublisher<>(Document.class,
-                                                                     createRegistry(settings.getCodecRegistry(),
-                                                                                    settings.getUuidRepresentation()),
-                                                                     settings.getReadPreference(),
-                                                                     settings.getReadConcern(), settings.getWriteConcern(),
-                                                                     settings.getRetryWrites(), settings.getRetryReads(),
-                                                                     settings.getUuidRepresentation(), this.executor);
+        this.mongoOperationPublisher = new MongoOperationPublisher<>(
+                Document.class, createRegistry(settings.getCodecRegistry(), settings.getUuidRepresentation()),
+                settings.getReadPreference(), settings.getReadConcern(), settings.getWriteConcern(), settings.getRetryWrites(),
+                settings.getRetryReads(), settings.getUuidRepresentation(), settings.getTimeout(TimeUnit.MILLISECONDS),
+                this.executor);
     }
 
     Cluster getCluster() {

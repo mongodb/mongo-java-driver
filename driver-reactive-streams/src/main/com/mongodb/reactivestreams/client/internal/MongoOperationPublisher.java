@@ -53,6 +53,8 @@ import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
+import com.mongodb.internal.ClientSideOperationTimeoutFactories;
+import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.bulk.WriteRequest;
 import com.mongodb.internal.operation.AsyncReadOperation;
@@ -77,39 +79,46 @@ import reactor.core.publisher.MonoSink;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Collections.singletonList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.toList;
 import static org.bson.internal.CodecRegistryHelper.createRegistry;
 
+@SuppressWarnings("deprecation")
 public final class MongoOperationPublisher<T> {
 
     private final Operations<T> operations;
     private final UuidRepresentation uuidRepresentation;
+    @Nullable
+    private final Long timeoutMS;
     private final OperationExecutor executor;
 
     MongoOperationPublisher(
             final Class<T> documentClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
             final ReadConcern readConcern, final WriteConcern writeConcern, final boolean retryWrites, final boolean retryReads,
-            final UuidRepresentation uuidRepresentation, final OperationExecutor executor) {
+            final UuidRepresentation uuidRepresentation, @Nullable final Long timeoutMS, final OperationExecutor executor) {
         this(new MongoNamespace("_ignored", "_ignored"), documentClass,
              codecRegistry, readPreference, readConcern, writeConcern, retryWrites, retryReads,
-             uuidRepresentation, executor);
+             uuidRepresentation, timeoutMS, executor);
     }
 
     MongoOperationPublisher(
             final MongoNamespace namespace, final Class<T> documentClass, final CodecRegistry codecRegistry,
             final ReadPreference readPreference, final ReadConcern readConcern, final WriteConcern writeConcern,
             final boolean retryWrites, final boolean retryReads, final UuidRepresentation uuidRepresentation,
-            final OperationExecutor executor) {
+            @Nullable final Long timeoutMS, final OperationExecutor executor) {
         this.operations = new Operations<>(namespace, notNull("documentClass", documentClass),
                                            notNull("readPreference", readPreference), notNull("codecRegistry", codecRegistry),
                                            notNull("readConcern", readConcern), notNull("writeConcern", writeConcern),
                                            retryWrites, retryReads);
         this.uuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
+        this.timeoutMS = timeoutMS;
         this.executor = notNull("executor", executor);
     }
 
@@ -139,6 +148,14 @@ public final class MongoOperationPublisher<T> {
 
     public boolean getRetryReads() {
         return operations.isRetryReads();
+    }
+
+    @Nullable
+    public Long getTimeout(final TimeUnit timeUnit) {
+        if (timeoutMS != null) {
+            return notNull("timeUnit", timeUnit).convert(timeoutMS, MILLISECONDS);
+        }
+        return null;
     }
 
     Class<T> getDocumentClass() {
@@ -173,14 +190,14 @@ public final class MongoOperationPublisher<T> {
         }
         return new MongoOperationPublisher<>(notNull("namespace", namespace), notNull("documentClass", documentClass),
                                              getCodecRegistry(), getReadPreference(), getReadConcern(), getWriteConcern(),
-                                             getRetryWrites(), getRetryReads(), uuidRepresentation, executor);
+                                             getRetryWrites(), getRetryReads(), uuidRepresentation, timeoutMS, executor);
     }
 
     MongoOperationPublisher<T> withCodecRegistry(final CodecRegistry codecRegistry) {
         return new MongoOperationPublisher<>(getNamespace(), getDocumentClass(),
                                              createRegistry(notNull("codecRegistry", codecRegistry), uuidRepresentation),
                                              getReadPreference(), getReadConcern(), getWriteConcern(), getRetryWrites(), getRetryReads(),
-                                             uuidRepresentation, executor);
+                                             uuidRepresentation, timeoutMS, executor);
     }
 
     MongoOperationPublisher<T> withReadPreference(final ReadPreference readPreference) {
@@ -190,7 +207,7 @@ public final class MongoOperationPublisher<T> {
         return new MongoOperationPublisher<>(getNamespace(), getDocumentClass(), getCodecRegistry(),
                                              notNull("readPreference", readPreference),
                                              getReadConcern(), getWriteConcern(), getRetryWrites(), getRetryReads(),
-                                             uuidRepresentation, executor);
+                                             uuidRepresentation, timeoutMS, executor);
     }
 
     MongoOperationPublisher<T> withWriteConcern(final WriteConcern writeConcern) {
@@ -199,7 +216,7 @@ public final class MongoOperationPublisher<T> {
         }
         return new MongoOperationPublisher<>(getNamespace(), getDocumentClass(), getCodecRegistry(), getReadPreference(), getReadConcern(),
                                              notNull("writeConcern", writeConcern),
-                                             getRetryWrites(), getRetryReads(), uuidRepresentation, executor);
+                                             getRetryWrites(), getRetryReads(), uuidRepresentation, timeoutMS, executor);
     }
 
     MongoOperationPublisher<T> withReadConcern(final ReadConcern readConcern) {
@@ -208,12 +225,21 @@ public final class MongoOperationPublisher<T> {
         }
         return new MongoOperationPublisher<>(getNamespace(), getDocumentClass(),
                                              getCodecRegistry(), getReadPreference(), notNull("readConcern", readConcern),
-                                             getWriteConcern(), getRetryWrites(), getRetryReads(), uuidRepresentation, executor);
+                                             getWriteConcern(), getRetryWrites(), getRetryReads(), uuidRepresentation, timeoutMS, executor);
+    }
+
+    MongoOperationPublisher<T> withTimeout(final long timeout, final TimeUnit timeUnit) {
+        isTrueArgument("timeout >= 0", timeout >= 0);
+        notNull("timeUnit", timeUnit);
+        long timeoutMS = timeUnit.convert(timeout, TimeUnit.MILLISECONDS);
+        return new MongoOperationPublisher<>(getNamespace(), getDocumentClass(),
+                getCodecRegistry(), getReadPreference(), getReadConcern(),
+                getWriteConcern(), getRetryWrites(), getRetryReads(), uuidRepresentation, timeoutMS, executor);
     }
 
     Publisher<Void> dropDatabase(@Nullable final ClientSession clientSession) {
-        return createWriteOperationMono(() -> new DropDatabaseOperation(getNamespace().getDatabaseName(), getWriteConcern()),
-                                        clientSession);
+        return createWriteOperationMono(() -> new DropDatabaseOperation(getClientSideOperationTimeoutFactory(),
+                        getNamespace().getDatabaseName(), getWriteConcern()), clientSession);
     }
 
     Publisher<Void> createCollection(
@@ -221,7 +247,8 @@ public final class MongoOperationPublisher<T> {
             final CreateCollectionOptions options) {
         return createWriteOperationMono(() -> {
             CreateCollectionOperation operation =
-                    new CreateCollectionOperation(namespace.getDatabaseName(), namespace.getCollectionName(), getWriteConcern())
+                    new CreateCollectionOperation(getClientSideOperationTimeoutFactory(),
+                            namespace.getDatabaseName(), namespace.getCollectionName(), getWriteConcern())
                             .capped(options.isCapped())
                             .sizeInBytes(options.getSizeInBytes())
                             .maxDocuments(options.getMaxDocuments())
@@ -253,11 +280,9 @@ public final class MongoOperationPublisher<T> {
             final List<? extends Bson> pipeline, final CreateViewOptions options) {
         List<BsonDocument> bsonDocumentPipeline = createBsonDocumentList(notNull("pipeline", pipeline));
         return createWriteOperationMono(
-                () -> new CreateViewOperation(getNamespace().getDatabaseName(),
-                                              notNull("viewName", viewName),
-                                              notNull("viewOn", viewOn),
-                                              bsonDocumentPipeline,
-                                              getWriteConcern())
+                () -> new CreateViewOperation(getClientSideOperationTimeoutFactory(),
+                        getNamespace().getDatabaseName(), notNull("viewName", viewName),
+                        notNull("viewOn", viewOn), bsonDocumentPipeline, getWriteConcern())
                         .collation(notNull("options", options).getCollation()),
                 clientSession);
     }
@@ -269,142 +294,150 @@ public final class MongoOperationPublisher<T> {
             return Mono.error(new MongoClientException("Read preference in a transaction must be primary"));
         }
         return createReadOperationMono(
-                () -> new CommandReadOperation<>(getNamespace().getDatabaseName(),
-                                                 toBsonDocument(notNull("command", command)),
-                                                 getCodecRegistry().get(notNull("clazz", clazz))),
+                () -> new CommandReadOperation<>(getClientSideOperationTimeoutFactory(),
+                        getNamespace().getDatabaseName(), toBsonDocument(notNull("command", command)),
+                        getCodecRegistry().get(notNull("clazz", clazz))),
                 clientSession, notNull("readPreference", readPreference));
     }
 
 
     Publisher<Long> estimatedDocumentCount(final EstimatedDocumentCountOptions options) {
-        return createReadOperationMono(() -> operations.estimatedDocumentCount(notNull("options", options)), null);
+        return createReadOperationMono(() -> operations.estimatedDocumentCount(
+                getClientSideOperationTimeoutFactory(notNull("options", options).getMaxTime(MILLISECONDS))),
+                null);
     }
 
     Publisher<Long> countDocuments(@Nullable final ClientSession clientSession, final Bson filter, final CountOptions options) {
-        return createReadOperationMono(() -> operations.countDocuments(notNull("filter", filter), notNull("options", options)
-        ), clientSession);
+        return createReadOperationMono(() -> operations.countDocuments(
+                getClientSideOperationTimeoutFactory(notNull("options", options).getMaxTime(MILLISECONDS)),
+                notNull("filter", filter), options), clientSession);
     }
 
     Publisher<BulkWriteResult> bulkWrite(
             @Nullable final ClientSession clientSession,
             final List<? extends WriteModel<? extends T>> requests, final BulkWriteOptions options) {
-        return createWriteOperationMono(() -> operations.bulkWrite(notNull("requests", requests), notNull("options", options)),
-                                        clientSession);
+        return createWriteOperationMono(() -> operations.bulkWrite(
+                getClientSideOperationTimeoutFactory(), notNull("requests", requests),
+                notNull("options", options)), clientSession);
     }
 
     Publisher<InsertOneResult> insertOne(@Nullable final ClientSession clientSession, final T document, final InsertOneOptions options) {
-        return createSingleWriteRequestMono(() -> operations.insertOne(notNull("document", document),
-                                                                       notNull("options", options)),
-                                            clientSession, WriteRequest.Type.INSERT)
+        return createSingleWriteRequestMono(() -> operations.insertOne(
+                getClientSideOperationTimeoutFactory(), notNull("document", document),
+                notNull("options", options)), clientSession, WriteRequest.Type.INSERT)
                 .map(INSERT_ONE_RESULT_MAPPER);
     }
 
     Publisher<InsertManyResult> insertMany(
             @Nullable final ClientSession clientSession, final List<? extends T> documents,
             final InsertManyOptions options) {
-        return createWriteOperationMono(() -> operations.insertMany(notNull("documents", documents), notNull("options", options)),
-                                        clientSession)
+        return createWriteOperationMono(() -> operations.insertMany(
+                getClientSideOperationTimeoutFactory(),
+                notNull("documents", documents), notNull("options", options)), clientSession)
                 .map(INSERT_MANY_RESULT_MAPPER);
     }
 
     Publisher<DeleteResult> deleteOne(@Nullable final ClientSession clientSession, final Bson filter, final DeleteOptions options) {
-        return createSingleWriteRequestMono(() -> operations.deleteOne(notNull("filter", filter), notNull("options", options)),
-                                            clientSession, WriteRequest.Type.DELETE)
+        return createSingleWriteRequestMono(() -> operations.deleteOne(
+                getClientSideOperationTimeoutFactory(),
+                notNull("filter", filter), notNull("options", options)), clientSession, WriteRequest.Type.DELETE)
                 .map(DELETE_RESULT_MAPPER);
     }
 
     Publisher<DeleteResult> deleteMany(@Nullable final ClientSession clientSession, final Bson filter, final DeleteOptions options) {
-        return createSingleWriteRequestMono(() -> operations.deleteMany(notNull("filter", filter), notNull("options", options)),
-                                            clientSession, WriteRequest.Type.DELETE)
+        return createSingleWriteRequestMono(() -> operations.deleteMany(
+                getClientSideOperationTimeoutFactory(),
+                notNull("filter", filter), notNull("options", options)), clientSession, WriteRequest.Type.DELETE)
                 .map(DELETE_RESULT_MAPPER);
     }
 
     Publisher<UpdateResult> replaceOne(
             @Nullable final ClientSession clientSession, final Bson filter, final T replacement,
             final ReplaceOptions options) {
-        return createSingleWriteRequestMono(() -> operations.replaceOne(notNull("filter", filter),
-                                                                        notNull("replacement", replacement),
-                                                                        notNull("options", options)),
-                                            clientSession, WriteRequest.Type.REPLACE)
+        return createSingleWriteRequestMono(() -> operations.replaceOne(
+                getClientSideOperationTimeoutFactory(),
+                notNull("filter", filter), notNull("replacement", replacement), notNull("options", options)),
+                clientSession, WriteRequest.Type.REPLACE)
                 .map(UPDATE_RESULT_MAPPER);
     }
 
     Publisher<UpdateResult> updateOne(
             @Nullable final ClientSession clientSession, final Bson filter, final Bson update,
             final UpdateOptions options) {
-        return createSingleWriteRequestMono(() -> operations.updateOne(notNull("filter", filter),
-                                                                       notNull("update", update),
-                                                                       notNull("options", options)),
-                                            clientSession, WriteRequest.Type.UPDATE)
+        return createSingleWriteRequestMono(() -> operations.updateOne(
+                getClientSideOperationTimeoutFactory(),
+                notNull("filter", filter), notNull("update", update), notNull("options", options)),
+                clientSession, WriteRequest.Type.UPDATE)
                 .map(UPDATE_RESULT_MAPPER);
     }
 
     Publisher<UpdateResult> updateOne(
             @Nullable final ClientSession clientSession, final Bson filter, final List<? extends Bson> update,
             final UpdateOptions options) {
-        return createSingleWriteRequestMono(() -> operations.updateOne(notNull("filter", filter),
-                                                                       notNull("update", update),
-                                                                       notNull("options", options)),
-                                            clientSession, WriteRequest.Type.UPDATE)
+        return createSingleWriteRequestMono(() -> operations.updateOne(
+                getClientSideOperationTimeoutFactory(),
+                notNull("filter", filter), notNull("update", update), notNull("options", options)),
+                clientSession, WriteRequest.Type.UPDATE)
                 .map(UPDATE_RESULT_MAPPER);
     }
 
     Publisher<UpdateResult> updateMany(
             @Nullable final ClientSession clientSession, final Bson filter, final Bson update,
             final UpdateOptions options) {
-        return createSingleWriteRequestMono(() -> operations.updateMany(notNull("filter", filter),
-                                                                        notNull("update", update),
-                                                                        notNull("options", options)),
-                                            clientSession, WriteRequest.Type.UPDATE)
+        return createSingleWriteRequestMono(() -> operations.updateMany(
+                getClientSideOperationTimeoutFactory(),
+                notNull("filter", filter), notNull("update", update), notNull("options", options)),
+                clientSession, WriteRequest.Type.UPDATE)
                 .map(UPDATE_RESULT_MAPPER);
     }
 
     Publisher<UpdateResult> updateMany(
             @Nullable final ClientSession clientSession, final Bson filter, final List<? extends Bson> update,
             final UpdateOptions options) {
-        return createSingleWriteRequestMono(() -> operations.updateMany(notNull("filter", filter),
-                                                                        notNull("update", update),
-                                                                        notNull("options", options)),
-                                            clientSession, WriteRequest.Type.UPDATE)
+        return createSingleWriteRequestMono(() -> operations.updateMany(
+                getClientSideOperationTimeoutFactory(),
+                notNull("filter", filter), notNull("update", update), notNull("options", options)),
+                clientSession, WriteRequest.Type.UPDATE)
                 .map(UPDATE_RESULT_MAPPER);
     }
 
     Publisher<T> findOneAndDelete(@Nullable final ClientSession clientSession, final Bson filter, final FindOneAndDeleteOptions options) {
-        return createWriteOperationMono(() -> operations.findOneAndDelete(notNull("filter", filter),
-                                                                          notNull("options", options)),
-                                        clientSession);
+        return createWriteOperationMono(() -> operations.findOneAndDelete(
+                getClientSideOperationTimeoutFactory(notNull("options", options).getMaxTime(MILLISECONDS)),
+                notNull("filter", filter), options), clientSession);
     }
 
     Publisher<T> findOneAndReplace(
             @Nullable final ClientSession clientSession, final Bson filter, final T replacement,
             final FindOneAndReplaceOptions options) {
-        return createWriteOperationMono(() -> operations.findOneAndReplace(notNull("filter", filter),
-                                                                           notNull("replacement", replacement),
-                                                                           notNull("options", options)),
-                                        clientSession);
+        return createWriteOperationMono(() -> operations.findOneAndReplace(
+                getClientSideOperationTimeoutFactory(notNull("options", options).getMaxTime(MILLISECONDS)),
+                notNull("filter", filter), notNull("replacement", replacement), options),
+                clientSession);
     }
 
     Publisher<T> findOneAndUpdate(
             @Nullable final ClientSession clientSession, final Bson filter, final Bson update,
             final FindOneAndUpdateOptions options) {
-        return createWriteOperationMono(() -> operations.findOneAndUpdate(notNull("filter", filter),
-                                                                          notNull("update", update),
-                                                                          notNull("options", options)),
-                                        clientSession);
+        return createWriteOperationMono(() -> operations.findOneAndUpdate(
+                getClientSideOperationTimeoutFactory(notNull("options", options).getMaxTime(MILLISECONDS)),
+                notNull("filter", filter), notNull("update", update), options),
+                clientSession);
     }
 
     Publisher<T> findOneAndUpdate(
             @Nullable final ClientSession clientSession, final Bson filter,
             final List<? extends Bson> update, final FindOneAndUpdateOptions options) {
-        return createWriteOperationMono(() -> operations.findOneAndUpdate(notNull("filter", filter),
-                                                                          notNull("update", update),
-                                                                          notNull("options", options)),
-                                        clientSession);
+        return createWriteOperationMono(() -> operations.findOneAndUpdate(
+                getClientSideOperationTimeoutFactory(notNull("options", options).getMaxTime(MILLISECONDS)),
+                notNull("filter", filter), notNull("update", update), options),
+                clientSession);
     }
 
 
     Publisher<Void> dropCollection(@Nullable final ClientSession clientSession) {
-        return createWriteOperationMono(operations::dropCollection, clientSession);
+        return createWriteOperationMono(() -> operations.dropCollection(getClientSideOperationTimeoutFactory()),
+                clientSession);
     }
 
     Publisher<String> createIndex(@Nullable final ClientSession clientSession, final Bson key, final IndexOptions options) {
@@ -415,19 +448,22 @@ public final class MongoOperationPublisher<T> {
     Publisher<String> createIndexes(
             @Nullable final ClientSession clientSession, final List<IndexModel> indexes,
             final CreateIndexOptions options) {
-        return createWriteOperationMono(() -> operations.createIndexes(notNull("indexes", indexes),
-                                                                       notNull("options", options)), clientSession)
+        return createWriteOperationMono(() -> operations.createIndexes(
+                getClientSideOperationTimeoutFactory(notNull("options", options).getMaxTime(MILLISECONDS)),
+                notNull("indexes", indexes), options), clientSession)
                 .thenMany(Flux.fromIterable(IndexHelper.getIndexNames(indexes, getCodecRegistry())));
     }
 
     Publisher<Void> dropIndex(@Nullable final ClientSession clientSession, final String indexName, final DropIndexOptions options) {
-        return createWriteOperationMono(() -> operations.dropIndex(notNull("indexName", indexName), notNull("options", options)),
-                                        clientSession);
+        return createWriteOperationMono(() -> operations.dropIndex(
+                getClientSideOperationTimeoutFactory(notNull("options", options).getMaxTime(MILLISECONDS)),
+                notNull("indexName", indexName)), clientSession);
     }
 
     Publisher<Void> dropIndex(@Nullable final ClientSession clientSession, final Bson keys, final DropIndexOptions options) {
-        return createWriteOperationMono(() -> operations.dropIndex(notNull("keys", keys), notNull("options", options)),
-                                        clientSession);
+        return createWriteOperationMono(() -> operations.dropIndex(
+                getClientSideOperationTimeoutFactory(notNull("options", options).getMaxTime(MILLISECONDS)),
+                notNull("keys", keys)), clientSession);
     }
 
     Publisher<Void> dropIndexes(@Nullable final ClientSession clientSession, final DropIndexOptions options) {
@@ -437,9 +473,10 @@ public final class MongoOperationPublisher<T> {
     Publisher<Void> renameCollection(
             @Nullable final ClientSession clientSession, final MongoNamespace newCollectionNamespace,
             final RenameCollectionOptions options) {
-        return createWriteOperationMono(() -> operations.renameCollection(notNull("newCollectionNamespace", newCollectionNamespace),
-                                                                          notNull("options", options)),
-                                        clientSession);
+        return createWriteOperationMono(() -> operations.renameCollection(
+                getClientSideOperationTimeoutFactory(),
+                notNull("newCollectionNamespace", newCollectionNamespace), notNull("options", options)),
+                clientSession);
     }
 
     <R> Mono<R> createReadOperationMono(
@@ -534,6 +571,18 @@ public final class MongoOperationPublisher<T> {
             throw new IllegalArgumentException("pipeline can not contain a null value");
         }
         return pipeline.stream().map(this::toBsonDocument).collect(toList());
+    }
+
+    public ClientSideOperationTimeoutFactory getClientSideOperationTimeoutFactory() {
+        return ClientSideOperationTimeoutFactories.create(timeoutMS);
+    }
+
+    public ClientSideOperationTimeoutFactory getClientSideOperationTimeoutFactory(final long maxTimeMS) {
+        return ClientSideOperationTimeoutFactories.create(timeoutMS, maxTimeMS);
+    }
+
+    public ClientSideOperationTimeoutFactory getClientSideOperationTimeoutFactory(final long maxTimeMS, final long maxAwaitTimeMS) {
+        return ClientSideOperationTimeoutFactories.create(timeoutMS, maxTimeMS, maxAwaitTimeMS);
     }
 
     public static <T> SingleResultCallback<T> sinkToCallback(final MonoSink<T> sink) {
