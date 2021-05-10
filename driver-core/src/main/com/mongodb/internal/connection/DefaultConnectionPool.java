@@ -494,7 +494,11 @@ class DefaultConnectionPool implements ConnectionPool {
         public void open() {
             assertFalse(isClosed.get());
             try {
+                connectionCreated(connectionPoolListener, wrapped.getDescription().getConnectionId());
                 wrapped.open();
+                if (getDescription().getServiceId() != null) {
+                    addConnectionToServiceStats(getDescription().getServiceId());
+                }
             } catch (RuntimeException e) {
                 closeAndHandleOpenFailure();
                 throw new MongoOpenConnectionInternalException(e);
@@ -875,13 +879,8 @@ class DefaultConnectionPool implements ConnectionPool {
                 connection.closeSilently();
                 return availableConnection;
             } else {//acquired a permit, phase two
-                connectionCreated(//a connection is considered created only when it is ready to be open
-                        connectionPoolListener, getId(connection));
                 try {
                     connection.open();
-                    if (connection.getDescription().getServiceId() != null) {
-                        addConnectionToServiceStats(connection.getDescription().getServiceId());
-                    }
                 } finally {
                     releasePermit();
                 }
