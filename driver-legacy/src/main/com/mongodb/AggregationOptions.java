@@ -73,7 +73,9 @@ public class AggregationOptions {
      * @param timeUnit the time unit for the result
      * @return the max time
      * @since 2.12
+     * @deprecated prefer {@link com.mongodb.DBCollection#setTimeout(long, TimeUnit)} instead
      */
+    @Deprecated
     public long getMaxTime(final TimeUnit timeUnit) {
         return timeUnit.convert(maxTimeMS, MILLISECONDS);
     }
@@ -168,7 +170,9 @@ public class AggregationOptions {
          * @param maxTime  the max time
          * @param timeUnit the time unit
          * @return {@code this} so calls can be chained
+         * @deprecated prefer {@link com.mongodb.DBCollection#setTimeout(long, TimeUnit)} instead
          */
+        @Deprecated
         public Builder maxTime(final long maxTime, final TimeUnit timeUnit) {
             maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
             return this;

@@ -23,6 +23,8 @@ import com.mongodb.client.internal.OperationExecutor;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.DBCollectionCountOptions;
 import com.mongodb.client.model.DBCollectionFindOptions;
+import com.mongodb.internal.ClientSideOperationTimeoutFactories;
+import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.operation.FindOperation;
 import com.mongodb.lang.Nullable;
 import org.bson.codecs.Decoder;
@@ -77,6 +79,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     private int numSeen;
     private boolean closed;
     private final List<DBObject> all = new ArrayList<DBObject>();
+    private ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
     private MongoCursor<DBObject> cursor;
     // This allows us to easily enable/disable finalizer for cleaning up un-closed cursors
     @SuppressWarnings("UnusedDeclaration")// IDEs will say it can be converted to a local variable, resist the urge
@@ -114,14 +117,20 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     DBCursor(final DBCollection collection, @Nullable final DBObject filter, final DBCollectionFindOptions findOptions,
+             final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory) {
+        this(collection, filter, findOptions, collection.getExecutor(), collection.getDBDecoderFactory(),
+                collection.getObjectCodec(), true, clientSideOperationTimeoutFactory);
+    }
+
+    DBCursor(final DBCollection collection, @Nullable final DBObject filter, final DBCollectionFindOptions findOptions,
              final boolean retryReads) {
         this(collection, filter, findOptions, collection.getExecutor(), collection.getDBDecoderFactory(),
-                collection.getObjectCodec(), retryReads);
+                collection.getObjectCodec(), retryReads, null);
     }
 
     private DBCursor(final DBCollection collection, @Nullable final DBObject filter, final DBCollectionFindOptions findOptions,
                      final OperationExecutor executor, final DBDecoderFactory decoderFactory, final Decoder<DBObject> decoder,
-                     final boolean retryReads) {
+                     final boolean retryReads, @Nullable final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory) {
         this.collection = notNull("collection", collection);
         this.filter = filter;
         this.executor = notNull("executor", executor);
@@ -129,6 +138,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         this.decoderFactory = decoderFactory;
         this.decoder = notNull("decoder", decoder);
         this.retryReads = retryReads;
+        this.clientSideOperationTimeoutFactory = clientSideOperationTimeoutFactory;
     }
 
     /**
@@ -137,7 +147,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return the new cursor
      */
     public DBCursor copy() {
-        return new DBCursor(collection, filter, findOptions, executor, decoderFactory, decoder, retryReads);
+        return new DBCursor(collection, filter, findOptions, executor, decoderFactory, decoder, retryReads,
+                clientSideOperationTimeoutFactory);
     }
 
     /**
@@ -316,7 +327,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return same DBCursor for chaining operations
      * @mongodb.driver.manual reference/operator/meta/maxTimeMS/ $maxTimeMS
      * @since 2.12.0
+     * @deprecated prefer {@link com.mongodb.DBCollection#setTimeout(long, TimeUnit)} instead
      */
+    @Deprecated
     public DBCursor maxTime(final long maxTime, final TimeUnit timeUnit) {
         findOptions.maxTime(maxTime, timeUnit);
         return this;
@@ -397,28 +410,35 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
 
     @SuppressWarnings("deprecation")
     private FindOperation<DBObject> getQueryOperation(final Decoder<DBObject> decoder) {
+        return new FindOperation<>(createClientSideOperationFactory(), collection.getNamespace(), decoder)
+                .filter(collection.wrapAllowNull(filter))
+                .batchSize(findOptions.getBatchSize())
+                .skip(findOptions.getSkip())
+                .limit(findOptions.getLimit())
+                .projection(collection.wrapAllowNull(findOptions.getProjection()))
+                .sort(collection.wrapAllowNull(findOptions.getSort()))
+                .collation(findOptions.getCollation())
+                .comment(findOptions.getComment())
+                .hint(collection.wrapAllowNull(findOptions.getHint()))
+                .min(collection.wrapAllowNull(findOptions.getMin()))
+                .max(collection.wrapAllowNull(findOptions.getMax()))
+                .cursorType(findOptions.getCursorType())
+                .noCursorTimeout(findOptions.isNoCursorTimeout())
+                .oplogReplay(findOptions.isOplogReplay())
+                .partial(findOptions.isPartial())
+                .returnKey(findOptions.isReturnKey())
+                .showRecordId(findOptions.isShowRecordId())
+                .retryReads(retryReads);
+    }
 
-        return new FindOperation<DBObject>(collection.getNamespace(), decoder)
-                                                .filter(collection.wrapAllowNull(filter))
-                                                .batchSize(findOptions.getBatchSize())
-                                                .skip(findOptions.getSkip())
-                                                .limit(findOptions.getLimit())
-                                                .maxAwaitTime(findOptions.getMaxAwaitTime(MILLISECONDS), MILLISECONDS)
-                                                .maxTime(findOptions.getMaxTime(MILLISECONDS), MILLISECONDS)
-                                                .projection(collection.wrapAllowNull(findOptions.getProjection()))
-                                                .sort(collection.wrapAllowNull(findOptions.getSort()))
-                                                .collation(findOptions.getCollation())
-                                                .comment(findOptions.getComment())
-                                                .hint(collection.wrapAllowNull(findOptions.getHint()))
-                                                .min(collection.wrapAllowNull(findOptions.getMin()))
-                                                .max(collection.wrapAllowNull(findOptions.getMax()))
-                                                .cursorType(findOptions.getCursorType())
-                                                .noCursorTimeout(findOptions.isNoCursorTimeout())
-                                                .oplogReplay(findOptions.isOplogReplay())
-                                                .partial(findOptions.isPartial())
-                                                .returnKey(findOptions.isReturnKey())
-                                                .showRecordId(findOptions.isShowRecordId())
-                                                .retryReads(retryReads);
+    private ClientSideOperationTimeoutFactory createClientSideOperationFactory() {
+        if (clientSideOperationTimeoutFactory != null) {
+            return clientSideOperationTimeoutFactory;
+        }
+        return ClientSideOperationTimeoutFactories.create(
+                collection.getTimeout(MILLISECONDS),
+                findOptions.getMaxTime(MILLISECONDS),
+                findOptions.getMaxAwaitTime(MILLISECONDS));
     }
 
     /**
@@ -870,6 +890,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         }
     }
 
+    @SuppressWarnings("deprecation")
     private DBCollectionCountOptions getDbCollectionCountOptions() {
         return new DBCollectionCountOptions()
                 .readPreference(getReadPreference())

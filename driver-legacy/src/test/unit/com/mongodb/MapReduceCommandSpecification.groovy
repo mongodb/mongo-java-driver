@@ -24,6 +24,7 @@ import static com.mongodb.MapReduceCommand.OutputType
 import static com.mongodb.ReadPreference.primary
 import static java.util.concurrent.TimeUnit.SECONDS
 
+@SuppressWarnings('deprecation')
 class MapReduceCommandSpecification extends Specification {
     @Shared
     private MapReduceCommand cmd

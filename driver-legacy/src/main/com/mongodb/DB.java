@@ -24,6 +24,7 @@ import com.mongodb.client.model.DBCreateViewOptions;
 import com.mongodb.client.model.ValidationAction;
 import com.mongodb.client.model.ValidationLevel;
 import com.mongodb.connection.BufferProvider;
+import com.mongodb.internal.ClientSideOperationTimeoutFactories;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.CommandReadOperation;
 import com.mongodb.internal.operation.CreateCollectionOperation;
@@ -44,12 +45,15 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.DBCollection.createWriteConcernException;
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
 import static com.mongodb.ReadPreference.primary;
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * A thread-safe client view of a logical database in a MongoDB cluster. A DB instance can be achieved from a {@link MongoClient} instance
@@ -77,6 +81,8 @@ public class DB {
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
     private volatile ReadConcern readConcern;
+    @Nullable
+    private volatile Long timeoutMS;
 
     DB(final MongoClient mongo, final String name, final OperationExecutor executor) {
         checkDatabaseNameValidity(name);
@@ -165,6 +171,62 @@ public class DB {
     }
 
     /**
+     * The time limit for the full execution of an operation.
+     *
+     * <p>If set the following deprecated options will be ignored:
+     * {@code waitQueueTimeoutMS}, {@code socketTimeoutMS}, {@code wTimeoutMS}, {@code maxTimeMS} and {@code maxCommitTimeMS}</p>
+     *
+     * <ul>
+     *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
+     *    <ul>
+     *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
+     *        available</li>
+     *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
+     *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
+     *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
+     *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS">cursor.maxTimeMS</a>.</li>
+     *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
+     *        See: {@link TransactionOptions#getMaxCommitTime}.</li>
+     *   </ul>
+     *   </li>
+     *   <li>{@code 0} means infinite timeout.</li>
+     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+     * </ul>
+     *
+     * @param timeUnit the time unit to return the result in
+     * @return the time limit for the full execution of an operation or null.
+     * @since 4.x
+     */
+    @Nullable
+    public Long getTimeout(final TimeUnit timeUnit) {
+        Long localTimeoutMS = timeoutMS;
+        if (localTimeoutMS != null) {
+            return notNull("timeUnit", timeUnit).convert(localTimeoutMS, MILLISECONDS);
+        }
+        return mongo.getMongoClientOptions().getTimeout(timeUnit);
+    }
+
+    /**
+     * Sets the time limit for the full execution of an operation.
+     *
+     * <ul>
+     *   <li>{@code 0} means infinite timeout.</li>
+     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+     * </ul>
+     *
+     * @param timeout the timeout, which must be greater than or equal to 0
+     * @param timeUnit the time unit
+     * @return this
+     * @since 4.x
+     */
+    public DB setTimeout(final long timeout, final TimeUnit timeUnit) {
+        isTrueArgument("timeout >= 0", timeout >= 0);
+        notNull("timeUnit", timeUnit);
+        timeoutMS = MILLISECONDS.convert(timeout, timeUnit);
+        return this;
+    }
+
+    /**
      * Gets a collection with a given name.
      *
      * @param name the name of the collection to return
@@ -197,7 +259,9 @@ public class DB {
      */
     public void dropDatabase() {
         try {
-            getExecutor().execute(new DropDatabaseOperation(getName(), getWriteConcern()), getReadConcern());
+            getExecutor().execute(new DropDatabaseOperation(
+                    ClientSideOperationTimeoutFactories.create(getTimeout(MILLISECONDS)), getName(), getWriteConcern()),
+                    getReadConcern());
         } catch (MongoWriteConcernException e) {
             throw createWriteConcernException(e);
         }
@@ -222,11 +286,11 @@ public class DB {
     public Set<String> getCollectionNames() {
         List<String> collectionNames =
                 new MongoIterableImpl<DBObject>(null, executor, ReadConcern.DEFAULT, primary(),
-                        mongo.getMongoClientOptions().getRetryReads()) {
+                        mongo.getMongoClientOptions().getRetryReads(), getTimeout(MILLISECONDS)) {
                     @Override
                     public ReadOperation<BatchCursor<DBObject>> asReadOperation() {
-                        return new ListCollectionsOperation<DBObject>(name, commandCodec)
-                                .nameOnly(true);
+                        return new ListCollectionsOperation<DBObject>(
+                                ClientSideOperationTimeoutFactories.create(getTimeoutMS()), name, commandCodec).nameOnly(true);
                     }
                 }.map(new Function<DBObject, String>() {
                             @Override
@@ -311,8 +375,9 @@ public class DB {
         try {
             notNull("options", options);
             DBCollection view = getCollection(viewName);
-            executor.execute(new CreateViewOperation(name, viewName, viewOn, view.preparePipeline(pipeline), writeConcern)
-                                     .collation(options.getCollation()), getReadConcern());
+            executor.execute(new CreateViewOperation(ClientSideOperationTimeoutFactories.create(getTimeout(MILLISECONDS)),
+                    name, viewName, viewOn, view.preparePipeline(pipeline), writeConcern).collation(options.getCollation()),
+                    getReadConcern());
             return view;
         } catch (MongoWriteConcernException e) {
             throw createWriteConcernException(e);
@@ -387,7 +452,8 @@ public class DB {
             validationAction = ValidationAction.fromString((String) options.get("validationAction"));
         }
         Collation collation = DBObjectCollationHelper.createCollationFromOptions(options);
-        return new CreateCollectionOperation(getName(), collectionName, getWriteConcern())
+        return new CreateCollectionOperation(ClientSideOperationTimeoutFactories.create(getTimeout(MILLISECONDS)), getName(),
+                                             collectionName, getWriteConcern())
                    .capped(capped)
                    .collation(collation)
                    .sizeInBytes(sizeInBytes)
@@ -520,9 +586,9 @@ public class DB {
     }
 
     CommandResult executeCommand(final BsonDocument commandDocument, final ReadPreference readPreference) {
-        return new CommandResult(executor.execute(new CommandReadOperation<BsonDocument>(getName(), commandDocument,
-                                                                                         new BsonDocumentCodec()),
-                                                  readPreference, getReadConcern()));
+        return new CommandResult(executor.execute(
+                new CommandReadOperation<BsonDocument>(ClientSideOperationTimeoutFactories.create(getTimeout(MILLISECONDS)),
+                        getName(), commandDocument, new BsonDocumentCodec()), readPreference, getReadConcern()));
     }
 
     OperationExecutor getExecutor() {

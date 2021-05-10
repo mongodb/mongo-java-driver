@@ -199,7 +199,9 @@ public final class DBCollectionFindAndModifyOptions {
      * @param timeUnit the time unit to return the result in
      * @return the maximum execution time in the given time unit
      * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
+     * @deprecated prefer {@link com.mongodb.DBCollection#setTimeout(long, TimeUnit)} instead
      */
+    @Deprecated
     public long getMaxTime(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
@@ -212,7 +214,9 @@ public final class DBCollectionFindAndModifyOptions {
      * @param timeUnit the time unit, which may not be null
      * @return this
      * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
+     * @deprecated prefer {@link com.mongodb.DBCollection#setTimeout(long, TimeUnit)} instead
      */
+    @Deprecated
     public DBCollectionFindAndModifyOptions maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         isTrueArgument("maxTime > = 0", maxTime >= 0);

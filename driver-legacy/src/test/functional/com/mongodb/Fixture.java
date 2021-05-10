@@ -17,6 +17,8 @@
 package com.mongodb;
 
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.ClientSideOperationTimeoutFactories;
+import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import org.bson.UuidRepresentation;
 
 import java.util.List;
@@ -33,6 +35,16 @@ public final class Fixture {
     private static MongoClient mongoClient;
     private static MongoClientURI mongoClientURI;
     private static DB defaultDatabase;
+
+    public static final long TIMEOUT_MS = 60000;
+    public static final ClientSideOperationTimeoutFactory CSOT_FACTORY_TIMEOUT =
+            ClientSideOperationTimeoutFactories.create(TIMEOUT_MS);
+    public static final ClientSideOperationTimeoutFactory CSOT_FACTORY_TIMEOUT_AND_MAX_TIME =
+            ClientSideOperationTimeoutFactories.create(TIMEOUT_MS, 99);
+    public static final ClientSideOperationTimeoutFactory CSOT_FACTORY_ALL =
+            ClientSideOperationTimeoutFactories.create(TIMEOUT_MS, 99, 999L);
+    public static final ClientSideOperationTimeoutFactory CSOT_FACTORY_NO_TIMEOUT =
+            ClientSideOperationTimeoutFactories.NO_TIMEOUT;
 
     private Fixture() {
     }
