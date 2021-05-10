@@ -51,10 +51,8 @@ import org.bson.codecs.Decoder;
 import org.bson.types.ObjectId;
 
 import java.util.Deque;
-import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -484,7 +482,7 @@ class DefaultConnectionPool implements ConnectionPool {
     private class PooledConnection implements InternalConnection {
         private final UsageTrackingInternalConnection wrapped;
         private final AtomicBoolean isClosed = new AtomicBoolean();
-        private Set<Connection.PinningMode> pinningModes;
+        private Connection.PinningMode pinningMode;
 
         PooledConnection(final UsageTrackingInternalConnection wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
@@ -688,39 +686,36 @@ class DefaultConnectionPool implements ConnectionPool {
         @Override
         public synchronized void markAsPinned(final Connection.PinningMode pinningMode) {
             assertNotNull(pinningMode);
-            if (pinningModes == null) {
-                pinningModes = EnumSet.noneOf(Connection.PinningMode.class);
-            } else {
-                assertFalse(pinningModes.contains(pinningMode));
-            }
-            pinningModes.add(pinningMode);
-            switch (pinningMode) {
-                case CURSOR:
-                    numPinnedToCursor.increment();
-                    break;
-                case TRANSACTION:
-                    numPinnedToTransaction.increment();
-                    break;
-                default:
-                    fail();
+            // if the connection is already pinned for some other mode, the additional mode can be ignored.
+            // The typical case is the connection is first pinned for a transaction, then pinned for a cursor withing that transaction
+            // In this case, the cursor pinning is subsumed by the transaction pinning.
+            if (this.pinningMode == null) {
+                this.pinningMode = pinningMode;
+                switch (pinningMode) {
+                    case CURSOR:
+                        numPinnedToCursor.increment();
+                        break;
+                    case TRANSACTION:
+                        numPinnedToTransaction.increment();
+                        break;
+                    default:
+                        fail();
+                }
             }
         }
 
         synchronized void unmarkAsPinned() {
-            if (pinningModes != null) {
-                for (Connection.PinningMode pinningMode : pinningModes) {
-                    switch (pinningMode) {
-                        case CURSOR:
-                            numPinnedToCursor.decrement();
-                            break;
-                        case TRANSACTION:
-                            numPinnedToTransaction.decrement();
-                            break;
-                        default:
-                            fail();
-                    }
+            if (pinningMode != null) {
+                switch (pinningMode) {
+                    case CURSOR:
+                        numPinnedToCursor.decrement();
+                        break;
+                    case TRANSACTION:
+                        numPinnedToTransaction.decrement();
+                        break;
+                    default:
+                        fail();
                 }
-                pinningModes = null;
             }
         }
 
