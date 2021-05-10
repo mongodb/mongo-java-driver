@@ -33,20 +33,14 @@ import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerOpeningEvent;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
-import com.mongodb.lang.Nullable;
 import org.bson.types.ObjectId;
 
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
-import static com.mongodb.internal.connection.ClusterableServer.ConnectionState.AFTER_HANDSHAKE;
-import static com.mongodb.internal.connection.ClusterableServer.ConnectionState.BEFORE_HANDSHAKE;
-import static java.util.Arrays.asList;
 
 public class LoadBalancedServer implements ClusterableServer {
-    private static final List<Integer> SHUTDOWN_CODES = asList(91, 11600);
     private final AtomicBoolean closed = new AtomicBoolean();
     private final ServerId serverId;
     private final ConnectionPool connectionPool;
@@ -86,15 +80,13 @@ public class LoadBalancedServer implements ClusterableServer {
     @Override
     public void invalidate(final ConnectionState connectionState, final Throwable reason, final int connectionGeneration,
                            final int maxWireVersion) {
-        invalidate(connectionState, reason, null, -1);
+        // no op
     }
 
 
-    private void invalidate(final ConnectionState connectionState, final Throwable t, @Nullable final ObjectId serviceId,
-                            final int generation) {
+    private void invalidate(final Throwable t, final ObjectId serviceId, final int generation) {
         if (!isClosed()) {
-            if (t instanceof MongoSocketException
-                    && (!(t instanceof MongoSocketReadTimeoutException) || connectionState == BEFORE_HANDSHAKE)) {
+            if (t instanceof MongoSocketException && (!(t instanceof MongoSocketReadTimeoutException))) {
                 if (serviceId != null) {
                     connectionPool.invalidate(serviceId, generation);
                 }
@@ -147,7 +139,7 @@ public class LoadBalancedServer implements ClusterableServer {
             } catch (MongoWriteConcernWithResponseException e) {
                 return (T) e.getResponse();
             } catch (MongoException e) {
-                invalidate(AFTER_HANDSHAKE, e, connection.getDescription().getServiceId(), connection.getGeneration());
+                invalidate(e, connection.getDescription().getServiceId(), connection.getGeneration());
                 if (e instanceof MongoSocketException && sessionContext.hasSession()) {
                     sessionContext.markSessionDirty();
                 }
