@@ -64,6 +64,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -97,8 +98,8 @@ class DefaultConnectionPool implements ConnectionPool {
     private final Runnable maintenanceTask;
     private final ConnectionPoolListener connectionPoolListener;
     private final ServerId serverId;
-    private final AtomicInteger numPinnedToCursor = new AtomicInteger(0);
-    private final AtomicInteger numPinnedToTransaction = new AtomicInteger(0);
+    private final LongAdder numPinnedToCursor = new LongAdder();
+    private final LongAdder numPinnedToTransaction = new LongAdder();
 
     private final Map<ObjectId, ServiceStats> serverStatsMap = new HashMap<>();
     private final ConnectionGenerationSupplier connectionGenerationSupplier;
@@ -324,8 +325,8 @@ class DefaultConnectionPool implements ConnectionPool {
     }
 
     private MongoTimeoutException createTimeoutException(final Timeout timeout) {
-        int numPinnedToCursor = this.numPinnedToCursor.get();
-        int numPinnedToTransaction = this.numPinnedToTransaction.get();
+        int numPinnedToCursor = this.numPinnedToCursor.intValue();
+        int numPinnedToTransaction = this.numPinnedToTransaction.intValue();
         if (numPinnedToCursor == 0 && numPinnedToTransaction == 0) {
             return new MongoTimeoutException(format("Timed out after %s while waiting for a connection to server %s.",
                     timeout.toUserString(), serverId.getAddress()));
@@ -689,10 +690,10 @@ class DefaultConnectionPool implements ConnectionPool {
             pinningModes.add(pinningMode);
             switch (pinningMode) {
                 case CURSOR:
-                    numPinnedToCursor.incrementAndGet();
+                    numPinnedToCursor.increment();
                     break;
                 case TRANSACTION:
-                    numPinnedToTransaction.incrementAndGet();
+                    numPinnedToTransaction.increment();
                     break;
                 default:
                     fail();
@@ -704,10 +705,10 @@ class DefaultConnectionPool implements ConnectionPool {
                 for (Connection.PinningMode pinningMode : pinningModes) {
                     switch (pinningMode) {
                         case CURSOR:
-                            numPinnedToCursor.decrementAndGet();
+                            numPinnedToCursor.decrement();
                             break;
                         case TRANSACTION:
-                            numPinnedToTransaction.decrementAndGet();
+                            numPinnedToTransaction.decrement();
                             break;
                         default:
                             fail();
