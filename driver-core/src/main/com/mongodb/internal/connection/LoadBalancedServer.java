@@ -86,7 +86,7 @@ public class LoadBalancedServer implements ClusterableServer {
 
     private void invalidate(final Throwable t, final ObjectId serviceId, final int generation) {
         if (!isClosed()) {
-            if (t instanceof MongoSocketException && (!(t instanceof MongoSocketReadTimeoutException))) {
+            if (t instanceof MongoSocketException && !(t instanceof MongoSocketReadTimeoutException)) {
                 if (serviceId != null) {
                     connectionPool.invalidate(serviceId, generation);
                 }
