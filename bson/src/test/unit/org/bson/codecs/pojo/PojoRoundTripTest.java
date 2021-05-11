@@ -72,6 +72,7 @@ import org.bson.codecs.pojo.entities.SimpleIdImmutableModel;
 import org.bson.codecs.pojo.entities.SimpleIdModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.SimpleNestedPojoModel;
+import org.bson.codecs.pojo.entities.SimpleWithStaticModel;
 import org.bson.codecs.pojo.entities.TreeWithIdModel;
 import org.bson.codecs.pojo.entities.UpperBoundsConcreteModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationBsonPropertyIdModel;
@@ -138,6 +139,10 @@ public final class PojoRoundTripTest extends PojoTestCase {
     private static List<TestData> testCases() {
         List<TestData> data = new ArrayList<TestData>();
         data.add(new TestData("Simple model", getSimpleModel(), PojoCodecProvider.builder().register(SimpleModel.class),
+                SIMPLE_MODEL_JSON));
+
+        data.add(new TestData("Simple model with statics", new SimpleWithStaticModel(42, "myString"),
+                PojoCodecProvider.builder().register(SimpleWithStaticModel.class),
                 SIMPLE_MODEL_JSON));
 
         data.add(new TestData("Property selection model", new PropertySelectionModel(),
