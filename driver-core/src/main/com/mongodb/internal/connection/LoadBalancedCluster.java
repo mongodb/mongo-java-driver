@@ -21,6 +21,7 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
+import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterId;
@@ -56,6 +57,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+@ThreadSafe
 public final class LoadBalancedCluster implements Cluster {
     private static final Logger LOGGER = Loggers.getLogger("cluster");
 

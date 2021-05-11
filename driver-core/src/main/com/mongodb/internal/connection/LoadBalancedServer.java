@@ -22,6 +22,7 @@ import com.mongodb.MongoNodeIsRecoveringException;
 import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketReadTimeoutException;
+import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ServerConnectionState;
 import com.mongodb.connection.ServerDescription;
@@ -40,6 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 
+@ThreadSafe
 public class LoadBalancedServer implements ClusterableServer {
     private final AtomicBoolean closed = new AtomicBoolean();
     private final ServerId serverId;

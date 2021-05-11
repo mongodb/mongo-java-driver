@@ -21,6 +21,7 @@ import com.mongodb.MongoCredential;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
+import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ConnectionPoolSettings;
@@ -32,6 +33,7 @@ import com.mongodb.event.ServerListener;
 
 import java.util.List;
 
+@ThreadSafe
 public class LoadBalancedClusterableServerFactory implements ClusterableServerFactory {
     private final ClusterId clusterId;
     private final ServerSettings serverSettings;
