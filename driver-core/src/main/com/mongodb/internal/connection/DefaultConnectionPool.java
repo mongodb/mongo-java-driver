@@ -95,7 +95,7 @@ class DefaultConnectionPool implements ConnectionPool {
     private final Runnable maintenanceTask;
     private final ConnectionPoolListener connectionPoolListener;
     private final ServerId serverId;
-    private final PinnedStateManager pinnedStateManager = new PinnedStateManager();
+    private final PinnedStatsManager pinnedStatsManager = new PinnedStatsManager();
     private final ServiceStateManager serviceStateManager = new ServiceStateManager();
     private final ConnectionGenerationSupplier connectionGenerationSupplier;
     private volatile boolean closed;
@@ -320,8 +320,8 @@ class DefaultConnectionPool implements ConnectionPool {
     }
 
     private MongoTimeoutException createTimeoutException(final Timeout timeout) {
-        int numPinnedToCursor = pinnedStateManager.getNumPinnedToCursor();
-        int numPinnedToTransaction = pinnedStateManager.getNumPinnedToTransaction();
+        int numPinnedToCursor = pinnedStatsManager.getNumPinnedToCursor();
+        int numPinnedToTransaction = pinnedStatsManager.getNumPinnedToTransaction();
         if (numPinnedToCursor == 0 && numPinnedToTransaction == 0) {
             return new MongoTimeoutException(format("Timed out after %s while waiting for a connection to server %s.",
                     timeout.toUserString(), serverId.getAddress()));
@@ -679,13 +679,13 @@ class DefaultConnectionPool implements ConnectionPool {
             // In this case, the cursor pinning is subsumed by the transaction pinning.
             if (this.pinningMode == null) {
                 this.pinningMode = pinningMode;
-                pinnedStateManager.increment(pinningMode);
+                pinnedStatsManager.increment(pinningMode);
             }
         }
 
         void unmarkAsPinned() {
             if (pinningMode != null) {
-                pinnedStateManager.decrement(pinningMode);
+                pinnedStatsManager.decrement(pinningMode);
             }
         }
 
@@ -1138,7 +1138,7 @@ class DefaultConnectionPool implements ConnectionPool {
         }
     }
 
-    private static final class PinnedStateManager {
+    private static final class PinnedStatsManager {
         private final LongAdder numPinnedToCursor = new LongAdder();
         private final LongAdder numPinnedToTransaction = new LongAdder();
 
