@@ -344,6 +344,9 @@ class DefaultConnectionPool implements ConnectionPool {
                         numPinnedToCursor + numPinnedToTransaction, // must be at least a big as this sum but not bigger than `maxSize`
                         maxSize);
             }
+            numPinnedToCursor = Math.min(
+                    numPinnedToCursor, // prefer the observed value, but it must not be bigger than `numInUse`
+                    numInUse);
             numPinnedToTransaction = Math.min(
                     numPinnedToTransaction, // prefer the observed value, but it must not be bigger than `numInUse` - `numPinnedToCursor`
                     numInUse - numPinnedToCursor);
