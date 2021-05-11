@@ -44,6 +44,7 @@ import util.JsonPoweredTestHelper;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -65,14 +66,14 @@ import static org.junit.Assume.assumeTrue;
 public class InitialDnsSeedlistDiscoveryTest {
 
     private final String filename;
-    private final String parentDirectory;
+    private final Path parentDirectory;
     private final String uri;
     private final List<String> seeds;
     private final List<ServerAddress> hosts;
     private final boolean isError;
     private final BsonDocument options;
 
-    public InitialDnsSeedlistDiscoveryTest(final String filename, final String parentDirectory, final String uri, final List<String> seeds,
+    public InitialDnsSeedlistDiscoveryTest(final String filename, final Path parentDirectory, final String uri, final List<String> seeds,
                                            final List<ServerAddress> hosts, final boolean isError, final BsonDocument options) {
         this.filename = filename;
         this.parentDirectory = parentDirectory;
@@ -85,9 +86,9 @@ public class InitialDnsSeedlistDiscoveryTest {
 
     @Before
     public void setUp() {
-        if (parentDirectory.equals("replica-set")) {
+        if (parentDirectory.endsWith("replica-set")) {
             assumeTrue(isDiscoverableReplicaSet());
-        } else if (parentDirectory.equals("load-balanced")) {
+        } else if (parentDirectory.endsWith("load-balanced")) {
             assumeTrue(isLoadBalanced());
         } else {
             fail("Unexpected parent directory: " + parentDirectory);
@@ -251,7 +252,7 @@ public class InitialDnsSeedlistDiscoveryTest {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             data.add(new Object[]{
                     file.getName(),
-                    file.getParentFile().getName(),
+                    file.toPath().getParent(),
                     testDocument.getString("uri").getValue(),
                     toStringList(testDocument.getArray("seeds")),
                     toServerAddressList(testDocument.getArray("hosts")),
