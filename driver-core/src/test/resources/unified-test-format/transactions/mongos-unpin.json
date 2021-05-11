@@ -227,7 +227,7 @@
       ]
     },
     {
-      "description": "unpin when a non-transaction operation uses a session",
+      "description": "unpin when a non-transaction write operation uses a session",
       "operations": [
         {
           "name": "startTransaction",
@@ -259,6 +259,53 @@
           "object": "collection0",
           "arguments": {
             "document": {
+              "x": 1
+            },
+            "session": "session0"
+          }
+        },
+        {
+          "name": "assertSessionUnpinned",
+          "object": "testRunner",
+          "arguments": {
+            "session": "session0"
+          }
+        }
+      ]
+    },
+    {
+      "description": "unpin when a non-transaction read operation uses a session",
+      "operations": [
+        {
+          "name": "startTransaction",
+          "object": "session0"
+        },
+        {
+          "name": "insertOne",
+          "object": "collection0",
+          "arguments": {
+            "document": {
+              "x": 1
+            },
+            "session": "session0"
+          }
+        },
+        {
+          "name": "commitTransaction",
+          "object": "session0"
+        },
+        {
+          "name": "assertSessionPinned",
+          "object": "testRunner",
+          "arguments": {
+            "session": "session0"
+          }
+        },
+        {
+          "name": "find",
+          "object": "collection0",
+          "arguments": {
+            "filter": {
               "x": 1
             },
             "session": "session0"
