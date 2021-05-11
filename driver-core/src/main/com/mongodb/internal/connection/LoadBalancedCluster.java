@@ -53,7 +53,6 @@ import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.internal.event.EventListenerHelper.createServerListener;
 import static com.mongodb.internal.event.EventListenerHelper.getClusterListener;
 import static java.lang.String.format;
-import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -80,7 +79,7 @@ public final class LoadBalancedCluster implements Cluster {
         this.clusterId = clusterId;
         this.settings = settings;
         this.clusterListener = getClusterListener(settings);
-        this.description = new ClusterDescription(ClusterConnectionMode.LOAD_BALANCED, ClusterType.LOAD_BALANCED, emptyList(), settings,
+        this.description = new ClusterDescription(settings.getMode(), ClusterType.UNKNOWN, Collections.emptyList(), settings,
                 serverFactory.getSettings());
 
         if (settings.getSrvHost() == null) {
@@ -122,12 +121,10 @@ public final class LoadBalancedCluster implements Cluster {
     private void init(final ClusterId clusterId, final ClusterableServerFactory serverFactory, final ServerAddress host) {
         clusterListener.clusterOpening(new ClusterOpeningEvent(clusterId));
 
-        ClusterDescription startingDescription = new ClusterDescription(settings.getMode(), ClusterType.UNKNOWN, Collections.emptyList(),
-                settings, serverFactory.getSettings());
         ClusterDescription initialDescription = new ClusterDescription(settings.getMode(), ClusterType.LOAD_BALANCED,
                 singletonList(ServerDescription.builder().address(settings.getHosts().get(0)).state(CONNECTING).build()),
                 settings, serverFactory.getSettings());
-        clusterListener.clusterDescriptionChanged(new ClusterDescriptionChangedEvent(clusterId, initialDescription, startingDescription));
+        clusterListener.clusterDescriptionChanged(new ClusterDescriptionChangedEvent(clusterId, initialDescription, description));
 
         description = new ClusterDescription(ClusterConnectionMode.LOAD_BALANCED, ClusterType.LOAD_BALANCED,
                 singletonList(ServerDescription.builder()
