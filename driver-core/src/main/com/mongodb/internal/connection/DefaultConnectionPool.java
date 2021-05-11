@@ -490,7 +490,7 @@ class DefaultConnectionPool implements ConnectionPool {
         public void open() {
             assertFalse(isClosed.get());
             try {
-                connectionCreated(connectionPoolListener, wrapped.getDescription().getConnectionId());
+                connectionCreated(connectionPoolListener, getDescription().getConnectionId());
                 wrapped.open();
             } catch (RuntimeException e) {
                 closeAndHandleOpenFailure();
