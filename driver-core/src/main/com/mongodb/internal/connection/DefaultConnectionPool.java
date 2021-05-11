@@ -355,7 +355,7 @@ class DefaultConnectionPool implements ConnectionPool {
                             + "connections in use by other operations: %d",
                     timeout.toUserString(), serverId.getAddress(),
                     maxSize, numPinnedToCursor, numPinnedToTransaction, numOtherInUse));
-        }                                        
+        }
     }
 
 
