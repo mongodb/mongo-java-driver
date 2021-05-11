@@ -326,14 +326,38 @@ class DefaultConnectionPool implements ConnectionPool {
             return new MongoTimeoutException(format("Timed out after %s while waiting for a connection to server %s.",
                     timeout.toUserString(), serverId.getAddress()));
         } else {
-            int numOtherInUse = pool.getInUseCount() - numPinnedToCursor - numPinnedToTransaction;
+            int maxSize = settings.getMaxSize();
+            int numInUse = pool.getInUseCount();
+            /* At this point in an execution we consider at least one of `numPinnedToCursor`, `numPinnedToTransaction` to be positive.
+             * `numPinnedToCursor`, `numPinnedToTransaction` and `numInUse` are not a snapshot view,
+             * but we still must maintain the following invariants:
+             * - numInUse > 0
+             *     we consider at least one of `numPinnedToCursor`, `numPinnedToTransaction` to be positive,
+             *     so if we observe `numInUse` to be 0, we have to estimate it based on `numPinnedToCursor` and `numPinnedToTransaction`;
+             * - numInUse < maxSize
+             *     `numInUse` must not exceed the limit in situations when we estimate `numInUse`;
+             * - numPinnedToCursor + numPinnedToTransaction <= numInUse
+             *     otherwise the numbers do not make sense.
+             */
+            if (numInUse == 0) {
+                numInUse = Math.min(
+                        numPinnedToCursor + numPinnedToTransaction, // must be at least a big as this sum but not bigger than `maxSize`
+                        maxSize);
+            }
+            numPinnedToTransaction = Math.min(
+                    numPinnedToTransaction, // prefer the observed value, but it must not be bigger than `numInUse` - `numPinnedToCursor`
+                    numInUse - numPinnedToCursor);
+            int numOtherInUse = numInUse - numPinnedToCursor - numPinnedToTransaction;
+            assertTrue(numOtherInUse >= 0);
+            assertTrue(numPinnedToCursor + numPinnedToTransaction + numOtherInUse <= maxSize);
             return new MongoTimeoutException(format("Timed out after %s while waiting for a connection to server %s. Details: "
-                    + "maxPoolSize: %d, connections in use by cursors: %d, connections in use by transactions: %d, "
-                    + "connections in use by other operations: %d",
+                            + "maxPoolSize: %d, connections in use by cursors: %d, connections in use by transactions: %d, "
+                            + "connections in use by other operations: %d",
                     timeout.toUserString(), serverId.getAddress(),
-                    settings.getMaxSize(), numPinnedToCursor, numPinnedToTransaction, numOtherInUse));
-        }
+                    maxSize, numPinnedToCursor, numPinnedToTransaction, numOtherInUse));
+        }                                        
     }
+
 
     ConcurrentPool<UsageTrackingInternalConnection> getPool() {
         return pool;
