@@ -39,9 +39,11 @@ class UsageTrackingInternalConnection implements InternalConnection {
     private volatile long lastUsedAt;
     private volatile boolean closeSilently;
     private final InternalConnection wrapped;
+    private final DefaultConnectionPool.ServiceStateManager serviceStateManager;
 
-    UsageTrackingInternalConnection(final InternalConnection wrapped) {
+    UsageTrackingInternalConnection(final InternalConnection wrapped, final DefaultConnectionPool.ServiceStateManager serviceStateManager) {
         this.wrapped = wrapped;
+        this.serviceStateManager = serviceStateManager;
         openedAt = Long.MAX_VALUE;
         lastUsedAt = openedAt;
     }
@@ -51,6 +53,9 @@ class UsageTrackingInternalConnection implements InternalConnection {
         wrapped.open();
         openedAt = System.currentTimeMillis();
         lastUsedAt = openedAt;
+        if (getDescription().getServiceId() != null) {
+            serviceStateManager.addConnection(getDescription().getServiceId());
+        }
     }
 
     @Override
@@ -71,7 +76,13 @@ class UsageTrackingInternalConnection implements InternalConnection {
 
     @Override
     public void close() {
-        wrapped.close();
+        try {
+            wrapped.close();
+        } finally {
+            if (openedAt != Long.MAX_VALUE && getDescription().getServiceId() != null) {
+                serviceStateManager.removeConnection(getDescription().getServiceId());
+            }
+        }
     }
 
     @Override

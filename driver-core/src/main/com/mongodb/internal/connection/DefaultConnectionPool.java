@@ -492,9 +492,6 @@ class DefaultConnectionPool implements ConnectionPool {
             try {
                 connectionCreated(connectionPoolListener, wrapped.getDescription().getConnectionId());
                 wrapped.open();
-                if (getDescription().getServiceId() != null) {
-                    serviceStateManager.addConnection(getDescription().getServiceId());
-                }
             } catch (RuntimeException e) {
                 closeAndHandleOpenFailure();
                 throw new MongoOpenConnectionInternalException(e);
@@ -726,7 +723,8 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Override
         public UsageTrackingInternalConnection create() {
-            return new UsageTrackingInternalConnection(internalConnectionFactory.create(serverId, connectionGenerationSupplier));
+            return new UsageTrackingInternalConnection(internalConnectionFactory.create(serverId, connectionGenerationSupplier),
+                    serviceStateManager);
         }
 
         @Override
@@ -743,9 +741,6 @@ class DefaultConnectionPool implements ConnectionPool {
                 }
             }
             connection.close();
-            if (connection.getDescription().getServiceId() != null) {
-                serviceStateManager.removeConnection(connection.getDescription().getServiceId());
-            }
         }
 
         private String getReasonStringForClosing(final UsageTrackingInternalConnection connection) {
@@ -1071,7 +1066,7 @@ class DefaultConnectionPool implements ConnectionPool {
         }
     }
 
-    private static final class ServiceStateManager {
+    static final class ServiceStateManager {
         private final ConcurrentHashMap<ObjectId, ServiceState> stateByServiceId = new ConcurrentHashMap<>();
 
         void addConnection(final ObjectId serviceId) {
@@ -1102,6 +1097,8 @@ class DefaultConnectionPool implements ConnectionPool {
          * With this restriction, we still may use {@code expectedGeneration} to avoid incrementing the generation
          * if {@code expectedGeneration} is outdated, despite the generation not growing monotonically for any given service
          * due to method {@link #removeConnection(ObjectId)} removing {@link ServiceState} when the connection count reaches 0.
+         *
+         * @return true if the generation was incremented
          */
         boolean incrementGeneration(final ObjectId serviceId, final int expectedGeneration) {
             ServiceState state = stateByServiceId.compute(serviceId, (k, v) -> {
