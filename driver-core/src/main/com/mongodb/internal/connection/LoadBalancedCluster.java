@@ -120,6 +120,15 @@ public final class LoadBalancedCluster implements Cluster {
     }
 
     private void init(final ClusterId clusterId, final ClusterableServerFactory serverFactory, final ServerAddress host) {
+        clusterListener.clusterOpening(new ClusterOpeningEvent(clusterId));
+
+        ClusterDescription startingDescription = new ClusterDescription(settings.getMode(), ClusterType.UNKNOWN, Collections.emptyList(),
+                settings, serverFactory.getSettings());
+        ClusterDescription initialDescription = new ClusterDescription(settings.getMode(), ClusterType.LOAD_BALANCED,
+                singletonList(ServerDescription.builder().address(settings.getHosts().get(0)).state(CONNECTING).build()),
+                settings, serverFactory.getSettings());
+        clusterListener.clusterDescriptionChanged(new ClusterDescriptionChangedEvent(clusterId, initialDescription, startingDescription));
+
         description = new ClusterDescription(ClusterConnectionMode.LOAD_BALANCED, ClusterType.LOAD_BALANCED,
                 singletonList(ServerDescription.builder()
                         .ok(true)
@@ -131,14 +140,6 @@ public final class LoadBalancedCluster implements Cluster {
         server = serverFactory.create(settings.getHosts().get(0), event -> { }, createServerListener(serverFactory.getSettings()),
                 clusterClock);
 
-        clusterListener.clusterOpening(new ClusterOpeningEvent(clusterId));
-
-        ClusterDescription startingDescription = new ClusterDescription(settings.getMode(), ClusterType.UNKNOWN, Collections.emptyList(),
-                settings, serverFactory.getSettings());
-        ClusterDescription initialDescription = new ClusterDescription(settings.getMode(), ClusterType.LOAD_BALANCED,
-                singletonList(ServerDescription.builder().address(settings.getHosts().get(0)).state(CONNECTING).build()),
-                settings, serverFactory.getSettings());
-        clusterListener.clusterDescriptionChanged(new ClusterDescriptionChangedEvent(clusterId, initialDescription, startingDescription));
         clusterListener.clusterDescriptionChanged(new ClusterDescriptionChangedEvent(clusterId, description, initialDescription));
     }
 
