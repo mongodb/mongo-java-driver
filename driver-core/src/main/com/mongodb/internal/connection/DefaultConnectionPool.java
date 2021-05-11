@@ -1093,22 +1093,14 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         /**
-         * This method must not be called after calling {@link #removeConnection(ObjectId)} for any connection.
-         * With this restriction, we still may use {@code expectedGeneration} to avoid incrementing the generation
-         * if {@code expectedGeneration} is outdated, despite the generation not growing monotonically for any given service
-         * due to method {@link #removeConnection(ObjectId)} removing {@link ServiceState} when the connection count reaches 0.
+         * In some cases we may increment the generation even for an unregistered serviceId, as when open fails on the only connection to
+         * a given serviceId. In this case this method does not track the generation increment but does return true.
          *
          * @return true if the generation was incremented
          */
         boolean incrementGeneration(final ObjectId serviceId, final int expectedGeneration) {
-            ServiceState state = stateByServiceId.compute(serviceId, (k, v) -> {
-                if (v == null) {
-                    v = new ServiceState();
-                }
-                return v;
-
-            });
-            return state.incrementGeneration(expectedGeneration);
+            ServiceState state = stateByServiceId.get(serviceId);
+            return state == null || state.incrementGeneration(expectedGeneration);
         }
 
         int getGeneration(final ObjectId serviceId) {
