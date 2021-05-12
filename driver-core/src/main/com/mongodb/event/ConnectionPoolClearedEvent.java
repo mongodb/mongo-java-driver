@@ -28,8 +28,8 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 4.0
  */
 public final class ConnectionPoolClearedEvent {
-    @Nullable private final ServerId serverId;
-    private final ObjectId serviceId;
+    private final ServerId serverId;
+    @Nullable private final ObjectId serviceId;
 
     /**
      * Constructs a new instance of the event.
