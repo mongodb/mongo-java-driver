@@ -25,9 +25,12 @@ import com.mongodb.connection.ServerId;
 import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.internal.Timeout;
 import com.mongodb.internal.async.SingleResultCallback;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,6 +46,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Stream;
 
 import static com.mongodb.internal.connection.DefaultConnectionPool.MAX_CONNECTING;
 import static java.lang.Long.MAX_VALUE;
@@ -50,10 +54,10 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static junit.framework.TestCase.assertNotNull;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -72,15 +76,16 @@ public class DefaultConnectionPoolTest {
     private DefaultConnectionPool provider;
     private ExecutorService cachedExecutor;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         connectionFactory = new TestInternalConnectionFactory();
         cachedExecutor = Executors.newCachedThreadPool();
     }
 
-    @After
+    @AfterEach
     @SuppressWarnings("try")
     public void cleanup() throws InterruptedException {
+        //noinspection unused
         try (DefaultConnectionPool closed = provider) {
             cachedExecutor.shutdownNow();
             //noinspection ResultOfMethodCallIgnored
@@ -236,18 +241,30 @@ public class DefaultConnectionPoolTest {
         assertTrue(connectionFactory.getCreatedConnections().get(0).isClosed());
     }
 
-    @Test
-    public void concurrentUsage() throws InterruptedException {
-        int maxAvailableConnections = 7;
+    @ParameterizedTest
+    @MethodSource("concurrentUsageArguments")
+    public void concurrentUsage(final int minSize, final int maxSize, final int concurrentUsersCount,
+                                final boolean checkoutSync, final boolean checkoutAsync, final float invalidateProb)
+            throws InterruptedException {
         ControllableConnectionFactory controllableConnFactory = newControllableConnectionFactory(cachedExecutor);
         provider = new DefaultConnectionPool(SERVER_ID, controllableConnFactory.factory, ConnectionPoolSettings.builder()
-                .maxSize(MAX_CONNECTING + maxAvailableConnections)
-                .minSize(2)
+                .minSize(minSize)
+                .maxSize(maxSize)
                 .maxWaitTime(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS)
                 .maintenanceInitialDelay(0, NANOSECONDS)
                 .maintenanceFrequency(100, MILLISECONDS)
                 .build());
-        assertUseConcurrently(provider, 2 * maxAvailableConnections, cachedExecutor, SECONDS.toNanos(15));
+        assertUseConcurrently(provider, concurrentUsersCount, checkoutSync, checkoutAsync, invalidateProb,
+                cachedExecutor, SECONDS.toNanos(10));
+    }
+
+    private static Stream<Arguments> concurrentUsageArguments() {
+        return Stream.of(
+                Arguments.of(0, 1, 8, true, false, 0.02f),
+                Arguments.of(0, 1, 8, false, true, 0.02f),
+                Arguments.of(Math.min(3, MAX_CONNECTING), MAX_CONNECTING, 8, true, true, 0f),
+                Arguments.of(MAX_CONNECTING + 5, MAX_CONNECTING + 5, 2 * (MAX_CONNECTING + 5), true, true, 0.02f),
+                Arguments.of(Math.min(3, MAX_CONNECTING), MAX_CONNECTING + 5, 2 * (MAX_CONNECTING + 5), true, true, 0.9f));
     }
 
     @Test
@@ -262,7 +279,8 @@ public class DefaultConnectionPoolTest {
                 .maintenanceInitialDelay(MAX_VALUE, NANOSECONDS)
                 .build());
         acquireOpenPermits(provider, MAX_CONNECTING, InfiniteCheckoutEmulation.INFINITE_CALLBACK, controllableConnFactory, listener);
-        assertUseConcurrently(provider, 2 * maxAvailableConnections, cachedExecutor, SECONDS.toNanos(10));
+        assertUseConcurrently(provider, 2 * maxAvailableConnections, true, true, 0.02f,
+                cachedExecutor, SECONDS.toNanos(10));
     }
 
     /**
@@ -339,33 +357,36 @@ public class DefaultConnectionPoolTest {
     }
 
     private static void assertUseConcurrently(final DefaultConnectionPool pool, final int concurrentUsersCount,
+                                              final boolean sync, final boolean async, final float invalidateProb,
                                               final ExecutorService executor, final long durationNanos) throws InterruptedException {
         try {
-            useConcurrently(pool, concurrentUsersCount, executor, durationNanos);
+            useConcurrently(pool, concurrentUsersCount, sync, async, invalidateProb, executor, durationNanos);
         } catch (TimeoutException | ExecutionException e) {
             throw new AssertionError(e);
         }
     }
 
     private static void useConcurrently(final DefaultConnectionPool pool, final int concurrentUsersCount,
+                                        final boolean checkoutSync, final boolean checkoutAsync, final float invalidateProb,
                                         final ExecutorService executor, final long durationNanos)
             throws ExecutionException, InterruptedException, TimeoutException {
+        assertTrue(invalidateProb >= 0 && invalidateProb <= 1);
         Runnable spontaneouslyInvalidate = () -> {
-            if (ThreadLocalRandom.current().nextFloat() < 0.02) {
+            if (ThreadLocalRandom.current().nextFloat() < invalidateProb) {
                 pool.invalidate();
             }
         };
         Collection<Future<?>> tasks = new ArrayList<>();
         Timeout duration = Timeout.startNow(durationNanos);
         for (int i = 0; i < concurrentUsersCount; i++) {
-            if (i % 2 == 0) {//check out synchronously
+            if ((checkoutSync && checkoutAsync) ? i % 2 == 0 : checkoutSync) {//check out synchronously
                 tasks.add(executor.submit(() -> {
                     while (!(duration.expired() || Thread.currentThread().isInterrupted())) {
                         spontaneouslyInvalidate.run();
                         pool.get(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS).close();
                     }
                 }));
-            } else {//check out asynchronously
+            } else if (checkoutAsync) {//check out asynchronously
                 tasks.add(executor.submit(() -> {
                     while (!(duration.expired() || Thread.currentThread().isInterrupted())) {
                         spontaneouslyInvalidate.run();
