@@ -68,7 +68,8 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
     }
 
     private void assertTopology(final BsonDocument outcome) {
-        assertTopologyType(outcome.getString("topologyType").getValue());
+        String topologyType = outcome.getString("topologyType").getValue();
+        assertTopologyType(topologyType);
         assertLogicalSessionTimeout(outcome.get("logicalSessionTimeoutMinutes", BsonNull.VALUE));
         assertDriverCompatibility(outcome.get("compatible"));
     }
@@ -155,6 +156,10 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
                 break;
             case "Sharded":
                 assertEquals(MultiServerCluster.class, getCluster().getClass());
+                assertEquals(getClusterType(topologyType), getCluster().getCurrentDescription().getType());
+                break;
+            case "LoadBalanced":
+                assertEquals(LoadBalancedCluster.class, getCluster().getClass());
                 assertEquals(getClusterType(topologyType), getCluster().getCurrentDescription().getType());
                 break;
             case "Unknown":

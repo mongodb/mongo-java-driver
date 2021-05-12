@@ -604,7 +604,7 @@ final class CommandOperationHelper {
             }
 
             if (binding.getSessionContext().hasActiveTransaction()) {
-                binding.getSessionContext().unpinServerAddress();
+                binding.getSessionContext().clearTransactionContext();
             }
             final BsonDocument originalCommand = command;
             final MongoException originalException = exception;
@@ -708,7 +708,7 @@ final class CommandOperationHelper {
                     oldConnection.release();
                     oldSource.release();
                     if (binding.getSessionContext().hasActiveTransaction()) {
-                        binding.getSessionContext().unpinServerAddress();
+                        binding.getSessionContext().clearTransactionContext();
                     }
                     retryableCommand(originalError);
                 }

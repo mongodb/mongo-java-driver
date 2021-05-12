@@ -66,7 +66,7 @@ class BaseClusterSpecification extends Specification {
             }
 
             @Override
-            protected ClusterableServer getServer(final ServerAddress serverAddress) {
+            ClusterableServer getServer(final ServerAddress serverAddress) {
                 throw new UnsupportedOperationException()
             }
         }

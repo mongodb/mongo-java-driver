@@ -101,7 +101,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
         given:
         def connection = new InternalStreamConnectionFactory(
                 new NettyStreamFactory(readSocketSettings, getSslSettings()), getCredentialWithCache(), null, null, [], getServerApi(),
-        ).create(new ServerId(new ClusterId(), getPrimary()))
+        ).create(new ServerId(new ClusterId(), getPrimary()), connectionGeneration)
         connection.open()
 
         getCollectionHelper().insertDocuments(new BsonDocument('_id', new BsonInt32(1)));

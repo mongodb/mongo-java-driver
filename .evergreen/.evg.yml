@@ -240,6 +240,22 @@ functions:
         script: |
           DRIVERS_TOOLS="${DRIVERS_TOOLS}" sh ${DRIVERS_TOOLS}/.evergreen/atlas_data_lake/run-mongohouse-local.sh
 
+  "run load-balancer":
+    - command: shell.exec
+      params:
+        script: |
+          DRIVERS_TOOLS=${DRIVERS_TOOLS} MONGODB_URI=${MONGODB_URI} bash ${DRIVERS_TOOLS}/.evergreen/run-load-balancer.sh start
+    - command: expansions.update
+      params:
+        file: lb-expansion.yml
+
+  "stop load-balancer":
+    - command: shell.exec
+      params:
+        script: |
+          cd ${DRIVERS_TOOLS}/.evergreen
+          DRIVERS_TOOLS=${DRIVERS_TOOLS} bash ${DRIVERS_TOOLS}/.evergreen/run-load-balancer.sh stop
+
   "run tests":
     - command: shell.exec
       type: test
@@ -261,6 +277,18 @@ functions:
           GCP_EMAIL=${gcp_email} GCP_PRIVATE_KEY=${gcp_private_key} \
           REQUIRE_API_VERSION=${REQUIRE_API_VERSION} \
           .evergreen/run-tests.sh
+
+  "run load-balancer tests":
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          AUTH="${AUTH}" SSL="${SSL}" JDK="${JDK}" \
+          SINGLE_MONGOS_LB_URI="${SINGLE_MONGOS_LB_URI}" \
+          MULTI_MONGOS_LB_URI="${MULTI_MONGOS_LB_URI}" \
+          .evergreen/run-load-balancer-tests.sh
 
   "run reactive streams tck tests":
     - command: shell.exec
@@ -695,6 +723,7 @@ post:
   - func: "upload working dir logs"
   - func: "upload test results"
   - func: "cleanup"
+  - func: "stop load-balancer"
 
 tasks:
 
@@ -710,6 +739,12 @@ tasks:
       commands:
         - func: "bootstrap mongo-orchestration"
         - func: "run tests"
+
+    - name: load-balancer-test
+      commands:
+        - func: "bootstrap mongo-orchestration"
+        - func: "run load-balancer"
+        - func: "run load-balancer tests"
 
     - name: "scala-tests"
       commands:
@@ -1424,6 +1459,12 @@ buildvariants:
   tags: ["tests-variant"]
   tasks:
     - name: "test"
+
+- matrix_name: "tests-load-balancer-secure"
+  matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk11"], version: ["latest"], topology: "sharded-cluster", os: "ubuntu" }
+  display_name: "Load Balancer ${version} ${auth} ${ssl} ${jdk} ${os}"
+  tasks:
+    - name: "load-balancer-test"
 
 - matrix_name: "tests-slow"
   matrix_spec: { auth: "noauth", ssl: "*", jdk: "jdk8", version: ["4.2"], topology: "*", os: "linux" }

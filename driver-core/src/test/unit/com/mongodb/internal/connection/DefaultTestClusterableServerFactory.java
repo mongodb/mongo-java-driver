@@ -46,12 +46,17 @@ public class DefaultTestClusterableServerFactory implements ClusterableServerFac
     public ClusterableServer create(final ServerAddress serverAddress,
                                     final ServerDescriptionChangedListener serverDescriptionChangedListener,
                                     final ServerListener serverListener, final ClusterClock clusterClock) {
-        TestServerMonitorFactory serverMonitorFactory = new TestServerMonitorFactory(new ServerId(clusterId, serverAddress));
-        serverAddressToServerMonitorFactoryMap.put(serverAddress, serverMonitorFactory);
+        if (clusterConnectionMode == ClusterConnectionMode.LOAD_BALANCED) {
+            return new LoadBalancedServer(new ServerId(clusterId, serverAddress), new TestConnectionPool(),
+                    new TestConnectionFactory(), serverListenerFactory.create(serverAddress), clusterClock);
+        } else {
+            TestServerMonitorFactory serverMonitorFactory = new TestServerMonitorFactory(new ServerId(clusterId, serverAddress));
+            serverAddressToServerMonitorFactoryMap.put(serverAddress, serverMonitorFactory);
 
-        return new DefaultServer(new ServerId(clusterId, serverAddress), clusterConnectionMode, new TestConnectionPool(),
-                new TestConnectionFactory(), serverMonitorFactory, serverDescriptionChangedListener,
-                serverListenerFactory.create(serverAddress), null, clusterClock);
+            return new DefaultServer(new ServerId(clusterId, serverAddress), clusterConnectionMode, new TestConnectionPool(),
+                    new TestConnectionFactory(), serverMonitorFactory, serverDescriptionChangedListener,
+                    serverListenerFactory.create(serverAddress), null, clusterClock);
+        }
     }
 
     @Override

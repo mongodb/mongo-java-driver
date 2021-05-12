@@ -207,7 +207,7 @@ abstract class BaseCluster implements Cluster {
         }
     }
 
-    protected ClusterId getClusterId() {
+    public ClusterId getClusterId() {
         return clusterId;
     }
 
@@ -235,14 +235,6 @@ abstract class BaseCluster implements Cluster {
     public boolean isClosed() {
         return isClosed;
     }
-
-    /**
-     * Return the server at the given address.
-     *
-     * @param serverAddress the address
-     * @return the server, or null if the cluster no longer contains a server at this address.
-     */
-    protected abstract ClusterableServer getServer(ServerAddress serverAddress);
 
     protected synchronized void updateDescription(final ClusterDescription newDescription) {
         if (LOGGER.isDebugEnabled()) {

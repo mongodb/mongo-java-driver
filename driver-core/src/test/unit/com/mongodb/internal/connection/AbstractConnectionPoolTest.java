@@ -21,6 +21,7 @@ import com.mongodb.JsonTestServerVersionChecker;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ConnectionPoolSettings;
@@ -46,6 +47,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
+import org.bson.types.ObjectId;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -144,6 +146,7 @@ public abstract class AbstractConnectionPoolTest {
                 ServerId serverId = new ServerId(new ClusterId(), ClusterFixture.getPrimary());
                 pool = new ConnectionIdAdjustingConnectionPool(new DefaultConnectionPool(serverId,
                         new InternalStreamConnectionFactory(
+                                ClusterConnectionMode.SINGLE,
                                 createStreamFactory(SocketSettings.builder().build(), ClusterFixture.getSslSettings()),
                                 ClusterFixture.getCredentialWithCache(),
                                 fileName + ": " + description,
@@ -531,6 +534,11 @@ public abstract class AbstractConnectionPoolTest {
         @Override
         public void invalidate() {
             pool.invalidate();
+        }
+
+        @Override
+        public void invalidate(final ObjectId serviceId, final int generation) {
+            pool.invalidate(serviceId, generation);
         }
 
         @Override

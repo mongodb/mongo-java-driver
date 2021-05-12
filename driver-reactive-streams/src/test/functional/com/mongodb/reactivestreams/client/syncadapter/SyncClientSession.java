@@ -53,6 +53,21 @@ class SyncClientSession implements ClientSession {
     }
 
     @Override
+    public Object getTransactionContext() {
+        return wrapped.getTransactionContext();
+    }
+
+    @Override
+    public void setTransactionContext(final ServerAddress address, final Object transactionContext) {
+        wrapped.setTransactionContext(address, transactionContext);
+    }
+
+    @Override
+    public void clearTransactionContext() {
+        wrapped.clearTransactionContext();
+    }
+
+    @Override
     public BsonDocument getRecoveryToken() {
         return wrapped.getRecoveryToken();
     }

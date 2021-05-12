@@ -66,7 +66,7 @@ public class ServerDiscoveryAndMonitoringMonitoringTest extends AbstractServerDi
     public void shouldPassAllOutcomes() {
         for (BsonValue phase : getDefinition().getArray("phases")) {
             try {
-                for (BsonValue response : phase.asDocument().getArray("responses")) {
+                for (BsonValue response : phase.asDocument().getArray("responses", new BsonArray())) {
                     applyResponse(response.asArray());
                 }
                 BsonDocument outcome = phase.asDocument().getDocument("outcome");
@@ -104,6 +104,8 @@ public class ServerDiscoveryAndMonitoringMonitoringTest extends AbstractServerDi
                         event.getNewDescription());
                 if (newDescription.getString("topologyType").getValue().equals("Single") && isSingleServerClusterExpected()) {
                     assertEquals(SingleServerCluster.class, getCluster().getClass());
+                } else if (newDescription.getString("topologyType").getValue().equals("LoadBalanced")) {
+                    assertEquals(LoadBalancedCluster.class, getCluster().getClass());
                 } else {
                     assertEquals(MultiServerCluster.class, getCluster().getClass());
                 }

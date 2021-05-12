@@ -32,6 +32,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ServerId;
 import com.mongodb.event.CommandEvent;
@@ -73,6 +74,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
+import static com.mongodb.ClusterFixture.isLoadBalanced;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static com.mongodb.client.unified.EventMatcher.getReasonString;
@@ -282,7 +284,9 @@ public final class Entities {
         if (entity.getBoolean("useMultipleMongoses", BsonBoolean.FALSE).getValue()) {
             assumeTrue("Multiple mongos connection string not available for sharded cluster",
                     !isSharded() || getMultiMongosConnectionString() != null);
-            if (isSharded()) {
+            assumeTrue("Multiple mongos connection string not available for load-balanced cluster",
+                    !isLoadBalanced() || getMultiMongosConnectionString() != null);
+            if (isSharded() || isLoadBalanced()) {
                 clientSettingsBuilder.applyConnectionString(requireNonNull(getMultiMongosConnectionString()));
             }
         }
@@ -367,6 +371,11 @@ public final class Entities {
                     case "waitQueueTimeoutMS":
                         clientSettingsBuilder.applyToConnectionPoolSettings(builder ->
                                 builder.maxWaitTime(value.asNumber().longValue(), TimeUnit.MILLISECONDS));
+                        break;
+                    case "loadBalanced":
+                        if (value.asBoolean().getValue()) {
+                            clientSettingsBuilder.applyToClusterSettings(builder -> builder.mode(ClusterConnectionMode.LOAD_BALANCED));
+                        }
                         break;
                     case "appname":
                         clientSettingsBuilder.applicationName(value.asString().getValue());
