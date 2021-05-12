@@ -29,6 +29,7 @@ import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerType
 import com.mongodb.internal.async.SingleResultCallback
 import org.bson.BsonArray
+import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
@@ -210,7 +211,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
     def 'should add client metadata document to isMaster command'() {
         given:
         def initializer = new InternalStreamConnectionInitializer(SINGLE, null, clientMetadataDocument, [], null)
-        def expectedIsMasterCommandDocument = new BsonDocument('ismaster', new BsonInt32(1))
+        def expectedIsMasterCommandDocument = new BsonDocument('ismaster', new BsonInt32(1)).append('helloOk', BsonBoolean.TRUE)
         if (clientMetadataDocument != null) {
             expectedIsMasterCommandDocument.append('client', clientMetadataDocument)
         }
@@ -238,7 +239,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
     def 'should add compression to isMaster command'() {
         given:
         def initializer = new InternalStreamConnectionInitializer(SINGLE, null, null, compressors, null)
-        def expectedIsMasterCommandDocument = new BsonDocument('ismaster', new BsonInt32(1))
+        def expectedIsMasterCommandDocument = new BsonDocument('ismaster', new BsonInt32(1)).append('helloOk', BsonBoolean.TRUE)
 
         def compressionArray = new BsonArray()
         for (def compressor : compressors) {
@@ -404,7 +405,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         ((SpeculativeAuthenticator) authenticator).getSpeculativeAuthenticateResponse() == null
         ((SpeculativeAuthenticator) authenticator)
                 .createSpeculativeAuthenticateCommand(internalConnection) == null
-        BsonDocument.parse('{ismaster: 1}') == decodeCommand(internalConnection.getSent()[0])
+        BsonDocument.parse('{ismaster: 1, helloOk: true}') == decodeCommand(internalConnection.getSent()[0])
 
         where:
         async << [true, false]
@@ -511,7 +512,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
     def createIsMasterCommand(final String firstClientChallenge, final String mechanism,
                               final boolean hasSaslSupportedMechs) {
-        String isMaster = '{ismaster: 1, ' +
+        String isMaster = '{ismaster: 1, helloOk: true, ' +
                 (hasSaslSupportedMechs ? 'saslSupportedMechs: "database.user", ' : '') +
                 (mechanism == 'MONGODB-X509' ?
                         'speculativeAuthenticate: { authenticate: 1, ' +
