@@ -127,6 +127,11 @@ class TestInternalConnection implements InternalConnection {
     }
 
     @Override
+    public int getGeneration() {
+        return 0;
+    }
+
+    @Override
     public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
         // repackage all byte buffers into a single byte buffer...
         int totalSize = 0;

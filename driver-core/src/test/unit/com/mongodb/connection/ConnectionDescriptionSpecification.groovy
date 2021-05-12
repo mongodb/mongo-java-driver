@@ -17,15 +17,21 @@
 package com.mongodb.connection
 
 import com.mongodb.ServerAddress
+import org.bson.BsonArray
+import org.bson.BsonString
+import org.bson.types.ObjectId
 import spock.lang.Specification
 
 class ConnectionDescriptionSpecification extends Specification {
+    private final serverId = new ObjectId();
     private final id = new ConnectionId(new ServerId(new ClusterId(), new ServerAddress()))
-    private final description = new ConnectionDescription(id, 5, ServerType.STANDALONE, 1, 2, 3,
-    ['zlib'])
+    private final saslSupportedMechanisms = new BsonArray([new BsonString('SCRAM-SHA-256')])
+    private final description = new ConnectionDescription(serverId, id, 5, ServerType.STANDALONE, 1, 2, 3,
+            ['zlib'], saslSupportedMechanisms)
 
     def 'should initialize all values'() {
         expect:
+        description.getServiceId() == serverId
         description.connectionId == id
         description.maxWireVersion == 5
         description.serverType == ServerType.STANDALONE
@@ -33,6 +39,7 @@ class ConnectionDescriptionSpecification extends Specification {
         description.maxDocumentSize == 2
         description.maxMessageSize == 3
         description.compressors == ['zlib']
+        description.saslSupportedMechanisms == saslSupportedMechanisms
     }
 
     def 'withConnectionId should return a new instance with the given connectionId and preserve the rest'() {
@@ -42,6 +49,7 @@ class ConnectionDescriptionSpecification extends Specification {
 
         expect:
         !newDescription.is(description)
+        newDescription.serviceId == serverId
         newDescription.connectionId == newId
         newDescription.maxWireVersion == 5
         newDescription.serverType == ServerType.STANDALONE
@@ -49,5 +57,24 @@ class ConnectionDescriptionSpecification extends Specification {
         newDescription.maxDocumentSize == 2
         newDescription.maxMessageSize == 3
         newDescription.compressors == ['zlib']
+        description.saslSupportedMechanisms == saslSupportedMechanisms
+    }
+
+    def 'withServerId should return a new instance with the given serverId and preserve the rest'() {
+        given:
+        def newServerId = new ObjectId();
+        def newDescription = description.withServiceId(newServerId)
+
+        expect:
+        !newDescription.is(description)
+        newDescription.serviceId == newServerId
+        newDescription.connectionId == id
+        newDescription.maxWireVersion == 5
+        newDescription.serverType == ServerType.STANDALONE
+        newDescription.maxBatchCount == 1
+        newDescription.maxDocumentSize == 2
+        newDescription.maxMessageSize == 3
+        newDescription.compressors == ['zlib']
+        description.saslSupportedMechanisms == saslSupportedMechanisms
     }
 }

@@ -265,8 +265,16 @@ public final class ClusterSettings {
          */
         public Builder applyConnectionString(final ConnectionString connectionString) {
             Boolean directConnection = connectionString.isDirectConnection();
+            Boolean loadBalanced = connectionString.isLoadBalanced();
 
-            if (connectionString.isSrvProtocol()) {
+            if (loadBalanced != null && loadBalanced) {
+                mode(ClusterConnectionMode.LOAD_BALANCED);
+                if (connectionString.isSrvProtocol()) {
+                    srvHost(connectionString.getHosts().get(0));
+                } else {
+                    hosts(singletonList(createServerAddress(connectionString.getHosts().get(0))));
+                }
+            } else if (connectionString.isSrvProtocol()) {
                 mode(ClusterConnectionMode.MULTIPLE);
                 srvHost(connectionString.getHosts().get(0));
             } else if ((directConnection != null && directConnection)
@@ -553,13 +561,17 @@ public final class ClusterSettings {
             }
         }
 
+        if (builder.mode == ClusterConnectionMode.LOAD_BALANCED && builder.srvHost == null && builder.hosts.size() != 1) {
+            throw new IllegalArgumentException("Multiple hosts cannot be specified when in load balancing mode");
+        }
+
         srvHost = builder.srvHost;
         hosts = builder.hosts;
         if (srvHost != null) {
             if (builder.mode == ClusterConnectionMode.SINGLE) {
                 throw new IllegalArgumentException("An SRV host name was provided but the connection mode is not MULTIPLE");
             }
-            mode = ClusterConnectionMode.MULTIPLE;
+            mode = builder.mode != null ? builder.mode : ClusterConnectionMode.MULTIPLE;
         } else {
             if (builder.mode == ClusterConnectionMode.SINGLE && builder.hosts.size() > 1) {
                 throw new IllegalArgumentException("Can not directly connect to more than one server");

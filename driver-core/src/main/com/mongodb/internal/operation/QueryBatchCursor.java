@@ -19,9 +19,11 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.MongoSocketException;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
+import com.mongodb.connection.ServerType;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.QueryResult;
@@ -39,6 +41,7 @@ import org.bson.codecs.Decoder;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.CursorHelper.getNumberToReturn;
@@ -60,14 +63,16 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     private final long maxTimeMS;
     private int batchSize;
     private ConnectionSource connectionSource;
+    private Connection connection;
     private ServerCursor serverCursor;
     private List<T> nextBatch;
     private int count;
     private volatile boolean closed;
     private BsonDocument postBatchResumeToken;
     private BsonTimestamp operationTime;
-    private boolean firstBatchEmpty;
+    private final boolean firstBatchEmpty;
     private int maxWireVersion = 0;
+    private boolean killCursorOnClose = true;
 
     QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize, final Decoder<T> decoder) {
         this(firstQueryResult, limit, batchSize, decoder, null);
@@ -76,11 +81,6 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize,
                      final Decoder<T> decoder, final ConnectionSource connectionSource) {
         this(firstQueryResult, limit, batchSize, 0, decoder, connectionSource, null, null);
-    }
-
-    QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize,
-                     final Decoder<T> decoder, final ConnectionSource connectionSource, final Connection connection) {
-        this(firstQueryResult, limit, batchSize, 0, decoder, connectionSource, connection, null);
     }
 
     QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize, final long maxTimeMS,
@@ -107,8 +107,6 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         }
         if (connectionSource != null) {
             this.connectionSource = connectionSource.retain();
-        } else {
-            this.connectionSource = null;
         }
 
         initFromQueryResult(firstQueryResult);
@@ -118,9 +116,15 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             this.maxWireVersion = connection.getDescription().getMaxWireVersion();
             if (limitReached()) {
                 killCursor(connection);
+            } else {
+                assertNotNull(connectionSource);
+                if (connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER) {
+                    this.connection = connection.retain();
+                    this.connection.markAsPinned(Connection.PinningMode.CURSOR);
+                }
             }
         }
-        releaseConnectionSourceIfNoServerCursor();
+        releaseConnectionAndSourceIfNoServerCursor();
     }
 
     @Override
@@ -187,9 +191,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             try {
                 killCursor();
             } finally {
-                if (connectionSource != null) {
-                    connectionSource.release();
-                }
+                releaseConnectionAndSource();
             }
         }
     }
@@ -261,7 +263,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     }
 
     private void getMore() {
-        Connection connection = connectionSource.getConnection();
+        Connection connection = getConnection();
         try {
             if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
                 try {
@@ -283,9 +285,23 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             if (limitReached()) {
                 killCursor(connection);
             }
+        } catch (MongoSocketException e) {
+            // If connection is pinned, don't attempt to kill the cursor on close, since the connection is in a bad state
+            if (this.connection != null) {
+                killCursorOnClose = false;
+            }
+            throw e;
         } finally {
             connection.release();
-            releaseConnectionSourceIfNoServerCursor();
+            releaseConnectionAndSourceIfNoServerCursor();
+        }
+    }
+
+    private Connection getConnection() {
+        if (connection == null) {
+            return connectionSource.getConnection();
+        } else {
+            return connection.retain();
         }
     }
 
@@ -323,9 +339,9 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     }
 
     private void killCursor() {
-        if (serverCursor != null) {
+        if (serverCursor != null && killCursorOnClose) {
             try {
-                Connection connection = connectionSource.getConnection();
+                Connection connection = getConnection();
                 try {
                     killCursor(connection);
                 } finally {
@@ -354,10 +370,20 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         }
     }
 
-    private void releaseConnectionSourceIfNoServerCursor() {
-        if (serverCursor == null && connectionSource != null) {
+    private void releaseConnectionAndSourceIfNoServerCursor() {
+        if (serverCursor == null) {
+            releaseConnectionAndSource();
+        }
+    }
+
+    private void releaseConnectionAndSource() {
+        if (connectionSource != null) {
             connectionSource.release();
             connectionSource = null;
+        }
+        if (connection != null) {
+            connection.release();
+            connection = null;
         }
     }
 

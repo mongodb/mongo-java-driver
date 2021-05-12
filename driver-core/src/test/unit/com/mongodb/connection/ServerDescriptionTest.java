@@ -34,6 +34,7 @@ import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.connection.ServerDescription.MAX_DRIVER_WIRE_VERSION;
 import static com.mongodb.connection.ServerDescription.MIN_DRIVER_WIRE_VERSION;
 import static com.mongodb.connection.ServerDescription.builder;
+import static com.mongodb.connection.ServerType.LOAD_BALANCER;
 import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY;
 import static com.mongodb.connection.ServerType.UNKNOWN;
 import static java.util.Arrays.asList;
@@ -441,6 +442,19 @@ public class ServerDescriptionTest {
                 .address(new ServerAddress())
                 .state(CONNECTING)
                 .ok(false)
+                .build();
+        assertTrue(serverDescription.isCompatibleWithDriver());
+        assertFalse(serverDescription.isIncompatiblyNewerThanDriver());
+        assertFalse(serverDescription.isIncompatiblyOlderThanDriver());
+    }
+
+    @Test
+    public void loadBalancerIsCompatible() {
+        ServerDescription serverDescription = builder()
+                .address(new ServerAddress())
+                .state(CONNECTED)
+                .type(LOAD_BALANCER)
+                .ok(true)
                 .build();
         assertTrue(serverDescription.isCompatibleWithDriver());
         assertFalse(serverDescription.isIncompatiblyNewerThanDriver());

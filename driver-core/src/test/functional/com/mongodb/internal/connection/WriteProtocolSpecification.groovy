@@ -33,6 +33,7 @@ import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ClusterFixture.getSslSettings
+import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.internal.connection.ProtocolTestHelper.execute
 
 class WriteProtocolSpecification extends OperationFunctionalSpecification {
@@ -40,7 +41,7 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
     InternalStreamConnection connection;
 
     def setupSpec() {
-        connection = new InternalStreamConnectionFactory(new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
+        connection = new InternalStreamConnectionFactory(SINGLE, new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
                 getCredentialWithCache(), null, null, [], null, getServerApi())
                 .create(new ServerId(new ClusterId(), getPrimary()))
         connection.open();

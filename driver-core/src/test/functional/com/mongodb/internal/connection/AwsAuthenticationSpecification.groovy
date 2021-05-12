@@ -6,6 +6,7 @@ import com.mongodb.MongoCredential
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactory
+import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.SocketSettings
@@ -62,11 +63,12 @@ class AwsAuthenticationSpecification extends Specification {
     }
 
     private static InternalStreamConnection createConnection(final boolean async, final MongoCredential credential) {
-        new InternalStreamConnection(
+        new InternalStreamConnection(ClusterConnectionMode.SINGLE,
                 new ServerId(new ClusterId(), new ServerAddress(getConnectionString().getHosts().get(0))),
+                new TestConnectionGenerationSupplier(),
                 async ? new AsynchronousSocketChannelStreamFactory(SocketSettings.builder().build(), getSslSettings())
                         : new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()), [], null,
-                new InternalStreamConnectionInitializer(createAuthenticator(credential), null, [], null))
+                new InternalStreamConnectionInitializer(ClusterConnectionMode.SINGLE, createAuthenticator(credential), null, [], null))
     }
 
     private static Authenticator createAuthenticator(final MongoCredential credential) {

@@ -51,7 +51,7 @@ import static org.junit.Assert.assertEquals;
 public class AbstractServerDiscoveryAndMonitoringTest {
     private final BsonDocument definition;
     private DefaultTestClusterableServerFactory factory;
-    private BaseCluster cluster;
+    private Cluster cluster;
 
     public AbstractServerDiscoveryAndMonitoringTest(final BsonDocument definition) {
         this.definition = definition;
@@ -126,6 +126,8 @@ public class AbstractServerDiscoveryAndMonitoringTest {
             return serverDescriptions.iterator().next().getClusterType();
         } else if (topologyType.equalsIgnoreCase("Sharded")) {
             return ClusterType.SHARDED;
+        } else if (topologyType.equalsIgnoreCase("LoadBalanced")) {
+            return ClusterType.LOAD_BALANCED;
         } else if (topologyType.startsWith("ReplicaSet")) {
             return ClusterType.REPLICA_SET;
         } else if (topologyType.equalsIgnoreCase("Unknown")) {
@@ -153,6 +155,8 @@ public class AbstractServerDiscoveryAndMonitoringTest {
             serverType = ServerType.STANDALONE;
         } else if (serverTypeString.equals("PossiblePrimary")) {
             serverType = ServerType.UNKNOWN;
+        } else if (serverTypeString.equals("LoadBalancer")) {
+            serverType = ServerType.LOAD_BALANCER;
         } else if (serverTypeString.equals("Unknown")) {
             serverType = ServerType.UNKNOWN;
         } else {
@@ -177,8 +181,10 @@ public class AbstractServerDiscoveryAndMonitoringTest {
 
         if (settings.getMode() == ClusterConnectionMode.SINGLE) {
             cluster = new SingleServerCluster(clusterId, clusterSettings, factory);
-        } else {
+        } else if (settings.getMode() == ClusterConnectionMode.MULTIPLE) {
             cluster = new MultiServerCluster(clusterId, clusterSettings, factory);
+        } else {
+            cluster = new LoadBalancedCluster(clusterId, clusterSettings, factory, null);
         }
     }
 
@@ -198,7 +204,7 @@ public class AbstractServerDiscoveryAndMonitoringTest {
         return factory;
     }
 
-    protected BaseCluster getCluster() {
+    protected Cluster getCluster() {
         return cluster;
     }
 }

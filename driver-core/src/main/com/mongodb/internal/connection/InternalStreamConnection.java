@@ -28,6 +28,7 @@ import com.mongodb.MongoSocketWriteException;
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.connection.AsyncCompletionHandler;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ServerConnectionState;
@@ -59,6 +60,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -90,7 +92,9 @@ public class InternalStreamConnection implements InternalConnection {
 
     private static final Logger LOGGER = Loggers.getLogger("connection");
 
+    private final ClusterConnectionMode clusterConnectionMode;
     private final ServerId serverId;
+    private final ConnectionGenerationSupplier connectionGenerationSupplier;
     private final StreamFactory streamFactory;
     private final InternalConnectionInitializer connectionInitializer;
 
@@ -107,11 +111,15 @@ public class InternalStreamConnection implements InternalConnection {
     private volatile Map<Byte, Compressor> compressorMap;
     private volatile boolean hasMoreToCome;
     private volatile int responseTo;
+    private int generation = NOT_INITIALIZED_GENERATION;
 
-    public InternalStreamConnection(final ServerId serverId, final StreamFactory streamFactory,
-                                    final List<MongoCompressor> compressorList, final CommandListener commandListener,
-                                    final InternalConnectionInitializer connectionInitializer) {
+    public InternalStreamConnection(final ClusterConnectionMode clusterConnectionMode, final ServerId serverId,
+                                    final ConnectionGenerationSupplier connectionGenerationSupplier,
+                                    final StreamFactory streamFactory, final List<MongoCompressor> compressorList,
+                                    final CommandListener commandListener, final InternalConnectionInitializer connectionInitializer) {
+        this.clusterConnectionMode = clusterConnectionMode;
         this.serverId = notNull("serverId", serverId);
+        this.connectionGenerationSupplier = notNull("connectionGeneration", connectionGenerationSupplier);
         this.streamFactory = notNull("streamFactory", streamFactory);
         this.compressorList = notNull("compressorList", compressorList);
         this.compressorMap = createCompressorMap(compressorList);
@@ -123,6 +131,9 @@ public class InternalStreamConnection implements InternalConnection {
                 .type(ServerType.UNKNOWN)
                 .state(ServerConnectionState.CONNECTING)
                 .build();
+        if (clusterConnectionMode != ClusterConnectionMode.LOAD_BALANCED) {
+            generation = connectionGenerationSupplier.getGeneration();
+        }
     }
 
     @Override
@@ -136,12 +147,26 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     @Override
+    public int getGeneration() {
+        return generation;
+    }
+
+    @Override
     public void open() {
         isTrue("Open already called", stream == null);
         stream = streamFactory.create(serverId.getAddress());
         try {
             stream.open();
-            InternalConnectionInitializationDescription initializationDescription = connectionInitializer.initialize(this);
+
+            InternalConnectionInitializationDescription initializationDescription = connectionInitializer.startHandshake(this);
+            description = initializationDescription.getConnectionDescription();
+            initialServerDescription = initializationDescription.getServerDescription();
+
+            if (clusterConnectionMode == ClusterConnectionMode.LOAD_BALANCED) {
+                generation = connectionGenerationSupplier.getGeneration(assertNotNull(description.getServiceId()));
+            }
+
+            initializationDescription = connectionInitializer.finishHandshake(this, initializationDescription);
             description = initializationDescription.getConnectionDescription();
             initialServerDescription = initializationDescription.getServerDescription();
             opened.set(true);

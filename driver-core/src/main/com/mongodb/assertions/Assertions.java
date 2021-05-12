@@ -177,6 +177,13 @@ public final class Assertions {
         return false;
     }
 
+    /**
+     * @throws AssertionError Always
+     */
+    public static void fail() throws AssertionError {
+        throw new AssertionError();
+    }
+
     private Assertions() {
     }
 }

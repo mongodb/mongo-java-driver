@@ -17,6 +17,8 @@
 package com.mongodb.internal.connection;
 
 
+import com.mongodb.ServerAddress;
+import com.mongodb.connection.ClusterId;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterSettings;
@@ -48,6 +50,14 @@ public interface Cluster extends Closeable {
      * @throws com.mongodb.MongoTimeoutException if the timeout has been reached before the cluster type is known
      */
     ClusterDescription getDescription();
+
+
+    ClusterId getClusterId();
+
+    /**
+     * For internal, unit testing use only
+     */
+    ClusterableServer getServer(ServerAddress serverAddress);
 
     /**
      * Get the current description of this cluster.

@@ -20,9 +20,13 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
 
 public interface ProtocolExecutor {
-    <T> T execute(LegacyProtocol<T> protocol, InternalConnection connection);
+    default <T> T execute(LegacyProtocol<T> protocol, InternalConnection connection) {
+        throw new UnsupportedOperationException();
+    }
 
-    <T> void executeAsync(LegacyProtocol<T> protocol, InternalConnection connection, SingleResultCallback<T> callback);
+    default <T> void executeAsync(LegacyProtocol<T> protocol, InternalConnection connection, SingleResultCallback<T> callback) {
+        throw new UnsupportedOperationException();
+    }
 
     <T> T execute(CommandProtocol<T> protocol, InternalConnection connection, SessionContext sessionContext);
 

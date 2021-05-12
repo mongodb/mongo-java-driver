@@ -65,24 +65,31 @@ public final class DefaultClusterFactory {
 
         ClusterId clusterId = new ClusterId();
 
-
-        ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(clusterId, clusterSettings, serverSettings,
-                connectionPoolSettings, streamFactory, heartbeatStreamFactory, credential, commandListener, applicationName,
-                mongoDriverInformation != null ? mongoDriverInformation : MongoDriverInformation.builder().build(), compressorList,
-                serverApi);
-
         DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory = new DefaultDnsSrvRecordMonitorFactory(clusterId, serverSettings);
 
-        if (clusterSettings.getMode() == ClusterConnectionMode.SINGLE) {
-            return new SingleServerCluster(clusterId, clusterSettings, serverFactory);
-        } else if (clusterSettings.getMode() == ClusterConnectionMode.MULTIPLE) {
-            if (clusterSettings.getSrvHost() == null) {
-                return new MultiServerCluster(clusterId, clusterSettings, serverFactory);
-            } else {
-                return new DnsMultiServerCluster(clusterId, clusterSettings, serverFactory, dnsSrvRecordMonitorFactory);
-            }
+        if (clusterSettings.getMode() == ClusterConnectionMode.LOAD_BALANCED) {
+            ClusterableServerFactory serverFactory = new LoadBalancedClusterableServerFactory(clusterId, serverSettings,
+                    connectionPoolSettings, streamFactory, credential, commandListener, applicationName,
+                    mongoDriverInformation != null ? mongoDriverInformation : MongoDriverInformation.builder().build(), compressorList,
+                    serverApi);
+            return new LoadBalancedCluster(clusterId, clusterSettings, serverFactory, dnsSrvRecordMonitorFactory);
         } else {
-            throw new UnsupportedOperationException("Unsupported cluster mode: " + clusterSettings.getMode());
+            ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(clusterId, clusterSettings, serverSettings,
+                    connectionPoolSettings, streamFactory, heartbeatStreamFactory, credential, commandListener, applicationName,
+                    mongoDriverInformation != null ? mongoDriverInformation : MongoDriverInformation.builder().build(), compressorList,
+                    serverApi);
+
+            if (clusterSettings.getMode() == ClusterConnectionMode.SINGLE) {
+                return new SingleServerCluster(clusterId, clusterSettings, serverFactory);
+            } else if (clusterSettings.getMode() == ClusterConnectionMode.MULTIPLE) {
+                if (clusterSettings.getSrvHost() == null) {
+                    return new MultiServerCluster(clusterId, clusterSettings, serverFactory);
+                } else {
+                    return new DnsMultiServerCluster(clusterId, clusterSettings, serverFactory, dnsSrvRecordMonitorFactory);
+                }
+            } else {
+                throw new UnsupportedOperationException("Unsupported cluster mode: " + clusterSettings.getMode());
+            }
         }
     }
 }

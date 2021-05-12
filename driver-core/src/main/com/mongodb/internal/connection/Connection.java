@@ -168,4 +168,16 @@ public interface Connection extends ReferenceCounted {
      * @param cursors   the cursors
      */
     void killCursor(MongoNamespace namespace, List<Long> cursors);
+
+
+    enum PinningMode {
+        CURSOR,
+        TRANSACTION
+    }
+
+    /**
+     * Marks the connection as pinned. Used so that any pool timeout exceptions can include information about the pinned connections,
+     * and what they are pinned to.
+     */
+     void markAsPinned(PinningMode pinningMode);
 }

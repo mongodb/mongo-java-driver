@@ -67,7 +67,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         pool.get()
 
         then:
-        1 * connectionFactory.create(SERVER_ID)
+        1 * connectionFactory.create(SERVER_ID, _)
     }
 
     def 'should release a connection back into the pool on close, not close the underlying connection'() throws InterruptedException {
@@ -296,7 +296,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         connection.getDescription() >> new ConnectionDescription(SERVER_ID)
         connection.opened() >> false
         connection.open() >> { throw new UncheckedIOException('expected failure', new IOException()) }
-        connectionFactory.create(SERVER_ID) >> connection
+        connectionFactory.create(SERVER_ID, _) >> connection
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory, builder().addConnectionPoolListener(listener).build())
 
         when:
@@ -321,7 +321,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         connection.openAsync(_) >> { SingleResultCallback<Void> callback ->
             callback.onResult(null, new UncheckedIOException('expected failure', new IOException()))
         }
-        connectionFactory.create(SERVER_ID) >> connection
+        connectionFactory.create(SERVER_ID, _) >> connection
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory, builder().addConnectionPoolListener(listener).build())
 
         when:

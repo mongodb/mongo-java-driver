@@ -33,6 +33,7 @@ import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.MongoCredential.JAVA_SUBJECT_PROVIDER_KEY
+import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 
 @IgnoreIf({ ClusterFixture.getCredential() == null || ClusterFixture.getCredential().getAuthenticationMechanism() != GSSAPI })
 class GSSAPIAuthenticatorSpecification extends Specification {
@@ -46,7 +47,7 @@ class GSSAPIAuthenticatorSpecification extends Specification {
         def credential = ClusterFixture.getCredential().withMechanismProperty(JAVA_SUBJECT_PROVIDER_KEY, subjectProvider)
         def credentialWithCache = new MongoCredentialWithCache(credential)
         def streamFactory = new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings())
-        def internalConnection = new InternalStreamConnectionFactory(streamFactory, credentialWithCache, null,
+        def internalConnection = new InternalStreamConnectionFactory(SINGLE, streamFactory, credentialWithCache, null,
                 null, Collections.<MongoCompressor> emptyList(), null, getServerApi())
                 .create(new ServerId(new ClusterId(), getPrimary()))
 

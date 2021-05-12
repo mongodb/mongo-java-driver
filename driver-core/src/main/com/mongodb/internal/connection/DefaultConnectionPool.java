@@ -48,10 +48,12 @@ import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
+import org.bson.types.ObjectId;
 
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -59,6 +61,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -67,6 +70,7 @@ import java.util.concurrent.locks.StampedLock;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -86,12 +90,14 @@ class DefaultConnectionPool implements ConnectionPool {
     private final ConcurrentPool<UsageTrackingInternalConnection> pool;
     private final ConnectionPoolSettings settings;
     private final AtomicInteger generation = new AtomicInteger(0);
-    private final AtomicInteger lastPrunedGeneration = new AtomicInteger(0);
     private final ScheduledExecutorService sizeMaintenanceTimer;
     private final Workers workers;
     private final Runnable maintenanceTask;
     private final ConnectionPoolListener connectionPoolListener;
     private final ServerId serverId;
+    private final PinnedStatsManager pinnedStatsManager = new PinnedStatsManager();
+    private final ServiceStateManager serviceStateManager = new ServiceStateManager();
+    private final ConnectionGenerationSupplier connectionGenerationSupplier;
     private volatile boolean closed;
     private final OpenConcurrencyLimiter openConcurrencyLimiter;
 
@@ -108,6 +114,17 @@ class DefaultConnectionPool implements ConnectionPool {
         connectionPoolCreated(connectionPoolListener, serverId, settings);
         openConcurrencyLimiter = new OpenConcurrencyLimiter(MAX_CONNECTING);
         workers = new Workers();
+        connectionGenerationSupplier = new ConnectionGenerationSupplier() {
+            @Override
+            public int getGeneration() {
+                return generation.get();
+            }
+
+            @Override
+            public int getGeneration(@NonNull final ObjectId serviceId) {
+                return serviceStateManager.getGeneration(serviceId);
+            }
+        };
     }
 
     @Override
@@ -230,6 +247,16 @@ class DefaultConnectionPool implements ConnectionPool {
         connectionPoolListener.connectionPoolCleared(new ConnectionPoolClearedEvent(serverId));
     }
 
+    public void invalidate(final ObjectId serviceId, final int generation) {
+        if (generation == InternalConnection.NOT_INITIALIZED_GENERATION) {
+            return;
+        }
+        if (serviceStateManager.incrementGeneration(serviceId, generation)) {
+            LOGGER.debug("Invalidating the connection pool for server id " + serviceId);
+            connectionPoolListener.connectionPoolCleared(new ConnectionPoolClearedEvent(this.serverId, serviceId));
+        }
+    }
+
     @Override
     public void close() {
         if (!closed) {
@@ -281,9 +308,47 @@ class DefaultConnectionPool implements ConnectionPool {
     }
 
     private MongoTimeoutException createTimeoutException(final Timeout timeout) {
-        return new MongoTimeoutException(format("Timed out after %s while waiting for a connection to server %s.",
-                                                timeout.toUserString(), serverId.getAddress()));
+        int numPinnedToCursor = pinnedStatsManager.getNumPinnedToCursor();
+        int numPinnedToTransaction = pinnedStatsManager.getNumPinnedToTransaction();
+        if (numPinnedToCursor == 0 && numPinnedToTransaction == 0) {
+            return new MongoTimeoutException(format("Timed out after %s while waiting for a connection to server %s.",
+                    timeout.toUserString(), serverId.getAddress()));
+        } else {
+            int maxSize = settings.getMaxSize();
+            int numInUse = pool.getInUseCount();
+            /* At this point in an execution we consider at least one of `numPinnedToCursor`, `numPinnedToTransaction` to be positive.
+             * `numPinnedToCursor`, `numPinnedToTransaction` and `numInUse` are not a snapshot view,
+             * but we still must maintain the following invariants:
+             * - numInUse > 0
+             *     we consider at least one of `numPinnedToCursor`, `numPinnedToTransaction` to be positive,
+             *     so if we observe `numInUse` to be 0, we have to estimate it based on `numPinnedToCursor` and `numPinnedToTransaction`;
+             * - numInUse < maxSize
+             *     `numInUse` must not exceed the limit in situations when we estimate `numInUse`;
+             * - numPinnedToCursor + numPinnedToTransaction <= numInUse
+             *     otherwise the numbers do not make sense.
+             */
+            if (numInUse == 0) {
+                numInUse = Math.min(
+                        numPinnedToCursor + numPinnedToTransaction, // must be at least a big as this sum but not bigger than `maxSize`
+                        maxSize);
+            }
+            numPinnedToCursor = Math.min(
+                    numPinnedToCursor, // prefer the observed value, but it must not be bigger than `numInUse`
+                    numInUse);
+            numPinnedToTransaction = Math.min(
+                    numPinnedToTransaction, // prefer the observed value, but it must not be bigger than `numInUse` - `numPinnedToCursor`
+                    numInUse - numPinnedToCursor);
+            int numOtherInUse = numInUse - numPinnedToCursor - numPinnedToTransaction;
+            assertTrue(numOtherInUse >= 0);
+            assertTrue(numPinnedToCursor + numPinnedToTransaction + numOtherInUse <= maxSize);
+            return new MongoTimeoutException(format("Timed out after %s while waiting for a connection to server %s. Details: "
+                            + "maxPoolSize: %d, connections in use by cursors: %d, connections in use by transactions: %d, "
+                            + "connections in use by other operations: %d",
+                    timeout.toUserString(), serverId.getAddress(),
+                    maxSize, numPinnedToCursor, numPinnedToTransaction, numOtherInUse));
+        }
     }
+
 
     ConcurrentPool<UsageTrackingInternalConnection> getPool() {
         return pool;
@@ -296,14 +361,12 @@ class DefaultConnectionPool implements ConnectionPool {
                 @Override
                 public synchronized void run() {
                     try {
-                        int curGeneration = generation.get();
-                        if (shouldPrune() || curGeneration > lastPrunedGeneration.get()) {
+                        if (shouldPrune()) {
                             if (LOGGER.isDebugEnabled()) {
                                 LOGGER.debug(format("Pruning pooled connections to %s", serverId.getAddress()));
                             }
                             pool.prune();
                         }
-                        lastPrunedGeneration.set(curGeneration);
                         if (shouldEnsureMinSize()) {
                             if (LOGGER.isDebugEnabled()) {
                                 LOGGER.debug(format("Ensuring minimum pooled connections to %s", serverId.getAddress()));
@@ -351,7 +414,16 @@ class DefaultConnectionPool implements ConnectionPool {
     }
 
     private boolean fromPreviousGeneration(final UsageTrackingInternalConnection connection) {
-        return generation.get() > connection.getGeneration();
+        int generation = connection.getGeneration();
+        if (generation == InternalConnection.NOT_INITIALIZED_GENERATION) {
+            return false;
+        }
+        ObjectId serviceId = connection.getDescription().getServiceId();
+        if (serviceId != null) {
+            return serviceStateManager.getGeneration(serviceId) > generation;
+        } else {
+            return this.generation.get() > generation;
+        }
     }
 
     private boolean expired(final long startTime, final long curTime, final long maxTime) {
@@ -418,6 +490,7 @@ class DefaultConnectionPool implements ConnectionPool {
     private class PooledConnection implements InternalConnection {
         private final UsageTrackingInternalConnection wrapped;
         private final AtomicBoolean isClosed = new AtomicBoolean();
+        private Connection.PinningMode pinningMode;
 
         PooledConnection(final UsageTrackingInternalConnection wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
@@ -432,6 +505,7 @@ class DefaultConnectionPool implements ConnectionPool {
         public void open() {
             assertFalse(isClosed.get());
             try {
+                connectionCreated(connectionPoolListener, wrapped.getDescription().getConnectionId());
                 wrapped.open();
             } catch (RuntimeException e) {
                 closeAndHandleOpenFailure();
@@ -458,6 +532,7 @@ class DefaultConnectionPool implements ConnectionPool {
         public void close() {
             // All but the first call is a no-op
             if (!isClosed.getAndSet(true)) {
+                unmarkAsPinned();
                 connectionPoolListener.connectionCheckedIn(new ConnectionCheckedInEvent(getId(wrapped)));
                 if (LOGGER.isTraceEnabled()) {
                     LOGGER.trace(format("Checked in connection [%s] to server %s", getId(wrapped), serverId.getAddress()));
@@ -495,6 +570,9 @@ class DefaultConnectionPool implements ConnectionPool {
             if (!isClosed.getAndSet(true)) {
                 if (LOGGER.isTraceEnabled()) {
                     LOGGER.trace(format("Pooled connection %s to server %s failed to open", getId(this), serverId));
+                }
+                if (wrapped.getDescription().getServiceId() != null) {
+                    invalidate(wrapped.getDescription().getServiceId(), wrapped.getGeneration());
                 }
                 pool.release(wrapped, true);
             }
@@ -609,6 +687,24 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
+        public void markAsPinned(final Connection.PinningMode pinningMode) {
+            assertNotNull(pinningMode);
+            // if the connection is already pinned for some other mode, the additional mode can be ignored.
+            // The typical case is the connection is first pinned for a transaction, then pinned for a cursor withing that transaction
+            // In this case, the cursor pinning is subsumed by the transaction pinning.
+            if (this.pinningMode == null) {
+                this.pinningMode = pinningMode;
+                pinnedStatsManager.increment(pinningMode);
+            }
+        }
+
+        void unmarkAsPinned() {
+            if (pinningMode != null) {
+                pinnedStatsManager.decrement(pinningMode);
+            }
+        }
+
+        @Override
         public ConnectionDescription getDescription() {
             return wrapped.getDescription();
         }
@@ -642,7 +738,8 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Override
         public UsageTrackingInternalConnection create() {
-            return new UsageTrackingInternalConnection(internalConnectionFactory.create(serverId), generation.get());
+            return new UsageTrackingInternalConnection(internalConnectionFactory.create(serverId, connectionGenerationSupplier),
+                    serviceStateManager);
         }
 
         @Override
@@ -767,8 +864,6 @@ class DefaultConnectionPool implements ConnectionPool {
                 connection.closeSilently();
                 return availableConnection;
             } else {//acquired a permit, phase two
-                connectionCreated(//a connection is considered created only when it is ready to be open
-                        connectionPoolListener, getId(connection));
                 try {
                     connection.open();
                 } finally {
@@ -970,6 +1065,109 @@ class DefaultConnectionPool implements ConnectionPool {
         private T reference;
 
         private MutableReference() {
+        }
+    }
+
+    static final class ServiceStateManager {
+        private final ConcurrentHashMap<ObjectId, ServiceState> stateByServiceId = new ConcurrentHashMap<>();
+
+        void addConnection(final ObjectId serviceId) {
+            stateByServiceId.compute(serviceId, (k, v) -> {
+                if (v == null) {
+                    v = new ServiceState();
+                }
+                v.incrementConnectionCount();
+                return v;
+            });
+        }
+
+        /**
+         * Removes the mapping from {@code serviceId} to a {@link ServiceState} if its connection count reaches 0.
+         * This is done to prevent memory leaks.
+         * <p>
+         * This method must be called once for any connection for which {@link #addConnection(ObjectId)} was called.
+         */
+        void removeConnection(final ObjectId serviceId) {
+            stateByServiceId.compute(serviceId, (k, v) -> {
+                assertNotNull(v);
+                return v.decrementAndGetConnectionCount() == 0 ? null : v;
+            });
+        }
+
+        /**
+         * In some cases we may increment the generation even for an unregistered serviceId, as when open fails on the only connection to
+         * a given serviceId. In this case this method does not track the generation increment but does return true.
+         *
+         * @return true if the generation was incremented
+         */
+        boolean incrementGeneration(final ObjectId serviceId, final int expectedGeneration) {
+            ServiceState state = stateByServiceId.get(serviceId);
+            return state == null || state.incrementGeneration(expectedGeneration);
+        }
+
+        int getGeneration(final ObjectId serviceId) {
+            ServiceState state = stateByServiceId.get(serviceId);
+            return state == null ? 0 : state.getGeneration();
+        }
+
+        private static final class ServiceState {
+            private final AtomicInteger generation = new AtomicInteger();
+            private final AtomicInteger connectionCount = new AtomicInteger();
+
+            void incrementConnectionCount() {
+                connectionCount.incrementAndGet();
+            }
+
+            int decrementAndGetConnectionCount() {
+                return connectionCount.decrementAndGet();
+            }
+
+            boolean incrementGeneration(final int expectedGeneration) {
+                return generation.compareAndSet(expectedGeneration, expectedGeneration + 1);
+            }
+
+            public int getGeneration() {
+                return generation.get();
+            }
+        }
+    }
+
+    private static final class PinnedStatsManager {
+        private final LongAdder numPinnedToCursor = new LongAdder();
+        private final LongAdder numPinnedToTransaction = new LongAdder();
+
+        void increment(final Connection.PinningMode pinningMode) {
+            switch (pinningMode) {
+                case CURSOR:
+                    numPinnedToCursor.increment();
+                    break;
+                case TRANSACTION:
+                    numPinnedToTransaction.increment();
+                    break;
+                default:
+                    fail();
+            }
+        }
+
+        void decrement(final Connection.PinningMode pinningMode) {
+            switch (pinningMode) {
+                case CURSOR:
+                    numPinnedToCursor.decrement();
+                    break;
+                case TRANSACTION:
+                    numPinnedToTransaction.decrement();
+                    break;
+                default:
+                    fail();
+            }
+        }
+
+        int getNumPinnedToCursor() {
+            return numPinnedToCursor.intValue();
+        }
+
+        int getNumPinnedToTransaction() {
+            return numPinnedToTransaction.intValue();
         }
     }
 

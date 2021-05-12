@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerConnectionState.CONNECTED;
+import static com.mongodb.connection.ServerType.LOAD_BALANCER;
 import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY;
 import static com.mongodb.connection.ServerType.REPLICA_SET_SECONDARY;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
@@ -466,9 +467,17 @@ public class ServerDescription {
      * Return whether the server is compatible with the driver. An incompatible server is one that has a min wire version greater that the
      * driver's max wire version or a max wire version less than the driver's min wire version.
      *
+     * <p>
+     * A load balancer is always deemed to be compatible.
+     * </p>
+     *
      * @return true if the server is compatible with the driver.
      */
     public boolean isCompatibleWithDriver() {
+        if (type == LOAD_BALANCER) {
+            return true;
+        }
+
         if (isIncompatiblyOlderThanDriver()) {
             return false;
         }
@@ -484,22 +493,30 @@ public class ServerDescription {
      * Return whether the server is compatible with the driver. An incompatible server is one that has a min wire version greater that the
      * driver's max wire version or a max wire version less than the driver's min wire version.
      *
+     * <p>
+     * A load balancer is always deemed to be compatible.
+     * </p>
+     *
      * @return true if the server is compatible with the driver.
      * @since 3.6
      */
     public boolean isIncompatiblyNewerThanDriver() {
-        return ok && minWireVersion > MAX_DRIVER_WIRE_VERSION;
+        return ok && type != LOAD_BALANCER && minWireVersion > MAX_DRIVER_WIRE_VERSION;
     }
 
     /**
      * Return whether the server is compatible with the driver. An incompatible server is one that has a min wire version greater that the
      * driver's max wire version or a max wire version less than the driver's min wire version.
      *
+     * <p>
+     * A load balancer is always deemed to be compatible.
+     * </p>
+     *
      * @return true if the server is compatible with the driver.
      * @since 3.6
      */
     public boolean isIncompatiblyOlderThanDriver() {
-        return ok && maxWireVersion < MIN_DRIVER_WIRE_VERSION;
+        return ok && type != LOAD_BALANCER && maxWireVersion < MIN_DRIVER_WIRE_VERSION;
     }
 
     /**
@@ -568,19 +585,19 @@ public class ServerDescription {
     /**
      * Returns whether this can be treated as a primary server.
      *
-     * @return true if this server is the primary in a replica set, is a mongos, or is a single standalone server
+     * @return true if this server is the primary in a replica set, is a mongos, a load balancer, or is a single standalone server
      */
     public boolean isPrimary() {
-        return ok && (type == REPLICA_SET_PRIMARY || type == SHARD_ROUTER || type == STANDALONE);
+        return ok && (type == REPLICA_SET_PRIMARY || type == SHARD_ROUTER || type == STANDALONE || type == LOAD_BALANCER);
     }
 
     /**
      * Returns whether this can be treated as a secondary server.
      *
-     * @return true if this server is a secondary in a replica set, is a mongos, or is a single standalone server
+     * @return true if this server is a secondary in a replica set, is a mongos, a load balancer, or is a single standalone server
      */
     public boolean isSecondary() {
-        return ok && (type == REPLICA_SET_SECONDARY || type == SHARD_ROUTER || type == STANDALONE);
+        return ok && (type == REPLICA_SET_SECONDARY || type == SHARD_ROUTER || type == STANDALONE || type == LOAD_BALANCER);
     }
 
     /**

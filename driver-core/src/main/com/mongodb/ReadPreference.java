@@ -135,6 +135,8 @@ public abstract class ReadPreference {
             case SHARDED:
             case STANDALONE:
                 return chooseForNonReplicaSet(clusterDescription);
+            case LOAD_BALANCED:
+                return clusterDescription.getServerDescriptions();
             case UNKNOWN:
                 return Collections.emptyList();
             default:
