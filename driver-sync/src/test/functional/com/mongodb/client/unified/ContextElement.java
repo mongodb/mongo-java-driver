@@ -97,7 +97,7 @@ abstract class ContextElement {
         }
 
         public String toString() {
-            return "Started Operation Result Context: " + "\n"
+            return "Started Operation Context: " + "\n"
                     + "   Operation:\n"
                     + operation.toJson(JsonWriterSettings.builder().indent(true).build()) + "\n"
                     + "   Operation index: " + index + "\n";
@@ -116,7 +116,7 @@ abstract class ContextElement {
         }
 
         public String toString() {
-            return "Completed Operation Result Context: " + "\n"
+            return "Completed Operation Context: " + "\n"
                     + "   Operation:\n"
                     + operation.toJson(JsonWriterSettings.builder().indent(true).build()) + "\n"
                     + "   Actual result:\n"
