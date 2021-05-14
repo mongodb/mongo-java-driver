@@ -284,14 +284,14 @@ public final class CommandMessage extends RequestMessage {
             if (firstMessageInTransaction) {
                 extraElements.add(new BsonElement("startTransaction", BsonBoolean.TRUE));
                 addReadConcernDocument(extraElements, sessionContext);
-                if (serverApi != null) {
-                    addServerApiElements(extraElements);
-                }
             }
             extraElements.add(new BsonElement("autocommit", BsonBoolean.FALSE));
-        } else if (serverApi != null) {
+        }
+
+        if (serverApi != null) {
             addServerApiElements(extraElements);
         }
+
         if (readPreference != null) {
             if (!readPreference.equals(primary())) {
                 extraElements.add(new BsonElement("$readPreference", readPreference.toDocument()));
@@ -333,7 +333,7 @@ public final class CommandMessage extends RequestMessage {
     }
 
     private static boolean isServerVersionAtLeastThreeDotSix(final MessageSettings settings) {
-          return settings.getMaxWireVersion() >= THREE_DOT_SIX_WIRE_VERSION;
+        return settings.getMaxWireVersion() >= THREE_DOT_SIX_WIRE_VERSION;
     }
 
 }

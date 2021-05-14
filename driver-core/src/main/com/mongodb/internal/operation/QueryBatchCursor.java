@@ -273,7 +273,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
                             ReadPreference.primary(),
                             CommandResultDocumentCodec.create(decoder, "nextBatch"),
                             connectionSource.getSessionContext(),
-                            null /* As per spec, ServerApi elements are not included in getMore commands */));
+                            connectionSource.getServerApi()));
                 } catch (MongoCommandException e) {
                     throw translateCommandException(e, serverCursor);
                 }
