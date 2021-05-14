@@ -35,8 +35,12 @@ abstract class ContextElement {
         return new TestContextContextElement(definition);
     }
 
-    static ContextElement ofOperation(final BsonDocument operation, final OperationResult result) {
-        return new OperationContextElement(operation, result);
+    static ContextElement ofStartedOperation(final BsonDocument operation, final int index) {
+        return new StartedOperationContextElement(operation, index);
+    }
+
+    static ContextElement ofCompletedOperation(final BsonDocument operation, final OperationResult result, final int index) {
+        return new CompletedOperationContextElement(operation, result, index);
     }
 
     static ContextElement ofValueMatcher(final BsonValue expected, final BsonValue actual, final String key, final int arrayPosition) {
@@ -83,21 +87,41 @@ abstract class ContextElement {
         }
     }
 
-    private static class OperationContextElement extends ContextElement {
+    private static class StartedOperationContextElement extends ContextElement {
         private final BsonDocument operation;
-        private final OperationResult result;
+        private final int index;
 
-        OperationContextElement(final BsonDocument operation, final OperationResult result) {
+        StartedOperationContextElement(final BsonDocument operation, final int index) {
             this.operation = operation;
-            this.result = result;
+            this.index = index;
         }
 
         public String toString() {
-            return "Operation Result Context: " + "\n"
+            return "Started Operation Context: " + "\n"
+                    + "   Operation:\n"
+                    + operation.toJson(JsonWriterSettings.builder().indent(true).build()) + "\n"
+                    + "   Operation index: " + index + "\n";
+        }
+    }
+
+    private static class CompletedOperationContextElement extends ContextElement {
+        private final BsonDocument operation;
+        private final OperationResult result;
+        private final int index;
+
+        CompletedOperationContextElement(final BsonDocument operation, final OperationResult result, final int index) {
+            this.operation = operation;
+            this.result = result;
+            this.index = index;
+        }
+
+        public String toString() {
+            return "Completed Operation Context: " + "\n"
                     + "   Operation:\n"
                     + operation.toJson(JsonWriterSettings.builder().indent(true).build()) + "\n"
                     + "   Actual result:\n"
-                    + result + "\n";
+                    + result + "\n"
+                    + "   Operation index: " + index + "\n";
         }
     }
 
