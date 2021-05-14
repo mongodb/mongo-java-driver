@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.MongoChangeStreamException;
 import com.mongodb.MongoException;
 import com.mongodb.internal.async.AsyncAggregateResponseBatchCursor;
 import com.mongodb.internal.async.AsyncBatchCursor;
@@ -29,7 +28,6 @@ import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 import org.bson.RawBsonDocument;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -37,6 +35,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.operation.ChangeStreamBatchCursor.convertAndProduceLastId;
 import static com.mongodb.internal.operation.ChangeStreamBatchCursorHelper.isRetryableError;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.withAsyncReadConnection;
@@ -83,7 +82,7 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
                               final SingleResultCallback<List<RawBsonDocument>> callback) {
                 cursor.next(callback);
             }
-        }, convertResultsCallback(callback), false);
+        }, callback, false);
     }
 
     @Override
@@ -94,7 +93,7 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
                               final SingleResultCallback<List<RawBsonDocument>> callback) {
                 cursor.tryNext(callback);
             }
-        }, convertResultsCallback(callback), true);
+        }, callback, true);
     }
 
     @Override
@@ -191,45 +190,14 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
         }
     }
 
-    private SingleResultCallback<List<RawBsonDocument>> convertResultsCallback(final SingleResultCallback<List<T>> callback) {
-        return errorHandlingCallback(new SingleResultCallback<List<RawBsonDocument>>() {
-            @Override
-            public void onResult(final List<RawBsonDocument> rawDocuments, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else if (rawDocuments != null) {
-                    List<T> results = new ArrayList<T>();
-                    for (RawBsonDocument rawDocument : rawDocuments) {
-                        if (!rawDocument.containsKey("_id")) {
-                            callback.onResult(null,
-                                    new MongoChangeStreamException("Cannot provide resume functionality when the resume token is missing.")
-                            );
-                            return;
-                        }
-                        try {
-                            results.add(rawDocument.decode(changeStreamOperation.getDecoder()));
-                        } catch (Exception e) {
-                            callback.onResult(null, e);
-                            return;
-                        }
-                    }
-                    resumeToken = rawDocuments.get(rawDocuments.size() - 1).getDocument("_id");
-                    callback.onResult(results, null);
-                } else {
-                    callback.onResult(null, null);
-                }
-            }
-        }, LOGGER);
-    }
-
     private interface AsyncBlock {
         void apply(AsyncAggregateResponseBatchCursor<RawBsonDocument> cursor, SingleResultCallback<List<RawBsonDocument>> callback);
     }
 
-    private void resumeableOperation(final AsyncBlock asyncBlock, final SingleResultCallback<List<RawBsonDocument>> convertResultsCallback,
-                                     final boolean tryNext) {
+    private void resumeableOperation(final AsyncBlock asyncBlock, final SingleResultCallback<List<T>> callback, final boolean tryNext) {
+        SingleResultCallback<List<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         if (isClosed()) {
-            convertResultsCallback.onResult(null, new MongoException(format("%s called after the cursor was closed.",
+            errHandlingCallback.onResult(null, new MongoException(format("%s called after the cursor was closed.",
                     tryNext ? "tryNext()" : "next()")));
             return;
         }
@@ -237,24 +205,33 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
         asyncBlock.apply(wrappedCursor, new SingleResultCallback<List<RawBsonDocument>>() {
             @Override
             public void onResult(final List<RawBsonDocument> result, final Throwable t) {
-                boolean retry = false;
                 if (t == null) {
-                    convertResultsCallback.onResult(result, null);
-                } else if (isRetryableError(t, maxWireVersion)) {
-                    retry = true;
+                    try {
+                        List<T> convertedResults;
+                        try {
+                            convertedResults = convertAndProduceLastId(result, changeStreamOperation.getDecoder(),
+                                    lastId -> resumeToken = lastId);
+                        } finally {
+                            cachePostBatchResumeToken(wrappedCursor);
+                        }
+                        errHandlingCallback.onResult(convertedResults, null);
+                    } catch (RuntimeException e) {
+                        errHandlingCallback.onResult(null, e);
+                    }
                 } else {
-                    convertResultsCallback.onResult(null, t);
-                }
-                cachePostBatchResumeToken(wrappedCursor);
-                if (retry) {
-                    nullifyAndCloseWrapped();
-                    retryOperation(asyncBlock, convertResultsCallback, tryNext);
+                    cachePostBatchResumeToken(wrappedCursor);
+                    if (isRetryableError(t, maxWireVersion)) {
+                        nullifyAndCloseWrapped();
+                        retryOperation(asyncBlock, errHandlingCallback, tryNext);
+                    } else {
+                        errHandlingCallback.onResult(null, t);
+                    }
                 }
             }
         });
     }
 
-    private void retryOperation(final AsyncBlock asyncBlock, final SingleResultCallback<List<RawBsonDocument>> callback,
+    private void retryOperation(final AsyncBlock asyncBlock, final SingleResultCallback<List<T>> callback,
                                 final boolean tryNext) {
         withAsyncReadConnection(binding, new AsyncCallableWithSource() {
             @Override
