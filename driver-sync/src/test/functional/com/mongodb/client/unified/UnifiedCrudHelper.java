@@ -75,6 +75,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -390,8 +391,8 @@ final class UnifiedCrudHelper {
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
-        String lastStageName = pipeline.get(pipeline.size() - 1).getFirstKey();
-        boolean useToCollection = lastStageName.equals("$out") || lastStageName.equals("$merge");
+        String lastStageName = pipeline.isEmpty() ? null : pipeline.get(pipeline.size() - 1).getFirstKey();
+        boolean useToCollection = Objects.equals(lastStageName, "$out") || Objects.equals(lastStageName, "$merge");
 
         return resultOf(() -> {
             if (!pipeline.isEmpty() && useToCollection) {
