@@ -155,8 +155,10 @@ public abstract class UnifiedTest {
 
     @Test
     public void shouldPassAllOutcomes() {
-        for (BsonValue cur : definition.getArray("operations")) {
-            assertOperation(cur.asDocument());
+        BsonArray operations = definition.getArray("operations");
+        for (int i = 0; i < operations.size(); i++) {
+            BsonValue cur = operations.get(i);
+            assertOperation(cur.asDocument(), i);
         }
 
         if (definition.containsKey("outcome")) {
@@ -198,9 +200,9 @@ public abstract class UnifiedTest {
         }
     }
 
-    private void assertOperation(final BsonDocument operation) {
-        OperationResult result = executeOperation(operation);
-        context.push(ContextElement.ofOperation(operation, result));
+    private void assertOperation(final BsonDocument operation, final int operationIndex) {
+        OperationResult result = executeOperation(operation, operationIndex);
+        context.push(ContextElement.ofCompletedOperation(operation, result, operationIndex));
         if (!operation.getBoolean("ignoreResultAndError", BsonBoolean.FALSE).getValue()) {
             if (operation.containsKey("expectResult")) {
                 assertNotNull(context.getMessage("The operation expects a result but an exception occurred"), result.getResult());
@@ -215,111 +217,116 @@ public abstract class UnifiedTest {
         context.pop();
     }
 
-    private OperationResult executeOperation(final BsonDocument operation) {
+    private OperationResult executeOperation(final BsonDocument operation, final int operationNum) {
+        context.push(ContextElement.ofStartedOperation(operation, operationNum));
         String name = operation.getString("name").getValue();
-        switch (name) {
-            case "failPoint":
-                return executeFailPoint(operation);
-            case "targetedFailPoint":
-                return executeTargetedFailPoint(operation);
-            case "endSession":
-                return executeEndSession(operation);
-            case "assertSessionDirty":
-                return executeAssertSessionDirty(operation);
-            case "assertSessionNotDirty":
-                return executeAssertSessionNotDirty(operation);
-            case "assertSessionPinned":
-                return executeAssertSessionPinned(operation);
-            case "assertSessionUnpinned":
-                return executeAssertSessionUnpinned(operation);
-            case "assertSameLsidOnLastTwoCommands":
-                return executeAssertSameLsidOnLastTwoCommands(operation);
-            case "assertDifferentLsidOnLastTwoCommands":
-                return executeAssertDifferentLsidOnLastTwoCommands(operation);
-            case "assertNumberConnectionsCheckedOut":
-                return executeAssertNumberConnectionsCheckedOut(operation);
-            case "assertSessionTransactionState":
-                return executeAssertSessionTransactionState(operation);
-            case "assertCollectionExists":
-                return executeAssertCollectionExists(operation);
-            case "assertCollectionNotExists":
-                return executeAssertCollectionNotExists(operation);
-            case "assertIndexExists":
-                return executeAssertIndexExists(operation);
-            case "assertIndexNotExists":
-                return executeAssertIndexNotExists(operation);
-            case "bulkWrite":
-                return crudHelper.executeBulkWrite(operation);
-            case "insertOne":
-                return crudHelper.executeInsertOne(operation);
-            case "insertMany":
-                return crudHelper.executeInsertMany(operation);
-            case "updateOne":
-                return crudHelper.executeUpdateOne(operation);
-            case "updateMany":
-                return crudHelper.executeUpdateMany(operation);
-            case "replaceOne":
-                return crudHelper.executeReplaceOne(operation);
-            case "deleteOne":
-                return crudHelper.executeDeleteOne(operation);
-            case "deleteMany":
-                return crudHelper.executeDeleteMany(operation);
-            case "aggregate":
-                return crudHelper.executeAggregate(operation);
-            case "find":
-                return crudHelper.executeFind(operation);
-            case "distinct":
-                return crudHelper.executeDistinct(operation);
-            case "countDocuments":
-                return crudHelper.executeCountDocuments(operation);
-            case "estimatedDocumentCount":
-                return crudHelper.executeEstimatedDocumentCount(operation);
-            case "findOneAndUpdate":
-                return crudHelper.executeFindOneAndUpdate(operation);
-            case "findOneAndReplace":
-                return crudHelper.executeFindOneAndReplace(operation);
-            case "findOneAndDelete":
-                return crudHelper.executeFindOneAndDelete(operation);
-            case "listDatabases":
-                return crudHelper.executeListDatabases(operation);
-            case "listCollections":
-                return crudHelper.executeListCollections(operation);
-            case "listIndexes":
-                return crudHelper.executeListIndexes(operation);
-            case "dropCollection":
-                return crudHelper.executeDropCollection(operation);
-            case "createCollection":
-                return crudHelper.executeCreateCollection(operation);
-            case "createIndex":
-                return crudHelper.executeCreateIndex(operation);
-            case "startTransaction":
-                return crudHelper.executeStartTransaction(operation);
-            case "commitTransaction":
-                return crudHelper.executeCommitTransaction(operation);
-            case "abortTransaction":
-                return crudHelper.executeAbortTransaction(operation);
-            case "withTransaction":
-                return crudHelper.executeWithTransaction(operation, this::assertOperation);
-            case "createFindCursor":
-                return crudHelper.createFindCursor(operation);
-            case "createChangeStream":
-                return crudHelper.createChangeStreamCursor(operation);
-            case "close":
-                return crudHelper.close(operation);
-            case "iterateUntilDocumentOrError":
-                return crudHelper.executeIterateUntilDocumentOrError(operation);
-            case "delete":
-                return gridFSHelper.executeDelete(operation);
-            case "download":
-                return gridFSHelper.executeDownload(operation);
-            case "upload":
-                return gridFSHelper.executeUpload(operation);
-            case "runCommand":
-                return crudHelper.executeRunCommand(operation);
-            case "loop":
-                return loop(operation);
-            default:
-                throw new UnsupportedOperationException("Unsupported test operation: " + name);
+        try {
+            switch (name) {
+                case "failPoint":
+                    return executeFailPoint(operation);
+                case "targetedFailPoint":
+                    return executeTargetedFailPoint(operation);
+                case "endSession":
+                    return executeEndSession(operation);
+                case "assertSessionDirty":
+                    return executeAssertSessionDirty(operation);
+                case "assertSessionNotDirty":
+                    return executeAssertSessionNotDirty(operation);
+                case "assertSessionPinned":
+                    return executeAssertSessionPinned(operation);
+                case "assertSessionUnpinned":
+                    return executeAssertSessionUnpinned(operation);
+                case "assertSameLsidOnLastTwoCommands":
+                    return executeAssertSameLsidOnLastTwoCommands(operation);
+                case "assertDifferentLsidOnLastTwoCommands":
+                    return executeAssertDifferentLsidOnLastTwoCommands(operation);
+                case "assertNumberConnectionsCheckedOut":
+                    return executeAssertNumberConnectionsCheckedOut(operation);
+                case "assertSessionTransactionState":
+                    return executeAssertSessionTransactionState(operation);
+                case "assertCollectionExists":
+                    return executeAssertCollectionExists(operation);
+                case "assertCollectionNotExists":
+                    return executeAssertCollectionNotExists(operation);
+                case "assertIndexExists":
+                    return executeAssertIndexExists(operation);
+                case "assertIndexNotExists":
+                    return executeAssertIndexNotExists(operation);
+                case "bulkWrite":
+                    return crudHelper.executeBulkWrite(operation);
+                case "insertOne":
+                    return crudHelper.executeInsertOne(operation);
+                case "insertMany":
+                    return crudHelper.executeInsertMany(operation);
+                case "updateOne":
+                    return crudHelper.executeUpdateOne(operation);
+                case "updateMany":
+                    return crudHelper.executeUpdateMany(operation);
+                case "replaceOne":
+                    return crudHelper.executeReplaceOne(operation);
+                case "deleteOne":
+                    return crudHelper.executeDeleteOne(operation);
+                case "deleteMany":
+                    return crudHelper.executeDeleteMany(operation);
+                case "aggregate":
+                    return crudHelper.executeAggregate(operation);
+                case "find":
+                    return crudHelper.executeFind(operation);
+                case "distinct":
+                    return crudHelper.executeDistinct(operation);
+                case "countDocuments":
+                    return crudHelper.executeCountDocuments(operation);
+                case "estimatedDocumentCount":
+                    return crudHelper.executeEstimatedDocumentCount(operation);
+                case "findOneAndUpdate":
+                    return crudHelper.executeFindOneAndUpdate(operation);
+                case "findOneAndReplace":
+                    return crudHelper.executeFindOneAndReplace(operation);
+                case "findOneAndDelete":
+                    return crudHelper.executeFindOneAndDelete(operation);
+                case "listDatabases":
+                    return crudHelper.executeListDatabases(operation);
+                case "listCollections":
+                    return crudHelper.executeListCollections(operation);
+                case "listIndexes":
+                    return crudHelper.executeListIndexes(operation);
+                case "dropCollection":
+                    return crudHelper.executeDropCollection(operation);
+                case "createCollection":
+                    return crudHelper.executeCreateCollection(operation);
+                case "createIndex":
+                    return crudHelper.executeCreateIndex(operation);
+                case "startTransaction":
+                    return crudHelper.executeStartTransaction(operation);
+                case "commitTransaction":
+                    return crudHelper.executeCommitTransaction(operation);
+                case "abortTransaction":
+                    return crudHelper.executeAbortTransaction(operation);
+                case "withTransaction":
+                    return crudHelper.executeWithTransaction(operation, this::assertOperation);
+                case "createFindCursor":
+                    return crudHelper.createFindCursor(operation);
+                case "createChangeStream":
+                    return crudHelper.createChangeStreamCursor(operation);
+                case "close":
+                    return crudHelper.close(operation);
+                case "iterateUntilDocumentOrError":
+                    return crudHelper.executeIterateUntilDocumentOrError(operation);
+                case "delete":
+                    return gridFSHelper.executeDelete(operation);
+                case "download":
+                    return gridFSHelper.executeDownload(operation);
+                case "upload":
+                    return gridFSHelper.executeUpload(operation);
+                case "runCommand":
+                    return crudHelper.executeRunCommand(operation);
+                case "loop":
+                    return loop(operation);
+                default:
+                    throw new UnsupportedOperationException("Unsupported test operation: " + name);
+            }
+        } finally {
+            context.pop();
         }
     }
 
@@ -334,9 +341,11 @@ public abstract class UnifiedTest {
         BsonArray errorDescriptionDocuments = new BsonArray();
 
         while (!terminateLoop()) {
-            for (BsonValue cur : arguments.getArray("operations")) {
+            BsonArray array = arguments.getArray("operations");
+            for (int i = 0; i < array.size(); i++) {
+                BsonValue cur = array.get(i);
                 try {
-                    assertOperation(cur.asDocument().clone());
+                    assertOperation(cur.asDocument().clone(), i);
                     numSuccessfulOperations++;
                 } catch (AssertionError e) {
                     if (storeFailures) {

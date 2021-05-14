@@ -748,8 +748,9 @@ final class UnifiedCrudHelper {
 
         return resultOf(() -> {
             session.withTransaction(() -> {
-                for (BsonValue cur : callback) {
-                    operationAsserter.assertOperation(cur.asDocument());
+                for (int i = 0; i < callback.size(); i++) {
+                    BsonValue cur = callback.get(i);
+                    operationAsserter.assertOperation(cur.asDocument(), i);
                 }
                 //noinspection ConstantConditions
                 return null;

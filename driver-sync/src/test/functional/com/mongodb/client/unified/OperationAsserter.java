@@ -19,5 +19,5 @@ package com.mongodb.client.unified;
 import org.bson.BsonDocument;
 
 interface OperationAsserter {
-    void assertOperation(BsonDocument operation);
+    void assertOperation(BsonDocument operation, int index);
 }
