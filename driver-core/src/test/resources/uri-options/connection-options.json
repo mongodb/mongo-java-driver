@@ -119,6 +119,57 @@
       "options": {}
     },
     {
+      "description": "directConnection=true",
+      "uri": "mongodb://example.com/?directConnection=true",
+      "valid": true,
+      "warning": false,
+      "hosts": null,
+      "auth": null,
+      "options": {
+        "directConnection": true
+      }
+    },
+    {
+      "description": "directConnection=true with multiple seeds",
+      "uri": "mongodb://example1.com,example2.com/?directConnection=true",
+      "valid": false,
+      "warning": false,
+      "hosts": null,
+      "auth": null,
+      "options": {}
+    },
+    {
+      "description": "directConnection=false",
+      "uri": "mongodb://example.com/?directConnection=false",
+      "valid": true,
+      "warning": false,
+      "hosts": null,
+      "auth": null,
+      "options": {
+        "directConnection": false
+      }
+    },
+    {
+      "description": "directConnection=false with multiple seeds",
+      "uri": "mongodb://example1.com,example2.com/?directConnection=false",
+      "valid": true,
+      "warning": false,
+      "hosts": null,
+      "auth": null,
+      "options": {
+        "directConnection": false
+      }
+    },
+    {
+      "description": "Invalid directConnection value",
+      "uri": "mongodb://example.com/?directConnection=invalid",
+      "valid": true,
+      "warning": true,
+      "hosts": null,
+      "auth": null,
+      "options": {}
+    },
+    {
       "description": "loadBalanced=true",
       "uri": "mongodb://example.com/?loadBalanced=true",
       "valid": true,
@@ -127,6 +178,18 @@
       "auth": null,
       "options": {
         "loadBalanced": true
+      }
+    },
+    {
+      "description": "loadBalanced=true with directConnection=false",
+      "uri": "mongodb://example.com/?loadBalanced=true&directConnection=false",
+      "valid": true,
+      "warning": false,
+      "hosts": null,
+      "auth": null,
+      "options": {
+        "loadBalanced": true,
+        "directConnection": false
       }
     },
     {
@@ -161,15 +224,6 @@
     {
       "description": "loadBalanced=true with directConnection=true causes an error",
       "uri": "mongodb://example.com/?loadBalanced=true&directConnection=true",
-      "valid": false,
-      "warning": false,
-      "hosts": null,
-      "auth": null,
-      "options": {}
-    },
-    {
-      "description": "loadBalanced=true with directConnection=false causes an error",
-      "uri": "mongodb://example.com/?loadBalanced=true&directConnection=false",
       "valid": false,
       "warning": false,
       "hosts": null,

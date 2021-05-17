@@ -208,6 +208,9 @@ public abstract class AbstractConnectionStringTest extends TestCase {
             } else if (option.getKey().toLowerCase().equals("loadbalanced")) {
                 Boolean expected = option.getValue().asBoolean().getValue();
                 assertEquals(expected, connectionString.isLoadBalanced());
+            } else if (option.getKey().toLowerCase().equals("directconnection")) {
+                Boolean expected = option.getValue().asBoolean().getValue();
+                assertEquals(expected, connectionString.isDirectConnection());
             } else {
                 assertTrue(String.format("Unsupported option '%s' in '%s'", option.getKey(), input), false);
             }
