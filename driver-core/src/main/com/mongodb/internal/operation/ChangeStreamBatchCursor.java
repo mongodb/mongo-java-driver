@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.Function;
+import java.util.function.Function;
 import com.mongodb.MongoChangeStreamException;
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
@@ -24,12 +24,15 @@ import com.mongodb.ServerCursor;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.operation.OperationHelper.CallableWithSource;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 import org.bson.RawBsonDocument;
+import org.bson.codecs.Decoder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static com.mongodb.internal.operation.ChangeStreamBatchCursorHelper.isRetryableError;
 import static com.mongodb.internal.operation.OperationHelper.withReadConnectionSource;
@@ -79,7 +82,8 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
             @Override
             public List<T> apply(final AggregateResponseBatchCursor<RawBsonDocument> queryBatchCursor) {
                 try {
-                    return convertResults(queryBatchCursor.next());
+                    return convertAndProduceLastId(queryBatchCursor.next(), changeStreamOperation.getDecoder(),
+                            lastId -> resumeToken = lastId);
                 } finally {
                     cachePostBatchResumeToken(queryBatchCursor);
                 }
@@ -93,7 +97,8 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
             @Override
             public List<T> apply(final AggregateResponseBatchCursor<RawBsonDocument> queryBatchCursor) {
                 try {
-                    return convertResults(queryBatchCursor.tryNext());
+                    return convertAndProduceLastId(queryBatchCursor.tryNext(), changeStreamOperation.getDecoder(),
+                            lastId -> resumeToken = lastId);
                 } finally {
                     cachePostBatchResumeToken(queryBatchCursor);
                 }
@@ -161,7 +166,14 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
         }
     }
 
-    private List<T> convertResults(final List<RawBsonDocument> rawDocuments) {
+    /**
+     * @param lastIdConsumer Is {@linkplain Consumer#accept(Object) called} iff {@code rawDocuments} is successfully converted
+     *                       and the returned {@link List} is neither {@code null} nor {@linkplain List#isEmpty() empty}.
+     */
+    @Nullable
+    static <T> List<T> convertAndProduceLastId(@Nullable final List<RawBsonDocument> rawDocuments,
+                                               final Decoder<T> decoder,
+                                               final Consumer<BsonDocument> lastIdConsumer) {
         List<T> results = null;
         if (rawDocuments != null) {
             results = new ArrayList<T>();
@@ -169,9 +181,9 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
                 if (!rawDocument.containsKey("_id")) {
                     throw new MongoChangeStreamException("Cannot provide resume functionality when the resume token is missing.");
                 }
-                results.add(rawDocument.decode(changeStreamOperation.getDecoder()));
+                results.add(rawDocument.decode(decoder));
             }
-            resumeToken = rawDocuments.get(rawDocuments.size() - 1).getDocument("_id");
+            lastIdConsumer.accept(rawDocuments.get(rawDocuments.size() - 1).getDocument("_id"));
         }
         return results;
     }
