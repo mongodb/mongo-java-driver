@@ -405,8 +405,8 @@ public class ConnectionString {
         }
 
         if (loadBalanced != null && loadBalanced) {
-            if (directConnection != null) {
-                throw new IllegalArgumentException("directConnection can not be specified with loadBalanced=true");
+            if (directConnection != null && directConnection) {
+                throw new IllegalArgumentException("directConnection=true can not be specified with loadBalanced=true");
             }
             if (requiredReplicaSetName != null) {
                 throw new IllegalArgumentException("replicaSet can not be specified with loadBalanced=true");
