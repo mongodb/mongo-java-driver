@@ -36,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class DistinctPublisherImplTest extends TestHelper {
 
-    @SuppressWarnings("deprecated")
+    @SuppressWarnings("deprecation")
     @DisplayName("Should build the expected DistinctOperation")
     @Test
     void shouldBuildTheExpectedOperation() {

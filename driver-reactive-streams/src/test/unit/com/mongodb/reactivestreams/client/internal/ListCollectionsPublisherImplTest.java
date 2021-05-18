@@ -35,7 +35,7 @@ public class ListCollectionsPublisherImplTest extends TestHelper {
 
     private static final String DATABASE_NAME = NAMESPACE.getDatabaseName();
 
-    @SuppressWarnings("deprecated")
+    @SuppressWarnings("deprecation")
     @DisplayName("Should build the expected ListCollectionsOperation")
     @Test
     void shouldBuildTheExpectedOperation() {

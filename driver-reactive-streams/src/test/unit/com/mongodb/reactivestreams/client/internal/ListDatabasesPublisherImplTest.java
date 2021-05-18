@@ -33,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ListDatabasesPublisherImplTest extends TestHelper {
 
-    @SuppressWarnings("deprecated")
+    @SuppressWarnings("deprecation")
     @DisplayName("Should build the expected ListDatabasesOperation")
     @Test
     void shouldBuildTheExpectedOperation() {

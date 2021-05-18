@@ -44,7 +44,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@SuppressWarnings({"deprecated", "rawtypes"})
+@SuppressWarnings({"deprecation", "rawtypes"})
 public class AggregatePublisherImplTest extends TestHelper {
 
     @DisplayName("Should build the expected AggregateOperation")

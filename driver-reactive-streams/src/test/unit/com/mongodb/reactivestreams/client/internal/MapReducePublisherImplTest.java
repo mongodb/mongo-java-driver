@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@SuppressWarnings({"deprecated", "rawtypes"})
+@SuppressWarnings({"deprecation", "rawtypes"})
 public class MapReducePublisherImplTest extends TestHelper {
 
     private static final String MAP_FUNCTION = "mapFunction(){}";

@@ -34,7 +34,7 @@ public class ListIndexesPublisherImplTest extends TestHelper {
 
     private static final MongoNamespace NAMESPACE = new MongoNamespace("db", "coll");
 
-    @SuppressWarnings("deprecated")
+    @SuppressWarnings("deprecation")
     @DisplayName("Should build the expected ListIndexesOperation")
     @Test
     void shouldBuildTheExpectedOperation() {
