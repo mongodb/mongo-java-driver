@@ -1509,7 +1509,7 @@ buildvariants:
      - name: "gssapi-auth-test"
 
 - matrix_name: "perf"
-  matrix_spec:  { auth: "noauth", ssl: "nossl", jdk: "jdk8", version: "*", topology: "standalone", os: "linux" }
+  matrix_spec:  { auth: "noauth", ssl: "nossl", jdk: "jdk11", version: ["4.0", "4.2", "4.4", "latest"], topology: "standalone", os: "linux" }
   batchtime: 1440 # run once a day
   display_name: "Perf Tests ${version} "
   tags: ["perf-variant"]
