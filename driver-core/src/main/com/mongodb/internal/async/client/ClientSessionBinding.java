@@ -83,36 +83,23 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
     }
 
     private void getPinnedConnectionSource(final boolean isRead, final SingleResultCallback<AsyncConnectionSource> callback) {
+        WrappingCallback wrappingCallback = new WrappingCallback(callback);
         TransactionContext transactionContext = (TransactionContext) session.getTransactionContext();
         if (transactionContext == null) {
+            SingleResultCallback<AsyncConnectionSource> connectionSourceCallback = (result, t) -> {
+                if (t != null) {
+                    wrappingCallback.onResult(null, t);
+                } else {
+                    TransactionContext newTransactionContext = new TransactionContext(wrapped.getCluster().getDescription().getType());
+                    session.setTransactionContext(result.getServerDescription().getAddress(), newTransactionContext);
+                    newTransactionContext.release();  // The session is responsible for retaining a reference to the context
+                    wrappingCallback.onResult(result, null);
+                }
+            };
             if (isRead) {
-                wrapped.getReadConnectionSource(new SingleResultCallback<AsyncConnectionSource>() {
-                    @Override
-                    public void onResult(final AsyncConnectionSource result, final Throwable t) {
-                        if (t != null) {
-                            callback.onResult(null, t);
-                        } else {
-                            TransactionContext transactionContext = new TransactionContext(wrapped.getCluster().getDescription().getType());
-                            session.setTransactionContext(result.getServerDescription().getAddress(), transactionContext);
-                            transactionContext.release();  // The session is responsible for retaining a reference to the context
-                            new WrappingCallback(callback).onResult(result, null);
-                        }
-                    }
-                });
+                wrapped.getReadConnectionSource(connectionSourceCallback);
             } else {
-                wrapped.getWriteConnectionSource(new SingleResultCallback<AsyncConnectionSource>() {
-                    @Override
-                    public void onResult(final AsyncConnectionSource result, final Throwable t) {
-                        if (t != null) {
-                            callback.onResult(null, t);
-                        } else {
-                            TransactionContext transactionContext = new TransactionContext(wrapped.getCluster().getDescription().getType());
-                            session.setTransactionContext(result.getServerDescription().getAddress(), transactionContext);
-                            transactionContext.release();  // The session is responsible for retaining a reference to the context
-                            new WrappingCallback(callback).onResult(result, null);
-                        }
-                    }
-                });
+                wrapped.getWriteConnectionSource(connectionSourceCallback);
             }
         } else {
             wrapped.getConnectionSource(session.getPinnedServerAddress(), new WrappingCallback(callback));
