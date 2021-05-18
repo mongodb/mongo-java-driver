@@ -18,7 +18,6 @@ package com.mongodb.internal.async.client;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
-import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
@@ -93,8 +92,7 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
                         if (t != null) {
                             callback.onResult(null, t);
                         } else {
-                            TransactionContext transactionContext = new TransactionContext(wrapped.getCluster().getDescription().getType(),
-                                    result.getServerDescription().getAddress());
+                            TransactionContext transactionContext = new TransactionContext(wrapped.getCluster().getDescription().getType());
                             session.setTransactionContext(result.getServerDescription().getAddress(), transactionContext);
                             transactionContext.release();  // The session is responsible for retaining a reference to the context
                             new WrappingCallback(callback).onResult(result, null);
@@ -108,8 +106,7 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
                         if (t != null) {
                             callback.onResult(null, t);
                         } else {
-                            TransactionContext transactionContext = new TransactionContext(wrapped.getCluster().getDescription().getType(),
-                                    result.getServerDescription().getAddress());
+                            TransactionContext transactionContext = new TransactionContext(wrapped.getCluster().getDescription().getType());
                             session.setTransactionContext(result.getServerDescription().getAddress(), transactionContext);
                             transactionContext.release();  // The session is responsible for retaining a reference to the context
                             new WrappingCallback(callback).onResult(result, null);
@@ -118,22 +115,16 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
                 });
             }
         } else {
-            wrapped.getConnectionSource(transactionContext.getServerAddress(), new WrappingCallback(callback));
+            wrapped.getConnectionSource(session.getPinnedServerAddress(), new WrappingCallback(callback));
         }
     }
 
     private static class TransactionContext extends AbstractReferenceCounted {
         private final ClusterType clusterType;
-        private final ServerAddress serverAddress;
         private AsyncConnection pinnedConnection;
 
-        TransactionContext(final ClusterType clusterType, final ServerAddress serverAddress) {
+        TransactionContext(final ClusterType clusterType) {
             this.clusterType = clusterType;
-            this.serverAddress = serverAddress;
-        }
-
-        ServerAddress getServerAddress() {
-            return serverAddress;
         }
 
         @Nullable

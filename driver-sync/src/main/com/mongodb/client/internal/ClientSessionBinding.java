@@ -18,7 +18,6 @@ package com.mongodb.client.internal;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
-import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
 import com.mongodb.client.ClientSession;
 import com.mongodb.connection.ClusterType;
@@ -117,28 +116,21 @@ public class ClientSessionBinding implements ReadWriteBinding {
         ConnectionSource source;
         if (transactionContext == null) {
             source = isRead ? wrapped.getReadConnectionSource() : wrapped.getWriteConnectionSource();
-            transactionContext = new TransactionContext(wrapped.getCluster().getDescription().getType(),
-                    source.getServerDescription().getAddress());
+            transactionContext = new TransactionContext(wrapped.getCluster().getDescription().getType());
             session.setTransactionContext(source.getServerDescription().getAddress(), transactionContext);
             transactionContext.release();  // The session is responsible for retaining a reference to the context
         } else {
-            source = wrapped.getConnectionSource(transactionContext.getServerAddress());
+            source = wrapped.getConnectionSource(session.getPinnedServerAddress());
         }
         return source;
     }
 
     private static class TransactionContext extends AbstractReferenceCounted {
         private final ClusterType clusterType;
-        private final ServerAddress serverAddress;
         private Connection pinnedConnection;
 
-        TransactionContext(final ClusterType clusterType, final ServerAddress serverAddress) {
+        TransactionContext(final ClusterType clusterType) {
             this.clusterType = clusterType;
-            this.serverAddress = serverAddress;
-        }
-
-        ServerAddress getServerAddress() {
-            return serverAddress;
         }
 
         @Nullable
