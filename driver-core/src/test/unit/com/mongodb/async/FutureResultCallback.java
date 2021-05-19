@@ -59,7 +59,7 @@ public class FutureResultCallback<T> implements SingleResultCallback<T>, Future<
         return result.isDone();
     }
 
-    public boolean wasResultAnException() {
+    public boolean isCompletedExceptionally() {
         return result.hasError();
     }
 

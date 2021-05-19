@@ -432,11 +432,11 @@ public class LoadBalancedClusterTest {
             for (FutureResultCallback<ServerTuple> curCallback : callbacks) {
                 assertFalse(curCallback.wasInvokedMultipleTimes());
                 assertTrue(curCallback.isDone());
-                if (!curCallback.wasResultAnException()) {
+                if (!curCallback.isCompletedExceptionally()) {
                     foundFirstNonExceptionResult = true;
                 }
                 if (foundFirstNonExceptionResult) {
-                    assertFalse(curCallback.wasResultAnException());
+                    assertFalse(curCallback.isCompletedExceptionally());
                 }
             }
         }
