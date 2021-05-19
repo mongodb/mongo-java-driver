@@ -247,7 +247,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
             connection.commandAsync(namespace.getDatabaseName(), asGetMoreCommandDocument(cursor.getId()), NO_OP_FIELD_NAME_VALIDATOR,
                     ReadPreference.primary(), CommandResultDocumentCodec.create(decoder, "nextBatch"),
-                    connectionSource.getSessionContext(), null /* spec requires no server api for getMore */,
+                    connectionSource.getSessionContext(), connectionSource.getServerApi(),
                     new CommandResultSingleResultCallback(connection, cursor, callback, tryNext));
 
         } else {
