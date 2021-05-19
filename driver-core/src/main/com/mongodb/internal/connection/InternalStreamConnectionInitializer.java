@@ -98,15 +98,8 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
                                 callback.onResult(null, t);
                             }
                         } else {
-                            ConnectionId connectionId = internalConnection.getDescription().getConnectionId();
-                            ConnectionDescription connectionDescription = createConnectionDescription(clusterConnectionMode, connectionId,
-                                    isMasterResult);
-                            ServerDescription serverDescription =
-                                    createServerDescription(internalConnection.getDescription().getServerAddress(), isMasterResult,
-                                            System.nanoTime() - startTime);
                             setSpeculativeAuthenticateResponse(isMasterResult);
-                            callback.onResult(new InternalConnectionInitializationDescription(connectionDescription, serverDescription),
-                                    null);
+                            callback.onResult(createInitializationDescription(isMasterResult, internalConnection, startTime), null);
                         }
                     }
                 });
@@ -148,13 +141,19 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
             }
             throw e;
         }
-        long elapsedTime = System.nanoTime() - start;
-
-        ConnectionDescription connectionDescription = createConnectionDescription(clusterConnectionMode,
-                internalConnection.getDescription().getConnectionId(), isMasterResult);
-        ServerDescription serverDescription = createServerDescription(internalConnection.getDescription().getServerAddress(),
-                isMasterResult, elapsedTime);
         setSpeculativeAuthenticateResponse(isMasterResult);
+        return createInitializationDescription(isMasterResult, internalConnection, start);
+    }
+
+    private InternalConnectionInitializationDescription createInitializationDescription(final BsonDocument isMasterResult,
+                                                                                        final InternalConnection internalConnection,
+                                                                                        final long startTime) {
+        ConnectionId connectionId = internalConnection.getDescription().getConnectionId();
+        ConnectionDescription connectionDescription = createConnectionDescription(clusterConnectionMode, connectionId,
+                isMasterResult);
+        ServerDescription serverDescription =
+                createServerDescription(internalConnection.getDescription().getServerAddress(), isMasterResult,
+                        System.nanoTime() - startTime);
         return new InternalConnectionInitializationDescription(connectionDescription, serverDescription);
     }
 

@@ -109,7 +109,7 @@ public class LoadBalancedServer implements ClusterableServer {
     @Override
     public void close() {
         if (!closed.getAndSet(true)) {
-           serverListener.serverClosed(new ServerClosedEvent(serverId));
+            serverListener.serverClosed(new ServerClosedEvent(serverId));
         }
     }
 
@@ -133,15 +133,12 @@ public class LoadBalancedServer implements ClusterableServer {
     @Override
     public void getConnectionAsync(final SingleResultCallback<AsyncConnection> callback) {
         isTrue("open", !isClosed());
-        connectionPool.getAsync(new SingleResultCallback<InternalConnection>() {
-            @Override
-            public void onResult(final InternalConnection result, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    callback.onResult(connectionFactory.createAsync(result, new LoadBalancedServerProtocolExecutor(),
-                            ClusterConnectionMode.LOAD_BALANCED), null);
-                }
+        connectionPool.getAsync((result, t) -> {
+            if (t != null) {
+                callback.onResult(null, t);
+            } else {
+                callback.onResult(connectionFactory.createAsync(result, new LoadBalancedServerProtocolExecutor(),
+                        ClusterConnectionMode.LOAD_BALANCED), null);
             }
         });
     }
@@ -169,22 +166,19 @@ public class LoadBalancedServer implements ClusterableServer {
         public <T> void executeAsync(final CommandProtocol<T> protocol, final InternalConnection connection,
                                      final SessionContext sessionContext, final SingleResultCallback<T> callback) {
             protocol.sessionContext(new ClusterClockAdvancingSessionContext(sessionContext, clusterClock));
-            protocol.executeAsync(connection, errorHandlingCallback(new SingleResultCallback<T>() {
-                @Override
-                public void onResult(final T result, final Throwable t) {
-                    if (t != null) {
-                        if (t instanceof MongoWriteConcernWithResponseException) {
-                            callback.onResult((T) ((MongoWriteConcernWithResponseException) t).getResponse(), null);
-                        } else {
-                            invalidate(t, connection.getDescription().getServiceId(), connection.getGeneration());
-                            if (t instanceof MongoSocketException && sessionContext.hasSession()) {
-                                sessionContext.markSessionDirty();
-                            }
-                            callback.onResult(null, t);
-                        }
+            protocol.executeAsync(connection, errorHandlingCallback((result, t) -> {
+                if (t != null) {
+                    if (t instanceof MongoWriteConcernWithResponseException) {
+                        callback.onResult((T) ((MongoWriteConcernWithResponseException) t).getResponse(), null);
                     } else {
-                        callback.onResult(result, null);
+                        invalidate(t, connection.getDescription().getServiceId(), connection.getGeneration());
+                        if (t instanceof MongoSocketException && sessionContext.hasSession()) {
+                            sessionContext.markSessionDirty();
+                        }
+                        callback.onResult(null, t);
                     }
+                } else {
+                    callback.onResult(result, null);
                 }
             }, LOGGER));
         }

@@ -159,21 +159,10 @@ public class InternalStreamConnection implements InternalConnection {
             stream.open();
 
             InternalConnectionInitializationDescription initializationDescription = connectionInitializer.startHandshake(this);
-            description = initializationDescription.getConnectionDescription();
-            initialServerDescription = initializationDescription.getServerDescription();
-
-            if (clusterConnectionMode == ClusterConnectionMode.LOAD_BALANCED) {
-                generation = connectionGenerationSupplier.getGeneration(assertNotNull(description.getServiceId()));
-            }
+            initAfterHandshakeStart(initializationDescription);
 
             initializationDescription = connectionInitializer.finishHandshake(this, initializationDescription);
-            description = initializationDescription.getConnectionDescription();
-            initialServerDescription = initializationDescription.getServerDescription();
-            opened.set(true);
-            sendCompressor = findSendCompressor(description);
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
-            }
+            initAfterHandshakeFinish(initializationDescription);
         } catch (Throwable t) {
             close();
             if (t instanceof MongoException) {
@@ -198,25 +187,14 @@ public class InternalStreamConnection implements InternalConnection {
                                         close();
                                         callback.onResult(null, initialException);
                                     } else {
-                                        description = initialResult.getConnectionDescription();
-                                        initialServerDescription = initialResult.getServerDescription();
-                                        if (clusterConnectionMode == ClusterConnectionMode.LOAD_BALANCED) {
-                                            generation = connectionGenerationSupplier.getGeneration(description.getServiceId());
-                                        }
+                                        initAfterHandshakeStart(initialResult);
                                         connectionInitializer.finishHandshakeAsync(InternalStreamConnection.this,
                                                 initialResult, (completedResult, completedException) ->  {
                                                         if (completedException != null) {
                                                             close();
                                                             callback.onResult(null, completedException);
                                                         } else {
-                                                            description = completedResult.getConnectionDescription();
-                                                            initialServerDescription = completedResult.getServerDescription();
-                                                            opened.set(true);
-                                                            sendCompressor = findSendCompressor(description);
-                                                            if (LOGGER.isInfoEnabled()) {
-                                                                LOGGER.info(format("Opened connection [%s] to %s",
-                                                                        getId(), serverId.getAddress()));
-                                                            }
+                                                            initAfterHandshakeFinish(completedResult);
                                                             callback.onResult(null, null);
                                                         }
                                                 });
@@ -231,6 +209,26 @@ public class InternalStreamConnection implements InternalConnection {
             });
         } catch (Throwable t) {
             callback.onResult(null, t);
+        }
+    }
+
+
+    private void initAfterHandshakeStart(final InternalConnectionInitializationDescription initializationDescription) {
+        description = initializationDescription.getConnectionDescription();
+        initialServerDescription = initializationDescription.getServerDescription();
+
+        if (clusterConnectionMode == ClusterConnectionMode.LOAD_BALANCED) {
+            generation = connectionGenerationSupplier.getGeneration(assertNotNull(description.getServiceId()));
+        }
+    }
+
+    private void initAfterHandshakeFinish(final InternalConnectionInitializationDescription initializationDescription) {
+        description = initializationDescription.getConnectionDescription();
+        initialServerDescription = initializationDescription.getServerDescription();
+        opened.set(true);
+        sendCompressor = findSendCompressor(description);
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
         }
     }
 
