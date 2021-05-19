@@ -89,14 +89,7 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
                     @Override
                     public void onResult(final BsonDocument isMasterResult, final Throwable t) {
                         if (t != null) {
-                            if (checkSaslSupportedMechs && t instanceof MongoException
-                                    && ((MongoException) t).getCode() == USER_NOT_FOUND_CODE) {
-                                MongoCredential credential = authenticator.getMongoCredential();
-                                callback.onResult(null, new MongoSecurityException(credential,
-                                        format("Exception authenticating %s", credential), t));
-                            } else {
-                                callback.onResult(null, t);
-                            }
+                            callback.onResult(null, t instanceof MongoException ? mapIsMasterException((MongoException) t) : t);
                         } else {
                             setSpeculativeAuthenticateResponse(isMasterResult);
                             callback.onResult(createInitializationDescription(isMasterResult, internalConnection, startTime), null);
@@ -135,14 +128,19 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
         try {
             isMasterResult = executeCommand("admin", isMasterCommandDocument, serverApi, internalConnection);
         } catch (MongoException e) {
-            if (checkSaslSupportedMechs && e.getCode() == USER_NOT_FOUND_CODE) {
-                MongoCredential credential = authenticator.getMongoCredential();
-                throw new MongoSecurityException(credential, format("Exception authenticating %s", credential), e);
-            }
-            throw e;
+            throw mapIsMasterException(e);
         }
         setSpeculativeAuthenticateResponse(isMasterResult);
         return createInitializationDescription(isMasterResult, internalConnection, start);
+    }
+
+    private MongoException mapIsMasterException(final MongoException e) {
+        if (checkSaslSupportedMechs && e.getCode() == USER_NOT_FOUND_CODE) {
+            MongoCredential credential = authenticator.getMongoCredential();
+            return new MongoSecurityException(credential, format("Exception authenticating %s", credential), e);
+        } else {
+            return e;
+        }
     }
 
     private InternalConnectionInitializationDescription createInitializationDescription(final BsonDocument isMasterResult,
