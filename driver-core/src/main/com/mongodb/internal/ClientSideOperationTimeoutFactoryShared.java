@@ -42,14 +42,4 @@ public final class ClientSideOperationTimeoutFactoryShared implements ClientSide
                 + "factory=" + factory
                 + '}';
     }
-
-    @Override
-    public boolean equals(final Object o) {
-        return factory.equals(o);
-    }
-
-    @Override
-    public int hashCode() {
-        return factory != null ? factory.hashCode() : 0;
-    }
 }
