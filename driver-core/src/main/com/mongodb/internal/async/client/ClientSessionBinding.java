@@ -163,15 +163,12 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
             if (transactionContext != null && transactionContext.isConnectionPinningRequired()) {
                 AsyncConnection pinnedConnection = transactionContext.getPinnedConnection();
                 if (pinnedConnection == null) {
-                    wrapped.getConnection(new SingleResultCallback<AsyncConnection>() {
-                        @Override
-                        public void onResult(final AsyncConnection connection, final Throwable t) {
-                            if (t != null) {
-                                callback.onResult(null, t);
-                            } else {
-                                transactionContext.pinConnection(connection, AsyncConnection::markAsPinned);
-                                callback.onResult(connection, null);
-                            }
+                    wrapped.getConnection((connection, t) -> {
+                        if (t != null) {
+                            callback.onResult(null, t);
+                        } else {
+                            transactionContext.pinConnection(connection, AsyncConnection::markAsPinned);
+                            callback.onResult(connection, null);
                         }
                     });
                 } else {
