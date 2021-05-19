@@ -32,7 +32,12 @@ class QueryOperationHelper {
 
     static BsonDocument getKeyPattern(BsonDocument explainPlan) {
         BsonDocument winningPlan = explainPlan.getDocument('queryPlanner').getDocument('winningPlan')
-        if (winningPlan.containsKey('inputStage')) {
+        if (winningPlan.containsKey('queryPlan')) {
+            BsonDocument queryPlan = winningPlan.getDocument('queryPlan')
+            if (queryPlan.containsKey('inputStage')) {
+                return queryPlan.getDocument('inputStage').getDocument('keyPattern')
+            }
+        } else if (winningPlan.containsKey('inputStage')) {
             return winningPlan.getDocument('inputStage').getDocument('keyPattern')
         } else if (winningPlan.containsKey('shards')) {
             return winningPlan.getArray('shards')[0].asDocument().getDocument('winningPlan')
