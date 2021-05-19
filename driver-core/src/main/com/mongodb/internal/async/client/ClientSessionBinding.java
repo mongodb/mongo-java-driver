@@ -22,12 +22,11 @@ import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.binding.AbstractReferenceCounted;
 import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
+import com.mongodb.internal.binding.TransactionContext;
 import com.mongodb.internal.connection.AsyncConnection;
-import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.session.ClientSessionContext;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
@@ -84,13 +83,14 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
 
     private void getPinnedConnectionSource(final boolean isRead, final SingleResultCallback<AsyncConnectionSource> callback) {
         WrappingCallback wrappingCallback = new WrappingCallback(callback);
-        TransactionContext transactionContext = (TransactionContext) session.getTransactionContext();
+        TransactionContext<AsyncConnection> transactionContext = TransactionContext.get(session);
         if (transactionContext == null) {
             SingleResultCallback<AsyncConnectionSource> connectionSourceCallback = (result, t) -> {
                 if (t != null) {
                     wrappingCallback.onResult(null, t);
                 } else {
-                    TransactionContext newTransactionContext = new TransactionContext(wrapped.getCluster().getDescription().getType());
+                    TransactionContext<AsyncConnection> newTransactionContext = new TransactionContext<>(
+                            wrapped.getCluster().getDescription().getType());
                     session.setTransactionContext(result.getServerDescription().getAddress(), newTransactionContext);
                     newTransactionContext.release();  // The session is responsible for retaining a reference to the context
                     wrappingCallback.onResult(result, null);
@@ -103,39 +103,6 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
             }
         } else {
             wrapped.getConnectionSource(session.getPinnedServerAddress(), new WrappingCallback(callback));
-        }
-    }
-
-    private static class TransactionContext extends AbstractReferenceCounted {
-        private final ClusterType clusterType;
-        private AsyncConnection pinnedConnection;
-
-        TransactionContext(final ClusterType clusterType) {
-            this.clusterType = clusterType;
-        }
-
-        @Nullable
-        AsyncConnection getPinnedConnection() {
-            return pinnedConnection;
-        }
-
-        public void pinConnection(final AsyncConnection connection) {
-            this.pinnedConnection = connection.retain();
-            pinnedConnection.markAsPinned(Connection.PinningMode.TRANSACTION);
-        }
-
-        boolean isConnectionPinningRequired() {
-            return clusterType == LOAD_BALANCED;
-        }
-
-        @Override
-        public void release() {
-            super.release();
-            if (getCount() == 0) {
-                if (pinnedConnection != null) {
-                    pinnedConnection.release();
-                }
-            }
         }
     }
 
@@ -192,7 +159,7 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
 
         @Override
         public void getConnection(final SingleResultCallback<AsyncConnection> callback) {
-            TransactionContext transactionContext = (TransactionContext) session.getTransactionContext();
+            TransactionContext<AsyncConnection> transactionContext = TransactionContext.get(session);
             if (transactionContext != null && transactionContext.isConnectionPinningRequired()) {
                 AsyncConnection pinnedConnection = transactionContext.getPinnedConnection();
                 if (pinnedConnection == null) {
@@ -202,7 +169,7 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
                             if (t != null) {
                                 callback.onResult(null, t);
                             } else {
-                                transactionContext.pinConnection(connection);
+                                transactionContext.pinConnection(connection, AsyncConnection::markAsPinned);
                                 callback.onResult(connection, null);
                             }
                         }
