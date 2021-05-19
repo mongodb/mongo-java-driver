@@ -99,7 +99,6 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         this.batchSize = batchSize;
         this.decoder = decoder;
         this.cursor = new AtomicReference<ServerCursor>(firstBatch.getCursor());
-        this.connectionSource = notNull("connectionSource", connectionSource).retain();
         this.count.addAndGet(firstBatch.getResults().size());
         if (result != null) {
             this.operationTime = result.getTimestamp(OPERATION_TIME, null);
@@ -109,12 +108,12 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         }
 
         firstBatchEmpty = firstBatch.getResults().isEmpty();
-        releaseConnectionAndSourceIfNoServerCursor();
-        if (firstBatch.getCursor() != null) {
+        if (cursor.get() != null) {
+            this.connectionSource = notNull("connectionSource", connectionSource).retain();
+            assertTrue(connection != null);
             if (limitReached()) {
                 killCursor(connection);
             } else {
-                assertTrue(connection != null);
                 if (connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER) {
                     this.pinnedConnection = connection.retain();
                     this.pinnedConnection.markAsPinned(Connection.PinningMode.CURSOR);
@@ -455,19 +454,5 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
             return cursor.getDocument(POST_BATCH_RESUME_TOKEN, null);
         }
         return null;
-    }
-
-    private void releaseConnectionAndSourceIfNoServerCursor() {
-        ServerCursor serverCursor = cursor.get();
-        if (serverCursor == null) {
-            if (connectionSource != null) {
-                connectionSource.release();
-                connectionSource = null;
-            }
-            if (pinnedConnection != null) {
-                pinnedConnection.release();
-                pinnedConnection = null;
-            }
-        }
     }
 }
