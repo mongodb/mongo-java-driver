@@ -334,14 +334,8 @@ public class LoadBalancedClusterTest {
 
         Duration srvResolutionTime = Duration.ofSeconds(5);
         DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory = mock(DnsSrvRecordMonitorFactory.class);
-        AtomicReference<TestDnsSrvRecordMonitor> dnsSrvRecordMonitorReference = new AtomicReference<>();
         when(dnsSrvRecordMonitorFactory.create(eq(srvHostName), any())).thenAnswer(
-                invocation -> {
-                    TestDnsSrvRecordMonitor dnsSrvRecordMonitor = new TestDnsSrvRecordMonitor(invocation.getArgument(1))
-                            .sleepTime(srvResolutionTime);
-                    dnsSrvRecordMonitorReference.set(dnsSrvRecordMonitor);
-                    return dnsSrvRecordMonitor;
-                });
+                invocation -> new TestDnsSrvRecordMonitor(invocation.getArgument(1)).sleepTime(srvResolutionTime));
         cluster = new LoadBalancedCluster(new ClusterId(), clusterSettings, serverFactory, dnsSrvRecordMonitorFactory);
 
         int numThreads = 100;
