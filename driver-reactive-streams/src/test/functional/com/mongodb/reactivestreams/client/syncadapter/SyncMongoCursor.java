@@ -81,13 +81,9 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
             }
             // Unfortunately this is the only way to wait for the query to be initiated, since its asynchronous
             // and we have no way of knowing
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                throw new MongoInterruptedException("Interrupted from nap", e);
-            }
+            Thread.sleep(100);
         } catch (InterruptedException e) {
-            throw new MongoInterruptedException("Interrupted awaiting latch", e);
+            throw new MongoInterruptedException("Interrupted waiting for asynchronous cursor establishment", e);
         }
     }
 
