@@ -37,8 +37,8 @@ public final class TransactionContext<C extends ReferenceCounted> extends Abstra
         return pinnedConnection;
     }
 
+    @SuppressWarnings("unchecked")
     public void pinConnection(final C connection, final BiConsumer<C, Connection.PinningMode> markAsPinnedOperation) {
-        //noinspection unchecked
         this.pinnedConnection = (C) connection.retain(); // safe because of the `retain` method contract
         markAsPinnedOperation.accept(connection, Connection.PinningMode.TRANSACTION);
     }
