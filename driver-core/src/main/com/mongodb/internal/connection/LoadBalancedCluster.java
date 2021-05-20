@@ -85,6 +85,7 @@ public final class LoadBalancedCluster implements Cluster {
 
     public LoadBalancedCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory,
                                final DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory) {
+        assertTrue(settings.getMode() == ClusterConnectionMode.LOAD_BALANCED);
         LOGGER.info(format("Cluster created with id %s and settings %s", clusterId, settings.getShortDescription()));
 
         this.clusterId = clusterId;
@@ -95,7 +96,6 @@ public final class LoadBalancedCluster implements Cluster {
 
         if (settings.getSrvHost() == null) {
             dnsSrvRecordMonitor = null;
-            assertTrue(settings.getHosts().size() == 1);
             init(clusterId, serverFactory, settings.getHosts().get(0));
             initializationCompleted = true;
         } else {
