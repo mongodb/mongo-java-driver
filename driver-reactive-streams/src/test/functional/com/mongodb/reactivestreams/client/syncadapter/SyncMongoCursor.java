@@ -39,7 +39,7 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
     private final BlockingDeque<Object> results = new LinkedBlockingDeque<>();
     private final Integer batchSize;
     private int countToBatchSize;
-    private volatile Subscription subscription;
+    private Subscription subscription;
     private T current;
     private boolean completed;
     private RuntimeException error;
@@ -79,12 +79,12 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
             if (!latch.await(TIMEOUT, TimeUnit.SECONDS)) {
                 throw new MongoTimeoutException("Timeout waiting for subscription");
             }
-            // Unfortunately this is the only to wait for the query to be initiated, since its asynchronous
+            // Unfortunately this is the only way to wait for the query to be initiated, since its asynchronous
             // and we have no way of knowing
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
-                // ignore
+                throw new MongoInterruptedException("Interrupted from nap", e);
             }
         } catch (InterruptedException e) {
             throw new MongoInterruptedException("Interrupted awaiting latch", e);
@@ -99,7 +99,7 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
         try {
             Thread.sleep(100);
         } catch (InterruptedException e) {
-            // ignore
+            throw new MongoInterruptedException("Interrupted from nap", e);
         }
     }
 

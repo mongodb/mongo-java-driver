@@ -153,10 +153,7 @@ public class LoadBalancedServer implements ClusterableServer {
             } catch (MongoWriteConcernWithResponseException e) {
                 return (T) e.getResponse();
             } catch (MongoException e) {
-                invalidate(e, connection.getDescription().getServiceId(), connection.getGeneration());
-                if (e instanceof MongoSocketException && sessionContext.hasSession()) {
-                    sessionContext.markSessionDirty();
-                }
+                handleExecutionException(connection, sessionContext, e);
                 throw e;
             }
         }
@@ -171,16 +168,21 @@ public class LoadBalancedServer implements ClusterableServer {
                     if (t instanceof MongoWriteConcernWithResponseException) {
                         callback.onResult((T) ((MongoWriteConcernWithResponseException) t).getResponse(), null);
                     } else {
-                        invalidate(t, connection.getDescription().getServiceId(), connection.getGeneration());
-                        if (t instanceof MongoSocketException && sessionContext.hasSession()) {
-                            sessionContext.markSessionDirty();
-                        }
+                        handleExecutionException(connection, sessionContext, t);
                         callback.onResult(null, t);
                     }
                 } else {
                     callback.onResult(result, null);
                 }
             }, LOGGER));
+        }
+
+        private void handleExecutionException(final InternalConnection connection, final SessionContext sessionContext,
+                                              final Throwable t) {
+            invalidate(t, connection.getDescription().getServiceId(), connection.getGeneration());
+            if (t instanceof MongoSocketException && sessionContext.hasSession()) {
+                sessionContext.markSessionDirty();
+            }
         }
     }
 }

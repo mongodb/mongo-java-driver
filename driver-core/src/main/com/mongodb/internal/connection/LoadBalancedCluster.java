@@ -76,7 +76,7 @@ public final class LoadBalancedCluster implements Cluster {
     private final AtomicBoolean closed = new AtomicBoolean();
     private final DnsSrvRecordMonitor dnsSrvRecordMonitor;
     private volatile MongoException srvResolutionException;
-    private volatile boolean srvRecordResolvedToMultipleHosts;
+    private boolean srvRecordResolvedToMultipleHosts;
     private volatile boolean initializationCompleted;
     private List<ServerSelectionRequest> waitQueue = new LinkedList<>();
     private Thread waitQueueHandler;
@@ -216,6 +216,9 @@ public final class LoadBalancedCluster implements Cluster {
         try {
             long remainingTimeNanos = getMaxWaitTimeNanos();
             while (!initializationCompleted) {
+                if (isClosed()) {
+                    throw createShutdownException();
+                }
                 if (remainingTimeNanos <= 0) {
                     throw createTimeoutException();
                 }
@@ -367,6 +370,10 @@ public final class LoadBalancedCluster implements Cluster {
                 timeoutList.clear();
             }
 
+            // This code is executed either after closing the LoadBalancedCluster or after initializing it. In the latter case,
+            // waitQueue is guaranteed to be empty (as DnsSrvRecordInitializer.initialize clears it and no thread adds new elements to
+            // it after that). So shutdownList is not empty iff LoadBalancedCluster is closed, in which case we need to complete the
+            // requests in it.
             List<ServerSelectionRequest> shutdownList;
             lock.lock();
             try {
@@ -375,7 +382,7 @@ public final class LoadBalancedCluster implements Cluster {
             } finally {
                 lock.unlock();
             }
-            shutdownList.forEach(request -> request.onError(createTimeoutException()));
+            shutdownList.forEach(request -> request.onError(createShutdownException()));
         }
     }
 
