@@ -64,7 +64,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 @ThreadSafe
-public final class LoadBalancedCluster implements Cluster {
+final class LoadBalancedCluster implements Cluster {
     private static final Logger LOGGER = Loggers.getLogger("cluster");
 
     private final ClusterId clusterId;
@@ -83,8 +83,8 @@ public final class LoadBalancedCluster implements Cluster {
     private final Lock lock = new ReentrantLock(true);
     private final Condition condition = lock.newCondition();
 
-    public LoadBalancedCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory,
-                               final DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory) {
+    LoadBalancedCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory,
+                        final DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory) {
         assertTrue(settings.getMode() == ClusterConnectionMode.LOAD_BALANCED);
         LOGGER.info(format("Cluster created with id %s and settings %s", clusterId, settings.getShortDescription()));
 
