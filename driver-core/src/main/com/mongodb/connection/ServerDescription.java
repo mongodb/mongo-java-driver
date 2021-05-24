@@ -94,6 +94,7 @@ public class ServerDescription {
     private final Integer logicalSessionTimeoutMinutes;
 
     private final Throwable exception;
+    private final boolean helloOk;
 
     /**
      * Gets a Builder for creating a new ServerDescription instance.
@@ -137,6 +138,18 @@ public class ServerDescription {
         return logicalSessionTimeoutMinutes;
     }
 
+
+    /**
+     * Gets whether this server supports the "hello" command. The default is {@code false}.
+     *
+     * @return true if this server supports the "hello" command.
+     * @mongodb.server.release 5.0
+     * @since 4.3
+     */
+    public boolean isHelloOk() {
+        return helloOk;
+    }
+
     /**
      * A builder for creating ServerDescription.
      */
@@ -163,6 +176,7 @@ public class ServerDescription {
         private Date lastWriteDate;
         private long lastUpdateTimeNanos = Time.nanoTime();
         private Integer logicalSessionTimeoutMinutes;
+        private boolean helloOk;
 
         private Throwable exception;
 
@@ -441,6 +455,18 @@ public class ServerDescription {
             return this;
         }
 
+        /**
+         * Sets whether this server supports the "hello" command. The default is {@code false}.
+         *
+         * @param helloOk helloOk
+         * @return this
+         * @mongodb.server.release 5.0
+         * @since 4.3
+         */
+        public Builder helloOk(final boolean helloOk) {
+            this.helloOk = helloOk;
+            return this;
+        }
 
         /**
          * Sets the exception thrown while attempting to determine the server description.
@@ -895,6 +921,10 @@ public class ServerDescription {
             return false;
         }
 
+        if (helloOk != that.helloOk) {
+            return false;
+        }
+
         // Compare class equality and message as exceptions rarely override equals
         Class<?> thisExceptionClass = exception != null ? exception.getClass() : null;
         Class<?> thatExceptionClass = that.exception != null ? that.exception.getClass() : null;
@@ -933,6 +963,7 @@ public class ServerDescription {
         result = 31 * result + minWireVersion;
         result = 31 * result + maxWireVersion;
         result = 31 * result + (logicalSessionTimeoutMinutes != null ? logicalSessionTimeoutMinutes.hashCode() : 0);
+        result = 31 * result + (helloOk ? 1 : 0);
         result = 31 * result + (exception == null ? 0 : exception.getClass().hashCode());
         result = 31 * result + (exception == null ? 0 : exception.getMessage().hashCode());
         return result;
@@ -1032,6 +1063,7 @@ public class ServerDescription {
         lastWriteDate = builder.lastWriteDate;
         lastUpdateTimeNanos = builder.lastUpdateTimeNanos;
         logicalSessionTimeoutMinutes = builder.logicalSessionTimeoutMinutes;
+        helloOk = builder.helloOk;
         exception = builder.exception;
     }
 }

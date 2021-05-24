@@ -31,6 +31,7 @@ import java.util.concurrent.ExecutionException;
 
 import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.internal.connection.MessageHelper.getApiVersionField;
+import static com.mongodb.internal.connection.MessageHelper.getDbField;
 import static org.junit.Assert.assertEquals;
 
 public class PlainAuthenticatorUnitTest {
@@ -73,6 +74,7 @@ public class PlainAuthenticatorUnitTest {
         String expectedCommand = "{\"saslStart\": 1, "
                                  + "\"mechanism\": \"PLAIN\", "
                                  + "\"payload\": {\"$binary\": {\"base64\": \"dXNlcgB1c2VyAHBlbmNpbA==\", \"subType\": \"00\"}}"
+                                 + getDbField("$external")
                                  + getApiVersionField()
                                  + "}";
 
