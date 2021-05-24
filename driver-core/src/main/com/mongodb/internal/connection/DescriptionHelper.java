@@ -112,6 +112,7 @@ public final class DescriptionHelper {
                                 .lastWriteDate(getLastWriteDate(isMasterResult))
                                 .roundTripTime(roundTripTime, NANOSECONDS)
                                 .logicalSessionTimeoutMinutes(getLogicalSessionTimeoutMinutes(isMasterResult))
+                                .helloOk(isMasterResult.getBoolean("helloOk", BsonBoolean.FALSE).getValue())
                                 .ok(CommandHelper.isCommandOk(isMasterResult)).build();
     }
 
@@ -190,6 +191,10 @@ public final class DescriptionHelper {
 
             if (isMasterResult.getBoolean("hidden", BsonBoolean.FALSE).getValue()) {
                 return REPLICA_SET_OTHER;
+            }
+
+            if (isMasterResult.getBoolean("isWritablePrimary", BsonBoolean.FALSE).getValue()) {
+                return REPLICA_SET_PRIMARY;
             }
 
             if (isMasterResult.getBoolean("ismaster", BsonBoolean.FALSE).getValue()) {

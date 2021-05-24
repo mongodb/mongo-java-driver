@@ -100,7 +100,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
                                      + "configureFailPoint: \"failCommand\","
                                      + "mode: {times: 1000},"
                                      + " data: {"
-                                     + "   failCommands: [\"isMaster\"],"
+                                     + "   failCommands: [\"isMaster\", \"hello\"],"
                                      + "   blockConnection: true,"
                                      + "   blockTimeMS: 100,"
                                      + "   appName: \"streamingRttTest\""

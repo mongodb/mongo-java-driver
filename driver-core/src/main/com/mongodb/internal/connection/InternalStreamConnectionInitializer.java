@@ -29,6 +29,7 @@ import com.mongodb.connection.ServerType;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
@@ -138,7 +139,8 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
     }
 
     private BsonDocument createIsMasterCommand(final Authenticator authenticator, final InternalConnection connection) {
-        BsonDocument isMasterCommandDocument = new BsonDocument("ismaster", new BsonInt32(1));
+        BsonDocument isMasterCommandDocument = new BsonDocument(getHandshakeCommandName(), new BsonInt32(1))
+                .append("helloOk", BsonBoolean.TRUE);
         if (clientMetadataDocument != null) {
             isMasterCommandDocument.append("client", clientMetadataDocument);
         }
@@ -261,5 +263,9 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
         }
 
         return description.withConnectionDescription(connectionDescription.withConnectionId(connectionId));
+    }
+
+    private String getHandshakeCommandName() {
+        return serverApi == null ? "ismaster" : "hello";
     }
 }
