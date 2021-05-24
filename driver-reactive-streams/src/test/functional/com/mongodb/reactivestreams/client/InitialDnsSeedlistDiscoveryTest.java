@@ -21,6 +21,7 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.netty.NettyStreamFactoryFactory;
@@ -44,6 +45,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -54,6 +56,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.mongodb.ClusterFixture.getSslSettings;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
+import static com.mongodb.ClusterFixture.isLoadBalanced;
 import static com.mongodb.reactivestreams.client.Fixture.getStreamFactoryFactory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -89,8 +92,7 @@ public class InitialDnsSeedlistDiscoveryTest {
         if (parentDirectory.endsWith("replica-set")) {
             assumeTrue(isDiscoverableReplicaSet());
         } else if (parentDirectory.endsWith("load-balanced")) {
-            // TODO: un-skip these once reactive driver is supported
-            assumeTrue(false);
+            assumeTrue(isLoadBalanced());
         } else {
             fail("Unexpected parent directory: " + parentDirectory);
         }
@@ -105,41 +107,62 @@ public class InitialDnsSeedlistDiscoveryTest {
                 final AtomicReference<MongoException> exceptionReference = new AtomicReference<MongoException>();
                 final CountDownLatch latch = new CountDownLatch(1);
 
-                ConnectionString connectionString = new ConnectionString(uri);
-                final SslSettings sslSettings = getSslSettings(connectionString);
-                MongoClientSettings settings = MongoClientSettings.builder().applyConnectionString(connectionString)
-                        .applyToSslSettings(builder -> {
-                            builder.applySettings(sslSettings);
-                            builder.invalidHostNameAllowed(true);
-                        })
-                        .streamFactoryFactory(NettyStreamFactoryFactory.builder().build())
-                        .applyToClusterSettings(builder -> builder.addClusterListener(new ClusterListener() {
-                            @Override
-                            public void clusterOpening(final ClusterOpeningEvent event) {
-                            }
+                ConnectionString connectionString;
+                MongoClientSettings settings;
+                try {
+                    connectionString = new ConnectionString(uri);
+                    final SslSettings sslSettings = getSslSettings(connectionString);
+                    assumeTrue("SSL settings don't match", getSslSettings().isEnabled() == sslSettings.isEnabled());
+                    settings = MongoClientSettings.builder().applyConnectionString(connectionString)
+                            .applyToSslSettings(builder -> {
+                                builder.applySettings(sslSettings);
+                                builder.invalidHostNameAllowed(true);
+                            })
+                            .streamFactoryFactory(NettyStreamFactoryFactory.builder().build())
+                            .applyToClusterSettings(builder -> {
+                                builder.serverSelectionTimeout(5, TimeUnit.SECONDS);
+                                builder.addClusterListener(new ClusterListener() {
+                                    @Override
+                                    public void clusterOpening(final ClusterOpeningEvent event) {
+                                    }
 
-                            @Override
-                            public void clusterClosed(final ClusterClosedEvent event) {
-                            }
+                                    @Override
+                                    public void clusterClosed(final ClusterClosedEvent event) {
+                                    }
 
-                            @Override
-                            public void clusterDescriptionChanged(final ClusterDescriptionChangedEvent event) {
-                                if (event.getNewDescription().getSrvResolutionException() != null) {
-                                    exceptionReference.set(event.getNewDescription().getSrvResolutionException());
-                                    latch.countDown();
-                                }
-                            }
-                        }))
-                        .build();
-                client = MongoClients.create(settings);
-                if (!latch.await(5, TimeUnit.SECONDS)) {
-                    fail("");
+                                    @Override
+                                    public void clusterDescriptionChanged(final ClusterDescriptionChangedEvent event) {
+                                        if (event.getNewDescription().getSrvResolutionException() != null) {
+                                            exceptionReference.set(event.getNewDescription().getSrvResolutionException());
+                                            latch.countDown();
+                                        }
+                                    }
+                                });
+                            })
+                            .build();
+                } catch (MongoClientException | IllegalArgumentException e) {
+                    // all good
+                    return;
                 }
-                throw exceptionReference.get();
-            } catch (IllegalArgumentException e) {
-                // all good
-            } catch (MongoClientException e) {
-                // all good
+                client = MongoClients.create(settings);
+                // Load balancing mode has special rules regarding cluster event publishing, so we can't rely on those here.
+                // Instead we just try to execute an operation and assert that it throws
+                if (settings.getClusterSettings().getMode() == ClusterConnectionMode.LOAD_BALANCED) {
+                    try {
+                        Mono.from(client.getDatabase("admin").runCommand(new Document("ping", 1))).block(Duration.ofSeconds(5));
+                    } catch (MongoClientException e) {
+                        // all good
+                    }
+                } else {
+                    if (!latch.await(5, TimeUnit.SECONDS)) {
+                        fail("Failed to capture SRV resolution exception");
+                    }
+                    try {
+                        throw exceptionReference.get();
+                    } catch (MongoClientException e) {
+                        // all good
+                    }
+                }
             } finally {
                 if (client != null) {
                     client.close();
@@ -213,12 +236,12 @@ public class InitialDnsSeedlistDiscoveryTest {
                 .build();
 
         try (MongoClient client = MongoClients.create(settings)) {
-            assertTrue(latch.await(5, TimeUnit.SECONDS));
             final CountDownLatch pingLatch = new CountDownLatch(1);
             Mono.from(client.getDatabase("admin").runCommand(new Document("ping", 1)))
                     .doOnSuccess(r -> pingLatch.countDown())
                     .subscribe();
             assertTrue(pingLatch.await(5, TimeUnit.SECONDS));
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
         }
     }
 

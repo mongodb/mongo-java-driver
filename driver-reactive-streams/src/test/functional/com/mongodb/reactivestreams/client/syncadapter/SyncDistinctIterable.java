@@ -47,6 +47,7 @@ class SyncDistinctIterable<T> extends SyncMongoIterable<T> implements DistinctIt
     @Override
     public DistinctIterable<T> batchSize(final int batchSize) {
         wrapped.batchSize(batchSize);
+        super.batchSize(batchSize);
         return this;
     }
 

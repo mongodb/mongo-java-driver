@@ -21,10 +21,12 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerCursor;
+import com.mongodb.connection.ServerType;
 import com.mongodb.internal.async.AsyncAggregateResponseBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.connection.AsyncConnection;
+import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonArray;
@@ -42,6 +44,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -63,7 +66,8 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     private final int limit;
     private final Decoder<T> decoder;
     private final long maxTimeMS;
-    private final AsyncConnectionSource connectionSource;
+    private volatile AsyncConnectionSource connectionSource;
+    private volatile AsyncConnection pinnedConnection;
     private final AtomicReference<ServerCursor> cursor;
     private volatile QueryResult<T> firstBatch;
     private volatile int batchSize;
@@ -95,7 +99,6 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         this.batchSize = batchSize;
         this.decoder = decoder;
         this.cursor = new AtomicReference<ServerCursor>(firstBatch.getCursor());
-        this.connectionSource = notNull("connectionSource", connectionSource);
         this.count.addAndGet(firstBatch.getResults().size());
         if (result != null) {
             this.operationTime = result.getTimestamp(OPERATION_TIME, null);
@@ -105,10 +108,16 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         }
 
         firstBatchEmpty = firstBatch.getResults().isEmpty();
-        if (firstBatch.getCursor() != null) {
-            connectionSource.retain();
+        if (cursor.get() != null) {
+            this.connectionSource = notNull("connectionSource", connectionSource).retain();
+            assertTrue(connection != null);
             if (limitReached()) {
                 killCursor(connection);
+            } else {
+                if (connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER) {
+                    this.pinnedConnection = connection.retain();
+                    this.pinnedConnection.markAsPinned(Connection.PinningMode.CURSOR);
+                }
             }
         }
         this.maxWireVersion = connection == null ? 0 : connection.getDescription().getMaxWireVersion();
@@ -229,17 +238,21 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     }
 
     private void getMore(final ServerCursor cursor, final SingleResultCallback<List<T>> callback, final boolean tryNext) {
-        connectionSource.getConnection(new SingleResultCallback<AsyncConnection>() {
-            @Override
-            public void onResult(final AsyncConnection connection, final Throwable t) {
-                if (t != null) {
-                    endOperationInProgress();
-                    callback.onResult(null, t);
-                } else {
-                    getMore(connection, cursor, callback, tryNext);
+        if (pinnedConnection != null)  {
+            getMore(pinnedConnection.retain(), cursor, callback, tryNext);
+        } else {
+            connectionSource.getConnection(new SingleResultCallback<AsyncConnection>() {
+                @Override
+                public void onResult(final AsyncConnection connection, final Throwable t) {
+                    if (t != null) {
+                        endOperationInProgress();
+                        callback.onResult(null, t);
+                    } else {
+                        getMore(connection, cursor, callback, tryNext);
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     private void getMore(final AsyncConnection connection, final ServerCursor cursor, final SingleResultCallback<List<T>> callback,
@@ -273,16 +286,22 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     private void killCursorOnClose() {
         final ServerCursor localCursor = getServerCursor();
         if (localCursor != null) {
-            connectionSource.getConnection(new SingleResultCallback<AsyncConnection>() {
-                @Override
-                public void onResult(final AsyncConnection connection, final Throwable t) {
-                    if (t != null) {
-                        connectionSource.release();
-                    } else {
-                        killCursorAsynchronouslyAndReleaseConnectionAndSource(connection, localCursor);
+            if (pinnedConnection != null) {
+                killCursorAsynchronouslyAndReleaseConnectionAndSource(pinnedConnection, localCursor);
+            } else {
+                connectionSource.getConnection(new SingleResultCallback<AsyncConnection>() {
+                    @Override
+                    public void onResult(final AsyncConnection connection, final Throwable t) {
+                        if (t != null) {
+                            connectionSource.release();
+                        } else {
+                            killCursorAsynchronouslyAndReleaseConnectionAndSource(connection, localCursor);
+                        }
                     }
-                }
-            });
+                });
+            }
+        } else if (pinnedConnection != null) {
+            pinnedConnection.release();
         }
     }
 

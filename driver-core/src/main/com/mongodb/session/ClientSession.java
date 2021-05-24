@@ -47,16 +47,6 @@ public interface ClientSession extends Closeable {
     ServerAddress getPinnedServerAddress();
 
     /**
-     * Set the server address of the pinned mongos.
-     * For internal use only.
-     *
-     * @param address the server address to pin
-     * @mongodb.server.release 4.2
-     * @since 3.11
-     */
-    void setPinnedServerAddress(ServerAddress address);
-
-    /**
      * Gets the transaction context.
      *
      * <p>For internal use only </p>

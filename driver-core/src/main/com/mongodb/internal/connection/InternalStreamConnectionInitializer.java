@@ -46,7 +46,7 @@ import static com.mongodb.internal.connection.DescriptionHelper.createServerDesc
 import static java.lang.String.format;
 
 public class InternalStreamConnectionInitializer implements InternalConnectionInitializer {
-    private ClusterConnectionMode clusterConnectionMode;
+    private final ClusterConnectionMode clusterConnectionMode;
     private final Authenticator authenticator;
     private final BsonDocument clientMetadataDocument;
     private final List<MongoCompressor> requestedCompressors;
@@ -81,25 +81,33 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
     }
 
     @Override
-    public void initializeAsync(final InternalConnection internalConnection,
-                                final SingleResultCallback<InternalConnectionInitializationDescription> callback) {
-        initializeConnectionDescriptionAsync(internalConnection, createConnectionDescriptionCallback(internalConnection, callback));
+    public void startHandshakeAsync(final InternalConnection internalConnection,
+                                    final SingleResultCallback<InternalConnectionInitializationDescription> callback) {
+        final long startTime = System.nanoTime();
+        executeCommandAsync("admin", createIsMasterCommand(authenticator, internalConnection), serverApi, internalConnection,
+                new SingleResultCallback<BsonDocument>() {
+                    @Override
+                    public void onResult(final BsonDocument isMasterResult, final Throwable t) {
+                        if (t != null) {
+                            callback.onResult(null, t instanceof MongoException ? mapIsMasterException((MongoException) t) : t);
+                        } else {
+                            setSpeculativeAuthenticateResponse(isMasterResult);
+                            callback.onResult(createInitializationDescription(isMasterResult, internalConnection, startTime), null);
+                        }
+                    }
+                });
     }
 
-    private SingleResultCallback<InternalConnectionInitializationDescription>
-    createConnectionDescriptionCallback(final InternalConnection internalConnection,
-                                        final SingleResultCallback<InternalConnectionInitializationDescription> callback) {
-        return new SingleResultCallback<InternalConnectionInitializationDescription>() {
-            @Override
-            public void onResult(final InternalConnectionInitializationDescription description, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else if (authenticator == null || description.getConnectionDescription().getServerType()
-                        == ServerType.REPLICA_SET_ARBITER) {
-                    completeConnectionDescriptionInitializationAsync(internalConnection, description, callback);
-                } else {
-                    authenticator.authenticateAsync(internalConnection, description.getConnectionDescription(),
-                            new SingleResultCallback<Void>() {
+    @Override
+    public void finishHandshakeAsync(final InternalConnection internalConnection,
+                                     final InternalConnectionInitializationDescription description,
+                                     final SingleResultCallback<InternalConnectionInitializationDescription> callback) {
+        if (authenticator == null || description.getConnectionDescription().getServerType()
+                == ServerType.REPLICA_SET_ARBITER) {
+            completeConnectionDescriptionInitializationAsync(internalConnection, description, callback);
+        } else {
+            authenticator.authenticateAsync(internalConnection, description.getConnectionDescription(),
+                    new SingleResultCallback<Void>() {
                         @Override
                         public void onResult(final Void result1, final Throwable t1) {
                             if (t1 != null) {
@@ -109,9 +117,7 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
                             }
                         }
                     });
-                }
-            }
-        };
+        }
     }
 
     private InternalConnectionInitializationDescription initializeConnectionDescription(final InternalConnection internalConnection) {
@@ -122,19 +128,30 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
         try {
             isMasterResult = executeCommand("admin", isMasterCommandDocument, serverApi, internalConnection);
         } catch (MongoException e) {
-            if (checkSaslSupportedMechs && e.getCode() == USER_NOT_FOUND_CODE) {
-                MongoCredential credential = authenticator.getMongoCredential();
-                throw new MongoSecurityException(credential, format("Exception authenticating %s", credential), e);
-            }
-            throw e;
+            throw mapIsMasterException(e);
         }
-        long elapsedTime = System.nanoTime() - start;
-
-        ConnectionDescription connectionDescription = createConnectionDescription(clusterConnectionMode,
-                internalConnection.getDescription().getConnectionId(), isMasterResult);
-        ServerDescription serverDescription = createServerDescription(internalConnection.getDescription().getServerAddress(),
-                isMasterResult, elapsedTime);
         setSpeculativeAuthenticateResponse(isMasterResult);
+        return createInitializationDescription(isMasterResult, internalConnection, start);
+    }
+
+    private MongoException mapIsMasterException(final MongoException e) {
+        if (checkSaslSupportedMechs && e.getCode() == USER_NOT_FOUND_CODE) {
+            MongoCredential credential = authenticator.getMongoCredential();
+            return new MongoSecurityException(credential, format("Exception authenticating %s", credential), e);
+        } else {
+            return e;
+        }
+    }
+
+    private InternalConnectionInitializationDescription createInitializationDescription(final BsonDocument isMasterResult,
+                                                                                        final InternalConnection internalConnection,
+                                                                                        final long startTime) {
+        ConnectionId connectionId = internalConnection.getDescription().getConnectionId();
+        ConnectionDescription connectionDescription = createConnectionDescription(clusterConnectionMode, connectionId,
+                isMasterResult);
+        ServerDescription serverDescription =
+                createServerDescription(internalConnection.getDescription().getServerAddress(), isMasterResult,
+                        System.nanoTime() - startTime);
         return new InternalConnectionInitializationDescription(connectionDescription, serverDescription);
     }
 
@@ -184,37 +201,6 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
         if (authenticator != null && connectionDescription.getServerType() != ServerType.REPLICA_SET_ARBITER) {
             authenticator.authenticate(internalConnection, connectionDescription);
         }
-    }
-
-    private void initializeConnectionDescriptionAsync(final InternalConnection internalConnection,
-                                                      final SingleResultCallback<InternalConnectionInitializationDescription> callback) {
-        final long startTime = System.nanoTime();
-        executeCommandAsync("admin", createIsMasterCommand(authenticator, internalConnection), serverApi, internalConnection,
-                new SingleResultCallback<BsonDocument>() {
-                    @Override
-                    public void onResult(final BsonDocument isMasterResult, final Throwable t) {
-                        if (t != null) {
-                            if (checkSaslSupportedMechs && t instanceof MongoException
-                                    && ((MongoException) t).getCode() == USER_NOT_FOUND_CODE) {
-                                MongoCredential credential = authenticator.getMongoCredential();
-                                callback.onResult(null, new MongoSecurityException(credential,
-                                        format("Exception authenticating %s", credential), t));
-                            } else {
-                                callback.onResult(null, t);
-                            }
-                        } else {
-                            ConnectionId connectionId = internalConnection.getDescription().getConnectionId();
-                            ConnectionDescription connectionDescription = createConnectionDescription(clusterConnectionMode, connectionId,
-                                    isMasterResult);
-                            ServerDescription serverDescription =
-                                    createServerDescription(internalConnection.getDescription().getServerAddress(), isMasterResult,
-                                            System.nanoTime() - startTime);
-                            setSpeculativeAuthenticateResponse(isMasterResult);
-                            callback.onResult(new InternalConnectionInitializationDescription(connectionDescription, serverDescription),
-                                    null);
-                        }
-                    }
-                });
     }
 
     private void setSpeculativeAuthenticateResponse(final BsonDocument isMasterResult) {

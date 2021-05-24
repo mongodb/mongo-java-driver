@@ -68,6 +68,9 @@ class UsageTrackingInternalConnection implements InternalConnection {
                 } else {
                     openedAt = System.currentTimeMillis();
                     lastUsedAt = openedAt;
+                    if (getDescription().getServiceId() != null) {
+                        serviceStateManager.addConnection(getDescription().getServiceId());
+                    }
                     callback.onResult(null, null);
                 }
             }
