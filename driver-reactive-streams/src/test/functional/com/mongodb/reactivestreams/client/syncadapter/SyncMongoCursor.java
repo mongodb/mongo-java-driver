@@ -81,7 +81,7 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
             }
             // Unfortunately this is the only way to wait for the query to be initiated, since its asynchronous
             // and we have no way of knowing
-            Thread.sleep(100);
+            Thread.sleep(250);
         } catch (InterruptedException e) {
             throw new MongoInterruptedException("Interrupted waiting for asynchronous cursor establishment", e);
         }
@@ -93,7 +93,7 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
         // Unfortunately this is the only way to wait for cancellation to complete, since it's asynchronous.
         // This is inherently racy but there are not any other good options.
         try {
-            Thread.sleep(100);
+            Thread.sleep(250);
         } catch (InterruptedException e) {
             throw new MongoInterruptedException("Interrupted from nap", e);
         }
