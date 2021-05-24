@@ -517,6 +517,7 @@ class DefaultConnectionPool implements ConnectionPool {
         @Override
         public void openAsync(final SingleResultCallback<Void> callback) {
             assertFalse(isClosed.get());
+            connectionCreated(connectionPoolListener, wrapped.getDescription().getConnectionId());
             wrapped.openAsync((nullResult, failure) -> {
                 if (failure != null) {
                     closeAndHandleOpenFailure();
@@ -898,8 +899,6 @@ class DefaultConnectionPool implements ConnectionPool {
                 connection.closeSilently();
                 callback.onResult(availableConnection, null);
             } else {//acquired a permit, phase two
-                connectionCreated(//a connection is considered created only when it is ready to be open
-                        connectionPoolListener, getId(connection));
                 connection.openAsync((nullResult, failure) -> {
                     releasePermit();
                     if (failure != null) {

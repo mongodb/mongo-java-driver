@@ -6,7 +6,8 @@
       "minServerVersion": "4.9",
       "topologies": [
         "replicaset",
-        "sharded-replicaset"
+        "sharded-replicaset",
+        "load-balanced"
       ]
     }
   ],
@@ -91,7 +92,8 @@
         {
           "topologies": [
             "replicaset",
-            "sharded-replicaset"
+            "sharded-replicaset",
+            "load-balanced"
           ]
         }
       ],
@@ -219,7 +221,8 @@
         {
           "topologies": [
             "replicaset",
-            "sharded-replicaset"
+            "sharded-replicaset",
+            "load-balanced"
           ]
         }
       ],

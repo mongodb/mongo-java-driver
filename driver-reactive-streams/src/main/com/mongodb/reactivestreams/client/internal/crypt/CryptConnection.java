@@ -27,6 +27,7 @@ import com.mongodb.internal.bulk.DeleteRequest;
 import com.mongodb.internal.bulk.InsertRequest;
 import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.connection.AsyncConnection;
+import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.MessageSettings;
 import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.internal.connection.SplittablePayload;
@@ -207,4 +208,8 @@ class CryptConnection implements AsyncConnection {
         callback.onResult(null, new UnsupportedOperationException());
     }
 
+    @Override
+    public void markAsPinned(final Connection.PinningMode pinningMode) {
+        wrapped.markAsPinned(pinningMode);
+    }
 }

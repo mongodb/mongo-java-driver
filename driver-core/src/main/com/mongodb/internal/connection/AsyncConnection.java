@@ -172,4 +172,6 @@ public interface AsyncConnection extends ReferenceCounted {
      * @param callback  the callback that is called once the cursors have been killed
      */
     void killCursorAsync(MongoNamespace namespace, List<Long> cursors, SingleResultCallback<Void> callback);
+
+    void markAsPinned(Connection.PinningMode pinningMode);
 }

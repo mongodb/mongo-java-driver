@@ -18,15 +18,14 @@ package com.mongodb.client.internal;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
-import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
 import com.mongodb.client.ClientSession;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.internal.binding.AbstractReferenceCounted;
 import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadWriteBinding;
+import com.mongodb.internal.binding.TransactionContext;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.session.ClientSessionContext;
 import com.mongodb.internal.session.SessionContext;
@@ -113,57 +112,17 @@ public class ClientSessionBinding implements ReadWriteBinding {
     }
 
     private ConnectionSource getPinnedConnectionSource(final boolean isRead) {
-        TransactionContext transactionContext = (TransactionContext) session.getTransactionContext();
+        TransactionContext<Connection> transactionContext = TransactionContext.get(session);
         ConnectionSource source;
         if (transactionContext == null) {
             source = isRead ? wrapped.getReadConnectionSource() : wrapped.getWriteConnectionSource();
-            transactionContext = new TransactionContext(wrapped.getCluster().getDescription().getType(),
-                    source.getServerDescription().getAddress());
+            transactionContext = new TransactionContext<>(wrapped.getCluster().getDescription().getType());
             session.setTransactionContext(source.getServerDescription().getAddress(), transactionContext);
             transactionContext.release();  // The session is responsible for retaining a reference to the context
         } else {
-            source = wrapped.getConnectionSource(transactionContext.getServerAddress());
+            source = wrapped.getConnectionSource(session.getPinnedServerAddress());
         }
         return source;
-    }
-
-    private static class TransactionContext extends AbstractReferenceCounted {
-        private final ClusterType clusterType;
-        private final ServerAddress serverAddress;
-        private Connection pinnedConnection;
-
-        TransactionContext(final ClusterType clusterType, final ServerAddress serverAddress) {
-            this.clusterType = clusterType;
-            this.serverAddress = serverAddress;
-        }
-
-        ServerAddress getServerAddress() {
-            return serverAddress;
-        }
-
-        @Nullable
-        Connection getPinnedConnection() {
-            return pinnedConnection;
-        }
-
-        public void pinConnection(final Connection connection) {
-            this.pinnedConnection = connection.retain();
-            pinnedConnection.markAsPinned(Connection.PinningMode.TRANSACTION);
-        }
-
-        boolean isConnectionPinningRequired() {
-            return clusterType == LOAD_BALANCED;
-        }
-
-        @Override
-        public void release() {
-            super.release();
-            if (getCount() == 0) {
-                if (pinnedConnection != null) {
-                    pinnedConnection.release();
-                }
-            }
-        }
     }
 
     private class SessionBindingConnectionSource implements ConnectionSource {
@@ -190,12 +149,12 @@ public class ClientSessionBinding implements ReadWriteBinding {
 
         @Override
         public Connection getConnection() {
-            TransactionContext transactionContext = (TransactionContext) session.getTransactionContext();
+            TransactionContext<Connection> transactionContext = TransactionContext.get(session);
             if (transactionContext != null && transactionContext.isConnectionPinningRequired()) {
                 Connection pinnedConnection = transactionContext.getPinnedConnection();
                 if (pinnedConnection == null) {
                     Connection connection = wrapped.getConnection();
-                    transactionContext.pinConnection(connection);
+                    transactionContext.pinConnection(connection, Connection::markAsPinned);
                     return connection;
                 } else {
                     return pinnedConnection.retain();

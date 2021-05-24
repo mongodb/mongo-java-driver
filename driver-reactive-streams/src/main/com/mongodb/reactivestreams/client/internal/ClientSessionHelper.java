@@ -21,6 +21,7 @@ import com.mongodb.TransactionOptions;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.connection.ServerType;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
@@ -54,7 +55,8 @@ public class ClientSessionHelper {
     Mono<ClientSession> createClientSessionMono(final ClientSessionOptions options, final OperationExecutor executor) {
         ClusterDescription clusterDescription = mongoClient.getCluster().getCurrentDescription();
         if (!getServerDescriptionListToConsiderForSessionSupport(clusterDescription).isEmpty()
-                && clusterDescription.getLogicalSessionTimeoutMinutes() != null) {
+                && (clusterDescription.getLogicalSessionTimeoutMinutes() != null
+                || clusterDescription.getConnectionMode() == ClusterConnectionMode.LOAD_BALANCED)) {
             return Mono.fromCallable(() -> createClientSession(options, executor));
         } else {
             return Mono.create(sink ->
@@ -63,7 +65,8 @@ public class ClientSessionHelper {
                                            (serverTuple, t) -> {
                                                if (t != null) {
                                                    sink.success();
-                                               } else if (serverTuple.getServerDescription().getLogicalSessionTimeoutMinutes() == null) {
+                                               } else if (serverTuple.getServerDescription().getLogicalSessionTimeoutMinutes() == null
+                                                       && serverTuple.getServerDescription().getType() != ServerType.LOAD_BALANCER) {
                                                    sink.success();
                                                } else {
                                                    sink.success(createClientSession(options, executor));

@@ -58,12 +58,6 @@ public class BaseClientSessionImpl implements ClientSession {
     }
 
     @Override
-    public void setPinnedServerAddress(@Nullable final ServerAddress address) {
-        isTrue("pinned mongos null check", address == null || pinnedServerAddress == null);
-        pinnedServerAddress = address;
-    }
-
-    @Override
     public Object getTransactionContext() {
         return transactionContext;
     }

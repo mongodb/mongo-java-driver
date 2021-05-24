@@ -98,6 +98,7 @@ class SyncChangeStreamIterable<T> extends SyncMongoIterable<ChangeStreamDocument
     public ChangeStreamIterable<T> batchSize(final int batchSize) {
         wrapped.batchSize(batchSize);
         this.batchSize = batchSize;
+        super.batchSize(batchSize);
         return this;
     }
 
