@@ -208,13 +208,13 @@ final class FindPublisherImpl<T> extends BatchCursorPublisher<T> implements Find
 
     @Override
     AsyncExplainableReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
-        return getOperations().find(getClientSideOperationTimeoutFactory(maxTimeMS, maxAwaitTimeMS), filter, getDocumentClass(),
+        return getOperations().find(getClientSideOperationTimeout(maxTimeMS, maxAwaitTimeMS), filter, getDocumentClass(),
                 findOptions.withBatchSize(initialBatchSize));
     }
 
     @Override
     AsyncReadOperation<AsyncBatchCursor<T>> asAsyncFirstReadOperation() {
-        return getOperations().findFirst(getClientSideOperationTimeoutFactory(maxTimeMS, maxAwaitTimeMS), filter, getDocumentClass(),
+        return getOperations().findFirst(getClientSideOperationTimeout(maxTimeMS, maxAwaitTimeMS), filter, getDocumentClass(),
                 findOptions);
     }
 }

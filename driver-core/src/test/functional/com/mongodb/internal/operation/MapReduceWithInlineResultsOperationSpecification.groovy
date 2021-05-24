@@ -45,8 +45,8 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.DEFAULT_CSOT_FACTORY
-import static com.mongodb.ClusterFixture.NO_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.CSOT_TIMEOUT
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.connection.ServerType.STANDALONE
@@ -55,7 +55,7 @@ import static com.mongodb.internal.operation.OperationReadConcernHelper.appendRe
 class MapReduceWithInlineResultsOperationSpecification extends OperationFunctionalSpecification {
     private final bsonDocumentCodec = new BsonDocumentCodec()
     def mapReduceOperation = new MapReduceWithInlineResultsOperation<BsonDocument>(
-            DEFAULT_CSOT_FACTORY,
+            CSOT_TIMEOUT,
             getNamespace(),
             new BsonJavaScript('function(){ emit( this.name , 1 ); }'),
             new BsonJavaScript('function(key, values){ return values.length; }'),
@@ -76,7 +76,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         when:
         def mapF = new BsonJavaScript('function(){ }')
         def reduceF = new BsonJavaScript('function(key, values){ }')
-        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(DEFAULT_CSOT_FACTORY, helper.namespace, mapF, reduceF,
+        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(CSOT_TIMEOUT, helper.namespace, mapF, reduceF,
                 bsonDocumentCodec)
 
         then:
@@ -100,7 +100,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         def finalizeF = new BsonJavaScript('function(key, value){}')
         def mapF = new BsonJavaScript('function(){ }')
         def reduceF = new BsonJavaScript('function(key, values){ }')
-        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(DEFAULT_CSOT_FACTORY, helper.namespace, mapF, reduceF,
+        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(CSOT_TIMEOUT, helper.namespace, mapF, reduceF,
                 bsonDocumentCodec)
                 .filter(filter)
                 .finalizeFunction(finalizeF)
@@ -140,7 +140,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
 
     def 'should use the ReadBindings readPreference to set slaveOK'() {
         when:
-        def operation = new MapReduceWithInlineResultsOperation<Document>(DEFAULT_CSOT_FACTORY, helper.namespace,
+        def operation = new MapReduceWithInlineResultsOperation<Document>(CSOT_TIMEOUT, helper.namespace,
                 new BsonJavaScript('function(){ }'), new BsonJavaScript('function(key, values){ }'), bsonDocumentCodec)
 
         then:
@@ -152,7 +152,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
 
     def 'should create the expected command'() {
         when:
-        def operation = new MapReduceWithInlineResultsOperation<Document>(NO_CSOT_FACTORY, helper.namespace,
+        def operation = new MapReduceWithInlineResultsOperation<Document>(CSOT_NO_TIMEOUT, helper.namespace,
                 new BsonJavaScript('function(){ }'), new BsonJavaScript('function(key, values){ }'), bsonDocumentCodec)
         def expectedCommand = new BsonDocument('mapreduce', new BsonString(helper.namespace.getCollectionName()))
             .append('map', operation.getMapFunction())
@@ -198,7 +198,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
 
     def 'should throw an exception when using an unsupported ReadConcern'() {
         given:
-        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(DEFAULT_CSOT_FACTORY, helper.namespace,
+        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(CSOT_TIMEOUT, helper.namespace,
                 new BsonJavaScript('function(){ }'), new BsonJavaScript('function(key, values){ }'), bsonDocumentCodec)
 
         when:
@@ -214,7 +214,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
 
     def 'should throw an exception when using an unsupported Collation'() {
         given:
-        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(DEFAULT_CSOT_FACTORY, helper.namespace,
+        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(CSOT_TIMEOUT, helper.namespace,
                 new BsonJavaScript('function(){ }'), new BsonJavaScript('function(key, values){ }'), bsonDocumentCodec)
                 .collation(defaultCollation)
 
@@ -235,7 +235,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         def document = Document.parse('{_id: 1, str: "foo"}')
         getCollectionHelper().insertDocuments(document)
         def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(
-                DEFAULT_CSOT_FACTORY,
+                CSOT_TIMEOUT,
                 namespace,
                 new BsonJavaScript('function(){ emit( this.str, 1 ); }'),
                 new BsonJavaScript('function(key, values){ return Array.sum(values); }'),
@@ -272,7 +272,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
               }''')
         appendReadConcernToCommand(sessionContext, commandDocument)
 
-        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(NO_CSOT_FACTORY, helper.namespace,
+        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(CSOT_NO_TIMEOUT, helper.namespace,
                 new BsonJavaScript('function(){ }'), new BsonJavaScript('function(key, values){ }'), bsonDocumentCodec)
 
         when:
@@ -321,7 +321,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
               }''')
         appendReadConcernToCommand(sessionContext, commandDocument)
 
-        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(NO_CSOT_FACTORY, helper.namespace,
+        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(CSOT_NO_TIMEOUT, helper.namespace,
                 new BsonJavaScript('function(){ }'), new BsonJavaScript('function(key, values){ }'), bsonDocumentCodec)
 
         when:

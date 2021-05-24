@@ -33,7 +33,7 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateViewOptions;
 import com.mongodb.client.model.IndexOptionDefaults;
 import com.mongodb.client.model.ValidationOptions;
-import com.mongodb.internal.ClientSideOperationTimeoutFactories;
+import com.mongodb.internal.ClientSideOperationTimeouts;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.operation.CommandReadOperation;
@@ -214,7 +214,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
         if (clientSession != null && clientSession.hasActiveTransaction() && !readPreference.equals(ReadPreference.primary())) {
             throw new MongoClientException("Read preference in a transaction must be primary");
         }
-        return executor.execute(new CommandReadOperation<TResult>(ClientSideOperationTimeoutFactories.create(timeoutMS),
+        return executor.execute(new CommandReadOperation<TResult>(ClientSideOperationTimeouts.create(timeoutMS),
                         getName(), toBsonDocument(command), codecRegistry.get(resultClass)),
                 readPreference, readConcern, clientSession);
     }
@@ -231,7 +231,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
     }
 
     private void executeDrop(@Nullable final ClientSession clientSession) {
-        executor.execute(new DropDatabaseOperation(ClientSideOperationTimeoutFactories.create(timeoutMS), name,
+        executor.execute(new DropDatabaseOperation(ClientSideOperationTimeouts.create(timeoutMS), name,
                                                    getWriteConcern()), readConcern, clientSession);
     }
 
@@ -308,7 +308,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
 
     private void executeCreateCollection(@Nullable final ClientSession clientSession, final String collectionName,
                                          final CreateCollectionOptions createCollectionOptions) {
-        CreateCollectionOperation operation = new CreateCollectionOperation(ClientSideOperationTimeoutFactories.create(timeoutMS), name,
+        CreateCollectionOperation operation = new CreateCollectionOperation(ClientSideOperationTimeouts.create(timeoutMS), name,
                                                                             collectionName, writeConcern)
                 .collation(createCollectionOptions.getCollation())
                 .capped(createCollectionOptions.isCapped())
@@ -440,7 +440,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
     private void executeCreateView(@Nullable final ClientSession clientSession, final String viewName, final String viewOn,
                                    final List<? extends Bson> pipeline, final CreateViewOptions createViewOptions) {
         notNull("createViewOptions", createViewOptions);
-        executor.execute(new CreateViewOperation(ClientSideOperationTimeoutFactories.create(timeoutMS), name, viewName, viewOn,
+        executor.execute(new CreateViewOperation(ClientSideOperationTimeouts.create(timeoutMS), name, viewName, viewOn,
                                                  createBsonDocumentList(pipeline), writeConcern)
                         .collation(createViewOptions.getCollation()),
                 readConcern, clientSession);

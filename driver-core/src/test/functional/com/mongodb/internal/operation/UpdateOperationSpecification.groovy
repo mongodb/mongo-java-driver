@@ -31,7 +31,7 @@ import org.bson.types.ObjectId
 import spock.lang.IgnoreIf
 import util.spock.annotations.Slow
 
-import static com.mongodb.ClusterFixture.DEFAULT_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.CSOT_TIMEOUT
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
@@ -43,7 +43,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should throw IllegalArgumentException for empty list of requests'() {
         when:
-        new UpdateOperation(DEFAULT_CSOT_FACTORY, getNamespace(), true, ACKNOWLEDGED, false, [])
+        new UpdateOperation(CSOT_TIMEOUT, getNamespace(), true, ACKNOWLEDGED, false, [])
 
         then:
         thrown(IllegalArgumentException)
@@ -51,7 +51,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should update nothing if no documents match'() {
         given:
-        def operation = new UpdateOperation(DEFAULT_CSOT_FACTORY, getNamespace(), true, ACKNOWLEDGED, false,
+        def operation = new UpdateOperation(CSOT_TIMEOUT, getNamespace(), true, ACKNOWLEDGED, false,
                 asList(new UpdateRequest(new BsonDocument('x', new BsonInt32(1)),
                         new BsonDocument('$set', new BsonDocument('y', new BsonInt32(2))), UPDATE).multi(false))
         )
@@ -75,7 +75,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().insertDocuments(new DocumentCodec(),
                                               new Document('x', 1),
                                               new Document('x', 1))
-        def operation = new UpdateOperation(DEFAULT_CSOT_FACTORY, getNamespace(), true, ACKNOWLEDGED, false,
+        def operation = new UpdateOperation(CSOT_TIMEOUT, getNamespace(), true, ACKNOWLEDGED, false,
                 asList(new UpdateRequest(new BsonDocument('x', new BsonInt32(1)),
                         new BsonDocument('$set', new BsonDocument('y', new BsonInt32(2))), UPDATE).multi(false))
         )
@@ -99,7 +99,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().insertDocuments(new DocumentCodec(),
                                               new Document('x', 1),
                                               new Document('x', 1))
-        def operation = new UpdateOperation(DEFAULT_CSOT_FACTORY, getNamespace(), true, ACKNOWLEDGED, false,
+        def operation = new UpdateOperation(CSOT_TIMEOUT, getNamespace(), true, ACKNOWLEDGED, false,
                 asList(new UpdateRequest(new BsonDocument('x', new BsonInt32(1)),
                         new BsonDocument('$set', new BsonDocument('y', new BsonInt32(2))), UPDATE).multi(true))
         )
@@ -120,7 +120,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
 
     def 'when upsert is true should insert a document if there are no matching documents'() {
         given:
-        def operation = new UpdateOperation(DEFAULT_CSOT_FACTORY, getNamespace(), true, ACKNOWLEDGED, false,
+        def operation = new UpdateOperation(CSOT_TIMEOUT, getNamespace(), true, ACKNOWLEDGED, false,
                 asList(new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                         new BsonDocument('$set', new BsonDocument('y', new BsonInt32(2))), UPDATE).upsert(true))
         )
@@ -144,7 +144,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         // small enough so the update document is 16MB, but enough to push the the request as a whole over 16MB
         def binary = new BsonBinary(new byte[16 * 1024 * 1024 - 24])
         given:
-        def operation = new UpdateOperation(DEFAULT_CSOT_FACTORY, getNamespace(), true, ACKNOWLEDGED, false,
+        def operation = new UpdateOperation(CSOT_TIMEOUT, getNamespace(), true, ACKNOWLEDGED, false,
                 asList(new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                         new BsonDocument('$set', new BsonDocument('y', binary)), UPDATE).upsert(true)))
 
@@ -166,7 +166,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
     def 'should return correct result for upsert'() {
         given:
         def id = new ObjectId()
-        def operation = new UpdateOperation(DEFAULT_CSOT_FACTORY, getNamespace(), true, ACKNOWLEDGED, false,
+        def operation = new UpdateOperation(CSOT_TIMEOUT, getNamespace(), true, ACKNOWLEDGED, false,
                 asList(new UpdateRequest(new BsonDocument('_id', new BsonObjectId(id)),
                         new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))), UPDATE).upsert(true))
         )
@@ -186,7 +186,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
 
     def 'when an update request document contains a non $-prefixed key, update should throw IllegalArgumentException'() {
         given:
-        def operation = new UpdateOperation(DEFAULT_CSOT_FACTORY, getNamespace(), ordered, ACKNOWLEDGED, false,
+        def operation = new UpdateOperation(CSOT_TIMEOUT, getNamespace(), ordered, ACKNOWLEDGED, false,
                 [new UpdateRequest(new BsonDocument(), new BsonDocument('$set', new BsonDocument('x', new BsonInt32(2)))
                         .append('y', new BsonInt32(2)), UPDATE)])
 
@@ -208,7 +208,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
 
     def 'when an update document is empty, update should throw IllegalArgumentException'() {
         given:
-        def operation =  new UpdateOperation(DEFAULT_CSOT_FACTORY, getNamespace(), ordered, ACKNOWLEDGED, false,
+        def operation =  new UpdateOperation(CSOT_TIMEOUT, getNamespace(), ordered, ACKNOWLEDGED, false,
                 [new UpdateRequest(new BsonDocument(), new BsonDocument(), UPDATE)])
 
         when:
@@ -230,7 +230,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ serverVersionAtLeast(3, 4) })
     def 'should throw an exception when using an unsupported Collation'() {
         given:
-        def operation = new UpdateOperation(DEFAULT_CSOT_FACTORY, getNamespace(), false, ACKNOWLEDGED, false, requests)
+        def operation = new UpdateOperation(CSOT_TIMEOUT, getNamespace(), false, ACKNOWLEDGED, false, requests)
 
         when:
         execute(operation, async)
@@ -257,7 +257,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().insertDocuments(Document.parse('{str: "foo"}'))
         def requests = [new UpdateRequest(BsonDocument.parse('{str: "FOO"}}'), BsonDocument.parse('{$set: {str: "bar"}}'), UPDATE)
                                 .collation(caseInsensitiveCollation)]
-        def operation = new UpdateOperation(DEFAULT_CSOT_FACTORY, getNamespace(), false, ACKNOWLEDGED, false, requests)
+        def operation = new UpdateOperation(CSOT_TIMEOUT, getNamespace(), false, ACKNOWLEDGED, false, requests)
 
         when:
         WriteConcernResult result = execute(operation, async)
@@ -274,7 +274,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         given:
         def requests = [new UpdateRequest(BsonDocument.parse('{str: "FOO"}}'), BsonDocument.parse('{$set: {str: "bar"}}'), UPDATE)
                                 .collation(caseInsensitiveCollation)]
-        def operation = new UpdateOperation(DEFAULT_CSOT_FACTORY, getNamespace(), false, UNACKNOWLEDGED, false, requests)
+        def operation = new UpdateOperation(CSOT_TIMEOUT, getNamespace(), false, UNACKNOWLEDGED, false, requests)
 
         when:
         execute(operation, async)
@@ -290,7 +290,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
     def 'should support retryable writes'() {
         given:
         def id = new ObjectId()
-        def operation = new UpdateOperation(DEFAULT_CSOT_FACTORY, getNamespace(), true, ACKNOWLEDGED, true,
+        def operation = new UpdateOperation(CSOT_TIMEOUT, getNamespace(), true, ACKNOWLEDGED, true,
                 asList(new UpdateRequest(new BsonDocument('_id', new BsonObjectId(id)),
                         new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))), UPDATE).upsert(true))
         )
@@ -314,7 +314,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().insertDocuments(Document.parse('{str: "foo"}'))
         def requests = [new UpdateRequest(BsonDocument.parse('{str: "foo"}}'), BsonDocument.parse('{$set: {str: "bar"}}'), UPDATE)
                                 .hint(hint).hintString(hintString)]
-        def operation = new UpdateOperation(DEFAULT_CSOT_FACTORY, getNamespace(), false, ACKNOWLEDGED, false, requests
+        def operation = new UpdateOperation(CSOT_TIMEOUT, getNamespace(), false, ACKNOWLEDGED, false, requests
         )
 
         when:

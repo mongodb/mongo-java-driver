@@ -24,18 +24,21 @@ import com.mongodb.internal.operation.AsyncReadOperation;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 import static com.mongodb.reactivestreams.client.internal.TestHelper.OPERATION_EXECUTOR;
@@ -46,6 +49,7 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 
 @SuppressWarnings("unchecked")
@@ -67,7 +71,7 @@ public class BatchCursorPublisherTest {
         StepVerifier.create(createVerifiableBatchCursor(documents))
                 .expectNext(documents.toArray(new Document[0]))
                 .expectComplete()
-                .verify();
+                .verify(Duration.ofMillis(1000));
     }
 
     @Test
@@ -177,19 +181,22 @@ public class BatchCursorPublisherTest {
             publisher.batchSize(batchSize);
         }
 
+        ArgumentMatcher<Supplier<AsyncReadOperation<AsyncBatchCursor<Document>>>> supplierMatcher =
+                (arg) -> arg.get().equals(readOperation);
+
         if (errorCreatingCursor) {
             Mockito.doAnswer(invocation -> Mono.fromCallable(() -> {
                 throw new Exception(ERROR_CREATING_CURSOR);
             }))
                     .when(executor)
-                    .execute(eq(readOperation),
+                    .execute(argThat(supplierMatcher),
                              eq(ReadPreference.primary()),
                              eq(ReadConcern.DEFAULT),
                              eq(null));
         } else {
             Mockito.doAnswer(invocation ->  Mono.fromCallable(() -> batchCursor))
                     .when(executor)
-                    .execute(eq(readOperation),
+                    .execute(argThat(supplierMatcher),
                              eq(ReadPreference.primary()),
                              eq(ReadConcern.DEFAULT),
                              eq(null));

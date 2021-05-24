@@ -34,7 +34,7 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.Decoder
 import spock.lang.Specification
 
-import static com.mongodb.ClusterFixture.NO_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.internal.operation.AsyncCommandOperationHelper.CommandReadTransformerAsync
 import static com.mongodb.internal.operation.AsyncCommandOperationHelper.CommandWriteTransformerAsync
@@ -88,7 +88,7 @@ class AsyncCommandOperationHelperSpecification extends Specification {
         }
 
         when:
-        executeRetryableCommandAsync(NO_CSOT_FACTORY.create(), asyncWriteBinding, dbName, primary(), new NoOpFieldNameValidator(),
+        executeRetryableCommandAsync(CSOT_NO_TIMEOUT, asyncWriteBinding, dbName, primary(), new NoOpFieldNameValidator(),
                 decoder, commandCreator, FindAndModifyHelper.asyncTransformer(), callback)
 
         then:
@@ -117,7 +117,7 @@ class AsyncCommandOperationHelperSpecification extends Specification {
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeCommandAsync(NO_CSOT_FACTORY.create(), asyncWriteBinding, dbName, command, connection, function, callback)
+        executeCommandAsync(CSOT_NO_TIMEOUT, asyncWriteBinding, dbName, command, connection, function, callback)
 
         then:
         _ * connection.getDescription() >> connectionDescription
@@ -145,7 +145,7 @@ class AsyncCommandOperationHelperSpecification extends Specification {
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeCommandAsync(NO_CSOT_FACTORY.create(), asyncReadBinding, dbName, commandCreator, decoder, function, false, callback)
+        executeCommandAsync(CSOT_NO_TIMEOUT, asyncReadBinding, dbName, commandCreator, decoder, function, false, callback)
 
         then:
         _ * connection.getDescription() >> connectionDescription

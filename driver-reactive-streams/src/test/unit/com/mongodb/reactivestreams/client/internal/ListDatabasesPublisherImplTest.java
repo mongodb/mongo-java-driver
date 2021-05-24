@@ -42,7 +42,7 @@ public class ListDatabasesPublisherImplTest extends TestHelper {
         TestOperationExecutor executor = createOperationExecutor(asList(getBatchCursor(), getBatchCursor()));
         ListDatabasesPublisher<Document> publisher = new ListDatabasesPublisherImpl<>(null, createMongoOperationPublisher(executor));
 
-        ListDatabasesOperation<Document> expectedOperation = new ListDatabasesOperation<>(CSOT_FACTORY_TIMEOUT,
+        ListDatabasesOperation<Document> expectedOperation = new ListDatabasesOperation<>(CSOT_TIMEOUT,
                 getDefaultCodecRegistry().get(Document.class))
                 .retryReads(true);
 
@@ -59,7 +59,7 @@ public class ListDatabasesPublisherImplTest extends TestHelper {
                 .maxTime(99, MILLISECONDS)
                 .batchSize(100);
 
-        expectedOperation = new ListDatabasesOperation<>(CSOT_FACTORY_MAX_AWAIT_TIME,
+        expectedOperation = new ListDatabasesOperation<>(CSOT_MAX_AWAIT_TIME,
                 getDefaultCodecRegistry().get(Document.class))
                 .retryReads(true)
                 .authorizedDatabasesOnly(true)

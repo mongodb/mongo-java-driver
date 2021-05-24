@@ -51,7 +51,7 @@ import static com.mongodb.ReadPreference.secondary
 import static org.bson.UuidRepresentation.JAVA_LEGACY
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
-import static com.mongodb.client.internal.TestHelper.CSOT_FACTORY_TIMEOUT
+import static com.mongodb.client.internal.TestHelper.CSOT_TIMEOUT
 
 @SuppressWarnings('ClosureAsLastMethodParameter')
 class GridFSBucketSpecification extends Specification {
@@ -584,7 +584,7 @@ class GridFSBucketSpecification extends Specification {
 
         then:
         executor.getReadPreference() == primary()
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation<GridFSFile>(CSOT_FACTORY_TIMEOUT,
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation<GridFSFile>(CSOT_TIMEOUT,
                 new MongoNamespace('test.fs.files'), decoder)
                 .filter(new BsonDocument()))
 
@@ -595,7 +595,7 @@ class GridFSBucketSpecification extends Specification {
 
         then:
         executor.getReadPreference() == secondary()
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation<GridFSFile>(CSOT_FACTORY_TIMEOUT,
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation<GridFSFile>(CSOT_TIMEOUT,
                 new MongoNamespace('test.fs.files'), decoder)
                 .filter(filter).slaveOk(true))
     }

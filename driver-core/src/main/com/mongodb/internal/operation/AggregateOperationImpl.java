@@ -21,7 +21,6 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.ClientSideOperationTimeout;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncConnectionSource;
@@ -63,7 +62,7 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     private static final String FIRST_BATCH = "firstBatch";
     private static final List<String> FIELD_NAMES_WITH_RESULT = Arrays.asList(RESULT, FIRST_BATCH);
 
-    private final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final List<BsonDocument> pipeline;
     private final Decoder<T> decoder;
@@ -77,17 +76,17 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     private String comment;
     private BsonValue hint;
 
-    AggregateOperationImpl(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+    AggregateOperationImpl(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
                            final List<BsonDocument> pipeline, final Decoder<T> decoder, final AggregationLevel aggregationLevel) {
-        this(clientSideOperationTimeoutFactory, namespace, pipeline, decoder,
+        this(clientSideOperationTimeout, namespace, pipeline, decoder,
                 defaultAggregateTarget(notNull("aggregationLevel", aggregationLevel),
                         notNull("namespace", namespace).getCollectionName()), defaultPipelineCreator(pipeline));
     }
 
-    AggregateOperationImpl(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+    AggregateOperationImpl(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
                            final List<BsonDocument> pipeline, final Decoder<T> decoder, final AggregateTarget aggregateTarget,
                            final PipelineCreator pipelineCreator) {
-        this.clientSideOperationTimeoutFactory = notNull("clientSideOperationTimeoutFactory", clientSideOperationTimeoutFactory);
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.namespace = notNull("namespace", namespace);
         this.pipeline = notNull("pipeline", pipeline);
         this.decoder = notNull("decoder", decoder);
@@ -125,8 +124,8 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
         return this;
     }
 
-    ClientSideOperationTimeoutFactory getClientSideOperationTimeoutFactory() {
-        return clientSideOperationTimeoutFactory;
+    ClientSideOperationTimeout getClientSideOperationTimeout() {
+        return clientSideOperationTimeout;
     }
 
     Collation getCollation() {
@@ -168,7 +167,6 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        ClientSideOperationTimeout clientSideOperationTimeout = clientSideOperationTimeoutFactory.create();
         return executeCommand(clientSideOperationTimeout, binding, namespace.getDatabaseName(),
                 getCommandCreator(binding.getSessionContext()),
                 CommandResultDocumentCodec.create(decoder, FIELD_NAMES_WITH_RESULT),
@@ -177,7 +175,6 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        ClientSideOperationTimeout clientSideOperationTimeout = clientSideOperationTimeoutFactory.create();
         SingleResultCallback<AsyncBatchCursor<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         executeCommandAsync(clientSideOperationTimeout, binding, namespace.getDatabaseName(),
                 getCommandCreator(binding.getSessionContext()),

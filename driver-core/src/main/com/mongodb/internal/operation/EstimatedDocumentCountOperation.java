@@ -20,7 +20,6 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.ClientSideOperationTimeout;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
@@ -50,19 +49,19 @@ import static java.util.Collections.singletonList;
 
 public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
-    private final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private boolean retryReads;
 
     /**
      * Construct an instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      */
-    public EstimatedDocumentCountOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory,
+    public EstimatedDocumentCountOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
                                            final MongoNamespace namespace) {
-        this.clientSideOperationTimeoutFactory = notNull("clientSideOperationTimeoutFactory", clientSideOperationTimeoutFactory);
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.namespace = notNull("namespace", namespace);
     }
 
@@ -74,7 +73,7 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
     @Override
     public Long execute(final ReadBinding binding) {
         try {
-            return executeCommand(clientSideOperationTimeoutFactory.create(), binding, namespace.getDatabaseName(),
+            return executeCommand(clientSideOperationTimeout, binding, namespace.getDatabaseName(),
                     getCommandCreator(binding.getSessionContext()),
                     CommandResultDocumentCodec.create(DECODER, singletonList("firstBatch")), transformer(), retryReads);
         } catch (MongoCommandException e) {
@@ -84,7 +83,7 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Long> callback) {
-        executeCommandAsync(clientSideOperationTimeoutFactory.create(), binding, namespace.getDatabaseName(),
+        executeCommandAsync(clientSideOperationTimeout, binding, namespace.getDatabaseName(),
                 getCommandCreator(binding.getSessionContext()),
                 CommandResultDocumentCodec.create(DECODER, singletonList("firstBatch")), asyncTransformer(), retryReads,
                 (result, t) -> {

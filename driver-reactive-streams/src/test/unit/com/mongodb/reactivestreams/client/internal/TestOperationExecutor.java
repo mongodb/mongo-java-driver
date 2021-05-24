@@ -26,6 +26,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class TestOperationExecutor implements OperationExecutor {
@@ -34,28 +35,29 @@ public class TestOperationExecutor implements OperationExecutor {
     private final List<ClientSession> clientSessions = new ArrayList<>();
     private final List<ReadPreference> readPreferences = new ArrayList<>();
 
-    private final List<AsyncReadOperation> readOperations = new ArrayList<>();
-    private final List<AsyncWriteOperation> writeOperations = new ArrayList<>();
+    private final List<Supplier<AsyncReadOperation>> readOperations = new ArrayList<>();
+    private final List<Supplier<AsyncWriteOperation>> writeOperations = new ArrayList<>();
 
     public TestOperationExecutor(final List<Object> responses) {
         this.responses = new ArrayList<>(responses);
     }
 
     @Override
-    public <T> Mono<T> execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern,
+    public <T> Mono<T> execute(final Supplier<? extends AsyncReadOperation<T>> operation, final ReadPreference readPreference,
+                               final ReadConcern readConcern,
                                @Nullable final ClientSession session) {
         readPreferences.add(readPreference);
         clientSessions.add(session);
-        readOperations.add(operation);
+        readOperations.add(operation::get);
         return createMono();
     }
 
 
     @Override
-    public <T> Mono<T> execute(final AsyncWriteOperation<T> operation, final ReadConcern readConcern,
+    public <T> Mono<T> execute(final Supplier<? extends AsyncWriteOperation<T>> operation, final ReadConcern readConcern,
                                @Nullable final ClientSession session) {
         clientSessions.add(session);
-        writeOperations.add(operation);
+        writeOperations.add(operation::get);
         return createMono();
     }
 
@@ -82,7 +84,7 @@ public class TestOperationExecutor implements OperationExecutor {
 
     @Nullable
     AsyncReadOperation getReadOperation() {
-        return readOperations.isEmpty() ? null : readOperations.remove(0);
+        return readOperations.isEmpty() ? null : readOperations.remove(0).get();
     }
 
     @Nullable
@@ -92,7 +94,7 @@ public class TestOperationExecutor implements OperationExecutor {
 
     @Nullable
     AsyncWriteOperation getWriteOperation() {
-        return writeOperations.isEmpty() ? null : writeOperations.remove(0);
+        return writeOperations.isEmpty() ? null : writeOperations.remove(0).get();
     }
 
 }

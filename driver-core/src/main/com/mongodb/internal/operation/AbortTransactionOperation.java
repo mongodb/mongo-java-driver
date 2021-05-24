@@ -21,7 +21,6 @@ import com.mongodb.WriteConcern;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.ClientSideOperationTimeout;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import org.bson.BsonDocument;
 
 import static com.mongodb.internal.operation.CommandOperationHelper.noOpRetryCommandModifier;
@@ -37,12 +36,12 @@ public class AbortTransactionOperation extends TransactionOperation {
     /**
      * Construct an instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param writeConcern the write concern
      */
-    public AbortTransactionOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory,
+    public AbortTransactionOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
                                      final WriteConcern writeConcern) {
-        super(clientSideOperationTimeoutFactory, writeConcern);
+        super(clientSideOperationTimeout, writeConcern);
     }
 
     /**

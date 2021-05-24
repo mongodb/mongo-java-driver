@@ -27,7 +27,6 @@ import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.ClientSideOperationTimeout;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -70,7 +69,7 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  * @since 3.0
  */
 public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
-    private final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final List<IndexRequest> requests;
     private final WriteConcern writeConcern;
@@ -79,28 +78,28 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace     the database and collection namespace for the operation.
      * @param requests the index request
      */
-    public CreateIndexesOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory,
+    public CreateIndexesOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
                                   final MongoNamespace namespace, final List<IndexRequest> requests) {
-        this(clientSideOperationTimeoutFactory, namespace, requests, null);
+        this(clientSideOperationTimeout, namespace, requests, null);
     }
 
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace     the database and collection namespace for the operation.
      * @param requests the index request
      * @param writeConcern the write concern
      *
      * @since 3.4
      */
-    public CreateIndexesOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory,
+    public CreateIndexesOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
                                   final MongoNamespace namespace, final List<IndexRequest> requests, final WriteConcern writeConcern) {
-        this.clientSideOperationTimeoutFactory = notNull("clientSideOperationTimeoutFactory", clientSideOperationTimeoutFactory);
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.namespace = notNull("namespace", namespace);
         this.requests = notNull("indexRequests", requests);
         this.writeConcern = writeConcern;
@@ -167,7 +166,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
 
     @Override
     public Void execute(final WriteBinding binding) {
-        return withConnection(clientSideOperationTimeoutFactory.create(), binding, new CallableWithConnection<Void>() {
+        return withConnection(clientSideOperationTimeout, binding, new CallableWithConnection<Void>() {
             @Override
             public Void call(final ClientSideOperationTimeout clientSideOperationTimeout, final Connection connection) {
                 try {
@@ -185,7 +184,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withAsyncConnection(clientSideOperationTimeoutFactory.create(), binding, new AsyncCallableWithConnection() {
+        withAsyncConnection(clientSideOperationTimeout, binding, new AsyncCallableWithConnection() {
             @Override
             public void call(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncConnection connection,
                              final Throwable t) {

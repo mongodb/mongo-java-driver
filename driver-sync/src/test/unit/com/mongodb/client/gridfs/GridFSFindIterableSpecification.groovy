@@ -39,7 +39,7 @@ import java.util.function.Consumer
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
-import static com.mongodb.client.internal.TestHelper.CSOT_FACTORY_TIMEOUT
+import static com.mongodb.client.internal.TestHelper.CSOT_TIMEOUT
 import static spock.util.matcher.HamcrestSupport.expect
 
 class GridFSFindIterableSpecification extends Specification {
@@ -65,7 +65,7 @@ class GridFSFindIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new FindOperation<GridFSFile>(CSOT_FACTORY_TIMEOUT, namespace, gridFSFileCodec)
+        expect operation, isTheSameAs(new FindOperation<GridFSFile>(CSOT_TIMEOUT, namespace, gridFSFileCodec)
                 .filter(new BsonDocument()).slaveOk(true).retryReads(true))
         readPreference == secondary()
 
@@ -82,7 +82,7 @@ class GridFSFindIterableSpecification extends Specification {
         operation = executor.getReadOperation() as FindOperation<GridFSFile>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new FindOperation<GridFSFile>(CSOT_FACTORY_TIMEOUT, namespace, gridFSFileCodec)
+        expect operation, isTheSameAs(new FindOperation<GridFSFile>(CSOT_TIMEOUT, namespace, gridFSFileCodec)
                 .filter(new BsonDocument('filter', new BsonInt32(2)))
                 .sort(new BsonDocument('sort', new BsonInt32(2)))
                 .batchSize(99)
@@ -109,7 +109,7 @@ class GridFSFindIterableSpecification extends Specification {
         def operation = executor.getReadOperation() as FindOperation<GridFSFile>
 
         then:
-        expect operation, isTheSameAs(new FindOperation<GridFSFile>(CSOT_FACTORY_TIMEOUT, namespace, gridFSFileCodec)
+        expect operation, isTheSameAs(new FindOperation<GridFSFile>(CSOT_TIMEOUT, namespace, gridFSFileCodec)
                 .filter(new BsonDocument('filter', new BsonInt32(1)))
                 .sort(new BsonDocument('sort', new BsonInt32(1)))
                 .cursorType(CursorType.NonTailable)

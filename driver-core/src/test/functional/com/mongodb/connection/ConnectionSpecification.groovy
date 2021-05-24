@@ -23,7 +23,7 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.codecs.BsonDocumentCodec
 
-import static com.mongodb.ClusterFixture.NO_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageSize
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxWriteBatchSize
@@ -65,7 +65,7 @@ class ConnectionSpecification extends OperationFunctionalSpecification {
         source?.release()
     }
    private static BsonDocument getIsMasterResult() {
-        new CommandReadOperation<BsonDocument>(NO_CSOT_FACTORY, 'admin', new BsonDocument('ismaster', new BsonInt32(1)),
+        new CommandReadOperation<BsonDocument>(CSOT_NO_TIMEOUT, 'admin', new BsonDocument('ismaster', new BsonInt32(1)),
                                                new BsonDocumentCodec()).execute(getBinding())
     }
 }

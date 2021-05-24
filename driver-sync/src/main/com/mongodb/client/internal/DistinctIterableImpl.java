@@ -22,7 +22,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.DistinctIterable;
 import com.mongodb.client.model.Collation;
-import com.mongodb.internal.ClientSideOperationTimeoutFactories;
+import com.mongodb.internal.ClientSideOperationTimeouts;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.SyncOperations;
@@ -92,7 +92,7 @@ class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult
 
     @Override
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
-        return operations.distinct(ClientSideOperationTimeoutFactories.create(getTimeoutMS(), maxTimeMS), fieldName, filter, resultClass,
+        return operations.distinct(ClientSideOperationTimeouts.create(getTimeoutMS(), maxTimeMS), fieldName, filter, resultClass,
                                    collation);
     }
 }

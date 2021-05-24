@@ -24,7 +24,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Collation;
-import com.mongodb.internal.ClientSideOperationTimeoutFactories;
+import com.mongodb.internal.ClientSideOperationTimeouts;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.ExplainableReadOperation;
@@ -205,7 +205,7 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
     public TResult first() {
         BatchCursor<TResult> batchCursor =
                 getExecutor().execute(operations.findFirst(
-                        ClientSideOperationTimeoutFactories.create(getTimeoutMS(), maxTimeMS, maxAwaitTimeMS),
+                        ClientSideOperationTimeouts.create(getTimeoutMS(), maxTimeMS, maxAwaitTimeMS),
                         filter, resultClass, findOptions),
                 getReadPreference(), getReadConcern(),
                 getClientSession());
@@ -243,7 +243,7 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
     }
 
     public ExplainableReadOperation<BatchCursor<TResult>> asReadOperation() {
-        return operations.find(ClientSideOperationTimeoutFactories.create(getTimeoutMS(), maxTimeMS, maxAwaitTimeMS), filter,
+        return operations.find(ClientSideOperationTimeouts.create(getTimeoutMS(), maxTimeMS, maxAwaitTimeMS), filter,
                                resultClass, findOptions);
     }
 }

@@ -34,7 +34,7 @@ import com.mongodb.internal.connection.AsyncConnection
 import org.bson.BsonDocument
 import spock.lang.Specification
 
-import static com.mongodb.ClusterFixture.NO_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.connection.ServerType.STANDALONE
@@ -53,7 +53,7 @@ class AsyncOperationHelperSpecification extends Specification {
         def asyncConnection = Stub(AsyncConnection) {
             getDescription() >> connectionDescription
         }
-        validateReadConcern(NO_CSOT_FACTORY.create(), asyncConnection, readConcern, asyncCallableWithConnection)
+        validateReadConcern(CSOT_NO_TIMEOUT, asyncConnection, readConcern, asyncCallableWithConnection)
 
         then:
         notThrown(IllegalArgumentException)
@@ -71,7 +71,7 @@ class AsyncOperationHelperSpecification extends Specification {
         def asyncConnection = Stub(AsyncConnection) {
             getDescription() >> connectionDescription
         }
-        validateReadConcern(NO_CSOT_FACTORY.create(), asyncConnection, readConcern, asyncCallableWithConnection)
+        validateReadConcern(CSOT_NO_TIMEOUT, asyncConnection, readConcern, asyncCallableWithConnection)
 
         then:
         thrown(IllegalArgumentException)
@@ -87,7 +87,7 @@ class AsyncOperationHelperSpecification extends Specification {
         def asyncConnection = Stub(AsyncConnection) {
             getDescription() >> connectionDescription
         }
-        validateCollation(NO_CSOT_FACTORY.create(), asyncConnection, collation, asyncCallableWithConnection)
+        validateCollation(CSOT_NO_TIMEOUT, asyncConnection, collation, asyncCallableWithConnection)
 
         then:
         notThrown(IllegalArgumentException)
@@ -103,7 +103,7 @@ class AsyncOperationHelperSpecification extends Specification {
         def asyncConnection = Stub(AsyncConnection) {
             getDescription() >> connectionDescription
         }
-        validateCollation(NO_CSOT_FACTORY.create(), asyncConnection, collation, asyncCallableWithConnection)
+        validateCollation(CSOT_NO_TIMEOUT, asyncConnection, collation, asyncCallableWithConnection)
 
         then:
         thrown(IllegalArgumentException)
@@ -118,14 +118,14 @@ class AsyncOperationHelperSpecification extends Specification {
         def asyncConnection = Stub(AsyncConnection) {
             getDescription() >> connectionDescription
         }
-        validateFindOptions(NO_CSOT_FACTORY.create(), asyncConnection, readConcern, collation, allowDiskUse, asyncCallableWithConnection)
+        validateFindOptions(CSOT_NO_TIMEOUT, asyncConnection, readConcern, collation, allowDiskUse, asyncCallableWithConnection)
 
         then:
         notThrown(IllegalArgumentException)
 
         when:
         def asyncConnectionSource = Stub(AsyncConnectionSource)
-        validateFindOptions(NO_CSOT_FACTORY.create(), asyncConnectionSource, asyncConnection, readConcern, collation, allowDiskUse,
+        validateFindOptions(CSOT_NO_TIMEOUT, asyncConnectionSource, asyncConnection, readConcern, collation, allowDiskUse,
                 asyncCallableWithConnectionAndSource)
 
         then:
@@ -142,14 +142,14 @@ class AsyncOperationHelperSpecification extends Specification {
         def asyncConnection = Stub(AsyncConnection) {
             getDescription() >> connectionDescription
         }
-        validateFindOptions(NO_CSOT_FACTORY.create(), asyncConnection, readConcern, collation, allowDiskUse, asyncCallableWithConnection)
+        validateFindOptions(CSOT_NO_TIMEOUT, asyncConnection, readConcern, collation, allowDiskUse, asyncCallableWithConnection)
 
         then:
         thrown(IllegalArgumentException)
 
         when:
         def asyncConnectionSource = Stub(AsyncConnectionSource)
-        validateFindOptions(NO_CSOT_FACTORY.create(), asyncConnectionSource, asyncConnection, readConcern, collation, allowDiskUse,
+        validateFindOptions(CSOT_NO_TIMEOUT, asyncConnectionSource, asyncConnection, readConcern, collation, allowDiskUse,
                 asyncCallableWithConnectionAndSource)
 
         then:
@@ -167,7 +167,7 @@ class AsyncOperationHelperSpecification extends Specification {
         def asyncConnection = Stub(AsyncConnection) {
             getDescription() >> connectionDescription
         }
-        validateWriteRequests(NO_CSOT_FACTORY.create(),  asyncConnection, bypassDocumentValidation, writeRequests, writeConcern,
+        validateWriteRequests(CSOT_NO_TIMEOUT,  asyncConnection, bypassDocumentValidation, writeRequests, writeConcern,
                 asyncCallableWithConnection)
 
         then:
@@ -192,7 +192,7 @@ class AsyncOperationHelperSpecification extends Specification {
         def writeRequests = [new DeleteRequest(BsonDocument.parse('{a: "a"}}'))]
 
         when:
-        validateWriteRequests(NO_CSOT_FACTORY.create(), asyncThreeTwoConnection, false, writeRequests, UNACKNOWLEDGED,
+        validateWriteRequests(CSOT_NO_TIMEOUT, asyncThreeTwoConnection, false, writeRequests, UNACKNOWLEDGED,
                 asyncCallableWithConnection)
 
         then:
@@ -201,7 +201,7 @@ class AsyncOperationHelperSpecification extends Specification {
         when:
         def writeRequestsWithCollation = [new DeleteRequest(BsonDocument.parse('{a: "a"}}'))
                                             .collation(enCollation)]
-        validateWriteRequests(NO_CSOT_FACTORY.create(), asyncThreeTwoConnection, false, writeRequestsWithCollation,
+        validateWriteRequests(CSOT_NO_TIMEOUT, asyncThreeTwoConnection, false, writeRequestsWithCollation,
                 ACKNOWLEDGED, asyncCallableWithConnection)
 
         then:
@@ -211,7 +211,7 @@ class AsyncOperationHelperSpecification extends Specification {
         def asyncThreeFourConnection = Stub(AsyncConnection) {
             getDescription() >> threeFourConnectionDescription
         }
-        validateWriteRequests(NO_CSOT_FACTORY.create(), asyncThreeFourConnection, null, writeRequestsWithCollation, UNACKNOWLEDGED,
+        validateWriteRequests(CSOT_NO_TIMEOUT, asyncThreeFourConnection, null, writeRequestsWithCollation, UNACKNOWLEDGED,
                 asyncCallableWithConnection)
 
         then:
@@ -223,7 +223,7 @@ class AsyncOperationHelperSpecification extends Specification {
         def asyncConnection = Stub(AsyncConnection) {
             getDescription() >> connectionDescription
         }
-        validateIndexRequestCollations(NO_CSOT_FACTORY.create(), asyncConnection, indexRequests, asyncCallableWithConnection)
+        validateIndexRequestCollations(CSOT_NO_TIMEOUT, asyncConnection, indexRequests, asyncCallableWithConnection)
 
         then:
         notThrown(IllegalArgumentException)
@@ -239,7 +239,7 @@ class AsyncOperationHelperSpecification extends Specification {
         def asyncConnection = Stub(AsyncConnection) {
             getDescription() >> connectionDescription
         }
-        validateIndexRequestCollations(NO_CSOT_FACTORY.create(), asyncConnection, indexRequests, asyncCallableWithConnection)
+        validateIndexRequestCollations(CSOT_NO_TIMEOUT, asyncConnection, indexRequests, asyncCallableWithConnection)
 
         then:
         thrown(IllegalArgumentException)

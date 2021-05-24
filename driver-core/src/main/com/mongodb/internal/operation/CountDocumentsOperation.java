@@ -18,7 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
@@ -36,7 +36,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
-    private final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private boolean retryReads;
     private BsonDocument filter;
@@ -48,12 +48,12 @@ public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOp
     /**
      * Construct an instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      */
-    public CountDocumentsOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory,
+    public CountDocumentsOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
                                    final MongoNamespace namespace) {
-        this.clientSideOperationTimeoutFactory = notNull("clientSideOperationTimeoutFactory", clientSideOperationTimeoutFactory);
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.namespace = notNull("namespace", namespace);
     }
 
@@ -135,7 +135,7 @@ public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOp
     }
 
     private AggregateOperation<BsonDocument> getAggregateOperation() {
-        return new AggregateOperation<BsonDocument>(clientSideOperationTimeoutFactory, namespace, getPipeline(), DECODER)
+        return new AggregateOperation<BsonDocument>(clientSideOperationTimeout, namespace, getPipeline(), DECODER)
                 .retryReads(retryReads)
                 .collation(collation)
                 .hint(hint);

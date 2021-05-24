@@ -17,21 +17,16 @@
 package com.mongodb.client.internal
 
 import com.mongodb.client.ClientSession
-import com.mongodb.internal.ClientSideOperationTimeoutFactories
-import com.mongodb.internal.ClientSideOperationTimeoutFactory
+import com.mongodb.internal.ClientSideOperationTimeout
+import com.mongodb.internal.ClientSideOperationTimeouts
 
 class TestHelper {
 
-    public static final ClientSideOperationTimeoutFactory CSOT_FACTORY_TIMEOUT =
-            ClientSideOperationTimeoutFactories.create(60000)
-    public static final ClientSideOperationTimeoutFactory CSOT_FACTORY_MAX_TIME =
-            ClientSideOperationTimeoutFactories.create(null, 99, 0, 0)
-    public static final ClientSideOperationTimeoutFactory CSOT_FACTORY_MAX_AWAIT_TIME =
-            ClientSideOperationTimeoutFactories.create(null, 0, 999)
-    public static final ClientSideOperationTimeoutFactory CSOT_FACTORY_MAX_TIME_AND_MAX_AWAIT_TIME =
-            ClientSideOperationTimeoutFactories.create(null, 99, 999)
-    public static final ClientSideOperationTimeoutFactory CSOT_FACTORY_NO_TIMEOUT =
-            ClientSideOperationTimeoutFactories.NO_TIMEOUT
+    public static final ClientSideOperationTimeout CSOT_NO_TIMEOUT = ClientSideOperationTimeouts.NO_TIMEOUT
+    public static final ClientSideOperationTimeout CSOT_TIMEOUT = ClientSideOperationTimeouts.create(60000)
+    public static final ClientSideOperationTimeout CSOT_MAX_TIME = ClientSideOperationTimeouts.create(null, 99)
+    public static final ClientSideOperationTimeout CSOT_MAX_AWAIT_TIME = ClientSideOperationTimeouts.create(null, 0, 999)
+    public static final ClientSideOperationTimeout CSOT_MAX_TIME_AND_MAX_AWAIT_TIME = ClientSideOperationTimeouts.create(null, 99, 999)
 
     static <T> T execute(final Closure<T> method, final ClientSession session, ... restOfArgs) {
         if (session == null) {

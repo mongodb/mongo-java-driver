@@ -21,26 +21,24 @@ import org.junit.jupiter.api.TestFactory;
 import java.util.Collection;
 
 import static com.mongodb.ClusterFixture.sleep;
-import static com.mongodb.internal.ClientSideOperationTimeoutFactories.NO_TIMEOUT;
-import static com.mongodb.internal.ClientSideOperationTimeoutFactories.create;
-import static com.mongodb.internal.ClientSideOperationTimeoutFactories.shared;
-import static com.mongodb.internal.ClientSideOperationTimeoutFactories.withMaxCommitMS;
+import static com.mongodb.internal.ClientSideOperationTimeouts.NO_TIMEOUT;
+import static com.mongodb.internal.ClientSideOperationTimeouts.create;
+import static com.mongodb.internal.ClientSideOperationTimeouts.withMaxCommitMS;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
-final class ClientSideOperationTimeoutTest {
+final class ClientSideOperationTimeoutsTest {
 
 
     @TestFactory
-    Collection<DynamicTest> clientSideOperationTimeoutFactoriesTest() {
+    Collection<DynamicTest> clientSideOperationTimeoutsTest() {
         return asList(
                 dynamicTest("test defaults", () -> {
-                    ClientSideOperationTimeout clientSideOperationTimeout = NO_TIMEOUT.create();
+                    ClientSideOperationTimeout clientSideOperationTimeout = NO_TIMEOUT;
                     assertAll(
                             () -> assertFalse(clientSideOperationTimeout.hasTimeoutMS()),
                             () -> assertEquals(0, clientSideOperationTimeout.getMaxTimeMS()),
@@ -50,7 +48,7 @@ final class ClientSideOperationTimeoutTest {
                 }),
                 dynamicTest("Uses timeoutMS if set", () -> {
                     long altTimeout = 9;
-                    ClientSideOperationTimeout clientSideOperationTimeout = create(99999999L, altTimeout, altTimeout, altTimeout).create();
+                    ClientSideOperationTimeout clientSideOperationTimeout = create(99999999L, altTimeout, altTimeout, altTimeout);
                     assertAll(
                             () -> assertTrue(clientSideOperationTimeout.hasTimeoutMS()),
                             () -> assertTrue(clientSideOperationTimeout.getMaxTimeMS() > 0),
@@ -59,7 +57,7 @@ final class ClientSideOperationTimeoutTest {
                     );
                 }),
                 dynamicTest("MaxTimeMS set", () -> {
-                    ClientSideOperationTimeout clientSideOperationTimeout = create(null, 9).create();
+                    ClientSideOperationTimeout clientSideOperationTimeout = create(null, 9);
                     assertAll(
                             () -> assertEquals(9, clientSideOperationTimeout.getMaxTimeMS()),
                             () -> assertEquals(0, clientSideOperationTimeout.getMaxAwaitTimeMS()),
@@ -67,7 +65,7 @@ final class ClientSideOperationTimeoutTest {
                     );
                 }),
                 dynamicTest("MaxTimeMS and MaxAwaitTimeMS set", () -> {
-                    ClientSideOperationTimeout clientSideOperationTimeout = create(null, 9, 99).create();
+                    ClientSideOperationTimeout clientSideOperationTimeout = create(null, 9, 99);
                     assertAll(
                             () -> assertEquals(9, clientSideOperationTimeout.getMaxTimeMS()),
                             () -> assertEquals(99, clientSideOperationTimeout.getMaxAwaitTimeMS()),
@@ -75,7 +73,7 @@ final class ClientSideOperationTimeoutTest {
                     );
                 }),
                 dynamicTest("MaxCommitTimeMS set", () -> {
-                    ClientSideOperationTimeout clientSideOperationTimeout = withMaxCommitMS(null, 9L).create();
+                    ClientSideOperationTimeout clientSideOperationTimeout = withMaxCommitMS(null, 9L);
                     assertAll(
                             () -> assertEquals(0, clientSideOperationTimeout.getMaxTimeMS()),
                             () -> assertEquals(0, clientSideOperationTimeout.getMaxAwaitTimeMS()),
@@ -83,41 +81,29 @@ final class ClientSideOperationTimeoutTest {
                     );
                 }),
                 dynamicTest("All deprecated options set", () -> {
-                    ClientSideOperationTimeout clientSideOperationTimeout = create(null, 99, 9L, 999).create();
+                    ClientSideOperationTimeout clientSideOperationTimeout = create(null, 99, 9L, 999);
                     assertAll(
                             () -> assertEquals(9, clientSideOperationTimeout.getMaxAwaitTimeMS()),
                             () -> assertEquals(99, clientSideOperationTimeout.getMaxTimeMS()),
                             () -> assertEquals(999, clientSideOperationTimeout.getMaxCommitTimeMS())
                     );
                 }),
-                dynamicTest("shared ClientSideOperationTimeout", () -> {
-                    ClientSideOperationTimeoutFactory normalFactory = create(null, 99);
-                    ClientSideOperationTimeoutFactory sharedFactory = shared(normalFactory);
-                    assertAll(
-                            () -> assertNotEquals(normalFactory.create(), normalFactory.create()),
-                            () -> assertEquals(sharedFactory.create(), sharedFactory.create())
-                    );
-                }),
-                dynamicTest("Use timeout if available or the alternative", () -> {
-                    assertAll(
-                            () -> assertEquals(99L, NO_TIMEOUT.create().timeoutOrAlternative(99)),
-                            () -> assertEquals(0L, ClientSideOperationTimeoutFactories.create(0L).create().timeoutOrAlternative(99)),
-                            () -> assertTrue(ClientSideOperationTimeoutFactories.create(999L).create().timeoutOrAlternative(0) <= 999),
-                            () -> assertTrue(ClientSideOperationTimeoutFactories.create(999L).create().timeoutOrAlternative(999999) <= 999)
-                    );
-                }),
-                dynamicTest("Calculate min works as expected", () -> {
-                    assertAll(
-                            () -> assertEquals(99L, NO_TIMEOUT.create().calculateMin(99)),
-                            () -> assertEquals(99L, ClientSideOperationTimeoutFactories.create(0L).create().calculateMin(99)),
-                            () -> assertTrue(ClientSideOperationTimeoutFactories.create(999L).create().calculateMin(0) <= 999),
-                            () -> assertTrue(ClientSideOperationTimeoutFactories.create(999L).create().calculateMin(999999) <= 999)
-                    );
-                }),
+                dynamicTest("Use timeout if available or the alternative", () -> assertAll(
+                        () -> assertEquals(99L, NO_TIMEOUT.timeoutOrAlternative(99)),
+                        () -> assertEquals(0L, ClientSideOperationTimeouts.create(0L).timeoutOrAlternative(99)),
+                        () -> assertTrue(ClientSideOperationTimeouts.create(999L).timeoutOrAlternative(0) <= 999),
+                        () -> assertTrue(ClientSideOperationTimeouts.create(999L).timeoutOrAlternative(999999) <= 999)
+                )),
+                dynamicTest("Calculate min works as expected", () -> assertAll(
+                        () -> assertEquals(99L, NO_TIMEOUT.calculateMin(99)),
+                        () -> assertEquals(99L, ClientSideOperationTimeouts.create(0L).calculateMin(99)),
+                        () -> assertTrue(ClientSideOperationTimeouts.create(999L).calculateMin(0) <= 999),
+                        () -> assertTrue(ClientSideOperationTimeouts.create(999L).calculateMin(999999) <= 999)
+                )),
                 dynamicTest("Expired works as expected", () -> {
-                    ClientSideOperationTimeout smallTimeout = ClientSideOperationTimeoutFactories.create(1L).create();
-                    ClientSideOperationTimeout longTimeout = ClientSideOperationTimeoutFactories.create(999999999L).create();
-                    ClientSideOperationTimeout noTimeout = NO_TIMEOUT.create();
+                    ClientSideOperationTimeout smallTimeout = ClientSideOperationTimeouts.create(1L);
+                    ClientSideOperationTimeout longTimeout = ClientSideOperationTimeouts.create(999999999L);
+                    ClientSideOperationTimeout noTimeout = NO_TIMEOUT;
                     sleep(100);
                     assertAll(
                             () -> assertFalse(noTimeout.expired()),
@@ -128,6 +114,6 @@ final class ClientSideOperationTimeoutTest {
         );
     }
 
-    private ClientSideOperationTimeoutTest() {
+    private ClientSideOperationTimeoutsTest() {
     }
 }

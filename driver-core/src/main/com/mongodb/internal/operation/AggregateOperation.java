@@ -19,7 +19,7 @@ package com.mongodb.internal.operation;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -46,29 +46,29 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
     private final AggregateOperationImpl<T> wrapped;
     /**
      * Construct a new instance.
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      * @param pipeline the aggregation pipeline.
      * @param decoder the decoder for the result documents.
      */
-    public AggregateOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+    public AggregateOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
                               final List<BsonDocument> pipeline, final Decoder<T> decoder) {
-        this(clientSideOperationTimeoutFactory, namespace, pipeline, decoder, AggregationLevel.COLLECTION);
+        this(clientSideOperationTimeout, namespace, pipeline, decoder, AggregationLevel.COLLECTION);
     }
 
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      * @param pipeline the aggregation pipeline.
      * @param decoder the decoder for the result documents.
      * @param aggregationLevel the aggregation level
      * @since 3.10
      */
-    public AggregateOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+    public AggregateOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
                               final List<BsonDocument> pipeline, final Decoder<T> decoder, final AggregationLevel aggregationLevel) {
-        this.wrapped = new AggregateOperationImpl<T>(clientSideOperationTimeoutFactory, namespace, pipeline, decoder, aggregationLevel);
+        this.wrapped = new AggregateOperationImpl<T>(clientSideOperationTimeout, namespace, pipeline, decoder, aggregationLevel);
     }
 
     /**
@@ -260,9 +260,9 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
      * @return a read operation that when executed will explain this operation
      */
     public <R> ReadOperation<R> asExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
-        return new CommandReadOperation<R>(wrapped.getClientSideOperationTimeoutFactory(), getNamespace().getDatabaseName(),
-                asExplainCommand(wrapped.getCommand(wrapped.getClientSideOperationTimeoutFactory().create(), NoOpSessionContext.INSTANCE),
-                        verbosity), resultDecoder);
+        ClientSideOperationTimeout timeout = wrapped.getClientSideOperationTimeout();
+        return new CommandReadOperation<R>(timeout, getNamespace().getDatabaseName(),
+                asExplainCommand(wrapped.getCommand(timeout, NoOpSessionContext.INSTANCE), verbosity), resultDecoder);
     }
 
     /**
@@ -273,9 +273,9 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
      */
     public <R> AsyncReadOperation<R> asAsyncExplainableOperation(@Nullable final ExplainVerbosity verbosity,
                                                                  final Decoder<R> resultDecoder) {
-        return new CommandReadOperation<R>(wrapped.getClientSideOperationTimeoutFactory(), getNamespace().getDatabaseName(),
-                asExplainCommand(wrapped.getCommand(wrapped.getClientSideOperationTimeoutFactory().create(), NoOpSessionContext.INSTANCE),
-                        verbosity), resultDecoder);
+        ClientSideOperationTimeout timeout = wrapped.getClientSideOperationTimeout();
+        return new CommandReadOperation<R>(timeout, getNamespace().getDatabaseName(),
+                asExplainCommand(wrapped.getCommand(timeout, NoOpSessionContext.INSTANCE), verbosity), resultDecoder);
     }
 
 

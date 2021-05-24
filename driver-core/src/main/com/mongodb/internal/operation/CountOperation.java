@@ -19,7 +19,6 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.ClientSideOperationTimeout;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
@@ -42,7 +41,7 @@ import static com.mongodb.internal.operation.SyncCommandOperationHelper.executeC
 
 public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
-    private final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private boolean retryReads;
     private BsonDocument filter;
@@ -54,11 +53,11 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
     /**
      * Construct an instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      */
-    public CountOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace) {
-        this.clientSideOperationTimeoutFactory = notNull("clientSideOperationTimeoutFactory", clientSideOperationTimeoutFactory);
+    public CountOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace) {
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.namespace = notNull("namespace", namespace);
     }
 
@@ -118,13 +117,13 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
 
     @Override
     public Long execute(final ReadBinding binding) {
-        return executeCommand(clientSideOperationTimeoutFactory.create(), binding, namespace.getDatabaseName(),
+        return executeCommand(clientSideOperationTimeout, binding, namespace.getDatabaseName(),
                 getCommandCreator(binding.getSessionContext()), DECODER, transformer(), retryReads);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Long> callback) {
-        executeCommandAsync(clientSideOperationTimeoutFactory.create(), binding, namespace.getDatabaseName(),
+        executeCommandAsync(clientSideOperationTimeout, binding, namespace.getDatabaseName(),
                 getCommandCreator(binding.getSessionContext()), DECODER, asyncTransformer(), retryReads, callback);
     }
 

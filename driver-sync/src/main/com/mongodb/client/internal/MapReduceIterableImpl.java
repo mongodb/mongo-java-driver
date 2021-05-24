@@ -24,8 +24,9 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.MapReduceIterable;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.MapReduceAction;
-import com.mongodb.internal.ClientSideOperationTimeoutFactories;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
+
+import com.mongodb.internal.ClientSideOperationTimeouts;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.operation.BatchCursor;
@@ -86,7 +87,7 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         if (inline) {
             throw new IllegalStateException("The options must specify a non-inline result");
         }
-        getExecutor().execute(createMapReduceToCollectionOperation(createClientSideOperationTimeoutFactory()), getReadConcern(),
+        getExecutor().execute(createMapReduceToCollectionOperation(createClientSideOperationTimeout()), getReadConcern(),
                 getClientSession());
     }
 
@@ -200,14 +201,14 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
 
     @Override
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
-        ClientSideOperationTimeoutFactory csotFactory = createClientSideOperationTimeoutFactory();
+        ClientSideOperationTimeout clientSideOperationTimeout = createClientSideOperationTimeout();
         if (inline) {
-            ReadOperation<MapReduceBatchCursor<TResult>> operation = operations.mapReduce(csotFactory, mapFunction, reduceFunction,
-                    finalizeFunction, resultClass, filter, limit, jsMode, scope, sort, verbose, collation);
+            ReadOperation<MapReduceBatchCursor<TResult>> operation = operations.mapReduce(clientSideOperationTimeout, mapFunction,
+                    reduceFunction, finalizeFunction, resultClass, filter, limit, jsMode, scope, sort, verbose, collation);
             return new WrappedMapReduceReadOperation<>(operation);
         } else {
-            ClientSideOperationTimeoutFactory csotFactoryShared = ClientSideOperationTimeoutFactories.shared(csotFactory);
-            getExecutor().execute(createMapReduceToCollectionOperation(csotFactoryShared), getReadConcern(), getClientSession());
+            getExecutor().execute(createMapReduceToCollectionOperation(clientSideOperationTimeout), getReadConcern(),
+                    getClientSession());
 
             String dbName = databaseName != null ? databaseName : namespace.getDatabaseName();
 
@@ -216,18 +217,18 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
             if (batchSize != null) {
                 findOptions.batchSize(batchSize);
             }
-            return operations.find(csotFactoryShared, new MongoNamespace(dbName, collectionName), new BsonDocument(), resultClass,
+            return operations.find(clientSideOperationTimeout, new MongoNamespace(dbName, collectionName), new BsonDocument(), resultClass,
                     findOptions);
         }
     }
 
-    private ClientSideOperationTimeoutFactory createClientSideOperationTimeoutFactory() {
-        return ClientSideOperationTimeoutFactories.create(getTimeoutMS(), maxTimeMS);
+    private ClientSideOperationTimeout createClientSideOperationTimeout() {
+        return ClientSideOperationTimeouts.create(getTimeoutMS(), maxTimeMS);
     }
 
     private WriteOperation<MapReduceStatistics> createMapReduceToCollectionOperation(
-            final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory) {
-        return operations.mapReduceToCollection(clientSideOperationTimeoutFactory, databaseName, collectionName, mapFunction,
+            final ClientSideOperationTimeout clientSideOperationTimeout) {
+        return operations.mapReduceToCollection(clientSideOperationTimeout, databaseName, collectionName, mapFunction,
                 reduceFunction, finalizeFunction, filter, limit, jsMode, scope, sort, verbose, action, nonAtomic, sharded,
                 bypassDocumentValidation, collation);
     }

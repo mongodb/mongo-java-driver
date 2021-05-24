@@ -22,7 +22,6 @@ import com.mongodb.client.model.ValidationAction;
 import com.mongodb.client.model.ValidationLevel;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.ClientSideOperationTimeout;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -55,7 +54,7 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  * @mongodb.driver.manual reference/method/db.createCollection Create Collection
  */
 public class CreateCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
-    private final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final String databaseName;
     private final String collectionName;
     private final WriteConcern writeConcern;
@@ -73,28 +72,28 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param databaseName   the name of the database for the operation.
      * @param collectionName the name of the collection to be created.
      */
-    public CreateCollectionOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final String databaseName,
+    public CreateCollectionOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final String databaseName,
                                      final String collectionName) {
-        this(clientSideOperationTimeoutFactory, databaseName, collectionName, null);
+        this(clientSideOperationTimeout, databaseName, collectionName, null);
     }
 
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation  factory
+     * @param clientSideOperationTimeout the client side operation  factory
      * @param databaseName   the name of the database for the operation.
      * @param collectionName the name of the collection to be created.
      * @param writeConcern   the write concern
      *
      * @since 3.4
      */
-    public CreateCollectionOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final String databaseName,
+    public CreateCollectionOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final String databaseName,
                                      final String collectionName, final WriteConcern writeConcern) {
-        this.clientSideOperationTimeoutFactory = notNull("clientSideOperationTimeoutFactory", clientSideOperationTimeoutFactory);
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.databaseName = notNull("databaseName", databaseName);
         this.collectionName = notNull("collectionName", collectionName);
         this.writeConcern = writeConcern;
@@ -350,7 +349,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
 
     @Override
     public Void execute(final WriteBinding binding) {
-        return withConnection(clientSideOperationTimeoutFactory.create(), binding, new CallableWithConnection<Void>() {
+        return withConnection(clientSideOperationTimeout, binding, new CallableWithConnection<Void>() {
             @Override
             public Void call(final ClientSideOperationTimeout clientSideOperationTimeout, final Connection connection) {
                 SyncOperationHelper.validateCollation(connection, collation);
@@ -363,7 +362,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withAsyncConnection(clientSideOperationTimeoutFactory.create(), binding, new AsyncCallableWithConnection() {
+        withAsyncConnection(clientSideOperationTimeout, binding, new AsyncCallableWithConnection() {
             @Override
             public void call(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncConnection connection,
                              final Throwable t) {

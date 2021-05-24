@@ -24,8 +24,8 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.model.Collation;
-import com.mongodb.internal.ClientSideOperationTimeoutFactories;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
+import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.ClientSideOperationTimeouts;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.operation.BatchCursor;
@@ -94,13 +94,12 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
             throw new IllegalStateException("The last stage of the aggregation pipeline must be $out or $merge");
         }
 
-        getExecutor().execute(createAggregateToCollectionOperation(createClientSideOperationTimeoutFactory()), getReadConcern(),
+        getExecutor().execute(createAggregateToCollectionOperation(createClientSideOperationTimeout()), getReadConcern(),
                 getClientSession());
     }
 
-    private WriteOperation<Void> createAggregateToCollectionOperation(
-            final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory) {
-        return operations.aggregateToCollection(clientSideOperationTimeoutFactory, pipeline, allowDiskUse, bypassDocumentValidation,
+    private WriteOperation<Void> createAggregateToCollectionOperation(final ClientSideOperationTimeout clientSideOperationTimeout) {
+        return operations.aggregateToCollection(clientSideOperationTimeout, pipeline, allowDiskUse, bypassDocumentValidation,
                 collation, hint, comment, aggregationLevel);
     }
 
@@ -185,9 +184,8 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
         MongoNamespace outNamespace = getOutNamespace();
         if (outNamespace != null) {
-            ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory =
-                    ClientSideOperationTimeoutFactories.shared(createClientSideOperationTimeoutFactory());
-            getExecutor().execute(createAggregateToCollectionOperation(clientSideOperationTimeoutFactory), getReadConcern(),
+            ClientSideOperationTimeout clientSideOperationTimeout = createClientSideOperationTimeout();
+            getExecutor().execute(createAggregateToCollectionOperation(clientSideOperationTimeout), getReadConcern(),
                     getClientSession());
 
             FindOptions findOptions = new FindOptions().collation(collation);
@@ -195,14 +193,14 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
             if (batchSize != null) {
                 findOptions.batchSize(batchSize);
             }
-            return operations.find(clientSideOperationTimeoutFactory, outNamespace, new BsonDocument(), resultClass, findOptions);
+            return operations.find(clientSideOperationTimeout, outNamespace, new BsonDocument(), resultClass, findOptions);
         } else {
             return asAggregateOperation();
         }
     }
 
     private ExplainableReadOperation<BatchCursor<TResult>> asAggregateOperation() {
-        return operations.aggregate(createClientSideOperationTimeoutFactory(), pipeline, resultClass, getBatchSize(), collation,
+        return operations.aggregate(createClientSideOperationTimeout(), pipeline, resultClass, getBatchSize(), collation,
                 hint, comment, allowDiskUse, aggregationLevel);
     }
 
@@ -250,7 +248,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
 
-    private ClientSideOperationTimeoutFactory createClientSideOperationTimeoutFactory() {
-        return ClientSideOperationTimeoutFactories.create(getTimeoutMS(), maxTimeMS, maxAwaitTimeMS);
+    private ClientSideOperationTimeout createClientSideOperationTimeout() {
+        return ClientSideOperationTimeouts.create(getTimeoutMS(), maxTimeMS, maxAwaitTimeMS);
     }
 }

@@ -34,9 +34,9 @@ import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.DEFAULT_CSOT_FACTORY
-import static com.mongodb.ClusterFixture.MAX_TIME_MS_CSOT_FACTORY
-import static com.mongodb.ClusterFixture.NO_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.CSOT_TIMEOUT
+import static com.mongodb.ClusterFixture.CSOT_MAX_TIME
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.isSharded
@@ -47,7 +47,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
     def 'should return a list of database names'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1))
-        def operation = new ListDatabasesOperation(NO_CSOT_FACTORY, codec)
+        def operation = new ListDatabasesOperation(CSOT_NO_TIMEOUT, codec)
 
         when:
         def names = executeAndCollectBatchCursorResults(operation, async)*.get('name')
@@ -92,7 +92,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
         disableMaxTimeFailPoint()
 
         where:
-        [async, csotFactory] << [[true, false], [MAX_TIME_MS_CSOT_FACTORY, DEFAULT_CSOT_FACTORY]].combinations()
+        [async, csotFactory] << [[true, false], [CSOT_MAX_TIME, CSOT_TIMEOUT]].combinations()
     }
 
     def 'should use the ReadBindings readPreference to set slaveOK'() {
@@ -107,7 +107,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
             getReadPreference() >> readPreference
             getServerApi() >> null
         }
-        def operation = new ListDatabasesOperation(DEFAULT_CSOT_FACTORY, helper.decoder)
+        def operation = new ListDatabasesOperation(CSOT_TIMEOUT, helper.decoder)
 
         when:
         operation.execute(readBinding)
@@ -132,7 +132,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
             getServerApi() >> null
             getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
         }
-        def operation = new ListDatabasesOperation(DEFAULT_CSOT_FACTORY, helper.decoder)
+        def operation = new ListDatabasesOperation(CSOT_TIMEOUT, helper.decoder)
 
         when:
         operation.executeAsync(readBinding, Stub(SingleResultCallback))

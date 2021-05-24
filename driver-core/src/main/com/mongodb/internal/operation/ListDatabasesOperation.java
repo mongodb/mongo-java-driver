@@ -19,7 +19,6 @@ package com.mongodb.internal.operation;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.ClientSideOperationTimeout;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncConnectionSource;
@@ -52,7 +51,7 @@ import static com.mongodb.internal.operation.SyncCommandOperationHelper.executeC
  * @since 3.0
  */
 public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
-    private final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final Decoder<T> decoder;
     private boolean retryReads;
 
@@ -63,11 +62,11 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param decoder the decoder to use for the results
      */
-    public ListDatabasesOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final Decoder<T> decoder) {
-        this.clientSideOperationTimeoutFactory = notNull("clientSideOperationTimeoutFactory", clientSideOperationTimeoutFactory);
+    public ListDatabasesOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final Decoder<T> decoder) {
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.decoder = notNull("decoder", decoder);
     }
 
@@ -174,13 +173,13 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
      */
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return executeCommand(clientSideOperationTimeoutFactory.create(), binding, "admin", getCommandCreator(),
+        return executeCommand(clientSideOperationTimeout, binding, "admin", getCommandCreator(),
                 CommandResultDocumentCodec.create(decoder, "databases"), transformer(), retryReads);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        executeCommandAsync(clientSideOperationTimeoutFactory.create(), binding, "admin", getCommandCreator(),
+        executeCommandAsync(clientSideOperationTimeout, binding, "admin", getCommandCreator(),
                 CommandResultDocumentCodec.create(decoder, "databases"), asyncTransformer(),
                 retryReads, errorHandlingCallback(callback, LOGGER));
     }

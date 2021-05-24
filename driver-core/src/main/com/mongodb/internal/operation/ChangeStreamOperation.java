@@ -20,7 +20,6 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.internal.ClientSideOperationTimeout;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.AsyncAggregateResponseBatchCursor;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -70,21 +69,21 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace                  the database and collection namespace for the operation.
      * @param fullDocument               the fullDocument value
      * @param pipeline                   the aggregation pipeline.
      * @param decoder                    the decoder for the result documents.
      */
-    public ChangeStreamOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+    public ChangeStreamOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
                                  final FullDocument fullDocument, final List<BsonDocument> pipeline, final Decoder<T> decoder) {
-        this(clientSideOperationTimeoutFactory, namespace, fullDocument, pipeline, decoder, ChangeStreamLevel.COLLECTION);
+        this(clientSideOperationTimeout, namespace, fullDocument, pipeline, decoder, ChangeStreamLevel.COLLECTION);
     }
 
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace                  the database and collection namespace for the operation.
      * @param fullDocument               the fullDocument value
      * @param pipeline                   the aggregation pipeline.
@@ -92,10 +91,10 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
      * @param changeStreamLevel          the level at which the change stream is observing
      * @since 3.8
      */
-    public ChangeStreamOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+    public ChangeStreamOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
                                  final FullDocument fullDocument, final List<BsonDocument> pipeline, final Decoder<T> decoder,
                                  final ChangeStreamLevel changeStreamLevel) {
-        this.wrapped = new AggregateOperationImpl<>(clientSideOperationTimeoutFactory, namespace, pipeline, RAW_BSON_DOCUMENT_CODEC,
+        this.wrapped = new AggregateOperationImpl<>(clientSideOperationTimeout, namespace, pipeline, RAW_BSON_DOCUMENT_CODEC,
                 getAggregateTarget(), getPipelineCreator());
         this.fullDocument = notNull("fullDocument", fullDocument);
         this.decoder = notNull("decoder", decoder);
@@ -291,7 +290,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return withReadConnectionSource(wrapped.getClientSideOperationTimeoutFactory().create(), binding,
+        return withReadConnectionSource(wrapped.getClientSideOperationTimeout(), binding,
                 new CallableWithSource<BatchCursor<T>>() {
                     @Override
                     public BatchCursor<T> call(final ClientSideOperationTimeout clientSideOperationTimeout, final ConnectionSource source) {

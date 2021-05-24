@@ -43,7 +43,7 @@ public class ListCollectionsPublisherImplTest extends TestHelper {
         ListCollectionsPublisher<String> publisher = new ListCollectionsPublisherImpl<>(null, createMongoOperationPublisher(executor)
                 .withDocumentClass(String.class), true);
 
-        ListCollectionsOperation<String> expectedOperation = new ListCollectionsOperation<>(CSOT_FACTORY_NO_TIMEOUT, DATABASE_NAME,
+        ListCollectionsOperation<String> expectedOperation = new ListCollectionsOperation<>(CSOT_NO_TIMEOUT, DATABASE_NAME,
                 getDefaultCodecRegistry().get(String.class))
                 .batchSize(Integer.MAX_VALUE)
                 .nameOnly(true).retryReads(true);
@@ -60,7 +60,7 @@ public class ListCollectionsPublisherImplTest extends TestHelper {
                 .maxTime(99, MILLISECONDS)
                 .batchSize(100);
 
-        expectedOperation = new ListCollectionsOperation<>(CSOT_FACTORY_MAX_TIME, DATABASE_NAME,
+        expectedOperation = new ListCollectionsOperation<>(CSOT_MAX_TIME, DATABASE_NAME,
                 getDefaultCodecRegistry().get(String.class))
                 .nameOnly(true).retryReads(true)
                 .filter(new BsonDocument("filter", new BsonInt32(1)))

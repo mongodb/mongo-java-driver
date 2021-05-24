@@ -18,7 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.bulk.DeleteRequest;
 import com.mongodb.internal.bulk.WriteRequest;
 
@@ -38,22 +38,22 @@ public class DeleteOperation extends BaseWriteOperation {
     /**
      * Construct an instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace      the database and collection namespace for the operation.
      * @param ordered        whether the writes are ordered.
      * @param writeConcern   the write concern for the operation.
      * @param deleteRequests the remove requests.
      */
-    public DeleteOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+    public DeleteOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
                            final boolean ordered, final WriteConcern writeConcern,
                            final List<DeleteRequest> deleteRequests) {
-        this(clientSideOperationTimeoutFactory, namespace, ordered, writeConcern, false, deleteRequests);
+        this(clientSideOperationTimeout, namespace, ordered, writeConcern, false, deleteRequests);
     }
 
     /**
      * Construct an instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace      the database and collection namespace for the operation.
      * @param ordered        whether the writes are ordered.
      * @param writeConcern   the write concern for the operation.
@@ -61,10 +61,10 @@ public class DeleteOperation extends BaseWriteOperation {
      * @param deleteRequests the remove requests.
      * @since 3.6
      */
-    public DeleteOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+    public DeleteOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
                            final boolean ordered, final WriteConcern writeConcern,
                            final boolean retryWrites, final List<DeleteRequest> deleteRequests) {
-        super(clientSideOperationTimeoutFactory, namespace, ordered, writeConcern, retryWrites);
+        super(clientSideOperationTimeout, namespace, ordered, writeConcern, retryWrites);
         this.deleteRequests = notNull("removes", deleteRequests);
         isTrueArgument("deleteRequests not empty", !deleteRequests.isEmpty());
     }

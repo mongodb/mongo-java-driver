@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
@@ -35,7 +35,7 @@ import static com.mongodb.internal.operation.SyncCommandOperationHelper.executeC
  * @since 3.0
  */
 public class CommandReadOperation<T> implements AsyncReadOperation<T>, ReadOperation<T> {
-    private final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final String databaseName;
     private final CommandCreator commandCreator;
     private final Decoder<T> decoder;
@@ -46,33 +46,32 @@ public class CommandReadOperation<T> implements AsyncReadOperation<T>, ReadOpera
      *
      * <p>Will overwrite any existing maxTimeMS value if the ClientSideOperationTimeout contains a timeoutMS value.</p>
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout
      * @param databaseName the name of the database for the operation.
      * @param command the command to execute.
      * @param decoder the decoder for the result documents.
      */
-    public CommandReadOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final String databaseName,
+    public CommandReadOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final String databaseName,
                                 final BsonDocument command, final Decoder<T> decoder) {
-        this(clientSideOperationTimeoutFactory, databaseName,
-                (clientSideOperationTimeout, serverDescription, connectionDescription) -> {
-                    notNull("command", command);
-                    if (clientSideOperationTimeout.hasTimeoutMS()) {
-                        putIfNotZero(command, "maxTimeMS", clientSideOperationTimeout.getMaxTimeMS());
-                    }
-                    return command;
-            }, decoder);
+        this(clientSideOperationTimeout, databaseName, (csoTimeout, serverDescription, connectionDescription) -> {
+            notNull("command", command);
+            if (csoTimeout.hasTimeoutMS()) {
+                putIfNotZero(command, "maxTimeMS", csoTimeout.getMaxTimeMS());
+            }
+            return command;
+        }, decoder);
     }
 
     /**
      * Construct a new instance.
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout
      * @param databaseName the name of the database for the operation.
      * @param commandCreator the command creator.
      * @param decoder the decoder for the result documents.
      */
-    public CommandReadOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final String databaseName,
+    public CommandReadOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final String databaseName,
                                 final CommandCreator commandCreator, final Decoder<T> decoder) {
-        this.clientSideOperationTimeoutFactory = notNull("clientSideOperationTimeoutFactory", clientSideOperationTimeoutFactory);
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.databaseName = notNull("databaseName", databaseName);
         this.commandCreator = notNull("command", commandCreator);
         this.decoder = notNull("decoder", decoder);
@@ -80,12 +79,12 @@ public class CommandReadOperation<T> implements AsyncReadOperation<T>, ReadOpera
 
     @Override
     public T execute(final ReadBinding binding) {
-        return executeCommand(clientSideOperationTimeoutFactory.create(), binding, databaseName, commandCreator, decoder, false);
+        return executeCommand(clientSideOperationTimeout, binding, databaseName, commandCreator, decoder, false);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<T> callback) {
-        executeCommandAsync(clientSideOperationTimeoutFactory.create(), binding, databaseName, commandCreator, decoder, false, callback);
+        executeCommandAsync(clientSideOperationTimeout, binding, databaseName, commandCreator, decoder, false, callback);
     }
 
 }

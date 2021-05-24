@@ -30,9 +30,9 @@ import java.util.concurrent.TimeUnit
 
 import static Fixture.getMongoClient
 import static com.mongodb.CustomMatchers.isTheSameAs
-import static com.mongodb.Fixture.CSOT_FACTORY_ALL
-import static com.mongodb.Fixture.CSOT_FACTORY_TIMEOUT
-import static com.mongodb.Fixture.CSOT_FACTORY_TIMEOUT_AND_MAX_TIME
+import static com.mongodb.Fixture.CSOT_ALL
+import static com.mongodb.Fixture.CSOT_TIMEOUT
+import static com.mongodb.Fixture.CSOT_TIMEOUT_AND_MAX_TIME
 import static com.mongodb.Fixture.TIMEOUT_MS
 import static spock.util.matcher.HamcrestSupport.expect
 
@@ -126,7 +126,7 @@ class DBCursorSpecification extends Specification {
         cursor.toArray()
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation(CSOT_FACTORY_TIMEOUT, collection.getNamespace(),
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation(CSOT_TIMEOUT, collection.getNamespace(),
                 collection.getObjectCodec())
                 .filter(new BsonDocument())
                 .projection(new BsonDocument())
@@ -145,7 +145,7 @@ class DBCursorSpecification extends Specification {
         cursor.one()
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation(CSOT_FACTORY_TIMEOUT, collection.getNamespace(),
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation(CSOT_TIMEOUT, collection.getNamespace(),
                 collection.getObjectCodec())
                 .limit(-1)
                 .filter(new BsonDocument())
@@ -184,7 +184,7 @@ class DBCursorSpecification extends Specification {
         cursor.toArray()
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation(CSOT_FACTORY_TIMEOUT_AND_MAX_TIME,
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation(CSOT_TIMEOUT_AND_MAX_TIME,
                 collection.getNamespace(), collection.getObjectCodec())
                 .batchSize(1)
                 .collation(collation)
@@ -252,7 +252,7 @@ class DBCursorSpecification extends Specification {
         cursor.toArray()
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation(CSOT_FACTORY_ALL, collection.getNamespace(),
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation(CSOT_ALL, collection.getNamespace(),
                 collection.getObjectCodec())
                 .batchSize(1)
                 .collation(collation)
@@ -288,7 +288,7 @@ class DBCursorSpecification extends Specification {
 
         then:
         result == 42
-        expect executor.getReadOperation(), isTheSameAs(new CountOperation(CSOT_FACTORY_TIMEOUT, collection.getNamespace())
+        expect executor.getReadOperation(), isTheSameAs(new CountOperation(CSOT_TIMEOUT, collection.getNamespace())
                                                                 .filter(new BsonDocument()).retryReads(true))
         executor.getReadConcern() == ReadConcern.MAJORITY
     }
@@ -304,7 +304,7 @@ class DBCursorSpecification extends Specification {
 
         then:
         result == 42
-        expect executor.getReadOperation(), isTheSameAs(new CountOperation(CSOT_FACTORY_TIMEOUT, collection.getNamespace())
+        expect executor.getReadOperation(), isTheSameAs(new CountOperation(CSOT_TIMEOUT, collection.getNamespace())
                                                                 .filter(new BsonDocument()).retryReads(true))
         executor.getReadConcern() == ReadConcern.MAJORITY
     }

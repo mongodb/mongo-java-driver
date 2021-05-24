@@ -43,10 +43,10 @@ import java.util.function.Consumer
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
-import static com.mongodb.client.internal.TestHelper.CSOT_FACTORY_TIMEOUT
-import static com.mongodb.client.internal.TestHelper.CSOT_FACTORY_MAX_TIME_AND_MAX_AWAIT_TIME
-import static com.mongodb.client.internal.TestHelper.CSOT_FACTORY_NO_TIMEOUT
-import static com.mongodb.client.internal.TestHelper.CSOT_FACTORY_MAX_TIME
+import static com.mongodb.client.internal.TestHelper.CSOT_TIMEOUT
+import static com.mongodb.client.internal.TestHelper.CSOT_MAX_TIME_AND_MAX_AWAIT_TIME
+import static com.mongodb.client.internal.TestHelper.CSOT_NO_TIMEOUT
+import static com.mongodb.client.internal.TestHelper.CSOT_MAX_TIME
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
@@ -75,7 +75,7 @@ class AggregateIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new AggregateOperation<Document>(CSOT_FACTORY_NO_TIMEOUT, namespace,
+        expect operation, isTheSameAs(new AggregateOperation<Document>(CSOT_NO_TIMEOUT, namespace,
                 [new BsonDocument('$match', new BsonInt32(1))], new DocumentCodec())
                 .retryReads(true))
         readPreference == secondary()
@@ -92,7 +92,7 @@ class AggregateIterableSpecification extends Specification {
         operation = executor.getReadOperation() as AggregateOperation<Document>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new AggregateOperation<Document>(CSOT_FACTORY_MAX_TIME_AND_MAX_AWAIT_TIME, namespace,
+        expect operation, isTheSameAs(new AggregateOperation<Document>(CSOT_MAX_TIME_AND_MAX_AWAIT_TIME, namespace,
                 [new BsonDocument('$match', new BsonInt32(1))], new DocumentCodec())
                 .retryReads(true)
                 .collation(collation)
@@ -120,7 +120,7 @@ class AggregateIterableSpecification extends Specification {
         def operation = executor.getWriteOperation() as AggregateToCollectionOperation
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new AggregateToCollectionOperation(CSOT_FACTORY_NO_TIMEOUT, namespace,
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(CSOT_NO_TIMEOUT, namespace,
                 [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))],
                 readConcern, writeConcern, AggregationLevel.COLLECTION)
                 .allowDiskUse(true)
@@ -133,7 +133,7 @@ class AggregateIterableSpecification extends Specification {
         operation = executor.getReadOperation() as FindOperation<Document>
 
         then: 'should use the correct settings'
-        expect operation, isTheSameAs(new FindOperation(CSOT_FACTORY_NO_TIMEOUT, collectionNamespace, new DocumentCodec())
+        expect operation, isTheSameAs(new FindOperation(CSOT_NO_TIMEOUT, collectionNamespace, new DocumentCodec())
                 .collation(collation)
                 .batchSize(99)
                 .filter(new BsonDocument())
@@ -153,7 +153,7 @@ class AggregateIterableSpecification extends Specification {
         operation = executor.getWriteOperation() as AggregateToCollectionOperation
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new AggregateToCollectionOperation(CSOT_FACTORY_MAX_TIME, namespace,
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(CSOT_MAX_TIME, namespace,
                 [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))],
                 readConcern, writeConcern, AggregationLevel.DATABASE)
                 .allowDiskUse(true)
@@ -166,7 +166,7 @@ class AggregateIterableSpecification extends Specification {
         operation = executor.getReadOperation() as FindOperation<Document>
 
         then: 'should use the correct settings'
-        expect operation, isTheSameAs(new FindOperation(CSOT_FACTORY_MAX_TIME, collectionNamespace, new DocumentCodec())
+        expect operation, isTheSameAs(new FindOperation(CSOT_MAX_TIME, collectionNamespace, new DocumentCodec())
                 .collation(collation)
                 .batchSize(99)
                 .filter(new BsonDocument())
@@ -185,7 +185,7 @@ class AggregateIterableSpecification extends Specification {
         operation = executor.getWriteOperation() as AggregateToCollectionOperation
 
         then:
-        expect operation, isTheSameAs(new AggregateToCollectionOperation(CSOT_FACTORY_TIMEOUT, namespace,
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(CSOT_TIMEOUT, namespace,
                 [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))],
                 readConcern, writeConcern)
                 .allowDiskUse(true)
@@ -217,7 +217,7 @@ class AggregateIterableSpecification extends Specification {
         def operation = executor.getWriteOperation() as AggregateToCollectionOperation
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new AggregateToCollectionOperation(CSOT_FACTORY_NO_TIMEOUT, namespace,
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(CSOT_NO_TIMEOUT, namespace,
                 [new BsonDocument('$match', new BsonInt32(1)),
                  new BsonDocument('$merge', new BsonDocument('into', new BsonString(collectionName)))],
                 readConcern, writeConcern, AggregationLevel.COLLECTION)
@@ -231,7 +231,7 @@ class AggregateIterableSpecification extends Specification {
         operation = executor.getReadOperation() as FindOperation<Document>
 
         then: 'should use the correct settings'
-        expect operation, isTheSameAs(new FindOperation(CSOT_FACTORY_NO_TIMEOUT, mergeNamespace1, new DocumentCodec())
+        expect operation, isTheSameAs(new FindOperation(CSOT_NO_TIMEOUT, mergeNamespace1, new DocumentCodec())
                 .collation(collation)
                 .batchSize(99)
                 .filter(new BsonDocument())
@@ -251,7 +251,7 @@ class AggregateIterableSpecification extends Specification {
         operation = executor.getWriteOperation() as AggregateToCollectionOperation
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new AggregateToCollectionOperation(CSOT_FACTORY_MAX_TIME, namespace,
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(CSOT_MAX_TIME, namespace,
                 [new BsonDocument('$match', new BsonInt32(1)),
                  new BsonDocument('$merge', new BsonDocument('into',
                          new BsonDocument('db', new BsonString('db2')).append('coll', new BsonString(collectionName))))],
@@ -266,7 +266,7 @@ class AggregateIterableSpecification extends Specification {
         operation = executor.getReadOperation() as FindOperation<Document>
 
         then: 'should use the correct settings'
-        expect operation, isTheSameAs(new FindOperation(CSOT_FACTORY_MAX_TIME, mergeNamespace2, new DocumentCodec())
+        expect operation, isTheSameAs(new FindOperation(CSOT_MAX_TIME, mergeNamespace2, new DocumentCodec())
                 .collation(collation)
                 .batchSize(99)
                 .filter(new BsonDocument())
@@ -286,7 +286,7 @@ class AggregateIterableSpecification extends Specification {
         operation = executor.getWriteOperation() as AggregateToCollectionOperation
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new AggregateToCollectionOperation(CSOT_FACTORY_TIMEOUT, namespace,
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(CSOT_TIMEOUT, namespace,
                 [new BsonDocument('$match', new BsonInt32(1)),
                  new BsonDocument('$merge', new BsonDocument('into', new BsonString(collectionName)))],
                 readConcern, writeConcern,
@@ -301,7 +301,7 @@ class AggregateIterableSpecification extends Specification {
         operation = executor.getReadOperation() as FindOperation<Document>
 
         then: 'should use the correct settings'
-        expect operation, isTheSameAs(new FindOperation(CSOT_FACTORY_TIMEOUT, collectionNamespace, new DocumentCodec())
+        expect operation, isTheSameAs(new FindOperation(CSOT_TIMEOUT, collectionNamespace, new DocumentCodec())
                 .collation(collation)
                 .batchSize(99)
                 .filter(new BsonDocument())
@@ -320,7 +320,7 @@ class AggregateIterableSpecification extends Specification {
         operation = executor.getWriteOperation() as AggregateToCollectionOperation
 
         then:
-        expect operation, isTheSameAs(new AggregateToCollectionOperation(CSOT_FACTORY_NO_TIMEOUT, namespace,
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(CSOT_NO_TIMEOUT, namespace,
                 [new BsonDocument('$match', new BsonInt32(1)),
                  new BsonDocument('$merge', new BsonDocument('into', new BsonString(collectionName)))],
                 readConcern, writeConcern)
@@ -363,7 +363,7 @@ class AggregateIterableSpecification extends Specification {
         def operation = executor.getWriteOperation() as AggregateToCollectionOperation
 
         then:
-        expect operation, isTheSameAs(new AggregateToCollectionOperation(CSOT_FACTORY_TIMEOUT, namespace,
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(CSOT_TIMEOUT, namespace,
                 [new BsonDocument('$match', new BsonInt32(1)), BsonDocument.parse('{$out: {s3: true}}')],
                 readConcern, writeConcern, AggregationLevel.COLLECTION)
         )
@@ -382,7 +382,7 @@ class AggregateIterableSpecification extends Specification {
         operation = executor.getWriteOperation() as AggregateToCollectionOperation
 
         then:
-        expect operation, isTheSameAs(new AggregateToCollectionOperation(CSOT_FACTORY_TIMEOUT, namespace,
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(CSOT_TIMEOUT, namespace,
                 [new BsonDocument('$match', new BsonInt32(1)), BsonDocument.parse('{$out: {s3: true}}')],
                 readConcern, writeConcern, AggregationLevel.DATABASE)
         )
@@ -401,7 +401,7 @@ class AggregateIterableSpecification extends Specification {
         operation = executor.getWriteOperation() as AggregateToCollectionOperation
 
         then:
-        expect operation, isTheSameAs(new AggregateToCollectionOperation(CSOT_FACTORY_TIMEOUT, namespace,
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(CSOT_TIMEOUT, namespace,
                 [new BsonDocument('$match', new BsonInt32(1)), BsonDocument.parse('{$out: {s3: true}}')],
                 readConcern, writeConcern))
 
@@ -419,7 +419,7 @@ class AggregateIterableSpecification extends Specification {
         operation = executor.getWriteOperation() as AggregateToCollectionOperation
 
         then:
-        expect operation, isTheSameAs(new AggregateToCollectionOperation(CSOT_FACTORY_TIMEOUT, namespace,
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(CSOT_TIMEOUT, namespace,
                 [new BsonDocument('$match', new BsonInt32(1)),
                  BsonDocument.parse('{$out: {db: "testDB", coll: "testCollection"}}')], readConcern, writeConcern
         ))

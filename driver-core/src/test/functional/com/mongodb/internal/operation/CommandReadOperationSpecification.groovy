@@ -27,9 +27,9 @@ import org.bson.codecs.BsonDocumentCodec
 import spock.lang.IgnoreIf
 import util.spock.annotations.Slow
 
-import static com.mongodb.ClusterFixture.DEFAULT_CSOT_FACTORY
-import static com.mongodb.ClusterFixture.MAX_TIME_MS_CSOT_FACTORY
-import static com.mongodb.ClusterFixture.NO_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.CSOT_TIMEOUT
+import static com.mongodb.ClusterFixture.CSOT_MAX_TIME
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.executeAsync
@@ -40,7 +40,7 @@ class CommandReadOperationSpecification extends OperationFunctionalSpecification
 
     def 'should execute read command'() {
         given:
-        def commandOperation = new CommandReadOperation<BsonDocument>(DEFAULT_CSOT_FACTORY, getNamespace().databaseName,
+        def commandOperation = new CommandReadOperation<BsonDocument>(CSOT_TIMEOUT, getNamespace().databaseName,
                                                                       new BsonDocument('count', new BsonString(getCollectionName())),
                                                                       new BsonDocumentCodec())
         when:
@@ -53,7 +53,7 @@ class CommandReadOperationSpecification extends OperationFunctionalSpecification
 
     def 'should execute read command asynchronously'() {
         given:
-        def commandOperation = new CommandReadOperation<BsonDocument>(DEFAULT_CSOT_FACTORY, getNamespace().databaseName,
+        def commandOperation = new CommandReadOperation<BsonDocument>(CSOT_TIMEOUT, getNamespace().databaseName,
                                                                       new BsonDocument('count', new BsonString(getCollectionName())),
                                                                       new BsonDocumentCodec())
         when:
@@ -66,7 +66,7 @@ class CommandReadOperationSpecification extends OperationFunctionalSpecification
     @Slow
     def 'should execute command larger than 16MB'() {
         when:
-        def result = new CommandReadOperation<>(DEFAULT_CSOT_FACTORY, getNamespace().databaseName,
+        def result = new CommandReadOperation<>(CSOT_TIMEOUT, getNamespace().databaseName,
                                                              new BsonDocument('findAndModify', new BsonString(getNamespace().fullName))
                                                                      .append('query', new BsonDocument('_id', new BsonInt32(42)))
                                                                      .append('update',
@@ -98,13 +98,13 @@ class CommandReadOperationSpecification extends OperationFunctionalSpecification
         disableMaxTimeFailPoint()
 
         where:
-        [async, csotFactory] << [[true, false], [MAX_TIME_MS_CSOT_FACTORY, NO_CSOT_FACTORY]].combinations()
+        [async, csotFactory] << [[true, false], [CSOT_MAX_TIME, CSOT_NO_TIMEOUT]].combinations()
     }
 
     @IgnoreIf({ isSharded() })
     def 'should throw execution timeout exception from execute if timeoutMS is set'() {
         given:
-        def operation = new CommandReadOperation<BsonDocument>(DEFAULT_CSOT_FACTORY, getNamespace().databaseName,
+        def operation = new CommandReadOperation<BsonDocument>(CSOT_TIMEOUT, getNamespace().databaseName,
                 new BsonDocument('count', new BsonString(getCollectionName())),
                 new BsonDocumentCodec())
         enableMaxTimeFailPoint()
@@ -125,7 +125,7 @@ class CommandReadOperationSpecification extends OperationFunctionalSpecification
     @IgnoreIf({ isSharded() })
     def 'should throw execution timeout exception from execute if maxTimeMS is explicitly set'() {
         given:
-        def operation = new CommandReadOperation<BsonDocument>(NO_CSOT_FACTORY, getNamespace().databaseName,
+        def operation = new CommandReadOperation<BsonDocument>(CSOT_NO_TIMEOUT, getNamespace().databaseName,
                 new BsonDocument('count', new BsonString(getCollectionName()))
                 .append('maxTimeMS', new BsonInt64(100)),
                 new BsonDocumentCodec())

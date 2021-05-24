@@ -22,7 +22,6 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.ClientSideOperationTimeout;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
@@ -56,42 +55,42 @@ public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      * @param decoder   the decoder for the result documents.
      */
-    public FindAndDeleteOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+    public FindAndDeleteOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
                                   final Decoder<T> decoder) {
-        this(clientSideOperationTimeoutFactory, namespace, WriteConcern.ACKNOWLEDGED, false, decoder);
+        this(clientSideOperationTimeout, namespace, WriteConcern.ACKNOWLEDGED, false, decoder);
     }
 
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace    the database and collection namespace for the operation.
      * @param writeConcern the writeConcern for the operation
      * @param decoder      the decoder for the result documents.
      * @since 3.2
      */
-    public FindAndDeleteOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+    public FindAndDeleteOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
                                   final WriteConcern writeConcern, final Decoder<T> decoder) {
-        this(clientSideOperationTimeoutFactory, namespace, writeConcern, false, decoder);
+        this(clientSideOperationTimeout, namespace, writeConcern, false, decoder);
     }
 
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace    the database and collection namespace for the operation.
      * @param writeConcern the writeConcern for the operation
      * @param retryWrites  if writes should be retried if they fail due to a network error.
      * @param decoder      the decoder for the result documents.
      * @since 3.6
      */
-    public FindAndDeleteOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+    public FindAndDeleteOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
                                   final WriteConcern writeConcern, final boolean retryWrites, final Decoder<T> decoder) {
-        super(clientSideOperationTimeoutFactory, namespace, writeConcern, retryWrites, decoder);
+        super(clientSideOperationTimeout, namespace, writeConcern, retryWrites, decoder);
     }
 
     /**

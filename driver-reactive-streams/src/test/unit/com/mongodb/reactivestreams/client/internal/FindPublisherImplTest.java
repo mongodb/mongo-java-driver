@@ -50,7 +50,7 @@ public class FindPublisherImplTest extends TestHelper {
         TestOperationExecutor executor = createOperationExecutor(asList(getBatchCursor(), getBatchCursor()));
         FindPublisher<Document> publisher = new FindPublisherImpl<>(null, createMongoOperationPublisher(executor), new Document());
 
-        FindOperation<Document> expectedOperation = new FindOperation<>(CSOT_FACTORY_NO_TIMEOUT, NAMESPACE,
+        FindOperation<Document> expectedOperation = new FindOperation<>(CSOT_NO_TIMEOUT, NAMESPACE,
                 getDefaultCodecRegistry().get(Document.class))
                 .batchSize(Integer.MAX_VALUE)
                 .retryReads(true)
@@ -85,7 +85,7 @@ public class FindPublisherImplTest extends TestHelper {
                 .showRecordId(false)
                 .allowDiskUse(false);
 
-        expectedOperation = new FindOperation<>(CSOT_FACTORY_MAX_TIME_AND_MAX_AWAIT_TIME, NAMESPACE,
+        expectedOperation = new FindOperation<>(CSOT_MAX_TIME_AND_MAX_AWAIT_TIME, NAMESPACE,
                 getDefaultCodecRegistry().get(Document.class))
                 .retryReads(true)
                 .allowDiskUse(false)
@@ -110,5 +110,4 @@ public class FindPublisherImplTest extends TestHelper {
         assertOperationIsTheSameAs(expectedOperation, executor.getReadOperation());
         assertEquals(ReadPreference.primary(), executor.getReadPreference());
     }
-
 }

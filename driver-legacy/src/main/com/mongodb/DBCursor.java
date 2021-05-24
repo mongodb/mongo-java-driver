@@ -23,8 +23,8 @@ import com.mongodb.client.internal.OperationExecutor;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.DBCollectionCountOptions;
 import com.mongodb.client.model.DBCollectionFindOptions;
-import com.mongodb.internal.ClientSideOperationTimeoutFactories;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
+import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.ClientSideOperationTimeouts;
 import com.mongodb.internal.operation.FindOperation;
 import com.mongodb.lang.Nullable;
 import org.bson.codecs.Decoder;
@@ -79,7 +79,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     private int numSeen;
     private boolean closed;
     private final List<DBObject> all = new ArrayList<DBObject>();
-    private ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
+    private ClientSideOperationTimeout clientSideOperationTimeout;
     private MongoCursor<DBObject> cursor;
     // This allows us to easily enable/disable finalizer for cleaning up un-closed cursors
     @SuppressWarnings("UnusedDeclaration")// IDEs will say it can be converted to a local variable, resist the urge
@@ -117,9 +117,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     DBCursor(final DBCollection collection, @Nullable final DBObject filter, final DBCollectionFindOptions findOptions,
-             final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory) {
+             final ClientSideOperationTimeout clientSideOperationTimeout) {
         this(collection, filter, findOptions, collection.getExecutor(), collection.getDBDecoderFactory(),
-                collection.getObjectCodec(), true, clientSideOperationTimeoutFactory);
+                collection.getObjectCodec(), true, clientSideOperationTimeout);
     }
 
     DBCursor(final DBCollection collection, @Nullable final DBObject filter, final DBCollectionFindOptions findOptions,
@@ -130,7 +130,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
 
     private DBCursor(final DBCollection collection, @Nullable final DBObject filter, final DBCollectionFindOptions findOptions,
                      final OperationExecutor executor, final DBDecoderFactory decoderFactory, final Decoder<DBObject> decoder,
-                     final boolean retryReads, @Nullable final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory) {
+                     final boolean retryReads, @Nullable final ClientSideOperationTimeout clientSideOperationTimeout) {
         this.collection = notNull("collection", collection);
         this.filter = filter;
         this.executor = notNull("executor", executor);
@@ -138,7 +138,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         this.decoderFactory = decoderFactory;
         this.decoder = notNull("decoder", decoder);
         this.retryReads = retryReads;
-        this.clientSideOperationTimeoutFactory = clientSideOperationTimeoutFactory;
+        this.clientSideOperationTimeout = clientSideOperationTimeout;
     }
 
     /**
@@ -148,7 +148,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      */
     public DBCursor copy() {
         return new DBCursor(collection, filter, findOptions, executor, decoderFactory, decoder, retryReads,
-                clientSideOperationTimeoutFactory);
+                clientSideOperationTimeout);
     }
 
     /**
@@ -410,7 +410,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
 
     @SuppressWarnings("deprecation")
     private FindOperation<DBObject> getQueryOperation(final Decoder<DBObject> decoder) {
-        return new FindOperation<>(createClientSideOperationFactory(), collection.getNamespace(), decoder)
+        return new FindOperation<>(startClientSideOperationTimeout(), collection.getNamespace(), decoder)
                 .filter(collection.wrapAllowNull(filter))
                 .batchSize(findOptions.getBatchSize())
                 .skip(findOptions.getSkip())
@@ -431,11 +431,11 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
                 .retryReads(retryReads);
     }
 
-    private ClientSideOperationTimeoutFactory createClientSideOperationFactory() {
-        if (clientSideOperationTimeoutFactory != null) {
-            return clientSideOperationTimeoutFactory;
+    private ClientSideOperationTimeout startClientSideOperationTimeout() {
+        if (clientSideOperationTimeout != null) {
+            return clientSideOperationTimeout;
         }
-        return ClientSideOperationTimeoutFactories.create(
+        return ClientSideOperationTimeouts.create(
                 collection.getTimeout(MILLISECONDS),
                 findOptions.getMaxTime(MILLISECONDS),
                 findOptions.getMaxAwaitTime(MILLISECONDS));

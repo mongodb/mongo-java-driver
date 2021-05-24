@@ -24,13 +24,13 @@ import com.mongodb.internal.connection.QueryResult
 import org.bson.Document
 import spock.lang.Specification
 
-import static com.mongodb.ClusterFixture.DEFAULT_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.CSOT_TIMEOUT
 
 class AsyncSingleBatchQueryCursorSpecification extends Specification {
 
     def 'should work as expected'() {
         given:
-        def cursor = new AsyncSingleBatchQueryCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch)
+        def cursor = new AsyncSingleBatchQueryCursor<Document>(CSOT_TIMEOUT, firstBatch)
 
         when:
         def batch = nextBatch(cursor)
@@ -50,7 +50,7 @@ class AsyncSingleBatchQueryCursorSpecification extends Specification {
 
     def 'should work as with tryNext'() {
         given:
-        def cursor = new AsyncSingleBatchQueryCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch)
+        def cursor = new AsyncSingleBatchQueryCursor<Document>(CSOT_TIMEOUT, firstBatch)
 
         when:
         def batch = tryNextBatch(cursor)
@@ -70,7 +70,7 @@ class AsyncSingleBatchQueryCursorSpecification extends Specification {
 
     def 'should not support setting batchsize'() {
         given:
-        def cursor = new AsyncSingleBatchQueryCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch)
+        def cursor = new AsyncSingleBatchQueryCursor<Document>(CSOT_TIMEOUT, firstBatch)
 
         when:
         cursor.setBatchSize(1)

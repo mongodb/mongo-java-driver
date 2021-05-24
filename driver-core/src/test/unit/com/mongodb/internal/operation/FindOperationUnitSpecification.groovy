@@ -43,8 +43,8 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
 
-import static com.mongodb.ClusterFixture.DEFAULT_CSOT_FACTORY
-import static com.mongodb.ClusterFixture.NO_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.CSOT_TIMEOUT
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.CursorType.TailableAwait
 import static com.mongodb.connection.ServerType.STANDALONE
 
@@ -77,7 +77,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
             "$returnKey": true,
             "$showDiskLoc": true
         }''')
-        def operation = new FindOperation<BsonDocument>(NO_CSOT_FACTORY, namespace, decoder)
+        def operation = new FindOperation<BsonDocument>(CSOT_NO_TIMEOUT, namespace, decoder)
 
         // Defaults
         when:
@@ -119,7 +119,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
 
     def 'should find with correct command'() {
         when:
-        def operation = new FindOperation<BsonDocument>(NO_CSOT_FACTORY, namespace, new BsonDocumentCodec())
+        def operation = new FindOperation<BsonDocument>(CSOT_NO_TIMEOUT, namespace, new BsonDocumentCodec())
         def expectedCommand = new BsonDocument('find', new BsonString(namespace.getCollectionName()))
 
         then:
@@ -215,7 +215,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
             _ * getNamespace() >> namespace
             _ * getResults() >> []
         }
-        def operation = new FindOperation<BsonDocument>(DEFAULT_CSOT_FACTORY, namespace, decoder)
+        def operation = new FindOperation<BsonDocument>(CSOT_TIMEOUT, namespace, decoder)
 
         when:
         operation.execute(readBinding)
@@ -256,7 +256,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
             _ * getNamespace() >> namespace
             _ * getResults() >> []
         }
-        def operation = new FindOperation<BsonDocument>(DEFAULT_CSOT_FACTORY, namespace, decoder)
+        def operation = new FindOperation<BsonDocument>(CSOT_TIMEOUT, namespace, decoder)
 
         when:
         operation.executeAsync(readBinding, Stub(SingleResultCallback))
@@ -272,7 +272,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
 
     def 'should use the readPreference to set slaveOK for commands'() {
         when:
-        def operation = new FindOperation<Document>(DEFAULT_CSOT_FACTORY, namespace, new DocumentCodec())
+        def operation = new FindOperation<Document>(CSOT_TIMEOUT, namespace, new DocumentCodec())
 
         then:
         testOperationSlaveOk(operation, [3, 2, 0], readPreference, async, commandResult)
@@ -283,7 +283,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
 
     def 'should throw an exception when using an unsupported Collation'() {
         given:
-        def operation = new FindOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(), new DocumentCodec())
+        def operation = new FindOperation<Document>(CSOT_TIMEOUT, getNamespace(), new DocumentCodec())
                 .filter(BsonDocument.parse('{str: "FOO"}'))
                 .collation(defaultCollation)
 

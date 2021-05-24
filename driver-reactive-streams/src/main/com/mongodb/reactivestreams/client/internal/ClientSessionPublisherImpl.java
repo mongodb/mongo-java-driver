@@ -23,12 +23,10 @@ import com.mongodb.MongoInternalException;
 import com.mongodb.ReadConcern;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
-import com.mongodb.internal.ClientSideOperationTimeoutFactories;
+import com.mongodb.internal.ClientSideOperationTimeouts;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.client.AsyncClientSession;
 import com.mongodb.internal.operation.AbortTransactionOperation;
-import com.mongodb.internal.operation.AsyncReadOperation;
-import com.mongodb.internal.operation.AsyncWriteOperation;
 import com.mongodb.internal.operation.CommitTransactionOperation;
 import com.mongodb.internal.session.BaseClientSessionImpl;
 import com.mongodb.internal.session.ServerSessionPool;
@@ -84,8 +82,7 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
 
     @Override
     public void notifyOperationInitiated(final Object operation) {
-        assertTrue(operation instanceof AsyncReadOperation || operation instanceof AsyncWriteOperation);
-        if (!(hasActiveTransaction() || operation instanceof CommitTransactionOperation)) {
+        if (!(hasActiveTransaction() || operation instanceof CommitTransactionOperationSupplier)) {
             assertTrue(getPinnedServerAddress() == null
                     || (transactionState != TransactionState.ABORTED && transactionState != TransactionState.NONE));
             setPinnedServerAddress(null);
@@ -168,13 +165,12 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
             boolean alreadyCommitted = commitInProgress || transactionState == TransactionState.COMMITTED;
             commitInProgress = true;
 
-            return executor.execute(
+            return executor.execute(new CommitTransactionOperationSupplier(() ->
                     new CommitTransactionOperation(
-                            ClientSideOperationTimeoutFactories.withMaxCommitMS(timeoutMS,
-                                                                                transactionOptions.getMaxCommitTime(MILLISECONDS)),
+                            ClientSideOperationTimeouts.withMaxCommitMS(timeoutMS,
+                                    transactionOptions.getMaxCommitTime(MILLISECONDS)),
                             transactionOptions.getWriteConcern(), alreadyCommitted)
-                            .recoveryToken(getRecoveryToken()),
-                    readConcern, this)
+                            .recoveryToken(getRecoveryToken())), readConcern, this)
                     .doOnTerminate(() -> {
                         commitInProgress = false;
                         transactionState = TransactionState.COMMITTED;
@@ -202,9 +198,9 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
             if (readConcern == null) {
                 throw new MongoInternalException("Invariant violated. Transaction options read concern can not be null");
             }
-            return executor.execute(
+            return executor.execute(() ->
                     new AbortTransactionOperation(
-                            ClientSideOperationTimeoutFactories.withMaxCommitMS(timeoutMS,
+                            ClientSideOperationTimeouts.withMaxCommitMS(timeoutMS,
                                                                                 transactionOptions.getMaxCommitTime(MILLISECONDS)),
                             transactionOptions.getWriteConcern())
                             .recoveryToken(getRecoveryToken()),

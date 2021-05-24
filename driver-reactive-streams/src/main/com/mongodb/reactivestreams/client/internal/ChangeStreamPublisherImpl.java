@@ -136,7 +136,7 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
     }
 
     private <S> AsyncReadOperation<AsyncBatchCursor<S>> createChangeStreamOperation(final Codec<S> codec, final int initialBatchSize) {
-        return new ChangeStreamOperation<>(getClientSideOperationTimeoutFactory(0, maxAwaitTimeMS), getNamespace(), fullDocument,
+        return new ChangeStreamOperation<>(getClientSideOperationTimeout(0, maxAwaitTimeMS), getNamespace(), fullDocument,
                                            createBsonDocumentList(pipeline), codec, changeStreamLevel)
                 .batchSize(initialBatchSize)
                 .collation(collation)

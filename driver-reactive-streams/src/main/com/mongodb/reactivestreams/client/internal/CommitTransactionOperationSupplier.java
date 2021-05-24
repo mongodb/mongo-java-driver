@@ -13,11 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongodb.internal;
 
-/**
- * The client side operation timeout factory that creates client side operation timeout instances.
- */
-public interface ClientSideOperationTimeoutFactory {
-     ClientSideOperationTimeout create();
+package com.mongodb.reactivestreams.client.internal;
+
+import com.mongodb.internal.operation.CommitTransactionOperation;
+
+import java.util.function.Supplier;
+
+public class CommitTransactionOperationSupplier implements Supplier<CommitTransactionOperation> {
+
+    private final Supplier<CommitTransactionOperation> supplier;
+
+    public CommitTransactionOperationSupplier(final Supplier<CommitTransactionOperation> supplier) {
+        this.supplier = supplier;
+    }
+
+    @Override
+    public CommitTransactionOperation get() {
+        return supplier.get();
+    }
 }

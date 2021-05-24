@@ -22,7 +22,6 @@ import com.mongodb.ReadPreference;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.ClientSideOperationTimeout;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncConnectionSource;
@@ -71,7 +70,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.withReadConnect
  * @mongodb.driver.manual reference/command/listIndexes/ List indexes
  */
 public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
-    private final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     private boolean retryReads;
@@ -80,13 +79,13 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      * @param decoder   the decoder for the result documents.
      */
-    public ListIndexesOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+    public ListIndexesOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
                                 final Decoder<T> decoder) {
-        this.clientSideOperationTimeoutFactory = notNull("clientSideOperationTimeoutFactory", clientSideOperationTimeoutFactory);
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.namespace = notNull("namespace", namespace);
         this.decoder = notNull("decoder", decoder);
     }
@@ -139,7 +138,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return withReadConnectionSource(clientSideOperationTimeoutFactory.create(), binding, new CallableWithSource<BatchCursor<T>>() {
+        return withReadConnectionSource(clientSideOperationTimeout, binding, new CallableWithSource<BatchCursor<T>>() {
             @Override
             public BatchCursor<T> call(final ClientSideOperationTimeout clientSideOperationTimeout, final ConnectionSource source) {
                 Connection connection = source.getConnection();
@@ -167,7 +166,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        withAsyncReadConnection(clientSideOperationTimeoutFactory.create(), binding, new AsyncCallableWithConnectionAndSource() {
+        withAsyncReadConnection(clientSideOperationTimeout, binding, new AsyncCallableWithConnectionAndSource() {
             @Override
             public void call(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncConnectionSource source,
                              final AsyncConnection connection,

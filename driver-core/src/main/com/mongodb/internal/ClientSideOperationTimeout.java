@@ -17,6 +17,8 @@ package com.mongodb.internal;
 
 import com.mongodb.lang.Nullable;
 
+import java.util.Objects;
+
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -132,5 +134,23 @@ public class ClientSideOperationTimeout {
                 + ", maxTimeMS=" + maxTimeMS
                 + ", maxCommitTimeMS=" + maxCommitTimeMS
                 + '}';
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final ClientSideOperationTimeout that = (ClientSideOperationTimeout) o;
+        return maxAwaitTimeMS == that.maxAwaitTimeMS && maxTimeMS == that.maxTimeMS && maxCommitTimeMS == that.maxCommitTimeMS
+                && Objects.equals(timeoutMS, that.timeoutMS);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(timeoutMS, maxAwaitTimeMS, maxTimeMS, maxCommitTimeMS);
     }
 }

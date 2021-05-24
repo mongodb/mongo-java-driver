@@ -73,6 +73,6 @@ final class DistinctPublisherImpl<T> extends BatchCursorPublisher<T> implements 
     @Override
     AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
         // initialBatchSize is ignored for distinct operations.
-        return getOperations().distinct(getClientSideOperationTimeoutFactory(maxTimeMS), fieldName, filter, getDocumentClass(), collation);
+        return getOperations().distinct(getClientSideOperationTimeout(maxTimeMS), fieldName, filter, getDocumentClass(), collation);
     }
 }

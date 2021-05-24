@@ -52,8 +52,8 @@ import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.primaryPreferred
 import static com.mongodb.ReadPreference.secondary
-import static com.mongodb.client.internal.TestHelper.CSOT_FACTORY_NO_TIMEOUT
-import static com.mongodb.client.internal.TestHelper.CSOT_FACTORY_TIMEOUT
+import static com.mongodb.client.internal.TestHelper.CSOT_NO_TIMEOUT
+import static com.mongodb.client.internal.TestHelper.CSOT_TIMEOUT
 import static com.mongodb.client.internal.TestHelper.execute
 import static org.bson.UuidRepresentation.JAVA_LEGACY
 import static org.bson.UuidRepresentation.STANDARD
@@ -221,7 +221,7 @@ class MongoDatabaseSpecification extends Specification {
         def operation = executor.getReadOperation() as CommandReadOperation<Document>
 
         then:
-        operation.commandCreator.create(CSOT_FACTORY_NO_TIMEOUT.create(), Stub(ServerDescription), Stub(ConnectionDescription)) == command
+        operation.commandCreator.create(CSOT_NO_TIMEOUT, Stub(ServerDescription), Stub(ConnectionDescription)) == command
         executor.getClientSession() == session
         executor.getReadPreference() == primary()
 
@@ -230,7 +230,7 @@ class MongoDatabaseSpecification extends Specification {
         operation = executor.getReadOperation() as CommandReadOperation<Document>
 
         then:
-        operation.commandCreator.create(CSOT_FACTORY_NO_TIMEOUT.create(), Stub(ServerDescription), Stub(ConnectionDescription)) == command
+        operation.commandCreator.create(CSOT_NO_TIMEOUT, Stub(ServerDescription), Stub(ConnectionDescription)) == command
         executor.getClientSession() == session
         executor.getReadPreference() == primaryPreferred()
 
@@ -239,7 +239,7 @@ class MongoDatabaseSpecification extends Specification {
         operation = executor.getReadOperation() as CommandReadOperation<BsonDocument>
 
         then:
-        operation.commandCreator.create(CSOT_FACTORY_NO_TIMEOUT.create(), Stub(ServerDescription), Stub(ConnectionDescription)) == command
+        operation.commandCreator.create(CSOT_NO_TIMEOUT, Stub(ServerDescription), Stub(ConnectionDescription)) == command
         executor.getClientSession() == session
         executor.getReadPreference() == primary()
 
@@ -248,7 +248,7 @@ class MongoDatabaseSpecification extends Specification {
         operation = executor.getReadOperation() as CommandReadOperation<BsonDocument>
 
         then:
-        operation.commandCreator.create(CSOT_FACTORY_NO_TIMEOUT.create(), Stub(ServerDescription), Stub(ConnectionDescription)) == command
+        operation.commandCreator.create(CSOT_NO_TIMEOUT, Stub(ServerDescription), Stub(ConnectionDescription)) == command
         executor.getClientSession() == session
         executor.getReadPreference() == primaryPreferred()
 
@@ -268,7 +268,7 @@ class MongoDatabaseSpecification extends Specification {
         def operation = executor.getWriteOperation() as DropDatabaseOperation
 
         then:
-        expect operation, isTheSameAs(new DropDatabaseOperation(CSOT_FACTORY_TIMEOUT, name, writeConcern))
+        expect operation, isTheSameAs(new DropDatabaseOperation(CSOT_TIMEOUT, name, writeConcern))
         executor.getClientSession() == session
 
         where:
@@ -322,7 +322,7 @@ class MongoDatabaseSpecification extends Specification {
         def operation = executor.getWriteOperation() as CreateCollectionOperation
 
         then:
-        expect operation, isTheSameAs(new CreateCollectionOperation(CSOT_FACTORY_TIMEOUT, name, collectionName, writeConcern))
+        expect operation, isTheSameAs(new CreateCollectionOperation(CSOT_TIMEOUT, name, collectionName, writeConcern))
         executor.getClientSession() == session
 
         when:
@@ -341,7 +341,7 @@ class MongoDatabaseSpecification extends Specification {
         operation = executor.getWriteOperation() as CreateCollectionOperation
 
         then:
-        expect operation, isTheSameAs(new CreateCollectionOperation(CSOT_FACTORY_TIMEOUT, name, collectionName, writeConcern)
+        expect operation, isTheSameAs(new CreateCollectionOperation(CSOT_TIMEOUT, name, collectionName, writeConcern)
                 .collation(collation)
                 .capped(true)
                 .maxDocuments(100)
@@ -373,7 +373,7 @@ class MongoDatabaseSpecification extends Specification {
         def operation = executor.getWriteOperation() as CreateViewOperation
 
         then:
-        expect operation, isTheSameAs(new CreateViewOperation(CSOT_FACTORY_TIMEOUT, name, viewName, viewOn,
+        expect operation, isTheSameAs(new CreateViewOperation(CSOT_TIMEOUT, name, viewName, viewOn,
                 [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern))
         executor.getClientSession() == session
 
@@ -382,7 +382,7 @@ class MongoDatabaseSpecification extends Specification {
         operation = executor.getWriteOperation() as CreateViewOperation
 
         then:
-        expect operation, isTheSameAs(new CreateViewOperation(CSOT_FACTORY_TIMEOUT, name, viewName, viewOn,
+        expect operation, isTheSameAs(new CreateViewOperation(CSOT_TIMEOUT, name, viewName, viewOn,
                 [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern).collation(collation))
         executor.getClientSession() == session
 

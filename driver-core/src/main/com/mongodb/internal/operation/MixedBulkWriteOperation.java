@@ -23,7 +23,6 @@ import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.internal.ClientSideOperationTimeout;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncWriteBinding;
@@ -77,7 +76,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.withReleasableC
  */
 public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteResult>, WriteOperation<BulkWriteResult> {
     private static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator();
-    private final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final List<? extends WriteRequest> writeRequests;
     private final boolean ordered;
@@ -88,7 +87,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace     the database and collection namespace for the operation.
      * @param writeRequests the list of writeRequests to execute.
      * @param ordered       whether the writeRequests must be executed in order.
@@ -96,10 +95,10 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
      * @param retryWrites   if writes should be retried if they fail due to a network error.
      * @since 3.6
      */
-    public MixedBulkWriteOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory,
+    public MixedBulkWriteOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
                                    final MongoNamespace namespace, final List<? extends WriteRequest> writeRequests,
                                    final boolean ordered, final WriteConcern writeConcern, final boolean retryWrites) {
-        this.clientSideOperationTimeoutFactory = notNull("clientSideOperationTimeoutFactory", clientSideOperationTimeoutFactory);
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.namespace = notNull("namespace", namespace);
         this.writeRequests = notNull("writes", writeRequests);
         this.ordered = ordered;
@@ -188,7 +187,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
      */
     @Override
     public BulkWriteResult execute(final WriteBinding binding) {
-        return withReleasableConnection(clientSideOperationTimeoutFactory.create(), binding,
+        return withReleasableConnection(clientSideOperationTimeout, binding,
                 new CallableWithConnectionAndSource<BulkWriteResult>() {
             @Override
             public BulkWriteResult call(final ClientSideOperationTimeout clientSideOperationTimeout,
@@ -210,7 +209,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<BulkWriteResult> callback) {
         final SingleResultCallback<BulkWriteResult> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-        withAsyncConnection(clientSideOperationTimeoutFactory.create(), binding, new AsyncCallableWithConnectionAndSource() {
+        withAsyncConnection(clientSideOperationTimeout, binding, new AsyncCallableWithConnectionAndSource() {
             @Override
             public void call(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncConnectionSource source,
                              final AsyncConnection connection, final Throwable t) {

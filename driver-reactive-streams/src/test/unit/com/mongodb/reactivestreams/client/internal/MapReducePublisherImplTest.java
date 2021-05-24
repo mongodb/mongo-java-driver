@@ -32,7 +32,6 @@ import org.bson.codecs.configuration.CodecConfigurationException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 
 import static com.mongodb.reactivestreams.client.MongoClients.getDefaultCodecRegistry;
@@ -59,7 +58,7 @@ public class MapReducePublisherImplTest extends TestHelper {
                 new MapReducePublisherImpl<>(null, createMongoOperationPublisher(executor), MAP_FUNCTION, REDUCE_FUNCTION);
 
         MapReduceWithInlineResultsOperation<Document> expectedOperation =
-                new MapReduceWithInlineResultsOperation<>(CSOT_FACTORY_NO_TIMEOUT, NAMESPACE, new BsonJavaScript(MAP_FUNCTION),
+                new MapReduceWithInlineResultsOperation<>(CSOT_NO_TIMEOUT, NAMESPACE, new BsonJavaScript(MAP_FUNCTION),
                         new BsonJavaScript(REDUCE_FUNCTION), getDefaultCodecRegistry().get(Document.class)).verbose(true);
 
         // default input should be as expected
@@ -84,7 +83,7 @@ public class MapReducePublisherImplTest extends TestHelper {
                 .sort(Sorts.ascending("sort"))
                 .verbose(false);
 
-        expectedOperation = new MapReduceWithInlineResultsOperation<>(CSOT_FACTORY_MAX_AWAIT_TIME, NAMESPACE,
+        expectedOperation = new MapReduceWithInlineResultsOperation<>(CSOT_MAX_AWAIT_TIME, NAMESPACE,
                 new BsonJavaScript(MAP_FUNCTION), new BsonJavaScript(REDUCE_FUNCTION), getDefaultCodecRegistry().get(Document.class))
                 .collation(COLLATION)
                 .filter(BsonDocument.parse("{filter: 1}"))
@@ -112,7 +111,7 @@ public class MapReducePublisherImplTest extends TestHelper {
                 new MapReducePublisherImpl<>(null, createMongoOperationPublisher(executor), MAP_FUNCTION, REDUCE_FUNCTION)
                         .collectionName(NAMESPACE.getCollectionName());
 
-        MapReduceToCollectionOperation expectedOperation = new MapReduceToCollectionOperation(CSOT_FACTORY_NO_TIMEOUT, NAMESPACE,
+        MapReduceToCollectionOperation expectedOperation = new MapReduceToCollectionOperation(CSOT_NO_TIMEOUT, NAMESPACE,
                 new BsonJavaScript(MAP_FUNCTION), new BsonJavaScript(REDUCE_FUNCTION), NAMESPACE.getCollectionName(),
                 WriteConcern.ACKNOWLEDGED).verbose(true);
 
@@ -133,7 +132,7 @@ public class MapReducePublisherImplTest extends TestHelper {
                 .sort(Sorts.ascending("sort"))
                 .verbose(false);
 
-        expectedOperation = new MapReduceToCollectionOperation(CSOT_FACTORY_NO_TIMEOUT, NAMESPACE, new BsonJavaScript(MAP_FUNCTION),
+        expectedOperation = new MapReduceToCollectionOperation(CSOT_NO_TIMEOUT, NAMESPACE, new BsonJavaScript(MAP_FUNCTION),
                 new BsonJavaScript(REDUCE_FUNCTION), NAMESPACE.getCollectionName(), WriteConcern.ACKNOWLEDGED)
                 .collation(COLLATION)
                 .bypassDocumentValidation(true)
@@ -151,7 +150,7 @@ public class MapReducePublisherImplTest extends TestHelper {
     @DisplayName("Should handle error scenarios")
     @Test
     void shouldHandleErrorScenarios() {
-        TestOperationExecutor executor = createOperationExecutor(asList(new MongoException("Failure"), null, null));
+        TestOperationExecutor executor = createOperationExecutor(asList(new MongoException("Failure"), null));
 
         // Operation fails
         MapReducePublisher<Document> publisher =
@@ -162,9 +161,9 @@ public class MapReducePublisherImplTest extends TestHelper {
         assertThrows(IllegalStateException.class, publisher::toCollection);
 
         // Missing Codec
-        Publisher<Document> publisherMissingCodec =
+        assertThrows(CodecConfigurationException.class, () ->
                 new MapReducePublisherImpl<>(null, createMongoOperationPublisher(executor)
-                        .withCodecRegistry(BSON_CODEC_REGISTRY), MAP_FUNCTION, REDUCE_FUNCTION);
-        assertThrows(CodecConfigurationException.class, () -> Flux.from(publisherMissingCodec).blockFirst());
+                        .withCodecRegistry(BSON_CODEC_REGISTRY), MAP_FUNCTION, REDUCE_FUNCTION)
+                        .asAsyncReadOperation(0));
     }
 }

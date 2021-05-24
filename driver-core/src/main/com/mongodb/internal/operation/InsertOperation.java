@@ -18,7 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.bulk.InsertRequest;
 import com.mongodb.internal.bulk.WriteRequest;
 
@@ -38,21 +38,21 @@ public class InsertOperation extends BaseWriteOperation {
     /**
      * Construct an instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace         the database and collection namespace for the operation.
      * @param ordered           whether the inserts are ordered.
      * @param writeConcern      the write concern for the operation.
      * @param insertRequests    the list of inserts.
      */
-    public InsertOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory,  final MongoNamespace namespace,
+    public InsertOperation(final ClientSideOperationTimeout clientSideOperationTimeout,  final MongoNamespace namespace,
                            final boolean ordered, final WriteConcern writeConcern, final List<InsertRequest> insertRequests) {
-        this(clientSideOperationTimeoutFactory, namespace, ordered, writeConcern, false, insertRequests);
+        this(clientSideOperationTimeout, namespace, ordered, writeConcern, false, insertRequests);
     }
 
     /**
      * Construct an instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      * @param ordered whether the inserts are ordered.
      * @param writeConcern the write concern for the operation.
@@ -60,10 +60,10 @@ public class InsertOperation extends BaseWriteOperation {
      * @param insertRequests the list of inserts.
      * @since 3.6
      */
-    public InsertOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+    public InsertOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
                            final boolean ordered, final WriteConcern writeConcern, final boolean retryWrites,
                            final List<InsertRequest> insertRequests) {
-        super(clientSideOperationTimeoutFactory, namespace, ordered, writeConcern, retryWrites);
+        super(clientSideOperationTimeout, namespace, ordered, writeConcern, retryWrites);
         this.insertRequests = notNull("insertRequests", insertRequests);
         isTrueArgument("insertRequests not empty", !insertRequests.isEmpty());
     }

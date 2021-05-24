@@ -22,7 +22,6 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.ClientSideOperationTimeout;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.CollectibleDocumentFieldNameValidator;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
@@ -68,36 +67,36 @@ public class FindAndReplaceOperation<T> extends BaseFindAndModifyOperation<T> {
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace   the database and collection namespace for the operation.
      * @param decoder     the decoder for the result documents.
      * @param replacement the document that will replace the found document.
      */
-    public FindAndReplaceOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory,
+    public FindAndReplaceOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
                                    final MongoNamespace namespace, final Decoder<T> decoder, final BsonDocument replacement) {
-        this(clientSideOperationTimeoutFactory, namespace, WriteConcern.ACKNOWLEDGED, false, decoder, replacement);
+        this(clientSideOperationTimeout, namespace, WriteConcern.ACKNOWLEDGED, false, decoder, replacement);
     }
 
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace   the database and collection namespace for the operation.
      * @param writeConcern the writeConcern for the operation
      * @param decoder     the decoder for the result documents.
      * @param replacement the document that will replace the found document.
      * @since 3.2
      */
-    public FindAndReplaceOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory,
+    public FindAndReplaceOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
                                    final MongoNamespace namespace, final WriteConcern writeConcern, final Decoder<T> decoder,
                                    final BsonDocument replacement) {
-        this(clientSideOperationTimeoutFactory, namespace, writeConcern, false, decoder, replacement);
+        this(clientSideOperationTimeout, namespace, writeConcern, false, decoder, replacement);
     }
 
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace   the database and collection namespace for the operation.
      * @param writeConcern the writeConcern for the operation
      * @param retryWrites  if writes should be retried if they fail due to a network error.
@@ -105,11 +104,11 @@ public class FindAndReplaceOperation<T> extends BaseFindAndModifyOperation<T> {
      * @param replacement the document that will replace the found document.
      * @since 3.6
      */
-    public FindAndReplaceOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory,
+    public FindAndReplaceOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
                                    final MongoNamespace namespace, final WriteConcern writeConcern, final boolean retryWrites,
                                    final Decoder<T> decoder,
                                    final BsonDocument replacement) {
-        super(clientSideOperationTimeoutFactory, namespace, writeConcern, retryWrites, decoder);
+        super(clientSideOperationTimeout, namespace, writeConcern, retryWrites, decoder);
         this.replacement = notNull("replacement", replacement);
     }
 

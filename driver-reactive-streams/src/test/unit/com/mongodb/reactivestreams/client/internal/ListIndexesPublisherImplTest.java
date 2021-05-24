@@ -44,7 +44,7 @@ public class ListIndexesPublisherImplTest extends TestHelper {
         ListIndexesPublisher<Document> publisher = new ListIndexesPublisherImpl<>(null, createMongoOperationPublisher(executor));
 
         ListIndexesOperation<Document> expectedOperation =
-                new ListIndexesOperation<>(CSOT_FACTORY_NO_TIMEOUT, NAMESPACE, getDefaultCodecRegistry().get(Document.class))
+                new ListIndexesOperation<>(CSOT_NO_TIMEOUT, NAMESPACE, getDefaultCodecRegistry().get(Document.class))
                         .batchSize(Integer.MAX_VALUE)
                         .retryReads(true);
 
@@ -59,7 +59,7 @@ public class ListIndexesPublisherImplTest extends TestHelper {
                 .batchSize(100)
                 .maxTime(99, MILLISECONDS);
 
-        expectedOperation = new ListIndexesOperation<>(CSOT_FACTORY_MAX_TIME, NAMESPACE, getDefaultCodecRegistry().get(Document.class))
+        expectedOperation = new ListIndexesOperation<>(CSOT_MAX_TIME, NAMESPACE, getDefaultCodecRegistry().get(Document.class))
                 .batchSize(100)
                 .retryReads(true);
 

@@ -17,8 +17,8 @@
 package com.mongodb;
 
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.internal.ClientSideOperationTimeoutFactories;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
+import com.mongodb.internal.ClientSideOperationTimeouts;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import org.bson.UuidRepresentation;
 
 import java.util.List;
@@ -37,14 +37,10 @@ public final class Fixture {
     private static DB defaultDatabase;
 
     public static final long TIMEOUT_MS = 60000;
-    public static final ClientSideOperationTimeoutFactory CSOT_FACTORY_TIMEOUT =
-            ClientSideOperationTimeoutFactories.create(TIMEOUT_MS);
-    public static final ClientSideOperationTimeoutFactory CSOT_FACTORY_TIMEOUT_AND_MAX_TIME =
-            ClientSideOperationTimeoutFactories.create(TIMEOUT_MS, 99);
-    public static final ClientSideOperationTimeoutFactory CSOT_FACTORY_ALL =
-            ClientSideOperationTimeoutFactories.create(TIMEOUT_MS, 99, 999L);
-    public static final ClientSideOperationTimeoutFactory CSOT_FACTORY_NO_TIMEOUT =
-            ClientSideOperationTimeoutFactories.NO_TIMEOUT;
+    public static final ClientSideOperationTimeout CSOT_NO_TIMEOUT = ClientSideOperationTimeouts.NO_TIMEOUT;
+    public static final ClientSideOperationTimeout CSOT_TIMEOUT = ClientSideOperationTimeouts.create(TIMEOUT_MS);
+    public static final ClientSideOperationTimeout CSOT_TIMEOUT_AND_MAX_TIME = ClientSideOperationTimeouts.create(TIMEOUT_MS, 99);
+    public static final ClientSideOperationTimeout CSOT_ALL = ClientSideOperationTimeouts.create(TIMEOUT_MS, 99, 999L);
 
     private Fixture() {
     }

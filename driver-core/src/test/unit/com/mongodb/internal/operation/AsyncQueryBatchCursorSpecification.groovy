@@ -37,9 +37,9 @@ import org.bson.codecs.DocumentCodec
 import spock.lang.Specification
 
 import static OperationUnitSpecification.getMaxWireVersionForServerVersion
-import static com.mongodb.ClusterFixture.DEFAULT_CSOT_FACTORY
-import static com.mongodb.ClusterFixture.MAX_AWAIT_TIME_MS_CSOT_FACTORY
-import static com.mongodb.ClusterFixture.NO_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.CSOT_TIMEOUT
+import static com.mongodb.ClusterFixture.CSOT_MAX_TIME_AND_MAX_AWAIT_TIME
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.ReadPreference.primary
 
 class AsyncQueryBatchCursorSpecification extends Specification {
@@ -50,8 +50,8 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         def connectionSource = getAsyncConnectionSource(connection)
 
         def firstBatch = new QueryResult(NAMESPACE, [], 42, SERVER_ADDRESS)
-        def cursor = new AsyncQueryBatchCursor<Document>(csotFactory.create(), firstBatch, 0, batchSize,
-                CODEC, connectionSource, null)
+        def cursor = new AsyncQueryBatchCursor<Document>(clientSideOperationTimeout, firstBatch, 0, batchSize, CODEC, connectionSource,
+                null)
         def expectedCommand = new BsonDocument('getMore': new BsonInt64(CURSOR_ID))
                 .append('collection', new BsonString(NAMESPACE.getCollectionName()))
         if (batchSize != 0) {
@@ -83,10 +83,10 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         connectionSource.getCount() == 0
 
         where:
-        batchSize  | csotFactory                      | expectedMaxTimeFieldValue
-        0          | NO_CSOT_FACTORY                  | null
-        2          | NO_CSOT_FACTORY                  | null
-        0          | MAX_AWAIT_TIME_MS_CSOT_FACTORY   | 9999
+        batchSize  | clientSideOperationTimeout       | expectedMaxTimeFieldValue
+        0          | CSOT_NO_TIMEOUT                  | null
+        2          | CSOT_NO_TIMEOUT                  | null
+        0          | CSOT_MAX_TIME_AND_MAX_AWAIT_TIME | 9999
     }
 
     def 'should close the cursor'() {
@@ -95,7 +95,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         def connectionSource = getAsyncConnectionSource(connection)
 
         when:
-        def cursor = new AsyncQueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch, 0, 0, CODEC, connectionSource, null)
+        def cursor = new AsyncQueryBatchCursor<Document>(CSOT_TIMEOUT, firstBatch, 0, 0, CODEC, connectionSource, null)
         cursor.close()
 
         then:
@@ -131,7 +131,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         def connectionSource = getAsyncConnectionSource(referenceCountedAsyncConnection())
 
         when:
-        def cursor = new AsyncQueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), queryResult(FIRST_BATCH, 0), 0, 0, CODEC,
+        def cursor = new AsyncQueryBatchCursor<Document>(CSOT_TIMEOUT, queryResult(FIRST_BATCH, 0), 0, 0, CODEC,
                 connectionSource, null)
 
         then:
@@ -169,7 +169,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         def thirdBatch = [new Document('_id', 4), new Document('_id', 5)]
 
         when:
-        def cursor = new AsyncQueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), queryResult(firstBatch), 6, 2, CODEC,
+        def cursor = new AsyncQueryBatchCursor<Document>(CSOT_TIMEOUT, queryResult(firstBatch), 6, 2, CODEC,
                 connectionSource, null)
         def batch = nextBatch(cursor)
 
@@ -239,7 +239,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         def thirdBatch = [new Document('_id', 6)]
 
         when:
-        def cursor = new AsyncQueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), queryResult(firstBatch), 6, 2, CODEC,
+        def cursor = new AsyncQueryBatchCursor<Document>(CSOT_TIMEOUT, queryResult(firstBatch), 6, 2, CODEC,
                 connectionSource, null)
         def batch = nextBatch(cursor)
 
@@ -306,7 +306,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         def queryResult = queryResult()
 
         when:
-        def cursor = new AsyncQueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), queryResult, 1, 0, CODEC, connectionSource,
+        def cursor = new AsyncQueryBatchCursor<Document>(CSOT_TIMEOUT, queryResult, 1, 0, CODEC, connectionSource,
                 connection)
 
         then:
@@ -341,7 +341,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         def connectionSource = getAsyncConnectionSource(connection)
 
         when:
-        def cursor = new AsyncQueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), queryResult([], 42), 3, 0, CODEC,
+        def cursor = new AsyncQueryBatchCursor<Document>(CSOT_TIMEOUT, queryResult([], 42), 3, 0, CODEC,
                 connectionSource, null)
         def batch = nextBatch(cursor)
 
@@ -400,7 +400,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         def initialResult = queryResult()
 
         when:
-        def cursor = new AsyncQueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), initialResult, 3, 0, CODEC, connectionSource,
+        def cursor = new AsyncQueryBatchCursor<Document>(CSOT_TIMEOUT, initialResult, 3, 0, CODEC, connectionSource,
                 null)
         def batch = nextBatch(cursor)
 
@@ -452,7 +452,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         def initialResult = queryResult()
 
         when:
-        def cursor = new AsyncQueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), initialResult, 0, 0, CODEC, connectionSource,
+        def cursor = new AsyncQueryBatchCursor<Document>(CSOT_TIMEOUT, initialResult, 0, 0, CODEC, connectionSource,
                 null)
         def batch = nextBatch(cursor)
 
@@ -508,7 +508,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         def initialResult = queryResult()
 
         when:
-        def cursor = new AsyncQueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), initialResult, 0, 0, CODEC, connectionSource,
+        def cursor = new AsyncQueryBatchCursor<Document>(CSOT_TIMEOUT, initialResult, 0, 0, CODEC, connectionSource,
                 null)
         def batch = nextBatch(cursor)
 
@@ -549,7 +549,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
     def 'should handle errors when calling close'() {
         given:
         def connectionSource = getAsyncConnectionSourceWithResult { [null, MONGO_EXCEPTION] }
-        def cursor = new AsyncQueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), queryResult(), 0, 0, CODEC, connectionSource,
+        def cursor = new AsyncQueryBatchCursor<Document>(CSOT_TIMEOUT, queryResult(), 0, 0, CODEC, connectionSource,
                 null)
 
         when:
@@ -578,7 +578,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         def connectionSource = getAsyncConnectionSourceWithResult { [null, MONGO_EXCEPTION] }
 
         when:
-        def cursor = new AsyncQueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), queryResult(), 0, 0, CODEC, connectionSource,
+        def cursor = new AsyncQueryBatchCursor<Document>(CSOT_TIMEOUT, queryResult(), 0, 0, CODEC, connectionSource,
                 null)
 
         then:
@@ -607,7 +607,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         def connectionSource = getAsyncConnectionSource(connectionA, connectionB)
 
         when:
-        def cursor = new AsyncQueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), queryResult([]), 0, 0, CODEC,
+        def cursor = new AsyncQueryBatchCursor<Document>(CSOT_TIMEOUT, queryResult([]), 0, 0, CODEC,
                 connectionSource, null)
 
         then:

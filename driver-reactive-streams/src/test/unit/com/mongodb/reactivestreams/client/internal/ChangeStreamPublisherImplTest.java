@@ -55,7 +55,7 @@ public class ChangeStreamPublisherImplTest extends TestHelper {
                                                                                     Document.class, pipeline, ChangeStreamLevel.COLLECTION);
 
         ChangeStreamOperation<ChangeStreamDocument<Document>> expectedOperation =
-                new ChangeStreamOperation<>(CSOT_FACTORY_NO_TIMEOUT, NAMESPACE, FullDocument.DEFAULT, pipeline, codec)
+                new ChangeStreamOperation<>(CSOT_NO_TIMEOUT, NAMESPACE, FullDocument.DEFAULT, pipeline, codec)
                         .batchSize(Integer.MAX_VALUE)
                         .retryReads(true);
 
@@ -72,7 +72,7 @@ public class ChangeStreamPublisherImplTest extends TestHelper {
                 .maxAwaitTime(999, MILLISECONDS)
                 .fullDocument(FullDocument.UPDATE_LOOKUP);
 
-        expectedOperation = new ChangeStreamOperation<>(CSOT_FACTORY_MAX_AWAIT_TIME, NAMESPACE, FullDocument.UPDATE_LOOKUP, pipeline,
+        expectedOperation = new ChangeStreamOperation<>(CSOT_MAX_AWAIT_TIME, NAMESPACE, FullDocument.UPDATE_LOOKUP, pipeline,
                 codec)
                 .retryReads(true)
                 .batchSize(100)
@@ -94,7 +94,7 @@ public class ChangeStreamPublisherImplTest extends TestHelper {
                         .withDocumentClass(BsonDocument.class);
 
         ChangeStreamOperation<BsonDocument> expectedOperation =
-                new ChangeStreamOperation<>(CSOT_FACTORY_NO_TIMEOUT, NAMESPACE, FullDocument.DEFAULT, pipeline,
+                new ChangeStreamOperation<>(CSOT_NO_TIMEOUT, NAMESPACE, FullDocument.DEFAULT, pipeline,
                         getDefaultCodecRegistry().get(BsonDocument.class))
                         .batchSize(Integer.MAX_VALUE)
                         .retryReads(true);
@@ -110,7 +110,7 @@ public class ChangeStreamPublisherImplTest extends TestHelper {
     @Test
     void shouldHandleErrorScenarios() {
         List<BsonDocument> pipeline = singletonList(BsonDocument.parse("{'$match': 1}"));
-        TestOperationExecutor executor = createOperationExecutor(asList(new MongoException("Failure"), null, null));
+        TestOperationExecutor executor = createOperationExecutor(singletonList(new MongoException("Failure")));
 
         // Operation fails
         ChangeStreamPublisher<Document> publisher = new ChangeStreamPublisherImpl<>(null, createMongoOperationPublisher(executor),
@@ -120,12 +120,14 @@ public class ChangeStreamPublisherImplTest extends TestHelper {
         // Missing Codec
         assertThrows(CodecConfigurationException.class, () ->
                 new ChangeStreamPublisherImpl<>(null, createMongoOperationPublisher(executor)
-                        .withCodecRegistry(BSON_CODEC_REGISTRY), Document.class, pipeline, ChangeStreamLevel.COLLECTION));
+                        .withCodecRegistry(BSON_CODEC_REGISTRY), Document.class, pipeline, ChangeStreamLevel.COLLECTION)
+                .asAsyncReadOperation(0)
+        );
 
         // Pipeline contains null
-        ChangeStreamPublisher<Document> publisherPipelineNull =
-                new ChangeStreamPublisherImpl<>(null, createMongoOperationPublisher(executor), Document.class,
-                                                singletonList(null), ChangeStreamLevel.COLLECTION);
-        assertThrows(IllegalArgumentException.class, () -> Flux.from(publisherPipelineNull).blockFirst());
+        assertThrows(IllegalArgumentException.class, () ->
+                        new ChangeStreamPublisherImpl<>(null, createMongoOperationPublisher(executor), Document.class,
+                                singletonList(null), ChangeStreamLevel.COLLECTION).asAsyncReadOperation(0)
+        );
     }
 }

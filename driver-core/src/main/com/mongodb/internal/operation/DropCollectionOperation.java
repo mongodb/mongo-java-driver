@@ -21,7 +21,6 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.ClientSideOperationTimeout;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -53,32 +52,32 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  * @since 3.0
  */
 public class DropCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
-    private final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final WriteConcern writeConcern;
 
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      */
-    public DropCollectionOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory,
+    public DropCollectionOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
                                    final MongoNamespace namespace) {
-        this(clientSideOperationTimeoutFactory, namespace, null);
+        this(clientSideOperationTimeout, namespace, null);
     }
 
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace    the database and collection namespace for the operation.
      * @param writeConcern the write concern
      * @since 3.4
      */
-    public DropCollectionOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory,
+    public DropCollectionOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
                                    final MongoNamespace namespace, final WriteConcern writeConcern) {
-        this.clientSideOperationTimeoutFactory = notNull("clientSideOperationTimeoutFactory", clientSideOperationTimeoutFactory);
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.namespace = notNull("namespace", namespace);
         this.writeConcern = writeConcern;
     }
@@ -95,7 +94,7 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
 
     @Override
     public Void execute(final WriteBinding binding) {
-        return withConnection(clientSideOperationTimeoutFactory.create(), binding, new CallableWithConnection<Void>() {
+        return withConnection(clientSideOperationTimeout, binding, new CallableWithConnection<Void>() {
             @Override
             public Void call(final ClientSideOperationTimeout clientSideOperationTimeout, final Connection connection) {
                 try {
@@ -111,7 +110,7 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withAsyncConnection(clientSideOperationTimeoutFactory.create(), binding, new AsyncCallableWithConnection() {
+        withAsyncConnection(clientSideOperationTimeout, binding, new AsyncCallableWithConnection() {
             @Override
             public void call(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncConnection connection,
                              final Throwable t) {

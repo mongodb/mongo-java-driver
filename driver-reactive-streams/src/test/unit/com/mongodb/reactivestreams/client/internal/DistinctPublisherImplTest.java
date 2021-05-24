@@ -30,6 +30,7 @@ import reactor.core.publisher.Flux;
 
 import static com.mongodb.reactivestreams.client.MongoClients.getDefaultCodecRegistry;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -45,7 +46,7 @@ public class DistinctPublisherImplTest extends TestHelper {
         DistinctPublisher<Document> publisher =
                 new DistinctPublisherImpl<>(null, createMongoOperationPublisher(executor), fieldName, new Document());
 
-        DistinctOperation<Document> expectedOperation = new DistinctOperation<>(CSOT_FACTORY_NO_TIMEOUT, NAMESPACE, fieldName,
+        DistinctOperation<Document> expectedOperation = new DistinctOperation<>(CSOT_NO_TIMEOUT, NAMESPACE, fieldName,
                                                                                 getDefaultCodecRegistry().get(Document.class))
                 .retryReads(true).filter(new BsonDocument());
 
@@ -63,7 +64,7 @@ public class DistinctPublisherImplTest extends TestHelper {
                 .maxTime(99, MILLISECONDS)
                 .filter(filter);
 
-        expectedOperation =  new DistinctOperation<>(CSOT_FACTORY_MAX_AWAIT_TIME, NAMESPACE, fieldName,
+        expectedOperation =  new DistinctOperation<>(CSOT_MAX_AWAIT_TIME, NAMESPACE, fieldName,
                 getDefaultCodecRegistry().get(Document.class))
                 .retryReads(true)
                 .collation(COLLATION)
@@ -79,7 +80,7 @@ public class DistinctPublisherImplTest extends TestHelper {
     @DisplayName("Should handle error scenarios")
     @Test
     void shouldHandleErrorScenarios() {
-        TestOperationExecutor executor = createOperationExecutor(asList(new MongoException("Failure"), null));
+        TestOperationExecutor executor = createOperationExecutor(singletonList(new MongoException("Failure")));
 
         // Operation fails
         Publisher<Document> publisher =
@@ -87,10 +88,10 @@ public class DistinctPublisherImplTest extends TestHelper {
         assertThrows(MongoException.class, () -> Flux.from(publisher).blockFirst());
 
         // Missing Codec
-        Publisher<Document> publisherMissingCodec =
+        assertThrows(CodecConfigurationException.class, () ->
                 new DistinctPublisherImpl<>(null, createMongoOperationPublisher(executor).withCodecRegistry(BSON_CODEC_REGISTRY),
-                                            "fieldName", new Document());
-        assertThrows(CodecConfigurationException.class, () -> Flux.from(publisherMissingCodec).blockFirst());
+                "fieldName", new Document()).asAsyncReadOperation(0)
+        );
     }
 
 }

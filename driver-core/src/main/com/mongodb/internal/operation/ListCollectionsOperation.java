@@ -24,7 +24,6 @@ import com.mongodb.ServerCursor;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.ClientSideOperationTimeout;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncConnectionSource;
@@ -85,7 +84,7 @@ import static java.util.Arrays.asList;
  * @since 3.0
  */
 public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
-    private final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final String databaseName;
     private final Decoder<T> decoder;
     private boolean retryReads;
@@ -96,13 +95,13 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param databaseName the name of the database for the operation.
      * @param decoder the decoder to use for the results
      */
-    public ListCollectionsOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final String databaseName,
+    public ListCollectionsOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final String databaseName,
                                     final Decoder<T> decoder) {
-        this.clientSideOperationTimeoutFactory = notNull("clientSideOperationTimeoutFactory", clientSideOperationTimeoutFactory);
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.databaseName = notNull("databaseName", databaseName);
         this.decoder = notNull("decoder", decoder);
     }
@@ -205,7 +204,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return withReadConnectionSource(clientSideOperationTimeoutFactory.create(), binding, new CallableWithSource<BatchCursor<T>>() {
+        return withReadConnectionSource(clientSideOperationTimeout, binding, new CallableWithSource<BatchCursor<T>>() {
             @Override
             public BatchCursor<T> call(final ClientSideOperationTimeout clientSideOperationTimeout, final ConnectionSource source) {
                 Connection connection = source.getConnection();
@@ -234,7 +233,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        withAsyncReadConnection(clientSideOperationTimeoutFactory.create(), binding, new AsyncCallableWithConnectionAndSource() {
+        withAsyncReadConnection(clientSideOperationTimeout, binding, new AsyncCallableWithConnectionAndSource() {
             @Override
             public void call(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncConnectionSource source,
                              final AsyncConnection connection, final Throwable t) {

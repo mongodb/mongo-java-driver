@@ -40,9 +40,9 @@ import java.util.function.Consumer
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
-import static com.mongodb.client.internal.TestHelper.CSOT_FACTORY_MAX_TIME_AND_MAX_AWAIT_TIME
-import static com.mongodb.client.internal.TestHelper.CSOT_FACTORY_NO_TIMEOUT
-import static com.mongodb.client.internal.TestHelper.CSOT_FACTORY_TIMEOUT
+import static com.mongodb.client.internal.TestHelper.CSOT_MAX_TIME_AND_MAX_AWAIT_TIME
+import static com.mongodb.client.internal.TestHelper.CSOT_NO_TIMEOUT
+import static com.mongodb.client.internal.TestHelper.CSOT_TIMEOUT
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
@@ -88,7 +88,7 @@ class FindIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new FindOperation<Document>(CSOT_FACTORY_MAX_TIME_AND_MAX_AWAIT_TIME, namespace, new DocumentCodec())
+        expect operation, isTheSameAs(new FindOperation<Document>(CSOT_MAX_TIME_AND_MAX_AWAIT_TIME, namespace, new DocumentCodec())
                 .filter(new BsonDocument('filter', new BsonInt32(1)))
                 .sort(new BsonDocument('sort', new BsonInt32(1)))
                 .projection(new BsonDocument('projection', new BsonInt32(1)))
@@ -132,7 +132,7 @@ class FindIterableSpecification extends Specification {
         operation = executor.getReadOperation() as FindOperation<Document>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new FindOperation<Document>(CSOT_FACTORY_MAX_TIME_AND_MAX_AWAIT_TIME, namespace, new DocumentCodec())
+        expect operation, isTheSameAs(new FindOperation<Document>(CSOT_MAX_TIME_AND_MAX_AWAIT_TIME, namespace, new DocumentCodec())
                 .filter(new BsonDocument('filter', new BsonInt32(2)))
                 .sort(new BsonDocument('sort', new BsonInt32(2)))
                 .projection(new BsonDocument('projection', new BsonInt32(2)))
@@ -171,7 +171,7 @@ class FindIterableSpecification extends Specification {
         operation = executor.getReadOperation() as FindOperation<Document>
 
         then: 'should set an empty doc for the filter'
-        expect operation, isTheSameAs(new FindOperation<Document>(CSOT_FACTORY_TIMEOUT, namespace, new DocumentCodec())
+        expect operation, isTheSameAs(new FindOperation<Document>(CSOT_TIMEOUT, namespace, new DocumentCodec())
                 .filter(new BsonDocument()).slaveOk(true).retryReads(true))
     }
 
@@ -214,7 +214,7 @@ class FindIterableSpecification extends Specification {
         def operation = executor.getReadOperation() as FindOperation<Document>
 
         then:
-        expect operation, isTheSameAs(new FindOperation<Document>(CSOT_FACTORY_NO_TIMEOUT, namespace, new DocumentCodec())
+        expect operation, isTheSameAs(new FindOperation<Document>(CSOT_NO_TIMEOUT, namespace, new DocumentCodec())
                 .filter(new BsonDocument('filter', new BsonInt32(1)))
                 .sort(new BsonDocument('sort', new BsonInt32(1)))
                 .cursorType(CursorType.NonTailable)

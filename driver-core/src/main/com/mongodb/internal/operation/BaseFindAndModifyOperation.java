@@ -20,7 +20,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -44,7 +44,7 @@ import static com.mongodb.internal.operation.SyncCommandOperationHelper.executeR
  */
 public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T> {
 
-    private final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final WriteConcern writeConcern;
     private final boolean retryWrites;
@@ -53,16 +53,16 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace   the database and collection namespace for the operation.
      * @param writeConcern the writeConcern for the operation
      * @param retryWrites  if writes should be retried if they fail due to a network error.
      * @param decoder     the decoder for the result documents.
      */
-    protected BaseFindAndModifyOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory,
+    protected BaseFindAndModifyOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
                                          final MongoNamespace namespace, final WriteConcern writeConcern, final boolean retryWrites,
                                          final Decoder<T> decoder) {
-        this.clientSideOperationTimeoutFactory = notNull("clientSideOperationTimeoutFactory", clientSideOperationTimeoutFactory);
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.namespace = notNull("namespace", namespace);
         this.writeConcern = notNull("writeConcern", writeConcern);
         this.retryWrites = retryWrites;
@@ -71,14 +71,14 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
 
     @Override
     public T execute(final WriteBinding binding) {
-        return executeRetryableCommand(clientSideOperationTimeoutFactory.create(), binding, getDatabaseName(), null,
+        return executeRetryableCommand(clientSideOperationTimeout, binding, getDatabaseName(), null,
                 getFieldNameValidator(), CommandResultDocumentCodec.create(getDecoder(), "value"),
                 getCommandCreator(binding.getSessionContext()), FindAndModifyHelper.<T>transformer());
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<T> callback) {
-        executeRetryableCommandAsync(clientSideOperationTimeoutFactory.create(), binding, getDatabaseName(), null,
+        executeRetryableCommandAsync(clientSideOperationTimeout, binding, getDatabaseName(), null,
                 getFieldNameValidator(), CommandResultDocumentCodec.create(getDecoder(), "value"),
                 getCommandCreator(binding.getSessionContext()), FindAndModifyHelper.<T>asyncTransformer(), callback);
     }

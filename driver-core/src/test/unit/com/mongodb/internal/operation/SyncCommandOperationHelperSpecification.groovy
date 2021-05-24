@@ -33,7 +33,7 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.Decoder
 import spock.lang.Specification
 
-import static com.mongodb.ClusterFixture.NO_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.internal.operation.OperationUnitSpecification.getMaxWireVersionForServerVersion
 import static com.mongodb.internal.operation.SyncCommandOperationHelper.CommandReadTransformer
@@ -62,7 +62,7 @@ class SyncCommandOperationHelperSpecification extends Specification {
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeCommand(NO_CSOT_FACTORY.create(), writeBinding, dbName, commandCreator, decoder, function)
+        executeCommand(CSOT_NO_TIMEOUT, writeBinding, dbName, commandCreator, decoder, function)
 
         then:
         _ * connection.getDescription() >> connectionDescription
@@ -103,7 +103,7 @@ class SyncCommandOperationHelperSpecification extends Specification {
         }
 
         when:
-        executeRetryableCommand(NO_CSOT_FACTORY.create(), writeBinding, dbName, primary(), new NoOpFieldNameValidator(), decoder,
+        executeRetryableCommand(CSOT_NO_TIMEOUT, writeBinding, dbName, primary(), new NoOpFieldNameValidator(), decoder,
                 commandCreator, FindAndModifyHelper.transformer())
 
         then:
@@ -133,7 +133,7 @@ class SyncCommandOperationHelperSpecification extends Specification {
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeCommand(NO_CSOT_FACTORY.create(), readBinding, dbName, commandCreator, decoder, function, false)
+        executeCommand(CSOT_NO_TIMEOUT, readBinding, dbName, commandCreator, decoder, function, false)
 
         then:
         _ * connection.getDescription() >> connectionDescription

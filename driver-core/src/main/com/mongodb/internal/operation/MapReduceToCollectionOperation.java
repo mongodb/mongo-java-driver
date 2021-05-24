@@ -22,7 +22,6 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.ClientSideOperationTimeout;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -71,7 +70,7 @@ import static java.util.Arrays.asList;
  */
 public class
 MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistics>, WriteOperation<MapReduceStatistics> {
-    private final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final BsonJavaScript mapFunction;
     private final BsonJavaScript reduceFunction;
@@ -95,23 +94,23 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
     /**
      * Construct a MapReduceOperation with all the criteria it needs to execute
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      * @param mapFunction a JavaScript function that associates or "maps" a value with a key and emits the key and value pair.
      * @param reduceFunction a JavaScript function that "reduces" to a single object all the values associated with a particular key.
      * @param collectionName the name of the collection to output the results to.
      * @mongodb.driver.manual core/map-reduce Map Reduce
      */
-    public MapReduceToCollectionOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory,
+    public MapReduceToCollectionOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
                                           final MongoNamespace namespace, final BsonJavaScript mapFunction,
                                           final BsonJavaScript reduceFunction, final String collectionName) {
-        this(clientSideOperationTimeoutFactory, namespace, mapFunction, reduceFunction, collectionName, null);
+        this(clientSideOperationTimeout, namespace, mapFunction, reduceFunction, collectionName, null);
     }
 
     /**
      * Construct a MapReduceOperation with all the criteria it needs to execute
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      * @param mapFunction a JavaScript function that associates or "maps" a value with a key and emits the key and value pair.
      * @param reduceFunction a JavaScript function that "reduces" to a single object all the values associated with a particular key.
@@ -121,11 +120,11 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
      *
      * @since 3.4
      */
-    public MapReduceToCollectionOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory,
+    public MapReduceToCollectionOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
                                           final MongoNamespace namespace, final BsonJavaScript mapFunction,
                                           final BsonJavaScript reduceFunction, final String collectionName,
                                           final WriteConcern writeConcern) {
-        this.clientSideOperationTimeoutFactory = notNull("clientSideOperationTimeoutFactory", clientSideOperationTimeoutFactory);
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.namespace = notNull("namespace", namespace);
         this.mapFunction = notNull("mapFunction", mapFunction);
         this.reduceFunction = notNull("reduceFunction", reduceFunction);
@@ -487,7 +486,7 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
      */
     @Override
     public MapReduceStatistics execute(final WriteBinding binding) {
-        return withConnection(clientSideOperationTimeoutFactory.create(), binding, new CallableWithConnection<MapReduceStatistics>() {
+        return withConnection(clientSideOperationTimeout, binding, new CallableWithConnection<MapReduceStatistics>() {
             @Override
             public MapReduceStatistics call(final ClientSideOperationTimeout clientSideOperationTimeout, final Connection connection) {
                 SyncOperationHelper.validateCollation(connection, collation);
@@ -499,7 +498,7 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<MapReduceStatistics> callback) {
-        withAsyncConnection(clientSideOperationTimeoutFactory.create(), binding, new AsyncCallableWithConnection() {
+        withAsyncConnection(clientSideOperationTimeout, binding, new AsyncCallableWithConnection() {
             @Override
             public void call(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncConnection connection,
                              final Throwable t) {
@@ -548,7 +547,7 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
     }
 
     private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
-        return new CommandReadOperation<>(clientSideOperationTimeoutFactory, namespace.getDatabaseName(),
+        return new CommandReadOperation<>(clientSideOperationTimeout, namespace.getDatabaseName(),
                 asExplainCommandCreator((clientSideOperationTimeout, serverDescription, connectionDescription) ->
                         getCommand(clientSideOperationTimeout, connectionDescription), explainVerbosity), new BsonDocumentCodec());
     }

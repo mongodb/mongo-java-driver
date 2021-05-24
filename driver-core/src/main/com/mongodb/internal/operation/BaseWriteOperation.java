@@ -27,7 +27,7 @@ import com.mongodb.WriteConcernResult;
 import com.mongodb.bulk.BulkWriteError;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.WriteConcernError;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -52,7 +52,7 @@ import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE;
  * @since 3.0
  */
 public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteConcernResult>, WriteOperation<WriteConcernResult> {
-    private final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final WriteConcern writeConcern;
     private final MongoNamespace namespace;
     private final boolean ordered;
@@ -62,16 +62,16 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
     /**
      * Construct an instance
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace    the database and collection namespace for the operation.
      * @param ordered      whether the writes are ordered.
      * @param writeConcern the write concern for the operation.
      * @param retryWrites   if writes should be retried if they fail due to a network error.
      * @since 3.6
      */
-    public BaseWriteOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+    public BaseWriteOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
                               final boolean ordered, final WriteConcern writeConcern, final boolean retryWrites) {
-        this.clientSideOperationTimeoutFactory = notNull("clientSideOperationTimeoutFactory", clientSideOperationTimeoutFactory);
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.ordered = ordered;
         this.namespace = notNull("namespace", namespace);
         this.writeConcern = notNull("writeConcern", writeConcern);
@@ -169,7 +169,7 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
     }
 
     private MixedBulkWriteOperation getMixedBulkOperation() {
-        return new MixedBulkWriteOperation(clientSideOperationTimeoutFactory, namespace, getWriteRequests(), ordered, writeConcern,
+        return new MixedBulkWriteOperation(clientSideOperationTimeout, namespace, getWriteRequests(), ordered, writeConcern,
                 retryWrites).bypassDocumentValidation(bypassDocumentValidation);
     }
 

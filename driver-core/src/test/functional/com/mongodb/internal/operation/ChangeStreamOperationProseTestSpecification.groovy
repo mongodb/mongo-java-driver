@@ -32,7 +32,7 @@ import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.DEFAULT_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.CSOT_TIMEOUT
 import static com.mongodb.ClusterFixture.getAsyncCluster
 import static com.mongodb.ClusterFixture.getCluster
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
@@ -52,7 +52,7 @@ class ChangeStreamOperationProseTestSpecification extends OperationFunctionalSpe
         given:
         def helper = getHelper()
         def pipeline = [BsonDocument.parse('{$project: {"_id": 0}}')]
-        def operation = new ChangeStreamOperation<BsonDocument>(DEFAULT_CSOT_FACTORY, helper.getNamespace(), FullDocument.DEFAULT,
+        def operation = new ChangeStreamOperation<BsonDocument>(CSOT_TIMEOUT, helper.getNamespace(), FullDocument.DEFAULT,
                 pipeline, CODEC)
 
         when:
@@ -89,7 +89,7 @@ class ChangeStreamOperationProseTestSpecification extends OperationFunctionalSpe
 
         def pipeline = [BsonDocument.parse('{$match: {operationType: "insert"}}')]
         def failPointDocument = createFailPointDocument('getMore', 10107)
-        def operation = new ChangeStreamOperation<BsonDocument>(DEFAULT_CSOT_FACTORY, helper.getNamespace(), FullDocument.DEFAULT,
+        def operation = new ChangeStreamOperation<BsonDocument>(CSOT_TIMEOUT, helper.getNamespace(), FullDocument.DEFAULT,
                 pipeline, CODEC)
 
         def cursor = execute(operation, async)
@@ -122,7 +122,7 @@ class ChangeStreamOperationProseTestSpecification extends OperationFunctionalSpe
     def 'should not resume for aggregation errors'() {
         given:
         def pipeline = [BsonDocument.parse('{$unsupportedStage: {_id: 0}}')]
-        def operation = new ChangeStreamOperation<BsonDocument>(DEFAULT_CSOT_FACTORY, helper.getNamespace(), FullDocument.DEFAULT,
+        def operation = new ChangeStreamOperation<BsonDocument>(CSOT_TIMEOUT, helper.getNamespace(), FullDocument.DEFAULT,
                 pipeline, CODEC)
 
         when:

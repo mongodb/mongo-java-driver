@@ -32,8 +32,8 @@ import java.util.function.Consumer
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
-import static com.mongodb.client.internal.TestHelper.CSOT_FACTORY_MAX_TIME
-import static com.mongodb.client.internal.TestHelper.CSOT_FACTORY_NO_TIMEOUT
+import static com.mongodb.client.internal.TestHelper.CSOT_MAX_TIME
+import static com.mongodb.client.internal.TestHelper.CSOT_NO_TIMEOUT
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
@@ -59,7 +59,7 @@ class ListIndexesIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new ListIndexesOperation<Document>(CSOT_FACTORY_NO_TIMEOUT, namespace, new DocumentCodec())
+        expect operation, isTheSameAs(new ListIndexesOperation<Document>(CSOT_NO_TIMEOUT, namespace, new DocumentCodec())
                 .batchSize(100).retryReads(true))
         readPreference == secondary()
 
@@ -71,7 +71,7 @@ class ListIndexesIterableSpecification extends Specification {
         operation = executor.getReadOperation() as ListIndexesOperation<Document>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new ListIndexesOperation<Document>(CSOT_FACTORY_MAX_TIME, namespace, new DocumentCodec())
+        expect operation, isTheSameAs(new ListIndexesOperation<Document>(CSOT_MAX_TIME, namespace, new DocumentCodec())
                 .batchSize(99).retryReads(true))
     }
 

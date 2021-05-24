@@ -25,7 +25,6 @@ import com.mongodb.ReadPreference;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.ClientSideOperationTimeout;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncConnectionSource;
@@ -76,7 +75,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
 
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
-    private final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private boolean retryReads;
     private BsonDocument filter;
     private int batchSize;
@@ -100,13 +99,13 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
 
     /**
      * Construct a new instance.
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      * @param decoder the decoder for the result documents.
      */
-    public FindOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+    public FindOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
                          final Decoder<T> decoder) {
-        this.clientSideOperationTimeoutFactory = notNull("clientSideOperationTimeoutFactory", clientSideOperationTimeoutFactory);
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.namespace = notNull("namespace", namespace);
         this.decoder = notNull("decoder", decoder);
     }
@@ -581,7 +580,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return SyncOperationHelper.withReadConnectionSource(clientSideOperationTimeoutFactory.create(), binding,
+        return SyncOperationHelper.withReadConnectionSource(clientSideOperationTimeout, binding,
                 new CallableWithSource<BatchCursor<T>>() {
             @Override
             public BatchCursor<T> call(final ClientSideOperationTimeout clientSideOperationTimeout, final ConnectionSource source) {
@@ -624,7 +623,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        AsyncOperationHelper.withAsyncReadConnection(clientSideOperationTimeoutFactory.create(), binding,
+        AsyncOperationHelper.withAsyncReadConnection(clientSideOperationTimeout, binding,
                 new AsyncCallableWithConnectionAndSource() {
             @Override
             public void call(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncConnectionSource source,
@@ -700,14 +699,14 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
 
     @Override
     public <R> ReadOperation<R> asExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
-        return new CommandReadOperation<>(clientSideOperationTimeoutFactory, getNamespace().getDatabaseName(),
+        return new CommandReadOperation<>(clientSideOperationTimeout, getNamespace().getDatabaseName(),
                 asExplainCommandCreator(getCommandCreator(NoOpSessionContext.INSTANCE), verbosity), resultDecoder);
     }
 
     @Override
     public <R> AsyncReadOperation<R> asAsyncExplainableOperation(@Nullable final ExplainVerbosity verbosity,
                                                                  final Decoder<R> resultDecoder) {
-        return new CommandReadOperation<>(clientSideOperationTimeoutFactory, getNamespace().getDatabaseName(),
+        return new CommandReadOperation<>(clientSideOperationTimeout, getNamespace().getDatabaseName(),
                 asExplainCommandCreator(getCommandCreator(NoOpSessionContext.INSTANCE), verbosity), resultDecoder);
     }
 

@@ -21,7 +21,6 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.ClientSideOperationTimeout;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncConnectionSource;
@@ -60,7 +59,7 @@ import static com.mongodb.internal.operation.SyncCommandOperationHelper.executeC
  */
 public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
     private static final String VALUES = "values";
-    private final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final String fieldName;
     private final Decoder<T> decoder;
@@ -71,14 +70,14 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
     /**
      * Construct an instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      * @param fieldName the name of the field to return distinct values.
      * @param decoder   the decoder for the result documents.
      */
-    public DistinctOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+    public DistinctOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
                              final String fieldName, final Decoder<T> decoder) {
-        this.clientSideOperationTimeoutFactory = notNull("clientSideOperationTimeoutFactory", clientSideOperationTimeoutFactory);
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.namespace = notNull("namespace", namespace);
         this.fieldName = notNull("fieldName", fieldName);
         this.decoder = notNull("decoder", decoder);
@@ -156,13 +155,13 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return executeCommand(clientSideOperationTimeoutFactory.create(), binding, namespace.getDatabaseName(),
+        return executeCommand(clientSideOperationTimeout, binding, namespace.getDatabaseName(),
                 getCommandCreator(binding.getSessionContext()), createCommandDecoder(), transformer(), retryReads);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        executeCommandAsync(clientSideOperationTimeoutFactory.create(), binding, namespace.getDatabaseName(),
+        executeCommandAsync(clientSideOperationTimeout, binding, namespace.getDatabaseName(),
                 getCommandCreator(binding.getSessionContext()), createCommandDecoder(),
                 asyncTransformer(), retryReads, errorHandlingCallback(callback, LOGGER));
     }

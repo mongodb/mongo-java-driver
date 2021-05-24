@@ -27,7 +27,7 @@ import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
-import com.mongodb.internal.ClientSideOperationTimeoutFactories;
+import com.mongodb.internal.ClientSideOperationTimeouts;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.ChangeStreamOperation;
@@ -181,7 +181,7 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
     }
 
     private ReadOperation<BatchCursor<RawBsonDocument>> createChangeStreamOperation() {
-        return new ChangeStreamOperation<>(ClientSideOperationTimeoutFactories.create(getTimeoutMS(), 0, maxAwaitTimeMS),
+        return new ChangeStreamOperation<>(ClientSideOperationTimeouts.create(getTimeoutMS(), 0, maxAwaitTimeMS),
                 namespace, fullDocument, createBsonDocumentList(pipeline),
                                                           new RawBsonDocumentCodec(), changeStreamLevel)
                         .batchSize(getBatchSize())

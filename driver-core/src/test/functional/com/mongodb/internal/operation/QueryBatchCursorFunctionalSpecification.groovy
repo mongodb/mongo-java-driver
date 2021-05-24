@@ -23,7 +23,7 @@ import com.mongodb.ReadPreference
 import com.mongodb.ServerCursor
 import com.mongodb.WriteConcern
 import com.mongodb.client.model.CreateCollectionOptions
-import com.mongodb.internal.ClientSideOperationTimeoutFactories
+import com.mongodb.internal.ClientSideOperationTimeouts
 import com.mongodb.internal.binding.ConnectionSource
 import com.mongodb.internal.connection.Connection
 import com.mongodb.internal.connection.QueryResult
@@ -40,7 +40,7 @@ import util.spock.annotations.Slow
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.ClusterFixture.DEFAULT_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.CSOT_TIMEOUT
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION
 import static com.mongodb.ClusterFixture.checkReferenceCountReachesTarget
 import static com.mongodb.ClusterFixture.getBinding
@@ -78,7 +78,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def firstBatch = executeQuery(2)
 
         when:
-        cursor = new QueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch, 0, 0, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(CSOT_TIMEOUT, firstBatch, 0, 0, new DocumentCodec(), connectionSource)
 
         then:
         cursor.getServerCursor() != null
@@ -89,7 +89,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def firstBatch = executeQuery()
 
         when:
-        cursor = new QueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch, 0, 0, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(CSOT_TIMEOUT, firstBatch, 0, 0, new DocumentCodec(), connectionSource)
         then:
         cursor.getServerAddress() != null
     }
@@ -98,7 +98,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         given:
         def firstBatch = executeQuery()
 
-        cursor = new QueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch, 0, 0, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(CSOT_TIMEOUT, firstBatch, 0, 0, new DocumentCodec(), connectionSource)
 
         when:
         cursor.close()
@@ -127,7 +127,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         given:
         def firstBatch = executeQuery(1)
 
-        cursor = new QueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch, 2, 0, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(CSOT_TIMEOUT, firstBatch, 2, 0, new DocumentCodec(), connectionSource)
         when:
         cursor.next()
         cursor.next()
@@ -142,7 +142,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def firstBatch = executeQuery()
 
         when:
-        cursor = new QueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch, 0, 0, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(CSOT_TIMEOUT, firstBatch, 0, 0, new DocumentCodec(), connectionSource)
 
         then:
         cursor.iterator().sum { it.size } == 10
@@ -154,7 +154,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def connection = connectionSource.getConnection()
 
         when:
-        cursor = new QueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch, limit, batchSize, new DocumentCodec(),
+        cursor = new QueryBatchCursor<Document>(CSOT_TIMEOUT, firstBatch, limit, batchSize, new DocumentCodec(),
                 connectionSource, connection)
 
         then:
@@ -179,7 +179,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         given:
         def firstBatch = executeQuery()
 
-        cursor = new QueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch, 0, 0, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(CSOT_TIMEOUT, firstBatch, 0, 0, new DocumentCodec(), connectionSource)
 
         when:
         cursor.remove()
@@ -198,7 +198,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, awaitData);
 
         when:
-        cursor = new QueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch, 0, 2, new DocumentCodec(),
+        cursor = new QueryBatchCursor<Document>(CSOT_TIMEOUT, firstBatch, 0, 2, new DocumentCodec(),
                 connectionSource, connection)
 
         then:
@@ -246,7 +246,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
 
 
         when:
-        cursor = new QueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch, 0, 2, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(CSOT_TIMEOUT, firstBatch, 0, 2, new DocumentCodec(), connectionSource)
 
         then:
         cursor.tryNext().iterator().next().get('_id') == 1
@@ -268,7 +268,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
         def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, true);
-        cursor = new QueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch, 0, 2, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(CSOT_TIMEOUT, firstBatch, 0, 2, new DocumentCodec(), connectionSource)
         cursor.next()
         def latch = new CountDownLatch(1)
 
@@ -298,7 +298,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
 
         def connection = connectionSource.getConnection()
         def maxTimeMS = 10
-        def csotFactory = ClientSideOperationTimeoutFactories.create(null, null, maxTimeMS, 0)
+        def csotFactory = ClientSideOperationTimeouts.create(null, null, maxTimeMS, 0)
         cursor = new QueryBatchCursor<Document>(csotFactory.create(), firstBatch, 0, 2, new DocumentCodec(), connectionSource, connection)
         cursor.tryNext()
         long startTime = System.currentTimeMillis()
@@ -324,7 +324,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def firstBatch = executeQuery(new BsonDocument(), 0, 2, true, true)
 
         when:
-        cursor = new QueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch, 0, 2, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(CSOT_TIMEOUT, firstBatch, 0, 2, new DocumentCodec(), connectionSource)
 
         CountDownLatch latch = new CountDownLatch(1)
         def seen = 0
@@ -355,7 +355,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def firstBatch = executeQuery(5)
         def connection = connectionSource.getConnection()
 
-        cursor = new QueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch, 5, 0, new DocumentCodec(),
+        cursor = new QueryBatchCursor<Document>(CSOT_TIMEOUT, firstBatch, 5, 0, new DocumentCodec(),
                 connectionSource, connection)
 
         when:
@@ -374,7 +374,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         given:
         def firstBatch = executeQuery(3)
 
-        cursor = new QueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch, 5, 3, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(CSOT_TIMEOUT, firstBatch, 5, 3, new DocumentCodec(), connectionSource)
         ServerCursor serverCursor = cursor.getServerCursor()
 
         cursor.next()
@@ -394,7 +394,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def connection = connectionSource.getConnection()
 
         when:
-        cursor = new QueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch, 5, 0, new DocumentCodec(),
+        cursor = new QueryBatchCursor<Document>(CSOT_TIMEOUT, firstBatch, 5, 0, new DocumentCodec(),
                 connectionSource, connection)
 
         then:
@@ -408,7 +408,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         given:
         def firstBatch = executeQuery(3)
 
-        cursor = new QueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch, 5, 3, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(CSOT_TIMEOUT, firstBatch, 5, 3, new DocumentCodec(), connectionSource)
 
         when:
         cursor.next()
@@ -423,7 +423,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def firstBatch = executeQuery(2)
 
         when:
-        cursor = new QueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch, 5, 2, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(CSOT_TIMEOUT, firstBatch, 5, 2, new DocumentCodec(), connectionSource)
 
         then:
         cursor.next() != null
@@ -442,7 +442,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def firstBatch = executeQuery(300, 0)
 
         when:
-        cursor = new QueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch, 300, 0, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(CSOT_TIMEOUT, firstBatch, 300, 0, new DocumentCodec(), connectionSource)
 
         then:
         cursor.iterator().sum { it.size } == 300
@@ -453,7 +453,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def firstBatch = executeQuery(2)
 
         when:
-        cursor = new QueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch, 0, 2, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(CSOT_TIMEOUT, firstBatch, 0, 2, new DocumentCodec(), connectionSource)
 
         then:
         cursor.batchSize == 2
@@ -490,7 +490,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def firstBatch = executeQuery(2)
 
         when:
-        cursor = new QueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch, 0, 2, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(CSOT_TIMEOUT, firstBatch, 0, 2, new DocumentCodec(), connectionSource)
         def results = cursor.iterator().collectMany { it*.get('_id') }
 
         then:
@@ -503,7 +503,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def firstBatch = executeQuery(2)
 
         when:
-        cursor = new QueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch, 0, 2, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(CSOT_TIMEOUT, firstBatch, 0, 2, new DocumentCodec(), connectionSource)
 
         then:
         (0..4).each { cursor.next() }
@@ -524,7 +524,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def firstBatch = executeQuery(2)
 
         when:
-        cursor = new QueryBatchCursor<Document>(DEFAULT_CSOT_FACTORY.create(), firstBatch, 0, 2, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(CSOT_TIMEOUT, firstBatch, 0, 2, new DocumentCodec(), connectionSource)
         def serverCursor = cursor.getServerCursor()
         def connection = connectionSource.getConnection()
         connection.killCursor(getNamespace(), asList(cursor.getServerCursor().id))

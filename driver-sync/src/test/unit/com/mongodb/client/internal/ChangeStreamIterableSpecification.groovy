@@ -44,8 +44,8 @@ import java.util.function.Consumer
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
-import static com.mongodb.client.internal.TestHelper.CSOT_FACTORY_MAX_AWAIT_TIME
-import static com.mongodb.client.internal.TestHelper.CSOT_FACTORY_NO_TIMEOUT
+import static com.mongodb.client.internal.TestHelper.CSOT_MAX_AWAIT_TIME
+import static com.mongodb.client.internal.TestHelper.CSOT_NO_TIMEOUT
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
@@ -72,7 +72,7 @@ class ChangeStreamIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new ChangeStreamOperation<Document>(CSOT_FACTORY_NO_TIMEOUT, namespace, FullDocument.DEFAULT,
+        expect operation, isTheSameAs(new ChangeStreamOperation<Document>(CSOT_NO_TIMEOUT, namespace, FullDocument.DEFAULT,
                 [BsonDocument.parse('{$match: 1}')], codec as Decoder<Document>)
                 .retryReads(true))
         readPreference == secondary()
@@ -87,7 +87,7 @@ class ChangeStreamIterableSpecification extends Specification {
         operation = executor.getReadOperation() as ChangeStreamOperation<Document>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new ChangeStreamOperation<Document>(CSOT_FACTORY_MAX_AWAIT_TIME, namespace,
+        expect operation, isTheSameAs(new ChangeStreamOperation<Document>(CSOT_MAX_AWAIT_TIME, namespace,
                 FullDocument.UPDATE_LOOKUP, [BsonDocument.parse('{$match: 1}')], codec as Decoder<Document>
         )
                 .collation(collation)

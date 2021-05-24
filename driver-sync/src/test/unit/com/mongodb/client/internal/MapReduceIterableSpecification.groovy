@@ -43,9 +43,9 @@ import java.util.function.Consumer
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
-import static com.mongodb.client.internal.TestHelper.CSOT_FACTORY_MAX_TIME
-import static com.mongodb.client.internal.TestHelper.CSOT_FACTORY_NO_TIMEOUT
-import static com.mongodb.client.internal.TestHelper.CSOT_FACTORY_TIMEOUT
+import static com.mongodb.client.internal.TestHelper.CSOT_MAX_TIME
+import static com.mongodb.client.internal.TestHelper.CSOT_NO_TIMEOUT
+import static com.mongodb.client.internal.TestHelper.CSOT_TIMEOUT
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
@@ -73,7 +73,7 @@ class MapReduceIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new MapReduceWithInlineResultsOperation<Document>(CSOT_FACTORY_NO_TIMEOUT, namespace,
+        expect operation, isTheSameAs(new MapReduceWithInlineResultsOperation<Document>(CSOT_NO_TIMEOUT, namespace,
                 new BsonJavaScript('map'), new BsonJavaScript('reduce'), new DocumentCodec())
                 .verbose(true))
         readPreference == secondary()
@@ -93,7 +93,7 @@ class MapReduceIterableSpecification extends Specification {
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new MapReduceWithInlineResultsOperation<Document>(
-                CSOT_FACTORY_MAX_TIME,
+                CSOT_MAX_TIME,
                 namespace,
                 new BsonJavaScript('map'),
                 new BsonJavaScript('reduce'), new DocumentCodec())
@@ -133,7 +133,7 @@ class MapReduceIterableSpecification extends Specification {
         mapReduceIterable.iterator()
 
         def operation = executor.getWriteOperation() as MapReduceToCollectionOperation
-        def expectedOperation = new MapReduceToCollectionOperation(CSOT_FACTORY_TIMEOUT, namespace, new BsonJavaScript('map'),
+        def expectedOperation = new MapReduceToCollectionOperation(CSOT_TIMEOUT, namespace, new BsonJavaScript('map'),
                 new BsonJavaScript('reduce'), 'collName', writeConcern)
                 .databaseName(collectionNamespace.getDatabaseName())
                 .filter(new BsonDocument('filter', new BsonInt32(1)))

@@ -21,7 +21,6 @@ import com.mongodb.ReadConcern;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.ClientSideOperationTimeout;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncWriteBinding;
@@ -66,7 +65,7 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  * @since 3.0
  */
 public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
-    private final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final List<BsonDocument> pipeline;
     private final WriteConcern writeConcern;
@@ -82,67 +81,67 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      * @param pipeline the aggregation pipeline.
      */
-    public AggregateToCollectionOperation(final ClientSideOperationTimeoutFactory  clientSideOperationTimeoutFactory,
+    public AggregateToCollectionOperation(final ClientSideOperationTimeout  clientSideOperationTimeout,
                                           final MongoNamespace namespace, final List<BsonDocument> pipeline) {
-        this(clientSideOperationTimeoutFactory, namespace, pipeline, null, null, AggregationLevel.COLLECTION);
+        this(clientSideOperationTimeout, namespace, pipeline, null, null, AggregationLevel.COLLECTION);
     }
 
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      * @param pipeline the aggregation pipeline.
      * @param writeConcern the write concern to apply
      *
      * @since 3.4
      */
-    public AggregateToCollectionOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory,
+    public AggregateToCollectionOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
                                           final MongoNamespace namespace, final List<BsonDocument> pipeline,
                                           final WriteConcern writeConcern) {
-        this(clientSideOperationTimeoutFactory, namespace, pipeline, null, writeConcern, AggregationLevel.COLLECTION);
+        this(clientSideOperationTimeout, namespace, pipeline, null, writeConcern, AggregationLevel.COLLECTION);
     }
 
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      * @param pipeline the aggregation pipeline.
      * @param readConcern the read concern to apply
      *
      * @since 3.11
      */
-    public AggregateToCollectionOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory,
+    public AggregateToCollectionOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
                                           final MongoNamespace namespace, final List<BsonDocument> pipeline,
                                           final ReadConcern readConcern) {
-        this(clientSideOperationTimeoutFactory, namespace, pipeline, readConcern, null, AggregationLevel.COLLECTION);
+        this(clientSideOperationTimeout, namespace, pipeline, readConcern, null, AggregationLevel.COLLECTION);
     }
 
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      * @param pipeline the aggregation pipeline.
      * @param readConcern the read concern to apply
      * @param writeConcern the write concern to apply
      * @since 3.11
      */
-    public AggregateToCollectionOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory,
+    public AggregateToCollectionOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
                                           final MongoNamespace namespace, final List<BsonDocument> pipeline,
                                           final ReadConcern readConcern, final WriteConcern writeConcern) {
-        this(clientSideOperationTimeoutFactory, namespace, pipeline, readConcern, writeConcern, AggregationLevel.COLLECTION);
+        this(clientSideOperationTimeout, namespace, pipeline, readConcern, writeConcern, AggregationLevel.COLLECTION);
     }
 
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      * @param pipeline the aggregation pipeline.
      * @param readConcern the read concern to apply
@@ -150,11 +149,11 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
      * @param aggregationLevel the aggregation level
      * @since 3.11
      */
-    public AggregateToCollectionOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory,
+    public AggregateToCollectionOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
                                           final MongoNamespace namespace, final List<BsonDocument> pipeline,
                                           final ReadConcern readConcern, final WriteConcern writeConcern,
                                           final AggregationLevel aggregationLevel) {
-        this.clientSideOperationTimeoutFactory = notNull("clientSideOperationTimeoutFactory", clientSideOperationTimeoutFactory);
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.namespace = notNull("namespace", namespace);
         this.pipeline = notNull("pipeline", pipeline);
         this.writeConcern = writeConcern;
@@ -318,7 +317,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
 
     @Override
     public Void execute(final WriteBinding binding) {
-        return withConnection(clientSideOperationTimeoutFactory.create(), binding, new CallableWithConnectionAndSource<Void>() {
+        return withConnection(clientSideOperationTimeout, binding, new CallableWithConnectionAndSource<Void>() {
             @Override
             public Void call(final ClientSideOperationTimeout clientSideOperationTimeout,
                              final ConnectionSource source, final Connection connection) {
@@ -332,7 +331,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withAsyncConnection(clientSideOperationTimeoutFactory.create(), binding, new AsyncCallableWithConnectionAndSource() {
+        withAsyncConnection(clientSideOperationTimeout, binding, new AsyncCallableWithConnectionAndSource() {
             @Override
             public void call(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncConnectionSource source,
                              final AsyncConnection connection, final Throwable t) {

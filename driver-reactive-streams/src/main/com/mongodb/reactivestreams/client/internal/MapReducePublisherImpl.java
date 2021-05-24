@@ -20,8 +20,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.MapReduceAction;
-import com.mongodb.internal.ClientSideOperationTimeoutFactories;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -199,33 +198,31 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
             // initialBatchSize is ignored for map reduce operations.
             return createMapReduceInlineOperation();
         } else {
-
-            ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory =
-                    ClientSideOperationTimeoutFactories.shared(getClientSideOperationTimeoutFactory(maxTimeMS));
-            return new WriteOperationThenCursorReadOperation<>(createMapReduceToCollectionOperation(clientSideOperationTimeoutFactory),
-                    createFindOperation(clientSideOperationTimeoutFactory, initialBatchSize));
+            ClientSideOperationTimeout clientSideOperationTimeout = getClientSideOperationTimeout(maxTimeMS);
+            return new WriteOperationThenCursorReadOperation<>(createMapReduceToCollectionOperation(clientSideOperationTimeout),
+                    createFindOperation(clientSideOperationTimeout, initialBatchSize));
         }
     }
 
     private WrappedMapReduceReadOperation<T> createMapReduceInlineOperation() {
         return new WrappedMapReduceReadOperation<T>(getOperations().mapReduce(
-                getClientSideOperationTimeoutFactory(maxTimeMS), mapFunction, reduceFunction, finalizeFunction,
+                getClientSideOperationTimeout(maxTimeMS), mapFunction, reduceFunction, finalizeFunction,
                 getDocumentClass(), filter, limit, jsMode, scope, sort, verbose, collation));
     }
 
     private WrappedMapReduceWriteOperation createMapReduceToCollectionOperation() {
-        return createMapReduceToCollectionOperation(getClientSideOperationTimeoutFactory(maxTimeMS));
+        return createMapReduceToCollectionOperation(getClientSideOperationTimeout(maxTimeMS));
     }
 
     private WrappedMapReduceWriteOperation createMapReduceToCollectionOperation(
-            final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory) {
+            final ClientSideOperationTimeout clientSideOperationTimeoutFactory) {
         return new WrappedMapReduceWriteOperation(getOperations().mapReduceToCollection(clientSideOperationTimeoutFactory, databaseName,
                 collectionName, mapFunction, reduceFunction, finalizeFunction, filter, limit, jsMode, scope, sort, verbose, action,
                 nonAtomic, sharded, bypassDocumentValidation, collation));
     }
 
     private AsyncReadOperation<AsyncBatchCursor<T>> createFindOperation(
-            final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final int initialBatchSize) {
+            final ClientSideOperationTimeout clientSideOperationTimeoutFactory, final int initialBatchSize) {
         String dbName = databaseName != null ? databaseName : getNamespace().getDatabaseName();
         FindOptions findOptions = new FindOptions().collation(collation).batchSize(initialBatchSize);
         return getOperations().find(clientSideOperationTimeoutFactory, new MongoNamespace(dbName, collectionName), new BsonDocument(),

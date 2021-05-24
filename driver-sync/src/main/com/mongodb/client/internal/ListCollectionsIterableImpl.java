@@ -20,7 +20,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListCollectionsIterable;
-import com.mongodb.internal.ClientSideOperationTimeoutFactories;
+import com.mongodb.internal.ClientSideOperationTimeouts;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.SyncOperations;
@@ -81,7 +81,7 @@ class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> im
 
     @Override
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
-        return operations.listCollections(ClientSideOperationTimeoutFactories.create(getTimeoutMS(), maxTimeMS), databaseName,
+        return operations.listCollections(ClientSideOperationTimeouts.create(getTimeoutMS(), maxTimeMS), databaseName,
                                           resultClass, filter, collectionNamesOnly, getBatchSize());
     }
 }

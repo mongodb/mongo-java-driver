@@ -32,7 +32,7 @@ import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerId
-import com.mongodb.internal.ClientSideOperationTimeoutFactory
+import com.mongodb.internal.ClientSideOperationTimeout
 import com.mongodb.internal.binding.AsyncClusterBinding
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
@@ -55,10 +55,10 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.DEFAULT_CSOT_FACTORY
-import static com.mongodb.ClusterFixture.MAX_AWAIT_TIME_MS_CSOT_FACTORY
-import static com.mongodb.ClusterFixture.MAX_TIME_MS_CSOT_FACTORY
-import static com.mongodb.ClusterFixture.NO_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.CSOT_MAX_TIME
+import static com.mongodb.ClusterFixture.CSOT_MAX_TIME_AND_MAX_AWAIT_TIME
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
+import static com.mongodb.ClusterFixture.CSOT_TIMEOUT
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
@@ -83,7 +83,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def decoder = new DocumentCodec()
 
         when:
-        FindOperation operation = new FindOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(), decoder)
+        FindOperation operation = new FindOperation<Document>(CSOT_TIMEOUT, getNamespace(), decoder)
 
         then:
         operation.getNamespace() == getNamespace()
@@ -109,7 +109,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def hint = new BsonString('a_1')
 
         when:
-        FindOperation operation = new FindOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(), new DocumentCodec())
+        FindOperation operation = new FindOperation<Document>(CSOT_TIMEOUT, getNamespace(), new DocumentCodec())
                 .filter(filter)
                 .limit(20)
                 .skip(30)
@@ -143,7 +143,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         given:
         def document = new Document('_id', 1)
         getCollectionHelper().insertDocuments(new DocumentCodec(), document);
-        def operation = new FindOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(), new DocumentCodec())
+        def operation = new FindOperation<Document>(CSOT_TIMEOUT, getNamespace(), new DocumentCodec())
 
         when:
         def results = executeAndCollectBatchCursorResults(operation, async)
@@ -169,7 +169,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         where:
         [async, operation] << [
                 [true, false],
-                [new FindOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(), new DocumentCodec())
+                [new FindOperation<Document>(CSOT_TIMEOUT, getNamespace(), new DocumentCodec())
                          .filter(new BsonDocument('_id', new BsonInt32(1)))]
         ].combinations()
     }
@@ -190,7 +190,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         where:
         [async, operation] << [
                 [true, false],
-                [new FindOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(), new DocumentCodec())
+                [new FindOperation<Document>(CSOT_TIMEOUT, getNamespace(), new DocumentCodec())
                          .sort(new BsonDocument('_id', new BsonInt32(1)))]
         ].combinations()
     }
@@ -199,7 +199,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(),
                 new Document('x', 5).append('y', 10), new Document('_id', 1).append('x', 10));
-        def operation = new FindOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(), new DocumentCodec())
+        def operation = new FindOperation<Document>(CSOT_TIMEOUT, getNamespace(), new DocumentCodec())
                 .projection(new BsonDocument('_id', new BsonInt32(0)).append('x', new BsonInt32(1)))
 
         when:
@@ -218,7 +218,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
                          new Document('_id', 5)]
         getCollectionHelper().insertDocuments(new DocumentCodec(), documents);
 
-        def operation = new FindOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(), new DocumentCodec())
+        def operation = new FindOperation<Document>(CSOT_TIMEOUT, getNamespace(), new DocumentCodec())
                 .sort(new BsonDocument('_id', new BsonInt32(1)))
                 .skip(3)
 
@@ -238,7 +238,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
                          new Document('_id', 5)]
         getCollectionHelper().insertDocuments(new DocumentCodec(), documents);
 
-        def operation = new FindOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(), new DocumentCodec())
+        def operation = new FindOperation<Document>(CSOT_TIMEOUT, getNamespace(), new DocumentCodec())
                 .sort(new BsonDocument('_id', new BsonInt32(1)))
                 .limit(limit)
 
@@ -257,7 +257,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def documents = [new Document('_id', 1), new Document('_id', 2), new Document('_id', 3), new Document('_id', 4),
                          new Document('_id', 5)]
         getCollectionHelper().insertDocuments(new DocumentCodec(), documents);
-        def operation = new FindOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(), new DocumentCodec())
+        def operation = new FindOperation<Document>(CSOT_TIMEOUT, getNamespace(), new DocumentCodec())
                 .sort(new BsonDocument('_id', new BsonInt32(1)))
                 .batchSize(batchSize)
 
@@ -300,7 +300,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should throw query exception'() {
         given:
-        def operation = new FindOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(), new DocumentCodec())
+        def operation = new FindOperation<Document>(CSOT_TIMEOUT, getNamespace(), new DocumentCodec())
                 .filter(new BsonDocument('x', new BsonDocument('$thisIsNotAnOperator', BsonBoolean.TRUE)))
 
         when:
@@ -330,7 +330,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         disableMaxTimeFailPoint()
 
         where:
-        [async, csotFactory] << [[true, false], [MAX_TIME_MS_CSOT_FACTORY, DEFAULT_CSOT_FACTORY]].combinations()
+        [async, csotFactory] << [[true, false], [CSOT_MAX_TIME, CSOT_TIMEOUT]].combinations()
     }
 
     def '$max should limit items returned'() {
@@ -339,7 +339,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
             collectionHelper.insertDocuments(new DocumentCodec(), new Document('x', 'y').append('count', it))
         }
         collectionHelper.createIndex(new BsonDocument('count', new BsonInt32(1)))
-        def operation = new FindOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(), new DocumentCodec())
+        def operation = new FindOperation<Document>(CSOT_TIMEOUT, getNamespace(), new DocumentCodec())
                 .max(new BsonDocument('count', new BsonInt32(11)))
                 .hint(new BsonDocument('count', new BsonInt32(1)))
 
@@ -359,7 +359,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
             collectionHelper.insertDocuments(new DocumentCodec(), new Document('x', 'y').append('count', it))
         }
         collectionHelper.createIndex(new BsonDocument('count', new BsonInt32(1)))
-        def operation = new FindOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(), new DocumentCodec())
+        def operation = new FindOperation<Document>(CSOT_TIMEOUT, getNamespace(), new DocumentCodec())
                 .min(new BsonDocument('count', new BsonInt32(10)))
                 .hint(new BsonDocument('count', new BsonInt32(1)))
 
@@ -380,7 +380,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         }
         collectionHelper.createIndex(new BsonDocument('x', new BsonInt32(1)))
 
-        def operation = new FindOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(), new DocumentCodec())
+        def operation = new FindOperation<Document>(CSOT_TIMEOUT, getNamespace(), new DocumentCodec())
                 .filter(new BsonDocument('x', new BsonInt32(7)))
                 .returnKey(true)
 
@@ -400,7 +400,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def index = new BsonDocument('a', new BsonInt32(1))
         collectionHelper.createIndex(index)
 
-        def operation = new FindOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(), new DocumentCodec())
+        def operation = new FindOperation<Document>(CSOT_TIMEOUT, getNamespace(), new DocumentCodec())
                 .hint((BsonValue) hint)
                 .asExplainableOperation(null, new BsonDocumentCodec())
 
@@ -419,10 +419,10 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
     def 'should apply comment'() {
         given:
         def profileCollectionHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'system.profile'))
-        new CommandReadOperation<>(DEFAULT_CSOT_FACTORY, getDatabaseName(), new BsonDocument('profile', new BsonInt32(2)),
+        new CommandReadOperation<>(CSOT_TIMEOUT, getDatabaseName(), new BsonDocument('profile', new BsonInt32(2)),
                 new BsonDocumentCodec()).execute(getBinding())
         def expectedComment = 'this is a comment'
-        def operation = new FindOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(), new DocumentCodec())
+        def operation = new FindOperation<Document>(CSOT_TIMEOUT, getNamespace(), new DocumentCodec())
                 .comment(expectedComment)
 
         when:
@@ -439,9 +439,9 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         }
 
         cleanup:
-        new CommandReadOperation<>(DEFAULT_CSOT_FACTORY, getDatabaseName(), new BsonDocument('profile', new BsonInt32(0)),
+        new CommandReadOperation<>(CSOT_TIMEOUT, getDatabaseName(), new BsonDocument('profile', new BsonInt32(0)),
                 new BsonDocumentCodec()) .execute(getBinding())
-        profileCollectionHelper.drop();
+        profileCollectionHelper.drop()
 
         where:
         async << [true, false]
@@ -452,7 +452,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         String fieldName = serverVersionAtLeast(3, 2) ? '$recordId' : '$diskLoc';
         collectionHelper.insertDocuments(new BsonDocument())
 
-        def operation = new FindOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(), new DocumentCodec())
+        def operation = new FindOperation<Document>(CSOT_TIMEOUT, getNamespace(), new DocumentCodec())
                 .showRecordId(true)
 
         when:
@@ -469,7 +469,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
     def 'should read from a secondary'() {
         given:
         collectionHelper.insertDocuments(new DocumentCodec(), new Document())
-        def operation = new FindOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(), new DocumentCodec())
+        def operation = new FindOperation<Document>(CSOT_TIMEOUT, getNamespace(), new DocumentCodec())
         def syncBinding = new ClusterBinding(getCluster(), ReadPreference.secondary(), ReadConcern.DEFAULT, null)
         def asyncBinding = new AsyncClusterBinding(getAsyncCluster(), ReadPreference.secondary(), ReadConcern.DEFAULT, null)
 
@@ -489,7 +489,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def documents = [new Document('_id', 3), new Document('_id', 1), new Document('_id', 2), new Document('_id', 5),
                          new Document('_id', 4)]
         collectionHelper.insertDocuments(new DocumentCodec(), documents);
-        def operation = new FindOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(), new DocumentCodec())
+        def operation = new FindOperation<Document>(CSOT_TIMEOUT, getNamespace(), new DocumentCodec())
 
         when:
         def hedgeOptions = isHedgeEnabled != null ?
@@ -530,7 +530,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
                 .append('maxTimeMS', new BsonInt64(TIMEOUT_DURATION.toMillis()))
         appendReadConcernToCommand(sessionContext, commandDocument)
 
-        def operation = new FindOperation<Document>(MAX_TIME_MS_CSOT_FACTORY, getNamespace(), new DocumentCodec())
+        def operation = new FindOperation<Document>(CSOT_MAX_TIME, getNamespace(), new DocumentCodec())
 
         when:
         operation.execute(binding)
@@ -571,7 +571,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
                 .append('maxTimeMS', new BsonInt64(TIMEOUT_DURATION.toMillis()))
         appendReadConcernToCommand(sessionContext, commandDocument)
 
-        def operation = new FindOperation<Document>(MAX_TIME_MS_CSOT_FACTORY, getNamespace(), new DocumentCodec())
+        def operation = new FindOperation<Document>(CSOT_MAX_TIME, getNamespace(), new DocumentCodec())
 
         when:
         executeAsync(operation, binding)
@@ -611,7 +611,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def commandDocument = new BsonDocument('find', new BsonString(getCollectionName())).append('allowDiskUse', BsonBoolean.TRUE)
         appendReadConcernToCommand(sessionContext, commandDocument)
 
-        def operation = new FindOperation<Document>(NO_CSOT_FACTORY, getNamespace(), new DocumentCodec()).allowDiskUse(true)
+        def operation = new FindOperation<Document>(CSOT_NO_TIMEOUT, getNamespace(), new DocumentCodec()).allowDiskUse(true)
 
         when:
         operation.execute(binding)
@@ -651,7 +651,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def commandDocument = new BsonDocument('find', new BsonString(getCollectionName())).append('allowDiskUse', BsonBoolean.TRUE)
         appendReadConcernToCommand(sessionContext, commandDocument)
 
-        def operation = new FindOperation<Document>(NO_CSOT_FACTORY, getNamespace(), new DocumentCodec()).allowDiskUse(true)
+        def operation = new FindOperation<Document>(CSOT_NO_TIMEOUT, getNamespace(), new DocumentCodec()).allowDiskUse(true)
 
         when:
         executeAsync(operation, binding)
@@ -679,7 +679,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should call query on Connection with no $query when there are no other meta operators'() {
         given:
-        def operation = new FindOperation<Document>(NO_CSOT_FACTORY, getNamespace(), new DocumentCodec())
+        def operation = new FindOperation<Document>(CSOT_NO_TIMEOUT, getNamespace(), new DocumentCodec())
                 .projection(new BsonDocument('x', new BsonInt32(1)))
                 .filter(new BsonDocument('z', new BsonString('val')))
         def binding = Stub(ReadBinding) {
@@ -712,13 +712,11 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
     def 'should pass tailable and await data flags through'() {
         given:
         collectionHelper.create(getCollectionName(), new CreateCollectionOptions().capped(true).sizeInBytes(1000))
-        def operation = new FindOperation<BsonDocument>(csotFactory as ClientSideOperationTimeoutFactory, namespace,
-                new BsonDocumentCodec())
+        def operation = new FindOperation<BsonDocument>(csot as ClientSideOperationTimeout, namespace, new BsonDocumentCodec())
                 .cursorType(cursorType as CursorType)
 
         when:
         def cursor = execute(operation, async)
-        def expectedClientSideOperationTimeout = csotFactory.create()
         def clientSideOperationTimeout = cursor.getClientSideOperationTimeout()
 
         then:
@@ -728,19 +726,19 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         expectedClientSideOperationTimeout.getMaxCommitTimeMS() == clientSideOperationTimeout.getMaxCommitTimeMS()
 
         where:
-        [async, cursorType, csotFactory] << [
+        [async, cursorType, expectedClientSideOperationTimeout] << [
                 [true, false],
                 [NonTailable, Tailable, TailableAwait],
-                [NO_CSOT_FACTORY,
-                 MAX_TIME_MS_CSOT_FACTORY,
-                 MAX_AWAIT_TIME_MS_CSOT_FACTORY]
+                [CSOT_NO_TIMEOUT,
+                 CSOT_MAX_TIME,
+                 CSOT_MAX_TIME_AND_MAX_AWAIT_TIME]
         ].combinations()
     }
 
     // sanity check that the server accepts the miscallaneous flags
     def 'should pass miscallaneous flags through'() {
         given:
-        def operation = new FindOperation<BsonDocument>(DEFAULT_CSOT_FACTORY, namespace, new BsonDocumentCodec())
+        def operation = new FindOperation<BsonDocument>(CSOT_TIMEOUT, namespace, new BsonDocumentCodec())
                 .noCursorTimeout(true)
                 .partial(true)
                 .oplogReplay(true)
@@ -760,7 +758,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         given:
         def document = BsonDocument.parse('{_id: 1, str: "foo"}')
         getCollectionHelper().insertDocuments(document)
-        def operation = new FindOperation<BsonDocument>(DEFAULT_CSOT_FACTORY, getNamespace(), new BsonDocumentCodec())
+        def operation = new FindOperation<BsonDocument>(CSOT_TIMEOUT, getNamespace(), new BsonDocumentCodec())
                 .filter(BsonDocument.parse('{str: "FOO"}'))
                 .collation(caseInsensitiveCollation)
 

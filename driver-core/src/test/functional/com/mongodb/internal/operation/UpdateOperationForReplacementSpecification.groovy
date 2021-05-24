@@ -27,7 +27,7 @@ import org.bson.codecs.BsonDocumentCodec
 import spock.lang.IgnoreIf
 import util.spock.annotations.Slow
 
-import static com.mongodb.ClusterFixture.DEFAULT_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.CSOT_TIMEOUT
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
@@ -39,7 +39,7 @@ class UpdateOperationForReplacementSpecification extends OperationFunctionalSpec
     def 'should return correct result'() {
         given:
         def replacement = new UpdateRequest(new BsonDocument(), new BsonDocument('_id', new BsonInt32(1)), REPLACE)
-        def operation = new UpdateOperation(DEFAULT_CSOT_FACTORY, getNamespace(), true, ACKNOWLEDGED, false, asList(replacement))
+        def operation = new UpdateOperation(CSOT_TIMEOUT, getNamespace(), true, ACKNOWLEDGED, false, asList(replacement))
 
         when:
         def result = execute(operation, async)
@@ -57,11 +57,11 @@ class UpdateOperationForReplacementSpecification extends OperationFunctionalSpec
     def 'should replace a single document'() {
         given:
         def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
-        new InsertOperation(DEFAULT_CSOT_FACTORY, getNamespace(), true, ACKNOWLEDGED, false, asList(insert)).execute(getBinding())
+        new InsertOperation(CSOT_TIMEOUT, getNamespace(), true, ACKNOWLEDGED, false, asList(insert)).execute(getBinding())
 
         def replacement = new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                                             new BsonDocument('_id', new BsonInt32(1)).append('x', new BsonInt32(1)), REPLACE)
-        def operation = new UpdateOperation(DEFAULT_CSOT_FACTORY, getNamespace(), true, ACKNOWLEDGED, false, asList(replacement))
+        def operation = new UpdateOperation(CSOT_TIMEOUT, getNamespace(), true, ACKNOWLEDGED, false, asList(replacement))
 
         when:
         def result = execute(operation, async)
@@ -82,13 +82,13 @@ class UpdateOperationForReplacementSpecification extends OperationFunctionalSpec
     def 'should support hint'() {
         given:
         def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
-        new InsertOperation(DEFAULT_CSOT_FACTORY, getNamespace(), true, ACKNOWLEDGED, false, asList(insert)).execute(getBinding())
+        new InsertOperation(CSOT_TIMEOUT, getNamespace(), true, ACKNOWLEDGED, false, asList(insert)).execute(getBinding())
 
         def replacement = new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                 new BsonDocument('_id', new BsonInt32(1)).append('x', new BsonInt32(1)), REPLACE)
                 .hint(hint)
                 .hintString(hintString)
-        def operation = new UpdateOperation(DEFAULT_CSOT_FACTORY, getNamespace(), true, ACKNOWLEDGED, false, asList(replacement))
+        def operation = new UpdateOperation(CSOT_TIMEOUT, getNamespace(), true, ACKNOWLEDGED, false, asList(replacement))
 
         when:
         def result = execute(operation, async)
@@ -114,7 +114,7 @@ class UpdateOperationForReplacementSpecification extends OperationFunctionalSpec
         def replacement = new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                                             new BsonDocument('_id', new BsonInt32(1)).append('x', new BsonInt32(1)), REPLACE)
                 .upsert(true)
-        def operation = new UpdateOperation(DEFAULT_CSOT_FACTORY, getNamespace(), true, ACKNOWLEDGED, false, asList(replacement))
+        def operation = new UpdateOperation(CSOT_TIMEOUT, getNamespace(), true, ACKNOWLEDGED, false, asList(replacement))
 
         when:
         execute(operation, async)
@@ -131,7 +131,7 @@ class UpdateOperationForReplacementSpecification extends OperationFunctionalSpec
         def replacement = new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                                             new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))), REPLACE)
                 .upsert(true)
-        def operation = new UpdateOperation(DEFAULT_CSOT_FACTORY, getNamespace(), true, ACKNOWLEDGED, false, asList(replacement))
+        def operation = new UpdateOperation(CSOT_TIMEOUT, getNamespace(), true, ACKNOWLEDGED, false, asList(replacement))
 
         when:
         execute(operation, async)
@@ -150,7 +150,7 @@ class UpdateOperationForReplacementSpecification extends OperationFunctionalSpec
         def replacements = [new UpdateRequest(new BsonDocument(),
                                               new BsonDocument('_id', new BsonInt32(1)).append('b', new BsonBinary(hugeByteArray)),
                                               REPLACE)]
-        def operation = new UpdateOperation(DEFAULT_CSOT_FACTORY, getNamespace(), true, ACKNOWLEDGED, false, replacements)
+        def operation = new UpdateOperation(CSOT_TIMEOUT, getNamespace(), true, ACKNOWLEDGED, false, replacements)
 
         when:
         execute(operation, async)
@@ -164,11 +164,11 @@ class UpdateOperationForReplacementSpecification extends OperationFunctionalSpec
 
     def 'should move _id to the beginning'() {
         def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
-        new InsertOperation(DEFAULT_CSOT_FACTORY, getNamespace(), true, ACKNOWLEDGED, false, asList(insert)).execute(getBinding())
+        new InsertOperation(CSOT_TIMEOUT, getNamespace(), true, ACKNOWLEDGED, false, asList(insert)).execute(getBinding())
 
         def replacement = new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                                             new BsonDocument('x', new BsonInt32(1)).append('_id', new BsonInt32(1)), REPLACE)
-        def operation = new UpdateOperation(DEFAULT_CSOT_FACTORY, getNamespace(), true, ACKNOWLEDGED, false, asList(replacement))
+        def operation = new UpdateOperation(CSOT_TIMEOUT, getNamespace(), true, ACKNOWLEDGED, false, asList(replacement))
 
         when:
         execute(operation, async)

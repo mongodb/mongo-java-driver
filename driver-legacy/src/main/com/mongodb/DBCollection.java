@@ -27,8 +27,8 @@ import com.mongodb.client.model.DBCollectionFindOptions;
 import com.mongodb.client.model.DBCollectionRemoveOptions;
 import com.mongodb.client.model.DBCollectionUpdateOptions;
 import com.mongodb.connection.BufferProvider;
-import com.mongodb.internal.ClientSideOperationTimeoutFactories;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
+import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.ClientSideOperationTimeouts;
 import com.mongodb.internal.bulk.DeleteRequest;
 import com.mongodb.internal.bulk.IndexRequest;
 import com.mongodb.internal.bulk.InsertRequest;
@@ -343,7 +343,7 @@ public class DBCollection {
     private WriteResult insert(final List<InsertRequest> insertRequestList, final WriteConcern writeConcern,
                                final boolean continueOnError, @Nullable final Boolean bypassDocumentValidation) {
         return executeWriteOperation(
-                new InsertOperation(ClientSideOperationTimeoutFactories.create(getTimeout(MILLISECONDS)), getNamespace(), !continueOnError,
+                new InsertOperation(ClientSideOperationTimeouts.create(getTimeout(MILLISECONDS)), getNamespace(), !continueOnError,
                         writeConcern, retryWrites, insertRequestList).bypassDocumentValidation(bypassDocumentValidation));
     }
 
@@ -428,7 +428,7 @@ public class DBCollection {
         UpdateRequest replaceRequest = new UpdateRequest(wrap(filter), wrap(obj, objectCodec),
                                                          Type.REPLACE).upsert(true);
 
-        return executeWriteOperation(new UpdateOperation(ClientSideOperationTimeoutFactories.create(getTimeout(MILLISECONDS)),
+        return executeWriteOperation(new UpdateOperation(ClientSideOperationTimeouts.create(getTimeout(MILLISECONDS)),
                 getNamespace(), false, writeConcern, retryWrites, singletonList(replaceRequest)));
     }
 
@@ -580,7 +580,7 @@ public class DBCollection {
                                               .collation(options.getCollation())
                                               .arrayFilters(wrapAllowNull(options.getArrayFilters(), options.getEncoder()));
         return executeWriteOperation(
-                new UpdateOperation(ClientSideOperationTimeoutFactories.create(getTimeout(MILLISECONDS)), getNamespace(),
+                new UpdateOperation(ClientSideOperationTimeouts.create(getTimeout(MILLISECONDS)), getNamespace(),
                         true, writeConcern, retryWrites, singletonList(updateRequest))
                         .bypassDocumentValidation(options.getBypassDocumentValidation()));
     }
@@ -652,7 +652,7 @@ public class DBCollection {
         WriteConcern writeConcern = options.getWriteConcern() != null ? options.getWriteConcern() : getWriteConcern();
         DeleteRequest deleteRequest = new DeleteRequest(wrap(query, options.getEncoder())).collation(options.getCollation());
         return executeWriteOperation(
-                new DeleteOperation(ClientSideOperationTimeoutFactories.create(getTimeout(MILLISECONDS)), getNamespace(),
+                new DeleteOperation(ClientSideOperationTimeouts.create(getTimeout(MILLISECONDS)), getNamespace(),
                         false, writeConcern, retryWrites, singletonList(deleteRequest)));
     }
 
@@ -911,7 +911,7 @@ public class DBCollection {
     public long getCount(@Nullable final DBObject query, final DBCollectionCountOptions options) {
         notNull("countOptions", options);
         CountOperation operation = new CountOperation(
-                ClientSideOperationTimeoutFactories.create(getTimeout(MILLISECONDS), options.getMaxTime(MILLISECONDS)),
+                ClientSideOperationTimeouts.create(getTimeout(MILLISECONDS), options.getMaxTime(MILLISECONDS)),
                 getNamespace())
                 .skip(options.getSkip())
                 .limit(options.getLimit())
@@ -959,7 +959,7 @@ public class DBCollection {
     public DBCollection rename(final String newName, final boolean dropTarget) {
         try {
             executor.execute(
-                    new RenameCollectionOperation(ClientSideOperationTimeoutFactories.create(getTimeout(MILLISECONDS)),
+                    new RenameCollectionOperation(ClientSideOperationTimeouts.create(getTimeout(MILLISECONDS)),
                             getNamespace(), new MongoNamespace(getNamespace().getDatabaseName(), newName), getWriteConcern())
                             .dropTarget(dropTarget), getReadConcern());
             return getDB().getCollection(newName);
@@ -1034,7 +1034,7 @@ public class DBCollection {
                                                   retryReads, getTimeout(MILLISECONDS)) {
             @Override
             public ReadOperation<BatchCursor<BsonValue>> asReadOperation() {
-                return new DistinctOperation<BsonValue>(ClientSideOperationTimeoutFactories.create(getTimeoutMS()),
+                return new DistinctOperation<BsonValue>(ClientSideOperationTimeouts.create(getTimeoutMS()),
                         getNamespace(), fieldName, new BsonValueCodec())
                                .filter(wrapAllowNull(options.getFilter()))
                                .collation(options.getCollation())
@@ -1121,7 +1121,7 @@ public class DBCollection {
         if (command.getOutputType() == MapReduceCommand.OutputType.INLINE) {
             MapReduceWithInlineResultsOperation<DBObject> operation =
                     new MapReduceWithInlineResultsOperation<DBObject>(
-                            ClientSideOperationTimeoutFactories.create(getTimeout(MILLISECONDS),
+                            ClientSideOperationTimeouts.create(getTimeout(MILLISECONDS),
                                     command.getMaxTime(MILLISECONDS)), getNamespace(), new BsonJavaScript(command.getMap()),
                             new BsonJavaScript(command.getReduce()), getDefaultDBObjectCodec())
                             .filter(wrapAllowNull(command.getQuery()))
@@ -1157,7 +1157,7 @@ public class DBCollection {
 
             MapReduceToCollectionOperation operation =
                 new MapReduceToCollectionOperation(
-                        ClientSideOperationTimeoutFactories.create(getTimeout(MILLISECONDS),
+                        ClientSideOperationTimeouts.create(getTimeout(MILLISECONDS),
                                 command.getMaxTime(MILLISECONDS)), getNamespace(), new BsonJavaScript(command.getMap()),
                         new BsonJavaScript(command.getReduce()), command.getOutputTarget(), getWriteConcern())
                     .filter(wrapAllowNull(command.getQuery()))
@@ -1225,11 +1225,9 @@ public class DBCollection {
         List<BsonDocument> stages = preparePipeline(pipeline);
 
         BsonValue outCollection = stages.get(stages.size() - 1).get("$out");
-        ClientSideOperationTimeoutFactory csotFactory =
-                ClientSideOperationTimeoutFactories.shared(
-                        ClientSideOperationTimeoutFactories.create(getTimeout(MILLISECONDS), options.getMaxTime(MILLISECONDS)));
+        ClientSideOperationTimeout csot = ClientSideOperationTimeouts.create(getTimeout(MILLISECONDS), options.getMaxTime(MILLISECONDS));
         if (outCollection != null) {
-            AggregateToCollectionOperation operation = new AggregateToCollectionOperation(csotFactory, getNamespace(), stages,
+            AggregateToCollectionOperation operation = new AggregateToCollectionOperation(csot, getNamespace(), stages,
                     getReadConcern(), getWriteConcern())
                     .allowDiskUse(options.getAllowDiskUse())
                     .bypassDocumentValidation(options.getBypassDocumentValidation())
@@ -1238,12 +1236,12 @@ public class DBCollection {
                 executor.execute(operation, getReadConcern());
                 result = new DBCursor(database.getCollection(outCollection.asString().getValue()), new BasicDBObject(),
                         new DBCollectionFindOptions().readPreference(primary()).collation(options.getCollation()),
-                        csotFactory);
+                        csot);
             } catch (MongoWriteConcernException e) {
                 throw createWriteConcernException(e);
             }
         } else {
-            AggregateOperation<DBObject> operation = new AggregateOperation<>(csotFactory, getNamespace(), stages,
+            AggregateOperation<DBObject> operation = new AggregateOperation<>(csot, getNamespace(), stages,
                     getDefaultDBObjectCodec())
                     .allowDiskUse(options.getAllowDiskUse())
                     .batchSize(options.getBatchSize())
@@ -1268,7 +1266,7 @@ public class DBCollection {
     public CommandResult explainAggregate(final List<? extends DBObject> pipeline, final AggregationOptions options) {
 
         AggregateOperation<BsonDocument> operation = new AggregateOperation<>(
-                ClientSideOperationTimeoutFactories.create(getTimeout(MILLISECONDS), options.getMaxTime(MILLISECONDS)),
+                ClientSideOperationTimeouts.create(getTimeout(MILLISECONDS), options.getMaxTime(MILLISECONDS)),
                 getNamespace(), preparePipeline(pipeline), new BsonDocumentCodec())
                 .allowDiskUse(options.getAllowDiskUse())
                 .collation(options.getCollation())
@@ -1666,10 +1664,9 @@ public class DBCollection {
         WriteConcern optionsWriteConcern = options.getWriteConcern();
         WriteConcern writeConcern = optionsWriteConcern != null ? optionsWriteConcern : getWriteConcern();
         WriteOperation<DBObject> operation;
-        ClientSideOperationTimeoutFactory csotFactory = ClientSideOperationTimeoutFactories.create(getTimeout(MILLISECONDS),
-                                                                                                          options.getMaxTime(MILLISECONDS));
+        ClientSideOperationTimeout csot = ClientSideOperationTimeouts.create(getTimeout(MILLISECONDS), options.getMaxTime(MILLISECONDS));
         if (options.isRemove()) {
-            operation = new FindAndDeleteOperation<DBObject>(csotFactory, getNamespace(), writeConcern, retryWrites, objectCodec)
+            operation = new FindAndDeleteOperation<DBObject>(csot, getNamespace(), writeConcern, retryWrites, objectCodec)
                         .filter(wrapAllowNull(query))
                         .projection(wrapAllowNull(options.getProjection()))
                         .sort(wrapAllowNull(options.getSort()))
@@ -1680,7 +1677,7 @@ public class DBCollection {
                 throw new IllegalArgumentException("update can not be null unless it's a remove");
             }
             if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
-                operation = new FindAndUpdateOperation<DBObject>(csotFactory, getNamespace(), writeConcern, retryWrites, objectCodec,
+                operation = new FindAndUpdateOperation<DBObject>(csot, getNamespace(), writeConcern, retryWrites, objectCodec,
                         wrap(update))
                         .filter(wrap(query))
                         .projection(wrapAllowNull(options.getProjection()))
@@ -1691,7 +1688,7 @@ public class DBCollection {
                         .collation(options.getCollation())
                         .arrayFilters(wrapAllowNull(options.getArrayFilters(), (Encoder<DBObject>) null));
             } else {
-                operation = new FindAndReplaceOperation<DBObject>(csotFactory, getNamespace(), writeConcern, retryWrites,
+                operation = new FindAndReplaceOperation<DBObject>(csot, getNamespace(), writeConcern, retryWrites,
                         objectCodec, wrap(update))
                         .filter(wrap(query))
                         .projection(wrapAllowNull(options.getProjection()))
@@ -1859,7 +1856,7 @@ public class DBCollection {
      */
     public void drop() {
         try {
-            executor.execute(new DropCollectionOperation(ClientSideOperationTimeoutFactories.create(getTimeout(MILLISECONDS)),
+            executor.execute(new DropCollectionOperation(ClientSideOperationTimeouts.create(getTimeout(MILLISECONDS)),
                     getNamespace(), getWriteConcern()), getReadConcern());
         } catch (MongoWriteConcernException e) {
             throw createWriteConcernException(e);
@@ -1927,7 +1924,7 @@ public class DBCollection {
         return new MongoIterableImpl<DBObject>(null, executor, ReadConcern.DEFAULT, primary(), retryReads, getTimeout(MILLISECONDS)) {
             @Override
             public ReadOperation<BatchCursor<DBObject>> asReadOperation() {
-                return new ListIndexesOperation<DBObject>(ClientSideOperationTimeoutFactories.create(getTimeoutMS()),
+                return new ListIndexesOperation<DBObject>(ClientSideOperationTimeouts.create(getTimeoutMS()),
                         getNamespace(), getDefaultDBObjectCodec()).retryReads(retryReads);
             }
         }.into(new ArrayList<DBObject>());
@@ -1943,7 +1940,7 @@ public class DBCollection {
      */
     public void dropIndex(final DBObject index) {
         try {
-            executor.execute(new DropIndexOperation(ClientSideOperationTimeoutFactories.create(getTimeout(MILLISECONDS)),
+            executor.execute(new DropIndexOperation(ClientSideOperationTimeouts.create(getTimeout(MILLISECONDS)),
                     getNamespace(), wrap(index), getWriteConcern()), getReadConcern());
         } catch (MongoWriteConcernException e) {
             throw createWriteConcernException(e);
@@ -1959,7 +1956,7 @@ public class DBCollection {
      */
     public void dropIndex(final String indexName) {
         try {
-            executor.execute(new DropIndexOperation(ClientSideOperationTimeoutFactories.create(getTimeout(MILLISECONDS)),
+            executor.execute(new DropIndexOperation(ClientSideOperationTimeouts.create(getTimeout(MILLISECONDS)),
                     getNamespace(), indexName, getWriteConcern()), getReadConcern());
         } catch (MongoWriteConcernException e) {
             throw createWriteConcernException(e);
@@ -2095,7 +2092,7 @@ public class DBCollection {
                                               final WriteConcern writeConcern) {
         try {
             return translateBulkWriteResult(executor.execute(new MixedBulkWriteOperation(
-                    ClientSideOperationTimeoutFactories.create(getTimeout(MILLISECONDS)),
+                    ClientSideOperationTimeouts.create(getTimeout(MILLISECONDS)),
                     getNamespace(), translateWriteRequestsToNew(writeRequests), ordered, writeConcern, false)
                     .bypassDocumentValidation(bypassDocumentValidation), getReadConcern()), getObjectCodec());
         } catch (MongoBulkWriteException e) {
@@ -2211,7 +2208,7 @@ public class DBCollection {
         if (options.containsField("collation")) {
             request.collation(DBObjectCollationHelper.createCollationFromOptions(options));
         }
-        return new CreateIndexesOperation(ClientSideOperationTimeoutFactories.create(getTimeout(MILLISECONDS)),
+        return new CreateIndexesOperation(ClientSideOperationTimeouts.create(getTimeout(MILLISECONDS)),
                 getNamespace(), singletonList(request), writeConcern);
     }
 

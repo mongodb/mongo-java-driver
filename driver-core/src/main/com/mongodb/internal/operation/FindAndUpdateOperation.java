@@ -22,7 +22,6 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.ClientSideOperationTimeout;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
@@ -72,35 +71,35 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      * @param decoder   the decoder for the result documents.
      * @param update    the document containing update operators.
      */
-    public FindAndUpdateOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+    public FindAndUpdateOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
                                   final Decoder<T> decoder, final BsonDocument update) {
-        this(clientSideOperationTimeoutFactory, namespace, WriteConcern.ACKNOWLEDGED, false, decoder, update);
+        this(clientSideOperationTimeout, namespace, WriteConcern.ACKNOWLEDGED, false, decoder, update);
     }
 
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace    the database and collection namespace for the operation.
      * @param writeConcern the writeConcern for the operation
      * @param decoder      the decoder for the result documents.
      * @param update       the document containing update operators.
      * @since 3.2
      */
-    public FindAndUpdateOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+    public FindAndUpdateOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
                                   final WriteConcern writeConcern, final Decoder<T> decoder, final BsonDocument update) {
-        this(clientSideOperationTimeoutFactory, namespace, writeConcern, false, decoder, update);
+        this(clientSideOperationTimeout, namespace, writeConcern, false, decoder, update);
     }
 
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace    the database and collection namespace for the operation.
      * @param writeConcern the writeConcern for the operation
      * @param retryWrites  if writes should be retried if they fail due to a network error.
@@ -108,10 +107,10 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
      * @param update       the document containing update operators.
      * @since 3.6
      */
-    public FindAndUpdateOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+    public FindAndUpdateOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
                                   final WriteConcern writeConcern, final boolean retryWrites, final Decoder<T> decoder,
                                   final BsonDocument update) {
-        super(clientSideOperationTimeoutFactory, namespace, writeConcern, retryWrites, decoder);
+        super(clientSideOperationTimeout, namespace, writeConcern, retryWrites, decoder);
         this.update = notNull("update", update);
         this.updatePipeline = null;
     }
@@ -119,7 +118,7 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace    the database and collection namespace for the operation.
      * @param writeConcern the writeConcern for the operation
      * @param retryWrites  if writes should be retried if they fail due to a network error.
@@ -128,10 +127,10 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
      * @since 3.11
      * @mongodb.server.release 4.2
      */
-    public FindAndUpdateOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final MongoNamespace namespace,
+    public FindAndUpdateOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
                                   final WriteConcern writeConcern, final boolean retryWrites, final Decoder<T> decoder,
                                   final List<BsonDocument> update) {
-        super(clientSideOperationTimeoutFactory, namespace, writeConcern, retryWrites, decoder);
+        super(clientSideOperationTimeout, namespace, writeConcern, retryWrites, decoder);
         this.updatePipeline = update;
         this.update = null;
     }

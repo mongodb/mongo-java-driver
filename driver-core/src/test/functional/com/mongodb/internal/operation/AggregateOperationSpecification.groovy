@@ -52,9 +52,9 @@ import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
 import static QueryOperationHelper.getKeyPattern
-import static com.mongodb.ClusterFixture.DEFAULT_CSOT_FACTORY
-import static com.mongodb.ClusterFixture.MAX_TIME_MS_CSOT_FACTORY
-import static com.mongodb.ClusterFixture.NO_CSOT_FACTORY
+import static com.mongodb.ClusterFixture.CSOT_TIMEOUT
+import static com.mongodb.ClusterFixture.CSOT_MAX_TIME
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION
 import static com.mongodb.ClusterFixture.collectCursorResults
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
@@ -82,7 +82,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should have the correct defaults'() {
         when:
-        AggregateOperation operation = new AggregateOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(), [], new DocumentCodec())
+        AggregateOperation operation = new AggregateOperation<Document>(CSOT_TIMEOUT, getNamespace(), [], new DocumentCodec())
 
         then:
         operation.getAllowDiskUse() == null
@@ -96,7 +96,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         def hint = BsonDocument.parse('{a: 1}')
 
         when:
-        AggregateOperation operation = new AggregateOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(), [], new DocumentCodec())
+        AggregateOperation operation = new AggregateOperation<Document>(CSOT_TIMEOUT, getNamespace(), [], new DocumentCodec())
                 .allowDiskUse(true)
                 .batchSize(10)
                 .collation(defaultCollation)
@@ -112,7 +112,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     def 'should throw when using invalid hint'() {
         given:
         def hint = new BsonString('ok')
-        def operation = new AggregateOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(), [], new DocumentCodec())
+        def operation = new AggregateOperation<Document>(CSOT_TIMEOUT, getNamespace(), [], new DocumentCodec())
                 .hint(hint)
 
         when:
@@ -137,7 +137,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     def 'should create the expected command'() {
         when:
         def pipeline = [new BsonDocument('$match', new BsonDocument('a', new BsonString('A')))]
-        def operation = new AggregateOperation<Document>(NO_CSOT_FACTORY, helper.namespace, pipeline, new DocumentCodec())
+        def operation = new AggregateOperation<Document>(CSOT_NO_TIMEOUT, helper.namespace, pipeline, new DocumentCodec())
 
         def expectedCommand = new BsonDocument('aggregate', new BsonString(helper.namespace.getCollectionName()))
                 .append('pipeline', new BsonArray(pipeline))
@@ -147,7 +147,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         testOperation(operation, [3, 4, 0], expectedCommand, async, helper.cursorResult)
 
         when:
-        operation = new AggregateOperation<Document>(MAX_TIME_MS_CSOT_FACTORY, helper.namespace, pipeline, new DocumentCodec())
+        operation = new AggregateOperation<Document>(CSOT_MAX_TIME, helper.namespace, pipeline, new DocumentCodec())
                 .allowDiskUse(true)
                 .batchSize(10)
                 .collation(defaultCollation)
@@ -168,7 +168,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     def 'should throw an exception when using an unsupported ReadConcern'() {
         given:
         def pipeline = [new BsonDocument('$match', new BsonDocument('a', new BsonString('A')))]
-        def operation = new AggregateOperation<Document>(DEFAULT_CSOT_FACTORY, helper.namespace, pipeline, new DocumentCodec())
+        def operation = new AggregateOperation<Document>(CSOT_TIMEOUT, helper.namespace, pipeline, new DocumentCodec())
 
         when:
         testOperationThrows(operation, [3, 0, 0], readConcern, async)
@@ -184,7 +184,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     def 'should throw an exception when using an unsupported Collation'() {
         given:
         def pipeline = [new BsonDocument('$match', new BsonDocument('a', new BsonString('A')))]
-        def operation = new AggregateOperation<Document>(DEFAULT_CSOT_FACTORY, helper.namespace, pipeline, new DocumentCodec())
+        def operation = new AggregateOperation<Document>(CSOT_TIMEOUT, helper.namespace, pipeline, new DocumentCodec())
                 .collation(defaultCollation)
 
         when:
@@ -204,7 +204,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         def document = BsonDocument.parse('{_id: 1, str: "foo"}')
         getCollectionHelper().insertDocuments(document)
         def pipeline = [BsonDocument.parse('{$match: {str: "FOO"}}')]
-        def operation = new AggregateOperation<BsonDocument>(DEFAULT_CSOT_FACTORY, namespace, pipeline, new BsonDocumentCodec())
+        def operation = new AggregateOperation<BsonDocument>(CSOT_TIMEOUT, namespace, pipeline, new BsonDocumentCodec())
                 .collation(caseInsensitiveCollation)
 
         when:
@@ -222,7 +222,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         given:
         def expected = [createExpectedChangeNotification(namespace, 0), createExpectedChangeNotification(namespace, 1)]
         def pipeline = ['{$changeStream: {}}', '{$project: {"_id.clusterTime": 0, "_id.uuid": 0}}'].collect { BsonDocument.parse(it) }
-        def operation = new AggregateOperation<BsonDocument>(DEFAULT_CSOT_FACTORY, namespace, pipeline, new BsonDocumentCodec())
+        def operation = new AggregateOperation<BsonDocument>(CSOT_TIMEOUT, namespace, pipeline, new BsonDocumentCodec())
         def helper = getCollectionHelper()
 
         when:
@@ -248,7 +248,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should be able to aggregate'() {
         when:
-        AggregateOperation operation = new AggregateOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(), [], new DocumentCodec())
+        AggregateOperation operation = new AggregateOperation<Document>(CSOT_TIMEOUT, getNamespace(), [], new DocumentCodec())
         def batchCursor = execute(operation, async)
         def results = collectCursorResults(batchCursor)*.getString('name')
 
@@ -266,11 +266,11 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         def viewSuffix = '-view'
         def viewName = getCollectionName() + viewSuffix
         def viewNamespace = new MongoNamespace(getDatabaseName(), viewName)
-        new CreateViewOperation(DEFAULT_CSOT_FACTORY, getDatabaseName(), viewName, getCollectionName(), [], WriteConcern.ACKNOWLEDGED)
+        new CreateViewOperation(CSOT_TIMEOUT, getDatabaseName(), viewName, getCollectionName(), [], WriteConcern.ACKNOWLEDGED)
                 .execute(getBinding(getCluster()))
 
         when:
-        AggregateOperation operation = new AggregateOperation<Document>(DEFAULT_CSOT_FACTORY, viewNamespace, [], new DocumentCodec())
+        AggregateOperation operation = new AggregateOperation<Document>(CSOT_TIMEOUT, viewNamespace, [], new DocumentCodec())
         def batchCursor = execute(operation, async)
         def results = collectCursorResults(batchCursor)*.getString('name')
 
@@ -279,7 +279,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         results.containsAll(['Pete', 'Sam'])
 
         cleanup:
-        new DropCollectionOperation(DEFAULT_CSOT_FACTORY, viewNamespace, WriteConcern.ACKNOWLEDGED).execute(getBinding(getCluster()))
+        new DropCollectionOperation(CSOT_TIMEOUT, viewNamespace, WriteConcern.ACKNOWLEDGED).execute(getBinding(getCluster()))
 
         where:
         async << [true, false]
@@ -287,7 +287,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should be able to aggregate with pipeline'() {
         when:
-        AggregateOperation operation = new AggregateOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(),
+        AggregateOperation operation = new AggregateOperation<Document>(CSOT_TIMEOUT, getNamespace(),
                 [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber')))], new DocumentCodec())
         def batchCursor = execute(operation, async)
         def results = collectCursorResults(batchCursor)*.getString('name')
@@ -302,7 +302,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should allow disk usage'() {
         when:
-        AggregateOperation operation = new AggregateOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(), [], new DocumentCodec())
+        AggregateOperation operation = new AggregateOperation<Document>(CSOT_TIMEOUT, getNamespace(), [], new DocumentCodec())
                 .allowDiskUse(allowDiskUse)
         def cursor = operation.execute(getBinding())
 
@@ -315,7 +315,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should allow batch size'() {
         when:
-        AggregateOperation operation = new AggregateOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(), [], new DocumentCodec())
+        AggregateOperation operation = new AggregateOperation<Document>(CSOT_TIMEOUT, getNamespace(), [], new DocumentCodec())
                 .batchSize(batchSize)
         def cursor = operation.execute(getBinding())
 
@@ -342,13 +342,13 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         disableMaxTimeFailPoint()
 
         where:
-        [async, csotFactory] << [[true, false], [MAX_TIME_MS_CSOT_FACTORY, DEFAULT_CSOT_FACTORY]].combinations()
+        [async, csotFactory] << [[true, false], [CSOT_MAX_TIME, CSOT_TIMEOUT]].combinations()
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'should be able to explain an empty pipeline'() {
         given:
-        def operation = new AggregateOperation(DEFAULT_CSOT_FACTORY, getNamespace(), [], new BsonDocumentCodec())
+        def operation = new AggregateOperation(CSOT_TIMEOUT, getNamespace(), [], new BsonDocumentCodec())
         operation = async ? operation.asAsyncExplainableOperation(QUERY_PLANNER, new BsonDocumentCodec()) :
                 operation.asExplainableOperation(QUERY_PLANNER, new BsonDocumentCodec())
 
@@ -365,7 +365,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should be able to aggregate with collation'() {
         when:
-        AggregateOperation operation = new AggregateOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(),
+        AggregateOperation operation = new AggregateOperation<Document>(CSOT_TIMEOUT, getNamespace(),
                 [BsonDocument.parse('{$match: {job : "plumber"}}')], new DocumentCodec())
                 .collation(options)
         def batchCursor = execute(operation, async)
@@ -386,7 +386,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         def index = new BsonDocument('a', new BsonInt32(1))
         collectionHelper.createIndex(index)
 
-        def operation = new AggregateOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(), [], new DocumentCodec())
+        def operation = new AggregateOperation<Document>(CSOT_TIMEOUT, getNamespace(), [], new DocumentCodec())
                 .hint(hint)
 
         when:
@@ -404,10 +404,10 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     def 'should apply comment'() {
         given:
         def profileCollectionHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'system.profile'))
-        new CommandReadOperation<>(DEFAULT_CSOT_FACTORY, getDatabaseName(), new BsonDocument('profile', new BsonInt32(2)),
+        new CommandReadOperation<>(CSOT_TIMEOUT, getDatabaseName(), new BsonDocument('profile', new BsonInt32(2)),
                 new BsonDocumentCodec()).execute(getBinding())
         def expectedComment = 'this is a comment'
-        def operation = new AggregateOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(), [], new DocumentCodec())
+        def operation = new AggregateOperation<Document>(CSOT_TIMEOUT, getNamespace(), [], new DocumentCodec())
                 .comment(expectedComment)
 
         when:
@@ -418,7 +418,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         ((Document) profileDocument.get('command')).get('comment') == expectedComment
 
         cleanup:
-        new CommandReadOperation<>(DEFAULT_CSOT_FACTORY, getDatabaseName(), new BsonDocument('profile', new BsonInt32(0)),
+        new CommandReadOperation<>(CSOT_TIMEOUT, getDatabaseName(), new BsonDocument('profile', new BsonInt32(0)),
                 new BsonDocumentCodec()).execute(getBinding())
         profileCollectionHelper.drop()
 
@@ -429,7 +429,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ isStandalone() || !serverVersionAtLeast(3, 6) })
     def 'should be able to respect maxAwaitTime with pipeline'() {
         given:
-        AggregateOperation operation = new AggregateOperation<Document>(DEFAULT_CSOT_FACTORY, getNamespace(),
+        AggregateOperation operation = new AggregateOperation<Document>(CSOT_TIMEOUT, getNamespace(),
                 [new BsonDocument('$changeStream', new BsonDocument())], new DocumentCodec())
                 .batchSize(2)
 
@@ -463,7 +463,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
                 .append('cursor', new BsonDocument())
         appendReadConcernToCommand(sessionContext, commandDocument)
 
-        def operation = new AggregateOperation<Document>(NO_CSOT_FACTORY, getNamespace(), [], new DocumentCodec())
+        def operation = new AggregateOperation<Document>(CSOT_NO_TIMEOUT, getNamespace(), [], new DocumentCodec())
 
         when:
         operation.execute(binding)
@@ -505,7 +505,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
                 .append('cursor', new BsonDocument())
         appendReadConcernToCommand(sessionContext, commandDocument)
 
-        def operation = new AggregateOperation<Document>(NO_CSOT_FACTORY, getNamespace(), [], new DocumentCodec())
+        def operation = new AggregateOperation<Document>(CSOT_NO_TIMEOUT, getNamespace(), [], new DocumentCodec())
 
         when:
         executeAsync(operation, binding)
@@ -533,7 +533,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should use the ReadBindings readPreference to set slaveOK'() {
         when:
-        def operation = new AggregateOperation(NO_CSOT_FACTORY, helper.namespace, [], new BsonDocumentCodec())
+        def operation = new AggregateOperation(CSOT_NO_TIMEOUT, helper.namespace, [], new BsonDocumentCodec())
 
         then:
         testOperationSlaveOk(operation, [2, 6, 0], readPreference, async, helper.cursorResult)

@@ -21,7 +21,6 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.ClientSideOperationTimeout;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -56,7 +55,7 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  * @mongodb.driver.manual reference/command/create Create
  */
 public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
-    private final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final String databaseName;
     private final String viewName;
     private final String viewOn;
@@ -67,17 +66,17 @@ public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOper
     /**
      * Construct a new instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param databaseName the name of the database for the operation, which may not be null
      * @param viewName     the name of the collection to be created, which may not be null
      * @param viewOn       the name of the collection or view that backs this view, which may not be null
      * @param pipeline     the aggregation pipeline that defines the view, which may not be null
      * @param writeConcern the write concern, which may not be null
      */
-    public CreateViewOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final String databaseName,
+    public CreateViewOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final String databaseName,
                                final String viewName, final String viewOn, final List<BsonDocument> pipeline,
                                final WriteConcern writeConcern) {
-        this.clientSideOperationTimeoutFactory = notNull("clientSideOperationTimeoutFactory", clientSideOperationTimeoutFactory);
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.databaseName = notNull("databaseName", databaseName);
         this.viewName = notNull("viewName", viewName);
         this.viewOn = notNull("viewOn", viewOn);
@@ -152,7 +151,7 @@ public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOper
 
     @Override
     public Void execute(final WriteBinding binding) {
-        return withConnection(clientSideOperationTimeoutFactory.create(), binding, new CallableWithConnection<Void>() {
+        return withConnection(clientSideOperationTimeout, binding, new CallableWithConnection<Void>() {
             @Override
             public Void call(final ClientSideOperationTimeout clientSideOperationTimeout, final Connection connection) {
                 if (!serverIsAtLeastVersionThreeDotFour(connection.getDescription())) {
@@ -167,7 +166,7 @@ public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOper
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withAsyncConnection(clientSideOperationTimeoutFactory.create(), binding, new AsyncCallableWithConnection() {
+        withAsyncConnection(clientSideOperationTimeout, binding, new AsyncCallableWithConnection() {
             @Override
             public void call(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncConnection connection,
                              final Throwable t) {

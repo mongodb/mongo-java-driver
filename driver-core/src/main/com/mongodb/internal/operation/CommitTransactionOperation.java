@@ -28,7 +28,6 @@ import com.mongodb.WriteConcern;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.ClientSideOperationTimeout;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -54,24 +53,24 @@ public class CommitTransactionOperation extends TransactionOperation {
     /**
      * Construct an instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param writeConcern the write concern
      */
-    CommitTransactionOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final WriteConcern writeConcern) {
-        this(clientSideOperationTimeoutFactory, writeConcern, false);
+    CommitTransactionOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final WriteConcern writeConcern) {
+        this(clientSideOperationTimeout, writeConcern, false);
     }
 
     /**
      * Construct an instance.
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param writeConcern the write concern
      * @param alreadyCommitted if the transaction has already been committed.
      * @since 3.11
      */
-    public CommitTransactionOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory,
+    public CommitTransactionOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
                                       final WriteConcern writeConcern, final boolean alreadyCommitted) {
-        super(clientSideOperationTimeoutFactory, writeConcern);
+        super(clientSideOperationTimeout, writeConcern);
         this.alreadyCommitted = alreadyCommitted;
     }
 

@@ -21,7 +21,6 @@ import com.mongodb.WriteConcern;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.ClientSideOperationTimeout;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -45,18 +44,18 @@ import static com.mongodb.internal.operation.SyncCommandOperationHelper.writeCon
  * @since 3.8
  */
 public abstract class TransactionOperation implements WriteOperation<Void>, AsyncWriteOperation<Void> {
-    private final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory;
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final WriteConcern writeConcern;
 
     /**
      * Construct an instance.
      *
      *
-     * @param clientSideOperationTimeoutFactory the client side operation timeout factory
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param writeConcern the write concern
      */
-    TransactionOperation(final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory, final WriteConcern writeConcern) {
-        this.clientSideOperationTimeoutFactory = notNull("clientSideOperationTimeoutFactory", clientSideOperationTimeoutFactory);
+    TransactionOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final WriteConcern writeConcern) {
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.writeConcern = notNull("writeConcern", writeConcern);
     }
 
@@ -72,14 +71,14 @@ public abstract class TransactionOperation implements WriteOperation<Void>, Asyn
     @Override
     public Void execute(final WriteBinding binding) {
         isTrue("in transaction", binding.getSessionContext().hasActiveTransaction());
-        return executeRetryableCommand(clientSideOperationTimeoutFactory.create(), binding, "admin", null, new NoOpFieldNameValidator(),
+        return executeRetryableCommand(clientSideOperationTimeout, binding, "admin", null, new NoOpFieldNameValidator(),
                 new BsonDocumentCodec(), getCommandCreator(), writeConcernErrorTransformer(), getRetryCommandModifier());
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
         isTrue("in transaction", binding.getSessionContext().hasActiveTransaction());
-        executeRetryableCommandAsync(clientSideOperationTimeoutFactory.create(), binding, "admin", null, new NoOpFieldNameValidator(),
+        executeRetryableCommandAsync(clientSideOperationTimeout, binding, "admin", null, new NoOpFieldNameValidator(),
                 new BsonDocumentCodec(), getCommandCreator(), writeConcernErrorTransformerAsync(), getRetryCommandModifier(),
                 errorHandlingCallback(callback, LOGGER));
     }

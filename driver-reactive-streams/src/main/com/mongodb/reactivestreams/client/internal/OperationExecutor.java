@@ -24,6 +24,8 @@ import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
 import reactor.core.publisher.Mono;
 
+import java.util.function.Supplier;
+
 /**
  * An interface describing the execution of a read or a write operation.
  */
@@ -38,8 +40,8 @@ public interface OperationExecutor {
      * @param session the session to associate this operation with
      * @param <T> the operations result type.
      */
-    <T> Mono<T> execute(AsyncReadOperation<T> operation, ReadPreference readPreference, ReadConcern readConcern,
-            @Nullable ClientSession session);
+    <T> Mono<T> execute(Supplier<? extends AsyncReadOperation<T>> operation, ReadPreference readPreference, ReadConcern readConcern,
+                        @Nullable ClientSession session);
 
     /**
      * Execute the write operation.
@@ -49,5 +51,5 @@ public interface OperationExecutor {
      * @param readConcern the read concern
      * @param <T> the operations result type.
      */
-    <T> Mono<T> execute(AsyncWriteOperation<T> operation, ReadConcern readConcern, @Nullable ClientSession session);
+    <T> Mono<T> execute(Supplier<? extends AsyncWriteOperation<T>> operation, ReadConcern readConcern, @Nullable ClientSession session);
 }

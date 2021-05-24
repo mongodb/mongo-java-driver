@@ -19,8 +19,7 @@ package com.mongodb.reactivestreams.client.internal;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
-import com.mongodb.internal.ClientSideOperationTimeoutFactories;
-import com.mongodb.internal.ClientSideOperationTimeoutFactory;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.FindOptions;
@@ -155,14 +154,13 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
         MongoNamespace outNamespace = getOutNamespace();
 
         if (outNamespace != null) {
-            ClientSideOperationTimeoutFactory csotFactory =
-                    ClientSideOperationTimeoutFactories.shared(getClientSideOperationTimeoutFactory(maxTimeMS, maxAwaitTimeMS));
-            AsyncWriteOperation<Void> aggregateToCollectionOperation = getAggregateToCollectionOperation(csotFactory);
+            ClientSideOperationTimeout clientSideOperationTimeout = getClientSideOperationTimeout(maxTimeMS, maxAwaitTimeMS);
+            AsyncWriteOperation<Void> aggregateToCollectionOperation = getAggregateToCollectionOperation(clientSideOperationTimeout);
 
             FindOptions findOptions = new FindOptions().collation(collation).batchSize(initialBatchSize);
 
-            AsyncReadOperation<AsyncBatchCursor<T>> findOperation =
-                    getOperations().find(csotFactory, outNamespace, new BsonDocument(), getDocumentClass(), findOptions);
+            AsyncReadOperation<AsyncBatchCursor<T>> findOperation = getOperations()
+                    .find(clientSideOperationTimeout, outNamespace, new BsonDocument(), getDocumentClass(), findOptions);
 
             return new WriteOperationThenCursorReadOperation<>(aggregateToCollectionOperation, findOperation);
         } else {
@@ -172,17 +170,16 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
 
     private AggregateOperation<T> asAggregateOperation(final int initialBatchSize) {
         return getOperations()
-                .aggregate(getClientSideOperationTimeoutFactory(maxTimeMS), pipeline, getDocumentClass(), initialBatchSize, collation, hint,
+                .aggregate(getClientSideOperationTimeout(maxTimeMS), pipeline, getDocumentClass(), initialBatchSize, collation, hint,
                         comment, allowDiskUse, aggregationLevel);
     }
 
     private AsyncWriteOperation<Void> getAggregateToCollectionOperation() {
-        return getAggregateToCollectionOperation(getClientSideOperationTimeoutFactory(maxTimeMS));
+        return getAggregateToCollectionOperation(getClientSideOperationTimeout(maxTimeMS));
     }
 
-    private AsyncWriteOperation<Void> getAggregateToCollectionOperation(
-            final ClientSideOperationTimeoutFactory clientSideOperationTimeoutFactory) {
-        return getOperations().aggregateToCollection(clientSideOperationTimeoutFactory, pipeline, allowDiskUse,
+    private AsyncWriteOperation<Void> getAggregateToCollectionOperation(final ClientSideOperationTimeout clientSideOperationTimeout) {
+        return getOperations().aggregateToCollection(clientSideOperationTimeout, pipeline, allowDiskUse,
                 bypassDocumentValidation, collation, hint, comment, aggregationLevel);
     }
 

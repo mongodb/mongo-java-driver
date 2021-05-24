@@ -38,8 +38,8 @@ import java.util.function.Consumer
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
-import static com.mongodb.client.internal.TestHelper.CSOT_FACTORY_MAX_TIME
-import static com.mongodb.client.internal.TestHelper.CSOT_FACTORY_NO_TIMEOUT
+import static com.mongodb.client.internal.TestHelper.CSOT_MAX_TIME
+import static com.mongodb.client.internal.TestHelper.CSOT_NO_TIMEOUT
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
@@ -65,7 +65,7 @@ class DistinctIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new DistinctOperation<Document>(CSOT_FACTORY_NO_TIMEOUT, namespace, 'field', new DocumentCodec())
+        expect operation, isTheSameAs(new DistinctOperation<Document>(CSOT_NO_TIMEOUT, namespace, 'field', new DocumentCodec())
                 .filter(new BsonDocument()).retryReads(true))
         readPreference == secondary()
 
@@ -75,7 +75,7 @@ class DistinctIterableSpecification extends Specification {
         operation = executor.getReadOperation() as DistinctOperation<Document>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new DistinctOperation<Document>(CSOT_FACTORY_MAX_TIME, namespace, 'field',
+        expect operation, isTheSameAs(new DistinctOperation<Document>(CSOT_MAX_TIME, namespace, 'field',
                 new DocumentCodec())
                 .filter(new BsonDocument('field', new BsonInt32(1))).collation(collation).retryReads(true))
     }

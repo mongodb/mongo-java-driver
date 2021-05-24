@@ -57,7 +57,7 @@ import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
-import com.mongodb.internal.ClientSideOperationTimeoutFactories;
+import com.mongodb.internal.ClientSideOperationTimeouts;
 import com.mongodb.internal.bulk.WriteRequest;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
@@ -236,13 +236,13 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     @Override
     public long estimatedDocumentCount(final EstimatedDocumentCountOptions options) {
         return executor.execute(operations.estimatedDocumentCount(
-                ClientSideOperationTimeoutFactories.create(timeoutMS, options.getMaxTime(MILLISECONDS))),
+                ClientSideOperationTimeouts.create(timeoutMS, options.getMaxTime(MILLISECONDS))),
                 readPreference, readConcern, null);
     }
 
     private long executeCount(@Nullable final ClientSession clientSession, final Bson filter, final CountOptions options) {
         return executor.execute(operations.countDocuments(
-                ClientSideOperationTimeoutFactories.create(timeoutMS, options.getMaxTime(MILLISECONDS)), filter, options),
+                ClientSideOperationTimeouts.create(timeoutMS, options.getMaxTime(MILLISECONDS)), filter, options),
                 readPreference, readConcern, clientSession);
     }
 
@@ -462,7 +462,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                                              final List<? extends WriteModel<? extends TDocument>> requests,
                                              final BulkWriteOptions options) {
         notNull("requests", requests);
-        return executor.execute(operations.bulkWrite(ClientSideOperationTimeoutFactories.create(timeoutMS), requests, options),
+        return executor.execute(operations.bulkWrite(ClientSideOperationTimeouts.create(timeoutMS), requests, options),
                 readConcern, clientSession);
     }
 
@@ -492,7 +492,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private InsertOneResult executeInsertOne(@Nullable final ClientSession clientSession, final TDocument document,
                                              final InsertOneOptions options) {
         return toInsertOneResult(executeSingleWriteRequest(clientSession,
-                operations.insertOne(ClientSideOperationTimeoutFactories.create(timeoutMS), document, options), INSERT));
+                operations.insertOne(ClientSideOperationTimeouts.create(timeoutMS), document, options), INSERT));
     }
 
     @Override
@@ -520,7 +520,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private InsertManyResult executeInsertMany(@Nullable final ClientSession clientSession, final List<? extends TDocument> documents,
                                    final InsertManyOptions options) {
-        return toInsertManyResult(executor.execute(operations.insertMany(ClientSideOperationTimeoutFactories.create(timeoutMS), documents,
+        return toInsertManyResult(executor.execute(operations.insertMany(ClientSideOperationTimeouts.create(timeoutMS), documents,
                                                                          options), readConcern, clientSession));
     }
 
@@ -591,7 +591,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private UpdateResult executeReplaceOne(@Nullable final ClientSession clientSession, final Bson filter, final TDocument replacement,
                                            final ReplaceOptions replaceOptions) {
         return toUpdateResult(executeSingleWriteRequest(clientSession, operations.replaceOne(
-                ClientSideOperationTimeoutFactories.create(timeoutMS), filter, replacement, replaceOptions), REPLACE));
+                ClientSideOperationTimeouts.create(timeoutMS), filter, replacement, replaceOptions), REPLACE));
     }
 
     @Override
@@ -713,7 +713,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private TDocument executeFindOneAndDelete(@Nullable final ClientSession clientSession, final Bson filter,
                                               final FindOneAndDeleteOptions options) {
         return executor.execute(operations.findOneAndDelete(
-                ClientSideOperationTimeoutFactories.create(timeoutMS, options.getMaxTime(MILLISECONDS)), filter, options),
+                ClientSideOperationTimeouts.create(timeoutMS, options.getMaxTime(MILLISECONDS)), filter, options),
                 readConcern, clientSession);
     }
 
@@ -747,7 +747,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private TDocument executeFindOneAndReplace(@Nullable final ClientSession clientSession, final Bson filter, final TDocument replacement,
                                                final FindOneAndReplaceOptions options) {
         return executor.execute(operations.findOneAndReplace(
-                ClientSideOperationTimeoutFactories.create(timeoutMS, options.getMaxTime(MILLISECONDS)), filter, replacement, options),
+                ClientSideOperationTimeouts.create(timeoutMS, options.getMaxTime(MILLISECONDS)), filter, replacement, options),
                 readConcern, clientSession);
     }
 
@@ -781,7 +781,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private TDocument executeFindOneAndUpdate(@Nullable final ClientSession clientSession, final Bson filter, final Bson update,
                                               final FindOneAndUpdateOptions options) {
         return executor.execute(operations.findOneAndUpdate(
-                ClientSideOperationTimeoutFactories.create(timeoutMS, options.getMaxTime(MILLISECONDS)), filter, update, options),
+                ClientSideOperationTimeouts.create(timeoutMS, options.getMaxTime(MILLISECONDS)), filter, update, options),
                 readConcern, clientSession);
     }
 
@@ -815,7 +815,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private TDocument executeFindOneAndUpdate(@Nullable final ClientSession clientSession, final Bson filter,
                                               final List<? extends Bson> update, final FindOneAndUpdateOptions options) {
         return executor.execute(operations.findOneAndUpdate(
-                ClientSideOperationTimeoutFactories.create(timeoutMS, options.getMaxTime(MILLISECONDS)), filter, update, options),
+                ClientSideOperationTimeouts.create(timeoutMS, options.getMaxTime(MILLISECONDS)), filter, update, options),
                 readConcern, clientSession);
     }
 
@@ -831,7 +831,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     private void executeDrop(@Nullable final ClientSession clientSession) {
-        executor.execute(operations.dropCollection(ClientSideOperationTimeoutFactories.create(timeoutMS)), readConcern, clientSession);
+        executor.execute(operations.dropCollection(ClientSideOperationTimeouts.create(timeoutMS)), readConcern, clientSession);
     }
 
     @Override
@@ -879,7 +879,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private List<String> executeCreateIndexes(@Nullable final ClientSession clientSession, final List<IndexModel> indexes,
                                               final CreateIndexOptions createIndexOptions) {
         executor.execute(operations.createIndexes(
-                ClientSideOperationTimeoutFactories.create(timeoutMS, createIndexOptions.getMaxTime(MILLISECONDS)), indexes,
+                ClientSideOperationTimeouts.create(timeoutMS, createIndexOptions.getMaxTime(MILLISECONDS)), indexes,
                 createIndexOptions), readConcern, clientSession);
         return IndexHelper.getIndexNames(indexes, codecRegistry);
     }
@@ -978,13 +978,13 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                                   final DropIndexOptions dropIndexOptions) {
         notNull("dropIndexOptions", dropIndexOptions);
         executor.execute(operations.dropIndex(
-                ClientSideOperationTimeoutFactories.create(timeoutMS, dropIndexOptions.getMaxTime(MILLISECONDS)), indexName),
+                ClientSideOperationTimeouts.create(timeoutMS, dropIndexOptions.getMaxTime(MILLISECONDS)), indexName),
                 readConcern, clientSession);
     }
 
     private void executeDropIndex(@Nullable final ClientSession clientSession, final Bson keys, final DropIndexOptions dropIndexOptions) {
         executor.execute(operations.dropIndex(
-                ClientSideOperationTimeoutFactories.create(timeoutMS, dropIndexOptions.getMaxTime(MILLISECONDS)), keys),
+                ClientSideOperationTimeouts.create(timeoutMS, dropIndexOptions.getMaxTime(MILLISECONDS)), keys),
                 readConcern, clientSession);
     }
 
@@ -1012,15 +1012,15 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private void executeRenameCollection(@Nullable final ClientSession clientSession, final MongoNamespace newCollectionNamespace,
                                          final RenameCollectionOptions renameCollectionOptions) {
-        executor.execute(operations.renameCollection(ClientSideOperationTimeoutFactories.create(timeoutMS), newCollectionNamespace,
+        executor.execute(operations.renameCollection(ClientSideOperationTimeouts.create(timeoutMS), newCollectionNamespace,
                                                      renameCollectionOptions), readConcern, clientSession);
     }
 
     private DeleteResult executeDelete(@Nullable final ClientSession clientSession, final Bson filter, final DeleteOptions deleteOptions,
                                        final boolean multi) {
         com.mongodb.bulk.BulkWriteResult result = executeSingleWriteRequest(clientSession,
-                multi ? operations.deleteMany(ClientSideOperationTimeoutFactories.create(timeoutMS), filter, deleteOptions)
-                        : operations.deleteOne(ClientSideOperationTimeoutFactories.create(timeoutMS), filter, deleteOptions),
+                multi ? operations.deleteMany(ClientSideOperationTimeouts.create(timeoutMS), filter, deleteOptions)
+                        : operations.deleteOne(ClientSideOperationTimeouts.create(timeoutMS), filter, deleteOptions),
                 DELETE);
         if (result.wasAcknowledged()) {
             return DeleteResult.acknowledged(result.getDeletedCount());
@@ -1032,16 +1032,16 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private UpdateResult executeUpdate(@Nullable final ClientSession clientSession, final Bson filter, final Bson update,
                                        final UpdateOptions updateOptions, final boolean multi) {
         return toUpdateResult(executeSingleWriteRequest(clientSession,
-                multi ? operations.updateMany(ClientSideOperationTimeoutFactories.create(timeoutMS), filter, update, updateOptions)
-                        : operations.updateOne(ClientSideOperationTimeoutFactories.create(timeoutMS), filter, update, updateOptions),
+                multi ? operations.updateMany(ClientSideOperationTimeouts.create(timeoutMS), filter, update, updateOptions)
+                        : operations.updateOne(ClientSideOperationTimeouts.create(timeoutMS), filter, update, updateOptions),
                 UPDATE));
     }
 
     private UpdateResult executeUpdate(@Nullable final ClientSession clientSession, final Bson filter,
                                        final List<? extends Bson> update, final UpdateOptions updateOptions, final boolean multi) {
         return toUpdateResult(executeSingleWriteRequest(clientSession,
-                multi ? operations.updateMany(ClientSideOperationTimeoutFactories.create(timeoutMS), filter, update, updateOptions)
-                        : operations.updateOne(ClientSideOperationTimeoutFactories.create(timeoutMS), filter, update, updateOptions),
+                multi ? operations.updateMany(ClientSideOperationTimeouts.create(timeoutMS), filter, update, updateOptions)
+                        : operations.updateOne(ClientSideOperationTimeouts.create(timeoutMS), filter, update, updateOptions),
                 UPDATE));
     }
 

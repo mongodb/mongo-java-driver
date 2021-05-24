@@ -35,7 +35,7 @@ import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.DBObjectMatchers.hasFields;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
-import static com.mongodb.Fixture.CSOT_FACTORY_TIMEOUT;
+import static com.mongodb.Fixture.CSOT_TIMEOUT;
 import static com.mongodb.Fixture.getDefaultDatabaseName;
 import static com.mongodb.Fixture.getMongoClient;
 import static com.mongodb.ReadPreference.secondary;
@@ -318,7 +318,7 @@ public class DBTest extends DatabaseTestCase {
     }
 
     BsonDocument getCollectionInfo(final String collectionName) {
-        return new ListCollectionsOperation<BsonDocument>(CSOT_FACTORY_TIMEOUT, getDefaultDatabaseName(), new BsonDocumentCodec())
+        return new ListCollectionsOperation<BsonDocument>(CSOT_TIMEOUT, getDefaultDatabaseName(), new BsonDocumentCodec())
                 .filter(new BsonDocument("name", new BsonString(collectionName))).execute(getBinding()).next().get(0);
     }
 }
