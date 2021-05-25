@@ -175,12 +175,15 @@ public class AggregatePublisherImplTest extends TestHelper {
     void shouldBuildTheExpectedOperationsForDollarOutAsDocument() {
         List<BsonDocument> pipeline = asList(BsonDocument.parse("{'$match': 1}"), BsonDocument.parse("{'$out': {s3: true}}"));
 
-        TestOperationExecutor executor = createOperationExecutor(asList(null, null, null));
+        TestOperationExecutor executor = createOperationExecutor(asList(getBatchCursor(), null, null, null));
+        AggregatePublisher<Document> publisher =
+                new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), pipeline, AggregationLevel.COLLECTION);
 
         // default input should be as expected
-        assertThrows(IllegalStateException.class, () ->
-                new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), pipeline, AggregationLevel.COLLECTION)
-                .asAsyncReadOperation(0));
+        assertThrows(IllegalStateException.class, () -> {
+            Flux.from(publisher).blockFirst();
+            executor.getReadOperation();
+        });
 
         // Should handle toCollection
         Publisher<Void> toCollectionPublisher =
@@ -298,25 +301,31 @@ public class AggregatePublisherImplTest extends TestHelper {
     @Test
     void shouldHandleErrorScenarios() {
         List<BsonDocument> pipeline = singletonList(BsonDocument.parse("{'$match': 1}"));
-        TestOperationExecutor executor = createOperationExecutor(singletonList(new MongoException("Failure")));
+        TestOperationExecutor errorExecutor = createOperationExecutor(singletonList(new MongoException("Failure")));
 
         // Operation fails
         Publisher<Document> publisher =
-                new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), pipeline, AggregationLevel.COLLECTION);
+                new AggregatePublisherImpl<>(null, createMongoOperationPublisher(errorExecutor), pipeline, AggregationLevel.COLLECTION);
         assertThrows(MongoException.class, () -> Flux.from(publisher).blockFirst());
 
         // Missing Codec
-        assertThrows(CodecConfigurationException.class, () ->
-                        new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor)
-                                .withCodecRegistry(BSON_CODEC_REGISTRY), pipeline, AggregationLevel.COLLECTION)
-                                .asAsyncReadOperation(0)
-        );
+        TestOperationExecutor executor = createOperationExecutor(asList(getBatchCursor(), getBatchCursor()));
+        Publisher<Document> publisherMissingCodec =
+                new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor)
+                        .withCodecRegistry(BSON_CODEC_REGISTRY), pipeline, AggregationLevel.COLLECTION);
+        assertThrows(CodecConfigurationException.class, () -> {
+            Flux.from(publisherMissingCodec).blockFirst();
+            executor.getReadOperation();
+        });
 
         // Pipeline contains null
-        assertThrows(IllegalArgumentException.class, () ->
-                        new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), singletonList(null),
-                                AggregationLevel.COLLECTION).asAsyncReadOperation(0)
-        );
+        Publisher<Document> publisherPipelineNull =
+                new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), singletonList(null),
+                        AggregationLevel.COLLECTION);
+        assertThrows(IllegalArgumentException.class, () -> {
+            Flux.from(publisherPipelineNull).blockFirst();
+            executor.getReadOperation();
+        });
     }
 
 

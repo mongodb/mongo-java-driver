@@ -32,10 +32,12 @@ import org.bson.codecs.configuration.CodecConfigurationException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 
 import static com.mongodb.reactivestreams.client.MongoClients.getDefaultCodecRegistry;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -161,9 +163,14 @@ public class MapReducePublisherImplTest extends TestHelper {
         assertThrows(IllegalStateException.class, publisher::toCollection);
 
         // Missing Codec
-        assertThrows(CodecConfigurationException.class, () ->
-                new MapReducePublisherImpl<>(null, createMongoOperationPublisher(executor)
-                        .withCodecRegistry(BSON_CODEC_REGISTRY), MAP_FUNCTION, REDUCE_FUNCTION)
-                        .asAsyncReadOperation(0));
+        TestOperationExecutor missingCodecExecutor = createOperationExecutor(singletonList(getBatchCursor()));
+        Publisher<Document> publisherMissingCodec =
+                new MapReducePublisherImpl<>(null, createMongoOperationPublisher(missingCodecExecutor)
+                        .withCodecRegistry(BSON_CODEC_REGISTRY), MAP_FUNCTION, REDUCE_FUNCTION);
+        assertThrows(CodecConfigurationException.class, () -> {
+            Flux.from(publisherMissingCodec).blockFirst();
+            missingCodecExecutor.getReadOperation();
+        });
+
     }
 }

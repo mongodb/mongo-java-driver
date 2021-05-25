@@ -712,7 +712,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
     def 'should pass tailable and await data flags through'() {
         given:
         collectionHelper.create(getCollectionName(), new CreateCollectionOptions().capped(true).sizeInBytes(1000))
-        def operation = new FindOperation<BsonDocument>(csot as ClientSideOperationTimeout, namespace, new BsonDocumentCodec())
+        def operation = new FindOperation<BsonDocument>(expectedClientSideOperationTimeout as ClientSideOperationTimeout, namespace, new BsonDocumentCodec())
                 .cursorType(cursorType as CursorType)
 
         when:

@@ -88,10 +88,14 @@ public class DistinctPublisherImplTest extends TestHelper {
         assertThrows(MongoException.class, () -> Flux.from(publisher).blockFirst());
 
         // Missing Codec
-        assertThrows(CodecConfigurationException.class, () ->
-                new DistinctPublisherImpl<>(null, createMongoOperationPublisher(executor).withCodecRegistry(BSON_CODEC_REGISTRY),
-                "fieldName", new Document()).asAsyncReadOperation(0)
-        );
+        TestOperationExecutor missingCodecExecutor = createOperationExecutor(singletonList(getBatchCursor()));
+        Publisher<Document> publisherMissingCodec =
+                new DistinctPublisherImpl<>(null, createMongoOperationPublisher(missingCodecExecutor)
+                        .withCodecRegistry(BSON_CODEC_REGISTRY), "fieldName", new Document());
+        assertThrows(CodecConfigurationException.class, () -> {
+            Flux.from(publisherMissingCodec).blockFirst();
+            missingCodecExecutor.getReadOperation();
+        });
     }
 
 }

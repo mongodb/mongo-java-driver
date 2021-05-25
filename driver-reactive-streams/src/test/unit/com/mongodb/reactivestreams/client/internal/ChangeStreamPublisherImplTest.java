@@ -110,24 +110,30 @@ public class ChangeStreamPublisherImplTest extends TestHelper {
     @Test
     void shouldHandleErrorScenarios() {
         List<BsonDocument> pipeline = singletonList(BsonDocument.parse("{'$match': 1}"));
-        TestOperationExecutor executor = createOperationExecutor(singletonList(new MongoException("Failure")));
+        TestOperationExecutor errorExecutor = createOperationExecutor(singletonList(new MongoException("Failure")));
 
         // Operation fails
-        ChangeStreamPublisher<Document> publisher = new ChangeStreamPublisherImpl<>(null, createMongoOperationPublisher(executor),
-                                                                                    Document.class, pipeline, ChangeStreamLevel.COLLECTION);
+        ChangeStreamPublisher<Document> publisher = new ChangeStreamPublisherImpl<>(null, createMongoOperationPublisher(errorExecutor),
+                Document.class, pipeline, ChangeStreamLevel.COLLECTION);
         assertThrows(MongoException.class, () -> Flux.from(publisher).blockFirst());
 
         // Missing Codec
-        assertThrows(CodecConfigurationException.class, () ->
+        TestOperationExecutor executor = createOperationExecutor(asList(getBatchCursor(), getBatchCursor()));
+        ChangeStreamPublisherImpl<Document> publisherMissingCodec =
                 new ChangeStreamPublisherImpl<>(null, createMongoOperationPublisher(executor)
-                        .withCodecRegistry(BSON_CODEC_REGISTRY), Document.class, pipeline, ChangeStreamLevel.COLLECTION)
-                .asAsyncReadOperation(0)
-        );
+                .withCodecRegistry(BSON_CODEC_REGISTRY), Document.class, pipeline, ChangeStreamLevel.COLLECTION);
+        assertThrows(CodecConfigurationException.class, () -> {
+            Flux.from(publisherMissingCodec).blockFirst();
+            executor.getReadOperation();
+        });
 
         // Pipeline contains null
-        assertThrows(IllegalArgumentException.class, () ->
-                        new ChangeStreamPublisherImpl<>(null, createMongoOperationPublisher(executor), Document.class,
-                                singletonList(null), ChangeStreamLevel.COLLECTION).asAsyncReadOperation(0)
-        );
+        ChangeStreamPublisher<Document> publisherPipelineNull =
+                new ChangeStreamPublisherImpl<>(null, createMongoOperationPublisher(executor), Document.class,
+                        singletonList(null), ChangeStreamLevel.COLLECTION);
+        assertThrows(IllegalArgumentException.class, () -> {
+            Flux.from(publisherPipelineNull).blockFirst();
+            executor.getReadOperation();
+        });
     }
 }
