@@ -141,7 +141,7 @@ public class ConcurrentPool<T> implements Pool<T> {
     @Override
     public T get(final long timeout, final TimeUnit timeUnit) {
         if (closed) {
-            throw new IllegalStateException("The pool is closed");
+            throw poolClosedException();
         }
 
         if (!acquirePermit(timeout, timeUnit)) {
@@ -293,5 +293,9 @@ public class ConcurrentPool<T> implements Pool<T> {
         } catch (RuntimeException e) {
             // ItemFactory.close() really should not throw
         }
+    }
+
+    static IllegalStateException poolClosedException() {
+        return new IllegalStateException("The pool is closed");
     }
 }
