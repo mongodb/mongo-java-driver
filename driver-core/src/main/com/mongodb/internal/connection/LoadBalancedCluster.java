@@ -259,6 +259,7 @@ final class LoadBalancedCluster implements Cluster {
             if (dnsSrvRecordMonitor != null) {
                 dnsSrvRecordMonitor.close();
             }
+            server.close();
             lock.lock();
             try {
                 condition.signalAll();
