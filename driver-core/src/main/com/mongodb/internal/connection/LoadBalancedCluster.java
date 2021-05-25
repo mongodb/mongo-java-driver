@@ -74,7 +74,7 @@ final class LoadBalancedCluster implements Cluster {
     private final ClusterListener clusterListener;
     private ClusterDescription description;
     @Nullable
-    private volatile ClusterableServer server;
+    private ClusterableServer server;
     private final AtomicBoolean closed = new AtomicBoolean();
     private final DnsSrvRecordMonitor dnsSrvRecordMonitor;
     private volatile MongoException srvResolutionException;
@@ -111,6 +111,9 @@ final class LoadBalancedCluster implements Cluster {
                     List<ServerSelectionRequest> localWaitQueue;
                     lock.lock();
                     try {
+                        if (isClosed()) {
+                            return;
+                        }
                         srvResolutionException = null;
                         if (hosts.size() != 1) {
                             srvRecordResolvedToMultipleHosts = true;
@@ -261,15 +264,16 @@ final class LoadBalancedCluster implements Cluster {
             if (dnsSrvRecordMonitor != null) {
                 dnsSrvRecordMonitor.close();
             }
-            ClusterableServer localServer = server;
-            if (localServer != null) {
-                localServer.close();
-            }
+            ClusterableServer localServer;
             lock.lock();
             try {
                 condition.signalAll();
+                localServer = server;
             } finally {
                 lock.unlock();
+            }
+            if (localServer != null) {
+                localServer.close();
             }
         }
     }
