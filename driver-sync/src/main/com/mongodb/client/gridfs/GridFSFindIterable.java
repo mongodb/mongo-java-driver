@@ -92,7 +92,9 @@ public interface GridFSFindIterable extends MongoIterable<GridFSFile> {
      * @param timeUnit the time unit, which may not be null
      * @return this
      * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
+     * @deprecated prefer {@link GridFSBucket#withTimeout(long, TimeUnit)} instead
      */
+    @Deprecated
     GridFSFindIterable maxTime(long maxTime, TimeUnit timeUnit);
 
     /**

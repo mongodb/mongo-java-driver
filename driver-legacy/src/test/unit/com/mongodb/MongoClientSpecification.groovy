@@ -337,7 +337,7 @@ class MongoClientSpecification extends Specification {
 
         then:
         expect database, isTheSameAs(new MongoDatabaseImpl('name', client.getCodecRegistry(), secondary(),
-                WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, STANDARD,
+                WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, STANDARD, null,
                 client.getOperationExecutor()))
     }
 

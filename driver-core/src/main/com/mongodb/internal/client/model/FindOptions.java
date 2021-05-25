@@ -21,9 +21,6 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
-import java.util.concurrent.TimeUnit;
-
-import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -36,8 +33,6 @@ public final class FindOptions {
     private int batchSize;
     private int limit;
     private Bson projection;
-    private long maxTimeMS;
-    private long maxAwaitTimeMS;
     private int skip;
     private Bson sort;
     private CursorType cursorType = CursorType.NonTailable;
@@ -62,15 +57,13 @@ public final class FindOptions {
 
     //CHECKSTYLE:OFF
     FindOptions(
-            final int batchSize, final int limit, final Bson projection, final long maxTimeMS, final long maxAwaitTimeMS, final int skip,
-            final Bson sort, final CursorType cursorType, final boolean noCursorTimeout, final boolean oplogReplay, final boolean partial,
-            final Collation collation, final String comment, final Bson hint, final String hintString, final Bson max, final Bson min,
-            final boolean returnKey, final boolean showRecordId, final Boolean allowDiskUse) {
+            final int batchSize, final int limit, final Bson projection, final int skip, final Bson sort, final CursorType cursorType,
+            final boolean noCursorTimeout, final boolean oplogReplay, final boolean partial, final Collation collation,
+            final String comment, final Bson hint, final String hintString, final Bson max, final Bson min, final boolean returnKey,
+            final boolean showRecordId, final Boolean allowDiskUse) {
         this.batchSize = batchSize;
         this.limit = limit;
         this.projection = projection;
-        this.maxTimeMS = maxTimeMS;
-        this.maxAwaitTimeMS = maxAwaitTimeMS;
         this.skip = skip;
         this.sort = sort;
         this.cursorType = cursorType;
@@ -90,8 +83,8 @@ public final class FindOptions {
     //CHECKSTYLE:ON
 
     public FindOptions withBatchSize(final int batchSize) {
-        return new FindOptions(batchSize, limit, projection, maxTimeMS, maxAwaitTimeMS, skip, sort, cursorType, noCursorTimeout,
-                oplogReplay, partial, collation, comment, hint, hintString, max, min, returnKey, showRecordId, allowDiskUse);
+        return new FindOptions(batchSize, limit, projection, skip, sort, cursorType, noCursorTimeout, oplogReplay, partial, collation,
+                comment, hint, hintString, max, min, returnKey, showRecordId, allowDiskUse);
     }
 
     /**
@@ -135,72 +128,6 @@ public final class FindOptions {
      */
     public FindOptions skip(final int skip) {
         this.skip = skip;
-        return this;
-    }
-
-    /**
-     * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
-     *
-     * @param timeUnit the time unit to return the result in
-     * @return the maximum execution time in the given time unit
-     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
-     */
-    public long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
-    }
-
-    /**
-     * Sets the maximum execution time on the server for this operation.
-     *
-     * @param maxTime  the max time
-     * @param timeUnit the time unit, which may not be null
-     * @return this
-     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
-     */
-    public FindOptions maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        isTrueArgument("maxTime > = 0", maxTime >= 0);
-        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
-        return this;
-    }
-
-    /**
-     * The maximum amount of time for the server to wait on new documents to satisfy a tailable cursor
-     * query. This only applies to a TAILABLE_AWAIT cursor. When the cursor is not a TAILABLE_AWAIT cursor,
-     * this option is ignored.
-     *
-     * On servers &gt;= 3.2, this option will be specified on the getMore command as "maxTimeMS". The default
-     * is no value: no "maxTimeMS" is sent to the server with the getMore command.
-     *
-     * On servers &lt; 3.2, this option is ignored, and indicates that the driver should respect the server's default value
-     *
-     * A zero value will be ignored.
-     *
-     * @param timeUnit the time unit to return the result in
-     * @return the maximum await execution time in the given time unit
-     * @since 3.2
-     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
-     */
-    public long getMaxAwaitTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxAwaitTimeMS, TimeUnit.MILLISECONDS);
-    }
-
-    /**
-     * Sets the maximum await execution time on the server for this operation.
-     *
-     * @param maxAwaitTime  the max await time.  A zero value will be ignored, and indicates that the driver should respect the server's
-     *                      default value
-     * @param timeUnit the time unit, which may not be null
-     * @return this
-     * @since 3.2
-     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
-     */
-    public FindOptions maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        isTrueArgument("maxAwaitTime > = 0", maxAwaitTime >= 0);
-        this.maxAwaitTimeMS = TimeUnit.MILLISECONDS.convert(maxAwaitTime, timeUnit);
         return this;
     }
 
@@ -575,8 +502,6 @@ public final class FindOptions {
                 + "batchSize=" + batchSize
                 + ", limit=" + limit
                 + ", projection=" + projection
-                + ", maxTimeMS=" + maxTimeMS
-                + ", maxAwaitTimeMS=" + maxAwaitTimeMS
                 + ", skip=" + skip
                 + ", sort=" + sort
                 + ", cursorType=" + cursorType

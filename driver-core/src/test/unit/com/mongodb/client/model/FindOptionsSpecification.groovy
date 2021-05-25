@@ -22,9 +22,6 @@ import org.bson.BsonDocument
 import org.bson.Document
 import spock.lang.Specification
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS
-import static java.util.concurrent.TimeUnit.SECONDS
-
 class FindOptionsSpecification extends Specification {
 
     def 'should have the expected defaults'() {
@@ -33,8 +30,6 @@ class FindOptionsSpecification extends Specification {
 
         then:
         options.getCollation() == null
-        options.getMaxTime(MILLISECONDS) == 0
-        options.getMaxAwaitTime(MILLISECONDS) == 0
         options.getProjection() == null
         options.getSort() == null
         options.getHint() == null
@@ -127,46 +122,6 @@ class FindOptionsSpecification extends Specification {
 
         where:
         noCursorTimeout << [true, false]
-    }
-
-    def 'should convert maxTime'() {
-        when:
-        def options = new FindOptions()
-
-        then:
-        options.getMaxTime(SECONDS) == 0
-
-        when:
-        options.maxTime(100, MILLISECONDS)
-
-        then:
-        options.getMaxTime(MILLISECONDS) == 100
-
-        when:
-        options.maxTime(1004, MILLISECONDS)
-
-        then:
-        options.getMaxTime(SECONDS) == 1
-    }
-
-    def 'should convert maxAwaitTime'() {
-        when:
-        def options = new FindOptions()
-
-        then:
-        options.getMaxAwaitTime(SECONDS) == 0
-
-        when:
-        options.maxAwaitTime(100, MILLISECONDS)
-
-        then:
-        options.getMaxAwaitTime(MILLISECONDS) == 100
-
-        when:
-        options.maxAwaitTime(1004, MILLISECONDS)
-
-        then:
-        options.getMaxAwaitTime(SECONDS) == 1
     }
 
     def 'should set hint'() {

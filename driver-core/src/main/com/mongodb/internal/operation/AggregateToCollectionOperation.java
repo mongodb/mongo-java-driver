@@ -20,9 +20,11 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
-import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncWriteBinding;
+import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.connection.AsyncConnection;
@@ -36,25 +38,23 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommand;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandAsync;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorTransformer;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorWriteTransformer;
-import static com.mongodb.internal.operation.OperationHelper.AsyncCallableWithConnection;
-import static com.mongodb.internal.operation.OperationHelper.CallableWithConnection;
+import static com.mongodb.internal.operation.AsyncCommandOperationHelper.executeCommandAsync;
+import static com.mongodb.internal.operation.AsyncCommandOperationHelper.writeConcernErrorTransformerAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.AsyncCallableWithConnectionAndSource;
+import static com.mongodb.internal.operation.AsyncOperationHelper.releasingCallback;
+import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncConnection;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.OperationHelper.releasingCallback;
-import static com.mongodb.internal.operation.OperationHelper.validateCollation;
-import static com.mongodb.internal.operation.OperationHelper.withAsyncConnection;
-import static com.mongodb.internal.operation.OperationHelper.withConnection;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotFour;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotSix;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
+import static com.mongodb.internal.operation.SyncCommandOperationHelper.executeCommand;
+import static com.mongodb.internal.operation.SyncCommandOperationHelper.writeConcernErrorTransformer;
+import static com.mongodb.internal.operation.SyncOperationHelper.CallableWithConnectionAndSource;
+import static com.mongodb.internal.operation.SyncOperationHelper.withConnection;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 
 /**
@@ -65,6 +65,7 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  * @since 3.0
  */
 public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final List<BsonDocument> pipeline;
     private final WriteConcern writeConcern;
@@ -72,7 +73,6 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
     private final AggregationLevel aggregationLevel;
 
     private Boolean allowDiskUse;
-    private long maxTimeMS;
     private Boolean bypassDocumentValidation;
     private Collation collation;
     private String comment;
@@ -81,72 +81,67 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
     /**
      * Construct a new instance.
      *
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      * @param pipeline the aggregation pipeline.
      */
-    public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline) {
-        this(namespace, pipeline, null, null, AggregationLevel.COLLECTION);
+    public AggregateToCollectionOperation(final ClientSideOperationTimeout  clientSideOperationTimeout,
+                                          final MongoNamespace namespace, final List<BsonDocument> pipeline) {
+        this(clientSideOperationTimeout, namespace, pipeline, null, null, AggregationLevel.COLLECTION);
     }
 
     /**
      * Construct a new instance.
      *
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      * @param pipeline the aggregation pipeline.
      * @param writeConcern the write concern to apply
      *
      * @since 3.4
      */
-    public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
+    public AggregateToCollectionOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                          final MongoNamespace namespace, final List<BsonDocument> pipeline,
                                           final WriteConcern writeConcern) {
-        this(namespace, pipeline, null, writeConcern, AggregationLevel.COLLECTION);
+        this(clientSideOperationTimeout, namespace, pipeline, null, writeConcern, AggregationLevel.COLLECTION);
     }
 
     /**
      * Construct a new instance.
      *
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      * @param pipeline the aggregation pipeline.
      * @param readConcern the read concern to apply
      *
      * @since 3.11
      */
-    public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
+    public AggregateToCollectionOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                          final MongoNamespace namespace, final List<BsonDocument> pipeline,
                                           final ReadConcern readConcern) {
-        this(namespace, pipeline, readConcern, null, AggregationLevel.COLLECTION);
+        this(clientSideOperationTimeout, namespace, pipeline, readConcern, null, AggregationLevel.COLLECTION);
     }
 
     /**
      * Construct a new instance.
      *
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      * @param pipeline the aggregation pipeline.
-     * @param writeConcern the write concern to apply
      * @param readConcern the read concern to apply
+     * @param writeConcern the write concern to apply
      * @since 3.11
      */
-    public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
+    public AggregateToCollectionOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                          final MongoNamespace namespace, final List<BsonDocument> pipeline,
                                           final ReadConcern readConcern, final WriteConcern writeConcern) {
-        this(namespace, pipeline, readConcern, writeConcern, AggregationLevel.COLLECTION);
+        this(clientSideOperationTimeout, namespace, pipeline, readConcern, writeConcern, AggregationLevel.COLLECTION);
     }
 
     /**
      * Construct a new instance.
      *
-     * @param namespace the database and collection namespace for the operation.
-     * @param pipeline the aggregation pipeline.
-     * @param writeConcern the write concern to apply
-     * @param aggregationLevel the aggregation level
-     * @since 3.10
-     */
-    public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
-                                          final WriteConcern writeConcern, final AggregationLevel aggregationLevel) {
-        this(namespace, pipeline, ReadConcern.DEFAULT, writeConcern, aggregationLevel);
-    }
-
-    /**
-     * Construct a new instance.
-     *
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param namespace the database and collection namespace for the operation.
      * @param pipeline the aggregation pipeline.
      * @param readConcern the read concern to apply
@@ -154,9 +149,11 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
      * @param aggregationLevel the aggregation level
      * @since 3.11
      */
-    public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
+    public AggregateToCollectionOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                          final MongoNamespace namespace, final List<BsonDocument> pipeline,
                                           final ReadConcern readConcern, final WriteConcern writeConcern,
                                           final AggregationLevel aggregationLevel) {
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.namespace = notNull("namespace", namespace);
         this.pipeline = notNull("pipeline", pipeline);
         this.writeConcern = writeConcern;
@@ -217,32 +214,6 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
      */
     public AggregateToCollectionOperation allowDiskUse(final Boolean allowDiskUse) {
         this.allowDiskUse = allowDiskUse;
-        return this;
-    }
-
-    /**
-     * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
-     *
-     * @param timeUnit the time unit to return the result in
-     * @return the maximum execution time in the given time unit
-     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
-     */
-    public long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
-    }
-
-    /**
-     * Sets the maximum execution time on the server for this operation.
-     *
-     * @param maxTime  the max time
-     * @param timeUnit the time unit, which may not be null
-     * @return this
-     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
-     */
-    public AggregateToCollectionOperation maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
@@ -346,11 +317,13 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
 
     @Override
     public Void execute(final WriteBinding binding) {
-        return withConnection(binding, new CallableWithConnection<Void>() {
+        return withConnection(clientSideOperationTimeout, binding, new CallableWithConnectionAndSource<Void>() {
             @Override
-            public Void call(final Connection connection) {
-                validateCollation(connection, collation);
-                return executeCommand(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
+            public Void call(final ClientSideOperationTimeout clientSideOperationTimeout,
+                             final ConnectionSource source, final Connection connection) {
+                SyncOperationHelper.validateCollation(connection, collation);
+                return executeCommand(clientSideOperationTimeout, binding, namespace.getDatabaseName(),
+                        getCommandCreator().create(clientSideOperationTimeout, source.getServerDescription(), connection.getDescription()),
                         connection, writeConcernErrorTransformer());
             }
         });
@@ -358,22 +331,27 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withAsyncConnection(binding, new AsyncCallableWithConnection() {
+        withAsyncConnection(clientSideOperationTimeout, binding, new AsyncCallableWithConnectionAndSource() {
             @Override
-            public void call(final AsyncConnection connection, final Throwable t) {
+            public void call(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncConnectionSource source,
+                             final AsyncConnection connection, final Throwable t) {
                 SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
                 if (t != null) {
                     errHandlingCallback.onResult(null, t);
                 } else {
-                    final SingleResultCallback<Void> wrappedCallback = releasingCallback(errHandlingCallback, connection);
-                    validateCollation(connection, collation, new AsyncCallableWithConnection() {
-                        @Override
-                        public void call(final AsyncConnection connection, final Throwable t) {
+                    final SingleResultCallback<Void> wrappedCallback = releasingCallback(errHandlingCallback, source, connection);
+                    AsyncOperationHelper.validateCollation(clientSideOperationTimeout, source, connection, collation,
+                            new AsyncCallableWithConnectionAndSource() {
+                                @Override
+                                public void call(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                 final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
                             if (t != null) {
                                 wrappedCallback.onResult(null, t);
                             } else {
-                                executeCommandAsync(binding, namespace.getDatabaseName(),
-                                        getCommand(connection.getDescription()), connection, writeConcernErrorWriteTransformer(),
+                                executeCommandAsync(clientSideOperationTimeout, binding, namespace.getDatabaseName(),
+                                        getCommandCreator().create(clientSideOperationTimeout, source.getServerDescription(),
+                                                connection.getDescription()), connection,
+                                        writeConcernErrorTransformerAsync(),
                                         wrappedCallback);
                             }
                         }
@@ -383,43 +361,45 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
         });
     }
 
-    private BsonDocument getCommand(final ConnectionDescription description) {
-        BsonValue aggregationTarget = (aggregationLevel == AggregationLevel.DATABASE)
-                ? new BsonInt32(1) : new BsonString(namespace.getCollectionName());
+    private CommandCreator getCommandCreator() {
+        return (clientSideOperationTimeout, serverDescription, connectionDescription) -> {
+            BsonValue aggregationTarget = (aggregationLevel == AggregationLevel.DATABASE)
+                    ? new BsonInt32(1) : new BsonString(namespace.getCollectionName());
 
-        BsonDocument commandDocument = new BsonDocument("aggregate", aggregationTarget);
-        commandDocument.put("pipeline", new BsonArray(pipeline));
-        if (maxTimeMS > 0) {
-            commandDocument.put("maxTimeMS", new BsonInt64(maxTimeMS));
-        }
-        if (allowDiskUse != null) {
-            commandDocument.put("allowDiskUse", BsonBoolean.valueOf(allowDiskUse));
-        }
-        if (bypassDocumentValidation != null && serverIsAtLeastVersionThreeDotTwo(description)) {
-            commandDocument.put("bypassDocumentValidation", BsonBoolean.valueOf(bypassDocumentValidation));
-        }
+            BsonDocument commandDocument = new BsonDocument("aggregate", aggregationTarget);
+            commandDocument.put("pipeline", new BsonArray(pipeline));
 
-        if (serverIsAtLeastVersionThreeDotSix(description)) {
-            commandDocument.put("cursor", new BsonDocument());
-        }
+            long maxTimeMS = clientSideOperationTimeout.getMaxTimeMS();
+            if (maxTimeMS > 0) {
+                commandDocument.put("maxTimeMS", new BsonInt64(maxTimeMS));
+            }
+            if (allowDiskUse != null) {
+                commandDocument.put("allowDiskUse", BsonBoolean.valueOf(allowDiskUse));
+            }
+            if (bypassDocumentValidation != null && serverIsAtLeastVersionThreeDotTwo(connectionDescription)) {
+                commandDocument.put("bypassDocumentValidation", BsonBoolean.valueOf(bypassDocumentValidation));
+            }
 
-        appendWriteConcernToCommand(writeConcern, commandDocument, description);
-        if (readConcern != null && !readConcern.isServerDefault() && serverIsAtLeastVersionThreeDotFour(description)) {
-            commandDocument.put("readConcern", readConcern.asDocument());
-        }
+            if (serverIsAtLeastVersionThreeDotSix(connectionDescription)) {
+                commandDocument.put("cursor", new BsonDocument());
+            }
 
-        if (collation != null) {
-            commandDocument.put("collation", collation.asDocument());
-        }
-        if (comment != null) {
-            commandDocument.put("comment", new BsonString(comment));
-        }
-        if (hint != null) {
-            commandDocument.put("hint", hint);
-        }
-        return commandDocument;
+            appendWriteConcernToCommand(writeConcern, commandDocument, connectionDescription);
+            if (readConcern != null && !readConcern.isServerDefault() && serverIsAtLeastVersionThreeDotFour(connectionDescription)) {
+                commandDocument.put("readConcern", readConcern.asDocument());
+            }
+
+            if (collation != null) {
+                commandDocument.put("collation", collation.asDocument());
+            }
+            if (comment != null) {
+                commandDocument.put("comment", new BsonString(comment));
+            }
+            if (hint != null) {
+                commandDocument.put("hint", hint);
+            }
+            return commandDocument;
+        };
     }
-
-
 
 }

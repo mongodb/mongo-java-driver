@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.connection.QueryResult;
 import org.bson.codecs.Decoder;
@@ -29,9 +30,10 @@ import org.bson.codecs.Decoder;
 class MapReduceInlineResultsCursor<T> extends QueryBatchCursor<T> implements MapReduceBatchCursor<T> {
     private final MapReduceStatistics statistics;
 
-    MapReduceInlineResultsCursor(final QueryResult<T> queryResult, final Decoder<T> decoder, final ConnectionSource connectionSource,
+    MapReduceInlineResultsCursor(final ClientSideOperationTimeout clientSideOperationTimeout, final QueryResult<T> queryResult,
+                                 final Decoder<T> decoder, final ConnectionSource connectionSource,
                                  final MapReduceStatistics statistics) {
-        super(queryResult, 0, 0, decoder, connectionSource);
+        super(clientSideOperationTimeout, queryResult, 0, 0, decoder, connectionSource);
         this.statistics = statistics;
     }
 

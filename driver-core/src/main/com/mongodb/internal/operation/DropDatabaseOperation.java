@@ -17,8 +17,9 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.WriteConcern;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.AsyncConnection;
@@ -28,16 +29,16 @@ import org.bson.BsonInt32;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommand;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandAsync;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorTransformer;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorWriteTransformer;
-import static com.mongodb.internal.operation.OperationHelper.AsyncCallableWithConnection;
-import static com.mongodb.internal.operation.OperationHelper.CallableWithConnection;
+import static com.mongodb.internal.operation.AsyncCommandOperationHelper.executeCommandAsync;
+import static com.mongodb.internal.operation.AsyncCommandOperationHelper.writeConcernErrorTransformerAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.AsyncCallableWithConnection;
+import static com.mongodb.internal.operation.AsyncOperationHelper.releasingCallback;
+import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncConnection;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.OperationHelper.releasingCallback;
-import static com.mongodb.internal.operation.OperationHelper.withAsyncConnection;
-import static com.mongodb.internal.operation.OperationHelper.withConnection;
+import static com.mongodb.internal.operation.SyncCommandOperationHelper.executeCommand;
+import static com.mongodb.internal.operation.SyncCommandOperationHelper.writeConcernErrorTransformer;
+import static com.mongodb.internal.operation.SyncOperationHelper.CallableWithConnection;
+import static com.mongodb.internal.operation.SyncOperationHelper.withConnection;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 
 /**
@@ -47,28 +48,32 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  * @since 3.0
  */
 public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
-    private static final BsonDocument DROP_DATABASE = new BsonDocument("dropDatabase", new BsonInt32(1));
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final String databaseName;
     private final WriteConcern writeConcern;
 
     /**
      * Construct a new instance.
      *
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param databaseName the name of the database for the operation.
      */
-    public DropDatabaseOperation(final String databaseName) {
-        this(databaseName, null);
+    public DropDatabaseOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final String databaseName) {
+        this(clientSideOperationTimeout, databaseName, null);
     }
 
     /**
      * Construct a new instance.
      *
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param databaseName the name of the database for the operation.
      * @param writeConcern the write concern
      *
      * @since 3.4
      */
-    public DropDatabaseOperation(final String databaseName, final WriteConcern writeConcern) {
+    public DropDatabaseOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final String databaseName,
+                                 final WriteConcern writeConcern) {
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.databaseName = notNull("databaseName", databaseName);
         this.writeConcern = writeConcern;
     }
@@ -86,10 +91,11 @@ public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOp
 
     @Override
     public Void execute(final WriteBinding binding) {
-        return withConnection(binding, new CallableWithConnection<Void>() {
+        return withConnection(clientSideOperationTimeout, binding, new CallableWithConnection<Void>() {
             @Override
-            public Void call(final Connection connection) {
-                executeCommand(binding, databaseName, getCommand(connection.getDescription()), connection, writeConcernErrorTransformer());
+            public Void call(final ClientSideOperationTimeout clientSideOperationTimeout, final Connection connection) {
+                executeCommand(clientSideOperationTimeout, binding, databaseName, getCommand(connection.getDescription()), connection,
+                        writeConcernErrorTransformer());
                 return null;
             }
         });
@@ -97,15 +103,16 @@ public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOp
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withAsyncConnection(binding, new AsyncCallableWithConnection() {
+        withAsyncConnection(clientSideOperationTimeout, binding, new AsyncCallableWithConnection() {
             @Override
-            public void call(final AsyncConnection connection, final Throwable t) {
+            public void call(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncConnection connection,
+                             final Throwable t) {
                 SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
                 if (t != null) {
                     errHandlingCallback.onResult(null, t);
                 } else {
-                    executeCommandAsync(binding, databaseName, getCommand(connection.getDescription()), connection,
-                            writeConcernErrorWriteTransformer(), releasingCallback(errHandlingCallback, connection));
+                    executeCommandAsync(clientSideOperationTimeout, binding, databaseName, getCommand(connection.getDescription()),
+                            connection, writeConcernErrorTransformerAsync(), releasingCallback(errHandlingCallback, connection));
 
                 }
             }

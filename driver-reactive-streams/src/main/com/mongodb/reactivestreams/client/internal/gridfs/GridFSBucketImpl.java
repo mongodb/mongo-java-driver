@@ -22,6 +22,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
+import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoCollection;
@@ -39,6 +40,7 @@ import org.bson.types.ObjectId;
 import org.reactivestreams.Publisher;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.reactivestreams.client.internal.gridfs.GridFSPublisherCreator.createDeletePublisher;
@@ -115,6 +117,12 @@ public final class GridFSBucketImpl implements GridFSBucket {
         return filesCollection.getReadConcern();
     }
 
+    @Nullable
+    @Override
+    public Long getTimeout(final TimeUnit timeUnit) {
+        return filesCollection.getTimeout(timeUnit);
+    }
+
     @Override
     public GridFSBucket withChunkSizeBytes(final int chunkSizeBytes) {
         return new GridFSBucketImpl(bucketName, chunkSizeBytes, filesCollection, chunksCollection);
@@ -139,6 +147,13 @@ public final class GridFSBucketImpl implements GridFSBucket {
         notNull("readConcern", readConcern);
         return new GridFSBucketImpl(bucketName, chunkSizeBytes, filesCollection.withReadConcern(readConcern),
                                     chunksCollection.withReadConcern(readConcern));
+    }
+
+    @Override
+    public GridFSBucket withTimeout(final long timeout, final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        return new GridFSBucketImpl(bucketName, chunkSizeBytes, filesCollection.withTimeout(timeout, timeUnit),
+                chunksCollection.withTimeout(timeout, timeUnit));
     }
 
     @Override

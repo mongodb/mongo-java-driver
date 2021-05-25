@@ -44,6 +44,7 @@ import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
+import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
 import com.mongodb.reactivestreams.client.ClientSession;
@@ -60,6 +61,7 @@ import org.reactivestreams.Publisher;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -101,6 +103,12 @@ final class MongoCollectionImpl<T> implements MongoCollection<T> {
         return mongoOperationPublisher.getReadConcern();
     }
 
+    @Nullable
+    @Override
+    public Long getTimeout(final TimeUnit timeUnit) {
+        return mongoOperationPublisher.getTimeout(timeUnit);
+    }
+
     MongoOperationPublisher<T> getPublisherHelper() {
         return mongoOperationPublisher;
     }
@@ -128,6 +136,11 @@ final class MongoCollectionImpl<T> implements MongoCollection<T> {
     @Override
     public MongoCollection<T> withReadConcern(final ReadConcern readConcern) {
         return new MongoCollectionImpl<>(mongoOperationPublisher.withReadConcern(readConcern));
+    }
+
+    @Override
+    public MongoCollection<T> withTimeout(final long timeout, final TimeUnit timeUnit) {
+        return new MongoCollectionImpl<>(mongoOperationPublisher.withTimeout(timeout, timeUnit));
     }
 
     @Override

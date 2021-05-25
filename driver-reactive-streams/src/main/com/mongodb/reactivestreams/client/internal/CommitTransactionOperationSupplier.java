@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.client.model;
+package com.mongodb.reactivestreams.client.internal;
 
-import com.mongodb.client.model.CountOptions;
-import com.mongodb.client.model.EstimatedDocumentCountOptions;
+import com.mongodb.internal.operation.CommitTransactionOperation;
 
-import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
-/**
- * Not part of the public API
- */
-public final class CountOptionsHelper {
+public class CommitTransactionOperationSupplier implements Supplier<CommitTransactionOperation> {
 
-    public static CountOptions fromEstimatedDocumentCountOptions(final EstimatedDocumentCountOptions options) {
-        return new CountOptions().maxTime(options.getMaxTime(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
+    private final Supplier<CommitTransactionOperation> supplier;
+
+    public CommitTransactionOperationSupplier(final Supplier<CommitTransactionOperation> supplier) {
+        this.supplier = supplier;
     }
 
-    private CountOptionsHelper() {
+    @Override
+    public CommitTransactionOperation get() {
+        return supplier.get();
     }
 }

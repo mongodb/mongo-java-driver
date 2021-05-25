@@ -24,6 +24,9 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.MapReduceIterable;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.MapReduceAction;
+
+import com.mongodb.internal.ClientSideOperationTimeouts;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.operation.BatchCursor;
@@ -59,19 +62,18 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     private int limit;
     private boolean jsMode;
     private boolean verbose = true;
-    private long maxTimeMS;
     private MapReduceAction action = MapReduceAction.REPLACE;
     private String databaseName;
     private boolean sharded;
     private boolean nonAtomic;
     private Boolean bypassDocumentValidation;
     private Collation collation;
-
+    private long maxTimeMS;
     MapReduceIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
                           final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
                           final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
-                          final String mapFunction, final String reduceFunction) {
-        super(clientSession, executor, readConcern, readPreference, false);
+                          final String mapFunction, final String reduceFunction,  @Nullable final Long timeoutMS) {
+        super(clientSession, executor, readConcern, readPreference, false, timeoutMS);
         this.operations = new SyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
                 false, false);
         this.namespace = notNull("namespace", namespace);
@@ -85,8 +87,8 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         if (inline) {
             throw new IllegalStateException("The options must specify a non-inline result");
         }
-
-        getExecutor().execute(createMapReduceToCollectionOperation(), getReadConcern(), getClientSession());
+        getExecutor().execute(createMapReduceToCollectionOperation(createClientSideOperationTimeout()), getReadConcern(),
+                getClientSession());
     }
 
     @Override
@@ -138,6 +140,7 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         return this;
     }
 
+    @Deprecated
     @Override
     public MapReduceIterable<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
@@ -198,12 +201,14 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
 
     @Override
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
+        ClientSideOperationTimeout clientSideOperationTimeout = createClientSideOperationTimeout();
         if (inline) {
-            ReadOperation<MapReduceBatchCursor<TResult>> operation = operations.mapReduce(mapFunction, reduceFunction, finalizeFunction,
-                    resultClass, filter, limit, maxTimeMS, jsMode, scope, sort, verbose, collation);
-            return new WrappedMapReduceReadOperation<TResult>(operation);
+            ReadOperation<MapReduceBatchCursor<TResult>> operation = operations.mapReduce(clientSideOperationTimeout, mapFunction,
+                    reduceFunction, finalizeFunction, resultClass, filter, limit, jsMode, scope, sort, verbose, collation);
+            return new WrappedMapReduceReadOperation<>(operation);
         } else {
-            getExecutor().execute(createMapReduceToCollectionOperation(), getReadConcern(), getClientSession());
+            getExecutor().execute(createMapReduceToCollectionOperation(clientSideOperationTimeout), getReadConcern(),
+                    getClientSession());
 
             String dbName = databaseName != null ? databaseName : namespace.getDatabaseName();
 
@@ -212,15 +217,20 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
             if (batchSize != null) {
                 findOptions.batchSize(batchSize);
             }
-            return operations.find(new MongoNamespace(dbName, collectionName), new BsonDocument(), resultClass, findOptions);
+            return operations.find(clientSideOperationTimeout, new MongoNamespace(dbName, collectionName), new BsonDocument(), resultClass,
+                    findOptions);
         }
-
     }
 
-    private WriteOperation<MapReduceStatistics> createMapReduceToCollectionOperation() {
-        return operations.mapReduceToCollection(databaseName, collectionName, mapFunction, reduceFunction, finalizeFunction, filter,
-                limit, maxTimeMS, jsMode, scope, sort, verbose, action, nonAtomic, sharded, bypassDocumentValidation, collation
-        );
+    private ClientSideOperationTimeout createClientSideOperationTimeout() {
+        return ClientSideOperationTimeouts.create(getTimeoutMS(), maxTimeMS);
+    }
+
+    private WriteOperation<MapReduceStatistics> createMapReduceToCollectionOperation(
+            final ClientSideOperationTimeout clientSideOperationTimeout) {
+        return operations.mapReduceToCollection(clientSideOperationTimeout, databaseName, collectionName, mapFunction,
+                reduceFunction, finalizeFunction, filter, limit, jsMode, scope, sort, verbose, action, nonAtomic, sharded,
+                bypassDocumentValidation, collation);
     }
 
     // this could be inlined, but giving it a name so that it's unit-testable

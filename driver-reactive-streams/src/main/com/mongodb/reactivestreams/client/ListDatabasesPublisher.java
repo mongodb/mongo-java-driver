@@ -38,7 +38,9 @@ public interface ListDatabasesPublisher<TResult> extends Publisher<TResult> {
      * @param timeUnit the time unit, which may not be null
      * @return this
      * @mongodb.driver.manual reference/operator/meta/maxTimeMS/ Max Time
+     * @deprecated prefer {@link MongoCollection#withTimeout(long, TimeUnit)} instead
      */
+    @Deprecated
     ListDatabasesPublisher<TResult> maxTime(long maxTime, TimeUnit timeUnit);
 
     /**

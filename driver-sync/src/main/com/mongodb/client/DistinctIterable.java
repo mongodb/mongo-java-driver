@@ -45,7 +45,9 @@ public interface DistinctIterable<TResult> extends MongoIterable<TResult> {
      * @param maxTime  the max time
      * @param timeUnit the time unit, which may not be null
      * @return this
+     * @deprecated prefer {@code MongoCollection.withTimeout(long, TimeUnit)} instead
      */
+    @Deprecated
     DistinctIterable<TResult> maxTime(long maxTime, TimeUnit timeUnit);
 
     /**

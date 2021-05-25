@@ -26,6 +26,7 @@ import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.TransactionBody;
+import com.mongodb.internal.ClientSideOperationTimeouts;
 import com.mongodb.internal.operation.AbortTransactionOperation;
 import com.mongodb.internal.operation.CommitTransactionOperation;
 import com.mongodb.internal.operation.ReadOperation;
@@ -140,10 +141,12 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                     throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
                 }
                 commitInProgress = true;
-                delegate.getOperationExecutor().execute(new CommitTransactionOperation(transactionOptions.getWriteConcern(),
-                        transactionState == TransactionState.COMMITTED)
-                                .recoveryToken(getRecoveryToken())
-                                .maxCommitTime(transactionOptions.getMaxCommitTime(MILLISECONDS), MILLISECONDS),
+                delegate.getOperationExecutor().execute(
+                        new CommitTransactionOperation(
+                                ClientSideOperationTimeouts.withMaxCommitMS(delegate.getTimeoutMS(),
+                                        transactionOptions.getMaxCommitTime(MILLISECONDS)),
+                                transactionOptions.getWriteConcern(), transactionState == TransactionState.COMMITTED)
+                                .recoveryToken(getRecoveryToken()),
                         readConcern, this);
             }
         } catch (MongoException e) {
@@ -172,9 +175,9 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                 if (readConcern == null) {
                     throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
                 }
-                delegate.getOperationExecutor().execute(new AbortTransactionOperation(transactionOptions.getWriteConcern())
-                                .recoveryToken(getRecoveryToken()),
-                        readConcern, this);
+                delegate.getOperationExecutor().execute(new AbortTransactionOperation(
+                        ClientSideOperationTimeouts.create(delegate.getTimeoutMS()), transactionOptions.getWriteConcern())
+                                .recoveryToken(getRecoveryToken()), readConcern, this);
             }
         } catch (Exception e) {
             // ignore exceptions from abort

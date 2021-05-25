@@ -21,6 +21,7 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerCursor;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.AsyncAggregateResponseBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncConnectionSource;
@@ -42,7 +43,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
-import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.CursorHelper.getNumberToReturn;
@@ -59,10 +59,10 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     private static final String POST_BATCH_RESUME_TOKEN = "postBatchResumeToken";
     private static final String OPERATION_TIME = "operationTime";
 
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final int limit;
     private final Decoder<T> decoder;
-    private final long maxTimeMS;
     private final AsyncConnectionSource connectionSource;
     private final AtomicReference<ServerCursor> cursor;
     private volatile QueryResult<T> firstBatch;
@@ -79,16 +79,16 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     /* protected by `this` */
     private volatile boolean isClosePending = false;
 
-    AsyncQueryBatchCursor(final QueryResult<T> firstBatch, final int limit, final int batchSize, final long maxTimeMS,
-                          final Decoder<T> decoder, final AsyncConnectionSource connectionSource, final AsyncConnection connection) {
-        this(firstBatch, limit, batchSize, maxTimeMS, decoder, connectionSource, connection, null);
+    AsyncQueryBatchCursor(final ClientSideOperationTimeout clientSideOperationTimeout, final QueryResult<T> firstBatch, final int limit,
+                          final int batchSize, final Decoder<T> decoder, final AsyncConnectionSource connectionSource,
+                          final AsyncConnection connection) {
+        this(clientSideOperationTimeout, firstBatch, limit, batchSize, decoder, connectionSource, connection, null);
     }
 
-    AsyncQueryBatchCursor(final QueryResult<T> firstBatch, final int limit, final int batchSize, final long maxTimeMS,
-                          final Decoder<T> decoder, final AsyncConnectionSource connectionSource, final AsyncConnection connection,
-                          final BsonDocument result) {
-        isTrueArgument("maxTimeMS >= 0", maxTimeMS >= 0);
-        this.maxTimeMS = maxTimeMS;
+    AsyncQueryBatchCursor(final ClientSideOperationTimeout clientSideOperationTimeout, final QueryResult<T> firstBatch, final int limit,
+                          final int batchSize, final Decoder<T> decoder, final AsyncConnectionSource connectionSource,
+                          final AsyncConnection connection, final BsonDocument result) {
+        this.clientSideOperationTimeout = clientSideOperationTimeout;
         this.namespace = firstBatch.getNamespace();
         this.firstBatch = firstBatch;
         this.limit = limit;
@@ -139,6 +139,11 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         if (doClose) {
             killCursorOnClose();
         }
+    }
+
+    @Override
+    public ClientSideOperationTimeout getClientSideOperationTimeout() {
+        return clientSideOperationTimeout;
     }
 
     @Override
@@ -264,8 +269,8 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         if (batchSizeForGetMoreCommand != 0) {
             document.append("batchSize", new BsonInt32(batchSizeForGetMoreCommand));
         }
-        if (maxTimeMS != 0) {
-            document.append("maxTimeMS", new BsonInt64(maxTimeMS));
+        if (clientSideOperationTimeout.getMaxAwaitTimeMS() > 0) {
+            document.append("maxTimeMS", new BsonInt64(clientSideOperationTimeout.getMaxAwaitTimeMS()));
         }
         return document;
     }

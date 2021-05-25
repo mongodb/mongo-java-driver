@@ -86,6 +86,7 @@ public class MapReduceTest extends DatabaseTestCase {
         assertThat(output.results(), everyItem(allOf(isA(DBObject.class), hasFields(new String[]{"_id", "value"}))));
     }
 
+    @SuppressWarnings("deprecation")
     @Test(expected = MongoExecutionTimeoutException.class)
     public void testMapReduceExecutionTimeout() {
         assumeThat(isSharded(), is(false));

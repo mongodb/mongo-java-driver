@@ -46,7 +46,9 @@ public interface DistinctPublisher<TResult> extends Publisher<TResult> {
      * @param maxTime  the max time
      * @param timeUnit the time unit, which may not be null
      * @return this
+     * @deprecated prefer {@link MongoCollection#withTimeout(long, TimeUnit)} instead
      */
+    @Deprecated
     DistinctPublisher<TResult> maxTime(long maxTime, TimeUnit timeUnit);
 
     /**

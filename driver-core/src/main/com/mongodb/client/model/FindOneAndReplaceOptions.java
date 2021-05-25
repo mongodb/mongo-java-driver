@@ -134,7 +134,9 @@ public class FindOneAndReplaceOptions {
      * @param maxTime  the max time
      * @param timeUnit the time unit, which may not be null
      * @return this
+     * @deprecated prefer {@code MongoCollection.withTimeout(long, TimeUnit)} instead
      */
+    @Deprecated
     public FindOneAndReplaceOptions maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
@@ -146,7 +148,9 @@ public class FindOneAndReplaceOptions {
      *
      * @param timeUnit the time unit for the result
      * @return the max time
+     * @deprecated prefer {@code MongoCollection.withTimeout(long, TimeUnit)} instead
      */
+    @Deprecated
     public long getMaxTime(final TimeUnit timeUnit) {
         return timeUnit.convert(maxTimeMS, MILLISECONDS);
     }

@@ -19,6 +19,7 @@ package com.mongodb.internal.operation;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.internal.ClientSideOperationTimeout;
 
 import java.io.Closeable;
 import java.util.Iterator;
@@ -93,4 +94,9 @@ public interface BatchCursor<T> extends Iterator<List<T>>, Closeable {
      * @return ServerAddress
      */
     ServerAddress getServerAddress();
+
+    /**
+     * @return the client side operation timeout for the cursor
+     */
+    ClientSideOperationTimeout getClientSideOperationTimeout();
 }

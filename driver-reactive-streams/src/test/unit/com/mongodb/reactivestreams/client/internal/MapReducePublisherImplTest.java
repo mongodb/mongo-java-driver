@@ -37,12 +37,13 @@ import reactor.core.publisher.Flux;
 
 import static com.mongodb.reactivestreams.client.MongoClients.getDefaultCodecRegistry;
 import static java.util.Arrays.asList;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.Collections.singletonList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@SuppressWarnings({"rawtypes"})
+@SuppressWarnings({"deprecation", "rawtypes"})
 public class MapReducePublisherImplTest extends TestHelper {
 
     private static final String MAP_FUNCTION = "mapFunction(){}";
@@ -59,8 +60,8 @@ public class MapReducePublisherImplTest extends TestHelper {
                 new MapReducePublisherImpl<>(null, createMongoOperationPublisher(executor), MAP_FUNCTION, REDUCE_FUNCTION);
 
         MapReduceWithInlineResultsOperation<Document> expectedOperation =
-                new MapReduceWithInlineResultsOperation<>(NAMESPACE, new BsonJavaScript(MAP_FUNCTION), new BsonJavaScript(REDUCE_FUNCTION),
-                                                          getDefaultCodecRegistry().get(Document.class)).verbose(true);
+                new MapReduceWithInlineResultsOperation<>(CSOT_NO_TIMEOUT, NAMESPACE, new BsonJavaScript(MAP_FUNCTION),
+                        new BsonJavaScript(REDUCE_FUNCTION), getDefaultCodecRegistry().get(Document.class)).verbose(true);
 
         // default input should be as expected
         Flux.from(publisher).blockFirst();
@@ -79,19 +80,17 @@ public class MapReducePublisherImplTest extends TestHelper {
                 .filter(new Document("filter", 1))
                 .finalizeFunction(FINALIZE_FUNCTION)
                 .limit(999)
-                .maxTime(10, SECONDS)
+                .maxTime(99, MILLISECONDS)
                 .scope(new Document("scope", 1))
                 .sort(Sorts.ascending("sort"))
                 .verbose(false);
 
-        expectedOperation
-                .collation(COLLATION)
+        expectedOperation = new MapReduceWithInlineResultsOperation<>(CSOT_MAX_AWAIT_TIME, NAMESPACE,
+                new BsonJavaScript(MAP_FUNCTION), new BsonJavaScript(REDUCE_FUNCTION), getDefaultCodecRegistry().get(Document.class))
                 .collation(COLLATION)
                 .filter(BsonDocument.parse("{filter: 1}"))
                 .finalizeFunction(new BsonJavaScript(FINALIZE_FUNCTION))
                 .limit(999)
-                .maxTime(10, SECONDS)
-                .maxTime(10, SECONDS)
                 .scope(new BsonDocument("scope", new BsonInt32(1)))
                 .sort(new BsonDocument("sort", new BsonInt32(1)))
                 .verbose(false);
@@ -114,11 +113,9 @@ public class MapReducePublisherImplTest extends TestHelper {
                 new MapReducePublisherImpl<>(null, createMongoOperationPublisher(executor), MAP_FUNCTION, REDUCE_FUNCTION)
                         .collectionName(NAMESPACE.getCollectionName());
 
-        MapReduceToCollectionOperation expectedOperation = new MapReduceToCollectionOperation(NAMESPACE,
-                                                                                              new BsonJavaScript(MAP_FUNCTION),
-                                                                                              new BsonJavaScript(REDUCE_FUNCTION),
-                                                                                              NAMESPACE.getCollectionName(),
-                                                                                              WriteConcern.ACKNOWLEDGED).verbose(true);
+        MapReduceToCollectionOperation expectedOperation = new MapReduceToCollectionOperation(CSOT_NO_TIMEOUT, NAMESPACE,
+                new BsonJavaScript(MAP_FUNCTION), new BsonJavaScript(REDUCE_FUNCTION), NAMESPACE.getCollectionName(),
+                WriteConcern.ACKNOWLEDGED).verbose(true);
 
         // default input should be as expected
         Flux.from(publisher.toCollection()).blockFirst();
@@ -132,19 +129,18 @@ public class MapReducePublisherImplTest extends TestHelper {
                 .filter(new Document("filter", 1))
                 .finalizeFunction(FINALIZE_FUNCTION)
                 .limit(999)
-                .maxTime(10, SECONDS)
+                .maxTime(99, MILLISECONDS)
                 .scope(new Document("scope", 1))
                 .sort(Sorts.ascending("sort"))
                 .verbose(false);
 
-        expectedOperation
+        expectedOperation = new MapReduceToCollectionOperation(CSOT_NO_TIMEOUT, NAMESPACE, new BsonJavaScript(MAP_FUNCTION),
+                new BsonJavaScript(REDUCE_FUNCTION), NAMESPACE.getCollectionName(), WriteConcern.ACKNOWLEDGED)
                 .collation(COLLATION)
                 .bypassDocumentValidation(true)
                 .filter(BsonDocument.parse("{filter: 1}"))
                 .finalizeFunction(new BsonJavaScript(FINALIZE_FUNCTION))
                 .limit(999)
-                .maxTime(10, SECONDS)
-                .maxTime(10, SECONDS)
                 .scope(new BsonDocument("scope", new BsonInt32(1)))
                 .sort(new BsonDocument("sort", new BsonInt32(1)))
                 .verbose(false);
@@ -156,7 +152,7 @@ public class MapReducePublisherImplTest extends TestHelper {
     @DisplayName("Should handle error scenarios")
     @Test
     void shouldHandleErrorScenarios() {
-        TestOperationExecutor executor = createOperationExecutor(asList(new MongoException("Failure"), null, null));
+        TestOperationExecutor executor = createOperationExecutor(asList(new MongoException("Failure"), null));
 
         // Operation fails
         MapReducePublisher<Document> publisher =
@@ -167,9 +163,14 @@ public class MapReducePublisherImplTest extends TestHelper {
         assertThrows(IllegalStateException.class, publisher::toCollection);
 
         // Missing Codec
+        TestOperationExecutor missingCodecExecutor = createOperationExecutor(singletonList(getBatchCursor()));
         Publisher<Document> publisherMissingCodec =
-                new MapReducePublisherImpl<>(null, createMongoOperationPublisher(executor)
+                new MapReducePublisherImpl<>(null, createMongoOperationPublisher(missingCodecExecutor)
                         .withCodecRegistry(BSON_CODEC_REGISTRY), MAP_FUNCTION, REDUCE_FUNCTION);
-        assertThrows(CodecConfigurationException.class, () -> Flux.from(publisherMissingCodec).blockFirst());
+        assertThrows(CodecConfigurationException.class, () -> {
+            Flux.from(publisherMissingCodec).blockFirst();
+            missingCodecExecutor.getReadOperation();
+        });
+
     }
 }

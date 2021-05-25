@@ -105,6 +105,7 @@ case class GridFSFindObservable(private val wrapped: GridFSFindPublisher) extend
    * @param duration the duration
    * @return this
    */
+  @deprecated("prefer `MongoCollection[T].withTimeout` instead")
   def maxTime(duration: Duration): GridFSFindObservable = {
     wrapped.maxTime(duration.toMillis, TimeUnit.MILLISECONDS)
     this

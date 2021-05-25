@@ -38,6 +38,7 @@ class SyncDistinctIterable<T> extends SyncMongoIterable<T> implements DistinctIt
         return this;
     }
 
+    @Deprecated
     @Override
     public DistinctIterable<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         wrapped.maxTime(maxTime, timeUnit);

@@ -300,6 +300,7 @@ public abstract class AbstractUnifiedTest {
         return mongoClient.startSession(options);
     }
 
+    @SuppressWarnings("deprecation")
     private TransactionOptions createDefaultTransactionOptions(final BsonDocument optionsDocument) {
         TransactionOptions.Builder builder = TransactionOptions.builder();
         if (optionsDocument.containsKey("defaultTransactionOptions")) {
@@ -707,6 +708,7 @@ public abstract class AbstractUnifiedTest {
         return events.subList(events.size() - 2, events.size());
     }
 
+    @SuppressWarnings("deprecation")
     private TransactionOptions createTransactionOptions(final BsonDocument options) {
         TransactionOptions.Builder builder = TransactionOptions.builder();
         if (options.containsKey("writeConcern")) {

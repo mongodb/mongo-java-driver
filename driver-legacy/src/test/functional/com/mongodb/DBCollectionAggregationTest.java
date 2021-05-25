@@ -117,6 +117,7 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
         collection.aggregate(new ArrayList<DBObject>(), null);
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     public void testMaxTime() {
         assumeThat(isSharded(), is(false));

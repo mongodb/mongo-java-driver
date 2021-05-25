@@ -20,6 +20,7 @@ import com.mongodb.Function;
 import com.mongodb.WriteConcern;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import org.bson.BsonDocument;
 
 import static com.mongodb.internal.operation.CommandOperationHelper.noOpRetryCommandModifier;
@@ -35,10 +36,12 @@ public class AbortTransactionOperation extends TransactionOperation {
     /**
      * Construct an instance.
      *
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param writeConcern the write concern
      */
-    public AbortTransactionOperation(final WriteConcern writeConcern) {
-        super(writeConcern);
+    public AbortTransactionOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                     final WriteConcern writeConcern) {
+        super(clientSideOperationTimeout, writeConcern);
     }
 
     /**
@@ -59,13 +62,16 @@ public class AbortTransactionOperation extends TransactionOperation {
     }
 
     @Override
-    CommandOperationHelper.CommandCreator getCommandCreator() {
-        final CommandOperationHelper.CommandCreator creator = super.getCommandCreator();
+    CommandCreator getCommandCreator() {
+        final CommandCreator creator = super.getCommandCreator();
         if (recoveryToken != null) {
-            return new CommandOperationHelper.CommandCreator() {
+            return new CommandCreator() {
                 @Override
-                public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
-                    return creator.create(serverDescription, connectionDescription).append("recoveryToken", recoveryToken);
+                public BsonDocument create(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                           final ServerDescription serverDescription,
+                                           final ConnectionDescription connectionDescription) {
+                    return creator.create(clientSideOperationTimeout, serverDescription, connectionDescription)
+                            .append("recoveryToken", recoveryToken);
                 }
             };
         }

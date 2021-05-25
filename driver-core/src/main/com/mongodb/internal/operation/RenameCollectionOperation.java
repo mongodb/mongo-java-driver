@@ -18,8 +18,9 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.AsyncConnection;
@@ -30,16 +31,16 @@ import org.bson.BsonString;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommand;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandAsync;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorTransformer;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorWriteTransformer;
-import static com.mongodb.internal.operation.OperationHelper.AsyncCallableWithConnection;
-import static com.mongodb.internal.operation.OperationHelper.CallableWithConnection;
+import static com.mongodb.internal.operation.AsyncCommandOperationHelper.executeCommandAsync;
+import static com.mongodb.internal.operation.AsyncCommandOperationHelper.writeConcernErrorTransformerAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.AsyncCallableWithConnection;
+import static com.mongodb.internal.operation.AsyncOperationHelper.releasingCallback;
+import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncConnection;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.OperationHelper.releasingCallback;
-import static com.mongodb.internal.operation.OperationHelper.withAsyncConnection;
-import static com.mongodb.internal.operation.OperationHelper.withConnection;
+import static com.mongodb.internal.operation.SyncCommandOperationHelper.executeCommand;
+import static com.mongodb.internal.operation.SyncCommandOperationHelper.writeConcernErrorTransformer;
+import static com.mongodb.internal.operation.SyncOperationHelper.CallableWithConnection;
+import static com.mongodb.internal.operation.SyncOperationHelper.withConnection;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 
 /**
@@ -52,28 +53,38 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  * @since 3.0
  */
 public class RenameCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace originalNamespace;
     private final MongoNamespace newNamespace;
     private final WriteConcern writeConcern;
     private boolean dropTarget;
 
     /**
+     * Construct an instance
+     *
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param originalNamespace the name of the collection to rename
      * @param newNamespace      the desired new name for the collection
      */
-    public RenameCollectionOperation(final MongoNamespace originalNamespace, final MongoNamespace newNamespace) {
-        this(originalNamespace, newNamespace, null);
+    public RenameCollectionOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                     final MongoNamespace originalNamespace, final MongoNamespace newNamespace) {
+        this(clientSideOperationTimeout, originalNamespace, newNamespace, null);
     }
 
     /**
+     * Construct an instance
+     *
+     * @param clientSideOperationTimeout the client side operation timeout factory
      * @param originalNamespace the name of the collection to rename
      * @param newNamespace      the desired new name for the collection
      * @param writeConcern      the writeConcern
      *
      * @since 3.4
      */
-    public RenameCollectionOperation(final MongoNamespace originalNamespace, final MongoNamespace newNamespace,
+    public RenameCollectionOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                     final MongoNamespace originalNamespace, final MongoNamespace newNamespace,
                                      final WriteConcern writeConcern) {
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.originalNamespace = notNull("originalNamespace", originalNamespace);
         this.newNamespace = notNull("newNamespace", newNamespace);
         this.writeConcern = writeConcern;
@@ -120,10 +131,10 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
      */
     @Override
     public Void execute(final WriteBinding binding) {
-        return withConnection(binding, new CallableWithConnection<Void>() {
+        return withConnection(clientSideOperationTimeout, binding, new CallableWithConnection<Void>() {
             @Override
-            public Void call(final Connection connection) {
-                return executeCommand(binding, "admin", getCommand(connection.getDescription()), connection,
+            public Void call(final ClientSideOperationTimeout clientSideOperationTimeout, final Connection connection) {
+                return executeCommand(clientSideOperationTimeout, binding, "admin", getCommand(connection.getDescription()), connection,
                         writeConcernErrorTransformer());
             }
         });
@@ -131,15 +142,16 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withAsyncConnection(binding, new AsyncCallableWithConnection() {
+        withAsyncConnection(clientSideOperationTimeout, binding, new AsyncCallableWithConnection() {
             @Override
-            public void call(final AsyncConnection connection, final Throwable t) {
+            public void call(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncConnection connection,
+                             final Throwable t) {
                 SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
                 if (t != null) {
                     errHandlingCallback.onResult(null, t);
                 } else {
-                    executeCommandAsync(binding, "admin", getCommand(connection.getDescription()), connection,
-                            writeConcernErrorWriteTransformer(), releasingCallback(errHandlingCallback, connection));
+                    executeCommandAsync(clientSideOperationTimeout, binding, "admin", getCommand(connection.getDescription()),
+                            connection, writeConcernErrorTransformerAsync(), releasingCallback(errHandlingCallback, connection));
                 }
             }
         });

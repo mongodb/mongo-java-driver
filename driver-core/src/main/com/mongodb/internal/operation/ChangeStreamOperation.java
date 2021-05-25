@@ -19,6 +19,7 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.FullDocument;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.AsyncAggregateResponseBatchCursor;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -27,8 +28,8 @@ import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
-import com.mongodb.internal.operation.OperationHelper.AsyncCallableWithSource;
-import com.mongodb.internal.operation.OperationHelper.CallableWithSource;
+import com.mongodb.internal.operation.AsyncOperationHelper.AsyncCallableWithSource;
+import com.mongodb.internal.operation.SyncOperationHelper.CallableWithSource;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -42,11 +43,10 @@ import org.bson.codecs.RawBsonDocumentCodec;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.operation.OperationHelper.withAsyncReadConnection;
-import static com.mongodb.internal.operation.OperationHelper.withReadConnectionSource;
+import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncReadConnection;
+import static com.mongodb.internal.operation.SyncOperationHelper.withReadConnectionSource;
 
 /**
  * An operation that executes an {@code $changeStream} aggregation.
@@ -69,30 +69,32 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
     /**
      * Construct a new instance.
      *
-     * @param namespace    the database and collection namespace for the operation.
-     * @param fullDocument the fullDocument value
-     * @param pipeline     the aggregation pipeline.
-     * @param decoder      the decoder for the result documents.
+     * @param clientSideOperationTimeout the client side operation timeout factory
+     * @param namespace                  the database and collection namespace for the operation.
+     * @param fullDocument               the fullDocument value
+     * @param pipeline                   the aggregation pipeline.
+     * @param decoder                    the decoder for the result documents.
      */
-    public ChangeStreamOperation(final MongoNamespace namespace, final FullDocument fullDocument, final List<BsonDocument> pipeline,
-                                 final Decoder<T> decoder) {
-        this(namespace, fullDocument, pipeline, decoder, ChangeStreamLevel.COLLECTION);
+    public ChangeStreamOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+                                 final FullDocument fullDocument, final List<BsonDocument> pipeline, final Decoder<T> decoder) {
+        this(clientSideOperationTimeout, namespace, fullDocument, pipeline, decoder, ChangeStreamLevel.COLLECTION);
     }
 
     /**
      * Construct a new instance.
      *
-     * @param namespace         the database and collection namespace for the operation.
-     * @param fullDocument      the fullDocument value
-     * @param pipeline          the aggregation pipeline.
-     * @param decoder           the decoder for the result documents.
-     * @param changeStreamLevel the level at which the change stream is observing
-     *
+     * @param clientSideOperationTimeout the client side operation timeout factory
+     * @param namespace                  the database and collection namespace for the operation.
+     * @param fullDocument               the fullDocument value
+     * @param pipeline                   the aggregation pipeline.
+     * @param decoder                    the decoder for the result documents.
+     * @param changeStreamLevel          the level at which the change stream is observing
      * @since 3.8
      */
-    public ChangeStreamOperation(final MongoNamespace namespace, final FullDocument fullDocument, final List<BsonDocument> pipeline,
-                                 final Decoder<T> decoder, final ChangeStreamLevel changeStreamLevel) {
-        this.wrapped = new AggregateOperationImpl<RawBsonDocument>(namespace, pipeline, RAW_BSON_DOCUMENT_CODEC,
+    public ChangeStreamOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+                                 final FullDocument fullDocument, final List<BsonDocument> pipeline, final Decoder<T> decoder,
+                                 final ChangeStreamLevel changeStreamLevel) {
+        this.wrapped = new AggregateOperationImpl<>(clientSideOperationTimeout, namespace, pipeline, RAW_BSON_DOCUMENT_CODEC,
                 getAggregateTarget(), getPipelineCreator());
         this.fullDocument = notNull("fullDocument", fullDocument);
         this.decoder = notNull("decoder", decoder);
@@ -212,34 +214,6 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
     }
 
     /**
-     * The maximum amount of time for the server to wait on new documents to satisfy a tailable cursor
-     * query. This only applies to a TAILABLE_AWAIT cursor. When the cursor is not a TAILABLE_AWAIT cursor,
-     * this option is ignored.
-     *
-     * A zero value will be ignored.
-     *
-     * @param timeUnit the time unit to return the result in
-     * @return the maximum await execution time in the given time unit
-     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
-     */
-    public long getMaxAwaitTime(final TimeUnit timeUnit) {
-        return wrapped.getMaxAwaitTime(timeUnit);
-    }
-
-    /**
-     * Sets the maximum await execution time on the server for this operation.
-     *
-     * @param maxAwaitTime the max await time.  A value less than one will be ignored, and indicates that the driver should respect the
-     *                     server's default value
-     * @param timeUnit     the time unit, which may not be null
-     * @return this
-     */
-    public ChangeStreamOperation<T> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
-        wrapped.maxAwaitTime(maxAwaitTime, timeUnit);
-        return this;
-    }
-
-    /**
      * Returns the collation options
      *
      * @return the collation options
@@ -316,21 +290,23 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return withReadConnectionSource(binding, new CallableWithSource<BatchCursor<T>>() {
-            @Override
-            public BatchCursor<T> call(final ConnectionSource source) {
-                AggregateResponseBatchCursor<RawBsonDocument> cursor =
-                        (AggregateResponseBatchCursor<RawBsonDocument>) wrapped.execute(binding);
-                return new ChangeStreamBatchCursor<T>(ChangeStreamOperation.this, cursor, binding,
-                        setChangeStreamOptions(cursor.getPostBatchResumeToken(), cursor.getOperationTime(),
-                                cursor.getMaxWireVersion(), cursor.isFirstBatchEmpty()), cursor.getMaxWireVersion());
-            }
-        });
+        return withReadConnectionSource(wrapped.getClientSideOperationTimeout(), binding,
+                new CallableWithSource<BatchCursor<T>>() {
+                    @Override
+                    public BatchCursor<T> call(final ClientSideOperationTimeout clientSideOperationTimeout, final ConnectionSource source) {
+                        AggregateResponseBatchCursor<RawBsonDocument> cursor =
+                                (AggregateResponseBatchCursor<RawBsonDocument>) wrapped.execute(binding);
+                        return new ChangeStreamBatchCursor<T>(ChangeStreamOperation.this, cursor, binding,
+                                setChangeStreamOptions(cursor.getPostBatchResumeToken(), cursor.getOperationTime(),
+                                        cursor.getMaxWireVersion(), cursor.isFirstBatchEmpty()), cursor.getMaxWireVersion());
+                    }
+                });
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        wrapped.executeAsync(binding, new SingleResultCallback<AsyncBatchCursor<RawBsonDocument>>() {
+        wrapped.executeAsync(binding,
+                new SingleResultCallback<AsyncBatchCursor<RawBsonDocument>>() {
             @Override
             public void onResult(final AsyncBatchCursor<RawBsonDocument> result, final Throwable t) {
                 if (t != null) {
@@ -338,9 +314,10 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
                 } else {
                     final AsyncAggregateResponseBatchCursor<RawBsonDocument> cursor =
                             (AsyncAggregateResponseBatchCursor<RawBsonDocument>) result;
-                    withAsyncReadConnection(binding, new AsyncCallableWithSource() {
+                    withAsyncReadConnection(cursor.getClientSideOperationTimeout(), binding, new AsyncCallableWithSource() {
                         @Override
-                        public void call(final AsyncConnectionSource source, final Throwable t) {
+                        public void call(final ClientSideOperationTimeout clientSideOperationTimeout, final AsyncConnectionSource source,
+                                         final Throwable t) {
                             if (t != null) {
                                 callback.onResult(null, t);
                             } else {

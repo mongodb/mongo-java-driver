@@ -26,8 +26,6 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DeleteOptions;
-import com.mongodb.client.model.DropIndexOptions;
-import com.mongodb.client.model.EstimatedDocumentCountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
@@ -39,6 +37,7 @@ import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.FindOptions;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -79,176 +78,192 @@ public final class SyncOperations<TDocument> {
                 retryWrites, retryReads);
     }
 
-    public ReadOperation<Long> countDocuments(final Bson filter, final CountOptions options) {
-        return operations.countDocuments(filter, options);
+    public ReadOperation<Long> countDocuments(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                              final Bson filter, final CountOptions options) {
+        return operations.countDocuments(clientSideOperationTimeout, filter, options);
     }
 
-    public ReadOperation<Long> estimatedDocumentCount(final EstimatedDocumentCountOptions options) {
-        return operations.estimatedDocumentCount(options);
+    public ReadOperation<Long> estimatedDocumentCount(final ClientSideOperationTimeout clientSideOperationTimeout) {
+        return operations.estimatedDocumentCount(clientSideOperationTimeout);
     }
 
-    public <TResult> ReadOperation<BatchCursor<TResult>> findFirst(final Bson filter, final Class<TResult> resultClass,
-                                                                   final FindOptions options) {
-        return operations.findFirst(filter, resultClass, options);
+    public <TResult> ReadOperation<BatchCursor<TResult>> findFirst(
+            final ClientSideOperationTimeout clientSideOperationTimeout, final Bson filter, final Class<TResult> resultClass,
+            final FindOptions options) {
+        return operations.findFirst(clientSideOperationTimeout, filter, resultClass, options);
     }
 
-    public <TResult> ExplainableReadOperation<BatchCursor<TResult>> find(final Bson filter, final Class<TResult> resultClass,
-                                                              final FindOptions options) {
-        return operations.find(filter, resultClass, options);
+    public <TResult> ExplainableReadOperation<BatchCursor<TResult>> find(
+            final ClientSideOperationTimeout clientSideOperationTimeout, final Bson filter, final Class<TResult> resultClass,
+            final FindOptions options) {
+        return operations.find(clientSideOperationTimeout, filter, resultClass, options);
     }
 
-    public <TResult> ReadOperation<BatchCursor<TResult>> find(final MongoNamespace findNamespace, final Bson filter,
+    public <TResult> ReadOperation<BatchCursor<TResult>> find(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                              final MongoNamespace findNamespace, final Bson filter,
                                                               final Class<TResult> resultClass, final FindOptions options) {
-        return operations.find(findNamespace, filter, resultClass, options);
+        return operations.find(clientSideOperationTimeout, findNamespace, filter, resultClass, options);
     }
 
-    public <TResult> ReadOperation<BatchCursor<TResult>> distinct(final String fieldName, final Bson filter,
-                                                                  final Class<TResult> resultClass, final long maxTimeMS,
-                                                                  final Collation collation) {
-        return operations.distinct(fieldName, filter, resultClass, maxTimeMS, collation);
+    public <TResult> ReadOperation<BatchCursor<TResult>> distinct(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                                  final String fieldName, final Bson filter,
+                                                                  final Class<TResult> resultClass, final Collation collation) {
+        return operations.distinct(clientSideOperationTimeout, fieldName, filter, resultClass, collation);
     }
 
-    public <TResult> ExplainableReadOperation<BatchCursor<TResult>> aggregate(final List<? extends Bson> pipeline,
-                                                                              final Class<TResult> resultClass,
-                                                                              final long maxTimeMS, final long maxAwaitTimeMS,
-                                                                              final Integer batchSize,
-                                                                              final Collation collation, final Bson hint,
-                                                                              final String comment,
-                                                                              final Boolean allowDiskUse,
-                                                                              final AggregationLevel aggregationLevel) {
-        return operations.aggregate(pipeline, resultClass, maxTimeMS, maxAwaitTimeMS, batchSize, collation, hint, comment, allowDiskUse,
-                aggregationLevel);
+    public <TResult> ExplainableReadOperation<BatchCursor<TResult>> aggregate(
+            final ClientSideOperationTimeout clientSideOperationTimeout, final List<? extends Bson> pipeline,
+            final Class<TResult> resultClass, final Integer batchSize, final Collation collation, final Bson hint,
+            final String comment, final Boolean allowDiskUse, final AggregationLevel aggregationLevel) {
+        return operations.aggregate(clientSideOperationTimeout, pipeline, resultClass, batchSize, collation, hint, comment,
+                allowDiskUse, aggregationLevel);
     }
 
-    public WriteOperation<Void> aggregateToCollection(final List<? extends Bson> pipeline, final long maxTimeMS,
-                                                      final Boolean allowDiskUse, final Boolean bypassDocumentValidation,
-                                                      final Collation collation, final Bson hint, final String comment,
-                                                      final AggregationLevel aggregationLevel) {
-        return operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint, comment,
-                aggregationLevel);
+    public WriteOperation<Void> aggregateToCollection(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                      final List<? extends Bson> pipeline, final Boolean allowDiskUse,
+                                                      final Boolean bypassDocumentValidation, final Collation collation, final Bson hint,
+                                                      final String comment, final AggregationLevel aggregationLevel) {
+        return operations.aggregateToCollection(clientSideOperationTimeout, pipeline, allowDiskUse, bypassDocumentValidation,
+                collation, hint, comment, aggregationLevel);
     }
 
-    public WriteOperation<MapReduceStatistics> mapReduceToCollection(final String databaseName, final String collectionName,
-                                                                     final String mapFunction, final String reduceFunction,
-                                                                     final String finalizeFunction, final Bson filter, final int limit,
-                                                                     final long maxTimeMS, final boolean jsMode, final Bson scope,
-                                                                     final Bson sort, final boolean verbose, final MapReduceAction action,
-                                                                     final boolean nonAtomic, final boolean sharded,
-                                                                     final Boolean bypassDocumentValidation, final Collation collation) {
-        return operations.mapReduceToCollection(databaseName, collectionName, mapFunction, reduceFunction, finalizeFunction, filter, limit,
-                maxTimeMS, jsMode, scope, sort, verbose, action, nonAtomic, sharded, bypassDocumentValidation, collation);
+    public WriteOperation<MapReduceStatistics> mapReduceToCollection(
+            final ClientSideOperationTimeout clientSideOperationTimeout, final String databaseName,
+            final String collectionName, final String mapFunction, final String reduceFunction, final String finalizeFunction,
+            final Bson filter, final int limit, final boolean jsMode, final Bson scope, final Bson sort, final boolean verbose,
+            final MapReduceAction action, final boolean nonAtomic, final boolean sharded, final Boolean bypassDocumentValidation,
+            final Collation collation) {
+        return operations.mapReduceToCollection(clientSideOperationTimeout, databaseName, collectionName, mapFunction,
+                reduceFunction, finalizeFunction, filter, limit, jsMode, scope, sort, verbose, action, nonAtomic, sharded,
+                bypassDocumentValidation, collation);
     }
 
-    public <TResult> ReadOperation<MapReduceBatchCursor<TResult>> mapReduce(final String mapFunction, final String reduceFunction,
-                                                                            final String finalizeFunction, final Class<TResult> resultClass,
-                                                                            final Bson filter, final int limit,
-                                                                            final long maxTimeMS, final boolean jsMode, final Bson scope,
-                                                                            final Bson sort, final boolean verbose,
-                                                                            final Collation collation) {
-        return operations.mapReduce(mapFunction, reduceFunction, finalizeFunction, resultClass, filter, limit, maxTimeMS, jsMode, scope,
-                sort, verbose, collation);
+    public <TResult> ReadOperation<MapReduceBatchCursor<TResult>> mapReduce(
+            final ClientSideOperationTimeout clientSideOperationTimeout, final String mapFunction,
+            final String reduceFunction, final String finalizeFunction, final Class<TResult> resultClass, final Bson filter,
+            final int limit, final boolean jsMode, final Bson scope, final Bson sort, final boolean verbose, final Collation collation) {
+        return operations.mapReduce(clientSideOperationTimeout, mapFunction, reduceFunction, finalizeFunction, resultClass,
+                filter, limit, jsMode, scope, sort, verbose, collation);
     }
 
-    public WriteOperation<TDocument> findOneAndDelete(final Bson filter, final FindOneAndDeleteOptions options) {
-        return operations.findOneAndDelete(filter, options);
+    public WriteOperation<TDocument> findOneAndDelete(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                      final Bson filter, final FindOneAndDeleteOptions options) {
+        return operations.findOneAndDelete(clientSideOperationTimeout, filter, options);
     }
 
-    public WriteOperation<TDocument> findOneAndReplace(final Bson filter, final TDocument replacement,
+    public WriteOperation<TDocument> findOneAndReplace(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                       final Bson filter, final TDocument replacement,
                                                        final FindOneAndReplaceOptions options) {
-        return operations.findOneAndReplace(filter, replacement, options);
+        return operations.findOneAndReplace(clientSideOperationTimeout, filter, replacement, options);
     }
 
-    public WriteOperation<TDocument> findOneAndUpdate(final Bson filter, final Bson update, final FindOneAndUpdateOptions options) {
-        return operations.findOneAndUpdate(filter, update, options);
+    public WriteOperation<TDocument> findOneAndUpdate(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                      final Bson filter, final Bson update, final FindOneAndUpdateOptions options) {
+        return operations.findOneAndUpdate(clientSideOperationTimeout, filter, update, options);
     }
 
-    public WriteOperation<TDocument> findOneAndUpdate(final Bson filter, final List<? extends Bson> update,
+    public WriteOperation<TDocument> findOneAndUpdate(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                      final Bson filter, final List<? extends Bson> update,
                                                       final FindOneAndUpdateOptions options) {
-        return operations.findOneAndUpdate(filter, update, options);
+        return operations.findOneAndUpdate(clientSideOperationTimeout, filter, update, options);
     }
 
-    public WriteOperation<BulkWriteResult> insertOne(final TDocument document, final InsertOneOptions options) {
-        return operations.insertOne(document, options);
+    public WriteOperation<BulkWriteResult> insertOne(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                     final TDocument document, final InsertOneOptions options) {
+        return operations.insertOne(clientSideOperationTimeout, document, options);
     }
 
 
-    public WriteOperation<BulkWriteResult> replaceOne(final Bson filter, final TDocument replacement, final ReplaceOptions options) {
-        return operations.replaceOne(filter, replacement, options);
+    public WriteOperation<BulkWriteResult> replaceOne(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                      final Bson filter, final TDocument replacement, final ReplaceOptions options) {
+        return operations.replaceOne(clientSideOperationTimeout, filter, replacement, options);
     }
 
-    public WriteOperation<BulkWriteResult> deleteOne(final Bson filter, final DeleteOptions options) {
-        return operations.deleteOne(filter, options);
+    public WriteOperation<BulkWriteResult> deleteOne(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                     final Bson filter, final DeleteOptions options) {
+        return operations.deleteOne(clientSideOperationTimeout, filter, options);
     }
 
-    public WriteOperation<BulkWriteResult> deleteMany(final Bson filter, final DeleteOptions options) {
-        return operations.deleteMany(filter, options);
+    public WriteOperation<BulkWriteResult> deleteMany(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                      final Bson filter, final DeleteOptions options) {
+        return operations.deleteMany(clientSideOperationTimeout, filter, options);
     }
 
-    public WriteOperation<BulkWriteResult> updateOne(final Bson filter, final Bson update, final UpdateOptions updateOptions) {
-        return operations.updateOne(filter, update, updateOptions);
+    public WriteOperation<BulkWriteResult> updateOne(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                     final Bson filter, final Bson update, final UpdateOptions updateOptions) {
+        return operations.updateOne(clientSideOperationTimeout, filter, update, updateOptions);
     }
 
-    public WriteOperation<BulkWriteResult> updateOne(final Bson filter, final List<? extends Bson> update,
+    public WriteOperation<BulkWriteResult> updateOne(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                     final Bson filter, final List<? extends Bson> update,
                                                      final UpdateOptions updateOptions) {
-        return operations.updateOne(filter, update, updateOptions);
+        return operations.updateOne(clientSideOperationTimeout, filter, update, updateOptions);
     }
 
-    public WriteOperation<BulkWriteResult> updateMany(final Bson filter, final Bson update, final UpdateOptions updateOptions) {
-        return operations.updateMany(filter, update, updateOptions);
+    public WriteOperation<BulkWriteResult> updateMany(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                      final Bson filter, final Bson update, final UpdateOptions updateOptions) {
+        return operations.updateMany(clientSideOperationTimeout, filter, update, updateOptions);
     }
 
-    public WriteOperation<BulkWriteResult> updateMany(final Bson filter, final List<? extends Bson> update,
+    public WriteOperation<BulkWriteResult> updateMany(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                      final Bson filter, final List<? extends Bson> update,
                                                       final UpdateOptions updateOptions) {
-        return operations.updateMany(filter, update, updateOptions);
+        return operations.updateMany(clientSideOperationTimeout, filter, update, updateOptions);
     }
 
-    public WriteOperation<BulkWriteResult> insertMany(final List<? extends TDocument> documents,
-                                                      final InsertManyOptions options) {
-        return operations.insertMany(documents, options);
+    public WriteOperation<BulkWriteResult> insertMany(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                      final List<? extends TDocument> documents, final InsertManyOptions options) {
+        return operations.insertMany(clientSideOperationTimeout, documents, options);
     }
 
     @SuppressWarnings("unchecked")
-    public WriteOperation<BulkWriteResult> bulkWrite(final List<? extends WriteModel<? extends TDocument>> requests,
+    public WriteOperation<BulkWriteResult> bulkWrite(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                     final List<? extends WriteModel<? extends TDocument>> requests,
                                                      final BulkWriteOptions options) {
-        return operations.bulkWrite(requests, options);
+        return operations.bulkWrite(clientSideOperationTimeout, requests, options);
     }
 
 
-    public WriteOperation<Void> dropCollection() {
-        return operations.dropCollection();
+    public WriteOperation<Void> dropCollection(final ClientSideOperationTimeout clientSideOperationTimeout) {
+        return operations.dropCollection(clientSideOperationTimeout);
     }
 
-    public WriteOperation<Void> renameCollection(final MongoNamespace newCollectionNamespace,
+    public WriteOperation<Void> renameCollection(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                                 final MongoNamespace newCollectionNamespace,
                                                  final RenameCollectionOptions options) {
-        return operations.renameCollection(newCollectionNamespace, options);
+        return operations.renameCollection(clientSideOperationTimeout, newCollectionNamespace, options);
     }
 
-    public WriteOperation<Void> createIndexes(final List<IndexModel> indexes, final CreateIndexOptions options) {
-        return operations.createIndexes(indexes, options);
+    public WriteOperation<Void> createIndexes(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                              final List<IndexModel> indexes, final CreateIndexOptions options) {
+        return operations.createIndexes(clientSideOperationTimeout, indexes, options);
     }
 
-    public WriteOperation<Void> dropIndex(final String indexName, final DropIndexOptions options) {
-        return operations.dropIndex(indexName, options);
+    public WriteOperation<Void> dropIndex(final ClientSideOperationTimeout clientSideOperationTimeout,
+                                          final String indexName) {
+        return operations.dropIndex(clientSideOperationTimeout, indexName);
     }
 
-    public WriteOperation<Void> dropIndex(final Bson keys, final DropIndexOptions options) {
-        return operations.dropIndex(keys, options);
+    public WriteOperation<Void> dropIndex(final ClientSideOperationTimeout clientSideOperationTimeout, final Bson keys) {
+        return operations.dropIndex(clientSideOperationTimeout, keys);
     }
 
-    public <TResult> ReadOperation<BatchCursor<TResult>> listCollections(final String databaseName, final Class<TResult> resultClass,
-                                                                         final Bson filter, final boolean collectionNamesOnly,
-                                                                         final Integer batchSize, final long maxTimeMS) {
-        return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, batchSize, maxTimeMS);
+    public <TResult> ReadOperation<BatchCursor<TResult>> listCollections(
+            final ClientSideOperationTimeout clientSideOperationTimeout, final String databaseName,
+            final Class<TResult> resultClass, final Bson filter, final boolean collectionNamesOnly, final Integer batchSize) {
+        return operations.listCollections(clientSideOperationTimeout, databaseName, resultClass, filter, collectionNamesOnly,
+                batchSize);
     }
 
-    public <TResult> ReadOperation<BatchCursor<TResult>> listDatabases(final Class<TResult> resultClass, final Bson filter,
-                                                                       final Boolean nameOnly, final long maxTimeMS,
-                                                                       final Boolean authorizedDatabases) {
-        return operations.listDatabases(resultClass, filter, nameOnly, maxTimeMS, authorizedDatabases);
+    public <TResult> ReadOperation<BatchCursor<TResult>> listDatabases(
+            final ClientSideOperationTimeout clientSideOperationTimeout, final Class<TResult> resultClass, final Bson filter,
+            final Boolean nameOnly, final Boolean authorizedDatabases) {
+        return operations.listDatabases(clientSideOperationTimeout, resultClass, filter, nameOnly, authorizedDatabases);
     }
 
-    public <TResult> ReadOperation<BatchCursor<TResult>> listIndexes(final Class<TResult> resultClass, final Integer batchSize,
-                                                                     final long maxTimeMS) {
-        return operations.listIndexes(resultClass, batchSize, maxTimeMS);
+    public <TResult> ReadOperation<BatchCursor<TResult>> listIndexes(
+            final ClientSideOperationTimeout clientSideOperationTimeout, final Class<TResult> resultClass,
+            final Integer batchSize) {
+        return operations.listIndexes(clientSideOperationTimeout, resultClass, batchSize);
     }
 }

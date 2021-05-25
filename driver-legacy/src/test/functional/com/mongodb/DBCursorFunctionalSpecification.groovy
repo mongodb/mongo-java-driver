@@ -19,6 +19,7 @@ package com.mongodb
 import com.mongodb.client.internal.TestOperationExecutor
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CollationStrength
+import com.mongodb.internal.ClientSideOperationTimeout
 import com.mongodb.internal.operation.BatchCursor
 import spock.lang.IgnoreIf
 import spock.lang.Subject
@@ -198,6 +199,9 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
 
                     @Override
                     ServerAddress getServerAddress() { null }
+
+                    @Override
+                    ClientSideOperationTimeout getClientSideOperationTimeout() { null }
                 }
 
         def executor = new TestOperationExecutor([tailableCursor, tailableCursor, tailableCursor, tailableCursor])

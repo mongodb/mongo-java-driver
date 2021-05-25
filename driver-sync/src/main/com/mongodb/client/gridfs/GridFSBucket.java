@@ -18,17 +18,20 @@ package com.mongodb.client.gridfs;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Represents a GridFS Bucket
@@ -77,6 +80,36 @@ public interface GridFSBucket {
     ReadConcern getReadConcern();
 
     /**
+     * The time limit for the full execution of an operation.
+     *
+     * <p>If not null the following deprecated options will be ignored:
+     * {@code waitQueueTimeoutMS}, {@code socketTimeoutMS}, {@code wTimeoutMS}, {@code maxTimeMS} and {@code maxCommitTimeMS}</p>
+     *
+     * <ul>
+     *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
+     *    <ul>
+     *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
+     *        available</li>
+     *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
+     *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
+     *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
+     *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS">cursor.maxTimeMS</a>.</li>
+     *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
+     *        See: {@link TransactionOptions#getMaxCommitTime}.</li>
+     *   </ul>
+     *   </li>
+     *   <li>{@code 0} means infinite timeout.</li>
+     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+     * </ul>
+     *
+     * @param timeUnit the time unit
+     * @return the timeout in the given time unit
+     * @since 4.x
+     */
+    @Nullable
+    Long getTimeout(TimeUnit timeUnit);
+
+    /**
      *  Create a new GridFSBucket instance with a new chunk size in bytes.
      *
      * @param chunkSizeBytes the new chunk size in bytes.
@@ -110,6 +143,22 @@ public interface GridFSBucket {
      * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     GridFSBucket withReadConcern(ReadConcern readConcern);
+
+    /**
+     * Sets the time limit for the full execution of an operation.
+     *
+     * <ul>
+     *   <li>{@code 0} means infinite timeout.</li>
+     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+     * </ul>
+     *
+     * @param timeout the timeout, which must be greater than or equal to 0
+     * @param timeUnit the time unit
+     * @return this
+     * @since 4.x
+     * @see #getTimeout
+     */
+    GridFSBucket withTimeout(long timeout, TimeUnit timeUnit);
 
     /**
      * Opens a Stream that the application can write the contents of the file to.

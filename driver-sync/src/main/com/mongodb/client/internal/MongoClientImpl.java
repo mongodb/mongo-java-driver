@@ -47,6 +47,7 @@ import org.bson.conversions.Bson;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.client.internal.Crypts.createCrypt;
@@ -71,14 +72,15 @@ public final class MongoClientImpl implements MongoClient {
         AutoEncryptionSettings autoEncryptionSettings = settings.getAutoEncryptionSettings();
         this.delegate = new MongoClientDelegate(notNull("cluster", cluster),
                 createRegistry(settings.getCodecRegistry(), settings.getUuidRepresentation()), this, operationExecutor,
-                autoEncryptionSettings == null ? null : createCrypt(this, autoEncryptionSettings), settings.getServerApi());
+                autoEncryptionSettings == null ? null : createCrypt(this, autoEncryptionSettings), settings.getServerApi(),
+                settings.getTimeout(TimeUnit.MILLISECONDS));
     }
 
     @Override
     public MongoDatabase getDatabase(final String databaseName) {
         return new MongoDatabaseImpl(databaseName, delegate.getCodecRegistry(), settings.getReadPreference(), settings.getWriteConcern(),
                 settings.getRetryWrites(), settings.getRetryReads(), settings.getReadConcern(),
-                settings.getUuidRepresentation(), delegate.getOperationExecutor());
+                settings.getUuidRepresentation(), settings.getTimeout(TimeUnit.MILLISECONDS), delegate.getOperationExecutor());
     }
 
     @Override
@@ -191,7 +193,7 @@ public final class MongoClientImpl implements MongoClient {
                                                                                final Class<TResult> resultClass) {
         return new ChangeStreamIterableImpl<>(clientSession, "admin", settings.getCodecRegistry(), settings.getReadPreference(),
                 settings.getReadConcern(), delegate.getOperationExecutor(),
-                pipeline, resultClass, ChangeStreamLevel.CLIENT, settings.getRetryReads());
+                pipeline, resultClass, ChangeStreamLevel.CLIENT, settings.getRetryReads(), getSettings().getTimeout(TimeUnit.MILLISECONDS));
     }
 
     public Cluster getCluster() {
@@ -223,7 +225,7 @@ public final class MongoClientImpl implements MongoClient {
 
     private <T> ListDatabasesIterable<T> createListDatabasesIterable(@Nullable final ClientSession clientSession, final Class<T> clazz) {
         return new ListDatabasesIterableImpl<>(clientSession, clazz, delegate.getCodecRegistry(), ReadPreference.primary(),
-                delegate.getOperationExecutor(), settings.getRetryReads());
+                delegate.getOperationExecutor(), settings.getRetryReads(), delegate.getTimeoutMS());
     }
 
     private MongoIterable<String> createListDatabaseNamesIterable(final @Nullable ClientSession clientSession) {

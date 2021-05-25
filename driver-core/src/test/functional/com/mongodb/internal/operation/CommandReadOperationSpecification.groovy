@@ -16,27 +16,31 @@
 
 package com.mongodb.internal.operation
 
-import util.spock.annotations.Slow
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import org.bson.BsonBinary
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.BsonInt64
 import org.bson.BsonString
 import org.bson.codecs.BsonDocumentCodec
 import spock.lang.IgnoreIf
+import util.spock.annotations.Slow
 
+import static com.mongodb.ClusterFixture.CSOT_TIMEOUT
+import static com.mongodb.ClusterFixture.CSOT_MAX_TIME
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
 
-class CommandOperationSpecification extends OperationFunctionalSpecification {
+class CommandReadOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should execute read command'() {
         given:
-        def commandOperation = new CommandReadOperation<BsonDocument>(getNamespace().databaseName,
+        def commandOperation = new CommandReadOperation<BsonDocument>(CSOT_TIMEOUT, getNamespace().databaseName,
                                                                       new BsonDocument('count', new BsonString(getCollectionName())),
                                                                       new BsonDocumentCodec())
         when:
@@ -49,7 +53,7 @@ class CommandOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should execute read command asynchronously'() {
         given:
-        def commandOperation = new CommandReadOperation<BsonDocument>(getNamespace().databaseName,
+        def commandOperation = new CommandReadOperation<BsonDocument>(CSOT_TIMEOUT, getNamespace().databaseName,
                                                                       new BsonDocument('count', new BsonString(getCollectionName())),
                                                                       new BsonDocumentCodec())
         when:
@@ -62,7 +66,7 @@ class CommandOperationSpecification extends OperationFunctionalSpecification {
     @Slow
     def 'should execute command larger than 16MB'() {
         when:
-        def result = new CommandReadOperation<>(getNamespace().databaseName,
+        def result = new CommandReadOperation<>(CSOT_TIMEOUT, getNamespace().databaseName,
                                                              new BsonDocument('findAndModify', new BsonString(getNamespace().fullName))
                                                                      .append('query', new BsonDocument('_id', new BsonInt32(42)))
                                                                      .append('update',
@@ -77,41 +81,66 @@ class CommandOperationSpecification extends OperationFunctionalSpecification {
     }
 
     @IgnoreIf({ isSharded() })
-    def 'should throw execution timeout exception from execute'() {
+    def 'will not throw execution timeout exception if no timeoutMS is set'() {
         given:
-        def commandOperation = new CommandReadOperation<BsonDocument>(getNamespace().databaseName,
-                                                                      new BsonDocument('count', new BsonString(getCollectionName()))
-                                                                              .append('maxTimeMS', new BsonInt32(1)),
-                                                                      new BsonDocumentCodec())
+        def operation = new CommandReadOperation<BsonDocument>(csotFactory, getNamespace().databaseName,
+                new BsonDocument('count', new BsonString(getCollectionName())),
+                new BsonDocumentCodec())
         enableMaxTimeFailPoint()
 
         when:
-        commandOperation.execute(getBinding())
+        execute(operation, async)
 
         then:
-        thrown(MongoExecutionTimeoutException)
+        notThrown(MongoExecutionTimeoutException)
 
         cleanup:
         disableMaxTimeFailPoint()
+
+        where:
+        [async, csotFactory] << [[true, false], [CSOT_MAX_TIME, CSOT_NO_TIMEOUT]].combinations()
     }
 
-
     @IgnoreIf({ isSharded() })
-    def 'should throw execution timeout exception from executeAsync'() {
+    def 'should throw execution timeout exception from execute if timeoutMS is set'() {
         given:
-        def commandOperation = new CommandReadOperation<BsonDocument>(getNamespace().databaseName,
-                                                                      new BsonDocument('count', new BsonString(getCollectionName()))
-                                                                              .append('maxTimeMS', new BsonInt32(1)),
-                                                                      new BsonDocumentCodec())
+        def operation = new CommandReadOperation<BsonDocument>(CSOT_TIMEOUT, getNamespace().databaseName,
+                new BsonDocument('count', new BsonString(getCollectionName())),
+                new BsonDocumentCodec())
         enableMaxTimeFailPoint()
 
         when:
-        executeAsync(commandOperation)
+        execute(operation, async)
 
         then:
         thrown(MongoExecutionTimeoutException)
 
         cleanup:
         disableMaxTimeFailPoint()
+
+        where:
+        async << [true, false]
+    }
+
+    @IgnoreIf({ isSharded() })
+    def 'should throw execution timeout exception from execute if maxTimeMS is explicitly set'() {
+        given:
+        def operation = new CommandReadOperation<BsonDocument>(CSOT_NO_TIMEOUT, getNamespace().databaseName,
+                new BsonDocument('count', new BsonString(getCollectionName()))
+                .append('maxTimeMS', new BsonInt64(100)),
+                new BsonDocumentCodec())
+        enableMaxTimeFailPoint()
+
+        when:
+        execute(operation, async)
+
+        then:
+        thrown(MongoExecutionTimeoutException)
+
+        cleanup:
+        disableMaxTimeFailPoint()
+
+        where:
+        async << [true, false]
     }
 }

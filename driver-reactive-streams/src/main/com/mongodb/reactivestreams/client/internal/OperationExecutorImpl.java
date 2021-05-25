@@ -35,6 +35,8 @@ import com.mongodb.reactivestreams.client.internal.crypt.Crypt;
 import com.mongodb.reactivestreams.client.internal.crypt.CryptBinding;
 import reactor.core.publisher.Mono;
 
+import java.util.function.Supplier;
+
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
 import static com.mongodb.ReadPreference.primary;
@@ -52,8 +54,8 @@ public class OperationExecutorImpl implements OperationExecutor {
     }
 
     @Override
-    public <T> Mono<T> execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern,
-            @Nullable final ClientSession session) {
+    public <T> Mono<T> execute(final Supplier<? extends AsyncReadOperation<T>> operation, final ReadPreference readPreference,
+                               final ReadConcern readConcern, @Nullable final ClientSession session) {
         notNull("operation", operation);
         notNull("readPreference", readPreference);
         notNull("readConcern", readConcern);
@@ -71,7 +73,7 @@ public class OperationExecutorImpl implements OperationExecutor {
                         binding.release();
                         return Mono.error(new MongoClientException("Read preference in a transaction must be primary"));
                     } else {
-                        return Mono.<T>create(sink -> operation.executeAsync(binding, (result, t) -> {
+                        return Mono.<T>create(sink -> operation.get().executeAsync(binding, (result, t) -> {
                             try {
                                 binding.release();
                             } finally {
@@ -86,7 +88,7 @@ public class OperationExecutorImpl implements OperationExecutor {
     }
 
     @Override
-    public <T> Mono<T> execute(final AsyncWriteOperation<T> operation, final ReadConcern readConcern,
+    public <T> Mono<T> execute(final Supplier<? extends AsyncWriteOperation<T>> operation, final ReadConcern readConcern,
             @Nullable final ClientSession session) {
         notNull("operation", operation);
         notNull("readConcern", readConcern);
@@ -100,7 +102,7 @@ public class OperationExecutorImpl implements OperationExecutor {
                                                               session == null && clientSession != null))
                 .switchIfEmpty(Mono.fromCallable(() -> getReadWriteBinding(ReadPreference.primary(), readConcern, session, false)))
                 .flatMap(binding ->
-                        Mono.<T>create(sink -> operation.executeAsync(binding, (result, t) -> {
+                        Mono.<T>create(sink -> operation.get().executeAsync(binding, (result, t) -> {
                             try {
                                 binding.release();
                             } finally {

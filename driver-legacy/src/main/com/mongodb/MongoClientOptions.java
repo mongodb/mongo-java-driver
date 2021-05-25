@@ -785,7 +785,7 @@ public class MongoClientOptions {
      */
     @Nullable
     public Long getTimeout(final TimeUnit timeUnit) {
-        return timeout == null ? null : timeUnit.convert(timeout, MILLISECONDS);
+        return timeout == null ? null : notNull("timeUnit", timeUnit).convert(timeout, MILLISECONDS);
     }
 
     ConnectionPoolSettings getConnectionPoolSettings() {

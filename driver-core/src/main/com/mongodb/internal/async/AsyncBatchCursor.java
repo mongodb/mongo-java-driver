@@ -16,6 +16,8 @@
 
 package com.mongodb.internal.async;
 
+import com.mongodb.internal.ClientSideOperationTimeout;
+
 import java.io.Closeable;
 import java.util.List;
 
@@ -28,6 +30,7 @@ import java.util.List;
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#wire-op-get-more OP_GET_MORE
  */
 public interface AsyncBatchCursor<T> extends Closeable {
+
     /**
      * Returns the next batch of results.  A tailable cursor will block until another batch exists.  After the last batch, the next call
      * to this method will execute the callback with a null result to indicate that there are no more batches available and the cursor
@@ -85,4 +88,9 @@ public interface AsyncBatchCursor<T> extends Closeable {
      */
     @Override
     void close();
+
+    /**
+     * @return the client side operation timeout for the cursor
+     */
+    ClientSideOperationTimeout getClientSideOperationTimeout();
 }

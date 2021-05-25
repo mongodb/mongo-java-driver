@@ -38,8 +38,6 @@ public final class DBCollectionFindOptions {
     private int batchSize;
     private int limit;
     private DBObject projection;
-    private long maxTimeMS;
-    private long maxAwaitTimeMS;
     private int skip;
     private DBObject sort;
     private CursorType cursorType = CursorType.NonTailable;
@@ -55,6 +53,8 @@ public final class DBCollectionFindOptions {
     private DBObject min;
     private boolean returnKey;
     private boolean showRecordId;
+    private long maxTimeMS;
+    private long maxAwaitTimeMS;
 
     /**
      * Construct a new instance

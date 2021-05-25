@@ -140,6 +140,7 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
    * @param duration the duration
    * @return this
    */
+  @deprecated("prefer `MongoCollection[T].withTimeout` instead")
   def maxTime(duration: Duration): MapReduceObservable[TResult] = {
     wrapped.maxTime(duration.toMillis, TimeUnit.MILLISECONDS)
     this
