@@ -34,6 +34,35 @@ import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static java.util.Objects.requireNonNull;
 
 public class SyncMongoClient implements MongoClient {
+
+    // Unfortunately this is the only way to wait for a query to be initiated, since Reactive Streams is asynchronous
+    // and we have no way of knowing. Tests which require cursor initiation to complete before execution of the next operation
+    // can set this to a positive value.  A value of 256 ms has been shown to work well.
+    // Defaults to 0
+    private static long sleepAfterCursorOpenMS;
+
+    // Unfortunately this is the only way to wait for close to complete, since it's asynchronous.
+    // This is inherently racy but there are not any other good options. Tests which require cursor cancellation to complete before
+    // execution of the next operation can set this to a positive value.  A value of 256 ms has been shown to work well.
+    // Defaults to 0
+    private static long sleepAfterCursorCloseMS;
+
+    public static void setSleepAfterCursorOpen(final long sleepMS) {
+        sleepAfterCursorOpenMS = sleepMS;
+    }
+
+    public static void setSleepAfterCursorClose(final long sleepMS) {
+        sleepAfterCursorCloseMS = sleepMS;
+    }
+
+    public static long getSleepAfterCursorOpen() {
+        return sleepAfterCursorOpenMS;
+    }
+
+    public static long getSleepAfterCursorClose() {
+        return sleepAfterCursorCloseMS;
+    }
+
     private final com.mongodb.reactivestreams.client.MongoClient wrapped;
 
     public SyncMongoClient(final com.mongodb.reactivestreams.client.MongoClient wrapped) {

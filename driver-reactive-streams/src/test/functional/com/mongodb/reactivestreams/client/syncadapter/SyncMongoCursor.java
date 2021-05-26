@@ -33,6 +33,8 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.TIMEOUT;
+import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.getSleepAfterCursorClose;
+import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.getSleepAfterCursorOpen;
 
 class SyncMongoCursor<T> implements MongoCursor<T> {
     private static final Object COMPLETED = new Object();
@@ -79,9 +81,9 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
             if (!latch.await(TIMEOUT, TimeUnit.SECONDS)) {
                 throw new MongoTimeoutException("Timeout waiting for subscription");
             }
-            // Unfortunately this is the only way to wait for the query to be initiated, since its asynchronous
-            // and we have no way of knowing
-            Thread.sleep(250);
+            if (getSleepAfterCursorOpen() > 0) {
+                Thread.sleep(getSleepAfterCursorOpen());
+            }
         } catch (InterruptedException e) {
             throw new MongoInterruptedException("Interrupted waiting for asynchronous cursor establishment", e);
         }
@@ -90,15 +92,14 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
     @Override
     public void close() {
         subscription.cancel();
-        // Unfortunately this is the only way to wait for cancellation to complete, since it's asynchronous.
-        // This is inherently racy but there are not any other good options.
-        try {
-            Thread.sleep(250);
-        } catch (InterruptedException e) {
-            throw new MongoInterruptedException("Interrupted from nap", e);
+        if (getSleepAfterCursorClose() > 0) {
+            try {
+                Thread.sleep(getSleepAfterCursorClose());
+            } catch (InterruptedException e) {
+                throw new MongoInterruptedException("Interrupted from nap", e);
+            }
         }
     }
-
     @Override
     @SuppressWarnings("unchecked")
     public boolean hasNext() {
