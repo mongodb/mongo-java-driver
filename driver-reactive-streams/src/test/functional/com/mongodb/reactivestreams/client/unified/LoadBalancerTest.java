@@ -51,7 +51,8 @@ public class LoadBalancerTest extends UnifiedTest {
             Arrays.asList(
                     "pinned connections are returned to the pool when the cursor is closed",
                     "only connections for a specific serviceId are closed when pools are cleared",
-                    "pinned connections are returned after a network error during a killCursors request");
+                    "pinned connections are returned after a network error during a killCursors request",
+                    "a connection can be shared by a transaction and a cursor");
 
     public LoadBalancerTest(@SuppressWarnings("unused") final String fileDescription,
                             final String testDescription,
