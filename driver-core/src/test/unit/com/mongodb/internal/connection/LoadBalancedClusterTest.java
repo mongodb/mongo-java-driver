@@ -35,6 +35,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -57,7 +58,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class LoadBalancedClusterTest {
@@ -317,6 +322,42 @@ public class LoadBalancedClusterTest {
                 exception.getMessage());
     }
 
+    @Test
+    void shouldNotInitServerAfterClosing() {
+        // prepare mocks
+        ClusterableServerFactory serverFactory = mock(ClusterableServerFactory.class);
+        when(serverFactory.getSettings()).thenReturn(mock(ServerSettings.class));
+        DnsSrvRecordMonitorFactory srvRecordMonitorFactory = mock(DnsSrvRecordMonitorFactory.class);
+        when(srvRecordMonitorFactory.create(any(), any(DnsSrvRecordInitializer.class))).thenReturn(mock(DnsSrvRecordMonitor.class));
+        ArgumentCaptor<DnsSrvRecordInitializer> serverInitializerCaptor = ArgumentCaptor.forClass(DnsSrvRecordInitializer.class);
+        // create `cluster` and capture its `DnsSrvRecordInitializer` (server initializer)
+        LoadBalancedCluster cluster = new LoadBalancedCluster(new ClusterId(),
+                ClusterSettings.builder().mode(ClusterConnectionMode.LOAD_BALANCED).srvHost("foo.bar.com").build(),
+                serverFactory, srvRecordMonitorFactory);
+        verify(srvRecordMonitorFactory, times(1)).create(any(), serverInitializerCaptor.capture());
+        // close `cluster`, call `DnsSrvRecordInitializer.initialize` and check that it does not result in creating a `ClusterableServer`
+        cluster.close();
+        serverInitializerCaptor.getValue().initialize(Collections.singleton(new ServerAddress()));
+        verify(serverFactory, never()).create(any(), any(), any(), any());
+    }
+
+    @Test
+    void shouldCloseServerWhenClosing() {
+        // prepare mocks
+        ClusterableServerFactory serverFactory = mock(ClusterableServerFactory.class);
+        when(serverFactory.getSettings()).thenReturn(mock(ServerSettings.class));
+        ClusterableServer server = mock(ClusterableServer.class);
+        when(serverFactory.create(any(), any(), any(), any())).thenReturn(server);
+        // create `cluster` and check that it creates a `ClusterableServer`
+        LoadBalancedCluster cluster = new LoadBalancedCluster(new ClusterId(),
+                ClusterSettings.builder().mode(ClusterConnectionMode.LOAD_BALANCED).build(), serverFactory,
+                mock(DnsSrvRecordMonitorFactory.class));
+        verify(serverFactory, times(1)).create(any(), any(), any(), any());
+        // close `cluster` and check that it closes `server`
+        cluster.close();
+        verify(server, atLeastOnce()).close();
+    }
+
     @RepeatedTest(value = 10, name = RepeatedTest.LONG_DISPLAY_NAME)
     @Tag("Slow")
     public void synchronousConcurrentTest() throws InterruptedException, ExecutionException, TimeoutException {
@@ -497,20 +538,17 @@ public class LoadBalancedClusterTest {
 
         @Override
         public void start() {
-            thread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        Thread.sleep(sleepTime.toMillis());
-                        if (exception != null) {
-                            initializer.initialize(exception);
-                        } else {
-                            initializer.initialize(hosts);
-                        }
-                        initialized = true;
-                    } catch (InterruptedException e) {
-                        // ignore
+            thread = new Thread(() -> {
+                try {
+                    Thread.sleep(sleepTime.toMillis());
+                    if (exception != null) {
+                        initializer.initialize(exception);
+                    } else {
+                        initializer.initialize(hosts);
                     }
+                    initialized = true;
+                } catch (InterruptedException e) {
+                    // ignore
                 }
             });
             thread.start();

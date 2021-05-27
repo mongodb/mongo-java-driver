@@ -37,6 +37,7 @@ import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ClusterOpeningEvent;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
 import org.bson.BsonTimestamp;
 
@@ -72,6 +73,7 @@ final class LoadBalancedCluster implements Cluster {
     private final ClusterClock clusterClock = new ClusterClock();
     private final ClusterListener clusterListener;
     private ClusterDescription description;
+    @Nullable
     private ClusterableServer server;
     private final AtomicBoolean closed = new AtomicBoolean();
     private final DnsSrvRecordMonitor dnsSrvRecordMonitor;
@@ -109,6 +111,9 @@ final class LoadBalancedCluster implements Cluster {
                     List<ServerSelectionRequest> localWaitQueue;
                     lock.lock();
                     try {
+                        if (isClosed()) {
+                            return;
+                        }
                         srvResolutionException = null;
                         if (hosts.size() != 1) {
                             srvRecordResolvedToMultipleHosts = true;
@@ -259,11 +264,16 @@ final class LoadBalancedCluster implements Cluster {
             if (dnsSrvRecordMonitor != null) {
                 dnsSrvRecordMonitor.close();
             }
+            ClusterableServer localServer;
             lock.lock();
             try {
                 condition.signalAll();
+                localServer = server;
             } finally {
                 lock.unlock();
+            }
+            if (localServer != null) {
+                localServer.close();
             }
         }
     }
