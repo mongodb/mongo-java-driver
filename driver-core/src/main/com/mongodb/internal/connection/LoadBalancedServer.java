@@ -109,6 +109,7 @@ public class LoadBalancedServer implements ClusterableServer {
     @Override
     public void close() {
         if (!closed.getAndSet(true)) {
+            connectionPool.close();
             serverListener.serverClosed(new ServerClosedEvent(serverId));
         }
     }
