@@ -24,15 +24,38 @@ import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.junit.After;
 import org.junit.runners.Parameterized;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
+import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.disableCursorSleep;
+import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.enableSleepAfterCursorClose;
+import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.enableSleepAfterCursorOpen;
 import static org.junit.Assume.assumeFalse;
 
 public class LoadBalancerTest extends UnifiedTest {
+
+    private static final List<String> CURSOR_OPEN_TIMING_SENSITIVE_TESTS =
+            Arrays.asList(
+                    "pinned connections are returned when the cursor is drained",
+                    "only connections for a specific serviceId are closed when pools are cleared",
+                    "pinned connections are returned to the pool when the cursor is closed",
+                    "no connection is pinned if all documents are returned in the initial batch",
+                    "stale errors are ignored",
+                    "a connection can be shared by a transaction and a cursor",
+                    "wait queue timeout errors include cursor statistics");
+
+    private static final List<String> CURSOR_CLOSE_TIMING_SENSITIVE_TESTS =
+            Arrays.asList(
+                    "pinned connections are returned to the pool when the cursor is closed",
+                    "only connections for a specific serviceId are closed when pools are cleared",
+                    "pinned connections are returned after a network error during a killCursors request",
+                    "a connection can be shared by a transaction and a cursor");
 
     public LoadBalancerTest(@SuppressWarnings("unused") final String fileDescription,
                             final String testDescription,
@@ -46,6 +69,20 @@ public class LoadBalancerTest extends UnifiedTest {
         // Reactive streams driver can't implement this test because there is no way to tell that a change stream cursor
         // that has not yet received any results has even initiated the change stream
         assumeFalse(testDescription.equals("change streams pin to a connection"));
+
+        if (CURSOR_OPEN_TIMING_SENSITIVE_TESTS.contains(testDescription)) {
+            enableSleepAfterCursorOpen(256);
+        }
+
+        if (CURSOR_CLOSE_TIMING_SENSITIVE_TESTS.contains(testDescription)) {
+            enableSleepAfterCursorClose(256);
+        }
+    }
+
+    @After
+    public void cleanUp() {
+        super.cleanUp();
+        disableCursorSleep();
     }
 
     @Override
