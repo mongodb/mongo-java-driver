@@ -35,24 +35,44 @@ import static java.util.Objects.requireNonNull;
 
 public class SyncMongoClient implements MongoClient {
 
-    // Unfortunately this is the only way to wait for a query to be initiated, since Reactive Streams is asynchronous
-    // and we have no way of knowing. Tests which require cursor initiation to complete before execution of the next operation
-    // can set this to a positive value.  A value of 256 ms has been shown to work well.
-    // Defaults to 0
     private static long sleepAfterCursorOpenMS;
 
-    // Unfortunately this is the only way to wait for close to complete, since it's asynchronous.
-    // This is inherently racy but there are not any other good options. Tests which require cursor cancellation to complete before
-    // execution of the next operation can set this to a positive value.  A value of 256 ms has been shown to work well.
-    // Defaults to 0
     private static long sleepAfterCursorCloseMS;
 
-    public static void setSleepAfterCursorOpen(final long sleepMS) {
+    /**
+     * Unfortunately this is the only way to wait for a query to be initiated, since Reactive Streams is asynchronous
+     * and we have no way of knowing. Tests which require cursor initiation to complete before execution of the next operation
+     * can set this to a positive value.  A value of 256 ms has been shown to work well. The default value is 0.
+     */
+    public static void enableSleepAfterCursorOpen(final long sleepMS) {
+        if (sleepAfterCursorOpenMS != 0) {
+            throw new IllegalStateException("Already enabled");
+        }
+        if (sleepMS <= 0) {
+            throw new IllegalArgumentException("sleepMS must be a postive value");
+        }
         sleepAfterCursorOpenMS = sleepMS;
     }
 
-    public static void setSleepAfterCursorClose(final long sleepMS) {
+    /**
+     * Unfortunately this is the only way to wait for close to complete, since it's asynchronous.
+     * This is inherently racy but there are not any other good options. Tests which require cursor cancellation to complete before
+     * execution of the next operation can set this to a positive value.  A value of 256 ms has been shown to work well. The default
+     * value is 0.
+     */
+    public static void enableSleepAfterCursorClose(final long sleepMS) {
+        if (sleepAfterCursorCloseMS != 0) {
+            throw new IllegalStateException("Already enabled");
+        }
+        if (sleepMS <= 0) {
+            throw new IllegalArgumentException("sleepMS must be a postive value");
+        }
         sleepAfterCursorCloseMS = sleepMS;
+    }
+
+    public static void disableCursorSleep() {
+        sleepAfterCursorOpenMS = 0;
+        sleepAfterCursorCloseMS = 0;
     }
 
     public static long getSleepAfterCursorOpen() {

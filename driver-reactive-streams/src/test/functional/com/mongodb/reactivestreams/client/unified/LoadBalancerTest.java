@@ -33,6 +33,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.disableCursorSleep;
+import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.enableSleepAfterCursorClose;
+import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.enableSleepAfterCursorOpen;
 import static org.junit.Assume.assumeFalse;
 
 public class LoadBalancerTest extends UnifiedTest {
@@ -68,19 +71,18 @@ public class LoadBalancerTest extends UnifiedTest {
         assumeFalse(testDescription.equals("change streams pin to a connection"));
 
         if (CURSOR_OPEN_TIMING_SENSITIVE_TESTS.contains(testDescription)) {
-            SyncMongoClient.setSleepAfterCursorOpen(256);
+            enableSleepAfterCursorOpen(256);
         }
 
         if (CURSOR_CLOSE_TIMING_SENSITIVE_TESTS.contains(testDescription)) {
-            SyncMongoClient.setSleepAfterCursorClose(256);
+            enableSleepAfterCursorClose(256);
         }
     }
 
     @After
     public void cleanUp() {
         super.cleanUp();
-        SyncMongoClient.setSleepAfterCursorOpen(0);
-        SyncMongoClient.setSleepAfterCursorClose(0);
+        disableCursorSleep();
     }
 
     @Override

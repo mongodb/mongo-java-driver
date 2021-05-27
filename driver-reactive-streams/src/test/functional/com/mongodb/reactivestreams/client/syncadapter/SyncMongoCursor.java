@@ -81,9 +81,7 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
             if (!latch.await(TIMEOUT, TimeUnit.SECONDS)) {
                 throw new MongoTimeoutException("Timeout waiting for subscription");
             }
-            if (getSleepAfterCursorOpen() > 0) {
-                Thread.sleep(getSleepAfterCursorOpen());
-            }
+            sleep(getSleepAfterCursorOpen());
         } catch (InterruptedException e) {
             throw new MongoInterruptedException("Interrupted waiting for asynchronous cursor establishment", e);
         }
@@ -92,14 +90,17 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
     @Override
     public void close() {
         subscription.cancel();
-        if (getSleepAfterCursorClose() > 0) {
-            try {
-                Thread.sleep(getSleepAfterCursorClose());
-            } catch (InterruptedException e) {
-                throw new MongoInterruptedException("Interrupted from nap", e);
-            }
+        sleep(getSleepAfterCursorClose());
+    }
+
+    private static void sleep(final long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            throw new MongoInterruptedException("Interrupted from nap", e);
         }
     }
+
     @Override
     @SuppressWarnings("unchecked")
     public boolean hasNext() {
