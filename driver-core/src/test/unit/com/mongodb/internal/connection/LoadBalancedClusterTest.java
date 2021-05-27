@@ -58,6 +58,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -338,6 +339,23 @@ public class LoadBalancedClusterTest {
         cluster.close();
         serverInitializerCaptor.getValue().initialize(Collections.singleton(new ServerAddress()));
         verify(serverFactory, never()).create(any(), any(), any(), any());
+    }
+
+    @Test
+    void shouldCloseServerWhenClosing() {
+        // prepare mocks
+        ClusterableServerFactory serverFactory = mock(ClusterableServerFactory.class);
+        when(serverFactory.getSettings()).thenReturn(mock(ServerSettings.class));
+        ClusterableServer server = mock(ClusterableServer.class);
+        when(serverFactory.create(any(), any(), any(), any())).thenReturn(server);
+        // create `cluster` and check that it creates a `ClusterableServer`
+        LoadBalancedCluster cluster = new LoadBalancedCluster(new ClusterId(),
+                ClusterSettings.builder().mode(ClusterConnectionMode.LOAD_BALANCED).build(), serverFactory,
+                mock(DnsSrvRecordMonitorFactory.class));
+        verify(serverFactory, times(1)).create(any(), any(), any(), any());
+        // close `cluster` and check that it closes `server`
+        cluster.close();
+        verify(server, atLeastOnce()).close();
     }
 
     @RepeatedTest(value = 10, name = RepeatedTest.LONG_DISPLAY_NAME)
