@@ -50,13 +50,19 @@ import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
 import org.bson.types.ObjectId;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Deque;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -65,7 +71,8 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.StampedLock;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
@@ -91,7 +98,7 @@ class DefaultConnectionPool implements ConnectionPool {
     private final ConnectionPoolSettings settings;
     private final AtomicInteger generation = new AtomicInteger(0);
     private final ScheduledExecutorService sizeMaintenanceTimer;
-    private final Workers workers;
+    private final AsyncWorkManager asyncWorkManager;
     private final Runnable maintenanceTask;
     private final ConnectionPoolListener connectionPoolListener;
     private final ServerId serverId;
@@ -113,7 +120,7 @@ class DefaultConnectionPool implements ConnectionPool {
         sizeMaintenanceTimer = createMaintenanceTimer();
         connectionPoolCreated(connectionPoolListener, serverId, settings);
         openConcurrencyLimiter = new OpenConcurrencyLimiter(MAX_CONNECTING);
-        workers = new Workers();
+        asyncWorkManager = new AsyncWorkManager();
         connectionGenerationSupplier = new ConnectionGenerationSupplier() {
             @Override
             public int getGeneration() {
@@ -186,20 +193,20 @@ class DefaultConnectionPool implements ConnectionPool {
         if (immediateConnection != null) {
             openAsync(immediateConnection, timeout, eventSendingCallback);
         } else {
-            workers.getter().execute(() -> {
-                if (timeout.expired()) {
-                    eventSendingCallback.onResult(null, createTimeoutException(timeout));
-                    return;
+            asyncWorkManager.enqueueGet(new Task(timeout, t -> {
+                if (t != null) {
+                    eventSendingCallback.onResult(null, t);
+                } else {
+                    PooledConnection connection;
+                    try {
+                        connection = getPooledConnection(timeout);
+                    } catch (RuntimeException e) {
+                        eventSendingCallback.onResult(null, e);
+                        return;
+                    }
+                    openAsync(connection, timeout, eventSendingCallback);
                 }
-                PooledConnection connection;
-                try {
-                    connection = getPooledConnection(timeout);
-                } catch (RuntimeException e) {
-                    eventSendingCallback.onResult(null, e);
-                    return;
-                }
-                openAsync(connection, timeout, eventSendingCallback);
-            });
+            }));
         }
     }
 
@@ -236,7 +243,13 @@ class DefaultConnectionPool implements ConnectionPool {
                 LOGGER.trace(format("Pooled connection %s to server %s is not yet open",
                         getId(pooledConnection), serverId));
             }
-            workers.opener().execute(() -> openConcurrencyLimiter.openAsyncOrGetAvailable(pooledConnection, timeout, callback));
+            asyncWorkManager.enqueueOpen(new Task(timeout, t -> {
+                if (t != null) {
+                    callback.onResult(null, t);
+                } else {
+                    openConcurrencyLimiter.openAsyncOrGetAvailable(pooledConnection, timeout, callback);
+                }
+            }));
         }
     }
 
@@ -264,7 +277,7 @@ class DefaultConnectionPool implements ConnectionPool {
             if (sizeMaintenanceTimer != null) {
                 sizeMaintenanceTimer.shutdownNow();
             }
-            workers.close();
+            asyncWorkManager.close();
             closed = true;
             connectionPoolListener.connectionPoolClosed(new ConnectionPoolClosedEvent(serverId));
         }
@@ -1170,55 +1183,270 @@ class DefaultConnectionPool implements ConnectionPool {
         }
     }
 
+    /**
+     * This class maintains threads needed to perform {@link #getAsync(SingleResultCallback)}.
+     * This operation includes creating an {@link InternalConnection} ({@code create})
+     * and {@linkplain InternalConnection#open() opening} ({@code open}) it.
+     * These tasks may be blocked due to the {@link ConnectionPoolSettings#getMaxSize() max size} and
+     * {@link OpenConcurrencyLimiter#OpenConcurrencyLimiter(int) max connecting} limits respectively.
+     * An {@code open} task blocked because of the max connecting limit is also being counted towards the max size limit,
+     * i.e., it may block a {@code create} task. If we were to execute both kinds of tasks in the same thread, then it would
+     * totally order all tasks, making it possible for a {@code create} task to block an {@code open} task and, thus, open opportunities for
+     * tasks deadlocking. As a result, we must maintain at least two sets of threads for two kinds of tasks.
+     * <p>
+     * Due to tasks having a timeout, we also must monitor queued tasks to determine which ones timed out and completing them accordingly.
+     * While this logic can be incorporated in {@code create}/{@code open} tasks, doing so would have significantly complicate them further,
+     * and it is especially not obvious how to maintain fairness in that case.
+     */
     @ThreadSafe
-    private static class Workers implements AutoCloseable {
-        private volatile ExecutorService getter;
-        private volatile ExecutorService opener;
+    private static class AsyncWorkManager implements AutoCloseable {
+        private volatile State state;
+        private volatile BlockingQueue<Task> gets;
+        private volatile BlockingQueue<Task> opens;
         private final Lock lock;
+        private final Condition closedOrTaskAddedCondition;
+        @Nullable
+        private ExecutorService getter;
+        @Nullable
+        private ExecutorService opener;
+        @Nullable
+        private ExecutorService timeouter;
 
-        Workers() {
-            lock = new StampedLock().asWriteLock();
+        AsyncWorkManager() {
+            state = State.NEW;
+            gets = new LinkedBlockingQueue<>();
+            opens = new LinkedBlockingQueue<>();
+            lock = new ReentrantLock();
+            closedOrTaskAddedCondition = lock.newCondition();
         }
 
-        Executor getter() {
-            if (getter == null) {
-                lock.lock();
-                try {
-                    if (getter == null) {
-                        getter = Executors.newSingleThreadExecutor(new DaemonThreadFactory("AsyncGetter"));
-                    }
-                } finally {
-                    lock.unlock();
-                }
-            }
-            return getter;
+        void enqueueGet(final Task task) {
+            enqueue(gets, task);
         }
 
-        Executor opener() {
-            if (opener == null) {
-                lock.lock();
-                try {
-                    if (opener == null) {
-                        opener = Executors.newSingleThreadExecutor(new DaemonThreadFactory("AsyncOpener"));
-                    }
-                } finally {
-                    lock.unlock();
-                }
-            }
-            return opener;
+        void enqueueOpen(final Task task) {
+            enqueue(opens, task);
         }
 
-        @Override
-        public void close() {
+        private void enqueue(final Queue<Task> queue, final Task task) {
+            lock.lock();
             try {
-                if (getter != null) {
-                    getter.shutdownNow();
+                if (initWorkersUnlessClosed()) {
+                    queue.add(task);
+                    closedOrTaskAddedCondition.signalAll();
+                    return;
                 }
             } finally {
-                if (opener != null) {
-                    opener.shutdownNow();
-                }
+                lock.unlock();
             }
+            task.failAsClosed();
+        }
+
+        /**
+         * @return {@code false} iff the {@link #state} is {@link State#CLOSED}.
+         */
+        private boolean initWorkersUnlessClosed() {
+            boolean result = true;
+            if (state == State.NEW) {
+                getter = Executors.newSingleThreadExecutor(new DaemonThreadFactory("AsyncGetter"));
+                assertNotNull(getter).submit(() -> runAndLogUncaught(() -> workerRun(gets)));
+                opener = Executors.newSingleThreadExecutor(new DaemonThreadFactory("AsyncOpener"));
+                assertNotNull(opener).submit(() -> runAndLogUncaught(() -> workerRun(opens)));
+                timeouter = Executors.newSingleThreadExecutor(new DaemonThreadFactory("AsyncTimeouter"));
+                assertNotNull(timeouter).submit(() -> runAndLogUncaught(this::timeouterRun));
+                state = State.INITIALIZED;
+            } else if (state == State.CLOSED) {
+                result = false;
+            }
+            return result;
+        }
+
+        /**
+         * {@linkplain Thread#interrupt() Interrupts} all workers and causes queued tasks to
+         * {@linkplain Task#failAsClosed() fail} asynchronously.
+         */
+        @Override
+        @SuppressWarnings("try")
+        public void close() {
+            lock.lock();
+            try {
+                if (state != State.CLOSED) {
+                    try (UncheckedAutoCloseable ignored3 = UncheckedAutoCloseable.create(getter);
+                         UncheckedAutoCloseable ignored2 = UncheckedAutoCloseable.create(opener);
+                         UncheckedAutoCloseable ignored1 = UncheckedAutoCloseable.create(timeouter)) {
+                        state = State.CLOSED;
+                        closedOrTaskAddedCondition.signalAll();
+                    } // at this point we interrupt worker threads
+                }
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        private void workerRun(final BlockingQueue<Task> tasks) {
+            try {
+                while (state != State.CLOSED) {
+                    try {
+                        /* Take a task without holding the `lock`. As a result, we may complete the `task` concurrently with
+                         * other threads completing it. This is why `Task` allows to complete itself at most once. */
+                        Task task = tasks.take();
+                        if (task.timeout().expired()) {
+                            task.failAsTimedOut();
+                        } else {
+                            task.execute();
+                        }
+                    } catch (RuntimeException e) {
+                        LOGGER.error(null, e);
+                    }
+                }
+            } catch (InterruptedException closed) {
+                // fail the rest of the tasks and stop
+            }
+            LOGGER.debug("Stopping");
+            failAllTasksAfterClosing();
+        }
+
+        private void timeouterRun() {
+            try {
+                while (state != State.CLOSED) {
+                    try {
+                        Collection<Task> timedOutTasks = new ArrayList<>();
+                        long minRemainingNanos = 0;
+                        lock.lockInterruptibly();
+                        try { // remove timed out tasks from queues and calculate time till next timeout
+                            if (state == State.CLOSED) {
+                                break;
+                            }
+                            for (Collection<Task> tasks : Arrays.asList(gets, opens)) {
+                                for (Iterator<Task> taskIt = tasks.iterator(); taskIt.hasNext();) {
+                                    Task task = taskIt.next();
+                                    Timeout timeout = task.timeout();
+                                    if (timeout.expired()) {
+                                        taskIt.remove();
+                                        timedOutTasks.add(task);
+                                    } else if (!timeout.isInfinite()) {
+                                        minRemainingNanos = Math.min(minRemainingNanos, timeout.remaining(NANOSECONDS));
+                                    }
+                                }
+                            }
+                        } finally {
+                            lock.unlock();
+                        }
+                        timedOutTasks.forEach(Task::failAsTimedOut);
+                        timedOutTasks.clear();
+                        lock.lockInterruptibly();
+                        try {
+                            if (state == State.CLOSED) {
+                                break;
+                            }
+                            // wait until closed, or the next timeout, or a new task
+                            if (minRemainingNanos > 0) {
+                                //noinspection ResultOfMethodCallIgnored
+                                closedOrTaskAddedCondition.awaitNanos(minRemainingNanos);
+                            } else {
+                                closedOrTaskAddedCondition.await();
+                            }
+                        } finally {
+                            lock.unlock();
+                        }
+                    } catch (RuntimeException e) {
+                        LOGGER.error(null, e);
+                    }
+                }
+            } catch (InterruptedException closed) {
+                // stop
+            }
+            LOGGER.debug("Stopping");
+        }
+
+        private void failAllTasksAfterClosing() {
+            Queue<Task> localGets;
+            Queue<Task> localOpens;
+            lock.lock();
+            try {
+                assertTrue(state == State.CLOSED);
+                // at this point it is guaranteed that no thread enqueues a task
+                localGets = gets;
+                if (!gets.isEmpty()) {
+                    gets = new LinkedBlockingQueue<>();
+                }
+                localOpens = opens;
+                if (!opens.isEmpty()) {
+                    opens = new LinkedBlockingQueue<>();
+                }
+            } finally {
+                lock.unlock();
+            }
+            localGets.forEach(Task::failAsClosed);
+            localGets.clear();
+            localOpens.forEach(Task::failAsClosed);
+            localOpens.clear();
+        }
+
+        private void runAndLogUncaught(final Runnable runnable) {
+            try {
+                runnable.run();
+            } catch (Throwable t) {
+                LOGGER.error("The pool is not going to work correctly from now on. You may want to recreate the MongoClient", t);
+                throw t;
+            }
+        }
+
+        private enum State {
+            NEW,
+            INITIALIZED,
+            CLOSED
+        }
+
+        private interface UncheckedAutoCloseable extends AutoCloseable {
+            @Override
+            void close();
+
+            static UncheckedAutoCloseable create(@Nullable final ExecutorService ex) {
+                return () -> {
+                    if (ex != null) {
+                        ex.shutdownNow();
+                    }
+                };
+            }
+        }
+    }
+
+    /**
+     * An action that can be completed (failed or executed) at most once, and a timeout associated with it.
+     */
+    @ThreadSafe
+    private final class Task {
+        private final Timeout timeout;
+        private final Consumer<RuntimeException> action;
+        private final AtomicBoolean completed;
+
+        private Task(final Timeout timeout, final Consumer<RuntimeException> action) {
+            this.timeout = timeout;
+            this.action = action;
+            completed = new AtomicBoolean();
+        }
+
+        void execute() {
+            doComplete(() -> null);
+        }
+
+        void failAsClosed() {
+            doComplete(ConcurrentPool::poolClosedException);
+        }
+
+        void failAsTimedOut() {
+            doComplete(() -> createTimeoutException(timeout));
+        }
+
+        private void doComplete(final Supplier<RuntimeException> failureSupplier) {
+            if (!completed.getAndSet(true)) {
+                action.accept(failureSupplier.get());
+            }
+        }
+
+        Timeout timeout() {
+            return timeout;
         }
     }
 }

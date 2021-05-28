@@ -196,4 +196,11 @@
         <Method name="awaitNanos"/>
         <Bug pattern="WA_AWAIT_NOT_IN_LOOP"/>
     </Match>
+
+    <!-- We simply wait for the specified duration or until a new task is enqueued, we do not care about the return value. -->
+    <Match>
+        <Class name="com.mongodb.internal.connection.DefaultConnectionPool$AsyncWorkManager"/>
+        <Method name="timeouterRun"/>
+        <Bug pattern="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"/>
+    </Match>
 </FindBugsFilter>
