@@ -33,7 +33,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.disableCursorSleep;
+import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.disableSleep;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.enableSleepAfterCursorClose;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.enableSleepAfterCursorOpen;
 import static org.junit.Assume.assumeFalse;
@@ -82,7 +82,7 @@ public class LoadBalancerTest extends UnifiedTest {
     @After
     public void cleanUp() {
         super.cleanUp();
-        disableCursorSleep();
+        disableSleep();
     }
 
     @Override
