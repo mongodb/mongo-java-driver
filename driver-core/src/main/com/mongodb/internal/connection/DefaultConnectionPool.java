@@ -67,6 +67,7 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.StampedLock;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -1161,15 +1162,13 @@ class DefaultConnectionPool implements ConnectionPool {
         private volatile State state;
         private volatile BlockingQueue<Task> tasks;
         private final Lock lock;
-        private final Condition closedOrTaskAddedCondition;
         @Nullable
         private ExecutorService worker;
 
         AsyncWorkManager() {
             state = State.NEW;
             tasks = new LinkedBlockingQueue<>();
-            lock = new ReentrantLock();
-            closedOrTaskAddedCondition = lock.newCondition();
+            lock = new StampedLock().asWriteLock();
         }
 
         void enqueue(final Task task) {
@@ -1177,7 +1176,6 @@ class DefaultConnectionPool implements ConnectionPool {
             try {
                 if (initUnlessClosed()) {
                     tasks.add(task);
-                    closedOrTaskAddedCondition.signalAll();
                     return;
                 }
             } finally {
@@ -1213,7 +1211,6 @@ class DefaultConnectionPool implements ConnectionPool {
                 if (state != State.CLOSED) {
                     try (UncheckedAutoCloseable ignored = UncheckedAutoCloseable.create(worker)) {
                         state = State.CLOSED;
-                        closedOrTaskAddedCondition.signalAll();
                     } // at this point we interrupt `worker`s thread
                 }
             } finally {
