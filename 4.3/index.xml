@@ -1069,7 +1069,7 @@ Bugs / Feature Requests If you think you’ve found a bug or want to see a new f
       <guid>/mongo-java-driver/4.3/driver-reactive/getting-started/installation/</guid>
       <description> Installation The recommended way to get started using one of the drivers in your project is with a dependency management system.
  MongoDB Reactive Streams Driver The Reactive Streams implementation for asynchronous stream processing with non-blocking back pressure.
-&amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.mongodb&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;mongodb-driver-reactivestreams&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;4.3.0-beta1&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; &amp;lt;/dependencies&amp;gt;    dependencies { compile &#39;org.mongodb:mongodb-driver-reactivestreams:4.3.0-beta1&#39; }    libraryDependencies += &#34;org.mongodb&#34; %% &#34;mongodb-driver-reactivestreams&#34; % &#34;4.3.0-beta1&#34;  </description>
+&amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.mongodb&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;mongodb-driver-reactivestreams&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;4.3.0-beta2&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; &amp;lt;/dependencies&amp;gt;    dependencies { compile &#39;org.mongodb:mongodb-driver-reactivestreams:4.3.0-beta2&#39; }    libraryDependencies += &#34;org.mongodb&#34; %% &#34;mongodb-driver-reactivestreams&#34; % &#34;4.3.0-beta2&#34;  </description>
     </item>
     
     <item>
@@ -1080,7 +1080,7 @@ Bugs / Feature Requests If you think you’ve found a bug or want to see a new f
       <guid>/mongo-java-driver/4.3/driver-scala/getting-started/installation/</guid>
       <description>Installation The recommended way to get started using one of the drivers in your project is with a dependency management system.
  MongoDB Scala Driver The Reactive Streams based Scala implementation for asynchronous stream processing with non-blocking back pressure.
-Scala 2.12 &amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.mongodb.scala&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;mongo-scala-driver&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;4.3.0-beta1_2.12&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; &amp;lt;/dependencies&amp;gt;    dependencies { compile &#39;org.mongodb.scala:mongo-scala-driver:4.3.0-beta1_2.12&#39; }    libraryDependencies += &#34;org.mongodb.scala&#34; %% &#34;mongo-scala-driver&#34; % &#34;4.3.0-beta1&#34;  Scala 2.11 &amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.</description>
+Scala 2.12 &amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.mongodb.scala&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;mongo-scala-driver&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;4.3.0-beta2_2.12&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; &amp;lt;/dependencies&amp;gt;    dependencies { compile &#39;org.mongodb.scala:mongo-scala-driver:4.3.0-beta2_2.12&#39; }    libraryDependencies += &#34;org.mongodb.scala&#34; %% &#34;mongo-scala-driver&#34; % &#34;4.3.0-beta2&#34;  Scala 2.11 &amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.</description>
     </item>
     
     <item>
