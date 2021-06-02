@@ -1185,13 +1185,15 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         /**
+         * Invocations of this method must be guarded by {@link #lock}.
+         *
          * @return {@code false} iff the {@link #state} is {@link State#CLOSED}.
          */
         private boolean initUnlessClosed() {
             boolean result = true;
             if (state == State.NEW) {
                 worker = Executors.newSingleThreadExecutor(new DaemonThreadFactory("AsyncGetter"));
-                assertNotNull(worker).submit(() -> runAndLogUncaught(this::workerRun));
+                worker.submit(() -> runAndLogUncaught(this::workerRun));
                 state = State.INITIALIZED;
             } else if (state == State.CLOSED) {
                 result = false;
@@ -1209,9 +1211,10 @@ class DefaultConnectionPool implements ConnectionPool {
             lock.lock();
             try {
                 if (state != State.CLOSED) {
-                    try (UncheckedAutoCloseable ignored = UncheckedAutoCloseable.create(worker)) {
-                        state = State.CLOSED;
-                    } // at this point we interrupt `worker`s thread
+                    state = State.CLOSED;
+                    if (worker != null) {
+                        worker.shutdownNow(); // at this point we interrupt `worker`s thread
+                    }
                 }
             } finally {
                 lock.unlock();
@@ -1268,19 +1271,6 @@ class DefaultConnectionPool implements ConnectionPool {
             NEW,
             INITIALIZED,
             CLOSED
-        }
-
-        private interface UncheckedAutoCloseable extends AutoCloseable {
-            @Override
-            void close();
-
-            static UncheckedAutoCloseable create(@Nullable final ExecutorService ex) {
-                return () -> {
-                    if (ex != null) {
-                        ex.shutdownNow();
-                    }
-                };
-            }
         }
     }
 
