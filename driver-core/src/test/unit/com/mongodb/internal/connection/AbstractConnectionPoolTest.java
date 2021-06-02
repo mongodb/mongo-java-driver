@@ -142,8 +142,9 @@ public abstract class AbstractConnectionPoolTest {
             if (intervalMillis < 0) {
                 settingsBuilder.maintenanceInitialDelay(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
             } else {
-                /* We are allowed to pick an interval smaller than the one requested, which is what happens when we specify frequency,
-                 * a.k.a. period, instead of an interval. */
+                /* Using frequency/period instead of an interval as required by the specification is incorrect, for example,
+                 * because it opens up a possibility to run the background thread non-stop if runs are as long as or longer than the period.
+                 * Nevertheless, I am reusing what we already have in the driver instead of clogging up the implementation. */
                 settingsBuilder.maintenanceFrequency(
                         poolOptions.getNumber("backgroundThreadIntervalMS").longValue(), TimeUnit.MILLISECONDS);
             }

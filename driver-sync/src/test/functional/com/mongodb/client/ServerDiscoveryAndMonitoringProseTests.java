@@ -65,7 +65,9 @@ import static org.junit.Assume.assumeTrue;
 
 /**
  * See
- * <a href="https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-tests.rst">Server Discovery And Monitoring—Test Plan</a>.
+ * <a href="https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-tests.rst">Server Discovery And Monitoring—Test Plan</a>
+ * and
+ * <a href="https://github.com/mongodb/specifications/tree/master/source/server-discovery-and-monitoring/tests#prose-tests">Prose Tests</a>.
  */
 public class ServerDiscoveryAndMonitoringProseTests {
     private static final Logger LOGGER = Loggers.getLogger(ServerDiscoveryAndMonitoringProseTests.class.getSimpleName());

@@ -123,7 +123,11 @@ public abstract class AbstractUnifiedTest {
      * @param createSessions {@code true} means that {@code session0}, {@code session1} {@link ClientSession}s must be created as specified
      *                       <a href="https://github.com/mongodb/specifications/blob/master/source/transactions/tests/README.rst#use-as-integration-tests">here</a>,
      *                       otherwise these sessions are not created.
-     *
+     *                       <p>
+     *                       This parameter was introduced to work around a race condition in the test
+     *                       {@code minPoolSize-error.json: "Network error on minPoolSize background creation"},
+     *                       which occurs as a result of the test runner creating sessions concurrently with activities of
+     *                       the connection pool background thread.
      */
     public AbstractUnifiedTest(final String filename, final String description, final String databaseName, final String collectionName,
                                final BsonArray data, final BsonDocument definition, final boolean skipTest, final boolean createSessions) {
