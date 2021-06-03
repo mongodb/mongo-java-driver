@@ -288,7 +288,9 @@ public class MongoDatabaseImpl implements MongoDatabase {
                 .capped(createCollectionOptions.isCapped())
                 .sizeInBytes(createCollectionOptions.getSizeInBytes())
                 .maxDocuments(createCollectionOptions.getMaxDocuments())
-                .storageEngineOptions(toBsonDocument(createCollectionOptions.getStorageEngineOptions()));
+                .storageEngineOptions(toBsonDocument(createCollectionOptions.getStorageEngineOptions()))
+                .expireAfter(createCollectionOptions.getExpireAfter())
+                .timeSeriesOptions(createCollectionOptions.getTimeSeriesOptions());
 
         IndexOptionDefaults indexOptionDefaults = createCollectionOptions.getIndexOptionDefaults();
         Bson storageEngine = indexOptionDefaults.getStorageEngine();

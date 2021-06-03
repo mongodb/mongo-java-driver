@@ -16,7 +16,10 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.MongoInternalException;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.model.TimeSeriesGranularity;
+import com.mongodb.client.model.TimeSeriesOptions;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.ValidationAction;
@@ -27,9 +30,13 @@ import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.operation.OperationHelper.CallableWithConnection;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
+import org.bson.BsonInt64;
 import org.bson.BsonString;
+
+import java.time.Duration;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -67,6 +74,8 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
     private ValidationLevel validationLevel = null;
     private ValidationAction validationAction = null;
     private Collation collation = null;
+    private Duration expireAfter;
+    private TimeSeriesOptions timeSeriesOptions;
 
     /**
      * Construct a new instance.
@@ -341,6 +350,16 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         return this;
     }
 
+    public CreateCollectionOperation expireAfter(@Nullable final Duration expireAfter) {
+        this.expireAfter = expireAfter;
+        return this;
+    }
+
+    public CreateCollectionOperation timeSeriesOptions(@Nullable final TimeSeriesOptions timeSeriesOptions) {
+        this.timeSeriesOptions = timeSeriesOptions;
+        return this;
+    }
+
     @Override
     public Void execute(final WriteBinding binding) {
         return withConnection(binding, new CallableWithConnection<Void>() {
@@ -407,7 +426,34 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         if (collation != null) {
             document.put("collation", collation.asDocument());
         }
+        if (expireAfter != null) {
+            document.put("expireAfterSeconds", new BsonInt64(expireAfter.getSeconds()));
+        }
+        if (timeSeriesOptions != null) {
+            BsonDocument timeSeriesDocument = new BsonDocument("timeField", new BsonString(timeSeriesOptions.getTimeField()));
+            String metaField = timeSeriesOptions.getMetaField();
+            if (metaField != null) {
+                timeSeriesDocument.put("metaField", new BsonString(metaField));
+            }
+            TimeSeriesGranularity granularity = timeSeriesOptions.getGranularity();
+            if (granularity != null) {
+                timeSeriesDocument.put("granularity", new BsonString(getGranularityAsString(granularity)));
+            }
+            document.put("timeseries", timeSeriesDocument);
+        }
         return document;
     }
 
+    private String getGranularityAsString(final TimeSeriesGranularity granularity) {
+        switch (granularity) {
+            case SECONDS:
+                return "seconds";
+            case MINUTES:
+                return "minutes";
+            case HOURS:
+                return "hours";
+            default:
+                throw new MongoInternalException("Unexpected granularity " + granularity);
+        }
+    }
 }

@@ -226,7 +226,9 @@ public final class MongoOperationPublisher<T> {
                             .sizeInBytes(options.getSizeInBytes())
                             .maxDocuments(options.getMaxDocuments())
                             .storageEngineOptions(toBsonDocument(options.getStorageEngineOptions()))
-                            .collation(options.getCollation());
+                            .collation(options.getCollation())
+                            .expireAfter(options.getExpireAfter())
+                            .timeSeriesOptions(options.getTimeSeriesOptions());
 
             IndexOptionDefaults indexOptionDefaults = options.getIndexOptionDefaults();
             Bson storageEngine = indexOptionDefaults.getStorageEngine();

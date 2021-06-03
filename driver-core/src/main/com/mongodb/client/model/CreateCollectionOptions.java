@@ -19,12 +19,15 @@ package com.mongodb.client.model;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
+import java.time.Duration;
+
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * Options for creating a collection
  *
  * @mongodb.driver.manual reference/method/db.createCollection/ Create Collection
+ * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
  * @since 3.0
  */
 public class CreateCollectionOptions {
@@ -35,6 +38,8 @@ public class CreateCollectionOptions {
     private IndexOptionDefaults indexOptionDefaults = new IndexOptionDefaults();
     private ValidationOptions validationOptions = new ValidationOptions();
     private Collation collation;
+    private Duration expireAfter;
+    private TimeSeriesOptions timeSeriesOptions;
 
     /**
      * Gets the maximum number of documents allowed in a capped collection.
@@ -194,6 +199,63 @@ public class CreateCollectionOptions {
         return this;
     }
 
+    /**
+     * Returns the expire-after option.
+     *
+     * @return the expire-after option, which may be null.
+     * @since 4.3
+     * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
+     */
+    @Nullable
+    public Duration getExpireAfter() {
+        return expireAfter;
+    }
+
+    /**
+     * Sets the expire-after option.
+     *
+     * <p>
+     * A duration indicating after how long old time-series data should be deleted. Partial seconds are ignored.
+     * </p>
+     * <p>
+     * Currently applies only to time-series collections, so if this value is set then so must the time-series options
+     * </p>
+     * @param expireAfter the expire-after duration
+     * @return this
+     * @since 4.3
+     * @see #timeSeriesOptions(TimeSeriesOptions)
+     * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
+     */
+    public CreateCollectionOptions expireAfter(@Nullable final Duration expireAfter) {
+        this.expireAfter = expireAfter;
+        return this;
+    }
+
+    /**
+     * Gets the time series collection options.
+     *
+     * @return the options for a time-series collection
+     * @since 4.3
+     * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
+     */
+    @Nullable
+    public TimeSeriesOptions getTimeSeriesOptions() {
+        return timeSeriesOptions;
+    }
+
+    /**
+     * Sets the time-series collection options.
+     *
+     * @param timeSeriesOptions the time-series options
+     * @return this
+     * @since 4.3
+     * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
+     */
+    public CreateCollectionOptions timeSeriesOptions(final TimeSeriesOptions timeSeriesOptions) {
+        this.timeSeriesOptions = timeSeriesOptions;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "CreateCollectionOptions{"
@@ -204,6 +266,8 @@ public class CreateCollectionOptions {
                 + ", indexOptionDefaults=" + indexOptionDefaults
                 + ", validationOptions=" + validationOptions
                 + ", collation=" + collation
+                + ", expireAfter=" + expireAfter
+                + ", timeSeriesOptions=" + timeSeriesOptions
                 + '}';
     }
 }
