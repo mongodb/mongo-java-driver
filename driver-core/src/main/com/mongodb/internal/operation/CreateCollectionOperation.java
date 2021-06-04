@@ -16,15 +16,14 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.MongoInternalException;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.TimeSeriesGranularity;
 import com.mongodb.client.model.TimeSeriesOptions;
-import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.ValidationAction;
 import com.mongodb.client.model.ValidationLevel;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.AsyncConnection;
@@ -453,7 +452,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
             case HOURS:
                 return "hours";
             default:
-                throw new MongoInternalException("Unexpected granularity " + granularity);
+                throw new AssertionError("Unexpected granularity " + granularity);
         }
     }
 }

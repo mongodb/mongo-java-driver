@@ -27,7 +27,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @see CreateCollectionOptions
  * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
  */
-public class TimeSeriesOptions {
+public final class TimeSeriesOptions {
     private final String timeField;
     private String metaField;
     private TimeSeriesGranularity granularity;
@@ -55,6 +55,7 @@ public class TimeSeriesOptions {
      * Gets the name of the meta field.
      *
      * @return the name of the meta field
+     * @see #metaField(String)
      */
     @Nullable
     public String getMetaField() {
@@ -70,6 +71,7 @@ public class TimeSeriesOptions {
      * </p>
      * @param metaField the name of the meta field
      * @return this
+     * @see #getMetaField()
      */
     public TimeSeriesOptions metaField(@Nullable final String metaField) {
         this.metaField = metaField;
@@ -80,6 +82,7 @@ public class TimeSeriesOptions {
      * Gets the granularity of the time-series data.
      *
      * @return the time-series granularity
+     * @see #granularity(TimeSeriesGranularity)
      */
     @Nullable
     public TimeSeriesGranularity getGranularity() {
@@ -88,9 +91,13 @@ public class TimeSeriesOptions {
 
     /**
      * Sets the granularity of the time-series data.
+     * <p>
+     * The default value is {@link TimeSeriesGranularity#SECONDS}.
+     * </p>
      *
      * @param granularity the time-series granularity
      * @return this
+     * @see #getGranularity()
      */
     public TimeSeriesOptions granularity(@Nullable final TimeSeriesGranularity granularity) {
         this.granularity = granularity;
