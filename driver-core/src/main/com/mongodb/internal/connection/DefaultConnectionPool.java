@@ -253,7 +253,8 @@ class DefaultConnectionPool implements ConnectionPool {
     public void invalidate(@Nullable final Throwable cause) {
         assertTrue(sdamProvider.optional().isPresent());
         if (stateAndGeneration.pauseAndIncrementGeneration(cause)) {
-            LOGGER.debug("Invalidating the connection pool and marking it as 'paused'");
+            LOGGER.debug("Invalidating the connection pool and marking it as 'paused'"
+                    + (cause == null ? "" : " due to " + cause.toString()));
             openConcurrencyLimiter.signalClosedOrPaused();
         }
     }
