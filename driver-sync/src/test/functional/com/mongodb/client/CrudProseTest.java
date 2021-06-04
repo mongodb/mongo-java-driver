@@ -97,9 +97,11 @@ public class CrudProseTest extends DatabaseTestCase {
             // effective
             assertTrue(e.getMessage().contains("Write error"));
             assertNotNull(e.getError().getDetails());
-            assertFalse(e.getError().getDetails().isEmpty());
+            if (serverVersionAtLeast(5, 0)) {
+                assertFalse(e.getError().getDetails().isEmpty());
+            }
         }
-
+        
         try {
             collection.insertMany(asList(new Document("x", 1)));
             fail("Should throw, as document doesn't match schema");
@@ -108,7 +110,9 @@ public class CrudProseTest extends DatabaseTestCase {
             // effective
             assertTrue(e.getMessage().contains("Write errors"));
             assertEquals(1, e.getWriteErrors().size());
-            assertFalse(e.getWriteErrors().get(0).getDetails().isEmpty());
+            if (serverVersionAtLeast(5, 0)) {
+                assertFalse(e.getWriteErrors().get(0).getDetails().isEmpty());
+            }
         }
     }
 
