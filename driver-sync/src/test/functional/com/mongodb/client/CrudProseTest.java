@@ -101,7 +101,7 @@ public class CrudProseTest extends DatabaseTestCase {
                 assertFalse(e.getError().getDetails().isEmpty());
             }
         }
-        
+
         try {
             collection.insertMany(asList(new Document("x", 1)));
             fail("Should throw, as document doesn't match schema");
