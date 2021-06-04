@@ -32,7 +32,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class MainTransactionsTest extends AbstractMainTransactionsTest {
-    private static final Set<String> SESSION_CLOSE_TIMING_SENSITIVE_TESTS = new HashSet<>(Collections.singletonList(
+    public static final Set<String> SESSION_CLOSE_TIMING_SENSITIVE_TESTS = new HashSet<>(Collections.singletonList(
             "implicit abort"));
 
     public MainTransactionsTest(final String filename, final String description, final String databaseName, final String collectionName,

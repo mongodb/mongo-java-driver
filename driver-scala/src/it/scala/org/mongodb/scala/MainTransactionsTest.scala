@@ -18,6 +18,7 @@ package org.mongodb.scala
 
 import com.mongodb.client.AbstractMainTransactionsTest
 import org.bson.{ BsonArray, BsonDocument }
+import org.junit.{ After, Before }
 import org.mongodb.scala.syncadapter.SyncMongoClient
 
 class MainTransactionsTest(
@@ -39,4 +40,14 @@ class MainTransactionsTest(
     ) {
   override protected def createMongoClient(settings: com.mongodb.MongoClientSettings) =
     SyncMongoClient(MongoClient(settings))
+
+  @Before def before(): Unit = {
+    if (com.mongodb.reactivestreams.client.MainTransactionsTest.SESSION_CLOSE_TIMING_SENSITIVE_TESTS
+          .contains(getDescription))
+      com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.enableSleepAfterSessionClose(256)
+  }
+
+  @After def after(): Unit = {
+    com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.disableSleep()
+  }
 }
