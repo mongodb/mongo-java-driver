@@ -36,9 +36,9 @@ import com.mongodb.internal.connection.BulkWriteBatchCombiner;
 import com.mongodb.internal.connection.IndexMap;
 import com.mongodb.internal.connection.SplittablePayload;
 import com.mongodb.internal.session.SessionContext;
-import com.mongodb.internal.validator.CollectibleDocumentFieldNameValidator;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
+import com.mongodb.internal.validator.ReplacingDocumentFieldNameValidator;
 import com.mongodb.internal.validator.UpdateFieldNameValidator;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -260,12 +260,10 @@ final class BulkWriteBatch {
     }
 
     public FieldNameValidator getFieldNameValidator() {
-        if (batchType == INSERT) {
-            return new CollectibleDocumentFieldNameValidator();
-        } else if (batchType == UPDATE || batchType == REPLACE) {
+        if (batchType == UPDATE || batchType == REPLACE) {
             Map<String, FieldNameValidator> rootMap = new HashMap<String, FieldNameValidator>();
             if (batchType == WriteRequest.Type.REPLACE) {
-                rootMap.put("u", new CollectibleDocumentFieldNameValidator());
+                rootMap.put("u", new ReplacingDocumentFieldNameValidator());
             } else {
                 rootMap.put("u", new UpdateFieldNameValidator());
             }
