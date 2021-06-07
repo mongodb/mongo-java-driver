@@ -387,6 +387,9 @@ final class UnifiedCrudHelper {
                 case "allowDiskUse":
                     iterable.allowDiskUse(cur.getValue().asBoolean().getValue());
                     break;
+                case "let":
+                    iterable.let(cur.getValue().asDocument());
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }

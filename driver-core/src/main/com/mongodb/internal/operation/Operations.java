@@ -211,7 +211,8 @@ public final class Operations<TDocument> {
     public <TResult> AggregateOperation<TResult> aggregate(final List<? extends Bson> pipeline, final Class<TResult> resultClass,
                                                     final long maxTimeMS, final long maxAwaitTimeMS, final Integer batchSize,
                                                     final Collation collation, final Bson hint, final String comment,
-                                                    final Boolean allowDiskUse, final AggregationLevel aggregationLevel) {
+                                                    final Bson variables, final Boolean allowDiskUse,
+                                                    final AggregationLevel aggregationLevel) {
         return new AggregateOperation<TResult>(namespace, toBsonDocumentList(pipeline), codecRegistry.get(resultClass), aggregationLevel)
                 .retryReads(retryReads)
                 .maxTime(maxTimeMS, MILLISECONDS)
@@ -220,21 +221,22 @@ public final class Operations<TDocument> {
                 .batchSize(batchSize)
                 .collation(collation)
                 .hint(hint == null ? null : hint.toBsonDocument(documentClass, codecRegistry))
-                .comment(comment);
-
+                .comment(comment)
+                .let(variables == null ? null : variables.toBsonDocument(documentClass, codecRegistry));
     }
 
     public AggregateToCollectionOperation aggregateToCollection(final List<? extends Bson> pipeline, final long maxTimeMS,
                                                          final Boolean allowDiskUse, final Boolean bypassDocumentValidation,
                                                          final Collation collation, final Bson hint, final String comment,
-                                                         final AggregationLevel aggregationLevel) {
+                                                         final Bson variables, final AggregationLevel aggregationLevel) {
         return new AggregateToCollectionOperation(namespace, toBsonDocumentList(pipeline), readConcern, writeConcern, aggregationLevel)
                 .maxTime(maxTimeMS, MILLISECONDS)
                 .allowDiskUse(allowDiskUse)
                 .bypassDocumentValidation(bypassDocumentValidation)
                 .collation(collation)
                 .hint(hint == null ? null : hint.toBsonDocument(documentClass, codecRegistry))
-                .comment(comment);
+                .comment(comment)
+                .let(variables == null ? null : variables.toBsonDocument(documentClass, codecRegistry));
     }
 
     public MapReduceToCollectionOperation mapReduceToCollection(final String databaseName, final String collectionName,
