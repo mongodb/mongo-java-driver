@@ -92,6 +92,12 @@ class SyncAggregateIterable<T> extends SyncMongoIterable<T> implements Aggregate
     }
 
     @Override
+    public AggregateIterable<T> let(final Bson variables) {
+        wrapped.let(variables);
+        return this;
+    }
+
+    @Override
     public Document explain() {
         return requireNonNull(Mono.from(wrapped.explain()).block(TIMEOUT_DURATION));
     }

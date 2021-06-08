@@ -67,6 +67,10 @@ case class SyncAggregateIterable[T](wrapped: AggregateObservable[T])
     wrapped.comment(comment)
     this
   }
+  override def let(variables: Bson): AggregateIterable[T] = {
+    wrapped.let(variables)
+    this
+  }
 
   override def hint(hint: Bson): AggregateIterable[T] = {
     wrapped.hint(hint)

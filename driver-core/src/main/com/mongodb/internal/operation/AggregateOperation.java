@@ -228,6 +228,11 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
         return this;
     }
 
+    public AggregateOperation<T> let(final BsonDocument variables) {
+        wrapped.let(variables);
+        return this;
+    }
+
     /**
      * Enables retryable reads if a read fails due to a network error.
      *
