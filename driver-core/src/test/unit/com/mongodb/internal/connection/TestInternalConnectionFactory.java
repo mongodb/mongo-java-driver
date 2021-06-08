@@ -26,16 +26,16 @@ import com.mongodb.internal.session.SessionContext;
 import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize;
 
 class TestInternalConnectionFactory implements InternalConnectionFactory {
     private final AtomicInteger incrementingId = new AtomicInteger();
-    private final List<TestInternalConnection> createdConnections = new ArrayList<TestInternalConnection>();
+    private final List<TestInternalConnection> createdConnections = new CopyOnWriteArrayList<>();
 
     @Override
     public InternalConnection create(final ServerId serverId, final ConnectionGenerationSupplier connectionGenerationSupplier) {
@@ -55,8 +55,8 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
     class TestInternalConnection implements InternalConnection {
         private final ConnectionId connectionId;
         private final int generation;
-        private boolean closed;
-        private boolean opened;
+        private volatile boolean closed;
+        private volatile boolean opened;
 
         TestInternalConnection(final ServerId serverId, final int generation) {
             this.connectionId = new ConnectionId(serverId, incrementingId.incrementAndGet(), null);

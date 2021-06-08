@@ -17,6 +17,7 @@
 package com.mongodb.reactivestreams.client.syncadapter;
 
 import com.mongodb.ClientSessionOptions;
+import com.mongodb.MongoInterruptedException;
 import com.mongodb.ServerAddress;
 import com.mongodb.TransactionOptions;
 import com.mongodb.client.ClientSession;
@@ -27,6 +28,7 @@ import org.bson.BsonTimestamp;
 import reactor.core.publisher.Mono;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.getSleepAfterSessionClose;
 
 class SyncClientSession implements ClientSession {
     private final com.mongodb.reactivestreams.client.ClientSession wrapped;
@@ -114,6 +116,7 @@ class SyncClientSession implements ClientSession {
     @Override
     public void close() {
         wrapped.close();
+        sleep(getSleepAfterSessionClose());
     }
 
     @Override
@@ -164,5 +167,13 @@ class SyncClientSession implements ClientSession {
     @Override
     public <T> T withTransaction(final TransactionBody<T> transactionBody, final TransactionOptions options) {
         throw new UnsupportedOperationException();
+    }
+
+    private static void sleep(final long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            throw new MongoInterruptedException(null, e);
+        }
     }
 }
