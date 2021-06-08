@@ -19,7 +19,7 @@ package com.mongodb.client.model;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
-import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -38,7 +38,7 @@ public class CreateCollectionOptions {
     private IndexOptionDefaults indexOptionDefaults = new IndexOptionDefaults();
     private ValidationOptions validationOptions = new ValidationOptions();
     private Collation collation;
-    private Duration expireAfter;
+    private long expireAfterSeconds;
     private TimeSeriesOptions timeSeriesOptions;
 
     /**
@@ -200,15 +200,17 @@ public class CreateCollectionOptions {
     }
 
     /**
-     * Returns the expire-after option.
+     * Returns the expire-after option.  The default value is 0, which indicates no expiration.
      *
+     * @param timeUnit the time unit
      * @return the expire-after option, which may be null.
      * @since 4.3
      * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
      */
     @Nullable
-    public Duration getExpireAfter() {
-        return expireAfter;
+    public long getExpireAfter(final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        return timeUnit.convert(expireAfterSeconds, TimeUnit.SECONDS);
     }
 
     /**
@@ -220,14 +222,21 @@ public class CreateCollectionOptions {
      * <p>
      * Currently applies only to time-series collections, so if this value is set then so must the time-series options
      * </p>
-     * @param expireAfter the expire-after duration
+     * @param expireAfter the expire-after duration.  After conversion to seconds using
+     * {@link TimeUnit#convert(long, java.util.concurrent.TimeUnit)}, the value must be >= 0.  A value of 0 indicates no expiration.
+     * @param timeUnit the time unit
      * @return this
      * @since 4.3
      * @see #timeSeriesOptions(TimeSeriesOptions)
      * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
      */
-    public CreateCollectionOptions expireAfter(@Nullable final Duration expireAfter) {
-        this.expireAfter = expireAfter;
+    public CreateCollectionOptions expireAfter(final long expireAfter, final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        long asSeconds = TimeUnit.SECONDS.convert(expireAfter, timeUnit);
+        if (asSeconds < 0) {
+            throw new IllegalArgumentException("expireAfter, after conversion to seconds, must be >= 0");
+        }
+        this.expireAfterSeconds = asSeconds;
         return this;
     }
 
@@ -266,7 +275,7 @@ public class CreateCollectionOptions {
                 + ", indexOptionDefaults=" + indexOptionDefaults
                 + ", validationOptions=" + validationOptions
                 + ", collation=" + collation
-                + ", expireAfter=" + expireAfter
+                + ", expireAfterSeconds=" + expireAfterSeconds
                 + ", timeSeriesOptions=" + timeSeriesOptions
                 + '}';
     }

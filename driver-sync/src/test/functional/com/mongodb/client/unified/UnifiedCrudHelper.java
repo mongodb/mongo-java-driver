@@ -75,7 +75,6 @@ import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.jetbrains.annotations.NotNull;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -791,7 +790,7 @@ final class UnifiedCrudHelper {
                 case "session":
                     break;
                 case "expireAfterSeconds":
-                    options.expireAfter(Duration.ofSeconds(cur.getValue().asNumber().longValue()));
+                    options.expireAfter(cur.getValue().asNumber().longValue(), TimeUnit.SECONDS);
                     break;
                 case "timeseries":
                     options.timeSeriesOptions(createTimeSeriesOptions(cur.getValue().asDocument()));

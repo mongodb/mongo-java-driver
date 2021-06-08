@@ -49,6 +49,7 @@ import org.bson.conversions.Bson;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -289,7 +290,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
                 .sizeInBytes(createCollectionOptions.getSizeInBytes())
                 .maxDocuments(createCollectionOptions.getMaxDocuments())
                 .storageEngineOptions(toBsonDocument(createCollectionOptions.getStorageEngineOptions()))
-                .expireAfter(createCollectionOptions.getExpireAfter())
+                .expireAfter(createCollectionOptions.getExpireAfter(TimeUnit.SECONDS))
                 .timeSeriesOptions(createCollectionOptions.getTimeSeriesOptions());
 
         IndexOptionDefaults indexOptionDefaults = createCollectionOptions.getIndexOptionDefaults();

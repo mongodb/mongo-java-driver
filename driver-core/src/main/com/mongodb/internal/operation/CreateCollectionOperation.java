@@ -35,8 +35,6 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
 
-import java.time.Duration;
-
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.CommandOperationHelper.executeCommand;
@@ -73,7 +71,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
     private ValidationLevel validationLevel = null;
     private ValidationAction validationAction = null;
     private Collation collation = null;
-    private Duration expireAfter;
+    private long expireAfterSeconds;
     private TimeSeriesOptions timeSeriesOptions;
 
     /**
@@ -349,8 +347,8 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         return this;
     }
 
-    public CreateCollectionOperation expireAfter(@Nullable final Duration expireAfter) {
-        this.expireAfter = expireAfter;
+    public CreateCollectionOperation expireAfter(final long expireAfterSeconds) {
+        this.expireAfterSeconds = expireAfterSeconds;
         return this;
     }
 
@@ -425,8 +423,8 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         if (collation != null) {
             document.put("collation", collation.asDocument());
         }
-        if (expireAfter != null) {
-            document.put("expireAfterSeconds", new BsonInt64(expireAfter.getSeconds()));
+        if (expireAfterSeconds > 0) {
+            document.put("expireAfterSeconds", new BsonInt64(expireAfterSeconds));
         }
         if (timeSeriesOptions != null) {
             BsonDocument timeSeriesDocument = new BsonDocument("timeField", new BsonString(timeSeriesOptions.getTimeField()));
