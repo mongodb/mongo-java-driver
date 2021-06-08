@@ -207,7 +207,6 @@ public class CreateCollectionOptions {
      * @since 4.3
      * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
      */
-    @Nullable
     public long getExpireAfter(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         return timeUnit.convert(expireAfterSeconds, TimeUnit.SECONDS);
