@@ -220,9 +220,9 @@ public final class Operations<TDocument> {
                 .allowDiskUse(allowDiskUse)
                 .batchSize(batchSize)
                 .collation(collation)
-                .hint(hint == null ? null : hint.toBsonDocument(documentClass, codecRegistry))
+                .hint(toBsonDocument(hint))
                 .comment(comment)
-                .let(variables == null ? null : variables.toBsonDocument(documentClass, codecRegistry));
+                .let(toBsonDocument(variables));
     }
 
     public AggregateToCollectionOperation aggregateToCollection(final List<? extends Bson> pipeline, final long maxTimeMS,
@@ -234,9 +234,9 @@ public final class Operations<TDocument> {
                 .allowDiskUse(allowDiskUse)
                 .bypassDocumentValidation(bypassDocumentValidation)
                 .collation(collation)
-                .hint(hint == null ? null : hint.toBsonDocument(documentClass, codecRegistry))
+                .hint(toBsonDocument(hint))
                 .comment(comment)
-                .let(variables == null ? null : variables.toBsonDocument(documentClass, codecRegistry));
+                .let(toBsonDocument(variables));
     }
 
     public MapReduceToCollectionOperation mapReduceToCollection(final String databaseName, final String collectionName,
