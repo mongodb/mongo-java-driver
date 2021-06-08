@@ -77,6 +77,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
     private Collation collation;
     private String comment;
     private BsonDocument hint;
+    private BsonDocument variables;
 
     /**
      * Construct a new instance.
@@ -307,6 +308,11 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
         return comment;
     }
 
+    public AggregateToCollectionOperation let(final BsonDocument variables) {
+        this.variables = variables;
+        return this;
+    }
+
     /**
      * Sets the comment to the aggregation. A null value means no comment is set.
      *
@@ -416,6 +422,9 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
         }
         if (hint != null) {
             commandDocument.put("hint", hint);
+        }
+        if (variables != null) {
+            commandDocument.put("let", variables);
         }
         return commandDocument;
     }

@@ -114,18 +114,19 @@ public final class SyncOperations<TDocument> {
                                                                               final Integer batchSize,
                                                                               final Collation collation, final Bson hint,
                                                                               final String comment,
+                                                                              final Bson variables,
                                                                               final Boolean allowDiskUse,
                                                                               final AggregationLevel aggregationLevel) {
-        return operations.aggregate(pipeline, resultClass, maxTimeMS, maxAwaitTimeMS, batchSize, collation, hint, comment, allowDiskUse,
-                aggregationLevel);
+        return operations.aggregate(pipeline, resultClass, maxTimeMS, maxAwaitTimeMS, batchSize, collation, hint, comment, variables,
+                allowDiskUse, aggregationLevel);
     }
 
     public WriteOperation<Void> aggregateToCollection(final List<? extends Bson> pipeline, final long maxTimeMS,
                                                       final Boolean allowDiskUse, final Boolean bypassDocumentValidation,
                                                       final Collation collation, final Bson hint, final String comment,
-                                                      final AggregationLevel aggregationLevel) {
+                                                      final Bson variables, final AggregationLevel aggregationLevel) {
         return operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint, comment,
-                aggregationLevel);
+                variables, aggregationLevel);
     }
 
     public WriteOperation<MapReduceStatistics> mapReduceToCollection(final String databaseName, final String collectionName,
