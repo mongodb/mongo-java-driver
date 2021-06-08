@@ -32,6 +32,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -45,7 +46,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 
 import static com.mongodb.internal.connection.DefaultConnectionPool.MAX_CONNECTING;
@@ -307,6 +310,7 @@ public class DefaultConnectionPoolTest {
                          * the max pool size, and then check that no connections were created nonetheless. */
                         + maxConcurrentlyHandedOver)
                 .addConnectionPoolListener(listener)
+                .maxWaitTime(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS)
                 .maintenanceInitialDelay(MAX_VALUE, NANOSECONDS)
                 .build());
         List<InternalConnection> connections = new ArrayList<>();
@@ -446,11 +450,11 @@ public class DefaultConnectionPoolTest {
                 break;
             }
             case INFINITE_OPEN: {
-                controllableConnFactory.openDurationMillisHandle.set(MAX_VALUE);
+                controllableConnFactory.openDurationHandle.set(Duration.ofMillis(MAX_VALUE), openPermitsCount);
                 for (int i = 0; i < openPermitsCount; i++) {
                     pool.getAsync((result, t) -> {});
                 }
-                controllableConnFactory.openDurationMillisHandle.set(0);
+                controllableConnFactory.openDurationHandle.await(Duration.ofMillis(TEST_WAIT_TIMEOUT_MILLIS));
                 break;
             }
             default: {
@@ -462,16 +466,15 @@ public class DefaultConnectionPoolTest {
     }
 
     private static ControllableConnectionFactory newControllableConnectionFactory(final ExecutorService asyncOpenExecutor) {
-        AtomicLong openDurationMillisHandle = new AtomicLong(0);
+        ControllableConnectionFactory.OpenDurationHandle openDurationHandle = new ControllableConnectionFactory.OpenDurationHandle();
         InternalConnectionFactory connectionFactory = (serverId, connectionGenerationSupplier) -> {
             InternalConnection connection = mock(InternalConnection.class, withSettings().stubOnly());
             when(connection.getGeneration()).thenReturn(connectionGenerationSupplier.getGeneration());
             when(connection.getDescription()).thenReturn(new ConnectionDescription(serverId));
             AtomicBoolean open = new AtomicBoolean(false);
             when(connection.opened()).thenAnswer(invocation -> open.get());
-            long openDurationMillis = openDurationMillisHandle.get();
             Runnable doOpen = () -> {
-                sleepMillis(openDurationMillis);
+                sleepMillis(openDurationHandle.getDurationAndCountDown().toMillis());
                 open.set(true);
             };
             doAnswer(invocation -> {
@@ -488,16 +491,78 @@ public class DefaultConnectionPoolTest {
             }).when(connection).openAsync(any());
             return connection;
         };
-        return new ControllableConnectionFactory(connectionFactory, openDurationMillisHandle);
+        return new ControllableConnectionFactory(connectionFactory, openDurationHandle);
     }
 
     private static class ControllableConnectionFactory {
         private final InternalConnectionFactory factory;
-        private final AtomicLong openDurationMillisHandle;
+        private final OpenDurationHandle openDurationHandle;
 
-        ControllableConnectionFactory(final InternalConnectionFactory factory, final AtomicLong openDurationMillisHandle) {
+        ControllableConnectionFactory(final InternalConnectionFactory factory, final OpenDurationHandle openDurationHandle) {
             this.factory = factory;
-            this.openDurationMillisHandle = openDurationMillisHandle;
+            this.openDurationHandle = openDurationHandle;
+        }
+
+        static final class OpenDurationHandle {
+            private Duration duration;
+            private long count;
+            private final Lock lock;
+            private final Condition countIsZeroCondition;
+
+            private OpenDurationHandle() {
+                duration = Duration.ZERO;
+                lock = new ReentrantLock();
+                countIsZeroCondition = lock.newCondition();
+            }
+
+            /**
+             * Sets the specified {@code duration} for the next {@code count} connections.
+             */
+            void set(final Duration duration, final long count) {
+                lock.lock();
+                try {
+                    assertEquals(this.count, 0);
+                    if (count > 0) {
+                        this.duration = duration;
+                        this.count = count;
+                    }
+                } finally {
+                    lock.unlock();
+                }
+            }
+
+            private Duration getDurationAndCountDown() {
+                lock.lock();
+                try {
+                    Duration result = duration;
+                    if (count > 0) {
+                        count--;
+                        if (count == 0) {
+                            duration = Duration.ZERO;
+                            countIsZeroCondition.signalAll();
+                        }
+                    }
+                    return result;
+                } finally {
+                    lock.unlock();
+                }
+            }
+
+            /**
+             * Wait until {@link #factory} has started opening as many connections as were specified via {@link #set(Duration, long)}.
+             */
+            void await(final Duration timeout) throws InterruptedException {
+                long remainingNanos = timeout.toNanos();
+                lock.lock();
+                try {
+                    while (count > 0) {
+                        assertTrue(remainingNanos > 0, "Timed out after " + timeout);
+                        remainingNanos = countIsZeroCondition.awaitNanos(remainingNanos);
+                    }
+                } finally {
+                    lock.unlock();
+                }
+            }
         }
     }
 

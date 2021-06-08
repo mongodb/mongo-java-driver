@@ -26,6 +26,7 @@ dependencies {
     testImplementation project(':bson').sourceSets.test.output
     testImplementation project(':driver-sync').sourceSets.test.output
     testImplementation project(':driver-core').sourceSets.test.output
+    testImplementation project(':driver-reactive-streams').sourceSets.test.output
 }
 
 

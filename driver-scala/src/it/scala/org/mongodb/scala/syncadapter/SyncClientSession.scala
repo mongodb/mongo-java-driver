@@ -16,11 +16,12 @@
 
 package org.mongodb.scala.syncadapter
 
-import com.mongodb.{ ClientSessionOptions, ServerAddress, TransactionOptions }
+import com.mongodb.{ ClientSessionOptions, MongoInterruptedException, ServerAddress, TransactionOptions }
 import com.mongodb.client.{ TransactionBody, ClientSession => JClientSession }
 import com.mongodb.session.ServerSession
 import org.bson.{ BsonDocument, BsonTimestamp }
 import org.mongodb.scala._
+import com.mongodb.reactivestreams.client.syncadapter.{ SyncMongoClient => JSyncMongoClient }
 
 case class SyncClientSession(wrapped: ClientSession, originator: Object) extends JClientSession {
 
@@ -46,7 +47,10 @@ case class SyncClientSession(wrapped: ClientSession, originator: Object) extends
 
   override def getClusterTime: BsonDocument = wrapped.getClusterTime
 
-  override def close(): Unit = wrapped.close()
+  override def close(): Unit = {
+    wrapped.close()
+    sleep(JSyncMongoClient.getSleepAfterSessionClose)
+  }
 
   override def hasActiveTransaction: Boolean = wrapped.hasActiveTransaction
 
@@ -76,4 +80,12 @@ case class SyncClientSession(wrapped: ClientSession, originator: Object) extends
     wrapped.setTransactionContext(address, transactionContext)
 
   override def clearTransactionContext(): Unit = wrapped.clearTransactionContext()
+
+  private def sleep(millis: Long): Unit = {
+    try Thread.sleep(millis)
+    catch {
+      case e: InterruptedException =>
+        throw new MongoInterruptedException(null, e)
+    }
+  }
 }
