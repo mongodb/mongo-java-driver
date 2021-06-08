@@ -32,7 +32,6 @@ import com.mongodb.internal.operation.OperationHelper.CallableWithConnection;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
-import org.bson.BsonInt64;
 import org.bson.BsonString;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -423,9 +422,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         if (collation != null) {
             document.put("collation", collation.asDocument());
         }
-        if (expireAfterSeconds > 0) {
-            document.put("expireAfterSeconds", new BsonInt64(expireAfterSeconds));
-        }
+        putIfNotZero(document, "expireAfterSeconds", expireAfterSeconds);
         if (timeSeriesOptions != null) {
             BsonDocument timeSeriesDocument = new BsonDocument("timeField", new BsonString(timeSeriesOptions.getTimeField()));
             String metaField = timeSeriesOptions.getMetaField();
