@@ -20,6 +20,8 @@ import com.mongodb.client.AbstractMainTransactionsTest
 import org.bson.{ BsonArray, BsonDocument }
 import org.junit.{ After, Before }
 import org.mongodb.scala.syncadapter.SyncMongoClient
+import com.mongodb.reactivestreams.client.MainTransactionsTest.SESSION_CLOSE_TIMING_SENSITIVE_TESTS
+import com.mongodb.reactivestreams.client.syncadapter.{ SyncMongoClient => JSyncMongoClient }
 
 class MainTransactionsTest(
     val filename: String,
@@ -42,12 +44,9 @@ class MainTransactionsTest(
     SyncMongoClient(MongoClient(settings))
 
   @Before def before(): Unit = {
-    if (com.mongodb.reactivestreams.client.MainTransactionsTest.SESSION_CLOSE_TIMING_SENSITIVE_TESTS
-          .contains(getDescription))
-      com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.enableSleepAfterSessionClose(256)
+    if (SESSION_CLOSE_TIMING_SENSITIVE_TESTS.contains(getDescription))
+      JSyncMongoClient.enableSleepAfterSessionClose(256)
   }
 
-  @After def after(): Unit = {
-    com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.disableSleep()
-  }
+  @After def after(): Unit = JSyncMongoClient.disableSleep()
 }

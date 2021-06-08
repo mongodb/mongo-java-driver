@@ -21,6 +21,7 @@ import com.mongodb.client.{ TransactionBody, ClientSession => JClientSession }
 import com.mongodb.session.ServerSession
 import org.bson.{ BsonDocument, BsonTimestamp }
 import org.mongodb.scala._
+import com.mongodb.reactivestreams.client.syncadapter.{ SyncMongoClient => JSyncMongoClient }
 
 case class SyncClientSession(wrapped: ClientSession, originator: Object) extends JClientSession {
 
@@ -48,7 +49,7 @@ case class SyncClientSession(wrapped: ClientSession, originator: Object) extends
 
   override def close(): Unit = {
     wrapped.close()
-    sleep(com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.getSleepAfterSessionClose)
+    sleep(JSyncMongoClient.getSleepAfterSessionClose)
   }
 
   override def hasActiveTransaction: Boolean = wrapped.hasActiveTransaction
