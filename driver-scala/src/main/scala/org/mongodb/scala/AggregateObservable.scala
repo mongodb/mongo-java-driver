@@ -119,6 +119,24 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
   }
 
   /**
+   * Add top-level variables to the aggregation.
+   *
+   * For MongoDB 5.0+, the aggregate command accepts a "let" option. This option is a document consisting of zero or more
+   * fields representing variables that are accessible to the aggregation pipeline.  The key is the name of the variable and the value is
+   * a constant in the aggregate expression language. Each parameter name is then usable to access the value of the corresponding
+   * expression with the "$$" syntax within aggregate expression contexts which may require the use of $expr or a pipeline.
+   *
+   * @param variables the variables
+   * @return this
+   * @since 4.3
+   * @note Requires MongoDB 5.0 or greater
+   */
+  def let(variables: Bson): AggregateObservable[TResult] = {
+    wrapped.let(variables)
+    this
+  }
+
+  /**
    * Sets the hint for which index to use. A null value means no hint is set.
    *
    * @param hint the hint

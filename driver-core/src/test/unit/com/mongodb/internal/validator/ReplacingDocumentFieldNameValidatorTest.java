@@ -18,11 +18,12 @@ package com.mongodb.internal.validator;
 
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class CollectibleDocumentFieldNameValidatorTest {
-    private final CollectibleDocumentFieldNameValidator fieldNameValidator = new CollectibleDocumentFieldNameValidator();
+public class ReplacingDocumentFieldNameValidatorTest {
+    private final ReplacingDocumentFieldNameValidator fieldNameValidator = new ReplacingDocumentFieldNameValidator();
 
     @Test
     public void testFieldValidationSuccess() {
@@ -35,11 +36,6 @@ public class CollectibleDocumentFieldNameValidatorTest {
     }
 
     @Test
-    public void testFieldNameWithDotsValidation() {
-        assertFalse(fieldNameValidator.validate("1.2"));
-    }
-
-    @Test
     public void testFieldNameStartsWithDollarValidation() {
         assertFalse(fieldNameValidator.validate("$1"));
         assertTrue(fieldNameValidator.validate("$db"));
@@ -47,4 +43,8 @@ public class CollectibleDocumentFieldNameValidatorTest {
         assertTrue(fieldNameValidator.validate("$id"));
     }
 
+    @Test
+    public void testNestedDocumentsAreNotValidated() {
+        assertEquals(NoOpFieldNameValidator.class, fieldNameValidator.getValidatorForField("nested").getClass());
+    }
 }

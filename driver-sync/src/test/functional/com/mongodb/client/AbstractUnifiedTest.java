@@ -151,6 +151,10 @@ public abstract class AbstractUnifiedTest {
         return null;
     }
 
+    protected final String getDescription() {
+        return description;
+    }
+
     @Before
     public void setUp() {
         assumeFalse(skipTest);

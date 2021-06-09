@@ -77,6 +77,7 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     private BsonValue hint;
     private long maxAwaitTimeMS;
     private long maxTimeMS;
+    private BsonDocument variables;
 
     AggregateOperationImpl(final MongoNamespace namespace, final List<BsonDocument> pipeline, final Decoder<T> decoder,
                            final AggregationLevel aggregationLevel) {
@@ -165,6 +166,11 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
         return this;
     }
 
+    AggregateOperationImpl<T> let(final BsonDocument variables) {
+        this.variables = variables;
+        return this;
+    }
+
     AggregateOperationImpl<T> retryReads(final boolean retryReads) {
         this.retryReads = retryReads;
         return this;
@@ -232,6 +238,9 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
         }
         if (hint != null) {
             commandDocument.put("hint", hint);
+        }
+        if (variables != null) {
+            commandDocument.put("let", variables);
         }
 
         return commandDocument;
