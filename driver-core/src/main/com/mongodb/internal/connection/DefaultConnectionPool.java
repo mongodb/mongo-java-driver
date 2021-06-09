@@ -1392,6 +1392,7 @@ class DefaultConnectionPool implements ConnectionPool {
             if (maintainer != null) {
                 assertNotNull(cancellationHandle).cancel(false);
                 cancellationHandle = null;
+                maintainer.execute(DefaultConnectionPool.this::doMaintenance);
             }
         }
 
