@@ -163,6 +163,23 @@ package object model {
   }
 
   /**
+   * Options for creating a time-series collection
+   */
+  type TimeSeriesOptions = com.mongodb.client.model.TimeSeriesOptions
+
+  /**
+   * Options for creating a time-series collection
+   */
+  object TimeSeriesOptions {
+    def apply(timeFieldName: String): TimeSeriesOptions = new com.mongodb.client.model.TimeSeriesOptions(timeFieldName)
+  }
+
+  /**
+   * Enumeration of values for time-series data granularity
+   */
+  type TimeSeriesGranularity = com.mongodb.client.model.TimeSeriesGranularity
+
+  /**
    * Options for creating a view
    *
    * @since 1.2
