@@ -369,7 +369,6 @@ public class ConcurrentPool<T> implements Pool<T> {
                 // preserve the eager InterruptedException behavior of `Semaphore.tryAcquire(long, TimeUnit)`
                 lock.writeLock().lockInterruptibly();
             } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
                 throw new MongoInterruptedException(null, e);
             }
             try {
@@ -384,7 +383,6 @@ public class ConcurrentPool<T> implements Pool<T> {
                             return false;
                         }
                     } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
                         throw new MongoInterruptedException(null, e);
                     }
                 }

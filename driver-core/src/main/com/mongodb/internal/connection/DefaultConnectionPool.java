@@ -1075,7 +1075,6 @@ class DefaultConnectionPool implements ConnectionPool {
             try {
                 lock.lockInterruptibly();
             } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
                 throw new MongoInterruptedException(null, e);
             }
         }
@@ -1094,7 +1093,6 @@ class DefaultConnectionPool implements ConnectionPool {
                     return Math.max(0, condition.awaitNanos(timeoutNanos));
                 }
             } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
                 throw new MongoInterruptedException(null, e);
             }
         }
