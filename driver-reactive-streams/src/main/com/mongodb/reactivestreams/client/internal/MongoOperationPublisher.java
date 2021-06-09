@@ -77,6 +77,7 @@ import reactor.core.publisher.MonoSink;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -226,7 +227,9 @@ public final class MongoOperationPublisher<T> {
                             .sizeInBytes(options.getSizeInBytes())
                             .maxDocuments(options.getMaxDocuments())
                             .storageEngineOptions(toBsonDocument(options.getStorageEngineOptions()))
-                            .collation(options.getCollation());
+                            .collation(options.getCollation())
+                            .expireAfter(options.getExpireAfter(TimeUnit.SECONDS))
+                            .timeSeriesOptions(options.getTimeSeriesOptions());
 
             IndexOptionDefaults indexOptionDefaults = options.getIndexOptionDefaults();
             Bson storageEngine = indexOptionDefaults.getStorageEngine();

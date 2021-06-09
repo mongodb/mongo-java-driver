@@ -34,6 +34,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.BulkWriteOptions;
+import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.DeleteOptions;
@@ -48,6 +49,8 @@ import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.ReturnDocument;
+import com.mongodb.client.model.TimeSeriesGranularity;
+import com.mongodb.client.model.TimeSeriesOptions;
 import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
@@ -804,11 +807,18 @@ final class UnifiedCrudHelper {
         BsonDocument arguments = operation.getDocument("arguments");
         String collectionName = arguments.getString("collection").getValue();
         ClientSession session = getSession(arguments);
+        CreateCollectionOptions options = new CreateCollectionOptions();
 
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
                 case "collection":
                 case "session":
+                    break;
+                case "expireAfterSeconds":
+                    options.expireAfter(cur.getValue().asNumber().longValue(), TimeUnit.SECONDS);
+                    break;
+                case "timeseries":
+                    options.timeSeriesOptions(createTimeSeriesOptions(cur.getValue().asDocument()));
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -817,12 +827,45 @@ final class UnifiedCrudHelper {
 
         return resultOf(() -> {
             if (session == null) {
-                database.createCollection(collectionName);
+                database.createCollection(collectionName, options);
             } else {
-                database.createCollection(session, collectionName);
+                database.createCollection(session, collectionName, options);
             }
             return null;
         });
+    }
+
+    private TimeSeriesOptions createTimeSeriesOptions(final BsonDocument timeSeriesDocument) {
+        TimeSeriesOptions options = new TimeSeriesOptions(timeSeriesDocument.getString("timeField").getValue());
+
+        for (Map.Entry<String, BsonValue> cur : timeSeriesDocument.entrySet()) {
+            switch (cur.getKey()) {
+                case "timeField":
+                    break;
+                case "metaField":
+                    options.metaField(cur.getValue().asString().getValue());
+                    break;
+                case "granularity":
+                    options.granularity(createTimeSeriesGranularity(cur.getValue().asString().getValue()));
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+            }
+        }
+        return options;
+    }
+
+    private TimeSeriesGranularity createTimeSeriesGranularity(final String value) {
+        switch (value) {
+            case "seconds":
+                return TimeSeriesGranularity.SECONDS;
+            case "minutes":
+                return TimeSeriesGranularity.MINUTES;
+            case "hours":
+                return TimeSeriesGranularity.HOURS;
+            default:
+                throw new UnsupportedOperationException("Unsupported time series granularity: " + value);
+        }
     }
 
     public OperationResult executeCreateIndex(final BsonDocument operation) {
