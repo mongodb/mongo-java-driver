@@ -308,12 +308,4 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         }
         assertEquals(collection.count(), 2);
     }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testDotKeysFail() {
-        DBCollection c = collection;
-
-        DBObject obj = BasicDBObjectBuilder.start().add("x", 1).add("y", 2).add("foo.bar", "baz").get();
-        c.insert(obj);
-    }
 }

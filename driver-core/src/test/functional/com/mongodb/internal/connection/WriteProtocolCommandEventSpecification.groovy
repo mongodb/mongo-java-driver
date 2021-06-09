@@ -201,8 +201,8 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
 
     def 'should not deliver any events if encoding fails'() {
         given:
-        def insertRequest = new InsertRequest(new BsonDocument('$set', new BsonInt32(1)))
-        def protocol = new InsertProtocol(getNamespace(), true, insertRequest)
+        def updateRequest = new UpdateRequest(new BsonDocument(), new BsonDocument('$set', new BsonInt32(1)), REPLACE)
+        def protocol = new UpdateProtocol(getNamespace(), true, updateRequest)
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
 

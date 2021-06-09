@@ -428,7 +428,11 @@ final class UnifiedCrudHelper {
     }
 
     private BsonDocument toExpected(final DeleteResult result) {
-        return new BsonDocument("deletedCount", new BsonInt32((int) result.getDeletedCount()));
+        if (result.wasAcknowledged()) {
+            return new BsonDocument("deletedCount", new BsonInt32((int) result.getDeletedCount()));
+        } else {
+            return new BsonDocument();
+        }
     }
 
     OperationResult executeUpdateOne(final BsonDocument operation) {
@@ -482,14 +486,18 @@ final class UnifiedCrudHelper {
     }
 
     private BsonDocument toExpected(final UpdateResult result) {
-        BsonDocument expectedDocument = new BsonDocument()
-                .append("matchedCount", new BsonInt32((int) result.getMatchedCount()))
-                .append("modifiedCount", new BsonInt32((int) result.getModifiedCount()))
-                .append("upsertedCount", new BsonInt32(result.getUpsertedId() == null ? 0 : 1));
-        if (result.getUpsertedId() != null) {
-            expectedDocument.append("upsertedId", result.getUpsertedId());
+        if (result.wasAcknowledged()) {
+            BsonDocument expectedDocument = new BsonDocument()
+                    .append("matchedCount", new BsonInt32((int) result.getMatchedCount()))
+                    .append("modifiedCount", new BsonInt32((int) result.getModifiedCount()))
+                    .append("upsertedCount", new BsonInt32(result.getUpsertedId() == null ? 0 : 1));
+            if (result.getUpsertedId() != null) {
+                expectedDocument.append("upsertedId", result.getUpsertedId());
+            }
+            return expectedDocument;
+        } else {
+            return new BsonDocument();
         }
-        return expectedDocument;
     }
 
 
@@ -517,7 +525,12 @@ final class UnifiedCrudHelper {
     }
 
     private BsonDocument toExpected(final InsertOneResult result) {
-        return new BsonDocument("insertedId", result.getInsertedId());
+        if (result.wasAcknowledged()) {
+            return new BsonDocument("insertedId", result.getInsertedId())
+                    .append("insertedCount", new BsonInt32(1));
+        } else {
+            return new BsonDocument();
+        }
     }
 
     OperationResult executeInsertMany(final BsonDocument operation) {
@@ -543,8 +556,13 @@ final class UnifiedCrudHelper {
     }
 
     private BsonDocument toExpected(final InsertManyResult result) {
-        return new BsonDocument("insertedIds", new BsonDocument(result.getInsertedIds().entrySet().stream()
-                .map(value -> new BsonElement(value.getKey().toString(), value.getValue())).collect(toList())));
+        if (result.wasAcknowledged()) {
+            return new BsonDocument("insertedIds", new BsonDocument(result.getInsertedIds().entrySet().stream()
+                    .map(value -> new BsonElement(value.getKey().toString(), value.getValue())).collect(toList())))
+                    .append("insertedCount", new BsonInt32(result.getInsertedIds().size()));
+        } else {
+            return new BsonDocument();
+        }
     }
 
     OperationResult executeBulkWrite(final BsonDocument operation) {
@@ -570,16 +588,20 @@ final class UnifiedCrudHelper {
     }
 
     private BsonDocument toExpected(final BulkWriteResult result) {
-        return new BsonDocument()
-                .append("deletedCount", new BsonInt32(result.getDeletedCount()))
-                .append("insertedCount", new BsonInt32(result.getInsertedCount()))
-                .append("matchedCount", new BsonInt32(result.getMatchedCount()))
-                .append("modifiedCount", new BsonInt32(result.getModifiedCount()))
-                .append("upsertedCount", new BsonInt32(result.getUpserts().size()))
-                .append("insertedIds", new BsonDocument(result.getInserts().stream()
-                        .map(value -> new BsonElement(Integer.toString(value.getIndex()), value.getId())).collect(toList())))
-                .append("upsertedIds", new BsonDocument(result.getUpserts().stream()
-                        .map(value -> new BsonElement(Integer.toString(value.getIndex()), value.getId())).collect(toList())));
+        if (result.wasAcknowledged()) {
+            return new BsonDocument()
+                    .append("deletedCount", new BsonInt32(result.getDeletedCount()))
+                    .append("insertedCount", new BsonInt32(result.getInsertedCount()))
+                    .append("matchedCount", new BsonInt32(result.getMatchedCount()))
+                    .append("modifiedCount", new BsonInt32(result.getModifiedCount()))
+                    .append("upsertedCount", new BsonInt32(result.getUpserts().size()))
+                    .append("insertedIds", new BsonDocument(result.getInserts().stream()
+                            .map(value -> new BsonElement(Integer.toString(value.getIndex()), value.getId())).collect(toList())))
+                    .append("upsertedIds", new BsonDocument(result.getUpserts().stream()
+                            .map(value -> new BsonElement(Integer.toString(value.getIndex()), value.getId())).collect(toList())));
+        } else {
+            return new BsonDocument();
+        }
     }
 
     private WriteModel<BsonDocument> toWriteModel(final BsonDocument document) {
