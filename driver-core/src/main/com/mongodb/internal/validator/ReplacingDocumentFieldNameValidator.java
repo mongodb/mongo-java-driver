@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * A field name validator for document that are meant for storage in MongoDB collections via replace operations  It ensures that no
+ * A field name validator for documents that are meant for storage in MongoDB collections via replace operations. It ensures that no
  * top-level fields start with '$' (with the exception of "$db", "$ref", and "$id", so that DBRefs are not rejected).
  *
  * <p>This class should not be considered a part of the public API.</p>
