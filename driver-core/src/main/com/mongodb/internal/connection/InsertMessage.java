@@ -17,7 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.internal.bulk.InsertRequest;
-import com.mongodb.internal.validator.CollectibleDocumentFieldNameValidator;
+import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.io.BsonOutput;
 
 /**
@@ -38,7 +38,7 @@ class InsertMessage extends LegacyMessage {
     protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput outputStream) {
         writeInsertPrologue(outputStream);
         int firstDocumentPosition = outputStream.getPosition();
-        addCollectibleDocument(insertRequest.getDocument(), outputStream, new CollectibleDocumentFieldNameValidator());
+        addCollectibleDocument(insertRequest.getDocument(), outputStream, new NoOpFieldNameValidator());
         return new EncodingMetadata(firstDocumentPosition);
     }
 
