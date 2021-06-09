@@ -222,7 +222,7 @@ public class CreateCollectionOptions {
      * Currently applies only to time-series collections, so if this value is set then so must the time-series options
      * </p>
      * @param expireAfter the expire-after duration.  After conversion to seconds using
-     * {@link TimeUnit#convert(long, java.util.concurrent.TimeUnit)}, the value must be >= 0.  A value of 0 indicates no expiration.
+     * {@link TimeUnit#convert(long, java.util.concurrent.TimeUnit)}, the value must be &gt;= 0.  A value of 0 indicates no expiration.
      * @param timeUnit the time unit
      * @return this
      * @since 4.3
