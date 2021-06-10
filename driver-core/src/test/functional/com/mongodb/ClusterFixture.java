@@ -102,6 +102,7 @@ public final class ClusterFixture {
     public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
     public static final String MONGODB_API_VERSION = "org.mongodb.test.api.version";
     public static final String MONGODB_TRANSACTION_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.transaction.uri";
+    public static final String SERVERLESS_TEST_SYSTEM_PROPERTY_NAME = "org.mongodb.test.serverless";
     public static final String DATA_LAKE_TEST_SYSTEM_PROPERTY_NAME = "org.mongodb.test.data.lake";
     private static final String MONGODB_OCSP_SHOULD_SUCCEED = "org.mongodb.test.ocsp.tls.should.succeed";
     private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
@@ -233,6 +234,11 @@ public final class ClusterFixture {
     @Nullable
     public static synchronized ConnectionString getMultiMongosConnectionString() {
         return getConnectionStringFromSystemProperty(MONGODB_TRANSACTION_URI_SYSTEM_PROPERTY_NAME);
+    }
+
+    public static boolean isServerlessTest() {
+        String isServerlessSystemProperty = System.getProperty(SERVERLESS_TEST_SYSTEM_PROPERTY_NAME);
+        return isServerlessSystemProperty != null && isServerlessSystemProperty.equals("true");
     }
 
     public static synchronized boolean isDataLakeTest() {
@@ -512,6 +518,11 @@ public final class ClusterFixture {
 
     public static boolean isAuthenticated() {
         return getConnectionString().getCredential() != null;
+    }
+
+    public static boolean isClientSideEncryptionTest() {
+        return System.getProperty("org.mongodb.test.awsAccessKeyId") != null
+                && !System.getProperty("org.mongodb.test.awsAccessKeyId").isEmpty();
     }
 
     public static void enableMaxTimeFailPoint() {

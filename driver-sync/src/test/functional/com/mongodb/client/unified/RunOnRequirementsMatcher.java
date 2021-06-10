@@ -16,6 +16,7 @@
 
 package com.mongodb.client.unified;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.connection.ServerVersion;
 import org.bson.BsonArray;
@@ -59,6 +60,12 @@ final class RunOnRequirementsMatcher {
                             break requirementLoop;
                         }
                         break;
+                    case "serverless":
+                        if (!serverlessMatches(curRequirement.getValue().asString().getValue())) {
+                             requirementMet = false;
+                             break requirementLoop;
+                        }
+                        break;
                     case "auth":
                         if (curRequirement.getValue().asBoolean().getValue() == (clientSettings.getCredential() == null)) {
                             requirementMet = false;
@@ -74,9 +81,6 @@ final class RunOnRequirementsMatcher {
                             }
                         }
                         break;
-                    case "serverless":
-                        // TODO: Implement support in scope of JAVA-3987
-                        break;
                     default:
                         throw new UnsupportedOperationException("Unsupported runOnRequirement: " + curRequirement.getKey());
                 }
@@ -87,6 +91,19 @@ final class RunOnRequirementsMatcher {
             }
         }
         return false;
+    }
+
+    private static boolean serverlessMatches(final String serverlessRequirement) {
+        switch (serverlessRequirement) {
+            case "require":
+                return ClusterFixture.isServerlessTest();
+            case "forbid":
+                return !ClusterFixture.isServerlessTest();
+            case "allow":
+                return true;
+            default:
+                throw new UnsupportedOperationException("Unsupported serverless requirement value: " + serverlessRequirement);
+        }
     }
 
     private RunOnRequirementsMatcher() {

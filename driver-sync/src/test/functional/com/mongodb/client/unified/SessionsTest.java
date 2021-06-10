@@ -28,12 +28,20 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
+import static com.mongodb.ClusterFixture.isServerlessTest;
+import static org.junit.Assume.assumeFalse;
+
 public class SessionsTest extends UnifiedTest {
 
     public SessionsTest(@SuppressWarnings("unused") final String fileDescription, @SuppressWarnings("unused") final String testDescription,
                         final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
                         final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
+        // This test is currently failing due to an issue with the serverless proxy.  It can be re-enabled once the issue is addressed.
+        assumeFalse((
+                testDescription.equals("Server returns an error on listCollections with snapshot")
+                        || testDescription.equals("Server returns an error on runCommand with snapshot"))
+                && isServerlessTest());
     }
 
     @Override

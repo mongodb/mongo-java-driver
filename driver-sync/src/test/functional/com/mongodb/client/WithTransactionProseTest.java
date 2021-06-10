@@ -24,11 +24,13 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
+import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 // See https://github.com/mongodb/specifications/tree/master/source/transactions-convenient-api/tests/README.rst#prose-tests
@@ -161,6 +163,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     //
     @Test
     public void testRetryTimeoutEnforcedTransientTransactionErrorOnCommit() {
+        assumeFalse(isServerlessTest());
         final MongoDatabase failPointAdminDb = client.getDatabase("admin");
         failPointAdminDb.runCommand(
                 Document.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 2}, "
