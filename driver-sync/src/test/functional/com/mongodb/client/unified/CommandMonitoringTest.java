@@ -28,6 +28,9 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
+import static com.mongodb.ClusterFixture.isServerlessTest;
+import static org.junit.Assume.assumeFalse;
+
 public class CommandMonitoringTest extends UnifiedTest {
 
 
@@ -37,6 +40,7 @@ public class CommandMonitoringTest extends UnifiedTest {
                                  @Nullable final BsonArray runOnRequirements, final BsonArray entities, final BsonArray initialData,
                                  final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
+        assumeFalse(isServerlessTest());
     }
 
     @Override

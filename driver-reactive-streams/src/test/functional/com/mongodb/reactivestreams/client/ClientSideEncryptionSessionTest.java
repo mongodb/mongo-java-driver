@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static com.mongodb.ClusterFixture.isClientSideEncryptionTest;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.reactivestreams.client.Fixture.getDefaultDatabaseName;
@@ -73,6 +74,7 @@ public class ClientSideEncryptionSessionTest {
     @Before
     public void setUp() throws Throwable {
         assumeTrue(serverVersionAtLeast(4, 2));
+        assumeTrue(isClientSideEncryptionTest());
         assumeFalse(isStandalone());
 
         /* Step 1: get unencrypted client and recreate keys collection */

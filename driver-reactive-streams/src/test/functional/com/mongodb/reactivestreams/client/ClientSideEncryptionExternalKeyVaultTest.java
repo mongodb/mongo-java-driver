@@ -46,6 +46,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static com.mongodb.ClusterFixture.isClientSideEncryptionTest;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.reactivestreams.client.Fixture.getMongoClient;
 import static com.mongodb.reactivestreams.client.Fixture.getMongoClientBuilderFromConnectionString;
@@ -66,9 +67,7 @@ public class ClientSideEncryptionExternalKeyVaultTest {
     @Before
     public void setUp() throws Throwable {
         assumeTrue(serverVersionAtLeast(4, 1));
-        assumeTrue("Encryption test with external keyVault is disabled",
-                System.getProperty("org.mongodb.test.awsAccessKeyId") != null
-                        && !System.getProperty("org.mongodb.test.awsAccessKeyId").isEmpty());
+        assumeTrue("Encryption test with external keyVault is disabled", isClientSideEncryptionTest());
 
         /* Step 1: get unencrypted client and recreate keys collection */
         MongoClient client = getMongoClient();
