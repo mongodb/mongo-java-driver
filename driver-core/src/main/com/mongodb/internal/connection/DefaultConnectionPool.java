@@ -1373,7 +1373,9 @@ class DefaultConnectionPool implements ConnectionPool {
         private boolean initialStart;
 
         private BackgroundMaintenanceManager() {
-            maintainer = Executors.newSingleThreadScheduledExecutor(new DaemonThreadFactory("MaintenanceTimer"));
+            maintainer = settings.getMaintenanceInitialDelay(NANOSECONDS) < Long.MAX_VALUE
+                    ? Executors.newSingleThreadScheduledExecutor(new DaemonThreadFactory("MaintenanceTimer"))
+                    : null;
             cancellationHandle = null;
             initialStart = true;
         }
