@@ -151,7 +151,32 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
 
     @Override
     public void next(final SingleResultCallback<List<T>> callback) {
-        internalNext(callback);
+        if (isClosed()) {
+            callback.onResult(null, new MongoException("next() called after the cursor was closed."));
+        } else if (firstBatch != null && (!firstBatch.getResults().isEmpty())) {
+            // May be empty for a tailable cursor
+            List<T> results = firstBatch.getResults();
+            firstBatch = null;
+            if (getServerCursor() == null) {
+                close();
+            }
+            callback.onResult(results, null);
+        } else {
+            ServerCursor localCursor = getServerCursor();
+            if (localCursor == null) {
+                close();
+                callback.onResult(null, null);
+            } else {
+                synchronized (this) {
+                    if (isClosed()) {
+                        callback.onResult(null, new MongoException("next() called after the cursor was closed."));
+                        return;
+                    }
+                    isOperationInProgress = true;
+                }
+                getMore(localCursor, callback);
+            }
+        }
     }
 
     @Override
@@ -191,35 +216,6 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     @Override
     public int getMaxWireVersion() {
         return maxWireVersion;
-    }
-
-    private void internalNext(final SingleResultCallback<List<T>> callback) {
-        if (isClosed()) {
-            callback.onResult(null, new MongoException("next() called after the cursor was closed."));
-        } else if (firstBatch != null && (!firstBatch.getResults().isEmpty())) {
-            // May be empty for a tailable cursor
-            List<T> results = firstBatch.getResults();
-            firstBatch = null;
-            if (getServerCursor() == null) {
-                close();
-            }
-            callback.onResult(results, null);
-        } else {
-            ServerCursor localCursor = getServerCursor();
-            if (localCursor == null) {
-                close();
-                callback.onResult(null, null);
-            } else {
-                synchronized (this) {
-                    if (isClosed()) {
-                        callback.onResult(null, new MongoException("next() called after the cursor was closed."));
-                        return;
-                    }
-                    isOperationInProgress = true;
-                }
-                getMore(localCursor, callback);
-            }
-        }
     }
 
     private boolean limitReached() {
