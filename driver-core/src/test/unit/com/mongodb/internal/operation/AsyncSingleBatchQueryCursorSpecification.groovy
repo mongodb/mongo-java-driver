@@ -46,26 +46,6 @@ class AsyncSingleBatchQueryCursorSpecification extends Specification {
         thrown(MongoException)
     }
 
-    def 'should work as with tryNext'() {
-        given:
-        def cursor = new AsyncSingleBatchQueryCursor<Document>(firstBatch)
-
-        when:
-        def batch = tryNextBatch(cursor)
-
-        then:
-        batch == firstBatch.getResults()
-
-        then:
-        tryNextBatch(cursor) == null
-
-        when:
-        tryNextBatch(cursor)
-
-        then:
-        thrown(MongoException)
-    }
-
     def 'should not support setting batchsize'() {
         given:
         def cursor = new AsyncSingleBatchQueryCursor<Document>(firstBatch)
@@ -83,12 +63,6 @@ class AsyncSingleBatchQueryCursorSpecification extends Specification {
         cursor.next(futureResultCallback)
         futureResultCallback.get()
     }
-    List<Document> tryNextBatch(AsyncSingleBatchQueryCursor cursor) {
-        def futureResultCallback = new FutureResultCallback()
-        cursor.tryNext(futureResultCallback)
-        futureResultCallback.get()
-    }
-
 
     def firstBatch = new QueryResult(new MongoNamespace('db', 'coll'), [new Document('a', 1)], 0, new ServerAddress())
 }

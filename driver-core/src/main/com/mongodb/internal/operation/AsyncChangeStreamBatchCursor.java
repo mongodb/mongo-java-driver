@@ -86,17 +86,6 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
     }
 
     @Override
-    public void tryNext(final SingleResultCallback<List<T>> callback) {
-        resumeableOperation(new AsyncBlock() {
-            @Override
-            public void apply(final AsyncAggregateResponseBatchCursor<RawBsonDocument> cursor,
-                              final SingleResultCallback<List<RawBsonDocument>> callback) {
-                cursor.tryNext(callback);
-            }
-        }, callback, true);
-    }
-
-    @Override
     public void close() {
         if (isClosed.compareAndSet(false, true)) {
             try {
