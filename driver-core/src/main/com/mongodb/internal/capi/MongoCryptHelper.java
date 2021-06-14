@@ -88,14 +88,14 @@ public final class MongoCryptHelper {
                 .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
                     @Override
                     public void apply(final ClusterSettings.Builder builder) {
-                        builder.serverSelectionTimeout(1, TimeUnit.SECONDS);
+                        builder.serverSelectionTimeout(10, TimeUnit.SECONDS);
                     }
                 })
                 .applyToSocketSettings(new Block<SocketSettings.Builder>() {
                     @Override
                     public void apply(final SocketSettings.Builder builder) {
-                        builder.readTimeout(1, TimeUnit.SECONDS);
-                        builder.connectTimeout(1, TimeUnit.SECONDS);
+                        builder.readTimeout(10, TimeUnit.SECONDS);
+                        builder.connectTimeout(10, TimeUnit.SECONDS);
                     }
                 })
                 .applyConnectionString(new ConnectionString((connectionString != null)
