@@ -188,18 +188,6 @@ class OperationFunctionalSpecification extends Specification {
         }
     }
 
-    def tryNext(cursor, boolean async) {
-        def next
-        if (async) {
-            def futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
-            cursor.tryNext(futureResultCallback)
-            next = futureResultCallback.get(TIMEOUT, TimeUnit.SECONDS)
-        } else {
-            next = cursor.tryNext()
-        }
-        next
-    }
-
     def consumeAsyncResults(cursor) {
         def batch = next(cursor, true)
         while (batch != null) {
