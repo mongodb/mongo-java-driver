@@ -65,7 +65,7 @@ final class DefaultSdamServerDescriptionManager implements SdamServerDescription
              * facilitates achieving this. However, because once the pool is observed, it may be used concurrently with the pool being
              * invalidated by either the current method or the `handleException` method, the pool still may be used in a paused state.
              * For those cases `MongoConnectionPoolClearedException` was introduced. */
-            if (candidateDescription.getType().isDataBearing()) {
+            if (ServerTypeHelper.isDataBearing(candidateDescription.getType())) {
                 connectionPool.ready();
             }
             updateDescription(candidateDescription);

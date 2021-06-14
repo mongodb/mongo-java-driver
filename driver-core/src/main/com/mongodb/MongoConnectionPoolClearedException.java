@@ -26,6 +26,8 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
  * An exception that may happen usually as a result of another thread clearing a connection pool.
  * Such clearing usually itself happens as a result of an exception,
  * in which case it may be specified via the {@link #getCause()} method.
+ * <p>
+ * It is always safe to retry an operation that failed with this exception.
  */
 public final class MongoConnectionPoolClearedException extends MongoException {
     private static final long serialVersionUID = 1;

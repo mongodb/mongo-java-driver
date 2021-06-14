@@ -227,9 +227,11 @@ class DefaultConnectionPool implements ConnectionPool {
         Throwable result = t;
         if (t instanceof MongoTimeoutException) {
             connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, Reason.TIMEOUT));
-        } else if (t instanceof MongoOpenConnectionInternalException || t instanceof MongoConnectionPoolClearedException) {
+        } else if (t instanceof MongoOpenConnectionInternalException) {
             connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, Reason.CONNECTION_ERROR));
             result = MongoOpenConnectionInternalException.unwrap(t);
+        } else if (t instanceof MongoConnectionPoolClearedException) {
+            connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, Reason.CONNECTION_ERROR));
         } else if (ConcurrentPool.isPoolClosedException(t)) {
             connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, Reason.POOL_CLOSED));
         } else {
@@ -242,7 +244,7 @@ class DefaultConnectionPool implements ConnectionPool {
     public void invalidate(@Nullable final Throwable cause) {
         assertTrue(sdamProvider.optional().isPresent());
         if (stateAndGeneration.pauseAndIncrementGeneration(cause)) {
-            LOGGER.debug("Invalidating the connection pool and marking it as 'paused'"
+            LOGGER.debug("Invalidating the connection pool for " + serverId + " and marking it as 'paused'"
                     + (cause == null ? "" : " due to " + cause.toString()));
             openConcurrencyLimiter.signalClosedOrPaused();
         }
@@ -256,7 +258,7 @@ class DefaultConnectionPool implements ConnectionPool {
     @Override
     public void ready() {
         if (stateAndGeneration.ready()) {
-            LOGGER.debug("Marking the connection pool as 'ready'");
+            LOGGER.debug("Marking the connection pool for " + serverId +  " as 'ready'");
         }
     }
 
@@ -382,13 +384,13 @@ class DefaultConnectionPool implements ConnectionPool {
                     try {
                         openConcurrencyLimiter.openImmediately(new PooledConnection(newConnection));
                     } catch (MongoException | MongoOpenConnectionInternalException e) {
-                        RuntimeException actualE = (RuntimeException) MongoOpenConnectionInternalException.unwrap(e);
+                        RuntimeException actualException = (RuntimeException) MongoOpenConnectionInternalException.unwrap(e);
                         sdamProvider.optional().ifPresent(sdam -> {
-                            if (!silentlyComplete.test(actualE)) {
-                                sdam.handleExceptionBeforeHandshake(SdamIssue.specific(actualE, sdam.context(newConnection)));
+                            if (!silentlyComplete.test(actualException)) {
+                                sdam.handleExceptionBeforeHandshake(SdamIssue.specific(actualException, sdam.context(newConnection)));
                             }
                         });
-                        throw actualE;
+                        throw actualException;
                     }
                 });
             }
@@ -933,6 +935,8 @@ class DefaultConnectionPool implements ConnectionPool {
          * if {@code tryGetAvailable} is {@code true} and an {@linkplain PooledConnection#opened() opened} one becomes available while
          * waiting for a permit.
          * @throws MongoTimeoutException If timed out.
+         * @throws MongoInterruptedException If the current thread has its {@linkplain Thread#interrupted() interrupted status}
+         * set on entry to this method or is interrupted while waiting to get an available opened connection.
          */
         @Nullable
         private PooledConnection acquirePermitOrGetAvailableOpenedConnection(final boolean tryGetAvailable, final Timeout timeout)

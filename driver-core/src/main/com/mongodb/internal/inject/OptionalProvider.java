@@ -18,10 +18,7 @@ package com.mongodb.internal.inject;
 import java.util.Optional;
 
 /**
- * Inspired by <a href="https://jakarta.ee/specifications/dependency-injection/2.0/apidocs/jakarta/inject/provider">
- * {@code jakarta.inject.Provider}</a>.
- * <p>
- * If a parameter is of type {@link OptionalProvider}, then the corresponding argument must not be {@code null}.
+ * If a constructor parameter is of type {@link OptionalProvider}, then the corresponding argument must not be {@code null}.
  *
  * @param <T> The type of provided objects.
  * @see Provider

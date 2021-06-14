@@ -17,6 +17,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.connection.TopologyVersion;
 import org.bson.types.ObjectId;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -27,13 +28,20 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class TopologyVersionHelperTest {
-    @Test
-    void compare() {
+    private ObjectId processIdA;
+    private ObjectId processIdB;
+
+    @BeforeEach
+    void setUp() {
         int objectIdCounterExclusiveUpperBound = 0xff_ff_ff;
         ThreadLocalRandom rnd = ThreadLocalRandom.current();
-        ObjectId processIdA = new ObjectId(rnd.nextInt(), rnd.nextInt(objectIdCounterExclusiveUpperBound));
-        ObjectId processIdB = new ObjectId(rnd.nextInt(), rnd.nextInt(objectIdCounterExclusiveUpperBound));
+        processIdA = new ObjectId(rnd.nextInt(), rnd.nextInt(objectIdCounterExclusiveUpperBound));
+        processIdB = new ObjectId(rnd.nextInt(), rnd.nextInt(objectIdCounterExclusiveUpperBound));
         assertNotEquals(processIdA, processIdB);
+    }
+
+    @Test
+    void newer() {
         TopologyVersion a1 = new TopologyVersion(processIdA, 1);
         TopologyVersion a2 = new TopologyVersion(processIdA, 2);
         TopologyVersion b1 = new TopologyVersion(processIdB, 1);
@@ -46,6 +54,13 @@ final class TopologyVersionHelperTest {
                 () -> assertFalse(TopologyVersionHelper.newer(a1, a2)),
                 () -> assertFalse(TopologyVersionHelper.newer(a1, a1)),
                 () -> assertTrue(TopologyVersionHelper.newer(a2, a1)));
+    }
+
+    @Test
+    void newerOrEqual() {
+        TopologyVersion a1 = new TopologyVersion(processIdA, 1);
+        TopologyVersion a2 = new TopologyVersion(processIdA, 2);
+        TopologyVersion b1 = new TopologyVersion(processIdB, 1);
         assertAll(
                 () -> assertFalse(TopologyVersionHelper.newerOrEqual(null, null)),
                 () -> assertFalse(TopologyVersionHelper.newerOrEqual(null, a1)),
