@@ -62,7 +62,7 @@ public class ServerDescription {
      * The maximum supported driver wire version
      * @since 3.8
      */
-    public static final int MAX_DRIVER_WIRE_VERSION = 9;
+    public static final int MAX_DRIVER_WIRE_VERSION = 13;
 
     private static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
 
