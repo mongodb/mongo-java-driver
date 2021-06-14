@@ -440,29 +440,6 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ isStandalone() || !serverVersionAtLeast(3, 6) })
-    def 'should be able to respect maxAwaitTime with pipeline'() {
-        given:
-        AggregateOperation operation = new AggregateOperation<Document>(getNamespace(), [
-                new BsonDocument('$changeStream', new BsonDocument())
-        ], new DocumentCodec())
-                .batchSize(2)
-                .maxAwaitTime(10, MILLISECONDS)
-
-        when:
-        def cursor = execute(operation, async)
-        tryNext(cursor, async)
-
-        then:
-        noExceptionThrown()
-
-        cleanup:
-        cursor?.close()
-
-        where:
-        async << [true, false]
-    }
-
     def 'should add read concern to command'() {
         given:
         def binding = Stub(ReadBinding)
