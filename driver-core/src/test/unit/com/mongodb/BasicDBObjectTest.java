@@ -18,6 +18,8 @@ package com.mongodb;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.bson.BsonBinary;
+import org.bson.BsonDocument;
 import org.bson.codecs.Codec;
 import org.bson.json.JsonMode;
 import org.bson.json.JsonWriterSettings;
@@ -34,9 +36,9 @@ import java.util.UUID;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
@@ -76,6 +78,24 @@ public class BasicDBObjectTest {
         assertEquals("{\"int\": 1, \"string\": \"abc\", \"_id\": ObjectId(\"000000000000000000000000\"), "
                 + "\"dbRef\": {\"$ref\": \"collection\", \"$id\": ObjectId(\"01234567890123456789abcd\"), \"$db\": \"db\"}}",
                 document.toJson(JsonWriterSettings.builder().outputMode(JsonMode.SHELL).build(), DECODER));
+    }
+
+    @Test
+    public void toJsonShouldRenderUuidAsStandard() {
+        UUID uuid = UUID.randomUUID();
+        BasicDBObject doc = new BasicDBObject("_id", uuid);
+
+        String json = doc.toJson();
+        assertEquals(new BsonDocument("_id", new BsonBinary(uuid)), BsonDocument.parse(json));
+    }
+
+    @Test
+    public void toStringShouldRenderUuidAsStandard() {
+        UUID uuid = UUID.randomUUID();
+        BasicDBObject doc = new BasicDBObject("_id", uuid);
+
+        String json = doc.toString();
+        assertEquals(new BsonDocument("_id", new BsonBinary(uuid)), BsonDocument.parse(json));
     }
 
     @Test

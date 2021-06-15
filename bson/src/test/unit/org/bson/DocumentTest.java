@@ -33,6 +33,7 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs;
@@ -142,6 +143,15 @@ public class DocumentTest {
 
         assertEquals(expected, document.toBsonDocument(BsonDocument.class, Bson.DEFAULT_CODEC_REGISTRY));
         assertEquals(expected, document.toBsonDocument());
+    }
+
+    @Test
+    public void toJsonShouldRenderUuidAsStandard() {
+        UUID uuid = UUID.randomUUID();
+        Document doc = new Document("_id", uuid);
+
+        String json = doc.toJson();
+        assertEquals(new BsonDocument("_id", new BsonBinary(uuid)), BsonDocument.parse(json));
     }
 
     public class Name {
