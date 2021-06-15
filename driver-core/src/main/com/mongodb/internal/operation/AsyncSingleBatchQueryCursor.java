@@ -54,11 +54,6 @@ class AsyncSingleBatchQueryCursor<T> implements AsyncBatchCursor<T> {
     }
 
     @Override
-    public void tryNext(final SingleResultCallback<List<T>> callback) {
-        next(callback);
-    }
-
-    @Override
     public void setBatchSize(final int batchSize) {
         // Noop
     }

@@ -73,12 +73,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.mongodb.connection.ClusterConnectionMode.LOAD_BALANCED;
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static com.mongodb.connection.ClusterType.REPLICA_SET;
 import static com.mongodb.connection.ClusterType.SHARDED;
 import static com.mongodb.connection.ClusterType.STANDALONE;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimaries;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getSecondaries;
+import static com.mongodb.internal.connection.DescriptionHelper.enableServiceIdManufacturing;
 import static java.lang.String.format;
 import static java.lang.Thread.sleep;
 import static java.util.Arrays.asList;
@@ -116,6 +118,14 @@ public final class ClusterFixture {
 
     static {
         Runtime.getRuntime().addShutdownHook(new ShutdownHook());
+
+        ConnectionString defaultConnectionString = getConnectionStringFromSystemProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
+        if (defaultConnectionString != null) {
+            Boolean loadBalanced = defaultConnectionString.isLoadBalanced();
+            if (loadBalanced != null && loadBalanced) {
+                enableServiceIdManufacturing();
+            }
+        }
     }
 
     private ClusterFixture() {
@@ -183,7 +193,7 @@ public final class ClusterFixture {
 
     public static boolean hasEncryptionTestsEnabled() {
         List<String> requiredSystemProperties = asList("awsAccessKeyId", "awsSecretAccessKey", "azureTenantId", "azureClientId",
-                "azureClientSecret", "gcpEmail", "gcpPrivateKey");
+                "azureClientSecret", "gcpEmail", "gcpPrivateKey", "tmpAwsAccessKeyId", "tmpAwsSecretAccessKey", "tmpAwsSessionToken");
         return requiredSystemProperties.stream()
                         .map(name -> System.getProperty("org.mongodb.test." + name, ""))
                         .filter(s -> !s.isEmpty())
@@ -483,6 +493,10 @@ public final class ClusterFixture {
 
     public static boolean isStandalone() {
         return getCluster().getDescription().getType() == STANDALONE;
+    }
+
+    public static boolean isLoadBalanced() {
+        return getCluster().getSettings().getMode() == LOAD_BALANCED;
     }
 
     public static boolean isAuthenticated() {

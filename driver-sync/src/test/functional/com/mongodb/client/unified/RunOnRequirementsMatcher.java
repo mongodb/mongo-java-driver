@@ -16,12 +16,14 @@
 
 package com.mongodb.client.unified;
 
+import com.mongodb.MongoClientSettings;
 import com.mongodb.connection.ServerVersion;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 
 import java.util.Map;
+import java.util.Objects;
 
 import static com.mongodb.ClusterFixture.getServerParameters;
 import static com.mongodb.JsonTestServerVersionChecker.getMaxServerVersionForField;
@@ -29,7 +31,8 @@ import static com.mongodb.JsonTestServerVersionChecker.getMinServerVersion;
 import static com.mongodb.JsonTestServerVersionChecker.topologyMatches;
 
 final class RunOnRequirementsMatcher {
-    public static boolean runOnRequirementsMet(final BsonArray runOnRequirements, final ServerVersion serverVersion) {
+    public static boolean runOnRequirementsMet(final BsonArray runOnRequirements, final MongoClientSettings clientSettings,
+                                               final ServerVersion serverVersion) {
         for (BsonValue cur : runOnRequirements) {
             boolean requirementMet = true;
             BsonDocument requirement = cur.asDocument();
@@ -56,10 +59,16 @@ final class RunOnRequirementsMatcher {
                             break requirementLoop;
                         }
                         break;
+                    case "auth":
+                        if (curRequirement.getValue().asBoolean().getValue() == (clientSettings.getCredential() == null)) {
+                            requirementMet = false;
+                            break requirementLoop;
+                        }
+                        break;
                     case "serverParameters":
                         BsonDocument serverParameters = getServerParameters();
                         for (Map.Entry<String, BsonValue> curParameter: curRequirement.getValue().asDocument().entrySet()) {
-                            if (!serverParameters.get(curParameter.getKey()).equals(curParameter.getValue())) {
+                            if (!Objects.equals(serverParameters.get(curParameter.getKey()), curParameter.getValue())) {
                                 requirementMet = false;
                                 break requirementLoop;
                             }

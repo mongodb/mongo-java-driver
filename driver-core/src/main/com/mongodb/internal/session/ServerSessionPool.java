@@ -241,7 +241,7 @@ public class ServerSessionPool {
 
     private final class ServerSessionItemFactory implements ConcurrentPool.ItemFactory<ServerSessionImpl> {
         @Override
-        public ServerSessionImpl create(final boolean initialize) {
+        public ServerSessionImpl create() {
             return new ServerSessionImpl(createNewServerSessionIdentifier());
         }
 

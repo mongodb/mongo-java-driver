@@ -34,6 +34,76 @@ import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static java.util.Objects.requireNonNull;
 
 public class SyncMongoClient implements MongoClient {
+
+    private static long sleepAfterCursorOpenMS;
+
+    private static long sleepAfterCursorCloseMS;
+    private static long sleepAfterSessionCloseMS;
+
+    /**
+     * Unfortunately this is the only way to wait for a query to be initiated, since Reactive Streams is asynchronous
+     * and we have no way of knowing. Tests which require cursor initiation to complete before execution of the next operation
+     * can set this to a positive value.  A value of 256 ms has been shown to work well. The default value is 0.
+     */
+    public static void enableSleepAfterCursorOpen(final long sleepMS) {
+        if (sleepAfterCursorOpenMS != 0) {
+            throw new IllegalStateException("Already enabled");
+        }
+        if (sleepMS <= 0) {
+            throw new IllegalArgumentException("sleepMS must be a postive value");
+        }
+        sleepAfterCursorOpenMS = sleepMS;
+    }
+
+    /**
+     * Unfortunately this is the only way to wait for close to complete, since it's asynchronous.
+     * This is inherently racy but there are not any other good options. Tests which require cursor cancellation to complete before
+     * execution of the next operation can set this to a positive value.  A value of 256 ms has been shown to work well. The default
+     * value is 0.
+     */
+    public static void enableSleepAfterCursorClose(final long sleepMS) {
+        if (sleepAfterCursorCloseMS != 0) {
+            throw new IllegalStateException("Already enabled");
+        }
+        if (sleepMS <= 0) {
+            throw new IllegalArgumentException("sleepMS must be a postive value");
+        }
+        sleepAfterCursorCloseMS = sleepMS;
+    }
+
+    /**
+     * Enables {@linkplain Thread#sleep(long) sleeping} in {@link SyncClientSession#close()} to wait until asynchronous closing actions
+     * are done. It is an attempt to make asynchronous {@link SyncMongoClient#close()} method synchronous;
+     * the attempt is racy and incorrect, but good enough for tests given that no other approach is available.
+     */
+    public static void enableSleepAfterSessionClose(final long sleepMS) {
+        if (sleepAfterSessionCloseMS != 0) {
+            throw new IllegalStateException("Already enabled");
+        }
+        if (sleepMS <= 0) {
+            throw new IllegalArgumentException("sleepMS must be a postive value");
+        }
+        sleepAfterSessionCloseMS = sleepMS;
+    }
+
+    public static void disableSleep() {
+        sleepAfterCursorOpenMS = 0;
+        sleepAfterCursorCloseMS = 0;
+        sleepAfterSessionCloseMS = 0;
+    }
+
+    public static long getSleepAfterCursorOpen() {
+        return sleepAfterCursorOpenMS;
+    }
+
+    public static long getSleepAfterCursorClose() {
+        return sleepAfterCursorCloseMS;
+    }
+
+    public static long getSleepAfterSessionClose() {
+        return sleepAfterSessionCloseMS;
+    }
+
     private final com.mongodb.reactivestreams.client.MongoClient wrapped;
 
     public SyncMongoClient(final com.mongodb.reactivestreams.client.MongoClient wrapped) {

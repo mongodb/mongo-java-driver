@@ -40,6 +40,7 @@ class SyncListDatabasesIterable<T> extends SyncMongoIterable<T> implements ListD
     @Override
     public ListDatabasesIterable<T> batchSize(final int batchSize) {
         wrapped.batchSize(batchSize);
+        super.batchSize(batchSize);
         return this;
     }
 

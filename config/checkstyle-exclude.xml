@@ -101,6 +101,7 @@
     <suppress checks="MethodName" files="DBAddress"/>
     <suppress checks="MethodName" files="GridFSInputFile"/>
     <suppress checks="MethodName" files="ReflectionDBObject"/>
+    <suppress checks="MethodName" files="SimpleWithStaticModel"/>
 
     <suppress checks="VisibilityModifier" files="Bytes"/>
     <suppress checks="VisibilityModifier" files="GridFSFile"/>

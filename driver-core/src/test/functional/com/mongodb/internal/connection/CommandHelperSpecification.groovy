@@ -19,6 +19,7 @@ package com.mongodb.internal.connection
 
 import com.mongodb.MongoCommandException
 import com.mongodb.ServerAddress
+import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
@@ -44,7 +45,8 @@ class CommandHelperSpecification extends Specification {
     InternalConnection connection
 
     def setup() {
-        connection = new InternalStreamConnectionFactory(new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
+        connection = new InternalStreamConnectionFactory(ClusterConnectionMode.SINGLE,
+                new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
                 getCredentialWithCache(), null, null, [], null, getServerApi())
                 .create(new ServerId(new ClusterId(), getPrimary()))
         connection.open()

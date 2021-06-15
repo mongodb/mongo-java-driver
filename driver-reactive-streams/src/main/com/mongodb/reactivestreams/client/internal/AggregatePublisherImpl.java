@@ -49,6 +49,7 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
     private Collation collation;
     private String comment;
     private Bson hint;
+    private Bson variables;
 
     AggregatePublisherImpl(
             @Nullable final ClientSession clientSession,
@@ -111,6 +112,12 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
     }
 
     @Override
+    public AggregatePublisher<T> let(@Nullable final Bson variables) {
+        this.variables = variables;
+        return this;
+    }
+
+    @Override
     public Publisher<Void> toCollection() {
         BsonDocument lastPipelineStage = getLastPipelineStage();
         if (lastPipelineStage == null || !lastPipelineStage.containsKey("$out") && !lastPipelineStage.containsKey("$merge")) {
@@ -168,12 +175,12 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
     private AggregateOperation<T> asAggregateOperation(final int initialBatchSize) {
         return getOperations()
                 .aggregate(pipeline, getDocumentClass(), maxTimeMS, maxAwaitTimeMS,
-                           initialBatchSize, collation, hint, comment, allowDiskUse, aggregationLevel);
+                           initialBatchSize, collation, hint, comment, variables, allowDiskUse, aggregationLevel);
     }
 
     private AsyncWriteOperation<Void> getAggregateToCollectionOperation() {
         return getOperations().aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint, comment,
-                                                     aggregationLevel);
+                                                     variables, aggregationLevel);
     }
 
     @Nullable

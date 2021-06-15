@@ -78,7 +78,7 @@ case class ListDatabasesObservable[TResult](wrapped: ListDatabasesPublisher[TRes
    * @param authorizedDatabasesOnly the authorizedDatabasesOnly flag, which may be null
    * @return this
    * @since 4.1
-   * @mongodb.server.release 4.0.5
+   * @note Requires MongoDB 4.0.5 or greater
    */
   def authorizedDatabasesOnly(authorizedDatabasesOnly: Boolean): ListDatabasesObservable[TResult] = {
     wrapped.authorizedDatabasesOnly(authorizedDatabasesOnly)

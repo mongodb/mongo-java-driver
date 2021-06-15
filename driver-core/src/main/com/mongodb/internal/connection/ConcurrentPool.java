@@ -20,10 +20,15 @@ import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.internal.connection.ConcurrentLinkedDeque.RemovalReportingIterator;
+import com.mongodb.lang.Nullable;
 
 import java.util.Iterator;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+
+import static com.mongodb.assertions.Assertions.assertFalse;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * A concurrent pool implementation.
@@ -59,7 +64,7 @@ public class ConcurrentPool<T> implements Pool<T> {
      * @param <T>
      */
     public interface ItemFactory<T> {
-        T create(boolean initialize);
+        T create();
 
         void close(T t);
 
@@ -80,6 +85,7 @@ public class ConcurrentPool<T> implements Pool<T> {
 
     /**
      * Return an instance of T to the pool.  This method simply calls {@code release(t, false)}
+     * Must not throw {@link Exception}s.
      *
      * @param t item to return to the pool
      */
@@ -90,6 +96,7 @@ public class ConcurrentPool<T> implements Pool<T> {
 
     /**
      * call done when you are done with an object from the pool if there is room and the object is ok will get added
+     * Must not throw {@link Exception}s.
      *
      * @param t     item to return to the pool
      * @param prune true if the item should be closed, false if it should be put back in the pool
@@ -134,7 +141,7 @@ public class ConcurrentPool<T> implements Pool<T> {
     @Override
     public T get(final long timeout, final TimeUnit timeUnit) {
         if (closed) {
-            throw new IllegalStateException("The pool is closed");
+            throw poolClosedException();
         }
 
         if (!acquirePermit(timeout, timeUnit)) {
@@ -143,10 +150,28 @@ public class ConcurrentPool<T> implements Pool<T> {
 
         T t = available.pollLast();
         if (t == null) {
-            t = createNewAndReleasePermitIfFailure(false);
+            t = createNewAndReleasePermitIfFailure();
         }
 
         return t;
+    }
+
+    /**
+     * This method is similar to {@link #get(long, TimeUnit)} with 0 timeout.
+     * The difference is that it never creates a new element
+     * and returns {@code null} instead of throwing {@link MongoTimeoutException}.
+     */
+    @Nullable
+    T getImmediately() {
+        assertFalse(closed);
+        T element = null;
+        if (acquirePermit(0, NANOSECONDS)) {
+            element = available.pollLast();
+            if (element == null) {
+                permits.release();
+            }
+        }
+        return element;
     }
 
     public void prune() {
@@ -167,18 +192,29 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
     }
 
-    public void ensureMinSize(final int minSize, final boolean initialize) {
+    /**
+     * Try to populate this pool with items so that {@link #getCount()} is not smaller than {@code minSize}.
+     * The {@code postCreate} action throwing a exception causes this method to stop and re-throw that exception.
+     *
+     * @param initialize An action applied to non-{@code null} new items.
+     *                   If an exception is thrown by the action, the action must treat the provided item as if obtained via
+     *                   a {@link #get(long, TimeUnit) get…} method, {@linkplain #release(Object, boolean) releasing} it
+     *                   if an exception is thrown; otherwise the action must not release the item.
+     */
+    public void ensureMinSize(final int minSize, final Consumer<T> initialize) {
         while (getCount() < minSize) {
-            if (!acquirePermit(10, TimeUnit.MILLISECONDS)) {
+            if (!acquirePermit(0, TimeUnit.MILLISECONDS)) {
                 break;
             }
-            release(createNewAndReleasePermitIfFailure(initialize));
+            T newItem = createNewAndReleasePermitIfFailure();
+            initialize.accept(newItem);
+            release(newItem);
         }
     }
 
-    private T createNewAndReleasePermitIfFailure(final boolean initialize) {
+    private T createNewAndReleasePermitIfFailure() {
         try {
-            T newMember = itemFactory.create(initialize);
+            T newMember = itemFactory.create();
             if (newMember == null) {
                 throw new MongoInternalException("The factory for the pool created a null item");
             }
@@ -210,6 +246,7 @@ public class ConcurrentPool<T> implements Pool<T> {
 
     /**
      * Clears the pool of all objects.
+     * Must not throw {@link Exception}s.
      */
     @Override
     public void close() {
@@ -247,12 +284,18 @@ public class ConcurrentPool<T> implements Pool<T> {
         return buf.toString();
     }
 
-    // swallow exceptions from ItemFactory.close()
+    /**
+     * Must not throw {@link Exception}s, so swallow exceptions from {@link ItemFactory#close(Object)}.
+     */
     private void close(final T t) {
         try {
             itemFactory.close(t);
         } catch (RuntimeException e) {
             // ItemFactory.close() really should not throw
         }
+    }
+
+    static IllegalStateException poolClosedException() {
+        return new IllegalStateException("The pool is closed");
     }
 }

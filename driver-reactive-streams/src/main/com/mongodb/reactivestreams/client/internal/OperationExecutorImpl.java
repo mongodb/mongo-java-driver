@@ -57,6 +57,11 @@ public class OperationExecutorImpl implements OperationExecutor {
         notNull("operation", operation);
         notNull("readPreference", readPreference);
         notNull("readConcern", readConcern);
+
+        if (session != null) {
+            session.notifyOperationInitiated(operation);
+        }
+
           return clientSessionHelper.withClientSession(session, this)
                 .map(clientSession -> getReadWriteBinding(readPreference, readConcern, clientSession,
                                                               session == null && clientSession != null))
@@ -66,12 +71,16 @@ public class OperationExecutorImpl implements OperationExecutor {
                         binding.release();
                         return Mono.error(new MongoClientException("Read preference in a transaction must be primary"));
                     } else {
-                        return Mono.<T>create(sink -> operation.executeAsync(binding, sinkToCallback(sink)))
-                                .doOnTerminate(binding::release)
-                                .doOnError((t) -> {
-                                    labelException(session, t);
-                                    unpinServerAddressOnTransientTransactionError(session, t);
-                                });
+                        return Mono.<T>create(sink -> operation.executeAsync(binding, (result, t) -> {
+                            try {
+                                binding.release();
+                            } finally {
+                                sinkToCallback(sink).onResult(result, t);
+                            }
+                        })).doOnError((t) -> {
+                            labelException(session, t);
+                            unpinServerAddressOnTransientTransactionError(session, t);
+                        });
                     }
                 });
     }
@@ -81,18 +90,26 @@ public class OperationExecutorImpl implements OperationExecutor {
             @Nullable final ClientSession session) {
         notNull("operation", operation);
         notNull("readConcern", readConcern);
+
+        if (session != null) {
+            session.notifyOperationInitiated(operation);
+        }
+
         return clientSessionHelper.withClientSession(session, this)
                 .map(clientSession -> getReadWriteBinding(ReadPreference.primary(), readConcern, clientSession,
                                                               session == null && clientSession != null))
                 .switchIfEmpty(Mono.fromCallable(() -> getReadWriteBinding(ReadPreference.primary(), readConcern, session, false)))
                 .flatMap(binding ->
-                    Mono.<T>create(sink -> operation.executeAsync(binding, sinkToCallback(sink)))
-                                .doOnTerminate(binding::release)
-                                .doOnError((t) -> {
-                                    labelException(session, t);
-                                    unpinServerAddressOnTransientTransactionError(session, t);
-                                })
-
+                        Mono.<T>create(sink -> operation.executeAsync(binding, (result, t) -> {
+                            try {
+                                binding.release();
+                            } finally {
+                                sinkToCallback(sink).onResult(result, t);
+                            }
+                        })).doOnError((t) -> {
+                            labelException(session, t);
+                            unpinServerAddressOnTransientTransactionError(session, t);
+                        })
                 );
     }
 
@@ -109,7 +126,7 @@ public class OperationExecutorImpl implements OperationExecutor {
             @Nullable final Throwable throwable) {
         if (session != null && throwable instanceof MongoException
                 && ((MongoException) throwable).hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)) {
-            session.setPinnedServerAddress(null);
+            session.clearTransactionContext();
         }
     }
 

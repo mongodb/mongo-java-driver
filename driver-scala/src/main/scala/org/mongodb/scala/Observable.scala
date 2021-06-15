@@ -364,7 +364,7 @@ trait Observable[T] extends Publisher[T] {
   def andThen[U](pf: PartialFunction[Try[T], U]): Observable[T] = AndThenObservable(this, pf)
 
   /**
-   * Returns the head of the [[Observable]] in a [[scala.concurrent.Future]].
+   * Returns the head of the [[Observable]] in a `scala.concurrent.Future`.
    *
    * @return the head result of the [[Observable]].
    */
@@ -376,7 +376,7 @@ trait Observable[T] extends Publisher[T] {
   }
 
   /**
-   * Returns the head option of the [[Observable]] in a [[scala.concurrent.Future]].
+   * Returns the head option of the [[Observable]] in a `scala.concurrent.Future`.
    *
    * @return the head option result of the [[Observable]].
    * @since 2.2

@@ -16,33 +16,136 @@
 
 package com.mongodb.reactivestreams.client.syncadapter;
 
+import com.mongodb.MongoInterruptedException;
+import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.client.MongoCursor;
+import com.mongodb.lang.Nullable;
 import org.reactivestreams.Publisher;
-import reactor.core.publisher.Flux;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 
-import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
+
+import static com.mongodb.ClusterFixture.TIMEOUT;
+import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.getSleepAfterCursorClose;
+import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.getSleepAfterCursorOpen;
 
 class SyncMongoCursor<T> implements MongoCursor<T> {
-    private final Iterator<T> iterator;
+    private static final Object COMPLETED = new Object();
+    private final BlockingDeque<Object> results = new LinkedBlockingDeque<>();
+    private final Integer batchSize;
+    private int countToBatchSize;
+    private Subscription subscription;
+    private T current;
+    private boolean completed;
+    private RuntimeException error;
 
-    SyncMongoCursor(final Publisher<T> publisher) {
-        iterator = Flux.from(publisher).toIterable().iterator();
+    SyncMongoCursor(final Publisher<T> publisher, @Nullable final Integer batchSize) {
+        this.batchSize = batchSize;
+        CountDownLatch latch = new CountDownLatch(1);
+        //noinspection ReactiveStreamsSubscriberImplementation
+        publisher.subscribe(new Subscriber<T>() {
+            @Override
+            public void onSubscribe(final Subscription s) {
+                subscription = s;
+                if (batchSize == null || batchSize == 0) {
+                    subscription.request(Long.MAX_VALUE);
+                } else {
+                    subscription.request(batchSize);
+                }
+                latch.countDown();
+            }
+
+            @Override
+            public void onNext(final T t) {
+                results.addLast(t);
+            }
+
+            @Override
+            public void onError(final Throwable t) {
+                results.addLast(t);
+            }
+
+            @Override
+            public void onComplete() {
+                results.addLast(COMPLETED);
+            }
+        });
+        try {
+            if (!latch.await(TIMEOUT, TimeUnit.SECONDS)) {
+                throw new MongoTimeoutException("Timeout waiting for subscription");
+            }
+            sleep(getSleepAfterCursorOpen());
+        } catch (InterruptedException e) {
+            throw new MongoInterruptedException("Interrupted waiting for asynchronous cursor establishment", e);
+        }
     }
 
     @Override
     public void close() {
+        subscription.cancel();
+        sleep(getSleepAfterCursorClose());
+    }
+
+    private static void sleep(final long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            throw new MongoInterruptedException("Interrupted from nap", e);
+        }
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public boolean hasNext() {
-        return iterator.hasNext();
+        if (error != null) {
+            throw error;
+        }
+        if (completed) {
+            return false;
+        }
+        if (current != null) {
+            return true;
+        }
+        try {
+            Object next;
+            if (batchSize != null && batchSize != 0 && countToBatchSize == batchSize) {
+                subscription.request(batchSize);
+                countToBatchSize = 0;
+            }
+            next = results.pollFirst(TIMEOUT, TimeUnit.SECONDS);
+            if (next == null) {
+                throw new MongoTimeoutException("Time out waiting for result from cursor");
+            } else if (next instanceof Throwable) {
+                error = translateError((Throwable) next);
+                throw error;
+            } else if (next == COMPLETED) {
+                completed = true;
+                return false;
+            } else {
+                current = (T) next;
+                countToBatchSize++;
+                return true;
+            }
+        } catch (InterruptedException e) {
+            throw new MongoInterruptedException("Interrupted waiting for next result", e);
+        }
     }
 
     @Override
     public T next() {
-        return iterator.next();
+        if (!hasNext()) {
+            throw new NoSuchElementException();
+        }
+        T retVal = current;
+        current = null;
+        return retVal;
     }
 
     @Override
@@ -65,4 +168,10 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
         throw new UnsupportedOperationException();
     }
 
+    private RuntimeException translateError(final Throwable throwable) {
+        if (throwable instanceof RuntimeException) {
+            return (RuntimeException) throwable;
+        }
+        return new RuntimeException(throwable);
+    }
 }

@@ -35,10 +35,6 @@ public class BatchCursor<T> implements AutoCloseable {
         return Mono.create(sink -> wrapped.next(sinkToCallback(sink)));
     }
 
-    public Publisher<List<T>> tryNext() {
-        return Mono.create(sink -> wrapped.tryNext(sinkToCallback(sink)));
-    }
-
     public void setBatchSize(final int batchSize) {
         wrapped.setBatchSize(batchSize);
     }

@@ -321,7 +321,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
         return new CommandReadTransformer<BsonDocument, BatchCursor<T>>() {
             @Override
             public BatchCursor<T> apply(final BsonDocument result, final ConnectionSource source, final Connection connection) {
-                return cursorDocumentToBatchCursor(result.getDocument("cursor"), decoder, source, batchSize);
+                return cursorDocumentToBatchCursor(result.getDocument("cursor"), decoder, source, connection, batchSize);
             }
         };
     }
@@ -455,20 +455,6 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
         @Override
         public void next(final SingleResultCallback<List<T>> callback) {
             delegate.next(new SingleResultCallback<List<BsonDocument>>() {
-                @Override
-                public void onResult(final List<BsonDocument> result, final Throwable t) {
-                    if (t != null) {
-                        callback.onResult(null, t);
-                    } else {
-                        callback.onResult(projectFromFullNamespaceToCollectionName(result), null);
-                    }
-                }
-            });
-        }
-
-        @Override
-        public void tryNext(final SingleResultCallback<List<T>> callback) {
-            delegate.tryNext(new SingleResultCallback<List<BsonDocument>>() {
                 @Override
                 public void onResult(final List<BsonDocument> result, final Throwable t) {
                     if (t != null) {

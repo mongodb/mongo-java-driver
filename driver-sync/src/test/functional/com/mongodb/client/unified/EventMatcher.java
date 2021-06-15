@@ -20,12 +20,18 @@ import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
+import com.mongodb.event.ConnectionCheckOutFailedEvent;
+import com.mongodb.event.ConnectionClosedEvent;
+import com.mongodb.event.ConnectionPoolClearedEvent;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.bson.types.ObjectId;
 
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 final class EventMatcher {
     private final ValueMatcher valueMatcher;
@@ -36,20 +42,30 @@ final class EventMatcher {
         this.context = context;
     }
 
-    public void assertEventsEquality(final String client, final BsonArray expectedEventDocuments, final List<CommandEvent> events) {
-        context.push(ContextElement.ofEvents(client, expectedEventDocuments, events));
+    public void assertCommandEventsEquality(final String client, final BsonArray expectedEventDocuments, final List<CommandEvent> events) {
+        context.push(ContextElement.ofCommandEvents(client, expectedEventDocuments, events));
         assertEquals(context.getMessage("Number of events must be the same"), expectedEventDocuments.size(), events.size());
 
         for (int i = 0; i < events.size(); i++) {
             CommandEvent actual = events.get(i);
             BsonDocument expectedEventDocument = expectedEventDocuments.get(i).asDocument();
             String eventType = expectedEventDocument.getFirstKey();
-            context.push(ContextElement.ofEvent(expectedEventDocument, actual, i));
+            context.push(ContextElement.ofCommandEvent(expectedEventDocument, actual, i));
             BsonDocument expected = expectedEventDocument.getDocument(eventType);
 
             if (expected.containsKey("commandName")) {
                 assertEquals(context.getMessage("Command names must be equal"),
                         expected.getString("commandName").getValue(), actual.getCommandName());
+            }
+
+            if (expected.containsKey("hasServiceId")) {
+                boolean hasServiceId = expected.getBoolean("hasServiceId").getValue();
+                ObjectId serviceId = actual.getConnectionDescription().getServiceId();
+                if (hasServiceId) {
+                    assertNotNull(context.getMessage("Expected serviceId"), serviceId);
+                } else {
+                    assertNull(context.getMessage("Expected no serviceId"), serviceId);
+                }
             }
 
             if (actual.getClass().equals(CommandStartedEvent.class)) {
@@ -78,5 +94,88 @@ final class EventMatcher {
             context.pop();
         }
         context.pop();
+    }
+
+    public void assertConnectionPoolEventsEquality(final String client, final BsonArray expectedEventDocuments, final List<Object> events) {
+        context.push(ContextElement.ofConnectionPoolEvents(client, expectedEventDocuments, events));
+        assertEquals(context.getMessage("Number of events must be the same"), expectedEventDocuments.size(), events.size());
+
+        for (int i = 0; i < events.size(); i++) {
+            Object actual = events.get(i);
+            BsonDocument expectedEventDocument = expectedEventDocuments.get(i).asDocument();
+            String eventType = expectedEventDocument.getFirstKey();
+            context.push(ContextElement.ofConnectionPoolEvent(expectedEventDocument, actual, i));
+
+            assertEquals(context.getMessage("Expected event type to match"), eventType, getEventType(actual.getClass()));
+
+            if (actual.getClass().equals(ConnectionPoolClearedEvent.class)) {
+                BsonDocument expected = expectedEventDocument.getDocument(eventType);
+                ConnectionPoolClearedEvent connectionPoolClearedEvent = (ConnectionPoolClearedEvent) actual;
+                if (expected.containsKey("hasServiceId")) {
+                    boolean hasServiceId = expected.getBoolean("hasServiceId").getValue();
+                    ObjectId serviceId = connectionPoolClearedEvent.getServiceId();
+                    if (hasServiceId) {
+                        assertNotNull(context.getMessage("Expected serviceId"), serviceId);
+                    } else {
+                        assertNull(context.getMessage("Expected no serviceId"), serviceId);
+                    }
+                }
+            } else if (actual.getClass().equals(ConnectionCheckOutFailedEvent.class)) {
+                BsonDocument expected = expectedEventDocument.getDocument(eventType);
+                ConnectionCheckOutFailedEvent actualEvent = (ConnectionCheckOutFailedEvent) actual;
+                if (expected.containsKey("reason")) {
+                    assertEquals(context.getMessage("Expected reason to match"), expected.getString("reason").getValue(),
+                            getReasonString(actualEvent.getReason()));
+                }
+            } else if (actual.getClass().equals(ConnectionClosedEvent.class)) {
+                BsonDocument expected = expectedEventDocument.getDocument(eventType);
+                ConnectionClosedEvent actualEvent = (ConnectionClosedEvent) actual;
+                if (expected.containsKey("reason")) {
+                    assertEquals(context.getMessage("Expected reason to match"), expected.getString("reason").getValue(),
+                            getReasonString(actualEvent.getReason()));
+                }
+            }
+            context.pop();
+        }
+        context.pop();
+    }
+
+    private static String getEventType(final Class<?> eventClass) {
+        String eventClassName = eventClass.getSimpleName();
+        if (eventClassName.startsWith("ConnectionPool")) {
+            return eventClassName.replace("ConnectionPool", "pool");
+        } else {
+            return eventClassName.replace("Connection", "connection");
+        }
+    }
+
+    public static String getReasonString(final ConnectionCheckOutFailedEvent.Reason reason) {
+        switch (reason) {
+            case POOL_CLOSED:
+                return "poolClosed";
+            case TIMEOUT:
+                return "timeout";
+            case CONNECTION_ERROR:
+                return "connectionError";
+            case UNKNOWN:
+                return "unknown";
+            default:
+                throw new UnsupportedOperationException("Unsupported reason: " + reason);
+        }
+    }
+
+    public static String getReasonString(final ConnectionClosedEvent.Reason reason) {
+        switch (reason) {
+            case STALE:
+                return "stale";
+            case IDLE:
+                return "idle";
+            case ERROR:
+                return "error";
+            case POOL_CLOSED:
+                return "poolClosed";
+            default:
+                throw new UnsupportedOperationException("Unsupported reason: " + reason);
+        }
     }
 }

@@ -24,8 +24,17 @@ import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.junit.After;
+import org.junit.Before;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 public class MainTransactionsTest extends AbstractMainTransactionsTest {
+    public static final Set<String> SESSION_CLOSE_TIMING_SENSITIVE_TESTS = new HashSet<>(Collections.singletonList(
+            "implicit abort"));
+
     public MainTransactionsTest(final String filename, final String description, final String databaseName, final String collectionName,
                                 final BsonArray data, final BsonDocument definition, final boolean skipTest) {
         super(filename, description, databaseName, collectionName, data, definition, skipTest);
@@ -39,5 +48,17 @@ public class MainTransactionsTest extends AbstractMainTransactionsTest {
     @Override
     protected StreamFactoryFactory getStreamFactoryFactory() {
         return ClusterFixture.getOverriddenStreamFactoryFactory();
+    }
+
+    @Before
+    public void before() {
+        if (SESSION_CLOSE_TIMING_SENSITIVE_TESTS.contains(getDescription())) {
+            SyncMongoClient.enableSleepAfterSessionClose(256);
+        }
+    }
+
+    @After
+    public void after() {
+        SyncMongoClient.disableSleep();
     }
 }

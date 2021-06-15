@@ -16,9 +16,11 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.MongoClientException;
 import com.mongodb.ServerAddress;
 import com.mongodb.Tag;
 import com.mongodb.TagSet;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ServerDescription;
@@ -57,8 +59,14 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 public final class DescriptionHelper {
 
-    static ConnectionDescription createConnectionDescription(final ConnectionId connectionId,
-                                                             final BsonDocument isMasterResult) {
+    private static volatile boolean manufactureServiceId = false;
+
+    public static void enableServiceIdManufacturing() {
+        manufactureServiceId = true;
+    }
+
+    static ConnectionDescription createConnectionDescription(final ClusterConnectionMode clusterConnectionMode,
+                                                             final ConnectionId connectionId, final BsonDocument isMasterResult) {
         ConnectionDescription connectionDescription = new ConnectionDescription(connectionId,
                 getMaxWireVersion(isMasterResult), getServerType(isMasterResult), getMaxWriteBatchSize(isMasterResult),
                 getMaxBsonObjectSize(isMasterResult), getMaxMessageSizeBytes(isMasterResult), getCompressors(isMasterResult),
@@ -67,6 +75,17 @@ public final class DescriptionHelper {
             ConnectionId newConnectionId =
                     connectionDescription.getConnectionId().withServerValue(isMasterResult.getNumber("connectionId").intValue());
             connectionDescription = connectionDescription.withConnectionId(newConnectionId);
+        }
+        if (clusterConnectionMode == ClusterConnectionMode.LOAD_BALANCED) {
+            if (manufactureServiceId) {
+                TopologyVersion topologyVersion = getTopologyVersion(isMasterResult);
+                if (topologyVersion != null) {
+                    connectionDescription = connectionDescription.withServiceId(topologyVersion.getProcessId());
+                }
+            } else {
+                throw new MongoClientException("Driver attempted to initialize in load balancing mode, but the server does not support "
+                        + "this mode");
+            }
         }
         return connectionDescription;
     }
@@ -93,6 +112,7 @@ public final class DescriptionHelper {
                                 .lastWriteDate(getLastWriteDate(isMasterResult))
                                 .roundTripTime(roundTripTime, NANOSECONDS)
                                 .logicalSessionTimeoutMinutes(getLogicalSessionTimeoutMinutes(isMasterResult))
+                                .helloOk(isMasterResult.getBoolean("helloOk", BsonBoolean.FALSE).getValue())
                                 .ok(CommandHelper.isCommandOk(isMasterResult)).build();
     }
 
@@ -171,6 +191,10 @@ public final class DescriptionHelper {
 
             if (isMasterResult.getBoolean("hidden", BsonBoolean.FALSE).getValue()) {
                 return REPLICA_SET_OTHER;
+            }
+
+            if (isMasterResult.getBoolean("isWritablePrimary", BsonBoolean.FALSE).getValue()) {
+                return REPLICA_SET_PRIMARY;
             }
 
             if (isMasterResult.getBoolean("ismaster", BsonBoolean.FALSE).getValue()) {

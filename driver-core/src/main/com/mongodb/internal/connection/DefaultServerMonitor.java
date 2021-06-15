@@ -32,6 +32,7 @@ import com.mongodb.event.ServerMonitorListener;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
@@ -206,7 +207,8 @@ class DefaultServerMonitor implements ServerMonitor {
                 try {
                     SessionContext sessionContext = new ClusterClockAdvancingSessionContext(NoOpSessionContext.INSTANCE, clusterClock);
                     if (!connection.hasMoreToCome()) {
-                        BsonDocument ismaster = new BsonDocument("ismaster", new BsonInt32(1));
+                        BsonDocument ismaster = new BsonDocument(getHandshakeCommandName(currentServerDescription), new BsonInt32(1))
+                                .append("helloOk", BsonBoolean.TRUE);
                         if (shouldStreamResponses(currentServerDescription)) {
                             ismaster.append("topologyVersion", currentServerDescription.getTopologyVersion().asDocument());
                             ismaster.append("maxAwaitTimeMS", new BsonInt64(serverSettings.getHeartbeatFrequency(MILLISECONDS)));
@@ -430,7 +432,9 @@ class DefaultServerMonitor implements ServerMonitor {
 
         private void pingServer(final InternalConnection connection) {
             long start = System.nanoTime();
-            executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), clusterClock, serverApi, connection);
+            executeCommand("admin",
+                    new BsonDocument(getHandshakeCommandName(connection.getInitialServerDescription()), new BsonInt32(1)),
+                    clusterClock, serverApi, connection);
             long elapsedTimeNanos = System.nanoTime() - start;
             averageRoundTripTime.addSample(elapsedTimeNanos);
         }
@@ -442,5 +446,9 @@ class DefaultServerMonitor implements ServerMonitor {
         } catch (InterruptedException e) {
             // fall through
         }
+    }
+
+    private String getHandshakeCommandName(final ServerDescription serverDescription) {
+        return serverDescription.isHelloOk() ? "hello" : "ismaster";
     }
 }

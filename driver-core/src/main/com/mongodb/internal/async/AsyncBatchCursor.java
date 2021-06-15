@@ -39,18 +39,6 @@ public interface AsyncBatchCursor<T> extends Closeable {
     void next(SingleResultCallback<List<T>> callback);
 
     /**
-     * A special {@code next()} case that returns the next batch if available or null.
-     *
-     * <p>Tailable cursors are an example where this is useful. A call to {@code tryNext()} may return null, but in the future calling
-     * {@code tryNext()} would return a new batch if a document had been added to the capped collection.</p>
-     *
-     * @param callback callback to receive the next batch of results
-     * @since 3.6
-     * @mongodb.driver.manual reference/glossary/#term-tailable-cursor Tailable Cursor
-     */
-    void tryNext(SingleResultCallback<List<T>> callback);
-
-    /**
      * Sets the batch size to use when requesting the next batch.  This is the number of documents to request in the next batch.
      *
      * @param batchSize the non-negative batch size.  0 means to use the server default.
@@ -65,12 +53,24 @@ public interface AsyncBatchCursor<T> extends Closeable {
     int getBatchSize();
 
     /**
-     * Return true if the AsyncBatchCursor has been closed
+     * Implementations of {@link AsyncBatchCursor} are allowed to close themselves, see {@link #close()} for more details.
      *
-     * @return true if the AsyncBatchCursor has been closed
+     * @return {@code true} if {@code this} has been closed or has closed itself.
      */
     boolean isClosed();
 
+    /**
+     * Implementations of {@link AsyncBatchCursor} are allowed to close themselves synchronously via methods
+     * {@link #next(SingleResultCallback)}.
+     * Self-closing behavior is discouraged because it introduces an additional burden on code that uses {@link AsyncBatchCursor}.
+     * To help making such code simpler, this method is required to be idempotent.
+     * <p>
+     * Another quirk is that this method is allowed to release resources "eventually",
+     * i.e., not before (in the happens before order) returning.
+     * Nevertheless, {@link #isClosed()} called after (in the happens-before order) {@link #close()} must return {@code true}.
+     *
+     * @see #close()
+     */
     @Override
     void close();
 }

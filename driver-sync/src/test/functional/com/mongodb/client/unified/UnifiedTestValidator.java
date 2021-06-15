@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-public class    UnifiedTestValidator extends UnifiedTest {
+public class UnifiedTestValidator extends UnifiedTest {
     private final String fileDescription;
     private final String testDescription;
 
@@ -53,6 +53,6 @@ public class    UnifiedTestValidator extends UnifiedTest {
 
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format");
+        return getTestData("unified-test-format/valid-pass");
     }
 }

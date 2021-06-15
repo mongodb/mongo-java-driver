@@ -35,6 +35,7 @@ import org.bson.codecs.pojo.entities.ShapeModelAbstract;
 import org.bson.codecs.pojo.entities.ShapeModelCircle;
 import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
+import org.bson.codecs.pojo.entities.SimpleWithStaticModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationInheritedModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationModel;
 import org.junit.Test;
@@ -255,6 +256,15 @@ public final class ClassModelTest {
         assertEquals(createTypeData(Double.class), classModel.getPropertyModel("level1").getTypeData());
         assertEquals(createTypeData(List.class, Integer.class), classModel.getPropertyModel("level2").getTypeData());
         assertEquals(createTypeData(Map.class, String.class, String.class), classModel.getPropertyModel("level3").getTypeData());
+    }
+
+    @Test
+    public void testSimpleWithStaticModel() {
+        ClassModel<?> classModel = ClassModel.builder(SimpleWithStaticModel.class).build();
+
+        assertEquals(2, classModel.getPropertyModels().size());
+        assertEquals(createTypeData(Integer.class), classModel.getPropertyModel("integerField").getTypeData());
+        assertEquals(createTypeData(String.class), classModel.getPropertyModel("stringField").getTypeData());
     }
 
     <T> TypeData.Builder<T> createBuilder(final Class<T> clazz, final Class<?>... types) {

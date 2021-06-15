@@ -139,7 +139,7 @@ public final class Address {
 ```
 ## Creating a Custom CodecRegistry
 
-Before you can use a POJO with the driver, you need to configure the [`CodecRegistry` ]({{< relref "bson/codecs.md" >}}) to include a codecs 
+Before you can use a POJO with the driver, you need to configure the [`CodecRegistry`]({{< relref "bson/codecs.md" >}}) to include a codecs 
 to handle the translation to and from [`bson`]({{< relref "bson/index.md" >}}) for your POJOs. The simplest way to do that is to use the 
 [`PojoCodecProvider.builder()`]({{< apiref "bson" "org/bson/codecs/pojo/PojoCodecProvider.html" >}}) to create and configure a `CodecProvider`.
 

@@ -55,7 +55,7 @@ public class PowerOfTwoBufferPool implements BufferProvider {
             powerOfTwoToPoolMap.put(i, new ConcurrentPool<ByteBuffer>(Integer.MAX_VALUE,
                                                                          new ConcurrentPool.ItemFactory<ByteBuffer>() {
                                                                              @Override
-                                                                             public ByteBuffer create(final boolean initialize) {
+                                                                             public ByteBuffer create() {
                                                                                  return createNew(size);
                                                                              }
 

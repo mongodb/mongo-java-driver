@@ -23,13 +23,16 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.test.CollectionHelper;
-import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
+import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
+import org.bson.BsonDouble;
+import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +53,7 @@ import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.getServerVersion;
 import static com.mongodb.client.Fixture.getMongoClient;
+import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.unified.RunOnRequirementsMatcher.runOnRequirementsMet;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
@@ -88,6 +92,10 @@ public abstract class UnifiedTest {
         this.context.push(ContextElement.ofTest(definition));
     }
 
+    public Entities getEntities() {
+        return entities;
+    }
+
     @NotNull
     protected static Collection<Object[]> getTestData(final String directory) throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<>();
@@ -115,20 +123,20 @@ public abstract class UnifiedTest {
 
     protected abstract MongoClient createMongoClient(MongoClientSettings settings);
 
-    @Nullable
-    protected StreamFactoryFactory getStreamFactoryFactory() {
-        return null;
-    }
-
     @Before
     public void setUp() {
-        assertTrue(schemaVersion.startsWith("1.0") || schemaVersion.startsWith("1.1"));
+        assertTrue(schemaVersion.startsWith("1.0")
+                || schemaVersion.startsWith("1.1")
+                || schemaVersion.startsWith("1.2")
+                || schemaVersion.startsWith("1.3"));
         if (runOnRequirements != null) {
-            assumeTrue("Run-on requirements not met", runOnRequirementsMet(runOnRequirements, getServerVersion()));
+            assumeTrue("Run-on requirements not met",
+                    runOnRequirementsMet(runOnRequirements, getMongoClientSettings(), getServerVersion()));
         }
         if (definition.containsKey("runOnRequirements")) {
             assumeTrue("Run-on requirements not met",
-                    runOnRequirementsMet(definition.getArray("runOnRequirements", new BsonArray()), getServerVersion()));
+                    runOnRequirementsMet(definition.getArray("runOnRequirements", new BsonArray()), getMongoClientSettings(),
+                            getServerVersion()));
         }
         if (definition.containsKey("skipReason")) {
             throw new AssumptionViolatedException(definition.getString("skipReason").getValue());
@@ -147,8 +155,10 @@ public abstract class UnifiedTest {
 
     @Test
     public void shouldPassAllOutcomes() {
-        for (BsonValue cur : definition.getArray("operations")) {
-            assertOperation(cur.asDocument());
+        BsonArray operations = definition.getArray("operations");
+        for (int i = 0; i < operations.size(); i++) {
+            BsonValue cur = operations.get(i);
+            assertOperation(cur.asDocument(), i);
         }
 
         if (definition.containsKey("outcome")) {
@@ -164,8 +174,16 @@ public abstract class UnifiedTest {
         for (BsonValue cur : operation.getArray("expectEvents")) {
             BsonDocument curClientEvents = cur.asDocument();
             String client = curClientEvents.getString("client").getValue();
-            TestCommandListener listener = entities.getClientCommandListener(client);
-            eventMatcher.assertEventsEquality(client, curClientEvents.getArray("events"), listener.getEvents());
+            String eventType = curClientEvents.getString("eventType", new BsonString("command")).getValue();
+            if (eventType.equals("command")) {
+                TestCommandListener listener = entities.getClientCommandListener(client);
+                eventMatcher.assertCommandEventsEquality(client, curClientEvents.getArray("events"), listener.getEvents());
+            } else if (eventType.equals("cmap")) {
+                TestConnectionPoolListener listener = entities.getConnectionPoolListener(client);
+                eventMatcher.assertConnectionPoolEventsEquality(client, curClientEvents.getArray("events"), listener.getEvents());
+            } else {
+                throw new UnsupportedOperationException("Unexpected event type: " + eventType);
+            }
         }
     }
 
@@ -182,115 +200,199 @@ public abstract class UnifiedTest {
         }
     }
 
-    private void assertOperation(final BsonDocument operation) {
-        OperationResult result = executeOperation(operation);
-        context.push(ContextElement.ofOperation(operation, result));
-        if (operation.containsKey("expectResult")) {
-            assertNotNull(context.getMessage("The operation expects a result but an exception occurred"), result.getResult());
-            valueMatcher.assertValuesMatch(operation.get("expectResult"), result.getResult());
-        } else if (operation.containsKey("expectError")) {
-            assertNotNull(context.getMessage("The operation expects an error but no exception was thrown"), result.getException());
-            errorMatcher.assertErrorsMatch(operation.getDocument("expectError"), result.getException());
-        } else {
-            assertNull(context.getMessage("The operation expects no error but an exception occurred"), result.getException());
+    private void assertOperation(final BsonDocument operation, final int operationIndex) {
+        OperationResult result = executeOperation(operation, operationIndex);
+        context.push(ContextElement.ofCompletedOperation(operation, result, operationIndex));
+        if (!operation.getBoolean("ignoreResultAndError", BsonBoolean.FALSE).getValue()) {
+            if (operation.containsKey("expectResult")) {
+                assertNotNull(context.getMessage("The operation expects a result but an exception occurred"), result.getResult());
+                valueMatcher.assertValuesMatch(operation.get("expectResult"), result.getResult());
+            } else if (operation.containsKey("expectError")) {
+                assertNotNull(context.getMessage("The operation expects an error but no exception was thrown"), result.getException());
+                errorMatcher.assertErrorsMatch(operation.getDocument("expectError"), result.getException());
+            } else {
+                assertNull(context.getMessage("The operation expects no error but an exception occurred"), result.getException());
+            }
         }
         context.pop();
     }
 
-    private OperationResult executeOperation(final BsonDocument operation) {
+    private OperationResult executeOperation(final BsonDocument operation, final int operationNum) {
+        context.push(ContextElement.ofStartedOperation(operation, operationNum));
         String name = operation.getString("name").getValue();
-        switch (name) {
-            case "failPoint":
-                return executeFailPoint(operation);
-            case "targetedFailPoint":
-                return executeTargetedFailPoint(operation);
-            case "endSession":
-                return executeEndSession(operation);
-            case "assertSessionDirty":
-                return executeAssertSessionDirty(operation);
-            case "assertSessionNotDirty":
-                return executeAssertSessionNotDirty(operation);
-            case "assertSessionPinned":
-                return executeAssertSessionPinned(operation);
-            case "assertSessionUnpinned":
-                return executeAssertSessionUnpinned(operation);
-            case "assertSameLsidOnLastTwoCommands":
-                return executeAssertSameLsidOnLastTwoCommands(operation);
-            case "assertDifferentLsidOnLastTwoCommands":
-                return executeAssertDifferentLsidOnLastTwoCommands(operation);
-            case "assertSessionTransactionState":
-                return executeAssertSessionTransactionState(operation);
-            case "assertCollectionExists":
-                return executeAssertCollectionExists(operation);
-            case "assertCollectionNotExists":
-                return executeAssertCollectionNotExists(operation);
-            case "assertIndexExists":
-                return executeAssertIndexExists(operation);
-            case "assertIndexNotExists":
-                return executeAssertIndexNotExists(operation);
-            case "bulkWrite":
-                return crudHelper.executeBulkWrite(operation);
-            case "insertOne":
-                return crudHelper.executeInsertOne(operation);
-            case "insertMany":
-                return crudHelper.executeInsertMany(operation);
-            case "updateOne":
-                return crudHelper.executeUpdateOne(operation);
-            case "updateMany":
-                return crudHelper.executeUpdateMany(operation);
-            case "replaceOne":
-                return crudHelper.executeReplaceOne(operation);
-            case "deleteOne":
-                return crudHelper.executeDeleteOne(operation);
-            case "deleteMany":
-                return crudHelper.executeDeleteMany(operation);
-            case "aggregate":
-                return crudHelper.executeAggregate(operation);
-            case "find":
-                return crudHelper.executeFind(operation);
-            case "distinct":
-                return crudHelper.executeDistinct(operation);
-            case "countDocuments":
-                return crudHelper.executeCountDocuments(operation);
-            case "estimatedDocumentCount":
-                return crudHelper.executeEstimatedDocumentCount(operation);
-            case "findOneAndUpdate":
-                return crudHelper.executeFindOneAndUpdate(operation);
-            case "findOneAndReplace":
-                return crudHelper.executeFindOneAndReplace(operation);
-            case "findOneAndDelete":
-                return crudHelper.executeFindOneAndDelete(operation);
-            case "listDatabases":
-                return crudHelper.executeListDatabases(operation);
-            case "dropCollection":
-                return crudHelper.executeDropCollection(operation);
-            case "createCollection":
-                return crudHelper.executeCreateCollection(operation);
-            case "createIndex":
-                return crudHelper.executeCreateIndex(operation);
-            case "startTransaction":
-                return crudHelper.executeStartTransaction(operation);
-            case "commitTransaction":
-                return crudHelper.executeCommitTransaction(operation);
-            case "abortTransaction":
-                return crudHelper.executeAbortTransaction(operation);
-            case "withTransaction":
-                return crudHelper.executeWithTransaction(operation, this::assertOperation);
-            case "createChangeStream":
-                return crudHelper.executeChangeStream(operation);
-            case "iterateUntilDocumentOrError":
-                return crudHelper.executeIterateUntilDocumentOrError(operation);
-            case "delete":
-                return gridFSHelper.executeDelete(operation);
-            case "download":
-                return gridFSHelper.executeDownload(operation);
-            case "upload":
-                return gridFSHelper.executeUpload(operation);
-            case "runCommand":
-                return crudHelper.executeRunCommand(operation);
-            default:
-                throw new UnsupportedOperationException("Unsupported test operation: " + name);
+        try {
+            switch (name) {
+                case "failPoint":
+                    return executeFailPoint(operation);
+                case "targetedFailPoint":
+                    return executeTargetedFailPoint(operation);
+                case "endSession":
+                    return executeEndSession(operation);
+                case "assertSessionDirty":
+                    return executeAssertSessionDirty(operation);
+                case "assertSessionNotDirty":
+                    return executeAssertSessionNotDirty(operation);
+                case "assertSessionPinned":
+                    return executeAssertSessionPinned(operation);
+                case "assertSessionUnpinned":
+                    return executeAssertSessionUnpinned(operation);
+                case "assertSameLsidOnLastTwoCommands":
+                    return executeAssertSameLsidOnLastTwoCommands(operation);
+                case "assertDifferentLsidOnLastTwoCommands":
+                    return executeAssertDifferentLsidOnLastTwoCommands(operation);
+                case "assertNumberConnectionsCheckedOut":
+                    return executeAssertNumberConnectionsCheckedOut(operation);
+                case "assertSessionTransactionState":
+                    return executeAssertSessionTransactionState(operation);
+                case "assertCollectionExists":
+                    return executeAssertCollectionExists(operation);
+                case "assertCollectionNotExists":
+                    return executeAssertCollectionNotExists(operation);
+                case "assertIndexExists":
+                    return executeAssertIndexExists(operation);
+                case "assertIndexNotExists":
+                    return executeAssertIndexNotExists(operation);
+                case "bulkWrite":
+                    return crudHelper.executeBulkWrite(operation);
+                case "insertOne":
+                    return crudHelper.executeInsertOne(operation);
+                case "insertMany":
+                    return crudHelper.executeInsertMany(operation);
+                case "updateOne":
+                    return crudHelper.executeUpdateOne(operation);
+                case "updateMany":
+                    return crudHelper.executeUpdateMany(operation);
+                case "replaceOne":
+                    return crudHelper.executeReplaceOne(operation);
+                case "deleteOne":
+                    return crudHelper.executeDeleteOne(operation);
+                case "deleteMany":
+                    return crudHelper.executeDeleteMany(operation);
+                case "aggregate":
+                    return crudHelper.executeAggregate(operation);
+                case "find":
+                    return crudHelper.executeFind(operation);
+                case "distinct":
+                    return crudHelper.executeDistinct(operation);
+                case "countDocuments":
+                    return crudHelper.executeCountDocuments(operation);
+                case "estimatedDocumentCount":
+                    return crudHelper.executeEstimatedDocumentCount(operation);
+                case "findOneAndUpdate":
+                    return crudHelper.executeFindOneAndUpdate(operation);
+                case "findOneAndReplace":
+                    return crudHelper.executeFindOneAndReplace(operation);
+                case "findOneAndDelete":
+                    return crudHelper.executeFindOneAndDelete(operation);
+                case "listDatabases":
+                    return crudHelper.executeListDatabases(operation);
+                case "listCollections":
+                    return crudHelper.executeListCollections(operation);
+                case "listIndexes":
+                    return crudHelper.executeListIndexes(operation);
+                case "dropCollection":
+                    return crudHelper.executeDropCollection(operation);
+                case "createCollection":
+                    return crudHelper.executeCreateCollection(operation);
+                case "createIndex":
+                    return crudHelper.executeCreateIndex(operation);
+                case "startTransaction":
+                    return crudHelper.executeStartTransaction(operation);
+                case "commitTransaction":
+                    return crudHelper.executeCommitTransaction(operation);
+                case "abortTransaction":
+                    return crudHelper.executeAbortTransaction(operation);
+                case "withTransaction":
+                    return crudHelper.executeWithTransaction(operation, this::assertOperation);
+                case "createFindCursor":
+                    return crudHelper.createFindCursor(operation);
+                case "createChangeStream":
+                    return crudHelper.createChangeStreamCursor(operation);
+                case "close":
+                    return crudHelper.close(operation);
+                case "iterateUntilDocumentOrError":
+                    return crudHelper.executeIterateUntilDocumentOrError(operation);
+                case "delete":
+                    return gridFSHelper.executeDelete(operation);
+                case "download":
+                    return gridFSHelper.executeDownload(operation);
+                case "upload":
+                    return gridFSHelper.executeUpload(operation);
+                case "runCommand":
+                    return crudHelper.executeRunCommand(operation);
+                case "loop":
+                    return loop(operation);
+                default:
+                    throw new UnsupportedOperationException("Unsupported test operation: " + name);
+            }
+        } finally {
+            context.pop();
         }
+    }
+
+    private OperationResult loop(final BsonDocument operation) {
+        BsonDocument arguments = operation.getDocument("arguments");
+
+        int numIterations = 0;
+        int numSuccessfulOperations = 0;
+        boolean storeFailures = arguments.containsKey("storeFailuresAsEntity");
+        boolean storeErrors = arguments.containsKey("storeErrorsAsEntity");
+        BsonArray failureDescriptionDocuments = new BsonArray();
+        BsonArray errorDescriptionDocuments = new BsonArray();
+
+        while (!terminateLoop()) {
+            BsonArray array = arguments.getArray("operations");
+            for (int i = 0; i < array.size(); i++) {
+                BsonValue cur = array.get(i);
+                try {
+                    assertOperation(cur.asDocument().clone(), i);
+                    numSuccessfulOperations++;
+                } catch (AssertionError e) {
+                    if (storeFailures) {
+                        failureDescriptionDocuments.add(createDocumentFromException(e));
+                    } else if (storeErrors) {
+                        errorDescriptionDocuments.add(createDocumentFromException(e));
+                    } else {
+                        throw e;
+                    }
+                    break;
+                } catch (RuntimeException e) {
+                    if (storeErrors) {
+                        errorDescriptionDocuments.add(createDocumentFromException(e));
+                    } else if (storeFailures) {
+                        failureDescriptionDocuments.add(createDocumentFromException(e));
+                    } else {
+                        throw e;
+                    }
+                    break;
+                }
+            }
+            numIterations++;
+        }
+
+        if (arguments.containsKey("storeSuccessesAsEntity")) {
+            entities.addSuccessCount(arguments.getString("storeSuccessesAsEntity").getValue(), numSuccessfulOperations);
+        }
+        if (arguments.containsKey("storeIterationsAsEntity")) {
+            entities.addIterationCount(arguments.getString("storeIterationsAsEntity").getValue(), numIterations);
+        }
+        if (storeFailures) {
+            entities.addFailureDocuments(arguments.getString("storeFailuresAsEntity").getValue(), failureDescriptionDocuments);
+        }
+        if (storeErrors) {
+            entities.addErrorDocuments(arguments.getString("storeErrorsAsEntity").getValue(), errorDescriptionDocuments);
+        }
+
+        return OperationResult.NONE;
+    }
+
+    private BsonDocument createDocumentFromException(final Throwable throwable) {
+        return new BsonDocument("error", new BsonString(throwable.toString()))
+                .append("time", new BsonDouble(System.currentTimeMillis() / 1000.0));
+    }
+
+    protected boolean terminateLoop() {
+        return true;
     }
 
     private OperationResult executeFailPoint(final BsonDocument operation) {
@@ -340,6 +442,14 @@ public abstract class UnifiedTest {
         ClientSession session = entities.getSession(operation.getDocument("arguments").getString("session").getValue());
         assertNotNull(session.getServerSession());
         assertEquals(expected, session.getPinnedServerAddress() != null);
+        return OperationResult.NONE;
+    }
+
+    private OperationResult executeAssertNumberConnectionsCheckedOut(final BsonDocument operation) {
+        TestConnectionPoolListener listener = entities.getConnectionPoolListener(
+                operation.getDocument("arguments").getString("client").getValue());
+        assertEquals(context.getMessage("Number of checked out connections must match expected"),
+                operation.getDocument("arguments").getNumber("connections").intValue(), listener.getNumConnectionsCheckedOut());
         return OperationResult.NONE;
     }
 

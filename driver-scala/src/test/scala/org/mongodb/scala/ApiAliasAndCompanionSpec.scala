@@ -65,7 +65,18 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "SingleResultCallback",
       "SubjectProvider",
       "TransactionExample",
-      "UnixServerAddress"
+      "UnixServerAddress",
+      "SubscriberHelpers",
+      "PublisherHelpers",
+      "TargetDocument",
+      "UpdatePrimer",
+      "InsertPrimer",
+      "IndexesPrimer",
+      "QueryPrimer",
+      "DocumentationSamples",
+      "AggregatePrimer",
+      "RemovePrimer",
+      "SyncMongoClient"
     )
     val scalaExclusions = Set(
       "BuildInfo",

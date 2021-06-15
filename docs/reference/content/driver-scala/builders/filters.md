@@ -89,7 +89,7 @@ This example creates a filter that selects all documents where the value of the 
 and(gt("qty", 20), equal("user", "jdoe"))
 ```
 
-The `and` method generates a `$and` operator only if necessary, as the query language implicity ands together all the elements in a 
+The `and` method generates a `$and` operator only if necessary, as the query language implicitly ands together all the elements in a 
 filter. So the above example will render as: 
 
 ```json
@@ -156,7 +156,7 @@ The evaluation operator methods include:
 
 - `mod`: Performs a modulo operation on the value of a field and selects documents with a specified result.
 - `regex`: Selects documents where values match a specified regular expression.
-- `text`: Selects documemts matching a full-text search expression.
+- `text`: Selects documents matching a full-text search expression.
 - `where`: Matches documents that satisfy a JavaScript expression.
 
 #### Examples

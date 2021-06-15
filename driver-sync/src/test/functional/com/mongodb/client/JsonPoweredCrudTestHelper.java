@@ -1084,19 +1084,34 @@ public class JsonPoweredCrudTestHelper {
     BsonDocument getClientWatchResult(final BsonDocument collectionOptions, final BsonDocument rawArguments,
                                       @Nullable final ClientSession clientSession) {
         MongoCursor<ChangeStreamDocument<Document>> cursor = mongoClient.watch().iterator();
-        return new BsonDocument("ok", new BsonInt32(1));
+        //noinspection TryFinallyCanBeTryWithResources
+        try {
+            return new BsonDocument("ok", new BsonInt32(1));
+        } finally {
+            cursor.close();
+        }
     }
 
     BsonDocument getWatchResult(final BsonDocument collectionOptions, final BsonDocument rawArguments,
                                       @Nullable final ClientSession clientSession) {
         MongoCursor<ChangeStreamDocument<BsonDocument>> cursor = baseCollection.watch().iterator();
-        return new BsonDocument("ok", new BsonInt32(1));
+        //noinspection TryFinallyCanBeTryWithResources
+        try {
+            return new BsonDocument("ok", new BsonInt32(1));
+        } finally {
+            cursor.close();
+        }
     }
 
     BsonDocument getDatabaseWatchResult(final BsonDocument collectionOptions, final BsonDocument rawArguments,
                                         @Nullable final ClientSession clientSession) {
         MongoCursor<ChangeStreamDocument<Document>> cursor = database.watch().iterator();
-        return new BsonDocument("ok", new BsonInt32(1));
+        //noinspection TryFinallyCanBeTryWithResources
+        try {
+            return new BsonDocument("ok", new BsonInt32(1));
+        } finally {
+            cursor.close();
+        }
     }
 
     Collation getCollation(final BsonDocument bsonCollation) {

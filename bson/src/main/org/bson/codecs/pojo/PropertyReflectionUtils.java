@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static java.lang.reflect.Modifier.isPublic;
+import static java.lang.reflect.Modifier.isStatic;
 
 final class PropertyReflectionUtils {
     private PropertyReflectionUtils() {}
@@ -82,7 +83,7 @@ final class PropertyReflectionUtils {
         // on the subclass will return the overridden method as well as the method that was overridden from
         // the super class. This original method is copied over into the subclass as a bridge method, so we're
         // excluding them here to avoid multiple getters of the same property with different return types
-        if (isPublic(method.getModifiers()) && !method.isBridge()) {
+        if (isPublic(method.getModifiers())  && !isStatic(method.getModifiers()) && !method.isBridge()) {
             if (isGetter(method)) {
                 getters.add(method);
             } else if (isSetter(method)) {

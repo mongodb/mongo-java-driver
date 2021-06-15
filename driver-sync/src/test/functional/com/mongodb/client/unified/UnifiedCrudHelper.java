@@ -18,6 +18,7 @@ package com.mongodb.client.unified;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadConcernLevel;
+import com.mongodb.ReadPreference;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
 import com.mongodb.bulk.BulkWriteResult;
@@ -26,14 +27,18 @@ import com.mongodb.client.ChangeStreamIterable;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.DistinctIterable;
 import com.mongodb.client.FindIterable;
+import com.mongodb.client.ListCollectionsIterable;
+import com.mongodb.client.ListIndexesIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.BulkWriteOptions;
+import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.EstimatedDocumentCountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
@@ -44,33 +49,48 @@ import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.ReturnDocument;
+import com.mongodb.client.model.TimeSeriesGranularity;
+import com.mongodb.client.model.TimeSeriesOptions;
 import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
+import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.bson.BsonDocumentWriter;
 import org.bson.BsonElement;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.bson.codecs.BsonCodecProvider;
+import org.bson.codecs.Codec;
+import org.bson.codecs.EncoderContext;
+import org.bson.codecs.ValueCodecProvider;
+import org.bson.codecs.configuration.CodecRegistries;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
 final class UnifiedCrudHelper {
     private final Entities entities;
+    private final Codec<ChangeStreamDocument<BsonDocument>> changeStreamDocumentCodec = ChangeStreamDocument.createCodec(
+            BsonDocument.class,
+            CodecRegistries.fromProviders(asList(new BsonCodecProvider(), new ValueCodecProvider())));
 
     UnifiedCrudHelper(final Entities entities) {
         this.entities = entities;
@@ -88,6 +108,14 @@ final class UnifiedCrudHelper {
             throw new UnsupportedOperationException("Unsupported write concern properties");
         }
         return new WriteConcern(writeConcernDocument.getInt32("w").intValue());
+    }
+
+    public static ReadPreference asReadPreference(final BsonDocument readPreferenceDocument) {
+        if (readPreferenceDocument.size() > 1) {
+            throw new UnsupportedOperationException("Unsupported read preference properties");
+        }
+
+        return ReadPreference.valueOf(readPreferenceDocument.getString("mode").getValue());
     }
 
     private OperationResult resultOf(final Supplier<BsonValue> operationResult) {
@@ -118,14 +146,71 @@ final class UnifiedCrudHelper {
                 new BsonArray(client.listDatabases(BsonDocument.class).into(new ArrayList<>())));
     }
 
-    OperationResult executeFind(final BsonDocument operation) {
-        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+    OperationResult executeListCollections(final BsonDocument operation) {
+        MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
 
-        BsonDocument filter = arguments.getDocument("filter");
-        FindIterable<BsonDocument> iterable = collection.find(filter);
+        BsonDocument arguments = operation.getDocument("arguments");
+        ListCollectionsIterable<BsonDocument> iterable = database.listCollections(BsonDocument.class);
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
+                case "filter":
+                    iterable.filter(cur.getValue().asDocument());
+                    break;
+                case "batchSize":
+                    iterable.batchSize(cur.getValue().asNumber().intValue());
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+            }
+        }
+
+        return resultOf(() ->
+                new BsonArray(iterable.into(new ArrayList<>())));
+    }
+
+    OperationResult executeListIndexes(final BsonDocument operation) {
+        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        BsonDocument arguments = operation.getDocument("arguments");
+        ListIndexesIterable<BsonDocument> iterable = collection.listIndexes(BsonDocument.class);
+        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
+            //noinspection SwitchStatementWithTooFewBranches
+            switch (cur.getKey()) {
+                case "batchSize":
+                    iterable.batchSize(cur.getValue().asNumber().intValue());
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+            }
+        }
+
+        return resultOf(() ->
+                new BsonArray(iterable.into(new ArrayList<>())));
+    }
+
+    OperationResult executeFind(final BsonDocument operation) {
+        FindIterable<BsonDocument> iterable = createFindIterable(operation);
+        return resultOf(() ->
+                new BsonArray(iterable.into(new ArrayList<>())));
+    }
+
+    OperationResult createFindCursor(final BsonDocument operation) {
+        FindIterable<BsonDocument> iterable = createFindIterable(operation);
+        return resultOf(() -> {
+            entities.addCursor(operation.getString("saveResultAsEntity").getValue(), iterable.cursor());
+            return null;
+        });
+    }
+
+    @NotNull
+    private FindIterable<BsonDocument> createFindIterable(final BsonDocument operation) {
+        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        BsonDocument arguments = operation.getDocument("arguments");
+        ClientSession session = getSession(arguments);
+        BsonDocument filter = arguments.getDocument("filter");
+        FindIterable<BsonDocument> iterable = session == null ? collection.find(filter) : collection.find(session, filter);
+        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
+            switch (cur.getKey()) {
+                case "session":
                 case "filter":
                     break;
                 case "sort":
@@ -137,12 +222,14 @@ final class UnifiedCrudHelper {
                 case "limit":
                     iterable.limit(cur.getValue().asInt32().intValue());
                     break;
+                case "allowDiskUse":
+                    iterable.allowDiskUse(cur.getValue().asBoolean().getValue());
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
-        return resultOf(() ->
-                new BsonArray(iterable.into(new ArrayList<>())));
+        return iterable;
     }
 
     OperationResult executeDistinct(final BsonDocument operation) {
@@ -173,7 +260,7 @@ final class UnifiedCrudHelper {
         BsonDocument arguments = operation.getDocument("arguments");
 
         BsonDocument filter = arguments.getDocument("filter").asDocument();
-        BsonDocument update = arguments.getDocument("update").asDocument();
+        BsonValue update = arguments.get("update");
         FindOneAndUpdateOptions options = new FindOneAndUpdateOptions();
 
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
@@ -193,13 +280,23 @@ final class UnifiedCrudHelper {
                             throw new UnsupportedOperationException("Can't happen");
                     }
                     break;
+                case "hint":
+                    if (cur.getValue().isString()) {
+                        options.hintString(cur.getValue().asString().getValue());
+                    } else {
+                        options.hint(cur.getValue().asDocument());
+                    }
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
 
         return resultOf(() ->
-                collection.findOneAndUpdate(filter, update, options));
+                update.isArray()
+                        ? collection.findOneAndUpdate(filter, update.asArray().stream().map(BsonValue::asDocument).collect(toList()),
+                        options)
+                        : collection.findOneAndUpdate(filter, update.asDocument(), options));
     }
 
     OperationResult executeFindOneAndReplace(final BsonDocument operation) {
@@ -227,6 +324,13 @@ final class UnifiedCrudHelper {
                             throw new UnsupportedOperationException("Can't happen");
                     }
                     break;
+                case "hint":
+                    if (cur.getValue().isString()) {
+                        options.hintString(cur.getValue().asString().getValue());
+                    } else {
+                        options.hint(cur.getValue().asDocument());
+                    }
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
@@ -244,9 +348,15 @@ final class UnifiedCrudHelper {
         FindOneAndDeleteOptions options = new FindOneAndDeleteOptions();
 
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
-            //noinspection SwitchStatementWithTooFewBranches
             switch (cur.getKey()) {
                 case "filter":
+                    break;
+                case "hint":
+                    if (cur.getValue().isString()) {
+                        options.hintString(cur.getValue().asString().getValue());
+                    } else {
+                        options.hint(cur.getValue().asDocument());
+                    }
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -277,12 +387,21 @@ final class UnifiedCrudHelper {
                 case "batchSize":
                     iterable.batchSize(cur.getValue().asNumber().intValue());
                     break;
+                case "allowDiskUse":
+                    iterable.allowDiskUse(cur.getValue().asBoolean().getValue());
+                    break;
+                case "let":
+                    iterable.let(cur.getValue().asDocument());
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
+        String lastStageName = pipeline.isEmpty() ? null : pipeline.get(pipeline.size() - 1).getFirstKey();
+        boolean useToCollection = Objects.equals(lastStageName, "$out") || Objects.equals(lastStageName, "$merge");
+
         return resultOf(() -> {
-            if (pipeline.get(pipeline.size() - 1).getFirstKey().equals("$out")) {
+            if (!pipeline.isEmpty() && useToCollection) {
                 iterable.toCollection();
                 return null;
             } else {
@@ -295,70 +414,67 @@ final class UnifiedCrudHelper {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments");
         BsonDocument filter = arguments.getDocument("filter");
-
-        if (operation.getDocument("arguments").size() > 1) {
-            throw new UnsupportedOperationException("Unexpected arguments");
-        }
+        DeleteOptions options = getDeleteOptions(arguments);
 
         return resultOf(() ->
-                toExpected(collection.deleteOne(filter)));
+                toExpected(collection.deleteOne(filter, options)));
     }
 
     OperationResult executeDeleteMany(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments");
         BsonDocument filter = arguments.getDocument("filter");
-
-        if (operation.getDocument("arguments").size() > 1) {
-            throw new UnsupportedOperationException("Unexpected arguments");
-        }
+        DeleteOptions options = getDeleteOptions(arguments);
 
         return resultOf(() ->
-                toExpected(collection.deleteMany(filter)));
+                toExpected(collection.deleteMany(filter, options)));
     }
 
     private BsonDocument toExpected(final DeleteResult result) {
-        return new BsonDocument("deletedCount", new BsonInt32((int) result.getDeletedCount()));
+        if (result.wasAcknowledged()) {
+            return new BsonDocument("deletedCount", new BsonInt32((int) result.getDeletedCount()));
+        } else {
+            return new BsonDocument();
+        }
     }
 
     OperationResult executeUpdateOne(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments");
+        ClientSession session = getSession(arguments);
         BsonDocument filter = arguments.getDocument("filter");
-        BsonDocument update = arguments.getDocument("update");
+        BsonValue update = arguments.get("update");
         UpdateOptions options = getUpdateOptions(arguments);
 
-        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
-            switch (cur.getKey()) {
-                case "filter":
-                case "update":
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+        return resultOf(() -> {
+            UpdateResult updateResult;
+            if (session == null) {
+                updateResult = update.isArray()
+                        ? collection.updateOne(filter, update.asArray().stream().map(BsonValue::asDocument).collect(toList()), options)
+                        : collection.updateOne(filter, update.asDocument(), options);
+            } else {
+                updateResult = update.isArray()
+                        ? collection.updateOne(session, filter, update.asArray().stream().map(BsonValue::asDocument).collect(toList()),
+                        options)
+                        : collection.updateOne(session, filter, update.asDocument(), options);
             }
-        }
-        return resultOf(() ->
-                toExpected(collection.updateOne(filter, update, options)));
+            return toExpected(updateResult);
+        });
     }
 
     OperationResult executeUpdateMany(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments");
         BsonDocument filter = arguments.getDocument("filter");
-        BsonDocument update = arguments.getDocument("update");
+        BsonValue update = arguments.get("update");
         UpdateOptions options = getUpdateOptions(arguments);
 
-        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
-            switch (cur.getKey()) {
-                case "filter":
-                case "update":
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
-            }
-        }
         return resultOf(() ->
-                toExpected(collection.updateMany(filter, update, options)));
+                update.isArray()
+                        ? toExpected(collection.updateMany(filter, update.asArray().stream().map(BsonValue::asDocument).collect(toList()),
+                        options))
+                        : toExpected(collection.updateMany(filter, update.asDocument(), options)));
+
     }
 
     OperationResult executeReplaceOne(final BsonDocument operation) {
@@ -368,28 +484,23 @@ final class UnifiedCrudHelper {
         BsonDocument replacement = arguments.getDocument("replacement");
         ReplaceOptions options = getReplaceOptions(arguments);
 
-        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
-            switch (cur.getKey()) {
-                case "filter":
-                case "replacement":
-                case "upsert":
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
-            }
-        }
         return resultOf(() ->
                 toExpected(collection.replaceOne(filter, replacement, options)));
     }
 
     private BsonDocument toExpected(final UpdateResult result) {
-        BsonDocument expectedDocument = new BsonDocument()
-                .append("matchedCount", new BsonInt32((int) result.getMatchedCount()))
-                .append("modifiedCount", new BsonInt32((int) result.getModifiedCount()));
-        if (result.getUpsertedId() != null) {
-            expectedDocument.append("upsertedId", result.getUpsertedId());
+        if (result.wasAcknowledged()) {
+            BsonDocument expectedDocument = new BsonDocument()
+                    .append("matchedCount", new BsonInt32((int) result.getMatchedCount()))
+                    .append("modifiedCount", new BsonInt32((int) result.getModifiedCount()))
+                    .append("upsertedCount", new BsonInt32(result.getUpsertedId() == null ? 0 : 1));
+            if (result.getUpsertedId() != null) {
+                expectedDocument.append("upsertedId", result.getUpsertedId());
+            }
+            return expectedDocument;
+        } else {
+            return new BsonDocument();
         }
-        return expectedDocument;
     }
 
 
@@ -417,7 +528,12 @@ final class UnifiedCrudHelper {
     }
 
     private BsonDocument toExpected(final InsertOneResult result) {
-        return new BsonDocument("insertedId", result.getInsertedId());
+        if (result.wasAcknowledged()) {
+            return new BsonDocument("insertedId", result.getInsertedId())
+                    .append("insertedCount", new BsonInt32(1));
+        } else {
+            return new BsonDocument();
+        }
     }
 
     OperationResult executeInsertMany(final BsonDocument operation) {
@@ -443,8 +559,13 @@ final class UnifiedCrudHelper {
     }
 
     private BsonDocument toExpected(final InsertManyResult result) {
-        return new BsonDocument("insertedIds", new BsonDocument(result.getInsertedIds().entrySet().stream()
-                .map(value -> new BsonElement(value.getKey().toString(), value.getValue())).collect(toList())));
+        if (result.wasAcknowledged()) {
+            return new BsonDocument("insertedIds", new BsonDocument(result.getInsertedIds().entrySet().stream()
+                    .map(value -> new BsonElement(value.getKey().toString(), value.getValue())).collect(toList())))
+                    .append("insertedCount", new BsonInt32(result.getInsertedIds().size()));
+        } else {
+            return new BsonDocument();
+        }
     }
 
     OperationResult executeBulkWrite(final BsonDocument operation) {
@@ -470,16 +591,20 @@ final class UnifiedCrudHelper {
     }
 
     private BsonDocument toExpected(final BulkWriteResult result) {
-        return new BsonDocument()
-                .append("deletedCount", new BsonInt32(result.getDeletedCount()))
-                .append("insertedCount", new BsonInt32(result.getInsertedCount()))
-                .append("matchedCount", new BsonInt32(result.getMatchedCount()))
-                .append("modifiedCount", new BsonInt32(result.getModifiedCount()))
-                .append("upsertedCount", new BsonInt32(result.getUpserts().size()))
-                .append("insertedIds", new BsonDocument(result.getInserts().stream()
-                        .map(value -> new BsonElement(Integer.toString(value.getIndex()), value.getId())).collect(toList())))
-                .append("upsertedIds", new BsonDocument(result.getUpserts().stream()
-                        .map(value -> new BsonElement(Integer.toString(value.getIndex()), value.getId())).collect(toList())));
+        if (result.wasAcknowledged()) {
+            return new BsonDocument()
+                    .append("deletedCount", new BsonInt32(result.getDeletedCount()))
+                    .append("insertedCount", new BsonInt32(result.getInsertedCount()))
+                    .append("matchedCount", new BsonInt32(result.getMatchedCount()))
+                    .append("modifiedCount", new BsonInt32(result.getModifiedCount()))
+                    .append("upsertedCount", new BsonInt32(result.getUpserts().size()))
+                    .append("insertedIds", new BsonDocument(result.getInserts().stream()
+                            .map(value -> new BsonElement(Integer.toString(value.getIndex()), value.getId())).collect(toList())))
+                    .append("upsertedIds", new BsonDocument(result.getUpserts().stream()
+                            .map(value -> new BsonElement(Integer.toString(value.getIndex()), value.getId())).collect(toList())));
+        } else {
+            return new BsonDocument();
+        }
     }
 
     private WriteModel<BsonDocument> toWriteModel(final BsonDocument document) {
@@ -490,15 +615,23 @@ final class UnifiedCrudHelper {
             case "insertOne":
                 return new InsertOneModel<>(arguments.getDocument("document"));
             case "updateOne":
-                return new UpdateOneModel<>(arguments.getDocument("filter"), arguments.getDocument("update"),
+                return arguments.isArray("update")
+                        ? new UpdateOneModel<>(arguments.getDocument("filter"),
+                        arguments.getArray("update").stream().map(BsonValue::asDocument).collect(toList()),
+                        getUpdateOptions(arguments))
+                        : new UpdateOneModel<>(arguments.getDocument("filter"), arguments.getDocument("update"),
                         getUpdateOptions(arguments));
             case "updateMany":
-                return new UpdateManyModel<>(arguments.getDocument("filter"), arguments.getDocument("update"),
+                return arguments.isArray("update")
+                        ? new UpdateManyModel<>(arguments.getDocument("filter"),
+                        arguments.getArray("update").stream().map(BsonValue::asDocument).collect(toList()),
+                        getUpdateOptions(arguments))
+                        : new UpdateManyModel<>(arguments.getDocument("filter"), arguments.getDocument("update"),
                         getUpdateOptions(arguments));
             case "deleteOne":
-                return new DeleteOneModel<>(arguments.getDocument("filter"), getDeleteOptions());
+                return new DeleteOneModel<>(arguments.getDocument("filter"), getDeleteOptions(arguments));
             case "deleteMany":
-                return new DeleteManyModel<>(arguments.getDocument("filter"), getDeleteOptions());
+                return new DeleteManyModel<>(arguments.getDocument("filter"), getDeleteOptions(arguments));
             case "replaceOne":
                 return new ReplaceOneModel<>(arguments.getDocument("filter"), arguments.getDocument("replacement"),
                         getReplaceOptions(arguments));
@@ -508,8 +641,26 @@ final class UnifiedCrudHelper {
     }
 
     @NotNull
-    private DeleteOptions getDeleteOptions() {
-        return new DeleteOptions();
+    private DeleteOptions getDeleteOptions(final BsonDocument arguments) {
+        DeleteOptions options = new DeleteOptions();
+
+        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
+            switch (cur.getKey()) {
+                case "session":
+                case "filter":
+                    break;
+                case "hint":
+                    if (cur.getValue().isString()) {
+                        options.hintString(cur.getValue().asString().getValue());
+                    } else {
+                        options.hint(cur.getValue().asDocument());
+                    }
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+            }
+        }
+        return options;
     }
 
     private UpdateOptions getUpdateOptions(final BsonDocument arguments) {
@@ -517,11 +668,22 @@ final class UnifiedCrudHelper {
 
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
+                case "session":
                 case "filter":
                 case "update":
                     break;
                 case "upsert":
                     options.upsert(cur.getValue().asBoolean().getValue());
+                    break;
+                case "arrayFilters":
+                    options.arrayFilters(cur.getValue().asArray().stream().map(BsonValue::asDocument).collect(toList()));
+                    break;
+                case "hint":
+                    if (cur.getValue().isString()) {
+                        options.hintString(cur.getValue().asString().getValue());
+                    } else {
+                        options.hint(cur.getValue().asDocument());
+                    }
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -539,6 +701,13 @@ final class UnifiedCrudHelper {
                     break;
                 case "upsert":
                     options.upsert(cur.getValue().asBoolean().getValue());
+                    break;
+                case "hint":
+                    if (cur.getValue().isString()) {
+                        options.hintString(cur.getValue().asString().getValue());
+                    } else {
+                        options.hint(cur.getValue().asDocument());
+                    }
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -607,8 +776,9 @@ final class UnifiedCrudHelper {
 
         return resultOf(() -> {
             session.withTransaction(() -> {
-                for (BsonValue cur : callback) {
-                    operationAsserter.assertOperation(cur.asDocument());
+                for (int i = 0; i < callback.size(); i++) {
+                    BsonValue cur = callback.get(i);
+                    operationAsserter.assertOperation(cur.asDocument(), i);
                 }
                 //noinspection ConstantConditions
                 return null;
@@ -637,11 +807,18 @@ final class UnifiedCrudHelper {
         BsonDocument arguments = operation.getDocument("arguments");
         String collectionName = arguments.getString("collection").getValue();
         ClientSession session = getSession(arguments);
+        CreateCollectionOptions options = new CreateCollectionOptions();
 
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
                 case "collection":
                 case "session":
+                    break;
+                case "expireAfterSeconds":
+                    options.expireAfter(cur.getValue().asNumber().longValue(), TimeUnit.SECONDS);
+                    break;
+                case "timeseries":
+                    options.timeSeriesOptions(createTimeSeriesOptions(cur.getValue().asDocument()));
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -650,12 +827,45 @@ final class UnifiedCrudHelper {
 
         return resultOf(() -> {
             if (session == null) {
-                database.createCollection(collectionName);
+                database.createCollection(collectionName, options);
             } else {
-                database.createCollection(session, collectionName);
+                database.createCollection(session, collectionName, options);
             }
             return null;
         });
+    }
+
+    private TimeSeriesOptions createTimeSeriesOptions(final BsonDocument timeSeriesDocument) {
+        TimeSeriesOptions options = new TimeSeriesOptions(timeSeriesDocument.getString("timeField").getValue());
+
+        for (Map.Entry<String, BsonValue> cur : timeSeriesDocument.entrySet()) {
+            switch (cur.getKey()) {
+                case "timeField":
+                    break;
+                case "metaField":
+                    options.metaField(cur.getValue().asString().getValue());
+                    break;
+                case "granularity":
+                    options.granularity(createTimeSeriesGranularity(cur.getValue().asString().getValue()));
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+            }
+        }
+        return options;
+    }
+
+    private TimeSeriesGranularity createTimeSeriesGranularity(final String value) {
+        switch (value) {
+            case "seconds":
+                return TimeSeriesGranularity.SECONDS;
+            case "minutes":
+                return TimeSeriesGranularity.MINUTES;
+            case "hours":
+                return TimeSeriesGranularity.HOURS;
+            default:
+                throw new UnsupportedOperationException("Unsupported time series granularity: " + value);
+        }
     }
 
     public OperationResult executeCreateIndex(final BsonDocument operation) {
@@ -688,24 +898,27 @@ final class UnifiedCrudHelper {
         });
     }
 
-    public OperationResult executeChangeStream(final BsonDocument operation) {
+    public OperationResult createChangeStreamCursor(final BsonDocument operation) {
         String entityName = operation.getString("object").getValue();
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+        List<BsonDocument> pipeline = arguments.getArray("pipeline").stream().map(BsonValue::asDocument).collect(toList());
         ChangeStreamIterable<BsonDocument> iterable;
         if (entities.hasCollection(entityName)) {
-            iterable = entities.getCollection(entityName).watch();
+            iterable = entities.getCollection(entityName).watch(pipeline);
         } else if (entities.hasDatabase(entityName)) {
-            iterable = entities.getDatabase(entityName).watch(BsonDocument.class);
+            iterable = entities.getDatabase(entityName).watch(pipeline, BsonDocument.class);
         } else if (entities.hasClient(entityName)) {
-            iterable = entities.getClient(entityName).watch(BsonDocument.class);
+            iterable = entities.getClient(entityName).watch(pipeline, BsonDocument.class);
         } else {
             throw new UnsupportedOperationException("No entity found for id: " + entityName);
         }
 
-        for (Map.Entry<String, BsonValue> cur : operation.getDocument("arguments", new BsonDocument()).entrySet()) {
-            //noinspection SwitchStatementWithTooFewBranches
+        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
                 case "batchSize":
                     iterable.batchSize(cur.getValue().asNumber().intValue());
+                    break;
+                case "pipeline":
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -713,20 +926,46 @@ final class UnifiedCrudHelper {
         }
 
         return resultOf(() -> {
-            MongoCursor<BsonDocument> cursor = iterable.withDocumentClass(BsonDocument.class).cursor();
-            entities.addChangeStream(operation.getString("saveResultAsEntity").getValue(), cursor);
+            entities.addChangeStreamCursor(operation.getString("saveResultAsEntity").getValue(), iterable.cursor());
             return null;
         });
     }
 
     public OperationResult executeIterateUntilDocumentOrError(final BsonDocument operation) {
-        MongoCursor<BsonDocument> cursor = entities.getChangeStream(operation.getString("object").getValue());
+        String id = operation.getString("object").getValue();
+        if (entities.hasCursor(id)) {
+            MongoCursor<BsonDocument> cursor = entities.getCursor(id);
 
-        if (operation.containsKey("arguments")) {
-            throw new UnsupportedOperationException("Unexpected arguments");
+            if (operation.containsKey("arguments")) {
+                throw new UnsupportedOperationException("Unexpected arguments");
+            }
+
+            return resultOf(cursor::next);
+        } else {
+            MongoCursor<ChangeStreamDocument<BsonDocument>> cursor = entities.getChangeStreamCursor(id);
+
+            if (operation.containsKey("arguments")) {
+                throw new UnsupportedOperationException("Unexpected arguments");
+            }
+
+            return resultOf(() -> {
+                BsonDocumentWriter bsonDocumentWriter = new BsonDocumentWriter(new BsonDocument());
+                changeStreamDocumentCodec.encode(bsonDocumentWriter, cursor.next(), EncoderContext.builder().build());
+                return bsonDocumentWriter.getDocument();
+            });
         }
+    }
 
-        return resultOf(cursor::next);
+    public OperationResult close(final BsonDocument operation) {
+        String id = operation.getString("object").getValue();
+        if (entities.hasCursor(id)) {
+            MongoCursor<BsonDocument> cursor = entities.getCursor(id);
+            cursor.close();
+        } else {
+            MongoCursor<ChangeStreamDocument<BsonDocument>> cursor = entities.getChangeStreamCursor(id);
+            cursor.close();
+        }
+        return OperationResult.NONE;
     }
 
     public OperationResult executeRunCommand(final BsonDocument operation) {
@@ -767,16 +1006,21 @@ final class UnifiedCrudHelper {
 
     public OperationResult executeEstimatedDocumentCount(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+
+        EstimatedDocumentCountOptions options = new EstimatedDocumentCountOptions();
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             //noinspection SwitchStatementWithTooFewBranches
             switch (cur.getKey()) {
+                case "maxTimeMS":
+                    options.maxTime(cur.getValue().asNumber().intValue(), TimeUnit.MILLISECONDS);
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
 
         return resultOf(() ->
-                new BsonInt64(collection.estimatedDocumentCount()));
+                new BsonInt64(collection.estimatedDocumentCount(options)));
     }
 }

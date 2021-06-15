@@ -39,6 +39,7 @@ import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ClusterFixture.getSslSettings
+import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.internal.bulk.WriteRequest.Type.REPLACE
 import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE
 import static com.mongodb.internal.connection.ProtocolTestHelper.execute
@@ -48,7 +49,7 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
     InternalStreamConnection connection
 
     def setupSpec() {
-        connection = new InternalStreamConnectionFactory(new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
+        connection = new InternalStreamConnectionFactory(SINGLE, new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
                 getCredentialWithCache(), null, null, [], null, getServerApi())
                 .create(new ServerId(new ClusterId(), getPrimary()))
         connection.open()
@@ -200,8 +201,8 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
 
     def 'should not deliver any events if encoding fails'() {
         given:
-        def insertRequest = new InsertRequest(new BsonDocument('$set', new BsonInt32(1)))
-        def protocol = new InsertProtocol(getNamespace(), true, insertRequest)
+        def updateRequest = new UpdateRequest(new BsonDocument(), new BsonDocument('$set', new BsonInt32(1)), REPLACE)
+        def protocol = new UpdateProtocol(getNamespace(), true, updateRequest)
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
 

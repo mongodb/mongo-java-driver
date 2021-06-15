@@ -19,21 +19,21 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoInternalException;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
-import jdk.net.ExtendedSocketOptions;
 
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocket;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketOption;
-import java.util.Arrays;
 
 import static com.mongodb.internal.connection.SslHelper.enableHostNameVerification;
 import static com.mongodb.internal.connection.SslHelper.enableSni;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+@SuppressWarnings({"unchecked", "rawtypes"})
 final class SocketStreamHelper {
     // Keep alive options and their values for Java 11+
     private static final String TCP_KEEPIDLE = "TCP_KEEPIDLE";
@@ -42,6 +42,35 @@ final class SocketStreamHelper {
     private static final int TCP_KEEPCOUNT_LIMIT = 9;
     private static final String TCP_KEEPINTERVAL = "TCP_KEEPINTERVAL";
     private static final int TCP_KEEPINTERVAL_DURATION = 10;
+
+    private static final SocketOption<Integer> KEEP_COUNT_OPTION;
+    private static final SocketOption<Integer> KEEP_IDLE_OPTION;
+    private static final SocketOption<Integer> KEEP_INTERVAL_OPTION;
+
+    private static final Method SET_OPTION_METHOD;
+
+    static {
+        SocketOption<Integer> keepCountOption = null;
+        SocketOption<Integer> keepIdleOption = null;
+        SocketOption<Integer> keepIntervalOption = null;
+        Method setOptionMethod = null;
+
+        try {
+            setOptionMethod = Socket.class.getMethod("setOption", SocketOption.class, Object.class);
+
+            Class extendedSocketOptionsClass = Class.forName("jdk.net.ExtendedSocketOptions");
+            keepCountOption = (SocketOption<Integer>) extendedSocketOptionsClass.getDeclaredField(TCP_KEEPCOUNT).get(null);
+            keepIdleOption = (SocketOption<Integer>) extendedSocketOptionsClass.getDeclaredField(TCP_KEEPIDLE).get(null);
+            keepIntervalOption = (SocketOption<Integer>) extendedSocketOptionsClass.getDeclaredField(TCP_KEEPINTERVAL).get(null);
+        } catch (ClassNotFoundException | NoSuchMethodException | NoSuchFieldException | IllegalAccessException e) {
+            // ignore: this is expected on JDKs < 11 and some deployments that don't include the jdk.net package
+        }
+
+        KEEP_COUNT_OPTION = keepCountOption;
+        KEEP_IDLE_OPTION = keepIdleOption;
+        KEEP_INTERVAL_OPTION = keepIntervalOption;
+        SET_OPTION_METHOD = setOptionMethod;
+    }
 
     static void initialize(final Socket socket, final InetSocketAddress inetSocketAddress, final SocketSettings settings,
                            final SslSettings sslSettings) throws IOException {
@@ -78,19 +107,21 @@ final class SocketStreamHelper {
         socket.connect(inetSocketAddress, settings.getConnectTimeout(MILLISECONDS));
     }
 
-    @SuppressWarnings("unchecked")
-    private static void setExtendedSocketOptions(final Socket socket) {
-        if (Arrays.stream(ExtendedSocketOptions.class.getDeclaredFields()).anyMatch(f -> f.getName().equals(TCP_KEEPCOUNT))) {
-            try {
-                Method setOptionMethod = Socket.class.getMethod("setOption", SocketOption.class, Object.class);
-                setOptionMethod.invoke(socket, ExtendedSocketOptions.class.getDeclaredField(TCP_KEEPCOUNT).get(null),
-                        TCP_KEEPCOUNT_LIMIT);
-                setOptionMethod.invoke(socket, ExtendedSocketOptions.class.getDeclaredField(TCP_KEEPIDLE).get(null),
-                        TCP_KEEPIDLE_DURATION);
-                setOptionMethod.invoke(socket, ExtendedSocketOptions.class.getDeclaredField(TCP_KEEPINTERVAL).get(null),
-                        TCP_KEEPINTERVAL_DURATION);
-            } catch (Throwable t) {
+    static void setExtendedSocketOptions(final Socket socket) {
+        try {
+            if (SET_OPTION_METHOD != null) {
+                if (KEEP_COUNT_OPTION != null) {
+                    SET_OPTION_METHOD.invoke(socket, KEEP_COUNT_OPTION, TCP_KEEPCOUNT_LIMIT);
+                }
+                if (KEEP_IDLE_OPTION != null) {
+                    SET_OPTION_METHOD.invoke(socket, KEEP_IDLE_OPTION, TCP_KEEPIDLE_DURATION);
+                }
+                if (KEEP_INTERVAL_OPTION != null) {
+                    SET_OPTION_METHOD.invoke(socket, KEEP_INTERVAL_OPTION, TCP_KEEPINTERVAL_DURATION);
+                }
             }
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            // ignore failures, as this is best effort
         }
     }
 

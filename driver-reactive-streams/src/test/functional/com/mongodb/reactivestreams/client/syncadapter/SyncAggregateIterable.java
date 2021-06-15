@@ -51,6 +51,7 @@ class SyncAggregateIterable<T> extends SyncMongoIterable<T> implements Aggregate
     @Override
     public AggregateIterable<T> batchSize(final int batchSize) {
         wrapped.batchSize(batchSize);
+        super.batchSize(batchSize);
         return this;
     }
 
@@ -87,6 +88,12 @@ class SyncAggregateIterable<T> extends SyncMongoIterable<T> implements Aggregate
     @Override
     public AggregateIterable<T> hint(@Nullable final Bson hint) {
         wrapped.hint(hint);
+        return this;
+    }
+
+    @Override
+    public AggregateIterable<T> let(final Bson variables) {
+        wrapped.let(variables);
         return this;
     }
 

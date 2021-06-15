@@ -7,6 +7,24 @@ title = "What's New"
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
+# What's new in 4.3
+
+This release fully supports all MongoDB releases from versions 2.6 to 4.4. It also supports some features of the next release of MongoDB.
+
+New features of the 4.3 Java driver release include:
+
+* Added support for the MongoDB Versioned API.  See the 
+  [`ServerApi`]({{< apiref "mongodb-driver-core" "com/mongodb/ServerApi.html" >}}) API documentation for details.
+* Removed most restrictions on allowed characters in field names of documents being inserted or replaced.  This is a behavioral change 
+  for any application that is relying on client-side enforcement of these restrictions. In particular: 
+  * Restrictions on field names containing the "." character have been removed. This affects all insert and replace operations.
+  * Restrictions on field names starting with the "$" character have been removed for all insert operations.
+  * Restrictions in nested documents on field names starting with the "$" character have been removed for all replace operations.  
+  * Restrictions in the top-level document on field names starting with the "$" character remain for all replace operations. This is 
+    primarily to prevent accidental use of a replace operation when the intention was to use an update operation.
+  * Note that unacknowledged writes using dollar-prefixed or dotted keys may be silently rejected by pre-5.0 servers, where some 
+    restrictions on field names are still enforced in the server.
+
 # What's new in 4.2
 
 This release fully supports all MongoDB releases from versions 2.6 to 4.4. New features of the 4.2 Java driver release include:

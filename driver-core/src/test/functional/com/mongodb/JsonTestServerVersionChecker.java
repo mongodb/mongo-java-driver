@@ -25,13 +25,14 @@ import java.util.List;
 import static com.mongodb.ClusterFixture.getServerVersion;
 import static com.mongodb.ClusterFixture.getVersionList;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
+import static com.mongodb.ClusterFixture.isLoadBalanced;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 
 public final class JsonTestServerVersionChecker {
-    private static final List<String> TOPOLOGY_TYPES = asList("sharded", "sharded-replicaset", "replicaset", "single");
+    private static final List<String> TOPOLOGY_TYPES = asList("sharded", "sharded-replicaset", "replicaset", "single", "load-balanced");
 
     public static boolean skipTest(final BsonDocument testDocument, final BsonDocument testDefinition) {
         return skipTest(testDocument, testDefinition, getServerVersion());
@@ -94,6 +95,8 @@ public final class JsonTestServerVersionChecker {
             } else if (typeString.equals("replicaset") && isDiscoverableReplicaSet()) {
                 return true;
             } else if (typeString.equals("single") && isStandalone()) {
+                return true;
+            } else if (typeString.equals("load-balanced") && isLoadBalanced()) {
                 return true;
             } else if (!TOPOLOGY_TYPES.contains(typeString)) {
                 throw new IllegalArgumentException(format("Unexpected topology type: '%s'", typeString));

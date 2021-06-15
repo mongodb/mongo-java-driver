@@ -122,7 +122,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
     }
 
     @Override
-    protected ClusterableServer getServer(final ServerAddress serverAddress) {
+    public ClusterableServer getServer(final ServerAddress serverAddress) {
         isTrue("is open", !isClosed());
 
         ServerTuple serverTuple = addressToServerTupleMap.get(serverAddress);

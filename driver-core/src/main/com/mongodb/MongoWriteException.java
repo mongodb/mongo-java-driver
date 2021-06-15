@@ -33,7 +33,7 @@ public class MongoWriteException extends MongoServerException {
      * @param serverAddress the server address
      */
     public MongoWriteException(final WriteError error, final ServerAddress serverAddress) {
-        super(error.getCode(), error.getMessage(), serverAddress);
+        super("Write operation error on server " + serverAddress + ". Write error: " + error + ". ", serverAddress);
         this.error = error;
     }
 

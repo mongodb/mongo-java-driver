@@ -67,7 +67,7 @@ public final class SingleServerCluster extends BaseCluster {
     }
 
     @Override
-    protected ClusterableServer getServer(final ServerAddress serverAddress) {
+    public ClusterableServer getServer(final ServerAddress serverAddress) {
         isTrue("open", !isClosed());
         return server;
     }

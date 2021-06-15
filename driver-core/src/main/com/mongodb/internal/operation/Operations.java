@@ -28,6 +28,7 @@ import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.DropIndexOptions;
+import com.mongodb.client.model.EstimatedDocumentCountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
@@ -50,7 +51,6 @@ import com.mongodb.internal.bulk.InsertRequest;
 import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.bulk.WriteRequest;
 import com.mongodb.internal.client.model.AggregationLevel;
-import com.mongodb.internal.client.model.CountStrategy;
 import com.mongodb.internal.client.model.FindOptions;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -127,8 +127,8 @@ public final class Operations<TDocument> {
         return retryReads;
     }
 
-    public CountOperation count(final Bson filter, final CountOptions options, final CountStrategy countStrategy) {
-        CountOperation operation = new CountOperation(namespace, countStrategy)
+    public CountDocumentsOperation countDocuments(final Bson filter, final CountOptions options) {
+        CountDocumentsOperation operation = new CountDocumentsOperation(namespace)
                 .retryReads(retryReads)
                 .filter(toBsonDocument(filter))
                 .skip(options.getSkip())
@@ -141,6 +141,12 @@ public final class Operations<TDocument> {
             operation.hint(new BsonString(options.getHintString()));
         }
         return operation;
+    }
+
+    public EstimatedDocumentCountOperation estimatedDocumentCount(final EstimatedDocumentCountOptions options) {
+        return new EstimatedDocumentCountOperation(namespace)
+                .retryReads(retryReads)
+                .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS);
     }
 
     public <TResult> FindOperation<TResult> findFirst(final Bson filter, final Class<TResult> resultClass,
@@ -205,7 +211,8 @@ public final class Operations<TDocument> {
     public <TResult> AggregateOperation<TResult> aggregate(final List<? extends Bson> pipeline, final Class<TResult> resultClass,
                                                     final long maxTimeMS, final long maxAwaitTimeMS, final Integer batchSize,
                                                     final Collation collation, final Bson hint, final String comment,
-                                                    final Boolean allowDiskUse, final AggregationLevel aggregationLevel) {
+                                                    final Bson variables, final Boolean allowDiskUse,
+                                                    final AggregationLevel aggregationLevel) {
         return new AggregateOperation<TResult>(namespace, toBsonDocumentList(pipeline), codecRegistry.get(resultClass), aggregationLevel)
                 .retryReads(retryReads)
                 .maxTime(maxTimeMS, MILLISECONDS)
@@ -213,22 +220,23 @@ public final class Operations<TDocument> {
                 .allowDiskUse(allowDiskUse)
                 .batchSize(batchSize)
                 .collation(collation)
-                .hint(hint == null ? null : hint.toBsonDocument(documentClass, codecRegistry))
-                .comment(comment);
-
+                .hint(toBsonDocument(hint))
+                .comment(comment)
+                .let(toBsonDocument(variables));
     }
 
     public AggregateToCollectionOperation aggregateToCollection(final List<? extends Bson> pipeline, final long maxTimeMS,
                                                          final Boolean allowDiskUse, final Boolean bypassDocumentValidation,
                                                          final Collation collation, final Bson hint, final String comment,
-                                                         final AggregationLevel aggregationLevel) {
+                                                         final Bson variables, final AggregationLevel aggregationLevel) {
         return new AggregateToCollectionOperation(namespace, toBsonDocumentList(pipeline), readConcern, writeConcern, aggregationLevel)
                 .maxTime(maxTimeMS, MILLISECONDS)
                 .allowDiskUse(allowDiskUse)
                 .bypassDocumentValidation(bypassDocumentValidation)
                 .collation(collation)
-                .hint(hint == null ? null : hint.toBsonDocument(documentClass, codecRegistry))
-                .comment(comment);
+                .hint(toBsonDocument(hint))
+                .comment(comment)
+                .let(toBsonDocument(variables));
     }
 
     public MapReduceToCollectionOperation mapReduceToCollection(final String databaseName, final String collectionName,

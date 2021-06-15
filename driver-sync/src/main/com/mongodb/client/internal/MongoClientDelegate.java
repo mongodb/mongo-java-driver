@@ -90,7 +90,8 @@ final class MongoClientDelegate {
 
         ClusterDescription connectedClusterDescription = getConnectedClusterDescription();
 
-        if (connectedClusterDescription.getLogicalSessionTimeoutMinutes() == null) {
+        if (connectedClusterDescription.getLogicalSessionTimeoutMinutes() == null
+                && connectedClusterDescription.getConnectionMode() != ClusterConnectionMode.LOAD_BALANCED) {
             return null;
         } else {
             ClientSessionOptions mergedOptions = ClientSessionOptions.builder(options)
@@ -163,6 +164,10 @@ final class MongoClientDelegate {
         @Override
         public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern,
                              @Nullable final ClientSession session) {
+            if (session != null) {
+                session.notifyOperationInitiated(operation);
+            }
+
             ClientSession actualClientSession = getClientSession(session);
             ReadBinding binding = getReadBinding(readPreference, readConcern, actualClientSession,
                     session == null && actualClientSession != null);
@@ -174,7 +179,7 @@ final class MongoClientDelegate {
                 return operation.execute(binding);
             } catch (MongoException e) {
                 labelException(session, e);
-                unpinServerAddressOnTransientTransactionError(session, e);
+                clearTransactionContextOnTransientTransactionError(session, e);
                 throw e;
             } finally {
                 binding.release();
@@ -183,6 +188,10 @@ final class MongoClientDelegate {
 
         @Override
         public <T> T execute(final WriteOperation<T> operation, final ReadConcern readConcern, @Nullable final ClientSession session) {
+            if (session != null) {
+                session.notifyOperationInitiated(operation);
+            }
+
             ClientSession actualClientSession = getClientSession(session);
             WriteBinding binding = getWriteBinding(readConcern, actualClientSession,
                     session == null && actualClientSession != null);
@@ -191,7 +200,7 @@ final class MongoClientDelegate {
                 return operation.execute(binding);
             } catch (MongoException e) {
                 labelException(session, e);
-                unpinServerAddressOnTransientTransactionError(session, e);
+                clearTransactionContextOnTransientTransactionError(session, e);
                 throw e;
             } finally {
                 binding.release();
@@ -232,9 +241,9 @@ final class MongoClientDelegate {
             }
         }
 
-        private void unpinServerAddressOnTransientTransactionError(final @Nullable ClientSession session, final MongoException e) {
+        private void clearTransactionContextOnTransientTransactionError(final @Nullable ClientSession session, final MongoException e) {
             if (session != null && e.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)) {
-                session.setPinnedServerAddress(null);
+                session.clearTransactionContext();
             }
         }
 

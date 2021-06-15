@@ -19,6 +19,7 @@ package com.mongodb.internal.event;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.ConnectionCheckOutFailedEvent;
+import com.mongodb.event.ConnectionCheckOutStartedEvent;
 import com.mongodb.event.ConnectionCheckedInEvent;
 import com.mongodb.event.ConnectionCheckedOutEvent;
 import com.mongodb.event.ConnectionClosedEvent;
@@ -93,6 +94,19 @@ final class ConnectionPoolListenerMulticaster implements ConnectionPoolListener 
             } catch (Exception e) {
                 if (LOGGER.isWarnEnabled()) {
                     LOGGER.warn(format("Exception thrown raising connection pool closed event to listener %s", cur), e);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void connectionCheckOutStarted(final ConnectionCheckOutStartedEvent event) {
+        for (ConnectionPoolListener cur : connectionPoolListeners) {
+            try {
+                cur.connectionCheckOutStarted(event);
+            } catch (Exception e) {
+                if (LOGGER.isWarnEnabled()) {
+                    LOGGER.warn(format("Exception thrown raising connection check out started event to listener %s", cur), e);
                 }
             }
         }

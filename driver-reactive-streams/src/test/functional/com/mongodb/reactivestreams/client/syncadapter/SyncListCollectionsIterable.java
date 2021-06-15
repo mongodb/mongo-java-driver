@@ -46,6 +46,7 @@ class SyncListCollectionsIterable<T> extends SyncMongoIterable<T> implements Lis
     @Override
     public ListCollectionsIterable<T> batchSize(final int batchSize) {
         wrapped.batchSize(batchSize);
+        super.batchSize(batchSize);
         return this;
     }
 }

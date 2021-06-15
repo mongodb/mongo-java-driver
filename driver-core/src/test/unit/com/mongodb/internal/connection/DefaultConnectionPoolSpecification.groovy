@@ -16,8 +16,10 @@
 
 package com.mongodb.internal.connection
 
+import com.mongodb.connection.ConnectionDescription
+import com.mongodb.event.ConnectionCheckOutFailedEvent
+import com.mongodb.internal.async.SingleResultCallback
 import util.spock.annotations.Slow
-import com.mongodb.MongoException
 import com.mongodb.MongoTimeoutException
 import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterId
@@ -65,7 +67,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         pool.get()
 
         then:
-        1 * connectionFactory.create(SERVER_ID)
+        1 * connectionFactory.create(SERVER_ID, _)
     }
 
     def 'should release a connection back into the pool on close, not close the underlying connection'() throws InterruptedException {
@@ -205,7 +207,7 @@ class DefaultConnectionPoolSpecification extends Specification {
                 .addConnectionPoolListener(listener).build())
 
         when:
-        selectConnectionAsync(pool)
+        selectConnectionAsyncAndGet(pool)
 
         then:
         1 * listener.connectionCreated { it.connectionId.serverId == SERVER_ID }
@@ -285,6 +287,54 @@ class DefaultConnectionPoolSpecification extends Specification {
 
         then:
         1 * listener.connectionCheckedIn { it.connectionId.serverId == SERVER_ID }
+    }
+
+    def 'should fire connection checkout failed with Reason.CONNECTION_ERROR if fails to open a connection'() {
+        given:
+        def listener = Mock(ConnectionPoolListener)
+        def connection = Mock(InternalConnection)
+        connection.getDescription() >> new ConnectionDescription(SERVER_ID)
+        connection.opened() >> false
+        connection.open() >> { throw new UncheckedIOException('expected failure', new IOException()) }
+        connectionFactory.create(SERVER_ID, _) >> connection
+        pool = new DefaultConnectionPool(SERVER_ID, connectionFactory, builder().addConnectionPoolListener(listener).build())
+
+        when:
+        try {
+            pool.get()
+        } catch (UncheckedIOException e) {
+            if ('expected failure' != e.getMessage()) {
+                throw e;
+            }
+        }
+
+        then:
+        1 * listener.connectionCheckOutFailed { it.reason == ConnectionCheckOutFailedEvent.Reason.CONNECTION_ERROR }
+    }
+
+    def 'should fire connection checkout failed with Reason.CONNECTION_ERROR if fails to open a connection asynchronously'() {
+        given:
+        def listener = Mock(ConnectionPoolListener)
+        def connection = Mock(InternalConnection)
+        connection.getDescription() >> new ConnectionDescription(SERVER_ID)
+        connection.opened() >> false
+        connection.openAsync(_) >> { SingleResultCallback<Void> callback ->
+            callback.onResult(null, new UncheckedIOException('expected failure', new IOException()))
+        }
+        connectionFactory.create(SERVER_ID, _) >> connection
+        pool = new DefaultConnectionPool(SERVER_ID, connectionFactory, builder().addConnectionPoolListener(listener).build())
+
+        when:
+        try {
+            selectConnectionAsyncAndGet(pool)
+        } catch (UncheckedIOException e) {
+            if ('expected failure' != e.getMessage()) {
+                throw e;
+            }
+        }
+
+        then:
+        1 * listener.connectionCheckOutFailed { it.reason == ConnectionCheckOutFailedEvent.Reason.CONNECTION_ERROR }
     }
 
     def 'should continue to fire events after pool is closed'() {
@@ -381,7 +431,7 @@ class DefaultConnectionPoolSpecification extends Specification {
 
     def selectConnectionAsync(DefaultConnectionPool pool) {
         def serverLatch = new ConnectionLatch()
-        pool.getAsync { InternalConnection result, MongoException e ->
+        pool.getAsync { InternalConnection result, Throwable e ->
             serverLatch.connection = result
             serverLatch.throwable = e
             serverLatch.latch.countDown()

@@ -96,7 +96,7 @@ public final class CommandMessage extends RequestMessage {
                    final boolean responseExpected, final boolean exhaustAllowed,
                    final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
                    final ClusterConnectionMode clusterConnectionMode, final @Nullable ServerApi serverApi) {
-        super(namespace.getFullName(), getOpCode(settings), settings);
+        super(namespace.getFullName(), getOpCode(settings, serverApi), settings);
         this.namespace = namespace;
         this.command = command;
         this.commandFieldNameValidator = commandFieldNameValidator;
@@ -284,14 +284,14 @@ public final class CommandMessage extends RequestMessage {
             if (firstMessageInTransaction) {
                 extraElements.add(new BsonElement("startTransaction", BsonBoolean.TRUE));
                 addReadConcernDocument(extraElements, sessionContext);
-                if (serverApi != null) {
-                    addServerApiElements(extraElements);
-                }
             }
             extraElements.add(new BsonElement("autocommit", BsonBoolean.FALSE));
-        } else if (serverApi != null) {
+        }
+
+        if (serverApi != null) {
             addServerApiElements(extraElements);
         }
+
         if (readPreference != null) {
             if (!readPreference.equals(primary())) {
                 extraElements.add(new BsonElement("$readPreference", readPreference.toDocument()));
@@ -328,12 +328,12 @@ public final class CommandMessage extends RequestMessage {
         }
     }
 
-    private static OpCode getOpCode(final MessageSettings settings) {
-        return isServerVersionAtLeastThreeDotSix(settings) ? OpCode.OP_MSG : OpCode.OP_QUERY;
+    private static OpCode getOpCode(final MessageSettings settings, @Nullable final ServerApi serverApi) {
+        return isServerVersionAtLeastThreeDotSix(settings) || serverApi != null ? OpCode.OP_MSG : OpCode.OP_QUERY;
     }
 
     private static boolean isServerVersionAtLeastThreeDotSix(final MessageSettings settings) {
-          return settings.getMaxWireVersion() >= THREE_DOT_SIX_WIRE_VERSION;
+        return settings.getMaxWireVersion() >= THREE_DOT_SIX_WIRE_VERSION;
     }
 
 }

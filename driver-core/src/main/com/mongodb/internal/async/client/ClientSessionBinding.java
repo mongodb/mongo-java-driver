@@ -25,14 +25,14 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
+import com.mongodb.internal.binding.TransactionContext;
 import com.mongodb.internal.connection.AsyncConnection;
-import com.mongodb.internal.connection.ServerTuple;
-import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.session.ClientSessionContext;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.connection.ClusterType.LOAD_BALANCED;
 
 public class ClientSessionBinding implements AsyncReadWriteBinding {
     private final AsyncClusterAwareReadWriteBinding wrapped;
@@ -55,16 +55,16 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
 
     @Override
     public void getReadConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
-        if (isActiveShardedTxn()) {
-            getPinnedConnectionSource(callback);
+        if (isConnectionSourcePinningRequired()) {
+            getPinnedConnectionSource(true, callback);
         } else {
             wrapped.getReadConnectionSource(new WrappingCallback(callback));
         }
     }
 
     public void getWriteConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
-        if (isActiveShardedTxn()) {
-            getPinnedConnectionSource(callback);
+        if (isConnectionSourcePinningRequired()) {
+            getPinnedConnectionSource(false, callback);
         } else {
             wrapped.getWriteConnectionSource(new WrappingCallback(callback));
         }
@@ -81,20 +81,26 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
         return wrapped.getServerApi();
     }
 
-    private void getPinnedConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
-        if (session.getPinnedServerAddress() == null) {
-            wrapped.getCluster().selectServerAsync(
-                    new ReadPreferenceServerSelector(wrapped.getReadPreference()), new SingleResultCallback<ServerTuple>() {
-                        @Override
-                        public void onResult(final ServerTuple serverTuple, final Throwable t) {
-                            if (t != null) {
-                                callback.onResult(null, t);
-                            } else {
-                                session.setPinnedServerAddress(serverTuple.getServerDescription().getAddress());
-                                wrapped.getConnectionSource(session.getPinnedServerAddress(), new WrappingCallback(callback));
-                            }
-                        }
-                    });
+    private void getPinnedConnectionSource(final boolean isRead, final SingleResultCallback<AsyncConnectionSource> callback) {
+        WrappingCallback wrappingCallback = new WrappingCallback(callback);
+        TransactionContext<AsyncConnection> transactionContext = TransactionContext.get(session);
+        if (transactionContext == null) {
+            SingleResultCallback<AsyncConnectionSource> connectionSourceCallback = (result, t) -> {
+                if (t != null) {
+                    wrappingCallback.onResult(null, t);
+                } else {
+                    TransactionContext<AsyncConnection> newTransactionContext = new TransactionContext<>(
+                            wrapped.getCluster().getDescription().getType());
+                    session.setTransactionContext(result.getServerDescription().getAddress(), newTransactionContext);
+                    newTransactionContext.release();  // The session is responsible for retaining a reference to the context
+                    wrappingCallback.onResult(result, null);
+                }
+            };
+            if (isRead) {
+                wrapped.getReadConnectionSource(connectionSourceCallback);
+            } else {
+                wrapped.getWriteConnectionSource(connectionSourceCallback);
+            }
         } else {
             wrapped.getConnectionSource(session.getPinnedServerAddress(), new WrappingCallback(callback));
         }
@@ -123,8 +129,9 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
         }
     }
 
-    private boolean isActiveShardedTxn() {
-        return session.hasActiveTransaction() && wrapped.getCluster().getDescription().getType() == ClusterType.SHARDED;
+    private boolean isConnectionSourcePinningRequired() {
+        ClusterType clusterType = wrapped.getCluster().getDescription().getType();
+        return session.hasActiveTransaction() && (clusterType == ClusterType.SHARDED || clusterType == LOAD_BALANCED);
     }
 
     private class SessionBindingAsyncConnectionSource implements AsyncConnectionSource {
@@ -152,7 +159,24 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
 
         @Override
         public void getConnection(final SingleResultCallback<AsyncConnection> callback) {
-            wrapped.getConnection(callback);
+            TransactionContext<AsyncConnection> transactionContext = TransactionContext.get(session);
+            if (transactionContext != null && transactionContext.isConnectionPinningRequired()) {
+                AsyncConnection pinnedConnection = transactionContext.getPinnedConnection();
+                if (pinnedConnection == null) {
+                    wrapped.getConnection((connection, t) -> {
+                        if (t != null) {
+                            callback.onResult(null, t);
+                        } else {
+                            transactionContext.pinConnection(connection, AsyncConnection::markAsPinned);
+                            callback.onResult(connection, null);
+                        }
+                    });
+                } else {
+                    callback.onResult(pinnedConnection.retain(), null);
+                }
+            } else {
+                wrapped.getConnection(callback);
+            }
         }
 
         @Override

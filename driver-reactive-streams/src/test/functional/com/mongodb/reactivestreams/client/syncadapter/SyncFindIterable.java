@@ -109,6 +109,7 @@ class SyncFindIterable<T> extends SyncMongoIterable<T> implements FindIterable<T
     @Override
     public FindIterable<T> batchSize(final int batchSize) {
         wrapped.batchSize(batchSize);
+        super.batchSize(batchSize);
         return this;
     }
 

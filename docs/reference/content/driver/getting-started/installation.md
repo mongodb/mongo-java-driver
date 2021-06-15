@@ -31,7 +31,7 @@ The `mongodb-driver-sync` artifact is a valid OSGi bundle whose symbolic name is
 
 {{% /note %}}
 
-{{< install artifactId="mongodb-driver-sync" version="4.2.0" dependencies="true">}}
+{{< install artifactId="mongodb-driver-sync" version="4.3.0-beta3" dependencies="true">}}
 
 ## MongoDB Driver Legacy 
 
@@ -44,4 +44,4 @@ While not deprecated, we recommend that new applications depend on the `mongodb-
 
 {{% /note %}}
 
-{{< install artifactId="mongodb-driver-legacy" version="4.2.0" dependencies="true">}}
+{{< install artifactId="mongodb-driver-legacy" version="4.3.0-beta3" dependencies="true">}}

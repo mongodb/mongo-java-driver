@@ -10,7 +10,7 @@ title = "Quick Start"
 
 # MongoDB Scala Driver Quick Start
 
-The following code snippets come from the [`QuickTour.java`]({{< srcref "driver-scala/src/it/tour/QuickTour.java" >}}) example code
+The following code snippets come from the [`QuickTour.java`]({{< srcref "driver-scala/src/it/tour/QuickTour.scala" >}}) example code
 that can be found with the Scala driver source on github.
 
 {{% note %}}
@@ -127,7 +127,7 @@ val collection: MongoCollection[Document] = database.getCollection("test")
 
 ## Create a Document
 
-To create the document using the Scala driver, use the [`Document`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/bson/collection/immutable/Document">}} class.
+To create the document using the Scala driver, use the [`Document`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/bson/collection/immutable/Document">}}) class.
 
 For example, consider the following JSON document:
 

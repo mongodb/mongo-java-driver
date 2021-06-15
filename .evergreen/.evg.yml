@@ -240,6 +240,22 @@ functions:
         script: |
           DRIVERS_TOOLS="${DRIVERS_TOOLS}" sh ${DRIVERS_TOOLS}/.evergreen/atlas_data_lake/run-mongohouse-local.sh
 
+  "run load-balancer":
+    - command: shell.exec
+      params:
+        script: |
+          DRIVERS_TOOLS=${DRIVERS_TOOLS} MONGODB_URI=${MONGODB_URI} bash ${DRIVERS_TOOLS}/.evergreen/run-load-balancer.sh start
+    - command: expansions.update
+      params:
+        file: lb-expansion.yml
+
+  "stop load-balancer":
+    - command: shell.exec
+      params:
+        script: |
+          cd ${DRIVERS_TOOLS}/.evergreen
+          DRIVERS_TOOLS=${DRIVERS_TOOLS} bash ${DRIVERS_TOOLS}/.evergreen/run-load-balancer.sh stop
+
   "run tests":
     - command: shell.exec
       type: test
@@ -247,13 +263,32 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
+          export AWS_ACCESS_KEY_ID=${aws_access_key_id}
+          export AWS_SECRET_ACCESS_KEY=${aws_secret_access_key}
+          export AWS_DEFAULT_REGION=us-east-1
+          . ${DRIVERS_TOOLS}/.evergreen/csfle/set-temp-creds.sh
           AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" SAFE_FOR_MULTI_MONGOS="${SAFE_FOR_MULTI_MONGOS}" TOPOLOGY="${TOPOLOGY}" \
           COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" \
           AWS_ACCESS_KEY_ID=${aws_access_key_id} AWS_SECRET_ACCESS_KEY=${aws_secret_access_key} \
+          AWS_TEMP_ACCESS_KEY_ID=$CSFLE_AWS_TEMP_ACCESS_KEY_ID \
+          AWS_TEMP_SECRET_ACCESS_KEY=$CSFLE_AWS_TEMP_SECRET_ACCESS_KEY \
+          AWS_TEMP_SESSION_TOKEN=$CSFLE_AWS_TEMP_SESSION_TOKEN \
           AZURE_TENANT_ID=${azure_tenant_id} AZURE_CLIENT_ID=${azure_client_id} AZURE_CLIENT_SECRET=${azure_client_secret} \
           GCP_EMAIL=${gcp_email} GCP_PRIVATE_KEY=${gcp_private_key} \
           REQUIRE_API_VERSION=${REQUIRE_API_VERSION} \
           .evergreen/run-tests.sh
+
+  "run load-balancer tests":
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          AUTH="${AUTH}" SSL="${SSL}" JDK="${JDK}" \
+          SINGLE_MONGOS_LB_URI="${SINGLE_MONGOS_LB_URI}" \
+          MULTI_MONGOS_LB_URI="${MULTI_MONGOS_LB_URI}" \
+          .evergreen/run-load-balancer-tests.sh
 
   "run reactive streams tck tests":
     - command: shell.exec
@@ -346,6 +381,7 @@ functions:
         script: |
           ${PREPARE_SHELL}
           cd ${DRIVERS_TOOLS}/.evergreen/auth_aws
+          . ./activate_venv.sh
           mongo aws_e2e_regular_aws.js
     - command: shell.exec
       type: test
@@ -369,6 +405,7 @@ functions:
         script: |
           ${PREPARE_SHELL}
           cd ${DRIVERS_TOOLS}/.evergreen/auth_aws
+          . ./activate_venv.sh
           mongo aws_e2e_assume_role.js
     - command: shell.exec
       type: test
@@ -397,6 +434,7 @@ functions:
         script: |
           ${PREPARE_SHELL}
           cd ${DRIVERS_TOOLS}/.evergreen/auth_aws
+          . ./activate_venv.sh
           mongo aws_e2e_ec2.js
     - command: shell.exec
       type: test
@@ -455,7 +493,7 @@ functions:
         script: |
           ${PREPARE_SHELL}
           cd ${DRIVERS_TOOLS}/.evergreen/auth_aws
-
+          . ./activate_venv.sh
           cat <<EOF > setup.js
           const mongo_binaries = "$MONGODB_BINARIES";
           const project_dir = "$PROJECT_DIRECTORY";
@@ -685,6 +723,7 @@ post:
   - func: "upload working dir logs"
   - func: "upload test results"
   - func: "cleanup"
+  - func: "stop load-balancer"
 
 tasks:
 
@@ -700,6 +739,12 @@ tasks:
       commands:
         - func: "bootstrap mongo-orchestration"
         - func: "run tests"
+
+    - name: load-balancer-test
+      commands:
+        - func: "bootstrap mongo-orchestration"
+        - func: "run load-balancer"
+        - func: "run load-balancer tests"
 
     - name: "scala-tests"
       commands:
@@ -1210,6 +1255,13 @@ axes:
            # Multiple mongos instances can be specified in the connection string
            # for this version.
            SAFE_FOR_MULTI_MONGOS: true
+      - id: "5.0"
+        display_name: "5.0"
+        variables:
+          VERSION: "5.0"
+          # Multiple mongos instances can be specified in the connection string
+          # for this version.
+          SAFE_FOR_MULTI_MONGOS: true
       - id: "4.4"
         display_name: "4.4"
         variables:
@@ -1369,7 +1421,7 @@ buildvariants:
 
 - matrix_name: "tests-zlib-compression"
   matrix_spec: { compressor : "zlib", auth: "noauth", ssl: "nossl", jdk: "jdk8",
-                 version: ["3.6", "4.0", "4.2", "4.4", "latest"],
+                 version: ["3.6", "4.0", "4.2", "4.4", "5.0", "latest"],
                  topology: "standalone", os: "linux-large" }
   display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
@@ -1378,7 +1430,7 @@ buildvariants:
 
 - matrix_name: "tests-snappy-compression"
   matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk8",
-                 version: ["3.4", "3.6", "4.0", "4.2", "4.4", "latest"],
+                 version: ["3.4", "3.6", "4.0", "4.2", "4.4", "5.0", "latest"],
                  topology: "standalone", os: "linux" }
   display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
@@ -1387,7 +1439,7 @@ buildvariants:
 
 - matrix_name: "tests-zstd-compression"
   matrix_spec: { compressor : "zstd", auth: "noauth", ssl: "nossl", jdk: "jdk8",
-                 version: ["4.2", "4.4", "latest"],
+                 version: ["4.2", "4.4", "5.0", "latest"],
                  topology: "standalone", os: "linux" }
   display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
@@ -1402,18 +1454,24 @@ buildvariants:
      - name: "test"
 
 - matrix_name: "tests-jdk-secure"
-  matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk8", "jdk11"], version: ["4.0", "4.2", "4.4", "latest"], topology: "*", os: "linux" }
+  matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk8", "jdk11"], version: ["4.0", "4.2", "4.4", "5.0", "latest"], topology: "*", os: "linux" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
      - name: "test"
 
 - matrix_name: "tests-require-api-version"
-  matrix_spec: { api-version: "required", auth: "auth", ssl: "nossl", jdk: ["jdk11"], version: ["latest"], topology: "standalone", os: "linux" }
+  matrix_spec: { api-version: "required", auth: "auth", ssl: "nossl", jdk: ["jdk11"], version: ["5.0", "latest"], topology: "standalone", os: "linux" }
   display_name: "${version} ${topology} ${api-version} "
   tags: ["tests-variant"]
   tasks:
     - name: "test"
+
+- matrix_name: "tests-load-balancer-secure"
+  matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk11"], version: ["5.0", "latest"], topology: "sharded-cluster", os: "ubuntu" }
+  display_name: "Load Balancer ${version} ${auth} ${ssl} ${jdk} ${os}"
+  tasks:
+    - name: "load-balancer-test"
 
 - matrix_name: "tests-slow"
   matrix_spec: { auth: "noauth", ssl: "*", jdk: "jdk8", version: ["4.2"], topology: "*", os: "linux" }
@@ -1458,7 +1516,7 @@ buildvariants:
      - name: "gssapi-auth-test"
 
 - matrix_name: "perf"
-  matrix_spec:  { auth: "noauth", ssl: "nossl", jdk: "jdk8", version: "*", topology: "standalone", os: "linux" }
+  matrix_spec:  { auth: "noauth", ssl: "nossl", jdk: "jdk11", version: ["4.0", "4.2", "4.4", "5.0", "latest"], topology: "standalone", os: "linux" }
   batchtime: 1440 # run once a day
   display_name: "Perf Tests ${version} "
   tags: ["perf-variant"]
@@ -1471,23 +1529,22 @@ buildvariants:
   tasks:
     - name: "plain-auth-test"
 
-# JAVA-3906
-#- matrix_name: "aws-auth-test"
-#  matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk11"], version: ["4.4", "latest"], os: "ubuntu" }
-#  display_name: "MONGODB-AWS Auth test ${version} ${jdk}"
-#  run_on: ubuntu1804-test
-#  tasks:
-#    - name: "aws-auth-test"
+- matrix_name: "aws-auth-test"
+  matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk11"], version: ["4.4", "5.0", "latest"], os: "ubuntu" }
+  display_name: "MONGODB-AWS Auth test ${version} ${jdk}"
+  run_on: ubuntu1804-test
+  tasks:
+    - name: "aws-auth-test"
 
 - matrix_name: "accept-api-version-2-test"
-  matrix_spec: { ssl: "nossl", auth: "noauth", jdk: "jdk11", version: ["latest"], topology: "standalone", os: "linux" }
-  display_name: "Accept API Version 2"
+  matrix_spec: { ssl: "nossl", auth: "noauth", jdk: "jdk11", version: ["5.0", "latest"], topology: "standalone", os: "linux" }
+  display_name: "Accept API Version 2 ${version}"
   run_on: ubuntu1804-test
   tasks:
     - name: "accept-api-version-2-test"
 
 - matrix_name: "ocsp-test"
-  matrix_spec: { auth: "noauth", ssl: "ssl", jdk: "jdk11", version: ["4.4", "latest"], os: "ubuntu" }
+  matrix_spec: { auth: "noauth", ssl: "ssl", jdk: "jdk11", version: ["4.4", "5.0", "latest"], os: "ubuntu" }
   display_name: "OCSP test ${version} ${os}"
   tasks:
     - name: ".ocsp"

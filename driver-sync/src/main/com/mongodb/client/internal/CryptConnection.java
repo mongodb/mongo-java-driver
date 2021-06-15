@@ -196,4 +196,8 @@ class CryptConnection implements Connection {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public void markAsPinned(final PinningMode pinningMode) {
+        wrapped.markAsPinned(pinningMode);
+    }
 }
