@@ -535,8 +535,8 @@ class DefaultConnectionPool implements ConnectionPool {
         @Override
         public void close(final UsageTrackingInternalConnection connection) {
             connectionPoolListener.connectionRemoved(new ConnectionRemovedEvent(getId(connection), getReasonForClosing(connection)));
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info(format("Closed connection [%s] to %s because %s.", getId(connection), serverId.getAddress(),
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(format("Closed connection [%s] to %s because %s.", getId(connection), serverId.getAddress(),
                                   getReasonStringForClosing(connection)));
             }
             connection.close();
