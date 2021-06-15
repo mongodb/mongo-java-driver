@@ -22,6 +22,7 @@ import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.UuidRepresentation;
+import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.Encoder;
@@ -58,6 +59,12 @@ import java.util.TreeSet;
 public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
     private static final long serialVersionUID = -4415279469780082174L;
 
+    private static final Codec<BasicDBObject> DEFAULT_CODEC =
+            CodecRegistryHelper.createRegistry(
+                    DBObjectCodec.getDefaultRegistry(),
+                    UuidRepresentation.STANDARD)
+                    .get(BasicDBObject.class);
+
     private boolean isPartialObject;
 
     /**
@@ -69,7 +76,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
      * @mongodb.driver.manual reference/mongodb-extended-json/ MongoDB Extended JSON
      */
     public static BasicDBObject parse(final String json) {
-        return parse(json, DBObjectCodec.getDefaultRegistry().get(BasicDBObject.class));
+        return parse(json, DEFAULT_CODEC);
     }
 
     /**
@@ -167,7 +174,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
      * @throws org.bson.codecs.configuration.CodecConfigurationException if the document contains types not in the default registry
      */
     public String toJson(final JsonWriterSettings writerSettings) {
-        return toJson(writerSettings, DBObjectCodec.getDefaultRegistry().get(BasicDBObject.class));
+        return toJson(writerSettings, DEFAULT_CODEC);
     }
 
     /**
@@ -227,10 +234,9 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
      * of this class because currently this method is only used for equality and hash code, and is not passed to any other parts of the
      * library.
      */
-    private static byte[] toBson(final DBObject dbObject) {
+    private static byte[] toBson(final BasicDBObject dbObject) {
         OutputBuffer outputBuffer = new BasicOutputBuffer();
-        CodecRegistryHelper.createRegistry(DBObjectCodec.getDefaultRegistry(), UuidRepresentation.STANDARD)
-                .get(DBObject.class).encode(new BsonBinaryWriter(outputBuffer), dbObject, EncoderContext.builder().build());
+        DEFAULT_CODEC.encode(new BsonBinaryWriter(outputBuffer), dbObject, EncoderContext.builder().build());
         return outputBuffer.toByteArray();
     }
 
@@ -302,7 +308,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
         return canonicalized;
     }
 
-    private static DBObject canonicalizeBSONObject(final BSONObject from) {
+    private static BasicDBObject canonicalizeBSONObject(final BSONObject from) {
         BasicDBObject canonicalized = new BasicDBObject();
         TreeSet<String> keysInOrder = new TreeSet<String>(from.keySet());
         for (String key : keysInOrder) {

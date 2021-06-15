@@ -53,7 +53,6 @@ import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.getMoreCursorDocumentToQueryResult;
 import static com.mongodb.internal.operation.QueryHelper.translateCommandException;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
-import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 
 class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
@@ -152,12 +151,32 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
 
     @Override
     public void next(final SingleResultCallback<List<T>> callback) {
-        next(callback, false);
-    }
-
-    @Override
-    public void tryNext(final SingleResultCallback<List<T>> callback) {
-        next(callback, true);
+        if (isClosed()) {
+            callback.onResult(null, new MongoException("next() called after the cursor was closed."));
+        } else if (firstBatch != null && (!firstBatch.getResults().isEmpty())) {
+            // May be empty for a tailable cursor
+            List<T> results = firstBatch.getResults();
+            firstBatch = null;
+            if (getServerCursor() == null) {
+                close();
+            }
+            callback.onResult(results, null);
+        } else {
+            ServerCursor localCursor = getServerCursor();
+            if (localCursor == null) {
+                close();
+                callback.onResult(null, null);
+            } else {
+                synchronized (this) {
+                    if (isClosed()) {
+                        callback.onResult(null, new MongoException("next() called after the cursor was closed."));
+                        return;
+                    }
+                    isOperationInProgress = true;
+                }
+                getMore(localCursor, callback);
+            }
+        }
     }
 
     @Override
@@ -199,47 +218,13 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         return maxWireVersion;
     }
 
-    private void next(final SingleResultCallback<List<T>> callback, final boolean tryNext) {
-        if (isClosed()) {
-            callback.onResult(null, new MongoException(format("%s called after the cursor was closed.",
-                    tryNext ? "tryNext()" : "next()")));
-        } else if (firstBatch != null && (tryNext || !firstBatch.getResults().isEmpty())) {
-            // May be empty for a tailable cursor
-            List<T> results = firstBatch.getResults();
-            if (tryNext && results.isEmpty()) {
-                results = null;
-            }
-            firstBatch = null;
-            if (getServerCursor() == null) {
-                close();
-            }
-            callback.onResult(results, null);
-        } else {
-            ServerCursor localCursor = getServerCursor();
-            if (localCursor == null) {
-                close();
-                callback.onResult(null, null);
-            } else {
-                synchronized (this) {
-                    if (isClosed()) {
-                        callback.onResult(null, new MongoException(format("%s called after the cursor was closed.",
-                                tryNext ? "tryNext()" : "next()")));
-                        return;
-                    }
-                    isOperationInProgress = true;
-                }
-                getMore(localCursor, callback, tryNext);
-            }
-        }
-    }
-
     private boolean limitReached() {
         return Math.abs(limit) != 0 && count.get() >= Math.abs(limit);
     }
 
-    private void getMore(final ServerCursor cursor, final SingleResultCallback<List<T>> callback, final boolean tryNext) {
+    private void getMore(final ServerCursor cursor, final SingleResultCallback<List<T>> callback) {
         if (pinnedConnection != null)  {
-            getMore(pinnedConnection.retain(), cursor, callback, tryNext);
+            getMore(pinnedConnection.retain(), cursor, callback);
         } else {
             connectionSource.getConnection(new SingleResultCallback<AsyncConnection>() {
                 @Override
@@ -248,24 +233,23 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
                         endOperationInProgress();
                         callback.onResult(null, t);
                     } else {
-                        getMore(connection, cursor, callback, tryNext);
+                        getMore(connection, cursor, callback);
                     }
                 }
             });
         }
     }
 
-    private void getMore(final AsyncConnection connection, final ServerCursor cursor, final SingleResultCallback<List<T>> callback,
-                         final boolean tryNext) {
+    private void getMore(final AsyncConnection connection, final ServerCursor cursor, final SingleResultCallback<List<T>> callback) {
         if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
             connection.commandAsync(namespace.getDatabaseName(), asGetMoreCommandDocument(cursor.getId()), NO_OP_FIELD_NAME_VALIDATOR,
                     ReadPreference.primary(), CommandResultDocumentCodec.create(decoder, "nextBatch"),
                     connectionSource.getSessionContext(), connectionSource.getServerApi(),
-                    new CommandResultSingleResultCallback(connection, cursor, callback, tryNext));
+                    new CommandResultSingleResultCallback(connection, cursor, callback));
 
         } else {
             connection.getMoreAsync(namespace, cursor.getId(), getNumberToReturn(limit, batchSize, count.get()),
-                                    decoder, new QueryResultSingleResultCallback(connection, callback, tryNext));
+                                    decoder, new QueryResultSingleResultCallback(connection, callback));
         }
     }
 
@@ -342,7 +326,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     }
 
     private void endOperationInProgress() {
-        boolean closePending = false;
+        boolean closePending;
         synchronized (this) {
             isOperationInProgress = false;
             closePending = this.isClosePending;
@@ -353,7 +337,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     }
 
     private void handleGetMoreQueryResult(final AsyncConnection connection, final SingleResultCallback<List<T>> callback,
-                                          final QueryResult<T> result, final boolean tryNext) {
+                                          final QueryResult<T> result) {
         cursor.set(result.getCursor());
         if (isClosePending) {
             try {
@@ -365,8 +349,8 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
             } finally {
                 callback.onResult(null, null);
             }
-        } else if (!tryNext && result.getResults().isEmpty() && result.getCursor() != null) {
-            getMore(connection, result.getCursor(), callback, false);
+        } else if (result.getResults().isEmpty() && result.getCursor() != null) {
+            getMore(connection, result.getCursor(), callback);
         } else {
             count.addAndGet(result.getResults().size());
             if (limitReached()) {
@@ -392,14 +376,12 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         private final AsyncConnection connection;
         private final ServerCursor cursor;
         private final SingleResultCallback<List<T>> callback;
-        private final boolean tryNext;
 
         CommandResultSingleResultCallback(final AsyncConnection connection, final ServerCursor cursor,
-                                          final SingleResultCallback<List<T>> callback, final boolean tryNext) {
+                                          final SingleResultCallback<List<T>> callback) {
             this.connection = connection;
             this.cursor = cursor;
             this.callback = errorHandlingCallback(callback, LOGGER);
-            this.tryNext = tryNext;
         }
 
         @Override
@@ -415,7 +397,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
                 QueryResult<T> queryResult = getMoreCursorDocumentToQueryResult(result.getDocument(CURSOR),
                         connection.getDescription().getServerAddress());
                 postBatchResumeToken = getPostBatchResumeTokenFromResponse(result);
-                handleGetMoreQueryResult(connection, callback, queryResult, tryNext);
+                handleGetMoreQueryResult(connection, callback, queryResult);
             }
         }
     }
@@ -423,13 +405,10 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     private class QueryResultSingleResultCallback implements SingleResultCallback<QueryResult<T>> {
         private final AsyncConnection connection;
         private final SingleResultCallback<List<T>> callback;
-        private final boolean tryNext;
 
-        QueryResultSingleResultCallback(final AsyncConnection connection, final SingleResultCallback<List<T>> callback,
-                                        final boolean tryNext) {
+        QueryResultSingleResultCallback(final AsyncConnection connection, final SingleResultCallback<List<T>> callback) {
             this.connection = connection;
             this.callback = errorHandlingCallback(callback, LOGGER);
-            this.tryNext = tryNext;
         }
 
         @Override
@@ -439,7 +418,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
                 endOperationInProgress();
                 callback.onResult(null, t);
             } else {
-                handleGetMoreQueryResult(connection, callback, result, tryNext);
+                handleGetMoreQueryResult(connection, callback, result);
             }
         }
     }

@@ -764,8 +764,8 @@ class DefaultConnectionPool implements ConnectionPool {
                 }
             } else {
                 connectionClosed(connectionPoolListener, getId(connection), getReasonForClosing(connection));
-                if (LOGGER.isInfoEnabled()) {
-                    LOGGER.info(format("Closed connection [%s] to %s because %s.", getId(connection), serverId.getAddress(),
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug(format("Closed connection [%s] to %s because %s.", getId(connection), serverId.getAddress(),
                             getReasonStringForClosing(connection)));
                 }
             }

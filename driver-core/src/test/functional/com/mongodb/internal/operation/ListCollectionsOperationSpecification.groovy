@@ -85,14 +85,6 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         then:
         callback.get() == null
 
-        when:
-        cursor = executeAsync(operation)
-        callback = new FutureResultCallback()
-        cursor.tryNext(callback)
-
-        then:
-        callback.get() == null
-
         cleanup:
         collectionHelper.dropDatabase(madeUpDatabase)
     }
