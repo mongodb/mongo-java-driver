@@ -229,7 +229,7 @@ class DefaultConnectionPool implements ConnectionPool {
             connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, Reason.TIMEOUT));
         } else if (t instanceof MongoOpenConnectionInternalException) {
             connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, Reason.CONNECTION_ERROR));
-            result = MongoOpenConnectionInternalException.unwrap(t);
+            result = t.getCause();
         } else if (t instanceof MongoConnectionPoolClearedException) {
             connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, Reason.CONNECTION_ERROR));
         } else if (ConcurrentPool.isPoolClosedException(t)) {
@@ -384,7 +384,9 @@ class DefaultConnectionPool implements ConnectionPool {
                     try {
                         openConcurrencyLimiter.openImmediately(new PooledConnection(newConnection));
                     } catch (MongoException | MongoOpenConnectionInternalException e) {
-                        RuntimeException actualException = (RuntimeException) MongoOpenConnectionInternalException.unwrap(e);
+                        RuntimeException actualException = e instanceof MongoOpenConnectionInternalException
+                                ? (RuntimeException) e.getCause()
+                                : e;
                         sdamProvider.optional().ifPresent(sdam -> {
                             if (!silentlyComplete.test(actualException)) {
                                 sdam.handleExceptionBeforeHandshake(SdamIssue.specific(actualException, sdam.context(newConnection)));
@@ -738,15 +740,6 @@ class DefaultConnectionPool implements ConnectionPool {
         @NonNull
         public Throwable getCause() {
             return assertNotNull(super.getCause());
-        }
-
-        @NonNull
-        static Throwable unwrap(final Throwable e) {
-            if (e instanceof MongoOpenConnectionInternalException) {
-                return e.getCause();
-            } else {
-                return e;
-            }
         }
     }
 
