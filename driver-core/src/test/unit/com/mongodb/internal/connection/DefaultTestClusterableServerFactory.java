@@ -57,7 +57,7 @@ public class DefaultTestClusterableServerFactory implements ClusterableServerFac
             ConnectionPool connectionPool = new TestConnectionPool();
             ServerListener serverListener = serverListenerFactory.create(serverAddress);
             SdamServerDescriptionManager sdam = new DefaultSdamServerDescriptionManager(serverId, serverDescriptionChangedListener,
-                    serverListener, serverMonitor, connectionPool);
+                    serverListener, serverMonitor, connectionPool, clusterConnectionMode);
             sdamProvider.initialize(sdam);
             serverMonitor.start();
             return new DefaultServer(serverId, clusterConnectionMode, connectionPool, new TestConnectionFactory(), serverMonitor, sdam,

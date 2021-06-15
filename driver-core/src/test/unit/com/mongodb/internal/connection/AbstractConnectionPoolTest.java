@@ -163,10 +163,11 @@ public abstract class AbstractConnectionPoolTest {
             }
             case INTEGRATION: {
                 ServerId serverId = new ServerId(new ClusterId(), ClusterFixture.getPrimary());
+                ClusterConnectionMode connectionMode = ClusterConnectionMode.MULTIPLE;
                 SameObjectProvider<SdamServerDescriptionManager> sdamProvider = SameObjectProvider.uninitialized();
                 pool = new ConnectionIdAdjustingConnectionPool(new DefaultConnectionPool(serverId,
                         new InternalStreamConnectionFactory(
-                                ClusterConnectionMode.SINGLE,
+                                connectionMode,
                                 createStreamFactory(SocketSettings.builder().build(), ClusterFixture.getSslSettings()),
                                 ClusterFixture.getCredentialWithCache(),
                                 poolOptions.getString("appName", new BsonString(fileName + ": " + description)).getValue(),
@@ -176,7 +177,7 @@ public abstract class AbstractConnectionPoolTest {
                                 ClusterFixture.getServerApi()),
                         settings, sdamProvider));
                 sdamProvider.initialize(new DefaultSdamServerDescriptionManager(serverId, mock(ServerDescriptionChangedListener.class),
-                        mock(ServerListener.class), mock(ServerMonitor.class), pool));
+                        mock(ServerListener.class), mock(ServerMonitor.class), pool, connectionMode));
                 setFailPoint();
                 break;
             }

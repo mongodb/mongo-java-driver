@@ -30,6 +30,7 @@ import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcernResult
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
@@ -121,7 +122,7 @@ class DefaultServerSpecification extends Specification {
         def sdamProvider = SameObjectProvider.<SdamServerDescriptionManager>uninitialized()
         def serverMonitor = new TestServerMonitor(sdamProvider)
         sdamProvider.initialize(new DefaultSdamServerDescriptionManager(serverId, Mock(ServerDescriptionChangedListener),
-                serverListener, serverMonitor, connectionPool))
+                serverListener, serverMonitor, connectionPool, ClusterConnectionMode.MULTIPLE))
         def server = defaultServer(Mock(ConnectionPool), serverMonitor, serverListener, sdamProvider.get(), Mock(CommandListener))
         serverMonitor.updateServerDescription(ServerDescription.builder()
                 .address(serverId.getAddress())
@@ -469,7 +470,8 @@ class DefaultServerSpecification extends Specification {
         def serverListener = Mock(ServerListener)
         defaultServer(connectionPool, serverMonitor, serverListener,
                 new DefaultSdamServerDescriptionManager(
-                        serverId, Mock(ServerDescriptionChangedListener), serverListener, serverMonitor, connectionPool),
+                        serverId, Mock(ServerDescriptionChangedListener), serverListener, serverMonitor, connectionPool,
+                        ClusterConnectionMode.MULTIPLE),
                 Mock(CommandListener))
     }
 

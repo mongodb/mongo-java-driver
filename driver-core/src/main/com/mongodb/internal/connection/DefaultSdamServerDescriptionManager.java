@@ -17,14 +17,17 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
+import com.mongodb.connection.ServerType;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.event.ServerListener;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.connection.ServerType.UNKNOWN;
@@ -38,18 +41,21 @@ final class DefaultSdamServerDescriptionManager implements SdamServerDescription
     private final ServerListener serverListener;
     private final ServerMonitor serverMonitor;
     private final ConnectionPool connectionPool;
+    private final ClusterConnectionMode connectionMode;
     private final Lock lock;
     private volatile ServerDescription description;
 
     DefaultSdamServerDescriptionManager(final ServerId serverId,
                                         final ServerDescriptionChangedListener serverDescriptionChangedListener,
                                         final ServerListener serverListener, final ServerMonitor serverMonitor,
-                                        final ConnectionPool connectionPool) {
+                                        final ConnectionPool connectionPool,
+                                        final ClusterConnectionMode connectionMode) {
         this.serverId = assertNotNull(serverId);
         this.serverDescriptionChangedListener = assertNotNull(serverDescriptionChangedListener);
         this.serverListener = assertNotNull(serverListener);
         this.serverMonitor = assertNotNull(serverMonitor);
         this.connectionPool = assertNotNull(connectionPool);
+        this.connectionMode = assertNotNull(connectionMode);
         description = unknownConnectingServerDescription(serverId, null);
         lock = new ReentrantLock();
     }
@@ -61,16 +67,21 @@ final class DefaultSdamServerDescriptionManager implements SdamServerDescription
             if (TopologyVersionHelper.newer(description.getTopologyVersion(), candidateDescription.getTopologyVersion())) {
                 return;
             }
+            ServerType newServerType = candidateDescription.getType();
+            boolean markedPoolReady = false;
             /* A paused pool should not be exposed and used. Calling `ready` before updating description and calling `invalidate` after
              * facilitates achieving this. However, because once the pool is observed, it may be used concurrently with the pool being
              * invalidated by either the current method or the `handleException` method, the pool still may be used in a paused state.
              * For those cases `MongoConnectionPoolClearedException` was introduced. */
-            if (ServerTypeHelper.isDataBearing(candidateDescription.getType())) {
+            if (ServerTypeHelper.isDataBearing(newServerType)
+                    || (newServerType != UNKNOWN && connectionMode == ClusterConnectionMode.SINGLE)) {
                 connectionPool.ready();
+                markedPoolReady = true;
             }
             updateDescription(candidateDescription);
             if (candidateDescription.getException() != null) {
-                assertTrue(candidateDescription.getType() == UNKNOWN);
+                assertTrue(newServerType == UNKNOWN);
+                assertFalse(markedPoolReady);
                 connectionPool.invalidate();
             }
         } finally {

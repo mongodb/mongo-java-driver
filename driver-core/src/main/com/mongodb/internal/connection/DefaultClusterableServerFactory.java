@@ -88,7 +88,7 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
                         mongoDriverInformation, compressorList, commandListener, serverApi),
                 connectionPoolSettings, sdamProvider);
         SdamServerDescriptionManager sdam = new DefaultSdamServerDescriptionManager(serverId, serverDescriptionChangedListener,
-                serverListener, serverMonitor, connectionPool);
+                serverListener, serverMonitor, connectionPool, clusterSettings.getMode());
         sdamProvider.initialize(sdam);
         serverMonitor.start();
         return new DefaultServer(serverId, clusterSettings.getMode(), connectionPool, new DefaultConnectionFactory(), serverMonitor,
