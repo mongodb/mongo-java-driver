@@ -19,7 +19,6 @@ The [aggregation pipeline]({{<docsref "core/aggregation-pipeline" >}}) is a fram
 - Include the following import statements:
 
      ```java
-     import com.mongodb.Block;
      import com.mongodb.client.MongoClients;
      import com.mongodb.client.MongoClient;
      import com.mongodb.client.MongoCollection;
@@ -28,19 +27,8 @@ The [aggregation pipeline]({{<docsref "core/aggregation-pipeline" >}}) is a fram
      import com.mongodb.client.model.Accumulators;
      import com.mongodb.client.model.Projections;
      import com.mongodb.client.model.Filters;
-     
+
      import org.bson.Document;
-     ```
-
-- Include the following code which the examples in the tutorials will use to print the results of the aggregation:
-
-     ```java
-     Block<Document> printBlock = new Block<Document>() {
-            @Override
-            public void apply(final Document document) {
-                System.out.println(document.toJson());
-            }
-        };
      ```
 
 ## Connect to a MongoDB Deployment
@@ -73,7 +61,7 @@ collection.aggregate(
               Aggregates.match(Filters.eq("categories", "Bakery")),
               Aggregates.group("$stars", Accumulators.sum("count", 1))
       )
-).forEach(printBlock);
+).forEach(doc -> System.out.println(doc.toJson()));
 ```
 
 ### Use Aggregation Expressions
@@ -98,5 +86,22 @@ collection.aggregate(
               )
           )
       )
-).forEach(printBlock);
+).forEach(doc -> System.out.println(doc.toJson()));
 ```
+
+### Explain an Aggregation
+
+To [explain]({{< docsref "reference/command/explain/" >}}) an aggregation pipeline, call the
+[`AggregateIterable.explain()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/AggregateIterable.html#explain()" >}}) method:
+
+```java
+Document explainResult = collection.aggregate(
+      Arrays.asList(
+              Aggregates.match(Filters.eq("categories", "Bakery")),
+              Aggregates.group("$stars", Accumulators.sum("count", 1))))
+      .explain();
+System.out.println(explainResult.toJson(JsonWriterSettings.builder().indent(true).build()));
+```
+
+The driver supports explain of aggregation pipelines starting with MongoDB 3.6.
+

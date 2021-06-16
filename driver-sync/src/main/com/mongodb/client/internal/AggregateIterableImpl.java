@@ -16,6 +16,7 @@
 
 package com.mongodb.client.internal;
 
+import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
@@ -26,11 +27,13 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.operation.BatchCursor;
+import com.mongodb.internal.operation.ExplainableReadOperation;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
+import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -55,6 +58,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     private Collation collation;
     private String comment;
     private Bson hint;
+    private Bson variables;
 
     AggregateIterableImpl(@Nullable final ClientSession clientSession, final String databaseName, final Class<TDocument> documentClass,
                           final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
@@ -95,7 +99,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         }
 
         getExecutor().execute(operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint,
-                comment, aggregationLevel), getReadConcern(), getClientSession());
+                comment, variables, aggregationLevel), getReadConcern(), getClientSession());
     }
 
     @Override
@@ -149,11 +153,43 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
+    public AggregateIterable<TResult> let(@Nullable final Bson variables) {
+        this.variables = variables;
+        return this;
+    }
+
+    @Override
+    public Document explain() {
+        return executeExplain(Document.class, null);
+    }
+
+    @Override
+    public Document explain(final ExplainVerbosity verbosity) {
+        return executeExplain(Document.class, notNull("verbosity", verbosity));
+    }
+
+    @Override
+    public <E> E explain(final Class<E> explainDocumentClass) {
+        return executeExplain(explainDocumentClass, null);
+    }
+
+    @Override
+    public <E> E explain(final Class<E> explainResultClass, final ExplainVerbosity verbosity) {
+        return executeExplain(explainResultClass, notNull("verbosity", verbosity));
+    }
+
+    private <E> E executeExplain(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity) {
+        notNull("explainDocumentClass", explainResultClass);
+        return getExecutor().execute(asAggregateOperation().asExplainableOperation(verbosity, codecRegistry.get(explainResultClass)),
+                getReadPreference(), getReadConcern(), getClientSession());
+    }
+
+    @Override
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
         MongoNamespace outNamespace = getOutNamespace();
         if (outNamespace != null) {
             getExecutor().execute(operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation,
-                    hint, comment, aggregationLevel), getReadConcern(), getClientSession());
+                    hint, comment, variables, aggregationLevel), getReadConcern(), getClientSession());
 
             FindOptions findOptions = new FindOptions().collation(collation);
             Integer batchSize = getBatchSize();
@@ -162,9 +198,13 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
             }
             return operations.find(outNamespace, new BsonDocument(), resultClass, findOptions);
         } else {
-            return operations.aggregate(pipeline, resultClass, maxTimeMS, maxAwaitTimeMS, getBatchSize(), collation,
-                    hint, comment, allowDiskUse, aggregationLevel);
+            return asAggregateOperation();
         }
+    }
+
+    private ExplainableReadOperation<BatchCursor<TResult>> asAggregateOperation() {
+        return operations.aggregate(pipeline, resultClass, maxTimeMS, maxAwaitTimeMS, getBatchSize(), collation,
+                hint, comment, variables, allowDiskUse, aggregationLevel);
     }
 
     @Nullable

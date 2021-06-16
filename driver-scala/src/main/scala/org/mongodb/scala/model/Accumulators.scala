@@ -167,14 +167,14 @@ object Accumulators {
     JAccumulators.stdDevSamp(fieldName, expression)
 
   /**
-   * Creates an \$accumulator pipeline stage
+   * Creates an `\$accumulator` pipeline stage
    *
    * @param fieldName            the field name
    * @param initFunction         a function used to initialize the state
    * @param accumulateFunction   a function used to accumulate documents
    * @param mergeFunction        a function used to merge two internal states, e.g. accumulated on different shards or
    *                             threads. It returns the resulting state of the accumulator.
-   * @return the \$accumulator pipeline stage
+   * @return the `\$accumulator` pipeline stage
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/accumulator/ \$accumulator]]
    * @since 1.2
    * @note Requires MongoDB 4.4 or greater
@@ -188,7 +188,7 @@ object Accumulators {
     JAccumulators.accumulator(fieldName, initFunction, accumulateFunction, mergeFunction)
 
   /**
-   * Creates an \$accumulator pipeline stage
+   * Creates an `\$accumulator` pipeline stage
    *
    * @param fieldName            the field name
    * @param initFunction         a function used to initialize the state
@@ -196,7 +196,7 @@ object Accumulators {
    * @param mergeFunction        a function used to merge two internal states, e.g. accumulated on different shards or
    *                             threads. It returns the resulting state of the accumulator.
    * @param finalizeFunction     a function used to finalize the state and return the result (may be null)
-   * @return the \$accumulator pipeline stage
+   * @return the `\$accumulator` pipeline stage
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/accumulator/ \$accumulator]]
    * @since 1.2
    * @note Requires MongoDB 4.4 or greater
@@ -211,7 +211,7 @@ object Accumulators {
     JAccumulators.accumulator(fieldName, initFunction, accumulateFunction, mergeFunction, finalizeFunction)
 
   /**
-   * Creates an \$accumulator pipeline stage
+   * Creates an `\$accumulator` pipeline stage
    *
    * @param fieldName            the field name
    * @param initFunction         a function used to initialize the state
@@ -222,7 +222,7 @@ object Accumulators {
    * @param mergeFunction        a function used to merge two internal states, e.g. accumulated on different shards or
    *                             threads. It returns the resulting state of the accumulator.
    * @param finalizeFunction     a function used to finalize the state and return the result (may be null)
-   * @return the \$accumulator pipeline stage
+   * @return the `\$accumulator` pipeline stage
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/accumulator/ \$accumulator]]
    * @since 1.2
    * @note Requires MongoDB 4.4 or greater
@@ -247,7 +247,7 @@ object Accumulators {
     )
 
   /**
-   * Creates an \$accumulator pipeline stage
+   * Creates an `\$accumulator` pipeline stage
    *
    * @param fieldName            the field name
    * @param initFunction         a function used to initialize the state
@@ -259,7 +259,7 @@ object Accumulators {
    *                             threads. It returns the resulting state of the accumulator.
    * @param finalizeFunction     a function used to finalize the state and return the result (may be null)
    * @param lang                 a language specifier
-   * @return the \$accumulator pipeline stage
+   * @return the `\$accumulator` pipeline stage
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/accumulator/ \$accumulator]]
    * @since 1.2
    * @note Requires MongoDB 4.4 or greater

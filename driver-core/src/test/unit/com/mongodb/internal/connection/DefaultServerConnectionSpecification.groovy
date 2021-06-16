@@ -20,13 +20,13 @@ import com.mongodb.MongoNamespace
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcernResult
-import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerId
 import com.mongodb.diagnostics.logging.Logger
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.bulk.DeleteRequest
 import com.mongodb.internal.bulk.InsertRequest
 import com.mongodb.internal.bulk.UpdateRequest
@@ -39,6 +39,7 @@ import org.bson.codecs.BsonDocumentCodec
 import spock.lang.Shared
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.CustomMatchers.compare
 import static com.mongodb.connection.ServerType.SHARD_ROUTER
 import static com.mongodb.connection.ServerType.STANDALONE
@@ -250,11 +251,12 @@ class DefaultServerConnectionSpecification extends Specification {
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
 
         when:
-        connection.commandAsync('test', command, validator, ReadPreference.primary(), codec, NoOpSessionContext.INSTANCE, callback)
+        connection.commandAsync('test', command, validator, ReadPreference.primary(), codec, NoOpSessionContext.INSTANCE,
+                getServerApi(), callback)
 
         then:
         1 * executor.executeAsync({
-            compare(new CommandProtocolImpl('test', command, validator, ReadPreference.primary(), codec), it)
+            compare(new CommandProtocolImpl('test', command, validator, ReadPreference.primary(), codec, getServerApi()), it)
         }, internalConnection, NoOpSessionContext.INSTANCE, callback)
     }
 

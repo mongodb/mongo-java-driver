@@ -38,6 +38,7 @@ import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.DefaultClusterFactory;
+import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.Document;
@@ -48,26 +49,29 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static org.bson.internal.CodecRegistryHelper.createRegistry;
 import static com.mongodb.client.internal.Crypts.createCrypt;
 import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
+import static org.bson.internal.CodecRegistryHelper.createRegistry;
 
 public final class MongoClientImpl implements MongoClient {
 
     private final MongoClientSettings settings;
+    private final MongoDriverInformation mongoDriverInformation;
     private final MongoClientDelegate delegate;
 
-    public MongoClientImpl(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation) {
-        this(createCluster(settings, mongoDriverInformation), settings, null);
+    public MongoClientImpl(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation) {
+        this(createCluster(settings, mongoDriverInformation), mongoDriverInformation, settings, null);
     }
 
-    public MongoClientImpl(final Cluster cluster, final MongoClientSettings settings,
+    public MongoClientImpl(final Cluster cluster, final MongoDriverInformation mongoDriverInformation,
+                           final MongoClientSettings settings,
                            @Nullable final OperationExecutor operationExecutor) {
         this.settings = notNull("settings", settings);
+        this.mongoDriverInformation = mongoDriverInformation;
         AutoEncryptionSettings autoEncryptionSettings = settings.getAutoEncryptionSettings();
         this.delegate = new MongoClientDelegate(notNull("cluster", cluster),
                 createRegistry(settings.getCodecRegistry(), settings.getUuidRepresentation()), this, operationExecutor,
-                autoEncryptionSettings == null ? null : createCrypt(SimpleMongoClients.create(this), autoEncryptionSettings));
+                autoEncryptionSettings == null ? null : createCrypt(this, autoEncryptionSettings), settings.getServerApi());
     }
 
     @Override
@@ -204,7 +208,7 @@ public final class MongoClientImpl implements MongoClient {
         return new DefaultClusterFactory().createCluster(settings.getClusterSettings(), settings.getServerSettings(),
                 settings.getConnectionPoolSettings(), getStreamFactory(settings, false), getStreamFactory(settings, true),
                 settings.getCredential(), getCommandListener(settings.getCommandListeners()), settings.getApplicationName(),
-                mongoDriverInformation, settings.getCompressorList());
+                mongoDriverInformation, settings.getCompressorList(), settings.getServerApi());
     }
 
     private static StreamFactory getStreamFactory(final MongoClientSettings settings, final boolean isHeartbeat) {
@@ -229,6 +233,22 @@ public final class MongoClientImpl implements MongoClient {
                 return result.getString("name").getValue();
             }
         });
+    }
+
+    public ServerSessionPool getServerSessionPool() {
+        return delegate.getServerSessionPool();
+    }
+
+    public OperationExecutor getOperationExecutor() {
+        return delegate.getOperationExecutor();
+    }
+
+    public MongoClientSettings getSettings() {
+        return settings;
+    }
+
+    public MongoDriverInformation getMongoDriverInformation() {
+        return mongoDriverInformation;
     }
 }
 

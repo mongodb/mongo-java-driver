@@ -116,11 +116,13 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
         given:
         def connection = Mock(Connection)
         def connectionSource = Stub(ConnectionSource) {
+            getServerApi() >> null
             getConnection() >> connection
         }
         def readBinding = Stub(ReadBinding) {
             getReadConnectionSource() >> connectionSource
             getReadPreference() >> readPreference
+            getServerApi() >> null
         }
         def operation = new ListDatabasesOperation(helper.decoder)
 
@@ -129,7 +131,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         _ * connection.getDescription() >> helper.connectionDescription
-        1 * connection.command(_, _, _, readPreference, _, _) >> helper.commandResult
+        1 * connection.command(_, _, _, readPreference, _, _, null) >> helper.commandResult
         1 * connection.release()
 
         where:
@@ -144,6 +146,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
         }
         def readBinding = Stub(AsyncReadBinding) {
             getReadPreference() >> readPreference
+            getServerApi() >> null
             getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
         }
         def operation = new ListDatabasesOperation(helper.decoder)
@@ -153,7 +156,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         _ * connection.getDescription() >> helper.connectionDescription
-        1 * connection.commandAsync(_, _, _, readPreference, _, _, _) >> { it[6].onResult(helper.commandResult, null) }
+        1 * connection.commandAsync(_, _, _, readPreference, _, _, _, _) >> { it.last().onResult(helper.commandResult, null) }
         1 * connection.release()
 
         where:

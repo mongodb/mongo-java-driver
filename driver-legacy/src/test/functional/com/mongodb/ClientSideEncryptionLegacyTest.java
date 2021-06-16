@@ -25,7 +25,7 @@ import org.junit.After;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import static com.mongodb.ClusterFixture.getConnectionString;
+import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 
 // See https://github.com/mongodb/specifications/tree/master/source/client-side-encryption/tests
 @RunWith(Parameterized.class)
@@ -40,10 +40,10 @@ public class ClientSideEncryptionLegacyTest extends AbstractClientSideEncryption
 
     @Override
     protected void createMongoClient(final AutoEncryptionSettings autoEncryptionSettings, final CommandListener commandListener) {
-        mongoClient = new MongoClient(new MongoClientURI(getConnectionString().getConnectionString(),
-                MongoClientOptions.builder()
-                        .autoEncryptionSettings(autoEncryptionSettings)
-                        .addCommandListener(commandListener)));
+        mongoClient = new MongoClient(getMongoClientSettingsBuilder()
+                .autoEncryptionSettings(autoEncryptionSettings)
+                .addCommandListener(commandListener)
+                .build());
     }
 
     @Override

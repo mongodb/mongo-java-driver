@@ -156,6 +156,20 @@ collection.find(and(gte("stars", 2), lt("stars", 5), equal("categories", "Bakery
           .printResults()
 ```
 
+### Explain
+
+To [explain]({{< docsref "reference/command/explain/" >}}) a find operation, call the
+[`FindObservable.explain()`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/FindObservable.html#explain()" >}})
+method:
+
+```scala
+collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery")))
+          .explain()
+          .printResults()
+```
+
+The driver supports explain of find operations starting with MongoDB 3.0.
+
 ## Read Preference
 
 For read operations on [replica sets]({{<docsref "replication/" >}}) or [sharded clusters]({{<docsref "sharding/" >}}), applications can configure the [read preference]({{<docsref "reference/read-preference" >}}) at three levels:
@@ -171,7 +185,7 @@ For read operations on [replica sets]({{<docsref "replication/" >}}) or [sharded
                                          .build())
       ```
 
-  - Via [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ConnectionString$.html" >}}), as in the following example:
+  - Via [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/package$$ConnectionString$.html" >}}), as in the following example:
 
       ```scala
       val mongoClient = MongoClient("mongodb://host1:27017,host2:27017/?readPreference=secondary")
@@ -214,7 +228,7 @@ For read operations on [replica sets]({{<docsref "replication/" >}}) or [sharded
                                      .build())
       ```
 
-  - Via [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ConnectionString$.html" >}}), as in the following example:
+  - Via [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/package$$ConnectionString$.html" >}}), as in the following example:
 
       ```scala
       val mongoClient = MongoClient("mongodb://host1:27017,host2:27017/?readConcernLevel=majority")
@@ -240,7 +254,7 @@ For example, in the following, the `collWithReadConcern` instance has an AVAILAB
 
 ```scala
 val collWithReadConcern = collection.withReadConcern(ReadConcern.AVAILABLE)
-```
+```              
 
 You can build `MongoClientSettings`, `MongoDatabase`, or `MongoCollection` to include a combination of read concern, read preference, and [write concern]({{<docsref "reference/write-concern" >}}).
 

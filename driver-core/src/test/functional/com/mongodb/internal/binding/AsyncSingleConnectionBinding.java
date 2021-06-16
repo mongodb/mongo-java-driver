@@ -19,15 +19,18 @@ package com.mongodb.internal.binding;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadPreference;
+import com.mongodb.ServerApi;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.internal.connection.Server;
+import com.mongodb.internal.connection.ServerTuple;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.selector.WritableServerSelector;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -47,46 +50,54 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
     private AsyncConnection writeConnection;
     private volatile Server readServer;
     private volatile Server writeServer;
+    private volatile ServerDescription readServerDescription;
+    private volatile ServerDescription writeServerDescription;
+    @Nullable
+    private final ServerApi serverApi;
 
     /**
      * Create a new binding with the given cluster.
-     *
-     * @param cluster     a non-null Cluster which will be used to select a server to bind to
+     *  @param cluster     a non-null Cluster which will be used to select a server to bind to
      * @param maxWaitTime the maximum time to wait for a connection to become available.
      * @param timeUnit    a non-null TimeUnit for the maxWaitTime
+     * @param serverApi   the server api, which may be null
      */
-    public AsyncSingleConnectionBinding(final Cluster cluster, final long maxWaitTime, final TimeUnit timeUnit) {
-        this(cluster, primary(), maxWaitTime, timeUnit);
+    public AsyncSingleConnectionBinding(final Cluster cluster, final long maxWaitTime, final TimeUnit timeUnit,
+                                        @Nullable final ServerApi serverApi) {
+        this(cluster, primary(), maxWaitTime, timeUnit, serverApi);
     }
 
     /**
      * Create a new binding with the given cluster.
-     *
-     * @param cluster        a non-null Cluster which will be used to select a server to bind to
+     *  @param cluster        a non-null Cluster which will be used to select a server to bind to
      * @param readPreference the readPreference for reads, if not primary a separate connection will be used for reads
      * @param maxWaitTime    the maximum time to wait for a connection to become available.
      * @param timeUnit       a non-null TimeUnit for the maxWaitTime
+     * @param serverApi      the server api, which may be null
      */
     public AsyncSingleConnectionBinding(final Cluster cluster, final ReadPreference readPreference,
-                                        final long maxWaitTime, final TimeUnit timeUnit) {
+                                        final long maxWaitTime, final TimeUnit timeUnit, @Nullable final ServerApi serverApi) {
+        this.serverApi = serverApi;
 
         notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
         final CountDownLatch latch = new CountDownLatch(2);
-        cluster.selectServerAsync(new WritableServerSelector(), new SingleResultCallback<Server>() {
+        cluster.selectServerAsync(new WritableServerSelector(), new SingleResultCallback<ServerTuple>() {
             @Override
-            public void onResult(final Server result, final Throwable t) {
+            public void onResult(final ServerTuple result, final Throwable t) {
                 if (t == null) {
-                    writeServer = result;
+                    writeServer = result.getServer();
+                    writeServerDescription = result.getServerDescription();
                     latch.countDown();
                 }
             }
         });
-        cluster.selectServerAsync(new ReadPreferenceServerSelector(readPreference), new SingleResultCallback<Server>() {
+        cluster.selectServerAsync(new ReadPreferenceServerSelector(readPreference), new SingleResultCallback<ServerTuple>() {
             @Override
-            public void onResult(final Server result, final Throwable t) {
+            public void onResult(final ServerTuple result, final Throwable t) {
                 if (t == null) {
-                    readServer = result;
+                    readServer = result.getServer();
+                    readServerDescription = result.getServerDescription();
                     latch.countDown();
                 }
             }
@@ -156,19 +167,25 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
     }
 
     @Override
+    @Nullable
+    public ServerApi getServerApi() {
+        return serverApi;
+    }
+
+    @Override
     public void getReadConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
         isTrue("open", getCount() > 0);
         if (readPreference == primary()) {
             getWriteConnectionSource(callback);
         } else {
-            callback.onResult(new SingleAsyncConnectionSource(readServer, readConnection), null);
+            callback.onResult(new SingleAsyncConnectionSource(readServerDescription, readConnection), null);
         }
     }
 
     @Override
     public void getWriteConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
         isTrue("open", getCount() > 0);
-        callback.onResult(new SingleAsyncConnectionSource(writeServer, writeConnection), null);
+        callback.onResult(new SingleAsyncConnectionSource(writeServerDescription, writeConnection), null);
     }
 
     @Override
@@ -181,23 +198,30 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
     }
 
     private final class SingleAsyncConnectionSource extends AbstractReferenceCounted implements AsyncConnectionSource {
-        private final Server server;
+        private final ServerDescription serverDescription;
         private final AsyncConnection connection;
 
-        private SingleAsyncConnectionSource(final Server server, final AsyncConnection connection) {
-            this.server = server;
+        private SingleAsyncConnectionSource(final ServerDescription serverDescription,
+                                            final AsyncConnection connection) {
+            this.serverDescription = serverDescription;
             this.connection = connection;
             AsyncSingleConnectionBinding.this.retain();
         }
 
         @Override
         public ServerDescription getServerDescription() {
-            return server.getDescription();
+            return serverDescription;
         }
 
         @Override
         public SessionContext getSessionContext() {
             return NoOpSessionContext.INSTANCE;
+        }
+
+        @Override
+        @Nullable
+        public ServerApi getServerApi() {
+            return serverApi;
         }
 
         @Override

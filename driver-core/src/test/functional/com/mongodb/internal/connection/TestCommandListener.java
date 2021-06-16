@@ -36,17 +36,22 @@ import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.mongodb.ClusterFixture.TIMEOUT;
+import static java.util.Collections.emptyList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class TestCommandListener implements CommandListener {
+    private final List<String> eventTypes;
+    private final List<String> ignoredCommandMonitoringEvents;
     private final List<CommandEvent> events = new ArrayList<>();
     private final Lock lock = new ReentrantLock();
     private final Condition commandCompletedCondition = lock.newCondition();
@@ -66,6 +71,15 @@ public class TestCommandListener implements CommandListener {
                         return null;
                     }
                 });
+    }
+
+    public TestCommandListener() {
+        this(Arrays.asList("commandStartedEvent", "commandSucceededEvent", "commandFailedEvent"), emptyList());
+    }
+
+    public TestCommandListener(final List<String> eventTypes, final List<String> ignoredCommandMonitoringEvents) {
+        this.eventTypes = eventTypes;
+        this.ignoredCommandMonitoringEvents = ignoredCommandMonitoringEvents;
     }
 
     public void reset() {
@@ -117,7 +131,7 @@ public class TestCommandListener implements CommandListener {
     private List<CommandEvent> getCommandStartedEvents(final int maxEvents) {
         lock.lock();
         try {
-            List<CommandEvent> commandStartedEvents = new ArrayList<CommandEvent>();
+            List<CommandEvent> commandStartedEvents = new ArrayList<>();
             for (CommandEvent cur : getEvents()) {
                 if (cur instanceof CommandStartedEvent) {
                     commandStartedEvents.add(cur);
@@ -137,7 +151,7 @@ public class TestCommandListener implements CommandListener {
         try {
             while (!hasCompletedEvents(numEvents)) {
                 try {
-                    if (!commandCompletedCondition.await(10, TimeUnit.SECONDS)) {
+                    if (!commandCompletedCondition.await(TIMEOUT, TimeUnit.SECONDS)) {
                         throw new MongoTimeoutException("Timeout waiting for event");
                     }
                 } catch (InterruptedException e) {
@@ -155,7 +169,7 @@ public class TestCommandListener implements CommandListener {
         try {
             while (!hasCompletedEvents(1)) {
                 try {
-                    if (!commandCompletedCondition.await(10, TimeUnit.SECONDS)) {
+                    if (!commandCompletedCondition.await(TIMEOUT, TimeUnit.SECONDS)) {
                         throw new MongoTimeoutException("Timeout waiting for event");
                     }
                 } catch (InterruptedException e) {
@@ -180,6 +194,9 @@ public class TestCommandListener implements CommandListener {
 
     @Override
     public void commandStarted(final CommandStartedEvent event) {
+        if (!eventTypes.contains("commandStartedEvent") || ignoredCommandMonitoringEvents.contains(event.getCommandName())) {
+            return;
+        }
         lock.lock();
         try {
             events.add(new CommandStartedEvent(event.getRequestId(), event.getConnectionDescription(), event.getDatabaseName(),
@@ -192,6 +209,9 @@ public class TestCommandListener implements CommandListener {
 
     @Override
     public void commandSucceeded(final CommandSucceededEvent event) {
+        if (!eventTypes.contains("commandSucceededEvent") || ignoredCommandMonitoringEvents.contains(event.getCommandName())) {
+            return;
+        }
         lock.lock();
         try {
             events.add(new CommandSucceededEvent(event.getRequestId(), event.getConnectionDescription(), event.getCommandName(),
@@ -205,6 +225,9 @@ public class TestCommandListener implements CommandListener {
 
     @Override
     public void commandFailed(final CommandFailedEvent event) {
+        if (!eventTypes.contains("commandFailedEvent") || ignoredCommandMonitoringEvents.contains(event.getCommandName())) {
+            return;
+        }
         lock.lock();
         try {
             events.add(event);

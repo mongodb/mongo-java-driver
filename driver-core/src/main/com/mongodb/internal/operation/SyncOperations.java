@@ -27,6 +27,7 @@ import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.DropIndexOptions;
+import com.mongodb.client.model.EstimatedDocumentCountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
@@ -39,7 +40,6 @@ import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.internal.client.model.AggregationLevel;
-import com.mongodb.internal.client.model.CountStrategy;
 import com.mongodb.internal.client.model.FindOptions;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -79,8 +79,12 @@ public final class SyncOperations<TDocument> {
                 retryWrites, retryReads);
     }
 
-    public ReadOperation<Long> count(final Bson filter, final CountOptions options, final CountStrategy countStrategy) {
-        return operations.count(filter, options, countStrategy);
+    public ReadOperation<Long> countDocuments(final Bson filter, final CountOptions options) {
+        return operations.countDocuments(filter, options);
+    }
+
+    public ReadOperation<Long> estimatedDocumentCount(final EstimatedDocumentCountOptions options) {
+        return operations.estimatedDocumentCount(options);
     }
 
     public <TResult> ReadOperation<BatchCursor<TResult>> findFirst(final Bson filter, final Class<TResult> resultClass,
@@ -88,7 +92,7 @@ public final class SyncOperations<TDocument> {
         return operations.findFirst(filter, resultClass, options);
     }
 
-    public <TResult> ReadOperation<BatchCursor<TResult>> find(final Bson filter, final Class<TResult> resultClass,
+    public <TResult> ExplainableReadOperation<BatchCursor<TResult>> find(final Bson filter, final Class<TResult> resultClass,
                                                               final FindOptions options) {
         return operations.find(filter, resultClass, options);
     }
@@ -104,21 +108,25 @@ public final class SyncOperations<TDocument> {
         return operations.distinct(fieldName, filter, resultClass, maxTimeMS, collation);
     }
 
-    public <TResult> ReadOperation<BatchCursor<TResult>> aggregate(final List<? extends Bson> pipeline, final Class<TResult> resultClass,
-                                                                   final long maxTimeMS, final long maxAwaitTimeMS, final Integer batchSize,
-                                                                   final Collation collation, final Bson hint, final String comment,
-                                                                   final Boolean allowDiskUse,
-                                                                   final AggregationLevel aggregationLevel) {
-        return operations.aggregate(pipeline, resultClass, maxTimeMS, maxAwaitTimeMS, batchSize, collation, hint, comment, allowDiskUse,
-                aggregationLevel);
+    public <TResult> ExplainableReadOperation<BatchCursor<TResult>> aggregate(final List<? extends Bson> pipeline,
+                                                                              final Class<TResult> resultClass,
+                                                                              final long maxTimeMS, final long maxAwaitTimeMS,
+                                                                              final Integer batchSize,
+                                                                              final Collation collation, final Bson hint,
+                                                                              final String comment,
+                                                                              final Bson variables,
+                                                                              final Boolean allowDiskUse,
+                                                                              final AggregationLevel aggregationLevel) {
+        return operations.aggregate(pipeline, resultClass, maxTimeMS, maxAwaitTimeMS, batchSize, collation, hint, comment, variables,
+                allowDiskUse, aggregationLevel);
     }
 
     public WriteOperation<Void> aggregateToCollection(final List<? extends Bson> pipeline, final long maxTimeMS,
                                                       final Boolean allowDiskUse, final Boolean bypassDocumentValidation,
                                                       final Collation collation, final Bson hint, final String comment,
-                                                      final AggregationLevel aggregationLevel) {
+                                                      final Bson variables, final AggregationLevel aggregationLevel) {
         return operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint, comment,
-                aggregationLevel);
+                variables, aggregationLevel);
     }
 
     public WriteOperation<MapReduceStatistics> mapReduceToCollection(final String databaseName, final String collectionName,

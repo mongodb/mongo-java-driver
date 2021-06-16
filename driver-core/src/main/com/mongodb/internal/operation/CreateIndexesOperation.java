@@ -240,11 +240,11 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
         });
     }
 
+    @SuppressWarnings("deprecation")
     private BsonDocument getIndex(final IndexRequest request) {
         BsonDocument index = new BsonDocument();
         index.append("key", request.getKeys());
         index.append("name", new BsonString(request.getName() != null ? request.getName() : generateIndexName(request.getKeys())));
-        index.append("ns", new BsonString(namespace.getFullName()));
         if (request.isBackground()) {
             index.append("background", BsonBoolean.TRUE);
         }

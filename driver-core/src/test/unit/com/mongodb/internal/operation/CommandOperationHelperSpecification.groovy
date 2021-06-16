@@ -122,9 +122,11 @@ class CommandOperationHelperSpecification extends Specification {
         def connection = Mock(Connection)
         def function = Stub(CommandOperationHelper.CommandWriteTransformer)
         def connectionSource = Stub(ConnectionSource) {
+            getServerApi() >> null
             getConnection() >> connection
         }
         def writeBinding = Stub(WriteBinding) {
+            getServerApi() >> null
             getWriteConnectionSource() >> connectionSource
         }
         def connectionDescription = Stub(ConnectionDescription)
@@ -134,7 +136,7 @@ class CommandOperationHelperSpecification extends Specification {
 
         then:
         _ * connection.getDescription() >> connectionDescription
-        1 * connection.command(dbName, command, _, primary(), decoder, _)
+        1 * connection.command(dbName, command, _, primary(), decoder, _, null)
         1 * connection.release()
     }
 
@@ -162,6 +164,7 @@ class CommandOperationHelperSpecification extends Specification {
         }
         def writeBinding = Stub(WriteBinding) {
             getWriteConnectionSource() >> connectionSource
+            getServerApi() >> null
             getSessionContext() >> Stub(SessionContext) {
                 hasSession() >> true
                 hasActiveTransaction() >> false
@@ -174,7 +177,7 @@ class CommandOperationHelperSpecification extends Specification {
                 FindAndModifyHelper.transformer())
 
         then:
-        2 * connection.command(dbName, command, _, primary(), decoder, _) >> { results.poll() }
+        2 * connection.command(dbName, command, _, primary(), decoder, _, null) >> { results.poll() }
 
         then:
         def ex = thrown(MongoWriteConcernException)
@@ -210,10 +213,12 @@ class CommandOperationHelperSpecification extends Specification {
         }
 
         def connectionSource = Stub(AsyncConnectionSource) {
+            getServerApi() >> null
             getConnection(_) >> { it[0].onResult(connection, null) }
             _ * getServerDescription() >> serverDescription
         }
         def asyncWriteBinding = Stub(AsyncWriteBinding) {
+            getServerApi() >> null
             getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
             getSessionContext() >> Stub(SessionContext) {
                 hasSession() >> true
@@ -227,7 +232,7 @@ class CommandOperationHelperSpecification extends Specification {
                 commandCreator, FindAndModifyHelper.asyncTransformer(), callback)
 
         then:
-        2 * connection.commandAsync(dbName, command, _, primary(), decoder, _, _) >> { it.last().onResult(results.poll(), null) }
+        2 * connection.commandAsync(dbName, command, _, primary(), decoder, _, _, _) >> { it.last().onResult(results.poll(), null) }
 
         then:
         callback.throwable instanceof MongoWriteConcernException
@@ -248,6 +253,7 @@ class CommandOperationHelperSpecification extends Specification {
         def readBinding = Stub(ReadBinding) {
             getReadConnectionSource() >> connectionSource
             getReadPreference() >> readPreference
+            getServerApi() >> null
         }
         def connectionDescription = Stub(ConnectionDescription)
 
@@ -256,36 +262,36 @@ class CommandOperationHelperSpecification extends Specification {
 
         then:
         _ * connection.getDescription() >> connectionDescription
-        1 * connection.command(dbName, command, _, readPreference, decoder, _)
+        1 * connection.command(dbName, command, _, readPreference, decoder, _, null)
         1 * connection.release()
 
         where:
         readPreference << [primary(), ReadPreference.secondary()]
     }
 
-    def 'should set read preference to primary to false when using AsyncWriteBinding'() {
+    def 'should set read preference to primary when using AsyncWriteBinding'() {
         given:
         def dbName = 'db'
         def command = new BsonDocument()
-        def decoder = Stub(Decoder)
         def callback = Stub(SingleResultCallback)
-        def function = Stub(CommandOperationHelper.CommandWriteTransformerAsync)
         def connection = Mock(AsyncConnection)
         def connectionSource = Stub(AsyncConnectionSource) {
+            getServerApi() >> null
             getConnection(_) >> { it[0].onResult(connection, null) }
         }
         def asyncWriteBinding = Stub(AsyncWriteBinding) {
+            getServerApi() >> null
             getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
         }
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeCommandAsync(asyncWriteBinding, dbName, command, decoder, function, callback)
+        executeCommandAsync(asyncWriteBinding, dbName, command, connection, callback)
 
         then:
         _ * connection.getDescription() >> connectionDescription
-        1 * connection.commandAsync(dbName, command, _, primary(), decoder, _, _) >> { it[6].onResult(1, null) }
-        1 * connection.release()
+        1 * connection.commandAsync(dbName, command, _, primary(), _, _, _, _) >> { it.last().onResult(1, null) }
+//        1 * connection.release()
     }
 
     def 'should use the AsyncReadBindings readPreference'() {
@@ -298,9 +304,11 @@ class CommandOperationHelperSpecification extends Specification {
         def function = Stub(CommandOperationHelper.CommandReadTransformerAsync)
         def connection = Mock(AsyncConnection)
         def connectionSource = Stub(AsyncConnectionSource) {
+            getServerApi() >> null
             getConnection(_) >> { it[0].onResult(connection, null) }
         }
         def asyncReadBinding = Stub(AsyncReadBinding) {
+            getServerApi() >> null
             getReadConnectionSource(_)  >> { it[0].onResult(connectionSource, null) }
             getReadPreference() >> readPreference
         }
@@ -311,7 +319,7 @@ class CommandOperationHelperSpecification extends Specification {
 
         then:
         _ * connection.getDescription() >> connectionDescription
-        1 * connection.commandAsync(dbName, command, _, readPreference, decoder, _, _) >> { it[6].onResult(1, null) }
+        1 * connection.commandAsync(dbName, command, _, readPreference, decoder, _, _, _) >> { it.last().onResult(1, null) }
         1 * connection.release()
 
         where:

@@ -25,6 +25,15 @@
 
 
     <!-- these specific issues are deliberate design decisions -->
+
+    <!-- Deliberately ignoring this, as the check for a null SSLParameters is actually necessary.
+         See https://jira.mongodb.org/browse/JAVA-2876 for details. -->
+    <Match>
+        <Class name="com.mongodb.client.internal.KeyManagementService"/>
+        <Method name="enableHostNameVerification" params="javax.net.ssl.SSLSocket"/>
+        <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
+    </Match>
+
     <!-- Deliberately ignoring this, as many BSONObject subclasses don't do it -->
     <Match>
         <Package name="com.mongodb"/>
@@ -163,6 +172,12 @@
         <Bug pattern="RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"/>
     </Match>
 
+    <Match>
+        <Class name="~com.mongodb.reactivestreams.client.internal.crypt.*"/>
+        <Method name="retain"/>
+        <Bug pattern="RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"/>
+    </Match>
+
     <!-- Caused by Java 11 generating a null check on try with resources.
          See https://github.com/spotbugs/spotbugs/issues/756 for details. -->
     <Match>
@@ -175,4 +190,10 @@
         <Bug pattern="VA_FORMAT_STRING_USES_NEWLINE"/>
     </Match>
 
+    <!-- The method is a wrapper for `Condition.await`, naturally it does not call it in a loop. -->
+    <Match>
+        <Class name="com.mongodb.internal.connection.DefaultConnectionPool$OpenConcurrencyLimiter"/>
+        <Method name="awaitNanos"/>
+        <Bug pattern="WA_AWAIT_NOT_IN_LOOP"/>
+    </Match>
 </FindBugsFilter>

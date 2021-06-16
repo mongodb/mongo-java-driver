@@ -28,6 +28,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -68,18 +69,16 @@ public class ReadConcernTest {
     @Test
     public void shouldIncludeReadConcernInCommand() {
         mongoClient.getDatabase(getDefaultDatabaseName()).getCollection("test")
-                .withReadConcern(ReadConcern.LOCAL).estimatedDocumentCount();
+                .withReadConcern(ReadConcern.LOCAL).find().into(new ArrayList<>());
 
         List<CommandEvent> events = commandListener.getCommandStartedEvents();
 
-        BsonDocument commandDocument = new BsonDocument("count", new BsonString("test"))
+        BsonDocument commandDocument = new BsonDocument("find", new BsonString("test"))
                 .append("readConcern", ReadConcern.LOCAL.asDocument())
-                .append("query", new BsonDocument());
-        if (serverVersionAtLeast(3, 6)) {
-            commandDocument.put("$db", new BsonString(getDefaultDatabaseName()));
-        }
+                .append("filter", new BsonDocument());
+
         assertEventsEquality(Arrays.<CommandEvent>asList(new CommandStartedEvent(1, null, getDefaultDatabaseName(),
-                        "count", commandDocument)), events);
+                        "find", commandDocument)), events);
     }
 
     private boolean canRunTests() {

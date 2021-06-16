@@ -10,7 +10,7 @@ title = "JNDI"
 
 ## Java Naming and Directory Interface (JNDI)
 
-The driver includes a [JNDI](http://docs.oracle.com/javase/8/docs/technotes/guides/jndi/index.html) ObjectFactory implementation,
+The driver includes a [JNDI]({{< javaseref "technotes/guides/jndi/index.html" >}}) ObjectFactory implementation,
 [`MongoClientFactory`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoClientFactory" >}}) ([`legacy version`]({{< apiref "mongodb-driver-legacy" "com/mongodb/client/jndi/MongoClientFactory" >}})), that returns `MongoClient` instances based on a
 [connection string](http://docs.mongodb.org/manual/reference/connection-string/).
 
@@ -28,7 +28,7 @@ The configuration of the `MongoClientFactory` differs depending on the applicati
 
         <module xmlns="urn:jboss:module:1.3" name="org.mongodb">
            <resources>
-               <resource-root path="mongodb-driver-sync-4.1.0.jar"/>
+               <resource-root path="mongodb-driver-sync-4.3.0-beta3.jar"/>
            </resources>
            <dependencies>
                <module name="javax.api"/>
@@ -52,7 +52,7 @@ connection string for the MongoDB cluster.
             <remote-naming/>
         </subsystem>
 
-A MongoClient instance will be accessible via the JNDI name `java:global/LocalMongoClient`.
+A MongoClient instance will be accessible via the JNDI name `java:global/MyMongoClient`.
 
 ### Tomcat
 

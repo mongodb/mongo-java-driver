@@ -12,7 +12,7 @@ set -o errexit  # Exit the script with error if any of the commands fail
 #       KEYTAB_BASE64           The BASE64-encoded keytab
 #       PROJECT_DIRECTORY       The project directory
 
-JDK=${JDK:-jdk}
+JDK=${JDK:-jdk8}
 
 ############################################
 #            Main Program                  #
@@ -41,4 +41,4 @@ echo "Running tests with ${JDK}"
 -Dorg.mongodb.test.uri=${MONGODB_URI} \
 -Pgssapi.enabled=true -Psun.security.krb5.debug=true -Pauth.login.config=file://${PROJECT_DIRECTORY}/.evergreen/java.login.drivers.config \
 -Pkrb5.kdc=${KDC} -Pkrb5.realm=${REALM} -Psun.security.krb5.debug=true \
-driver-core:test --tests GSSAPIAuthenticationSpecification
+driver-core:test --tests GSSAPIAuthenticationSpecification --tests GSSAPIAuthenticatorSpecification --tests KerberosSubjectProviderTest

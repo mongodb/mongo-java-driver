@@ -48,6 +48,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.mongodb.ClusterFixture.hasEncryptionTestsEnabled;
 import static com.mongodb.JsonTestServerVersionChecker.skipTest;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
@@ -115,9 +116,7 @@ public abstract class AbstractClientSideEncryptionTest {
 
     @Before
     public void setUp() {
-        assumeTrue("Client side encryption tests disabled",
-                System.getProperty("org.mongodb.test.awsAccessKeyId") != null
-                        && !System.getProperty("org.mongodb.test.awsAccessKeyId").isEmpty());
+        assumeTrue("Client side encryption tests disabled", hasEncryptionTestsEnabled());
         assumeFalse("runOn requirements not satisfied", skipTest);
         assumeFalse("Skipping count tests", filename.startsWith("count."));
         assumeFalse(definition.getString("skipReason", new BsonString("")).getValue(), definition.containsKey("skipReason"));
@@ -196,16 +195,32 @@ public abstract class AbstractClientSideEncryptionTest {
             }
         }
 
-        Map<String, Map<String, Object>> kmsProvidersMap = new HashMap<String, Map<String, Object>>();
-
+        Map<String, Map<String, Object>> kmsProvidersMap = new HashMap<>();
         for (String kmsProviderKey : kmsProviders.keySet()) {
             BsonDocument kmsProviderOptions = kmsProviders.get(kmsProviderKey).asDocument();
-            Map<String, Object> kmsProviderMap = new HashMap<String, Object>();
-
+            Map<String, Object> kmsProviderMap = new HashMap<>();
             if (kmsProviderKey.equals("aws")) {
                 kmsProviderMap.put("accessKeyId", System.getProperty("org.mongodb.test.awsAccessKeyId"));
                 kmsProviderMap.put("secretAccessKey", System.getProperty("org.mongodb.test.awsSecretAccessKey"));
                 kmsProvidersMap.put("aws", kmsProviderMap);
+            } else if (kmsProviderKey.equals("awsTemporary")) {
+                kmsProviderMap.put("accessKeyId", System.getProperty("org.mongodb.test.tmpAwsAccessKeyId"));
+                kmsProviderMap.put("secretAccessKey", System.getProperty("org.mongodb.test.tmpAwsSecretAccessKey"));
+                kmsProviderMap.put("sessionToken", System.getProperty("org.mongodb.test.tmpAwsSessionToken"));
+                kmsProvidersMap.put("aws", kmsProviderMap);
+            } else if (kmsProviderKey.equals("awsTemporaryNoSessionToken")) {
+                kmsProviderMap.put("accessKeyId", System.getProperty("org.mongodb.test.tmpAwsAccessKeyId"));
+                kmsProviderMap.put("secretAccessKey", System.getProperty("org.mongodb.test.tmpAwsSecretAccessKey"));
+                kmsProvidersMap.put("aws", kmsProviderMap);
+            } else if (kmsProviderKey.equals("azure")) {
+                kmsProviderMap.put("tenantId", System.getProperty("org.mongodb.test.azureTenantId"));
+                kmsProviderMap.put("clientId", System.getProperty("org.mongodb.test.azureClientId"));
+                kmsProviderMap.put("clientSecret", System.getProperty("org.mongodb.test.azureClientSecret"));
+                kmsProvidersMap.put("azure", kmsProviderMap);
+            } else if (kmsProviderKey.equals("gcp")) {
+                kmsProviderMap.put("email", System.getProperty("org.mongodb.test.gcpEmail"));
+                kmsProviderMap.put("privateKey", System.getProperty("org.mongodb.test.gcpPrivateKey"));
+                kmsProvidersMap.put("gcp", kmsProviderMap);
             } else if (kmsProviderKey.equals("local")) {
                 kmsProviderMap.put("key", kmsProviderOptions.getBinary("key").getData());
                 kmsProvidersMap.put("local", kmsProviderMap);

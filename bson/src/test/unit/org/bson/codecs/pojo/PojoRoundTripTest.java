@@ -72,6 +72,7 @@ import org.bson.codecs.pojo.entities.SimpleIdImmutableModel;
 import org.bson.codecs.pojo.entities.SimpleIdModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.SimpleNestedPojoModel;
+import org.bson.codecs.pojo.entities.SimpleWithStaticModel;
 import org.bson.codecs.pojo.entities.TreeWithIdModel;
 import org.bson.codecs.pojo.entities.UpperBoundsConcreteModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationBsonPropertyIdModel;
@@ -97,6 +98,7 @@ import org.bson.codecs.pojo.entities.conventions.InterfaceModelImplB;
 import org.bson.codecs.pojo.entities.conventions.Subclass1Model;
 import org.bson.codecs.pojo.entities.conventions.Subclass2Model;
 import org.bson.codecs.pojo.entities.conventions.SuperClassModel;
+import org.bson.codecs.pojo.entities.conventions.BsonRepresentationModel;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -131,11 +133,16 @@ public final class PojoRoundTripTest extends PojoTestCase {
     @Test
     public void test() {
         roundTrip(builder, model, json);
+        threadedRoundTrip(builder, model, json);
     }
 
     private static List<TestData> testCases() {
         List<TestData> data = new ArrayList<TestData>();
         data.add(new TestData("Simple model", getSimpleModel(), PojoCodecProvider.builder().register(SimpleModel.class),
+                SIMPLE_MODEL_JSON));
+
+        data.add(new TestData("Simple model with statics", new SimpleWithStaticModel(42, "myString"),
+                PojoCodecProvider.builder().register(SimpleWithStaticModel.class),
                 SIMPLE_MODEL_JSON));
 
         data.add(new TestData("Property selection model", new PropertySelectionModel(),
@@ -506,6 +513,10 @@ public final class PojoRoundTripTest extends PojoTestCase {
                 }}),
                 getPojoCodecProviderBuilder(MapListGenericExtendedModel.class),
                 "{values: {a: [1, 2, 3], b: [4, 5, 6]}}"));
+
+        data.add(new TestData("BsonRepresentation is encoded and decoded correctly", new BsonRepresentationModel(1),
+                getPojoCodecProviderBuilder(BsonRepresentationModel.class),
+                "{'_id': {'$oid': '111111111111111111111111'}, 'age': 1}"));
 
 
         return data;

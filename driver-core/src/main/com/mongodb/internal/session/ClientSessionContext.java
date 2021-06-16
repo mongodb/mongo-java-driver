@@ -85,8 +85,8 @@ public abstract class ClientSessionContext implements SessionContext {
     }
 
     @Override
-    public void unpinServerAddress() {
-        clientSession.setPinnedServerAddress(null);
+    public void clearTransactionContext() {
+        clientSession.clearTransactionContext();
     }
 
     @Override

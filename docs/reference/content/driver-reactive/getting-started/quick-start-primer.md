@@ -45,19 +45,19 @@ For more information about reactive streams go to: [http://www.reactive-streams.
 ## Subscribers
 
 The MongoDB Reactive Streams Driver API mirrors the Sync driver API and any methods that cause network IO return a `Publisher<T>`, 
-where `T` is the type of response for the operation.  
-The exception to that rule is for methods in the async driver that return a `Void` value in the callback. 
-In [reactive streams](http://www.reactive-streams.org) this is forbidden, so in those circumstances we
-return a [`Success`]({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/Success.html" >}}) on the operation.
+where `T` is the type of response for the operation.
 
 {{% note %}}
 All [`Publishers`](http://www.reactive-streams.org/reactive-streams-1.0.1-javadoc/?org/reactivestreams/Publisher.html) returned 
-from the API are cold, meaning that no I/O happens until they are subscribed to and the subscription makes a request. So just creating a 
-`Publisher` won't cause any network IO. It's not until `Subscription.request()` is called that the driver executes the operation.
+from the API are [cold](https://projectreactor.io/docs/core/release/reference/#reactor.hotCold), meaning that nothing happens until 
+they are subscribed to. So just creating a `Publisher` won't cause any network IO. It's not until `Publisher.subscribe` is called that 
+the driver executes the operation.
 
-Publishers in this implementation are unicast. Each [`Subscription`](http://www.reactive-streams.org/reactive-streams-1.0.1-javadoc/?org/reactivestreams/Subscription.html) 
-to a `Publisher` relates to a single MongoDB operation and its ['Subscriber'](http://www.reactive-streams.org/reactive-streams-1.0.1-javadoc/?org/reactivestreams/Subscriber.html)  
-will receive its own specific set of results. 
+Publishers in this implementation are unicast. Each
+[`Subscription`](http://www.reactive-streams.org/reactive-streams-1.0.1-javadoc/?org/reactivestreams/Subscription.html) to a `Publisher` 
+relates to a single MongoDB operation and its 
+['Subscriber'](http://www.reactive-streams.org/reactive-streams-1.0.1-javadoc/?org/reactivestreams/Subscriber.html) will receive its own 
+specific set of results.
 {{% /note %}}
 
 
@@ -86,11 +86,11 @@ do block on the results of one example before starting the next, so as to ensure
 
 5.  PrintToStringSubscriber
 
-    An implementation of the `ConsumerSubscriber` that prints the string version of the `result` on `Subsbcriber.onNext()`.
+    An implementation of the `ConsumerSubscriber` that prints the string version of the `result` on `Subscriber.onNext()`.
 
 6.  PrintDocumentSubscriber
 
-    An implementation of the `ConsumerSubscriber` that prints the json version of a `Document` on `Subsbcriber.onNext()`.
+    An implementation of the `ConsumerSubscriber` that prints the json version of a `Document` on `Subscriber.onNext()`.
 
 
 ##  Blocking and non blocking examples

@@ -66,7 +66,7 @@ class BaseClusterSpecification extends Specification {
             }
 
             @Override
-            protected ClusterableServer getServer(final ServerAddress serverAddress) {
+            ClusterableServer getServer(final ServerAddress serverAddress) {
                 throw new UnsupportedOperationException()
             }
         }
@@ -115,7 +115,8 @@ class BaseClusterSpecification extends Specification {
         factory.sendNotification(thirdServer, REPLICA_SET_PRIMARY, allServers)
 
         expect:
-        cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.secondary())).description.address == firstServer
+        cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.secondary()))
+                .serverDescription.address == firstServer
     }
 
     def 'should use server selector passed to selectServer if server selector in cluster settings is null'() {
@@ -131,7 +132,7 @@ class BaseClusterSpecification extends Specification {
         factory.sendNotification(thirdServer, REPLICA_SET_PRIMARY, allServers)
 
         expect:
-        cluster.selectServer(new ServerAddressSelector(firstServer)).description.address == firstServer
+        cluster.selectServer(new ServerAddressSelector(firstServer)).serverDescription.address == firstServer
     }
 
     def 'should timeout with useful message'() {
@@ -188,7 +189,8 @@ class BaseClusterSpecification extends Specification {
         factory.sendNotification(thirdServer, REPLICA_SET_PRIMARY, allServers)
 
         expect:
-        cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.primary())).description.address == thirdServer
+        cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.primary()))
+                .serverDescription.address == thirdServer
 
         cleanup:
         cluster?.close()
@@ -211,7 +213,7 @@ class BaseClusterSpecification extends Specification {
         def latch = new CountDownLatch(1)
         def thread = new Thread({
             try {
-                cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.primary()))
+                cluster.selectServer()(new ReadPreferenceServerSelector(ReadPreference.primary()))
             } catch (MongoInterruptedException e) {
                 latch.countDown()
             }
@@ -270,10 +272,10 @@ class BaseClusterSpecification extends Specification {
         factory.sendNotification(firstServer, REPLICA_SET_SECONDARY, allServers)
 
         when:
-        def server = selectServerAsyncAndGet(cluster, firstServer)
+        def serverDescription = selectServerAsync(cluster, firstServer).getDescription()
 
         then:
-        server.description.address == firstServer
+        serverDescription.address == firstServer
 
         cleanup:
         cluster?.close()
@@ -298,8 +300,8 @@ class BaseClusterSpecification extends Specification {
         factory.sendNotification(thirdServer, REPLICA_SET_SECONDARY, allServers)
 
         then:
-        secondServerLatch.get().description.address == secondServer
-        thirdServerLatch.get().description.address == thirdServer
+        secondServerLatch.getDescription().address == secondServer
+        thirdServerLatch.getDescription().address == thirdServer
 
         cleanup:
         cluster?.close()
@@ -357,8 +359,9 @@ class BaseClusterSpecification extends Specification {
 
     def selectServerAsync(BaseCluster cluster, ServerAddress serverAddress) {
         def serverLatch = new ServerLatch()
-        cluster.selectServerAsync(new ServerAddressSelector(serverAddress)) { Server result, MongoException e ->
-            serverLatch.server = result
+        cluster.selectServerAsync(new ServerAddressSelector(serverAddress)) { ServerTuple result, MongoException e ->
+            serverLatch.server = result != null ? result.getServer() : null
+            serverLatch.serverDescription = result != null ? result.serverDescription : null
             serverLatch.throwable = e
             serverLatch.latch.countDown()
         }
@@ -368,6 +371,7 @@ class BaseClusterSpecification extends Specification {
     class ServerLatch {
         CountDownLatch latch = new CountDownLatch(1)
         Server server
+        ServerDescription serverDescription
         Throwable throwable
 
         def get() {
@@ -376,6 +380,14 @@ class BaseClusterSpecification extends Specification {
                 throw throwable
             }
             server
+        }
+
+        def getDescription() {
+            latch.await()
+            if (throwable != null) {
+                throw throwable
+            }
+            serverDescription
         }
     }
 }

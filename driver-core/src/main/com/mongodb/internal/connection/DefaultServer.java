@@ -37,8 +37,6 @@ import com.mongodb.event.ServerOpeningEvent;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
 
-import java.util.List;
-
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
@@ -47,11 +45,9 @@ import static com.mongodb.internal.connection.ClusterableServer.ConnectionState.
 import static com.mongodb.internal.connection.ClusterableServer.ConnectionState.BEFORE_HANDSHAKE;
 import static com.mongodb.internal.connection.EventHelper.wouldDescriptionsGenerateEquivalentEvents;
 import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_TWO_WIRE_VERSION;
-import static java.util.Arrays.asList;
 
 class DefaultServer implements ClusterableServer {
     private static final Logger LOGGER = Loggers.getLogger("connection");
-    private static final List<Integer> SHUTDOWN_CODES = asList(91, 11600);
     private final ServerId serverId;
     private final ConnectionPool connectionPool;
     private final ClusterConnectionMode clusterConnectionMode;
@@ -122,12 +118,6 @@ class DefaultServer implements ClusterableServer {
                 }
             }
         });
-    }
-
-    @Override
-    public ServerDescription getDescription() {
-        isTrue("open", !isClosed());
-        return description;
     }
 
     @Override

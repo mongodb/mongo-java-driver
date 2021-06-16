@@ -29,9 +29,13 @@ import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionReadyEvent;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -39,13 +43,26 @@ import java.util.concurrent.locks.ReentrantLock;
 @SuppressWarnings("deprecation")
 public class TestConnectionPoolListener implements ConnectionPoolListener {
 
+    private final Set<String> eventTypes;
+
     private final List<Object> events = new ArrayList<Object>();
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
     private volatile Class<?> waitingForEventClass;
     private volatile int waitingForEventCount;
+    private final AtomicInteger numConnectionsCheckedOut = new AtomicInteger();
+
 
     public TestConnectionPoolListener() {
+        this(Arrays.asList("poolCreatedEvent", "poolReadyEvent", "poolClearedEvent", "poolClosedEvent", "connectionCreatedEvent",
+                "connectionReadyEvent", "connectionClosedEvent", "connectionCheckOutStartedEvent", "connectionCheckOutFailedEvent",
+                "connectionCheckedOutEvent", "connectionCheckedInEvent",
+                // These are deprecated, but still used by some tests
+                "poolOpenedEvent", "connectionAddedEvent", "connectionRemovedEvent"));
+    }
+
+    public TestConnectionPoolListener(final List<String> eventTypes) {
+        this.eventTypes = new HashSet<>(eventTypes);
     }
 
     public List<Object> getEvents() {
@@ -80,7 +97,8 @@ public class TestConnectionPoolListener implements ConnectionPoolListener {
                 return;
             }
             if (!condition.await(time, unit)) {
-                throw new TimeoutException("Timed out waiting for " + count + " events of type " + eventClass);
+                throw new TimeoutException("Timed out waiting for " + count + " events of type " + eventClass
+                        + ". The count after timing out is " + countEvents(eventClass));
             }
         } finally {
             waitingForEventClass = null;
@@ -109,66 +127,98 @@ public class TestConnectionPoolListener implements ConnectionPoolListener {
 
     @Override
     public void connectionPoolCreated(final ConnectionPoolCreatedEvent event) {
-        addEvent(event);
+        if (eventTypes.contains("poolCreatedEvent")) {
+            addEvent(event);
+        }
     }
 
     @Override
     public void connectionPoolOpened(final com.mongodb.event.ConnectionPoolOpenedEvent event) {
-        addEvent(event);
+        if (eventTypes.contains("poolOpenedEvent")) {
+            addEvent(event);
+        }
     }
 
     @Override
     public void connectionPoolCleared(final ConnectionPoolClearedEvent event) {
-        addEvent(event);
+        if (eventTypes.contains("poolClearedEvent")) {
+            addEvent(event);
+        }
     }
 
     @Override
     public void connectionPoolClosed(final ConnectionPoolClosedEvent event) {
-        addEvent(event);
+        if (eventTypes.contains("poolClosedEvent")) {
+            addEvent(event);
+        }
     }
 
     @Override
     public void connectionCheckOutStarted(final ConnectionCheckOutStartedEvent event) {
-        addEvent(event);
+        if (eventTypes.contains("connectionCheckOutStartedEvent")) {
+            addEvent(event);
+        }
     }
 
     @Override
     public void connectionCheckedOut(final ConnectionCheckedOutEvent event) {
-        addEvent(event);
+        numConnectionsCheckedOut.incrementAndGet();
+        if (eventTypes.contains("connectionCheckedOutEvent")) {
+            addEvent(event);
+        }
     }
 
     @Override
     public void connectionCheckOutFailed(final ConnectionCheckOutFailedEvent event) {
-        addEvent(event);
+        if (eventTypes.contains("connectionCheckOutFailedEvent")) {
+            addEvent(event);
+        }
     }
 
     @Override
     public void connectionCheckedIn(final ConnectionCheckedInEvent event) {
-        addEvent(event);
+        numConnectionsCheckedOut.decrementAndGet();
+        if (eventTypes.contains("connectionCheckedInEvent")) {
+            addEvent(event);
+        }
     }
 
     @Override
     public void connectionCreated(final ConnectionCreatedEvent event) {
-        addEvent(event);
+        if (eventTypes.contains("connectionCreatedEvent")) {
+            addEvent(event);
+        }
     }
 
     @Override
     public void connectionAdded(final com.mongodb.event.ConnectionAddedEvent event) {
-        addEvent(event);
+        if (eventTypes.contains("connectionAddedEvent")) {
+            addEvent(event);
+        }
     }
 
     @Override
     public void connectionRemoved(final com.mongodb.event.ConnectionRemovedEvent event) {
-        addEvent(event);
+        if (eventTypes.contains("connectionRemovedEvent")) {
+            addEvent(event);
+        }
     }
 
     @Override
     public void connectionReady(final ConnectionReadyEvent event) {
-        addEvent(event);
+        if (eventTypes.contains("connectionReadyEvent")) {
+            addEvent(event);
+        }
     }
 
     @Override
     public void connectionClosed(final ConnectionClosedEvent event) {
-        addEvent(event);
+        if (eventTypes.contains("connectionClosedEvent")) {
+            addEvent(event);
+        }
+    }
+
+    public int getNumConnectionsCheckedOut() {
+        return numConnectionsCheckedOut.get();
     }
 }

@@ -20,11 +20,12 @@ import com.mongodb.MongoNamespace
 import org.bson.Document
 import spock.lang.Specification
 
-import static Fixture.initializeCollection
 import static Fixture.dropDatabase
+import static Fixture.initializeCollection
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName
 import static com.mongodb.reactivestreams.client.Fixture.drop
 import static com.mongodb.reactivestreams.client.Fixture.getDefaultDatabase
+import static com.mongodb.reactivestreams.client.Fixture.waitForLastServerSessionPoolRelease
 
 class FunctionalSpecification extends Specification {
     protected MongoDatabase database;
@@ -48,6 +49,8 @@ class FunctionalSpecification extends Specification {
         if (collection != null) {
             drop(collection.getNamespace())
         }
+
+        waitForLastServerSessionPoolRelease();
     }
 
     String getDatabaseName() {

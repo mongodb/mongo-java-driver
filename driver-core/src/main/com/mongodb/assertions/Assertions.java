@@ -18,11 +18,18 @@
 package com.mongodb.assertions;
 
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.lang.Nullable;
 
 import java.util.Collection;
 
 /**
  * <p>Design by contract assertions.</p> <p>This class is not part of the public API and may be removed or changed at any time.</p>
+ * All {@code assert...} methods throw {@link AssertionError} and should be used to check conditions which may be violated if and only if
+ * the driver code is incorrect. The intended usage of this methods is the same as of the
+ * <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/language/assert.html">Java {@code assert} statement</a>. The reason
+ * for not using the {@code assert} statements is that they are not always enabled. We prefer having internal checks always done at the
+ * cost of our code doing a relatively small amount of additional work in production.
+ * The {@code assert...} methods return values to open possibilities of being used fluently.
  */
 public final class Assertions {
     /**
@@ -117,6 +124,64 @@ public final class Assertions {
                 throw new IllegalArgumentException(name + " can not contain a null value");
             }
         }
+    }
+
+    /**
+     * @param value A value to check.
+     * @param <T> The type of {@code value}.
+     * @return {@code null}.
+     * @throws AssertionError If {@code value} is not {@code null}.
+     */
+    @Nullable
+    public static <T> T assertNull(@Nullable final T value) throws AssertionError {
+        if (value != null) {
+            throw new AssertionError(value.toString());
+        }
+        return null;
+    }
+
+    /**
+     * @param value A value to check.
+     * @param <T> The type of {@code value}.
+     * @return {@code value}
+     * @throws AssertionError If {@code value} is {@code null}.
+     */
+    public static <T> T assertNotNull(@Nullable final T value) throws AssertionError {
+        if (value == null) {
+            throw new AssertionError();
+        }
+        return value;
+    }
+
+    /**
+     * @param value A value to check.
+     * @return {@code true}.
+     * @throws AssertionError If {@code value} is {@code false}.
+     */
+    public static boolean assertTrue(final boolean value) throws AssertionError {
+        if (!value) {
+            throw new AssertionError();
+        }
+        return true;
+    }
+
+    /**
+     * @param value A value to check.
+     * @return {@code false}.
+     * @throws AssertionError If {@code value} is {@code true}.
+     */
+    public static boolean assertFalse(final boolean value) throws AssertionError {
+        if (value) {
+            throw new AssertionError();
+        }
+        return false;
+    }
+
+    /**
+     * @throws AssertionError Always
+     */
+    public static void fail() throws AssertionError {
+        throw new AssertionError();
     }
 
     private Assertions() {

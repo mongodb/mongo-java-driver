@@ -18,19 +18,20 @@ package com.mongodb.client.internal;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
-import com.mongodb.ServerAddress;
+import com.mongodb.ServerApi;
 import com.mongodb.client.ClientSession;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadWriteBinding;
+import com.mongodb.internal.binding.TransactionContext;
 import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.connection.Server;
-import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.session.ClientSessionContext;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 
+import static com.mongodb.connection.ClusterType.LOAD_BALANCED;
 import static org.bson.assertions.Assertions.notNull;
 
 /**
@@ -79,16 +80,16 @@ public class ClientSessionBinding implements ReadWriteBinding {
 
     @Override
     public ConnectionSource getReadConnectionSource() {
-        if (isActiveShardedTxn()) {
-            return new SessionBindingConnectionSource(wrapped.getConnectionSource(pinServer()));
+        if (isConnectionSourcePinningRequired()) {
+            return new SessionBindingConnectionSource(getPinnedConnectionSource(true));
         } else {
             return new SessionBindingConnectionSource(wrapped.getReadConnectionSource());
         }
     }
 
     public ConnectionSource getWriteConnectionSource() {
-        if (isActiveShardedTxn()) {
-            return new SessionBindingConnectionSource(wrapped.getConnectionSource(pinServer()));
+        if (isConnectionSourcePinningRequired()) {
+            return new SessionBindingConnectionSource(getPinnedConnectionSource(false));
         } else {
             return new SessionBindingConnectionSource(wrapped.getWriteConnectionSource());
         }
@@ -99,18 +100,29 @@ public class ClientSessionBinding implements ReadWriteBinding {
         return sessionContext;
     }
 
-    private boolean isActiveShardedTxn() {
-        return session.hasActiveTransaction() && wrapped.getCluster().getDescription().getType() == ClusterType.SHARDED;
+    @Override
+    @Nullable
+    public ServerApi getServerApi() {
+        return wrapped.getServerApi();
     }
 
-    private ServerAddress pinServer() {
-        ServerAddress pinnedServerAddress = session.getPinnedServerAddress();
-        if (pinnedServerAddress == null) {
-            Server server = wrapped.getCluster().selectServer(new ReadPreferenceServerSelector(wrapped.getReadPreference()));
-            pinnedServerAddress = server.getDescription().getAddress();
-            session.setPinnedServerAddress(pinnedServerAddress);
+    private boolean isConnectionSourcePinningRequired() {
+        ClusterType clusterType = wrapped.getCluster().getDescription().getType();
+        return session.hasActiveTransaction() && (clusterType == ClusterType.SHARDED || clusterType == LOAD_BALANCED);
+    }
+
+    private ConnectionSource getPinnedConnectionSource(final boolean isRead) {
+        TransactionContext<Connection> transactionContext = TransactionContext.get(session);
+        ConnectionSource source;
+        if (transactionContext == null) {
+            source = isRead ? wrapped.getReadConnectionSource() : wrapped.getWriteConnectionSource();
+            transactionContext = new TransactionContext<>(wrapped.getCluster().getDescription().getType());
+            session.setTransactionContext(source.getServerDescription().getAddress(), transactionContext);
+            transactionContext.release();  // The session is responsible for retaining a reference to the context
+        } else {
+            source = wrapped.getConnectionSource(session.getPinnedServerAddress());
         }
-        return pinnedServerAddress;
+        return source;
     }
 
     private class SessionBindingConnectionSource implements ConnectionSource {
@@ -131,8 +143,25 @@ public class ClientSessionBinding implements ReadWriteBinding {
         }
 
         @Override
+        public ServerApi getServerApi() {
+            return wrapped.getServerApi();
+        }
+
+        @Override
         public Connection getConnection() {
-            return wrapped.getConnection();
+            TransactionContext<Connection> transactionContext = TransactionContext.get(session);
+            if (transactionContext != null && transactionContext.isConnectionPinningRequired()) {
+                Connection pinnedConnection = transactionContext.getPinnedConnection();
+                if (pinnedConnection == null) {
+                    Connection connection = wrapped.getConnection();
+                    transactionContext.pinConnection(connection, Connection::markAsPinned);
+                    return connection;
+                } else {
+                    return pinnedConnection.retain();
+                }
+            } else {
+                return wrapped.getConnection();
+            }
         }
 
         @Override

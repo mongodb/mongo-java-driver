@@ -128,7 +128,7 @@ To download a file by its file `_id`, pass the `_id` to the method. The followin
 val downloadById = gridFSBucket.downloadToObservable(fileId).results()
 ```
 
-If you don't know the `_id` of the file but know the filename, then you can pass the filename to the [`downloadToObservable`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/gridfs/GridFSBucket.html#downloadToObservable(filename:String,options:org.mongodb.scala.gridfs.GridFSDownloadOptions):org.mongodb.scala.gridfs.GridFSDownloadObservable" >}}) method. By default, it will download the latest version of the file. Use the [`GridFSDownloadOptions`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/gridfs/model/GridFSDownloadOptions.html" >}}) to configure which version to download.
+If you don't know the `_id` of the file but know the filename, then you can pass the filename to the [`downloadToObservable`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/gridfs/GridFSBucket.html#downloadToObservable(filename:String,options:org.mongodb.scala.gridfs.GridFSDownloadOptions):org.mongodb.scala.gridfs.GridFSDownloadObservable" >}}) method. By default, it will download the latest version of the file. Use the [`GridFSDownloadOptions`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/gridfs/model/index.html#GridFSDownloadOptions=com.mongodb.client.gridfs.model.GridFSDownloadOptions" >}}) to configure which version to download.
 
 The following example downloads the original version of the file named "mongodb-tutorial":
 

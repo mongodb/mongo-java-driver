@@ -32,6 +32,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -116,12 +117,20 @@ public class ServerSelectionSelectionTest {
 
     private ClusterDescription buildClusterDescription(final BsonDocument topologyDescription) {
         ClusterType clusterType = getClusterType(topologyDescription.getString("type").getValue());
-        ClusterConnectionMode connectionMode = ClusterConnectionMode.MULTIPLE;
+        ClusterConnectionMode connectionMode = getClusterConnectionMode(clusterType);
         List<ServerDescription> servers = buildServerDescriptions(topologyDescription.getArray("servers"));
         return new ClusterDescription(connectionMode, clusterType, servers, null,
                                              ServerSettings.builder()
                                                      .heartbeatFrequency(heartbeatFrequencyMS, TimeUnit.MILLISECONDS)
                                                      .build());
+    }
+
+    @NotNull
+    private ClusterConnectionMode getClusterConnectionMode(final ClusterType clusterType) {
+        if (clusterType == ClusterType.LOAD_BALANCED) {
+            return ClusterConnectionMode.LOAD_BALANCED;
+        }
+        return ClusterConnectionMode.MULTIPLE;
     }
 
     private ClusterType getClusterType(final String type) {
@@ -131,6 +140,8 @@ public class ServerSelectionSelectionTest {
             return ClusterType.REPLICA_SET;
         } else if (type.equals("Sharded")) {
             return ClusterType.SHARDED;
+        } else if (type.equals("LoadBalanced")) {
+            return ClusterType.LOAD_BALANCED;
         } else if (type.equals("Unknown")) {
             return ClusterType.UNKNOWN;
         }
@@ -189,6 +200,8 @@ public class ServerSelectionSelectionTest {
             serverType = ServerType.SHARD_ROUTER;
         } else if (serverTypeString.equals("Standalone")) {
             serverType = ServerType.STANDALONE;
+        } else if (serverTypeString.equals("LoadBalancer")) {
+            serverType = ServerType.LOAD_BALANCER;
         } else if (serverTypeString.equals("PossiblePrimary")) {
             serverType = ServerType.UNKNOWN;
         } else if (serverTypeString.equals("Unknown")) {

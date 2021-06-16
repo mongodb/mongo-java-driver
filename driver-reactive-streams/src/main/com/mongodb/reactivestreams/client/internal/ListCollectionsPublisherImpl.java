@@ -16,51 +16,51 @@
 
 package com.mongodb.reactivestreams.client.internal;
 
-import com.mongodb.internal.async.client.AsyncListCollectionsIterable;
+import com.mongodb.ReadConcern;
+import com.mongodb.internal.async.AsyncBatchCursor;
+import com.mongodb.internal.operation.AsyncReadOperation;
+import com.mongodb.lang.Nullable;
+import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.ListCollectionsPublisher;
 import org.bson.conversions.Bson;
-import org.reactivestreams.Publisher;
-import org.reactivestreams.Subscriber;
 
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+final class ListCollectionsPublisherImpl<T> extends BatchCursorPublisher<T> implements ListCollectionsPublisher<T> {
 
-final class ListCollectionsPublisherImpl<TResult> implements ListCollectionsPublisher<TResult> {
+    private final boolean collectionNamesOnly;
+    private Bson filter;
+    private long maxTimeMS;
 
-    private final AsyncListCollectionsIterable<TResult> wrapped;
-
-    ListCollectionsPublisherImpl(final AsyncListCollectionsIterable<TResult> wrapped) {
-        this.wrapped = notNull("wrapped", wrapped);
+    ListCollectionsPublisherImpl(
+            @Nullable final ClientSession clientSession,
+            final MongoOperationPublisher<T> mongoOperationPublisher,
+            final boolean collectionNamesOnly) {
+        super(clientSession, mongoOperationPublisher.withReadConcern(ReadConcern.DEFAULT));
+        this.collectionNamesOnly = collectionNamesOnly;
     }
 
-    @Override
-    public ListCollectionsPublisher<TResult> filter(final Bson filter) {
-        wrapped.filter(filter);
-        return this;
-    }
-
-    @Override
-    public ListCollectionsPublisher<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
+    public ListCollectionsPublisherImpl<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
-        wrapped.maxTime(maxTime, timeUnit);
+        this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
-    @Override
-    public ListCollectionsPublisher<TResult> batchSize(final int batchSize) {
-        wrapped.batchSize(batchSize);
+    public ListCollectionsPublisherImpl<T> batchSize(final int batchSize) {
+        super.batchSize(batchSize);
         return this;
     }
 
-    @Override
-    public Publisher<TResult> first() {
-        return Publishers.publish(wrapped::first);
+    public ListCollectionsPublisherImpl<T> filter(@Nullable final Bson filter) {
+        this.filter = filter;
+        return this;
     }
 
-    @Override
-    public void subscribe(final Subscriber<? super TResult> s) {
-        Publishers.publish(wrapped).subscribe(s);
+    AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
+        return getOperations().listCollections(getNamespace().getDatabaseName(), getDocumentClass(), filter, collectionNamesOnly,
+                initialBatchSize, maxTimeMS);
     }
 }

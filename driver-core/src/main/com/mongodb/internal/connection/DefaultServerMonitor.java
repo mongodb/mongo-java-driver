@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoSocketException;
+import com.mongodb.ServerApi;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
@@ -30,6 +31,8 @@ import com.mongodb.event.ServerHeartbeatSucceededEvent;
 import com.mongodb.event.ServerMonitorListener;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
+import com.mongodb.lang.Nullable;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
@@ -64,6 +67,8 @@ class DefaultServerMonitor implements ServerMonitor {
     private final ChangeListener<ServerDescription> serverStateListener;
     private final InternalConnectionFactory internalConnectionFactory;
     private final ConnectionPool connectionPool;
+    @Nullable
+    private final ServerApi serverApi;
     private final ServerSettings serverSettings;
     private final ServerMonitorRunnable monitor;
     private final Thread monitorThread;
@@ -76,7 +81,8 @@ class DefaultServerMonitor implements ServerMonitor {
 
     DefaultServerMonitor(final ServerId serverId, final ServerSettings serverSettings,
                          final ClusterClock clusterClock, final ChangeListener<ServerDescription> serverStateListener,
-                         final InternalConnectionFactory internalConnectionFactory, final ConnectionPool connectionPool) {
+                         final InternalConnectionFactory internalConnectionFactory, final ConnectionPool connectionPool,
+                         final @Nullable ServerApi serverApi) {
         this.serverSettings = notNull("serverSettings", serverSettings);
         this.serverId = notNull("serverId", serverId);
         this.serverMonitorListener = getServerMonitorListener(serverSettings);
@@ -84,6 +90,7 @@ class DefaultServerMonitor implements ServerMonitor {
         this.serverStateListener = serverStateListener;
         this.internalConnectionFactory = notNull("internalConnectionFactory", internalConnectionFactory);
         this.connectionPool = connectionPool;
+        this.serverApi = serverApi;
         monitor = new ServerMonitorRunnable();
         monitorThread = new Thread(monitor, "cluster-" + this.serverId.getClusterId() + "-" + this.serverId.getAddress());
         monitorThread.setDaemon(true);
@@ -200,7 +207,8 @@ class DefaultServerMonitor implements ServerMonitor {
                 try {
                     SessionContext sessionContext = new ClusterClockAdvancingSessionContext(NoOpSessionContext.INSTANCE, clusterClock);
                     if (!connection.hasMoreToCome()) {
-                        BsonDocument ismaster = new BsonDocument("ismaster", new BsonInt32(1));
+                        BsonDocument ismaster = new BsonDocument(getHandshakeCommandName(currentServerDescription), new BsonInt32(1))
+                                .append("helloOk", BsonBoolean.TRUE);
                         if (shouldStreamResponses(currentServerDescription)) {
                             ismaster.append("topologyVersion", currentServerDescription.getTopologyVersion().asDocument());
                             ismaster.append("maxAwaitTimeMS", new BsonInt64(serverSettings.getHeartbeatFrequency(MILLISECONDS)));
@@ -255,7 +263,7 @@ class DefaultServerMonitor implements ServerMonitor {
                     MessageSettings.builder()
                             .maxWireVersion(connection.getDescription().getMaxWireVersion())
                             .build(),
-                    shouldStreamResponses(currentServerDescription));
+                    shouldStreamResponses(currentServerDescription), serverApi);
         }
 
         private void logStateChange(final ServerDescription previousServerDescription,
@@ -424,7 +432,9 @@ class DefaultServerMonitor implements ServerMonitor {
 
         private void pingServer(final InternalConnection connection) {
             long start = System.nanoTime();
-            executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), clusterClock, connection);
+            executeCommand("admin",
+                    new BsonDocument(getHandshakeCommandName(connection.getInitialServerDescription()), new BsonInt32(1)),
+                    clusterClock, serverApi, connection);
             long elapsedTimeNanos = System.nanoTime() - start;
             averageRoundTripTime.addSample(elapsedTimeNanos);
         }
@@ -436,5 +446,9 @@ class DefaultServerMonitor implements ServerMonitor {
         } catch (InterruptedException e) {
             // fall through
         }
+    }
+
+    private String getHandshakeCommandName(final ServerDescription serverDescription) {
+        return serverDescription.isHelloOk() ? "hello" : "ismaster";
     }
 }

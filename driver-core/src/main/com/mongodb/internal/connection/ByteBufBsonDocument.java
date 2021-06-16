@@ -151,7 +151,7 @@ class ByteBufBsonDocument extends AbstractByteBufBsonDocument {
         return byteBuf.getInt(byteBuf.position());
     }
 
-    BsonDocument toBsonDocument() {
+    BsonDocument toBaseBsonDocument() {
         ByteBuf duplicateByteBuf = byteBuf.duplicate();
         BsonBinaryReader bsonReader = new BsonBinaryReader(new ByteBufferBsonInput(duplicateByteBuf));
         try {

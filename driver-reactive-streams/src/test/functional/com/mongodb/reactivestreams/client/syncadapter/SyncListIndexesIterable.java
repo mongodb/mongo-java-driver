@@ -38,6 +38,7 @@ class SyncListIndexesIterable<T> extends SyncMongoIterable<T> implements ListInd
     @Override
     public ListIndexesIterable<T> batchSize(final int batchSize) {
         wrapped.batchSize(batchSize);
+        super.batchSize(batchSize);
         return this;
     }
 }

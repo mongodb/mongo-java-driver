@@ -59,6 +59,18 @@ public final class IdGenerators {
         }
     };
 
+    public static final IdGenerator<String> STRING_ID_GENERATOR = new IdGenerator<String>() {
+        @Override
+        public String generate() {
+            return OBJECT_ID_GENERATOR.generate().toHexString();
+        }
+
+        @Override
+        public Class<String> getType() {
+            return String.class;
+        }
+    };
+
     private IdGenerators(){
     }
 }

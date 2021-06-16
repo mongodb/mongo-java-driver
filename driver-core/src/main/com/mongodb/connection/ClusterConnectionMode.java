@@ -30,5 +30,12 @@ public enum ClusterConnectionMode {
     /**
      * Connect to multiple servers in a cluster (either a replica set or multiple mongos servers)
      */
-    MULTIPLE
+    MULTIPLE,
+
+    /**
+     * Connect to one or more mongos servers via a load balancer
+     *
+     * @since 4.3
+     */
+    LOAD_BALANCED
 }

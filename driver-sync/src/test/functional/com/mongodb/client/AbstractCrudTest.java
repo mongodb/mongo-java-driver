@@ -121,21 +121,9 @@ public abstract class AbstractCrudTest {
     public void shouldPassAllOutcomes() {
         assumeFalse(definition.getString("description").getValue().startsWith("Deprecated count"));
 
-        BsonDocument expectedOutcome = definition.getDocument("outcome", null);
-        // check if v1 test
-        if (definition.containsKey("operation")) {
-            runOperation(expectedOutcome, definition.getDocument("operation"),
-                    expectedOutcome != null && expectedOutcome.containsKey("result") && expectedOutcome.isDocument("result")
-                            ? expectedOutcome.get("result") : null);
-        } else {  // v2 test
-            BsonArray operations = definition.getArray("operations");
-            for (BsonValue operation : operations) {
-                runOperation(expectedOutcome, operation.asDocument(), operation.asDocument().get("result", null));
-            }
-        }
-    }
-
-    private void runOperation(final BsonDocument expectedOutcome, final BsonDocument operation, final BsonValue expectedResult) {
+        BsonDocument expectedOutcome = definition.getDocument("outcome", new BsonDocument());
+        BsonDocument operation = definition.getDocument("operation");
+        BsonValue expectedResult = expectedOutcome.get("result");
         BsonDocument outcome = null;
         boolean wasException = false;
         try {
@@ -173,7 +161,7 @@ public abstract class AbstractCrudTest {
 
             assertEventsEquality(expectedEvents, events.subList(0, expectedEvents.size()));
         }
-        if (expectedOutcome != null && expectedOutcome.containsKey("collection")) {
+        if (expectedOutcome.containsKey("collection")) {
             assertCollectionEquals(expectedOutcome.getDocument("collection"));
         }
     }

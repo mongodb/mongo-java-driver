@@ -53,8 +53,8 @@ class OperationUnitSpecification extends Specification {
             [4, 0]: 7,
             [4, 1]: 8,
             [4, 2]: 8,
-            [4, 3]: 9,
-            [4, 4]: 9
+            [4, 4]: 9,
+            [5, 0]: 13
     ]
 
     static int getMaxWireVersionForServerVersion(List<Integer> serverVersion) {
@@ -94,16 +94,19 @@ class OperationUnitSpecification extends Specification {
 
         def connectionSource = Stub(ConnectionSource) {
             getConnection() >> connection
+            getServerApi() >> null
         }
         def readBinding = Stub(ReadBinding) {
             getReadConnectionSource() >> connectionSource
             getReadPreference() >> readPreference
+            getServerApi() >> null
             getSessionContext() >> Stub(SessionContext) {
                 hasActiveTransaction() >> false
                 getReadConcern() >> ReadConcern.DEFAULT
             }
         }
         def writeBinding = Stub(WriteBinding) {
+            getServerApi() >> null
             getWriteConnectionSource() >> connectionSource
         }
 
@@ -143,9 +146,11 @@ class OperationUnitSpecification extends Specification {
         }
 
         def connectionSource = Stub(AsyncConnectionSource) {
+            getServerApi() >> null
             getConnection(_) >> { it[0].onResult(connection, null) }
         }
         def readBinding = Stub(AsyncReadBinding) {
+            getServerApi() >> null
             getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
             getReadPreference() >> readPreference
             getSessionContext() >> Stub(SessionContext) {
@@ -154,6 +159,7 @@ class OperationUnitSpecification extends Specification {
             }
         }
         def writeBinding = Stub(AsyncWriteBinding) {
+            getServerApi() >> null
             getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
         }
         def callback = new FutureResultCallback()
@@ -170,9 +176,9 @@ class OperationUnitSpecification extends Specification {
             }
         }
 
-        0 * connection.commandAsync(_, _, _, _, _, _, _) >> {
+        0 * connection.commandAsync(_, _, _, _, _, _, _, _) >> {
             // Unexpected Command
-            it[6].onResult(result, null)
+            it.last().onResult(result, null)
         }
 
         1 * connection.release()

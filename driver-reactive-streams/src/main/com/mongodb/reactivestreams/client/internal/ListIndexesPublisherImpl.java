@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,45 +16,39 @@
 
 package com.mongodb.reactivestreams.client.internal;
 
-import com.mongodb.internal.async.client.AsyncListIndexesIterable;
+import com.mongodb.internal.async.AsyncBatchCursor;
+import com.mongodb.internal.operation.AsyncReadOperation;
+import com.mongodb.lang.Nullable;
+import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.ListIndexesPublisher;
-import org.reactivestreams.Publisher;
-import org.reactivestreams.Subscriber;
 
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+final class ListIndexesPublisherImpl<T> extends BatchCursorPublisher<T> implements ListIndexesPublisher<T> {
 
-final class ListIndexesPublisherImpl<TResult> implements ListIndexesPublisher<TResult> {
+    private long maxTimeMS;
 
-    private final AsyncListIndexesIterable<TResult> wrapped;
-
-    ListIndexesPublisherImpl(final AsyncListIndexesIterable<TResult> wrapped) {
-        this.wrapped = notNull("wrapped", wrapped);
+    ListIndexesPublisherImpl(
+            @Nullable final ClientSession clientSession,
+            final MongoOperationPublisher<T> mongoOperationPublisher) {
+        super(clientSession, mongoOperationPublisher);
     }
 
-    @Override
-    public ListIndexesPublisherImpl<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
+    public ListIndexesPublisherImpl<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
-        wrapped.maxTime(maxTime, timeUnit);
+        this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
-    @Override
-    public ListIndexesPublisher<TResult> batchSize(final int batchSize) {
-        wrapped.batchSize(batchSize);
+    public ListIndexesPublisherImpl<T> batchSize(final int batchSize) {
+        super.batchSize(batchSize);
         return this;
     }
 
-    @Override
-    public Publisher<TResult> first() {
-        return Publishers.publish(wrapped::first);
-    }
-
-    @Override
-    public void subscribe(final Subscriber<? super TResult> s) {
-        Publishers.publish(wrapped).subscribe(s);
+    AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
+        return getOperations().listIndexes(getDocumentClass(), initialBatchSize, maxTimeMS);
     }
 }
-

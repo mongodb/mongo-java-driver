@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.operation
 
-import com.mongodb.ExplainVerbosity
+
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
@@ -339,11 +339,12 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'should be able to explain an empty pipeline'() {
         given:
         def operation = new AggregateOperation(getNamespace(), [], new BsonDocumentCodec())
-        operation = async ? operation.asExplainableOperationAsync(ExplainVerbosity.QUERY_PLANNER) :
-                            operation.asExplainableOperation(ExplainVerbosity.QUERY_PLANNER)
+        operation = async ? operation.asAsyncExplainableOperation(QUERY_PLANNER, new BsonDocumentCodec()) :
+                            operation.asExplainableOperation(QUERY_PLANNER, new BsonDocumentCodec())
 
         when:
         def result = execute(operation, async)
@@ -384,7 +385,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
         when:
         execute(operation, async)
-        BsonDocument explainPlan = execute(operation.asExplainableOperation(QUERY_PLANNER), async)
+        BsonDocument explainPlan = execute(operation.asExplainableOperation(QUERY_PLANNER, new BsonDocumentCodec()), async)
 
         then:
         getKeyPattern(explainPlan.getArray('stages').get(0).asDocument().getDocument('$cursor')) == index
@@ -397,7 +398,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     def 'should apply comment'() {
         given:
         def profileCollectionHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'system.profile'))
-        new CommandWriteOperation(getDatabaseName(), new BsonDocument('profile', new BsonInt32(2)), new BsonDocumentCodec())
+        new CommandReadOperation<>(getDatabaseName(), new BsonDocument('profile', new BsonInt32(2)), new BsonDocumentCodec())
                 .execute(getBinding())
         def expectedComment = 'this is a comment'
         def operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec())
@@ -411,7 +412,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         ((Document) profileDocument.get('command')).get('comment') == expectedComment
 
         cleanup:
-        new CommandWriteOperation(getDatabaseName(), new BsonDocument('profile', new BsonInt32(0)), new BsonDocumentCodec())
+        new CommandReadOperation<>(getDatabaseName(), new BsonDocument('profile', new BsonInt32(0)), new BsonDocumentCodec())
                 .execute(getBinding())
         profileCollectionHelper.drop();
 
@@ -439,35 +440,13 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ isStandalone() || !serverVersionAtLeast(3, 6) })
-    def 'should be able to respect maxAwaitTime with pipeline'() {
-        given:
-        AggregateOperation operation = new AggregateOperation<Document>(getNamespace(), [
-                new BsonDocument('$changeStream', new BsonDocument())
-        ], new DocumentCodec())
-                .batchSize(2)
-                .maxAwaitTime(10, MILLISECONDS)
-
-        when:
-        def cursor = execute(operation, async)
-        tryNext(cursor, async)
-
-        then:
-        noExceptionThrown()
-
-        cleanup:
-        cursor?.close()
-
-        where:
-        async << [true, false]
-    }
-
     def 'should add read concern to command'() {
         given:
         def binding = Stub(ReadBinding)
         def source = Stub(ConnectionSource)
         def connection = Mock(Connection)
         binding.readPreference >> ReadPreference.primary()
+        binding.serverApi >> null
         binding.readConnectionSource >> source
         binding.sessionContext >> sessionContext
         source.connection >> connection
@@ -485,7 +464,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                 6, STANDALONE, 1000, 100000, 100000, [])
-        1 * connection.command(_, commandDocument, _, _, _, sessionContext) >>
+        1 * connection.command(_, commandDocument, _, _, _, sessionContext, null) >>
                 new BsonDocument('cursor', new BsonDocument('id', new BsonInt64(1))
                         .append('ns', new BsonString(getNamespace().getFullName()))
                         .append('firstBatch', new BsonArrayWrapper([])))
@@ -507,9 +486,11 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         def binding = Stub(AsyncReadBinding)
         def source = Stub(AsyncConnectionSource)
         def connection = Mock(AsyncConnection)
+        binding.serverApi >> null
         binding.readPreference >> ReadPreference.primary()
         binding.getReadConnectionSource(_) >> { it[0].onResult(source, null) }
         binding.sessionContext >> sessionContext
+        source.serverApi >> null
         source.getConnection(_) >> { it[0].onResult(connection, null) }
         source.retain() >> source
         def commandDocument = new BsonDocument('aggregate', new BsonString(getCollectionName()))
@@ -525,8 +506,8 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                 6, STANDALONE, 1000, 100000, 100000, [])
-        1 * connection.commandAsync(_, commandDocument, _, _, _, sessionContext, _) >> {
-            it[6].onResult(new BsonDocument('cursor', new BsonDocument('id', new BsonInt64(1))
+        1 * connection.commandAsync(_, commandDocument, _, _, _, sessionContext, _, _) >> {
+            it.last().onResult(new BsonDocument('cursor', new BsonDocument('id', new BsonInt64(1))
                     .append('ns', new BsonString(getNamespace().getFullName()))
                     .append('firstBatch', new BsonArrayWrapper([]))), null)
         }

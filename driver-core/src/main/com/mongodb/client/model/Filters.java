@@ -208,9 +208,7 @@ public final class Filters {
     }
 
     /**
-     * Creates a filter that performs a logical AND of the provided list of filters.  Note that this will only generate a "$and"
-     * operator if absolutely necessary, as the query language implicity ands together all the keys.  In other words, a query expression
-     * like:
+     * Creates a filter that performs a logical AND of the provided list of filters.
      *
      * <blockquote><pre>
      *    and(eq("x", 1), lt("y", 3))
@@ -218,7 +216,7 @@ public final class Filters {
      *
      * will generate a MongoDB query like:
      * <blockquote><pre>
-     *    {x : 1, y : {$lt : 3}}
+     *    { $and: [{x : 1}, {y : {$lt : 3}}]}
      * </pre></blockquote>
      *
      * @param filters the list of filters to and together
@@ -230,18 +228,15 @@ public final class Filters {
     }
 
     /**
-     * Creates a filter that performs a logical AND of the provided list of filters.  Note that this will only generate a "$and"
-     * operator if absolutely necessary, as the query language implicity ands together all the keys.  In other words, a query expression
-     * like:
+     * Creates a filter that performs a logical AND of the provided list of filters.
      *
      * <blockquote><pre>
      *    and(eq("x", 1), lt("y", 3))
      * </pre></blockquote>
      *
      * will generate a MongoDB query like:
-     *
      * <blockquote><pre>
-     *    {x : 1, y : {$lt : 3}}
+     *    { $and: [{x : 1}, {y : {$lt : 3}}]}
      * </pre></blockquote>
      *
      * @param filters the list of filters to and together
@@ -653,7 +648,7 @@ public final class Filters {
      * @since 3.1
      */
     public static Bson geoWithinPolygon(final String fieldName, final List<List<Double>> points) {
-        BsonArray pointsArray = new BsonArray();
+        BsonArray pointsArray = new BsonArray(points.size());
         for (List<Double> point : points) {
             pointsArray.add(new BsonArray(asList(new BsonDouble(point.get(0)), new BsonDouble(point.get(1)))));
         }
@@ -1236,7 +1231,7 @@ public final class Filters {
                 Map.Entry<String, BsonValue> entry = filterDocument.entrySet().iterator().next();
                 return createFilter(entry.getKey(), entry.getValue());
             } else {
-                BsonArray values = new BsonArray();
+                BsonArray values = new BsonArray(filterDocument.size());
                 for (Map.Entry<String, BsonValue> docs : filterDocument.entrySet()) {
                     values.add(new BsonDocument(docs.getKey(), docs.getValue()));
                 }

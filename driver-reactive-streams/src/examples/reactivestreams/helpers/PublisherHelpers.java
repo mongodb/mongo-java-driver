@@ -34,10 +34,10 @@
 package reactivestreams.helpers;
 
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
 
 import java.nio.ByteBuffer;
 
-import static com.mongodb.reactivestreams.client.internal.Publishers.publishAndFlatten;
 import static java.util.Arrays.asList;
 
 /**
@@ -51,7 +51,7 @@ public final class PublisherHelpers {
      * @return a {@code Publisher<ByteBuffer>}
      */
     public static Publisher<ByteBuffer> toPublisher(final ByteBuffer... byteBuffers) {
-        return publishAndFlatten(callback -> callback.onResult(asList(byteBuffers), null));
+        return Flux.fromIterable(asList(byteBuffers));
     }
 
     private PublisherHelpers() {

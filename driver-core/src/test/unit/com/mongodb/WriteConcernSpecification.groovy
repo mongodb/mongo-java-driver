@@ -39,7 +39,7 @@ class WriteConcernSpecification extends Specification {
         wc                                                | w          | wTimeout | journal
         new WriteConcern(1)                               | 1          | null     | null
         new WriteConcern(1, 10)                           | 1          | 10       | null
-        new WriteConcern((Object) null, 0, false, false)  | null       | 0        |  false
+        new WriteConcern((Object) null, 0, false)         | null       | 0        |  false
         new WriteConcern('majority')                      | 'majority' | null     | null
     }
 
@@ -49,9 +49,9 @@ class WriteConcernSpecification extends Specification {
 
         where:
         wc                                        | journal
-        new WriteConcern(null, null, null, null)  | null
-        new WriteConcern(null, null, null, false) | false
-        new WriteConcern(null, null, null, true)  | true
+        new WriteConcern(null, null, null)  | null
+        new WriteConcern(null, null, false) | false
+        new WriteConcern(null, null, true)  | true
     }
 
 
@@ -62,8 +62,8 @@ class WriteConcernSpecification extends Specification {
 
         where:
         wc                                        | wTimeout
-        new WriteConcern(null, null, null, null)  | null
-        new WriteConcern(null, 1000 , null, null) | 1000
+        new WriteConcern(null, null, null)  | null
+        new WriteConcern(null, 1000, null) | 1000
     }
 
     def 'test wTimeout getter error conditions'() {
@@ -128,8 +128,8 @@ class WriteConcernSpecification extends Specification {
 
     def 'test withW methods'() {
         expect:
-        WriteConcern.UNACKNOWLEDGED.withW(1) == new WriteConcern(1, null, null, null);
-        WriteConcern.UNACKNOWLEDGED.withW('dc1') == new WriteConcern('dc1', null, null, null);
+        WriteConcern.UNACKNOWLEDGED.withW(1) == new WriteConcern(1, null, null);
+        WriteConcern.UNACKNOWLEDGED.withW('dc1') == new WriteConcern('dc1', null, null);
 
         when:
         WriteConcern.UNACKNOWLEDGED.withW(null)
@@ -152,13 +152,13 @@ class WriteConcernSpecification extends Specification {
 
     def 'test withJournal methods'() {
         expect:
-        new WriteConcern(null, null, null, null).withJournal(true) == new WriteConcern(null, null, null, true);
+        new WriteConcern(null, null, null).withJournal(true) == new WriteConcern(null, null, true);
     }
 
     def 'test withWTimeout methods'() {
         expect:
-        new WriteConcern(null, null, null, null).withWTimeout(0, MILLISECONDS) == new WriteConcern(null, 0, null, null)
-        new WriteConcern(null, null, null, null).withWTimeout(1000, MILLISECONDS) == new WriteConcern(null, 1000, null, null)
+        new WriteConcern(null, null, null).withWTimeout(0, MILLISECONDS) == new WriteConcern(null, 0, null)
+        new WriteConcern(null, null, null).withWTimeout(1000, MILLISECONDS) == new WriteConcern(null, 1000, null)
 
         when:
         WriteConcern.ACKNOWLEDGED.withWTimeout(0, null)
@@ -215,9 +215,9 @@ class WriteConcernSpecification extends Specification {
         where:
         wc                                   | hashCode
         WriteConcern.ACKNOWLEDGED            | 0
-        WriteConcern.W1                      | 29791
-        WriteConcern.W2                      | 59582
-        WriteConcern.MAJORITY                | -1401337973
+        WriteConcern.W1                      | 961
+        WriteConcern.W2                      | 1922
+        WriteConcern.MAJORITY                | -322299115
     }
 
     def 'test constants'() {
@@ -226,7 +226,7 @@ class WriteConcernSpecification extends Specification {
 
         where:
         constructedWriteConcern                           | constantWriteConcern
-        new WriteConcern((Object) null, null, null, null) | WriteConcern.ACKNOWLEDGED
+        new WriteConcern((Object) null, null, null) | WriteConcern.ACKNOWLEDGED
         new WriteConcern(1)                               | WriteConcern.W1
         new WriteConcern(2)                               | WriteConcern.W2
         new WriteConcern(3)                               | WriteConcern.W3

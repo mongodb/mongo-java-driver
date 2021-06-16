@@ -18,14 +18,13 @@ package org.mongodb.scala
 
 import java.lang.reflect.Modifier._
 
-import scala.collection.JavaConverters._
-import scala.reflect.runtime.currentMirror
-
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
 import org.reflections.util.{ ClasspathHelper, ConfigurationBuilder, FilterBuilder }
 import org.scalatest.Inspectors.forEvery
-import org.scalatest.{ FlatSpec, Matchers }
+
+import scala.collection.JavaConverters._
+import scala.reflect.runtime.currentMirror
 
 class ApiAliasAndCompanionSpec extends BaseSpec {
 
@@ -36,8 +35,6 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
     val packageName = "com.mongodb"
     val javaExclusions = Set(
       "Address",
-      "AsyncAggregateResponseBatchCursor",
-      "AsyncBatchCursor",
       "BasicDBList",
       "BasicDBObject",
       "BasicDBObjectBuilder",
@@ -54,18 +51,32 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "DocumentToDBRefTransformer",
       "Function",
       "FutureResultCallback",
+      "KerberosSubjectProvider",
       "MongoClients",
       "NonNull",
       "NonNullApi",
       "Nullable",
       "Person",
       "ReadPreferenceHedgeOptions",
+      "ServerApi",
       "ServerCursor",
       "ServerSession",
       "SessionContext",
       "SingleResultCallback",
+      "SubjectProvider",
       "TransactionExample",
-      "UnixServerAddress"
+      "UnixServerAddress",
+      "SubscriberHelpers",
+      "PublisherHelpers",
+      "TargetDocument",
+      "UpdatePrimer",
+      "InsertPrimer",
+      "IndexesPrimer",
+      "QueryPrimer",
+      "DocumentationSamples",
+      "AggregatePrimer",
+      "RemovePrimer",
+      "SyncMongoClient"
     )
     val scalaExclusions = Set(
       "BuildInfo",

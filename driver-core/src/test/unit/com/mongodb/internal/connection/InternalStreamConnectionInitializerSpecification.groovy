@@ -27,8 +27,8 @@ import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerType
-import com.mongodb.internal.async.SingleResultCallback
 import org.bson.BsonArray
+import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
@@ -36,7 +36,6 @@ import org.bson.internal.Base64
 import spock.lang.Specification
 
 import java.nio.charset.Charset
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 import static com.mongodb.MongoCredential.createCredential
@@ -44,6 +43,7 @@ import static com.mongodb.MongoCredential.createMongoX509Credential
 import static com.mongodb.MongoCredential.createPlainCredential
 import static com.mongodb.MongoCredential.createScramSha1Credential
 import static com.mongodb.MongoCredential.createScramSha256Credential
+import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.internal.connection.ClientMetadataHelperSpecification.createExpectedClientMetadataDocument
 import static com.mongodb.internal.connection.MessageHelper.buildSuccessfulReply
 import static com.mongodb.internal.connection.MessageHelper.decodeCommand
@@ -55,11 +55,12 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
     def 'should create correct description'() {
         given:
-        def initializer = new InternalStreamConnectionInitializer(null, null, [])
+        def initializer = new InternalStreamConnectionInitializer(SINGLE, null, null, [], null)
 
         when:
         enqueueSuccessfulReplies(false, null)
-        def description = initializer.initialize(internalConnection)
+        def description = initializer.startHandshake(internalConnection)
+        description = initializer.finishHandshake(internalConnection, description)
         def connectionDescription = description.connectionDescription
         def serverDescription = description.serverDescription
 
@@ -70,13 +71,16 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
     def 'should create correct description asynchronously'() {
         given:
-        def initializer = new InternalStreamConnectionInitializer(null, null, [])
+        def initializer = new InternalStreamConnectionInitializer(SINGLE, null, null, [], null)
 
         when:
         enqueueSuccessfulReplies(false, null)
         def futureCallback = new FutureResultCallback<InternalConnectionInitializationDescription>()
-        initializer.initializeAsync(internalConnection, futureCallback)
+        initializer.startHandshakeAsync(internalConnection, futureCallback)
         def description = futureCallback.get()
+        futureCallback = new FutureResultCallback<InternalConnectionInitializationDescription>()
+        initializer.finishHandshakeAsync(internalConnection, description, futureCallback)
+        description = futureCallback.get()
         def connectionDescription = description.connectionDescription
         def serverDescription = description.serverDescription
 
@@ -87,124 +91,141 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
     def 'should create correct description with server connection id'() {
         given:
-        def initializer = new InternalStreamConnectionInitializer(null, null, [])
+        def initializer = new InternalStreamConnectionInitializer(SINGLE, null, null, [], null)
 
         when:
         enqueueSuccessfulReplies(false, 123)
-        def description = initializer.initialize(internalConnection).connectionDescription
+        def internalDescription = initializer.startHandshake(internalConnection)
+        def connectionDescription = initializer.finishHandshake(internalConnection, internalDescription).connectionDescription
 
         then:
-        description == getExpectedConnectionDescription(description.connectionId.localValue, 123)
+        connectionDescription == getExpectedConnectionDescription(connectionDescription.connectionId.localValue, 123)
     }
 
     def 'should create correct description with server connection id from isMaster'() {
         given:
-        def initializer = new InternalStreamConnectionInitializer(null, null, [])
+        def initializer = new InternalStreamConnectionInitializer(SINGLE, null, null, [], null)
 
         when:
         enqueueSuccessfulRepliesWithConnectionIdIsIsMasterResponse(false, 123)
-        def description = initializer.initialize(internalConnection).connectionDescription
+        def internalDescription = initializer.startHandshake(internalConnection)
+        def connectionDescription = initializer.finishHandshake(internalConnection, internalDescription).connectionDescription
 
         then:
-        description == getExpectedConnectionDescription(description.connectionId.localValue, 123)
+        connectionDescription == getExpectedConnectionDescription(connectionDescription.connectionId.localValue, 123)
     }
 
     def 'should create correct description with server connection id asynchronously'() {
         given:
-        def initializer = new InternalStreamConnectionInitializer(null, null, [])
+        def initializer = new InternalStreamConnectionInitializer(SINGLE, null, null, [], null)
 
         when:
         enqueueSuccessfulReplies(false, 123)
         def futureCallback = new FutureResultCallback<InternalConnectionInitializationDescription>()
-        initializer.initializeAsync(internalConnection, futureCallback)
-        def description = futureCallback.get().connectionDescription
+        initializer.startHandshakeAsync(internalConnection, futureCallback)
+        def description = futureCallback.get()
+        futureCallback = new FutureResultCallback<InternalConnectionInitializationDescription>()
+        initializer.finishHandshakeAsync(internalConnection, description, futureCallback)
+        def connectionDescription = futureCallback.get().connectionDescription
 
         then:
-        description == getExpectedConnectionDescription(description.connectionId.localValue, 123)
+        connectionDescription == getExpectedConnectionDescription(connectionDescription.connectionId.localValue, 123)
     }
 
     def 'should create correct description with server connection id from isMaster asynchronously'() {
         given:
-        def initializer = new InternalStreamConnectionInitializer(null, null, [])
+        def initializer = new InternalStreamConnectionInitializer(SINGLE, null, null, [], null)
 
         when:
         enqueueSuccessfulRepliesWithConnectionIdIsIsMasterResponse(false, 123)
         def futureCallback = new FutureResultCallback<InternalConnectionInitializationDescription>()
-        initializer.initializeAsync(internalConnection, futureCallback)
-        def description = futureCallback.get().connectionDescription
+        initializer.startHandshakeAsync(internalConnection, futureCallback)
+        def description = futureCallback.get()
+        futureCallback = new FutureResultCallback<InternalConnectionInitializationDescription>()
+        initializer.finishHandshakeAsync(internalConnection, description, futureCallback)
+        description = futureCallback.get()
+        def connectionDescription = description.connectionDescription
 
         then:
-        description == getExpectedConnectionDescription(description.connectionId.localValue, 123)
+        connectionDescription == getExpectedConnectionDescription(connectionDescription.connectionId.localValue, 123)
     }
 
     def 'should authenticate'() {
         given:
         def firstAuthenticator = Mock(Authenticator)
-        def initializer = new InternalStreamConnectionInitializer(firstAuthenticator, null, [])
+        def initializer = new InternalStreamConnectionInitializer(SINGLE, firstAuthenticator, null, [], null)
 
         when:
         enqueueSuccessfulReplies(false, null)
 
-        def description = initializer.initialize(internalConnection).connectionDescription
+        def internalDescription = initializer.startHandshake(internalConnection)
+        def connectionDescription = initializer.finishHandshake(internalConnection, internalDescription).connectionDescription
 
         then:
-        description
+        connectionDescription
         1 * firstAuthenticator.authenticate(internalConnection, _)
     }
 
     def 'should authenticate asynchronously'() {
         given:
         def authenticator = Mock(Authenticator)
-        def initializer = new InternalStreamConnectionInitializer(authenticator, null, [])
+        def initializer = new InternalStreamConnectionInitializer(SINGLE, authenticator, null, [], null)
 
         when:
         enqueueSuccessfulReplies(false, null)
 
         def futureCallback = new FutureResultCallback<InternalConnectionInitializationDescription>()
-        initializer.initializeAsync(internalConnection, futureCallback)
-        def description = futureCallback.get().connectionDescription
+        initializer.startHandshakeAsync(internalConnection, futureCallback)
+        def description = futureCallback.get()
+        futureCallback = new FutureResultCallback<InternalConnectionInitializationDescription>()
+        initializer.finishHandshakeAsync(internalConnection, description, futureCallback)
+        def connectionDescription = futureCallback.get().connectionDescription
 
         then:
-        description
+        connectionDescription
         1 * authenticator.authenticateAsync(internalConnection, _, _) >> { it[2].onResult(null, null) }
     }
 
     def 'should not authenticate if server is an arbiter'() {
         given:
         def authenticator = Mock(Authenticator)
-        def initializer = new InternalStreamConnectionInitializer(authenticator, null, [])
+        def initializer = new InternalStreamConnectionInitializer(SINGLE, authenticator, null, [], null)
 
         when:
         enqueueSuccessfulReplies(true, null)
 
-        def description = initializer.initialize(internalConnection).connectionDescription
+        def internalDescription = initializer.startHandshake(internalConnection)
+        def connectionDescription = initializer.finishHandshake(internalConnection, internalDescription).connectionDescription
 
         then:
-        description
+        connectionDescription
         0 * authenticator.authenticate(internalConnection, _)
     }
 
     def 'should not authenticate asynchronously if server is an arbiter asynchronously'() {
         given:
         def authenticator = Mock(Authenticator)
-        def initializer = new InternalStreamConnectionInitializer(authenticator, null, [])
+        def initializer = new InternalStreamConnectionInitializer(SINGLE, authenticator, null, [], null)
 
         when:
         enqueueSuccessfulReplies(true, null)
 
         def futureCallback = new FutureResultCallback<InternalConnectionInitializationDescription>()
-        initializer.initializeAsync(internalConnection, futureCallback)
-        def description = futureCallback.get().connectionDescription
+        initializer.startHandshakeAsync(internalConnection, futureCallback)
+        def description = futureCallback.get()
+        futureCallback = new FutureResultCallback<InternalConnectionInitializationDescription>()
+        initializer.finishHandshakeAsync(internalConnection, description, futureCallback)
+        def connectionDescription = futureCallback.get().connectionDescription
 
         then:
-        description
+        connectionDescription
         0 * authenticator.authenticateAsync(internalConnection, _, _)
     }
 
     def 'should add client metadata document to isMaster command'() {
         given:
-        def initializer = new InternalStreamConnectionInitializer(null, clientMetadataDocument, [])
-        def expectedIsMasterCommandDocument = new BsonDocument('ismaster', new BsonInt32(1))
+        def initializer = new InternalStreamConnectionInitializer(SINGLE, null, clientMetadataDocument, [], null)
+        def expectedIsMasterCommandDocument = new BsonDocument('ismaster', new BsonInt32(1)).append('helloOk', BsonBoolean.TRUE)
         if (clientMetadataDocument != null) {
             expectedIsMasterCommandDocument.append('client', clientMetadataDocument)
         }
@@ -212,12 +233,15 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         when:
         enqueueSuccessfulReplies(false, null)
         if (async) {
-            def latch = new CountDownLatch(1)
-            def callback = { result, t -> latch.countDown() } as SingleResultCallback
-            initializer.initializeAsync(internalConnection, callback)
-            latch.await()
+            def callback = new FutureResultCallback<InternalConnectionInitializationDescription>()
+            initializer.startHandshakeAsync(internalConnection, callback)
+            def description = callback.get()
+            callback = new FutureResultCallback<InternalConnectionInitializationDescription>()
+            initializer.finishHandshakeAsync(internalConnection, description, callback)
+            callback.get()
         } else {
-            initializer.initialize(internalConnection)
+            def internalDescription = initializer.startHandshake(internalConnection)
+            initializer.finishHandshake(internalConnection, internalDescription)
         }
 
         then:
@@ -230,8 +254,8 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
     def 'should add compression to isMaster command'() {
         given:
-        def initializer = new InternalStreamConnectionInitializer(null, null, compressors)
-        def expectedIsMasterCommandDocument = new BsonDocument('ismaster', new BsonInt32(1))
+        def initializer = new InternalStreamConnectionInitializer(SINGLE, null, null, compressors, null)
+        def expectedIsMasterCommandDocument = new BsonDocument('ismaster', new BsonInt32(1)).append('helloOk', BsonBoolean.TRUE)
 
         def compressionArray = new BsonArray()
         for (def compressor : compressors) {
@@ -244,12 +268,15 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         when:
         enqueueSuccessfulReplies(false, null)
         if (async) {
-            def latch = new CountDownLatch(1)
-            def callback = { result, t -> latch.countDown() } as SingleResultCallback
-            initializer.initializeAsync(internalConnection, callback)
-            latch.await()
+            def callback = new FutureResultCallback<InternalConnectionInitializationDescription>()
+            initializer.startHandshakeAsync(internalConnection, callback)
+            def description = callback.get()
+            callback = new FutureResultCallback<InternalConnectionInitializationDescription>()
+            initializer.finishHandshakeAsync(internalConnection, description, callback)
+            callback.get()
         } else {
-            initializer.initialize(internalConnection)
+            def internalDescription = initializer.startHandshake(internalConnection)
+            initializer.finishHandshake(internalConnection, internalDescription)
         }
 
         then:
@@ -263,11 +290,11 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
     def 'should speculatively authenticate with default authenticator'() {
         given:
         def credential = new MongoCredentialWithCache(createCredential('user', 'database', 'pencil' as char[]))
-        def authenticator = Spy(DefaultAuthenticator, constructorArgs: [credential])
+        def authenticator = Spy(DefaultAuthenticator, constructorArgs: [credential, null])
         def scramShaAuthenticator = Spy(ScramShaAuthenticator,
                 constructorArgs: [credential.withMechanism(AuthenticationMechanism.SCRAM_SHA_256),
-                                  { 'rOprNGfwEbeRWgbNEkqO' }, { 'pencil' }])
-        def initializer = new InternalStreamConnectionInitializer(authenticator, null, [])
+                                  { 'rOprNGfwEbeRWgbNEkqO' }, { 'pencil' }, null])
+        def initializer = new InternalStreamConnectionInitializer(SINGLE, authenticator, null, [], null)
         authenticator.getAuthenticatorForIsMaster() >> scramShaAuthenticator
         def serverResponse = 'r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096'
         def speculativeAuthenticateResponse =
@@ -297,8 +324,8 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
     def 'should speculatively authenticate with SCRAM-SHA-256 authenticator'() {
         given:
         def credential = new MongoCredentialWithCache(createScramSha256Credential('user', 'database', 'pencil' as char[]))
-        def authenticator = Spy(ScramShaAuthenticator, constructorArgs: [credential, { 'rOprNGfwEbeRWgbNEkqO' }, { 'pencil' }])
-        def initializer = new InternalStreamConnectionInitializer(authenticator, null, [])
+        def authenticator = Spy(ScramShaAuthenticator, constructorArgs: [credential, { 'rOprNGfwEbeRWgbNEkqO' }, { 'pencil' }, null])
+        def initializer = new InternalStreamConnectionInitializer(SINGLE, authenticator, null, [], null)
         def serverResponse = 'r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096'
         def speculativeAuthenticateResponse =
                 BsonDocument.parse("{ conversationId: 1, payload: BinData(0, '${encode64(serverResponse)}'), done: false }")
@@ -327,8 +354,8 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
     def 'should speculatively authenticate with SCRAM-SHA-1 authenticator'() {
         given:
         def credential = new MongoCredentialWithCache(createScramSha1Credential('user', 'database', 'pencil' as char[]))
-        def authenticator = Spy(ScramShaAuthenticator, constructorArgs: [credential, { 'fyko+d2lbbFgONRv9qkxdawL' }, { 'pencil' }])
-        def initializer = new InternalStreamConnectionInitializer(authenticator, null, [])
+        def authenticator = Spy(ScramShaAuthenticator, constructorArgs: [credential, { 'fyko+d2lbbFgONRv9qkxdawL' }, { 'pencil' }, null])
+        def initializer = new InternalStreamConnectionInitializer(SINGLE, authenticator, null, [], null)
         def serverResponse = 'r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096'
         def speculativeAuthenticateResponse =
                 BsonDocument.parse("{ conversationId: 1, payload: BinData(0, '${encode64(serverResponse)}'), done: false }")
@@ -357,8 +384,8 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
     def 'should speculatively authenticate with X509 authenticator'() {
         given:
         def credential = new MongoCredentialWithCache(createMongoX509Credential())
-        def authenticator = Spy(X509Authenticator, constructorArgs: [credential])
-        def initializer = new InternalStreamConnectionInitializer(authenticator, null, [])
+        def authenticator = Spy(X509Authenticator, constructorArgs: [credential, null])
+        def initializer = new InternalStreamConnectionInitializer(SINGLE, authenticator, null, [], null)
         def speculativeAuthenticateResponse =
                 BsonDocument.parse('{ dbname: "$external", user: "CN=client,OU=KernelUser,O=MongoDB,L=New York City,ST=New York,C=US"}')
 
@@ -385,8 +412,8 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
     def 'should not speculatively authenticate with Plain authenticator'() {
         given:
         def credential = new MongoCredentialWithCache(createPlainCredential('user', 'database', 'pencil' as char[]))
-        def authenticator = Spy(PlainAuthenticator, constructorArgs: [credential])
-        def initializer = new InternalStreamConnectionInitializer(authenticator, null, [])
+        def authenticator = Spy(PlainAuthenticator, constructorArgs: [credential, null])
+        def initializer = new InternalStreamConnectionInitializer(SINGLE, authenticator, null, [], null)
 
         when:
         enqueueSpeculativeAuthenticationResponsesForPlain()
@@ -396,7 +423,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         ((SpeculativeAuthenticator) authenticator).getSpeculativeAuthenticateResponse() == null
         ((SpeculativeAuthenticator) authenticator)
                 .createSpeculativeAuthenticateCommand(internalConnection) == null
-        BsonDocument.parse('{ismaster: 1}') == decodeCommand(internalConnection.getSent()[0])
+        BsonDocument.parse('{ismaster: 1, helloOk: true}') == decodeCommand(internalConnection.getSent()[0])
 
         where:
         async << [true, false]
@@ -410,11 +437,15 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
     def initializeConnection(final boolean async, final InternalStreamConnectionInitializer initializer,
                              final TestInternalConnection connection) {
         if (async) {
-            def futureCallback = new FutureResultCallback<ConnectionDescription>()
-            initializer.initializeAsync(connection, futureCallback)
-            futureCallback.get()
+            def callback = new FutureResultCallback<InternalConnectionInitializationDescription>()
+            initializer.startHandshakeAsync(internalConnection, callback)
+            def description = callback.get()
+            callback = new FutureResultCallback<InternalConnectionInitializationDescription>()
+            initializer.finishHandshakeAsync(internalConnection, description, callback)
+            callback.get()
         } else {
-            initializer.initialize(connection)
+            def internalDescription = initializer.startHandshake(connection)
+            initializer.finishHandshake(connection, internalDescription)
         }
     }
 
@@ -502,7 +533,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
     def createIsMasterCommand(final String firstClientChallenge, final String mechanism,
                               final boolean hasSaslSupportedMechs) {
-        String isMaster = '{ismaster: 1, ' +
+        String isMaster = '{ismaster: 1, helloOk: true, ' +
                 (hasSaslSupportedMechs ? 'saslSupportedMechs: "database.user", ' : '') +
                 (mechanism == 'MONGODB-X509' ?
                         'speculativeAuthenticate: { authenticate: 1, ' +

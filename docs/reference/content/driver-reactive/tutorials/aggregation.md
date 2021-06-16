@@ -93,3 +93,21 @@ collection.aggregate(
       )
 ).subscribe(new PrintDocumentSubscriber());
 ```
+
+### Explain an Aggregation
+
+To [explain]({{< docsref "reference/command/explain/" >}}) an aggregation pipeline, call the
+[`AggregatePublisher.explain()`]
+({{< apiref "mongodb-driver-reactivestreams" "com/mongodb/reactivestreams/client/AggregatePublisher.html#explain()" >}}) 
+method:
+
+```java
+collection.aggregate(
+      Arrays.asList(
+              Aggregates.match(Filters.eq("categories", "Bakery")),
+              Aggregates.group("$stars", Accumulators.sum("count", 1))))
+      .explain()
+      .subscribe(new PrintDocumentSubscriber());
+```
+
+The driver supports explain of aggregation pipelines starting with MongoDB 3.6.

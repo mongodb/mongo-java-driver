@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.internal.async.SingleResultCallback;
+import org.bson.types.ObjectId;
 
 import java.io.Closeable;
 import java.util.concurrent.TimeUnit;
@@ -28,11 +29,16 @@ interface ConnectionPool extends Closeable {
 
     InternalConnection get();
 
+    /**
+     * @param timeout See {@link com.mongodb.internal.Timeout#startNow(long, TimeUnit)}.
+     */
     InternalConnection get(long timeout, TimeUnit timeUnit);
 
     void getAsync(SingleResultCallback<InternalConnection> callback);
 
     void invalidate();
+
+    void invalidate(ObjectId serviceId, int generation);
 
     void close();
 

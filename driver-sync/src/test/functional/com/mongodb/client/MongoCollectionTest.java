@@ -18,6 +18,7 @@ package com.mongodb.client;
 
 import com.mongodb.DBRef;
 import com.mongodb.Function;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.result.InsertManyResult;
@@ -29,6 +30,9 @@ import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.json.JsonObject;
+import org.bson.codecs.pojo.PojoCodecProvider;
+import org.bson.codecs.pojo.entities.conventions.BsonRepresentationModel;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
@@ -40,6 +44,7 @@ import java.util.Map;
 
 import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -207,5 +212,37 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
         // then
         assertEquals(doc, collection.find().first());
+    }
+
+    @Test
+    public void testJsonObjectEncodingAndDecoding() {
+        // given
+        MongoCollection<JsonObject> test = database.getCollection("test", JsonObject.class);
+        JsonObject json = new JsonObject("{\"_id\": {\"$oid\": \"5f5a5442306e56d34136dbcf\"}, \"hello\": 1}");
+        test.drop();
+
+        // when
+        test.insertOne(json);
+
+        // then
+        assertEquals(json, test.find().first());
+    }
+
+    @Test
+    public void testObjectIdToStringConversion() {
+        // given
+        CodecRegistry pojoCodecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
+                fromProviders(PojoCodecProvider.builder().automatic(true).build()));
+
+        MongoCollection<BsonRepresentationModel> test =
+                database.getCollection("test", BsonRepresentationModel.class)
+                .withCodecRegistry(pojoCodecRegistry);
+        test.drop();
+
+        // when
+        test.insertOne(new BsonRepresentationModel(null, 1));
+
+        // then
+        assertNotNull(test.find().first().getId());
     }
 }

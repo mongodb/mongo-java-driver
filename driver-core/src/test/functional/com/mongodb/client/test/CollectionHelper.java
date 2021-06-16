@@ -35,8 +35,7 @@ import com.mongodb.internal.bulk.WriteRequest;
 import com.mongodb.internal.operation.AggregateOperation;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.CommandReadOperation;
-import com.mongodb.internal.operation.CommandWriteOperation;
-import com.mongodb.internal.operation.CountOperation;
+import com.mongodb.internal.operation.CountDocumentsOperation;
 import com.mongodb.internal.operation.CreateCollectionOperation;
 import com.mongodb.internal.operation.CreateIndexesOperation;
 import com.mongodb.internal.operation.DropCollectionOperation;
@@ -132,6 +131,10 @@ public final class CollectionHelper<T> {
         create(namespace.getCollectionName(), new CreateCollectionOptions(), WriteConcern.ACKNOWLEDGED);
     }
 
+    public void create(final WriteConcern writeConcern) {
+        create(namespace.getCollectionName(), new CreateCollectionOptions(), writeConcern);
+    }
+
     public void create(final String collectionName, final CreateCollectionOptions options) {
         create(collectionName, options, WriteConcern.ACKNOWLEDGED);
     }
@@ -165,7 +168,7 @@ public final class CollectionHelper<T> {
             BsonDocument command = new BsonDocument("killCursors", new BsonString(namespace.getCollectionName()))
                     .append("cursors", new BsonArray(singletonList(new BsonInt64(serverCursor.getId()))));
             try {
-                new CommandWriteOperation<BsonDocument>(namespace.getDatabaseName(), command, new BsonDocumentCodec())
+                new CommandReadOperation<>(namespace.getDatabaseName(), command, new BsonDocumentCodec())
                         .execute(getBinding());
             } catch (Exception e) {
                 // Ignore any exceptions killing old cursors
@@ -333,15 +336,15 @@ public final class CollectionHelper<T> {
     }
 
     public long count(final ReadBinding binding) {
-        return new CountOperation(namespace).execute(binding);
+        return new CountDocumentsOperation(namespace).execute(binding);
     }
 
     public long count(final AsyncReadWriteBinding binding) throws Throwable {
-        return executeAsync(new CountOperation(namespace), binding);
+        return executeAsync(new CountDocumentsOperation(namespace), binding);
     }
 
     public long count(final Bson filter) {
-        return new CountOperation(namespace).filter(toBsonDocument(filter)).execute(getBinding());
+        return new CountDocumentsOperation(namespace).filter(toBsonDocument(filter)).execute(getBinding());
     }
 
     public BsonDocument wrap(final Document document) {
@@ -375,6 +378,7 @@ public final class CollectionHelper<T> {
                                           WriteConcern.ACKNOWLEDGED).execute(getBinding());
     }
 
+    @SuppressWarnings("deprecation")
     public void createIndex(final Bson key, final Double bucketSize) {
         new CreateIndexesOperation(namespace, asList(new IndexRequest(key.toBsonDocument(Document.class, registry))
                 .bucketSize(bucketSize)), WriteConcern.ACKNOWLEDGED).execute(getBinding());
@@ -391,7 +395,7 @@ public final class CollectionHelper<T> {
 
     public void killAllSessions() {
         try {
-            new CommandWriteOperation<BsonDocument>("admin", new BsonDocument("killAllSessions", new BsonArray()),
+            new CommandReadOperation<>("admin", new BsonDocument("killAllSessions", new BsonArray()),
                     new BsonDocumentCodec()).execute(getBinding());
         } catch (MongoCommandException e) {
             // ignore exception caused by killing the implicit session that the killAllSessions command itself is running in
@@ -400,7 +404,7 @@ public final class CollectionHelper<T> {
 
     public void renameCollection(final MongoNamespace newNamespace) {
         try {
-            new CommandWriteOperation<BsonDocument>("admin",
+            new CommandReadOperation<>("admin",
                     new BsonDocument("renameCollection", new BsonString(getNamespace().getFullName()))
                                 .append("to", new BsonString(newNamespace.getFullName())),
                     new BsonDocumentCodec()).execute(getBinding());
@@ -414,6 +418,6 @@ public final class CollectionHelper<T> {
     }
 
     public void runAdminCommand(final BsonDocument command) {
-        new CommandWriteOperation<BsonDocument>("admin", command, new BsonDocumentCodec()).execute(getBinding());
+        new CommandReadOperation<>("admin", command, new BsonDocumentCodec()).execute(getBinding());
     }
 }

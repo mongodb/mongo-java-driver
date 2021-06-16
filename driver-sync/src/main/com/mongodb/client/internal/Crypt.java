@@ -19,6 +19,7 @@ package com.mongodb.client.internal;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.crypt.capi.MongoCrypt;
@@ -49,6 +50,7 @@ class Crypt implements Closeable {
     private final KeyRetriever keyRetriever;
     private final KeyManagementService keyManagementService;
     private final boolean bypassAutoEncryption;
+    private final MongoClient internalClient;
 
     /**
      * Create an instance to use for explicit encryption and decryption, and data key creation.
@@ -58,7 +60,7 @@ class Crypt implements Closeable {
      * @param keyManagementService the key management service
      */
     Crypt(final MongoCrypt mongoCrypt, final KeyRetriever keyRetriever, final KeyManagementService keyManagementService) {
-        this(mongoCrypt, null, null, keyRetriever, keyManagementService, false);
+        this(mongoCrypt, null, null, keyRetriever, keyManagementService, false, null);
     }
 
     /**
@@ -71,14 +73,15 @@ class Crypt implements Closeable {
      * @param commandMarker the command marker
      */
     Crypt(final MongoCrypt mongoCrypt, @Nullable final CollectionInfoRetriever collectionInfoRetriever,
-          @Nullable final CommandMarker commandMarker, final KeyRetriever keyRetriever, final KeyManagementService keyManagementService,
-          final boolean bypassAutoEncryption) {
+          @Nullable final CommandMarker commandMarker, final KeyRetriever keyRetriever,
+          final KeyManagementService keyManagementService, final boolean bypassAutoEncryption, @Nullable final MongoClient internalClient) {
         this.mongoCrypt = mongoCrypt;
         this.collectionInfoRetriever = collectionInfoRetriever;
         this.commandMarker = commandMarker;
         this.keyRetriever = keyRetriever;
         this.keyManagementService = keyManagementService;
         this.bypassAutoEncryption = bypassAutoEncryption;
+        this.internalClient = internalClient;
     }
 
     /**
@@ -217,12 +220,15 @@ class Crypt implements Closeable {
     }
 
     @Override
+    @SuppressWarnings("try")
     public void close() {
-        mongoCrypt.close();
-        if (commandMarker != null) {
-            commandMarker.close();
+        //noinspection EmptyTryBlock
+        try (MongoCrypt mongoCrypt = this.mongoCrypt;
+             CommandMarker commandMarker = this.commandMarker;
+             MongoClient internalClient = this.internalClient
+        ) {
+            // just using try-with-resources to ensure they all get closed, even in the case of exceptions
         }
-        keyRetriever.close();
     }
 
     private RawBsonDocument executeStateMachine(final MongoCryptContext cryptContext, final String databaseName) {

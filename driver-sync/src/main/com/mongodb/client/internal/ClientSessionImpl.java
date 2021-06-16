@@ -28,11 +28,14 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.TransactionBody;
 import com.mongodb.internal.operation.AbortTransactionOperation;
 import com.mongodb.internal.operation.CommitTransactionOperation;
+import com.mongodb.internal.operation.ReadOperation;
+import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.BaseClientSessionImpl;
 import com.mongodb.internal.session.ServerSessionPool;
 
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -76,6 +79,17 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         }
     }
 
+
+    @Override
+    public void notifyOperationInitiated(final Object operation) {
+        assertTrue(operation instanceof ReadOperation || operation instanceof WriteOperation);
+        if (!(hasActiveTransaction() || operation instanceof CommitTransactionOperation)) {
+            assertTrue(getPinnedServerAddress() == null
+                    || (transactionState != TransactionState.ABORTED && transactionState != TransactionState.NONE));
+            clearTransactionContext();
+        }
+    }
+
     @Override
     public TransactionOptions getTransactionOptions() {
         isTrue("in transaction", transactionState == TransactionState.IN || transactionState == TransactionState.COMMITTED);
@@ -107,7 +121,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         if (!writeConcern.isAcknowledged()) {
             throw new MongoClientException("Transactions do not support unacknowledged write concern");
         }
-        setPinnedServerAddress(null);
+        clearTransactionContext();
     }
 
     @Override
@@ -133,7 +147,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                         readConcern, this);
             }
         } catch (MongoException e) {
-            unpinServerAddressOnError(e);
+            clearTransactionContextOnError(e);
             throw e;
         } finally {
             transactionState = TransactionState.COMMITTED;
@@ -163,17 +177,16 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                         readConcern, this);
             }
         } catch (Exception e) {
-            if (e instanceof MongoException) {
-                unpinServerAddressOnError((MongoException) e);
-            }
+            // ignore exceptions from abort
         } finally {
+            clearTransactionContext();
             cleanupTransaction(TransactionState.ABORTED);
         }
     }
 
-    private void unpinServerAddressOnError(final MongoException e) {
+    private void clearTransactionContextOnError(final MongoException e) {
         if (e.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL) || e.hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
-            setPinnedServerAddress(null);
+            clearTransactionContext();
         }
     }
 
@@ -210,7 +223,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                         commitTransaction();
                         break;
                     } catch (MongoException e) {
-                        unpinServerAddressOnError(e);
+                        clearTransactionContextOnError(e);
                         if (ClientSessionClock.INSTANCE.now() - startTime < MAX_RETRY_TIME_LIMIT_MS) {
                             applyMajorityWriteConcernToTransactionOptions();
 
@@ -252,6 +265,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                 abortTransaction();
             }
         } finally {
+            clearTransactionContext();
             super.close();
         }
     }

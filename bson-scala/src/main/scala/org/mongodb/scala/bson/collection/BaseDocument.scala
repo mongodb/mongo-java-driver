@@ -239,10 +239,7 @@ private[bson] trait BaseDocument[T] extends Traversable[(String, BsonValue)] wit
    */
   def toJson(settings: JsonWriterSettings): String = underlying.toJson(settings)
 
-  /**
-   * Returns a copy of the underlying BsonDocument
-   */
-  def toBsonDocument: BsonDocument = copyBsonDocument()
+  override def toBsonDocument: BsonDocument = underlying
 
   override def toBsonDocument[TDocument](documentClass: Class[TDocument], codecRegistry: CodecRegistry): BsonDocument =
     underlying

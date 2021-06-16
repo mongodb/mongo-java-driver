@@ -20,8 +20,14 @@ import com.mongodb.internal.async.SingleResultCallback;
 
 interface InternalConnectionInitializer {
 
-    InternalConnectionInitializationDescription initialize(InternalConnection internalConnection);
+    InternalConnectionInitializationDescription startHandshake(InternalConnection internalConnection);
 
-    void initializeAsync(InternalConnection internalConnection, SingleResultCallback<InternalConnectionInitializationDescription> callback);
+    InternalConnectionInitializationDescription finishHandshake(InternalConnection internalConnection,
+                                                                InternalConnectionInitializationDescription description);
 
+    void startHandshakeAsync(InternalConnection internalConnection,
+                             SingleResultCallback<InternalConnectionInitializationDescription> callback);
+
+    void finishHandshakeAsync(InternalConnection internalConnection, InternalConnectionInitializationDescription description,
+                              SingleResultCallback<InternalConnectionInitializationDescription> callback);
 }

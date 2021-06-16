@@ -35,7 +35,9 @@ import java.util.concurrent.TimeUnit
 
 import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
+import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ClusterFixture.getSslSettings
+import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.connection.ServerConnectionState.CONNECTED
 import static com.mongodb.connection.ServerConnectionState.CONNECTING
 import static com.mongodb.connection.ServerDescription.builder
@@ -196,11 +198,11 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
                         latch.countDown()
                     }
                 },
-                new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder()
+                new InternalStreamConnectionFactory(SINGLE, new SocketStreamFactory(SocketSettings.builder()
                         .connectTimeout(500, TimeUnit.MILLISECONDS)
                         .build(),
-                        getSslSettings()), getCredentialWithCache(), null, null, [], null),
-                new TestConnectionPool())
+                        getSslSettings()), getCredentialWithCache(), null, null, [], null, getServerApi()),
+                new TestConnectionPool(), getServerApi())
         serverMonitor.start()
         serverMonitor
     }

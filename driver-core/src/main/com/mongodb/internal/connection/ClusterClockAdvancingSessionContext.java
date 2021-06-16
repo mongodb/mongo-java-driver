@@ -103,8 +103,8 @@ public final class ClusterClockAdvancingSessionContext implements SessionContext
     }
 
     @Override
-    public void unpinServerAddress() {
-        wrapped.unpinServerAddress();
+    public void clearTransactionContext() {
+        wrapped.clearTransactionContext();
     }
 
     @Override

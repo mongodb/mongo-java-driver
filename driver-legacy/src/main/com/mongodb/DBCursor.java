@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.DBObjects.toDBObject;
+import static com.mongodb.MongoClient.getDefaultCodecRegistry;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -335,13 +335,13 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return a {@code DBObject} containing the explain output for this DBCursor's query
      * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/explain Explain Output
-     * @deprecated Replace with direct use of the explain command using the runCommand helper method
+     * @mongodb.server.release 3.0
      */
     @Deprecated
     public DBObject explain() {
-        return toDBObject(executor.execute(getQueryOperation(collection.getObjectCodec())
-                                           .asExplainableOperation(),
-                                           getReadPreference(), getReadConcern()));
+        return executor.execute(getQueryOperation(collection.getObjectCodec())
+                        .asExplainableOperation(null, getDefaultCodecRegistry().get(DBObject.class)),
+                getReadPreference(), getReadConcern());
     }
 
     /**

@@ -18,7 +18,9 @@ package com.mongodb.connection;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.Immutable;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
+import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,6 +36,7 @@ import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize
  */
 @Immutable
 public class ConnectionDescription {
+    @Nullable private final ObjectId serviceId;
     private final ConnectionId connectionId;
     private final int maxWireVersion;
     private final ServerType serverType;
@@ -90,6 +93,28 @@ public class ConnectionDescription {
     public ConnectionDescription(final ConnectionId connectionId, final int maxWireVersion,
                                  final ServerType serverType, final int maxBatchCount, final int maxDocumentSize,
                                  final int maxMessageSize, final List<String> compressors, final BsonArray saslSupportedMechanisms) {
+        this(null, connectionId, maxWireVersion, serverType, maxBatchCount, maxDocumentSize, maxMessageSize, compressors,
+                saslSupportedMechanisms);
+    }
+
+    /**
+     * Construct an instance.
+     *
+     * @param serviceId       the service id, which may be null
+     * @param connectionId    the connection id
+     * @param maxWireVersion  the max wire version
+     * @param serverType      the server type
+     * @param maxBatchCount   the max batch count
+     * @param maxDocumentSize the max document size in bytes
+     * @param maxMessageSize  the max message size in bytes
+     * @param compressors     the available compressors on the connection
+     * @param saslSupportedMechanisms the supported SASL mechanisms
+     * @since 4.3
+     */
+    public ConnectionDescription(@Nullable final ObjectId serviceId, final ConnectionId connectionId, final int maxWireVersion,
+                                 final ServerType serverType, final int maxBatchCount, final int maxDocumentSize,
+                                 final int maxMessageSize, final List<String> compressors, final BsonArray saslSupportedMechanisms) {
+        this.serviceId = serviceId;
         this.connectionId = connectionId;
         this.serverType = serverType;
         this.maxBatchCount = maxBatchCount;
@@ -99,7 +124,6 @@ public class ConnectionDescription {
         this.compressors = notNull("compressors", Collections.unmodifiableList(new ArrayList<String>(compressors)));
         this.saslSupportedMechanisms = saslSupportedMechanisms;
     }
-
     /**
      * Creates a new connection description with the set connection id
      *
@@ -109,8 +133,21 @@ public class ConnectionDescription {
      */
     public ConnectionDescription withConnectionId(final ConnectionId connectionId) {
         notNull("connectionId", connectionId);
-        return new ConnectionDescription(connectionId, maxWireVersion, serverType, maxBatchCount, maxDocumentSize, maxMessageSize,
-                compressors, saslSupportedMechanisms);
+        return new ConnectionDescription(serviceId, connectionId, maxWireVersion, serverType, maxBatchCount, maxDocumentSize,
+                maxMessageSize, compressors, saslSupportedMechanisms);
+    }
+
+    /**
+     * Creates a new connection description with the given service id
+     *
+     * @param serviceId the service id
+     * @return the new connection description
+     * @since 4.3
+     */
+    public ConnectionDescription withServiceId(final ObjectId serviceId) {
+        notNull("serviceId", serviceId);
+        return new ConnectionDescription(serviceId, connectionId, maxWireVersion, serverType, maxBatchCount, maxDocumentSize,
+                maxMessageSize, compressors, saslSupportedMechanisms);
     }
 
     /**
@@ -129,6 +166,17 @@ public class ConnectionDescription {
      */
     public ConnectionId getConnectionId() {
         return connectionId;
+    }
+
+    /**
+     * Gets the id of the service this connection is to
+     *
+     * @return the service id, which may be null
+     * @since 4.3
+     */
+    @Nullable
+    public ObjectId getServiceId() {
+        return serviceId;
     }
 
     /**

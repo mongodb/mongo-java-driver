@@ -178,6 +178,19 @@ collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery"))
                 .forEach(printConsumer);
 ```
 
+
+### Explain
+
+To [explain]({{< docsref "reference/command/explain/" >}}) a find operation, call the 
+[`FindIterable.explain()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/FindIterable.html#explain()" >}}) method:
+
+```java
+Document explainResult = collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery"))).explain();
+System.out.println(explainResult.toJson(JsonWriterSettings.builder().indent(true).build()));
+```
+
+The driver supports explain of find operations starting with MongoDB 3.0.
+
 ## MongoIterable
 
 The [`MongoIterable`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoIterable.html" >}}) interface provides helper methods to access the results of an operation:
@@ -238,7 +251,7 @@ For example, in the following, the `collectionWithReadPref` instance has the rea
 
 For read operations on [replica sets]({{<docsref "replication/" >}}) or [sharded clusters]({{<docsref "sharding/" >}}), applications can configure the [read concern]({{<docsref "reference/read-concern" >}}) at three levels:
 
-- In a [`MongoClient()`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClient.html" >}})
+- In a [`MongoClient()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoClient.html" >}})
 
   - Via [`MongoClientSettings`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientSettings.html" >}}):
 

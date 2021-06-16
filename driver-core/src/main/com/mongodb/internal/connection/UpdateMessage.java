@@ -17,7 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.internal.bulk.UpdateRequest;
-import com.mongodb.internal.validator.CollectibleDocumentFieldNameValidator;
+import com.mongodb.internal.validator.ReplacingDocumentFieldNameValidator;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.internal.validator.UpdateFieldNameValidator;
 import org.bson.BsonValue;
@@ -56,7 +56,7 @@ class UpdateMessage extends LegacyMessage {
 
         addDocument(updateRequest.getFilter(), bsonOutput, new NoOpFieldNameValidator());
         if (updateRequest.getType() == REPLACE && updateRequest.getUpdateValue().isDocument()) {
-            addDocument(updateRequest.getUpdateValue().asDocument(), bsonOutput, new CollectibleDocumentFieldNameValidator());
+            addDocument(updateRequest.getUpdateValue().asDocument(), bsonOutput, new ReplacingDocumentFieldNameValidator());
         } else {
             int bufferPosition = bsonOutput.getPosition();
             BsonValue update = updateRequest.getUpdateValue();

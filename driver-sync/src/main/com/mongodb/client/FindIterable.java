@@ -17,8 +17,10 @@
 package com.mongodb.client;
 
 import com.mongodb.CursorType;
+import com.mongodb.ExplainVerbosity;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
+import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
@@ -239,4 +241,49 @@ public interface FindIterable<TResult> extends MongoIterable<TResult> {
      */
     FindIterable<TResult> allowDiskUse(@Nullable Boolean allowDiskUse);
 
+    /**
+     * Explain the execution plan for this operation with the server's default verbosity level
+     *
+     * @return the execution plan
+     * @since 4.2
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.2
+     */
+    Document explain();
+
+    /**
+     * Explain the execution plan for this operation with the given verbosity level
+     *
+     * @param verbosity the verbosity of the explanation
+     * @return the execution plan
+     * @since 4.2
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.2
+     */
+    Document explain(ExplainVerbosity verbosity);
+
+    /**
+     * Explain the execution plan for this operation with the server's default verbosity level
+     *
+     * @param <E> the type of the document class
+     * @param explainResultClass the document class to decode into
+     * @return the execution plan
+     * @since 4.2
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.2
+     */
+    <E> E explain(Class<E> explainResultClass);
+
+    /**
+     * Explain the execution plan for this operation with the given verbosity level
+     *
+     * @param <E> the type of the document class
+     * @param explainResultClass the document class to decode into
+     * @param verbosity            the verbosity of the explanation
+     * @return the execution plan
+     * @since 4.2
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.2
+     */
+    <E> E explain(Class<E> explainResultClass, ExplainVerbosity verbosity);
 }

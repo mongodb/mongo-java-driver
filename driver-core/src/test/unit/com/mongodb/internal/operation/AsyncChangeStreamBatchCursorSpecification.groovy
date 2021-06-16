@@ -43,12 +43,6 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
         1 * wrapped.setBatchSize(10)
 
         when:
-        cursor.tryNext(callback)
-
-        then:
-        1 * wrapped.tryNext(_) >> { it[0].onResult(null, null) }
-
-        when:
         cursor.next(callback)
 
         then:
@@ -94,31 +88,6 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
         cursor.isClosed()
     }
 
-    def 'should not close the cursor in tryNext if the cursor was closed before tryNext completed'() {
-        def changeStreamOpertation = Stub(ChangeStreamOperation)
-        def binding = Mock(AsyncReadBinding)
-        def wrapped = Mock(AsyncQueryBatchCursor)
-        def callback = Stub(SingleResultCallback)
-        def cursor = new AsyncChangeStreamBatchCursor(changeStreamOpertation, wrapped, binding, null,
-                ServerVersionHelper.FOUR_DOT_FOUR_WIRE_VERSION)
-
-        when:
-        cursor.tryNext(callback)
-
-        then:
-        1 * wrapped.tryNext(_) >> {
-            // Simulate the user calling close while wrapped.next() is in flight
-            cursor.close()
-            it[0].onResult(null, null)
-        }
-
-        then:
-        noExceptionThrown()
-
-        then:
-        cursor.isClosed()
-    }
-
     def 'should throw a MongoException when next/tryNext is called after the cursor is closed'() {
         def changeStreamOpertation = Stub(ChangeStreamOperation)
         def binding = Mock(AsyncReadBinding)
@@ -135,24 +104,11 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
         then:
         def exception = thrown(MongoException)
         exception.getMessage() == 'next() called after the cursor was closed.'
-
-        when:
-        tryNextBatch(cursor)
-
-        then:
-        exception = thrown(MongoException)
-        exception.getMessage() == 'tryNext() called after the cursor was closed.'
     }
 
     List<Document> nextBatch(AsyncChangeStreamBatchCursor cursor) {
         def futureResultCallback = new FutureResultCallback()
         cursor.next(futureResultCallback)
-        futureResultCallback.get(1, SECONDS)
-    }
-
-    List<Document> tryNextBatch(AsyncChangeStreamBatchCursor cursor) {
-        def futureResultCallback = new FutureResultCallback()
-        cursor.tryNext(futureResultCallback)
         futureResultCallback.get(1, SECONDS)
     }
 }

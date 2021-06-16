@@ -30,7 +30,10 @@ import org.junit.Test;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.internal.connection.MessageHelper.buildSuccessfulReply;
+import static com.mongodb.internal.connection.MessageHelper.getApiVersionField;
+import static com.mongodb.internal.connection.MessageHelper.getDbField;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -45,7 +48,7 @@ public class NativeAuthenticatorUnitTest {
         connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()));
         MongoCredential credential = MongoCredential.createCredential("\u53f0\u5317", "database",
                 "Ta\u0301ibe\u030Ci".toCharArray());
-        subject = new NativeAuthenticator(new MongoCredentialWithCache(credential));
+        subject = new NativeAuthenticator(new MongoCredentialWithCache(credential), getServerApi());
     }
 
     @Test
@@ -116,9 +119,14 @@ public class NativeAuthenticatorUnitTest {
 
         String secondCommand = MessageHelper.decodeCommandAsJson(sent.get(1));
 
-        assertEquals("{\"getnonce\": 1}", firstCommand);
+        assertEquals("{\"getnonce\": 1" + getDbField("database") + getApiVersionField() + "}", firstCommand);
         assertEquals("{\"authenticate\": 1, \"user\": \"\u53f0\u5317\", "
                      + "\"nonce\": \"2375531c32080ae8\", "
-                     + "\"key\": \"4fb55df196e38eea50d2b8b200acfa8b\"}", secondCommand);
+                     + "\"key\": \"4fb55df196e38eea50d2b8b200acfa8b\""
+                     + getDbField("database")
+                     + getApiVersionField()
+                     + "}",
+                secondCommand);
     }
+
 }

@@ -16,13 +16,16 @@
 
 package org.mongodb.scala
 
-import java.util.concurrent.TimeUnit
+import com.mongodb.ExplainVerbosity
 
+import java.util.concurrent.TimeUnit
 import com.mongodb.reactivestreams.client.AggregatePublisher
+import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Collation
 
 import scala.concurrent.duration.Duration
+import scala.reflect.ClassTag
 
 /**
  * Observable for aggregate
@@ -116,6 +119,24 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
   }
 
   /**
+   * Add top-level variables to the aggregation.
+   *
+   * For MongoDB 5.0+, the aggregate command accepts a "let" option. This option is a document consisting of zero or more
+   * fields representing variables that are accessible to the aggregation pipeline.  The key is the name of the variable and the value is
+   * a constant in the aggregate expression language. Each parameter name is then usable to access the value of the corresponding
+   * expression with the "$$" syntax within aggregate expression contexts which may require the use of $expr or a pipeline.
+   *
+   * @param variables the variables
+   * @return this
+   * @since 4.3
+   * @note Requires MongoDB 5.0 or greater
+   */
+  def let(variables: Bson): AggregateObservable[TResult] = {
+    wrapped.let(variables)
+    this
+  }
+
+  /**
    * Sets the hint for which index to use. A null value means no hint is set.
    *
    * @param hint the hint
@@ -155,6 +176,34 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
    * @since 4.0
    */
   def first(): SingleObservable[TResult] = wrapped.first()
+
+  /**
+   * Explain the execution plan for this operation with the server's default verbosity level
+   *
+   * @tparam ExplainResult The type of the result
+   * @return the execution plan
+   * @since 4.2
+   * @note Requires MongoDB 3.6 or greater
+   */
+  def explain[ExplainResult]()(
+      implicit e: ExplainResult DefaultsTo Document,
+      ct: ClassTag[ExplainResult]
+  ): SingleObservable[ExplainResult] =
+    wrapped.explain[ExplainResult](ct)
+
+  /**
+   * Explain the execution plan for this operation with the given verbosity level
+   *
+   * @tparam ExplainResult The type of the result
+   * @param verbosity the verbosity of the explanation
+   * @return the execution plan
+   * @since 4.2
+   * @note Requires MongoDB 3.6 or greater
+   */
+  def explain[ExplainResult](
+      verbosity: ExplainVerbosity
+  )(implicit e: ExplainResult DefaultsTo Document, ct: ClassTag[ExplainResult]): SingleObservable[ExplainResult] =
+    wrapped.explain[ExplainResult](ct, verbosity)
 
   override def subscribe(observer: Observer[_ >: TResult]): Unit = wrapped.subscribe(observer)
 }

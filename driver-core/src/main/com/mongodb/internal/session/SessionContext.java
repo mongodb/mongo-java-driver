@@ -126,7 +126,7 @@ public interface SessionContext {
     /**
      * Unpin a mongos from a session.
      */
-    void unpinServerAddress();
+    void clearTransactionContext();
 
     /**
      * Mark the session as dirty. This happens when a command fails with a network

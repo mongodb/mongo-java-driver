@@ -289,7 +289,7 @@ addFields(new Field("myNewField", new Document("c", 3).append("d", 4)),
 	new Field("z", 5))
 ```
 
-These new fields do not need be statically defined.  The following example shows how to add a new field which is a function of the current document's values.  In this case, a new field `alt3` is added with a value of `true` if the current value of the field `a` is less than 3.  Otherwise, `alt3` will be `false` in the new field.
+These new fields do not need to be statically defined.  The following example shows how to add a new field which is a function of the current document's values.  In this case, a new field `alt3` is added with a value of `true` if the current value of the field `a` is less than 3.  Otherwise, `alt3` will be `false` in the new field.
 
 ```java
 addFields(new Field("alt3", new Document("$lt", asList("$a", 3))))

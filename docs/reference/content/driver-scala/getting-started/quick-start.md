@@ -10,7 +10,7 @@ title = "Quick Start"
 
 # MongoDB Scala Driver Quick Start
 
-The following code snippets come from the [`QuickTour.java`]({{< srcref "driver-scala/src/it/tour/QuickTour.java" >}}) example code
+The following code snippets come from the [`QuickTour.java`]({{< srcref "driver-scala/src/it/tour/QuickTour.scala" >}}) example code
 that can be found with the Scala driver source on github.
 
 {{% note %}}
@@ -90,7 +90,7 @@ val mongoClient: MongoClient = MongoClient(
     .build())
 ```
 
-- You can specify the [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/ConnectionString$.html" >}}):
+- You can specify the [`ConnectionString`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/package$$ConnectionString$.html" >}}):
 
 ```scala
 val mongoClient: MongoClient = MongoClient("mongodb://hostOne:27017")
@@ -127,7 +127,7 @@ val collection: MongoCollection[Document] = database.getCollection("test")
 
 ## Create a Document
 
-To create the document using the Scala driver, use the [`Document`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/bson/collection/immutable/Document">}} class.
+To create the document using the Scala driver, use the [`Document`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/bson/collection/immutable/Document">}}) class.
 
 For example, consider the following JSON document:
 
@@ -171,7 +171,7 @@ passed back to the user.
 {{% /note %}}
 
 {{% note class="important" %}}
-In the API all methods returning a `Observables` are "cold" streams meaning that nothing happens until they are Subscribed to.
+In the API all methods returning a `Observables` are "cold" streams meaning that nothing happens until they are subscribed to.
 
 The example below does nothing:
 

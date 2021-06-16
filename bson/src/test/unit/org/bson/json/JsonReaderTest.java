@@ -141,6 +141,17 @@ public class JsonReaderTest {
     }
 
     @Test
+    public void testDateTimeShellDateOnly() {
+        String json = "ISODate(\"1970-01-01\")";
+        testStringAndStream(json, bsonReader -> {
+            assertEquals(BsonType.DATE_TIME, bsonReader.readBsonType());
+            assertEquals(0, bsonReader.readDateTime());
+            assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+            return null;
+        });
+    }
+
+    @Test
     public void testDateTimeShell() {
         String json = "ISODate(\"1970-01-01T00:00:00Z\")";
         testStringAndStream(json, bsonReader -> {
@@ -943,6 +954,30 @@ public class JsonReaderTest {
             assertEquals(BsonType.BINARY, bsonReader.readBsonType());
             return null;
         }, JsonParseException.class);
+    }
+
+    @Test
+    public void testUuid() {
+        String json = "{ \"$uuid\" : \"b5f21e0c-2a0d-42d6-ad03-d827008d8ab6\"}}";
+        testStringAndStream(json, bsonReader -> {
+            assertEquals(BsonType.BINARY, bsonReader.readBsonType());
+            BsonBinary binary = bsonReader.readBinaryData();
+            assertEquals(BsonBinarySubType.UUID_STANDARD.getValue(), binary.getType());
+            assertArrayEquals(new byte[]{-75, -14, 30, 12, 42, 13, 66, -42, -83, 3, -40, 39, 0, -115, -118, -74}, binary.getData());
+            assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+            return null;
+        });
+    }
+
+    // testing that JsonReader uses internal UuidStringValidator, as UUID.fromString accepts this UUID
+    @Test(expected = JsonParseException.class)
+    public void testInvalidUuid() {
+        // first hyphen out of place
+        String json = "{ \"$uuid\" : \"73ff-d26444b-34c6-990e8e-7d1dfc035d4\"}}";
+        testStringAndStream(json, bsonReader -> {
+            bsonReader.readBinaryData();
+            return null;
+        });
     }
 
     @Test

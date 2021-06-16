@@ -13,7 +13,7 @@ pre = "<i class='fa'></i>"
 [Indexes]({{<docsref "indexes" >}}) support the efficient execution of queries in MongoDB. To create an [index]({{<docsref "indexes" >}}) on a field or fields, pass an index specification document to the [`MongoCollection.createIndex()`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/MongoCollection.html#createIndex(key:org.mongodb.scala.bson.conversions.Bson,options:org.mongodb.scala.model.IndexOptions):org.mongodb.scala.SingleObservable[String]" >}}) method.
 
 The MongoDB Scala Driver provides
-the [`Indexes`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/model/Indexes.html" >}}) class that
+the [`Indexes`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/model/Indexes$.html" >}}) class that
 includes helper methods to create index specification
 documents for the various MongoDB Index key types.
 
@@ -155,23 +155,6 @@ The following example creates a `2dsphere` index on the `"contact.location"` fie
 collection.createIndex(Indexes.geo2dsphere("contact.location"))
           .printResults()
 ```
-
-### geoHaystack
-
-To create a specification for a [`geoHaystack` index]({{<docsref "core/geohaystack/" >}}), use the [`Indexes.geoHaystack`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/model/Indexes$.html#geoHaystack(fieldName:String,additional:org.mongodb.scala.bson.conversions.Bson):org.mongodb.scala.bson.conversions.Bson" >}}) method. `geoHaystack` indexes can improve performance on queries that use flat geometries.
-
-The following example creates a `geoHaystack` index on the `contact.location` field and an ascending index on the `stars` field:
-
-```scala
-val haystackOption = IndexOptions().bucketSize(1.0)
-collection.createIndex(
-            Indexes.geoHaystack("contact.location", Indexes.ascending("stars")),
-            haystackOption)
-        .printResults()
-```
-
-
-To query a haystack index, use the [`geoSearch`]({{<docsref "reference/command/geoSearch" >}}) command.
 
 ## IndexOptions
 

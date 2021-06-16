@@ -49,7 +49,7 @@ import static java.lang.String.format;
 public class BsonDocument extends BsonValue implements Map<String, BsonValue>, Cloneable, Bson, Serializable {
     private static final long serialVersionUID = 1L;
 
-    private final Map<String, BsonValue> map = new LinkedHashMap<String, BsonValue>();
+    private final Map<String, BsonValue> map;
 
     /**
      * Parses a string in MongoDB Extended JSON format to a {@code BsonDocument}
@@ -69,6 +69,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, C
      * @param bsonElements a list of {@code BsonElement}
      */
     public BsonDocument(final List<BsonElement> bsonElements) {
+        this(bsonElements.size());
         for (BsonElement cur : bsonElements) {
             put(cur.getName(), cur.getValue());
         }
@@ -81,13 +82,26 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, C
      * @param value the value
      */
     public BsonDocument(final String key, final BsonValue value) {
+        this();
         put(key, value);
+    }
+
+    /**
+     * Construct an empty document with the specified initial capacity.
+     *
+     * @param  initialCapacity the initial capacity
+     * @throws IllegalArgumentException if the initial capacity is negative
+     * @since 4.3
+     */
+    public BsonDocument(final int initialCapacity) {
+        map = new LinkedHashMap<String, BsonValue>(initialCapacity);
     }
 
     /**
      * Construct an empty document.
      */
     public BsonDocument() {
+         map = new LinkedHashMap<String, BsonValue>();
     }
 
     @Override
@@ -844,7 +858,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, C
 
     @Override
     public BsonDocument clone() {
-        BsonDocument to = new BsonDocument();
+        BsonDocument to = new BsonDocument(this.size());
         for (Entry<String, BsonValue> cur : entrySet()) {
             switch (cur.getValue().getBsonType()) {
                 case DOCUMENT:

@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection
 
 import com.mongodb.ClusterFixture
+import com.mongodb.KerberosSubjectProvider
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoCredential
 import com.mongodb.MongoSecurityException
@@ -39,7 +40,9 @@ import static com.mongodb.AuthenticationMechanism.GSSAPI
 import static com.mongodb.ClusterFixture.getConnectionString
 import static com.mongodb.ClusterFixture.getCredential
 import static com.mongodb.ClusterFixture.getSslSettings
+import static com.mongodb.MongoCredential.JAVA_SUBJECT_PROVIDER_KEY
 import static com.mongodb.MongoCredential.createGSSAPICredential
+import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.internal.connection.CommandHelper.executeCommand
 import static java.util.concurrent.TimeUnit.SECONDS
 
@@ -52,7 +55,7 @@ class GSSAPIAuthenticationSpecification extends Specification {
 
         when:
         openConnection(connection, async)
-        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), connection)
+        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), null, connection)
 
         then:
         thrown(MongoCommandException)
@@ -66,11 +69,11 @@ class GSSAPIAuthenticationSpecification extends Specification {
 
     def 'should authorize when successfully authenticated'() {
         given:
-        def connection = createConnection(async, getMongoCredential())
+        def connection = createConnection(async, credentials)
 
         when:
         openConnection(connection, async)
-        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), connection)
+        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), null, connection)
 
         then:
         true
@@ -79,16 +82,19 @@ class GSSAPIAuthenticationSpecification extends Specification {
         connection?.close()
 
         where:
-        async << [true, false]
+        [async, credentials] << [
+                [true, false],
+                [getMongoCredential(), getMongoCredential().withMechanismProperty(JAVA_SUBJECT_PROVIDER_KEY, new KerberosSubjectProvider())]
+        ].combinations()
     }
 
     def 'should throw MongoSecurityException when authentication fails'() {
         given:
-        def connection = createConnection(async, createGSSAPICredential('wrongUserName'))
+        def connection = createConnection(async, credentials)
 
         when:
         openConnection(connection, async)
-        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), connection)
+        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), null, connection)
 
         then:
         thrown(MongoSecurityException)
@@ -97,7 +103,12 @@ class GSSAPIAuthenticationSpecification extends Specification {
         connection?.close()
 
         where:
-        async << [true, false]
+        [async, credentials] << [
+                [true, false],
+                [createGSSAPICredential('wrongUserName'),
+                 createGSSAPICredential('wrongUserName')
+                         .withMechanismProperty(JAVA_SUBJECT_PROVIDER_KEY, new KerberosSubjectProvider())]
+        ].combinations()
     }
 
     def 'should authorize when successfully authenticated with Subject property'() {
@@ -114,7 +125,7 @@ class GSSAPIAuthenticationSpecification extends Specification {
         when:
         def connection = createConnection(async, getMongoCredential(subject))
         openConnection(connection, async)
-        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), connection)
+        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), null, connection)
 
         then:
         true
@@ -157,7 +168,7 @@ class GSSAPIAuthenticationSpecification extends Specification {
         when:
         def connection = createConnection(async, getMongoCredential(saslClientProperties))
         openConnection(connection, async)
-        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), connection)
+        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), null, connection)
 
         then:
         true
@@ -186,15 +197,15 @@ class GSSAPIAuthenticationSpecification extends Specification {
     }
 
     private static InternalStreamConnection createConnection(final boolean async, final MongoCredential credential) {
-        new InternalStreamConnection(
-                new ServerId(new ClusterId(), new ServerAddress(getConnectionString().getHosts().get(0))),
+        new InternalStreamConnection(SINGLE, new ServerId(new ClusterId(), new ServerAddress(getConnectionString().getHosts().get(0))),
+                new TestConnectionGenerationSupplier(),
                 async ? new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings())
                         : new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()), [], null,
-                new InternalStreamConnectionInitializer(createAuthenticator(credential), null, []))
+                new InternalStreamConnectionInitializer(SINGLE, createAuthenticator(credential), null, [], null))
     }
 
     private static Authenticator createAuthenticator(final MongoCredential credential) {
-        credential == null ? null : new GSSAPIAuthenticator(new MongoCredentialWithCache(credential))
+        credential == null ? null : new GSSAPIAuthenticator(new MongoCredentialWithCache(credential), null)
     }
 
     private static void openConnection(final InternalConnection connection, final boolean async) {

@@ -16,17 +16,16 @@
 
 package org.mongodb.scala.syncadapter
 
-import com.mongodb.{ ClientSessionOptions, ServerAddress, TransactionOptions }
+import com.mongodb.{ ClientSessionOptions, MongoInterruptedException, ServerAddress, TransactionOptions }
 import com.mongodb.client.{ TransactionBody, ClientSession => JClientSession }
 import com.mongodb.session.ServerSession
 import org.bson.{ BsonDocument, BsonTimestamp }
 import org.mongodb.scala._
+import com.mongodb.reactivestreams.client.syncadapter.{ SyncMongoClient => JSyncMongoClient }
 
 case class SyncClientSession(wrapped: ClientSession, originator: Object) extends JClientSession {
 
   override def getPinnedServerAddress: ServerAddress = wrapped.getPinnedServerAddress
-
-  override def setPinnedServerAddress(address: ServerAddress): Unit = wrapped.setPinnedServerAddress(address)
 
   override def getRecoveryToken: BsonDocument = wrapped.getRecoveryToken
 
@@ -48,11 +47,16 @@ case class SyncClientSession(wrapped: ClientSession, originator: Object) extends
 
   override def getClusterTime: BsonDocument = wrapped.getClusterTime
 
-  override def close(): Unit = wrapped.close()
+  override def close(): Unit = {
+    wrapped.close()
+    sleep(JSyncMongoClient.getSleepAfterSessionClose)
+  }
 
   override def hasActiveTransaction: Boolean = wrapped.hasActiveTransaction
 
   override def notifyMessageSent: Boolean = wrapped.notifyMessageSent
+
+  override def notifyOperationInitiated(operation: Object): Unit = wrapped.notifyOperationInitiated(operation)
 
   override def getTransactionOptions: TransactionOptions = wrapped.getTransactionOptions
 
@@ -69,4 +73,19 @@ case class SyncClientSession(wrapped: ClientSession, originator: Object) extends
 
   override def withTransaction[T](transactionBody: TransactionBody[T], options: TransactionOptions) =
     throw new UnsupportedOperationException
+
+  override def getTransactionContext: AnyRef = wrapped.getTransactionContext
+
+  override def setTransactionContext(address: ServerAddress, transactionContext: Any): Unit =
+    wrapped.setTransactionContext(address, transactionContext)
+
+  override def clearTransactionContext(): Unit = wrapped.clearTransactionContext()
+
+  private def sleep(millis: Long): Unit = {
+    try Thread.sleep(millis)
+    catch {
+      case e: InterruptedException =>
+        throw new MongoInterruptedException(null, e)
+    }
+  }
 }

@@ -25,6 +25,7 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.ServerApi;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
@@ -54,31 +55,26 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAny;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAnyPrimaryOrSecondary;
 
-/**
- * This class is not part of the public API and may be removed or changed at any time.
- */
-public class MongoClientDelegate {
+final class MongoClientDelegate {
     private final Cluster cluster;
     private final ServerSessionPool serverSessionPool;
     private final Object originator;
     private final OperationExecutor operationExecutor;
     private final Crypt crypt;
+    @Nullable
+    private final ServerApi serverApi;
     private final CodecRegistry codecRegistry;
-
-    public MongoClientDelegate(final Cluster cluster, final CodecRegistry codecRegistry,
-                               final Object originator, @Nullable final Crypt crypt) {
-        this(cluster, codecRegistry, originator, null, crypt);
-    }
 
     MongoClientDelegate(final Cluster cluster, final CodecRegistry codecRegistry,
                         final Object originator, @Nullable final OperationExecutor operationExecutor,
-                        @Nullable final Crypt crypt) {
+                        @Nullable final Crypt crypt, @Nullable final ServerApi serverApi) {
         this.cluster = cluster;
         this.codecRegistry = codecRegistry;
-        this.serverSessionPool = new ServerSessionPool(cluster);
+        this.serverSessionPool = new ServerSessionPool(cluster, serverApi);
         this.originator = originator;
         this.operationExecutor = operationExecutor == null ? new DelegateOperationExecutor() : operationExecutor;
         this.crypt = crypt;
+        this.serverApi = serverApi;
     }
 
     public OperationExecutor getOperationExecutor() {
@@ -94,7 +90,8 @@ public class MongoClientDelegate {
 
         ClusterDescription connectedClusterDescription = getConnectedClusterDescription();
 
-        if (connectedClusterDescription.getLogicalSessionTimeoutMinutes() == null) {
+        if (connectedClusterDescription.getLogicalSessionTimeoutMinutes() == null
+                && connectedClusterDescription.getConnectionMode() != ClusterConnectionMode.LOAD_BALANCED) {
             return null;
         } else {
             ClientSessionOptions mergedOptions = ClientSessionOptions.builder(options)
@@ -167,6 +164,10 @@ public class MongoClientDelegate {
         @Override
         public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern,
                              @Nullable final ClientSession session) {
+            if (session != null) {
+                session.notifyOperationInitiated(operation);
+            }
+
             ClientSession actualClientSession = getClientSession(session);
             ReadBinding binding = getReadBinding(readPreference, readConcern, actualClientSession,
                     session == null && actualClientSession != null);
@@ -178,7 +179,7 @@ public class MongoClientDelegate {
                 return operation.execute(binding);
             } catch (MongoException e) {
                 labelException(session, e);
-                unpinServerAddressOnTransientTransactionError(session, e);
+                clearTransactionContextOnTransientTransactionError(session, e);
                 throw e;
             } finally {
                 binding.release();
@@ -187,6 +188,10 @@ public class MongoClientDelegate {
 
         @Override
         public <T> T execute(final WriteOperation<T> operation, final ReadConcern readConcern, @Nullable final ClientSession session) {
+            if (session != null) {
+                session.notifyOperationInitiated(operation);
+            }
+
             ClientSession actualClientSession = getClientSession(session);
             WriteBinding binding = getWriteBinding(readConcern, actualClientSession,
                     session == null && actualClientSession != null);
@@ -195,7 +200,7 @@ public class MongoClientDelegate {
                 return operation.execute(binding);
             } catch (MongoException e) {
                 labelException(session, e);
-                unpinServerAddressOnTransientTransactionError(session, e);
+                clearTransactionContextOnTransientTransactionError(session, e);
                 throw e;
             } finally {
                 binding.release();
@@ -214,7 +219,7 @@ public class MongoClientDelegate {
         ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, final ReadConcern readConcern,
                                              @Nullable final ClientSession session, final boolean ownsSession) {
             ClusterAwareReadWriteBinding readWriteBinding = new ClusterBinding(cluster,
-                    getReadPreferenceForBinding(readPreference, session), readConcern);
+                    getReadPreferenceForBinding(readPreference, session), readConcern, serverApi);
 
             if (crypt != null) {
                 readWriteBinding = new CryptBinding(readWriteBinding, crypt);
@@ -236,9 +241,9 @@ public class MongoClientDelegate {
             }
         }
 
-        private void unpinServerAddressOnTransientTransactionError(final @Nullable ClientSession session, final MongoException e) {
+        private void clearTransactionContextOnTransientTransactionError(final @Nullable ClientSession session, final MongoException e) {
             if (session != null && e.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)) {
-                session.setPinnedServerAddress(null);
+                session.clearTransactionContext();
             }
         }
 

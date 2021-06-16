@@ -33,17 +33,17 @@ import static com.mongodb.ReadPreference.primary
 class UsageTrackingConnectionSpecification extends Specification {
     private static final ServerId SERVER_ID = new ServerId(new ClusterId(), new ServerAddress())
 
-    def 'generation is initialized'() {
+    def 'generation returns wrapped value'() {
         when:
-        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 1);
+        def connection = createConnection()
 
         then:
-        connection.generation == 1
+        connection.generation == 0
     }
 
     def 'openAt should be set on open'() {
         when:
-        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);
+        def connection = createConnection()
 
         then:
         connection.openedAt == Long.MAX_VALUE
@@ -59,7 +59,7 @@ class UsageTrackingConnectionSpecification extends Specification {
     def 'openAt should be set on open asynchronously'() {
         when:
         def futureResultCallback = new FutureResultCallback<Void>()
-        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);
+        def connection = createConnection()
 
         then:
         connection.openedAt == Long.MAX_VALUE
@@ -74,7 +74,7 @@ class UsageTrackingConnectionSpecification extends Specification {
 
     def 'lastUsedAt should be set on open'() {
         when:
-        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);
+        def connection = createConnection()
 
         then:
         connection.lastUsedAt == Long.MAX_VALUE
@@ -90,7 +90,7 @@ class UsageTrackingConnectionSpecification extends Specification {
     def 'lastUsedAt should be set on open asynchronously'() {
         when:
         def futureResultCallback = new FutureResultCallback<Void>()
-        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);
+        def connection = createConnection()
 
         then:
         connection.lastUsedAt == Long.MAX_VALUE
@@ -105,7 +105,7 @@ class UsageTrackingConnectionSpecification extends Specification {
 
     def 'lastUsedAt should be set on sendMessage'() {
         given:
-        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);
+        def connection = createConnection()
         connection.open()
         def openedLastUsedAt = connection.lastUsedAt
 
@@ -120,7 +120,7 @@ class UsageTrackingConnectionSpecification extends Specification {
 
     def 'lastUsedAt should be set on sendMessage asynchronously'() {
         given:
-        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);
+        def connection = createConnection()
         connection.open()
         def openedLastUsedAt = connection.lastUsedAt
         def futureResultCallback = new FutureResultCallback<Void>()
@@ -136,7 +136,7 @@ class UsageTrackingConnectionSpecification extends Specification {
 
     def 'lastUsedAt should be set on receiveMessage'() {
         given:
-        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);
+        def connection = createConnection()
         connection.open()
         def openedLastUsedAt = connection.lastUsedAt
         when:
@@ -149,7 +149,7 @@ class UsageTrackingConnectionSpecification extends Specification {
 
     def 'lastUsedAt should be set on receiveMessage asynchronously'() {
         given:
-        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);
+        def connection = createConnection()
         connection.open()
         def openedLastUsedAt = connection.lastUsedAt
         def futureResultCallback = new FutureResultCallback<Void>()
@@ -165,14 +165,14 @@ class UsageTrackingConnectionSpecification extends Specification {
 
     def 'lastUsedAt should be set on sendAndReceive'() {
         given:
-        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);
+        def connection = createConnection()
         connection.open()
         def openedLastUsedAt = connection.lastUsedAt
 
         when:
         connection.sendAndReceive(new CommandMessage(new MongoNamespace('test.coll'),
                 new BsonDocument('ping', new BsonInt32(1)), new NoOpFieldNameValidator(), primary(),
-                MessageSettings.builder().build()),
+                MessageSettings.builder().build(), null),
                 new BsonDocumentCodec(), NoOpSessionContext.INSTANCE)
 
         then:
@@ -182,7 +182,7 @@ class UsageTrackingConnectionSpecification extends Specification {
 
     def 'lastUsedAt should be set on sendAndReceive asynchronously'() {
         given:
-        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);
+        def connection = createConnection()
         connection.open()
         def openedLastUsedAt = connection.lastUsedAt
         def futureResultCallback = new FutureResultCallback<Void>()
@@ -190,12 +190,17 @@ class UsageTrackingConnectionSpecification extends Specification {
         when:
         connection.sendAndReceiveAsync(new CommandMessage(new MongoNamespace('test.coll'),
                 new BsonDocument('ping', new BsonInt32(1)), new NoOpFieldNameValidator(), primary(),
-                MessageSettings.builder().build()),
+                MessageSettings.builder().build(), null),
                 new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, futureResultCallback)
         futureResultCallback.get()
 
         then:
         connection.lastUsedAt >= openedLastUsedAt
         connection.lastUsedAt <= System.currentTimeMillis()
+    }
+
+    private static UsageTrackingInternalConnection createConnection() {
+        new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID),
+                new DefaultConnectionPool.ServiceStateManager())
     }
 }

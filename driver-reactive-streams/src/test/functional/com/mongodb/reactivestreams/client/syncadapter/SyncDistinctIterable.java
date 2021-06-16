@@ -25,12 +25,13 @@ import org.bson.conversions.Bson;
 import java.util.concurrent.TimeUnit;
 
 class SyncDistinctIterable<T> extends SyncMongoIterable<T> implements DistinctIterable<T> {
-    private com.mongodb.reactivestreams.client.DistinctPublisher<T> wrapped;
+    private final com.mongodb.reactivestreams.client.DistinctPublisher<T> wrapped;
 
     SyncDistinctIterable(final DistinctPublisher<T> wrapped) {
         super(wrapped);
         this.wrapped = wrapped;
     }
+
     @Override
     public DistinctIterable<T> filter(@Nullable final Bson filter) {
         wrapped.filter(filter);
@@ -46,6 +47,7 @@ class SyncDistinctIterable<T> extends SyncMongoIterable<T> implements DistinctIt
     @Override
     public DistinctIterable<T> batchSize(final int batchSize) {
         wrapped.batchSize(batchSize);
+        super.batchSize(batchSize);
         return this;
     }
 

@@ -17,6 +17,8 @@
 package com.mongodb.internal.connection;
 
 
+import com.mongodb.ServerAddress;
+import com.mongodb.connection.ClusterId;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterSettings;
@@ -49,6 +51,14 @@ public interface Cluster extends Closeable {
      */
     ClusterDescription getDescription();
 
+
+    ClusterId getClusterId();
+
+    /**
+     * For internal, unit testing use only
+     */
+    ClusterableServer getServer(ServerAddress serverAddress);
+
     /**
      * Get the current description of this cluster.
      *
@@ -65,22 +75,9 @@ public interface Cluster extends Closeable {
     @Nullable
     BsonTimestamp getClusterTime();
 
-    /**
-     * Get a MongoDB server that matches the criteria defined by the serverSelector
-     *
-     * @param serverSelector a ServerSelector that defines how to select the required Server
-     * @return a Server that meets the requirements
-     * @throws com.mongodb.MongoTimeoutException if the timeout has been reached before a server matching the selector is available
-     */
-    Server selectServer(ServerSelector serverSelector);
+    ServerTuple selectServer(ServerSelector serverSelector);
 
-    /**
-     * Asynchronously gets a MongoDB server that matches the criteria defined by the serverSelector.
-     *
-     * @param serverSelector a ServerSelector that defines how to select the required Server
-     * @param callback the callback to invoke when the server is found or an error occurs
-     */
-    void selectServerAsync(ServerSelector serverSelector, SingleResultCallback<Server> callback);
+    void selectServerAsync(ServerSelector serverSelector, SingleResultCallback<ServerTuple> callback);
 
     /**
      * Closes connections to the servers in the cluster.  After this is called, this cluster instance can no longer be used.

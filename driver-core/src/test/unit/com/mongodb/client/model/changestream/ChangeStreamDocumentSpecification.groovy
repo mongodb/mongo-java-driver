@@ -23,6 +23,9 @@ import org.bson.BsonTimestamp
 import org.bson.RawBsonDocument
 import spock.lang.Specification
 
+import static java.util.Collections.emptyList
+import static java.util.Collections.singletonList
+
 class ChangeStreamDocumentSpecification extends Specification {
 
     def 'should initialize correctly'() {
@@ -36,7 +39,7 @@ class ChangeStreamDocumentSpecification extends Specification {
         def documentKey = BsonDocument.parse('{_id : 1}')
         def clusterTime = new BsonTimestamp(1234, 2)
         def operationType = OperationType.UPDATE
-        def updateDesc = new UpdateDescription(['a', 'b'], BsonDocument.parse('{c: 1}'))
+        def updateDesc = new UpdateDescription(['a', 'b'], BsonDocument.parse('{c: 1}'), null)
         def txnNumber = new BsonInt64(1);
         def lsid = BsonDocument.parse('{id: 1, uid: 1}');
 
@@ -87,7 +90,7 @@ class ChangeStreamDocumentSpecification extends Specification {
         def documentKey = BsonDocument.parse('{_id : 1}')
         def clusterTime = new BsonTimestamp(1234, 2)
         def operationType = OperationType.DROP_DATABASE
-        def updateDesc = new UpdateDescription(['a', 'b'], BsonDocument.parse('{c: 1}'))
+        def updateDesc = new UpdateDescription(['a', 'b'], BsonDocument.parse('{c: 1}'), emptyList())
         def changeStreamDocumentNullNamespace = new ChangeStreamDocument<BsonDocument>(operationType, resumeToken, (BsonDocument) null,
                 (BsonDocument) null, fullDocument, documentKey, clusterTime, updateDesc, null, null)
 
@@ -108,7 +111,7 @@ class ChangeStreamDocumentSpecification extends Specification {
         def documentKey = BsonDocument.parse('{_id : 1}')
         def clusterTime = new BsonTimestamp(1234, 2)
         def operationType = OperationType.DROP_DATABASE
-        def updateDesc = new UpdateDescription(['a', 'b'], BsonDocument.parse('{c: 1}'))
+        def updateDesc = new UpdateDescription(['a', 'b'], BsonDocument.parse('{c: 1}'), singletonList(new TruncatedArray('d', 1)))
 
         def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(operationType, resumeToken, namespaceDocument,
                 (BsonDocument) null, fullDocument, documentKey, clusterTime, updateDesc, null, null)

@@ -228,6 +228,7 @@ import static java.util.Collections.unmodifiableList;
  * {@link MongoClientSettings#getUuidRepresentation()} for documentation of semantics of this parameter.  Defaults to "javaLegacy", but
  * will change to "unspecified" in the next major release.</li>
  * <li>{@code directConnection=true|false}. If true the driver will set the connection to be a direct connection to the host.</li>
+ * <li>{@code loadBalanced=true|false}. If true the driver will assume that it's connecting to MongoDB through a load balancer.</li>
  * </ul>
  *
  * @mongodb.driver.manual reference/connection-string Connection String Format
@@ -237,7 +238,8 @@ public class ConnectionString {
 
     private static final String MONGODB_PREFIX = "mongodb://";
     private static final String MONGODB_SRV_PREFIX = "mongodb+srv://";
-    private static final Set<String> ALLOWED_OPTIONS_IN_TXT_RECORD = new HashSet<String>(asList("authsource", "replicaset"));
+    private static final Set<String> ALLOWED_OPTIONS_IN_TXT_RECORD =
+            new HashSet<String>(asList("authsource", "replicaset", "loadbalanced"));
     private static final String UTF_8 = "UTF-8";
 
     private static final Logger LOGGER = Loggers.getLogger("uri");
@@ -250,6 +252,7 @@ public class ConnectionString {
     private final String connectionString;
 
     private Boolean directConnection;
+    private Boolean loadBalanced;
     private ReadPreference readPreference;
     private WriteConcern writeConcern;
     private Boolean retryWrites;
@@ -401,6 +404,18 @@ public class ConnectionString {
             }
         }
 
+        if (loadBalanced != null && loadBalanced) {
+            if (directConnection != null && directConnection) {
+                throw new IllegalArgumentException("directConnection=true can not be specified with loadBalanced=true");
+            }
+            if (requiredReplicaSetName != null) {
+                throw new IllegalArgumentException("replicaSet can not be specified with loadBalanced=true");
+            }
+            if (hosts.size() > 1) {
+                throw new IllegalArgumentException("Only one host can be specified with loadBalanced=true");
+            }
+        }
+
         credential = createCredentials(combinedOptionsMaps, userName, password);
         warnOnUnsupportedOptions(combinedOptionsMaps);
     }
@@ -448,6 +463,7 @@ public class ConnectionString {
         GENERAL_OPTIONS_KEYS.add("uuidrepresentation");
 
         GENERAL_OPTIONS_KEYS.add("directconnection");
+        GENERAL_OPTIONS_KEYS.add("loadbalanced");
 
         COMPRESSOR_KEYS.add("compressors");
         COMPRESSOR_KEYS.add("zlibcompressionlevel");
@@ -551,6 +567,8 @@ public class ConnectionString {
                 uuidRepresentation = createUuidRepresentation(value);
             } else if (key.equals("directconnection")) {
                 directConnection = parseBoolean(value, "directconnection");
+            } else if (key.equals("loadbalanced")) {
+                loadBalanced = parseBoolean(value, "loadbalanced");
             }
         }
 
@@ -1117,6 +1135,17 @@ public class ConnectionString {
     @Nullable
     public Boolean isDirectConnection() {
         return directConnection;
+    }
+
+    /**
+     * Indicates if the connection is through a load balancer.
+     *
+     * @return true if a load-balanced connection
+     * @since 4.3
+     */
+    @Nullable
+    public Boolean isLoadBalanced() {
+        return loadBalanced;
     }
 
     /**

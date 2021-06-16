@@ -25,13 +25,14 @@ import java.util.List;
 import static com.mongodb.ClusterFixture.getServerVersion;
 import static com.mongodb.ClusterFixture.getVersionList;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
+import static com.mongodb.ClusterFixture.isLoadBalanced;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 
 public final class JsonTestServerVersionChecker {
-    private static final List<String> TOPOLOGY_TYPES = asList("sharded", "replicaset", "single");
+    private static final List<String> TOPOLOGY_TYPES = asList("sharded", "sharded-replicaset", "replicaset", "single", "load-balanced");
 
     public static boolean skipTest(final BsonDocument testDocument, final BsonDocument testDefinition) {
         return skipTest(testDocument, testDefinition, getServerVersion());
@@ -86,14 +87,16 @@ public final class JsonTestServerVersionChecker {
         return topologyFound;
     }
 
-    private static boolean topologyMatches(final BsonArray topologyTypes) {
+    public static boolean topologyMatches(final BsonArray topologyTypes) {
         for (BsonValue type : topologyTypes) {
             String typeString = type.asString().getValue();
-            if (typeString.equals("sharded") && isSharded()) {
+            if ((typeString.equals("sharded") || typeString.equals("sharded-replicaset")) && isSharded()) {
                 return true;
             } else if (typeString.equals("replicaset") && isDiscoverableReplicaSet()) {
                 return true;
             } else if (typeString.equals("single") && isStandalone()) {
+                return true;
+            } else if (typeString.equals("load-balanced") && isLoadBalanced()) {
                 return true;
             } else if (!TOPOLOGY_TYPES.contains(typeString)) {
                 throw new IllegalArgumentException(format("Unexpected topology type: '%s'", typeString));
@@ -102,12 +105,20 @@ public final class JsonTestServerVersionChecker {
         return false;
     }
 
-    private static ServerVersion getMinServerVersionForField(final String fieldName, final BsonDocument document) {
-        return new ServerVersion(getVersionList(document.getString(fieldName).getValue()));
+    public static ServerVersion getMinServerVersionForField(final String fieldName, final BsonDocument document) {
+        return getMinServerVersion(document.getString(fieldName).getValue());
     }
 
-    private static ServerVersion getMaxServerVersionForField(final String fieldName, final BsonDocument document) {
-        List<Integer> versionList = getVersionList(document.getString(fieldName).getValue());
+    public static ServerVersion getMinServerVersion(final String serverVersion) {
+        return new ServerVersion(getVersionList(serverVersion));
+    }
+
+    public static ServerVersion getMaxServerVersionForField(final String fieldName, final BsonDocument document) {
+        return getMaxServerVersionForField(document.getString(fieldName).getValue());
+    }
+
+    public static ServerVersion getMaxServerVersionForField(final String serverVersion) {
+        List<Integer> versionList = getVersionList(serverVersion);
         if (versionList.size() > 2 && versionList.get(2).equals(0)) {
             versionList = asList(versionList.get(0), versionList.get(1), Integer.MAX_VALUE);
         }

@@ -16,13 +16,18 @@
 
 package org.bson;
 
+import org.bson.codecs.BsonValueCodecProvider;
+import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.DocumentCodec;
+import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.Encoder;
 import org.bson.codecs.EncoderContext;
+import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
+import org.bson.internal.CodecRegistryHelper;
 import org.bson.json.JsonMode;
 import org.bson.json.JsonReader;
 import org.bson.json.JsonWriter;
@@ -40,8 +45,10 @@ import java.util.Map;
 import java.util.Set;
 
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
 import static org.bson.assertions.Assertions.isTrue;
 import static org.bson.assertions.Assertions.notNull;
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 /**
  * A representation of a document as a {@code Map}.  All iterators will traverse the elements in insertion order, as with {@code
@@ -51,6 +58,12 @@ import static org.bson.assertions.Assertions.notNull;
  * @since 3.0.0
  */
 public class Document implements Map<String, Object>, Serializable, Bson {
+    private static final Codec<Document> DEFAULT_CODEC =
+            CodecRegistryHelper.createRegistry(
+                    fromProviders(asList(new ValueCodecProvider(), new BsonValueCodecProvider(), new DocumentCodecProvider())),
+                    UuidRepresentation.STANDARD)
+                    .get(Document.class);
+
     private static final long serialVersionUID = 6297731997167536582L;
 
     private final LinkedHashMap<String, Object> documentAsMap;
@@ -92,7 +105,7 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      * @mongodb.driver.manual reference/mongodb-extended-json/ MongoDB Extended JSON
      */
     public static Document parse(final String json) {
-        return parse(json, new DocumentCodec());
+        return parse(json, DEFAULT_CODEC);
     }
 
     /**
@@ -410,7 +423,7 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      * @throws org.bson.codecs.configuration.CodecConfigurationException if the document contains types not in the default registry
      */
     public String toJson(final JsonWriterSettings writerSettings) {
-        return toJson(writerSettings, new DocumentCodec());
+        return toJson(writerSettings, DEFAULT_CODEC);
     }
 
     /**

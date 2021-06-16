@@ -48,14 +48,14 @@ package object model {
   }
 
   /**
-   * The options for a \$bucketAuto aggregation pipeline stage
+   * The options for a `\$bucketAuto` aggregation pipeline stage
    *
    * @since 1.2
    */
   type BucketAutoOptions = com.mongodb.client.model.BucketAutoOptions
 
   /**
-   * The options for a \$bucketAuto aggregation pipeline stage
+   * The options for a `\$bucketAuto` aggregation pipeline stage
    *
    * @since 1.2
    */
@@ -64,14 +64,14 @@ package object model {
   }
 
   /**
-   * The options for a \$bucket aggregation pipeline stage
+   * The options for a `\$bucket` aggregation pipeline stage
    *
    * @since 1.2
    */
   type BucketOptions = com.mongodb.client.model.BucketOptions
 
   /**
-   * The options for a \$bucket aggregation pipeline stage
+   * The options for a `\$bucket` aggregation pipeline stage
    *
    * @since 1.2
    */
@@ -163,6 +163,23 @@ package object model {
   }
 
   /**
+   * Options for creating a time-series collection
+   */
+  type TimeSeriesOptions = com.mongodb.client.model.TimeSeriesOptions
+
+  /**
+   * Options for creating a time-series collection
+   */
+  object TimeSeriesOptions {
+    def apply(timeFieldName: String): TimeSeriesOptions = new com.mongodb.client.model.TimeSeriesOptions(timeFieldName)
+  }
+
+  /**
+   * Enumeration of values for time-series data granularity
+   */
+  type TimeSeriesGranularity = com.mongodb.client.model.TimeSeriesGranularity
+
+  /**
    * Options for creating a view
    *
    * @since 1.2
@@ -252,14 +269,14 @@ package object model {
   }
 
   /**
-   * Defines a Facet for use in \$facet pipeline stages.
+   * Defines a Facet for use in `\$facet` pipeline stages.
    *
    * @since 1.2
    */
   type Facet = com.mongodb.client.model.Facet
 
   /**
-   * Defines a Facet for use in \$facet pipeline stages.
+   * Defines a Facet for use in `\$facet` pipeline stages.
    *
    * @since 1.2
    */
@@ -270,7 +287,7 @@ package object model {
      *
      * @param name     the name of this facet
      * @param pipeline the facet definition pipeline
-     * @return the \$facet pipeline stage
+     * @return the `\$facet` pipeline stage
      */
     def apply(name: String, pipeline: Bson*): Facet = {
       new com.mongodb.client.model.Facet(name, pipeline.asJava)
@@ -278,7 +295,7 @@ package object model {
   }
 
   /**
-   * A helper to define new fields for the \$addFields pipeline stage
+   * A helper to define new fields for the `\$addFields` pipeline stage
    *
    * @tparam TExpression the expression type
    * @since 1.2
@@ -286,7 +303,7 @@ package object model {
   type Field[TExpression] = com.mongodb.client.model.Field[TExpression]
 
   /**
-   * A helper to define new fields for the \$addFields pipeline stage
+   * A helper to define new fields for the `\$addFields` pipeline stage
    *
    * @since 1.2
    */

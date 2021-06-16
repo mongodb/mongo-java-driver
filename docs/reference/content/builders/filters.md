@@ -54,7 +54,7 @@ which will render as:
 This example creates a filter that selects all documents where the value of the `qty` field is either `5` or `20`:
 
 ```java
-in("qty", 5, 15)
+in("qty", 5, 20)
 ```
 
 This example creates a filter that selects all documents because the predicate is empty:
@@ -87,13 +87,14 @@ This example creates a filter that selects all documents where the value of the 
 and(gt("qty", 20), eq("user", "jdoe"))
 ```
 
-The `and` method generates a `$and` operator only if necessary, as the query language implicity ands together all the elements in a 
-filter. So the above example will render as: 
+The `and` method generates a `$and` operator at all times, so the result would render:
 
 ```json
-{ 
-   "qty" : { "$gt" : 20 },
-   "user" : "jdoe"
+{
+  "$and": [
+    { "qty" : { "$gt" : 20 }},
+    { "user" : "jdoe" }
+  ]
 }
 ```
 
@@ -174,7 +175,7 @@ The evaluation operator methods include:
 
 - `mod`: Performs a modulo operation on the value of a field and selects documents with a specified result.
 - `regex`: Selects documents where values match a specified regular expression.
-- `text`: Selects documemts matching a full-text search expression.
+- `text`: Selects documents matching a full-text search expression.
 - `where`: Matches documents that satisfy a JavaScript expression.
 
 #### Examples

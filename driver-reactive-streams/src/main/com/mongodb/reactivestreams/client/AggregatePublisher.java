@@ -16,8 +16,10 @@
 
 package com.mongodb.reactivestreams.client;
 
+import com.mongodb.ExplainVerbosity;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
+import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
 
@@ -116,6 +118,22 @@ public interface AggregatePublisher<TResult> extends Publisher<TResult> {
     AggregatePublisher<TResult> hint(@Nullable Bson hint);
 
     /**
+     * Add top-level variables to the aggregation.
+     * <p>
+     * For MongoDB 5.0+, the aggregate command accepts a {@code let} option. This option is a document consisting of zero or more
+     * fields representing variables that are accessible to the aggregation pipeline.  The key is the name of the variable and the value is
+     * a constant in the aggregate expression language. Each parameter name is then usable to access the value of the corresponding
+     * expression with the "$$" syntax within aggregate expression contexts which may require the use of $expr or a pipeline.
+     * </p>
+     *
+     * @param variables the variables
+     * @return this
+     * @since 4.3
+     * @mongodb.server.release 5.0
+     */
+    AggregatePublisher<TResult> let(@Nullable Bson variables);
+
+    /**
      * Sets the number of documents to return per batch.
      *
      * <p>Overrides the {@link org.reactivestreams.Subscription#request(long)} value for setting the batch size, allowing for fine grained
@@ -135,4 +153,50 @@ public interface AggregatePublisher<TResult> extends Publisher<TResult> {
      * @since 1.8
      */
     Publisher<TResult> first();
+
+    /**
+     * Explain the execution plan for this operation with the server's default verbosity level
+     *
+     * @return the execution plan
+     * @since 4.2
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.6
+     */
+    Publisher<Document> explain();
+
+    /**
+     * Explain the execution plan for this operation with the given verbosity level
+     *
+     * @param verbosity the verbosity of the explanation
+     * @return the execution plan
+     * @since 4.2
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.6
+     */
+    Publisher<Document> explain(ExplainVerbosity verbosity);
+
+    /**
+     * Explain the execution plan for this operation with the server's default verbosity level
+     *
+     * @param <E> the type of the document class
+     * @param explainResultClass the document class to decode into
+     * @return the execution plan
+     * @since 4.2
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.6
+     */
+    <E> Publisher<E> explain(Class<E> explainResultClass);
+
+    /**
+     * Explain the execution plan for this operation with the given verbosity level
+     *
+     * @param <E> the type of the document class
+     * @param explainResultClass the document class to decode into
+     * @param verbosity            the verbosity of the explanation
+     * @return the execution plan
+     * @since 4.2
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.6
+     */
+    <E> Publisher<E> explain(Class<E> explainResultClass, ExplainVerbosity verbosity);
 }

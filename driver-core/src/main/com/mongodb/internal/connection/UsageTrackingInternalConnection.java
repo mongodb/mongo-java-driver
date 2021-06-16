@@ -20,6 +20,7 @@ import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
 import org.bson.ByteBuf;
@@ -36,12 +37,13 @@ class UsageTrackingInternalConnection implements InternalConnection {
     private static final Logger LOGGER = Loggers.getLogger("connection");
     private volatile long openedAt;
     private volatile long lastUsedAt;
-    private final int generation;
+    private volatile boolean closeSilently;
     private final InternalConnection wrapped;
+    private final DefaultConnectionPool.ServiceStateManager serviceStateManager;
 
-    UsageTrackingInternalConnection(final InternalConnection wrapped, final int generation) {
+    UsageTrackingInternalConnection(final InternalConnection wrapped, final DefaultConnectionPool.ServiceStateManager serviceStateManager) {
         this.wrapped = wrapped;
-        this.generation = generation;
+        this.serviceStateManager = serviceStateManager;
         openedAt = Long.MAX_VALUE;
         lastUsedAt = openedAt;
     }
@@ -51,6 +53,9 @@ class UsageTrackingInternalConnection implements InternalConnection {
         wrapped.open();
         openedAt = System.currentTimeMillis();
         lastUsedAt = openedAt;
+        if (getDescription().getServiceId() != null) {
+            serviceStateManager.addConnection(getDescription().getServiceId());
+        }
     }
 
     @Override
@@ -63,6 +68,9 @@ class UsageTrackingInternalConnection implements InternalConnection {
                 } else {
                     openedAt = System.currentTimeMillis();
                     lastUsedAt = openedAt;
+                    if (getDescription().getServiceId() != null) {
+                        serviceStateManager.addConnection(getDescription().getServiceId());
+                    }
                     callback.onResult(null, null);
                 }
             }
@@ -71,7 +79,13 @@ class UsageTrackingInternalConnection implements InternalConnection {
 
     @Override
     public void close() {
-        wrapped.close();
+        try {
+            wrapped.close();
+        } finally {
+            if (openedAt != Long.MAX_VALUE && getDescription().getServiceId() != null) {
+                serviceStateManager.removeConnection(getDescription().getServiceId());
+            }
+        }
     }
 
     @Override
@@ -188,7 +202,7 @@ class UsageTrackingInternalConnection implements InternalConnection {
 
     @Override
     public int getGeneration() {
-        return generation;
+        return wrapped.getGeneration();
     }
 
     /**
@@ -207,5 +221,24 @@ class UsageTrackingInternalConnection implements InternalConnection {
      */
     long getLastUsedAt() {
         return lastUsedAt;
+    }
+
+    /**
+     * This method must be used if and only if {@link ConnectionCreatedEvent} was not sent for the connection.
+     * Must not throw {@link Exception}s.
+     *
+     * @see #isCloseSilently()
+     */
+    void setCloseSilently() {
+        closeSilently = true;
+    }
+
+    /**
+     * Must not throw {@link Exception}s.
+     *
+     * @see #setCloseSilently()
+     */
+    boolean isCloseSilently() {
+        return closeSilently;
     }
 }

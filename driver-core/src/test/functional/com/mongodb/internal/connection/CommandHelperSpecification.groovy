@@ -19,6 +19,7 @@ package com.mongodb.internal.connection
 
 import com.mongodb.MongoCommandException
 import com.mongodb.ServerAddress
+import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
@@ -35,6 +36,7 @@ import java.util.concurrent.CountDownLatch
 
 import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
+import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.internal.connection.CommandHelper.executeCommand
 import static com.mongodb.internal.connection.CommandHelper.executeCommandAsync
@@ -43,8 +45,9 @@ class CommandHelperSpecification extends Specification {
     InternalConnection connection
 
     def setup() {
-        connection = new InternalStreamConnectionFactory(new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                getCredentialWithCache(), null, null, [], null)
+        connection = new InternalStreamConnectionFactory(ClusterConnectionMode.SINGLE,
+                new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
+                getCredentialWithCache(), null, null, [], null, getServerApi())
                 .create(new ServerId(new ClusterId(), getPrimary()))
         connection.open()
     }
@@ -63,7 +66,7 @@ class CommandHelperSpecification extends Specification {
         clusterClock.advance(new BsonDocument('clusterTime', new BsonTimestamp(42L)))
 
         when:
-        executeCommand('admin', new BsonDocument('ismaster', new BsonInt32(1)), clusterClock, connection)
+        executeCommand('admin', new BsonDocument('ismaster', new BsonInt32(1)), clusterClock, getServerApi(), connection)
 
         then:
         1 * connection.sendAndReceive(_, _, ) { it instanceof ClusterClockAdvancingSessionContext }
@@ -75,7 +78,7 @@ class CommandHelperSpecification extends Specification {
         BsonDocument receivedDocument = null
         Throwable receivedException = null
         def latch1 = new CountDownLatch(1)
-        executeCommandAsync('admin', new BsonDocument('ismaster', new BsonInt32(1)), connection)
+        executeCommandAsync('admin', new BsonDocument('ismaster', new BsonInt32(1)), getServerApi(), connection)
                 { document, exception -> receivedDocument = document; receivedException = exception; latch1.countDown() }
         latch1.await()
 
@@ -86,7 +89,7 @@ class CommandHelperSpecification extends Specification {
 
         when:
         def latch2 = new CountDownLatch(1)
-        executeCommandAsync('admin', new BsonDocument('non-existent-command', new BsonInt32(1)), connection)
+        executeCommandAsync('admin', new BsonDocument('non-existent-command', new BsonInt32(1)), getServerApi(), connection)
                 { document, exception -> receivedDocument = document; receivedException = exception; latch2.countDown() }
         latch2.await()
 

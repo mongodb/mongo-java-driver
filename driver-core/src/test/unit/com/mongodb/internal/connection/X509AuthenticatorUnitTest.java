@@ -31,7 +31,10 @@ import org.junit.Test;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.internal.connection.MessageHelper.buildSuccessfulReply;
+import static com.mongodb.internal.connection.MessageHelper.getApiVersionField;
+import static com.mongodb.internal.connection.MessageHelper.getDbField;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -46,7 +49,7 @@ public class X509AuthenticatorUnitTest {
         connection = new TestInternalConnection(new ServerId(new ClusterId(), new ServerAddress("localhost", 27017)));
         connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()));
         credential = MongoCredential.createMongoX509Credential("CN=client,OU=kerneluser,O=10Gen,L=New York City,ST=New York,C=US");
-        subject = new X509Authenticator(new MongoCredentialWithCache(credential));
+        subject = new X509Authenticator(new MongoCredentialWithCache(credential), getServerApi());
     }
 
     @Test
@@ -128,7 +131,10 @@ public class X509AuthenticatorUnitTest {
         String command = MessageHelper.decodeCommandAsJson(sent.get(0));
         String expectedCommand = "{\"authenticate\": 1, "
                 + "\"user\": \"CN=client,OU=kerneluser,O=10Gen,L=New York City,ST=New York,C=US\", "
-                + "\"mechanism\": \"MONGODB-X509\"}";
+                + "\"mechanism\": \"MONGODB-X509\""
+                + getDbField("$external")
+                + getApiVersionField()
+                + "}";
 
         assertEquals(expectedCommand, command);
     }

@@ -18,13 +18,15 @@ package com.mongodb.internal.binding;
 
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
+import com.mongodb.ServerApi;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.NoOpSessionContext;
-import com.mongodb.internal.connection.Server;
+import com.mongodb.internal.connection.ServerTuple;
 import com.mongodb.internal.selector.ServerAddressSelector;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -36,27 +38,19 @@ import static com.mongodb.assertions.Assertions.notNull;
 public class SingleServerBinding extends AbstractReferenceCounted implements ReadWriteBinding {
     private final Cluster cluster;
     private final ServerAddress serverAddress;
-    private final ReadPreference readPreference;
+    @Nullable
+    private final ServerApi serverApi;
 
     /**
      * Creates an instance, defaulting to {@link com.mongodb.ReadPreference#primary()} for reads.
      * @param cluster       a non-null  Cluster which will be used to select a server to bind to
      * @param serverAddress a non-null  address of the server to bind to
+     * @param serverApi     the server API, which may be null
      */
-    public SingleServerBinding(final Cluster cluster, final ServerAddress serverAddress) {
-        this(cluster, serverAddress, ReadPreference.primary());
-    }
-
-    /**
-     * Creates an instance.
-     * @param cluster        a non-null  Cluster which will be used to select a server to bind to
-     * @param serverAddress  a non-null  address of the server to bind to
-     * @param readPreference a non-null  ReadPreference for read operations
-     */
-    public SingleServerBinding(final Cluster cluster, final ServerAddress serverAddress, final ReadPreference readPreference) {
+    public SingleServerBinding(final Cluster cluster, final ServerAddress serverAddress, @Nullable final ServerApi serverApi) {
         this.cluster = notNull("cluster", cluster);
         this.serverAddress = notNull("serverAddress", serverAddress);
-        this.readPreference = notNull("readPreference", readPreference);
+        this.serverApi = serverApi;
     }
 
     @Override
@@ -66,7 +60,7 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
 
     @Override
     public ReadPreference getReadPreference() {
-        return readPreference;
+        return ReadPreference.primary();
     }
 
     @Override
@@ -80,22 +74,29 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
     }
 
     @Override
+    @Nullable
+    public ServerApi getServerApi() {
+        return serverApi;
+    }
+
+    @Override
     public SingleServerBinding retain() {
         super.retain();
         return this;
     }
 
     private final class SingleServerBindingConnectionSource extends AbstractReferenceCounted implements ConnectionSource {
-        private final Server server;
+        private final ServerDescription serverDescription;
 
         private SingleServerBindingConnectionSource() {
             SingleServerBinding.this.retain();
-            server = cluster.selectServer(new ServerAddressSelector(serverAddress));
+            ServerTuple serverTuple = cluster.selectServer(new ServerAddressSelector(serverAddress));
+            serverDescription = serverTuple.getServerDescription();
         }
 
         @Override
         public ServerDescription getServerDescription() {
-            return server.getDescription();
+            return serverDescription;
         }
 
         @Override
@@ -104,8 +105,13 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
         }
 
         @Override
+        public ServerApi getServerApi() {
+            return serverApi;
+        }
+
+        @Override
         public Connection getConnection() {
-            return cluster.selectServer(new ServerAddressSelector(serverAddress)).getConnection();
+            return cluster.selectServer(new ServerAddressSelector(serverAddress)).getServer().getConnection();
         }
 
         @Override

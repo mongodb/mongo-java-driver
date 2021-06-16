@@ -19,11 +19,11 @@ package com.mongodb.connection;
 import com.mongodb.ServerAddress;
 import com.mongodb.Tag;
 import com.mongodb.TagSet;
+import com.mongodb.internal.connection.Time;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -34,36 +34,35 @@ import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.connection.ServerDescription.MAX_DRIVER_WIRE_VERSION;
 import static com.mongodb.connection.ServerDescription.MIN_DRIVER_WIRE_VERSION;
 import static com.mongodb.connection.ServerDescription.builder;
+import static com.mongodb.connection.ServerType.LOAD_BALANCER;
 import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY;
 import static com.mongodb.connection.ServerType.UNKNOWN;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class ServerDescriptionTest {
 
     @Test(expected = IllegalArgumentException.class)
-    public void testMissingStatus() throws UnknownHostException {
+    public void testMissingStatus() {
         builder().address(new ServerAddress()).type(REPLICA_SET_PRIMARY).build();
 
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testMissingAddress() throws UnknownHostException {
+    public void testMissingAddress() {
         builder().state(CONNECTED).type(REPLICA_SET_PRIMARY).build();
-
     }
 
     @Test
-    public void testDefaults() throws UnknownHostException {
-        long currentNanoTime = System.nanoTime();
-
+    public void testDefaults() {
+        long currentNanoTime = Time.nanoTime();
         ServerDescription serverDescription = builder().address(new ServerAddress())
                                                                .state(CONNECTED)
                                                                .build();
@@ -97,13 +96,13 @@ public class ServerDescriptionTest {
         assertNull(serverDescription.getSetVersion());
         assertNull(serverDescription.getTopologyVersion());
         assertNull(serverDescription.getLastWriteDate());
-        assertTrue(serverDescription.getLastUpdateTime(TimeUnit.NANOSECONDS) > currentNanoTime);
+        assertTrue(serverDescription.getLastUpdateTime(TimeUnit.NANOSECONDS) >= currentNanoTime);
         assertNull(serverDescription.getLogicalSessionTimeoutMinutes());
         assertNull(serverDescription.getException());
     }
 
     @Test
-    public void testBuilder() throws UnknownHostException {
+    public void testBuilder() {
         IllegalArgumentException exception = new IllegalArgumentException();
         TopologyVersion topologyVersion = new TopologyVersion(new ObjectId(), 42);
         ServerDescription serverDescription = builder()
@@ -172,7 +171,7 @@ public class ServerDescriptionTest {
     }
 
     @Test
-    public void testObjectOverrides() throws UnknownHostException {
+    public void testObjectOverrides() {
         ServerDescription.Builder builder = createBuilder();
         ServerDescription description = builder.build();
 
@@ -284,7 +283,7 @@ public class ServerDescriptionTest {
     }
 
     @Test
-    public void testObjectOverridesWithUnequalException() throws UnknownHostException {
+    public void testObjectOverridesWithUnequalException() {
         ServerDescription.Builder builder1 = builder()
                                              .state(CONNECTING)
                                              .address(new ServerAddress())
@@ -314,7 +313,7 @@ public class ServerDescriptionTest {
     }
 
     @Test
-    public void testShortDescription() throws UnknownHostException {
+    public void testShortDescription() {
         assertEquals("{address=127.0.0.1:27017, type=UNKNOWN, TagSet{[Tag{name='dc', value='ny'}, Tag{name='rack', value='1'}]}, "
                      + "roundTripTime=5000.0 ms, state=CONNECTED, exception={java.lang.IllegalArgumentException: This is illegal}, "
                      + "caused by {java.lang.NullPointerException: This is null}}",
@@ -328,7 +327,7 @@ public class ServerDescriptionTest {
     }
 
     @Test
-    public void testIsPrimaryAndIsSecondary() throws UnknownHostException {
+    public void testIsPrimaryAndIsSecondary() {
         ServerDescription serverDescription = builder()
                                                                .address(new ServerAddress())
                                                                .type(ServerType.SHARD_ROUTER)
@@ -376,7 +375,7 @@ public class ServerDescriptionTest {
     }
 
     @Test
-    public void testHasTags() throws UnknownHostException {
+    public void testHasTags() {
         ServerDescription serverDescription = builder()
                                                                .address(new ServerAddress())
                                                                .type(ServerType.SHARD_ROUTER)
@@ -438,7 +437,7 @@ public class ServerDescriptionTest {
     }
 
     @Test
-    public void notOkServerShouldBeCompatible() throws UnknownHostException {
+    public void notOkServerShouldBeCompatible() {
         ServerDescription serverDescription = builder()
                 .address(new ServerAddress())
                 .state(CONNECTING)
@@ -450,7 +449,20 @@ public class ServerDescriptionTest {
     }
 
     @Test
-    public void serverWithMinWireVersionEqualToDriverMaxWireVersionShouldBeCompatible() throws UnknownHostException {
+    public void loadBalancerIsCompatible() {
+        ServerDescription serverDescription = builder()
+                .address(new ServerAddress())
+                .state(CONNECTED)
+                .type(LOAD_BALANCER)
+                .ok(true)
+                .build();
+        assertTrue(serverDescription.isCompatibleWithDriver());
+        assertFalse(serverDescription.isIncompatiblyNewerThanDriver());
+        assertFalse(serverDescription.isIncompatiblyOlderThanDriver());
+    }
+
+    @Test
+    public void serverWithMinWireVersionEqualToDriverMaxWireVersionShouldBeCompatible() {
         ServerDescription serverDescription = builder()
                 .address(new ServerAddress())
                 .state(CONNECTING)
@@ -464,7 +476,7 @@ public class ServerDescriptionTest {
     }
 
     @Test
-    public void serverWithMaxWireVersionEqualToDriverMinWireVersionShouldBeCompatible() throws UnknownHostException {
+    public void serverWithMaxWireVersionEqualToDriverMinWireVersionShouldBeCompatible() {
         ServerDescription serverDescription = builder()
                 .address(new ServerAddress())
                 .state(CONNECTING)
@@ -478,7 +490,7 @@ public class ServerDescriptionTest {
     }
 
     @Test
-    public void serverWithMinWireVersionGreaterThanDriverMaxWireVersionShouldBeIncompatible() throws UnknownHostException {
+    public void serverWithMinWireVersionGreaterThanDriverMaxWireVersionShouldBeIncompatible() {
         ServerDescription serverDescription = builder()
                 .address(new ServerAddress())
                 .state(CONNECTING)
@@ -492,7 +504,7 @@ public class ServerDescriptionTest {
     }
 
     @Test
-    public void serverWithMaxWireVersionLessThanDriverMinWireVersionShouldBeIncompatible() throws UnknownHostException {
+    public void serverWithMaxWireVersionLessThanDriverMinWireVersionShouldBeIncompatible() {
         ServerDescription serverDescription = builder()
                 .address(new ServerAddress())
                 .state(CONNECTING)

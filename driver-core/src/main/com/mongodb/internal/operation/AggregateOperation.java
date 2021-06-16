@@ -18,18 +18,22 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
+import com.mongodb.client.model.Collation;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.client.model.Collation;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.AggregationLevel;
+import com.mongodb.internal.connection.NoOpSessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.codecs.Decoder;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import static com.mongodb.internal.operation.ExplainHelper.asExplainCommand;
 
 /**
  * An operation that executes an aggregation query.
@@ -38,7 +42,7 @@ import java.util.concurrent.TimeUnit;
  * @mongodb.driver.manual aggregation/ Aggregation
  * @since 3.0
  */
-public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+public class AggregateOperation<T> implements AsyncExplainableReadOperation<AsyncBatchCursor<T>>, ExplainableReadOperation<BatchCursor<T>> {
     private final AggregateOperationImpl<T> wrapped;
     /**
      * Construct a new instance.
@@ -224,6 +228,11 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
         return this;
     }
 
+    public AggregateOperation<T> let(final BsonDocument variables) {
+        wrapped.let(variables);
+        return this;
+    }
+
     /**
      * Enables retryable reads if a read fails due to a network error.
      *
@@ -304,29 +313,26 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
     /**
      * Gets an operation whose execution explains this operation.
      *
-     * @param explainVerbosity the explain verbosity
+     * @param verbosity the explain verbosity
      * @return a read operation that when executed will explain this operation
      */
-    public ReadOperation<BsonDocument> asExplainableOperation(final ExplainVerbosity explainVerbosity) {
-        return new AggregateExplainOperation(getNamespace(), getPipeline())
-               .allowDiskUse(getAllowDiskUse())
-               .maxTime(getMaxAwaitTime(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS)
-               .hint(wrapped.getHint())
-               .retryReads(getRetryReads());
+    public <R> ReadOperation<R> asExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
+        return new CommandReadOperation<R>(getNamespace().getDatabaseName(),
+                asExplainCommand(wrapped.getCommand(NoOpSessionContext.INSTANCE), verbosity),
+                resultDecoder);
     }
 
     /**
      * Gets an operation whose execution explains this operation.
      *
-     * @param explainVerbosity the explain verbosity
+     * @param verbosity the explain verbosity
      * @return a read operation that when executed will explain this operation
      */
-    public AsyncReadOperation<BsonDocument> asExplainableOperationAsync(final ExplainVerbosity explainVerbosity) {
-        return new AggregateExplainOperation(getNamespace(), getPipeline())
-                .retryReads(getRetryReads())
-                .allowDiskUse(getAllowDiskUse())
-                .maxTime(getMaxAwaitTime(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS)
-                .hint(wrapped.getHint());
+    public <R> AsyncReadOperation<R> asAsyncExplainableOperation(@Nullable final ExplainVerbosity verbosity,
+                                                                 final Decoder<R> resultDecoder) {
+        return new CommandReadOperation<R>(getNamespace().getDatabaseName(),
+                asExplainCommand(wrapped.getCommand(NoOpSessionContext.INSTANCE), verbosity),
+                resultDecoder);
     }
 
 

@@ -23,6 +23,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
 import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
+import org.bson.types.ObjectId;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -133,6 +134,11 @@ public class TestConnectionPool implements ConnectionPool {
             public boolean isClosed() {
                 throw new UnsupportedOperationException("Not implemented yet!");
             }
+
+            @Override
+            public int getGeneration() {
+                return 0;
+            }
         };
     }
 
@@ -156,6 +162,11 @@ public class TestConnectionPool implements ConnectionPool {
     @Override
     public void invalidate() {
         generation++;
+    }
+
+    @Override
+    public void invalidate(final ObjectId serviceId, final int generation) {
+        throw new UnsupportedOperationException();
     }
 
     @Override

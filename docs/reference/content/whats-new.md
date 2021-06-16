@@ -7,6 +7,40 @@ title = "What's New"
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
+# What's new in 4.3
+
+This release fully supports all MongoDB releases from versions 2.6 to 4.4. It also supports some features of the next release of MongoDB.
+
+New features of the 4.3 Java driver release include:
+
+* Added support for the MongoDB Versioned API.  See the 
+  [`ServerApi`]({{< apiref "mongodb-driver-core" "com/mongodb/ServerApi.html" >}}) API documentation for details.
+* Removed most restrictions on allowed characters in field names of documents being inserted or replaced.  This is a behavioral change 
+  for any application that is relying on client-side enforcement of these restrictions. In particular: 
+  * Restrictions on field names containing the "." character have been removed. This affects all insert and replace operations.
+  * Restrictions on field names starting with the "$" character have been removed for all insert operations.
+  * Restrictions in nested documents on field names starting with the "$" character have been removed for all replace operations.  
+  * Restrictions in the top-level document on field names starting with the "$" character remain for all replace operations. This is 
+    primarily to prevent accidental use of a replace operation when the intention was to use an update operation.
+  * Note that unacknowledged writes using dollar-prefixed or dotted keys may be silently rejected by pre-5.0 servers, where some 
+    restrictions on field names are still enforced in the server.
+
+# What's new in 4.2
+
+This release fully supports all MongoDB releases from versions 2.6 to 4.4. New features of the 4.2 Java driver release include:
+
+* The Reactive Streams driver now utilizes [Project Reactor](https://projectreactor.io/) internally. Project reactor follows 
+  the Reactive Streams specification and has greatly simplified the implementation of the driver.
+* Added support for Azure and GCP key stores to client-side field level encryption.
+* Added support for caching Kerberos tickets so that they can be re-used for multiple authentication requests.
+* Added support for constructing legacy `com.mongodb.MongoClient` instances with `MongoClientSettings` or `ConnectionString` as 
+  the configuration, instead of `MongoClientOptions` or `MongoClientURI`.
+* Added support for `explain` of `find` and `aggregate` commands.
+* Added a `JsonObject` class to make encoding from and decoding to JSON more efficient by avoiding an intermediate `Map` representation.
+* Added a `BsonRepresentation` annotation that allows `ObjectId` BSON values to be represented as `String`s in POJO classes. 
+* Added support for the `BsonIgnore` annotation in Scala case classes.
+* Added a `Filters.empty()` method.
+
 # What's new in 4.1
 
 This release fully supports all MongoDB releases from versions 2.6 to 4.4. Key new features of the 4.1 Java driver release include:
@@ -280,7 +314,7 @@ The 3.6 release adds support for [change streams](http://dochub.mongodb.org/core
 ### Retryable writes
 
 The 3.6 release adds support for retryable writes using the `retryWrites` option in 
-[`MongoClientOptions`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientOptions" >}}).
+[`MongoClientOptions`]({{< apiref "mongodb-driver-legacy" "com/mongodb/MongoClientOptions" >}}).
 
 ### Compression
 
@@ -297,7 +331,7 @@ The 3.6 release adds support for [causally consistency](http://dochub.mongodb.or
 ### Application-configured server selection
 
 The 3.6 release adds support for application-configured control over server selection, using the `serverSelector` option in
-[`MongoClientOptions`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientOptions" >}}).
+[`MongoClientOptions`]({{< apiref "mongodb-driver-legacy" "com/mongodb/MongoClientOptions" >}}).
 
 ### POJO Codec improvements
 

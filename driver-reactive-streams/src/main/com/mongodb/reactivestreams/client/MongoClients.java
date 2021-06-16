@@ -19,10 +19,21 @@ package com.mongodb.reactivestreams.client;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
-import com.mongodb.internal.async.client.AsyncMongoClient;
-import com.mongodb.internal.async.client.AsyncMongoClients;
+import com.mongodb.MongoInternalException;
+import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory;
+import com.mongodb.connection.StreamFactory;
+import com.mongodb.connection.StreamFactoryFactory;
+import com.mongodb.connection.TlsChannelStreamFactoryFactory;
+import com.mongodb.internal.connection.Cluster;
+import com.mongodb.internal.connection.DefaultClusterFactory;
+import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.internal.MongoClientImpl;
 import org.bson.codecs.configuration.CodecRegistry;
+
+import java.io.Closeable;
+
+import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
 
 
 /**
@@ -71,7 +82,7 @@ public final class MongoClients {
      * @since 1.3
      */
     public static MongoClient create(final ConnectionString connectionString, final MongoDriverInformation mongoDriverInformation) {
-        return create(AsyncMongoClients.create(connectionString, wrapMongoDriverInformation(mongoDriverInformation)));
+        return create(MongoClientSettings.builder().applyConnectionString(connectionString).build(), mongoDriverInformation);
     }
 
     /**
@@ -96,7 +107,16 @@ public final class MongoClients {
      * @since 1.8
      */
     public static MongoClient create(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation) {
-        return create(AsyncMongoClients.create(settings, wrapMongoDriverInformation(mongoDriverInformation)));
+        if (settings.getStreamFactoryFactory() == null) {
+            if (settings.getSslSettings().isEnabled()) {
+                return createWithTlsChannel(settings, mongoDriverInformation);
+            } else {
+                return createWithAsynchronousSocketChannel(settings, mongoDriverInformation);
+            }
+        } else {
+            return createMongoClient(settings, mongoDriverInformation, getStreamFactory(settings, false),
+                    getStreamFactory(settings, true), null);
+        }
     }
 
     /**
@@ -107,16 +127,56 @@ public final class MongoClients {
      * @since 1.4
      */
     public static CodecRegistry getDefaultCodecRegistry() {
-        return AsyncMongoClients.getDefaultCodecRegistry();
+        return MongoClientSettings.getDefaultCodecRegistry();
     }
 
-    private static MongoClient create(final AsyncMongoClient asyncMongoClient) {
-        return new MongoClientImpl(asyncMongoClient);
+    private static MongoClient createMongoClient(final MongoClientSettings settings,
+            @Nullable final MongoDriverInformation mongoDriverInformation, final StreamFactory streamFactory,
+            final StreamFactory heartbeatStreamFactory, @Nullable final Closeable externalResourceCloser) {
+        return new MongoClientImpl(settings, createCluster(settings, wrapMongoDriverInformation(mongoDriverInformation),
+                streamFactory, heartbeatStreamFactory), externalResourceCloser);
+    }
+
+    private static Cluster createCluster(final MongoClientSettings settings,
+                                         @Nullable final MongoDriverInformation mongoDriverInformation,
+                                         final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory) {
+        notNull("settings", settings);
+        return new DefaultClusterFactory().createCluster(settings.getClusterSettings(), settings.getServerSettings(),
+                settings.getConnectionPoolSettings(), streamFactory, heartbeatStreamFactory, settings.getCredential(),
+                getCommandListener(settings.getCommandListeners()), settings.getApplicationName(), mongoDriverInformation,
+                settings.getCompressorList(), settings.getServerApi());
     }
 
     private static MongoDriverInformation wrapMongoDriverInformation(final MongoDriverInformation mongoDriverInformation) {
         return (mongoDriverInformation == null ? MongoDriverInformation.builder() : MongoDriverInformation.builder(mongoDriverInformation))
                 .driverName("reactive-streams").build();
+    }
+
+    private static MongoClient createWithTlsChannel(final MongoClientSettings settings,
+            @Nullable final MongoDriverInformation mongoDriverInformation) {
+        TlsChannelStreamFactoryFactory streamFactoryFactory = new TlsChannelStreamFactoryFactory();
+        StreamFactory streamFactory = streamFactoryFactory.create(settings.getSocketSettings(), settings.getSslSettings());
+        StreamFactory heartbeatStreamFactory = streamFactoryFactory.create(settings.getHeartbeatSocketSettings(),
+                settings.getSslSettings());
+        return createMongoClient(settings, mongoDriverInformation, streamFactory, heartbeatStreamFactory, streamFactoryFactory);
+    }
+
+    private static MongoClient createWithAsynchronousSocketChannel(final MongoClientSettings settings,
+            @Nullable final MongoDriverInformation mongoDriverInformation) {
+        StreamFactoryFactory streamFactoryFactory = AsynchronousSocketChannelStreamFactoryFactory.builder().build();
+        StreamFactory streamFactory = streamFactoryFactory.create(settings.getSocketSettings(), settings.getSslSettings());
+        StreamFactory heartbeatStreamFactory = streamFactoryFactory.create(settings.getHeartbeatSocketSettings(),
+                settings.getSslSettings());
+        return createMongoClient(settings, mongoDriverInformation, streamFactory, heartbeatStreamFactory, null);
+    }
+
+    private static StreamFactory getStreamFactory(final MongoClientSettings settings, final boolean isHeartbeat) {
+        StreamFactoryFactory streamFactoryFactory = settings.getStreamFactoryFactory();
+        if (streamFactoryFactory == null) {
+            throw new MongoInternalException("should not happen");
+        }
+        return streamFactoryFactory.create(isHeartbeat ? settings.getHeartbeatSocketSettings() : settings.getSocketSettings(),
+                settings.getSslSettings());
     }
 
     private MongoClients() {

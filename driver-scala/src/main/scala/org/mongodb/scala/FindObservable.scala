@@ -17,13 +17,14 @@
 package org.mongodb.scala
 
 import java.util.concurrent.TimeUnit
-
-import com.mongodb.CursorType
+import com.mongodb.{ CursorType, ExplainVerbosity }
 import com.mongodb.reactivestreams.client.FindPublisher
+import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Collation
 
 import scala.concurrent.duration.Duration
+import scala.reflect.ClassTag
 
 /**
  * Observable interface for Find.
@@ -309,6 +310,34 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
     wrapped.allowDiskUse(allowDiskUse)
     this
   }
+
+  /**
+   * Explain the execution plan for this operation with the server's default verbosity level
+   *
+   * @tparam ExplainResult The type of the result
+   * @return the execution plan
+   * @since 4.2
+   * @note Requires MongoDB 3.2 or greater
+   */
+  def explain[ExplainResult]()(
+      implicit e: ExplainResult DefaultsTo Document,
+      ct: ClassTag[ExplainResult]
+  ): SingleObservable[ExplainResult] =
+    wrapped.explain[ExplainResult](ct)
+
+  /**
+   * Explain the execution plan for this operation with the given verbosity level
+   *
+   * @tparam ExplainResult The type of the result
+   * @param verbosity the verbosity of the explanation
+   * @return the execution plan
+   * @since 4.2
+   * @note Requires MongoDB 3.2 or greater
+   */
+  def explain[ExplainResult](
+      verbosity: ExplainVerbosity
+  )(implicit e: ExplainResult DefaultsTo Document, ct: ClassTag[ExplainResult]): SingleObservable[ExplainResult] =
+    wrapped.explain[ExplainResult](ct, verbosity)
 
   override def subscribe(observer: Observer[_ >: TResult]): Unit = wrapped.subscribe(observer)
 }

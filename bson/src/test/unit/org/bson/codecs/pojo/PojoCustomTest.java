@@ -19,11 +19,13 @@ package org.bson.codecs.pojo;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.Document;
+import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.LongCodec;
 import org.bson.codecs.MapCodec;
+import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.entities.AbstractInterfaceModel;
@@ -37,6 +39,7 @@ import org.bson.codecs.pojo.entities.ConstructorNotPublicModel;
 import org.bson.codecs.pojo.entities.ConventionModel;
 import org.bson.codecs.pojo.entities.ConverterModel;
 import org.bson.codecs.pojo.entities.CustomPropertyCodecOptionalModel;
+import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.bson.codecs.pojo.entities.GenericTreeModel;
 import org.bson.codecs.pojo.entities.InterfaceBasedModel;
 import org.bson.codecs.pojo.entities.InvalidCollectionModel;
@@ -45,18 +48,23 @@ import org.bson.codecs.pojo.entities.InvalidMapModel;
 import org.bson.codecs.pojo.entities.InvalidMapPropertyCodecProvider;
 import org.bson.codecs.pojo.entities.InvalidSetterArgsModel;
 import org.bson.codecs.pojo.entities.MapStringObjectModel;
+import org.bson.codecs.pojo.entities.NestedGenericHolderFieldWithMultipleTypeParamsModel;
 import org.bson.codecs.pojo.entities.NestedSimpleIdModel;
 import org.bson.codecs.pojo.entities.Optional;
 import org.bson.codecs.pojo.entities.OptionalPropertyCodecProvider;
 import org.bson.codecs.pojo.entities.PrimitivesModel;
 import org.bson.codecs.pojo.entities.PrivateSetterFieldModel;
+import org.bson.codecs.pojo.entities.PropertyWithMultipleTypeParamsModel;
 import org.bson.codecs.pojo.entities.SimpleEnum;
 import org.bson.codecs.pojo.entities.SimpleEnumModel;
+import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleIdImmutableModel;
 import org.bson.codecs.pojo.entities.SimpleIdModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.SimpleNestedPojoModel;
 import org.bson.codecs.pojo.entities.UpperBoundsModel;
+import org.bson.codecs.pojo.entities.BsonRepresentationUnsupportedInt;
+import org.bson.codecs.pojo.entities.BsonRepresentationUnsupportedString;
 import org.bson.codecs.pojo.entities.conventions.AnnotationModel;
 import org.bson.codecs.pojo.entities.conventions.CollectionsGetterImmutableModel;
 import org.bson.codecs.pojo.entities.conventions.CollectionsGetterMutableModel;
@@ -69,6 +77,7 @@ import org.bson.codecs.pojo.entities.conventions.MapGetterImmutableModel;
 import org.bson.codecs.pojo.entities.conventions.MapGetterMutableModel;
 import org.bson.codecs.pojo.entities.conventions.MapGetterNonEmptyModel;
 import org.bson.codecs.pojo.entities.conventions.MapGetterNullModel;
+import org.bson.codecs.pojo.entities.conventions.BsonRepresentationModel;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
@@ -78,6 +87,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -89,6 +99,7 @@ import static org.bson.codecs.pojo.Conventions.DEFAULT_CONVENTIONS;
 import static org.bson.codecs.pojo.Conventions.NO_CONVENTIONS;
 import static org.bson.codecs.pojo.Conventions.SET_PRIVATE_FIELDS_CONVENTION;
 import static org.bson.codecs.pojo.Conventions.USE_GETTERS_FOR_SETTERS;
+import static org.bson.codecs.pojo.Conventions.CLASS_AND_PROPERTY_CONVENTION;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -593,6 +604,53 @@ public final class PojoCustomTest extends PojoTestCase {
     @Test(expected = CodecConfigurationException.class)
     public void testInvalidGetterAndSetterModelDecoding() {
         decodingShouldFail(getCodec(InvalidGetterAndSetterModel.class), "{'integerField': 42, 'stringField': 'myString'}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testInvalidBsonRepresentationStringDecoding() {
+        decodingShouldFail(getCodec(BsonRepresentationUnsupportedString.class), "{'id': 'hello', s: 3}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testInvalidBsonRepresentationStringEncoding() {
+        encodesTo(getPojoCodecProviderBuilder(BsonRepresentationUnsupportedString.class),
+                new BsonRepresentationUnsupportedString("1"), "");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testInvalidBsonRepresentationIntDecoding() {
+        decodingShouldFail(getCodec(BsonRepresentationUnsupportedInt.class), "{'id': 'hello', age: '3'}");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testStringIdIsNotObjectId() {
+        encodesTo(getCodec(BsonRepresentationModel.class), new BsonRepresentationModel("notanobjectid", 1), null);
+    }
+
+    @Test
+    public void testRoundTripWithoutBsonAnnotation() {
+        roundTrip(getPojoCodecProviderBuilder(BsonRepresentationModel.class).conventions(Arrays.asList(CLASS_AND_PROPERTY_CONVENTION)),
+                new BsonRepresentationModel("hello", 1), "{'_id': 'hello', 'age': 1}");
+    }
+
+    @Test
+    public void testMultiplePojoProviders() {
+        NestedGenericHolderFieldWithMultipleTypeParamsModel model = getNestedGenericHolderFieldWithMultipleTypeParamsModel();
+        PojoCodecProvider provider1 = PojoCodecProvider.builder().register(NestedGenericHolderFieldWithMultipleTypeParamsModel.class)
+                .build();
+        PojoCodecProvider provider2 = PojoCodecProvider.builder().register(PropertyWithMultipleTypeParamsModel.class).build();
+        PojoCodecProvider provider3 = PojoCodecProvider.builder().register(SimpleGenericsModel.class).build();
+        PojoCodecProvider provider4 = PojoCodecProvider.builder().register(GenericHolderModel.class).build();
+
+        CodecRegistry registry = fromProviders(provider1, provider2, provider3, provider4);
+        CodecRegistry actualRegistry = fromRegistries(fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider()), registry);
+
+        String json = "{'nested': {'myGenericField': {_t: 'PropertyWithMultipleTypeParamsModel', "
+                + "'simpleGenericsModel': {_t: 'org.bson.codecs.pojo.entities.SimpleGenericsModel', 'myIntegerField': 42, "
+                + "'myGenericField': {'$numberLong': '101'}, 'myListField': ['B', 'C'], 'myMapField': {'D': 2, 'E': 3, 'F': 4 }}},"
+                + "'myLongField': {'$numberLong': '42'}}}";
+
+        roundTrip(actualRegistry, model, json);
     }
 
     private List<Convention> getDefaultAndUseGettersConvention() {

@@ -19,9 +19,11 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
+import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonBoolean;
@@ -66,33 +68,35 @@ public final class CommandMessage extends RequestMessage {
     private final FieldNameValidator payloadFieldNameValidator;
     private final boolean responseExpected;
     private final ClusterConnectionMode clusterConnectionMode;
+    private final ServerApi serverApi;
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-                   final ReadPreference readPreference, final MessageSettings settings) {
+                   final ReadPreference readPreference, final MessageSettings settings, final @Nullable ServerApi serverApi) {
         this(namespace, command, commandFieldNameValidator, readPreference, settings, true, null, null,
-                MULTIPLE);
+                MULTIPLE, serverApi);
     }
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-                   final ReadPreference readPreference, final MessageSettings settings, final boolean exhaustAllowed) {
+                   final ReadPreference readPreference, final MessageSettings settings, final boolean exhaustAllowed,
+                   final @Nullable ServerApi serverApi) {
         this(namespace, command, commandFieldNameValidator, readPreference, settings, true, exhaustAllowed, null, null,
-                MULTIPLE);
+                MULTIPLE, serverApi);
     }
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings, final boolean responseExpected,
                    final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
-                   final ClusterConnectionMode clusterConnectionMode) {
+                   final ClusterConnectionMode clusterConnectionMode, final @Nullable ServerApi serverApi) {
         this(namespace, command, commandFieldNameValidator, readPreference, settings, responseExpected, false, payload,
-                payloadFieldNameValidator, clusterConnectionMode);
+                payloadFieldNameValidator, clusterConnectionMode, serverApi);
     }
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings,
                    final boolean responseExpected, final boolean exhaustAllowed,
                    final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
-                   final ClusterConnectionMode clusterConnectionMode) {
-        super(namespace.getFullName(), getOpCode(settings), settings);
+                   final ClusterConnectionMode clusterConnectionMode, final @Nullable ServerApi serverApi) {
+        super(namespace.getFullName(), getOpCode(settings, serverApi), settings);
         this.namespace = namespace;
         this.command = command;
         this.commandFieldNameValidator = commandFieldNameValidator;
@@ -102,6 +106,7 @@ public final class CommandMessage extends RequestMessage {
         this.payload = payload;
         this.payloadFieldNameValidator = payloadFieldNameValidator;
         this.clusterConnectionMode = clusterConnectionMode;
+        this.serverApi = serverApi;
     }
 
     BsonDocument getCommandDocument(final ByteBufferBsonOutput bsonOutput) {
@@ -110,7 +115,7 @@ public final class CommandMessage extends RequestMessage {
         BsonDocument commandBsonDocument;
 
         if (useOpMsg() && containsPayload()) {
-            commandBsonDocument = byteBufBsonDocument.toBsonDocument();
+            commandBsonDocument = byteBufBsonDocument.toBaseBsonDocument();
 
             int payloadStartPosition = getEncodingMetadata().getFirstDocumentPosition()
                     + byteBufBsonDocument.getSizeInBytes()
@@ -177,8 +182,16 @@ public final class CommandMessage extends RequestMessage {
             commandStartPosition = bsonOutput.getPosition();
 
             if (payload == null) {
-                addDocument(getCommandToEncode(), bsonOutput, commandFieldNameValidator, null);
+                List<BsonElement> elements = null;
+                if (serverApi != null) {
+                    elements = new ArrayList<>(3);
+                    addServerApiElements(elements);
+                }
+                addDocument(getCommandToEncode(), bsonOutput, commandFieldNameValidator, elements);
             } else {
+                // We're not concerned with adding ServerApi elements here.  The only reason we do it for OP_QUERY-based commands is that
+                // OP_QUERY is always used for the handshake, and we have to pass ServerApi elements in the handshake.  Other than that,
+                // all servers that support ServerApi also support OP_MSG, so this code path should never be hit.
                 addDocumentWithPayload(bsonOutput, messageStartPosition);
             }
         }
@@ -274,6 +287,11 @@ public final class CommandMessage extends RequestMessage {
             }
             extraElements.add(new BsonElement("autocommit", BsonBoolean.FALSE));
         }
+
+        if (serverApi != null) {
+            addServerApiElements(extraElements);
+        }
+
         if (readPreference != null) {
             if (!readPreference.equals(primary())) {
                 extraElements.add(new BsonElement("$readPreference", readPreference.toDocument()));
@@ -282,6 +300,16 @@ public final class CommandMessage extends RequestMessage {
             }
         }
         return extraElements;
+    }
+
+    private void addServerApiElements(final List<BsonElement> extraElements) {
+        extraElements.add(new BsonElement("apiVersion", new BsonString(serverApi.getVersion().getValue())));
+        if (serverApi.getStrict().isPresent()) {
+            extraElements.add(new BsonElement("apiStrict", BsonBoolean.valueOf(serverApi.getStrict().get())));
+        }
+        if (serverApi.getDeprecationErrors().isPresent()) {
+            extraElements.add(new BsonElement("apiDeprecationErrors", BsonBoolean.valueOf(serverApi.getDeprecationErrors().get())));
+        }
     }
 
     private void checkServerVersionForTransactionSupport() {
@@ -300,12 +328,12 @@ public final class CommandMessage extends RequestMessage {
         }
     }
 
-    private static OpCode getOpCode(final MessageSettings settings) {
-        return isServerVersionAtLeastThreeDotSix(settings) ? OpCode.OP_MSG : OpCode.OP_QUERY;
+    private static OpCode getOpCode(final MessageSettings settings, @Nullable final ServerApi serverApi) {
+        return isServerVersionAtLeastThreeDotSix(settings) || serverApi != null ? OpCode.OP_MSG : OpCode.OP_QUERY;
     }
 
     private static boolean isServerVersionAtLeastThreeDotSix(final MessageSettings settings) {
-          return settings.getMaxWireVersion() >= THREE_DOT_SIX_WIRE_VERSION;
+        return settings.getMaxWireVersion() >= THREE_DOT_SIX_WIRE_VERSION;
     }
 
 }

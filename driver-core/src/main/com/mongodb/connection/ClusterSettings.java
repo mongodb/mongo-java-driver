@@ -21,7 +21,6 @@ import com.mongodb.ServerAddress;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.event.ClusterListener;
-import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.ServerAddressHelper;
 import com.mongodb.internal.selector.LatencyMinimizingServerSelector;
 import com.mongodb.lang.Nullable;
@@ -266,8 +265,16 @@ public final class ClusterSettings {
          */
         public Builder applyConnectionString(final ConnectionString connectionString) {
             Boolean directConnection = connectionString.isDirectConnection();
+            Boolean loadBalanced = connectionString.isLoadBalanced();
 
-            if (connectionString.isSrvProtocol()) {
+            if (loadBalanced != null && loadBalanced) {
+                mode(ClusterConnectionMode.LOAD_BALANCED);
+                if (connectionString.isSrvProtocol()) {
+                    srvHost(connectionString.getHosts().get(0));
+                } else {
+                    hosts(singletonList(createServerAddress(connectionString.getHosts().get(0))));
+                }
+            } else if (connectionString.isSrvProtocol()) {
                 mode(ClusterConnectionMode.MULTIPLE);
                 srvHost(connectionString.getHosts().get(0));
             } else if ((directConnection != null && directConnection)
@@ -389,7 +396,6 @@ public final class ClusterSettings {
      * </ul>
      *
      * @return the server selector, which may be null
-     * @see Cluster#selectServer(com.mongodb.selector.ServerSelector)
      */
     @Nullable
     public ServerSelector getServerSelector() {
@@ -538,7 +544,7 @@ public final class ClusterSettings {
 
             if (builder.srvHost.split("\\.").length < 3) {
                 throw new IllegalArgumentException(format("An SRV host name '%s' was provided that does not contain at least three parts. "
-                        + "It must contain a hostname, domain name and a top level domain.", builder.hosts.get(0).getHost()));
+                        + "It must contain a hostname, domain name and a top level domain.", builder.srvHost));
             }
         }
 
@@ -555,13 +561,17 @@ public final class ClusterSettings {
             }
         }
 
+        if (builder.mode == ClusterConnectionMode.LOAD_BALANCED && builder.srvHost == null && builder.hosts.size() != 1) {
+            throw new IllegalArgumentException("Multiple hosts cannot be specified when in load balancing mode");
+        }
+
         srvHost = builder.srvHost;
         hosts = builder.hosts;
         if (srvHost != null) {
             if (builder.mode == ClusterConnectionMode.SINGLE) {
                 throw new IllegalArgumentException("An SRV host name was provided but the connection mode is not MULTIPLE");
             }
-            mode = ClusterConnectionMode.MULTIPLE;
+            mode = builder.mode != null ? builder.mode : ClusterConnectionMode.MULTIPLE;
         } else {
             if (builder.mode == ClusterConnectionMode.SINGLE && builder.hosts.size() > 1) {
                 throw new IllegalArgumentException("Can not directly connect to more than one server");

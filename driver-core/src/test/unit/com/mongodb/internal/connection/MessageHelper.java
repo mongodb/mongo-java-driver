@@ -33,7 +33,9 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageSize;
+import static org.junit.Assert.fail;
 
 final class MessageHelper {
 
@@ -84,13 +86,21 @@ final class MessageHelper {
 
     public static BsonDocument decodeCommand(final BsonInput bsonInput) {
         bsonInput.readInt32(); // length
-        bsonInput.readInt32(); //requestId
-        bsonInput.readInt32(); //responseTo
-        bsonInput.readInt32(); // opcode
-        bsonInput.readInt32(); // flags
-        bsonInput.readCString(); //collectionName
-        bsonInput.readInt32(); // numToSkip
-        bsonInput.readInt32(); // numToReturn
+        bsonInput.readInt32(); // requestId
+        bsonInput.readInt32(); // responseTo
+        int opCode = bsonInput.readInt32();
+
+        if (opCode == 2004) { // OP_QUERY
+            bsonInput.readInt32(); // flags
+            bsonInput.readCString(); // collectionName
+            bsonInput.readInt32(); // numToSkip
+            bsonInput.readInt32(); // numToReturn
+        } else if (opCode == 2013) { // OP_MSG
+            bsonInput.readInt32(); // flags
+            bsonInput.readByte();  // kind
+        } else {
+            fail("Unexpected opcode " + opCode);
+        }
 
         BsonBinaryReader reader = new BsonBinaryReader(bsonInput);
         return new BsonDocumentCodec().decode(reader, DecoderContext.builder().build());
@@ -98,6 +108,14 @@ final class MessageHelper {
 
     public static String decodeCommandAsJson(final BsonInput bsonInput) {
         return decodeCommand(bsonInput).toJson();
+    }
+
+    public static String getApiVersionField() {
+        return getServerApi() == null ? "" : ", \"apiVersion\": \"" + getServerApi().getVersion().getValue() + "\"";
+    }
+
+    public static String getDbField(final String databaseName) {
+        return getServerApi() == null ? "" : ", \"$db\": \"" + databaseName + "\"";
     }
 
     private static ByteBuf encodeJson(final String json) {

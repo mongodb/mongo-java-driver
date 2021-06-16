@@ -31,9 +31,11 @@ import com.mongodb.client.model.CreateViewOptions;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static java.util.Objects.requireNonNull;
 
 class SyncMongoDatabase implements MongoDatabase {
@@ -100,73 +102,54 @@ class SyncMongoDatabase implements MongoDatabase {
 
     @Override
     public Document runCommand(final Bson command) {
-        SingleResultSubscriber<Document> subscriber = new SingleResultSubscriber<>();
-        wrapped.runCommand(command).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.runCommand(command)).block(TIMEOUT_DURATION));
     }
 
     @Override
     public Document runCommand(final Bson command, final ReadPreference readPreference) {
-        SingleResultSubscriber<Document> subscriber = new SingleResultSubscriber<>();
-        wrapped.runCommand(command, readPreference).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.runCommand(command, readPreference)).block(TIMEOUT_DURATION));
     }
 
     @Override
     public <TResult> TResult runCommand(final Bson command, final Class<TResult> resultClass) {
-        SingleResultSubscriber<TResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.runCommand(command, resultClass).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.runCommand(command, resultClass)).block(TIMEOUT_DURATION));
     }
 
     @Override
     public <TResult> TResult runCommand(final Bson command, final ReadPreference readPreference, final Class<TResult> resultClass) {
-        SingleResultSubscriber<TResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.runCommand(command, readPreference, resultClass).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.runCommand(command, readPreference, resultClass)).block(TIMEOUT_DURATION));
     }
 
     @Override
     public Document runCommand(final ClientSession clientSession, final Bson command) {
-        SingleResultSubscriber<Document> subscriber = new SingleResultSubscriber<>();
-        wrapped.runCommand(unwrap(clientSession), command).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.runCommand(unwrap(clientSession), command)).block(TIMEOUT_DURATION));
     }
 
     @Override
     public Document runCommand(final ClientSession clientSession, final Bson command, final ReadPreference readPreference) {
-        SingleResultSubscriber<Document> subscriber = new SingleResultSubscriber<>();
-        wrapped.runCommand(unwrap(clientSession), command, readPreference).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.runCommand(unwrap(clientSession), command, readPreference)).block(TIMEOUT_DURATION));
     }
 
     @Override
     public <TResult> TResult runCommand(final ClientSession clientSession, final Bson command, final Class<TResult> resultClass) {
-        SingleResultSubscriber<TResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.runCommand(unwrap(clientSession), command, resultClass).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.runCommand(unwrap(clientSession), command, resultClass)).block(TIMEOUT_DURATION));
     }
 
     @Override
     public <TResult> TResult runCommand(final ClientSession clientSession, final Bson command, final ReadPreference readPreference,
                                         final Class<TResult> resultClass) {
-        SingleResultSubscriber<TResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.runCommand(unwrap(clientSession), command, readPreference, resultClass).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.runCommand(unwrap(clientSession), command, readPreference, resultClass))
+                                      .block(TIMEOUT_DURATION));
     }
 
     @Override
     public void drop() {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.drop().subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.drop()).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void drop(final ClientSession clientSession) {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.drop(unwrap(clientSession)).subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.drop(unwrap(clientSession))).block(TIMEOUT_DURATION);
     }
 
     @Override
@@ -201,31 +184,23 @@ class SyncMongoDatabase implements MongoDatabase {
 
     @Override
     public void createCollection(final String collectionName) {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.createCollection(collectionName).subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.createCollection(collectionName)).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void createCollection(final String collectionName, final CreateCollectionOptions createCollectionOptions) {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.createCollection(collectionName, createCollectionOptions).subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.createCollection(collectionName, createCollectionOptions)).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void createCollection(final ClientSession clientSession, final String collectionName) {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.createCollection(unwrap(clientSession), collectionName).subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.createCollection(unwrap(clientSession), collectionName)).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void createCollection(final ClientSession clientSession, final String collectionName,
                                  final CreateCollectionOptions createCollectionOptions) {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.createCollection(unwrap(clientSession), collectionName, createCollectionOptions).subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.createCollection(unwrap(clientSession), collectionName, createCollectionOptions)).block(TIMEOUT_DURATION);
     }
 
     @Override

@@ -16,6 +16,7 @@
 
 package org.bson.codecs.pojo;
 
+import org.bson.BsonType;
 import org.bson.codecs.Codec;
 
 /**
@@ -35,10 +36,11 @@ public final class PropertyModel<T> {
     private final PropertyAccessor<T> propertyAccessor;
     private final String error;
     private volatile Codec<T> cachedCodec;
+    private final BsonType bsonRepresentation;
 
     PropertyModel(final String name, final String readName, final String writeName, final TypeData<T> typeData,
                   final Codec<T> codec, final PropertySerialization<T> propertySerialization, final Boolean useDiscriminator,
-                  final PropertyAccessor<T> propertyAccessor, final String error) {
+                  final PropertyAccessor<T> propertyAccessor, final String error, final BsonType bsonRepresentation) {
         this.name = name;
         this.readName = readName;
         this.writeName = writeName;
@@ -49,6 +51,7 @@ public final class PropertyModel<T> {
         this.useDiscriminator = useDiscriminator;
         this.propertyAccessor = propertyAccessor;
         this.error = error;
+        this.bsonRepresentation = bsonRepresentation;
     }
 
     /**
@@ -111,6 +114,15 @@ public final class PropertyModel<T> {
      */
     public Codec<T> getCodec() {
         return codec;
+    }
+
+    /**
+     * @return the BsonRepresentation of the field
+     *
+     * @since 4.2
+     */
+    public BsonType getBsonRepresentation() {
+        return bsonRepresentation;
     }
 
     /**

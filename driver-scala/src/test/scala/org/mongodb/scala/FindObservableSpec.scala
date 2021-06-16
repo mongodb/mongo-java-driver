@@ -17,14 +17,14 @@
 package org.mongodb.scala
 
 import java.util.concurrent.TimeUnit
-
-import com.mongodb.CursorType
+import com.mongodb.{ CursorType, ExplainVerbosity }
 import com.mongodb.reactivestreams.client.FindPublisher
 import org.mongodb.scala.model.Collation
 import org.reactivestreams.Publisher
 import org.scalamock.scalatest.proxy.MockFactory
 
 import scala.concurrent.duration.Duration
+import scala.reflect.ClassTag
 
 class FindObservableSpec extends BaseSpec with MockFactory {
 
@@ -52,6 +52,8 @@ class FindObservableSpec extends BaseSpec with MockFactory {
     val sort = Document("sort" -> 1)
     val collation = Collation.builder().locale("en").build()
     val batchSize = 10
+    val ct = classOf[Document]
+    val verbosity = ExplainVerbosity.QUERY_PLANNER
 
     wrapper.expects(Symbol("first"))().once()
     observable.first()
@@ -72,6 +74,8 @@ class FindObservableSpec extends BaseSpec with MockFactory {
     wrapper.expects(Symbol("sort"))(sort).once()
     wrapper.expects(Symbol("batchSize"))(batchSize).once()
     wrapper.expects(Symbol("allowDiskUse"))(true).once()
+    wrapper.expects(Symbol("explain"))(ct).once()
+    wrapper.expects(Symbol("explain"))(ct, verbosity).once()
 
     observable.collation(collation)
     observable.cursorType(CursorType.NonTailable)
@@ -89,5 +93,7 @@ class FindObservableSpec extends BaseSpec with MockFactory {
     observable.sort(sort)
     observable.batchSize(batchSize)
     observable.allowDiskUse(true)
+    observable.explain[Document]()
+    observable.explain[Document](verbosity)
   }
 }

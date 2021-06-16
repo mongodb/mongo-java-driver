@@ -36,6 +36,7 @@ import spock.lang.Specification
 
 import static Fixture.getMongoClient
 import static com.mongodb.CustomMatchers.isTheSameAs
+import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry
 import static spock.util.matcher.HamcrestSupport.expect
 
 class DBSpecification extends Specification {
@@ -187,14 +188,16 @@ class DBSpecification extends Specification {
         def operation = executor.getReadOperation() as ListCollectionsOperation
 
         then:
-        expect operation, isTheSameAs(new ListCollectionsOperation(databaseName, MongoClient.getCommandCodec()).nameOnly(true))
+        expect operation, isTheSameAs(new ListCollectionsOperation(databaseName, new DBObjectCodec(getDefaultCodecRegistry()))
+                .nameOnly(true))
 
         when:
         db.collectionExists('someCollection')
         operation = executor.getReadOperation() as ListCollectionsOperation
 
         then:
-        expect operation, isTheSameAs(new ListCollectionsOperation(databaseName, MongoClient.getCommandCodec()).nameOnly(true))
+        expect operation, isTheSameAs(new ListCollectionsOperation(databaseName, new DBObjectCodec(getDefaultCodecRegistry()))
+                .nameOnly(true))
     }
 
     def 'should use provided read preference for obedient commands'() {

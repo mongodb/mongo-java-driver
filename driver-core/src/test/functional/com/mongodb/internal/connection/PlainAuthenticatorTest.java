@@ -20,6 +20,7 @@ import com.mongodb.MongoCompressor;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerId;
@@ -33,6 +34,7 @@ import org.junit.Test;
 
 import java.util.Collections;
 
+import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.ClusterFixture.getSslSettings;
 
 @Ignore
@@ -50,8 +52,9 @@ public class PlainAuthenticatorTest {
         userName = System.getProperty("org.mongodb.test.userName");
         source = System.getProperty("org.mongod.test.source");
         password = System.getProperty("org.mongodb.test.password");
-        internalConnection = new InternalStreamConnectionFactory(streamFactory, null, null,
-                null, Collections.<MongoCompressor>emptyList(), null).create(new ServerId(new ClusterId(), new ServerAddress(host)));
+        internalConnection = new InternalStreamConnectionFactory(ClusterConnectionMode.SINGLE, streamFactory, null, null,
+                null, Collections.<MongoCompressor>emptyList(), null, getServerApi()).create(new ServerId(new ClusterId(),
+                new ServerAddress(host)));
         connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()));
     }
 
@@ -62,13 +65,15 @@ public class PlainAuthenticatorTest {
 
     @Test
     public void testSuccessfulAuthentication() {
-        PlainAuthenticator authenticator = new PlainAuthenticator(getCredentialWithCache(userName, source, password.toCharArray()));
+        PlainAuthenticator authenticator = new PlainAuthenticator(getCredentialWithCache(userName, source, password.toCharArray()),
+                getServerApi());
         authenticator.authenticate(internalConnection, connectionDescription);
     }
 
     @Test(expected = MongoSecurityException.class)
     public void testUnsuccessfulAuthentication() {
-        PlainAuthenticator authenticator = new PlainAuthenticator(getCredentialWithCache(userName, source, "wrong".toCharArray()));
+        PlainAuthenticator authenticator = new PlainAuthenticator(getCredentialWithCache(userName, source, "wrong".toCharArray()),
+                getServerApi());
         authenticator.authenticate(internalConnection, connectionDescription);
     }
 

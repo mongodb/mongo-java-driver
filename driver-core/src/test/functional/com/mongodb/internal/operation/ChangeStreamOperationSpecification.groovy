@@ -227,7 +227,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         nextDoc.getFullDocument() == BsonDocument.parse('{ _id : 2, x : 3 }')
         nextDoc.getNamespace() == helper.getNamespace()
         nextDoc.getOperationType() == OperationType.UPDATE
-        nextDoc.getUpdateDescription() == new UpdateDescription(['y'], BsonDocument.parse('{x : 3}'))
+        nextDoc.getUpdateDescription() == new UpdateDescription(['y'], BsonDocument.parse('{x : 3}'), null)
 
         cleanup:
         cursor?.close()
@@ -433,18 +433,10 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
         when:
         def cursor = execute(operation, async)
-
-        then:
-        tryNextAndClean(cursor, async) == null
-
-        when:
         def expected = insertDocuments(helper, [1, 2])
 
         then:
         nextAndClean(cursor, async, expected.size()) == expected
-
-        then:
-        tryNextAndClean(cursor, async) == null
 
         when:
         expected = insertDocuments(helper, [3, 4])
@@ -481,9 +473,6 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
         then:
         results == expected
-
-        then:
-        tryNextAndClean(cursor, async) == null
 
         when:
         expected = insertDocuments(helper, [5, 6])
@@ -633,7 +622,9 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
                 getReadConcern() >> ReadConcern.DEFAULT
                 getOperationTime() >> new BsonTimestamp()
             }
+            getServerApi() >> null
             getReadConnectionSource() >> Stub(ConnectionSource) {
+                getServerApi() >> null
                 getConnection() >> Stub(Connection) {
                      command(*_) >> {
                          changeStream = getChangeStream(it[1])
@@ -680,12 +671,14 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         given:
         def changeStream
         def binding = Stub(AsyncReadBinding) {
+            getServerApi() >> null
             getSessionContext() >> Stub(SessionContext) {
                 getReadConcern() >> ReadConcern.DEFAULT
                 getOperationTime() >> new BsonTimestamp()
             }
             getReadConnectionSource(_) >> {
                 it.last().onResult(Stub(AsyncConnectionSource) {
+                    getServerApi() >> null
                     getConnection(_) >> {
                         it.last().onResult(Stub(AsyncConnection) {
                             commandAsync(*_) >> {
@@ -749,10 +742,6 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
                 "documentKey": {"_id": $it}
             }""")
         }
-    }
-
-    def tryNextAndClean(cursor, boolean async) {
-        removeExtra(tryNext(cursor, async))
     }
 
     def nextAndClean(cursor, boolean async, int minimumCount) {

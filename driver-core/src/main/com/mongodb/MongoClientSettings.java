@@ -33,6 +33,7 @@ import org.bson.codecs.BsonCodecProvider;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.IterableCodecProvider;
+import org.bson.codecs.JsonObjectCodecProvider;
 import org.bson.codecs.MapCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -68,6 +69,7 @@ public final class MongoClientSettings {
                     new GeoJsonCodecProvider(),
                     new GridFSFileCodecProvider(),
                     new Jsr310CodecProvider(),
+                    new JsonObjectCodecProvider(),
                     new BsonCodecProvider()));
 
     private final ReadPreference readPreference;
@@ -89,8 +91,11 @@ public final class MongoClientSettings {
     private final String applicationName;
     private final List<MongoCompressor> compressorList;
     private final UuidRepresentation uuidRepresentation;
+    private final ServerApi serverApi;
 
     private final AutoEncryptionSettings autoEncryptionSettings;
+    private final boolean heartbeatSocketTimeoutSetExplicitly;
+    private final boolean heartbeatConnectTimeoutSetExplicitly;
 
     /**
      * Gets the default codec registry.  It includes the following providers:
@@ -106,6 +111,7 @@ public final class MongoClientSettings {
      * <li>{@link com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider}</li>
      * <li>{@link com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider}</li>
      * <li>{@link org.bson.codecs.jsr310.Jsr310CodecProvider}</li>
+     * <li>{@link org.bson.codecs.JsonObjectCodecProvider}</li>
      * <li>{@link org.bson.codecs.BsonCodecProvider}</li>
      * </ul>
      *
@@ -158,8 +164,12 @@ public final class MongoClientSettings {
         private String applicationName;
         private List<MongoCompressor> compressorList = Collections.emptyList();
         private UuidRepresentation uuidRepresentation = UuidRepresentation.UNSPECIFIED;
+        private ServerApi serverApi;
 
         private AutoEncryptionSettings autoEncryptionSettings;
+
+        private int heartbeatConnectTimeoutMS;
+        private int heartbeatSocketTimeoutMS;
 
         private Builder() {
         }
@@ -177,6 +187,7 @@ public final class MongoClientSettings {
             readConcern = settings.getReadConcern();
             credential = settings.getCredential();
             uuidRepresentation = settings.getUuidRepresentation();
+            serverApi = settings.getServerApi();
             streamFactoryFactory = settings.getStreamFactoryFactory();
             autoEncryptionSettings = settings.getAutoEncryptionSettings();
             clusterSettingsBuilder.applySettings(settings.getClusterSettings());
@@ -184,6 +195,12 @@ public final class MongoClientSettings {
             socketSettingsBuilder.applySettings(settings.getSocketSettings());
             connectionPoolSettingsBuilder.applySettings(settings.getConnectionPoolSettings());
             sslSettingsBuilder.applySettings(settings.getSslSettings());
+            if (settings.heartbeatConnectTimeoutSetExplicitly) {
+                heartbeatConnectTimeoutMS = settings.heartbeatSocketSettings.getConnectTimeout(MILLISECONDS);
+            }
+            if (settings.heartbeatSocketTimeoutSetExplicitly) {
+                heartbeatSocketTimeoutMS = settings.heartbeatSocketSettings.getReadTimeout(MILLISECONDS);
+            }
         }
 
         /**
@@ -462,15 +479,53 @@ public final class MongoClientSettings {
         }
 
         /**
+         * Sets the server API to use when sending commands to the server.
+         * <p>
+         * This is required for some MongoDB deployments.
+         * </p>
+         *
+         * @param serverApi the server API, which may not be null
+         * @return this
+         * @since 4.3
+         */
+        public Builder serverApi(final ServerApi serverApi) {
+            this.serverApi = notNull("serverApi", serverApi);
+            return this;
+        }
+
+        /**
          * Sets the auto-encryption settings
+         *
+         * A separate, internal {@code MongoClient} is created if any of the following are true:
+         *
+         * <ul>
+         *    <li>{@code AutoEncryptionSettings.keyVaultClient} is not passed</li>
+         *    <li>{@code AutoEncryptionSettings.bypassAutomaticEncryption} is {@code false}</li>
+         * </ul>
+         *
+         * If an internal {@code MongoClient} is created, it is configured with the same
+         * options as the parent {@code MongoClient} except {@code minPoolSize} is set to {@code 0}
+         * and {@code AutoEncryptionSettings} is omitted.
          *
          * @param autoEncryptionSettings the auto-encryption settings
          * @return this
          * @since 3.11
          * @see #getAutoEncryptionSettings()
          */
-        public Builder autoEncryptionSettings(final AutoEncryptionSettings autoEncryptionSettings) {
+        public Builder autoEncryptionSettings(@Nullable final AutoEncryptionSettings autoEncryptionSettings) {
             this.autoEncryptionSettings = autoEncryptionSettings;
+            return this;
+        }
+
+        // Package-private to provide interop with MongoClientOptions
+        Builder heartbeatConnectTimeoutMS(final int heartbeatConnectTimeoutMS) {
+            this.heartbeatConnectTimeoutMS = heartbeatConnectTimeoutMS;
+            return this;
+        }
+
+        // Package-private to provide interop with MongoClientOptions
+        Builder heartbeatSocketTimeoutMS(final int heartbeatSocketTimeoutMS) {
+            this.heartbeatSocketTimeoutMS = heartbeatSocketTimeoutMS;
             return this;
         }
 
@@ -628,6 +683,17 @@ public final class MongoClientSettings {
     }
 
     /**
+     * Gets the server API to use when sending commands to the server.
+     *
+     * @return the server API, which may be null
+     * @since 4.3
+     */
+    @Nullable
+    public ServerApi getServerApi() {
+        return serverApi;
+    }
+
+    /**
      * Gets the auto-encryption settings.
      * <p>
      * Client side encryption enables an application to specify what fields in a collection must be
@@ -739,11 +805,17 @@ public final class MongoClientSettings {
         sslSettings = builder.sslSettingsBuilder.build();
         compressorList = builder.compressorList;
         uuidRepresentation = builder.uuidRepresentation;
+        serverApi = builder.serverApi;
         autoEncryptionSettings = builder.autoEncryptionSettings;
-
-        SocketSettings.Builder heartbeatSocketSettingsBuilder = SocketSettings.builder()
-                .readTimeout(socketSettings.getConnectTimeout(MILLISECONDS), MILLISECONDS)
-                .connectTimeout(socketSettings.getConnectTimeout(MILLISECONDS), MILLISECONDS);
-        heartbeatSocketSettings = heartbeatSocketSettingsBuilder.build();
+        heartbeatSocketSettings = SocketSettings.builder()
+                .readTimeout(builder.heartbeatSocketTimeoutMS == 0
+                                ? socketSettings.getConnectTimeout(MILLISECONDS) : builder.heartbeatSocketTimeoutMS,
+                        MILLISECONDS)
+                .connectTimeout(builder.heartbeatConnectTimeoutMS == 0
+                                ? socketSettings.getConnectTimeout(MILLISECONDS) : builder.heartbeatConnectTimeoutMS,
+                        MILLISECONDS)
+                .build();
+        heartbeatSocketTimeoutSetExplicitly = builder.heartbeatSocketTimeoutMS != 0;
+        heartbeatConnectTimeoutSetExplicitly = builder.heartbeatConnectTimeoutMS != 0;
     }
 }

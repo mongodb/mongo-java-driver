@@ -259,7 +259,7 @@ public class GenericBsonTest {
             } catch (NumberFormatException e) {
                 // all good
             }
-        } else if (testDefinitionDescription.startsWith("Top-level")) {
+        } else if (testDefinitionDescription.startsWith("Top-level") || testDefinitionDescription.startsWith("Binary type")) {
             try {
                 parse(str);
                 fail("Should fail to parse JSON '" + str + "' with description '" + description + "'");

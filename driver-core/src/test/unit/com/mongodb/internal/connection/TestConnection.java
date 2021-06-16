@@ -18,9 +18,10 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
+import com.mongodb.ServerApi;
 import com.mongodb.WriteConcernResult;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.bulk.DeleteRequest;
 import com.mongodb.internal.bulk.InsertRequest;
 import com.mongodb.internal.bulk.UpdateRequest;
@@ -101,14 +102,15 @@ class TestConnection implements Connection, AsyncConnection {
 
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-                         final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext) {
+                         final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
+                         final ServerApi serverApi) {
         return executeEnqueuedCommandBasedProtocol(sessionContext);
     }
 
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                          final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-                         final boolean responseExpected, final SplittablePayload payload,
+                         final ServerApi serverApi, final boolean responseExpected, final SplittablePayload payload,
                          final FieldNameValidator payloadFieldNameValidator) {
         return executeEnqueuedCommandBasedProtocol(sessionContext);
     }
@@ -116,15 +118,16 @@ class TestConnection implements Connection, AsyncConnection {
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
                                  final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                                 final SessionContext sessionContext, final SingleResultCallback<T> callback) {
+                                 final SessionContext sessionContext, final ServerApi serverApi, final SingleResultCallback<T> callback) {
         executeEnqueuedCommandBasedProtocolAsync(sessionContext, callback);
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                                  final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                                 final SessionContext sessionContext, final boolean responseExpected, final SplittablePayload payload,
-                                 final FieldNameValidator payloadFieldNameValidator, final SingleResultCallback<T> callback) {
+                                 final SessionContext sessionContext, final ServerApi serverApi, final boolean responseExpected,
+                                 final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
+                                 final SingleResultCallback<T> callback) {
         executeEnqueuedCommandBasedProtocolAsync(sessionContext, callback);
     }
 
@@ -163,6 +166,11 @@ class TestConnection implements Connection, AsyncConnection {
     @Override
     public void killCursor(final MongoNamespace namespace, final List<Long> cursors) {
         executeEnqueuedLegacyProtocol();
+    }
+
+    @Override
+    public void markAsPinned(final PinningMode pinningMode) {
+        throw new UnsupportedOperationException();
     }
 
     @Override

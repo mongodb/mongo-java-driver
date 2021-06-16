@@ -18,6 +18,11 @@ package org.bson.types;
 
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -182,5 +187,33 @@ public class ObjectIdTest {
     @Test
     public void testTimeMaxInt() throws ParseException {
         assertEquals(getDate("07-Feb-2106 06:28:15 -0000"), new ObjectId(0xFFFFFFFF, 0).getDate());
+    }
+
+    @Test
+    public void testObjectSerialization() throws IOException, ClassNotFoundException {
+        // given
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
+        ObjectId objectId = new ObjectId("5f8f4fcf27516f05e7eae5be");
+
+        // when
+        oos.writeObject(objectId);
+
+        // then
+        assertTrue(new String(baos.toByteArray()).contains("org.bson.types.ObjectId$SerializationProxy"));
+        assertArrayEquals(new byte[] {-84, -19, 0, 5, 115, 114, 0, 42, 111, 114, 103, 46, 98, 115, 111, 110, 46, 116, 121, 112, 101, 115,
+                        46, 79, 98, 106, 101, 99, 116, 73, 100, 36, 83, 101, 114, 105, 97, 108, 105, 122, 97, 116, 105, 111, 110, 80, 114,
+                        111, 120, 121, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 1, 91, 0, 5, 98, 121, 116, 101, 115, 116, 0, 2, 91, 66, 120, 112, 117,
+                        114, 0, 2, 91, 66, -84, -13, 23, -8, 6, 8, 84, -32, 2, 0, 0, 120, 112, 0, 0, 0, 12, 95, -113, 79, -49, 39, 81, 111,
+                        5, -25, -22, -27, -66},
+                baos.toByteArray());
+
+        // when
+        ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+        ObjectInputStream ois = new ObjectInputStream(bais);
+        ObjectId deserializedObjectId = (ObjectId) ois.readObject();
+
+        // then
+        assertEquals(objectId, deserializedObjectId);
     }
 }

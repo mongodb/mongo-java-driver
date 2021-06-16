@@ -35,7 +35,7 @@ Legacy MongoClient API:
 
 ```java
 import com.mongodb.MongoClient;
-import com.mongodb.MongoClientURI;
+import com.mongodb.ConnectionString;
 ```
 
 And the common elements between the legacy and new APIs:
@@ -48,7 +48,6 @@ import com.mongodb.client.MongoCollection;
 
 import org.bson.Document;
 import java.util.Arrays;
-import com.mongodb.Block;
 
 import com.mongodb.client.MongoCursor;
 import static com.mongodb.client.model.Filters.*;
@@ -61,7 +60,7 @@ import java.util.List;
 ## Make a Connection
 
 Use [`MongoClients.create()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoClients.html" >}}), 
-or [`MongoClient()`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClient.html" >}}) for the legacy MongoClient API, 
+or [`MongoClient()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoClient.html" >}}) for the legacy MongoClient API, 
 to make a connection to a running MongoDB instance.
 
 The `MongoClient` instance represents a pool of connections to the database; you will only need one instance of class `MongoClient` even with multiple threads.
@@ -130,21 +129,13 @@ MongoClient mongoClient = new MongoClient();
 - You can explicitly specify the hostname to connect to a MongoDB instance running on the specified host on port ``27017``:
 
 ```java
-MongoClient mongoClient = new MongoClient( "hostOne" );
+MongoClient mongoClient = new MongoClient("mongodb://hostOne");
 ```
 
-- You can explicitly specify the hostname and the port:
+- You can explicitly specify the hostname and port:
 
 ```java
-MongoClient mongoClient = new MongoClient( "hostOne" , 27018 );
-```
-
-- You can specify the
-[`MongoClientURI`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientURI.html" >}}) connection string:
-
-```java
- MongoClientURI connectionString = new MongoClientURI("mongodb://hostOne:27017,hostTwo:27017");
- MongoClient mongoClient = new MongoClient(connectionString);
+MongoClient mongoClient = new MongoClient("mongodb://hostOne:27018");
 ```
 
 The connection string mostly follows [RFC 3986](http://tools.ietf.org/html/rfc3986), with the exception of the domain name. For MongoDB, 
@@ -153,7 +144,7 @@ it is possible to list multiple domain names separated by a comma. For more info
 
 ## Access a Database
 
-Once you have a ``MongoClient`` instance connected to a MongoDB deployment, use the [`MongoClient.getDatabase()`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClient.html#getDatabase(java.lang.String)" >}}) method to access a database.
+Once you have a ``MongoClient`` instance connected to a MongoDB deployment, use the [`MongoClient.getDatabase()`]({{< apiref "mongodb-driver-sync" "com/mongodb/MongoClient.html#getDatabase(java.lang.String)" >}}) method to access a database.
 
 Specify the name of the database to the ``getDatabase()`` method. If a database does not exist, MongoDB creates the database when you first store data for that database.
 
@@ -364,22 +355,15 @@ The example prints one document:
 The following example returns and prints all documents where ``"i" > 50``:
 
 ```java
-Block<Document> printBlock = new Block<Document>() {
-     @Override
-     public void apply(final Document document) {
-         System.out.println(document.toJson());
-     }
-};
-
-collection.find(gt("i", 50)).forEach(printBlock);
+collection.find(gt("i", 50))
+        .forEach(doc -> System.out.println(doc.toJson()));
 ```
-
-The example uses the [`forEach`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoIterable.html#forEach(com.mongodb.Block)" >}}) method on the ``FindIterable`` object to apply a block to each document.
 
 To specify a filter for a range, such as ``50 < i <= 100``, you can use the [`and`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Filters.html#and(org.bson.conversions.Bson...)" >}}) helper:
 
 ```java
-collection.find(and(gt("i", 50), lte("i", 100))).forEach(printBlock);
+collection.find(and(gt("i", 50), lte("i", 100)))
+        .forEach(doc -> System.out.println(doc.toJson()));
 ```
 
 ## Update Documents

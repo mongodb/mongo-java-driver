@@ -16,6 +16,8 @@
 
 package org.bson.types;
 
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
@@ -45,7 +47,8 @@ import static org.bson.assertions.Assertions.notNull;
  */
 public final class ObjectId implements Comparable<ObjectId>, Serializable {
 
-    private static final long serialVersionUID = 3670079982654483072L;
+    // unused, as this class uses a proxy for serialization
+    private static final long serialVersionUID = 1L;
 
     private static final int OBJECT_ID_LENGTH = 12;
     private static final int LOW_ORDER_THREE_BYTES = 0x00ffffff;
@@ -346,6 +349,30 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
     @Override
     public String toString() {
         return toHexString();
+    }
+
+    // see https://docs.oracle.com/javase/6/docs/platform/serialization/spec/output.html
+    private Object writeReplace() {
+        return new SerializationProxy(this);
+    }
+
+    // see https://docs.oracle.com/javase/6/docs/platform/serialization/spec/input.html
+    private void readObject(final ObjectInputStream stream) throws InvalidObjectException {
+        throw new InvalidObjectException("Proxy required");
+    }
+
+    private static class SerializationProxy implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private final byte[] bytes;
+
+        SerializationProxy(final ObjectId objectId) {
+            bytes = objectId.toByteArray();
+        }
+
+        private Object readResolve() {
+            return new ObjectId(bytes);
+        }
     }
 
     static {

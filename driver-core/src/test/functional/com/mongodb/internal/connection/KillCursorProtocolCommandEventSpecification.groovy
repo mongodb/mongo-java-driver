@@ -34,7 +34,9 @@ import spock.lang.Shared
 
 import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
+import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ClusterFixture.getSslSettings
+import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.internal.connection.ProtocolTestHelper.execute
 
 class KillCursorProtocolCommandEventSpecification extends OperationFunctionalSpecification {
@@ -42,8 +44,8 @@ class KillCursorProtocolCommandEventSpecification extends OperationFunctionalSpe
     InternalStreamConnection connection;
 
     def setupSpec() {
-        connection = new InternalStreamConnectionFactory(new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                getCredentialWithCache(), null, null, [], null)
+        connection = new InternalStreamConnectionFactory(SINGLE, new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
+                getCredentialWithCache(), null, null, [], null, getServerApi())
                 .create(new ServerId(new ClusterId(), getPrimary()))
         connection.open();
     }

@@ -47,14 +47,33 @@ public interface ClientSession extends Closeable {
     ServerAddress getPinnedServerAddress();
 
     /**
-     * Set the server address of the pinned mongos.
-     * For internal use only.
+     * Gets the transaction context.
      *
-     * @param address the server address to pin
-     * @mongodb.server.release 4.2
-     * @since 3.11
+     * <p>For internal use only </p>
+     *
+     * @return the transaction context
      */
-    void setPinnedServerAddress(ServerAddress address);
+    @Nullable
+    Object getTransactionContext();
+
+    /**
+     * Sets the transaction context.
+     *
+     * <p>For internal use only </p>
+     * <p>Implementations may place additional restrictions on the type of the transaction context</p>
+     *
+     * @param address the server address
+     * @param transactionContext the transaction context, which may be null
+     */
+    void setTransactionContext(ServerAddress address, Object transactionContext);
+
+    /**
+     * Clears the transaction context.
+     *
+     * <p>For internal use only </p>
+     *
+     */
+    void clearTransactionContext();
 
     /**
      * Get the recovery token from the latest outcome in a sharded transaction.

@@ -17,14 +17,16 @@
 package com.mongodb.internal.binding;
 
 import com.mongodb.ReadPreference;
+import com.mongodb.ServerApi;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.NoOpSessionContext;
-import com.mongodb.internal.connection.Server;
+import com.mongodb.internal.connection.ServerTuple;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.selector.WritableServerSelector;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -39,19 +41,11 @@ public class SingleConnectionBinding implements ReadWriteBinding {
     private final ReadPreference readPreference;
     private final Connection readConnection;
     private final Connection writeConnection;
-    private final Server readServer;
-    private final Server writeServer;
-
+    private final ServerDescription readServerDescription;
+    private final ServerDescription writeServerDescription;
     private int count = 1;
-
-    /**
-     * Create a new binding with the given cluster.
-     *
-     * @param cluster     a non-null Cluster which will be used to select a server to bind to
-     */
-    public SingleConnectionBinding(final Cluster cluster) {
-        this(cluster, primary());
-    }
+    @Nullable
+    private final ServerApi serverApi;
 
     /**
      * Create a new binding with the given cluster.
@@ -59,13 +53,16 @@ public class SingleConnectionBinding implements ReadWriteBinding {
      * @param cluster     a non-null Cluster which will be used to select a server to bind to
      * @param readPreference the readPreference for reads, if not primary a separate connection will be used for reads
      */
-    public SingleConnectionBinding(final Cluster cluster, final ReadPreference readPreference) {
+    public SingleConnectionBinding(final Cluster cluster, final ReadPreference readPreference, @Nullable final ServerApi serverApi) {
+        this.serverApi = serverApi;
         notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
-        writeServer = cluster.selectServer(new WritableServerSelector());
-        writeConnection = writeServer.getConnection();
-        readServer = cluster.selectServer(new ReadPreferenceServerSelector(readPreference));
-        readConnection = readServer.getConnection();
+        ServerTuple writeServerTuple = cluster.selectServer(new WritableServerSelector());
+        writeServerDescription = writeServerTuple.getServerDescription();
+        writeConnection = writeServerTuple.getServer().getConnection();
+        ServerTuple readServerTuple = cluster.selectServer(new ReadPreferenceServerSelector(readPreference));
+        readServerDescription = readServerTuple.getServerDescription();
+        readConnection = readServerTuple.getServer().getConnection();
     }
 
     @Override
@@ -100,7 +97,7 @@ public class SingleConnectionBinding implements ReadWriteBinding {
         if (readPreference == primary()) {
             return getWriteConnectionSource();
         } else {
-            return new SingleConnectionSource(readServer, readConnection);
+            return new SingleConnectionSource(readServerDescription, readConnection);
         }
     }
 
@@ -110,30 +107,41 @@ public class SingleConnectionBinding implements ReadWriteBinding {
     }
 
     @Override
+    @Nullable
+    public ServerApi getServerApi() {
+        return serverApi;
+    }
+
+    @Override
     public ConnectionSource getWriteConnectionSource() {
         isTrue("open", getCount() > 0);
-        return new SingleConnectionSource(writeServer, writeConnection);
+        return new SingleConnectionSource(writeServerDescription, writeConnection);
     }
 
     private final class SingleConnectionSource implements ConnectionSource {
+        private final ServerDescription serverDescription;
         private final Connection connection;
-        private final Server server;
         private int count = 1;
 
-        SingleConnectionSource(final Server server, final Connection connection) {
-            this.server = server;
+        SingleConnectionSource(final ServerDescription serverDescription, final Connection connection) {
+            this.serverDescription = serverDescription;
             this.connection = connection;
             SingleConnectionBinding.this.retain();
         }
 
         @Override
         public ServerDescription getServerDescription() {
-            return server.getDescription();
+            return serverDescription;
         }
 
         @Override
         public SessionContext getSessionContext() {
             return NoOpSessionContext.INSTANCE;
+        }
+
+        @Override
+        public ServerApi getServerApi() {
+            return serverApi;
         }
 
         @Override

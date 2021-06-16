@@ -17,6 +17,7 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.CursorType;
+import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoQueryException;
@@ -43,7 +44,6 @@ import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonValue;
-import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 
 import java.util.concurrent.TimeUnit;
@@ -58,7 +58,9 @@ import static com.mongodb.internal.operation.CommandOperationHelper.CommandReadT
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformerAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandAsyncWithConnection;
 import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandWithConnection;
+import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNullOrEmpty;
+import static com.mongodb.internal.operation.ExplainHelper.asExplainCommand;
 import static com.mongodb.internal.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToQueryResult;
@@ -75,7 +77,7 @@ import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeast
  * @param <T> the operations result type.
  * @since 3.0
  */
-public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatchCursor<T>>, ExplainableReadOperation<BatchCursor<T>> {
     private static final String FIRST_BATCH = "firstBatch";
 
     private final MongoNamespace namespace;
@@ -756,16 +758,20 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
         };
     }
 
+    @Override
+    public <R> ReadOperation<R> asExplainableOperation(@Nullable final ExplainVerbosity verbosity,
+                                                       final Decoder<R> resultDecoder) {
+        return new CommandReadOperation<R>(getNamespace().getDatabaseName(),
+                asExplainCommand(getCommand(NoOpSessionContext.INSTANCE), verbosity),
+                resultDecoder);
+    }
 
-    /**
-     * Gets an operation whose execution explains this operation.
-     *
-     * @return a read operation that when executed will explain this operation
-     */
-    public ReadOperation<BsonDocument> asExplainableOperation() {
-        return new CommandReadOperation<>(getNamespace().getDatabaseName(),
-                new BsonDocument("explain", getCommand(NoOpSessionContext.INSTANCE, null)),
-                new BsonDocumentCodec());
+    @Override
+    public <R> AsyncReadOperation<R> asAsyncExplainableOperation(@Nullable final ExplainVerbosity verbosity,
+                                                                 final Decoder<R> resultDecoder) {
+        return new CommandReadOperation<R>(getNamespace().getDatabaseName(),
+                asExplainCommand(getCommand(NoOpSessionContext.INSTANCE), verbosity),
+                resultDecoder);
     }
 
     private BsonDocument asDocument(final ConnectionDescription connectionDescription, final ReadPreference readPreference) {
@@ -810,12 +816,12 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
         return document;
     }
 
-    private BsonDocument getCommand(final SessionContext sessionContext, final ConnectionDescription description) {
+    private BsonDocument getCommand(final SessionContext sessionContext) {
         BsonDocument commandDocument = new BsonDocument("find", new BsonString(namespace.getCollectionName()));
 
         appendReadConcernToCommand(sessionContext, commandDocument);
 
-        putIfNotNullOrEmpty(commandDocument, "filter", filter);
+        putIfNotNull(commandDocument, "filter", filter);
         putIfNotNullOrEmpty(commandDocument, "sort", sort);
         putIfNotNullOrEmpty(commandDocument, "projection", projection);
         if (skip > 0) {
@@ -884,7 +890,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
             @Override
             public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
                 validateFindOptions(connectionDescription, sessionContext.getReadConcern(), collation, allowDiskUse);
-                return getCommand(sessionContext, connectionDescription);
+                return getCommand(sessionContext);
             }
         };
     }

@@ -269,10 +269,17 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
     def caseInsensitiveCollation = Collation.builder().locale('en').collationStrength(CollationStrength.SECONDARY).build()
 
     static DBObject getKeyPattern(DBObject explainPlan) {
-        if (explainPlan.queryPlanner.winningPlan.inputStage != null) {
+        if (explainPlan.queryPlanner.winningPlan.queryPlan?.inputStage != null) {
+            return explainPlan.queryPlanner.winningPlan.queryPlan.inputStage.keyPattern
+        } else if (explainPlan.queryPlanner.winningPlan.inputStage != null) {
             return explainPlan.queryPlanner.winningPlan.inputStage.keyPattern
         } else if (explainPlan.queryPlanner.winningPlan.shards != null) {
-            return explainPlan.queryPlanner.winningPlan.shards[0].winningPlan.inputStage.keyPattern
+            def winningPlan = explainPlan.queryPlanner.winningPlan.shards[0].winningPlan
+            if (winningPlan.queryPlan?.inputStage != null) {
+                return winningPlan.queryPlan.inputStage.keyPattern
+            } else if (winningPlan.inputStage != null) {
+                return winningPlan.inputStage.keyPattern
+            }
         }
     }
 }

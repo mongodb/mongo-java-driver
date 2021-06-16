@@ -16,9 +16,13 @@
 
 package org.bson.codecs.pojo;
 
+import org.bson.BsonType;
 import org.bson.codecs.configuration.CodecConfigurationException;
+import org.bson.codecs.pojo.entities.BsonIdModel;
+import org.bson.codecs.pojo.entities.ConventionModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationBsonPropertyIdModel;
+import org.bson.codecs.pojo.entities.conventions.AnnotationBsonRepresentation;
 import org.bson.codecs.pojo.entities.conventions.AnnotationCollision;
 import org.bson.codecs.pojo.entities.conventions.AnnotationDefaultsModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationNameCollision;
@@ -102,6 +106,28 @@ public final class ConventionsTest {
         assertEquals(1, classModel.getPropertyModels().size());
         assertNull(classModel.getIdPropertyModel());
     }
+
+    @Test
+    public void testBsonRepresentation() {
+        ClassModel<AnnotationBsonRepresentation> classModel = ClassModel.builder(AnnotationBsonRepresentation.class).build();
+        assertEquals(classModel.getPropertyModel("id").getBsonRepresentation(), BsonType.OBJECT_ID);
+        assertEquals(classModel.getPropertyModel("parentId").getBsonRepresentation(), BsonType.OBJECT_ID);
+        assertNull(classModel.getPropertyModel("friendId").getBsonRepresentation());
+        assertNull(classModel.getPropertyModel("age").getBsonRepresentation());
+    }
+
+    @Test
+    public void testIdGeneratorChoice() {
+        ClassModel<AnnotationBsonRepresentation> stringIdObjectRep = ClassModel.builder(AnnotationBsonRepresentation.class).build();
+        assertEquals(stringIdObjectRep.getIdPropertyModelHolder().getIdGenerator(), IdGenerators.STRING_ID_GENERATOR);
+
+        ClassModel<ConventionModel>  stringIdStringRep = ClassModel.builder(ConventionModel.class).build();
+        assertNull(stringIdStringRep.getIdPropertyModelHolder().getIdGenerator());
+
+        ClassModel<BsonIdModel> bsonId = ClassModel.builder(BsonIdModel.class).build();
+        assertEquals(bsonId.getIdPropertyModelHolder().getIdGenerator(), IdGenerators.BSON_OBJECT_ID_GENERATOR);
+    }
+
 
     @Test
     @SuppressWarnings("unchecked")

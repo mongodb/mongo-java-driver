@@ -20,31 +20,37 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
+import com.mongodb.ServerApi;
+import com.mongodb.SubjectProvider;
+import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
-import com.mongodb.connection.ConnectionDescription;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 
 import javax.security.auth.Subject;
+import javax.security.auth.login.LoginException;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 import java.security.PrivilegedAction;
 
 import static com.mongodb.MongoCredential.JAVA_SUBJECT_KEY;
+import static com.mongodb.MongoCredential.JAVA_SUBJECT_PROVIDER_KEY;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.CommandHelper.executeCommand;
 import static com.mongodb.internal.connection.CommandHelper.executeCommandAsync;
 
 abstract class SaslAuthenticator extends Authenticator implements SpeculativeAuthenticator {
     public static final Logger LOGGER = Loggers.getLogger("authenticator");
+    private static final String SUBJECT_PROVIDER_CACHE_KEY = "SUBJECT_PROVIDER";
 
-    SaslAuthenticator(final MongoCredentialWithCache credential) {
-        super(credential);
+    SaslAuthenticator(final MongoCredentialWithCache credential, final @Nullable ServerApi serverApi) {
+        super(credential, serverApi);
     }
 
     public void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription) {
@@ -108,7 +114,8 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
 
     protected abstract SaslClient createSaslClient(ServerAddress serverAddress);
 
-    protected void appendSaslStartOptions(final BsonDocument saslStartCommand) {}
+    protected void appendSaslStartOptions(final BsonDocument saslStartCommand) {
+    }
 
     private void throwIfSaslClientIsNull(final SaslClient saslClient) {
         if (saslClient == null) {
@@ -181,31 +188,62 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
     }
 
     @Nullable
-    private Subject getSubject() {
-        return getMongoCredential().getMechanismProperty(JAVA_SUBJECT_KEY, null);
+    protected Subject getSubject() {
+        Subject subject = getMongoCredential().getMechanismProperty(JAVA_SUBJECT_KEY, null);
+        if (subject != null) {
+            return subject;
+        }
+
+        try {
+            return getSubjectProvider().getSubject();
+        } catch (LoginException e) {
+            throw new MongoSecurityException(getMongoCredential(), "Failed to login Subject", e);
+        }
+    }
+
+    @NonNull
+    private SubjectProvider getSubjectProvider() {
+        synchronized (getMongoCredentialWithCache()) {
+            SubjectProvider subjectProvider =
+                    getMongoCredentialWithCache().getFromCache(SUBJECT_PROVIDER_CACHE_KEY, SubjectProvider.class);
+            if (subjectProvider == null) {
+                subjectProvider = getMongoCredential().getMechanismProperty(JAVA_SUBJECT_PROVIDER_KEY, null);
+                if (subjectProvider == null) {
+                    subjectProvider = getDefaultSubjectProvider();
+                }
+                getMongoCredentialWithCache().putInCache(SUBJECT_PROVIDER_CACHE_KEY, subjectProvider);
+            }
+            return subjectProvider;
+        }
+    }
+
+    @NonNull
+    protected SubjectProvider getDefaultSubjectProvider() {
+        return () -> null;
     }
 
     private BsonDocument sendSaslStart(final byte[] outToken, final InternalConnection connection) {
         BsonDocument startDocument = createSaslStartCommandDocument(outToken);
         appendSaslStartOptions(startDocument);
-        return executeCommand(getMongoCredential().getSource(), startDocument, connection);
+        return executeCommand(getMongoCredential().getSource(), startDocument, getServerApi(), connection);
     }
 
     private BsonDocument sendSaslContinue(final BsonInt32 conversationId, final byte[] outToken, final InternalConnection connection) {
-        return executeCommand(getMongoCredential().getSource(), createSaslContinueDocument(conversationId, outToken), connection);
+        return executeCommand(getMongoCredential().getSource(), createSaslContinueDocument(conversationId, outToken), getServerApi(),
+                connection);
     }
 
     private void sendSaslStartAsync(final byte[] outToken, final InternalConnection connection,
                                     final SingleResultCallback<BsonDocument> callback) {
         BsonDocument startDocument = createSaslStartCommandDocument(outToken);
         appendSaslStartOptions(startDocument);
-        executeCommandAsync(getMongoCredential().getSource(), startDocument, connection, callback);
+        executeCommandAsync(getMongoCredential().getSource(), startDocument, getServerApi(), connection, callback);
     }
 
     private void sendSaslContinueAsync(final BsonInt32 conversationId, final byte[] outToken, final InternalConnection connection,
                                        final SingleResultCallback<BsonDocument> callback) {
-        executeCommandAsync(getMongoCredential().getSource(), createSaslContinueDocument(conversationId, outToken), connection,
-                callback);
+        executeCommandAsync(getMongoCredential().getSource(), createSaslContinueDocument(conversationId, outToken), getServerApi(),
+                connection, callback);
     }
 
     protected BsonDocument createSaslStartCommandDocument(final byte[] outToken) {
@@ -237,10 +275,11 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
     }
 
     void doAsSubject(final java.security.PrivilegedAction<Void> action) {
-        if (getSubject() == null) {
+        Subject subject = getSubject();
+        if (subject == null) {
             action.run();
         } else {
-            Subject.doAs(getSubject(), action);
+            Subject.doAs(subject, action);
         }
     }
 
@@ -251,7 +290,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
         private final SingleResultCallback<Void> callback;
 
         Continuator(final SaslClient saslClient, final BsonDocument saslStartDocument, final InternalConnection connection,
-                           final SingleResultCallback<Void> callback) {
+                    final SingleResultCallback<Void> callback) {
             this.saslClient = saslClient;
             this.saslStartDocument = saslStartDocument;
             this.connection = connection;

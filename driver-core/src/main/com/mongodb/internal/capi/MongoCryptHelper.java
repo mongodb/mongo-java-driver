@@ -22,13 +22,13 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.SocketSettings;
-import com.mongodb.crypt.capi.MongoAwsKmsProviderOptions;
 import com.mongodb.crypt.capi.MongoCryptOptions;
-import com.mongodb.crypt.capi.MongoLocalKmsProviderOptions;
 import org.bson.BsonDocument;
+import org.bson.BsonDocumentWrapper;
+import org.bson.Document;
+import org.bson.codecs.DocumentCodec;
 
 import java.io.File;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -40,24 +40,11 @@ public final class MongoCryptHelper {
                                                             final Map<String, BsonDocument> namespaceToLocalSchemaDocumentMap) {
         MongoCryptOptions.Builder mongoCryptOptionsBuilder = MongoCryptOptions.builder();
 
+        BsonDocument bsonKmsProviders = new BsonDocument();
         for (Map.Entry<String, Map<String, Object>> entry : kmsProviders.entrySet()) {
-            if (entry.getKey().equals("aws")) {
-                mongoCryptOptionsBuilder.awsKmsProviderOptions(
-                        MongoAwsKmsProviderOptions.builder()
-                                .accessKeyId((String) entry.getValue().get("accessKeyId"))
-                                .secretAccessKey((String) entry.getValue().get("secretAccessKey"))
-                                .build()
-                );
-            } else if (entry.getKey().equals("local")) {
-                mongoCryptOptionsBuilder.localKmsProviderOptions(
-                        MongoLocalKmsProviderOptions.builder()
-                                .localMasterKey(ByteBuffer.wrap((byte[]) entry.getValue().get("key")))
-                                .build()
-                );
-            } else {
-                throw new MongoClientException("Unrecognized KMS provider key: " + entry.getKey());
-            }
+            bsonKmsProviders.put(entry.getKey(), new BsonDocumentWrapper<>(new Document(entry.getValue()), new DocumentCodec()));
         }
+        mongoCryptOptionsBuilder.kmsProviderOptions(bsonKmsProviders);
         mongoCryptOptionsBuilder.localSchemaMap(namespaceToLocalSchemaDocumentMap);
         return mongoCryptOptionsBuilder.build();
     }
@@ -88,14 +75,14 @@ public final class MongoCryptHelper {
                 .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
                     @Override
                     public void apply(final ClusterSettings.Builder builder) {
-                        builder.serverSelectionTimeout(1, TimeUnit.SECONDS);
+                        builder.serverSelectionTimeout(10, TimeUnit.SECONDS);
                     }
                 })
                 .applyToSocketSettings(new Block<SocketSettings.Builder>() {
                     @Override
                     public void apply(final SocketSettings.Builder builder) {
-                        builder.readTimeout(1, TimeUnit.SECONDS);
-                        builder.connectTimeout(1, TimeUnit.SECONDS);
+                        builder.readTimeout(10, TimeUnit.SECONDS);
+                        builder.connectTimeout(10, TimeUnit.SECONDS);
                     }
                 })
                 .applyConnectionString(new ConnectionString((connectionString != null)

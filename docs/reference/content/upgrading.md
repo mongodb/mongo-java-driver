@@ -7,6 +7,19 @@ title = "Upgrade Considerations"
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
+# Upgrading to the 4.3 Driver
+
+The 4.3 release is a minor release as per the definition of [semantic versioning](https://semver.org). As such, there are no breaking
+changes in this release for users upgrading from the 4.2 release.
+
+# Upgrading to the 4.2 Driver
+
+The 4.2 release is a minor release as per the definition of [semantic versioning](https://semver.org). As such, there are no breaking
+changes in this release for users upgrading from the 4.1 release.
+
+Note that in this release the Reactive Streams driver has taken an implementation dependency on 
+[Project Reactor](https://projectreactor.io/).  The minimum supported Project Reactor version is *Californium-SR23*.
+
 # Upgrading to the 4.1 Driver
 
 The 4.1 release is a minor release as per the definition of [semantic versioning](https://semver.org). As such, there are no breaking
@@ -35,7 +48,7 @@ process is as seamless as possible.  Breaking changes are as follows:
     integers).
   * The default BSON representation of `java.util.UUID` values has changed from `JAVA_LEGACY` to `UNSPECIFIED`.  Applications that
     store or retrieve UUID values must explicitly specify which representation to use, via the `uuidRepresentation` property of
-    `MongoClientSettings` (or `MongoClientOptions` for the legacy driver).
+    `MongoClientSettings`.
   * The connection pool no longer enforces any restrictions on the size of the wait queue of threads or asynchronous tasks that
     require a connection to MongoDB.  It is up to the application to throttle requests sufficiently rather than rely on the driver to
     throw a `MongoWaitQueueFullException`.
@@ -80,21 +93,25 @@ The minimum JVM is Java 8.
 
 The following table specifies the compatibility of the MongoDB Java driver for use with a specific version of MongoDB.
 
-|Java Driver Version|MongoDB 2.6|MongoDB 3.0 |MongoDB 3.2|MongoDB 3.4|MongoDB 3.6|MongoDB 4.0|MongoDB 4.2|MongoDB 4.4|
-|-------------------|-----------|------------|-----------|-----------|-----------|-----------|-----------|-----------|
-|Version 4.1        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |
-|Version 4.0        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |
-|Version 3.12       |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |
-|Version 3.11       |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |
-|Version 3.10       |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |     |
-|Version 3.9        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |     |
-|Version 3.9        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |     |
-|Version 3.8        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |     |
-|Version 3.7        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |     |     |
-|Version 3.6        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |     |     |
-|Version 3.5        |  ✓  |  ✓  |  ✓  |  ✓  |     |     |     |     |
-|Version 3.4        |  ✓  |  ✓  |  ✓  |  ✓  |     |     |     |     |
-|Version 3.3        |  ✓  |  ✓  |  ✓  |     |     |     |     |     |
-|Version 3.2        |  ✓  |  ✓  |  ✓  |     |     |     |     |     |
-|Version 3.1        |  ✓  |  ✓  |     |     |     |     |     |     |
-|Version 3.0        |  ✓  |  ✓  |     |     |     |     |     |     |
+|Java Driver Version|MongoDB 3.0 |MongoDB 3.2|MongoDB 3.4|MongoDB 3.6|MongoDB 4.0|MongoDB 4.2|MongoDB 4.4|
+|-------------------|------------|-----------|-----------|-----------|-----------|-----------|-----------|
+|Version 4.3        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |
+|Version 4.2        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |
+|Version 4.1        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |
+|Version 4.0        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |
+|Version 3.12       |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓* |
+|Version 3.11       |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |
+|Version 3.10       |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |     |
+|Version 3.9        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |     |
+|Version 3.9        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |     |
+|Version 3.8        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |     |     |
+|Version 3.7        |  ✓  |  ✓  |  ✓  |  ✓  |     |     |     |
+|Version 3.6        |  ✓  |  ✓  |  ✓  |  ✓  |     |     |     |
+|Version 3.5        |  ✓  |  ✓  |  ✓  |     |     |     |     |
+|Version 3.4        |  ✓  |  ✓  |  ✓  |     |     |     |     |
+|Version 3.3        |  ✓  |  ✓  |     |     |     |     |     |
+|Version 3.2        |  ✓  |  ✓  |     |     |     |     |     |
+|Version 3.1        |  ✓  |     |     |     |     |     |     |
+|Version 3.0        |  ✓  |     |     |     |     |     |     |
+
+\* The 3.12 driver is tested against MongoDB 4.4 but does not support all the new features

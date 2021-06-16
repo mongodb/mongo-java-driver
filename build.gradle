@@ -21,16 +21,15 @@ buildscript {
     repositories {
         mavenLocal()
         mavenCentral()
-        jcenter()
         maven { url "https://plugins.gradle.org/m2/" }
     }
     dependencies {
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:3.0.3'
-        classpath "com.github.spotbugs:spotbugs-gradle-plugin:3.0.0"
-        classpath 'biz.aQute.bnd:biz.aQute.bnd.gradle:4.3.1'
+        classpath "gradle.plugin.com.github.spotbugs.snom:spotbugs-gradle-plugin:4.5.0"
+        classpath 'biz.aQute.bnd:biz.aQute.bnd.gradle:5.1.2'
         
         // Scala plugins
-        classpath "com.adtran:scala-multiversion-plugin:1.0.35"
+        classpath "com.adtran:scala-multiversion-plugin:1.0.36"
         classpath "com.diffplug.spotless:spotless-plugin-gradle:3.27.1"
 
         // Test logging plugin
@@ -48,7 +47,9 @@ ext {
     nettyVersion = '4.1.43.Final'
     snappyVersion = '1.1.4'
     zstdVersion = '1.3.8-3'
-    mongoCryptVersion = '1.0.1'
+    mongoCryptVersion = '1.2.0'
+    projectReactorVersion = 'Californium-SR23'
+    junitBomVersion = '5.6.2'
     gitVersion = getGitVersion()
 }
 
@@ -59,20 +60,22 @@ def scalaProjects = subprojects.findAll { it.name.contains('scala') }
 def javaMainProjects = javaProjects.findAll { !['util'].contains(it.name) }
 def javaCodeCheckedProjects = javaMainProjects.findAll { !['driver-benchmarks', 'driver-workload-executor'].contains(it.name) }
 def javaAndScalaTestedProjects = javaCodeCheckedProjects + scalaProjects
-def junitBomVersion = "5.6.2"
 
 configure(coreProjects) {
     apply plugin: 'idea'
 
     evaluationDependsOn(':util')
     group = 'org.mongodb'
-    version = '4.2.0-SNAPSHOT'
+    version = '4.3.0-SNAPSHOT'
 
     repositories {
         mavenLocal()
         google()
         mavenCentral()
-        jcenter()
+        maven {
+            url 'http://oss.sonatype.org/content/repositories/snapshots'
+        }
+
     }
 }
 
@@ -169,17 +172,8 @@ configure(javaMainProjects) {
 configure(javaAndScalaTestedProjects) {
     /* Testing */
     tasks.withType(Test) {
-        systemProperties(
-                'org.mongodb.test.uri': System.getProperty('org.mongodb.test.uri'),
-                'org.mongodb.test.transaction.uri': System.getProperty('org.mongodb.test.transaction.uri'),
-                'org.mongodb.test.data.lake': System.getProperty('org.mongodb.test.data.lake'),
-                'org.mongodb.useSocket': System.getProperty('org.mongodb.useSocket', 'false'),
-                'org.mongodb.disableAsync': System.getProperty('org.mongodb.disableAsync', 'false'),
-                'org.mongodb.test.async.type': System.getProperty('org.mongodb.test.async.type', 'nio2'),
-                'org.mongodb.test.awsAccessKeyId': System.getProperty('org.mongodb.test.awsAccessKeyId'),
-                'org.mongodb.test.awsSecretAccessKey': System.getProperty('org.mongodb.test.awsSecretAccessKey'),
-                'jna.library.path': System.getProperty('jna.library.path')
-        )
+        systemProperties(System.getProperties().findAll { it.key.toString().startsWith("org.mongodb.") })
+        systemProperty('jna.library.path', System.getProperty('jna.library.path'))
 
         project.ext.buildingWith = { propertyName ->
             project.hasProperty(propertyName) && project.property(propertyName).toBoolean()
@@ -239,7 +233,7 @@ configure(javaCodeCheckedProjects) {
         testImplementation platform('org.spockframework:spock-bom:2.0-M3-groovy-2.5')
         testImplementation 'org.spockframework:spock-core'
         testImplementation 'org.spockframework:spock-junit4'
-
+        testImplementation("org.mockito:mockito-core:3.8.0")
         testImplementation 'cglib:cglib-nodep:2.2.2'
         testImplementation 'org.objenesis:objenesis:1.3'
         testImplementation 'org.hamcrest:hamcrest-all:1.3'
@@ -311,20 +305,22 @@ configure(javaCodeCheckedProjects) {
 
     spotbugs {
         excludeFilter = new File(configDir, 'findbugs-exclude.xml')
-        sourceSets = [sourceSets.main]
-        toolVersion = '3.1.7'
     }
 
     codenarc {
-        toolVersion = '1.1'
+        toolVersion = '1.6.1'
         reportFormat = project.buildingWith('xmlReports.enabled') ? 'xml' : 'html'
     }
 
-    tasks.withType(com.github.spotbugs.SpotBugsTask) {
+    spotbugsMain {
         reports {
             xml.enabled = project.buildingWith('xmlReports.enabled')
             html.enabled = !project.buildingWith('xmlReports.enabled')
         }
+    }
+
+    spotbugsTest {
+        enabled = false
     }
 
     tasks.withType(Test) {

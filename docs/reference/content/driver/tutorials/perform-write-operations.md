@@ -262,7 +262,7 @@ See also [Drop a Collection]({{< relref  "driver/tutorials/databases-collections
 
 Applications can configure [write concern]({{<docsref "reference/write-concern" >}}) at three levels:
 
-- In a [`MongoClient()`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClient.html" >}})
+- In a [`MongoClient()`]({{< apiref "mongodb-driver-sync" "com/mongodb/client/MongoClient.html" >}})
 
   - Via [`MongoClientSettings`]({{< apiref "mongodb-driver-core" "com/mongodb/MongoClientSettings.html" >}}):
 

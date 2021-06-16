@@ -1252,6 +1252,7 @@ public class DBCollection {
      * @return the command result.  The explain output may change from release to release, so best to simply log this.
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
      * @mongodb.driver.manual reference/operator/meta/explain/ Explain query
+     * @mongodb.server.release 3.6
      */
     public CommandResult explainAggregate(final List<? extends DBObject> pipeline, final AggregationOptions options) {
         AggregateOperation<BsonDocument> operation = new AggregateOperation<BsonDocument>(getNamespace(), preparePipeline(pipeline),
@@ -1260,8 +1261,8 @@ public class DBCollection {
                                                          .allowDiskUse(options.getAllowDiskUse())
                                                          .collation(options.getCollation())
                                                          .retryReads(retryReads);
-        return new CommandResult(executor.execute(operation.asExplainableOperation(ExplainVerbosity.QUERY_PLANNER), primaryPreferred(),
-                getReadConcern()));
+        return new CommandResult(executor.execute(operation.asExplainableOperation(ExplainVerbosity.QUERY_PLANNER, new BsonDocumentCodec()),
+                primaryPreferred(), getReadConcern()));
     }
 
     @SuppressWarnings("unchecked")

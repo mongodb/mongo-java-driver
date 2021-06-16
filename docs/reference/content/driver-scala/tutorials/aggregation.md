@@ -86,3 +86,20 @@ collection.aggregate(
   )
 ).printResults()
 ```
+
+### Explain an Aggregation
+
+To [explain]({{< docsref "reference/command/explain/" >}}) an aggregation pipeline, call the
+[`AggregateObservable.explain()`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/AggregateObservable.html#explain()" >}})
+method:
+
+```java
+collection.aggregate(
+      Arrays.asList(
+              Aggregates.match(Filters.eq("categories", "Bakery")),
+              Aggregates.group("$stars", Accumulators.sum("count", 1))))
+      .explain()
+      .printResults()
+```
+
+The driver supports explain of aggregation pipelines starting with MongoDB 3.6.

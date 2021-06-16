@@ -28,6 +28,7 @@ import com.mongodb.MongoSocketWriteException;
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.connection.AsyncCompletionHandler;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ServerConnectionState;
@@ -59,6 +60,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -90,7 +92,9 @@ public class InternalStreamConnection implements InternalConnection {
 
     private static final Logger LOGGER = Loggers.getLogger("connection");
 
+    private final ClusterConnectionMode clusterConnectionMode;
     private final ServerId serverId;
+    private final ConnectionGenerationSupplier connectionGenerationSupplier;
     private final StreamFactory streamFactory;
     private final InternalConnectionInitializer connectionInitializer;
 
@@ -107,11 +111,15 @@ public class InternalStreamConnection implements InternalConnection {
     private volatile Map<Byte, Compressor> compressorMap;
     private volatile boolean hasMoreToCome;
     private volatile int responseTo;
+    private int generation = NOT_INITIALIZED_GENERATION;
 
-    public InternalStreamConnection(final ServerId serverId, final StreamFactory streamFactory,
-                                    final List<MongoCompressor> compressorList, final CommandListener commandListener,
-                                    final InternalConnectionInitializer connectionInitializer) {
+    public InternalStreamConnection(final ClusterConnectionMode clusterConnectionMode, final ServerId serverId,
+                                    final ConnectionGenerationSupplier connectionGenerationSupplier,
+                                    final StreamFactory streamFactory, final List<MongoCompressor> compressorList,
+                                    final CommandListener commandListener, final InternalConnectionInitializer connectionInitializer) {
+        this.clusterConnectionMode = clusterConnectionMode;
         this.serverId = notNull("serverId", serverId);
+        this.connectionGenerationSupplier = notNull("connectionGeneration", connectionGenerationSupplier);
         this.streamFactory = notNull("streamFactory", streamFactory);
         this.compressorList = notNull("compressorList", compressorList);
         this.compressorMap = createCompressorMap(compressorList);
@@ -123,6 +131,9 @@ public class InternalStreamConnection implements InternalConnection {
                 .type(ServerType.UNKNOWN)
                 .state(ServerConnectionState.CONNECTING)
                 .build();
+        if (clusterConnectionMode != ClusterConnectionMode.LOAD_BALANCED) {
+            generation = connectionGenerationSupplier.getGeneration();
+        }
     }
 
     @Override
@@ -136,19 +147,22 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     @Override
+    public int getGeneration() {
+        return generation;
+    }
+
+    @Override
     public void open() {
         isTrue("Open already called", stream == null);
         stream = streamFactory.create(serverId.getAddress());
         try {
             stream.open();
-            InternalConnectionInitializationDescription initializationDescription = connectionInitializer.initialize(this);
-            description = initializationDescription.getConnectionDescription();
-            initialServerDescription = initializationDescription.getServerDescription();
-            opened.set(true);
-            sendCompressor = findSendCompressor(description);
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
-            }
+
+            InternalConnectionInitializationDescription initializationDescription = connectionInitializer.startHandshake(this);
+            initAfterHandshakeStart(initializationDescription);
+
+            initializationDescription = connectionInitializer.finishHandshake(this, initializationDescription);
+            initAfterHandshakeFinish(initializationDescription);
         } catch (Throwable t) {
             close();
             if (t instanceof MongoException) {
@@ -164,39 +178,58 @@ public class InternalStreamConnection implements InternalConnection {
         isTrue("Open already called", stream == null, callback);
         try {
             stream = streamFactory.create(serverId.getAddress());
+            stream.openAsync(new AsyncCompletionHandler<Void>() {
+                @Override
+                public void completed(final Void aVoid) {
+                    connectionInitializer.startHandshakeAsync(InternalStreamConnection.this,
+                            (initialResult, initialException) -> {
+                                    if (initialException != null) {
+                                        close();
+                                        callback.onResult(null, initialException);
+                                    } else {
+                                        initAfterHandshakeStart(initialResult);
+                                        connectionInitializer.finishHandshakeAsync(InternalStreamConnection.this,
+                                                initialResult, (completedResult, completedException) ->  {
+                                                        if (completedException != null) {
+                                                            close();
+                                                            callback.onResult(null, completedException);
+                                                        } else {
+                                                            initAfterHandshakeFinish(completedResult);
+                                                            callback.onResult(null, null);
+                                                        }
+                                                });
+                                    }
+                            });
+                }
+
+                @Override
+                public void failed(final Throwable t) {
+                    callback.onResult(null, t);
+                }
+            });
         } catch (Throwable t) {
             callback.onResult(null, t);
-            return;
         }
-        stream.openAsync(new AsyncCompletionHandler<Void>() {
-            @Override
-            public void completed(final Void aVoid) {
-                connectionInitializer.initializeAsync(InternalStreamConnection.this,
-                        new SingleResultCallback<InternalConnectionInitializationDescription>() {
-                    @Override
-                    public void onResult(final InternalConnectionInitializationDescription result, final Throwable t) {
-                        if (t != null) {
-                            close();
-                            callback.onResult(null, t);
-                        } else {
-                            description = result.getConnectionDescription();
-                            initialServerDescription = result.getServerDescription();
-                            opened.set(true);
-                            sendCompressor = findSendCompressor(description);
-                            if (LOGGER.isInfoEnabled()) {
-                                LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
-                            }
-                            callback.onResult(null, null);
-                        }
-                    }
-                });
-            }
+    }
 
-            @Override
-            public void failed(final Throwable t) {
-                callback.onResult(null, t);
-            }
-        });
+
+    private void initAfterHandshakeStart(final InternalConnectionInitializationDescription initializationDescription) {
+        description = initializationDescription.getConnectionDescription();
+        initialServerDescription = initializationDescription.getServerDescription();
+
+        if (clusterConnectionMode == ClusterConnectionMode.LOAD_BALANCED) {
+            generation = connectionGenerationSupplier.getGeneration(assertNotNull(description.getServiceId()));
+        }
+    }
+
+    private void initAfterHandshakeFinish(final InternalConnectionInitializationDescription initializationDescription) {
+        description = initializationDescription.getConnectionDescription();
+        initialServerDescription = initializationDescription.getServerDescription();
+        opened.set(true);
+        sendCompressor = findSendCompressor(description);
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
+        }
     }
 
     private Map<Byte, Compressor> createCompressorMap(final List<MongoCompressor> compressorList) {
