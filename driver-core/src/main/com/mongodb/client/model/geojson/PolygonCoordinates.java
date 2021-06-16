@@ -41,6 +41,7 @@ public final class PolygonCoordinates {
      * @param holes    optional interior rings of the polygon
      */
     @SafeVarargs
+    @SuppressWarnings("varargs")
     public PolygonCoordinates(final List<Position> exterior, final List<Position>... holes) {
         this(exterior, Arrays.asList(holes));
     }
@@ -50,6 +51,7 @@ public final class PolygonCoordinates {
      *
      * @param exterior the exterior ring of the polygon
      * @param holes    optional interior rings of the polygon
+     * @since 4.3
      */
     public PolygonCoordinates(final List<Position> exterior, final List<List<Position>> holes) {
         notNull("exteriorRing", exterior);
