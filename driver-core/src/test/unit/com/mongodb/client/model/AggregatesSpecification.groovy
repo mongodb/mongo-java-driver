@@ -107,7 +107,6 @@ class AggregatesSpecification extends Specification {
                         '", finalize: "' + finalizeFunction + '", lang: "js"}}}}')
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should render $addFields'() {
         expect:
         toBson(addFields(new Field('newField', null))) == parse('{$addFields: {newField: null}}')
@@ -121,7 +120,6 @@ class AggregatesSpecification extends Specification {
         toBson(addFields(asList(new Field('b', 3), new Field('c', 5)))) == parse('{$addFields: {b: 3, c: 5}}')
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(4, 2) })
     def 'should render $set'() {
         expect:
         toBson(set(new Field('newField', null))) == parse('{$set: {newField: null}}')

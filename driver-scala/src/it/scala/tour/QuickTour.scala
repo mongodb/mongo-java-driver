@@ -16,19 +16,33 @@
 
 package tour
 
+import java.util.concurrent.CountDownLatch
 
+import com.mongodb.Block
+import com.mongodb.connection.{ ClusterSettings, SslSettings }
 import org.bson.UuidRepresentation
 import org.bson.codecs.UuidCodec
 import org.bson.codecs.configuration.CodecRegistries
 import org.mongodb.scala._
+import org.mongodb.scala.bson.BsonDocument
+import org.mongodb.scala.model.{
+  Accumulators,
+  Aggregates,
+  BulkWriteOptions,
+  CreateCollectionOptions,
+  DeleteOneModel,
+  Filters,
+  InsertOneModel,
+  Projections,
+  ReplaceOneModel,
+  UpdateOneModel
+}
 import org.mongodb.scala.model.Aggregates._
 import org.mongodb.scala.model.Filters._
-import org.mongodb.scala.model.Projections.excludeId
+import org.mongodb.scala.model.Projections._
 import org.mongodb.scala.model.Sorts._
-import org.mongodb.scala.model.Updates.{
-  set,
-  inc
-}
+import org.mongodb.scala.model.Updates.{ inc, set }
+import org.mongodb.scala.model.changestream.ChangeStreamDocument
 import tour.Helpers._
 
 import scala.collection.immutable.IndexedSeq

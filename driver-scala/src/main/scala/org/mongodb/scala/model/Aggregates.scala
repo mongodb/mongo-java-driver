@@ -47,8 +47,8 @@ object Aggregates {
    * @param fields the fields to add
    * @return the \$set pipeline stage
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/set/ \$set]]
-   * @since 1.2
-   * @note Requires MongoDB 3.4 or greater
+   * @since 4.3
+   * @note Requires MongoDB 4.2 or greater
    */
   def set(fields: Field[_]*): Bson = JAggregates.set(fields.asJava)
 

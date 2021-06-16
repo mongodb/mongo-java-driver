@@ -111,13 +111,6 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                                                                             new Document('_id', 3).append('x', 3).append('c', 'c')]
     }
 
-    def '$set'() {
-        expect:
-        aggregate([set(new Field('c', '$y'))]) == [new Document(a).append('c', 'a'),
-                                                          new Document(b).append('c', 'b'),
-                                                          new Document(c).append('c', 'c')]
-    }
-
     @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def '$project an exclusion'() {
         expect:
@@ -927,6 +920,14 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
 
         cleanup:
         helper?.drop()
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(4, 2) })
+    def '$set'() {
+        expect:
+        aggregate([set(new Field('c', '$y'))]) == [new Document(a).append('c', 'a'),
+                                                   new Document(b).append('c', 'b'),
+                                                   new Document(c).append('c', 'c')]
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 4) })
