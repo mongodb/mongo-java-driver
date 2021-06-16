@@ -147,6 +147,9 @@ object QuickTour {
     // release resources
     mongoClient.close()
 
+    import scala.collection.JavaConverters._
+    import org.mongodb.scala.bson._
+
     val codecRegistry =
       CodecRegistries.fromRegistries(
         CodecRegistries.fromCodecs(new UuidCodec(UuidRepresentation.STANDARD)),
