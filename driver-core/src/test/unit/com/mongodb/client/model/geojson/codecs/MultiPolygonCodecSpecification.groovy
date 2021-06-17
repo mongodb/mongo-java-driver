@@ -45,9 +45,9 @@ class MultiPolygonCodecSpecification extends Specification {
                                                   new PolygonCoordinates([new Position(100.0, 0.0), new Position(101.0, 0.0),
                                                                           new Position(101.0, 1.0), new Position(100.0, 1.0),
                                                                           new Position(100.0, 0.0)],
-                                                                         [new Position(100.2, 0.2), new Position(100.8, 0.2),
+                                                                         [[new Position(100.2, 0.2), new Position(100.8, 0.2),
                                                                           new Position(100.8, 0.8), new Position(100.2, 0.8),
-                                                                          new Position(100.2, 0.2)])])
+                                                                          new Position(100.2, 0.2)]])])
 
         when:
         codec.encode(writer, multiMultiPolygon, context)
@@ -75,9 +75,9 @@ class MultiPolygonCodecSpecification extends Specification {
                                                   new PolygonCoordinates([new Position(100.0, 0.0), new Position(101.0, 0.0),
                                                                           new Position(101.0, 1.0), new Position(100.0, 1.0),
                                                                           new Position(100.0, 0.0)],
-                                                                         [new Position(100.2, 0.2), new Position(100.8, 0.2),
+                                                                         [[new Position(100.2, 0.2), new Position(100.8, 0.2),
                                                                           new Position(100.8, 0.8), new Position(100.2, 0.8),
-                                                                          new Position(100.2, 0.2)])])
+                                                                          new Position(100.2, 0.2)]])])
 
         when:
         codec.encode(writer, multiMultiPolygon, context)
