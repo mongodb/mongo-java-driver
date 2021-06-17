@@ -101,7 +101,11 @@ public final class ProtocolHelper {
     }
 
     static BsonDocument getClusterTime(final ResponseBuffers responseBuffers) {
-        return getFieldDocument(responseBuffers, "$clusterTime");
+        BsonValue value = getFieldValue(responseBuffers, "$clusterTime");
+        if (value == null) {
+            return null;
+        }
+        return value.asDocument();
     }
 
     static BsonDocument getClusterTime(final BsonDocument response) {
@@ -112,17 +116,28 @@ public final class ProtocolHelper {
         return clusterTime.asDocument();
     }
 
-    static BsonDocument getRecoveryToken(final ResponseBuffers responseBuffers) {
-        return getFieldDocument(responseBuffers, "recoveryToken");
+    static BsonTimestamp getSnapshotTimestamp(final ResponseBuffers responseBuffers) {
+        BsonValue atClusterTimeValue = getNestedFieldValue(responseBuffers, "cursor", "atClusterTime");
+        if (atClusterTimeValue == null) {
+            atClusterTimeValue = getFieldValue(responseBuffers, "atClusterTime");
+        }
+        if (atClusterTimeValue != null && atClusterTimeValue.getBsonType() == BsonType.TIMESTAMP) {
+            return atClusterTimeValue.asTimestamp();
+        }
+        return null;
     }
 
-    private static BsonDocument getFieldDocument(final ResponseBuffers responseBuffers, final String fieldName) {
+    static BsonDocument getRecoveryToken(final ResponseBuffers responseBuffers) {
+        BsonValue value = getFieldValue(responseBuffers, "recoveryToken");
+        if (value == null) {
+            return null;
+        }
+        return value.asDocument();
+    }
+
+    private static BsonValue getFieldValue(final ResponseBuffers responseBuffers, final String fieldName) {
         try {
-            BsonValue fieldValue = getField(createBsonReader(responseBuffers), fieldName);
-            if (fieldValue == null) {
-                return null;
-            }
-            return fieldValue.asDocument();
+            return getField(createBsonReader(responseBuffers), fieldName);
         } finally {
             responseBuffers.reset();
         }
@@ -144,6 +159,25 @@ public final class ProtocolHelper {
         }
         bsonReader.readEndDocument();
         return null;
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private static BsonValue getNestedFieldValue(final ResponseBuffers responseBuffers, final String topLevelFieldName,
+                                                 final String nestedFieldName) {
+        try {
+            BsonReader bsonReader = createBsonReader(responseBuffers);
+            bsonReader.readStartDocument();
+            while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+                if (bsonReader.readName().equals(topLevelFieldName)) {
+                    return getField(bsonReader, nestedFieldName);
+                }
+                bsonReader.skipValue();
+            }
+            bsonReader.readEndDocument();
+            return null;
+        } finally {
+            responseBuffers.reset();
+        }
     }
 
     private static boolean isCommandOk(final BsonValue okValue) {

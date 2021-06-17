@@ -88,6 +88,21 @@ public final class ClusterClockAdvancingSessionContext implements SessionContext
     }
 
     @Override
+    public boolean isSnapshot() {
+        return wrapped.isSnapshot();
+    }
+
+    @Override
+    public void setSnapshotTimestamp(final BsonTimestamp snapshotTimestamp) {
+        wrapped.setSnapshotTimestamp(snapshotTimestamp);
+    }
+
+    @Override
+    public BsonTimestamp getSnapshotTimestamp() {
+        return wrapped.getSnapshotTimestamp();
+    }
+
+    @Override
     public boolean hasActiveTransaction() {
         return wrapped.hasActiveTransaction();
     }

@@ -21,6 +21,7 @@ import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
+import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.notNull;
 
 public final class ReadConcernHelper {
@@ -35,10 +36,17 @@ public final class ReadConcernHelper {
             readConcernDocument.append("level", new BsonString(level.getValue()));
         }
 
+        assertFalse(shouldAddAfterClusterTime(sessionContext) && shouldAddAtClusterTime(sessionContext));
         if (shouldAddAfterClusterTime(sessionContext)) {
             readConcernDocument.append("afterClusterTime", sessionContext.getOperationTime());
+        } else if (shouldAddAtClusterTime(sessionContext)) {
+            readConcernDocument.append("atClusterTime", sessionContext.getSnapshotTimestamp());
         }
         return readConcernDocument;
+    }
+
+    private static boolean shouldAddAtClusterTime(final SessionContext sessionContext) {
+        return sessionContext.isSnapshot() && sessionContext.getSnapshotTimestamp() != null;
     }
 
     private static boolean shouldAddAfterClusterTime(final SessionContext sessionContext) {

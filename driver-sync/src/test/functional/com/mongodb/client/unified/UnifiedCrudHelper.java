@@ -107,7 +107,11 @@ final class UnifiedCrudHelper {
         if (writeConcernDocument.size() > 1) {
             throw new UnsupportedOperationException("Unsupported write concern properties");
         }
-        return new WriteConcern(writeConcernDocument.getInt32("w").intValue());
+        if (writeConcernDocument.isString("w")) {
+            return new WriteConcern(writeConcernDocument.getString("w").getValue());
+        } else {
+            return new WriteConcern(writeConcernDocument.getInt32("w").intValue());
+        }
     }
 
     public static ReadPreference asReadPreference(final BsonDocument readPreferenceDocument) {
@@ -235,13 +239,17 @@ final class UnifiedCrudHelper {
     OperationResult executeDistinct(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments");
+        ClientSession session = getSession(arguments);
 
         BsonString fieldName = arguments.getString("fieldName");
-        DistinctIterable<BsonValue> iterable = collection.distinct(fieldName.getValue(), BsonValue.class);
+        DistinctIterable<BsonValue> iterable = session == null
+                ? collection.distinct(fieldName.getValue(), BsonValue.class)
+                : collection.distinct(session, fieldName.getValue(), BsonValue.class);
 
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
                 case "fieldName":
+                case "session":
                     break;
                 case "filter":
                     iterable.filter(cur.getValue().asDocument());
@@ -371,18 +379,24 @@ final class UnifiedCrudHelper {
         String entityName = operation.getString("object").getValue();
 
         BsonDocument arguments = operation.getDocument("arguments");
+        ClientSession session = getSession(arguments);
         List<BsonDocument> pipeline = arguments.getArray("pipeline").stream().map(BsonValue::asDocument).collect(toList());
         AggregateIterable<BsonDocument> iterable;
         if (entities.hasDatabase(entityName)) {
-            iterable = entities.getDatabase(entityName).aggregate(requireNonNull(pipeline), BsonDocument.class);
+            iterable = session == null
+                    ? entities.getDatabase(entityName).aggregate(requireNonNull(pipeline), BsonDocument.class)
+                    : entities.getDatabase(entityName).aggregate(session, requireNonNull(pipeline), BsonDocument.class);
         } else if (entities.hasCollection(entityName)) {
-            iterable = entities.getCollection(entityName).aggregate(requireNonNull(pipeline));
+            iterable = session == null
+                    ? entities.getCollection(entityName).aggregate(requireNonNull(pipeline))
+                    : entities.getCollection(entityName).aggregate(session, requireNonNull(pipeline));
         } else {
             throw new UnsupportedOperationException("Unsupported entity type with name: " + entityName);
         }
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
                 case "pipeline":
+                case "session":
                     break;
                 case "batchSize":
                     iterable.batchSize(cur.getValue().asNumber().intValue());

@@ -147,6 +147,20 @@ public interface ClientSession extends Closeable {
     void advanceClusterTime(BsonDocument clusterTime);
 
     /**
+     * For internal use only.
+     *
+     * @param snapshotTimestamp the snapshot timestamp
+     */
+    void setSnapshotTimestamp(BsonTimestamp snapshotTimestamp);
+
+    /**
+     * For internal use only.
+     *
+     * @return the snapshot timestamp
+     */
+    BsonTimestamp getSnapshotTimestamp();
+
+    /**
      * @return the latest cluster time seen by this session
      */
     BsonDocument getClusterTime();

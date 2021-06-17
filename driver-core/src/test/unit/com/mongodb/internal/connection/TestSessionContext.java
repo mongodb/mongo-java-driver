@@ -85,6 +85,21 @@ class TestSessionContext implements SessionContext {
     }
 
     @Override
+    public boolean isSnapshot() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setSnapshotTimestamp(final BsonTimestamp snapshotTimestamp) {
+        // TODO
+    }
+
+    @Override
+    public BsonTimestamp getSnapshotTimestamp() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public boolean hasActiveTransaction() {
         return false;
     }

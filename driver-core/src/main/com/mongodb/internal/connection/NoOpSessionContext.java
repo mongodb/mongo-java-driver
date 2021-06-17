@@ -87,6 +87,20 @@ public class NoOpSessionContext implements SessionContext {
     }
 
     @Override
+    public boolean isSnapshot() {
+        return false;
+    }
+
+    @Override
+    public void setSnapshotTimestamp(final BsonTimestamp snapshotTimestamp) {
+    }
+
+    @Override
+    public BsonTimestamp getSnapshotTimestamp() {
+        return null;
+    }
+
+    @Override
     public boolean hasActiveTransaction() {
         return false;
     }

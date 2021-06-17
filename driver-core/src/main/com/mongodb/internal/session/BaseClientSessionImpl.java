@@ -37,6 +37,7 @@ public class BaseClientSessionImpl implements ClientSession {
     private final ClientSessionOptions options;
     private BsonDocument clusterTime;
     private BsonTimestamp operationTime;
+    private BsonTimestamp snapshotTimestamp;
     private ServerAddress pinnedServerAddress;
     private BsonDocument recoveryToken;
     private ReferenceCounted transactionContext;
@@ -131,6 +132,21 @@ public class BaseClientSessionImpl implements ClientSession {
     public void advanceClusterTime(final BsonDocument newClusterTime) {
         isTrue("open", !closed);
         this.clusterTime = greaterOf(newClusterTime);
+    }
+
+    @Override
+    public void setSnapshotTimestamp(final BsonTimestamp snapshotTimestamp) {
+        isTrue("open", !closed);
+        if (snapshotTimestamp == null) {
+            return;
+        }
+        this.snapshotTimestamp = snapshotTimestamp;
+    }
+
+    @Override
+    public BsonTimestamp getSnapshotTimestamp() {
+        isTrue("open", !closed);
+        return snapshotTimestamp;
     }
 
     private BsonDocument greaterOf(final BsonDocument newClusterTime) {
