@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.internal.operation.ExplainHelper.asExplainCommand;
+import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSION;
 
 /**
  * An operation that executes an aggregation query.
@@ -318,7 +319,7 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
      */
     public <R> ReadOperation<R> asExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
         return new CommandReadOperation<R>(getNamespace().getDatabaseName(),
-                asExplainCommand(wrapped.getCommand(NoOpSessionContext.INSTANCE), verbosity),
+                asExplainCommand(wrapped.getCommand(NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION), verbosity),
                 resultDecoder);
     }
 
@@ -331,7 +332,7 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
     public <R> AsyncReadOperation<R> asAsyncExplainableOperation(@Nullable final ExplainVerbosity verbosity,
                                                                  final Decoder<R> resultDecoder) {
         return new CommandReadOperation<R>(getNamespace().getDatabaseName(),
-                asExplainCommand(wrapped.getCommand(NoOpSessionContext.INSTANCE), verbosity),
+                asExplainCommand(wrapped.getCommand(NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION), verbosity),
                 resultDecoder);
     }
 

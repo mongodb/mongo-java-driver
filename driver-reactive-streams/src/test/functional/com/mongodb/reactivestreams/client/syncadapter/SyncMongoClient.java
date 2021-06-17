@@ -147,7 +147,7 @@ public class SyncMongoClient implements MongoClient {
 
     @Override
     public ListDatabasesIterable<Document> listDatabases(final ClientSession clientSession) {
-        throw new UnsupportedOperationException();
+        return listDatabases(clientSession, Document.class);
     }
 
     @Override
@@ -157,7 +157,7 @@ public class SyncMongoClient implements MongoClient {
 
     @Override
     public <TResult> ListDatabasesIterable<TResult> listDatabases(final ClientSession clientSession, final Class<TResult> resultClass) {
-        throw new UnsupportedOperationException();
+        return new SyncListDatabasesIterable<TResult>(wrapped.listDatabases(unwrap(clientSession), resultClass));
     }
 
     @Override

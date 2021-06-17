@@ -54,9 +54,11 @@ final class ErrorMatcher {
             assertTrue(context.getMessage("isError must be true"), expectedError.getBoolean("isError").getValue());
         }
         if (expectedError.containsKey("isClientError")) {
-            assertEquals(context.getMessage("Exception must be of type MongoClientException or IllegalArgumentException"),
+            assertEquals(context.getMessage("Exception must be of type MongoClientException or IllegalArgumentException"
+                            + " or IllegalStateException or MongoSocketException"),
                     expectedError.getBoolean("isClientError").getValue(),
-                    e instanceof MongoClientException || e instanceof IllegalArgumentException || e instanceof MongoSocketException);
+                    e instanceof MongoClientException || e instanceof IllegalArgumentException || e instanceof IllegalStateException
+                            || e instanceof MongoSocketException);
         }
         if (expectedError.containsKey("errorContains")) {
             String errorContains = expectedError.getString("errorContains").getValue();

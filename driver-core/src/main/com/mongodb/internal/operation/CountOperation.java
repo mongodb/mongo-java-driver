@@ -18,6 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
+import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
@@ -144,14 +145,14 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
     private CommandCreator getCommandCreator(final SessionContext sessionContext) {
         return (serverDescription, connectionDescription) -> {
             validateReadConcernAndCollation(connectionDescription, sessionContext.getReadConcern(), collation);
-            return getCommand(sessionContext);
+            return getCommand(sessionContext, connectionDescription);
         };
     }
 
-    private BsonDocument getCommand(final SessionContext sessionContext) {
+    private BsonDocument getCommand(final SessionContext sessionContext, final ConnectionDescription connectionDescription) {
         BsonDocument document = new BsonDocument("count", new BsonString(namespace.getCollectionName()));
 
-        appendReadConcernToCommand(sessionContext, document);
+        appendReadConcernToCommand(sessionContext, connectionDescription.getMaxWireVersion(), document);
 
         putIfNotNull(document, "query", filter);
         putIfNotZero(document, "limit", limit);

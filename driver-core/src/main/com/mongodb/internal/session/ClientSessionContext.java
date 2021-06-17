@@ -80,6 +80,22 @@ public abstract class ClientSessionContext implements SessionContext {
     }
 
     @Override
+    public boolean isSnapshot() {
+        Boolean snapshot = clientSession.getOptions().isSnapshot();
+        return snapshot != null && snapshot;
+    }
+
+    @Override
+    public void setSnapshotTimestamp(final BsonTimestamp snapshotTimestamp) {
+        clientSession.setSnapshotTimestamp(snapshotTimestamp);
+    }
+
+    @Override
+    public BsonTimestamp getSnapshotTimestamp() {
+        return clientSession.getSnapshotTimestamp();
+    }
+
+    @Override
     public void setRecoveryToken(final BsonDocument recoveryToken) {
         clientSession.setRecoveryToken(recoveryToken);
     }

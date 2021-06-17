@@ -109,6 +109,16 @@ class SyncClientSession implements ClientSession {
     }
 
     @Override
+    public void setSnapshotTimestamp(final BsonTimestamp snapshotTimestamp) {
+        wrapped.setSnapshotTimestamp(snapshotTimestamp);
+    }
+
+    @Override
+    public BsonTimestamp getSnapshotTimestamp() {
+        return wrapped.getSnapshotTimestamp();
+    }
+
+    @Override
     public BsonDocument getClusterTime() {
         return wrapped.getClusterTime();
     }

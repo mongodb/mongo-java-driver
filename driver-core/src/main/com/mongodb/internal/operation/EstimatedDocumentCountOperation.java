@@ -114,15 +114,15 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
     private CommandCreator getCommandCreator(final SessionContext sessionContext) {
         return (serverDescription, connectionDescription) -> {
             if (serverIsAtLeastVersionFiveDotZero(connectionDescription)) {
-                return getAggregateCommand(sessionContext);
+                return getAggregateCommand(sessionContext, connectionDescription);
             } else {
                 validateReadConcern(connectionDescription, sessionContext.getReadConcern());
-                return getCountCommand(sessionContext);
+                return getCountCommand(sessionContext, connectionDescription);
             }
         };
     }
 
-    private BsonDocument getAggregateCommand(final SessionContext sessionContext) {
+    private BsonDocument getAggregateCommand(final SessionContext sessionContext, final ConnectionDescription connectionDescription) {
         BsonDocument document = new BsonDocument("aggregate", new BsonString(namespace.getCollectionName()))
                 .append("cursor", new BsonDocument())
                 .append("pipeline", new BsonArray(asList(
@@ -131,15 +131,15 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
                              .append("n", new BsonDocument("$sum", new BsonString("$count")))
                 ))));
 
-        appendReadConcernToCommand(sessionContext, document);
+        appendReadConcernToCommand(sessionContext, connectionDescription.getMaxWireVersion(), document);
         putIfNotZero(document, "maxTimeMS", maxTimeMS);
         return document;
     }
 
-    private BsonDocument getCountCommand(final SessionContext sessionContext) {
+    private BsonDocument getCountCommand(final SessionContext sessionContext, final ConnectionDescription connectionDescription) {
         BsonDocument document = new BsonDocument("count", new BsonString(namespace.getCollectionName()));
 
-        appendReadConcernToCommand(sessionContext, document);
+        appendReadConcernToCommand(sessionContext, connectionDescription.getMaxWireVersion(), document);
         putIfNotZero(document, "maxTimeMS", maxTimeMS);
         return document;
     }

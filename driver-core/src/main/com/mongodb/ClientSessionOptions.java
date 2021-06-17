@@ -35,6 +35,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 public final class ClientSessionOptions {
 
     private final Boolean causallyConsistent;
+    private final Boolean snapshot;
     private final TransactionOptions defaultTransactionOptions;
 
     /**
@@ -47,6 +48,20 @@ public final class ClientSessionOptions {
     @Nullable
     public Boolean isCausallyConsistent() {
         return causallyConsistent;
+    }
+
+    /**
+     * Whether read operations using this session should all share the same snapshot.
+     *
+     * @return whether read operations using this session should all share the same snapshot. A null value indicates to use the global
+     * default, which is currently false.
+     * @since 4.3
+     * @mongodb.server.release 5.0
+     * @mongodb.driver.manual  reference/read-concern-snapshot/#read-concern-and-atclustertime Snapshot reads
+     */
+    @Nullable
+    public Boolean isSnapshot() {
+        return snapshot;
     }
 
     /**
@@ -74,6 +89,10 @@ public final class ClientSessionOptions {
         if (causallyConsistent != null ? !causallyConsistent.equals(that.causallyConsistent) : that.causallyConsistent != null) {
             return false;
         }
+
+        if (snapshot != null ? !snapshot.equals(that.snapshot) : that.snapshot != null) {
+            return false;
+        }
         if (defaultTransactionOptions != null ? !defaultTransactionOptions.equals(that.defaultTransactionOptions)
                 : that.defaultTransactionOptions != null) {
             return false;
@@ -85,6 +104,7 @@ public final class ClientSessionOptions {
     @Override
     public int hashCode() {
         int result = causallyConsistent != null ? causallyConsistent.hashCode() : 0;
+        result = 31 * result + (snapshot != null ? snapshot.hashCode() : 0);
         result = 31 * result + (defaultTransactionOptions != null ? defaultTransactionOptions.hashCode() : 0);
         return result;
     }
@@ -93,6 +113,7 @@ public final class ClientSessionOptions {
     public String toString() {
         return "ClientSessionOptions{"
                 + "causallyConsistent=" + causallyConsistent
+                + "snapshot=" + snapshot
                 + ", defaultTransactionOptions=" + defaultTransactionOptions
                 + '}';
     }
@@ -117,6 +138,7 @@ public final class ClientSessionOptions {
         notNull("options", options);
         Builder builder = new Builder();
         builder.causallyConsistent = options.isCausallyConsistent();
+        builder.snapshot = options.isSnapshot();
         builder.defaultTransactionOptions = options.getDefaultTransactionOptions();
         return builder;
     }
@@ -127,6 +149,7 @@ public final class ClientSessionOptions {
     @NotThreadSafe
     public static final class Builder {
         private Boolean causallyConsistent;
+        private Boolean snapshot;
         private TransactionOptions defaultTransactionOptions = TransactionOptions.builder().build();
 
         /**
@@ -138,6 +161,24 @@ public final class ClientSessionOptions {
          */
         public Builder causallyConsistent(final boolean causallyConsistent) {
             this.causallyConsistent = causallyConsistent;
+            return this;
+        }
+
+        /**
+         * Sets whether read operations using the session should share the same snapshot.
+         *
+         * <p>
+         * The default value is unset, in which case the driver will use the global default value, which is currently false.
+         * </p>
+         *
+         * @param snapshot true for snapshot reads, false otherwise
+         * @return this
+         * @since 4.3
+         * @mongodb.server.release 5.0
+         * @mongodb.driver.manual  reference/read-concern-snapshot/#read-concern-and-atclustertime Snapshot reads
+         */
+        public Builder snapshot(final boolean snapshot) {
+            this.snapshot = snapshot;
             return this;
         }
 
@@ -168,7 +209,13 @@ public final class ClientSessionOptions {
     }
 
     private ClientSessionOptions(final Builder builder) {
-        this.causallyConsistent = builder.causallyConsistent;
+        if (builder.causallyConsistent != null && builder.causallyConsistent && builder.snapshot != null && builder.snapshot) {
+            throw new IllegalArgumentException("TODO"); // TODO
+        }
+        this.causallyConsistent = builder.causallyConsistent != null || builder.snapshot == null
+                ? builder.causallyConsistent
+                : Boolean.valueOf(!builder.snapshot);
+        this.snapshot = builder.snapshot;
         this.defaultTransactionOptions = builder.defaultTransactionOptions;
     }
 }
