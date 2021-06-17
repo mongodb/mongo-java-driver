@@ -60,6 +60,10 @@ class AggregatesSpec extends BaseSpec {
     toBson(addFields(Field("newField", "hello"))) should equal(Document("""{$addFields: { "newField": "hello"}}"""))
   }
 
+  it should "render $set" in {
+    toBson(set(Field("newField", "hello"))) should equal(Document("""{$set: { "newField": "hello"}}"""))
+  }
+
   // scalastyle:off magic.number
   it should "render $bucket" in {
     toBson(bucket("$screenSize", 0, 24, 32, 50, 100000)) should equal(
