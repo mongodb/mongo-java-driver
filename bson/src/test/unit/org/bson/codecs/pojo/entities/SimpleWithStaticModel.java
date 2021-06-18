@@ -50,6 +50,10 @@ public final class SimpleWithStaticModel {
         // Mimics the static kotlin synthetic annotations field
     }
 
+    public void getStringField$Alternative() {
+        // Non static void getter field
+    }
+
     public void setStringField(final String stringField) {
         this.stringField = stringField;
     }
