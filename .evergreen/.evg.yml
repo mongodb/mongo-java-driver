@@ -333,7 +333,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          STREAM_TYPE=netty AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" .evergreen/run-tests.sh
+          STREAM_TYPE="netty" AUTH="${AUTH}" SSL="${SSL}" NETTY_SSL_PROVIDER="${NETTY_SSL_PROVIDER}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" .evergreen/run-tests.sh
 
   "run plain auth test":
     - command: shell.exec
@@ -1224,6 +1224,8 @@ tasks:
           name: "plain-auth-test"
         - variant: ".test-scala-variant"
           name: "scala-tests"
+        - variant: ".tests-netty-variant"
+          name: "netty-test"
       commands:
         - func: "publish snapshot"
 
@@ -1350,6 +1352,17 @@ axes:
         display_name: NoSSL
         variables:
            SSL: "nossl"
+  - id: netty-ssl-provider
+    display_name: Netty TLS/SSL protocol provider
+    values:
+      - id: "jdk"
+        display_name: JDK
+        variables:
+          NETTY_SSL_PROVIDER: "JDK"
+      - id: "openssl"
+        display_name: OpenSSL
+        variables:
+          NETTY_SSL_PROVIDER: "OPENSSL"
   - id: compressor
     display_name: Compressor
     values:
@@ -1489,10 +1502,17 @@ buildvariants:
 
 - matrix_name: "tests-netty"
   matrix_spec: { auth: "noauth", ssl: "*", jdk: "jdk8", version: ["4.2", "4.4"], topology: "replicaset", os: "linux" }
-  display_name: "Netty: ${version} ${topology} ${ssl} ${jdk} ${os} "
-  tags: ["tests-variant"]
+  display_name: "Netty: ${version} ${topology} ${ssl} ${auth} ${jdk} ${os} "
+  tags: ["tests-netty-variant"]
   tasks:
-    - name: "test"
+    - name: "netty-test"
+
+- matrix_name: "tests-netty-ssl-provider"
+  matrix_spec: { netty-ssl-provider: "*", auth: "auth", ssl: "ssl", jdk: "jdk8", version: ["5.0"], topology: "replicaset", os: "linux" }
+  display_name: "Netty SSL provider: ${version} ${topology} ${ssl} SslProvider.${netty-ssl-provider} ${auth} ${jdk} ${os} "
+  tags: ["tests-netty-variant"]
+  tasks:
+    - name: "netty-test"
 
 - matrix_name: "tests-socket-snappy-compression"
   matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk8", version: ["4.2"], topology: "standalone", os: "linux" }
