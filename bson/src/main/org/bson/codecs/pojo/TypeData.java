@@ -236,6 +236,7 @@ final class TypeData<T> implements TypeWithTypeParameters<T> {
         map.put(int.class, Integer.class);
         map.put(long.class, Long.class);
         map.put(short.class, Short.class);
+        map.put(void.class, Void.class);
         PRIMITIVE_CLASS_MAP = map;
     }
 }
