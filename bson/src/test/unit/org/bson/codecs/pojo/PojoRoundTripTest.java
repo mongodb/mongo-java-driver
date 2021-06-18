@@ -27,6 +27,7 @@ import org.bson.codecs.pojo.entities.ConcreteInterfaceGenericModel;
 import org.bson.codecs.pojo.entities.ConcreteStandAloneAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.ContainsAlternativeMapAndCollectionModel;
 import org.bson.codecs.pojo.entities.ConventionModel;
+import org.bson.codecs.pojo.entities.DuplicateAnnotationAllowedModel;
 import org.bson.codecs.pojo.entities.FieldAndPropertyTypeMismatchModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.bson.codecs.pojo.entities.GenericTreeModel;
@@ -79,6 +80,7 @@ import org.bson.codecs.pojo.entities.conventions.AnnotationBsonPropertyIdModel;
 import org.bson.codecs.pojo.entities.conventions.BsonIgnoreDuplicatePropertyMultipleTypes;
 import org.bson.codecs.pojo.entities.conventions.BsonIgnoreInvalidMapModel;
 import org.bson.codecs.pojo.entities.conventions.BsonIgnoreSyntheticProperty;
+import org.bson.codecs.pojo.entities.conventions.BsonRepresentationModel;
 import org.bson.codecs.pojo.entities.conventions.CollectionDiscriminatorAbstractClassesModel;
 import org.bson.codecs.pojo.entities.conventions.CollectionDiscriminatorInterfacesModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorAllFinalFieldsModel;
@@ -91,14 +93,12 @@ import org.bson.codecs.pojo.entities.conventions.CreatorInSuperClassModelImpl;
 import org.bson.codecs.pojo.entities.conventions.CreatorMethodModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorNoArgsConstructorModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorNoArgsMethodModel;
-import org.bson.codecs.pojo.entities.DuplicateAnnotationAllowedModel;
 import org.bson.codecs.pojo.entities.conventions.InterfaceModel;
 import org.bson.codecs.pojo.entities.conventions.InterfaceModelImplA;
 import org.bson.codecs.pojo.entities.conventions.InterfaceModelImplB;
 import org.bson.codecs.pojo.entities.conventions.Subclass1Model;
 import org.bson.codecs.pojo.entities.conventions.Subclass2Model;
 import org.bson.codecs.pojo.entities.conventions.SuperClassModel;
-import org.bson.codecs.pojo.entities.conventions.BsonRepresentationModel;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -517,7 +517,6 @@ public final class PojoRoundTripTest extends PojoTestCase {
         data.add(new TestData("BsonRepresentation is encoded and decoded correctly", new BsonRepresentationModel(1),
                 getPojoCodecProviderBuilder(BsonRepresentationModel.class),
                 "{'_id': {'$oid': '111111111111111111111111'}, 'age': 1}"));
-
 
         return data;
     }

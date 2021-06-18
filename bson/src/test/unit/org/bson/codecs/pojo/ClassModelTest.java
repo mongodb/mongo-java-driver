@@ -265,6 +265,7 @@ public final class ClassModelTest {
         assertEquals(2, classModel.getPropertyModels().size());
         assertEquals(createTypeData(Integer.class), classModel.getPropertyModel("integerField").getTypeData());
         assertEquals(createTypeData(String.class), classModel.getPropertyModel("stringField").getTypeData());
+
     }
 
     <T> TypeData.Builder<T> createBuilder(final Class<T> clazz, final Class<?>... types) {
