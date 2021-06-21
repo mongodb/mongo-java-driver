@@ -20,6 +20,7 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.entities.SimpleModel;
+import org.bson.codecs.pojo.entities.VoidModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidMethodModel;
 import org.junit.Test;
 
@@ -67,6 +68,14 @@ public final class PojoCodecProviderTest extends PojoTestCase {
         CodecRegistry registry = fromProviders(provider, new ValueCodecProvider());
         Codec<CreatorInvalidMethodModel> codec = provider.get(CreatorInvalidMethodModel.class, registry);
         assertNull(codec);
+    }
+
+    @Test
+    public void testAutomaticVoidModel() {
+        PojoCodecProvider provider = PojoCodecProvider.builder().automatic(true).build();
+        CodecRegistry registry = fromProviders(provider, new ValueCodecProvider());
+        Codec<VoidModel> codec = provider.get(VoidModel.class, registry);
+        assertNotNull(codec);
     }
 
 }
