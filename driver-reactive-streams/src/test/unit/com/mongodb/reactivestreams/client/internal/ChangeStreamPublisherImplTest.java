@@ -88,13 +88,15 @@ public class ChangeStreamPublisherImplTest extends TestHelper {
         List<BsonDocument> pipeline = singletonList(BsonDocument.parse("{'$match': 1}"));
         TestOperationExecutor executor = createOperationExecutor(singletonList(getBatchCursor()));
 
+        int batchSize = 100;
         Publisher<BsonDocument> publisher = new ChangeStreamPublisherImpl<>(null, createMongoOperationPublisher(executor),
                                                                             Document.class, pipeline, ChangeStreamLevel.COLLECTION)
-                        .withDocumentClass(BsonDocument.class);
+                .batchSize(batchSize)
+                .withDocumentClass(BsonDocument.class);
 
         ChangeStreamOperation<BsonDocument> expectedOperation =
                 new ChangeStreamOperation<>(NAMESPACE, FullDocument.DEFAULT, pipeline, getDefaultCodecRegistry().get(BsonDocument.class))
-                        .batchSize(Integer.MAX_VALUE)
+                        .batchSize(batchSize)
                         .retryReads(true);
 
         // default input should be as expected

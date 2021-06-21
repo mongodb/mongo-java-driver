@@ -38,8 +38,14 @@ abstract class BatchCursorPublisher<T> implements Publisher<T> {
     private Integer batchSize;
 
     BatchCursorPublisher(@Nullable final ClientSession clientSession, final MongoOperationPublisher<T> mongoOperationPublisher) {
+        this(clientSession, mongoOperationPublisher, null);
+    }
+
+    BatchCursorPublisher(@Nullable final ClientSession clientSession, final MongoOperationPublisher<T> mongoOperationPublisher,
+                         @Nullable final Integer batchSize) {
         this.clientSession = clientSession;
         this.mongoOperationPublisher = notNull("mongoOperationPublisher", mongoOperationPublisher);
+        this.batchSize = batchSize;
     }
 
     abstract AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(int initialBatchSize);
