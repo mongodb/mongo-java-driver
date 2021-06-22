@@ -19,17 +19,19 @@
 
 package com.mongodb.internal.connection.tlschannel.impl;
 
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.connection.tlschannel.BufferAllocator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 
+import static java.lang.String.format;
+
 public class BufferHolder {
 
-  private static final Logger logger = LoggerFactory.getLogger(BufferHolder.class);
+  private static final Logger LOGGER = Loggers.getLogger("connection.tls");
   private static final byte[] zeros = new byte[TlsChannelImpl.maxTlsPacketSize];
 
   public final String name;
@@ -85,28 +87,32 @@ public class BufferHolder {
   public void resize(int newCapacity) {
     if (newCapacity > maxSize)
       throw new IllegalArgumentException(
-          String.format(
+          format(
               "new capacity (%s) bigger than absolute max size (%s)", newCapacity, maxSize));
-    logger.trace(
-        "resizing buffer {}, increasing from {} to {} (manual sizing)",
-        name,
-        buffer.capacity(),
-        newCapacity);
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.trace(format(
+            "resizing buffer %s, increasing from %s to %s (manual sizing)",
+            name,
+            buffer.capacity(),
+            newCapacity));
+    }
     resizeImpl(newCapacity);
   }
 
   public void enlarge() {
     if (buffer.capacity() >= maxSize) {
       throw new IllegalStateException(
-          String.format(
+          format(
               "%s buffer insufficient despite having capacity of %d", name, buffer.capacity()));
     }
     int newCapacity = Math.min(buffer.capacity() * 2, maxSize);
-    logger.trace(
-        "enlarging buffer {}, increasing from {} to {} (automatic enlarge)",
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.trace(format(
+        "enlarging buffer %s, increasing from %s to %s (automatic enlarge)",
         name,
         buffer.capacity(),
-        newCapacity);
+        newCapacity));
+    }
     resizeImpl(newCapacity);
   }
 
