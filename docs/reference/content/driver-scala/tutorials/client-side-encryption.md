@@ -236,7 +236,7 @@ val clientSettings = MongoClientSettings.builder()
             .bypassAutoEncryption(true)
             .build())
     .build()
-val mongoClient = MongoClients.create(clientSettings)
+val mongoClient = MongoClient(clientSettings)
 
 ...
 
