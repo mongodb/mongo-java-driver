@@ -64,8 +64,37 @@ public final class Aggregates {
      * @since 3.4
      */
     public static Bson addFields(final List<Field<?>> fields) {
-        return new AddFieldsStage(fields);
+        return new FieldsStage("$addFields", fields);
     }
+
+    /**
+     * Creates a $set pipeline stage for the specified projection
+     *
+     * @param fields the fields to add
+     * @return the $set pipeline stage
+     * @see Projections
+     * @since 4.3
+     * @mongodb.server.release 4.2
+     * @mongodb.driver.manual reference/operator/aggregation/set/ $set
+     */
+    public static Bson set(final Field<?>... fields) {
+        return set(asList(fields));
+    }
+
+    /**
+     * Creates a $set pipeline stage for the specified projection
+     *
+     * @param fields the fields to add
+     * @return the $set pipeline stage
+     * @see Projections
+     * @since 4.3
+     * @mongodb.server.release 4.2
+     * @mongodb.driver.manual reference/operator/aggregation/set/ $set
+     */
+    public static Bson set(final List<Field<?>> fields) {
+        return new FieldsStage("$set", fields);
+    }
+
 
     /**
      * Creates a $bucket pipeline stage
@@ -1148,18 +1177,20 @@ public final class Aggregates {
 
     }
 
-    private static class AddFieldsStage implements Bson {
+    private static class FieldsStage implements Bson {
         private final List<Field<?>> fields;
+        private final String stageName; //one of $addFields or $set
 
-        AddFieldsStage(final List<Field<?>> fields) {
-            this.fields = fields;
+        FieldsStage(final String stageName, final List<Field<?>> fields) {
+            this.stageName = stageName;
+            this.fields = notNull("fields", fields);
         }
 
         @Override
         public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
             BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
             writer.writeStartDocument();
-            writer.writeName("$addFields");
+            writer.writeName(stageName);
             writer.writeStartDocument();
             for (Field<?> field : fields) {
                 writer.writeName(field.getName());
@@ -1180,20 +1211,25 @@ public final class Aggregates {
                 return false;
             }
 
-            AddFieldsStage that = (AddFieldsStage) o;
+            FieldsStage that = (FieldsStage) o;
 
-            return fields != null ? fields.equals(that.fields) : that.fields == null;
+            if (!fields.equals(that.fields)) {
+                return false;
+            }
+            return stageName.equals(that.stageName);
         }
 
         @Override
         public int hashCode() {
-            return fields != null ? fields.hashCode() : 0;
+            int result = fields.hashCode();
+            result = 31 * result + stageName.hashCode();
+            return result;
         }
 
         @Override
         public String toString() {
             return "Stage{"
-                + "name='$addFields', "
+                + "name='" + stageName + "', "
                 + "fields=" + fields
                 + '}';
         }

@@ -53,6 +53,7 @@ import static com.mongodb.client.model.Aggregates.project
 import static com.mongodb.client.model.Aggregates.replaceRoot
 import static com.mongodb.client.model.Aggregates.replaceWith
 import static com.mongodb.client.model.Aggregates.sample
+import static com.mongodb.client.model.Aggregates.set
 import static com.mongodb.client.model.Aggregates.skip
 import static com.mongodb.client.model.Aggregates.sort
 import static com.mongodb.client.model.Aggregates.sortByCount
@@ -106,7 +107,6 @@ class AggregatesSpecification extends Specification {
                         '", finalize: "' + finalizeFunction + '", lang: "js"}}}}')
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should render $addFields'() {
         expect:
         toBson(addFields(new Field('newField', null))) == parse('{$addFields: {newField: null}}')
@@ -118,6 +118,19 @@ class AggregatesSpecification extends Specification {
                 '{$addFields: {alt3: {$lt: ["$a", 3]}}}')
         toBson(addFields(new Field('b', 3), new Field('c', 5))) == parse('{$addFields: {b: 3, c: 5}}')
         toBson(addFields(asList(new Field('b', 3), new Field('c', 5)))) == parse('{$addFields: {b: 3, c: 5}}')
+    }
+
+    def 'should render $set'() {
+        expect:
+        toBson(set(new Field('newField', null))) == parse('{$set: {newField: null}}')
+        toBson(set(new Field('newField', 'hello'))) == parse('{$set: {newField: "hello"}}')
+        toBson(set(new Field('this', '$$CURRENT'))) == parse('{$set: {this: "$$CURRENT"}}')
+        toBson(set(new Field('myNewField', new Document('c', 3)
+                .append('d', 4)))) == parse('{$set: {myNewField: {c: 3, d: 4}}}')
+        toBson(set(new Field('alt3', new Document('$lt', asList('$a', 3))))) == parse(
+                '{$set: {alt3: {$lt: ["$a", 3]}}}')
+        toBson(set(new Field('b', 3), new Field('c', 5))) == parse('{$set: {b: 3, c: 5}}')
+        toBson(set(asList(new Field('b', 3), new Field('c', 5)))) == parse('{$set: {b: 3, c: 5}}')
     }
 
     def 'should render $bucket'() {

@@ -82,7 +82,7 @@ To connect to a standalone MongoDB instance:
 
 ## Connect to a Replica Set
 
-To connect to a [replica set]({{<docsref "replication/" >}}), you must specify one or more members to the `MongoClients` create method.
+To connect to a [replica set]({{<docsref "replication/" >}}), you must specify one or more members to the `MongoClient` apply method.
 
 {{% note %}}
 MongoDB will auto-discover the primary and the secondaries.
@@ -118,7 +118,7 @@ val mongoClient = MongoClient(
 ## Connect to a Sharded Cluster
 
 To connect to a [sharded cluster]({{<docsref "sharding/" >}}), specify the `mongos` instance
-or instances to a `MongoClients` create method.
+or instances to a `MongoClient` apply method.
 
 To connect to a single `mongos` instance:
 

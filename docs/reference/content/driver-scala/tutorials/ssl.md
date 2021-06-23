@@ -40,7 +40,7 @@ To specify TLS/SSL with with [`MongoClientSettings`]({{< apiref "mongo-scala-dri
 val settings = MongoClientSettings.builder()
     .applyToSslSettings((builder: SslSettings.Builder) => builder.enabled(true))
     .build()
-val client = MongoClients.create(settings)
+val client = MongoClient(settings)
 ```
 
 ### Specify Java SE `SSLContext` via `MongoClientSettings`
@@ -60,7 +60,7 @@ val settings = MongoClientSettings.builder()
         builder.context(sslContext)
     })
     .build()
-val client = MongoClients.create(settings)
+val client = MongoClient(settings)
 ```
 
 ### Specify Netty `SslContext` via `NettyStreamFactoryFactory`
