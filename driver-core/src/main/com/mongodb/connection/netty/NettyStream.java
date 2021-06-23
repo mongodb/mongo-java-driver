@@ -45,14 +45,13 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.ReadTimeoutException;
 import org.bson.ByteBuf;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLParameters;
 import java.io.IOException;
 import java.net.SocketAddress;
@@ -64,7 +63,6 @@ import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
-import java.util.function.Consumer;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.internal.connection.SslHelper.enableHostNameVerification;
@@ -113,7 +111,7 @@ final class NettyStream implements Stream {
     private final Class<? extends SocketChannel> socketChannelClass;
     private final ByteBufAllocator allocator;
     @Nullable
-    private final Consumer<? super SslContextBuilder> nettySslContextTuner;
+    private final SslContext nettySslContext;
 
     private boolean isClosed;
     private volatile Channel channel;
@@ -135,14 +133,14 @@ final class NettyStream implements Stream {
 
     NettyStream(final ServerAddress address, final SocketSettings settings, final SslSettings sslSettings, final EventLoopGroup workerGroup,
                 final Class<? extends SocketChannel> socketChannelClass, final ByteBufAllocator allocator,
-                @Nullable final Consumer<? super SslContextBuilder> nettySslContextTuner) {
+                @Nullable final SslContext nettySslContext) {
         this.address = address;
         this.settings = settings;
         this.sslSettings = sslSettings;
         this.workerGroup = workerGroup;
         this.socketChannelClass = socketChannelClass;
         this.allocator = allocator;
-        this.nettySslContextTuner = nettySslContextTuner;
+        this.nettySslContext = nettySslContext;
     }
 
     @Override
@@ -396,7 +394,7 @@ final class NettyStream implements Stream {
 
     private void addSslHandler(final SocketChannel channel) {
         SSLEngine engine;
-        if (nettySslContextTuner == null) {
+        if (nettySslContext == null) {
             SSLContext sslContext;
             try {
                 sslContext = (sslSettings.getContext() == null) ? SSLContext.getDefault() : sslSettings.getContext();
@@ -405,14 +403,6 @@ final class NettyStream implements Stream {
             }
             engine = sslContext.createSSLEngine(address.getHost(), address.getPort());
         } else {
-            SslContextBuilder nettySslContextBuilder = SslContextBuilder.forClient();
-            nettySslContextTuner.accept(nettySslContextBuilder);
-            io.netty.handler.ssl.SslContext nettySslContext;
-            try {
-                nettySslContext = nettySslContextBuilder.build();
-            } catch (SSLException e) {
-                throw new MongoClientException("Unable to create Netty SslContext", e);
-            }
             engine = nettySslContext.newEngine(channel.alloc(), address.getHost(), address.getPort());
         }
         engine.setUseClientMode(true);

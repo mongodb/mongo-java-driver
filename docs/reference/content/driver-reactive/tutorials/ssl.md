@@ -79,21 +79,26 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoClient;
 import com.mongodb.connection.netty.NettyStreamFactoryFactory;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
 ```
 
 To instruct the driver to use [`io.netty.handler.ssl.SslContext`]({{< nettyapiref "io/netty/handler/ssl/SslContext.html" >}}),
 use the method
-[`NettyStreamFactoryFactory.Builder.applyToNettySslContext`]({{< apiref "mongodb-driver-core" "com/mongodb/connection/netty/NettyStreamFactoryFactory.Builder.html#applyToNettySslContext(java.util.function.Consumer)" >}}).
+[`NettyStreamFactoryFactory.Builder.nettySslContext`]({{< apiref "mongodb-driver-core" "com/mongodb/connection/netty/NettyStreamFactoryFactory.Builder.html#nettySslContext(io.netty.handler.ssl.SslContext)" >}}).
 See the documentation of this method for details on which
 [`io.netty.handler.ssl.SslProvider`]({{< nettyapiref "io/netty/handler/ssl/SslProvider.html" >}})s are supported by the driver
 and implications of using them.
 
 ```java
+SslContext nettySslContext = SslContextBuilder.forClient()
+        .sslProvider(SslProvider.OPENSSL)
+        .build();
 MongoClientSettings settings = MongoClientSettings.builder()
         .applyToSslSettings(builder -> builder.enabled(true))
         .streamFactoryFactory(NettyStreamFactoryFactory.builder()
-                .applyToNettySslContext(builder -> builder.sslProvider(SslProvider.OPENSSL))
+                .nettySslContext(nettySslContext)
                 .build())
         .build();
 MongoClient client = MongoClients.create(settings);

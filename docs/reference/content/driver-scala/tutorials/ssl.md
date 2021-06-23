@@ -75,19 +75,22 @@ import io.netty.handler.ssl.SslProvider;
 
 To instruct the driver to use [`io.netty.handler.ssl.SslContext`]({{< nettyapiref "io/netty/handler/ssl/SslContext.html" >}}),
 use the method
-[`NettyStreamFactoryFactory.Builder.applyToNettySslContext`]({{< apiref "mongodb-driver-core" "com/mongodb/connection/netty/NettyStreamFactoryFactory.Builder.html#applyToNettySslContext(java.util.function.Consumer)" >}}).
+[`NettyStreamFactoryFactory.Builder.nettySslContext`]({{< apiref "mongodb-driver-core" "com/mongodb/connection/netty/NettyStreamFactoryFactory.Builder.html#nettySslContext(io.netty.handler.ssl.SslContext)" >}}).
 See the documentation of this method for details on which
 [`io.netty.handler.ssl.SslProvider`]({{< nettyapiref "io/netty/handler/ssl/SslProvider.html" >}})s are supported by the driver
 and implications of using them.
 
 ```scala
+val nettySslContext = SslContextBuilder.forClient()
+    .sslProvider(SslProvider.OPENSSL)
+    .build();
 val settings = MongoClientSettings.builder()
     .applyToSslSettings((builder: SslSettings.Builder) => builder.enabled(true))
     .streamFactoryFactory(NettyStreamFactoryFactory.builder()
-        .applyToNettySslContext((builder: SslContextBuilder) => builder.sslProvider(SslProvider.OPENSSL))
+        .nettySslContext(nettySslContext)
         .build())
     .build()
-val client = MongoClients.create(settings)
+val client = MongoClient(settings)
 ```
 
 ## Disable Hostname Verification

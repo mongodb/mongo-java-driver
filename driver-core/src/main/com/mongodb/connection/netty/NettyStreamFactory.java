@@ -29,9 +29,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
-
-import java.util.function.Consumer;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -47,7 +44,7 @@ public class NettyStreamFactory implements StreamFactory {
     private final Class<? extends SocketChannel> socketChannelClass;
     private final ByteBufAllocator allocator;
     @Nullable
-    private final Consumer<? super SslContextBuilder> nettySslContextTuner;
+    private final SslContext nettySslContext;
 
     /**
      * Construct a new instance of the factory.
@@ -57,21 +54,21 @@ public class NettyStreamFactory implements StreamFactory {
      * @param eventLoopGroup the event loop group that all channels created by this factory will be a part of
      * @param socketChannelClass the socket channel class
      * @param allocator the allocator to use for ByteBuf instances
-     * @param nettySslContextTuner the tuner for a Netty {@link SslContext}
-     *                             as specified by {@link NettyStreamFactoryFactory.Builder#applyToNettySslContext(Consumer)}.
+     * @param nettySslContext the Netty {@link SslContext}
+     *                        as specified by {@link NettyStreamFactoryFactory.Builder#nettySslContext(SslContext)}.
      *
      * @since 4.3
      */
     public NettyStreamFactory(final SocketSettings settings, final SslSettings sslSettings,
                               final EventLoopGroup eventLoopGroup, final Class<? extends SocketChannel> socketChannelClass,
                               final ByteBufAllocator allocator,
-                              @Nullable final Consumer<? super SslContextBuilder> nettySslContextTuner) {
+                              @Nullable final SslContext nettySslContext) {
         this.settings = notNull("settings", settings);
         this.sslSettings = notNull("sslSettings", sslSettings);
         this.eventLoopGroup = notNull("eventLoopGroup", eventLoopGroup);
         this.socketChannelClass = notNull("socketChannelClass", socketChannelClass);
         this.allocator = notNull("allocator", allocator);
-        this.nettySslContextTuner = nettySslContextTuner;
+        this.nettySslContext = nettySslContext;
     }
 
     /**
@@ -129,7 +126,7 @@ public class NettyStreamFactory implements StreamFactory {
 
     @Override
     public Stream create(final ServerAddress serverAddress) {
-        return new NettyStream(serverAddress, settings, sslSettings, eventLoopGroup, socketChannelClass, allocator, nettySslContextTuner);
+        return new NettyStream(serverAddress, settings, sslSettings, eventLoopGroup, socketChannelClass, allocator, nettySslContext);
     }
 
 }

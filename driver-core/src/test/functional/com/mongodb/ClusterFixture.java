@@ -57,6 +57,8 @@ import com.mongodb.internal.operation.DropDatabaseOperation;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.lang.Nullable;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -66,6 +68,7 @@ import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DocumentCodec;
 
+import javax.net.ssl.SSLException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -418,7 +421,15 @@ public final class ClusterFixture {
                 NettyStreamFactoryFactory.Builder metafactoryBuilder = NettyStreamFactoryFactory.builder();
                 String nettySslProvider = System.getProperty("org.mongodb.test.netty.ssl.provider");
                 if (nettySslProvider != null) {
-                    metafactoryBuilder.applyToNettySslContext(builder -> builder.sslProvider(SslProvider.valueOf(nettySslProvider)));
+                    SslContext nettySslContext;
+                    try {
+                        nettySslContext = SslContextBuilder.forClient()
+                                .sslProvider(SslProvider.valueOf(nettySslProvider))
+                                .build();
+                    } catch (SSLException e) {
+                        throw new MongoClientException("Unable to create Netty SslContext", e);
+                    }
+                    metafactoryBuilder.nettySslContext(nettySslContext);
                 }
                 nettyStreamFactoryFactory = metafactoryBuilder.build();
             }
