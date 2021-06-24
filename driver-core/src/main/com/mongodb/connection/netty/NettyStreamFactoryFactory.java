@@ -47,7 +47,7 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
     private final Class<? extends SocketChannel> socketChannelClass;
     private final ByteBufAllocator allocator;
     @Nullable
-    private final SslContext nettySslContext;
+    private final SslContext sslContext;
 
     /**
      * Gets a builder for an instance of {@code NettyStreamFactoryFactory}.
@@ -68,7 +68,7 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
         private Class<? extends SocketChannel> socketChannelClass;
         private EventLoopGroup eventLoopGroup;
         @Nullable
-        private SslContext nettySslContext;
+        private SslContext sslContext;
 
         private Builder() {
             allocator(ByteBufAllocator.DEFAULT);
@@ -134,16 +134,16 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
          *    </li>
          * </ul>
          *
-         * @param nettySslContext The Netty {@link SslContext}, which must be created via {@linkplain SslContextBuilder#forClient()}.
+         * @param sslContext The Netty {@link SslContext}, which must be created via {@linkplain SslContextBuilder#forClient()}.
          * @return {@code this}.
          *
          * @since 4.3
          */
-        public Builder nettySslContext(final SslContext nettySslContext) {
-            this.nettySslContext = notNull("nettySslContext", nettySslContext);
-            isTrueArgument("nettySslContext must be client-side", nettySslContext.isClient());
-            isTrueArgument("nettySslContext must not be reference counted",
-                    !(nettySslContext instanceof ReferenceCountedOpenSslClientContext));
+        public Builder sslContext(final SslContext sslContext) {
+            this.sslContext = notNull("sslContext", sslContext);
+            isTrueArgument("sslContext must be client-side", sslContext.isClient());
+            isTrueArgument("sslContext must use either SslProvider.JDK or SslProvider.OPENSSL TLS/SSL protocol provider",
+                    !(sslContext instanceof ReferenceCountedOpenSslClientContext));
 
             return this;
         }
@@ -159,7 +159,7 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
 
     @Override
     public StreamFactory create(final SocketSettings socketSettings, final SslSettings sslSettings) {
-        return new NettyStreamFactory(socketSettings, sslSettings, eventLoopGroup, socketChannelClass, allocator, nettySslContext);
+        return new NettyStreamFactory(socketSettings, sslSettings, eventLoopGroup, socketChannelClass, allocator, sslContext);
     }
 
     @Override
@@ -168,7 +168,7 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
                 + "eventLoopGroup=" + eventLoopGroup
                 + ", socketChannelClass=" + socketChannelClass
                 + ", allocator=" + allocator
-                + ", nettySslContext=" + nettySslContext
+                + ", sslContext=" + sslContext
                 + '}';
     }
 
@@ -180,6 +180,6 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
         } else {
             eventLoopGroup = new NioEventLoopGroup();
         }
-        nettySslContext = builder.nettySslContext;
+        sslContext = builder.sslContext;
     }
 }

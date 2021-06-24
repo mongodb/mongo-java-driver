@@ -111,7 +111,7 @@ final class NettyStream implements Stream {
     private final Class<? extends SocketChannel> socketChannelClass;
     private final ByteBufAllocator allocator;
     @Nullable
-    private final SslContext nettySslContext;
+    private final SslContext sslContext;
 
     private boolean isClosed;
     private volatile Channel channel;
@@ -133,14 +133,14 @@ final class NettyStream implements Stream {
 
     NettyStream(final ServerAddress address, final SocketSettings settings, final SslSettings sslSettings, final EventLoopGroup workerGroup,
                 final Class<? extends SocketChannel> socketChannelClass, final ByteBufAllocator allocator,
-                @Nullable final SslContext nettySslContext) {
+                @Nullable final SslContext sslContext) {
         this.address = address;
         this.settings = settings;
         this.sslSettings = sslSettings;
         this.workerGroup = workerGroup;
         this.socketChannelClass = socketChannelClass;
         this.allocator = allocator;
-        this.nettySslContext = nettySslContext;
+        this.sslContext = sslContext;
     }
 
     @Override
@@ -394,7 +394,7 @@ final class NettyStream implements Stream {
 
     private void addSslHandler(final SocketChannel channel) {
         SSLEngine engine;
-        if (nettySslContext == null) {
+        if (sslContext == null) {
             SSLContext sslContext;
             try {
                 sslContext = (sslSettings.getContext() == null) ? SSLContext.getDefault() : sslSettings.getContext();
@@ -403,7 +403,7 @@ final class NettyStream implements Stream {
             }
             engine = sslContext.createSSLEngine(address.getHost(), address.getPort());
         } else {
-            engine = nettySslContext.newEngine(channel.alloc(), address.getHost(), address.getPort());
+            engine = sslContext.newEngine(channel.alloc(), address.getHost(), address.getPort());
         }
         engine.setUseClientMode(true);
         SSLParameters sslParameters = engine.getSSLParameters();

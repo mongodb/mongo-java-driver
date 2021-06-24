@@ -44,7 +44,7 @@ public class NettyStreamFactory implements StreamFactory {
     private final Class<? extends SocketChannel> socketChannelClass;
     private final ByteBufAllocator allocator;
     @Nullable
-    private final SslContext nettySslContext;
+    private final SslContext sslContext;
 
     /**
      * Construct a new instance of the factory.
@@ -54,21 +54,21 @@ public class NettyStreamFactory implements StreamFactory {
      * @param eventLoopGroup the event loop group that all channels created by this factory will be a part of
      * @param socketChannelClass the socket channel class
      * @param allocator the allocator to use for ByteBuf instances
-     * @param nettySslContext the Netty {@link SslContext}
-     *                        as specified by {@link NettyStreamFactoryFactory.Builder#nettySslContext(SslContext)}.
+     * @param sslContext the Netty {@link SslContext}
+     *                   as specified by {@link NettyStreamFactoryFactory.Builder#sslContext(SslContext)}.
      *
      * @since 4.3
      */
     public NettyStreamFactory(final SocketSettings settings, final SslSettings sslSettings,
                               final EventLoopGroup eventLoopGroup, final Class<? extends SocketChannel> socketChannelClass,
                               final ByteBufAllocator allocator,
-                              @Nullable final SslContext nettySslContext) {
+                              @Nullable final SslContext sslContext) {
         this.settings = notNull("settings", settings);
         this.sslSettings = notNull("sslSettings", sslSettings);
         this.eventLoopGroup = notNull("eventLoopGroup", eventLoopGroup);
         this.socketChannelClass = notNull("socketChannelClass", socketChannelClass);
         this.allocator = notNull("allocator", allocator);
-        this.nettySslContext = nettySslContext;
+        this.sslContext = sslContext;
     }
 
     /**
@@ -126,7 +126,7 @@ public class NettyStreamFactory implements StreamFactory {
 
     @Override
     public Stream create(final ServerAddress serverAddress) {
-        return new NettyStream(serverAddress, settings, sslSettings, eventLoopGroup, socketChannelClass, allocator, nettySslContext);
+        return new NettyStream(serverAddress, settings, sslSettings, eventLoopGroup, socketChannelClass, allocator, sslContext);
     }
 
 }

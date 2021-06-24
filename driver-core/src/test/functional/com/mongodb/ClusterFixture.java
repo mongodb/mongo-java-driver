@@ -400,15 +400,15 @@ public final class ClusterFixture {
     }
 
     public static StreamFactory getAsyncStreamFactory() {
-        StreamFactoryFactory overriddenStreamMetafactory = getOverriddenStreamFactoryFactory();
-        if (overriddenStreamMetafactory == null) { // use NIO2
+        StreamFactoryFactory overriddenStreamFactoryFactory = getOverriddenStreamFactoryFactory();
+        if (overriddenStreamFactoryFactory == null) { // use NIO2
             if (getSslSettings().isEnabled()) {
                 return new TlsChannelStreamFactoryFactory().create(getSocketSettings(), getSslSettings());
             } else {
                 return new AsynchronousSocketChannelStreamFactory(getSocketSettings(), getSslSettings());
             }
         } else {
-            return assertNotNull(overriddenStreamMetafactory).create(getSocketSettings(), getSslSettings());
+            return assertNotNull(overriddenStreamFactoryFactory).create(getSocketSettings(), getSslSettings());
         }
     }
 
@@ -416,23 +416,21 @@ public final class ClusterFixture {
     public static StreamFactoryFactory getOverriddenStreamFactoryFactory() {
         String streamType = System.getProperty("org.mongodb.test.async.type", "nio2");
 
-        if (nettyStreamFactoryFactory == null) {
-            if (streamType.equals("netty")) {
-                NettyStreamFactoryFactory.Builder metafactoryBuilder = NettyStreamFactoryFactory.builder();
-                String nettySslProvider = System.getProperty("org.mongodb.test.netty.ssl.provider");
-                if (nettySslProvider != null) {
-                    SslContext nettySslContext;
-                    try {
-                        nettySslContext = SslContextBuilder.forClient()
-                                .sslProvider(SslProvider.valueOf(nettySslProvider))
-                                .build();
-                    } catch (SSLException e) {
-                        throw new MongoClientException("Unable to create Netty SslContext", e);
-                    }
-                    metafactoryBuilder.nettySslContext(nettySslContext);
+        if (nettyStreamFactoryFactory == null && streamType.equals("netty")) {
+            NettyStreamFactoryFactory.Builder builder = NettyStreamFactoryFactory.builder();
+            String sslProvider = System.getProperty("org.mongodb.test.netty.ssl.provider");
+            if (sslProvider != null) {
+                SslContext sslContext;
+                try {
+                    sslContext = SslContextBuilder.forClient()
+                            .sslProvider(SslProvider.valueOf(sslProvider))
+                            .build();
+                } catch (SSLException e) {
+                    throw new MongoClientException("Unable to create Netty SslContext", e);
                 }
-                nettyStreamFactoryFactory = metafactoryBuilder.build();
+                builder.sslContext(sslContext);
             }
+            nettyStreamFactoryFactory = builder.build();
         }
         return nettyStreamFactoryFactory;
     }
