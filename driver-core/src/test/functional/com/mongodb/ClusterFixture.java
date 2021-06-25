@@ -30,7 +30,6 @@ import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.connection.TlsChannelStreamFactoryFactory;
-import com.mongodb.connection.netty.NettyStreamFactory;
 import com.mongodb.connection.netty.NettyStreamFactoryFactory;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -58,6 +57,9 @@ import com.mongodb.internal.operation.DropDatabaseOperation;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.lang.Nullable;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslProvider;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
@@ -66,6 +68,7 @@ import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DocumentCodec;
 
+import javax.net.ssl.SSLException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -73,6 +76,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.connection.ClusterConnectionMode.LOAD_BALANCED;
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static com.mongodb.connection.ClusterType.REPLICA_SET;
@@ -396,18 +400,15 @@ public final class ClusterFixture {
     }
 
     public static StreamFactory getAsyncStreamFactory() {
-        String streamType = System.getProperty("org.mongodb.test.async.type", "nio2");
-
-        if (streamType.equals("netty")) {
-            return new NettyStreamFactory(getSocketSettings(), getSslSettings());
-        } else if (streamType.equals("nio2")) {
+        StreamFactoryFactory overriddenStreamFactoryFactory = getOverriddenStreamFactoryFactory();
+        if (overriddenStreamFactoryFactory == null) { // use NIO2
             if (getSslSettings().isEnabled()) {
                 return new TlsChannelStreamFactoryFactory().create(getSocketSettings(), getSslSettings());
             } else {
                 return new AsynchronousSocketChannelStreamFactory(getSocketSettings(), getSslSettings());
             }
         } else {
-            throw new IllegalArgumentException("Unsupported stream type " + streamType);
+            return assertNotNull(overriddenStreamFactoryFactory).create(getSocketSettings(), getSslSettings());
         }
     }
 
@@ -415,13 +416,23 @@ public final class ClusterFixture {
     public static StreamFactoryFactory getOverriddenStreamFactoryFactory() {
         String streamType = System.getProperty("org.mongodb.test.async.type", "nio2");
 
-        if (streamType.equals("netty")) {
-            if (nettyStreamFactoryFactory == null) {
-                nettyStreamFactoryFactory = NettyStreamFactoryFactory.builder().build();
+        if (nettyStreamFactoryFactory == null && streamType.equals("netty")) {
+            NettyStreamFactoryFactory.Builder builder = NettyStreamFactoryFactory.builder();
+            String sslProvider = System.getProperty("org.mongodb.test.netty.ssl.provider");
+            if (sslProvider != null) {
+                SslContext sslContext;
+                try {
+                    sslContext = SslContextBuilder.forClient()
+                            .sslProvider(SslProvider.valueOf(sslProvider))
+                            .build();
+                } catch (SSLException e) {
+                    throw new MongoClientException("Unable to create Netty SslContext", e);
+                }
+                builder.sslContext(sslContext);
             }
-            return nettyStreamFactoryFactory;
+            nettyStreamFactoryFactory = builder.build();
         }
-        return null;
+        return nettyStreamFactoryFactory;
     }
 
     private static SocketSettings getSocketSettings() {

@@ -45,6 +45,7 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.ReadTimeoutException;
 import org.bson.ByteBuf;
@@ -109,6 +110,8 @@ final class NettyStream implements Stream {
     private final EventLoopGroup workerGroup;
     private final Class<? extends SocketChannel> socketChannelClass;
     private final ByteBufAllocator allocator;
+    @Nullable
+    private final SslContext sslContext;
 
     private boolean isClosed;
     private volatile Channel channel;
@@ -129,13 +132,15 @@ final class NettyStream implements Stream {
     private long readTimeoutMillis = NO_SCHEDULE_TIME;
 
     NettyStream(final ServerAddress address, final SocketSettings settings, final SslSettings sslSettings, final EventLoopGroup workerGroup,
-                final Class<? extends SocketChannel> socketChannelClass, final ByteBufAllocator allocator) {
+                final Class<? extends SocketChannel> socketChannelClass, final ByteBufAllocator allocator,
+                @Nullable final SslContext sslContext) {
         this.address = address;
         this.settings = settings;
         this.sslSettings = sslSettings;
         this.workerGroup = workerGroup;
         this.socketChannelClass = socketChannelClass;
         this.allocator = allocator;
+        this.sslContext = sslContext;
     }
 
     @Override
@@ -191,15 +196,7 @@ final class NettyStream implements Stream {
                 public void initChannel(final SocketChannel ch) {
                     ChannelPipeline pipeline = ch.pipeline();
                     if (sslSettings.isEnabled()) {
-                        SSLEngine engine = getSslContext().createSSLEngine(address.getHost(), address.getPort());
-                        engine.setUseClientMode(true);
-                        SSLParameters sslParameters = engine.getSSLParameters();
-                        enableSni(address.getHost(), sslParameters);
-                        if (!sslSettings.isInvalidHostNameAllowed()) {
-                            enableHostNameVerification(sslParameters);
-                        }
-                        engine.setSSLParameters(sslParameters);
-                        pipeline.addFirst("ssl", new SslHandler(engine, false));
+                        addSslHandler(ch);
                     }
 
                     int readTimeout = settings.getReadTimeout(MILLISECONDS);
@@ -395,12 +392,27 @@ final class NettyStream implements Stream {
         return allocator;
     }
 
-    private SSLContext getSslContext() {
-        try {
-            return (sslSettings.getContext() == null) ? SSLContext.getDefault() : sslSettings.getContext();
-        } catch (NoSuchAlgorithmException e) {
-            throw new MongoClientException("Unable to create default SSLContext", e);
+    private void addSslHandler(final SocketChannel channel) {
+        SSLEngine engine;
+        if (sslContext == null) {
+            SSLContext sslContext;
+            try {
+                sslContext = (sslSettings.getContext() == null) ? SSLContext.getDefault() : sslSettings.getContext();
+            } catch (NoSuchAlgorithmException e) {
+                throw new MongoClientException("Unable to create standard SSLContext", e);
+            }
+            engine = sslContext.createSSLEngine(address.getHost(), address.getPort());
+        } else {
+            engine = sslContext.newEngine(channel.alloc(), address.getHost(), address.getPort());
         }
+        engine.setUseClientMode(true);
+        SSLParameters sslParameters = engine.getSSLParameters();
+        enableSni(address.getHost(), sslParameters);
+        if (!sslSettings.isInvalidHostNameAllowed()) {
+            enableHostNameVerification(sslParameters);
+        }
+        engine.setSSLParameters(sslParameters);
+        channel.pipeline().addFirst("ssl", new SslHandler(engine, false));
     }
 
     private class InboundBufferHandler extends SimpleChannelInboundHandler<io.netty.buffer.ByteBuf> {

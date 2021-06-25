@@ -24,6 +24,10 @@ New features of the 4.3 Java driver release include:
     primarily to prevent accidental use of a replace operation when the intention was to use an update operation.
   * Note that unacknowledged writes using dollar-prefixed or dotted keys may be silently rejected by pre-5.0 servers, where some 
     restrictions on field names are still enforced in the server.
+* Added support for setting
+  [Netty](https://netty.io/) [`io.netty.handler.ssl.SslContext`]({{< nettyapiref "io/netty/handler/ssl/SslContext.html" >}}),
+  which may be used as a convenient way to utilize [OpenSSL](https://www.openssl.org/) as an alternative
+  to the TLS/SSL protocol implementation in a JDK.
 
 # What's new in 4.2
 

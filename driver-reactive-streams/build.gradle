@@ -32,6 +32,7 @@ dependencies {
     testImplementation 'org.reactivestreams:reactive-streams-tck:1.0.2'
     testImplementation 'io.projectreactor:reactor-test'
     testImplementation 'org.mockito:mockito-junit-jupiter:3.5.13'
+    testRuntimeOnly project(path: ':driver-core', configuration: 'consumableTestRuntimeOnly')
 }
 
 sourceSets {
