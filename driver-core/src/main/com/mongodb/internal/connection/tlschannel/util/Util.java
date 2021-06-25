@@ -19,14 +19,9 @@
 
 package com.mongodb.internal.connection.tlschannel.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.net.ssl.SSLEngineResult;
 
 public class Util {
-
-  private static final Logger logger = LoggerFactory.getLogger(Util.class);
 
   public static void assertTrue(boolean condition) {
     if (!condition) throw new AssertionError();

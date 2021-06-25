@@ -19,13 +19,13 @@
 
 package com.mongodb.internal.connection.tlschannel;
 
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.connection.tlschannel.impl.BufferHolder;
 import com.mongodb.internal.connection.tlschannel.impl.ByteBufferSet;
 import com.mongodb.internal.connection.tlschannel.impl.TlsChannelImpl;
 import com.mongodb.internal.connection.tlschannel.impl.TlsChannelImpl.EofException;
 import com.mongodb.internal.connection.tlschannel.impl.TlsExplorer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SNIHostName;
 import javax.net.ssl.SNIServerName;
@@ -50,7 +50,7 @@ import java.util.function.Function;
 /** A server-side {@link TlsChannel}. */
 public class ServerTlsChannel implements TlsChannel {
 
-  private static final Logger logger = LoggerFactory.getLogger(ServerTlsChannel.class);
+  private static final Logger LOGGER = Loggers.getLogger("connection.tls");
 
   private interface SslContextStrategy {
 
@@ -79,7 +79,7 @@ public class ServerTlsChannel implements TlsChannel {
       try {
         chosenContext = sniSslContextFactory.getSslContext(nameOpt);
       } catch (Exception e) {
-        logger.trace("client code threw exception during evaluation of server name indication", e);
+        LOGGER.trace("client code threw exception during evaluation of server name indication", e);
         throw new TlsChannelCallbackException("SNI callback failed", e);
       }
       return chosenContext.orElseThrow(
@@ -367,7 +367,7 @@ public class ServerTlsChannel implements TlsChannel {
         try {
           engine = engineFactory.apply(sslContext);
         } catch (Exception e) {
-          logger.trace("client threw exception in SSLEngine factory", e);
+          LOGGER.trace("client threw exception in SSLEngine factory", e);
           throw new TlsChannelCallbackException("SSLEngine creation callback failed", e);
         }
         impl =
