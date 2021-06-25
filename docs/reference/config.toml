@@ -8,6 +8,7 @@ disableKinds = ["section", "taxonomy", "taxonomyTerm", "404"]
 
 [params]
   javaSeDocsUri = "https://docs.oracle.com/javase/8/docs/"
+  nettyApiUri = "https://netty.io/4.1/api/"
 
 [blackfriday]
   plainIdAnchors = true

@@ -30,18 +30,26 @@ ext {
 // Add native-image.properties
 sourceSets.main.resources.srcDirs = ['src/resources']
 
+configurations {
+    consumableTestRuntimeOnly {
+        extendsFrom testRuntimeOnly
+        canBeConsumed = true
+    }
+}
+
 dependencies {
     api project(path: ':bson', configuration: 'default')
 
     implementation "com.github.jnr:jnr-unixsocket:$jnrUnixsocketVersion", optional
     api "io.netty:netty-buffer:$nettyVersion", optional
     api "io.netty:netty-transport:$nettyVersion", optional
-    implementation "io.netty:netty-handler:$nettyVersion", optional
+    api "io.netty:netty-handler:$nettyVersion", optional
     implementation "org.xerial.snappy:snappy-java:$snappyVersion", optional
     implementation "com.github.luben:zstd-jni:$zstdVersion", optional
     implementation "org.mongodb:mongodb-crypt:$mongoCryptVersion", optional
 
     testImplementation project(':bson').sourceSets.test.output
+    testRuntimeOnly "io.netty:netty-tcnative-boringssl-static:2.0.39.Final"
 }
 
 buildConfig {
