@@ -25,6 +25,6 @@
               <div class="documentwrapper">
                 <div class="bodywrapper">
                   <div class="body">
-                    {{ if ( findRE ".*mongo-java-driver\/4.3\/" .URL ) }}
+                    {{ if ( findRE ".*mongo-java-driver\/4.3\/(?!apidocs)" .URL ) }}
                       {{- partial "header/newSiteNotice.html" . -}}
                     {{ end }}
