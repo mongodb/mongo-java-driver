@@ -25,8 +25,6 @@
               <div class="documentwrapper">
                 <div class="bodywrapper">
                   <div class="body">
-                    {{ if (and (hasPrefix .URL "/driver/") (eq .Site.Data.mongodb.currentVersion "4.3")) }}
+                    {{ if ( findRE ".*mongo-java-driver\/4.3\/" .URL ) }}
                       {{- partial "header/newSiteNotice.html" . -}}
                     {{ end }}
-
-
