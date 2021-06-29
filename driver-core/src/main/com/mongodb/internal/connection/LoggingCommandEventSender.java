@@ -66,9 +66,10 @@ class LoggingCommandEventSender implements CommandEventSender {
     @Override
     public void sendStartedEvent() {
         if (loggingRequired()) {
+            String commandString = redactionRequired ? String.format("{\"%s\": ...", commandName) : getTruncatedJsonCommand();
             logger.debug(
                     format("Sending command '%s' with request id %d to database %s on connection [%s] to server %s",
-                            getTruncatedJsonCommand(), message.getId(),
+                            commandString, message.getId(),
                             message.getNamespace().getDatabaseName(), description.getConnectionId(), description.getServerAddress()));
         }
 
