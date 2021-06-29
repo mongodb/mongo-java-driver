@@ -37,6 +37,23 @@ import static java.util.stream.Collectors.toList;
 public final class Accumulators {
 
     /**
+     * Gets a field name for a $group operation representing the number of documents in the group.
+     *
+     * <p>
+     * {@code Accumulators.count("count")} has equivalent semantics to {@code Accumulators.sum("count", 1)}.
+     * </p>
+     *
+     * @param fieldName the field name
+     * @return the field
+     * @since 4.3
+     * @mongodb.server.release 5.0
+     * @mongodb.driver.manual reference/operator/aggregation/count/ $count
+     */
+    public static BsonField count(final String fieldName) {
+        return accumulatorOperator("$count", fieldName, new BsonDocument());
+    }
+
+    /**
      * Gets a field name for a $group operation representing the sum of the values of the given expression when applied to all members of
      * the group.
      *

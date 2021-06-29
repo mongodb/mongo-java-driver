@@ -32,6 +32,17 @@ import org.mongodb.scala.bson.conversions.Bson
 object Accumulators {
 
   /**
+   * Gets a field name for a `\$group` operation representing the number of documents in the group.
+   *
+   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/count/ \$count]]
+   * @param fieldName the field name
+   * @return the field
+   * @since 4.3
+   * @note Requires MongoDB 5.0 or greater
+   */
+  def count(fieldName: String): BsonField = JAccumulators.count(fieldName)
+
+  /**
    * Gets a field name for a `\$group` operation representing the sum of the values of the given expression when applied to all members of
    * the group.
    *

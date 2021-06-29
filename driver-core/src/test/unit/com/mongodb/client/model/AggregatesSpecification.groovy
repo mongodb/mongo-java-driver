@@ -427,6 +427,7 @@ class AggregatesSpecification extends Specification {
         def groupDocument = parse('''{
                             $group : {
                                       _id : null,
+                                      count: { $count: { } },
                                       sum: { $sum: { $multiply: [ "$price", "$quantity" ] } },
                                       avg: { $avg: "$quantity" },
                                       min: { $min: "$quantity" },
@@ -440,6 +441,7 @@ class AggregatesSpecification extends Specification {
                                      }
                                   }''')
         toBson(group(null,
+                     Accumulators.count('count'),
                      sum('sum', parse('{ $multiply: [ "$price", "$quantity" ] }')),
                      avg('avg', '$quantity'),
                      min('min', '$quantity'),

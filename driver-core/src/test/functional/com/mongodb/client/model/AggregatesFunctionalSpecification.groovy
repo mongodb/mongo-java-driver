@@ -174,6 +174,8 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
 
         aggregate([group('$z')]).containsAll([new Document('_id', true), new Document('_id', false)])
 
+        aggregate([group(null, Accumulators.count('acc'))]) == [new Document('_id', null).append('acc', 3)]
+
         aggregate([group(null, sum('acc', '$x'))]) == [new Document('_id', null).append('acc', 6)]
 
         aggregate([group(null, avg('acc', '$x'))]) == [new Document('_id', null).append('acc', 2)]
