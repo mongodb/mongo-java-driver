@@ -174,8 +174,6 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
 
         aggregate([group('$z')]).containsAll([new Document('_id', true), new Document('_id', false)])
 
-        aggregate([group(null, Accumulators.count('acc'))]) == [new Document('_id', null).append('acc', 3)]
-
         aggregate([group(null, sum('acc', '$x'))]) == [new Document('_id', null).append('acc', 6)]
 
         aggregate([group(null, avg('acc', '$x'))]) == [new Document('_id', null).append('acc', 2)]
@@ -193,6 +191,12 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
 
         aggregate([group('$z', addToSet('acc', '$z'))]).containsAll([new Document('_id', true).append('acc', [true]),
                                                                      new Document('_id', false).append('acc', [false])])
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(5, 0) })
+    def '$group with $count'() {
+        expect:
+        aggregate([group(null, Accumulators.count('acc'))]) == [new Document('_id', null).append('acc', 3)]
     }
 
     def '$out'() {
