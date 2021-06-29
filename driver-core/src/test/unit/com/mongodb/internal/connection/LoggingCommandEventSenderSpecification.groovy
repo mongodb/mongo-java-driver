@@ -55,7 +55,8 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def logger = Stub(Logger) {
             isDebugEnabled() >> debugLoggingEnabled
         }
-        def sender = new LoggingCommandEventSender([] as Set, connectionDescription, commandListener, message, bsonOutput, logger)
+        def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, commandListener, message, bsonOutput,
+                logger)
 
         when:
         sender.sendStartedEvent()
@@ -94,7 +95,8 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def logger = Mock(Logger) {
             isDebugEnabled() >> true
         }
-        def sender = new LoggingCommandEventSender([] as Set, connectionDescription, commandListener, message, bsonOutput, logger)
+        def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, commandListener, message, bsonOutput,
+                logger)
         when:
         sender.sendStartedEvent()
         sender.sendSucceededEventForOneWayCommand()
@@ -140,7 +142,7 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def logger = Mock(Logger) {
             isDebugEnabled() >> true
         }
-        def sender = new LoggingCommandEventSender([] as Set, connectionDescription, null, message, bsonOutput, logger)
+        def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, null, message, bsonOutput, logger)
 
         when:
         sender.sendStartedEvent()

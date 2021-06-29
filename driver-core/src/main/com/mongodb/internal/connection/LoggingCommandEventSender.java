@@ -39,7 +39,6 @@ import static java.lang.String.format;
 class LoggingCommandEventSender implements CommandEventSender {
     private static final int MAX_COMMAND_DOCUMENT_LENGTH_TO_LOG = 1000;
 
-    private final Set<String> securitySensitiveCommands;
     private final ConnectionDescription description;
     private final CommandListener commandListener;
     private final Logger logger;
@@ -47,11 +46,12 @@ class LoggingCommandEventSender implements CommandEventSender {
     private final CommandMessage message;
     private final String commandName;
     private volatile BsonDocument commandDocument;
+    private final boolean redactionRequired;
 
-    LoggingCommandEventSender(final Set<String> securitySensitiveCommands, final ConnectionDescription description,
+    LoggingCommandEventSender(final Set<String> securitySensitiveCommands, final Set<String> securitySensitiveHelloCommands,
+                              final ConnectionDescription description,
                               final CommandListener commandListener, final CommandMessage message,
                               final ByteBufferBsonOutput bsonOutput, final Logger logger) {
-        this.securitySensitiveCommands = securitySensitiveCommands;
         this.description = description;
         this.commandListener = commandListener;
         this.logger = logger;
@@ -59,6 +59,8 @@ class LoggingCommandEventSender implements CommandEventSender {
         this.message = message;
         this.commandDocument = message.getCommandDocument(bsonOutput);
         this.commandName = commandDocument.getFirstKey();
+        this.redactionRequired = securitySensitiveCommands.contains(commandName)
+                || (securitySensitiveHelloCommands.contains(commandName) && commandDocument.containsKey("speculativeAuthenticate"));
     }
 
     @Override
@@ -71,7 +73,7 @@ class LoggingCommandEventSender implements CommandEventSender {
         }
 
         if (eventRequired()) {
-            BsonDocument commandDocumentForEvent = (securitySensitiveCommands.contains(commandName))
+            BsonDocument commandDocumentForEvent = redactionRequired
                     ? new BsonDocument() : commandDocument;
 
             sendCommandStartedEvent(message, message.getNamespace().getDatabaseName(),
@@ -105,7 +107,7 @@ class LoggingCommandEventSender implements CommandEventSender {
     @Override
     public void sendFailedEvent(final Throwable t) {
         Throwable commandEventException = t;
-        if (t instanceof MongoCommandException && (securitySensitiveCommands.contains(commandName))) {
+        if (t instanceof MongoCommandException && redactionRequired) {
             commandEventException = new MongoCommandException(new BsonDocument(), description.getServerAddress());
         }
         long elapsedTimeNanos = System.nanoTime() - startTimeNanos;
@@ -136,7 +138,7 @@ class LoggingCommandEventSender implements CommandEventSender {
         }
 
         if (eventRequired()) {
-            BsonDocument responseDocumentForEvent = (securitySensitiveCommands.contains(commandName))
+            BsonDocument responseDocumentForEvent = redactionRequired
                     ? new BsonDocument()
                     : responseBuffers.getResponseDocument(message.getId(), new RawBsonDocumentCodec());
             sendCommandSucceededEvent(message, commandName, responseDocumentForEvent, description,
