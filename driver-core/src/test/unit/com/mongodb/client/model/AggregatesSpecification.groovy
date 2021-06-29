@@ -54,6 +54,7 @@ import static com.mongodb.client.model.Aggregates.replaceRoot
 import static com.mongodb.client.model.Aggregates.replaceWith
 import static com.mongodb.client.model.Aggregates.sample
 import static com.mongodb.client.model.Aggregates.set
+import static com.mongodb.client.model.Aggregates.setWindowFields
 import static com.mongodb.client.model.Aggregates.skip
 import static com.mongodb.client.model.Aggregates.sort
 import static com.mongodb.client.model.Aggregates.sortByCount
@@ -67,6 +68,10 @@ import static com.mongodb.client.model.Projections.fields
 import static com.mongodb.client.model.Projections.include
 import static com.mongodb.client.model.Sorts.ascending
 import static com.mongodb.client.model.Sorts.descending
+import static MongoTimeUnit.DAY
+import static com.mongodb.client.model.Windows.Bound.CURRENT
+import static com.mongodb.client.model.Windows.Bound.UNBOUNDED
+import static com.mongodb.client.model.Windows.documents
 import static java.util.Arrays.asList
 import static org.bson.BsonDocument.parse
 
@@ -451,6 +456,86 @@ class AggregatesSpecification extends Specification {
                      stdDevPop('stdDevPop', '$quantity'),
                      stdDevSamp('stdDevSamp', '$quantity')
         )) == groupDocument
+    }
+
+    def 'should render $setWindowFields'() {
+        given:
+        Window window = documents(1, 2)
+        BsonDocument setWindowFieldsBson = toBson(setWindowFields('$partitionByField', ascending('sortByField'), asList(
+                WindowedComputations.sum('newField01', '$field01', Windows.range(1, CURRENT)),
+                WindowedComputations.avg('newField02', '$field02', Windows.range(UNBOUNDED, 1)),
+                WindowedComputations.stdDevSamp('newField03', '$field03', window),
+                WindowedComputations.stdDevPop('newField04', '$field04', window),
+                WindowedComputations.min('newField05', '$field05', window),
+                WindowedComputations.max('newField06', '$field06', window),
+                WindowedComputations.count('newField07', window),
+                WindowedComputations.derivative('newField08', '$field08', window),
+                WindowedComputations.timeDerivative('newField09', '$field09', window, DAY),
+                WindowedComputations.integral('newField10', '$field10', window),
+                WindowedComputations.timeIntegral('newField11', '$field11', window, DAY),
+                WindowedComputations.timeIntegral('newField11', '$field11', window, DAY),
+                WindowedComputations.covarianceSamp('newField12', '$field12_1', '$field12_2', window),
+                WindowedComputations.covariancePop('newField13', '$field13_1', '$field13_2', window),
+                WindowedComputations.expMovingAvg('newField14', '$field14', 3),
+                WindowedComputations.expMovingAvg('newField15', '$field15', 0.5),
+                WindowedComputations.push('newField16', '$field16', window),
+                WindowedComputations.addToSet('newField17', '$field17', window),
+                WindowedComputations.first('newField18', '$field18', window),
+                WindowedComputations.last('newField19', '$field19', window),
+                WindowedComputations.shift('newField20', '$field20', 'defaultConstantValue', -3),
+                WindowedComputations.documentNumber('newField21'),
+                WindowedComputations.rank('newField22'),
+                WindowedComputations.denseRank('newField23'))
+        ))
+
+        expect:
+        setWindowFieldsBson == parse('''{
+                "$setWindowFields": {
+                    "partitionBy": "$partitionByField",
+                    "sortBy": { "sortByField" : 1 },
+                    "output": {
+                        "newField01": { "$sum": "$field01", "window": { "range": [{"$numberLong": "1"}, "current"] } },
+                        "newField02": { "$avg": "$field02", "window": { "range": ["unbounded", {"$numberLong": "1"}] } },
+                        "newField03": { "$stdDevSamp": "$field03", "window": { "documents": [1, 2] } },
+                        "newField04": { "$stdDevPop": "$field04", "window": { "documents": [1, 2] } },
+                        "newField05": { "$min": "$field05", "window": { "documents": [1, 2] } },
+                        "newField06": { "$max": "$field06", "window": { "documents": [1, 2] } },
+                        "newField07": { "$count": {}, "window": { "documents": [1, 2] } },
+                        "newField08": { "$derivative": { "input": "$field08" }, "window": { "documents": [1, 2] } },
+                        "newField09": { "$derivative": { "input": "$field09", "unit": "day" }, "window": { "documents": [1, 2] } },
+                        "newField10": { "$integral": { "input": "$field10"}, "window": { "documents": [1, 2] } },
+                        "newField11": { "$integral": { "input": "$field11", "unit": "day" }, "window": { "documents": [1, 2] } },
+                        "newField12": { "$covarianceSamp": ["$field12_1", "$field12_2"], "window": { "documents": [1, 2] } },
+                        "newField13": { "$covariancePop": ["$field13_1", "$field13_2"], "window": { "documents": [1, 2] } },
+                        "newField14": { "$expMovingAvg": { "input": "$field14", "N": 3 } },
+                        "newField15": { "$expMovingAvg": { "input": "$field15", "alpha": 0.5 } },
+                        "newField16": { "$push": "$field16", "window": { "documents": [1, 2] } },
+                        "newField17": { "$addToSet": "$field17", "window": { "documents": [1, 2] } },
+                        "newField18": { "$first": "$field18", "window": { "documents": [1, 2] } },
+                        "newField19": { "$last": "$field19", "window": { "documents": [1, 2] } },
+                        "newField20": { "$shift": { "output": "$field20", "by": -3, "default": "defaultConstantValue" } },
+                        "newField21": { "$documentNumber": {} },
+                        "newField22": { "$rank": {} },
+                        "newField23": { "$denseRank": {} }
+                    }
+                }
+        }''')
+    }
+
+    def 'should render $setWindowFields with no partitionBy/sortBy'() {
+        given:
+        BsonDocument setWindowFields = toBson(setWindowFields(null, null, asList(
+                WindowedComputations.sum('newField01', '$field01', documents(1, 2)))
+        ))
+
+        expect:
+        setWindowFields == parse('''{
+                "$setWindowFields": {
+                    "output": {
+                        "newField01": { "$sum": "$field01", "window": { "documents": [1, 2] } }
+                    }
+                }
+        }''')
     }
 
     def 'should create string representation for simple stages'() {

@@ -10,8 +10,9 @@ title = "Aggregates"
 
 ## Aggregates
 
-The [`Aggregates`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Aggregates" >}}) class provides static factory methods that build [aggregation
-pipeline operators]({{< docsref "reference/operator/aggregation/" >}}).  Each method returns an instance of the
+The [`Aggregates`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Aggregates" >}}) class provides static factory methods
+that build [aggregation pipeline stages]({{< docsref "meta/aggregation-quick-reference/#stages" >}}).
+Each method returns an instance of the
 [`Bson`]({{< relref "bson/documents.md#bson" >}}) type, which can in turn be passed to the `aggregate` method of `MongoCollection`.
 
 For brevity, you may choose to import the methods of the `Aggregates` class statically:
@@ -427,9 +428,27 @@ This stage returns a document that looks like this:
 
 ```
 
+### SetWindowFields
+
+The [`$setWindowFields`](https://dochub.mongodb.org/core/window-functions-set-window-fields) pipeline stage
+allows using window operators. This stage partitions the input documents similarly to the [`$group`](#group) pipeline stage,
+optionally sorts them, computes fields in the documents by computing window functions over windows specified per function
+(a window is a subset of a partition), and outputs the documents. The important difference from the `$group` pipeline stage is that
+documents belonging to the same partition or window are not folded into a single document.
+
+This example computes the accumulated rainfall and the average temperature over the past month per each locality
+from more fine-grained measurements presented via the `rainfall` and `temp` fields:
+
+```java
+Window pastMonth = Windows.timeRange(-1, Windows.Bound.CURRENT, Unit.MONTH);
+setWindowFields("$localityId", Sorts.ascending("measurementDateTime"),
+        WindowedComputations.sum("monthRainfall", "$rainfall", pastMonth),
+        WindowedComputations.avg("monthAvgTemp", "$temp", pastMonth));
+```
+
 ### Creating a Pipeline
 
-The above pipeline operators are typically combined into a list and passed to the `aggregate` method of a `MongoCollection`.  For instance:
+The above pipeline stages are typically combined into a list and passed to the `aggregate` method of a `MongoCollection`.  For instance:
 
 ```java
 collection.aggregate(Arrays.asList(match(eq("author", "Dave")),

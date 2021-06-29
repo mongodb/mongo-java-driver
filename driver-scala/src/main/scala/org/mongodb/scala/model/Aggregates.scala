@@ -446,10 +446,32 @@ object Aggregates {
    *
    * @param collection    the name of the collection in the same database to perform the union with.
    * @param pipeline      the pipeline to run on the union.
-   * @return the `\$unionWith``pipeline stage
+   * @return the `\$unionWith` pipeline stage
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/unionWith/]]
    */
   def unionWith(collection: String, pipeline: Bson*): Bson =
     JAggregates.unionWith(collection, pipeline.asJava)
 
+  /**
+   * Creates a `\$setWindowFields` pipeline stage, which allows using window operators.
+   * This stage partitions the input documents similarly to the [[Aggregates.group \$group]] pipeline stage,
+   * optionally sorts them, computes fields in the documents by computing window functions over [[Window windows]] specified per
+   * function, and outputs the documents. The important difference from the `\$group` pipeline stage is that
+   * documents belonging to the same partition or window are not folded into a single document.
+   *
+   * @param partitionBy Optional partitioning of data specified like `id` in [[Aggregates.group]].
+   *                    If `null`, then all documents belong to the same partition.
+   * @param sortBy      Fields to sort by. May be `null`. The syntax is identical to `sort` in [[Aggregates.sort]] (see [[Sorts]]).
+   *                    Sorting is required by certain functions and may be required by some windows (see [[Windows]] for more details).
+   *                    Sorting is used only for the purpose of computing window functions and does not guarantee ordering
+   *                    of the output documents.
+   * @param output      A nonempty list of [[WindowedComputation windowed computations]].
+   * @tparam TExpression The `partitionBy` expression type.
+   * @return The `\$setWindowFields` pipeline stage.
+   * @see [[http://dochub.mongodb.org/core/window-functions-set-window-fields \$setWindowFields]]
+   * @since 4.3
+   * @note Requires MongoDB 5.0 or greater.
+   */
+  def setWindowFields[TExpression](partitionBy: TExpression, sortBy: Bson, output: WindowedComputation*): Bson =
+    JAggregates.setWindowFields(partitionBy, sortBy, output.asJava)
 }

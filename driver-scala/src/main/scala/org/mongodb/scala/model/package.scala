@@ -17,6 +17,7 @@
 package org.mongodb.scala
 
 import scala.collection.JavaConverters._
+import com.mongodb.client.model.{ MongoTimeUnit => JMongoTimeUnit }
 import org.mongodb.scala.bson.conversions.Bson
 
 // scalastyle:off number.of.methods number.of.types
@@ -768,6 +769,73 @@ package object model {
       new com.mongodb.client.model.Variable[TExpression](name, value)
 
   }
+
+  /**
+   * Units for specifying time-based bounds for [[Window windows]] and output units for some time-based
+   * [[WindowedComputation windowed computations]].
+   *
+   * @since 4.3
+   */
+  object MongoTimeUnit {
+
+    /**
+     * @note Requires MongoDB 5.0 or greater.
+     */
+    val YEAR = JMongoTimeUnit.YEAR
+
+    /**
+     * @note Requires MongoDB 5.0 or greater.
+     */
+    val MONTH = JMongoTimeUnit.MONTH
+
+    /**
+     * @note Requires MongoDB 5.0 or greater.
+     */
+    val WEEK = JMongoTimeUnit.WEEK
+
+    /**
+     * @note Requires MongoDB 5.0 or greater.
+     */
+    val DAY = JMongoTimeUnit.DAY
+
+    /**
+     * @note Requires MongoDB 5.0 or greater.
+     */
+    val HOUR = JMongoTimeUnit.HOUR
+
+    /**
+     * @note Requires MongoDB 5.0 or greater.
+     */
+    val MINUTE = JMongoTimeUnit.MINUTE
+
+    /**
+     * @note Requires MongoDB 5.0 or greater.
+     */
+    val SECOND = JMongoTimeUnit.SECOND
+
+    /**
+     * @note Requires MongoDB 5.0 or greater.
+     */
+    val MILLISECOND = JMongoTimeUnit.MILLISECOND
+  }
+
+  /**
+   * A subset of documents within a partition in the [[Aggregates.setWindowFields \$setWindowFields]] pipeline stage
+   * of an aggregation pipeline (see `partitionBy` in [[Aggregates.setWindowFields]]).
+   *
+   * @see [[Windows]]
+   * @since 4.3
+   */
+  type Window = com.mongodb.client.model.Window
+
+  /**
+   * The core part of the [[Aggregates.setWindowFields \$setWindowFields]] pipeline stage of an aggregation pipeline.
+   * A triple of a window function, a [[Window window]] and a path to a field to be computed by the window function over the window.
+   *
+   * @see [[WindowedComputations]]
+   * @since 4.3
+   */
+  type WindowedComputation = com.mongodb.client.model.WindowedComputation
 }
 
 // scalastyle:on number.of.methods number.of.types

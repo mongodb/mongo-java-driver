@@ -25,6 +25,11 @@ import org.bson.Document
 import org.bson.conversions.Bson
 import spock.lang.IgnoreIf
 
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.model.Accumulators.accumulator
 import static com.mongodb.client.model.Accumulators.addToSet
@@ -54,6 +59,7 @@ import static com.mongodb.client.model.Aggregates.replaceRoot
 import static com.mongodb.client.model.Aggregates.replaceWith
 import static com.mongodb.client.model.Aggregates.sample
 import static com.mongodb.client.model.Aggregates.set
+import static com.mongodb.client.model.Aggregates.setWindowFields
 import static com.mongodb.client.model.Aggregates.skip
 import static com.mongodb.client.model.Aggregates.sort
 import static com.mongodb.client.model.Aggregates.sortByCount
@@ -69,7 +75,13 @@ import static com.mongodb.client.model.Projections.fields
 import static com.mongodb.client.model.Projections.include
 import static com.mongodb.client.model.Sorts.ascending
 import static com.mongodb.client.model.Sorts.descending
+import static com.mongodb.client.model.Windows.Bound.CURRENT
+import static com.mongodb.client.model.Windows.Bound.UNBOUNDED
+import static com.mongodb.client.model.Windows.documents
+import static com.mongodb.client.model.Windows.range
+import static com.mongodb.client.model.Windows.timeRange
 import static java.util.Arrays.asList
+import static java.util.stream.Collectors.toList
 import static org.spockframework.util.CollectionUtil.containsAny
 
 class AggregatesFunctionalSpecification extends OperationFunctionalSpecification {
@@ -1027,5 +1039,111 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         cleanup:
         coll1Helper?.drop()
         coll2Helper?.drop()
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(5, 0) })
+    def '$setWindowFields'(Object partitionBy, Bson sortBy, WindowedComputation output, List<Object> expectedFieldValues) {
+        given:
+        ZoneId utc = ZoneId.of(ZoneOffset.UTC.getId())
+        getCollectionHelper().drop()
+        Document[] original = [
+                new Document('partitionId', 1)
+                        .append('num1', 1)
+                        .append('num2', -1)
+                        .append('date1', LocalDateTime.ofInstant(Instant.ofEpochSecond(1), utc))
+                        .append('date2', LocalDateTime.ofInstant(Instant.ofEpochSecond(-1), utc)),
+                new Document('partitionId', 1)
+                        .append('num1', 2)
+                        .append('num2', -2)
+                        .append('date1', LocalDateTime.ofInstant(Instant.ofEpochSecond(2), utc))
+                        .append('date2', LocalDateTime.ofInstant(Instant.ofEpochSecond(-2), utc)),
+                new Document('partitionId', 2)
+                        .append('num1', 3)
+                        .append('num2', -3)
+                        .append('date1', LocalDateTime.ofInstant(Instant.ofEpochSecond(3), utc))
+                        .append('date2', LocalDateTime.ofInstant(Instant.ofEpochSecond(-3), utc))]
+        getCollectionHelper().insertDocuments(original)
+        List<Document> actual = aggregate([
+                setWindowFields(partitionBy, sortBy, output),
+                // guarantee ordering of the output documents
+                sort(ascending('num1'))])
+        List<Object> actualFieldValues = actual.stream()
+                .map { doc -> doc.get('result') }
+                .collect(toList())
+
+        expect:
+        actualFieldValues == expectedFieldValues
+
+        where:
+        partitionBy | sortBy | output | expectedFieldValues
+        null | null | WindowedComputations
+                .sum('result', '$num1', null) | [6, 6, 6]
+        null | null | WindowedComputations
+                .sum('result', '$num1', documents(UNBOUNDED, UNBOUNDED)) | [6, 6, 6]
+        '$partitionId' | ascending('num1') | WindowedComputations
+                .sum('result', '$num1', range(0, UNBOUNDED)) | [3, 2, 3]
+        null | ascending('num1') | WindowedComputations
+                .sum('result', '$num1', range(CURRENT, Integer.MAX_VALUE)) | [6, 5, 3]
+        null | ascending('date1') | WindowedComputations
+                .avg('result', '$num1', timeRange(Integer.MIN_VALUE, 0, MongoTimeUnit.SECOND))                 | [1, 1.5, 2]
+        null | null | WindowedComputations
+                .stdDevSamp('result', '$num1', documents(UNBOUNDED, UNBOUNDED)) | [1.0, 1.0, 1.0]
+        null | ascending('num1') | WindowedComputations
+                .stdDevPop('result', '$num1', documents(CURRENT, CURRENT)) | [0, 0, 0]
+        null | ascending('num1') | WindowedComputations
+                .min('result', '$num1', documents(-1, 0)) | [1, 1, 2]
+        null | null | WindowedComputations
+                .max('result', '$num1', null) | [3, 3, 3]
+        '$partitionId' | null | WindowedComputations
+                .count('result', null) | [2, 2, 1]
+        null | ascending('num1') | WindowedComputations
+                .derivative('result', '$num2', documents(UNBOUNDED, UNBOUNDED)) | [-1, -1, -1]
+        null | ascending('date1') | WindowedComputations
+                .timeDerivative('result', '$num2', documents(UNBOUNDED, UNBOUNDED), MongoTimeUnit.MILLISECOND) | [-0.001, -0.001, -0.001]
+        null | ascending('num1') | WindowedComputations
+                .integral('result', '$num2', documents(UNBOUNDED, UNBOUNDED)) | [-4, -4, -4]
+        null | ascending('date1') | WindowedComputations
+                .timeIntegral('result', '$num2', documents(UNBOUNDED, UNBOUNDED), MongoTimeUnit.SECOND)        | [-4, -4, -4]
+        null | null | WindowedComputations
+                .covarianceSamp('result', '$num1', '$num2', documents(UNBOUNDED, UNBOUNDED)) | [-1.0, -1.0, -1.0]
+        null | ascending('num1') | WindowedComputations
+                .covariancePop('result', '$num1', '$num2', documents(CURRENT, CURRENT)) | [0, 0, 0]
+        null | ascending('num1') | WindowedComputations
+                .expMovingAvg('result', '$num1', 1) | [1, 2, 3]
+        null | ascending('num1') | WindowedComputations
+                .expMovingAvg('result', '$num1', 0.5) | [1.0, 1.5, 2.25]
+        null | descending('num1') | WindowedComputations
+                .push('result', '$num1', documents(UNBOUNDED, CURRENT)) |[ [3, 2, 1], [3, 2], [3] ]
+        null | ascending('num1') | WindowedComputations
+                .addToSet('result', '$partitionId', documents(UNBOUNDED, -1)) |[ [], [1], [1] ]
+        null | ascending('num1') | WindowedComputations
+                .first('result', '$num1', documents(UNBOUNDED, UNBOUNDED)) |[ 1, 1, 1 ]
+        null | ascending('num1') | WindowedComputations
+                .last('result', '$num1', documents(UNBOUNDED, UNBOUNDED)) |[ 3, 3, 3 ]
+        null | ascending('num1') | WindowedComputations
+                .shift('result', '$num1', -3, 1) |[ 2, 3, -3 ]
+        null | ascending('num1') | WindowedComputations
+                .documentNumber('result') |[ 1, 2, 3 ]
+        null | ascending('partitionId') | WindowedComputations
+                .rank('result') |[ 1, 1, 3 ]
+        null | ascending('partitionId') | WindowedComputations
+                .denseRank('result') |[ 1, 1, 2 ]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(5, 0) })
+    def '$setWindowFields with multiple output'() {
+        given:
+        getCollectionHelper().drop()
+        Document[] original = [new Document('num', 1)]
+        getCollectionHelper().insertDocuments(original)
+        List<Document> actual = aggregate([
+                setWindowFields(null, null, [
+                        WindowedComputations.count('count', null),
+                        WindowedComputations.max('max', '$num', null)]),
+                project(fields(excludeId()))])
+
+        expect:
+        actual.size() == 1
+        actual.get(0) == original[0].append('count', 1).append('max', 1)
     }
 }
