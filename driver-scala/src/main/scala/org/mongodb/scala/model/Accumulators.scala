@@ -34,7 +34,7 @@ object Accumulators {
   /**
    * Gets a field name for a `\$group` operation representing the number of documents in the group.
    *
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/count/ \$count]]
+   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/count-accum/  \$count]]
    * @param fieldName the field name
    * @return the field
    * @since 4.3

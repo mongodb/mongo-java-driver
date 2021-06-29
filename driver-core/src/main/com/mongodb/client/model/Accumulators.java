@@ -47,7 +47,7 @@ public final class Accumulators {
      * @return the field
      * @since 4.3
      * @mongodb.server.release 5.0
-     * @mongodb.driver.manual reference/operator/aggregation/count/ $count
+     * @mongodb.driver.manual reference/operator/aggregation/count-accum/  $count
      */
     public static BsonField count(final String fieldName) {
         return accumulatorOperator("$count", fieldName, new BsonDocument());
