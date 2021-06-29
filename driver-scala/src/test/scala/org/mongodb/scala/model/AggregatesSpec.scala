@@ -98,8 +98,8 @@ class AggregatesSpec extends BaseSpec {
   }
 
   it should "render $count" in {
-    toBson(count()) should equal(Document("""{$count: "count"}"""))
-    toBson(count("total")) should equal(Document("""{$count: "total"}"""))
+    toBson(Aggregates.count()) should equal(Document("""{$count: "count"}"""))
+    toBson(Aggregates.count("total")) should equal(Document("""{$count: "total"}"""))
   }
 
   it should "render $match" in {
@@ -362,6 +362,7 @@ class AggregatesSpec extends BaseSpec {
     val groupDocument = Document("""{
       $group : {
         _id : null,
+        count: { $count: { } },
         sum: { $sum: { $multiply: [ "$price", "$quantity" ] } },
         avg: { $avg: "$quantity" },
         min: { $min: "$quantity" },
@@ -378,6 +379,7 @@ class AggregatesSpec extends BaseSpec {
     toBson(
       group(
         null,
+        Accumulators.count("count"),
         sum("sum", Document("""{ $multiply: [ "$price", "$quantity" ] }""")),
         avg("avg", "$quantity"),
         min("min", "$quantity"),
