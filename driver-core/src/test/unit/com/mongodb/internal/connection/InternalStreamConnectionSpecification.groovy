@@ -674,7 +674,10 @@ class InternalStreamConnectionSpecification extends Specification {
                 new BsonDocument('updateUser', new BsonInt32(1)),
                 new BsonDocument('copydbgetnonce', new BsonInt32(1)),
                 new BsonDocument('copydbsaslstart', new BsonInt32(1)),
-                new BsonDocument('copydb', new BsonInt32(1))
+                new BsonDocument('copydb', new BsonInt32(1)),
+                new BsonDocument('hello', new BsonInt32(1)).append('speculativeAuthenticate', new BsonDocument()),
+                new BsonDocument('ismaster', new BsonInt32(1)).append('speculativeAuthenticate', new BsonDocument()),
+                new BsonDocument('isMaster', new BsonInt32(1)).append('speculativeAuthenticate', new BsonDocument())
         ]
     }
 
@@ -707,7 +710,10 @@ class InternalStreamConnectionSpecification extends Specification {
                 new BsonDocument('updateUser', new BsonInt32(1)),
                 new BsonDocument('copydbgetnonce', new BsonInt32(1)),
                 new BsonDocument('copydbsaslstart', new BsonInt32(1)),
-                new BsonDocument('copydb', new BsonInt32(1))
+                new BsonDocument('copydb', new BsonInt32(1)),
+                new BsonDocument('hello', new BsonInt32(1)).append('speculativeAuthenticate', new BsonDocument()),
+                new BsonDocument('ismaster', new BsonInt32(1)).append('speculativeAuthenticate', new BsonDocument()),
+                new BsonDocument('isMaster', new BsonInt32(1)).append('speculativeAuthenticate', new BsonDocument())
         ]
     }
 
@@ -894,7 +900,10 @@ class InternalStreamConnectionSpecification extends Specification {
                 new BsonDocument('updateUser', new BsonInt32(1)),
                 new BsonDocument('copydbgetnonce', new BsonInt32(1)),
                 new BsonDocument('copydbsaslstart', new BsonInt32(1)),
-                new BsonDocument('copydb', new BsonInt32(1))
+                new BsonDocument('copydb', new BsonInt32(1)),
+                new BsonDocument('hello', new BsonInt32(1)).append('speculativeAuthenticate', new BsonDocument()),
+                new BsonDocument('ismaster', new BsonInt32(1)).append('speculativeAuthenticate', new BsonDocument()),
+                new BsonDocument('isMaster', new BsonInt32(1)).append('speculativeAuthenticate', new BsonDocument())
         ]
     }
 
