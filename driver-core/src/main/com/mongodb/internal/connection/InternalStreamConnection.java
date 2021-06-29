@@ -90,6 +90,11 @@ public class InternalStreamConnection implements InternalConnection {
             "copydbsaslstart",
             "copydb"));
 
+    private static final Set<String> SECURITY_SENSITIVE_HELLO_COMMANDS = new HashSet<String>(asList(
+            "hello",
+            "ismaster",
+            "isMaster"));
+
     private static final Logger LOGGER = Loggers.getLogger("connection");
 
     private final ClusterConnectionMode clusterConnectionMode;
@@ -787,8 +792,8 @@ public class InternalStreamConnection implements InternalConnection {
 
     private CommandEventSender createCommandEventSender(final CommandMessage message, final ByteBufferBsonOutput bsonOutput) {
         if (opened() && (commandListener != null || COMMAND_PROTOCOL_LOGGER.isDebugEnabled())) {
-            return new LoggingCommandEventSender(SECURITY_SENSITIVE_COMMANDS, description, commandListener, message, bsonOutput,
-                    COMMAND_PROTOCOL_LOGGER);
+            return new LoggingCommandEventSender(SECURITY_SENSITIVE_COMMANDS, SECURITY_SENSITIVE_HELLO_COMMANDS, description,
+                    commandListener, message, bsonOutput, COMMAND_PROTOCOL_LOGGER);
         } else {
             return new NoOpCommandEventSender();
         }
