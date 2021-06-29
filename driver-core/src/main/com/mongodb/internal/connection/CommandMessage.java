@@ -53,6 +53,7 @@ import static com.mongodb.internal.connection.BsonWriterHelper.writePayload;
 import static com.mongodb.internal.connection.ReadConcernHelper.getReadConcernDocument;
 import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_TWO_WIRE_VERSION;
 import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_ZERO_WIRE_VERSION;
+import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSION;
 import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION;
 
 /**
@@ -322,7 +323,7 @@ public final class CommandMessage extends RequestMessage {
 
 
     private void addReadConcernDocument(final List<BsonElement> extraElements, final SessionContext sessionContext) {
-        BsonDocument readConcernDocument = getReadConcernDocument(sessionContext);
+        BsonDocument readConcernDocument = getReadConcernDocument(sessionContext, MIN_WIRE_VERSION);
         if (!readConcernDocument.isEmpty()) {
             extraElements.add(new BsonElement("readConcern", readConcernDocument));
         }

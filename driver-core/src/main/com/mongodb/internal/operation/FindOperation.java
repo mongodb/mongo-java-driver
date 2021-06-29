@@ -69,6 +69,7 @@ import static com.mongodb.internal.operation.OperationHelper.validateFindOptions
 import static com.mongodb.internal.operation.OperationHelper.withAsyncReadConnection;
 import static com.mongodb.internal.operation.OperationHelper.withReadConnectionSource;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
+import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSION;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
 
 /**
@@ -762,7 +763,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     public <R> ReadOperation<R> asExplainableOperation(@Nullable final ExplainVerbosity verbosity,
                                                        final Decoder<R> resultDecoder) {
         return new CommandReadOperation<R>(getNamespace().getDatabaseName(),
-                asExplainCommand(getCommand(NoOpSessionContext.INSTANCE), verbosity),
+                asExplainCommand(getCommand(NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION), verbosity),
                 resultDecoder);
     }
 
@@ -770,7 +771,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     public <R> AsyncReadOperation<R> asAsyncExplainableOperation(@Nullable final ExplainVerbosity verbosity,
                                                                  final Decoder<R> resultDecoder) {
         return new CommandReadOperation<R>(getNamespace().getDatabaseName(),
-                asExplainCommand(getCommand(NoOpSessionContext.INSTANCE), verbosity),
+                asExplainCommand(getCommand(NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION), verbosity),
                 resultDecoder);
     }
 
@@ -816,10 +817,10 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         return document;
     }
 
-    private BsonDocument getCommand(final SessionContext sessionContext) {
+    private BsonDocument getCommand(final SessionContext sessionContext, final int maxWireVersion) {
         BsonDocument commandDocument = new BsonDocument("find", new BsonString(namespace.getCollectionName()));
 
-        appendReadConcernToCommand(sessionContext, commandDocument);
+        appendReadConcernToCommand(sessionContext, maxWireVersion, commandDocument);
 
         putIfNotNull(commandDocument, "filter", filter);
         putIfNotNullOrEmpty(commandDocument, "sort", sort);
@@ -890,7 +891,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
             @Override
             public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
                 validateFindOptions(connectionDescription, sessionContext.getReadConcern(), collation, allowDiskUse);
-                return getCommand(sessionContext);
+                return getCommand(sessionContext, connectionDescription.getMaxWireVersion());
             }
         };
     }

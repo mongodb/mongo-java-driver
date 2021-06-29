@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.MongoClientException;
 import com.mongodb.ReadConcernLevel;
 import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonDocument;
@@ -23,10 +24,11 @@ import org.bson.BsonString;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.operation.ServerVersionHelper.FIVE_DOT_ZERO_WIRE_VERSION;
 
 public final class ReadConcernHelper {
 
-    public static BsonDocument getReadConcernDocument(final SessionContext sessionContext) {
+    public static BsonDocument getReadConcernDocument(final SessionContext sessionContext, final int maxWireVersion) {
         notNull("sessionContext", sessionContext);
 
         BsonDocument readConcernDocument = new BsonDocument();
@@ -36,7 +38,10 @@ public final class ReadConcernHelper {
             readConcernDocument.append("level", new BsonString(level.getValue()));
         }
 
-        assertFalse(shouldAddAfterClusterTime(sessionContext) && shouldAddAtClusterTime(sessionContext));
+        assertFalse(sessionContext.isSnapshot() && sessionContext.isCausallyConsistent());
+        if (sessionContext.isSnapshot() && maxWireVersion < FIVE_DOT_ZERO_WIRE_VERSION) {
+            throw new MongoClientException("Snapshot reads require MongoDB 5.0 or later");
+        }
         if (shouldAddAfterClusterTime(sessionContext)) {
             readConcernDocument.append("afterClusterTime", sessionContext.getOperationTime());
         } else if (shouldAddAtClusterTime(sessionContext)) {
