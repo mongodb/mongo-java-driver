@@ -30,7 +30,6 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
-import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionId;
@@ -247,7 +246,8 @@ public final class Entities {
         entities.put(id, entity);
     }
 
-    public void init(final BsonArray entitiesArray, final Function<MongoClientSettings, MongoClient> mongoClientSupplier) {
+    public void init(final BsonArray entitiesArray, final Function<MongoClientSettings, MongoClient> mongoClientSupplier,
+                     final Function<MongoDatabase, GridFSBucket> gridFSBucketSupplier) {
         for (BsonValue cur : entitiesArray.getValues()) {
             String entityType = cur.asDocument().getFirstKey();
             BsonDocument entity = cur.asDocument().getDocument(entityType);
@@ -269,7 +269,7 @@ public final class Entities {
                     break;
                 }
                 case "bucket": {
-                    initBucket(entity, id);
+                    initBucket(entity, id, gridFSBucketSupplier);
                     break;
                 }
                 default:
@@ -462,12 +462,12 @@ public final class Entities {
         putEntity(id + "-identifier", session.getServerSession().getIdentifier(), sessionIdentifiers);
     }
 
-    private void initBucket(final BsonDocument entity, final String id) {
+    private void initBucket(final BsonDocument entity, final String id, final Function<MongoDatabase, GridFSBucket> gridFSBucketSupplier) {
         MongoDatabase database = databases.get(entity.getString("database").getValue());
         if (entity.containsKey("bucketOptions")) {
             throw new UnsupportedOperationException("Unsupported session specification: bucketOptions");
         }
-        putEntity(id, GridFSBuckets.create(database), buckets);
+        putEntity(id, gridFSBucketSupplier.apply(database), buckets);
     }
 
     private TransactionOptions getTransactionOptions(final BsonDocument options) {

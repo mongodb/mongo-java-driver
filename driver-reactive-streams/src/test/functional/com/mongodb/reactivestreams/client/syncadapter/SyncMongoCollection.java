@@ -673,7 +673,7 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
 
     @Override
     public ListIndexesIterable<Document> listIndexes() {
-        throw new UnsupportedOperationException();
+        return listIndexes(Document.class);
     }
 
     @Override
