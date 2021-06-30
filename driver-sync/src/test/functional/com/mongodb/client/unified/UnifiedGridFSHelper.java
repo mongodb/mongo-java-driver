@@ -17,12 +17,17 @@
 package com.mongodb.client.unified;
 
 import com.mongodb.client.gridfs.GridFSBucket;
+import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import com.mongodb.internal.HexUtils;
 import org.bson.BsonDocument;
+import org.bson.BsonDocumentReader;
 import org.bson.BsonObjectId;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.bson.Document;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.DocumentCodec;
 import util.Hex;
 
 import java.io.ByteArrayInputStream;
@@ -79,6 +84,40 @@ final class UnifiedGridFSHelper {
         }
     }
 
+    public OperationResult executeDownloadByName(final BsonDocument operation) {
+        GridFSBucket bucket = entities.getBucket(operation.getString("object").getValue());
+
+        BsonDocument arguments = operation.getDocument("arguments");
+        String filename = arguments.getString("filename").getValue();
+        requireNonNull(filename);
+        GridFSDownloadOptions options = getDownloadOptions(arguments);
+
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            bucket.downloadToStream(filename, baos, options);
+            return OperationResult.of(new BsonString(HexUtils.toHex(baos.toByteArray())));
+        } catch (Exception e) {
+            return OperationResult.of(e);
+        }
+    }
+
+    private GridFSDownloadOptions getDownloadOptions(final BsonDocument arguments) {
+        GridFSDownloadOptions options = new GridFSDownloadOptions();
+
+        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
+            switch (cur.getKey()) {
+                case "filename":
+                    break;
+                case "revision":
+                    options.revision(cur.getValue().asNumber().intValue());
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+            }
+        }
+        return options;
+    }
+
     public OperationResult executeUpload(final BsonDocument operation) {
         GridFSBucket bucket = entities.getBucket(operation.getString("object").getValue());
 
@@ -87,7 +126,7 @@ final class UnifiedGridFSHelper {
         byte[] bytes = null;
         GridFSUploadOptions options = new GridFSUploadOptions();
 
-        for (Map.Entry<String, BsonValue> cur : operation.getDocument("arguments").entrySet()) {
+        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
                 case "filename":
                     filename = cur.getValue().asString().getValue();
@@ -97,6 +136,11 @@ final class UnifiedGridFSHelper {
                     break;
                 case "chunkSizeBytes":
                     options.chunkSizeBytes(cur.getValue().asInt32().getValue());
+                    break;
+                case "disableMD5":
+                    break;
+                case "metadata":
+                    options.metadata(asDocument(cur.getValue().asDocument()));
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -116,5 +160,9 @@ final class UnifiedGridFSHelper {
         } catch (Exception e) {
             return OperationResult.of(e);
         }
+    }
+
+    Document asDocument(final BsonDocument bsonDocument) {
+        return new DocumentCodec().decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build());
     }
 }

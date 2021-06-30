@@ -16,9 +16,6 @@
 
 package com.mongodb.client.unified;
 
-import com.mongodb.MongoClientSettings;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -32,7 +29,7 @@ import java.util.Collection;
 
 import static org.junit.Assert.assertNotNull;
 
-public class UnifiedTestFailureValidator extends UnifiedTest {
+public class UnifiedTestFailureValidator extends UnifiedSyncTest {
     private Throwable exception;
 
     public UnifiedTestFailureValidator(@SuppressWarnings("unused") final String fileDescription,
@@ -61,11 +58,6 @@ public class UnifiedTestFailureValidator extends UnifiedTest {
             }
         }
         assertNotNull("Expected exception but not was thrown", exception);
-    }
-
-    @Override
-    protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return MongoClients.create(settings);
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
