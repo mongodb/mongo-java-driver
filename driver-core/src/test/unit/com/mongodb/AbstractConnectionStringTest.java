@@ -211,6 +211,12 @@ public abstract class AbstractConnectionStringTest extends TestCase {
             } else if (option.getKey().toLowerCase().equals("directconnection")) {
                 Boolean expected = option.getValue().asBoolean().getValue();
                 assertEquals(expected, connectionString.isDirectConnection());
+            } else if (option.getKey().toLowerCase().equals("maxpoolsize")) {
+                Integer expected = option.getValue().asNumber().intValue();
+                assertEquals(expected, connectionString.getMaxConnectionPoolSize());
+            } else if (option.getKey().toLowerCase().equals("minpoolsize")) {
+                Integer expected = option.getValue().asNumber().intValue();
+                assertEquals(expected, connectionString.getMinConnectionPoolSize());
             } else {
                 assertTrue(String.format("Unsupported option '%s' in '%s'", option.getKey(), input), false);
             }
