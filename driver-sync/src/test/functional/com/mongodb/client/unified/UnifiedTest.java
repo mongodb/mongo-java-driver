@@ -21,6 +21,8 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.event.CommandEvent;
@@ -123,6 +125,8 @@ public abstract class UnifiedTest {
 
     protected abstract MongoClient createMongoClient(MongoClientSettings settings);
 
+    protected abstract GridFSBucket createGridFSBucket(MongoDatabase database);
+
     @Before
     public void setUp() {
         assertTrue(String.format("Unsupported schema version %s", schemaVersion),
@@ -144,7 +148,7 @@ public abstract class UnifiedTest {
         if (definition.containsKey("skipReason")) {
             throw new AssumptionViolatedException(definition.getString("skipReason").getValue());
         }
-        entities.init(entitiesArray, this::createMongoClient);
+        entities.init(entitiesArray, this::createMongoClient, this::createGridFSBucket);
         addInitialData();
     }
 
@@ -319,6 +323,8 @@ public abstract class UnifiedTest {
                     return gridFSHelper.executeDelete(operation);
                 case "download":
                     return gridFSHelper.executeDownload(operation);
+                case "downloadByName":
+                    return gridFSHelper.executeDownloadByName(operation);
                 case "upload":
                     return gridFSHelper.executeUpload(operation);
                 case "runCommand":
