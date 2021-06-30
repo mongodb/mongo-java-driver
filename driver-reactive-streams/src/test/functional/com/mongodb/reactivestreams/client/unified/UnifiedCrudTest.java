@@ -16,12 +16,7 @@
 
 package com.mongodb.reactivestreams.client.unified;
 
-import com.mongodb.MongoClientSettings;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.unified.UnifiedTest;
 import com.mongodb.lang.Nullable;
-import com.mongodb.reactivestreams.client.MongoClients;
-import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.junit.runners.Parameterized;
@@ -30,7 +25,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-public class UnifiedCrudTest extends UnifiedTest {
+public class UnifiedCrudTest extends UnifiedReactiveStreamsTest {
     @SuppressWarnings("FieldCanBeLocal")
     private final String fileDescription;
     @SuppressWarnings("FieldCanBeLocal")
@@ -42,11 +37,6 @@ public class UnifiedCrudTest extends UnifiedTest {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
         this.fileDescription = fileDescription;
         this.testDescription = testDescription;
-    }
-
-    @Override
-    protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return new SyncMongoClient(MongoClients.create(settings));
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")

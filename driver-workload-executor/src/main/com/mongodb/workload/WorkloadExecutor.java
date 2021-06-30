@@ -16,10 +16,8 @@
 
 package com.mongodb.workload;
 
-import com.mongodb.MongoClientSettings;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
 import com.mongodb.client.unified.Entities;
+import com.mongodb.client.unified.UnifiedSyncTest;
 import com.mongodb.client.unified.UnifiedTest;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
@@ -87,16 +85,11 @@ public class WorkloadExecutor {
         }
         BsonDocument testDocument = testArray.get(0).asDocument();
 
-        UnifiedTest unifiedTest = new UnifiedTest(fileDocument.getString("schemaVersion").getValue(),
+        UnifiedTest unifiedTest = new UnifiedSyncTest(fileDocument.getString("schemaVersion").getValue(),
                 fileDocument.getArray("runOnRequirements", null),
                 fileDocument.getArray("createEntities", new BsonArray()),
                 fileDocument.getArray("initialData", new BsonArray()),
                 testDocument) {
-
-            @Override
-            protected MongoClient createMongoClient(final MongoClientSettings settings) {
-                return MongoClients.create(settings);
-            }
 
             @Override
             protected boolean terminateLoop() {
