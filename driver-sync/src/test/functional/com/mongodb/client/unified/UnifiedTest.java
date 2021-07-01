@@ -125,7 +125,8 @@ public abstract class UnifiedTest {
 
     @Before
     public void setUp() {
-        assertTrue(schemaVersion.startsWith("1.0")
+        assertTrue(String.format("Unsupported schema version %s", schemaVersion),
+                schemaVersion.startsWith("1.0")
                 || schemaVersion.startsWith("1.1")
                 || schemaVersion.startsWith("1.2")
                 || schemaVersion.startsWith("1.3")
