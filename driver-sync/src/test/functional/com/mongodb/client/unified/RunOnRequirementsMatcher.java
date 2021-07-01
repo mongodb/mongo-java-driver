@@ -74,6 +74,9 @@ final class RunOnRequirementsMatcher {
                             }
                         }
                         break;
+                    case "serverless":
+                        // TODO: Implement support in scope of JAVA-3987
+                        break;
                     default:
                         throw new UnsupportedOperationException("Unsupported runOnRequirement: " + curRequirement.getKey());
                 }
