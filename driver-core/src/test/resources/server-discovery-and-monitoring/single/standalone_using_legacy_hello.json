@@ -1,6 +1,6 @@
 {
-  "description": "Direct connection to mongos",
-  "uri": "mongodb://a/?directConnection=true",
+  "description": "Connect to standalone using legacy hello",
+  "uri": "mongodb://a",
   "phases": [
     {
       "responses": [
@@ -8,9 +8,7 @@
           "a:27017",
           {
             "ok": 1,
-            "helloOk": true,
-            "isWritablePrimary": true,
-            "msg": "isdbgrid",
+            "ismaster": true,
             "minWireVersion": 0,
             "maxWireVersion": 6
           }
@@ -19,7 +17,7 @@
       "outcome": {
         "servers": {
           "a:27017": {
-            "type": "Mongos",
+            "type": "Standalone",
             "setName": null
           }
         },
