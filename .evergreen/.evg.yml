@@ -722,8 +722,8 @@ post:
   - func: "upload mo artifacts"
   - func: "upload working dir logs"
   - func: "upload test results"
-  - func: "cleanup"
   - func: "stop load-balancer"
+  - func: "cleanup"
 
 tasks:
 
