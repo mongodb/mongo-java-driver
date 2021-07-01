@@ -77,14 +77,22 @@ public final class DescriptionHelper {
             connectionDescription = connectionDescription.withConnectionId(newConnectionId);
         }
         if (clusterConnectionMode == ClusterConnectionMode.LOAD_BALANCED) {
-            if (manufactureServiceId) {
-                TopologyVersion topologyVersion = getTopologyVersion(isMasterResult);
-                if (topologyVersion != null) {
-                    connectionDescription = connectionDescription.withServiceId(topologyVersion.getProcessId());
-                }
+            ObjectId serviceId = getServiceId(isMasterResult);
+            if (serviceId != null) {
+                connectionDescription = connectionDescription.withServiceId(serviceId);
             } else {
-                throw new MongoClientException("Driver attempted to initialize in load balancing mode, but the server does not support "
-                        + "this mode");
+                if (manufactureServiceId) {
+                    TopologyVersion topologyVersion = getTopologyVersion(isMasterResult);
+                    if (topologyVersion != null) {
+                        connectionDescription = connectionDescription.withServiceId(topologyVersion.getProcessId());
+                    } else {
+                        throw new MongoClientException("Driver attempted to initialize in test-only load balancing mode, but the server "
+                                + "does not have a topology version");
+                    }
+                } else {
+                    throw new MongoClientException("Driver attempted to initialize in load balancing mode, but the server does not support "
+                            + "this mode");
+                }
             }
         }
         return connectionDescription;
@@ -142,6 +150,11 @@ public final class DescriptionHelper {
     private static TopologyVersion getTopologyVersion(final BsonDocument isMasterResult) {
         return isMasterResult.containsKey("topologyVersion") && isMasterResult.get("topologyVersion").isDocument()
                 ? new TopologyVersion(isMasterResult.getDocument("topologyVersion")) : null;
+    }
+
+    private static ObjectId getServiceId(final BsonDocument isMasterResult) {
+        return isMasterResult.containsKey("serviceId") && isMasterResult.get("serviceId").isObjectId()
+                ? isMasterResult.getObjectId("serviceId").getValue() : null;
     }
 
     private static int getMaxMessageSizeBytes(final BsonDocument isMasterResult) {
