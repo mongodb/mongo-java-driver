@@ -161,6 +161,9 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
         if (clientMetadataDocument != null) {
             isMasterCommandDocument.append("client", clientMetadataDocument);
         }
+        if (clusterConnectionMode == ClusterConnectionMode.LOAD_BALANCED) {
+            isMasterCommandDocument.append("loadBalanced", BsonBoolean.TRUE);
+        }
         if (!requestedCompressors.isEmpty()) {
             BsonArray compressors = new BsonArray(this.requestedCompressors.size());
             for (MongoCompressor cur : this.requestedCompressors) {
