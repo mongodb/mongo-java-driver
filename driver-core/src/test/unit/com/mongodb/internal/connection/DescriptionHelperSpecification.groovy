@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection
 
+import com.mongodb.MongoClientException
 import com.mongodb.ServerAddress
 import com.mongodb.Tag
 import com.mongodb.TagSet
@@ -79,6 +80,51 @@ class DescriptionHelperSpecification extends Specification {
                                           }''')) ==
                 new ConnectionDescription(connectionId, 6, ServerType.STANDALONE, 1000, 16777216, 48000000, [])
                         .withConnectionId(connectionId.withServerValue(1004))
+    }
+
+
+    def 'connection description should reflect ismaster result from load balancer'() {
+        given:
+        def connectionId = new ConnectionId(new ServerId(new ClusterId(), serverAddress))
+        ObjectId serviceId = new ObjectId()
+
+        expect:
+        createConnectionDescription(ClusterConnectionMode.LOAD_BALANCED, connectionId,
+                parse("""{
+                        ismaster : true,
+                        msg : "isdbgrid",
+                        maxBsonObjectSize : 16777216,
+                        maxMessageSizeBytes : 48000000,
+                        maxWriteBatchSize : 1000,
+                        localTime : ISODate("2015-03-04T23:55:18.505Z"),
+                        maxWireVersion : 13,
+                        minWireVersion : 0,
+                        connectionId : 1004,
+                        serviceId: {\$oid : "${serviceId.toHexString()}"},
+                        ok : 1
+                        }""")) ==
+                new ConnectionDescription(connectionId, 13, ServerType.SHARD_ROUTER, 1000, 16777216, 48000000, [])
+                        .withConnectionId(connectionId.withServerValue(1004))
+                        .withServiceId(serviceId)
+
+        when:
+        createConnectionDescription(ClusterConnectionMode.LOAD_BALANCED, connectionId,
+                parse('''{
+                        ismaster : true,
+                        msg : "isdbgrid",
+                        maxBsonObjectSize : 16777216,
+                        maxMessageSizeBytes : 48000000,
+                        maxWriteBatchSize : 1000,
+                        localTime : ISODate("2015-03-04T23:55:18.505Z"),
+                        maxWireVersion : 13,
+                        minWireVersion : 0,
+                        connectionId : 1004,
+                        ok : 1
+                        }'''))
+
+        then:
+        def e = thrown(MongoClientException)
+        e.getMessage() == 'Driver attempted to initialize in load balancing mode, but the server does not support this mode'
     }
 
     def 'connection description should reflect ismaster result with compressors'() {
