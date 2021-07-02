@@ -2317,6 +2317,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <div class="block">Creates a filter that matches all documents that either contain or do not contain the given field, depending on the value of the
  exists parameter.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="com/mongodb/client/model/CreateCollectionOptions.html#expireAfter(long,java.util.concurrent.TimeUnit)">expireAfter(long, TimeUnit)</a></span> - Method in class com.mongodb.client.model.<a href="com/mongodb/client/model/CreateCollectionOptions.html" title="class in com.mongodb.client.model">CreateCollectionOptions</a></dt>
+<dd>
+<div class="block">Sets the expire-after option.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="com/mongodb/client/model/IndexOptions.html#expireAfter(java.lang.Long,java.util.concurrent.TimeUnit)">expireAfter(Long, TimeUnit)</a></span> - Method in class com.mongodb.client.model.<a href="com/mongodb/client/model/IndexOptions.html" title="class in com.mongodb.client.model">IndexOptions</a></dt>
 <dd>
 <div class="block">Sets the time to live for documents in the collection</div>
@@ -3220,6 +3224,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">Gets the exception thrown while attempting to determine the server description.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="com/mongodb/client/model/CreateCollectionOptions.html#getExpireAfter(java.util.concurrent.TimeUnit)">getExpireAfter(TimeUnit)</a></span> - Method in class com.mongodb.client.model.<a href="com/mongodb/client/model/CreateCollectionOptions.html" title="class in com.mongodb.client.model">CreateCollectionOptions</a></dt>
+<dd>
+<div class="block">Returns the expire-after option.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="com/mongodb/client/model/IndexOptions.html#getExpireAfter(java.util.concurrent.TimeUnit)">getExpireAfter(TimeUnit)</a></span> - Method in class com.mongodb.client.model.<a href="com/mongodb/client/model/IndexOptions.html" title="class in com.mongodb.client.model">IndexOptions</a></dt>
 <dd>
 <div class="block">Gets the time to live for documents in the collection</div>
@@ -3278,6 +3286,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </dd>
 <dt><span class="memberNameLink"><a href="com/mongodb/client/model/BucketAutoOptions.html#getGranularity()">getGranularity()</a></span> - Method in class com.mongodb.client.model.<a href="com/mongodb/client/model/BucketAutoOptions.html" title="class in com.mongodb.client.model">BucketAutoOptions</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="com/mongodb/client/model/TimeSeriesOptions.html#getGranularity()">getGranularity()</a></span> - Method in class com.mongodb.client.model.<a href="com/mongodb/client/model/TimeSeriesOptions.html" title="class in com.mongodb.client.model">TimeSeriesOptions</a></dt>
+<dd>
+<div class="block">Gets the granularity of the time-series data.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="com/mongodb/ConnectionString.html#getHeartbeatFrequency()">getHeartbeatFrequency()</a></span> - Method in class com.mongodb.<a href="com/mongodb/ConnectionString.html" title="class in com.mongodb">ConnectionString</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="com/mongodb/connection/ServerSettings.html#getHeartbeatFrequency(java.util.concurrent.TimeUnit)">getHeartbeatFrequency(TimeUnit)</a></span> - Method in class com.mongodb.connection.<a href="com/mongodb/connection/ServerSettings.html" title="class in com.mongodb.connection">ServerSettings</a></dt>
@@ -3699,6 +3711,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dt><span class="memberNameLink"><a href="com/mongodb/client/gridfs/model/GridFSUploadOptions.html#getMetadata()">getMetadata()</a></span> - Method in class com.mongodb.client.gridfs.model.<a href="com/mongodb/client/gridfs/model/GridFSUploadOptions.html" title="class in com.mongodb.client.gridfs.model">GridFSUploadOptions</a></dt>
 <dd>
 <div class="block">Returns any user provided data for the 'metadata' field of the files collection document.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="com/mongodb/client/model/TimeSeriesOptions.html#getMetaField()">getMetaField()</a></span> - Method in class com.mongodb.client.model.<a href="com/mongodb/client/model/TimeSeriesOptions.html" title="class in com.mongodb.client.model">TimeSeriesOptions</a></dt>
+<dd>
+<div class="block">Gets the name of the meta field.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="com/mongodb/client/model/IndexOptions.html#getMin()">getMin()</a></span> - Method in class com.mongodb.client.model.<a href="com/mongodb/client/model/IndexOptions.html" title="class in com.mongodb.client.model">IndexOptions</a></dt>
 <dd>
@@ -4341,6 +4357,14 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">Gets the exceptions that caused the failure</div>
 </dd>
+<dt><span class="memberNameLink"><a href="com/mongodb/client/model/TimeSeriesOptions.html#getTimeField()">getTimeField()</a></span> - Method in class com.mongodb.client.model.<a href="com/mongodb/client/model/TimeSeriesOptions.html" title="class in com.mongodb.client.model">TimeSeriesOptions</a></dt>
+<dd>
+<div class="block">Gets the name of the field holding the time value.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="com/mongodb/client/model/CreateCollectionOptions.html#getTimeSeriesOptions()">getTimeSeriesOptions()</a></span> - Method in class com.mongodb.client.model.<a href="com/mongodb/client/model/CreateCollectionOptions.html" title="class in com.mongodb.client.model">CreateCollectionOptions</a></dt>
+<dd>
+<div class="block">Gets the time series collection options.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="com/mongodb/connection/ServerDescription.html#getTopologyVersion()">getTopologyVersion()</a></span> - Method in class com.mongodb.connection.<a href="com/mongodb/connection/ServerDescription.html" title="class in com.mongodb.connection">ServerDescription</a></dt>
 <dd>
 <div class="block">The topologyVersion reported by this MongoDB server.</div>
@@ -4620,6 +4644,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dt><span class="memberNameLink"><a href="com/mongodb/client/model/BucketAutoOptions.html#granularity(com.mongodb.client.model.BucketGranularity)">granularity(BucketGranularity)</a></span> - Method in class com.mongodb.client.model.<a href="com/mongodb/client/model/BucketAutoOptions.html" title="class in com.mongodb.client.model">BucketAutoOptions</a></dt>
 <dd>
 <div class="block">Specifies the granularity of the bucket definitions.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="com/mongodb/client/model/TimeSeriesOptions.html#granularity(com.mongodb.client.model.TimeSeriesGranularity)">granularity(TimeSeriesGranularity)</a></span> - Method in class com.mongodb.client.model.<a href="com/mongodb/client/model/TimeSeriesOptions.html" title="class in com.mongodb.client.model">TimeSeriesOptions</a></dt>
+<dd>
+<div class="block">Sets the granularity of the time-series data.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="com/mongodb/client/model/Aggregates.html#graphLookup(java.lang.String,TExpression,java.lang.String,java.lang.String,java.lang.String)">graphLookup(String, TExpression, String, String, String)</a></span> - Static method in class com.mongodb.client.model.<a href="com/mongodb/client/model/Aggregates.html" title="class in com.mongodb.client.model">Aggregates</a></dt>
 <dd>
@@ -4936,6 +4964,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dt><span class="memberNameLink"><a href="com/mongodb/connection/ServerDescription.Builder.html#hosts(java.util.Set)">hosts(Set&lt;String&gt;)</a></span> - Method in class com.mongodb.connection.<a href="com/mongodb/connection/ServerDescription.Builder.html" title="class in com.mongodb.connection">ServerDescription.Builder</a></dt>
 <dd>
 <div class="block">Sets all members of the replica set that are neither hidden, passive, nor arbiters.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="com/mongodb/client/model/TimeSeriesGranularity.html#HOURS">HOURS</a></span> - com.mongodb.client.model.<a href="com/mongodb/client/model/TimeSeriesGranularity.html" title="enum in com.mongodb.client.model">TimeSeriesGranularity</a></dt>
+<dd>
+<div class="block">Hours-level granularity.</div>
 </dd>
 </dl>
 <a id="I:I">
@@ -5720,6 +5752,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">Sets metadata to stored alongside the filename in the files collection</div>
 </dd>
+<dt><span class="memberNameLink"><a href="com/mongodb/client/model/TimeSeriesOptions.html#metaField(java.lang.String)">metaField(String)</a></span> - Method in class com.mongodb.client.model.<a href="com/mongodb/client/model/TimeSeriesOptions.html" title="class in com.mongodb.client.model">TimeSeriesOptions</a></dt>
+<dd>
+<div class="block">Sets the name of the meta field.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="com/mongodb/client/model/Projections.html#metaTextScore(java.lang.String)">metaTextScore(String)</a></span> - Static method in class com.mongodb.client.model.<a href="com/mongodb/client/model/Projections.html" title="class in com.mongodb.client.model">Projections</a></dt>
 <dd>
 <div class="block">Creates a projection to the given field name of the textScore, for use with text queries.</div>
@@ -5757,6 +5793,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dt><span class="memberNameLink"><a href="com/mongodb/connection/ConnectionPoolSettings.Builder.html#minSize(int)">minSize(int)</a></span> - Method in class com.mongodb.connection.<a href="com/mongodb/connection/ConnectionPoolSettings.Builder.html" title="class in com.mongodb.connection">ConnectionPoolSettings.Builder</a></dt>
 <dd>
 <div class="block">The minimum number of connections.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="com/mongodb/client/model/TimeSeriesGranularity.html#MINUTES">MINUTES</a></span> - com.mongodb.client.model.<a href="com/mongodb/client/model/TimeSeriesGranularity.html" title="enum in com.mongodb.client.model">TimeSeriesGranularity</a></dt>
+<dd>
+<div class="block">Minutes-level granularity.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="com/mongodb/connection/ServerDescription.Builder.html#minWireVersion(int)">minWireVersion(int)</a></span> - Method in class com.mongodb.connection.<a href="com/mongodb/connection/ServerDescription.Builder.html" title="class in com.mongodb.connection">ServerDescription.Builder</a></dt>
 <dd>
@@ -6271,6 +6311,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">Construct a new instance of the factory.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="com/mongodb/connection/netty/NettyStreamFactory.html#%3Cinit%3E(com.mongodb.connection.SocketSettings,com.mongodb.connection.SslSettings,io.netty.channel.EventLoopGroup,java.lang.Class,io.netty.buffer.ByteBufAllocator,io.netty.handler.ssl.SslContext)">NettyStreamFactory(SocketSettings, SslSettings, EventLoopGroup, Class&lt;? extends SocketChannel&gt;, ByteBufAllocator, SslContext)</a></span> - Constructor for class com.mongodb.connection.netty.<a href="com/mongodb/connection/netty/NettyStreamFactory.html" title="class in com.mongodb.connection.netty">NettyStreamFactory</a></dt>
+<dd>
+<div class="block">Construct a new instance of the factory.</div>
+</dd>
 <dt><a href="com/mongodb/connection/netty/NettyStreamFactoryFactory.html" title="class in com.mongodb.connection.netty"><span class="typeNameLink">NettyStreamFactoryFactory</span></a> - Class in <a href="com/mongodb/connection/netty/package-summary.html">com.mongodb.connection.netty</a></dt>
 <dd>
 <div class="block">A <code>StreamFactoryFactory</code> implementation for <a href='http://netty.io/'>Netty</a>-based streams.</div>
@@ -6500,6 +6544,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">Construct an instance with the given coordinates.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="com/mongodb/client/model/geojson/Polygon.html#%3Cinit%3E(java.util.List,java.util.List)">Polygon(List&lt;Position&gt;, List&lt;List&lt;Position&gt;&gt;)</a></span> - Constructor for class com.mongodb.client.model.geojson.<a href="com/mongodb/client/model/geojson/Polygon.html" title="class in com.mongodb.client.model.geojson">Polygon</a></dt>
+<dd>
+<div class="block">Construct an instance with the given coordinates.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="com/mongodb/client/model/geojson/GeoJsonObjectType.html#POLYGON">POLYGON</a></span> - com.mongodb.client.model.geojson.<a href="com/mongodb/client/model/geojson/GeoJsonObjectType.html" title="enum in com.mongodb.client.model.geojson">GeoJsonObjectType</a></dt>
 <dd>
 <div class="block">A Polygon</div>
@@ -6517,6 +6565,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <div class="block">Coordinates for a GeoJSON Polygon.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="com/mongodb/client/model/geojson/PolygonCoordinates.html#%3Cinit%3E(java.util.List,java.util.List...)">PolygonCoordinates(List&lt;Position&gt;, List&lt;Position&gt;...)</a></span> - Constructor for class com.mongodb.client.model.geojson.<a href="com/mongodb/client/model/geojson/PolygonCoordinates.html" title="class in com.mongodb.client.model.geojson">PolygonCoordinates</a></dt>
+<dd>
+<div class="block">Construct an instance.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="com/mongodb/client/model/geojson/PolygonCoordinates.html#%3Cinit%3E(java.util.List,java.util.List)">PolygonCoordinates(List&lt;Position&gt;, List&lt;List&lt;Position&gt;&gt;)</a></span> - Constructor for class com.mongodb.client.model.geojson.<a href="com/mongodb/client/model/geojson/PolygonCoordinates.html" title="class in com.mongodb.client.model.geojson">PolygonCoordinates</a></dt>
 <dd>
 <div class="block">Construct an instance.</div>
 </dd>
@@ -6982,6 +7034,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <div class="block">Gets a read preference that forces reads to a secondary with one of the given sets of tags that is less stale than
  the given maximum.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="com/mongodb/client/model/TimeSeriesGranularity.html#SECONDS">SECONDS</a></span> - com.mongodb.client.model.<a href="com/mongodb/client/model/TimeSeriesGranularity.html" title="enum in com.mongodb.client.model">TimeSeriesGranularity</a></dt>
+<dd>
+<div class="block">Seconds-level granularity.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="com/mongodb/selector/CompositeServerSelector.html#select(com.mongodb.connection.ClusterDescription)">select(ClusterDescription)</a></span> - Method in class com.mongodb.selector.<a href="com/mongodb/selector/CompositeServerSelector.html" title="class in com.mongodb.selector">CompositeServerSelector</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="com/mongodb/selector/ServerSelector.html#select(com.mongodb.connection.ClusterDescription)">select(ClusterDescription)</a></span> - Method in interface com.mongodb.selector.<a href="com/mongodb/selector/ServerSelector.html" title="interface in com.mongodb.selector">ServerSelector</a></dt>
@@ -7226,9 +7282,17 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">Mechanism property key for overriding the service name for GSSAPI authentication.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="com/mongodb/client/model/Aggregates.html#set(com.mongodb.client.model.Field...)">set(Field&lt;?&gt;...)</a></span> - Static method in class com.mongodb.client.model.<a href="com/mongodb/client/model/Aggregates.html" title="class in com.mongodb.client.model">Aggregates</a></dt>
+<dd>
+<div class="block">Creates a $set pipeline stage for the specified projection</div>
+</dd>
 <dt><span class="memberNameLink"><a href="com/mongodb/client/model/Updates.html#set(java.lang.String,TItem)">set(String, TItem)</a></span> - Static method in class com.mongodb.client.model.<a href="com/mongodb/client/model/Updates.html" title="class in com.mongodb.client.model">Updates</a></dt>
 <dd>
 <div class="block">Creates an update that sets the value of the field with the given name to the given value.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="com/mongodb/client/model/Aggregates.html#set(java.util.List)">set(List&lt;Field&lt;?&gt;&gt;)</a></span> - Static method in class com.mongodb.client.model.<a href="com/mongodb/client/model/Aggregates.html" title="class in com.mongodb.client.model">Aggregates</a></dt>
+<dd>
+<div class="block">Creates a $set pipeline stage for the specified projection</div>
 </dd>
 <dt><span class="memberNameLink"><a href="com/mongodb/connection/ServerDescription.Builder.html#setName(java.lang.String)">setName(String)</a></span> - Method in class com.mongodb.connection.<a href="com/mongodb/connection/ServerDescription.Builder.html" title="class in com.mongodb.connection">ServerDescription.Builder</a></dt>
 <dd>
@@ -7378,6 +7442,11 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dt><span class="memberNameLink"><a href="com/mongodb/connection/ClusterSettings.Builder.html#srvHost(java.lang.String)">srvHost(String)</a></span> - Method in class com.mongodb.connection.<a href="com/mongodb/connection/ClusterSettings.Builder.html" title="class in com.mongodb.connection">ClusterSettings.Builder</a></dt>
 <dd>
 <div class="block">Sets the host name to use in order to look up an SRV DNS record to find the MongoDB hosts.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="com/mongodb/connection/netty/NettyStreamFactoryFactory.Builder.html#sslContext(io.netty.handler.ssl.SslContext)">sslContext(SslContext)</a></span> - Method in class com.mongodb.connection.netty.<a href="com/mongodb/connection/netty/NettyStreamFactoryFactory.Builder.html" title="class in com.mongodb.connection.netty">NettyStreamFactoryFactory.Builder</a></dt>
+<dd>
+<div class="block">Sets a client-side <code>io.netty.handler.ssl.SslContext</code>,
+ which overrides the standard <a href="com/mongodb/connection/SslSettings.html#getContext()"><code>SslSettings.getContext()</code></a>.</div>
 </dd>
 <dt><a href="com/mongodb/connection/SslSettings.html" title="class in com.mongodb.connection"><span class="typeNameLink">SslSettings</span></a> - Class in <a href="com/mongodb/connection/package-summary.html">com.mongodb.connection</a></dt>
 <dd>
@@ -7564,6 +7633,22 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">The connection check out attempt exceeded the specific timeout</div>
 </dd>
+<dt><a href="com/mongodb/client/model/TimeSeriesGranularity.html" title="enum in com.mongodb.client.model"><span class="typeNameLink">TimeSeriesGranularity</span></a> - Enum in <a href="com/mongodb/client/model/package-summary.html">com.mongodb.client.model</a></dt>
+<dd>
+<div class="block">An enumeration of time-series data granularity.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="com/mongodb/client/model/CreateCollectionOptions.html#timeSeriesOptions(com.mongodb.client.model.TimeSeriesOptions)">timeSeriesOptions(TimeSeriesOptions)</a></span> - Method in class com.mongodb.client.model.<a href="com/mongodb/client/model/CreateCollectionOptions.html" title="class in com.mongodb.client.model">CreateCollectionOptions</a></dt>
+<dd>
+<div class="block">Sets the time-series collection options.</div>
+</dd>
+<dt><a href="com/mongodb/client/model/TimeSeriesOptions.html" title="class in com.mongodb.client.model"><span class="typeNameLink">TimeSeriesOptions</span></a> - Class in <a href="com/mongodb/client/model/package-summary.html">com.mongodb.client.model</a></dt>
+<dd>
+<div class="block">Options related to the creation of time-series collections.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="com/mongodb/client/model/TimeSeriesOptions.html#%3Cinit%3E(java.lang.String)">TimeSeriesOptions(String)</a></span> - Constructor for class com.mongodb.client.model.<a href="com/mongodb/client/model/TimeSeriesOptions.html" title="class in com.mongodb.client.model">TimeSeriesOptions</a></dt>
+<dd>
+<div class="block">Construct a new instance.</div>
+</dd>
 <dt><a href="com/mongodb/connection/TlsChannelStreamFactoryFactory.html" title="class in com.mongodb.connection"><span class="typeNameLink">TlsChannelStreamFactoryFactory</span></a> - Class in <a href="com/mongodb/connection/package-summary.html">com.mongodb.connection</a></dt>
 <dd>
 <div class="block">A <code>StreamFactoryFactory</code> that supports TLS/SSL.</div>
@@ -7738,6 +7823,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dt><span class="memberNameLink"><a href="com/mongodb/client/model/ReplaceOptions.html#toString()">toString()</a></span> - Method in class com.mongodb.client.model.<a href="com/mongodb/client/model/ReplaceOptions.html" title="class in com.mongodb.client.model">ReplaceOptions</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="com/mongodb/client/model/TextSearchOptions.html#toString()">toString()</a></span> - Method in class com.mongodb.client.model.<a href="com/mongodb/client/model/TextSearchOptions.html" title="class in com.mongodb.client.model">TextSearchOptions</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="com/mongodb/client/model/TimeSeriesOptions.html#toString()">toString()</a></span> - Method in class com.mongodb.client.model.<a href="com/mongodb/client/model/TimeSeriesOptions.html" title="class in com.mongodb.client.model">TimeSeriesOptions</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="com/mongodb/client/model/UnwindOptions.html#toString()">toString()</a></span> - Method in class com.mongodb.client.model.<a href="com/mongodb/client/model/UnwindOptions.html" title="class in com.mongodb.client.model">UnwindOptions</a></dt>
 <dd>&nbsp;</dd>
@@ -8210,6 +8297,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">Returns the enum constant of this type with the specified name.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="com/mongodb/client/model/TimeSeriesGranularity.html#valueOf(java.lang.String)">valueOf(String)</a></span> - Static method in enum com.mongodb.client.model.<a href="com/mongodb/client/model/TimeSeriesGranularity.html" title="enum in com.mongodb.client.model">TimeSeriesGranularity</a></dt>
+<dd>
+<div class="block">Returns the enum constant of this type with the specified name.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="com/mongodb/client/model/ValidationAction.html#valueOf(java.lang.String)">valueOf(String)</a></span> - Static method in enum com.mongodb.client.model.<a href="com/mongodb/client/model/ValidationAction.html" title="enum in com.mongodb.client.model">ValidationAction</a></dt>
 <dd>
 <div class="block">Returns the enum constant of this type with the specified name.</div>
@@ -8349,6 +8440,11 @@ the order they are declared.</div>
 the order they are declared.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="com/mongodb/client/model/ReturnDocument.html#values()">values()</a></span> - Static method in enum com.mongodb.client.model.<a href="com/mongodb/client/model/ReturnDocument.html" title="enum in com.mongodb.client.model">ReturnDocument</a></dt>
+<dd>
+<div class="block">Returns an array containing the constants of this enum type, in
+the order they are declared.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="com/mongodb/client/model/TimeSeriesGranularity.html#values()">values()</a></span> - Static method in enum com.mongodb.client.model.<a href="com/mongodb/client/model/TimeSeriesGranularity.html" title="enum in com.mongodb.client.model">TimeSeriesGranularity</a></dt>
 <dd>
 <div class="block">Returns an array containing the constants of this enum type, in
 the order they are declared.</div>

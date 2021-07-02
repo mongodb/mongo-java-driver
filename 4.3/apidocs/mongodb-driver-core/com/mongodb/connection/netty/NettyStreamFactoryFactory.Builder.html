@@ -27,7 +27,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":10,"i1":10,"i2":10,"i3":10};
+var data = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -191,6 +191,14 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 <div class="block">Sets the socket channel class</div>
 </td>
 </tr>
+<tr id="i4" class="altColor">
+<td class="colFirst"><code><a href="NettyStreamFactoryFactory.Builder.html" title="class in com.mongodb.connection.netty">NettyStreamFactoryFactory.Builder</a></code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#sslContext(io.netty.handler.ssl.SslContext)">sslContext</a></span>&#8203;(io.netty.handler.ssl.SslContext&nbsp;sslContext)</code></th>
+<td class="colLast">
+<div class="block">Sets a client-side <code>io.netty.handler.ssl.SslContext</code>,
+ which overrides the standard <a href="../SslSettings.html#getContext()"><code>SslSettings.getContext()</code></a>.</div>
+</td>
+</tr>
 </table>
 <ul class="blockList">
 <li class="blockList"><a id="methods.inherited.from.class.java.lang.Object">
@@ -263,6 +271,44 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 <dd><code>eventLoopGroup</code> - the event loop group that all channels created by this factory will be a part of</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>this</dd>
+</dl>
+</li>
+</ul>
+<a id="sslContext(io.netty.handler.ssl.SslContext)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>sslContext</h4>
+<pre class="methodSignature">public&nbsp;<a href="NettyStreamFactoryFactory.Builder.html" title="class in com.mongodb.connection.netty">NettyStreamFactoryFactory.Builder</a>&nbsp;sslContext&#8203;(io.netty.handler.ssl.SslContext&nbsp;sslContext)</pre>
+<div class="block">Sets a client-side <code>io.netty.handler.ssl.SslContext</code>,
+ which overrides the standard <a href="../SslSettings.html#getContext()"><code>SslSettings.getContext()</code></a>.
+ By default it is <code>null</code> and <a href="../SslSettings.html#getContext()"><code>SslSettings.getContext()</code></a> is at play.
+ <p>
+ This option may be used as a convenient way to utilize
+ <a href="https://www.openssl.org/">OpenSSL</a> as an alternative to the TLS/SSL protocol implementation in a JDK.
+ To achieve this, specify <code>SslProvider.OPENSSL</code> TLS/SSL protocol provider via
+ <code>SslContextBuilder.sslProvider(SslProvider)</code>. Note that doing so adds a runtime dependency on
+ <a href="https://netty.io/wiki/forked-tomcat-native.html">netty-tcnative</a>, which you must satisfy.
+ <p>
+ Notes:
+ <ul>
+    <li>Netty <code>SslContext</code> may not examine some
+    <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/security/Security.html?is-external=true" title="class or interface in java.security" class="externalLink">security</a>/<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/System.html?is-external=true#getProperties()" title="class or interface in java.lang" class="externalLink">system</a> properties that are used to
+    <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/JSSERefGuide.html#Customization">
+    customize JSSE</a>. Therefore, instead of using them you may have to apply the equivalent configuration programmatically,
+    if both the <code>SslContextBuilder</code> and the TLS/SSL protocol provider of choice support it.
+    </li>
+    <li>Only <code>SslProvider.JDK</code> and <code>SslProvider.OPENSSL</code> TLS/SSL protocol providers are supported.
+    </li>
+ </ul></div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>sslContext</code> - The Netty <code>SslContext</code>, which must be created via SslContextBuilder.forClient().</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd><code>this</code>.</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>4.3</dd>
 </dl>
 </li>
 </ul>

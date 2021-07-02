@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2021-06-01T15:04:18.89">
+<meta name="date" content="2021-07-02T16:15:58.27">
 <link rel="shortcut icon" href="/mongo-java-driver/4.3/img/favicon.png">
 
     <title>Connect to MongoDB</title><link rel="stylesheet" href="/mongo-java-driver/4.3/lib/bootstrap.css" type="text/css" />
@@ -401,7 +401,7 @@ instance running on the specified host on port <code>27017</code>:</p>
 <h2 id="connect-to-a-replica-set">Connect to a Replica Set</h2>
 
 <p>To connect to a <a href="http://docs.mongodb.org/manual/replication/
-">replica set</a>, you must specify one or more members to the <code>MongoClients</code> create method.</p>
+">replica set</a>, you must specify one or more members to the <code>MongoClient</code> apply method.</p>
 
 <div class="admonition note">
 <h5 class="admonition-title">Note</h5>
@@ -447,7 +447,7 @@ instance running on the specified host on port <code>27017</code>:</p>
 
 <p>To connect to a <a href="http://docs.mongodb.org/manual/sharding/
 ">sharded cluster</a>, specify the <code>mongos</code> instance
-or instances to a <code>MongoClients</code> create method.</p>
+or instances to a <code>MongoClient</code> apply method.</p>
 
 <p>To connect to a single <code>mongos</code> instance:</p>
 

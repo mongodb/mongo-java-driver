@@ -322,7 +322,7 @@ Prerequisites  The example below requires a restaurants collection in the test d
       <guid>/mongo-java-driver/4.3/whats-new/</guid>
       <description>What&amp;rsquo;s new in 4.3 This release fully supports all MongoDB releases from versions 2.6 to 4.4. It also supports some features of the next release of MongoDB.
 New features of the 4.3 Java driver release include:
- Added support for the MongoDB Versioned API. See the ServerApi API documentation for details.  What&amp;rsquo;s new in 4.2 This release fully supports all MongoDB releases from versions 2.6 to 4.4. New features of the 4.</description>
+ Added support for the MongoDB Versioned API. See the ServerApi API documentation for details. Removed most restrictions on allowed characters in field names of documents being inserted or replaced. This is a behavioral change for any application that is relying on client-side enforcement of these restrictions.</description>
     </item>
     
     <item>
@@ -545,9 +545,8 @@ You can also use a ConnectionString and pass it to a MongoClient() constructor t
       <pubDate>Sun, 29 May 2016 22:05:03 -0400</pubDate>
       
       <guid>/mongo-java-driver/4.3/driver-reactive/tutorials/ssl/</guid>
-      <description>TLS/SSL The Java driver supports TLS/SSL connections to MongoDB servers using the underlying support for TLS/SSL provided by the JDK. You can configure the driver to use TLS/SSL either with ConnectionString or with MongoClientSettings.
-MongoClient API (since 3.7) Specify TLS/SSL via ConnectionString com.mongodb.reactivestreams.client.MongoClients; com.mongodb.reactivestreams.client.MongoClient;  To specify TLS/SSL with ConnectionString, specify ssl=true as part of the connection string, as in:
-MongoClient mongoClient = MongoClients.create(&amp;quot;mongodb://localhost/?ssl=true&amp;quot;);  Specify TLS/SSL via MongoClientSettings import com.</description>
+      <description>TLS/SSL By default the Java driver supports TLS/SSL connections to MongoDB servers using the underlying support for TLS/SSL provided by the JDK. This can be changed either by utilizing extensibility of the Java SE API, or via the Netty API. You can configure the driver to use TLS/SSL either with ConnectionString or with MongoClientSettings.
+MongoClient API (since 3.7) Specify TLS/SSL via ConnectionString com.mongodb.reactivestreams.client.MongoClients; com.mongodb.reactivestreams.client.MongoClient;  To specify TLS/SSL with ConnectionString, specify ssl=true as part of the connection string, as in:</description>
     </item>
     
     <item>
@@ -556,9 +555,8 @@ MongoClient mongoClient = MongoClients.create(&amp;quot;mongodb://localhost/?ssl
       <pubDate>Sun, 29 May 2016 22:05:03 -0400</pubDate>
       
       <guid>/mongo-java-driver/4.3/driver-scala/tutorials/ssl/</guid>
-      <description>TLS/SSL The Java driver supports TLS/SSL connections to MongoDB servers using the underlying support for TLS/SSL provided by the JDK. You can configure the driver to use TLS/SSL either with ConnectionString or with MongoClientSettings.
-MongoClient API (since 3.7) Specify TLS/SSL via ConnectionString import org.mongodb.scala._  To specify TLS/SSL with ConnectionString, specify ssl=true as part of the connection string, as in:
-val mongoClient: MongoClient = MongoClient(&amp;quot;mongodb://localhost/?ssl=true&amp;quot;)  Specify TLS/SSL via MongoClientSettings To specify TLS/SSL with with MongoClientSettings, set the enabled property to true, as in:</description>
+      <description>TLS/SSL By default the Java driver supports TLS/SSL connections to MongoDB servers using the underlying support for TLS/SSL provided by the JDK. This can be changed either by utilizing extensibility of the Java SE API, or via the Netty API. You can configure the driver to use TLS/SSL either with ConnectionString or with MongoClientSettings.
+MongoClient API (since 3.7) Specify TLS/SSL via ConnectionString import org.mongodb.scala._  To specify TLS/SSL with ConnectionString, specify ssl=true as part of the connection string, as in:</description>
     </item>
     
     <item>
@@ -567,9 +565,8 @@ val mongoClient: MongoClient = MongoClient(&amp;quot;mongodb://localhost/?ssl=tr
       <pubDate>Sun, 29 May 2016 22:05:03 -0400</pubDate>
       
       <guid>/mongo-java-driver/4.3/driver/tutorials/ssl/</guid>
-      <description>TLS/SSL The Java driver supports TLS/SSL connections to MongoDB servers using the underlying support for TLS/SSL provided by the JDK. You can configure the driver to use TLS/SSL either with ConnectionString or with MongoClientSettings.
-MongoClient API (since 3.7) Specify TLS/SSL via ConnectionString com.mongodb.client.MongoClients; com.mongodb.client.MongoClient;  To specify TLS/SSL with ConnectionString, specify ssl=true as part of the connection string, as in:
-MongoClient mongoClient = MongoClients.create(&amp;quot;mongodb://localhost/?ssl=true&amp;quot;);  Specify TLS/SSL via MongoClientSettings import com.</description>
+      <description>TLS/SSL By default the Java driver supports TLS/SSL connections to MongoDB servers using the underlying support for TLS/SSL provided by the JDK. This can be changed either by utilizing extensibility of the Java SE API, or via the Netty API. You can configure the driver to use TLS/SSL either with ConnectionString or with MongoClientSettings.
+MongoClient API (since 3.7) Specify TLS/SSL via ConnectionString com.mongodb.client.MongoClients; com.mongodb.client.MongoClient;  To specify TLS/SSL with ConnectionString, specify ssl=true as part of the connection string, as in:</description>
     </item>
     
     <item>
@@ -1069,7 +1066,7 @@ Bugs / Feature Requests If you think you’ve found a bug or want to see a new f
       <guid>/mongo-java-driver/4.3/driver-reactive/getting-started/installation/</guid>
       <description> Installation The recommended way to get started using one of the drivers in your project is with a dependency management system.
  MongoDB Reactive Streams Driver The Reactive Streams implementation for asynchronous stream processing with non-blocking back pressure.
-&amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.mongodb&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;mongodb-driver-reactivestreams&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;4.3.0-beta2&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; &amp;lt;/dependencies&amp;gt;    dependencies { compile &#39;org.mongodb:mongodb-driver-reactivestreams:4.3.0-beta2&#39; }    libraryDependencies += &#34;org.mongodb&#34; %% &#34;mongodb-driver-reactivestreams&#34; % &#34;4.3.0-beta2&#34;  </description>
+&amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.mongodb&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;mongodb-driver-reactivestreams&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;4.3.0-beta4&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; &amp;lt;/dependencies&amp;gt;    dependencies { compile &#39;org.mongodb:mongodb-driver-reactivestreams:4.3.0-beta4&#39; }    libraryDependencies += &#34;org.mongodb&#34; %% &#34;mongodb-driver-reactivestreams&#34; % &#34;4.3.0-beta4&#34;  </description>
     </item>
     
     <item>
@@ -1080,7 +1077,7 @@ Bugs / Feature Requests If you think you’ve found a bug or want to see a new f
       <guid>/mongo-java-driver/4.3/driver-scala/getting-started/installation/</guid>
       <description>Installation The recommended way to get started using one of the drivers in your project is with a dependency management system.
  MongoDB Scala Driver The Reactive Streams based Scala implementation for asynchronous stream processing with non-blocking back pressure.
-Scala 2.12 &amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.mongodb.scala&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;mongo-scala-driver&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;4.3.0-beta2_2.12&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; &amp;lt;/dependencies&amp;gt;    dependencies { compile &#39;org.mongodb.scala:mongo-scala-driver:4.3.0-beta2_2.12&#39; }    libraryDependencies += &#34;org.mongodb.scala&#34; %% &#34;mongo-scala-driver&#34; % &#34;4.3.0-beta2&#34;  Scala 2.11 &amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.</description>
+Scala 2.12 &amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.mongodb.scala&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;mongo-scala-driver&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;4.3.0-beta4_2.12&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; &amp;lt;/dependencies&amp;gt;    dependencies { compile &#39;org.mongodb.scala:mongo-scala-driver:4.3.0-beta4_2.12&#39; }    libraryDependencies += &#34;org.mongodb.scala&#34; %% &#34;mongo-scala-driver&#34; % &#34;4.3.0-beta4&#34;  Scala 2.11 &amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.</description>
     </item>
     
     <item>

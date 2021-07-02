@@ -27,7 +27,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":6,"i10":6,"i11":6,"i12":6,"i13":6};
+var data = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":6,"i10":6,"i11":6,"i12":6,"i13":6,"i14":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -239,13 +239,20 @@ extends <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc
 </tr>
 <tr id="i11" class="rowColor">
 <td class="colFirst"><code><a href="AggregatePublisher.html" title="interface in com.mongodb.reactivestreams.client">AggregatePublisher</a>&lt;<a href="AggregatePublisher.html" title="type parameter in AggregatePublisher">TResult</a>&gt;</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#let(org.bson.conversions.Bson)">let</a></span>&#8203;(<a href="http://mongodb.github.io/mongo-java-driver/4.3/apidocs/bson/org/bson/conversions/Bson.html?is-external=true" title="class or interface in org.bson.conversions" class="externalLink">Bson</a>&nbsp;variables)</code></th>
+<td class="colLast">
+<div class="block">Add top-level variables to the aggregation.</div>
+</td>
+</tr>
+<tr id="i12" class="altColor">
+<td class="colFirst"><code><a href="AggregatePublisher.html" title="interface in com.mongodb.reactivestreams.client">AggregatePublisher</a>&lt;<a href="AggregatePublisher.html" title="type parameter in AggregatePublisher">TResult</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#maxAwaitTime(long,java.util.concurrent.TimeUnit)">maxAwaitTime</a></span>&#8203;(long&nbsp;maxAwaitTime,
             <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/TimeUnit.html?is-external=true" title="class or interface in java.util.concurrent" class="externalLink">TimeUnit</a>&nbsp;timeUnit)</code></th>
 <td class="colLast">
 <div class="block">The maximum amount of time for the server to wait on new documents to satisfy a <code>$changeStream</code> aggregation.</div>
 </td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code><a href="AggregatePublisher.html" title="interface in com.mongodb.reactivestreams.client">AggregatePublisher</a>&lt;<a href="AggregatePublisher.html" title="type parameter in AggregatePublisher">TResult</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#maxTime(long,java.util.concurrent.TimeUnit)">maxTime</a></span>&#8203;(long&nbsp;maxTime,
        <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/TimeUnit.html?is-external=true" title="class or interface in java.util.concurrent" class="externalLink">TimeUnit</a>&nbsp;timeUnit)</code></th>
@@ -253,7 +260,7 @@ extends <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc
 <div class="block">Sets the maximum execution time on the server for this operation.</div>
 </td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code><a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html?is-external=true" title="class or interface in org.reactivestreams" class="externalLink">Publisher</a>&lt;<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Void.html?is-external=true" title="class or interface in java.lang" class="externalLink">Void</a>&gt;</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#toCollection()">toCollection</a></span>()</code></th>
 <td class="colLast">
@@ -433,6 +440,31 @@ extends <a href="https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc
 <dt><span class="simpleTagLabel">Since:</span></dt>
 <dd>1.7</dd>
 <dl><dt><span class="strong">Since server release</span></dt><dd><a href='http://docs.mongodb.org/manual/release-notes/3.6'>3.6</a></dd></dl>
+</li>
+</ul>
+<a id="let(org.bson.conversions.Bson)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>let</h4>
+<pre class="methodSignature"><a href="AggregatePublisher.html" title="interface in com.mongodb.reactivestreams.client">AggregatePublisher</a>&lt;<a href="AggregatePublisher.html" title="type parameter in AggregatePublisher">TResult</a>&gt;&nbsp;let&#8203;(<a href="http://mongodb.github.io/mongo-java-driver/4.3/apidocs/mongodb-driver-core/com/mongodb/lang/Nullable.html?is-external=true" title="class or interface in com.mongodb.lang" class="externalLink">@Nullable</a>
+                                <a href="http://mongodb.github.io/mongo-java-driver/4.3/apidocs/bson/org/bson/conversions/Bson.html?is-external=true" title="class or interface in org.bson.conversions" class="externalLink">Bson</a>&nbsp;variables)</pre>
+<div class="block">Add top-level variables to the aggregation.
+ <p>
+ For MongoDB 5.0+, the aggregate command accepts a <code>let</code> option. This option is a document consisting of zero or more
+ fields representing variables that are accessible to the aggregation pipeline.  The key is the name of the variable and the value is
+ a constant in the aggregate expression language. Each parameter name is then usable to access the value of the corresponding
+ expression with the "$$" syntax within aggregate expression contexts which may require the use of $expr or a pipeline.
+ </p></div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>variables</code> - the variables</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>this</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>4.3</dd>
+<dl><dt><span class="strong">Since server release</span></dt><dd><a href='http://docs.mongodb.org/manual/release-notes/5.0'>5.0</a></dd></dl>
 </li>
 </ul>
 <a id="batchSize(int)">

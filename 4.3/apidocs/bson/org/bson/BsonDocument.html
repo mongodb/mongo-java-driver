@@ -215,13 +215,19 @@ implements <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base
 </td>
 </tr>
 <tr class="rowColor">
+<th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(int)">BsonDocument</a></span>&#8203;(int&nbsp;initialCapacity)</code></th>
+<td class="colLast">
+<div class="block">Construct an empty document with the specified initial capacity.</div>
+</td>
+</tr>
+<tr class="altColor">
 <th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(java.lang.String,org.bson.BsonValue)">BsonDocument</a></span>&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html?is-external=true" title="class or interface in java.lang" class="externalLink">String</a>&nbsp;key,
             <a href="BsonValue.html" title="class in org.bson">BsonValue</a>&nbsp;value)</code></th>
 <td class="colLast">
 <div class="block">Construct a new instance with a single key value pair</div>
 </td>
 </tr>
-<tr class="altColor">
+<tr class="rowColor">
 <th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(java.util.List)">BsonDocument</a></span>&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/List.html?is-external=true" title="class or interface in java.util" class="externalLink">List</a>&lt;<a href="BsonElement.html" title="class in org.bson">BsonElement</a>&gt;&nbsp;bsonElements)</code></th>
 <td class="colLast">
 <div class="block">Construct a new instance with the given list <code>BsonElement</code>, none of which may be null.</div>
@@ -773,6 +779,24 @@ implements <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>key</code> - the key</dd>
 <dd><code>value</code> - the value</dd>
+</dl>
+</li>
+</ul>
+<a id="&lt;init&gt;(int)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>BsonDocument</h4>
+<pre>public&nbsp;BsonDocument&#8203;(int&nbsp;initialCapacity)</pre>
+<div class="block">Construct an empty document with the specified initial capacity.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>initialCapacity</code> - the initial capacity</dd>
+<dt><span class="throwsLabel">Throws:</span></dt>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/IllegalArgumentException.html?is-external=true" title="class or interface in java.lang" class="externalLink">IllegalArgumentException</a></code> - if the initial capacity is negative</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>4.3</dd>
 </dl>
 </li>
 </ul>

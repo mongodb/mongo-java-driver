@@ -289,7 +289,10 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 <div class="block">Sets the SSLContext for use when SSL is enabled.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>context</code> - the SSLContext to use for connections.  Ignored if SSL is not enabled.</dd>
+<dd><code>context</code> - the SSLContext to use for connections. Ignored if TLS/SSL is not <a href="#enabled(boolean)">enabled</a>,
+                or if a <a href="StreamFactory.html" title="interface in com.mongodb.connection"><code>StreamFactory</code></a> <a href="StreamFactoryFactory.html#create(com.mongodb.connection.SocketSettings,com.mongodb.connection.SslSettings)">created</a>
+                by the <a href="../MongoClientSettings.Builder.html#streamFactoryFactory(com.mongodb.connection.StreamFactoryFactory)">specified</a>
+                <a href="StreamFactoryFactory.html" title="interface in com.mongodb.connection"><code>StreamFactoryFactory</code></a> does not use <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/javax/net/ssl/SSLContext.html?is-external=true" title="class or interface in javax.net.ssl" class="externalLink"><code>SSLContext</code></a>.</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>this</dd>
 <dt><span class="simpleTagLabel">Since:</span></dt>

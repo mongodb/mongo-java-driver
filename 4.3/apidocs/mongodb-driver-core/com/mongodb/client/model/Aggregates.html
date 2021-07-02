@@ -27,7 +27,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":9,"i1":9,"i2":9,"i3":9,"i4":9,"i5":9,"i6":9,"i7":9,"i8":9,"i9":9,"i10":9,"i11":9,"i12":9,"i13":9,"i14":9,"i15":9,"i16":9,"i17":9,"i18":9,"i19":9,"i20":9,"i21":9,"i22":9,"i23":9,"i24":9,"i25":9,"i26":9,"i27":9,"i28":9,"i29":9,"i30":9,"i31":9,"i32":9,"i33":9,"i34":9,"i35":9};
+var data = {"i0":9,"i1":9,"i2":9,"i3":9,"i4":9,"i5":9,"i6":9,"i7":9,"i8":9,"i9":9,"i10":9,"i11":9,"i12":9,"i13":9,"i14":9,"i15":9,"i16":9,"i17":9,"i18":9,"i19":9,"i20":9,"i21":9,"i22":9,"i23":9,"i24":9,"i25":9,"i26":9,"i27":9,"i28":9,"i29":9,"i30":9,"i31":9,"i32":9,"i33":9,"i34":9,"i35":9,"i36":9,"i37":9};
 var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -400,26 +400,40 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 </tr>
 <tr id="i30" class="altColor">
 <td class="colFirst"><code>static <a href="http://mongodb.github.io/mongo-java-driver/4.3/apidocs/bson/org/bson/conversions/Bson.html?is-external=true" title="class or interface in org.bson.conversions" class="externalLink">Bson</a></code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#set(com.mongodb.client.model.Field...)">set</a></span>&#8203;(<a href="Field.html" title="class in com.mongodb.client.model">Field</a>&lt;?&gt;...&nbsp;fields)</code></th>
+<td class="colLast">
+<div class="block">Creates a $set pipeline stage for the specified projection</div>
+</td>
+</tr>
+<tr id="i31" class="rowColor">
+<td class="colFirst"><code>static <a href="http://mongodb.github.io/mongo-java-driver/4.3/apidocs/bson/org/bson/conversions/Bson.html?is-external=true" title="class or interface in org.bson.conversions" class="externalLink">Bson</a></code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#set(java.util.List)">set</a></span>&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/List.html?is-external=true" title="class or interface in java.util" class="externalLink">List</a>&lt;<a href="Field.html" title="class in com.mongodb.client.model">Field</a>&lt;?&gt;&gt;&nbsp;fields)</code></th>
+<td class="colLast">
+<div class="block">Creates a $set pipeline stage for the specified projection</div>
+</td>
+</tr>
+<tr id="i32" class="altColor">
+<td class="colFirst"><code>static <a href="http://mongodb.github.io/mongo-java-driver/4.3/apidocs/bson/org/bson/conversions/Bson.html?is-external=true" title="class or interface in org.bson.conversions" class="externalLink">Bson</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#skip(int)">skip</a></span>&#8203;(int&nbsp;skip)</code></th>
 <td class="colLast">
 <div class="block">Creates a $skip pipeline stage</div>
 </td>
 </tr>
-<tr id="i31" class="rowColor">
+<tr id="i33" class="rowColor">
 <td class="colFirst"><code>static <a href="http://mongodb.github.io/mongo-java-driver/4.3/apidocs/bson/org/bson/conversions/Bson.html?is-external=true" title="class or interface in org.bson.conversions" class="externalLink">Bson</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#sort(org.bson.conversions.Bson)">sort</a></span>&#8203;(<a href="http://mongodb.github.io/mongo-java-driver/4.3/apidocs/bson/org/bson/conversions/Bson.html?is-external=true" title="class or interface in org.bson.conversions" class="externalLink">Bson</a>&nbsp;sort)</code></th>
 <td class="colLast">
 <div class="block">Creates a $sort pipeline stage for the specified sort specification</div>
 </td>
 </tr>
-<tr id="i32" class="altColor">
+<tr id="i34" class="altColor">
 <td class="colFirst"><code>static &lt;TExpression&gt;<br><a href="http://mongodb.github.io/mongo-java-driver/4.3/apidocs/bson/org/bson/conversions/Bson.html?is-external=true" title="class or interface in org.bson.conversions" class="externalLink">Bson</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#sortByCount(TExpression)">sortByCount</a></span>&#8203;(TExpression&nbsp;filter)</code></th>
 <td class="colLast">
 <div class="block">Creates a $sortByCount pipeline stage for the specified filter</div>
 </td>
 </tr>
-<tr id="i33" class="rowColor">
+<tr id="i35" class="rowColor">
 <td class="colFirst"><code>static <a href="http://mongodb.github.io/mongo-java-driver/4.3/apidocs/bson/org/bson/conversions/Bson.html?is-external=true" title="class or interface in org.bson.conversions" class="externalLink">Bson</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#unionWith(java.lang.String,java.util.List)">unionWith</a></span>&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html?is-external=true" title="class or interface in java.lang" class="externalLink">String</a>&nbsp;collection,
          <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/List.html?is-external=true" title="class or interface in java.util" class="externalLink">List</a>&lt;? extends <a href="http://mongodb.github.io/mongo-java-driver/4.3/apidocs/bson/org/bson/conversions/Bson.html?is-external=true" title="class or interface in org.bson.conversions" class="externalLink">Bson</a>&gt;&nbsp;pipeline)</code></th>
@@ -427,14 +441,14 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 <div class="block">Creates a $unionWith pipeline stage.</div>
 </td>
 </tr>
-<tr id="i34" class="altColor">
+<tr id="i36" class="altColor">
 <td class="colFirst"><code>static <a href="http://mongodb.github.io/mongo-java-driver/4.3/apidocs/bson/org/bson/conversions/Bson.html?is-external=true" title="class or interface in org.bson.conversions" class="externalLink">Bson</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#unwind(java.lang.String)">unwind</a></span>&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html?is-external=true" title="class or interface in java.lang" class="externalLink">String</a>&nbsp;fieldName)</code></th>
 <td class="colLast">
 <div class="block">Creates a $unwind pipeline stage for the specified field name, which must be prefixed by a <code>'$'</code> sign.</div>
 </td>
 </tr>
-<tr id="i35" class="rowColor">
+<tr id="i37" class="rowColor">
 <td class="colFirst"><code>static <a href="http://mongodb.github.io/mongo-java-driver/4.3/apidocs/bson/org/bson/conversions/Bson.html?is-external=true" title="class or interface in org.bson.conversions" class="externalLink">Bson</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#unwind(java.lang.String,com.mongodb.client.model.UnwindOptions)">unwind</a></span>&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html?is-external=true" title="class or interface in java.lang" class="externalLink">String</a>&nbsp;fieldName,
       <a href="UnwindOptions.html" title="class in com.mongodb.client.model">UnwindOptions</a>&nbsp;unwindOptions)</code></th>
@@ -500,6 +514,46 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 <dt><span class="simpleTagLabel">Since:</span></dt>
 <dd>3.4</dd>
 <dl><dt><span class="strong">MongoDB documentation</span></dt><dd><a href='http://docs.mongodb.org/manual/reference/operator/aggregation/addFields/'>$addFields</a></dd><dl><dt><span class="strong">Since server release</span></dt><dd><a href='http://docs.mongodb.org/manual/release-notes/3.4'>3.4</a></dd></dl>
+</li>
+</ul>
+<a id="set(com.mongodb.client.model.Field...)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>set</h4>
+<pre class="methodSignature">public static&nbsp;<a href="http://mongodb.github.io/mongo-java-driver/4.3/apidocs/bson/org/bson/conversions/Bson.html?is-external=true" title="class or interface in org.bson.conversions" class="externalLink">Bson</a>&nbsp;set&#8203;(<a href="Field.html" title="class in com.mongodb.client.model">Field</a>&lt;?&gt;...&nbsp;fields)</pre>
+<div class="block">Creates a $set pipeline stage for the specified projection</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>fields</code> - the fields to add</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the $set pipeline stage</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>4.3</dd>
+<dt><span class="seeLabel">See Also:</span></dt>
+<dd><a href="Projections.html" title="class in com.mongodb.client.model"><code>Projections</code></a></dd>
+<dl><dt><span class="strong">MongoDB documentation</span></dt><dd><a href='http://docs.mongodb.org/manual/reference/operator/aggregation/set/'>$set</a></dd><dl><dt><span class="strong">Since server release</span></dt><dd><a href='http://docs.mongodb.org/manual/release-notes/4.2'>4.2</a></dd></dl>
+</li>
+</ul>
+<a id="set(java.util.List)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>set</h4>
+<pre class="methodSignature">public static&nbsp;<a href="http://mongodb.github.io/mongo-java-driver/4.3/apidocs/bson/org/bson/conversions/Bson.html?is-external=true" title="class or interface in org.bson.conversions" class="externalLink">Bson</a>&nbsp;set&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/List.html?is-external=true" title="class or interface in java.util" class="externalLink">List</a>&lt;<a href="Field.html" title="class in com.mongodb.client.model">Field</a>&lt;?&gt;&gt;&nbsp;fields)</pre>
+<div class="block">Creates a $set pipeline stage for the specified projection</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>fields</code> - the fields to add</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the $set pipeline stage</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>4.3</dd>
+<dt><span class="seeLabel">See Also:</span></dt>
+<dd><a href="Projections.html" title="class in com.mongodb.client.model"><code>Projections</code></a></dd>
+<dl><dt><span class="strong">MongoDB documentation</span></dt><dd><a href='http://docs.mongodb.org/manual/reference/operator/aggregation/set/'>$set</a></dd><dl><dt><span class="strong">Since server release</span></dt><dd><a href='http://docs.mongodb.org/manual/release-notes/4.2'>4.2</a></dd></dl>
 </li>
 </ul>
 <a id="bucket(java.lang.Object,java.util.List)">

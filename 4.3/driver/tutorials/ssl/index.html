@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2021-06-01T15:04:18.88">
+<meta name="date" content="2021-07-02T16:15:58.26">
 <link rel="shortcut icon" href="/mongo-java-driver/4.3/img/favicon.png">
 
     <title>TLS/SSL</title><link rel="stylesheet" href="/mongo-java-driver/4.3/lib/bootstrap.css" type="text/css" />
@@ -317,8 +317,11 @@
 
 <h2 id="tls-ssl">TLS/SSL</h2>
 
-<p>The Java driver supports TLS/SSL connections to MongoDB servers using
-the underlying support for TLS/SSL provided by the JDK.
+<p>By default the Java driver supports TLS/SSL connections to MongoDB servers using
+the underlying support for TLS/SSL provided by the JDK. This can be changed either by utilizing extensibility
+of the <a href="https://docs.oracle.com/javase/8/docs/api
+">Java SE API</a>, or via the <a href="https://netty.io/4.1/api/
+">Netty API</a>.
 You can configure the driver to use TLS/SSL either with <a href="/mongo-java-driver/4.3/apidocs/mongodb-driver-core/com/mongodb/ConnectionString.html
 "><code>ConnectionString</code></a> or with
 <a href="/mongo-java-driver/4.3/apidocs/mongodb-driver-core/com/mongodb/MongoClientSettings.html
@@ -357,12 +360,11 @@ import com.mongodb.client.MongoClient;
 MongoClient client = MongoClients.create(settings);
 </code></pre>
 
-<h3 id="specify-sslcontext-via-mongoclientsettings">Specify <code>SSLContext</code> via <code>MongoClientSettings</code></h3>
+<h3 id="specify-java-se-sslcontext-via-mongoclientsettings">Specify Java SE <code>SSLContext</code> via <code>MongoClientSettings</code></h3>
 
 <pre><code class="language-java">import javax.net.ssl.SSLContext;
 import com.mongodb.MongoClientSettings;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoClient;
+import com.mongodb.MongoClient;
 </code></pre>
 
 <p>To specify the <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLContext.html
@@ -372,10 +374,43 @@ import com.mongodb.client.MongoClient;
 
 <pre><code class="language-java">SSLContext sslContext = ...
 MongoClientSettings settings = MongoClientSettings.builder()
-        .applyToSslSettings(builder -&gt; {
-                    builder.enabled(true);
-                    builder.context(sslContext);
-                })
+        .applyToSslSettings(builder -&gt; builder.enabled(true).context(sslContext))
+        .build();
+MongoClient client = new MongoClient(settings);
+</code></pre>
+
+<h3 id="specify-netty-sslcontext-via-nettystreamfactoryfactory">Specify Netty <code>SslContext</code> via <code>NettyStreamFactoryFactory</code></h3>
+
+<p>If you use the driver with <a href="https://netty.io/">Netty</a> for network IO,
+you have an option to plug an alternative TLS/SSL protocol implementation provided by Netty.</p>
+
+<pre><code class="language-java">import com.mongodb.MongoClientSettings;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoClient;
+import com.mongodb.connection.netty.NettyStreamFactoryFactory;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslProvider;
+</code></pre>
+
+<p>To instruct the driver to use <a href="https://netty.io/4.1/api/io/netty/handler/ssl/SslContext.html
+"><code>io.netty.handler.ssl.SslContext</code></a>,
+use the method
+<a href="/mongo-java-driver/4.3/apidocs/mongodb-driver-core/com/mongodb/connection/netty/NettyStreamFactoryFactory.Builder.html#sslContext(io.netty.handler.ssl.SslContext)
+"><code>NettyStreamFactoryFactory.Builder.sslContext</code></a>.
+See the documentation of this method for details on which
+<a href="https://netty.io/4.1/api/io/netty/handler/ssl/SslProvider.html
+"><code>io.netty.handler.ssl.SslProvider</code></a>s are supported by the driver
+and implications of using them.</p>
+
+<pre><code class="language-java">SslContext sslContext = SslContextBuilder.forClient()
+        .sslProvider(SslProvider.OPENSSL)
+        .build();
+MongoClientSettings settings = MongoClientSettings.builder()
+        .applyToSslSettings(builder -&gt; builder.enabled(true))
+        .streamFactoryFactory(NettyStreamFactoryFactory.builder()
+                .sslContext(sslContext)
+                .build())
         .build();
 MongoClient client = MongoClients.create(settings);
 </code></pre>
@@ -408,7 +443,7 @@ import com.mongodb.MongoClient;
  MongoClient client = new MongoClient(settings);
 </code></pre>
 
-<h3 id="specify-sslcontext-via-mongoclientsettings-1">Specify <code>SSLContext</code> via <code>MongoClientSettings</code></h3>
+<h3 id="specify-java-se-sslcontext-via-mongoclientsettings-1">Specify Java SE <code>SSLContext</code> via <code>MongoClientSettings</code></h3>
 
 <pre><code class="language-java">import javax.net.ssl.SSLContext;
 import com.mongodb.MongoClientSettings;
@@ -425,6 +460,42 @@ MongoClientSettings settings = MongoClientSettings.builder()
         .applyToSslSettings(builder -&gt; builder.enabled(true).context(sslContext))
         .build();
 MongoClient client = new MongoClient(settings);
+</code></pre>
+
+<h3 id="specify-netty-sslcontext-via-nettystreamfactoryfactory-1">Specify Netty <code>SslContext</code> via <code>NettyStreamFactoryFactory</code></h3>
+
+<p>If you use the driver with <a href="https://netty.io/">Netty</a> for network IO,
+you have an option to plug an alternative TLS/SSL protocol implementation provided by Netty.</p>
+
+<pre><code class="language-java">import com.mongodb.MongoClientSettings;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoClient;
+import com.mongodb.connection.netty.NettyStreamFactoryFactory;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslProvider;
+</code></pre>
+
+<p>To instruct the driver to use <a href="https://netty.io/4.1/api/io/netty/handler/ssl/SslContext.html
+"><code>io.netty.handler.ssl.SslContext</code></a>,
+use the method
+<a href="/mongo-java-driver/4.3/apidocs/mongodb-driver-core/com/mongodb/connection/netty/NettyStreamFactoryFactory.Builder.html#sslContext(io.netty.handler.ssl.SslContext)
+"><code>NettyStreamFactoryFactory.Builder.sslContext</code></a>.
+See the documentation of this method for details on which
+<a href="https://netty.io/4.1/api/io/netty/handler/ssl/SslProvider.html
+"><code>io.netty.handler.ssl.SslProvider</code></a>s are supported by the driver
+and implications of using them.</p>
+
+<pre><code class="language-java">SslContext sslContext = SslContextBuilder.forClient()
+        .sslProvider(SslProvider.OPENSSL)
+        .build();
+MongoClientSettings settings = MongoClientSettings.builder()
+        .applyToSslSettings(builder -&gt; builder.enabled(true))
+        .streamFactoryFactory(NettyStreamFactoryFactory.builder()
+                .sslContext(sslContext)
+                .build())
+        .build();
+MongoClient client = MongoClients.create(settings);
 </code></pre>
 
 <h2 id="disable-hostname-verification">Disable Hostname Verification</h2>
@@ -448,7 +519,8 @@ this in <a href="/mongo-java-driver/4.3/apidocs/mongodb-driver-core/com/mongodb/
 
 <h2 id="common-tls-ssl-configuration-tasks">Common TLS/SSL Configuration Tasks</h2>
 
-<p><p></p></p>
+<p>This section is based on the documentation for <a href="https://www.oracle.com/java/technologies/javase-downloads.html#JDK8">Oracle JDK</a>,
+so some parts may be inapplicable to your JDK or to the custom TLS/SSL implementation you use.</p>
 
 <h3 id="configure-trust-store-and-key-store">Configure Trust Store and Key Store</h3>
 
@@ -599,13 +671,15 @@ refer to the <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/sec
 <ul>
 <li><a href="#specify-tls-ssl-via-connectionstring">Specify TLS/SSL via <code>ConnectionString</code></a></li>
 <li><a href="#specify-tls-ssl-via-mongoclientsettings">Specify TLS/SSL via <code>MongoClientSettings</code></a></li>
-<li><a href="#specify-sslcontext-via-mongoclientsettings">Specify <code>SSLContext</code> via <code>MongoClientSettings</code></a></li>
+<li><a href="#specify-java-se-sslcontext-via-mongoclientsettings">Specify Java SE <code>SSLContext</code> via <code>MongoClientSettings</code></a></li>
+<li><a href="#specify-netty-sslcontext-via-nettystreamfactoryfactory">Specify Netty <code>SslContext</code> via <code>NettyStreamFactoryFactory</code></a></li>
 </ul></li>
 <li><a href="#legacy-mongoclient-api">Legacy MongoClient API</a>
 <ul>
 <li><a href="#specify-tls-ssl-via-connection-string">Specify TLS/SSL via connection string</a></li>
 <li><a href="#specify-tls-ssl-via-mongoclientsettings-1">Specify TLS/SSL via <code>MongoClientSettings</code></a></li>
-<li><a href="#specify-sslcontext-via-mongoclientsettings-1">Specify <code>SSLContext</code> via <code>MongoClientSettings</code></a></li>
+<li><a href="#specify-java-se-sslcontext-via-mongoclientsettings-1">Specify Java SE <code>SSLContext</code> via <code>MongoClientSettings</code></a></li>
+<li><a href="#specify-netty-sslcontext-via-nettystreamfactoryfactory-1">Specify Netty <code>SslContext</code> via <code>NettyStreamFactoryFactory</code></a></li>
 </ul></li>
 <li><a href="#disable-hostname-verification">Disable Hostname Verification</a></li>
 <li><a href="#common-tls-ssl-configuration-tasks">Common TLS/SSL Configuration Tasks</a>

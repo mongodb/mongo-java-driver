@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2021-06-01T15:04:18.82">
+<meta name="date" content="2021-07-02T16:15:58.2">
 <link rel="shortcut icon" href="/mongo-java-driver/4.3/img/favicon.png">
 
     <title>What&#39;s New</title><link rel="stylesheet" href="/mongo-java-driver/4.3/lib/bootstrap.css" type="text/css" />
@@ -325,6 +325,23 @@
 <li>Added support for the MongoDB Versioned API.  See the
 <a href="/mongo-java-driver/4.3/apidocs/mongodb-driver-core/com/mongodb/ServerApi.html
 "><code>ServerApi</code></a> API documentation for details.</li>
+<li>Removed most restrictions on allowed characters in field names of documents being inserted or replaced.  This is a behavioral change
+for any application that is relying on client-side enforcement of these restrictions. In particular:
+
+<ul>
+<li>Restrictions on field names containing the &ldquo;.&rdquo; character have been removed. This affects all insert and replace operations.</li>
+<li>Restrictions on field names starting with the &ldquo;$&rdquo; character have been removed for all insert operations.</li>
+<li>Restrictions in nested documents on field names starting with the &ldquo;$&rdquo; character have been removed for all replace operations.<br /></li>
+<li>Restrictions in the top-level document on field names starting with the &ldquo;$&rdquo; character remain for all replace operations. This is
+primarily to prevent accidental use of a replace operation when the intention was to use an update operation.</li>
+<li>Note that unacknowledged writes using dollar-prefixed or dotted keys may be silently rejected by pre-5.0 servers, where some
+restrictions on field names are still enforced in the server.</li>
+</ul></li>
+<li>Added support for setting
+<a href="https://netty.io/">Netty</a> <a href="https://netty.io/4.1/api/io/netty/handler/ssl/SslContext.html
+"><code>io.netty.handler.ssl.SslContext</code></a>,
+which may be used as a convenient way to utilize <a href="https://www.openssl.org/">OpenSSL</a> as an alternative
+to the TLS/SSL protocol implementation in a JDK.</li>
 </ul>
 
 <h1 id="what-s-new-in-4-2">What&rsquo;s new in 4.2</h1>

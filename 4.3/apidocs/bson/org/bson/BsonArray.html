@@ -179,6 +179,12 @@ implements <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base
 </td>
 </tr>
 <tr class="rowColor">
+<th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(int)">BsonArray</a></span>&#8203;(int&nbsp;initialCapacity)</code></th>
+<td class="colLast">
+<div class="block">Construct an empty BsonArray with the specified initial capacity.</div>
+</td>
+</tr>
+<tr class="altColor">
 <th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(java.util.List)">BsonArray</a></span>&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/List.html?is-external=true" title="class or interface in java.util" class="externalLink">List</a>&lt;? extends <a href="BsonValue.html" title="class in org.bson">BsonValue</a>&gt;&nbsp;values)</code></th>
 <td class="colLast">
 <div class="block">Construct an instance with the given list of values.</div>
@@ -431,11 +437,30 @@ implements <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base
 <a id="&lt;init&gt;()">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>BsonArray</h4>
 <pre>public&nbsp;BsonArray()</pre>
 <div class="block">Construct an empty BsonArray</div>
+</li>
+</ul>
+<a id="&lt;init&gt;(int)">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>BsonArray</h4>
+<pre>public&nbsp;BsonArray&#8203;(int&nbsp;initialCapacity)</pre>
+<div class="block">Construct an empty BsonArray with the specified initial capacity.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>initialCapacity</code> - the initial capacity of the BsonArray</dd>
+<dt><span class="throwsLabel">Throws:</span></dt>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/IllegalArgumentException.html?is-external=true" title="class or interface in java.lang" class="externalLink">IllegalArgumentException</a></code> - if the specified initial capacity
+         is negative</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>4.3</dd>
+</dl>
 </li>
 </ul>
 </li>

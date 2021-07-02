@@ -27,7 +27,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10};
+var data = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -138,7 +138,7 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 <dl>
 <dt><span class="simpleTagLabel">Since:</span></dt>
 <dd>3.0</dd>
-<dl><dt><span class="strong">MongoDB documentation</span></dt><dd><a href='http://docs.mongodb.org/manual/reference/method/db.createCollection/'>Create Collection</a></dd></dl>
+<dl><dt><span class="strong">MongoDB documentation</span></dt><dd><a href='http://docs.mongodb.org/manual/reference/method/db.createCollection/'>Create Collection</a></dd><dd><a href='http://docs.mongodb.org/manual/core/timeseries-collections/'>Time-series collections</a></dd></dl>
 </li>
 </ul>
 </div>
@@ -195,88 +195,117 @@ extends <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/ja
 </td>
 </tr>
 <tr id="i2" class="altColor">
+<td class="colFirst"><code><a href="CreateCollectionOptions.html" title="class in com.mongodb.client.model">CreateCollectionOptions</a></code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#expireAfter(long,java.util.concurrent.TimeUnit)">expireAfter</a></span>&#8203;(long&nbsp;expireAfter,
+           <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/TimeUnit.html?is-external=true" title="class or interface in java.util.concurrent" class="externalLink">TimeUnit</a>&nbsp;timeUnit)</code></th>
+<td class="colLast">
+<div class="block">Sets the expire-after option.</div>
+</td>
+</tr>
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code><a href="Collation.html" title="class in com.mongodb.client.model">Collation</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getCollation()">getCollation</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Returns the collation options</div>
 </td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i4" class="altColor">
+<td class="colFirst"><code>long</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getExpireAfter(java.util.concurrent.TimeUnit)">getExpireAfter</a></span>&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/TimeUnit.html?is-external=true" title="class or interface in java.util.concurrent" class="externalLink">TimeUnit</a>&nbsp;timeUnit)</code></th>
+<td class="colLast">
+<div class="block">Returns the expire-after option.</div>
+</td>
+</tr>
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code><a href="IndexOptionDefaults.html" title="class in com.mongodb.client.model">IndexOptionDefaults</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getIndexOptionDefaults()">getIndexOptionDefaults</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Gets the index option defaults for the collection.</div>
 </td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>long</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getMaxDocuments()">getMaxDocuments</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Gets the maximum number of documents allowed in a capped collection.</div>
 </td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>long</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getSizeInBytes()">getSizeInBytes</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Gets the maximum size in bytes of a capped collection.</div>
 </td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code><a href="http://mongodb.github.io/mongo-java-driver/4.3/apidocs/bson/org/bson/conversions/Bson.html?is-external=true" title="class or interface in org.bson.conversions" class="externalLink">Bson</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getStorageEngineOptions()">getStorageEngineOptions</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Gets the storage engine options document for the collection.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i9" class="rowColor">
+<td class="colFirst"><code><a href="TimeSeriesOptions.html" title="class in com.mongodb.client.model">TimeSeriesOptions</a></code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getTimeSeriesOptions()">getTimeSeriesOptions</a></span>()</code></th>
+<td class="colLast">
+<div class="block">Gets the time series collection options.</div>
+</td>
+</tr>
+<tr id="i10" class="altColor">
 <td class="colFirst"><code><a href="ValidationOptions.html" title="class in com.mongodb.client.model">ValidationOptions</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getValidationOptions()">getValidationOptions</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Gets the validation options for documents being inserted or updated in a collection</div>
 </td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code><a href="CreateCollectionOptions.html" title="class in com.mongodb.client.model">CreateCollectionOptions</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#indexOptionDefaults(com.mongodb.client.model.IndexOptionDefaults)">indexOptionDefaults</a></span>&#8203;(<a href="IndexOptionDefaults.html" title="class in com.mongodb.client.model">IndexOptionDefaults</a>&nbsp;indexOptionDefaults)</code></th>
 <td class="colLast">
 <div class="block">Sets the index option defaults for the collection.</div>
 </td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#isCapped()">isCapped</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Gets whether the collection is capped.</div>
 </td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code><a href="CreateCollectionOptions.html" title="class in com.mongodb.client.model">CreateCollectionOptions</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#maxDocuments(long)">maxDocuments</a></span>&#8203;(long&nbsp;maxDocuments)</code></th>
 <td class="colLast">
 <div class="block">Sets the maximum number of documents allowed in a capped collection.</div>
 </td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code><a href="CreateCollectionOptions.html" title="class in com.mongodb.client.model">CreateCollectionOptions</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#sizeInBytes(long)">sizeInBytes</a></span>&#8203;(long&nbsp;sizeInBytes)</code></th>
 <td class="colLast">
 <div class="block">Gets the maximum size of in bytes of a capped collection.</div>
 </td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code><a href="CreateCollectionOptions.html" title="class in com.mongodb.client.model">CreateCollectionOptions</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#storageEngineOptions(org.bson.conversions.Bson)">storageEngineOptions</a></span>&#8203;(<a href="http://mongodb.github.io/mongo-java-driver/4.3/apidocs/bson/org/bson/conversions/Bson.html?is-external=true" title="class or interface in org.bson.conversions" class="externalLink">Bson</a>&nbsp;storageEngineOptions)</code></th>
 <td class="colLast">
 <div class="block">Sets the storage engine options document defaults for the collection</div>
 </td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i16" class="altColor">
+<td class="colFirst"><code><a href="CreateCollectionOptions.html" title="class in com.mongodb.client.model">CreateCollectionOptions</a></code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#timeSeriesOptions(com.mongodb.client.model.TimeSeriesOptions)">timeSeriesOptions</a></span>&#8203;(<a href="TimeSeriesOptions.html" title="class in com.mongodb.client.model">TimeSeriesOptions</a>&nbsp;timeSeriesOptions)</code></th>
+<td class="colLast">
+<div class="block">Sets the time-series collection options.</div>
+</td>
+</tr>
+<tr id="i17" class="rowColor">
 <td class="colFirst"><code><a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html?is-external=true" title="class or interface in java.lang" class="externalLink">String</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#toString()">toString</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i14" class="altColor">
+<tr id="i18" class="altColor">
 <td class="colFirst"><code><a href="CreateCollectionOptions.html" title="class in com.mongodb.client.model">CreateCollectionOptions</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#validationOptions(com.mongodb.client.model.ValidationOptions)">validationOptions</a></span>&#8203;(<a href="ValidationOptions.html" title="class in com.mongodb.client.model">ValidationOptions</a>&nbsp;validationOptions)</code></th>
 <td class="colLast">
@@ -552,6 +581,89 @@ public&nbsp;<a href="Collation.html" title="class in com.mongodb.client.model">C
 <dt><span class="simpleTagLabel">Since:</span></dt>
 <dd>3.4</dd>
 <dl><dt><span class="strong">Since server release</span></dt><dd><a href='http://docs.mongodb.org/manual/release-notes/3.4'>3.4</a></dd></dl>
+</li>
+</ul>
+<a id="getExpireAfter(java.util.concurrent.TimeUnit)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getExpireAfter</h4>
+<pre class="methodSignature">public&nbsp;long&nbsp;getExpireAfter&#8203;(<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/TimeUnit.html?is-external=true" title="class or interface in java.util.concurrent" class="externalLink">TimeUnit</a>&nbsp;timeUnit)</pre>
+<div class="block">Returns the expire-after option.  The default value is 0, which indicates no expiration.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>timeUnit</code> - the time unit</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the expire-after option, which may be null.</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>4.3</dd>
+<dl><dt><span class="strong">MongoDB documentation</span></dt><dd><a href='http://docs.mongodb.org/manual/core/timeseries-collections/'>Time-series collections</a></dd></dl>
+</li>
+</ul>
+<a id="expireAfter(long,java.util.concurrent.TimeUnit)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>expireAfter</h4>
+<pre class="methodSignature">public&nbsp;<a href="CreateCollectionOptions.html" title="class in com.mongodb.client.model">CreateCollectionOptions</a>&nbsp;expireAfter&#8203;(long&nbsp;expireAfter,
+                                           <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/TimeUnit.html?is-external=true" title="class or interface in java.util.concurrent" class="externalLink">TimeUnit</a>&nbsp;timeUnit)</pre>
+<div class="block">Sets the expire-after option.
+
+ <p>
+ A duration indicating after how long old time-series data should be deleted. Partial seconds are ignored.
+ </p>
+ <p>
+ Currently applies only to time-series collections, so if this value is set then so must the time-series options
+ </p></div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>expireAfter</code> - the expire-after duration.  After conversion to seconds using
+ <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/TimeUnit.html?is-external=true#convert(long,java.util.concurrent.TimeUnit)" title="class or interface in java.util.concurrent" class="externalLink"><code>TimeUnit.convert(long, java.util.concurrent.TimeUnit)</code></a>, the value must be &gt;= 0.  A value of 0 indicates no expiration.</dd>
+<dd><code>timeUnit</code> - the time unit</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>this</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>4.3</dd>
+<dt><span class="seeLabel">See Also:</span></dt>
+<dd><a href="#timeSeriesOptions(com.mongodb.client.model.TimeSeriesOptions)"><code>timeSeriesOptions(TimeSeriesOptions)</code></a></dd>
+<dl><dt><span class="strong">MongoDB documentation</span></dt><dd><a href='http://docs.mongodb.org/manual/core/timeseries-collections/'>Time-series collections</a></dd></dl>
+</li>
+</ul>
+<a id="getTimeSeriesOptions()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getTimeSeriesOptions</h4>
+<pre class="methodSignature"><a href="../../lang/Nullable.html" title="annotation in com.mongodb.lang">@Nullable</a>
+public&nbsp;<a href="TimeSeriesOptions.html" title="class in com.mongodb.client.model">TimeSeriesOptions</a>&nbsp;getTimeSeriesOptions()</pre>
+<div class="block">Gets the time series collection options.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the options for a time-series collection</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>4.3</dd>
+<dl><dt><span class="strong">MongoDB documentation</span></dt><dd><a href='http://docs.mongodb.org/manual/core/timeseries-collections/'>Time-series collections</a></dd></dl>
+</li>
+</ul>
+<a id="timeSeriesOptions(com.mongodb.client.model.TimeSeriesOptions)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>timeSeriesOptions</h4>
+<pre class="methodSignature">public&nbsp;<a href="CreateCollectionOptions.html" title="class in com.mongodb.client.model">CreateCollectionOptions</a>&nbsp;timeSeriesOptions&#8203;(<a href="TimeSeriesOptions.html" title="class in com.mongodb.client.model">TimeSeriesOptions</a>&nbsp;timeSeriesOptions)</pre>
+<div class="block">Sets the time-series collection options.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>timeSeriesOptions</code> - the time-series options</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>this</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>4.3</dd>
+<dl><dt><span class="strong">MongoDB documentation</span></dt><dd><a href='http://docs.mongodb.org/manual/core/timeseries-collections/'>Time-series collections</a></dd></dl>
 </li>
 </ul>
 <a id="toString()">

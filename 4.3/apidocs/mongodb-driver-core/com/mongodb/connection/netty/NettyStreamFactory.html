@@ -197,6 +197,17 @@ implements <a href="../StreamFactory.html" title="interface in com.mongodb.conne
 <div class="block">Construct a new instance of the factory.</div>
 </td>
 </tr>
+<tr class="altColor">
+<th class="colConstructorName" scope="row"><code><span class="memberNameLink"><a href="#%3Cinit%3E(com.mongodb.connection.SocketSettings,com.mongodb.connection.SslSettings,io.netty.channel.EventLoopGroup,java.lang.Class,io.netty.buffer.ByteBufAllocator,io.netty.handler.ssl.SslContext)">NettyStreamFactory</a></span>&#8203;(<a href="../SocketSettings.html" title="class in com.mongodb.connection">SocketSettings</a>&nbsp;settings,
+                  <a href="../SslSettings.html" title="class in com.mongodb.connection">SslSettings</a>&nbsp;sslSettings,
+                  io.netty.channel.EventLoopGroup&nbsp;eventLoopGroup,
+                  <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Class.html?is-external=true" title="class or interface in java.lang" class="externalLink">Class</a>&lt;? extends io.netty.channel.socket.SocketChannel&gt;&nbsp;socketChannelClass,
+                  io.netty.buffer.ByteBufAllocator&nbsp;allocator,
+                  io.netty.handler.ssl.SslContext&nbsp;sslContext)</code></th>
+<td class="colLast">
+<div class="block">Construct a new instance of the factory.</div>
+</td>
+</tr>
 </table>
 </li>
 </ul>
@@ -246,6 +257,34 @@ implements <a href="../StreamFactory.html" title="interface in com.mongodb.conne
 <!--   -->
 </a>
 <h3>Constructor Detail</h3>
+<a id="&lt;init&gt;(com.mongodb.connection.SocketSettings,com.mongodb.connection.SslSettings,io.netty.channel.EventLoopGroup,java.lang.Class,io.netty.buffer.ByteBufAllocator,io.netty.handler.ssl.SslContext)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>NettyStreamFactory</h4>
+<pre>public&nbsp;NettyStreamFactory&#8203;(<a href="../SocketSettings.html" title="class in com.mongodb.connection">SocketSettings</a>&nbsp;settings,
+                          <a href="../SslSettings.html" title="class in com.mongodb.connection">SslSettings</a>&nbsp;sslSettings,
+                          io.netty.channel.EventLoopGroup&nbsp;eventLoopGroup,
+                          <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Class.html?is-external=true" title="class or interface in java.lang" class="externalLink">Class</a>&lt;? extends io.netty.channel.socket.SocketChannel&gt;&nbsp;socketChannelClass,
+                          io.netty.buffer.ByteBufAllocator&nbsp;allocator,
+                          <a href="../../lang/Nullable.html" title="annotation in com.mongodb.lang">@Nullable</a>
+                          io.netty.handler.ssl.SslContext&nbsp;sslContext)</pre>
+<div class="block">Construct a new instance of the factory.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>settings</code> - the socket settings</dd>
+<dd><code>sslSettings</code> - the SSL settings</dd>
+<dd><code>eventLoopGroup</code> - the event loop group that all channels created by this factory will be a part of</dd>
+<dd><code>socketChannelClass</code> - the socket channel class</dd>
+<dd><code>allocator</code> - the allocator to use for ByteBuf instances</dd>
+<dd><code>sslContext</code> - the Netty <code>SslContext</code>
+                   as specified by <a href="NettyStreamFactoryFactory.Builder.html#sslContext(io.netty.handler.ssl.SslContext)"><code>NettyStreamFactoryFactory.Builder.sslContext(SslContext)</code></a>.</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>4.3</dd>
+</dl>
+</li>
+</ul>
 <a id="&lt;init&gt;(com.mongodb.connection.SocketSettings,com.mongodb.connection.SslSettings,io.netty.channel.EventLoopGroup,java.lang.Class,io.netty.buffer.ByteBufAllocator)">
 <!--   -->
 </a>
