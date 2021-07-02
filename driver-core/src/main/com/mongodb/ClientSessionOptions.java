@@ -210,7 +210,7 @@ public final class ClientSessionOptions {
 
     private ClientSessionOptions(final Builder builder) {
         if (builder.causallyConsistent != null && builder.causallyConsistent && builder.snapshot != null && builder.snapshot) {
-            throw new IllegalArgumentException("TODO"); // TODO
+            throw new IllegalArgumentException("A session can not be both a snapshot and causally consistent");
         }
         this.causallyConsistent = builder.causallyConsistent != null || builder.snapshot == null
                 ? builder.causallyConsistent

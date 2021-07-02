@@ -89,31 +89,11 @@ public final class ProtocolHelper {
     }
 
     static BsonTimestamp getOperationTime(final ResponseBuffers responseBuffers) {
-        try {
-            BsonValue operationTime = getField(createBsonReader(responseBuffers), "operationTime");
-            if (operationTime == null) {
-                return null;
-            }
-            return operationTime.asTimestamp();
-        } finally {
-            responseBuffers.reset();
-        }
+        return getFieldValueAsTimestamp(responseBuffers, "operationTime");
     }
 
     static BsonDocument getClusterTime(final ResponseBuffers responseBuffers) {
-        BsonValue value = getFieldValue(responseBuffers, "$clusterTime");
-        if (value == null) {
-            return null;
-        }
-        return value.asDocument();
-    }
-
-    static BsonDocument getClusterTime(final BsonDocument response) {
-        BsonValue clusterTime = response.get("$clusterTime");
-        if (clusterTime == null) {
-            return null;
-        }
-        return clusterTime.asDocument();
+        return getFieldValueAsDocument(responseBuffers, "$clusterTime");
     }
 
     static BsonTimestamp getSnapshotTimestamp(final ResponseBuffers responseBuffers) {
@@ -128,7 +108,20 @@ public final class ProtocolHelper {
     }
 
     static BsonDocument getRecoveryToken(final ResponseBuffers responseBuffers) {
-        BsonValue value = getFieldValue(responseBuffers, "recoveryToken");
+        return getFieldValueAsDocument(responseBuffers, "recoveryToken");
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private static BsonTimestamp getFieldValueAsTimestamp(final ResponseBuffers responseBuffers, final String fieldName) {
+        BsonValue value = getFieldValue(responseBuffers, fieldName);
+        if (value == null) {
+            return null;
+        }
+        return value.asTimestamp();
+    }
+
+    private static BsonDocument getFieldValueAsDocument(final ResponseBuffers responseBuffers, final String fieldName) {
+        BsonValue value = getFieldValue(responseBuffers, fieldName);
         if (value == null) {
             return null;
         }

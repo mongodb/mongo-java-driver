@@ -137,10 +137,9 @@ public class BaseClientSessionImpl implements ClientSession {
     @Override
     public void setSnapshotTimestamp(final BsonTimestamp snapshotTimestamp) {
         isTrue("open", !closed);
-        if (snapshotTimestamp == null) {
-            return;
+        if (snapshotTimestamp != null) {
+            this.snapshotTimestamp = snapshotTimestamp;
         }
-        this.snapshotTimestamp = snapshotTimestamp;
     }
 
     @Override
