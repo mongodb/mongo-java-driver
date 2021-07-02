@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageSize;
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxWriteBatchSize;
 import static com.mongodb.connection.ServerConnectionState.CONNECTED;
@@ -80,19 +81,13 @@ public final class DescriptionHelper {
             ObjectId serviceId = getServiceId(isMasterResult);
             if (serviceId != null) {
                 connectionDescription = connectionDescription.withServiceId(serviceId);
+            } else if (manufactureServiceId) {
+                TopologyVersion topologyVersion = getTopologyVersion(isMasterResult);
+                assertNotNull(topologyVersion);
+                connectionDescription = connectionDescription.withServiceId(topologyVersion.getProcessId());
             } else {
-                if (manufactureServiceId) {
-                    TopologyVersion topologyVersion = getTopologyVersion(isMasterResult);
-                    if (topologyVersion != null) {
-                        connectionDescription = connectionDescription.withServiceId(topologyVersion.getProcessId());
-                    } else {
-                        throw new MongoClientException("Driver attempted to initialize in test-only load balancing mode, but the server "
-                                + "does not have a topology version");
-                    }
-                } else {
-                    throw new MongoClientException("Driver attempted to initialize in load balancing mode, but the server does not support "
-                            + "this mode");
-                }
+                throw new MongoClientException("Driver attempted to initialize in load balancing mode, but the server does not support "
+                        + "this mode");
             }
         }
         return connectionDescription;
