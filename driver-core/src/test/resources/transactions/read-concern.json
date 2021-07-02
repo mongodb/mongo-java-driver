@@ -601,7 +601,6 @@
     },
     {
       "description": "only first distinct includes readConcern",
-      "skipReason": "Skip until JAVA-???? is fixed",
       "operations": [
         {
           "name": "startTransaction",
