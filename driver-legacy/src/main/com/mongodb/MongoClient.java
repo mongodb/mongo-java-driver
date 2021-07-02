@@ -119,6 +119,7 @@ public class MongoClient implements Closeable {
     private final ConcurrentLinkedQueue<ServerCursorAndNamespace> orphanedCursors = new ConcurrentLinkedQueue<>();
     private final ExecutorService cursorCleaningService;
     private final MongoClientImpl delegate;
+    private boolean closed;
 
     /**
      * Gets the default codec registry.  It includes the following providers:
@@ -763,10 +764,13 @@ public class MongoClient implements Closeable {
      * Closes all resources associated with this instance, in particular any open network connections. Once called, this instance and any
      * databases obtained from it can no longer be used.
      */
-    public void close() {
-        delegate.close();
-        if (cursorCleaningService != null) {
-            cursorCleaningService.shutdownNow();
+    public synchronized void close() {
+        if (!closed) {
+            closed = true;
+            delegate.close();
+            if (cursorCleaningService != null) {
+                cursorCleaningService.shutdownNow();
+            }
         }
     }
 

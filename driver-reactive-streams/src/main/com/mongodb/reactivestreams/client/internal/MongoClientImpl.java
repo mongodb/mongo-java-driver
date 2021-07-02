@@ -65,6 +65,7 @@ public final class MongoClientImpl implements MongoClient {
     private final ClientSessionHelper clientSessionHelper;
     private final MongoOperationPublisher<Document> mongoOperationPublisher;
     private final Crypt crypt;
+    private boolean closed;
 
     public MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, @Nullable final Closeable externalResourceCloser) {
         this(settings, cluster, null, externalResourceCloser);
@@ -125,17 +126,20 @@ public final class MongoClientImpl implements MongoClient {
     }
 
     @Override
-    public void close() {
-        if (crypt != null) {
-            crypt.close();
-        }
-        serverSessionPool.close();
-        cluster.close();
-        if (externalResourceCloser != null) {
-            try {
-                externalResourceCloser.close();
-            } catch (IOException e) {
-                LOGGER.warn("Exception closing resource", e);
+    public synchronized void close() {
+        if (!closed) {
+            closed = true;
+            if (crypt != null) {
+                crypt.close();
+            }
+            serverSessionPool.close();
+            cluster.close();
+            if (externalResourceCloser != null) {
+                try {
+                    externalResourceCloser.close();
+                } catch (IOException e) {
+                    LOGGER.warn("Exception closing resource", e);
+                }
             }
         }
     }

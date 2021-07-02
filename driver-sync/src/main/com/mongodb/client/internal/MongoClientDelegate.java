@@ -64,6 +64,7 @@ final class MongoClientDelegate {
     @Nullable
     private final ServerApi serverApi;
     private final CodecRegistry codecRegistry;
+    private boolean closed;
 
     MongoClientDelegate(final Cluster cluster, final CodecRegistry codecRegistry,
                         final Object originator, @Nullable final OperationExecutor operationExecutor,
@@ -108,12 +109,15 @@ final class MongoClientDelegate {
         }
     }
 
-    public void close() {
-        if (crypt != null) {
-            crypt.close();
+    public synchronized void close() {
+        if (!closed) {
+            closed = true;
+            if (crypt != null) {
+                crypt.close();
+            }
+            serverSessionPool.close();
+            cluster.close();
         }
-        serverSessionPool.close();
-        cluster.close();
     }
 
     public Cluster getCluster() {
