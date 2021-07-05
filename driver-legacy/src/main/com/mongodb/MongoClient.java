@@ -49,6 +49,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static com.mongodb.internal.connection.ServerAddressHelper.createServerAddress;
@@ -119,7 +120,7 @@ public class MongoClient implements Closeable {
     private final ConcurrentLinkedQueue<ServerCursorAndNamespace> orphanedCursors = new ConcurrentLinkedQueue<>();
     private final ExecutorService cursorCleaningService;
     private final MongoClientImpl delegate;
-    private boolean closed;
+    private final AtomicBoolean closed;
 
     /**
      * Gets the default codec registry.  It includes the following providers:
@@ -233,6 +234,7 @@ public class MongoClient implements Closeable {
         delegate = new MongoClientImpl(settings, wrapMongoDriverInformation(mongoDriverInformation));
         this.options = options != null ? options : MongoClientOptions.builder(settings).build();
         cursorCleaningService = this.options.isCursorFinalizerEnabled() ? createCursorCleaningService() : null;
+        this.closed = new AtomicBoolean();
     }
 
     private static MongoDriverInformation wrapMongoDriverInformation(@Nullable final MongoDriverInformation mongoDriverInformation) {
@@ -765,8 +767,7 @@ public class MongoClient implements Closeable {
      * databases obtained from it can no longer be used.
      */
     public synchronized void close() {
-        if (!closed) {
-            closed = true;
+        if (!closed.getAndSet(true)) {
             delegate.close();
             if (cursorCleaningService != null) {
                 cursorCleaningService.shutdownNow();
