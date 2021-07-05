@@ -766,7 +766,7 @@ public class MongoClient implements Closeable {
      * Closes all resources associated with this instance, in particular any open network connections. Once called, this instance and any
      * databases obtained from it can no longer be used.
      */
-    public synchronized void close() {
+    public void close() {
         if (!closed.getAndSet(true)) {
             delegate.close();
             if (cursorCleaningService != null) {

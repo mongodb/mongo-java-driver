@@ -111,7 +111,7 @@ final class MongoClientDelegate {
         }
     }
 
-    public synchronized void close() {
+    public void close() {
         if (!closed.getAndSet(true)) {
             if (crypt != null) {
                 crypt.close();
