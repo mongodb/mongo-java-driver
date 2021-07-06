@@ -21,6 +21,8 @@ import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.lang.Nullable;
 import com.mongodb.session.ClientSession;
 
+import java.util.Objects;
+
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -54,7 +56,7 @@ public final class ClientSessionOptions {
      * Whether read operations using this session should all share the same snapshot.
      *
      * @return whether read operations using this session should all share the same snapshot. A null value indicates to use the global
-     * default, which is currently false.
+     * default, which is false.
      * @since 4.3
      * @mongodb.server.release 5.0
      * @mongodb.driver.manual  reference/read-concern-snapshot/#read-concern-and-atclustertime Snapshot reads
@@ -86,15 +88,14 @@ public final class ClientSessionOptions {
 
         ClientSessionOptions that = (ClientSessionOptions) o;
 
-        if (causallyConsistent != null ? !causallyConsistent.equals(that.causallyConsistent) : that.causallyConsistent != null) {
+        if (!Objects.equals(causallyConsistent, that.causallyConsistent)) {
             return false;
         }
 
-        if (snapshot != null ? !snapshot.equals(that.snapshot) : that.snapshot != null) {
+        if (!Objects.equals(snapshot, that.snapshot)) {
             return false;
         }
-        if (defaultTransactionOptions != null ? !defaultTransactionOptions.equals(that.defaultTransactionOptions)
-                : that.defaultTransactionOptions != null) {
+        if (!Objects.equals(defaultTransactionOptions, that.defaultTransactionOptions)) {
             return false;
         }
 

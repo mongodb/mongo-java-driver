@@ -31,6 +31,7 @@ import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -96,12 +97,13 @@ public final class ProtocolHelper {
         return getFieldValueAsDocument(responseBuffers, "$clusterTime");
     }
 
+    @Nullable
     static BsonTimestamp getSnapshotTimestamp(final ResponseBuffers responseBuffers) {
         BsonValue atClusterTimeValue = getNestedFieldValue(responseBuffers, "cursor", "atClusterTime");
         if (atClusterTimeValue == null) {
             atClusterTimeValue = getFieldValue(responseBuffers, "atClusterTime");
         }
-        if (atClusterTimeValue != null && atClusterTimeValue.getBsonType() == BsonType.TIMESTAMP) {
+        if (atClusterTimeValue != null && atClusterTimeValue.isTimestamp()) {
             return atClusterTimeValue.asTimestamp();
         }
         return null;

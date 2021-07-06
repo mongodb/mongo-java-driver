@@ -280,7 +280,7 @@ public final class CommandMessage extends RequestMessage {
         }
         boolean firstMessageInTransaction = sessionContext.notifyMessageSent();
 
-            assertFalse(sessionContext.hasActiveTransaction() && sessionContext.isSnapshot());
+        assertFalse(sessionContext.hasActiveTransaction() && sessionContext.isSnapshot());
         if (sessionContext.hasActiveTransaction()) {
             checkServerVersionForTransactionSupport();
             extraElements.add(new BsonElement("txnNumber", new BsonInt64(sessionContext.getTransactionNumber())));

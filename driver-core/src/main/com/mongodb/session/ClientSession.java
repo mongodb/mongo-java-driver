@@ -158,6 +158,7 @@ public interface ClientSession extends Closeable {
      *
      * @return the snapshot timestamp
      */
+    @Nullable
     BsonTimestamp getSnapshotTimestamp();
 
     /**
