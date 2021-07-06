@@ -34,13 +34,6 @@ import java.util.Optional;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.client.model.MongoTimeUnit.MONTH;
 import static com.mongodb.client.model.MongoTimeUnit.YEAR;
-import static com.mongodb.client.model.WindowedComputations.ParamName.ALPHA;
-import static com.mongodb.client.model.WindowedComputations.ParamName.BY;
-import static com.mongodb.client.model.WindowedComputations.ParamName.DEFAULT;
-import static com.mongodb.client.model.WindowedComputations.ParamName.INPUT;
-import static com.mongodb.client.model.WindowedComputations.ParamName.N;
-import static com.mongodb.client.model.WindowedComputations.ParamName.OUTPUT;
-import static com.mongodb.client.model.WindowedComputations.ParamName.UNIT;
 import static org.bson.assertions.Assertions.notNull;
 
 /**
@@ -202,7 +195,7 @@ public final class WindowedComputations {
         notNull("expression", expression);
         notNull("window", window);
         final Map<ParamName, Object> args = new HashMap<>(1);
-        args.put(INPUT, expression);
+        args.put(ParamName.INPUT, expression);
         return compoundParameterWindowFunction(path, "$derivative", args, window);
     }
 
@@ -232,8 +225,8 @@ public final class WindowedComputations {
         notNull("unit", unit);
         isTrueArgument("unit must not be MONTH, YEAR", !(unit == MONTH || unit == YEAR));
         final Map<ParamName, Object> args = new LinkedHashMap<>(2);
-        args.put(INPUT, expression);
-        args.put(UNIT, unit.value());
+        args.put(ParamName.INPUT, expression);
+        args.put(ParamName.UNIT, unit.value());
         return compoundParameterWindowFunction(path, "$derivative", args, window);
     }
 
@@ -260,7 +253,7 @@ public final class WindowedComputations {
         notNull("expression", expression);
         notNull("window", window);
         final Map<ParamName, Object> args = new HashMap<>(1);
-        args.put(INPUT, expression);
+        args.put(ParamName.INPUT, expression);
         return compoundParameterWindowFunction(path, "$integral", args, window);
     }
 
@@ -290,8 +283,8 @@ public final class WindowedComputations {
         notNull("unit", unit);
         isTrueArgument("unit must not be MONTH, YEAR", !(unit == MONTH || unit == YEAR));
         final Map<ParamName, Object> args = new LinkedHashMap<>(2);
-        args.put(INPUT, expression);
-        args.put(UNIT, unit.value());
+        args.put(ParamName.INPUT, expression);
+        args.put(ParamName.UNIT, unit.value());
         return compoundParameterWindowFunction(path, "$integral", args, window);
     }
 
@@ -362,8 +355,8 @@ public final class WindowedComputations {
         notNull("expression", expression);
         isTrueArgument("n > 0", n > 0);
         final Map<ParamName, Object> args = new LinkedHashMap<>(2);
-        args.put(INPUT, expression);
-        args.put(N, n);
+        args.put(ParamName.INPUT, expression);
+        args.put(ParamName.N, n);
         return compoundParameterWindowFunction(path, "$expMovingAvg", args, null);
     }
 
@@ -388,8 +381,8 @@ public final class WindowedComputations {
         isTrueArgument("alpha > 0", alpha > 0);
         isTrueArgument("alpha < 1", alpha < 1);
         final Map<ParamName, Object> args = new LinkedHashMap<>(2);
-        args.put(INPUT, expression);
-        args.put(ALPHA, alpha);
+        args.put(ParamName.INPUT, expression);
+        args.put(ParamName.ALPHA, alpha);
         return compoundParameterWindowFunction(path, "$expMovingAvg", args, null);
     }
 
@@ -499,10 +492,10 @@ public final class WindowedComputations {
         notNull("path", path);
         notNull("expression", expression);
         final Map<ParamName, Object> args = new LinkedHashMap<>(3);
-        args.put(OUTPUT, expression);
-        args.put(BY, by);
+        args.put(ParamName.OUTPUT, expression);
+        args.put(ParamName.BY, by);
         if (defaultExpression != null) {
-            args.put(DEFAULT, defaultExpression);
+            args.put(ParamName.DEFAULT, defaultExpression);
         }
         return compoundParameterWindowFunction(path, "$shift", args, null);
     }
@@ -750,7 +743,7 @@ public final class WindowedComputations {
         }
     }
 
-    enum ParamName {
+    private enum ParamName {
         INPUT("input"),
         UNIT("unit"),
         N("N"),
