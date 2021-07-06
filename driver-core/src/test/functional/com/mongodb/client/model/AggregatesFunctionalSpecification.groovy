@@ -1050,18 +1050,15 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                 new Document('partitionId', 1)
                         .append('num1', 1)
                         .append('num2', -1)
-                        .append('date1', LocalDateTime.ofInstant(Instant.ofEpochSecond(1), utc))
-                        .append('date2', LocalDateTime.ofInstant(Instant.ofEpochSecond(-1), utc)),
+                        .append('date', LocalDateTime.ofInstant(Instant.ofEpochSecond(1), utc)),
                 new Document('partitionId', 1)
                         .append('num1', 2)
                         .append('num2', -2)
-                        .append('date1', LocalDateTime.ofInstant(Instant.ofEpochSecond(2), utc))
-                        .append('date2', LocalDateTime.ofInstant(Instant.ofEpochSecond(-2), utc)),
+                        .append('date', LocalDateTime.ofInstant(Instant.ofEpochSecond(2), utc)),
                 new Document('partitionId', 2)
                         .append('num1', 3)
                         .append('num2', -3)
-                        .append('date1', LocalDateTime.ofInstant(Instant.ofEpochSecond(3), utc))
-                        .append('date2', LocalDateTime.ofInstant(Instant.ofEpochSecond(-3), utc))]
+                        .append('date', LocalDateTime.ofInstant(Instant.ofEpochSecond(3), utc))]
         getCollectionHelper().insertDocuments(original)
         List<Document> actual = aggregate([
                 setWindowFields(partitionBy, sortBy, output),
@@ -1084,8 +1081,8 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                 .sum('result', '$num1', range(0, UNBOUNDED)) | [3, 2, 3]
         null | ascending('num1') | WindowedComputations
                 .sum('result', '$num1', range(CURRENT, Integer.MAX_VALUE)) | [6, 5, 3]
-        null | ascending('date1') | WindowedComputations
-                .avg('result', '$num1', timeRange(Integer.MIN_VALUE, 0, MongoTimeUnit.SECOND))                 | [1, 1.5, 2]
+        null | ascending('date') | WindowedComputations
+                .avg('result', '$num1', timeRange(Integer.MIN_VALUE, 0, MongoTimeUnit.SECOND)) | [1, 1.5, 2]
         null | null | WindowedComputations
                 .stdDevSamp('result', '$num1', documents(UNBOUNDED, UNBOUNDED)) | [1.0, 1.0, 1.0]
         null | ascending('num1') | WindowedComputations
@@ -1098,12 +1095,12 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                 .count('result', null) | [2, 2, 1]
         null | ascending('num1') | WindowedComputations
                 .derivative('result', '$num2', documents(UNBOUNDED, UNBOUNDED)) | [-1, -1, -1]
-        null | ascending('date1') | WindowedComputations
+        null | ascending('date') | WindowedComputations
                 .timeDerivative('result', '$num2', documents(UNBOUNDED, UNBOUNDED), MongoTimeUnit.MILLISECOND) | [-0.001, -0.001, -0.001]
         null | ascending('num1') | WindowedComputations
                 .integral('result', '$num2', documents(UNBOUNDED, UNBOUNDED)) | [-4, -4, -4]
-        null | ascending('date1') | WindowedComputations
-                .timeIntegral('result', '$num2', documents(UNBOUNDED, UNBOUNDED), MongoTimeUnit.SECOND)        | [-4, -4, -4]
+        null | ascending('date') | WindowedComputations
+                .timeIntegral('result', '$num2', documents(UNBOUNDED, UNBOUNDED), MongoTimeUnit.SECOND) | [-4, -4, -4]
         null | null | WindowedComputations
                 .covarianceSamp('result', '$num1', '$num2', documents(UNBOUNDED, UNBOUNDED)) | [-1.0, -1.0, -1.0]
         null | ascending('num1') | WindowedComputations
