@@ -17,6 +17,7 @@
 package com.mongodb.internal.session;
 
 import com.mongodb.ClientSessionOptions;
+import com.mongodb.MongoClientException;
 import com.mongodb.ServerAddress;
 import com.mongodb.internal.binding.ReferenceCounted;
 import com.mongodb.lang.Nullable;
@@ -138,11 +139,16 @@ public class BaseClientSessionImpl implements ClientSession {
     public void setSnapshotTimestamp(final BsonTimestamp snapshotTimestamp) {
         isTrue("open", !closed);
         if (snapshotTimestamp != null) {
+            if (this.snapshotTimestamp != null && !snapshotTimestamp.equals(this.snapshotTimestamp)) {
+                throw new MongoClientException("Snapshot timestamps should not change during the lifetime of the session.  Current "
+                        + "timestamp is " + this.snapshotTimestamp + ", and attempting to set it to " + snapshotTimestamp);
+            }
             this.snapshotTimestamp = snapshotTimestamp;
         }
     }
 
     @Override
+    @Nullable
     public BsonTimestamp getSnapshotTimestamp() {
         isTrue("open", !closed);
         return snapshotTimestamp;

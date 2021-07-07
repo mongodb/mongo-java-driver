@@ -18,6 +18,7 @@ package com.mongodb.internal.binding;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
 import org.bson.BsonTimestamp;
@@ -103,6 +104,7 @@ class SimpleSessionContext implements SessionContext {
     }
 
     @Override
+    @Nullable
     public BsonTimestamp getSnapshotTimestamp() {
         return null;
     }

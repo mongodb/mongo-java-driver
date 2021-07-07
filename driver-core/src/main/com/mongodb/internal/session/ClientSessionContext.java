@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.session;
 
+import com.mongodb.lang.Nullable;
 import com.mongodb.session.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
@@ -91,6 +92,7 @@ public abstract class ClientSessionContext implements SessionContext {
     }
 
     @Override
+    @Nullable
     public BsonTimestamp getSnapshotTimestamp() {
         return clientSession.getSnapshotTimestamp();
     }

@@ -230,6 +230,7 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
         }
 
         @Override
+        @Nullable
         public BsonTimestamp getSnapshotTimestamp() {
             return clientSession.getSnapshotTimestamp();
         }
