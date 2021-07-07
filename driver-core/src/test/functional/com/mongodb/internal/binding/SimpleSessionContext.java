@@ -18,6 +18,7 @@ package com.mongodb.internal.binding;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
 import org.bson.BsonTimestamp;
@@ -91,6 +92,21 @@ class SimpleSessionContext implements SessionContext {
     @Override
     public void advanceClusterTime(final BsonDocument clusterTime) {
         this.clusterTime = clusterTime;
+    }
+
+    @Override
+    public boolean isSnapshot() {
+        return false;
+    }
+
+    @Override
+    public void setSnapshotTimestamp(final BsonTimestamp snapshotTimestamp) {
+    }
+
+    @Override
+    @Nullable
+    public BsonTimestamp getSnapshotTimestamp() {
+        return null;
     }
 
     @Override

@@ -208,15 +208,15 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
             @Override
             public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
                 validateReadConcernAndCollation(connectionDescription, sessionContext.getReadConcern(), collation);
-                return getCommand(sessionContext);
+                return getCommand(sessionContext, connectionDescription.getMaxWireVersion());
             }
         };
     }
 
-    BsonDocument getCommand(final SessionContext sessionContext) {
+    BsonDocument getCommand(final SessionContext sessionContext, final int maxWireVersion) {
         BsonDocument commandDocument = new BsonDocument("aggregate", aggregateTarget.create());
 
-        appendReadConcernToCommand(sessionContext, commandDocument);
+        appendReadConcernToCommand(sessionContext, maxWireVersion, commandDocument);
         commandDocument.put("pipeline", pipelineCreator.create());
         if (maxTimeMS > 0) {
             commandDocument.put("maxTimeMS", maxTimeMS > Integer.MAX_VALUE

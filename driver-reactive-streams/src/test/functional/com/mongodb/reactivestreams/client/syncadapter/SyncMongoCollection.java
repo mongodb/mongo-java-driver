@@ -683,12 +683,12 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
 
     @Override
     public ListIndexesIterable<Document> listIndexes(final ClientSession clientSession) {
-        throw new UnsupportedOperationException();
+        return listIndexes(clientSession, Document.class);
     }
 
     @Override
     public <TResult> ListIndexesIterable<TResult> listIndexes(final ClientSession clientSession, final Class<TResult> resultClass) {
-        throw new UnsupportedOperationException();
+        return new SyncListIndexesIterable<>(wrapped.listIndexes(unwrap(clientSession), resultClass));
     }
 
     @Override

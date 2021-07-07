@@ -174,12 +174,12 @@ class SyncMongoDatabase implements MongoDatabase {
 
     @Override
     public ListCollectionsIterable<Document> listCollections(final ClientSession clientSession) {
-        throw new UnsupportedOperationException();
+        return listCollections(clientSession, Document.class);
     }
 
     @Override
     public <TResult> ListCollectionsIterable<TResult> listCollections(final ClientSession clientSession, final Class<TResult> resultClass) {
-        throw new UnsupportedOperationException();
+        return new SyncListCollectionsIterable<TResult>(wrapped.listCollections(unwrap(clientSession), resultClass));
     }
 
     @Override

@@ -17,6 +17,7 @@
 package com.mongodb.internal.session;
 
 import com.mongodb.ReadConcern;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 
@@ -101,6 +102,13 @@ public interface SessionContext {
      * @param clusterTime the new cluster time
      */
     void advanceClusterTime(BsonDocument clusterTime);
+
+    boolean isSnapshot();
+
+    void setSnapshotTimestamp(BsonTimestamp snapshotTimestamp);
+
+    @Nullable
+    BsonTimestamp getSnapshotTimestamp();
 
     /**
      * Gets whether the session has an active transaction
