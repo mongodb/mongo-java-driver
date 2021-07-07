@@ -47,6 +47,11 @@ case class SyncClientSession(wrapped: ClientSession, originator: Object) extends
 
   override def getClusterTime: BsonDocument = wrapped.getClusterTime
 
+  override def setSnapshotTimestamp(snapshotTimestamp: BsonTimestamp): Unit =
+    wrapped.setSnapshotTimestamp(snapshotTimestamp)
+
+  override def getSnapshotTimestamp: BsonTimestamp = wrapped.getSnapshotTimestamp
+
   override def close(): Unit = {
     wrapped.close()
     sleep(JSyncMongoClient.getSleepAfterSessionClose)

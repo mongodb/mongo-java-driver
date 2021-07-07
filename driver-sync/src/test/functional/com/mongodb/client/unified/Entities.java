@@ -447,10 +447,12 @@ public final class Entities {
         ClientSessionOptions.Builder optionsBuilder = ClientSessionOptions.builder();
         if (entity.containsKey("sessionOptions")) {
             for (Map.Entry<String, BsonValue> entry : entity.getDocument("sessionOptions").entrySet()) {
-                //noinspection SwitchStatementWithTooFewBranches
                 switch (entry.getKey()) {
                     case "defaultTransactionOptions":
                         optionsBuilder.defaultTransactionOptions(getTransactionOptions(entry.getValue().asDocument()));
+                        break;
+                    case "snapshot":
+                        optionsBuilder.snapshot(entry.getValue().asBoolean().getValue());
                         break;
                     default:
                         throw new UnsupportedOperationException("Unsupported session option: " + entry.getKey());

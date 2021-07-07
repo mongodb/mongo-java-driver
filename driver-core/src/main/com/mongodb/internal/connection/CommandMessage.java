@@ -44,6 +44,7 @@ import java.util.Map;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.primaryPreferred;
+import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE;
@@ -278,6 +279,8 @@ public final class CommandMessage extends RequestMessage {
             extraElements.add(new BsonElement("lsid", sessionContext.getSessionId()));
         }
         boolean firstMessageInTransaction = sessionContext.notifyMessageSent();
+
+        assertFalse(sessionContext.hasActiveTransaction() && sessionContext.isSnapshot());
         if (sessionContext.hasActiveTransaction()) {
             checkServerVersionForTransactionSupport();
             extraElements.add(new BsonElement("txnNumber", new BsonInt64(sessionContext.getTransactionNumber())));
@@ -286,6 +289,8 @@ public final class CommandMessage extends RequestMessage {
                 addReadConcernDocument(extraElements, sessionContext);
             }
             extraElements.add(new BsonElement("autocommit", BsonBoolean.FALSE));
+        } else if (sessionContext.isSnapshot()) {
+            addReadConcernDocument(extraElements, sessionContext);
         }
 
         if (serverApi != null) {
@@ -322,7 +327,7 @@ public final class CommandMessage extends RequestMessage {
 
 
     private void addReadConcernDocument(final List<BsonElement> extraElements, final SessionContext sessionContext) {
-        BsonDocument readConcernDocument = getReadConcernDocument(sessionContext);
+        BsonDocument readConcernDocument = getReadConcernDocument(sessionContext, getSettings().getMaxWireVersion());
         if (!readConcernDocument.isEmpty()) {
             extraElements.add(new BsonElement("readConcern", readConcernDocument));
         }

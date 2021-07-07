@@ -211,6 +211,8 @@ public class ClientSessionBinding implements ReadWriteBinding {
         public ReadConcern getReadConcern() {
             if (clientSession.hasActiveTransaction()) {
                 return clientSession.getTransactionOptions().getReadConcern();
+            } else if (isSnapshot()) {
+                return ReadConcern.SNAPSHOT;
             } else {
                return wrapped.getSessionContext().getReadConcern();
             }

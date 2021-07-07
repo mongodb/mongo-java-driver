@@ -101,6 +101,10 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
     @Override
     public void startTransaction(final TransactionOptions transactionOptions) {
         notNull("transactionOptions", transactionOptions);
+        Boolean snapshot = getOptions().isSnapshot();
+        if (snapshot != null && snapshot) {
+            throw new IllegalArgumentException("Transactions are not supported in snapshot sessions");
+        }
         if (transactionState == TransactionState.IN) {
             throw new IllegalStateException("Transaction already in progress");
         }
