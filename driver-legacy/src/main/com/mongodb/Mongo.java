@@ -57,6 +57,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.client.internal.Crypts.createCrypt;
@@ -104,6 +105,7 @@ public class Mongo {
     private final ConcurrentLinkedQueue<ServerCursorAndNamespace> orphanedCursors = new ConcurrentLinkedQueue<ServerCursorAndNamespace>();
     private final ExecutorService cursorCleaningService;
     private final MongoClientDelegate delegate;
+    private final AtomicBoolean closed;
 
     /**
      * Creates a Mongo instance based on a (single) mongodb node (localhost, default port)
@@ -332,6 +334,7 @@ public class Mongo {
                 autoEncryptionSettings == null ? null : createCrypt(asSimpleMongoClient(), autoEncryptionSettings));
 
         cursorCleaningService = options.isCursorFinalizerEnabled() ? createCursorCleaningService() : null;
+        this.closed = new AtomicBoolean();
     }
 
     // bit of a hack, but it works because only MongoClient subclass will ever make use of this
@@ -555,9 +558,11 @@ public class Mongo {
      * databases obtained from it can no longer be used.
      */
     public void close() {
-        delegate.close();
-        if (cursorCleaningService != null) {
-            cursorCleaningService.shutdownNow();
+        if (!closed.getAndSet(true)) {
+            delegate.close();
+            if (cursorCleaningService != null) {
+                cursorCleaningService.shutdownNow();
+            }
         }
     }
 

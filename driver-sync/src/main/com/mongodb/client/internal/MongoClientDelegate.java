@@ -48,6 +48,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
@@ -66,6 +67,7 @@ public class MongoClientDelegate {
     private final OperationExecutor operationExecutor;
     private final Crypt crypt;
     private final CodecRegistry codecRegistry;
+    private final AtomicBoolean closed;
 
     public MongoClientDelegate(final Cluster cluster, final CodecRegistry codecRegistry, final List<MongoCredential> credentialList,
                                final Object originator, @Nullable final Crypt crypt) {
@@ -82,6 +84,7 @@ public class MongoClientDelegate {
         this.originator = originator;
         this.operationExecutor = operationExecutor == null ? new DelegateOperationExecutor() : operationExecutor;
         this.crypt = crypt;
+        this.closed = new AtomicBoolean();
     }
 
     public OperationExecutor getOperationExecutor() {
@@ -127,11 +130,13 @@ public class MongoClientDelegate {
     }
 
     public void close() {
-        if (crypt != null) {
-            crypt.close();
+        if (!closed.getAndSet(true)) {
+            if (crypt != null) {
+                crypt.close();
+            }
+            serverSessionPool.close();
+            cluster.close();
         }
-        serverSessionPool.close();
-        cluster.close();
     }
 
     public Cluster getCluster() {

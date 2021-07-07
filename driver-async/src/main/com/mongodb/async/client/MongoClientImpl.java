@@ -39,6 +39,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -55,6 +56,7 @@ class MongoClientImpl implements MongoClient {
     private final ClientSessionHelper clientSessionHelper;
     private final CodecRegistry codecRegistry;
     private final Crypt crypt;
+    private final AtomicBoolean closed;
 
     MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, @Nullable final Closeable externalResourceCloser) {
         this(settings, cluster, null, externalResourceCloser);
@@ -79,6 +81,7 @@ class MongoClientImpl implements MongoClient {
         }
         this.externalResourceCloser = externalResourceCloser;
         this.codecRegistry = createRegistry(settings.getCodecRegistry(), settings.getUuidRepresentation());
+        this.closed = new AtomicBoolean();
     }
 
     @Override
@@ -113,16 +116,18 @@ class MongoClientImpl implements MongoClient {
 
     @Override
     public void close() {
-        if (crypt != null) {
-            crypt.close();
-        }
-        serverSessionPool.close();
-        cluster.close();
-        if (externalResourceCloser != null) {
-            try {
-                externalResourceCloser.close();
-            } catch (IOException e) {
-                LOGGER.warn("Exception closing resource", e);
+        if (!closed.getAndSet(true)) {
+            if (crypt != null) {
+                crypt.close();
+            }
+            serverSessionPool.close();
+            cluster.close();
+            if (externalResourceCloser != null) {
+                try {
+                    externalResourceCloser.close();
+                } catch (IOException e) {
+                    LOGGER.warn("Exception closing resource", e);
+                }
             }
         }
     }
