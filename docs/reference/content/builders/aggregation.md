@@ -436,14 +436,17 @@ optionally sorts them, computes fields in the documents by computing window func
 (a window is a subset of a partition), and outputs the documents. The important difference from the `$group` pipeline stage is that
 documents belonging to the same partition or window are not folded into a single document.
 
+The driver includes the [`WindowedComputations`]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/WindowedComputations" >}})
+class with factory methods for supported window operators.
+
 This example computes the accumulated rainfall and the average temperature over the past month per each locality
-from more fine-grained measurements presented via the `rainfall` and `temp` fields:
+from more fine-grained measurements presented via the `rainfall` and `temperature` fields:
 
 ```java
-Window pastMonth = Windows.timeRange(-1, Windows.Bound.CURRENT, Unit.MONTH);
+Window pastMonth = Windows.timeRange(-1, Windows.Bound.CURRENT, MongoTimeUnit.MONTH);
 setWindowFields("$localityId", Sorts.ascending("measurementDateTime"),
-        WindowedComputations.sum("monthRainfall", "$rainfall", pastMonth),
-        WindowedComputations.avg("monthAvgTemp", "$temp", pastMonth));
+        WindowedComputations.sum("monthlyRainfall", "$rainfall", pastMonth),
+        WindowedComputations.avg("monthlyAvgTemp", "$temperature", pastMonth));
 ```
 
 ### Creating a Pipeline
