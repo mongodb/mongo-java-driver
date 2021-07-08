@@ -17,6 +17,7 @@
 package com.mongodb.client.model;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.annotations.Beta;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -616,6 +617,7 @@ public final class Aggregates {
      * @mongodb.server.release 5.0
      * @since 4.3
      */
+    @Beta
     public static <TExpression> Bson setWindowFields(@Nullable final TExpression partitionBy, @Nullable final Bson sortBy,
                                                      final WindowedComputation... output) {
         notNull("output", output);
@@ -642,6 +644,7 @@ public final class Aggregates {
      * @mongodb.server.release 5.0
      * @since 4.3
      */
+    @Beta
     public static <TExpression> Bson setWindowFields(@Nullable final TExpression partitionBy, @Nullable final Bson sortBy,
                                                      final List<WindowedComputation> output) {
         notNull("output", output);

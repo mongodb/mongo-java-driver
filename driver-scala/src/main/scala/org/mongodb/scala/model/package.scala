@@ -16,6 +16,8 @@
 
 package org.mongodb.scala
 
+import com.mongodb.annotations.Beta
+
 import scala.collection.JavaConverters._
 import com.mongodb.client.model.{ MongoTimeUnit => JMongoTimeUnit }
 import org.mongodb.scala.bson.conversions.Bson
@@ -776,6 +778,7 @@ package object model {
    *
    * @since 4.3
    */
+  @Beta
   object MongoTimeUnit {
 
     /**
@@ -826,6 +829,7 @@ package object model {
    * @see [[Windows]]
    * @since 4.3
    */
+  @Beta
   type Window = com.mongodb.client.model.Window
 
   /**
@@ -835,6 +839,7 @@ package object model {
    * @see [[WindowedComputations]]
    * @since 4.3
    */
+  @Beta
   type WindowedComputation = com.mongodb.client.model.WindowedComputation
 }
 

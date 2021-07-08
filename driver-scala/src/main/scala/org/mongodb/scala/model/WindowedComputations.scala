@@ -15,6 +15,7 @@
  */
 package org.mongodb.scala.model
 
+import com.mongodb.annotations.Beta
 import com.mongodb.client.model.{ MongoTimeUnit => JMongoTimeUnit, WindowedComputations => JWindowedComputations }
 
 /**
@@ -35,6 +36,7 @@ import com.mongodb.client.model.{ MongoTimeUnit => JMongoTimeUnit, WindowedCompu
  * @see [[http://docs.mongodb.org/manual/meta/aggregation-quick-reference/#field-paths Field paths]]
  * @since 4.3
  */
+@Beta
 object WindowedComputations {
 
   /**

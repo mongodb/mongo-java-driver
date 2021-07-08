@@ -15,6 +15,7 @@
  */
 package com.mongodb.client.model;
 
+import com.mongodb.annotations.Beta;
 import com.mongodb.client.model.Windows.Bound;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -55,6 +56,7 @@ import static org.bson.assertions.Assertions.notNull;
  * @mongodb.driver.manual meta/aggregation-quick-reference/#field-paths Field paths
  * @since 4.3
  */
+@Beta
 public final class WindowedComputations {
     /**
      * Builds a computation of the sum of the evaluation results of the {@code expression} over the {@code window}.

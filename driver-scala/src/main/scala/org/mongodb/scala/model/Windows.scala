@@ -15,6 +15,7 @@
  */
 package org.mongodb.scala.model
 
+import com.mongodb.annotations.Beta
 import com.mongodb.client.model.{ MongoTimeUnit => JMongoTimeUnit, Windows => JWindows }
 import org.bson.types.Decimal128
 
@@ -53,6 +54,7 @@ import org.bson.types.Decimal128
  * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/dateSubtract/ \$dateSubtract aggregation pipeline stage]]
  * @since 4.3
  */
+@Beta
 object Windows {
 
   /**
@@ -240,6 +242,7 @@ object Windows {
    *
    * @since 4.3
    */
+  @Beta
   object Bound {
 
     /**

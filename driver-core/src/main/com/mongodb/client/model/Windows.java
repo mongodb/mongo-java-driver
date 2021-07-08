@@ -15,6 +15,7 @@
  */
 package com.mongodb.client.model;
 
+import com.mongodb.annotations.Beta;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
@@ -81,6 +82,7 @@ import static org.bson.assertions.Assertions.notNull;
  * @mongodb.driver.manual reference/operator/aggregation/dateSubtract/ $dateSubtract aggregation pipeline stage
  * @since 4.3
  */
+@Beta
 public final class Windows {
     /**
      * Creates a documents window whose bounds are determined by a number of documents before and after the current document.
@@ -331,6 +333,7 @@ public final class Windows {
      *
      * @since 4.3
      */
+    @Beta
     public enum Bound {
         /**
          * The {@linkplain Window window} bound is determined by the current document and is inclusive.

@@ -15,6 +15,7 @@
  */
 package com.mongodb.client.model;
 
+import com.mongodb.annotations.Beta;
 import org.bson.conversions.Bson;
 
 import java.util.List;
@@ -26,5 +27,6 @@ import java.util.List;
  * @see Windows
  * @since 4.3
  */
+@Beta
 public interface Window extends Bson {
 }
