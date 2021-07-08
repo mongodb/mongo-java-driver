@@ -44,7 +44,9 @@ import static org.bson.assertions.Assertions.notNull;
  *     <li>A window function. Some functions require documents in a window to be sorted
  *     (see {@code sortBy} in {@link Aggregates#setWindowFields(Object, Bson, List)}).</li>
  *     <li>An optional {@linkplain Window window}, a.k.a. frame.
- *     Specifying {@code null} window is equivalent to specifying [{@link Bound#UNBOUNDED}, {@link Bound#UNBOUNDED}].</li>
+ *     Specifying {@code null} window is equivalent to specifying an unbounded window,
+ *     i.e., a window with both ends specified as {@link Bound#UNBOUNDED}.
+ *     Some window functions require to specify an explicit unbounded window instead of specifying {@code null}.</li>
  *     <li>A path to an output field to be computed by the window function over the window.</li>
  * </ul>
  * A windowed computation is similar to an {@linkplain Accumulators accumulator} but does not result in folding documents constituting
@@ -361,7 +363,7 @@ public final class WindowedComputations {
     }
 
     /**
-     * Builds a computation of the exponential moving average of the evaluation results of the {@code expression} over the
+     * Builds a computation of the exponential moving average of the evaluation results of the {@code expression} over the half-bounded
      * window [{@link Bound#UNBOUNDED}, {@link Bound#CURRENT}], with {@code alpha} representing the degree of weighting decrease.
      * <p>
      * {@linkplain Aggregates#setWindowFields(Object, Bson, List) Sorting} is required.</p>

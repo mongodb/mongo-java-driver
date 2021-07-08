@@ -29,7 +29,7 @@ New features of the 4.3 Java driver release include:
   which may be used as a convenient way to utilize [OpenSSL](https://www.openssl.org/) as an alternative
   to the TLS/SSL protocol implementation in a JDK.
 * Added [builders]({{< apiref "mongodb-driver-core" "com/mongodb/client/model/Aggregates.html#setWindowFields(TExpression,org.bson.conversions.Bson,java.util.List)" >}})
-  for a new [`$setWindowFields`](https://dochub.mongodb.org/core/window-functions-set-window-fields)
+  for the new [`$setWindowFields`](https://dochub.mongodb.org/core/window-functions-set-window-fields)
   pipeline stage of an aggregation pipeline.
 
 # What's new in 4.2

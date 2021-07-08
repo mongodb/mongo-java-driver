@@ -24,7 +24,9 @@ import com.mongodb.client.model.{ MongoTimeUnit => JMongoTimeUnit, WindowedCompu
  *  - A window function. Some functions require documents in a window to be sorted
  *  (see `sortBy` in [[Aggregates.setWindowFields]]).
  *  - An optional [[Window window]], a.k.a. frame.
- *  Specifying `null` window is equivalent to specifying `[`[[Windows.Bound UNBOUNDED]], [[Windows.Bound UNBOUNDED]]`]`.
+ *  Specifying `null` window is equivalent to specifying an unbounded window,
+ *  i.e., a window with both ends specified as [[Windows.Bound UNBOUNDED]].
+ *  Some window functions require to specify an explicit unbounded window instead of specifying `null`.
  *  - A path to an output field to be computed by the window function over the window.
  *
  * A windowed computation is similar to an [[Accumulators accumulator]] but does not result in folding documents constituting
@@ -282,7 +284,7 @@ object WindowedComputations {
     JWindowedComputations.expMovingAvg(path, expression, n)
 
   /**
-   * Builds a computation of the exponential moving average of the evaluation results of the `expression` over the
+   * Builds a computation of the exponential moving average of the evaluation results of the `expression` over the half-bounded
    * window `[`[[Windows.Bound UNBOUNDED]], [[Windows.Bound CURRENT]]`]`,
    * with `alpha` representing the degree of weighting decrease.
    *
