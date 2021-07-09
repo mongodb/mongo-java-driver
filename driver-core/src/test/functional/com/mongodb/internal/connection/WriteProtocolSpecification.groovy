@@ -27,14 +27,16 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
 import org.bson.codecs.BsonDocumentCodec
+import spock.lang.IgnoreIf
 import spock.lang.Shared
 
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
+import static com.mongodb.ClusterFixture.serverVersionGreaterThan
 import static com.mongodb.connection.ConnectionFixture.getCredentialListWithCache
 import static com.mongodb.internal.connection.ProtocolTestHelper.execute
 
-
+@IgnoreIf({ serverVersionGreaterThan('5.0') })
 class WriteProtocolSpecification extends OperationFunctionalSpecification {
     @Shared
     InternalStreamConnection connection;

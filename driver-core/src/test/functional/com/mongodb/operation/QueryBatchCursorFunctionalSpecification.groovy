@@ -27,12 +27,17 @@ import com.mongodb.binding.ConnectionSource
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.connection.Connection
 import com.mongodb.connection.QueryResult
+import com.mongodb.internal.connection.NoOpSessionContext
+import com.mongodb.internal.validator.NoOpFieldNameValidator
+import org.bson.BsonArray
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.BsonInt64
 import org.bson.BsonString
 import org.bson.BsonTimestamp
 import org.bson.Document
+import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
@@ -45,9 +50,11 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static com.mongodb.operation.OperationHelper.cursorDocumentToQueryResult
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo
+import static com.mongodb.operation.OperationHelper.cursorDocumentToQueryResult
 import static java.util.Arrays.asList
+import static java.util.Collections.singletonList
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.fail
 
@@ -520,7 +527,15 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), connectionSource)
 
         def connection = connectionSource.getConnection()
-        connection.killCursor(getNamespace(), asList(cursor.getServerCursor().id))
+        if (serverVersionLessThan(3, 6)) {
+            connection.killCursor(getNamespace(), asList(cursor.getServerCursor().id))
+        } else {
+            connection.command(getNamespace().databaseName,
+                    new BsonDocument('killCursors', new BsonString(namespace.getCollectionName()))
+                            .append('cursors', new BsonArray(singletonList(new BsonInt64(cursor.getServerCursor().id)))),
+                    new NoOpFieldNameValidator(), ReadPreference.primary(),
+                    new BsonDocumentCodec(), new NoOpSessionContext())
+        }
         connection.release()
         cursor.next()
 
