@@ -712,9 +712,6 @@ public final class MongoClientSettings {
      * <p>
      * Automatic encryption requires the authenticated user to have the listCollections privilege action.
      * </p>
-     * <p>
-     * Note: support for client side encryption is in beta.  Backwards-breaking changes may be made before the final release.
-     * </p>
      *
      * @return the auto-encryption settings, which may be null
      * @since 3.11

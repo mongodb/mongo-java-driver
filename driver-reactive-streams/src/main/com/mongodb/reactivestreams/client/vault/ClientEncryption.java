@@ -16,7 +16,6 @@
 
 package com.mongodb.reactivestreams.client.vault;
 
-import com.mongodb.annotations.Beta;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
 import org.bson.BsonBinary;
@@ -30,13 +29,8 @@ import java.io.Closeable;
  * <p>
  * Used to create data encryption keys, and to explicitly encrypt and decrypt values when auto-encryption is not an option.
  * </p>
- * <p>
- * Note: support for client-side encryption should be considered as beta.  Backwards-breaking changes may be made before the final
- * release.
- * </p>
  * @since 1.12
  */
-@Beta
 public interface ClientEncryption extends Closeable {
 
     /**

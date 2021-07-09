@@ -17,10 +17,6 @@
 /**
  * This package contains the Key Vault API
  *
- * <p>
- * Note: support for client-side encryption should be considered as beta.  Backwards-breaking changes may be made before the final
- * release.
- * </p>
  * @since 1.12
  */
 @NonNullApi

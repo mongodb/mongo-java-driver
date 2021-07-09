@@ -22,10 +22,6 @@ import com.mongodb.reactivestreams.client.internal.vault.ClientEncryptionImpl;
 /**
  * Factory for ClientEncryption implementations.
  *
- * <p>
- * Note: support for client-side encryption should be considered as beta.  Backwards-breaking changes may be made before the final
- * release.
- * </p>
  * @since 1.12
  */
 public final class ClientEncryptions {
