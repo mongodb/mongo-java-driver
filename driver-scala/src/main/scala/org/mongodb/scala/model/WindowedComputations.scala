@@ -35,6 +35,7 @@ import com.mongodb.client.model.{ MongoTimeUnit => JMongoTimeUnit, WindowedCompu
  *
  * @see [[http://docs.mongodb.org/manual/meta/aggregation-quick-reference/#field-paths Field paths]]
  * @since 4.3
+ * @note Requires MongoDB 5.0 or greater.
  */
 @Beta
 object WindowedComputations {
@@ -48,7 +49,6 @@ object WindowedComputations {
    * @tparam TExpression The expression type.
    * @return The constructed [[WindowedComputation]].
    * @see [[http://dochub.mongodb.org/core/window-functions-sum \$sum]]
-   * @note Requires MongoDB 5.0 or greater.
    */
   def sum[TExpression](path: String, expression: TExpression, window: Window): WindowedComputation =
     JWindowedComputations.sum(path, expression, window)
@@ -62,7 +62,6 @@ object WindowedComputations {
    * @tparam TExpression The expression type.
    * @return The constructed [[WindowedComputation]].
    * @see [[http://dochub.mongodb.org/core/window-functions-avg \$avg]]
-   * @note Requires MongoDB 5.0 or greater.
    */
   def avg[TExpression](path: String, expression: TExpression, window: Window): WindowedComputation =
     JWindowedComputations.avg(path, expression, window)
@@ -76,7 +75,6 @@ object WindowedComputations {
    * @tparam TExpression The expression type.
    * @return The constructed [[WindowedComputation]].
    * @see [[http://dochub.mongodb.org/core/window-functions-std-dev-samp \$stdDevSamp]]
-   * @note Requires MongoDB 5.0 or greater.
    */
   def stdDevSamp[TExpression](path: String, expression: TExpression, window: Window): WindowedComputation =
     JWindowedComputations.stdDevSamp(path, expression, window)
@@ -90,7 +88,6 @@ object WindowedComputations {
    * @tparam TExpression The expression type.
    * @return The constructed [[WindowedComputation]].
    * @see [[http://dochub.mongodb.org/core/window-functions-std-dev-pop \$stdDevPop]]
-   * @note Requires MongoDB 5.0 or greater.
    */
   def stdDevPop[TExpression](path: String, expression: TExpression, window: Window): WindowedComputation =
     JWindowedComputations.stdDevPop(path, expression, window)
@@ -104,7 +101,6 @@ object WindowedComputations {
    * @tparam TExpression The expression type.
    * @return The constructed [[WindowedComputation]].
    * @see [[http://dochub.mongodb.org/core/window-functions-min \$min]]
-   * @note Requires MongoDB 5.0 or greater.
    */
   def min[TExpression](path: String, expression: TExpression, window: Window): WindowedComputation =
     JWindowedComputations.min(path, expression, window)
@@ -118,7 +114,6 @@ object WindowedComputations {
    * @tparam TExpression The expression type.
    * @return The constructed [[WindowedComputation]].
    * @see [[http://dochub.mongodb.org/core/window-functions-max \$max]]
-   * @note Requires MongoDB 5.0 or greater.
    */
   def max[TExpression](path: String, expression: TExpression, window: Window): WindowedComputation =
     JWindowedComputations.max(path, expression, window)
@@ -130,7 +125,6 @@ object WindowedComputations {
    * @param window The window. May be `null`.
    * @return The constructed [[WindowedComputation]].
    * @see [[http://dochub.mongodb.org/core/window-functions-count \$count]]
-   * @note Requires MongoDB 5.0 or greater.
    */
   def count(path: String, window: Window): WindowedComputation =
     JWindowedComputations.count(path, window)
@@ -149,7 +143,6 @@ object WindowedComputations {
    * @tparam TExpression The expression type.
    * @return The constructed [[WindowedComputation]].
    * @see [[http://dochub.mongodb.org/core/window-functions-derivative \$derivative]]
-   * @note Requires MongoDB 5.0 or greater.
    */
   def derivative[TExpression](path: String, expression: TExpression, window: Window): WindowedComputation =
     JWindowedComputations.derivative(path, expression, window)
@@ -165,12 +158,12 @@ object WindowedComputations {
    * @param path       The output field path.
    * @param expression The expression.
    * @param window     The window.
-   * @param unit       The desired time unit for the divisor. Must not be any of the following:
-   *                   [[MongoTimeUnit MONTH]], [[MongoTimeUnit YEAR]].
+   * @param unit       The desired time unit for the divisor. Allowed values are:
+   *                   [[MongoTimeUnit WEEK]], [[MongoTimeUnit DAY]], [[MongoTimeUnit HOUR]], [[MongoTimeUnit MINUTE]],
+   *                   [[MongoTimeUnit SECOND]], [[MongoTimeUnit MILLISECOND]].
    * @tparam TExpression The expression type.
    * @return The constructed [[WindowedComputation]].
    * @see [[http://dochub.mongodb.org/core/window-functions-derivative \$derivative]]
-   * @note Requires MongoDB 5.0 or greater.
    */
   def timeDerivative[TExpression](
       path: String,
@@ -196,7 +189,6 @@ object WindowedComputations {
    * @tparam TExpression The expression type.
    * @return The constructed [[WindowedComputation]].
    * @see [[http://dochub.mongodb.org/core/window-functions-integral \$integral]]
-   * @note Requires MongoDB 5.0 or greater.
    */
   def integral[TExpression](path: String, expression: TExpression, window: Window): WindowedComputation =
     JWindowedComputations.integral(path, expression, window)
@@ -212,12 +204,12 @@ object WindowedComputations {
    * @param path       The output field path.
    * @param expression The expression.
    * @param window     The window.
-   * @param unit       The desired time unit for the divisor. Must not be any of the following:
-   *                   [[MongoTimeUnit MONTH]], [[MongoTimeUnit YEAR]].
+   * @param unit       The desired time unit for the divisor. Allowed values are:
+   *                   [[MongoTimeUnit WEEK]], [[MongoTimeUnit DAY]], [[MongoTimeUnit HOUR]], [[MongoTimeUnit MINUTE]],
+   *                   [[MongoTimeUnit SECOND]], [[MongoTimeUnit MILLISECOND]].
    * @tparam TExpression The expression type.
    * @return The constructed [[WindowedComputation]].
    * @see [[http://dochub.mongodb.org/core/window-functions-integral \$integral]]
-   * @note Requires MongoDB 5.0 or greater.
    */
   def timeIntegral[TExpression](
       path: String,
@@ -237,7 +229,6 @@ object WindowedComputations {
    * @tparam TExpression The expression type.
    * @return The constructed [[WindowedComputation]].
    * @see [[http://dochub.mongodb.org/core/window-functions-covariance-samp \$covarianceSamp]]
-   * @note Requires MongoDB 5.0 or greater.
    */
   def covarianceSamp[TExpression](
       path: String,
@@ -257,7 +248,6 @@ object WindowedComputations {
    * @tparam TExpression The expression type.
    * @return The constructed [[WindowedComputation]].
    * @see [[http://dochub.mongodb.org/core/window-functions-covariance-pop \$covariancePop]]
-   * @note Requires MongoDB 5.0 or greater.
    */
   def covariancePop[TExpression](
       path: String,
@@ -280,7 +270,6 @@ object WindowedComputations {
    * @tparam TExpression The expression type.
    * @return The constructed [[WindowedComputation]].
    * @see [[http://dochub.mongodb.org/core/window-functions-exp-moving-avg \$expMovingAvg]]
-   * @note Requires MongoDB 5.0 or greater.
    */
   def expMovingAvg[TExpression](path: String, expression: TExpression, n: Int): WindowedComputation =
     JWindowedComputations.expMovingAvg(path, expression, n)
@@ -299,7 +288,6 @@ object WindowedComputations {
    * @tparam TExpression The expression type.
    * @return The constructed [[WindowedComputation]].
    * @see [[http://dochub.mongodb.org/core/window-functions-exp-moving-avg \$expMovingAvg]]
-   * @note Requires MongoDB 5.0 or greater.
    */
   def expMovingAvg[TExpression](path: String, expression: TExpression, alpha: Double): WindowedComputation =
     JWindowedComputations.expMovingAvg(path, expression, alpha)
@@ -315,7 +303,6 @@ object WindowedComputations {
    * @tparam TExpression The expression type.
    * @return The constructed [[WindowedComputation]].
    * @see [[http://dochub.mongodb.org/core/window-functions-push \$push]]
-   * @note Requires MongoDB 5.0 or greater.
    */
   def push[TExpression](path: String, expression: TExpression, window: Window): WindowedComputation =
     JWindowedComputations.push(path, expression, window)
@@ -331,7 +318,6 @@ object WindowedComputations {
    * @tparam TExpression The expression type.
    * @return The constructed [[WindowedComputation]].
    * @see [[http://dochub.mongodb.org/core/window-functions-add-to-set \$addToSet]]
-   * @note Requires MongoDB 5.0 or greater.
    */
   def addToSet[TExpression](path: String, expression: TExpression, window: Window): WindowedComputation =
     JWindowedComputations.addToSet(path, expression, window)
@@ -347,7 +333,6 @@ object WindowedComputations {
    * @tparam TExpression The expression type.
    * @return The constructed [[WindowedComputation]].
    * @see [[http://dochub.mongodb.org/core/window-functions-first \$first]]
-   * @note Requires MongoDB 5.0 or greater.
    */
   def first[TExpression](path: String, expression: TExpression, window: Window): WindowedComputation =
     JWindowedComputations.first(path, expression, window)
@@ -363,7 +348,6 @@ object WindowedComputations {
    * @tparam TExpression The expression type.
    * @return The constructed [[WindowedComputation]].
    * @see [[http://dochub.mongodb.org/core/window-functions-last \$last]]
-   * @note Requires MongoDB 5.0 or greater.
    */
   def last[TExpression](path: String, expression: TExpression, window: Window): WindowedComputation =
     JWindowedComputations.last(path, expression, window)
@@ -388,7 +372,6 @@ object WindowedComputations {
    * @tparam TExpression The expression type.
    * @return The constructed [[WindowedComputation]].
    * @see [[http://dochub.mongodb.org/core/window-functions-shift \$shift]]
-   * @note Requires MongoDB 5.0 or greater.
    */
   def shift[TExpression](
       path: String,
@@ -407,7 +390,6 @@ object WindowedComputations {
    * @param path The output field path.
    * @return The constructed [[WindowedComputation]].
    * @see [[http://dochub.mongodb.org/core/window-functions-document-number \$documentNumber]]
-   * @note Requires MongoDB 5.0 or greater.
    */
   def documentNumber(path: String): WindowedComputation =
     JWindowedComputations.documentNumber(path)
@@ -425,7 +407,6 @@ object WindowedComputations {
    * @param path The output field path.
    * @return The constructed [[WindowedComputation]].
    * @see [[http://dochub.mongodb.org/core/window-functions-rank \$rank]]
-   * @note Requires MongoDB 5.0 or greater.
    */
   def rank(path: String): WindowedComputation =
     JWindowedComputations.rank(path)
@@ -443,7 +424,6 @@ object WindowedComputations {
    * @param path The output field path.
    * @return The constructed [[WindowedComputation]].
    * @see [[http://dochub.mongodb.org/core/window-functions-dense-rank \$denseRank]]
-   * @note Requires MongoDB 5.0 or greater.
    */
   def denseRank(path: String): WindowedComputation =
     JWindowedComputations.denseRank(path)

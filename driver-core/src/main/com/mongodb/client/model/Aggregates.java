@@ -31,7 +31,6 @@ import org.bson.conversions.Bson;
 import java.util.List;
 import java.util.Objects;
 
-import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static java.util.Arrays.asList;
 import static org.bson.assertions.Assertions.notNull;
 
@@ -648,7 +647,6 @@ public final class Aggregates {
     public static <TExpression> Bson setWindowFields(@Nullable final TExpression partitionBy, @Nullable final Bson sortBy,
                                                      final List<WindowedComputation> output) {
         notNull("output", output);
-        isTrueArgument("output must not be empty", !output.isEmpty());
         return new SetWindowFieldsStage<>(partitionBy, sortBy, output);
     }
 

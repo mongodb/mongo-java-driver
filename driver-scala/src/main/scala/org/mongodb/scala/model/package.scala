@@ -777,48 +777,27 @@ package object model {
    * [[WindowedComputation windowed computations]].
    *
    * @since 4.3
+   * @note Requires MongoDB 5.0 or greater.
    */
   @Beta
   object MongoTimeUnit {
 
-    /**
-     * @note Requires MongoDB 5.0 or greater.
-     */
     val YEAR = JMongoTimeUnit.YEAR
 
-    /**
-     * @note Requires MongoDB 5.0 or greater.
-     */
+    val QUARTER = JMongoTimeUnit.QUARTER
+
     val MONTH = JMongoTimeUnit.MONTH
 
-    /**
-     * @note Requires MongoDB 5.0 or greater.
-     */
     val WEEK = JMongoTimeUnit.WEEK
 
-    /**
-     * @note Requires MongoDB 5.0 or greater.
-     */
     val DAY = JMongoTimeUnit.DAY
 
-    /**
-     * @note Requires MongoDB 5.0 or greater.
-     */
     val HOUR = JMongoTimeUnit.HOUR
 
-    /**
-     * @note Requires MongoDB 5.0 or greater.
-     */
     val MINUTE = JMongoTimeUnit.MINUTE
 
-    /**
-     * @note Requires MongoDB 5.0 or greater.
-     */
     val SECOND = JMongoTimeUnit.SECOND
 
-    /**
-     * @note Requires MongoDB 5.0 or greater.
-     */
     val MILLISECOND = JMongoTimeUnit.MILLISECOND
   }
 

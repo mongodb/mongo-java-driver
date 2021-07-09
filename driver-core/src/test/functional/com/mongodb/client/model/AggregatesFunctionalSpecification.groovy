@@ -1082,7 +1082,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         null | ascending('num1') | WindowedComputations
                 .sum('result', '$num1', range(CURRENT, Integer.MAX_VALUE)) | [6, 5, 3]
         null | ascending('date') | WindowedComputations
-                .avg('result', '$num1', timeRange(Integer.MIN_VALUE, 0, MongoTimeUnit.SECOND)) | [1, 1.5, 2]
+                .avg('result', '$num1', timeRange(-1, 0, MongoTimeUnit.QUARTER)) | [1, 1.5, 2]
         null | null | WindowedComputations
                 .stdDevSamp('result', '$num1', documents(UNBOUNDED, UNBOUNDED)) | [1.0, 1.0, 1.0]
         null | ascending('num1') | WindowedComputations
@@ -1142,5 +1142,20 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         expect:
         actual.size() == 1
         actual.get(0) == original[0].append('count', 1).append('max', 1)
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(5, 0) })
+    def '$setWindowFields with empty output'() {
+        given:
+        getCollectionHelper().drop()
+        Document[] original = [new Document('num', 1)]
+        getCollectionHelper().insertDocuments(original)
+        List<Document> actual = aggregate([
+                setWindowFields(null, null),
+                project(fields(excludeId()))])
+
+        expect:
+        actual.size() == 1
+        actual.get(0) == original[0]
     }
 }

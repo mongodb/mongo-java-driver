@@ -53,6 +53,7 @@ import org.bson.types.Decimal128
  * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/dateAdd/ \$dateAdd aggregation pipeline stage]]
  * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/dateSubtract/ \$dateSubtract aggregation pipeline stage]]
  * @since 4.3
+ * @note Requires MongoDB 5.0 or greater.
  */
 @Beta
 object Windows {
@@ -63,7 +64,6 @@ object Windows {
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
    * @return A documents window.
-   * @note Requires MongoDB 5.0 or greater.
    */
   def documents(lower: Int, upper: Int): Window = JWindows.documents(lower, upper)
 
@@ -83,7 +83,6 @@ object Windows {
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
    * @return A documents window.
-   * @note Requires MongoDB 5.0 or greater.
    */
   def documents(lower: Int, upper: JWindows.Bound): Window = JWindows.documents(lower, upper)
 
@@ -93,7 +92,6 @@ object Windows {
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
    * @return A documents window.
-   * @note Requires MongoDB 5.0 or greater.
    */
   def documents(lower: JWindows.Bound, upper: JWindows.Bound): Window = JWindows.documents(lower, upper)
 
@@ -104,7 +102,6 @@ object Windows {
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
    * @return A range window.
-   * @note Requires MongoDB 5.0 or greater.
    */
   def range(lower: Long, upper: Long): Window = JWindows.range(lower, upper)
 
@@ -115,7 +112,6 @@ object Windows {
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
    * @return A range window.
-   * @note Requires MongoDB 5.0 or greater.
    */
   def range(lower: Double, upper: Double): Window = JWindows.range(lower, upper)
 
@@ -126,7 +122,6 @@ object Windows {
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
    * @return A range window.
-   * @note Requires MongoDB 5.0 or greater.
    */
   def range(lower: Decimal128, upper: Decimal128): Window = JWindows.range(lower, upper)
 
@@ -137,7 +132,6 @@ object Windows {
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
    * @return A range window.
-   * @note Requires MongoDB 5.0 or greater.
    */
   def range(lower: JWindows.Bound, upper: Long): Window = JWindows.range(lower, upper)
 
@@ -148,7 +142,6 @@ object Windows {
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
    * @return A range window.
-   * @note Requires MongoDB 5.0 or greater.
    */
   def range(lower: JWindows.Bound, upper: Double): Window = JWindows.range(lower, upper)
 
@@ -159,7 +152,6 @@ object Windows {
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
    * @return A range window.
-   * @note Requires MongoDB 5.0 or greater.
    */
   def range(lower: JWindows.Bound, upper: Decimal128): Window = JWindows.range(lower, upper)
 
@@ -170,7 +162,6 @@ object Windows {
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
    * @return A range window.
-   * @note Requires MongoDB 5.0 or greater.
    */
   def range(lower: Long, upper: JWindows.Bound): Window = JWindows.range(lower, upper)
 
@@ -181,7 +172,6 @@ object Windows {
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
    * @return A range window.
-   * @note Requires MongoDB 5.0 or greater.
    */
   def range(lower: Double, upper: JWindows.Bound): Window = JWindows.range(lower, upper)
 
@@ -192,7 +182,6 @@ object Windows {
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
    * @return A range window.
-   * @note Requires MongoDB 5.0 or greater.
    */
   def range(lower: Decimal128, upper: JWindows.Bound): Window = JWindows.range(lower, upper)
 
@@ -205,7 +194,6 @@ object Windows {
    * @param upper A value based on which the upper bound of the window is calculated.
    * @param unit  A time unit in which `lower` and `upper` are specified.
    * @return A range window.
-   * @note Requires MongoDB 5.0 or greater.
    */
   def timeRange(lower: Long, upper: Long, unit: JMongoTimeUnit): Window = JWindows.timeRange(lower, upper, unit)
 
@@ -218,7 +206,6 @@ object Windows {
    * @param upper A value based on which the upper bound of the window is calculated.
    * @param unit  A time unit in which `upper` is specified.
    * @return A range window.
-   * @note Requires MongoDB 5.0 or greater.
    */
   def timeRange(lower: JWindows.Bound, upper: Long, unit: JMongoTimeUnit): Window =
     JWindows.timeRange(lower, upper, unit)
@@ -232,7 +219,6 @@ object Windows {
    * @param upper A value based on which the upper bound of the window is calculated.
    * @param unit  A time unit in which `lower` is specified.
    * @return A range window.
-   * @note Requires MongoDB 5.0 or greater.
    */
   def timeRange(lower: Long, upper: JWindows.Bound, unit: JMongoTimeUnit): Window =
     JWindows.timeRange(lower, upper, unit)
@@ -241,21 +227,18 @@ object Windows {
    * Special values that may be used when specifying the bounds of a [[Window window]].
    *
    * @since 4.3
+   * @note Requires MongoDB 5.0 or greater.
    */
   @Beta
   object Bound {
 
     /**
      * The [[Window window]] bound is determined by the current document and is inclusive.
-     *
-     * @note Requires MongoDB 5.0 or greater.
      */
     val UNBOUNDED = JWindows.Bound.UNBOUNDED
 
     /**
      * The [[Window window]] bound is the same as the corresponding bound of the partition encompassing it.
-     *
-     * @note Requires MongoDB 5.0 or greater.
      */
     val CURRENT = JWindows.Bound.CURRENT
   }

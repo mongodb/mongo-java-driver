@@ -21,50 +21,38 @@ import com.mongodb.annotations.Beta;
  * Units for specifying time-based bounds for {@linkplain Window windows} and output units for some time-based
  * {@linkplain WindowedComputation windowed computations}.
  *
+ * @mongodb.server.release 5.0
  * @since 4.3
  */
 @Beta
 public enum MongoTimeUnit {
-    /**
-     * @mongodb.server.release 5.0
-     */
-    YEAR("year"),
-    /**
-     * @mongodb.server.release 5.0
-     */
-    MONTH("month"),
-    /**
-     * @mongodb.server.release 5.0
-     */
-    WEEK("week"),
-    /**
-     * @mongodb.server.release 5.0
-     */
-    DAY("day"),
-    /**
-     * @mongodb.server.release 5.0
-     */
-    HOUR("hour"),
-    /**
-     * @mongodb.server.release 5.0
-     */
-    MINUTE("minute"),
-    /**
-     * @mongodb.server.release 5.0
-     */
-    SECOND("second"),
-    /**
-     * @mongodb.server.release 5.0
-     */
-    MILLISECOND("millisecond");
+    YEAR("year", false),
+    QUARTER("quarter", false),
+    MONTH("month", false),
+    WEEK("week", true),
+    DAY("day", true),
+    HOUR("hour", true),
+    MINUTE("minute", true),
+    SECOND("second", true),
+    MILLISECOND("millisecond", true);
 
     private final String value;
+    private final boolean fixed;
 
-    MongoTimeUnit(final String value) {
+    MongoTimeUnit(final String value, final boolean fixed) {
         this.value = value;
+        this.fixed = fixed;
     }
 
     String value() {
         return value;
+    }
+
+    /**
+     * Returns {@code true} iff the unit represents a fixed duration.
+     * E.g., a minute is a fixed duration equal to 60_000 milliseconds, while the duration of a month varies.
+     */
+    boolean fixed() {
+        return fixed;
     }
 }

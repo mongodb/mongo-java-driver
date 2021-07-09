@@ -178,6 +178,10 @@ out("authors")
 
 ### SetWindowFields
 
+{{% note class="important" %}}
+Support for `$setWindowFields` is in beta. Backwards-breaking changes may be made before the final release.
+{{% /note %}}
+
 The [`$setWindowFields`](https://dochub.mongodb.org/core/window-functions-set-window-fields) pipeline stage
 allows using window operators. This stage partitions the input documents similarly to the [`$group`](#group) pipeline stage,
 optionally sorts them, computes fields in the documents by computing window functions over windows specified per function

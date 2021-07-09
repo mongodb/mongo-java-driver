@@ -80,6 +80,7 @@ import static org.bson.assertions.Assertions.notNull;
  * @mongodb.driver.manual reference/bson-types/#date BSON Date type
  * @mongodb.driver.manual reference/operator/aggregation/dateAdd/ $dateAdd aggregation pipeline stage
  * @mongodb.driver.manual reference/operator/aggregation/dateSubtract/ $dateSubtract aggregation pipeline stage
+ * @mongodb.server.release 5.0
  * @since 4.3
  */
 @Beta
@@ -90,7 +91,6 @@ public final class Windows {
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
      * @return A documents window.
-     * @mongodb.server.release 5.0
      */
     public static Window documents(final int lower, final int upper) {
         isTrueArgument("lower <= upper", lower <= upper);
@@ -103,7 +103,6 @@ public final class Windows {
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
      * @return A documents window.
-     * @mongodb.server.release 5.0
      */
     public static Window documents(final Bound lower, final int upper) {
         notNull("lower", lower);
@@ -119,7 +118,6 @@ public final class Windows {
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
      * @return A documents window.
-     * @mongodb.server.release 5.0
      */
     public static Window documents(final int lower, final Bound upper) {
         notNull("upper", upper);
@@ -135,7 +133,6 @@ public final class Windows {
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
      * @return A documents window.
-     * @mongodb.server.release 5.0
      */
     public static Window documents(final Bound lower, final Bound upper) {
         notNull("lower", lower);
@@ -150,7 +147,6 @@ public final class Windows {
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
      * @return A range window.
-     * @mongodb.server.release 5.0
      */
     public static Window range(final long lower, final long upper) {
         isTrueArgument("lower <= upper", lower <= upper);
@@ -164,7 +160,6 @@ public final class Windows {
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
      * @return A range window.
-     * @mongodb.server.release 5.0
      */
     public static Window range(final double lower, final double upper) {
         isTrueArgument("lower <= upper", lower <= upper);
@@ -178,7 +173,6 @@ public final class Windows {
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
      * @return A range window.
-     * @mongodb.server.release 5.0
      */
     public static Window range(final Decimal128 lower, final Decimal128 upper) {
         notNull("lower", lower);
@@ -194,7 +188,6 @@ public final class Windows {
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
      * @return A range window.
-     * @mongodb.server.release 5.0
      */
     public static Window range(final Bound lower, final long upper) {
         notNull("lower", lower);
@@ -208,7 +201,6 @@ public final class Windows {
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
      * @return A range window.
-     * @mongodb.server.release 5.0
      */
     public static Window range(final Bound lower, final double upper) {
         notNull("lower", lower);
@@ -222,7 +214,6 @@ public final class Windows {
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
      * @return A range window.
-     * @mongodb.server.release 5.0
      */
     public static Window range(final Bound lower, final Decimal128 upper) {
         notNull("lower", lower);
@@ -237,7 +228,6 @@ public final class Windows {
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
      * @return A range window.
-     * @mongodb.server.release 5.0
      */
     public static Window range(final long lower, final Bound upper) {
         notNull("upper", upper);
@@ -251,7 +241,6 @@ public final class Windows {
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
      * @return A range window.
-     * @mongodb.server.release 5.0
      */
     public static Window range(final double lower, final Bound upper) {
         notNull("upper", upper);
@@ -265,7 +254,6 @@ public final class Windows {
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
      * @return A range window.
-     * @mongodb.server.release 5.0
      */
     public static Window range(final Decimal128 lower, final Bound upper) {
         notNull("lower", lower);
@@ -282,7 +270,6 @@ public final class Windows {
      * @param upper A value based on which the upper bound of the window is calculated.
      * @param unit A time unit in which {@code lower} and {@code upper} are specified.
      * @return A range window.
-     * @mongodb.server.release 5.0
      */
     public static Window timeRange(final long lower, final long upper, final MongoTimeUnit unit) {
         notNull("unit", unit);
@@ -299,7 +286,6 @@ public final class Windows {
      * @param upper A value based on which the upper bound of the window is calculated.
      * @param unit A time unit in which {@code upper} is specified.
      * @return A range window.
-     * @mongodb.server.release 5.0
      */
     public static Window timeRange(final Bound lower, final long upper, final MongoTimeUnit unit) {
         notNull("lower", lower);
@@ -316,7 +302,6 @@ public final class Windows {
      * @param upper A value based on which the upper bound of the window is calculated.
      * @param unit A time unit in which {@code lower} is specified.
      * @return A range window.
-     * @mongodb.server.release 5.0
      */
     public static Window timeRange(final long lower, final Bound upper, final MongoTimeUnit unit) {
         notNull("upper", upper);
@@ -331,20 +316,17 @@ public final class Windows {
     /**
      * Special values that may be used when specifying the bounds of a {@linkplain Window window}.
      *
+     * @mongodb.server.release 5.0
      * @since 4.3
      */
     @Beta
     public enum Bound {
         /**
          * The {@linkplain Window window} bound is determined by the current document and is inclusive.
-         *
-         * @mongodb.server.release 5.0
          */
         CURRENT("current"),
         /**
          * The {@linkplain Window window} bound is the same as the corresponding bound of the partition encompassing it.
-         *
-         * @mongodb.server.release 5.0
          */
         UNBOUNDED("unbounded");
 
