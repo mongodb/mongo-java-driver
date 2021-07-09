@@ -43,11 +43,12 @@ import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ClusterFixture.getSslSettings
+import static com.mongodb.ClusterFixture.serverVersionGreaterThan
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.internal.connection.ProtocolTestHelper.execute
 import static org.bson.BsonDocument.parse
 
-@IgnoreIf({ getSslSettings().isEnabled() })
+@IgnoreIf({ getSslSettings().isEnabled() || serverVersionGreaterThan('5.0') })
 class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecification {
     @Shared
     InternalStreamConnection nettyConnection
