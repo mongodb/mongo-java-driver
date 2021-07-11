@@ -46,6 +46,7 @@ import java.util.concurrent.TimeUnit
 
 import static com.mongodb.ClusterFixture.checkReferenceCountReachesTarget
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
@@ -533,7 +534,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
                     new BsonDocument('killCursors', new BsonString(namespace.getCollectionName()))
                             .append('cursors', new BsonArray(singletonList(new BsonInt64(serverCursor.getId())))),
                     new NoOpFieldNameValidator(), ReadPreference.primary(),
-                    new BsonDocumentCodec(), new NoOpSessionContext(), null)
+                    new BsonDocumentCodec(), new NoOpSessionContext(), getServerApi())
         }
         connection.release()
         cursor.next()
