@@ -54,6 +54,7 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getConnection
 import static com.mongodb.ClusterFixture.getReadConnectionSource
 import static com.mongodb.ClusterFixture.getReferenceCountAfterTimeout
+import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionLessThan
@@ -380,7 +381,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
                     new BsonDocument('killCursors', new BsonString(namespace.getCollectionName()))
                             .append('cursors', new BsonArray(singletonList(new BsonInt64(serverCursor.getId())))),
                     new NoOpFieldNameValidator(), ReadPreference.primary(),
-                    new BsonDocumentCodec(), new NoOpSessionContext(), null)
+                    new BsonDocumentCodec(), new NoOpSessionContext(), getServerApi())
         }
         connection.release()
         nextBatch()
