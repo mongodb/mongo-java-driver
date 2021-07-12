@@ -22,6 +22,11 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
+import com.mongodb.internal.connection.aws.AwsCredentials;
+import com.mongodb.internal.connection.aws.AwsCredentialsMiddleware;
+import com.mongodb.internal.connection.aws.Ec2CredentialsMiddleware;
+import com.mongodb.internal.connection.aws.EcsCredentialsMiddleware;
+import com.mongodb.internal.connection.aws.EksCredentialsMiddleware;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
@@ -79,10 +84,13 @@ public class AwsAuthenticator extends SaslAuthenticator {
         private final MongoCredential credential;
         private final byte[] clientNonce = new byte[RANDOM_LENGTH];
         private int step = -1;
-        private String httpResponse;
+        private AwsCredentials awsCredentials;
+        private final AwsCredentialsMiddleware awsCredentialsMiddleware;
 
         AwsSaslClient(final MongoCredential credential) {
             this.credential = credential;
+
+            awsCredentialsMiddleware = new EcsCredentialsMiddleware(new EksCredentialsMiddleware(new Ec2CredentialsMiddleware()));
         }
 
         @Override
@@ -197,10 +205,7 @@ public class AwsAuthenticator extends SaslAuthenticator {
             if (userName == null) {
                 userName = System.getenv("AWS_ACCESS_KEY_ID");
                 if (userName == null) {
-                    userName = BsonDocument
-                            .parse(getHttpResponse())
-                            .getString("AccessKeyId")
-                            .getValue();
+                    userName = getAwsCredentials().getAccessKeyId();
                 }
             }
             return userName;
@@ -213,11 +218,7 @@ public class AwsAuthenticator extends SaslAuthenticator {
                 if (System.getenv("AWS_SECRET_ACCESS_KEY") != null) {
                     password = System.getenv("AWS_SECRET_ACCESS_KEY").toCharArray();
                 } else {
-                    password = BsonDocument
-                            .parse(getHttpResponse())
-                            .getString("SecretAccessKey")
-                            .getValue()
-                            .toCharArray();
+                    password = getAwsCredentials().getSecretAccessKeyId().toCharArray();
                 }
             }
             return new String(password);
@@ -242,73 +243,17 @@ public class AwsAuthenticator extends SaslAuthenticator {
                 return System.getenv("AWS_SESSION_TOKEN");
             }
 
-            return BsonDocument
-                    .parse(getHttpResponse())
-                    .getString("Token")
-                    .getValue();
-        }
-
-
-        @NonNull
-        private String getHttpResponse() {
-            if (httpResponse != null) {
-                return httpResponse;
-            }
-
-            String path = System.getenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI");
-            httpResponse = (path == null)
-                    ?  getEc2Response()
-                    :  getHttpContents("GET", "http://169.254.170.2" + path, null);
-            return httpResponse;
-        }
-
-        private String getEc2Response() {
-            final String endpoint = "http://169.254.169.254";
-            final String path = "/latest/meta-data/iam/security-credentials/";
-
-            Map<String, String> header = new HashMap<>();
-            header.put("X-aws-ec2-metadata-token-ttl-seconds", "30");
-            String token = getHttpContents("PUT", endpoint + "/latest/api/token", header);
-
-            header.clear();
-            header.put("X-aws-ec2-metadata-token", token);
-            String role = getHttpContents("GET", endpoint + path, header);
-            return getHttpContents("GET", endpoint + path + role, header);
+            return getAwsCredentials().getSessionToken();
         }
 
         @NonNull
-        private static String getHttpContents(final String method, final String endpoint, final Map<String, String> headers) {
-            StringBuilder content = new StringBuilder();
-            HttpURLConnection conn = null;
-            try {
-                conn = (HttpURLConnection) new URL(endpoint).openConnection();
-                conn.setRequestMethod(method);
-                conn.setReadTimeout(10000);
-                if (headers != null) {
-                    for (Map.Entry<String, String> kvp : headers.entrySet()) {
-                       conn.setRequestProperty(kvp.getKey(), kvp.getValue());
-                    }
-                }
-
-                int status = conn.getResponseCode();
-                if (status != HttpURLConnection.HTTP_OK) {
-                    throw new IOException(String.format("%d %s", status, conn.getResponseMessage()));
-                }
-
-                try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
-                    String inputLine;
-                    while ((inputLine = in.readLine()) != null) {
-                        content.append(inputLine);
-                    }
-                }
-            } catch (IOException e) {
-                throw new MongoInternalException("Unexpected IOException", e);
-            } finally {
-                if (conn != null) {
-                    conn.disconnect();
-                }
+        private AwsCredentials getAwsCredentials() {
+            if (awsCredentials != null) {
+                return awsCredentials;
             }
-            return content.toString();
+
+            awsCredentials = awsCredentialsMiddleware.getCredentials();
+            return awsCredentials;
         }
     }
 
