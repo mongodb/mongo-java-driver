@@ -16,17 +16,12 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
-import com.mongodb.WriteConcernResult;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.binding.ReferenceCounted;
-import com.mongodb.internal.bulk.DeleteRequest;
-import com.mongodb.internal.bulk.InsertRequest;
-import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
@@ -54,39 +49,6 @@ public interface Connection extends ReferenceCounted {
      * @return the connection description
      */
     ConnectionDescription getDescription();
-
-    /**
-     * Insert the documents using the insert wire protocol and apply the write concern.
-     *
-     * @param namespace    the namespace
-     * @param ordered      whether the writes are ordered
-     * @param insertRequest the insert request
-     * @param requestContext the request context
-     * @return the write concern result
-     */
-    WriteConcernResult insert(MongoNamespace namespace, boolean ordered, InsertRequest insertRequest, RequestContext requestContext);
-
-    /**
-     * Update the documents using the update wire protocol and apply the write concern.
-     *
-     * @param namespace    the namespace
-     * @param ordered      whether the writes are ordered
-     * @param updateRequest the update request
-     * @param requestContext the request context
-     * @return the write concern result
-     */
-    WriteConcernResult update(MongoNamespace namespace, boolean ordered, UpdateRequest updateRequest, RequestContext requestContext);
-
-    /**
-     * Delete the documents using the delete wire protocol and apply the write concern.
-     *
-     * @param namespace    the namespace
-     * @param ordered      whether the writes are ordered
-     * @param deleteRequest the delete request
-     * @param requestContext the request context
-     * @return the write concern result
-     */
-    WriteConcernResult delete(MongoNamespace namespace, boolean ordered, DeleteRequest deleteRequest, RequestContext requestContext);
 
     /**
      * Execute the command.
