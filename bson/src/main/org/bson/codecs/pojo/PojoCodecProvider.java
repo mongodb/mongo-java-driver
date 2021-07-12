@@ -72,12 +72,18 @@ public final class PojoCodecProvider implements CodecProvider {
         return getPojoCodec(clazz, registry);
     }
 
-    @SuppressWarnings("unchecked")
-    private <T> PojoCodec<T> getPojoCodec(final Class<T> clazz, final CodecRegistry registry) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private <T> Codec<T> getPojoCodec(final Class<T> clazz, final CodecRegistry registry) {
         ClassModel<T> classModel = (ClassModel<T>) classModels.get(clazz);
         if (classModel != null) {
+            if (clazz.isEnum()) {
+                return new EnumCodec(clazz);
+            }
             return new PojoCodecImpl<T>(classModel, registry, propertyCodecProviders, discriminatorLookup);
         } else if (automatic || (clazz.getPackage() != null && packages.contains(clazz.getPackage().getName()))) {
+            if (clazz.isEnum()) {
+                return new EnumCodec(clazz);
+            }
             try {
                 classModel = createClassModel(clazz, conventions);
                 if (clazz.isInterface() || !classModel.getPropertyModels().isEmpty()) {
