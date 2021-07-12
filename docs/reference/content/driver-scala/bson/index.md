@@ -11,7 +11,7 @@ title = "BSON"
 ## BSON
 
 The BSON library comprehensively supports [BSON](http://www.bsonspec.org), the data storage and network transfer format that MongoDB uses for 
-“documents". BSON, short for Binary [JSON](http://json.org/), is a binary-encoded serialization of JSON-like documents.
+"documents". BSON, short for Binary [JSON](http://json.org/), is a binary-encoded serialization of JSON-like documents.
 
 For everyday usage there are type aliases and companion objects available from the [`org.mongodb.scala.bson`]({{< apiref="org.mongodb.scala.bson.package" >}}) package.
 

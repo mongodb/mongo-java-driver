@@ -849,7 +849,7 @@ public interface MongoCollection<TDocument> {
      * modified.
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @return the result of the remove one operation
      * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
      * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
@@ -863,7 +863,7 @@ public interface MongoCollection<TDocument> {
      * modified.
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @param options  the options to apply to the delete operation
      * @return the result of the remove one operation
      * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
@@ -880,7 +880,7 @@ public interface MongoCollection<TDocument> {
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @return the result of the remove one operation
      * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
      * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
@@ -897,7 +897,7 @@ public interface MongoCollection<TDocument> {
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @param options  the options to apply to the delete operation
      * @return the result of the remove one operation
      * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
@@ -912,7 +912,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
      *
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @return the result of the remove many operation
      * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
      * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
@@ -924,7 +924,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
      *
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @param options  the options to apply to the delete operation
      * @return the result of the remove many operation
      * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
@@ -939,7 +939,7 @@ public interface MongoCollection<TDocument> {
      * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
      *
      * @param clientSession the client session with which to associate this operation
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @return the result of the remove many operation
      * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
      * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
@@ -954,7 +954,7 @@ public interface MongoCollection<TDocument> {
      * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
      *
      * @param clientSession the client session with which to associate this operation
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @param options  the options to apply to the delete operation
      * @return the result of the remove many operation
      * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
@@ -973,7 +973,7 @@ public interface MongoCollection<TDocument> {
      * the corresponding {@link #updateOne(Bson, Bson)} method.</p>
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @return the result of the replace one operation
      * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
@@ -992,7 +992,7 @@ public interface MongoCollection<TDocument> {
      * the corresponding {@link #updateOne(Bson, Bson, UpdateOptions)} method.</p>
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
-     * @param filter        the query filter to apply the the replace operation
+     * @param filter        the query filter to apply the replace operation
      * @param replacement   the replacement document
      * @param replaceOptions the options to apply to the replace operation
      * @return the result of the replace one operation
@@ -1014,7 +1014,7 @@ public interface MongoCollection<TDocument> {
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @return the result of the replace one operation
      * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
@@ -1036,7 +1036,7 @@ public interface MongoCollection<TDocument> {
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
-     * @param filter        the query filter to apply the the replace operation
+     * @param filter        the query filter to apply the replace operation
      * @param replacement   the replacement document
      * @param replaceOptions the options to apply to the replace operation
      * @return the result of the replace one operation
@@ -1411,7 +1411,7 @@ public interface MongoCollection<TDocument> {
      * the corresponding {@link #findOneAndUpdate(Bson, Bson)} method.</p>
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @return the document that was replaced.  Depending on the value of the {@code returnOriginal} property, this will either be the
      * document as it was before the update or as it is after the update.  If no documents matched the query filter, then null will be
@@ -1428,7 +1428,7 @@ public interface MongoCollection<TDocument> {
      * the corresponding {@link #findOneAndUpdate(Bson, Bson, FindOneAndUpdateOptions)} method.</p>
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @param options     the options to apply to the operation
      * @return the document that was replaced.  Depending on the value of the {@code returnOriginal} property, this will either be the
@@ -1447,7 +1447,7 @@ public interface MongoCollection<TDocument> {
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @return the document that was replaced.  Depending on the value of the {@code returnOriginal} property, this will either be the
      * document as it was before the update or as it is after the update.  If no documents matched the query filter, then null will be
@@ -1467,7 +1467,7 @@ public interface MongoCollection<TDocument> {
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @param options     the options to apply to the operation
      * @return the document that was replaced.  Depending on the value of the {@code returnOriginal} property, this will either be the

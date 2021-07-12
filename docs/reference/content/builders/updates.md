@@ -27,7 +27,7 @@ This section describes update operators that apply to the value of an entire fie
 
 #### Set
 
-The [`$set`]({{< docsref "reference/operator/update/set/" >}}) update operator sets the value of a field to to the specified value.
+The [`$set`]({{< docsref "reference/operator/update/set/" >}}) update operator sets the value of a field to the specified value.
 
 This example sets the value of the `quantity` field to `11`:
 

@@ -14,7 +14,7 @@ title = "Quick Start - POJOs"
 POJOs stands for Plain Old Java Objects.
 
 The following code snippets come from the [`PojoQuickTour.java`]({{< srcref "driver-sync/src/examples/tour/PojoQuickTour.java" >}}) example code
-that can be found with the driver source on github.
+that can be found with the driver source on GitHub.
 {{% /note %}}
 
 ## Prerequisites
@@ -46,7 +46,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 ```
 
-- The following POJO classes. The full source is available on github for the [Person]({{< srcref "driver-sync/src/examples/tour/Person.java" >}}) and [Address]({{< srcref "driver-sync/src/examples/tour/Address.java" >}})
+- The following POJO classes. The full source is available on GitHub for the [Person]({{< srcref "driver-sync/src/examples/tour/Person.java" >}}) and [Address]({{< srcref "driver-sync/src/examples/tour/Address.java" >}})
 POJOs. Here are the main implementation details:
 
 ```java

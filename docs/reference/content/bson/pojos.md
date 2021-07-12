@@ -32,7 +32,7 @@ Each `PropertyModel` includes:
   * The read name, the name of the property to use as the key when serializing into BSON.
   * The write name, the name of the property to use as the key when deserializing from BSON.
   * Type data, to work around type erasure.
-  * An optional `Codec` for the property. The codec allows for fine grained control over how the property is encoded and decoded.
+  * An optional `Codec` for the property. The codec allows for fine-grained control over how the property is encoded and decoded.
   * A serialization checker. This checks if the value should be serialized. By default, `null` values are not serialized.
   * A property accessor. Used to access the property values from the POJO instance.
   * Use discriminator flag, only used when serializing other POJOs. By default it is off. When on the `PojoCodecProvider` copies the 
@@ -66,7 +66,7 @@ register any combination of:
 
   * Individual POJO classes.
   * Package names containing POJO classes.
-  * `ClassModel` instances which allow fine grained control over how a POJO is encoded and decoded.
+  * `ClassModel` instances which allow fine-grained control over how a POJO is encoded and decoded.
   
 The `builder` also allows the user to register default [Conventions](#conventions) for any POJOs that are automatically mapped, either 
 the individual POJO classes or POJOs found from registered packages. The `PojoCodecProvider` will lookup POJO `Codec` instances and return 

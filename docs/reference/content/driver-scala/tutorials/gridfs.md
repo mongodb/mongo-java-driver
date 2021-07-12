@@ -16,7 +16,7 @@ pre = "<i class='fa'></i>"
 When you query a GridFS store for a file, the Scala driver will reassemble the chunks as needed.
 
 The following code snippets come from the [`GridFSTour.java`]({{< srcref "driver-scala/src/it/gridfs/GridFSTour.java" >}}) example code
-that can be found with the driver source on github.
+that can be found with the driver source on GitHub.
 
 ## Prerequisites
 

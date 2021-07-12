@@ -49,7 +49,7 @@ public final class EncoderContext {
         }
 
         /**
-         * Set to true if the the value to be encoded is a document that will be put in a MongoDB collection.
+         * Set to true if the value to be encoded is a document that will be put in a MongoDB collection.
          *
          * @param encodingCollectibleDocument true if the value to be encoded is a document that will be put in a MongoDB collection
          * @return this
@@ -69,7 +69,7 @@ public final class EncoderContext {
     }
 
     /**
-     * Returns true if the the value to be encoded is a document that will be put in a MongoDB collection.  Encoders for such documents
+     * Returns true if the value to be encoded is a document that will be put in a MongoDB collection.  Encoders for such documents
      * might choose to act differently when encoding such as documents, e.g. by re-ordering the fields in some way (like encoding the _id
      * field first).
      *

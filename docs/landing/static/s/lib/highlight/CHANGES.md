@@ -292,7 +292,7 @@ Miscellaneous improvements:
 - Highlighting `=>` prompts in Clojure.
 - [Jeremy Hull][] fixed a lot of styles for consistency.
 - Finally, highlighting PHP and HTML [mixed in peculiar ways][php-html].
-- Objective C and C# now properly highlight titles in method definition.
+- Objective-C and C# now properly highlight titles in method definition.
 - Big overhaul of relevance counting for a number of languages. Please do report
   bugs about mis-detection of non-trivial code snippets!
 
@@ -596,7 +596,7 @@ New languages are:
 - Haskell by [Jeremy Hull][sourrust]
 - Erlang in two varieties — module and REPL — made collectively by [Nikolay
   Zakharov][desh], [Dmitry Kovega][arhibot] and [Sergey Ignatov][ignatov]
-- Objective C by [Valerii Hiora][vhbit]
+- Objective-C by [Valerii Hiora][vhbit]
 - Vala by [Antono Vasiljev][antono]
 - Go by [Stephan Kountso][steplg]
 
@@ -724,7 +724,7 @@ Fixes for existing languages:
 [yard]: http://yardoc.org/
 
 The highlighter has become more usable as a library allowing to do highlighting
-from initialization code of JS frameworks and in ajax methods (see.
+from initialization code of JS frameworks and in Ajax methods (see.
 readme.eng.txt).
 
 Also this version drops support for the [WordPress][wp] plugin. Everyone is
@@ -815,7 +815,7 @@ packing several languages along with the library itself into a single compressed
 file. Now sites using several languages will load considerably faster because
 the library won't dynamically include additional files while loading.
 
-Also this version fixes a long-standing bug with Javascript highlighting that
+Also this version fixes a long-standing bug with JavaScript highlighting that
 couldn't distinguish between regular expressions and division operations.
 
 And as usually there were a couple of minor correctness fixes.
@@ -895,7 +895,7 @@ New major version is a result of vast refactoring and of many contributions.
 Visible new features:
 
 - Highlighting of embedded languages. Currently is implemented highlighting of
-  Javascript and CSS inside HTML.
+  JavaScript and CSS inside HTML.
 - Bundled 5 ready-made style themes!
 
 Invisible new features:
@@ -1004,7 +1004,7 @@ Fixed bugs were rather unpleasant so I encourage everyone to upgrade!
 ## Version 2.4
 
 - Peter Leonov provides another improved highlighting for Perl
-- Javascript gets a new kind of keywords — "literals". These are the words
+- JavaScript gets a new kind of keywords — "literals". These are the words
   "true", "false" and "null"
 
 Also highlight.js homepage now lists sites that use the library. Feel free to
@@ -1022,7 +1022,7 @@ already downloaded that one!
 
 ## Version 2.2
 
-- added highlighting for Javascript
+- added highlighting for JavaScript
 - at last fixed parsing of Delphi's escaped apostrophes in strings
 - in Ruby fixed highlighting of keywords 'def' and 'class', same for 'sub' in
   Perl

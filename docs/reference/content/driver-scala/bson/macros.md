@@ -11,7 +11,7 @@ title = "Macros"
 
 New in 2.0, the Scala driver allows you to use case classes to represent documents in a collection via the 
 [`Macros`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/bson/codecs/Macros$" >}}) helper.  Simple case classes and nested case classes are supported. 
-Hierarchical modelling can be achieve by using a sealed trait or class and having case classes implement the parent trait.
+Hierarchical modelling can be achieved by using a sealed trait or class and having case classes implement the parent trait.
 
 Many simple Scala types are supported and they will be marshaled into their corresponding 
 `BsonValue` type. Below is a list of Scala types and their type-safe BSON representation:
@@ -47,7 +47,7 @@ case class Person(firstName: String, secondName: String)
 val personCodecProvider = Macros.createCodecProvider[Person]()
 ```
 
-The `personCodecProvider` can then be used when converted into a `CodecRegistry` by using the [`CodecRegistries`]({{< apiref "bson" "org/bson/codecs/configuration/CodecRegistries.html" >}}) static helpers. Below we create a new codec registry combining the new `personCodecProvider` and the the default codec registry:
+The `personCodecProvider` can then be used when converted into a `CodecRegistry` by using the [`CodecRegistries`]({{< apiref "bson" "org/bson/codecs/configuration/CodecRegistries.html" >}}) static helpers. Below we create a new codec registry combining the new `personCodecProvider` and the default codec registry:
 
 ```scala
 import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
@@ -102,7 +102,7 @@ val personCodecProvider = Macros.createCodecProviderIgnoreNone[Person]()
 
 ## Alternative field names
 
-The [`BsonProperty`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/bson/annotations/BsonProperty" >}}) annotation can be used to configure a the bson 
+The [`BsonProperty`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/bson/annotations/BsonProperty" >}}) annotation can be used to configure bson 
 field key to be used for a given property. In the following example uses the `BsonProperty` annotation to change how the `firstName` 
 property is stored:
 

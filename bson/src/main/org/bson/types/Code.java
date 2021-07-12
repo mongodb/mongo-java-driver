@@ -32,14 +32,14 @@ public class Code implements Serializable {
     /**
      * Construct a new instance with the given code.
      *
-     * @param code the Javascript code
+     * @param code the JavaScript code
      */
     public Code(final String code) {
         this.code = code;
     }
 
     /**
-     * Get the Javascript code.
+     * Get the JavaScript code.
      *
      * @return the code
      */

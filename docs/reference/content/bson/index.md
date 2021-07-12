@@ -10,7 +10,7 @@ title = "BSON"
 ## BSON
 
 The BSON library comprehensively supports [BSON](http://www.bsonspec.org), the data storage and network transfer format that MongoDB uses for 
-“documents". BSON, short for Binary [JSON](http://json.org/), is a binary-encoded serialization of JSON-like documents.
+"documents". BSON, short for Binary [JSON](http://json.org/), is a binary-encoded serialization of JSON-like documents.
 
 - [Documents]({{< relref "documents.md" >}}): Documentation of the driver's support for BSON document representations
 - [Readers and Writers]({{< relref "readers-and-writers.md" >}}): Documentation of the driver's support for stream-based reading and writing

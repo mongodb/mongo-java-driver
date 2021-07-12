@@ -28,7 +28,7 @@ public class BsonJavaScript extends BsonValue {
     /**
      * Construct a new instance with the given JavaScript code.
      *
-     * @param code the Javascript code
+     * @param code the JavaScript code
      */
     public BsonJavaScript(final String code) {
         this.code = code;
@@ -40,7 +40,7 @@ public class BsonJavaScript extends BsonValue {
     }
 
     /**
-     * Get the Javascript code.
+     * Get the JavaScript code.
      *
      * @return the code
      */

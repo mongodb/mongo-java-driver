@@ -31,5 +31,5 @@ For the MongoDB Scala Driver, see [MongoDB Scala Driver section]({{< relref "dri
 ### BSON Library
 
 The [BSON]({{< relref "bson/index.md" >}}) library comprehensively supports the BSON spec, the data storage and network transfer format that MongoDB uses for
-“documents".  The [reference guide]({{< relref "bson/index.md" >}}) provides information about working with [Documents]({{< relref "bson/documents.md" >}}),
+"documents".  The [reference guide]({{< relref "bson/index.md" >}}) provides information about working with [Documents]({{< relref "bson/documents.md" >}}),
 how to use [Codecs]({{< relref "bson/codecs.md" >}}) and [Extended JSON]({{< relref "bson/extended-json.md" >}}) support.

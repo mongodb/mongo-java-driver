@@ -33,7 +33,7 @@ public final class InsertManyOptions {
      * Gets whether the documents should be inserted in the order provided, stopping on the first failed insertion. The default is true.
      * If false, the server will attempt to insert all the documents regardless of an failures.
      *
-     * @return whether the the documents should be inserted in order
+     * @return whether the documents should be inserted in order
      */
     public boolean isOrdered() {
         return ordered;
@@ -51,7 +51,7 @@ public final class InsertManyOptions {
     }
 
     /**
-     * Gets the the bypass document level validation flag
+     * Gets the bypass document level validation flag
      *
      * @return the bypass document level validation flag
      * @since 3.2

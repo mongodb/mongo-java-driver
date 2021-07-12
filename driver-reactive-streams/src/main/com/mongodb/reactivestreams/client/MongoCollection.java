@@ -779,7 +779,7 @@ public interface MongoCollection<TDocument> {
      * Removes at most one document from the collection that matches the given filter.  If no documents match, the collection is not
      * modified.
      *
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @return a publisher with a single element the DeleteResult or with an com.mongodb.MongoException
      */
     Publisher<DeleteResult> deleteOne(Bson filter);
@@ -788,7 +788,7 @@ public interface MongoCollection<TDocument> {
      * Removes at most one document from the collection that matches the given filter.  If no documents match, the collection is not
      * modified.
      *
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @param options the options to apply to the delete operation
      * @return a publisher with a single element the DeleteResult or with an com.mongodb.MongoException
      * @since 1.5
@@ -800,7 +800,7 @@ public interface MongoCollection<TDocument> {
      * modified.
      *
      * @param clientSession the client session with which to associate this operation
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @return a publisher with a single element the DeleteResult or with an com.mongodb.MongoException
      * @mongodb.server.release 3.6
      * @since 1.7
@@ -812,7 +812,7 @@ public interface MongoCollection<TDocument> {
      * modified.
      *
      * @param clientSession the client session with which to associate this operation
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @param options the options to apply to the delete operation
      * @return a publisher with a single element the DeleteResult or with an com.mongodb.MongoException
      * @mongodb.server.release 3.6
@@ -823,7 +823,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
      *
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @return a publisher with a single element the DeleteResult or with an com.mongodb.MongoException
      */
     Publisher<DeleteResult> deleteMany(Bson filter);
@@ -831,7 +831,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
      *
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @param options the options to apply to the delete operation
      * @return a publisher with a single element the DeleteResult or with an com.mongodb.MongoException
      * @since 1.5
@@ -842,7 +842,7 @@ public interface MongoCollection<TDocument> {
      * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
      *
      * @param clientSession the client session with which to associate this operation
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @return a publisher with a single element the DeleteResult or with an com.mongodb.MongoException
      * @mongodb.server.release 3.6
      * @since 1.7
@@ -853,7 +853,7 @@ public interface MongoCollection<TDocument> {
      * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
      *
      * @param clientSession the client session with which to associate this operation
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @param options the options to apply to the delete operation
      * @return a publisher with a single element the DeleteResult or with an com.mongodb.MongoException
      * @mongodb.server.release 3.6
@@ -864,7 +864,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Replace a document in the collection according to the specified arguments.
      *
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @return a publisher with a single element the UpdateResult
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
@@ -874,7 +874,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Replace a document in the collection according to the specified arguments.
      *
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @param options     the options to apply to the replace operation
      * @return a publisher with a single element the UpdateResult
@@ -887,7 +887,7 @@ public interface MongoCollection<TDocument> {
      * Replace a document in the collection according to the specified arguments.
      *
      * @param clientSession the client session with which to associate this operation
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @return a publisher with a single element the UpdateResult
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
@@ -900,7 +900,7 @@ public interface MongoCollection<TDocument> {
      * Replace a document in the collection according to the specified arguments.
      *
      * @param clientSession the client session with which to associate this operation
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @param options     the options to apply to the replace operation
      * @return a publisher with a single element the UpdateResult
@@ -1177,7 +1177,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Atomically find a document and replace it.
      *
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @return a publisher with a single element the document that was replaced.  Depending on the value of the {@code returnOriginal}
      * property, this will either be the document as it was before the update or as it is after the update.  If no documents matched the
@@ -1188,7 +1188,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Atomically find a document and replace it.
      *
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @param options     the options to apply to the operation
      * @return a publisher with a single element the document that was replaced.  Depending on the value of the {@code returnOriginal}
@@ -1201,7 +1201,7 @@ public interface MongoCollection<TDocument> {
      * Atomically find a document and replace it.
      *
      * @param clientSession the client session with which to associate this operation
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @return a publisher with a single element the document that was replaced.  Depending on the value of the {@code returnOriginal}
      * property, this will either be the document as it was before the update or as it is after the update.  If no documents matched the
@@ -1215,7 +1215,7 @@ public interface MongoCollection<TDocument> {
      * Atomically find a document and replace it.
      *
      * @param clientSession the client session with which to associate this operation
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @param options     the options to apply to the operation
      * @return a publisher with a single element the document that was replaced.  Depending on the value of the {@code returnOriginal}

@@ -253,7 +253,7 @@ class ServerSessionPoolSpecification extends Specification {
             getCurrentDescription() >> connectedDescription
         }
         def pool = new ServerSessionPool(cluster, getServerApi())
-        // check out sessions up the the endSessions batch size
+        // check out sessions up to the endSessions batch size
         def sessions = []
         10000.times { sessions.add(pool.get()) }
         // and then check out one more

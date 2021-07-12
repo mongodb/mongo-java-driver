@@ -14,7 +14,7 @@ title = "Quick Start - POJOs"
 POJOs stands for Plain Old Java Objects.
 
 The following code snippets come from the [`PojoQuickTour.java`]({{< srcref "driver-reactive-streams/src/examples/reactivestreams/tour/PojoQuickTour.java" >}}) example code
-that can be found with the driver source on github.
+that can be found with the driver source on GitHub.
 {{% /note %}}
 
 {{% note class="important" %}}
@@ -54,7 +54,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 ```
 
-- The following POJO classes. The full source is available on github for the [Person]({{< srcref "driver-reactive-streams/src/examples/reactivestreams/tour/Person.java" >}}) and [Address]({{< srcref "driver-reactive-streams/src/examples/reactivestreams/tour/Address.java" >}})
+- The following POJO classes. The full source is available on GitHub for the [Person]({{< srcref "driver-reactive-streams/src/examples/reactivestreams/tour/Person.java" >}}) and [Address]({{< srcref "driver-reactive-streams/src/examples/reactivestreams/tour/Address.java" >}})
 POJOs. Here are the main implementation details:
 
 ```java

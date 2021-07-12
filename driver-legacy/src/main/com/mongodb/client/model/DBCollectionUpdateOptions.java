@@ -67,7 +67,7 @@ public class DBCollectionUpdateOptions {
     }
 
     /**
-     * Gets the the bypass document level validation flag
+     * Gets the bypass document level validation flag
      *
      * @return the bypass document level validation flag
      * @mongodb.server.release 3.2
