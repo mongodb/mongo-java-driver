@@ -25,17 +25,19 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-public class LoadBalancerTest extends UnifiedSyncTest {
+import static org.junit.Assume.assumeFalse;
 
-    public LoadBalancerTest(@SuppressWarnings("unused") final String fileDescription,
-                            @SuppressWarnings("unused") final String testDescription,
-                            final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
-                            final BsonArray initialData, final BsonDocument definition) {
+public class UnifiedGridFSTest extends UnifiedSyncTest {
+
+    public UnifiedGridFSTest(@SuppressWarnings("unused") final String fileDescription, final String testDescription,
+                             final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
+                             final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
+        // contentType is deprecated in GridFS spec, and 4.x Java driver no longer support it, so skipping this test
+        assumeFalse(testDescription.equals("upload when contentType is provided"));
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/load-balancers");
-    }
-}
+        return getTestData("unified-test-format/gridfs");
+    }}
