@@ -81,11 +81,16 @@ import static com.mongodb.client.unified.EventMatcher.getReasonString;
 import static com.mongodb.client.unified.UnifiedCrudHelper.asReadConcern;
 import static com.mongodb.client.unified.UnifiedCrudHelper.asReadPreference;
 import static com.mongodb.client.unified.UnifiedCrudHelper.asWriteConcern;
+import static java.util.Arrays.asList;
 import static java.util.Collections.synchronizedList;
 import static java.util.Objects.requireNonNull;
 import static org.junit.Assume.assumeTrue;
 
 public final class Entities {
+    private static final Set<String> SUPPORTED_CLIENT_ENTITY_OPTIONS = new HashSet<>(
+            asList(
+                    "id", "uriOptions", "serverApi", "useMultipleMongoses", "storeEventsAsEntities",
+                    "observeEvents", "observeSensitiveCommands", "ignoreCommandMonitoringEvents"));
     private final Set<String> entityNames = new HashSet<>();
     private final Map<String, BsonValue> results = new HashMap<>();
     private final Map<String, MongoClient> clients = new HashMap<>();
@@ -280,6 +285,10 @@ public final class Entities {
 
     private void initClient(final BsonDocument entity, final String id,
                             final Function<MongoClientSettings, MongoClient> mongoClientSupplier) {
+        if (!SUPPORTED_CLIENT_ENTITY_OPTIONS.containsAll(entity.keySet())) {
+            throw new UnsupportedOperationException("Client entity contains unsupported options: " + entity.keySet()
+                    + ". Supported options are " + SUPPORTED_CLIENT_ENTITY_OPTIONS);
+        }
         MongoClientSettings.Builder clientSettingsBuilder = getMongoClientSettingsBuilder();
         if (entity.getBoolean("useMultipleMongoses", BsonBoolean.FALSE).getValue()) {
             assumeTrue("Multiple mongos connection string not available for sharded cluster",
