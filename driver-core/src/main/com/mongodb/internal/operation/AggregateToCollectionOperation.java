@@ -21,7 +21,6 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
-import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
@@ -43,7 +42,6 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableRead;
 import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableReadAsync;
 import static com.mongodb.internal.operation.ServerVersionHelper.FIVE_DOT_ZERO_WIRE_VERSION;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotSix;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 import static com.mongodb.internal.operation.WriteConcernHelper.throwOnWriteConcernError;
 
@@ -333,7 +331,7 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
         return executeRetryableRead(binding,
                 () -> binding.getReadConnectionSource(FIVE_DOT_ZERO_WIRE_VERSION, ReadPreference.primary()),
                 namespace.getDatabaseName(),
-                (serverDescription, connectionDescription) -> getCommand(connectionDescription),
+                (serverDescription, connectionDescription) -> getCommand(),
                 new BsonDocumentCodec(), (result, source, connection) -> {
                     throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),
                             connection.getDescription().getMaxWireVersion());
@@ -348,7 +346,7 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
                         binding.getReadConnectionSource(FIVE_DOT_ZERO_WIRE_VERSION, ReadPreference.primary(), connectionSourceCallback);
                 },
                 namespace.getDatabaseName(),
-                (serverDescription, connectionDescription) -> getCommand(connectionDescription),
+                (serverDescription, connectionDescription) -> getCommand(),
                 new BsonDocumentCodec(), (result, source, connection) -> {
                     throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),
                             connection.getDescription().getMaxWireVersion());
@@ -356,7 +354,7 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
                 }, false, callback);
     }
 
-    private BsonDocument getCommand(final ConnectionDescription description) {
+    private BsonDocument getCommand() {
         BsonValue aggregationTarget = (aggregationLevel == AggregationLevel.DATABASE)
                 ? new BsonInt32(1) : new BsonString(namespace.getCollectionName());
 
@@ -372,9 +370,7 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
             commandDocument.put("bypassDocumentValidation", BsonBoolean.valueOf(bypassDocumentValidation));
         }
 
-        if (serverIsAtLeastVersionThreeDotSix(description)) {
-            commandDocument.put("cursor", new BsonDocument());
-        }
+        commandDocument.put("cursor", new BsonDocument());
 
         appendWriteConcernToCommand(writeConcern, commandDocument);
         if (readConcern != null && !readConcern.isServerDefault()) {

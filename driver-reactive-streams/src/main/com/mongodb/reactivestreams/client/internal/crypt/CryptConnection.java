@@ -17,16 +17,11 @@
 package com.mongodb.reactivestreams.client.internal.crypt;
 
 import com.mongodb.MongoClientException;
-import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
-import com.mongodb.WriteConcernResult;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.bulk.DeleteRequest;
-import com.mongodb.internal.bulk.InsertRequest;
-import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.MessageSettings;
@@ -167,27 +162,6 @@ class CryptConnection implements AsyncConnection {
                 .maxMessageSize(getDescription().getMaxMessageSize())
                 .maxDocumentSize(getDescription().getMaxDocumentSize())
                 .build();
-    }
-
-
-    // UNSUPPORTED METHODS for encryption/decryption
-
-    @Override
-    public void insertAsync(final MongoNamespace namespace, final boolean ordered, final InsertRequest insertRequest,
-                            final RequestContext requestContext, final SingleResultCallback<WriteConcernResult> callback) {
-        callback.onResult(null, new UnsupportedOperationException());
-    }
-
-    @Override
-    public void updateAsync(final MongoNamespace namespace, final boolean ordered, final UpdateRequest updateRequest,
-                            final RequestContext requestContext, final SingleResultCallback<WriteConcernResult> callback) {
-        callback.onResult(null, new UnsupportedOperationException());
-    }
-
-    @Override
-    public void deleteAsync(final MongoNamespace namespace, final boolean ordered, final DeleteRequest deleteRequest,
-                            final RequestContext requestContext, final SingleResultCallback<WriteConcernResult> callback) {
-        callback.onResult(null, new UnsupportedOperationException());
     }
 
     @Override

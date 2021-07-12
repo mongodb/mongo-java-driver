@@ -112,6 +112,7 @@ public final class CommandHelper {
                          // Note: server version will be 0.0 at this point when called from InternalConnectionInitializer,
                          // which means OP_MSG will not be used
                         .maxWireVersion(internalConnection.getDescription().getMaxWireVersion())
+                        .serverType(internalConnection.getDescription().getServerType())
                         .build(),
                 clusterConnectionMode, serverApi);
     }

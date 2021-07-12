@@ -16,19 +16,14 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
-import com.mongodb.WriteConcernResult;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.bulk.DeleteRequest;
-import com.mongodb.internal.bulk.InsertRequest;
-import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -68,42 +63,6 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
     @Override
     public ConnectionDescription getDescription() {
         return wrapped.getDescription();
-    }
-
-    @Override
-    public WriteConcernResult insert(final MongoNamespace namespace, final boolean ordered, final InsertRequest insertRequest,
-            final RequestContext requestContext) {
-        return executeProtocol(new InsertProtocol(namespace, ordered, insertRequest, requestContext));
-    }
-
-    @Override
-    public void insertAsync(final MongoNamespace namespace, final boolean ordered, final InsertRequest insertRequest,
-                            final RequestContext requestContext, final SingleResultCallback<WriteConcernResult> callback) {
-        executeProtocolAsync(new InsertProtocol(namespace, ordered, insertRequest, requestContext), callback);
-    }
-
-    @Override
-    public WriteConcernResult update(final MongoNamespace namespace, final boolean ordered, final UpdateRequest updateRequest,
-            final RequestContext requestContext) {
-        return executeProtocol(new UpdateProtocol(namespace, ordered, updateRequest, requestContext));
-    }
-
-    @Override
-    public void updateAsync(final MongoNamespace namespace, final boolean ordered, final UpdateRequest updateRequest,
-                            final RequestContext requestContext, final SingleResultCallback<WriteConcernResult> callback) {
-        executeProtocolAsync(new UpdateProtocol(namespace, ordered, updateRequest, requestContext), callback);
-    }
-
-    @Override
-    public WriteConcernResult delete(final MongoNamespace namespace, final boolean ordered, final DeleteRequest deleteRequest,
-            final RequestContext requestContext) {
-        return executeProtocol(new DeleteProtocol(namespace, ordered, deleteRequest, requestContext));
-    }
-
-    @Override
-    public void deleteAsync(final MongoNamespace namespace, final boolean ordered, final DeleteRequest deleteRequest,
-                            final RequestContext requestContext, final SingleResultCallback<WriteConcernResult> callback) {
-        executeProtocolAsync(new DeleteProtocol(namespace, ordered, deleteRequest, requestContext), callback);
     }
 
     @Override
@@ -153,21 +112,8 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
         wrapped.markAsPinned(pinningMode);
     }
 
-    private <T> T executeProtocol(final LegacyProtocol<T> protocol) {
-        return protocolExecutor.execute(protocol, this.wrapped);
-    }
-
     private <T> T executeProtocol(final CommandProtocol<T> protocol, final SessionContext sessionContext) {
         return protocolExecutor.execute(protocol, this.wrapped, sessionContext);
-    }
-
-    private <T> void executeProtocolAsync(final LegacyProtocol<T> protocol, final SingleResultCallback<T> callback) {
-        SingleResultCallback<T> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-        try {
-            protocolExecutor.executeAsync(protocol, this.wrapped, errHandlingCallback);
-        } catch (Throwable t) {
-            errHandlingCallback.onResult(null, t);
-        }
     }
 
     private <T> void executeProtocolAsync(final CommandProtocol<T> protocol, final SessionContext sessionContext,

@@ -17,13 +17,11 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
-import com.mongodb.MongoNamespace;
 import com.mongodb.MongoServerUnavailableException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ReadPreference;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
-import com.mongodb.WriteConcernResult;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerId;
@@ -35,9 +33,6 @@ import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerOpeningEvent;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.bulk.DeleteRequest;
-import com.mongodb.internal.bulk.InsertRequest;
-import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.connection.SdamServerDescriptionManager.SdamIssue;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
@@ -201,34 +196,6 @@ class DefaultServer implements ClusterableServer {
     }
 
     private class DefaultServerProtocolExecutor implements ProtocolExecutor {
-        @Override
-        public <T> T execute(final LegacyProtocol<T> protocol, final InternalConnection connection) {
-            try {
-                protocol.setCommandListener(commandListener);
-                return protocol.execute(connection);
-            } catch (MongoException e) {
-                sdam.handleExceptionAfterHandshake(SdamIssue.specific(e, sdam.context(connection)));
-                throw e;
-            }
-        }
-
-        @Override
-        public <T> void executeAsync(final LegacyProtocol<T> protocol, final InternalConnection connection,
-                                     final SingleResultCallback<T> callback) {
-            protocol.setCommandListener(commandListener);
-            protocol.executeAsync(connection, errorHandlingCallback(new SingleResultCallback<T>() {
-                @Override
-                public void onResult(final T result, final Throwable t) {
-                    try {
-                        if (t != null) {
-                            sdam.handleExceptionAfterHandshake(SdamIssue.specific(t, sdam.context(connection)));
-                        }
-                    } finally {
-                        callback.onResult(result, t);
-                    }
-                }
-            }, LOGGER));
-        }
 
         @SuppressWarnings("unchecked")
         @Override
@@ -320,24 +287,6 @@ class DefaultServer implements ClusterableServer {
         }
 
         @Override
-        public WriteConcernResult insert(final MongoNamespace namespace, final boolean ordered, final InsertRequest insertRequest,
-                final RequestContext requestContext) {
-            return wrapped.insert(namespace, ordered, insertRequest, requestContext);
-        }
-
-        @Override
-        public WriteConcernResult update(final MongoNamespace namespace, final boolean ordered, final UpdateRequest updateRequest,
-                final RequestContext requestContext) {
-            return wrapped.update(namespace, ordered, updateRequest, requestContext);
-        }
-
-        @Override
-        public WriteConcernResult delete(final MongoNamespace namespace, final boolean ordered, final DeleteRequest deleteRequest,
-                final RequestContext requestContext) {
-            return wrapped.delete(namespace, ordered, deleteRequest, requestContext);
-        }
-
-        @Override
         public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
                 final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
                 final ServerApi serverApi, final RequestContext requestContext) {
@@ -398,24 +347,6 @@ class DefaultServer implements ClusterableServer {
         @Override
         public ConnectionDescription getDescription() {
             return wrapped.getDescription();
-        }
-
-        @Override
-        public void insertAsync(final MongoNamespace namespace, final boolean ordered, final InsertRequest insertRequest,
-                final RequestContext requestContext, final SingleResultCallback<WriteConcernResult> callback) {
-            wrapped.insertAsync(namespace, ordered, insertRequest, requestContext, callback);
-        }
-
-        @Override
-        public void updateAsync(final MongoNamespace namespace, final boolean ordered, final UpdateRequest updateRequest,
-                final RequestContext requestContext, final SingleResultCallback<WriteConcernResult> callback) {
-            wrapped.updateAsync(namespace, ordered, updateRequest, requestContext, callback);
-        }
-
-        @Override
-        public void deleteAsync(final MongoNamespace namespace, final boolean ordered, final DeleteRequest deleteRequest,
-                final RequestContext requestContext, final SingleResultCallback<WriteConcernResult> callback) {
-            wrapped.deleteAsync(namespace, ordered, deleteRequest, requestContext, callback);
         }
 
         @Override

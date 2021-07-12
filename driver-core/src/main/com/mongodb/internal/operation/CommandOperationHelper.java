@@ -209,8 +209,7 @@ final class CommandOperationHelper {
         Supplier<T> read = decorateReadWithRetries(retryState, () -> {
             logRetryExecute(retryState);
             return withSourceAndConnection(readConnectionSourceSupplier, false, (source, connection) -> {
-                retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), connection.getDescription(),
-                        binding.getSessionContext()));
+                retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), binding.getSessionContext()));
                 return createReadCommandAndExecute(retryState, binding, source, database, commandCreator, decoder, transformer, connection);
             });
         });
@@ -281,7 +280,7 @@ final class CommandOperationHelper {
             withAsyncSourceAndConnection(sourceAsyncSupplier, false, funcCallback,
                 (source, connection, releasingCallback) -> {
                     if (retryState.breakAndCompleteIfRetryAnd(() -> !canRetryRead(source.getServerDescription(),
-                            connection.getDescription(), binding.getSessionContext()), releasingCallback)) {
+                            binding.getSessionContext()), releasingCallback)) {
                         return;
                     }
                     createReadCommandAndExecuteAsync(retryState, binding, source, database, commandCreator, decoder, transformer,

@@ -37,17 +37,18 @@ import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static com.mongodb.internal.connection.MessageHelper.buildSuccessfulReply;
 import static com.mongodb.internal.connection.MessageHelper.getApiVersionField;
 import static com.mongodb.internal.connection.MessageHelper.getDbField;
+import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION;
 import static org.junit.Assert.assertEquals;
 
 public class X509AuthenticatorNoUserNameTest {
     private TestInternalConnection connection;
-    private ConnectionDescription connectionDescriptionThreeFour;
+    private ConnectionDescription connectionDescriptionThreeSix;
 
     @Before
     public void before() {
         connection = new TestInternalConnection(new ServerId(new ClusterId(), new ServerAddress("localhost", 27017)));
-        connectionDescriptionThreeFour = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                5, ServerType.STANDALONE, 1000, 16000,
+        connectionDescriptionThreeSix = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
+                THREE_DOT_SIX_WIRE_VERSION, ServerType.STANDALONE, 1000, 16000,
                 48000, Collections.<String>emptyList());
     }
 
@@ -55,7 +56,7 @@ public class X509AuthenticatorNoUserNameTest {
     public void testSuccessfulAuthentication() {
         enqueueSuccessfulAuthenticationReply();
 
-        new X509Authenticator(getCredentialWithCache(), MULTIPLE, getServerApi()).authenticate(connection, connectionDescriptionThreeFour);
+        new X509Authenticator(getCredentialWithCache(), MULTIPLE, getServerApi()).authenticate(connection, connectionDescriptionThreeSix);
 
         validateMessages();
     }
@@ -66,7 +67,7 @@ public class X509AuthenticatorNoUserNameTest {
 
         FutureResultCallback<Void> futureCallback = new FutureResultCallback<Void>();
         new X509Authenticator(getCredentialWithCache(), MULTIPLE, getServerApi()).authenticateAsync(connection,
-                connectionDescriptionThreeFour, futureCallback);
+                connectionDescriptionThreeSix, futureCallback);
 
         futureCallback.get();
 

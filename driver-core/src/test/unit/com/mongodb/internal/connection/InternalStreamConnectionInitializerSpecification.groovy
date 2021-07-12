@@ -51,7 +51,7 @@ import static com.mongodb.internal.connection.MessageHelper.decodeCommand
 class InternalStreamConnectionInitializerSpecification extends Specification {
 
     def serverId = new ServerId(new ClusterId(), new ServerAddress())
-    def internalConnection = new TestInternalConnection(serverId)
+    def internalConnection = new TestInternalConnection(serverId, ServerType.STANDALONE)
 
     def 'should create correct description'() {
         given:
@@ -225,7 +225,9 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
      def 'should add client metadata document to hello command'() {
         given:
         def initializer = new InternalStreamConnectionInitializer(SINGLE, null, clientMetadataDocument, [], null)
-           def expectedHelloCommandDocument = new BsonDocument(LEGACY_HELLO, new BsonInt32(1)).append('helloOk', BsonBoolean.TRUE)
+        def expectedHelloCommandDocument = new BsonDocument(LEGACY_HELLO, new BsonInt32(1))
+                .append('helloOk', BsonBoolean.TRUE)
+                .append('\$db', new BsonString('admin'))
         if (clientMetadataDocument != null) {
              expectedHelloCommandDocument.append('client', clientMetadataDocument)
         }
@@ -255,7 +257,9 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
     def 'should add compression to hello command'() {
         given:
         def initializer = new InternalStreamConnectionInitializer(SINGLE, null, null, compressors, null)
-        def expectedHelloCommandDocument = new BsonDocument(LEGACY_HELLO, new BsonInt32(1)).append('helloOk', BsonBoolean.TRUE)
+        def expectedHelloCommandDocument = new BsonDocument(LEGACY_HELLO, new BsonInt32(1))
+                .append('helloOk', BsonBoolean.TRUE)
+                .append('\$db', new BsonString('admin'))
 
         def compressionArray = new BsonArray()
         for (def compressor : compressors) {
@@ -425,7 +429,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         ((SpeculativeAuthenticator) authenticator).getSpeculativeAuthenticateResponse() == null
         ((SpeculativeAuthenticator) authenticator)
                 .createSpeculativeAuthenticateCommand(internalConnection) == null
-        BsonDocument.parse("{$LEGACY_HELLO: 1, helloOk: true}") == decodeCommand(internalConnection.getSent()[0])
+        BsonDocument.parse("{$LEGACY_HELLO: 1, helloOk: true, '\$db': 'admin'}") == decodeCommand(internalConnection.getSent()[0])
 
         where:
         async << [true, false]
@@ -539,10 +543,12 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
                 (hasSaslSupportedMechs ? 'saslSupportedMechs: "database.user", ' : '') +
                 (mechanism == 'MONGODB-X509' ?
                         'speculativeAuthenticate: { authenticate: 1, ' +
-                                "mechanism: '${mechanism}', db: \"\$external\" } }" :
+                                "mechanism: '${mechanism}', db: \"\$external\" }" :
                         'speculativeAuthenticate: { saslStart: 1, ' +
                                 "mechanism: '${mechanism}', payload: BinData(0, '${encode64(firstClientChallenge)}'), " +
-                                'db: "database", options: { skipEmptyExchange: true } } }')
+                                'db: "database", options: { skipEmptyExchange: true } }') +
+                ', \$db: \"admin\" }'
+
 
         BsonDocument.parse(hello)
     }
