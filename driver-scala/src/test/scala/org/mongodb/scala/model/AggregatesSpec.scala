@@ -19,6 +19,7 @@ package org.mongodb.scala.model
 import java.lang.reflect.Modifier._
 
 import org.bson.BsonDocument
+import org.mongodb.scala.bson.BsonArray
 import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Accumulators._
@@ -401,6 +402,15 @@ class AggregatesSpec extends BaseSpec {
       setWindowFields(
         "$partitionByField",
         ascending("sortByField"),
+        WindowedComputations.of(
+          BsonField.apply(
+            "newField00",
+            Document(
+              "$sum" -> "$field00",
+              "window" -> Windows.of(Document("range" -> BsonArray(1, "current"))).toBsonDocument
+            )
+          )
+        ),
         WindowedComputations.sum("newField01", "$field01", range(1, CURRENT)),
         WindowedComputations.avg("newField02", "$field02", range(UNBOUNDED, 1)),
         WindowedComputations.stdDevSamp("newField03", "$field03", window),
@@ -433,6 +443,7 @@ class AggregatesSpec extends BaseSpec {
           "partitionBy": "$partitionByField",
           "sortBy": { "sortByField" : 1 },
           "output": {
+            "newField00": { "$sum": "$field00", "window": { "range": [{"$numberInt": "1"}, "current"] } },
             "newField01": { "$sum": "$field01", "window": { "range": [{"$numberLong": "1"}, "current"] } },
             "newField02": { "$avg": "$field02", "window": { "range": ["unbounded", {"$numberLong": "1"}] } },
             "newField03": { "$stdDevSamp": "$field03", "window": { "documents": [1, 2] } },

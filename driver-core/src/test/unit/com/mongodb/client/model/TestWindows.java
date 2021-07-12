@@ -23,9 +23,11 @@ import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
+import org.bson.Document;
 import org.bson.types.Decimal128;
 import org.junit.jupiter.api.Test;
 
+import static com.mongodb.client.model.MongoTimeUnit.SECOND;
 import static com.mongodb.client.model.Windows.Bound.CURRENT;
 import static com.mongodb.client.model.Windows.Bound.UNBOUNDED;
 import static com.mongodb.client.model.MongoTimeUnit.MILLISECOND;
@@ -40,6 +42,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 final class TestWindows {
+    @Test
+    void of() {
+        Window expected = Windows.timeRange(-1, SECOND, CURRENT);
+        Document windowDocument = new Document("range", asList(-1L, "current")).append("unit", "second");
+        Window actualFromDocument = Windows.of(windowDocument);
+        Window actualFromBsonDocument = Windows.of(windowDocument.toBsonDocument());
+        assertAll(
+                () -> assertEquals(expected.toBsonDocument(), actualFromDocument.toBsonDocument()),
+                () -> assertEquals(expected.toBsonDocument(), actualFromBsonDocument.toBsonDocument()));
+    }
+
     @Test
     void positionBased() {
         assertAll(
@@ -104,7 +117,7 @@ final class TestWindows {
                 () -> assertEquals(
                         new BsonDocument("range", new BsonArray(asList(new BsonInt64(1), new BsonString(UNBOUNDED.value()))))
                                 .append("unit", new BsonString("month")),
-                        timeRange(1, UNBOUNDED, MONTH).toBsonDocument()));
+                        timeRange(1, MONTH, UNBOUNDED).toBsonDocument()));
         assertAll(
                 () -> assertThrows(IllegalArgumentException.class, () -> range(1, -1)),
                 () -> assertThrows(IllegalArgumentException.class, () -> range(null, 1)),

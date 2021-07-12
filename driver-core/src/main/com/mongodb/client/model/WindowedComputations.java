@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static org.bson.assertions.Assertions.notNull;
 
@@ -57,6 +58,28 @@ import static org.bson.assertions.Assertions.notNull;
  */
 @Beta
 public final class WindowedComputations {
+    /**
+     * Creates a windowed computation from a document field in situations when there is no builder method that better satisfies your needs.
+     * This method cannot be used to validate the document field syntax.
+     * <p>
+     * <i>Example</i><br>
+     * The following code creates two functionally equivalent windowed computations,
+     * though they may not be {@linkplain #equals(Object) equal}.
+     * <pre>{@code
+     *  Window pastWeek = Windows.timeRange(-1, MongoTimeUnit.WEEK, Windows.Bound.CURRENT);
+     *  WindowedComputation pastWeekExpenses1 = WindowedComputations.sum("pastWeekExpenses", "$expenses", pastWeek);
+     *  WindowedComputation pastWeekExpenses2 = WindowedComputations.of(
+     *          new BsonField("pastWeekExpenses", new Document("$sum", "$expenses")
+     *                  .append("window", pastWeek.toBsonDocument())));
+     * }</pre>
+     *
+     * @param windowedComputation A document field representing the required windowed computation.
+     * @return The constructed windowed computation.
+     */
+    public static WindowedComputation of(final BsonField windowedComputation) {
+        return new BsonFieldWindowedComputation(notNull("windowedComputation", windowedComputation));
+    }
+
     /**
      * Builds a computation of the sum of the evaluation results of the {@code expression} over the {@code window}.
      *
@@ -541,29 +564,29 @@ public final class WindowedComputations {
     private static WindowedComputation simpleParameterWindowFunction(final String path, final String functionName,
                                                                      @Nullable final Object expression,
                                                                      @Nullable final Window window) {
-        return new WrappingWindowedComputation(new BsonField(path, new SimpleParameterFunctionAndWindow(functionName, expression, window)));
+        return new BsonFieldWindowedComputation(new BsonField(path, new SimpleParameterFunctionAndWindow(functionName, expression, window)));
     }
 
     private static WindowedComputation compoundParameterWindowFunction(final String path, final String functionName,
                                                                        final Map<ParamName, Object> args,
                                                                        @Nullable final Window window) {
-        return new WrappingWindowedComputation(new BsonField(path, new CompoundParameterFunctionAndWindow(functionName, args, window)));
+        return new BsonFieldWindowedComputation(new BsonField(path, new CompoundParameterFunctionAndWindow(functionName, args, window)));
     }
 
     private WindowedComputations() {
         throw new UnsupportedOperationException();
     }
 
-    private static final class WrappingWindowedComputation implements WindowedComputation {
-        private final BsonField field;
+    private static final class BsonFieldWindowedComputation implements WindowedComputation {
+        private final BsonField wrapped;
 
-        WrappingWindowedComputation(final BsonField field) {
-            this.field = field;
+        BsonFieldWindowedComputation(final BsonField field) {
+            wrapped = assertNotNull(field);
         }
 
         @Override
         public BsonField asBsonField() {
-            return field;
+            return wrapped;
         }
 
         @Override
@@ -574,20 +597,18 @@ public final class WindowedComputations {
             if (o == null || getClass() != o.getClass()) {
                 return false;
             }
-            final WrappingWindowedComputation that = (WrappingWindowedComputation) o;
-            return field.equals(that.field);
+            final BsonFieldWindowedComputation that = (BsonFieldWindowedComputation) o;
+            return wrapped.equals(that.wrapped);
         }
 
         @Override
         public int hashCode() {
-            return field.hashCode();
+            return wrapped.hashCode();
         }
 
         @Override
         public String toString() {
-            return "WindowedComputation{"
-                    + "field=" + field
-                    + '}';
+            return wrapped.toString();
         }
     }
 

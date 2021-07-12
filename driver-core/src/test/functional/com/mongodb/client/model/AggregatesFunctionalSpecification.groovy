@@ -1081,6 +1081,10 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                 .sum('result', '$num1', range(0, UNBOUNDED)) | [3, 2, 3]
         null | ascending('num1') | WindowedComputations
                 .sum('result', '$num1', range(CURRENT, Integer.MAX_VALUE)) | [6, 5, 3]
+        null | ascending('num1') | WindowedComputations
+                .of(new BsonField('result', new Document('$sum', '$num1')
+                        .append('window', Windows.of(
+                                new Document('range', asList("current", Integer.MAX_VALUE))).toBsonDocument()))) | [6, 5, 3]
         null | ascending('date') | WindowedComputations
                 .avg('result', '$num1', timeRange(-1, 0, MongoTimeUnit.QUARTER)) | [1, 1.5, 2]
         null | null | WindowedComputations

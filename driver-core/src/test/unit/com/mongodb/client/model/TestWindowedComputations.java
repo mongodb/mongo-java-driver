@@ -22,6 +22,7 @@ import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.bson.Document;
 import org.junit.jupiter.api.Test;
 
 import java.util.AbstractMap;
@@ -48,6 +49,16 @@ final class TestWindowedComputations {
             new AbstractMap.SimpleImmutableEntry<>("$fieldToRead", new BsonString("$fieldToRead"));
     private static final Window POSITION_BASED_WINDOW = documents(1, 2);
     private static final Window RANGE_BASED_WINDOW = range(1, 2);
+
+    @Test
+    void of() {
+        WindowedComputation expected = WindowedComputations.sum(PATH, STR_EXPR.getKey(), POSITION_BASED_WINDOW);
+        WindowedComputation actual = WindowedComputations.of(new BsonField(PATH, new Document("$sum", STR_EXPR.getKey())
+                .append("window", POSITION_BASED_WINDOW.toBsonDocument())));
+        assertAll(
+                () -> assertEquals(expected.asBsonField().getName(), actual.asBsonField().getName()),
+                () -> assertEquals(expected.asBsonField().getValue().toBsonDocument(), actual.asBsonField().getValue().toBsonDocument()));
+    }
 
     @Test
     void simpleWindowFunctions() {

@@ -41,6 +41,24 @@ import com.mongodb.client.model.{ MongoTimeUnit => JMongoTimeUnit, WindowedCompu
 object WindowedComputations {
 
   /**
+   * Creates a windowed computation from a document field in situations when there is no builder method that better satisfies your needs.
+   * This method cannot be used to validate the document field syntax.
+   *
+   * {{{
+   *  val pastWeek: Window = Windows.timeRange(-1, MongoTimeUnit.WEEK, Windows.Bound.CURRENT)
+   *  val pastWeekExpenses1: WindowedComputation = WindowedComputations.sum("pastWeekExpenses", "$expenses", pastWeek)
+   *  val pastWeekExpenses2: WindowedComputation = WindowedComputations.of(
+   *      BsonField("pastWeekExpenses", Document("$sum" -> "$expenses",
+   *          "window" -> pastWeek.toBsonDocument)))
+   * }}}
+   *
+   * @param windowedComputation A document field representing the required windowed computation.
+   * @return The constructed windowed computation.
+   */
+  def of(windowedComputation: BsonField): WindowedComputation =
+    JWindowedComputations.of(windowedComputation)
+
+  /**
    * Builds a computation of the sum of the evaluation results of the `expression` over the `window`.
    *
    * @param path       The output field path.
