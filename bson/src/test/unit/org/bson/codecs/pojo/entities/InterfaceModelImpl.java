@@ -63,7 +63,15 @@ public class InterfaceModelImpl extends InterfaceModelAbstract implements Interf
     @Override
     public int hashCode() {
         int result = getPropertyA() != null ? getPropertyA().hashCode() : 0;
-        result = 31 * result + getPropertyB() != null ? getPropertyB().hashCode() : 0;
+        result = 31 * result + (getPropertyB() != null ? getPropertyB().hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "InterfaceModelImpl{"
+                + "propertyA='" + getPropertyA() + "', "
+                + "propertyB='" + getPropertyB() + '\''
+                + '}';
     }
 }
