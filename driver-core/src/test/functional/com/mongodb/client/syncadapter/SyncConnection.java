@@ -15,15 +15,10 @@
  */
 package com.mongodb.client.syncadapter;
 
-import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
-import com.mongodb.WriteConcernResult;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.bulk.DeleteRequest;
-import com.mongodb.internal.bulk.InsertRequest;
-import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.SplittablePayload;
@@ -58,30 +53,6 @@ public final class SyncConnection implements Connection {
     @Override
     public ConnectionDescription getDescription() {
         return wrapped.getDescription();
-    }
-
-    @Override
-    public WriteConcernResult insert(final MongoNamespace namespace, final boolean ordered, final InsertRequest insertRequest,
-            final RequestContext requestContext) {
-        SupplyingCallback<WriteConcernResult> callback = new SupplyingCallback<>();
-        wrapped.insertAsync(namespace, ordered, insertRequest, requestContext, callback);
-        return callback.get();
-    }
-
-    @Override
-    public WriteConcernResult update(final MongoNamespace namespace, final boolean ordered, final UpdateRequest updateRequest,
-            final RequestContext requestContext) {
-        SupplyingCallback<WriteConcernResult> callback = new SupplyingCallback<>();
-        wrapped.updateAsync(namespace, ordered, updateRequest, requestContext, callback);
-        return callback.get();
-    }
-
-    @Override
-    public WriteConcernResult delete(final MongoNamespace namespace, final boolean ordered, final DeleteRequest deleteRequest,
-            final RequestContext requestContext) {
-        SupplyingCallback<WriteConcernResult> callback = new SupplyingCallback<>();
-        wrapped.deleteAsync(namespace, ordered, deleteRequest, requestContext, callback);
-        return callback.get();
     }
 
     @Override

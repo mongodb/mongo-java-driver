@@ -16,18 +16,13 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
-import com.mongodb.WriteConcernResult;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.ReferenceCounted;
-import com.mongodb.internal.bulk.DeleteRequest;
-import com.mongodb.internal.bulk.InsertRequest;
-import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
@@ -54,36 +49,6 @@ public interface AsyncConnection extends ReferenceCounted {
      * @return the connection description
      */
     ConnectionDescription getDescription();
-
-    /**
-     * Insert the documents using the insert wire protocol and apply the write concern asynchronously.
-     * @param namespace    the namespace
-     * @param ordered      whether the writes are ordered
-     * @param insertRequest the insert request
-     * @param callback     the callback to be passed the write result
-     */
-    void insertAsync(MongoNamespace namespace, boolean ordered, InsertRequest insertRequest, RequestContext requestContext,
-                     SingleResultCallback<WriteConcernResult> callback);
-
-    /**
-     * Update the documents using the update wire protocol and apply the write concern asynchronously.
-     * @param namespace    the namespace
-     * @param ordered      whether the writes are ordered
-     * @param updateRequest the update request
-     * @param callback     the callback to be passed the write result
-     */
-    void updateAsync(MongoNamespace namespace, boolean ordered, UpdateRequest updateRequest, RequestContext requestContext,
-                     SingleResultCallback<WriteConcernResult> callback);
-
-    /**
-     * Delete the documents using the delete wire protocol and apply the write concern asynchronously.
-     * @param namespace    the namespace
-     * @param ordered      whether the writes are ordered
-     * @param deleteRequest the delete request
-     * @param callback     the callback to be passed the write result
-     */
-    void deleteAsync(MongoNamespace namespace, boolean ordered, DeleteRequest deleteRequest, RequestContext requestContext,
-                     SingleResultCallback<WriteConcernResult> callback);
 
     /**
      * Execute the command.

@@ -120,7 +120,7 @@ final class MessageHelper {
     }
 
     public static String getDbField(final String databaseName) {
-        return getServerApi() == null ? "" : ", \"$db\": \"" + databaseName + "\"";
+        return ", \"$db\": \"" + databaseName + "\"";
     }
 
     private static ByteBuf encodeJson(final String json) {

@@ -23,7 +23,6 @@ import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerId
-import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.bulk.DeleteRequest
 import com.mongodb.internal.bulk.UpdateRequest
 import com.mongodb.internal.bulk.WriteRequest
@@ -37,8 +36,6 @@ import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.connection.ServerConnectionState.CONNECTED
 import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY
 import static com.mongodb.connection.ServerType.STANDALONE
-import static com.mongodb.internal.operation.OperationHelper.AsyncCallableWithConnection
-import static com.mongodb.internal.operation.OperationHelper.AsyncCallableWithConnectionAndSource
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead
 import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite
 import static com.mongodb.internal.operation.OperationHelper.validateWriteRequests
@@ -63,11 +60,11 @@ class OperationHelperSpecification extends Specification {
 
         where:
         connectionDescription          | bypassDocumentValidation | writeConcern   | writeRequests
-        threeConnectionDescription     | null                     | ACKNOWLEDGED   | [new DeleteRequest(BsonDocument.parse('{a: "a"}}'))]
-        threeTwoConnectionDescription  | null                     | UNACKNOWLEDGED | [new DeleteRequest(BsonDocument.parse('{a: "a"}}'))]
-        threeFourConnectionDescription | null                     | ACKNOWLEDGED   | [new DeleteRequest(BsonDocument.parse('{a: "a"}}'))
+        threeSixConnectionDescription  | null                     | ACKNOWLEDGED   | [new DeleteRequest(BsonDocument.parse('{a: "a"}}'))]
+        threeSixConnectionDescription  | null                     | UNACKNOWLEDGED | [new DeleteRequest(BsonDocument.parse('{a: "a"}}'))]
+        threeSixConnectionDescription  | null                     | ACKNOWLEDGED   | [new DeleteRequest(BsonDocument.parse('{a: "a"}}'))
                                                                                               .collation(enCollation)]
-        threeFourConnectionDescription | true                     | ACKNOWLEDGED   | [new UpdateRequest(BsonDocument.parse('{a: "a"}}'),
+        threeSixConnectionDescription  | true                     | ACKNOWLEDGED   | [new UpdateRequest(BsonDocument.parse('{a: "a"}}'),
                                                                                       BsonDocument.parse('{$set: {a: "A"}}'),
                                                                                       WriteRequest.Type.REPLACE).collation(enCollation)]
     }
@@ -118,16 +115,14 @@ class OperationHelperSpecification extends Specification {
         }
 
         expect:
-        canRetryRead(serverDescription, connectionDescription, noTransactionSessionContext) == expected
-        !canRetryRead(serverDescription, connectionDescription, activeTransactionSessionContext)
-        !canRetryRead(serverDescription, connectionDescription, noOpSessionContext)
+        canRetryRead(serverDescription, noTransactionSessionContext) == expected
+        !canRetryRead(serverDescription, activeTransactionSessionContext)
+        !canRetryRead(serverDescription, noOpSessionContext)
 
         where:
-        serverDescription             | connectionDescription                 | expected
-        retryableServerDescription    | threeSixConnectionDescription         | true
-        nonRetryableServerDescription | threeSixConnectionDescription         | false
-        retryableServerDescription    | threeFourConnectionDescription        | false
-        retryableServerDescription    | threeSixPrimaryConnectionDescription  | true
+        serverDescription             | expected
+        retryableServerDescription    | true
+        nonRetryableServerDescription | false
     }
 
 
@@ -138,10 +133,6 @@ class OperationHelperSpecification extends Specification {
             REPLICA_SET_PRIMARY, 1000, 100000, 100000, [])
     static ConnectionDescription threeFourConnectionDescription = new ConnectionDescription(connectionId, 5,
             STANDALONE, 1000, 100000, 100000, [])
-    static ConnectionDescription threeTwoConnectionDescription = new ConnectionDescription(connectionId, 4,
-            STANDALONE, 1000, 100000, 100000, [])
-    static ConnectionDescription threeConnectionDescription = new ConnectionDescription(connectionId, 3,
-            STANDALONE, 1000, 100000, 100000, [])
 
     static ServerDescription retryableServerDescription = ServerDescription.builder().address(new ServerAddress()).state(CONNECTED)
             .logicalSessionTimeoutMinutes(1).build()
@@ -149,23 +140,4 @@ class OperationHelperSpecification extends Specification {
             .state(CONNECTED).build()
 
     static Collation enCollation = Collation.builder().locale('en').build()
-
-    static asyncCallableWithConnection = new AsyncCallableWithConnection() {
-        @Override
-        void call(final AsyncConnection conn, final Throwable t) {
-            if (t != null) {
-                throw t
-            }
-        }
-    }
-
-    static asyncCallableWithConnectionAndSource = new AsyncCallableWithConnectionAndSource() {
-        @Override
-        void call(final AsyncConnectionSource source, final AsyncConnection conn, final Throwable t) {
-            if (t != null) {
-                throw t
-            }
-        }
-    }
-
 }

@@ -22,6 +22,7 @@ import com.mongodb.async.FutureResultCallback
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ServerId
+import com.mongodb.connection.ServerType
 import org.bson.BsonDocument
 import spock.lang.Specification
 
@@ -471,7 +472,7 @@ class ScramShaAuthenticatorSpecification extends Specification {
     }
 
     def createConnection(List<String> serverResponses, int responseWhereDoneIsTrue = -1) {
-        TestInternalConnection connection = new TestInternalConnection(serverId)
+        TestInternalConnection connection = new TestInternalConnection(serverId, ServerType.STANDALONE)
         serverResponses.eachWithIndex { response, index ->
             def isDone = (index == responseWhereDoneIsTrue).booleanValue()
             connection.enqueueReply(
@@ -492,7 +493,8 @@ class ScramShaAuthenticatorSpecification extends Specification {
             def sentMessage = sent.get(it)
             def messageStart = speculativeAuthenticate || it != 0 ? 'saslContinue: 1, conversationId: 1'
                     : "saslStart: 1, mechanism:'$mechanism', options: {skipEmptyExchange: true}"
-            def expectedMessage = BsonDocument.parse("{$messageStart, payload: BinData(0, '${encode64(clientMessages.get(it))}')}")
+            def expectedMessage = BsonDocument.parse(
+                    "{$messageStart, payload: BinData(0, '${encode64(clientMessages.get(it))}'), \$db: \"database\"}")
             assertEquals(expectedMessage, sentMessage)
         }
     }

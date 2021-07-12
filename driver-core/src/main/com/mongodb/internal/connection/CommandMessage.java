@@ -22,7 +22,6 @@ import com.mongodb.ReadPreference;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.internal.session.SessionContext;
-import com.mongodb.internal.validator.MappedFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBinaryWriter;
@@ -31,16 +30,12 @@ import org.bson.BsonDocument;
 import org.bson.BsonElement;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
-import org.bson.BsonWriter;
 import org.bson.FieldNameValidator;
-import org.bson.codecs.EncoderContext;
 import org.bson.io.BsonOutput;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.primaryPreferred;
@@ -117,7 +112,7 @@ public final class CommandMessage extends RequestMessage {
                 getEncodingMetadata().getFirstDocumentPosition());
         BsonDocument commandBsonDocument;
 
-        if (useOpMsg() && containsPayload()) {
+        if (containsPayload()) {
             commandBsonDocument = byteBufBsonDocument.toBaseBsonDocument();
 
             int payloadStartPosition = getEncodingMetadata().getFirstDocumentPosition()
@@ -131,10 +126,7 @@ public final class CommandMessage extends RequestMessage {
             commandBsonDocument = byteBufBsonDocument;
         }
 
-        if (commandBsonDocument.containsKey("$query")) {
-            commandBsonDocument = commandBsonDocument.getDocument("$query");
-        }
-        return commandBsonDocument;
+       return commandBsonDocument;
     }
 
     boolean containsPayload() {
@@ -160,7 +152,7 @@ public final class CommandMessage extends RequestMessage {
             bsonOutput.writeByte(0);    // payload type
             commandStartPosition = bsonOutput.getPosition();
 
-            addDocument(getCommandToEncode(), bsonOutput, commandFieldNameValidator, getExtraElements(sessionContext));
+            addDocument(command, bsonOutput, commandFieldNameValidator, getExtraElements(sessionContext));
 
             if (payload != null) {
                 bsonOutput.writeByte(1);          // payload type
@@ -177,48 +169,24 @@ public final class CommandMessage extends RequestMessage {
             // Write the flag bits
             bsonOutput.writeInt32(flagPosition, getOpMsgFlagBits());
         } else {
-            bsonOutput.writeInt32(getOpQueryFlagBits());
+            bsonOutput.writeInt32(0);
             bsonOutput.writeCString(namespace.getFullName());
             bsonOutput.writeInt32(0);
             bsonOutput.writeInt32(-1);
 
             commandStartPosition = bsonOutput.getPosition();
 
-            if (payload == null) {
-                List<BsonElement> elements = null;
-                if (serverApi != null) {
-                    elements = new ArrayList<>(3);
-                    addServerApiElements(elements);
-                }
-                addDocument(getCommandToEncode(), bsonOutput, commandFieldNameValidator, elements);
-            } else {
-                // We're not concerned with adding ServerApi elements here.  The only reason we do it for OP_QUERY-based commands is that
-                // OP_QUERY is always used for the handshake, and we have to pass ServerApi elements in the handshake.  Other than that,
-                // all servers that support ServerApi also support OP_MSG, so this code path should never be hit.
-                addDocumentWithPayload(bsonOutput, messageStartPosition);
+            List<BsonElement> elements = null;
+            if (serverApi != null) {
+                elements = new ArrayList<>(3);
+                addServerApiElements(elements);
             }
+            addDocument(command, bsonOutput, commandFieldNameValidator, elements);
         }
         return new EncodingMetadata(commandStartPosition);
     }
 
-    private FieldNameValidator getPayloadArrayFieldNameValidator() {
-        Map<String, FieldNameValidator> rootMap = new HashMap<String, FieldNameValidator>();
-        rootMap.put(payload.getPayloadName(), payloadFieldNameValidator);
-        return new MappedFieldNameValidator(commandFieldNameValidator, rootMap);
-    }
-
-    private void addDocumentWithPayload(final BsonOutput bsonOutput, final int messageStartPosition) {
-        BsonBinaryWriter bsonBinaryWriter = new BsonBinaryWriter(bsonOutput, getPayloadArrayFieldNameValidator());
-        BsonWriter bsonWriter = new SplittablePayloadBsonWriter(bsonBinaryWriter, bsonOutput, messageStartPosition, getSettings(), payload);
-        BsonDocument commandToEncode = getCommandToEncode();
-        getCodec(commandToEncode).encode(bsonWriter, commandToEncode, EncoderContext.builder().build());
-    }
-
     private int getOpMsgFlagBits() {
-        return getOpMsgResponseExpectedFlagBit();
-    }
-
-    private int getOpMsgResponseExpectedFlagBit() {
         int flagBits = 0;
         if (!requireOpMsgResponse()) {
             flagBits = 1 << 1;
@@ -237,22 +205,6 @@ public final class CommandMessage extends RequestMessage {
         }
     }
 
-    private int getOpQueryFlagBits() {
-        return getOpQuerySecondaryOkFlagBit();
-    }
-
-    private int getOpQuerySecondaryOkFlagBit() {
-        if (isSecondaryOk()) {
-            return 1 << 2;
-        } else {
-            return 0;
-        }
-    }
-
-    private boolean isSecondaryOk() {
-        return (readPreference != null && readPreference.isSecondaryOk()) || isDirectConnectionToReplicaSetMember();
-    }
-
     private boolean isDirectConnectionToReplicaSetMember() {
         return clusterConnectionMode == SINGLE
                 && getSettings().getServerType() != SHARD_ROUTER
@@ -263,16 +215,8 @@ public final class CommandMessage extends RequestMessage {
         return getOpCode().equals(OpCode.OP_MSG);
     }
 
-    private BsonDocument getCommandToEncode() {
-        BsonDocument commandToEncode = command;
-        if (!useOpMsg() && readPreference != null && !readPreference.equals(primary())) {
-            commandToEncode = new BsonDocument("$query", command).append("$readPreference", readPreference.toDocument());
-        }
-        return commandToEncode;
-    }
-
     private List<BsonElement> getExtraElements(final SessionContext sessionContext) {
-        List<BsonElement> extraElements = new ArrayList<BsonElement>();
+        List<BsonElement> extraElements = new ArrayList<>();
         extraElements.add(new BsonElement("$db", new BsonString(new MongoNamespace(getCollectionName()).getDatabaseName())));
         if (sessionContext.getClusterTime() != null) {
             extraElements.add(new BsonElement("$clusterTime", sessionContext.getClusterTime()));
@@ -345,5 +289,4 @@ public final class CommandMessage extends RequestMessage {
     private static boolean isServerVersionAtLeastThreeDotSix(final MessageSettings settings) {
         return settings.getMaxWireVersion() >= THREE_DOT_SIX_WIRE_VERSION;
     }
-
 }

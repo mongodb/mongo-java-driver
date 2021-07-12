@@ -245,8 +245,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
         Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryState, () -> {
             logRetryExecute(retryState);
             return withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection) -> {
-                retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), connection.getDescription(),
-                        binding.getSessionContext()));
+                retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), binding.getSessionContext()));
                 try {
                     return createReadCommandAndExecute(retryState, binding, source, databaseName, getCommandCreator(),
                             createCommandDecoder(), commandTransformer(), connection);
@@ -268,7 +267,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                     logRetryExecute(retryState);
                     withAsyncSourceAndConnection(binding::getReadConnectionSource, false, funcCallback,
                             (source, connection, releasingCallback) -> {
-                                if (retryState.breakAndCompleteIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), connection.getDescription(),
+                                if (retryState.breakAndCompleteIfRetryAnd(() -> !canRetryRead(source.getServerDescription(),
                                         binding.getSessionContext()), releasingCallback)) {
                                     return;
                                 }

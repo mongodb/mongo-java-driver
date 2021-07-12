@@ -166,35 +166,10 @@ abstract class RequestMessage {
      */
     protected abstract EncodingMetadata encodeMessageBodyWithMetadata(BsonOutput bsonOutput, SessionContext sessionContext);
 
-    /**
-     * Appends a document to the message.
-     *
-     * @param document the document
-     * @param bsonOutput the output
-     * @param validator the field name validator
-     */
-    protected void addDocument(final BsonDocument document, final BsonOutput bsonOutput,
-                               final FieldNameValidator validator) {
-        addDocument(document, getCodec(document), EncoderContext.builder().build(), bsonOutput, validator,
-                    settings.getMaxDocumentSize() + DOCUMENT_HEADROOM, null);
-    }
-
     protected void addDocument(final BsonDocument document, final BsonOutput bsonOutput,
                                final FieldNameValidator validator, final List<BsonElement> extraElements) {
         addDocument(document, getCodec(document), EncoderContext.builder().build(), bsonOutput, validator,
                 settings.getMaxDocumentSize() + DOCUMENT_HEADROOM, extraElements);
-    }
-
-    /**
-     * Appends a document to the message that is intended for storage in a collection.
-     *
-     * @param document the document
-     * @param bsonOutput the output
-     * @param validator the field name validator
-     */
-    protected void addCollectibleDocument(final BsonDocument document, final BsonOutput bsonOutput, final FieldNameValidator validator) {
-        addDocument(document, getCodec(document), EncoderContext.builder().isEncodingCollectibleDocument(true).build(), bsonOutput,
-                    validator, settings.getMaxDocumentSize(), null);
     }
 
     /**
@@ -222,7 +197,6 @@ abstract class RequestMessage {
         return (Codec<BsonDocument>) REGISTRY.get(document.getClass());
     }
 
-    @SuppressWarnings("unchecked")
     private <T> void addDocument(final T obj, final Encoder<T> encoder, final EncoderContext encoderContext,
                                  final BsonOutput bsonOutput, final FieldNameValidator validator, final int maxDocumentSize,
                                  final List<BsonElement> extraElements) {

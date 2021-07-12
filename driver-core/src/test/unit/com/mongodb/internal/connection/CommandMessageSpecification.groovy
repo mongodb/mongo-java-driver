@@ -20,8 +20,6 @@ import com.mongodb.MongoClientException
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
-import com.mongodb.ServerApi
-import com.mongodb.ServerApiVersion
 import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ServerType
 import com.mongodb.internal.bulk.InsertRequest
@@ -49,7 +47,6 @@ import java.nio.ByteBuffer
 
 import static com.mongodb.internal.connection.SplittablePayload.Type.INSERT
 import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_ZERO_WIRE_VERSION
-import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_FOUR_WIRE_VERSION
 import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION
 
 class CommandMessageSpecification extends Specification {
@@ -133,105 +130,6 @@ class CommandMessageSpecification extends Specification {
         ].combinations()
     }
 
-    def 'should encode command message with OP_MSG when connection mode is load-balanced'() {
-        given:
-        def sessionContext = Stub(SessionContext) {
-            hasSession() >> false
-            getClusterTime() >> null
-            getSessionId() >> new BsonDocument('id', new BsonBinary([1, 2, 3] as byte[]))
-            getReadConcern() >> ReadConcern.DEFAULT
-        }
-        def message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(),
-                MessageSettings.builder()
-                        .maxWireVersion(0)
-                        .build(),
-                true, false, null, null, ClusterConnectionMode.LOAD_BALANCED, null)
-        def output = new BasicOutputBuffer()
-
-        when:
-        message.encode(output, sessionContext)
-
-        then:
-        def byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
-        def messageHeader = new MessageHeader(byteBuf, 512)
-        messageHeader.opCode == OpCode.OP_MSG.value
-    }
-
-    def 'should encode command message with OP_MSG when server API is specified'() {
-        given:
-        def sessionContext = Stub(SessionContext) {
-            hasSession() >> false
-            getClusterTime() >> null
-            getSessionId() >> new BsonDocument('id', new BsonBinary([1, 2, 3] as byte[]))
-            getReadConcern() >> ReadConcern.DEFAULT
-        }
-        def message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(),
-                MessageSettings.builder()
-                        .maxWireVersion(0)
-                        .build(),
-                true, false, null, null, ClusterConnectionMode.MULTIPLE, ServerApi.builder().version(ServerApiVersion.V1).build())
-        def output = new BasicOutputBuffer()
-
-        when:
-        message.encode(output, sessionContext)
-
-        then:
-        def byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
-        def messageHeader = new MessageHeader(byteBuf, 512)
-        messageHeader.opCode == OpCode.OP_MSG.value
-    }
-
-    def 'should encode command message with OP_QUERY when server version is < 3.6'() {
-        given:
-        def message = new CommandMessage(namespace, command, fieldNameValidator, readPreference,
-                MessageSettings.builder()
-                        .maxWireVersion(THREE_DOT_FOUR_WIRE_VERSION)
-                        .serverType(serverType)
-                        .build(),
-                responseExpected, null, null, clusterConnectionMode, null)
-        def output = new BasicOutputBuffer()
-        def expectedFlagBits = 0
-        if (readPreference.isSecondaryOk()) {
-            expectedFlagBits = 4
-        } else if (clusterConnectionMode == ClusterConnectionMode.SINGLE && serverType != ServerType.SHARD_ROUTER) {
-            expectedFlagBits = 4
-        }
-        BsonDocument expectedCommand
-        if (readPreference.isSecondaryOk()) {
-            expectedCommand = new BsonDocument('$query', command).append('$readPreference', readPreference.toDocument())
-        } else {
-            expectedCommand = command
-        }
-
-        when:
-        message.encode(output, NoOpSessionContext.INSTANCE)
-
-        then:
-        def byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
-        def messageHeader = new MessageHeader(byteBuf, 512)
-        messageHeader.opCode == OpCode.OP_QUERY.value
-        messageHeader.requestId < RequestMessage.currentGlobalId
-        messageHeader.responseTo == 0
-        def flagBits = byteBuf.getInt()
-        flagBits == expectedFlagBits
-        def collectionName = getString(byteBuf)
-        collectionName == 'db.test'
-        def numberToSkip = byteBuf.getInt()
-        numberToSkip == 0
-        def numberToReturn = byteBuf.getInt()
-        numberToReturn == -1
-
-        getCommandDocument(byteBuf) == expectedCommand
-
-        where:
-        [readPreference, serverType, clusterConnectionMode, responseExpected] << [
-                [ReadPreference.primary(), ReadPreference.secondary()],
-                [ServerType.REPLICA_SET_PRIMARY, ServerType.SHARD_ROUTER],
-                [ClusterConnectionMode.SINGLE, ClusterConnectionMode.MULTIPLE],
-                [true, false]
-        ].combinations()
-    }
-
     String getString(final ByteBuf byteBuf) {
         def byteArrayOutputStream = new ByteArrayOutputStream()
         def cur = byteBuf.get()
@@ -264,19 +162,6 @@ class CommandMessageSpecification extends Specification {
 
         where:
         [maxWireVersion, originalCommandDocument, payload] << [
-                [
-                        THREE_DOT_FOUR_WIRE_VERSION,
-                        new BsonDocument('insert', new BsonString('coll')),
-                        new SplittablePayload(INSERT, [new BsonDocument('_id', new BsonInt32(1)),
-                                                       new BsonDocument('_id', new BsonInt32(2))]
-                                .withIndex().collect { doc, i -> new WriteRequestWithIndex(new InsertRequest(doc), i) } ),
-                ],
-                [
-                        THREE_DOT_FOUR_WIRE_VERSION,
-                        new BsonDocument('insert', new BsonString('coll')).append('documents',
-                                new BsonArray([new BsonDocument('_id', new BsonInt32(1)), new BsonDocument('_id', new BsonInt32(2))])),
-                        null
-                ],
                 [
                         THREE_DOT_SIX_WIRE_VERSION,
                         new BsonDocument('insert', new BsonString('coll')),

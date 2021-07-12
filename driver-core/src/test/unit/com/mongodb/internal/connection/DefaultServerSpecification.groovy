@@ -17,26 +17,18 @@
 package com.mongodb.internal.connection
 
 import com.mongodb.MongoException
-import com.mongodb.MongoNamespace
-import com.mongodb.MongoNodeIsRecoveringException
-import com.mongodb.MongoNotPrimaryException
 import com.mongodb.MongoSecurityException
 import com.mongodb.MongoServerUnavailableException
-import com.mongodb.MongoSocketException
 import com.mongodb.MongoSocketOpenException
 import com.mongodb.MongoSocketReadException
 import com.mongodb.MongoSocketReadTimeoutException
 import com.mongodb.MongoSocketWriteException
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
-import com.mongodb.WriteConcernResult
-import com.mongodb.async.FutureResultCallback
 import com.mongodb.client.syncadapter.SupplyingCallback
 import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ClusterSettings
-import com.mongodb.connection.ConnectionDescription
-import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerId
@@ -46,9 +38,7 @@ import com.mongodb.event.ServerDescriptionChangedEvent
 import com.mongodb.event.ServerListener
 import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.async.SingleResultCallback
-import com.mongodb.internal.bulk.InsertRequest
 import com.mongodb.internal.inject.SameObjectProvider
-import com.mongodb.internal.operation.ServerVersionHelper
 import com.mongodb.internal.session.SessionContext
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
@@ -289,126 +279,6 @@ class DefaultServerSpecification extends Specification {
         ]
     }
 
-    def 'should invalidate on MongoNotPrimaryException'() {
-        given:
-        def internalConnection = Mock(InternalConnection) {
-            getGeneration() >> 0
-            getDescription() >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())), 6,
-                    ServerType.STANDALONE, 1000, 16777216, 48000000, [])
-        }
-        def connectionPool = Mock(ConnectionPool)
-        connectionPool.get() >> { internalConnection }
-        def serverMonitor = Mock(ServerMonitor)
-        def server = defaultServer(connectionPool, serverMonitor)
-        def testConnection = (TestConnection) server.getConnection()
-
-        when:
-        testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoNotPrimaryException(new BsonDocument(), serverId.address)))
-
-        testConnection.insert(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
-                IgnorableRequestContext.INSTANCE)
-
-        then:
-        thrown(MongoNotPrimaryException)
-        1 * connectionPool.invalidate { it instanceof MongoNotPrimaryException }
-        1 * serverMonitor.connect()
-
-        when:
-        def futureResultCallback = new FutureResultCallback()
-        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
-                IgnorableRequestContext.INSTANCE, futureResultCallback);
-        futureResultCallback.get()
-
-        then:
-        thrown(MongoNotPrimaryException)
-        1 * connectionPool.invalidate { it instanceof MongoNotPrimaryException }
-        1 * serverMonitor.connect()
-    }
-
-    def 'should invalidate on MongoNodeIsRecoveringException'() {
-        given:
-        def connectionPool = Mock(ConnectionPool)
-        connectionPool.get() >> { internalConnection() }
-        def serverMonitor = Mock(ServerMonitor)
-        def server = defaultServer(connectionPool, serverMonitor)
-        def testConnection = (TestConnection) server.getConnection()
-
-        when:
-        testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoNodeIsRecoveringException(new BsonDocument(), new ServerAddress())))
-
-        testConnection.insert(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
-                IgnorableRequestContext.INSTANCE)
-
-        then:
-        thrown(MongoNodeIsRecoveringException)
-        1 * connectionPool.invalidate { it instanceof MongoNodeIsRecoveringException }
-        1 * serverMonitor.connect()
-    }
-
-
-    def 'should invalidate on MongoSocketException'() {
-        given:
-        def connectionPool = Mock(ConnectionPool)
-        connectionPool.get() >> { internalConnection() }
-        def serverMonitor = Mock(ServerMonitor)
-        def server = defaultServer(connectionPool, serverMonitor)
-        def testConnection = (TestConnection) server.getConnection()
-
-        when:
-        testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoSocketException('socket error', new ServerAddress())))
-
-        testConnection.insert(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
-                IgnorableRequestContext.INSTANCE)
-
-        then:
-        thrown(MongoSocketException)
-        1 * connectionPool.invalidate { it instanceof MongoSocketException }
-        1 * serverMonitor.cancelCurrentCheck()
-
-        when:
-        def futureResultCallback = new FutureResultCallback<WriteConcernResult>()
-        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
-                IgnorableRequestContext.INSTANCE, futureResultCallback)
-        futureResultCallback.get()
-
-        then:
-        thrown(MongoSocketException)
-        1 * connectionPool.invalidate { it instanceof MongoSocketException }
-        1 * serverMonitor.cancelCurrentCheck()
-    }
-
-    def 'should not invalidate on MongoSocketReadTimeoutException'() {
-        given:
-        def connectionPool = Mock(ConnectionPool)
-        connectionPool.get() >> { internalConnection() }
-        def serverMonitor = Mock(ServerMonitor)
-        def server = defaultServer(connectionPool, serverMonitor)
-        def testConnection = (TestConnection) server.getConnection()
-
-        when:
-        testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoSocketReadTimeoutException('socket timeout', new ServerAddress(),
-                new IOException())))
-
-        testConnection.insert(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
-                IgnorableRequestContext.INSTANCE)
-
-        then:
-        thrown(MongoSocketReadTimeoutException)
-        0 * connectionPool.invalidate { it instanceof MongoSocketReadTimeoutException }
-        0 * serverMonitor.connect()
-
-        when:
-        def futureResultCallback = new FutureResultCallback<WriteConcernResult>()
-        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
-                IgnorableRequestContext.INSTANCE, futureResultCallback)
-        futureResultCallback.get()
-
-        then:
-        thrown(MongoSocketReadTimeoutException)
-        0 * connectionPool.invalidate { it instanceof MongoSocketReadTimeoutException }
-        0 * serverMonitor.connect()
-    }
-
     def 'should propagate cluster time'() {
         given:
         def clusterClock = new ClusterClock()
@@ -461,14 +331,6 @@ class DefaultServerSpecification extends Specification {
         ].combinations()
     }
 
-    private InternalConnection internalConnection() {
-        Mock(InternalConnection) {
-            getGeneration() >> 0
-            getDescription() >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                    ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION, ServerType.STANDALONE, 1000, 0xff_ff_ff, 48_000_000, [])
-        }
-    }
-
     private DefaultServer defaultServer(final ConnectionPool connectionPool, final ServerMonitor serverMonitor) {
         def serverListener = Mock(ServerListener)
         defaultServer(connectionPool, serverMonitor, serverListener,
@@ -483,37 +345,6 @@ class DefaultServerSpecification extends Specification {
         serverMonitor.start()
         new DefaultServer(serverId, SINGLE, connectionPool, new TestConnectionFactory(), serverMonitor,
                 sdam, serverListener, commandListener, new ClusterClock(), false)
-    }
-
-    class TestLegacyProtocol implements LegacyProtocol {
-        private MongoException mongoException
-        private CommandListener commandListener
-
-        TestLegacyProtocol() {
-            this(null)
-        }
-
-        TestLegacyProtocol(MongoException mongoException) {
-            this.mongoException = mongoException
-        }
-
-        @Override
-        Object execute(final InternalConnection connection) {
-            if (mongoException != null) {
-                throw mongoException
-            }
-            null
-        }
-
-        @Override
-        void executeAsync(final InternalConnection connection, final SingleResultCallback callback) {
-            callback.onResult(null, mongoException)
-        }
-
-        @Override
-        void setCommandListener(final CommandListener commandListener) {
-            this.commandListener = commandListener
-        }
     }
 
     class TestCommandProtocol implements CommandProtocol<BsonDocument> {

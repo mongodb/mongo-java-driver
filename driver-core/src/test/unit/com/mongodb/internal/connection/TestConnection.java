@@ -16,16 +16,11 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
-import com.mongodb.WriteConcernResult;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.bulk.DeleteRequest;
-import com.mongodb.internal.bulk.InsertRequest;
-import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
@@ -35,7 +30,6 @@ import org.bson.codecs.Decoder;
 class TestConnection implements Connection, AsyncConnection {
     private final InternalConnection internalConnection;
     private final ProtocolExecutor executor;
-    private LegacyProtocol enqueuedLegacyProtocol;
     private CommandProtocol enqueuedCommandProtocol;
 
     TestConnection(final InternalConnection internalConnection, final ProtocolExecutor executor) {
@@ -61,45 +55,6 @@ class TestConnection implements Connection, AsyncConnection {
     @Override
     public ConnectionDescription getDescription() {
         throw new UnsupportedOperationException("Not implemented yet!");
-    }
-
-    @Override
-    public WriteConcernResult insert(final MongoNamespace namespace, final boolean ordered,
-                                     final InsertRequest insertRequest, final RequestContext requestContext) {
-        return executeEnqueuedLegacyProtocol();
-    }
-
-    @Override
-    public void insertAsync(final MongoNamespace namespace, final boolean ordered,
-                            final InsertRequest insertRequest, final RequestContext requestContext,
-                            final SingleResultCallback<WriteConcernResult> callback) {
-        executeEnqueuedLegacyProtocolAsync(callback);
-    }
-
-    @Override
-    public WriteConcernResult update(final MongoNamespace namespace, final boolean ordered,
-            final UpdateRequest updateRequest, final RequestContext requestContext) {
-        return executeEnqueuedLegacyProtocol();
-    }
-
-    @Override
-    public void updateAsync(final MongoNamespace namespace, final boolean ordered,
-                            final UpdateRequest updateRequest, final RequestContext requestContext,
-                            final SingleResultCallback<WriteConcernResult> callback) {
-        executeEnqueuedLegacyProtocolAsync(callback);
-    }
-
-    @Override
-    public WriteConcernResult delete(final MongoNamespace namespace, final boolean ordered,
-            final DeleteRequest deleteRequest, final RequestContext requestContext) {
-        return executeEnqueuedLegacyProtocol();
-    }
-
-    @Override
-    public void deleteAsync(final MongoNamespace namespace, final boolean ordered,
-                            final DeleteRequest deleteRequest, final RequestContext requestContext,
-                            final SingleResultCallback<WriteConcernResult> callback) {
-        executeEnqueuedLegacyProtocolAsync(callback);
     }
 
     @Override
@@ -141,16 +96,6 @@ class TestConnection implements Connection, AsyncConnection {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> T executeEnqueuedLegacyProtocol() {
-        return (T) executor.execute(enqueuedLegacyProtocol, internalConnection);
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T> void executeEnqueuedLegacyProtocolAsync(final SingleResultCallback<T> callback) {
-        executor.executeAsync(enqueuedLegacyProtocol, internalConnection, callback);
-    }
-
-    @SuppressWarnings("unchecked")
     private <T> T executeEnqueuedCommandBasedProtocol(final SessionContext sessionContext) {
         return (T) executor.execute(enqueuedCommandProtocol, internalConnection, sessionContext);
     }
@@ -158,10 +103,6 @@ class TestConnection implements Connection, AsyncConnection {
     @SuppressWarnings("unchecked")
     private <T> void executeEnqueuedCommandBasedProtocolAsync(final SessionContext sessionContext, final SingleResultCallback<T> callback) {
         executor.executeAsync(enqueuedCommandProtocol, internalConnection, sessionContext, callback);
-    }
-
-    void enqueueProtocol(final LegacyProtocol protocol) {
-        enqueuedLegacyProtocol = protocol;
     }
 
     void enqueueProtocol(final CommandProtocol protocol) {
