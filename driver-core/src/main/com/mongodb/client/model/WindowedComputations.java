@@ -585,7 +585,7 @@ public final class WindowedComputations {
         }
 
         @Override
-        public BsonField asBsonField() {
+        public BsonField toBsonField() {
             return wrapped;
         }
 

@@ -30,9 +30,9 @@ import java.util.List;
 @Beta
 public interface WindowedComputation {
     /**
-     * Returns a {@link BsonField} representation.
+     * Render into {@link BsonField}.
      *
      * @return A {@link BsonField} representation.
      */
-    BsonField asBsonField();
+    BsonField toBsonField();
 }

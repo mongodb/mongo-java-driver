@@ -1574,7 +1574,7 @@ public final class Aggregates {
             }
             writer.writeStartDocument("output");
             for (WindowedComputation windowedComputation : output) {
-                BsonField field = windowedComputation.asBsonField();
+                BsonField field = windowedComputation.toBsonField();
                 writer.writeName(field.getName());
                 BuildersHelper.encodeValue(writer, field.getValue(), codecRegistry);
             }

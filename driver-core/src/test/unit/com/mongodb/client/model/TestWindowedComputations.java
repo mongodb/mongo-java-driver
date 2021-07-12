@@ -56,8 +56,8 @@ final class TestWindowedComputations {
         WindowedComputation actual = WindowedComputations.of(new BsonField(PATH, new Document("$sum", STR_EXPR.getKey())
                 .append("window", POSITION_BASED_WINDOW.toBsonDocument())));
         assertAll(
-                () -> assertEquals(expected.asBsonField().getName(), actual.asBsonField().getName()),
-                () -> assertEquals(expected.asBsonField().getValue().toBsonDocument(), actual.asBsonField().getValue().toBsonDocument()));
+                () -> assertEquals(expected.toBsonField().getName(), actual.toBsonField().getName()),
+                () -> assertEquals(expected.toBsonField().getValue().toBsonDocument(), actual.toBsonField().getValue().toBsonDocument()));
     }
 
     @Test
@@ -222,8 +222,8 @@ final class TestWindowedComputations {
 
     private static void assertWindowedComputation(final BsonField expected, final WindowedComputation actual,
                                                   @Nullable final Supplier<String> messageSupplier) {
-        assertEquals(expected.getName(), actual.asBsonField().getName(), messageSupplier);
-        assertEquals(expected.getValue().toBsonDocument(), actual.asBsonField().getValue().toBsonDocument(), messageSupplier);
+        assertEquals(expected.getName(), actual.toBsonField().getName(), messageSupplier);
+        assertEquals(expected.getValue().toBsonDocument(), actual.toBsonField().getValue().toBsonDocument(), messageSupplier);
     }
 
     private static void assertWindowedComputation(final BsonField expected, final WindowedComputation actual) {
