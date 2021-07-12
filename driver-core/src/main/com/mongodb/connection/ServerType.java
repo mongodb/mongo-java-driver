@@ -119,4 +119,3 @@ public enum ServerType {
      */
     public abstract ClusterType getClusterType();
 }
-

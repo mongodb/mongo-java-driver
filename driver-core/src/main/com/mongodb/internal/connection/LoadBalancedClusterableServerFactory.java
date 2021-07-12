@@ -30,6 +30,7 @@ import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.ServerListener;
+import com.mongodb.internal.inject.EmptyProvider;
 
 import java.util.List;
 
@@ -69,9 +70,9 @@ public class LoadBalancedClusterableServerFactory implements ClusterableServerFa
                                     final ServerListener serverListener, final ClusterClock clusterClock) {
         ConnectionPool connectionPool = new DefaultConnectionPool(new ServerId(clusterId, serverAddress),
                 new InternalStreamConnectionFactory(ClusterConnectionMode.LOAD_BALANCED, streamFactory, credential, applicationName,
-                        mongoDriverInformation, compressorList, commandListener, serverApi), connectionPoolSettings);
-
-        connectionPool.start();
+                        mongoDriverInformation, compressorList, commandListener, serverApi), connectionPoolSettings,
+                EmptyProvider.instance());
+        connectionPool.ready();
 
         return new LoadBalancedServer(new ServerId(clusterId, serverAddress), connectionPool, new DefaultConnectionFactory(),
                 serverListener, clusterClock);

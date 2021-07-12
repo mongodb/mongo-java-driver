@@ -17,17 +17,13 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.connection.ServerId;
-
-import static com.mongodb.connection.ServerConnectionState.CONNECTING;
-import static com.mongodb.connection.ServerType.UNKNOWN;
+import com.mongodb.internal.inject.Provider;
 
 class TestServerMonitor implements ServerMonitor {
-    private ServerDescription currentDescription;
-    private ChangeListener<ServerDescription> serverStateListener;
+    private final Provider<SdamServerDescriptionManager> sdamProvider;
 
-    TestServerMonitor(final ServerId serverId) {
-        currentDescription = ServerDescription.builder().type(UNKNOWN).state(CONNECTING).address(serverId.getAddress()).build();
+    TestServerMonitor(final Provider<SdamServerDescriptionManager> sdamProvider) {
+        this.sdamProvider = sdamProvider;
     }
 
     @Override
@@ -46,13 +42,7 @@ class TestServerMonitor implements ServerMonitor {
     public void cancelCurrentCheck() {
     }
 
-    public void setServerStateListener(final ChangeListener<ServerDescription> serverStateListener) {
-        this.serverStateListener = serverStateListener;
-    }
-
-
-    public void sendNotification(final ServerDescription serverDescription) {
-        serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(currentDescription, serverDescription));
-        currentDescription = serverDescription;
+    public void updateServerDescription(final ServerDescription serverDescription) {
+        sdamProvider.get().update(serverDescription);
     }
 }

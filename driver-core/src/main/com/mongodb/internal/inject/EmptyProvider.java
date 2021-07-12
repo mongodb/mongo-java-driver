@@ -13,19 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.mongodb.internal.inject;
 
-package com.mongodb.internal.connection;
+import com.mongodb.annotations.Immutable;
 
-/**
- * Listener for ChangeEvents - classes that implement this will be informed if classes of type {@code T} are changed.
- *
- * @param <T> the type of the value that changed.
- */
-interface ChangeListener<T> {
+import java.util.Optional;
+
+@Immutable
+public final class EmptyProvider<T> implements OptionalProvider<T> {
+    private static final EmptyProvider<?> INSTANCE = new EmptyProvider<>();
+
+    private EmptyProvider() {
+    }
+
     /**
-     * A {@code ChangeEvent} has been fired to notify listeners that {@code T} has changed.
-     *
-     * @param event an event containing the old and new values of {@code T}.
+     * Returns {@link Optional#empty()}.
      */
-    void stateChanged(ChangeEvent<T> event);
+    @Override
+    public Optional<T> optional() {
+        return Optional.empty();
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> EmptyProvider<T> instance() {
+        return (EmptyProvider<T>) INSTANCE;
+    }
 }

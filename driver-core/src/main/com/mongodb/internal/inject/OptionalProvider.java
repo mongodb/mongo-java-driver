@@ -13,13 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.mongodb.internal.inject;
 
-package com.mongodb.internal.connection;
+import java.util.Optional;
 
-import com.mongodb.connection.ServerDescription;
-
-interface ServerMonitorFactory {
-
-    ServerMonitor create(ChangeListener<ServerDescription> serverStateListener);
-
+/**
+ * If a constructor parameter is of type {@link OptionalProvider}, then the corresponding argument must not be {@code null}.
+ *
+ * @param <T> The type of provided objects.
+ * @see Provider
+ */
+public interface OptionalProvider<T> {
+    /**
+     * Provides either a fully constructed and injected object or an {@linkplain Optional#isEmpty() empty} {@link Optional}
+     * to signify that the provider does not provide an object.
+     */
+    Optional<T> optional();
 }

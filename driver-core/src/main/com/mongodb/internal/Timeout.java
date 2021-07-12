@@ -46,7 +46,10 @@ public final class Timeout {
     /**
      * Converts the specified {@code duration} from {@code unit}s to {@link TimeUnit#NANOSECONDS} via {@link TimeUnit#toNanos(long)}
      * and then acts identically to {@link #startNow(long)}.
-     *
+     * <p>
+     * Note that the contract of this method is also used in some places to specify the behavior of methods that accept
+     * {@code (long timeout, TimeUnit unit)}, e.g., {@link com.mongodb.internal.connection.ConcurrentPool#get(long, TimeUnit)},
+     * so it cannot be changed without updating those methods.
      * @see #startNow(long)
      */
     public static Timeout startNow(final long duration, final TimeUnit unit) {
@@ -59,6 +62,10 @@ public final class Timeout {
      * or is equal to {@link Long#MAX_VALUE},
      * an {@linkplain #isImmediate() immediate} timeout if {@code durationNanos} is 0,
      * otherwise an object that represents the specified {@code durationNanos}.
+     * <p>
+     * Note that the contract of this method is also used in some places to specify the behavior of methods that accept
+     * {@code (long timeout, TimeUnit unit)}, e.g., {@link com.mongodb.internal.connection.ConcurrentPool#get(long, TimeUnit)},
+     * so it cannot be changed without updating those methods.
      */
     public static Timeout startNow(final long durationNanos) {
         if (durationNanos < 0 || durationNanos == Long.MAX_VALUE) {

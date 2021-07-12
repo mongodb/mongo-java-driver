@@ -29,6 +29,7 @@ import com.mongodb.event.ServerHeartbeatFailedEvent
 import com.mongodb.event.ServerHeartbeatStartedEvent
 import com.mongodb.event.ServerHeartbeatSucceededEvent
 import com.mongodb.event.ServerMonitorListener
+import com.mongodb.internal.inject.SameObjectProvider
 import org.bson.BsonDocument
 import org.bson.ByteBufNIO
 import spock.lang.Specification
@@ -45,10 +46,31 @@ class DefaultServerMonitorSpecification extends Specification {
     def 'close should not send a sendStateChangedEvent'() {
         given:
         def stateChanged = false
-        def changeListener = new ChangeListener<ServerDescription>() {
+        def sdam = new SdamServerDescriptionManager() {
             @Override
-            void stateChanged(final ChangeEvent<ServerDescription> event) {
+            void update(final ServerDescription candidateDescription) {
+                assert candidateDescription != null
                 stateChanged = true
+            }
+
+            @Override
+            void handleExceptionBeforeHandshake(final SdamServerDescriptionManager.SdamIssue sdamIssue) {
+                throw new UnsupportedOperationException()
+            }
+
+            @Override
+            void handleExceptionAfterHandshake(final SdamServerDescriptionManager.SdamIssue sdamIssue) {
+                throw new UnsupportedOperationException()
+            }
+
+            @Override
+            SdamServerDescriptionManager.SdamIssue.Context context() {
+                throw new UnsupportedOperationException()
+            }
+
+            @Override
+            SdamServerDescriptionManager.SdamIssue.Context context(final InternalConnection connection) {
+                throw new UnsupportedOperationException()
             }
         }
         def internalConnectionFactory = Mock(InternalConnectionFactory) {
@@ -59,7 +81,7 @@ class DefaultServerMonitorSpecification extends Specification {
             }
         }
         monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()), ServerSettings.builder().build(),
-                new ClusterClock(), changeListener, internalConnectionFactory, new TestConnectionPool(), null)
+                new ClusterClock(), internalConnectionFactory, null, SameObjectProvider.initialized(sdam))
         monitor.start()
 
         when:
@@ -72,12 +94,6 @@ class DefaultServerMonitorSpecification extends Specification {
 
     def 'should send started and succeeded heartbeat events'() {
         given:
-        def changeListener = new ChangeListener<ServerDescription>() {
-            @Override
-            void stateChanged(final ChangeEvent<ServerDescription> event) {
-            }
-        }
-
         def latch = new CountDownLatch(1)
         def startedEvent
         def succeededEvent
@@ -150,7 +166,7 @@ class DefaultServerMonitorSpecification extends Specification {
         }
         monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()),
                 ServerSettings.builder().heartbeatFrequency(1, TimeUnit.SECONDS).addServerMonitorListener(serverMonitorListener).build(),
-                new ClusterClock(), changeListener, internalConnectionFactory, new TestConnectionPool(), null)
+                new ClusterClock(), internalConnectionFactory, null, mockSdamProvider())
 
         when:
         monitor.start()
@@ -169,12 +185,6 @@ class DefaultServerMonitorSpecification extends Specification {
 
     def 'should send started and failed heartbeat events'() {
         given:
-        def changeListener = new ChangeListener<ServerDescription>() {
-            @Override
-            void stateChanged(final ChangeEvent<ServerDescription> event) {
-            }
-        }
-
         def latch = new CountDownLatch(1)
         def startedEvent
         def succeededEvent
@@ -237,7 +247,7 @@ class DefaultServerMonitorSpecification extends Specification {
         }
         monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()),
                 ServerSettings.builder().heartbeatFrequency(1, TimeUnit.SECONDS).addServerMonitorListener(serverMonitorListener).build(),
-                new ClusterClock(), changeListener, internalConnectionFactory, new TestConnectionPool(), null)
+                new ClusterClock(), internalConnectionFactory, null, mockSdamProvider())
 
         when:
         monitor.start()
@@ -252,5 +262,9 @@ class DefaultServerMonitorSpecification extends Specification {
 
         cleanup:
         monitor?.close()
+    }
+
+    private mockSdamProvider() {
+        SameObjectProvider.initialized(Mock(SdamServerDescriptionManager))
     }
 }

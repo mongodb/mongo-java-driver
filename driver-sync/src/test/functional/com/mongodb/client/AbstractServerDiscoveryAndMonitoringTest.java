@@ -38,7 +38,7 @@ public abstract class AbstractServerDiscoveryAndMonitoringTest extends AbstractU
     public AbstractServerDiscoveryAndMonitoringTest(final String filename, final String description, final String databaseName,
                                                     final String collectionName, final BsonArray data, final BsonDocument definition,
                                                     final boolean skipTest) {
-        super(filename, description, databaseName, collectionName, data, definition, skipTest);
+        super(filename, description, databaseName, collectionName, data, definition, skipTest, false);
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")

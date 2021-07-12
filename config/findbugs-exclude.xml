@@ -196,4 +196,16 @@
         <Method name="awaitNanos"/>
         <Bug pattern="WA_AWAIT_NOT_IN_LOOP"/>
     </Match>
+
+    <!-- The checker fails to see that the code prevents concurrent incrementation by using exclusive locking. -->
+    <Match>
+        <Class name="com.mongodb.internal.connection.DefaultConnectionPool$StateAndGeneration"/>
+        <Field name="generation"/>
+        <Bug pattern="VO_VOLATILE_INCREMENT"/>
+    </Match>
+    <Match>
+        <Class name="com.mongodb.internal.connection.ConcurrentPool$StateAndPermits"/>
+        <Field name="permits"/>
+        <Bug pattern="VO_VOLATILE_INCREMENT"/>
+    </Match>
 </FindBugsFilter>

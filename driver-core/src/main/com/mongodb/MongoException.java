@@ -105,7 +105,7 @@ public class MongoException extends RuntimeException {
      * @param msg the message
      * @param t   the throwable cause
      */
-    public MongoException(@Nullable final String msg, final Throwable t) {
+    public MongoException(@Nullable final String msg, @Nullable final Throwable t) {
         super(msg, t);
         code = -4;
     }

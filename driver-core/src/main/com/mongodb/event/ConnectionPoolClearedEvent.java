@@ -23,7 +23,7 @@ import org.bson.types.ObjectId;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * An event signifying when a connection pool is cleared.
+ * An event signifying when a connection pool is cleared and paused.
  *
  * @since 4.0
  */

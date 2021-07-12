@@ -350,6 +350,12 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
   type DuplicateKeyException = com.mongodb.DuplicateKeyException
 
   /**
+   * An exception that may happen usually as a result of another thread clearing a connection pool.
+   * Such clearing usually itself happens as a result of an exception.
+   */
+  type MongoConnectionPoolClearedException = com.mongodb.MongoConnectionPoolClearedException
+
+  /**
    * The client-side automatic encryption settings. Client side encryption enables an application to specify what fields in a collection
    * must be encrypted, and the driver automatically encrypts commands sent to MongoDB and decrypts responses.
    *
