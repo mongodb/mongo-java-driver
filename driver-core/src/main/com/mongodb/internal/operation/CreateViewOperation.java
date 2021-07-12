@@ -16,11 +16,9 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.MongoClientException;
 import com.mongodb.WriteConcern;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.client.model.Collation;
-import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.AsyncConnection;
@@ -44,7 +42,6 @@ import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.releasingCallback;
 import static com.mongodb.internal.operation.OperationHelper.withAsyncConnection;
 import static com.mongodb.internal.operation.OperationHelper.withConnection;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotFour;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 
 /**
@@ -150,10 +147,7 @@ public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOper
         return withConnection(binding, new CallableWithConnection<Void>() {
             @Override
             public Void call(final Connection connection) {
-                if (!serverIsAtLeastVersionThreeDotFour(connection.getDescription())) {
-                    throw createExceptionForIncompatibleServerVersion();
-                }
-                executeCommand(binding, databaseName, getCommand(connection.getDescription()), new BsonDocumentCodec(),
+                executeCommand(binding, databaseName, getCommand(), new BsonDocumentCodec(),
                         writeConcernErrorTransformer());
                 return null;
             }
@@ -171,17 +165,14 @@ public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOper
                 }
                 else {
                     SingleResultCallback<Void> wrappedCallback = releasingCallback(errHandlingCallback, connection);
-                    if (!serverIsAtLeastVersionThreeDotFour(connection.getDescription())) {
-                        wrappedCallback.onResult(null, createExceptionForIncompatibleServerVersion());
-                    }
-                    executeCommandAsync(binding, databaseName, getCommand(connection.getDescription()),
-                            connection, writeConcernErrorWriteTransformer(), wrappedCallback);
+                    executeCommandAsync(binding, databaseName, getCommand(), connection, writeConcernErrorWriteTransformer(),
+                            wrappedCallback);
                 }
             }
         });
     }
 
-    private BsonDocument getCommand(final ConnectionDescription description) {
+    private BsonDocument getCommand() {
         BsonDocument commandDocument = new BsonDocument("create", new BsonString(viewName))
                                                .append("viewOn", new BsonString(viewOn))
                                                .append("pipeline", new BsonArray(pipeline));
@@ -189,11 +180,7 @@ public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOper
             commandDocument.put("collation", collation.asDocument());
         }
 
-        appendWriteConcernToCommand(writeConcern, commandDocument, description);
+        appendWriteConcernToCommand(writeConcern, commandDocument);
         return commandDocument;
-    }
-
-    private MongoClientException createExceptionForIncompatibleServerVersion() {
-        return new MongoClientException("Can not create view.  The minimum server version that supports view creation is 3.4");
     }
 }

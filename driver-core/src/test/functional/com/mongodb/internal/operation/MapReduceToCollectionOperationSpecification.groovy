@@ -299,23 +299,6 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         serverVersion | includeBypassValidation | includeWriteConcern | includeCollation | async
         [3, 4, 0]     | true                    | true                | true             | true
         [3, 4, 0]     | true                    | true                | true             | false
-        [3, 2, 0]     | true                    | false               | false            | true
-        [3, 2, 0]     | true                    | false               | false            | false
-    }
-
-    def 'should throw an exception when passing an unsupported collation'() {
-        given:
-        def operation = mapReduceOperation.collation(defaultCollation)
-
-        when:
-        testOperationThrows(operation, [3, 2, 0], async)
-
-        then:
-        def exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('Collation not supported by wire version:')
-
-        where:
-        async << [false, false]
     }
 
     @IgnoreIf({ serverVersionLessThan(3, 4) })

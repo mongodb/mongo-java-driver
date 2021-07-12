@@ -266,21 +266,6 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
         [async, hint] << [[true, false], [new BsonString('hint_1'), BsonDocument.parse('{hint: 1}')]].combinations()
     }
 
-    def 'should throw an exception when using an unsupported Collation'() {
-        given:
-        def operation = new CountDocumentsOperation(helper.namespace).collation(defaultCollation)
-
-        when:
-        testOperationThrows(operation, [3, 2, 0], async)
-
-        then:
-        def exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('Collation not supported by wire version:')
-
-        where:
-        async << [true, false]
-    }
-
     @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should support collation'() {
         given:

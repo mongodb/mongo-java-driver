@@ -235,21 +235,6 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         async << [false, false]
     }
 
-    def 'should throw an exception when using an unsupported Collation'() {
-        def operation = new DistinctOperation(helper.namespace, 'name', helper.decoder)
-                .collation(defaultCollation)
-
-        when:
-        testOperationThrows(operation, [3, 2, 0], async)
-
-        then:
-        def exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('Collation not supported by wire version:')
-
-        where:
-        async << [false, false]
-    }
-
     @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should support collation'() {
         given:

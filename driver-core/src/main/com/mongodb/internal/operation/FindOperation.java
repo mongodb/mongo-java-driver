@@ -66,7 +66,6 @@ import static com.mongodb.internal.operation.ExplainHelper.asExplainCommand;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
 import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToQueryResult;
-import static com.mongodb.internal.operation.OperationHelper.validateFindOptions;
 import static com.mongodb.internal.operation.OperationHelper.withAsyncSourceAndConnection;
 import static com.mongodb.internal.operation.OperationHelper.withSourceAndConnection;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
@@ -809,7 +808,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         return new CommandOperationHelper.CommandCreator() {
             @Override
             public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
-                validateFindOptions(connectionDescription, collation);
                 return getCommand(sessionContext, connectionDescription.getMaxWireVersion());
             }
         };

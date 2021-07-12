@@ -23,7 +23,6 @@ import com.mongodb.client.model.TimeSeriesGranularity;
 import com.mongodb.client.model.TimeSeriesOptions;
 import com.mongodb.client.model.ValidationAction;
 import com.mongodb.client.model.ValidationLevel;
-import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -37,7 +36,7 @@ import org.bson.BsonString;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -50,7 +49,6 @@ import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.releasingCallback;
-import static com.mongodb.internal.operation.OperationHelper.validateCollation;
 import static com.mongodb.internal.operation.OperationHelper.withAsyncConnection;
 import static com.mongodb.internal.operation.OperationHelper.withConnection;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
@@ -400,9 +398,8 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
     @Override
     public Void execute(final WriteBinding binding) {
         return withConnection(binding, connection -> {
-            validateCollation(connection, collation);
             getCommandFunctions().forEach(commandCreator ->
-                executeCommand(binding, databaseName, commandCreator.apply(connection.getDescription()), connection,
+                executeCommand(binding, databaseName, commandCreator.get(), connection,
                         writeConcernErrorTransformer())
             );
             return null;
@@ -416,9 +413,8 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
             if (t != null) {
                 errHandlingCallback.onResult(null, t);
             } else {
-                validateCollation(connection, collation, (connection1, t1) ->
-                    new ProcessCommandsCallback(binding, connection1, releasingCallback(errHandlingCallback, connection))
-                            .onResult(null, t1));
+                new ProcessCommandsCallback(binding, connection, releasingCallback(errHandlingCallback, connection))
+                        .onResult(null, null);
             }
         });
     }
@@ -458,16 +454,16 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
      * </p>
      * @return the list of commands to run to create the collection
      */
-    private List<Function<ConnectionDescription, BsonDocument>> getCommandFunctions() {
+    private List<Supplier<BsonDocument>> getCommandFunctions() {
         if (encryptedFields == null) {
             return singletonList(this::getCreateCollectionCommand);
         }
         return asList(
-                connectionDescription -> getCreateEncryptedFieldsCollectionCommand("esc"),
-                connectionDescription -> getCreateEncryptedFieldsCollectionCommand("ecc"),
-                connectionDescription -> getCreateEncryptedFieldsCollectionCommand("ecoc"),
+                () -> getCreateEncryptedFieldsCollectionCommand("esc"),
+                () -> getCreateEncryptedFieldsCollectionCommand("ecc"),
+                () -> getCreateEncryptedFieldsCollectionCommand("ecoc"),
                 this::getCreateCollectionCommand,
-                connectionDescription -> new BsonDocument("createIndexes", new BsonString(collectionName))
+                () -> new BsonDocument("createIndexes", new BsonString(collectionName))
                         .append("indexes", SAFE_CONTENT_ARRAY)
         );
     }
@@ -480,7 +476,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
                 .append("clusteredIndex", ENCRYPT_CLUSTERED_INDEX);
     }
 
-    private BsonDocument getCreateCollectionCommand(final ConnectionDescription description) {
+    private BsonDocument getCreateCollectionCommand() {
         BsonDocument document = new BsonDocument("create", new BsonString(collectionName));
         putIfFalse(document, "autoIndexId", autoIndex);
         document.put("capped", BsonBoolean.valueOf(capped));
@@ -497,7 +493,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         if (validationAction != null) {
             document.put("validationAction", new BsonString(validationAction.getValue()));
         }
-        appendWriteConcernToCommand(writeConcern, document, description);
+        appendWriteConcernToCommand(writeConcern, document);
         if (collation != null) {
             document.put("collation", collation.asDocument());
         }
@@ -538,7 +534,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         private final AsyncWriteBinding binding;
         private final AsyncConnection connection;
         private final SingleResultCallback<Void>  finalCallback;
-        private final Deque<Function<ConnectionDescription, BsonDocument>> commands;
+        private final Deque<Supplier<BsonDocument>> commands;
 
         ProcessCommandsCallback(
                 final AsyncWriteBinding binding, final AsyncConnection connection, final SingleResultCallback<Void> finalCallback) {
@@ -554,11 +550,11 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
                 finalCallback.onResult(null, t);
                 return;
             }
-            Function<ConnectionDescription, BsonDocument> nextCommandFunction = commands.poll();
+            Supplier<BsonDocument> nextCommandFunction = commands.poll();
             if (nextCommandFunction == null) {
                 finalCallback.onResult(null, null);
             } else {
-                executeCommandAsync(binding, databaseName, nextCommandFunction.apply(connection.getDescription()),
+                executeCommandAsync(binding, databaseName, nextCommandFunction.get(),
                         connection, writeConcernErrorWriteTransformer(), this);
             }
         }
