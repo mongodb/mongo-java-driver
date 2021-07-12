@@ -25,6 +25,7 @@ import org.bson.types.ObjectId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize;
@@ -274,6 +275,9 @@ public class ConnectionDescription {
 
         ConnectionDescription that = (ConnectionDescription) o;
 
+        if (maxWireVersion != that.maxWireVersion) {
+            return false;
+        }
         if (maxBatchCount != that.maxBatchCount) {
             return false;
         }
@@ -283,31 +287,32 @@ public class ConnectionDescription {
         if (maxMessageSize != that.maxMessageSize) {
             return false;
         }
+        if (!Objects.equals(serviceId, that.serviceId)) {
+            return false;
+        }
         if (!connectionId.equals(that.connectionId)) {
             return false;
         }
         if (serverType != that.serverType) {
             return false;
         }
-        if (maxWireVersion != that.maxWireVersion) {
-            return false;
-        }
         if (!compressors.equals(that.compressors)) {
             return false;
         }
-
-        return true;
+        return Objects.equals(saslSupportedMechanisms, that.saslSupportedMechanisms);
     }
 
     @Override
     public int hashCode() {
         int result = connectionId.hashCode();
-        result = 31 * result + maxBatchCount;
+        result = 31 * result + maxWireVersion;
         result = 31 * result + serverType.hashCode();
         result = 31 * result + maxBatchCount;
         result = 31 * result + maxDocumentSize;
         result = 31 * result + maxMessageSize;
         result = 31 * result + compressors.hashCode();
+        result = 31 * result + (serviceId != null ? serviceId.hashCode() : 0);
+        result = 31 * result + (saslSupportedMechanisms != null ? saslSupportedMechanisms.hashCode() : 0);
         return result;
     }
 
@@ -321,6 +326,7 @@ public class ConnectionDescription {
                 + ", maxDocumentSize=" + maxDocumentSize
                 + ", maxMessageSize=" + maxMessageSize
                 + ", compressors=" + compressors
+                + ", serviceId=" + serviceId
                 + '}';
     }
 }

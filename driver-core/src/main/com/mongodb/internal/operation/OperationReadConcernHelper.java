@@ -23,7 +23,8 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.ReadConcernHelper.getReadConcernDocument;
 
 final class OperationReadConcernHelper {
-    static void appendReadConcernToCommand(final SessionContext sessionContext, final BsonDocument commandDocument) {
+    static void appendReadConcernToCommand(final SessionContext sessionContext, final int maxWireVersion,
+                                           final BsonDocument commandDocument) {
         notNull("commandDocument", commandDocument);
         notNull("sessionContext", sessionContext);
 
@@ -31,7 +32,11 @@ final class OperationReadConcernHelper {
             return;
         }
 
-        BsonDocument readConcernDocument = getReadConcernDocument(sessionContext);
+        if (sessionContext.isSnapshot()) {
+            return;
+        }
+
+        BsonDocument readConcernDocument = getReadConcernDocument(sessionContext, maxWireVersion);
         if (!readConcernDocument.isEmpty()) {
             commandDocument.append("readConcern", readConcernDocument);
         }

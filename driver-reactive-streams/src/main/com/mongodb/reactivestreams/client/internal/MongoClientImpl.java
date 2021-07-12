@@ -44,6 +44,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static org.bson.internal.CodecRegistryHelper.createRegistry;
@@ -65,6 +66,7 @@ public final class MongoClientImpl implements MongoClient {
     private final ClientSessionHelper clientSessionHelper;
     private final MongoOperationPublisher<Document> mongoOperationPublisher;
     private final Crypt crypt;
+    private final AtomicBoolean closed;
 
     public MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, @Nullable final Closeable externalResourceCloser) {
         this(settings, cluster, null, externalResourceCloser);
@@ -96,6 +98,7 @@ public final class MongoClientImpl implements MongoClient {
                                                                      settings.getReadConcern(), settings.getWriteConcern(),
                                                                      settings.getRetryWrites(), settings.getRetryReads(),
                                                                      settings.getUuidRepresentation(), this.executor);
+        this.closed = new AtomicBoolean();
     }
 
     Cluster getCluster() {
@@ -126,16 +129,18 @@ public final class MongoClientImpl implements MongoClient {
 
     @Override
     public void close() {
-        if (crypt != null) {
-            crypt.close();
-        }
-        serverSessionPool.close();
-        cluster.close();
-        if (externalResourceCloser != null) {
-            try {
-                externalResourceCloser.close();
-            } catch (IOException e) {
-                LOGGER.warn("Exception closing resource", e);
+        if (!closed.getAndSet(true)) {
+            if (crypt != null) {
+                crypt.close();
+            }
+            serverSessionPool.close();
+            cluster.close();
+            if (externalResourceCloser != null) {
+                try {
+                    externalResourceCloser.close();
+                } catch (IOException e) {
+                    LOGGER.warn("Exception closing resource", e);
+                }
             }
         }
     }

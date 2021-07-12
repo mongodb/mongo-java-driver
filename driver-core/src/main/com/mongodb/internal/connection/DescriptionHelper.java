@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageSize;
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxWriteBatchSize;
 import static com.mongodb.connection.ServerConnectionState.CONNECTED;
@@ -77,11 +78,13 @@ public final class DescriptionHelper {
             connectionDescription = connectionDescription.withConnectionId(newConnectionId);
         }
         if (clusterConnectionMode == ClusterConnectionMode.LOAD_BALANCED) {
-            if (manufactureServiceId) {
+            ObjectId serviceId = getServiceId(isMasterResult);
+            if (serviceId != null) {
+                connectionDescription = connectionDescription.withServiceId(serviceId);
+            } else if (manufactureServiceId) {
                 TopologyVersion topologyVersion = getTopologyVersion(isMasterResult);
-                if (topologyVersion != null) {
-                    connectionDescription = connectionDescription.withServiceId(topologyVersion.getProcessId());
-                }
+                assertNotNull(topologyVersion);
+                connectionDescription = connectionDescription.withServiceId(topologyVersion.getProcessId());
             } else {
                 throw new MongoClientException("Driver attempted to initialize in load balancing mode, but the server does not support "
                         + "this mode");
@@ -142,6 +145,11 @@ public final class DescriptionHelper {
     private static TopologyVersion getTopologyVersion(final BsonDocument isMasterResult) {
         return isMasterResult.containsKey("topologyVersion") && isMasterResult.get("topologyVersion").isDocument()
                 ? new TopologyVersion(isMasterResult.getDocument("topologyVersion")) : null;
+    }
+
+    private static ObjectId getServiceId(final BsonDocument isMasterResult) {
+        return isMasterResult.containsKey("serviceId") && isMasterResult.get("serviceId").isObjectId()
+                ? isMasterResult.getObjectId("serviceId").getValue() : null;
     }
 
     private static int getMaxMessageSizeBytes(final BsonDocument isMasterResult) {

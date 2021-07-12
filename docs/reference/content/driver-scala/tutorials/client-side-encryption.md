@@ -17,9 +17,7 @@ With field level encryption, developers can encrypt fields client side without a
 configuration or directives. Client-side field level encryption supports workloads where applications must guarantee that 
 unauthorized parties, including server administrators, cannot read the encrypted data.
 
-{{% note class="important" %}}
-Support for client side encryption is in beta.  Backwards-breaking changes may be made before the final release.
-
+{{% note %}}
 This guide uses the `Observable` implicits as covered in the [Quick Start Primer]({{< relref "driver-scala/getting-started/quick-start-primer.md" >}}).
 {{% /note %}}
 

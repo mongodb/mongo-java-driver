@@ -17,6 +17,7 @@
 package com.mongodb.internal.session;
 
 import com.mongodb.ClientSessionOptions;
+import com.mongodb.MongoClientException;
 import com.mongodb.ServerAddress;
 import com.mongodb.internal.binding.ReferenceCounted;
 import com.mongodb.lang.Nullable;
@@ -37,6 +38,7 @@ public class BaseClientSessionImpl implements ClientSession {
     private final ClientSessionOptions options;
     private BsonDocument clusterTime;
     private BsonTimestamp operationTime;
+    private BsonTimestamp snapshotTimestamp;
     private ServerAddress pinnedServerAddress;
     private BsonDocument recoveryToken;
     private ReferenceCounted transactionContext;
@@ -131,6 +133,25 @@ public class BaseClientSessionImpl implements ClientSession {
     public void advanceClusterTime(final BsonDocument newClusterTime) {
         isTrue("open", !closed);
         this.clusterTime = greaterOf(newClusterTime);
+    }
+
+    @Override
+    public void setSnapshotTimestamp(final BsonTimestamp snapshotTimestamp) {
+        isTrue("open", !closed);
+        if (snapshotTimestamp != null) {
+            if (this.snapshotTimestamp != null && !snapshotTimestamp.equals(this.snapshotTimestamp)) {
+                throw new MongoClientException("Snapshot timestamps should not change during the lifetime of the session.  Current "
+                        + "timestamp is " + this.snapshotTimestamp + ", and attempting to set it to " + snapshotTimestamp);
+            }
+            this.snapshotTimestamp = snapshotTimestamp;
+        }
+    }
+
+    @Override
+    @Nullable
+    public BsonTimestamp getSnapshotTimestamp() {
+        isTrue("open", !closed);
+        return snapshotTimestamp;
     }
 
     private BsonDocument greaterOf(final BsonDocument newClusterTime) {

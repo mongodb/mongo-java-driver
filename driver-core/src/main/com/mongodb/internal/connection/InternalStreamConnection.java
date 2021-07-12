@@ -72,6 +72,7 @@ import static com.mongodb.internal.connection.ProtocolHelper.getCommandFailureEx
 import static com.mongodb.internal.connection.ProtocolHelper.getMessageSettings;
 import static com.mongodb.internal.connection.ProtocolHelper.getOperationTime;
 import static com.mongodb.internal.connection.ProtocolHelper.getRecoveryToken;
+import static com.mongodb.internal.connection.ProtocolHelper.getSnapshotTimestamp;
 import static com.mongodb.internal.connection.ProtocolHelper.isCommandOk;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -642,6 +643,7 @@ public class InternalStreamConnection implements InternalConnection {
     private void updateSessionContext(final SessionContext sessionContext, final ResponseBuffers responseBuffers) {
         sessionContext.advanceOperationTime(getOperationTime(responseBuffers));
         sessionContext.advanceClusterTime(getClusterTime(responseBuffers));
+        sessionContext.setSnapshotTimestamp(getSnapshotTimestamp(responseBuffers));
         if (sessionContext.hasActiveTransaction()) {
             BsonDocument recoveryToken = getRecoveryToken(responseBuffers);
             if (recoveryToken != null) {

@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 
@@ -84,6 +85,21 @@ public class NoOpSessionContext implements SessionContext {
 
     @Override
     public void advanceClusterTime(final BsonDocument clusterTime) {
+    }
+
+    @Override
+    public boolean isSnapshot() {
+        return false;
+    }
+
+    @Override
+    public void setSnapshotTimestamp(final BsonTimestamp snapshotTimestamp) {
+    }
+
+    @Override
+    @Nullable
+    public BsonTimestamp getSnapshotTimestamp() {
+        return null;
     }
 
     @Override

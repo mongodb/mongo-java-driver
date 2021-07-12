@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation
 
-
 import com.mongodb.MongoCursorNotFoundException
 import com.mongodb.MongoException
 import com.mongodb.MongoTimeoutException
@@ -26,19 +25,23 @@ import com.mongodb.ServerCursor
 import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.client.model.CreateCollectionOptions
-import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
 import com.mongodb.internal.connection.AsyncConnection
 import com.mongodb.internal.connection.Connection
+import com.mongodb.internal.connection.NoOpSessionContext
 import com.mongodb.internal.connection.QueryResult
+import com.mongodb.internal.validator.NoOpFieldNameValidator
+import org.bson.BsonArray
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.BsonInt64
 import org.bson.BsonNull
 import org.bson.BsonString
 import org.bson.BsonTimestamp
 import org.bson.Document
+import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 import util.spock.annotations.Slow
@@ -51,6 +54,7 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getConnection
 import static com.mongodb.ClusterFixture.getReadConnectionSource
 import static com.mongodb.ClusterFixture.getReferenceCountAfterTimeout
+import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionLessThan
@@ -59,6 +63,7 @@ import static com.mongodb.internal.connection.ServerHelper.waitForRelease
 import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToQueryResult
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo
 import static java.util.Arrays.asList
+import static java.util.Collections.singletonList
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.fail
@@ -367,16 +372,17 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         when:
         cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 2, 0, new DocumentCodec(), connectionSource, connection)
 
-        def latch = new CountDownLatch(1)
         def connection = getConnection(connectionSource)
         def serverCursor = cursor.cursor.get()
-        connection.killCursorAsync(getNamespace(), asList(serverCursor.id), new SingleResultCallback<Void>() {
-            @Override
-            void onResult(final Void result, final Throwable t) {
-                latch.countDown()
-            }
-        })
-        latch.await()
+        if (serverVersionLessThan(3, 6)) {
+            connection.killCursor(getNamespace(), asList(cursor.getServerCursor().id))
+        } else {
+            connection.command(getNamespace().databaseName,
+                    new BsonDocument('killCursors', new BsonString(namespace.getCollectionName()))
+                            .append('cursors', new BsonArray(singletonList(new BsonInt64(serverCursor.getId())))),
+                    new NoOpFieldNameValidator(), ReadPreference.primary(),
+                    new BsonDocumentCodec(), new NoOpSessionContext(), getServerApi())
+        }
         connection.release()
         nextBatch()
 
