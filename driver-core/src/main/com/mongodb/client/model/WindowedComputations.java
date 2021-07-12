@@ -564,13 +564,15 @@ public final class WindowedComputations {
     private static WindowedComputation simpleParameterWindowFunction(final String path, final String functionName,
                                                                      @Nullable final Object expression,
                                                                      @Nullable final Window window) {
-        return new BsonFieldWindowedComputation(new BsonField(path, new SimpleParameterFunctionAndWindow(functionName, expression, window)));
+        return new BsonFieldWindowedComputation(new BsonField(path,
+                new SimpleParameterFunctionAndWindow(functionName, expression, window)));
     }
 
     private static WindowedComputation compoundParameterWindowFunction(final String path, final String functionName,
                                                                        final Map<ParamName, Object> args,
                                                                        @Nullable final Window window) {
-        return new BsonFieldWindowedComputation(new BsonField(path, new CompoundParameterFunctionAndWindow(functionName, args, window)));
+        return new BsonFieldWindowedComputation(new BsonField(path,
+                new CompoundParameterFunctionAndWindow(functionName, args, window)));
     }
 
     private WindowedComputations() {

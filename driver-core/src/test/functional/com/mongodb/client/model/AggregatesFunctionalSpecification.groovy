@@ -1084,7 +1084,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         null | ascending('num1') | WindowedComputations
                 .of(new BsonField('result', new Document('$sum', '$num1')
                         .append('window', Windows.of(
-                                new Document('range', asList("current", Integer.MAX_VALUE))).toBsonDocument()))) | [6, 5, 3]
+                                new Document('range', asList('current', Integer.MAX_VALUE))).toBsonDocument()))) | [6, 5, 3]
         null | ascending('date') | WindowedComputations
                 .avg('result', '$num1', timeRange(-1, 0, MongoTimeUnit.QUARTER)) | [1, 1.5, 2]
         null | null | WindowedComputations
