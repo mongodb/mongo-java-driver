@@ -20,7 +20,6 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.AsyncConnection;
@@ -154,7 +153,7 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
             @Override
             public Void call(final Connection connection) {
                 try {
-                    executeCommand(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()), connection,
+                    executeCommand(binding, namespace.getDatabaseName(), getCommand(), connection,
                             writeConcernErrorTransformer());
                 } catch (MongoCommandException e) {
                     rethrowIfNotNamespaceError(e);
@@ -174,7 +173,7 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
                     errHandlingCallback.onResult(null, t);
                 } else {
                     final SingleResultCallback<Void> releasingCallback = releasingCallback(errHandlingCallback, connection);
-                    executeCommandAsync(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
+                    executeCommandAsync(binding, namespace.getDatabaseName(), getCommand(),
                             connection, writeConcernErrorWriteTransformer(), new SingleResultCallback<Void>() {
                                 @Override
                                 public void onResult(final Void result, final Throwable t) {
@@ -190,7 +189,7 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
         });
     }
 
-    private BsonDocument getCommand(final ConnectionDescription description) {
+    private BsonDocument getCommand() {
         BsonDocument command = new BsonDocument("dropIndexes", new BsonString(namespace.getCollectionName()));
         if (indexName != null) {
             command.put("index", new BsonString(indexName));
@@ -199,7 +198,7 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
         }
 
         putIfNotZero(command, "maxTimeMS", maxTimeMS);
-        appendWriteConcernToCommand(writeConcern, command, description);
+        appendWriteConcernToCommand(writeConcern, command);
         return command;
     }
 }

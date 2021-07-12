@@ -163,24 +163,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    def 'should throw an exception when using an unsupported Collation'() {
-        given:
-        def pipeline = [new BsonDocument('$match', new BsonDocument('a', new BsonString('A')))]
-        def operation = new AggregateOperation<Document>(helper.namespace, pipeline, new DocumentCodec())
-                .collation(defaultCollation)
-
-        when:
-        testOperationThrows(operation, [3, 2, 0], async)
-
-        then:
-        def exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('Collation not supported by wire version:')
-
-        where:
-        async << [true, false]
-    }
-
-    @IgnoreIf({ serverVersionLessThan(3, 4) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should support collation'() {
         given:
         def document = BsonDocument.parse('{_id: 1, str: "foo"}')

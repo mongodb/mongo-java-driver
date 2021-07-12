@@ -39,7 +39,6 @@ import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.binding.ReferenceCounted;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.bulk.DeleteRequest;
-import com.mongodb.internal.bulk.IndexRequest;
 import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.bulk.WriteRequest;
 import com.mongodb.internal.connection.AsyncConnection;
@@ -62,10 +61,8 @@ import java.util.function.Supplier;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotFour;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotFour;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotTwo;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionThreeDotFour;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionThreeDotSix;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
@@ -93,23 +90,8 @@ final class OperationHelper {
         void call(AsyncConnectionSource source, AsyncConnection connection, Throwable t);
     }
 
-    static void validateCollation(final Connection connection, final Collation collation) {
-        validateCollation(connection.getDescription(), collation);
-    }
-
-    static void validateCollation(final ConnectionDescription connectionDescription, final Collation collation) {
-        if (collation != null && !serverIsAtLeastVersionThreeDotFour(connectionDescription)) {
-            throw new IllegalArgumentException(format("Collation not supported by wire version: %s",
-                    connectionDescription.getMaxWireVersion()));
-        }
-    }
-
-    static void validateCollationAndWriteConcern(final ConnectionDescription connectionDescription, final Collation collation,
-                                                 final WriteConcern writeConcern) {
-        if (collation != null && !serverIsAtLeastVersionThreeDotFour(connectionDescription)) {
-            throw new IllegalArgumentException(format("Collation not supported by wire version: %s",
-                    connectionDescription.getMaxWireVersion()));
-        } else if (collation != null && !writeConcern.isAcknowledged()) {
+    static void validateCollationAndWriteConcern(final Collation collation, final WriteConcern writeConcern) {
+        if (collation != null && !writeConcern.isAcknowledged()) {
             throw new MongoClientException("Specifying collation with an unacknowledged WriteConcern is not supported");
         }
     }
@@ -125,10 +107,6 @@ final class OperationHelper {
 
     private static void validateWriteRequestHint(final ConnectionDescription connectionDescription, final WriteConcern writeConcern,
                                                  final WriteRequest request) {
-        if (serverIsLessThanVersionThreeDotFour(connectionDescription)) {
-            throw new IllegalArgumentException(format("Hint not supported by wire version: %s",
-                    connectionDescription.getMaxWireVersion()));
-        }
         if (!writeConcern.isAcknowledged()) {
             if (request instanceof UpdateRequest && serverIsLessThanVersionFourDotTwo(connectionDescription)) {
                 throw new IllegalArgumentException(format("Hint not supported by wire version: %s",
@@ -152,18 +130,7 @@ final class OperationHelper {
         }
     }
 
-    static void validateCollation(final AsyncConnection connection, final Collation collation,
-                                  final AsyncCallableWithConnection callable) {
-        Throwable throwable = null;
-        if (!serverIsAtLeastVersionThreeDotFour(connection.getDescription()) && collation != null) {
-            throwable = new IllegalArgumentException(format("Collation not supported by wire version: %s",
-                    connection.getDescription().getMaxWireVersion()));
-        }
-        callable.call(connection, throwable);
-    }
-
-    static void validateWriteRequestCollations(final ConnectionDescription connectionDescription,
-                                               final List<? extends WriteRequest> requests, final WriteConcern writeConcern) {
+    static void validateWriteRequestCollations(final List<? extends WriteRequest> requests, final WriteConcern writeConcern) {
         Collation collation = null;
         for (WriteRequest request : requests) {
             if (request instanceof UpdateRequest) {
@@ -175,7 +142,7 @@ final class OperationHelper {
                 break;
             }
         }
-        validateCollationAndWriteConcern(connectionDescription, collation, writeConcern);
+        validateCollationAndWriteConcern(collation, writeConcern);
     }
 
     static void validateUpdateRequestArrayFilters(final ConnectionDescription connectionDescription,
@@ -192,8 +159,8 @@ final class OperationHelper {
         }
     }
 
-    static void validateWriteRequestHints(final ConnectionDescription connectionDescription,
-                                          final List<? extends WriteRequest> requests, final WriteConcern writeConcern) {
+    static void validateWriteRequestHints(final ConnectionDescription connectionDescription, final List<? extends WriteRequest> requests,
+            final WriteConcern writeConcern) {
         for (WriteRequest request : requests) {
             Bson hint = null;
             String hintString = null;
@@ -214,7 +181,7 @@ final class OperationHelper {
     static void validateWriteRequests(final ConnectionDescription connectionDescription, final Boolean bypassDocumentValidation,
                                       final List<? extends WriteRequest> requests, final WriteConcern writeConcern) {
         checkBypassDocumentValidationIsSupported(bypassDocumentValidation, writeConcern);
-        validateWriteRequestCollations(connectionDescription, requests, writeConcern);
+        validateWriteRequestCollations(requests, writeConcern);
         validateUpdateRequestArrayFilters(connectionDescription, requests, writeConcern);
         validateWriteRequestHints(connectionDescription, requests, writeConcern);
     }
@@ -229,69 +196,6 @@ final class OperationHelper {
             callback.onResult(null, validationT);
             return true;
         }
-    }
-
-    static void validateIndexRequestCollations(final Connection connection, final List<IndexRequest> requests) {
-        for (IndexRequest request : requests) {
-            if (request.getCollation() != null) {
-                validateCollation(connection, request.getCollation());
-                break;
-            }
-        }
-    }
-
-    static void validateIndexRequestCollations(final AsyncConnection connection, final List<IndexRequest> requests,
-                                               final AsyncCallableWithConnection callable) {
-        boolean calledTheCallable = false;
-        for (IndexRequest request : requests) {
-            if (request.getCollation() != null) {
-                calledTheCallable = true;
-                validateCollation(connection, request.getCollation(), new AsyncCallableWithConnection() {
-                    @Override
-                    public void call(final AsyncConnection connection, final Throwable t) {
-                        callable.call(connection, t);
-                    }
-                });
-                break;
-            }
-        }
-        if (!calledTheCallable) {
-            callable.call(connection, null);
-        }
-    }
-
-    static void validateFindOptions(final ConnectionDescription connectionDescription, final Collation collation) {
-        validateCollation(connectionDescription, collation);
-    }
-
-    static void validateFindOptions(final AsyncConnection connection, final Collation collation,
-            final AsyncCallableWithConnection callable) {
-        validateCollation(connection, collation, new AsyncCallableWithConnection() {
-            @Override
-            public void call(final AsyncConnection connection, final Throwable t) {
-                callable.call(connection, t);
-            }
-        });
-    }
-
-    static void validateFindOptions(final AsyncConnectionSource source, final AsyncConnection connection, final Collation collation,
-            final AsyncCallableWithConnectionAndSource callable) {
-        validateFindOptions(connection, collation, new AsyncCallableWithConnection() {
-            @Override
-            public void call(final AsyncConnection connection, final Throwable t) {
-                callable.call(source, connection, t);
-            }
-        });
-    }
-
-    static void validateCollation(final AsyncConnectionSource source, final AsyncConnection connection, final Collation collation,
-            final AsyncCallableWithConnectionAndSource callable) {
-        validateCollation(connection, collation, new AsyncCallableWithConnection(){
-            @Override
-            public void call(final AsyncConnection connection, final Throwable t) {
-                callable.call(source, connection, t);
-            }
-        });
     }
 
     static void checkBypassDocumentValidationIsSupported(final Boolean bypassDocumentValidation, final WriteConcern writeConcern) {

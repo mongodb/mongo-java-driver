@@ -22,7 +22,6 @@ import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.bulk.WriteConcernError;
-import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.connection.ProtocolHelper;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -31,16 +30,14 @@ import org.bson.BsonString;
 import java.util.stream.Collectors;
 
 import static com.mongodb.internal.operation.CommandOperationHelper.addRetryableWriteErrorLabel;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotFour;
 
 /**
  * This class is NOT part of the public API. It may change at any time without notification.
  */
 public final class WriteConcernHelper {
 
-    public static void appendWriteConcernToCommand(final WriteConcern writeConcern, final BsonDocument commandDocument,
-                                                   final ConnectionDescription description) {
-        if (writeConcern != null && !writeConcern.isServerDefault() && serverIsAtLeastVersionThreeDotFour(description)) {
+    public static void appendWriteConcernToCommand(final WriteConcern writeConcern, final BsonDocument commandDocument) {
+        if (writeConcern != null && !writeConcern.isServerDefault()) {
             commandDocument.put("writeConcern", writeConcern.asDocument());
         }
     }

@@ -42,9 +42,7 @@ import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableRead;
 import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableReadAsync;
-import static com.mongodb.internal.operation.OperationHelper.validateCollation;
 import static com.mongodb.internal.operation.ServerVersionHelper.FIVE_DOT_ZERO_WIRE_VERSION;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotFour;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotSix;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 import static com.mongodb.internal.operation.WriteConcernHelper.throwOnWriteConcernError;
@@ -359,7 +357,6 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
     }
 
     private BsonDocument getCommand(final ConnectionDescription description) {
-        validateCollation(description, collation);
         BsonValue aggregationTarget = (aggregationLevel == AggregationLevel.DATABASE)
                 ? new BsonInt32(1) : new BsonString(namespace.getCollectionName());
 
@@ -379,8 +376,8 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
             commandDocument.put("cursor", new BsonDocument());
         }
 
-        appendWriteConcernToCommand(writeConcern, commandDocument, description);
-        if (readConcern != null && !readConcern.isServerDefault() && serverIsAtLeastVersionThreeDotFour(description)) {
+        appendWriteConcernToCommand(writeConcern, commandDocument);
+        if (readConcern != null && !readConcern.isServerDefault()) {
             commandDocument.put("readConcern", readConcern.asDocument());
         }
 
@@ -398,7 +395,4 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
         }
         return commandDocument;
     }
-
-
-
 }

@@ -19,7 +19,6 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.AsyncConnection;
@@ -123,8 +122,7 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
         return withConnection(binding, new CallableWithConnection<Void>() {
             @Override
             public Void call(final Connection connection) {
-                return executeCommand(binding, "admin", getCommand(connection.getDescription()), connection,
-                        writeConcernErrorTransformer());
+                return executeCommand(binding, "admin", getCommand(), connection, writeConcernErrorTransformer());
             }
         });
     }
@@ -138,18 +136,18 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
                 if (t != null) {
                     errHandlingCallback.onResult(null, t);
                 } else {
-                    executeCommandAsync(binding, "admin", getCommand(connection.getDescription()), connection,
+                    executeCommandAsync(binding, "admin", getCommand(), connection,
                             writeConcernErrorWriteTransformer(), releasingCallback(errHandlingCallback, connection));
                 }
             }
         });
     }
 
-    private BsonDocument getCommand(final ConnectionDescription description) {
+    private BsonDocument getCommand() {
         BsonDocument commandDocument = new BsonDocument("renameCollection", new BsonString(originalNamespace.getFullName()))
                                             .append("to", new BsonString(newNamespace.getFullName()))
                                             .append("dropTarget", BsonBoolean.valueOf(dropTarget));
-        appendWriteConcernToCommand(writeConcern, commandDocument, description);
+        appendWriteConcernToCommand(writeConcern, commandDocument);
         return commandDocument;
     }
 }

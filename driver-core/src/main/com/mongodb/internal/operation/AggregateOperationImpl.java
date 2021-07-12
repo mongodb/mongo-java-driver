@@ -54,7 +54,6 @@ import static com.mongodb.internal.operation.CommandOperationHelper.executeRetry
 import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableReadAsync;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToQueryResult;
-import static com.mongodb.internal.operation.OperationHelper.validateCollation;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 
 class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
@@ -207,7 +206,6 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
         return new CommandCreator() {
             @Override
             public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
-                validateCollation(connectionDescription, collation);
                 return getCommand(sessionContext, connectionDescription.getMaxWireVersion());
             }
         };

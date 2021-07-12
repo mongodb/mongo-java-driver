@@ -33,7 +33,6 @@ import org.bson.BsonString;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.CommandHelper.executeCommand;
 import static com.mongodb.internal.connection.CommandHelper.executeCommandAsync;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionThreeDotFour;
 
 class X509Authenticator extends Authenticator implements SpeculativeAuthenticator {
     public static final Logger LOGGER = Loggers.getLogger("authenticator");
@@ -50,7 +49,6 @@ class X509Authenticator extends Authenticator implements SpeculativeAuthenticato
             return;
         }
         try {
-            validateUserName(connectionDescription);
             BsonDocument authCommand = getAuthCommand(getMongoCredential().getUserName());
             executeCommand(getMongoCredential().getSource(), authCommand, getClusterConnectionMode(), getServerApi(), connection);
         } catch (MongoCommandException e) {
@@ -66,7 +64,6 @@ class X509Authenticator extends Authenticator implements SpeculativeAuthenticato
         } else {
             SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
             try {
-                validateUserName(connectionDescription);
                 executeCommandAsync(getMongoCredential().getSource(), getAuthCommand(getMongoCredential().getUserName()),
                         getClusterConnectionMode(), getServerApi(), connection,
                         new SingleResultCallback<BsonDocument>() {
@@ -117,13 +114,6 @@ class X509Authenticator extends Authenticator implements SpeculativeAuthenticato
             return new MongoSecurityException(getMongoCredential(), "Exception authenticating", t);
         } else {
             return t;
-        }
-    }
-
-    private void validateUserName(final ConnectionDescription connectionDescription) {
-        if (getMongoCredential().getUserName() == null && serverIsLessThanVersionThreeDotFour(connectionDescription)) {
-            throw new MongoSecurityException(getMongoCredential(), "User name is required for the MONGODB-X509 authentication mechanism "
-                                                                      + "on server versions less than 3.4");
         }
     }
 }

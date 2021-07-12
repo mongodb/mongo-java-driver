@@ -25,8 +25,8 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.bulk.IndexRequest;
@@ -57,7 +57,6 @@ import static com.mongodb.internal.operation.OperationHelper.AsyncCallableWithCo
 import static com.mongodb.internal.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.releasingCallback;
-import static com.mongodb.internal.operation.OperationHelper.validateIndexRequestCollations;
 import static com.mongodb.internal.operation.OperationHelper.withAsyncConnection;
 import static com.mongodb.internal.operation.OperationHelper.withConnection;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionFourDotFour;
@@ -193,7 +192,6 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
             @Override
             public Void call(final Connection connection) {
                 try {
-                    validateIndexRequestCollations(connection, requests);
                     executeCommand(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
                             connection, writeConcernErrorTransformer());
                 } catch (MongoCommandException e) {
@@ -213,28 +211,19 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
                 if (t != null) {
                     errHandlingCallback.onResult(null, t);
                 } else {
-                    final SingleResultCallback<Void> wrappedCallback = releasingCallback(errHandlingCallback, connection);
-                    validateIndexRequestCollations(connection, requests, new AsyncCallableWithConnection() {
-                        @Override
-                        public void call(final AsyncConnection connection, final Throwable t) {
-                            if (t != null) {
-                                wrappedCallback.onResult(null, t);
-                            } else {
-                                try {
-                                    executeCommandAsync(binding, namespace.getDatabaseName(),
-                                            getCommand(connection.getDescription()), connection, writeConcernErrorWriteTransformer(),
-                                            new SingleResultCallback<Void>() {
-                                                @Override
-                                                public void onResult(final Void result, final Throwable t) {
-                                                    wrappedCallback.onResult(null, translateException(t));
-                                                }
-                                            });
-                                } catch (Throwable t1) {
-                                    wrappedCallback.onResult(null, t1);
-                                }
-                            }
-                        }
-                    });
+                    SingleResultCallback<Void> wrappedCallback = releasingCallback(errHandlingCallback, connection);
+                    try {
+                        executeCommandAsync(binding, namespace.getDatabaseName(),
+                                getCommand(connection.getDescription()), connection, writeConcernErrorWriteTransformer(),
+                                new SingleResultCallback<Void>() {
+                                    @Override
+                                    public void onResult(final Void result, final Throwable t) {
+                                        wrappedCallback.onResult(null, translateException(t));
+                                    }
+                                });
+                    } catch (Throwable t1) {
+                        wrappedCallback.onResult(null, t1);
+                    }
                 }
             }
         });
@@ -316,7 +305,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
         }
         command.put("indexes", new BsonArray(values));
         putIfNotZero(command, "maxTimeMS", maxTimeMS);
-        appendWriteConcernToCommand(writeConcern, command, description);
+        appendWriteConcernToCommand(writeConcern, command);
         if (commitQuorum != null) {
             if (serverIsAtLeastVersionFourDotFour(description)) {
                 command.put("commitQuorum", commitQuorum.toBsonValue());

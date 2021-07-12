@@ -19,7 +19,6 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
-import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
 import com.mongodb.internal.binding.AsyncWriteBinding;
@@ -34,7 +33,7 @@ import org.bson.codecs.BsonValueCodec;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -113,7 +112,7 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
         return withConnection(binding, connection -> {
             getCommands(localEncryptedFields).forEach(command -> {
                 try {
-                    executeCommand(binding, namespace.getDatabaseName(), command.apply(connection.getDescription()),
+                    executeCommand(binding, namespace.getDatabaseName(), command.get(),
                             connection, writeConcernErrorTransformer());
                 } catch (MongoCommandException e) {
                     rethrowIfNotNamespaceError(e);
@@ -172,14 +171,14 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
      *
      * @return the list of commands to run to create the collection
      */
-    private List<Function<ConnectionDescription, BsonDocument>> getCommands(final BsonDocument encryptedFields) {
+    private List<Supplier<BsonDocument>> getCommands(final BsonDocument encryptedFields) {
         if (encryptedFields == null) {
             return singletonList(this::dropCollectionCommand);
         } else  {
             return asList(
-                    connectionDescription -> getDropEncryptedFieldsCollectionCommand(encryptedFields, "esc"),
-                    connectionDescription -> getDropEncryptedFieldsCollectionCommand(encryptedFields, "ecc"),
-                    connectionDescription -> getDropEncryptedFieldsCollectionCommand(encryptedFields, "ecoc"),
+                    () -> getDropEncryptedFieldsCollectionCommand(encryptedFields, "esc"),
+                    () -> getDropEncryptedFieldsCollectionCommand(encryptedFields, "ecc"),
+                    () -> getDropEncryptedFieldsCollectionCommand(encryptedFields, "ecoc"),
                     this::dropCollectionCommand
             );
         }
@@ -190,9 +189,9 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
         return new BsonDocument("drop", encryptedFields.getOrDefault(collectionSuffix + "Collection", defaultCollectionName));
     }
 
-    private BsonDocument dropCollectionCommand(final ConnectionDescription description) {
+    private BsonDocument dropCollectionCommand() {
         BsonDocument commandDocument = new BsonDocument("drop", new BsonString(namespace.getCollectionName()));
-        appendWriteConcernToCommand(writeConcern, commandDocument, description);
+        appendWriteConcernToCommand(writeConcern, commandDocument);
         return commandDocument;
     }
 
@@ -248,11 +247,11 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
         private final AsyncWriteBinding binding;
         private final AsyncConnection connection;
         private final SingleResultCallback<Void> finalCallback;
-        private final Deque<Function<ConnectionDescription, BsonDocument>> commands;
+        private final Deque<Supplier<BsonDocument>> commands;
 
         ProcessCommandsCallback(
                 final AsyncWriteBinding binding, final AsyncConnection connection,
-                final List<Function<ConnectionDescription, BsonDocument>> commands,
+                final List<Supplier<BsonDocument>> commands,
                 final SingleResultCallback<Void> finalCallback) {
             this.binding = binding;
             this.connection = connection;
@@ -266,11 +265,11 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
                 finalCallback.onResult(null, t);
                 return;
             }
-            Function<ConnectionDescription, BsonDocument> nextCommandFunction = commands.poll();
+            Supplier<BsonDocument> nextCommandFunction = commands.poll();
             if (nextCommandFunction == null) {
                 finalCallback.onResult(null, null);
             } else {
-                executeCommandAsync(binding, namespace.getDatabaseName(), nextCommandFunction.apply(connection.getDescription()),
+                executeCommandAsync(binding, namespace.getDatabaseName(), nextCommandFunction.get(),
                         connection, writeConcernErrorWriteTransformer(), this);
             }
         }

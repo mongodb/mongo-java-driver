@@ -575,23 +575,6 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    def 'should throw an exception when passing an unsupported collation'() {
-        given:
-        def update = BsonDocument.parse('{ $set: {x: 1}}')
-        def operation = new FindAndUpdateOperation<Document>(getNamespace(), ACKNOWLEDGED, false, documentCodec, update)
-                .collation(defaultCollation)
-
-        when:
-        testOperationThrows(operation, [3, 2, 0], async)
-
-        then:
-        def exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('Collation not supported by wire version:')
-
-        where:
-        async << [false, false]
-    }
-
     @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should support collation'() {
         given:

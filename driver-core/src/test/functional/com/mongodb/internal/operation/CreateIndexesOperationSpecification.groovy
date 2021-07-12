@@ -488,26 +488,6 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    def 'should throw an exception when using an unsupported Collation'() {
-        given:
-        def operation = new CreateIndexesOperation(getNamespace(), requests)
-
-        when:
-        testOperationThrows(operation, [3, 2, 0], async)
-
-        then:
-        def exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('Collation not supported by wire version:')
-
-        where:
-        [async, requests] << [
-                [true, false],
-                [[new IndexRequest(BsonDocument.parse('{field: 1}}')).collation(defaultCollation)],
-                 [new IndexRequest(BsonDocument.parse('{field: 1}}')),
-                  new IndexRequest(BsonDocument.parse('{field: 2}}')).collation(defaultCollation)]]
-        ].combinations()
-    }
-
     @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should be able to create an index with collation'() {
         given:
