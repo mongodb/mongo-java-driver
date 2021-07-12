@@ -77,7 +77,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         operation.getCollation() == null
     }
 
-    def 'should set optional values correctly'(){
+    def 'should set optional values correctly'() {
         given:
         def filter = new BsonDocument('filter', new BsonInt32(1))
         def sort = new BsonDocument('sort', new BsonInt32(1))
@@ -121,7 +121,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
 
         when:
         operation = new FindAndReplaceOperation<Document>(getNamespace(), ACKNOWLEDGED, false, documentCodec,
-                                                          new BsonDocumentWrapper<Document>(pete, documentCodec))
+                new BsonDocumentWrapper<Document>(pete, documentCodec))
                 .filter(new BsonDocument('name', new BsonString('Jordan')))
                 .returnOriginal(false)
         returnedDocument = execute(operation, async)
@@ -259,7 +259,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
 
         when:
         operation = new FindAndReplaceOperation<Document>(getNamespace(), new WriteConcern(5, 1),
-                false,  documentCodec, jordan).filter(new BsonDocument('name', new BsonString('Bob')))
+                false, documentCodec, jordan).filter(new BsonDocument('name', new BsonString('Bob')))
                 .upsert(true)
         execute(operation, async)
 
@@ -336,7 +336,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
 
         then:
         testOperation([operation: operation, serverVersion: serverVersion, expectedCommand: expectedCommand, async: async,
-                       result: cannedResult, serverType: serverType])
+                       result   : cannedResult, serverType: serverType])
 
         when:
         def filter = BsonDocument.parse('{ filter : 1}')
@@ -364,7 +364,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
 
         then:
         testOperation([operation: operation, serverVersion: serverVersion, expectedCommand: expectedCommand, async: async,
-                       result: cannedResult, serverType: serverType])
+                       result   : cannedResult, serverType: serverType])
 
         where:
         [serverVersion, serverType, writeConcern, async, retryWrites] << [
@@ -456,23 +456,6 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         async << [true, false]
     }
 
-    def 'should throw an exception when passing an unsupported collation'() {
-        given:
-        def replacement = BsonDocument.parse('{ replacement: 1}')
-        def operation =  new FindAndReplaceOperation<Document>(getNamespace(), ACKNOWLEDGED, false, documentCodec, replacement)
-                .collation(defaultCollation)
-
-        when:
-        testOperationThrows(operation, [3, 2, 0], async)
-
-        then:
-        def exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('Collation not supported by wire version:')
-
-        where:
-        async << [false, false]
-    }
-
     @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should support collation'() {
         given:
@@ -492,5 +475,5 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         where:
         async << [true, false]
     }
-
 }
+

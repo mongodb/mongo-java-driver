@@ -117,23 +117,6 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
         [async, readPreference] << [[true, false], [ReadPreference.primary(), ReadPreference.secondary()]].combinations()
     }
 
-    def 'should throw an exception when using an unsupported Collation'() {
-        given:
-        def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
-                .filter(BsonDocument.parse('{str: "FOO"}'))
-                .collation(defaultCollation)
-
-        when:
-        testOperationThrows(operation, [3, 2, 0], async)
-
-        then:
-        def exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('Collation not supported by wire version:')
-
-        where:
-        async << [true, false]
-    }
-
     def namespace = new MongoNamespace('db', 'coll')
     def decoder = new BsonDocumentCodec()
     def readPreference = ReadPreference.secondary()

@@ -199,22 +199,6 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         [3, 0, 0]     | false            | false
     }
 
-    def 'should throw an exception when using an unsupported Collation'() {
-        given:
-        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(helper.namespace, new BsonJavaScript('function(){ }'),
-                new BsonJavaScript('function(key, values){ }'), bsonDocumentCodec).collation(defaultCollation)
-
-        when:
-        testOperationThrows(operation, [3, 2, 0], async)
-
-        then:
-        def exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('Collation not supported by wire version:')
-
-        where:
-        async << [false, false]
-    }
-
     @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should support collation'() {
         given:

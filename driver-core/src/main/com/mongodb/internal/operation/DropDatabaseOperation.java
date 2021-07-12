@@ -18,7 +18,6 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.WriteConcern;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.AsyncConnection;
@@ -47,7 +46,6 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  * @since 3.0
  */
 public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
-    private static final BsonDocument DROP_DATABASE = new BsonDocument("dropDatabase", new BsonInt32(1));
     private final String databaseName;
     private final WriteConcern writeConcern;
 
@@ -89,7 +87,7 @@ public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOp
         return withConnection(binding, new CallableWithConnection<Void>() {
             @Override
             public Void call(final Connection connection) {
-                executeCommand(binding, databaseName, getCommand(connection.getDescription()), connection, writeConcernErrorTransformer());
+                executeCommand(binding, databaseName, getCommand(), connection, writeConcernErrorTransformer());
                 return null;
             }
         });
@@ -104,7 +102,7 @@ public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOp
                 if (t != null) {
                     errHandlingCallback.onResult(null, t);
                 } else {
-                    executeCommandAsync(binding, databaseName, getCommand(connection.getDescription()), connection,
+                    executeCommandAsync(binding, databaseName, getCommand(), connection,
                             writeConcernErrorWriteTransformer(), releasingCallback(errHandlingCallback, connection));
 
                 }
@@ -112,9 +110,9 @@ public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOp
         });
     }
 
-    private BsonDocument getCommand(final ConnectionDescription description) {
+    private BsonDocument getCommand() {
         BsonDocument commandDocument = new BsonDocument("dropDatabase", new BsonInt32(1));
-        appendWriteConcernToCommand(writeConcern, commandDocument, description);
+        appendWriteConcernToCommand(writeConcern, commandDocument);
         return commandDocument;
     }
 }

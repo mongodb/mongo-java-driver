@@ -49,7 +49,6 @@ import static com.mongodb.internal.operation.OperationHelper.AsyncCallableWithCo
 import static com.mongodb.internal.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.releasingCallback;
-import static com.mongodb.internal.operation.OperationHelper.validateCollation;
 import static com.mongodb.internal.operation.OperationHelper.withAsyncConnection;
 import static com.mongodb.internal.operation.OperationHelper.withConnection;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionFourDotFour;
@@ -510,7 +509,6 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
         return withConnection(binding, new CallableWithConnection<MapReduceStatistics>() {
             @Override
             public MapReduceStatistics call(final Connection connection) {
-                validateCollation(connection, collation);
                 return executeCommand(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
                         connection, transformer());
             }
@@ -526,18 +524,10 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
                 if (t != null) {
                     errHandlingCallback.onResult(null, t);
                 } else {
-                    final SingleResultCallback<MapReduceStatistics> wrappedCallback = releasingCallback(errHandlingCallback, connection);
-                    validateCollation(connection, collation, new AsyncCallableWithConnection() {
-                        @Override
-                        public void call(final AsyncConnection connection, final Throwable t) {
-                            if (t != null) {
-                                wrappedCallback.onResult(null, t);
-                            } else {
-                                executeCommandAsync(binding, namespace.getDatabaseName(),
-                                        getCommand(connection.getDescription()), connection, transformerAsync(), wrappedCallback);
-                            }
-                        }
-                    });
+                    executeCommandAsync(binding, namespace.getDatabaseName(),
+                            getCommand(connection.getDescription()), connection, transformerAsync(),
+                            releasingCallback(errHandlingCallback, connection));
+
                 }
             }
         });
@@ -619,7 +609,7 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
             commandDocument.put("bypassDocumentValidation", BsonBoolean.valueOf(bypassDocumentValidation));
         }
         if (description != null) {
-            appendWriteConcernToCommand(writeConcern, commandDocument, description);
+            appendWriteConcernToCommand(writeConcern, commandDocument);
         }
         if (collation != null) {
             commandDocument.put("collation", collation.asDocument());
