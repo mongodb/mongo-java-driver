@@ -82,7 +82,7 @@ object Windows {
    *
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
-   * @return A documents window.
+   * @return The constructed documents window.
    */
   def documents(lower: Int, upper: Int): Window = JWindows.documents(lower, upper)
 
@@ -91,7 +91,7 @@ object Windows {
    *
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
-   * @return A documents window.
+   * @return The constructed documents window.
    * @note Requires MongoDB 5.0 or greater.
    */
   def documents(lower: JWindows.Bound, upper: Int): Window = JWindows.documents(lower, upper)
@@ -101,7 +101,7 @@ object Windows {
    *
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
-   * @return A documents window.
+   * @return The constructed documents window.
    */
   def documents(lower: Int, upper: JWindows.Bound): Window = JWindows.documents(lower, upper)
 
@@ -110,7 +110,7 @@ object Windows {
    *
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
-   * @return A documents window.
+   * @return The constructed documents window.
    */
   def documents(lower: JWindows.Bound, upper: JWindows.Bound): Window = JWindows.documents(lower, upper)
 
@@ -120,7 +120,7 @@ object Windows {
    *
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
-   * @return A range window.
+   * @return The constructed range window.
    */
   def range(lower: Long, upper: Long): Window = JWindows.range(lower, upper)
 
@@ -130,7 +130,7 @@ object Windows {
    *
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
-   * @return A range window.
+   * @return The constructed range window.
    */
   def range(lower: Double, upper: Double): Window = JWindows.range(lower, upper)
 
@@ -140,7 +140,7 @@ object Windows {
    *
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
-   * @return A range window.
+   * @return The constructed range window.
    */
   def range(lower: Decimal128, upper: Decimal128): Window = JWindows.range(lower, upper)
 
@@ -150,7 +150,7 @@ object Windows {
    *
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
-   * @return A range window.
+   * @return The constructed range window.
    */
   def range(lower: JWindows.Bound, upper: Long): Window = JWindows.range(lower, upper)
 
@@ -160,7 +160,7 @@ object Windows {
    *
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
-   * @return A range window.
+   * @return The constructed range window.
    */
   def range(lower: JWindows.Bound, upper: Double): Window = JWindows.range(lower, upper)
 
@@ -170,7 +170,7 @@ object Windows {
    *
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
-   * @return A range window.
+   * @return The constructed range window.
    */
   def range(lower: JWindows.Bound, upper: Decimal128): Window = JWindows.range(lower, upper)
 
@@ -180,7 +180,7 @@ object Windows {
    *
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
-   * @return A range window.
+   * @return The constructed range window.
    */
   def range(lower: Long, upper: JWindows.Bound): Window = JWindows.range(lower, upper)
 
@@ -190,7 +190,7 @@ object Windows {
    *
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
-   * @return A range window.
+   * @return The constructed range window.
    */
   def range(lower: Double, upper: JWindows.Bound): Window = JWindows.range(lower, upper)
 
@@ -200,7 +200,7 @@ object Windows {
    *
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
-   * @return A range window.
+   * @return The constructed range window.
    */
   def range(lower: Decimal128, upper: JWindows.Bound): Window = JWindows.range(lower, upper)
 
@@ -212,7 +212,7 @@ object Windows {
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
    * @param unit  A time unit in which `lower` and `upper` are specified.
-   * @return A range window.
+   * @return The constructed range window.
    */
   def timeRange(lower: Long, upper: Long, unit: JMongoTimeUnit): Window = JWindows.timeRange(lower, upper, unit)
 
@@ -224,7 +224,7 @@ object Windows {
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
    * @param unit  A time unit in which `upper` is specified.
-   * @return A range window.
+   * @return The constructed range window.
    */
   def timeRange(lower: JWindows.Bound, upper: Long, unit: JMongoTimeUnit): Window =
     JWindows.timeRange(lower, upper, unit)
@@ -237,7 +237,7 @@ object Windows {
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param unit  A time unit in which `lower` is specified.
    * @param upper A value based on which the upper bound of the window is calculated.
-   * @return A range window.
+   * @return The constructed range window.
    */
   def timeRange(lower: Long, unit: JMongoTimeUnit, upper: JWindows.Bound): Window =
     JWindows.timeRange(lower, unit, upper)

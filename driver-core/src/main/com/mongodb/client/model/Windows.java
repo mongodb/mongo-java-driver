@@ -132,7 +132,7 @@ public final class Windows {
      *
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
-     * @return A documents window.
+     * @return The constructed documents window.
      */
     public static Window documents(final int lower, final int upper) {
         isTrueArgument("lower <= upper", lower <= upper);
@@ -144,7 +144,7 @@ public final class Windows {
      *
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
-     * @return A documents window.
+     * @return The constructed documents window.
      */
     public static Window documents(final Bound lower, final int upper) {
         notNull("lower", lower);
@@ -159,7 +159,7 @@ public final class Windows {
      *
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
-     * @return A documents window.
+     * @return The constructed documents window.
      */
     public static Window documents(final int lower, final Bound upper) {
         notNull("upper", upper);
@@ -174,7 +174,7 @@ public final class Windows {
      *
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
-     * @return A documents window.
+     * @return The constructed documents window.
      */
     public static Window documents(final Bound lower, final Bound upper) {
         notNull("lower", lower);
@@ -188,7 +188,7 @@ public final class Windows {
      *
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
-     * @return A range window.
+     * @return The constructed range window.
      */
     public static Window range(final long lower, final long upper) {
         isTrueArgument("lower <= upper", lower <= upper);
@@ -201,7 +201,7 @@ public final class Windows {
      *
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
-     * @return A range window.
+     * @return The constructed range window.
      */
     public static Window range(final double lower, final double upper) {
         isTrueArgument("lower <= upper", lower <= upper);
@@ -214,7 +214,7 @@ public final class Windows {
      *
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
-     * @return A range window.
+     * @return The constructed range window.
      */
     public static Window range(final Decimal128 lower, final Decimal128 upper) {
         notNull("lower", lower);
@@ -229,7 +229,7 @@ public final class Windows {
      *
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
-     * @return A range window.
+     * @return The constructed range window.
      */
     public static Window range(final Bound lower, final long upper) {
         notNull("lower", lower);
@@ -242,7 +242,7 @@ public final class Windows {
      *
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
-     * @return A range window.
+     * @return The constructed range window.
      */
     public static Window range(final Bound lower, final double upper) {
         notNull("lower", lower);
@@ -255,7 +255,7 @@ public final class Windows {
      *
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
-     * @return A range window.
+     * @return The constructed range window.
      */
     public static Window range(final Bound lower, final Decimal128 upper) {
         notNull("lower", lower);
@@ -269,7 +269,7 @@ public final class Windows {
      *
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
-     * @return A range window.
+     * @return The constructed range window.
      */
     public static Window range(final long lower, final Bound upper) {
         notNull("upper", upper);
@@ -282,7 +282,7 @@ public final class Windows {
      *
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
-     * @return A range window.
+     * @return The constructed range window.
      */
     public static Window range(final double lower, final Bound upper) {
         notNull("upper", upper);
@@ -295,7 +295,7 @@ public final class Windows {
      *
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
-     * @return A range window.
+     * @return The constructed range window.
      */
     public static Window range(final Decimal128 lower, final Bound upper) {
         notNull("lower", lower);
@@ -311,7 +311,7 @@ public final class Windows {
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
      * @param unit A time unit in which {@code lower} and {@code upper} are specified.
-     * @return A range window.
+     * @return The constructed range window.
      */
     public static Window timeRange(final long lower, final long upper, final MongoTimeUnit unit) {
         notNull("unit", unit);
@@ -327,7 +327,7 @@ public final class Windows {
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
      * @param unit A time unit in which {@code upper} is specified.
-     * @return A range window.
+     * @return The constructed range window.
      */
     public static Window timeRange(final Bound lower, final long upper, final MongoTimeUnit unit) {
         notNull("lower", lower);
@@ -343,7 +343,7 @@ public final class Windows {
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param unit A time unit in which {@code lower} is specified.
      * @param upper A value based on which the upper bound of the window is calculated.
-     * @return A range window.
+     * @return The constructed range window.
      */
     public static Window timeRange(final long lower, final MongoTimeUnit unit, final Bound upper) {
         notNull("unit", unit);

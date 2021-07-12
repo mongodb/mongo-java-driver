@@ -87,7 +87,7 @@ public final class WindowedComputations {
      * @param expression The expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed {@link WindowedComputation}.
+     * @return The constructed windowed computation.
      * @mongodb.driver.dochub core/window-functions-sum $sum
      */
     public static <TExpression> WindowedComputation sum(final String path, final TExpression expression, @Nullable final Window window) {
@@ -103,7 +103,7 @@ public final class WindowedComputations {
      * @param expression The expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed {@link WindowedComputation}.
+     * @return The constructed windowed computation.
      * @mongodb.driver.dochub core/window-functions-avg $avg
      */
     public static <TExpression> WindowedComputation avg(final String path, final TExpression expression, @Nullable final Window window) {
@@ -119,7 +119,7 @@ public final class WindowedComputations {
      * @param expression The expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed {@link WindowedComputation}.
+     * @return The constructed windowed computation.
      * @mongodb.driver.dochub core/window-functions-std-dev-samp $stdDevSamp
      */
     public static <TExpression> WindowedComputation stdDevSamp(final String path, final TExpression expression,
@@ -137,7 +137,7 @@ public final class WindowedComputations {
      * @param expression The expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed {@link WindowedComputation}.
+     * @return The constructed windowed computation.
      * @mongodb.driver.dochub core/window-functions-std-dev-pop $stdDevPop
      */
     public static <TExpression> WindowedComputation stdDevPop(final String path, final TExpression expression,
@@ -154,7 +154,7 @@ public final class WindowedComputations {
      * @param expression The expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed {@link WindowedComputation}.
+     * @return The constructed windowed computation.
      * @mongodb.driver.dochub core/window-functions-min $min
      */
     public static <TExpression> WindowedComputation min(final String path, final TExpression expression, @Nullable final Window window) {
@@ -170,7 +170,7 @@ public final class WindowedComputations {
      * @param expression The expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed {@link WindowedComputation}.
+     * @return The constructed windowed computation.
      * @mongodb.driver.dochub core/window-functions-max $max
      */
     public static <TExpression> WindowedComputation max(final String path, final TExpression expression, @Nullable final Window window) {
@@ -184,7 +184,7 @@ public final class WindowedComputations {
      *
      * @param path The output field path.
      * @param window The window.
-     * @return The constructed {@link WindowedComputation}.
+     * @return The constructed windowed computation.
      * @mongodb.driver.dochub core/window-functions-count $count
      */
     public static WindowedComputation count(final String path, @Nullable final Window window) {
@@ -204,7 +204,7 @@ public final class WindowedComputations {
      * @param expression The expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed {@link WindowedComputation}.
+     * @return The constructed windowed computation.
      * @mongodb.driver.dochub core/window-functions-derivative $derivative
      */
     public static <TExpression> WindowedComputation derivative(final String path, final TExpression expression,
@@ -232,7 +232,7 @@ public final class WindowedComputations {
      * {@link MongoTimeUnit#WEEK}, {@link MongoTimeUnit#DAY}, {@link MongoTimeUnit#HOUR}, {@link MongoTimeUnit#MINUTE},
      * {@link MongoTimeUnit#SECOND}, {@link MongoTimeUnit#MILLISECOND}.
      * @param <TExpression> The expression type.
-     * @return The constructed {@link WindowedComputation}.
+     * @return The constructed windowed computation.
      * @mongodb.driver.dochub core/window-functions-derivative $derivative
      */
     public static <TExpression> WindowedComputation timeDerivative(final String path, final TExpression expression, final Window window,
@@ -262,7 +262,7 @@ public final class WindowedComputations {
      * @param expression The expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed {@link WindowedComputation}.
+     * @return The constructed windowed computation.
      * @mongodb.driver.dochub core/window-functions-integral $integral
      */
     public static <TExpression> WindowedComputation integral(final String path, final TExpression expression, final Window window) {
@@ -289,7 +289,7 @@ public final class WindowedComputations {
      * {@link MongoTimeUnit#WEEK}, {@link MongoTimeUnit#DAY}, {@link MongoTimeUnit#HOUR}, {@link MongoTimeUnit#MINUTE},
      * {@link MongoTimeUnit#SECOND}, {@link MongoTimeUnit#MILLISECOND}.
      * @param <TExpression> The expression type.
-     * @return The constructed {@link WindowedComputation}.
+     * @return The constructed windowed computation.
      * @mongodb.driver.dochub core/window-functions-integral $integral
      */
     public static <TExpression> WindowedComputation timeIntegral(final String path, final TExpression expression, final Window window,
@@ -314,7 +314,7 @@ public final class WindowedComputations {
      * @param expression2 The second expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed {@link WindowedComputation}.
+     * @return The constructed windowed computation.
      * @mongodb.driver.dochub core/window-functions-covariance-samp $covarianceSamp
      */
     public static <TExpression> WindowedComputation covarianceSamp(final String path, final TExpression expression1,
@@ -336,7 +336,7 @@ public final class WindowedComputations {
      * @param expression2 The second expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed {@link WindowedComputation}.
+     * @return The constructed windowed computation.
      * @mongodb.driver.dochub core/window-functions-covariance-pop $covariancePop
      */
     public static <TExpression> WindowedComputation covariancePop(final String path, final TExpression expression1,
@@ -361,7 +361,7 @@ public final class WindowedComputations {
      * @param expression The expression.
      * @param n Must be positive.
      * @param <TExpression> The expression type.
-     * @return The constructed {@link WindowedComputation}.
+     * @return The constructed windowed computation.
      * @mongodb.driver.dochub core/window-functions-exp-moving-avg $expMovingAvg
      */
     public static <TExpression> WindowedComputation expMovingAvg(final String path, final TExpression expression, final int n) {
@@ -385,7 +385,7 @@ public final class WindowedComputations {
      * @param alpha A parameter specifying how fast weighting decrease happens. A higher {@code alpha} discounts older observations faster.
      *              Must belong to the interval (0, 1).
      * @param <TExpression> The expression type.
-     * @return The constructed {@link WindowedComputation}.
+     * @return The constructed windowed computation.
      * @mongodb.driver.dochub core/window-functions-exp-moving-avg $expMovingAvg
      */
     public static <TExpression> WindowedComputation expMovingAvg(final String path, final TExpression expression, final double alpha) {
@@ -408,7 +408,7 @@ public final class WindowedComputations {
      * @param expression The expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed {@link WindowedComputation}.
+     * @return The constructed windowed computation.
      * @mongodb.driver.dochub core/window-functions-push $push
      */
     public static <TExpression> WindowedComputation push(final String path, final TExpression expression, @Nullable final Window window) {
@@ -426,7 +426,7 @@ public final class WindowedComputations {
      * @param expression The expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed {@link WindowedComputation}.
+     * @return The constructed windowed computation.
      * @mongodb.driver.dochub core/window-functions-add-to-set $addToSet
      */
     public static <TExpression> WindowedComputation addToSet(final String path, final TExpression expression,
@@ -445,7 +445,7 @@ public final class WindowedComputations {
      * @param expression The expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed {@link WindowedComputation}.
+     * @return The constructed windowed computation.
      * @mongodb.driver.dochub core/window-functions-first $first
      */
     public static <TExpression> WindowedComputation first(final String path, final TExpression expression, @Nullable final Window window) {
@@ -463,7 +463,7 @@ public final class WindowedComputations {
      * @param expression The expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed {@link WindowedComputation}.
+     * @return The constructed windowed computation.
      * @mongodb.driver.dochub core/window-functions-last $last
      */
     public static <TExpression> WindowedComputation last(final String path, final TExpression expression, @Nullable final Window window) {
@@ -492,7 +492,7 @@ public final class WindowedComputations {
      *              <li>a positive value refers to the document following the current one.</li>
      *           </ul>
      * @param <TExpression> The expression type.
-     * @return The constructed {@link WindowedComputation}.
+     * @return The constructed windowed computation.
      * @mongodb.driver.dochub core/window-functions-shift $shift
      */
     public static <TExpression> WindowedComputation shift(final String path, final TExpression expression,
@@ -515,7 +515,7 @@ public final class WindowedComputations {
      * {@linkplain Aggregates#setWindowFields(Object, Bson, List) Sorting} is required.</p>
      *
      * @param path The output field path.
-     * @return The constructed {@link WindowedComputation}.
+     * @return The constructed windowed computation.
      * @mongodb.driver.dochub core/window-functions-document-number $documentNumber
      */
     public static WindowedComputation documentNumber(final String path) {
@@ -534,7 +534,7 @@ public final class WindowedComputations {
      * {@linkplain Aggregates#setWindowFields(Object, Bson, List) Sorting} is required.</p>
      *
      * @param path The output field path.
-     * @return The constructed {@link WindowedComputation}.
+     * @return The constructed windowed computation.
      * @mongodb.driver.dochub core/window-functions-rank $rank
      */
     public static WindowedComputation rank(final String path) {
@@ -553,7 +553,7 @@ public final class WindowedComputations {
      * {@linkplain Aggregates#setWindowFields(Object, Bson, List) Sorting} is required.</p>
      *
      * @param path The output field path.
-     * @return The constructed {@link WindowedComputation}.
+     * @return The constructed windowed computation.
      * @mongodb.driver.dochub core/window-functions-dense-rank $denseRank
      */
     public static WindowedComputation denseRank(final String path) {
