@@ -40,7 +40,7 @@ important This guide uses the Subscriber implementations as covered in the Quick
       <guid>/mongo-java-driver/4.3/driver-scala/tutorials/client-side-encryption/</guid>
       <description>Client Side Encryption New in MongoDB 4.2 client side encryption allows administrators and developers to encrypt specific data fields in addition to other MongoDB encryption features.
 With field level encryption, developers can encrypt fields client side without any server-side configuration or directives. Client-side field level encryption supports workloads where applications must guarantee that unauthorized parties, including server administrators, cannot read the encrypted data.
-important Support for client side encryption is in beta.</description>
+Note This guide uses the Observable implicits as covered in the Quick Start Primer.</description>
     </item>
     
     <item>
@@ -743,7 +743,7 @@ Note The MongoDB Scala driver is now built upon the MongoDB Reactive Streams dri
       <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
       
       <guid>/mongo-java-driver/4.3/builders/aggregation/</guid>
-      <description>Aggregates The Aggregates class provides static factory methods that build aggregation pipeline operators. Each method returns an instance of the Bson type, which can in turn be passed to the aggregate method of MongoCollection.
+      <description>Aggregates The Aggregates class provides static factory methods that build aggregation pipeline stages. Each method returns an instance of the Bson type, which can in turn be passed to the aggregate method of MongoCollection.
 For brevity, you may choose to import the methods of the Aggregates class statically:
 import static com.mongodb.client.model.Aggregates.*;  All the examples below assume this static import.
 Match The $match pipeline stage passes all documents matching the specified filter to the next stage.</description>
@@ -755,7 +755,7 @@ Match The $match pipeline stage passes all documents matching the specified filt
       <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
       
       <guid>/mongo-java-driver/4.3/driver-scala/builders/aggregation/</guid>
-      <description>Aggregation The Aggregates class provides static factory methods that build aggregation pipeline operators. Each method returns an instance of the Bson type, which can in turn be passed to the aggregate method of MongoCollection.
+      <description>Aggregation The Aggregates class provides static factory methods that build aggregation pipeline stages. Each method returns an instance of the Bson type, which can in turn be passed to the aggregate method of MongoCollection.
 For brevity, you may choose to import the methods of the Aggregates class statically:
 import org.mongodb.scala.model.Aggregates._  All the examples below assume this static import.
 Match The $match pipeline stage passes all documents matching the specified filter to the next stage.</description>
@@ -1066,7 +1066,7 @@ Bugs / Feature Requests If you think you’ve found a bug or want to see a new f
       <guid>/mongo-java-driver/4.3/driver-reactive/getting-started/installation/</guid>
       <description> Installation The recommended way to get started using one of the drivers in your project is with a dependency management system.
  MongoDB Reactive Streams Driver The Reactive Streams implementation for asynchronous stream processing with non-blocking back pressure.
-&amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.mongodb&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;mongodb-driver-reactivestreams&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;4.3.0-beta4&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; &amp;lt;/dependencies&amp;gt;    dependencies { compile &#39;org.mongodb:mongodb-driver-reactivestreams:4.3.0-beta4&#39; }    libraryDependencies += &#34;org.mongodb&#34; %% &#34;mongodb-driver-reactivestreams&#34; % &#34;4.3.0-beta4&#34;  </description>
+&amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.mongodb&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;mongodb-driver-reactivestreams&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;4.3.0&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; &amp;lt;/dependencies&amp;gt;    dependencies { compile &#39;org.mongodb:mongodb-driver-reactivestreams:4.3.0&#39; }    libraryDependencies += &#34;org.mongodb&#34; %% &#34;mongodb-driver-reactivestreams&#34; % &#34;4.3.0&#34;  </description>
     </item>
     
     <item>
@@ -1077,7 +1077,7 @@ Bugs / Feature Requests If you think you’ve found a bug or want to see a new f
       <guid>/mongo-java-driver/4.3/driver-scala/getting-started/installation/</guid>
       <description>Installation The recommended way to get started using one of the drivers in your project is with a dependency management system.
  MongoDB Scala Driver The Reactive Streams based Scala implementation for asynchronous stream processing with non-blocking back pressure.
-Scala 2.12 &amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.mongodb.scala&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;mongo-scala-driver&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;4.3.0-beta4_2.12&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; &amp;lt;/dependencies&amp;gt;    dependencies { compile &#39;org.mongodb.scala:mongo-scala-driver:4.3.0-beta4_2.12&#39; }    libraryDependencies += &#34;org.mongodb.scala&#34; %% &#34;mongo-scala-driver&#34; % &#34;4.3.0-beta4&#34;  Scala 2.11 &amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.</description>
+Scala 2.12 &amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.mongodb.scala&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;mongo-scala-driver&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;4.3.0_2.12&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; &amp;lt;/dependencies&amp;gt;    dependencies { compile &#39;org.mongodb.scala:mongo-scala-driver:4.3.0_2.12&#39; }    libraryDependencies += &#34;org.mongodb.scala&#34; %% &#34;mongo-scala-driver&#34; % &#34;4.3.0&#34;  Scala 2.11 &amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.</description>
     </item>
     
     <item>

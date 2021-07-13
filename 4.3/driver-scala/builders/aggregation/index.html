@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2021-07-02T16:15:58.3">
+<meta name="date" content="2021-07-13T13:59:25.75">
 <link rel="shortcut icon" href="/mongo-java-driver/4.3/img/favicon.png">
 
     <title>Aggregation</title><link rel="stylesheet" href="/mongo-java-driver/4.3/lib/bootstrap.css" type="text/css" />
@@ -309,6 +309,7 @@
               <div class="documentwrapper">
                 <div class="bodywrapper">
                   <div class="body">
+                    
  
 <a class="edit-link" href="https://github.com/mongodb/mongo-java-driver/blob/master/docs/reference/content/driver-scala/builders/aggregation.md" target="_blank" title="Edit driver-scala/builders/aggregation.md on GitHub"><i class="fa fa-pencil-square-o"></i></a><div class="bc">
 <ul><li><a href="/mongo-java-driver/4.3/driver-scala/">Scala Driver</a> <i class="fa fa-angle-right"></i></li><li><a href="/mongo-java-driver/4.3/driver-scala/builders/">Builders</a> <i class="fa fa-angle-right"></i></li><li>Aggregation</li>
@@ -318,9 +319,10 @@
 <h2 id="aggregation">Aggregation</h2>
 
 <p>The <a href="/mongo-java-driver/4.3/apidocs/mongo-scala-driver/org/mongodb/scala/model/Aggregates$.html
-"><code>Aggregates</code></a> class provides static factory methods that build <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/
-">aggregation
-pipeline operators</a>.  Each method returns an instance of the
+"><code>Aggregates</code></a> class provides static factory methods
+that build <a href="http://docs.mongodb.org/manual/meta/aggregation-quick-reference/#stages
+">aggregation pipeline stages</a>.
+Each method returns an instance of the
 <a href="/mongo-java-driver/4.3/bson/documents/#bson"><code>Bson</code></a> type, which can in turn be passed to the <code>aggregate</code> method of <code>MongoCollection</code>.</p>
 
 <p>For brevity, you may choose to import the methods of the <code>Aggregates</code> class statically:</p>
@@ -444,10 +446,10 @@ expression on which to group, and zero or more
 <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/group/#accumulator-operator
 ">accumulators</a> which are evaluated for each
 grouping.  To simplify the expression of accumulators, the driver includes an
-<a href="/mongo-java-driver/4.3/apidocs/mongo-scala-driver/org/mongodb/scala/model/Aggregates$.html
-"><code>Accumulators</code></a> class with static factory methods for each of the supported
-accumulators. In the example below, it&rsquo;s assumed that the <code>sum</code> and <code>avg</code> methods of the <code>Accumulators</code> class have been statically
-imported.</p>
+<a href="/mongo-java-driver/4.3/apidocs/mongo-scala-driver/org/mongodb/scala/model/Accumulators$.html
+"><code>Accumulators</code></a> singleton object with factory methods
+for each of the supported accumulators.
+In the example below, it&rsquo;s assumed that the <code>sum</code> and <code>avg</code> methods of the <code>Accumulators</code> class have been statically imported.</p>
 
 <p>This example groups documents by the value of the <code>customerId</code> field, and for each group accumulates the sum and average of the values of
 the <code>quantity</code> field into the <code>totalQuantity</code> and <code>averageQuantity</code> fields, respectively.</p>
@@ -488,6 +490,34 @@ collection.  It must be the last stage in any aggregate pipeline:</p>
 <pre><code class="language-scala">out(&quot;authors&quot;)
 </code></pre>
 
+<h3 id="setwindowfields">SetWindowFields</h3>
+
+<div class="admonition important">
+<h5 class="admonition-title">important</h5>
+<p>Support for <code>$setWindowFields</code> is in beta. Backwards-breaking changes may be made before the final release.</p>
+
+</div>
+
+
+<p>The <a href="https://dochub.mongodb.org/core/window-functions-set-window-fields"><code>$setWindowFields</code></a> pipeline stage
+allows using window operators. This stage partitions the input documents similarly to the <a href="#group"><code>$group</code></a> pipeline stage,
+optionally sorts them, computes fields in the documents by computing window functions over windows specified per function
+(a window is a subset of a partition), and outputs the documents. The important difference from the <code>$group</code> pipeline stage is that
+documents belonging to the same partition or window are not folded into a single document.</p>
+
+<p>The driver includes the <a href="/mongo-java-driver/4.3/apidocs/mongo-scala-driver/org/mongodb/scala/model/WindowedComputations$.html
+"><code>WindowedComputations</code></a>
+singleton object with factory methods for supported window operators.</p>
+
+<p>This example computes the accumulated rainfall and the average temperature over the past month per each locality
+from more fine-grained measurements presented via the <code>rainfall</code> and <code>temperature</code> fields:</p>
+
+<pre><code class="language-scala">val pastMonth: Window = Windows.timeRange(-1, Windows.Bound.CURRENT, MongoTimeUnit.MONTH)
+setWindowFields(&quot;$localityId&quot;, Sorts.ascending(&quot;measurementDateTime&quot;),
+  WindowedComputations.sum(&quot;monthlyRainfall&quot;, &quot;$rainfall&quot;, pastMonth),
+  WindowedComputations.avg(&quot;monthlyAvgTemp&quot;, &quot;$temperature&quot;, pastMonth))
+</code></pre>
+
 <h3 id="creating-a-pipeline">Creating a Pipeline</h3>
 
 <p>The above pipeline operators are typically combined into a list and passed to the <code>aggregate</code> method of a <code>MongoCollection</code>.  For instance:</p>
@@ -526,6 +556,7 @@ collection.  It must be the last stage in any aggregate pipeline:</p>
 <li><a href="#group">Group</a></li>
 <li><a href="#unwind">Unwind</a></li>
 <li><a href="#out">Out</a></li>
+<li><a href="#setwindowfields">SetWindowFields</a></li>
 <li><a href="#creating-a-pipeline">Creating a Pipeline</a></li>
 </ul></li>
 </ul></li>
