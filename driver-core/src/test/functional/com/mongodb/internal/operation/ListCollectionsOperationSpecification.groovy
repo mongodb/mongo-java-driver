@@ -435,19 +435,11 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         }
         def operation = new ListCollectionsOperation(helper.dbName, helper.decoder)
 
-        when:
+        when: '3.6.0'
         operation.execute(readBinding)
 
         then:
-        _ * connection.getDescription() >> helper.twoSixConnectionDescription
-        1 * connection.query(_, _, _, _, _, _, readPreference.isSecondaryOk(), *_) >> helper.queryResult
-        1 * connection.release()
-
-        when: '3.0.0'
-        operation.execute(readBinding)
-
-        then:
-        _ * connection.getDescription() >> helper.threeZeroConnectionDescription
+        _ * connection.getDescription() >> helper.threeSixConnectionDescription
         1 * connection.command(_, _, _, readPreference, _, _, null, _) >> helper.commandResult
         1 * connection.release()
 
@@ -470,19 +462,11 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         }
         def operation = new ListCollectionsOperation(helper.dbName, helper.decoder)
 
-        when:
+        when: '3.6.0'
         operation.executeAsync(readBinding, Stub(SingleResultCallback))
 
         then:
-        _ * connection.getDescription() >> helper.twoSixConnectionDescription
-        1 * connection.queryAsync(_, _, _, _, _, _, readPreference.isSecondaryOk(), *_) >> {
-            it.last().onResult(helper.queryResult, null) }
-
-        when: '3.0.0'
-        operation.executeAsync(readBinding, Stub(SingleResultCallback))
-
-        then:
-        _ * connection.getDescription() >> helper.threeZeroConnectionDescription
+        _ * connection.getDescription() >> helper.threeSixConnectionDescription
         1 * connection.commandAsync(helper.dbName, _, _, readPreference, *_) >> { it.last().onResult(helper.commandResult, null) }
 
         where:
@@ -492,10 +476,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
     def helper = [
         dbName: 'db',
         decoder: Stub(Decoder),
-        twoSixConnectionDescription : Stub(ConnectionDescription) {
-            getMaxWireVersion() >> 2
-        },
-        threeZeroConnectionDescription : Stub(ConnectionDescription) {
+        threeSixConnectionDescription : Stub(ConnectionDescription) {
             getMaxWireVersion() >> 3
         },
         queryResult: Stub(QueryResult) {
