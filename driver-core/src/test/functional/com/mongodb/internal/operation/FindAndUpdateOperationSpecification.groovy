@@ -486,7 +486,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
 
         where:
         [serverVersion, serverType, writeConcern, async, retryWrites] << [
-                [[3, 6, 0], [3, 4, 0], [3, 0, 0]],
+                [[3, 6, 0], [3, 4, 0]],
                 [REPLICA_SET_PRIMARY, STANDALONE],
                 [ACKNOWLEDGED, W1, UNACKNOWLEDGED],
                 [true, false],

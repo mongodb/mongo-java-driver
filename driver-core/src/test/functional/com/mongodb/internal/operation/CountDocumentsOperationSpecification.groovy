@@ -266,21 +266,6 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
         [async, hint] << [[true, false], [new BsonString('hint_1'), BsonDocument.parse('{hint: 1}')]].combinations()
     }
 
-    def 'should throw an exception when using an unsupported ReadConcern'() {
-        given:
-        def operation = new CountDocumentsOperation(helper.namespace)
-
-        when:
-        testOperationThrows(operation, [3, 0, 0], readConcern, async)
-
-        then:
-        def exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('ReadConcern not supported by wire version:')
-
-        where:
-        [async, readConcern] << [[true, false], [ReadConcern.MAJORITY, ReadConcern.LOCAL]].combinations()
-    }
-
     def 'should throw an exception when using an unsupported Collation'() {
         given:
         def operation = new CountDocumentsOperation(helper.namespace).collation(defaultCollation)

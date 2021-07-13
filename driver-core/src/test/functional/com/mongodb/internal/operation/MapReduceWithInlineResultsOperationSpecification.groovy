@@ -199,22 +199,6 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         [3, 0, 0]     | false            | false
     }
 
-    def 'should throw an exception when using an unsupported ReadConcern'() {
-        given:
-        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(helper.namespace, new BsonJavaScript('function(){ }'),
-                new BsonJavaScript('function(key, values){ }'), bsonDocumentCodec)
-
-        when:
-        testOperationThrows(operation, [3, 0, 0], readConcern, async)
-
-        then:
-        def exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('ReadConcern not supported by wire version:')
-
-        where:
-        [async, readConcern] << [[true, false], [ReadConcern.MAJORITY, ReadConcern.LOCAL]].combinations()
-    }
-
     def 'should throw an exception when using an unsupported Collation'() {
         given:
         def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(helper.namespace, new BsonJavaScript('function(){ }'),

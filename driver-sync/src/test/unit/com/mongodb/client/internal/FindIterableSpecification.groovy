@@ -97,7 +97,6 @@ class FindIterableSpecification extends Specification {
                 .limit(100)
                 .skip(10)
                 .cursorType(CursorType.NonTailable)
-                .secondaryOk(true)
                 .comment(new BsonString('my comment'))
                 .hint(new BsonString('a_1'))
                 .min(new BsonDocument('min', new BsonInt32(1)))
@@ -148,7 +147,6 @@ class FindIterableSpecification extends Specification {
                 .oplogReplay(true)
                 .noCursorTimeout(true)
                 .partial(true)
-                .secondaryOk(true)
                 .collation(collation)
                 .comment(new BsonString('alt comment'))
                 .hint(new BsonDocument('hint', new BsonInt32(2)))
@@ -177,7 +175,7 @@ class FindIterableSpecification extends Specification {
 
         then: 'should set an empty doc for the filter'
         expect operation, isTheSameAs(new FindOperation<Document>(namespace, new DocumentCodec())
-                .filter(new BsonDocument()).secondaryOk(true).retryReads(true))
+                .filter(new BsonDocument()).retryReads(true))
     }
 
     def 'should use ClientSession'() {
@@ -223,7 +221,6 @@ class FindIterableSpecification extends Specification {
                 .filter(new BsonDocument('filter', new BsonInt32(1)))
                 .sort(new BsonDocument('sort', new BsonInt32(1)))
                 .cursorType(CursorType.NonTailable)
-                .secondaryOk(true)
                 .retryReads(true)
         )
     }

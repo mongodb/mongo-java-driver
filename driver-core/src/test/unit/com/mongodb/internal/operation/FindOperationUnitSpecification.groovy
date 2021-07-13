@@ -17,23 +17,7 @@
 package com.mongodb.internal.operation
 
 import com.mongodb.MongoNamespace
-import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
-import com.mongodb.ServerAddress
-import com.mongodb.connection.ClusterId
-import com.mongodb.connection.ConnectionDescription
-import com.mongodb.connection.ConnectionId
-import com.mongodb.connection.ServerId
-import com.mongodb.internal.IgnorableRequestContext
-import com.mongodb.internal.async.SingleResultCallback
-import com.mongodb.internal.binding.AsyncConnectionSource
-import com.mongodb.internal.binding.AsyncReadBinding
-import com.mongodb.internal.binding.ConnectionSource
-import com.mongodb.internal.binding.ReadBinding
-import com.mongodb.internal.connection.AsyncConnection
-import com.mongodb.internal.connection.Connection
-import com.mongodb.internal.connection.QueryResult
-import com.mongodb.internal.session.SessionContext
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -41,86 +25,12 @@ import org.bson.BsonInt64
 import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
-import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
 
 import static com.mongodb.CursorType.TailableAwait
-import static com.mongodb.connection.ServerType.STANDALONE
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class FindOperationUnitSpecification extends OperationUnitSpecification {
-
-    def 'should query with the correct arguments'() {
-        given:
-        def connectionDescription = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                 3, STANDALONE, 1000, 16000000, 48000000, [])
-        def connection = Mock(Connection) {
-            _ * getDescription() >> connectionDescription
-        }
-        def connectionSource = Stub(ConnectionSource) {
-            getConnection() >> connection
-            getServerApi() >> null
-            getRequestContext() >> IgnorableRequestContext.INSTANCE
-        }
-        def readBinding = Stub(ReadBinding) {
-            getReadPreference() >> readPreference
-            getReadConnectionSource() >> connectionSource
-            getSessionContext() >> Stub(SessionContext) {
-                getReadConcern() >> ReadConcern.DEFAULT
-            }
-            getRequestContext() >> IgnorableRequestContext.INSTANCE
-        }
-        def queryResult = new QueryResult(namespace, [], 0, new ServerAddress())
-        def expectedQueryWithOverrides = BsonDocument.parse('''{
-            "$query": { abc : { $gte: 100 }},
-            "$comment": "my comment",
-            "$hint": { hint: 1 },
-            "$min": { abc: 99 },
-            "$max": { abc: 1000 },
-            "$returnKey": true,
-            "$showDiskLoc": true
-        }''')
-        def operation = new FindOperation<BsonDocument>(namespace, decoder)
-
-        // Defaults
-        when:
-        operation.execute(readBinding)
-
-        then:
-        1 * connection.query(namespace, new BsonDocument(), operation.getProjection(), operation.getSkip(), operation.getLimit(),
-                operation.getBatchSize(), readPreference.isSecondaryOk(), false, false, false, false, false, decoder,
-                IgnorableRequestContext.INSTANCE) >> queryResult
-        1 * connection.release()
-
-        // Overrides
-        and:
-        operation.filter(BsonDocument.parse('{ abc : { $gte: 100 }}'))
-                .projection(new BsonDocument('x', new BsonInt32(1)))
-                .skip(2)
-                .limit(100)
-                .batchSize(10)
-                .cursorType(TailableAwait)
-                .oplogReplay(true)
-                .noCursorTimeout(true)
-                .partial(true)
-                .oplogReplay(true)
-                .comment(new BsonString('my comment'))
-                .hint(BsonDocument.parse('{ hint : 1}'))
-                .min(BsonDocument.parse('{ abc: 99 }'))
-                .max(BsonDocument.parse('{ abc: 1000 }'))
-                .returnKey(true)
-                .showRecordId(true)
-
-        when:
-        operation.execute(readBinding)
-
-        then:
-        1 * connection.query(namespace, expectedQueryWithOverrides, operation.getProjection(), operation.getSkip(), operation.getLimit(),
-                operation.getBatchSize(), readPreference.isSecondaryOk(), true, true, true, true, true, decoder,
-                IgnorableRequestContext.INSTANCE) >> queryResult
-        1 * connection.release()
-    }
-
 
     def 'should find with correct command'() {
         when:
@@ -195,88 +105,6 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
         allowDiskUse << [null] * 10 + [true] * 10
         version << [[3, 2, 0]] * 10 + [[3, 4, 0]] * 10
     }
-
-    def 'should use the ReadBindings readPreference to set secondaryOk'() {
-        given:
-        def dbName = 'db'
-        def collectionName = 'coll'
-        def namespace = new MongoNamespace(dbName, collectionName)
-        def decoder = Stub(Decoder)
-        def connectionDescription = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                 3, STANDALONE, 1000, 16000000, 48000000, [])
-        def connection = Mock(Connection) {
-            _ * getDescription() >> connectionDescription
-        }
-        def readBinding = Stub(ReadBinding) {
-            getReadConnectionSource() >> Stub(ConnectionSource) {
-                getConnection() >> connection
-                getServerApi() >> null
-            }
-            getReadPreference() >> Stub(ReadPreference) {
-                isSecondaryOk() >> secondaryOk
-            }
-            getSessionContext() >> Stub(SessionContext) {
-                getReadConcern() >> ReadConcern.DEFAULT
-            }
-        }
-        def queryResult = Mock(QueryResult) {
-            _ * getNamespace() >> namespace
-            _ * getResults() >> []
-        }
-        def operation = new FindOperation<BsonDocument>(namespace, decoder)
-
-        when:
-        operation.execute(readBinding)
-
-        then:
-        1 * connection.query(namespace, _, _, _, _, _, secondaryOk, *_) >> queryResult
-        1 * connection.release()
-
-        where:
-        secondaryOk << [true, false]
-    }
-
-    def 'should use the AsyncReadBindings readPreference to set secondaryOk'() {
-        given:
-        def dbName = 'db'
-        def collectionName = 'coll'
-        def namespace = new MongoNamespace(dbName, collectionName)
-        def decoder = Stub(Decoder)
-        def connectionDescription = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                 3, STANDALONE, 1000, 16000000, 48000000, [])
-
-        def connection = Mock(AsyncConnection) {
-            _ * getDescription() >> connectionDescription
-        }
-        def connectionSource = Stub(AsyncConnectionSource) {
-            getConnection(_) >> { it[0].onResult(connection, null) }
-        }
-        def readBinding = Stub(AsyncReadBinding) {
-            getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
-            getReadPreference() >> Stub(ReadPreference) {
-                isSecondaryOk() >> secondaryOk
-            }
-            getSessionContext() >> Stub(SessionContext) {
-                getReadConcern() >> ReadConcern.DEFAULT
-            }
-        }
-        def queryResult = Mock(QueryResult) {
-            _ * getNamespace() >> namespace
-            _ * getResults() >> []
-        }
-        def operation = new FindOperation<BsonDocument>(namespace, decoder)
-
-        when:
-        operation.executeAsync(readBinding, Stub(SingleResultCallback))
-
-        then:
-        1 * connection.queryAsync(namespace, _, _, _, _, _, secondaryOk, *_) >> { it.last().onResult(queryResult, null) }
-        1 * connection.release()
-
-        where:
-        secondaryOk << [true, false]
-    }
-
 
     def 'should use the readPreference to set secondaryOk for commands'() {
         when:

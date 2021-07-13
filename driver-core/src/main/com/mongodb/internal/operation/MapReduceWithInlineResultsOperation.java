@@ -52,7 +52,7 @@ import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.DocumentHelper.putIfTrue;
 import static com.mongodb.internal.operation.ExplainHelper.asExplainCommand;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.OperationHelper.validateReadConcernAndCollation;
+import static com.mongodb.internal.operation.OperationHelper.validateCollation;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSION;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -418,7 +418,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
         return new CommandCreator() {
             @Override
             public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
-                validateReadConcernAndCollation(connectionDescription, sessionContext.getReadConcern(), collation);
+                validateCollation(connectionDescription, collation);
                 return getCommand(sessionContext, connectionDescription.getMaxWireVersion());
             }
         };

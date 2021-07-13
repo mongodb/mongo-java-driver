@@ -41,7 +41,6 @@ import static com.mongodb.internal.operation.CommandOperationHelper.executeRetry
 import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceError;
 import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
-import static com.mongodb.internal.operation.OperationHelper.validateReadConcern;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 import static java.util.Collections.singletonList;
 
@@ -114,7 +113,6 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
 
     private CommandCreator getCommandCreator(final SessionContext sessionContext) {
         return (serverDescription, connectionDescription) -> {
-            validateReadConcern(connectionDescription, sessionContext.getReadConcern());
             BsonDocument document = new BsonDocument("count", new BsonString(namespace.getCollectionName()));
             appendReadConcernToCommand(sessionContext, connectionDescription.getMaxWireVersion(), document);
             putIfNotZero(document, "maxTimeMS", maxTimeMS);

@@ -44,7 +44,6 @@ import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
 import static com.mongodb.internal.operation.OperationHelper.validateCollation;
 import static com.mongodb.internal.operation.OperationHelper.validateHintForFindAndModify;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -367,8 +366,7 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
             specializeCommand(commandDocument, connectionDescription);
 
             putIfNotZero(commandDocument, "maxTimeMS", getMaxTime(MILLISECONDS));
-            if (getWriteConcern().isAcknowledged() && !getWriteConcern().isServerDefault()
-                    && serverIsAtLeastVersionThreeDotTwo(connectionDescription) && !sessionContext.hasActiveTransaction()) {
+            if (getWriteConcern().isAcknowledged() && !getWriteConcern().isServerDefault() && !sessionContext.hasActiveTransaction()) {
                 commandDocument.put("writeConcern", getWriteConcern().asDocument());
             }
             if (getCollation() != null) {

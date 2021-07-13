@@ -99,7 +99,6 @@ class QueryBatchCursorSpecification extends Specification {
             _ * getDescription() >> Stub(ConnectionDescription) {
                 getMaxWireVersion() >> 4
             }
-            _ * killCursor(*_) >> { throw new MongoSocketException('No MongoD', SERVER_ADDRESS) }
             _ * command(*_) >> { throw new MongoSocketException('No MongoD', SERVER_ADDRESS) }
         }
         def connectionSource = Stub(ConnectionSource) {
@@ -214,8 +213,6 @@ class QueryBatchCursorSpecification extends Specification {
         new ServerVersion([5, 0, 0]) | true       | false                    | ServerType.LOAD_BALANCER
         new ServerVersion([3, 2, 0]) | true       | true                     | ServerType.STANDALONE
         new ServerVersion([3, 2, 0]) | true       | false                    | ServerType.STANDALONE
-        new ServerVersion([3, 0, 0]) | false      | true                     | ServerType.STANDALONE
-        new ServerVersion([3, 0, 0]) | false      | false                    | ServerType.STANDALONE
     }
 
     def 'should close cursor after getMore finishes if cursor was closed while getMore was in progress and getMore throws exception'() {
@@ -273,7 +270,6 @@ class QueryBatchCursorSpecification extends Specification {
         serverVersion                | useCommand | serverType
         new ServerVersion([5, 0, 0]) | true       | ServerType.LOAD_BALANCER
         new ServerVersion([3, 2, 0]) | true       | ServerType.STANDALONE
-        new ServerVersion([3, 0, 0]) | false      | ServerType.STANDALONE
     }
 
     /**
