@@ -634,8 +634,7 @@ final class UnifiedCrudHelper {
     private BsonDocument toExpected(final InsertManyResult result) {
         if (result.wasAcknowledged()) {
             return new BsonDocument("insertedIds", new BsonDocument(result.getInsertedIds().entrySet().stream()
-                    .map(value -> new BsonElement(value.getKey().toString(), value.getValue())).collect(toList())))
-                    .append("insertedCount", new BsonInt32(result.getInsertedIds().size()));
+                    .map(value -> new BsonElement(value.getKey().toString(), value.getValue())).collect(toList())));
         } else {
             return new BsonDocument();
         }
