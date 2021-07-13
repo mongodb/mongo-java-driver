@@ -462,6 +462,8 @@ class AggregatesSpecification extends Specification {
         given:
         Window window = documents(1, 2)
         BsonDocument setWindowFieldsBson = toBson(setWindowFields('$partitionByField', ascending('sortByField'), asList(
+                WindowedComputations.of(new BsonField('newField00', new Document('$sum', '$field00')
+                        .append('window', Windows.of(new Document('range', asList(1, 'current')))))),
                 WindowedComputations.sum('newField01', '$field01', Windows.range(1, CURRENT)),
                 WindowedComputations.avg('newField02', '$field02', Windows.range(UNBOUNDED, 1)),
                 WindowedComputations.stdDevSamp('newField03', '$field03', window),
@@ -494,6 +496,7 @@ class AggregatesSpecification extends Specification {
                     "partitionBy": "$partitionByField",
                     "sortBy": { "sortByField" : 1 },
                     "output": {
+                        "newField00": { "$sum": "$field00", "window": { "range": [{"$numberInt": "1"}, "current"] } },
                         "newField01": { "$sum": "$field01", "window": { "range": [{"$numberLong": "1"}, "current"] } },
                         "newField02": { "$avg": "$field02", "window": { "range": ["unbounded", {"$numberLong": "1"}] } },
                         "newField03": { "$stdDevSamp": "$field03", "window": { "documents": [1, 2] } },

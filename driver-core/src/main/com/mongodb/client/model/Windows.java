@@ -20,7 +20,6 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
 import org.bson.BsonType;
-import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.bson.types.Decimal128;
@@ -88,8 +87,8 @@ import static org.bson.assertions.Assertions.notNull;
 @Beta
 public final class Windows {
     /**
-     * Creates a window from a document in situations when there is no builder method that better satisfies your needs.
-     * This method cannot be used to validate the document syntax.
+     * Creates a window from {@link Bson} in situations when there is no builder method that better satisfies your needs.
+     * This method cannot be used to validate the syntax.
      * <p>
      * <i>Example</i><br>
      * The following code creates two functionally equivalent windows, though they may not be {@linkplain #equals(Object) equal}.
@@ -100,31 +99,11 @@ public final class Windows {
      *                  .append("unit", "week"));
      * }</pre>
      *
-     * @param window A document representing the required window.
+     * @param window A {@link Bson} representing the required window.
      * @return The constructed window.
      */
-    public static Window of(final Document window) {
-        return new DocumentWindow(notNull("window", window));
-    }
-
-    /**
-     * Creates a window from a document in situations when there is no builder method that better satisfies your needs.
-     * This method cannot be used to validate the document syntax.
-     * <p>
-     * <i>Example</i><br>
-     * The following code creates two functionally identical windows, though they may not be {@linkplain #equals(Object) equal}.
-     * <pre>{@code
-     *  Window pastWeek1 = Windows.timeRange(-1, MongoTimeUnit.WEEK, Windows.Bound.CURRENT);
-     *  Window pastWeek2 = Windows.of(
-     *          new BsonDocument("range", new BsonArray(Arrays.asList(new BsonInt32(-1), new BsonString("current"))))
-     *                  .append("unit", new BsonString("week")));
-     * }</pre>
-     *
-     * @param window A document representing the required window.
-     * @return The constructed window.
-     */
-    public static Window of(final BsonDocument window) {
-        return new BsonDocumentWindow(notNull("window", window));
+    public static Window of(final Bson window) {
+        return new BsonWindow(notNull("window", window));
     }
 
     /**
@@ -443,10 +422,10 @@ public final class Windows {
         }
     }
 
-    private static final class DocumentWindow implements Window {
-        private final Document wrapped;
+    private static final class BsonWindow implements Window {
+        private final Bson wrapped;
 
-        DocumentWindow(final Document document) {
+        BsonWindow(final Bson document) {
             wrapped = assertNotNull(document);
         }
 
@@ -463,42 +442,7 @@ public final class Windows {
             if (o == null || getClass() != o.getClass()) {
                 return false;
             }
-            final DocumentWindow that = (DocumentWindow) o;
-            return wrapped.equals(that.wrapped);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(wrapped);
-        }
-
-        @Override
-        public String toString() {
-            return wrapped.toString();
-        }
-    }
-
-    private static final class BsonDocumentWindow implements Window {
-        private final BsonDocument wrapped;
-
-        BsonDocumentWindow(final BsonDocument document) {
-            wrapped = assertNotNull(document);
-        }
-
-        @Override
-        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
-            return wrapped;
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            final BsonDocumentWindow that = (BsonDocumentWindow) o;
+            final BsonWindow that = (BsonWindow) o;
             return wrapped.equals(that.wrapped);
         }
 

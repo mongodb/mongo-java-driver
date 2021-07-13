@@ -18,7 +18,7 @@ package org.mongodb.scala.model
 import com.mongodb.annotations.Beta
 import com.mongodb.client.model.{ MongoTimeUnit => JMongoTimeUnit, Windows => JWindows }
 import org.bson.types.Decimal128
-import org.mongodb.scala.bson.Document
+import org.mongodb.scala.bson.conversions.Bson
 
 /**
  * Builders for [[Window windows]] used when expressing [[WindowedComputation windowed computations]].
@@ -60,8 +60,9 @@ import org.mongodb.scala.bson.Document
 object Windows {
 
   /**
-   * Creates a window from a document in situations when there is no builder method that better satisfies your needs.
-   * This method cannot be used to validate the document syntax.
+   * Creates a window from [[org.mongodb.scala.bson.conversions.Bson]]
+   * in situations when there is no builder method that better satisfies your needs.
+   * This method cannot be used to validate the syntax.
    *
    * <i>Example</i><br>
    * The following code creates two functionally identical windows, though they may not be equal.
@@ -72,10 +73,10 @@ object Windows {
    *          "unit" -> BsonString("week")))
    * }}}
    *
-   * @param window A document representing the required window.
+   * @param window A [[org.mongodb.scala.bson.conversions.Bson]] representing the required window.
    * @return The constructed window.
    */
-  def of(window: Document): Window = JWindows.of(window)
+  def of(window: Bson): Window = JWindows.of(window)
 
   /**
    * Creates a documents window whose bounds are determined by a number of documents before and after the current document.
