@@ -61,6 +61,7 @@ import org.bson.codecs.IterableCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.jsr310.Jsr310CodecProvider;
 import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
@@ -78,7 +79,8 @@ public final class CollectionHelper<T> {
                                                                    new IterableCodecProvider(),
                                                                    new ValueCodecProvider(),
                                                                    new DocumentCodecProvider(),
-                                                                   new GeoJsonCodecProvider());
+                                                                   new GeoJsonCodecProvider(),
+                                                                   new Jsr310CodecProvider());
     private MongoNamespace namespace;
 
     public CollectionHelper(final Codec<T> codec, final MongoNamespace namespace) {
