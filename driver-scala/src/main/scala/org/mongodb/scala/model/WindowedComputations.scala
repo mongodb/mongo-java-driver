@@ -46,9 +46,9 @@ object WindowedComputations {
    *
    * {{{
    *  val pastWeek: Window = Windows.timeRange(-1, MongoTimeUnit.WEEK, Windows.Bound.CURRENT)
-   *  val pastWeekExpenses1: WindowedComputation = WindowedComputations.sum("pastWeekExpenses", "$expenses", pastWeek)
+   *  val pastWeekExpenses1: WindowedComputation = WindowedComputations.sum("pastWeekExpenses", "\$expenses", pastWeek)
    *  val pastWeekExpenses2: WindowedComputation = WindowedComputations.of(
-   *      BsonField("pastWeekExpenses", Document("$sum" -> "$expenses",
+   *      BsonField("pastWeekExpenses", Document("\$sum" -> "\$expenses",
    *          "window" -> pastWeek.toBsonDocument)))
    * }}}
    *

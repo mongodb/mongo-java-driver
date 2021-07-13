@@ -60,8 +60,7 @@ import org.mongodb.scala.bson.conversions.Bson
 object Windows {
 
   /**
-   * Creates a window from [[org.mongodb.scala.bson.conversions.Bson]]
-   * in situations when there is no builder method that better satisfies your needs.
+   * Creates a window from `Bson` in situations when there is no builder method that better satisfies your needs.
    * This method cannot be used to validate the syntax.
    *
    * <i>Example</i><br>
@@ -73,7 +72,7 @@ object Windows {
    *          "unit" -> BsonString("week")))
    * }}}
    *
-   * @param window A [[org.mongodb.scala.bson.conversions.Bson]] representing the required window.
+   * @param window A `Bson` representing the required window.
    * @return The constructed window.
    */
   def of(window: Bson): Window = JWindows.of(window)
