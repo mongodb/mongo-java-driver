@@ -48,7 +48,7 @@ import static com.mongodb.internal.operation.CommandOperationHelper.executeRetry
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.OperationHelper.validateReadConcernAndCollation;
+import static com.mongodb.internal.operation.OperationHelper.validateCollation;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 
 /**
@@ -248,7 +248,7 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
         return new CommandCreator() {
             @Override
             public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
-                validateReadConcernAndCollation(connectionDescription, sessionContext.getReadConcern(), collation);
+                validateCollation(connectionDescription, collation);
                 return getCommand(sessionContext, connectionDescription);
             }
         };

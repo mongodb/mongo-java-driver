@@ -32,8 +32,6 @@ import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
 
-import java.util.List;
-
 
 /**
  * A synchronous connection to a MongoDB server with blocking operations.
@@ -127,56 +125,6 @@ public interface Connection extends ReferenceCounted {
     <T> T command(String database, BsonDocument command, FieldNameValidator commandFieldNameValidator, ReadPreference readPreference,
             Decoder<T> commandResultDecoder, SessionContext sessionContext, ServerApi serverApi, RequestContext requestContext,
             boolean responseExpected, SplittablePayload payload, FieldNameValidator payloadFieldNameValidator);
-
-    /**
-     * Execute the query.
-     *
-     * @param <T>             the query result document type
-     * @param namespace       the namespace to query
-     * @param queryDocument   the query document
-     * @param fields          the field to include or exclude
-     * @param skip            the number of documents to skip
-     * @param limit           the maximum number of documents to return in all batches
-     * @param batchSize       the maximum number of documents to return in this batch
-     * @param secondaryOk     whether the query can run on a secondary
-     * @param tailableCursor  whether to return a tailable cursor
-     * @param awaitData       whether a tailable cursor should wait before returning if no documents are available
-     * @param noCursorTimeout whether the cursor should not timeout
-     * @param partial         whether partial results from sharded clusters are acceptable
-     * @param oplogReplay     whether to replay the oplog
-     * @param resultDecoder   the decoder for the query result documents
-     * @param requestContext  the request context
-     * @return the query results
-     *
-     * @since 3.1
-     */
-    <T> QueryResult<T> query(MongoNamespace namespace, BsonDocument queryDocument, BsonDocument fields,
-            int skip, int limit, int batchSize,
-            boolean secondaryOk, boolean tailableCursor, boolean awaitData, boolean noCursorTimeout,
-            boolean partial, boolean oplogReplay,
-            Decoder<T> resultDecoder, RequestContext requestContext);
-
-    /**
-     * Get more result documents from a cursor.
-     *
-     * @param <T>            the type of the query result documents
-     * @param namespace      the namespace to get more documents from
-     * @param cursorId       the cursor id
-     * @param numberToReturn the number of documents to return
-     * @param resultDecoder  the decoder for the query results
-     * @param requestContext the request context
-     * @return the query results
-     */
-    <T> QueryResult<T> getMore(MongoNamespace namespace, long cursorId, int numberToReturn, Decoder<T> resultDecoder,
-            RequestContext requestContext);
-
-    /**
-     * Kills the given list of cursors.
-     *  @param namespace the namespace to in which the cursors live
-     * @param cursors   the cursors
-     * @param requestContext the request context
-     */
-    void killCursor(MongoNamespace namespace, List<Long> cursors, RequestContext requestContext);
 
 
     enum PinningMode {

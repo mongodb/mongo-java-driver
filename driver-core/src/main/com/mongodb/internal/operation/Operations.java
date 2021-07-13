@@ -184,7 +184,6 @@ public final class Operations<TDocument> {
                 .noCursorTimeout(options.isNoCursorTimeout())
                 .oplogReplay(options.isOplogReplay())
                 .partial(options.isPartial())
-                .secondaryOk(readPreference.isSecondaryOk())
                 .collation(options.getCollation())
                 .comment(options.getComment())
                 .let(toBsonDocument(options.getLet()))

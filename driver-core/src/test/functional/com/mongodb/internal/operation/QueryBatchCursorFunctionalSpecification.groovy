@@ -53,8 +53,6 @@ import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToQueryResult
 import static com.mongodb.internal.operation.QueryOperationHelper.makeAdditionalGetMoreCall
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo
-import static java.util.Arrays.asList
 import static java.util.Collections.singletonList
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.fail
@@ -531,15 +529,11 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), null, connectionSource)
         def serverCursor = cursor.getServerCursor()
         def connection = connectionSource.getConnection()
-        if (serverVersionLessThan(3, 6)) {
-            connection.killCursor(getNamespace(), asList(cursor.getServerCursor().id), IgnorableRequestContext.INSTANCE)
-        } else {
-            connection.command(getNamespace().databaseName,
-                    new BsonDocument('killCursors', new BsonString(namespace.getCollectionName()))
-                            .append('cursors', new BsonArray(singletonList(new BsonInt64(serverCursor.getId())))),
-                    new NoOpFieldNameValidator(), ReadPreference.primary(),
-                    new BsonDocumentCodec(), new NoOpSessionContext(), getServerApi(), IgnorableRequestContext.INSTANCE)
-        }
+        connection.command(getNamespace().databaseName,
+                new BsonDocument('killCursors', new BsonString(namespace.getCollectionName()))
+                        .append('cursors', new BsonArray(singletonList(new BsonInt64(serverCursor.getId())))),
+                new NoOpFieldNameValidator(), ReadPreference.primary(),
+                new BsonDocumentCodec(), new NoOpSessionContext(), getServerApi(), IgnorableRequestContext.INSTANCE)
         connection.release()
         cursor.next()
 
@@ -626,34 +620,45 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
                                                ReadPreference readPreference) {
         def connection = connectionSource.getConnection()
         try {
-            if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
-                def findCommand = new BsonDocument('find', new BsonString(getCollectionName()))
-                        .append('filter', filter)
-                        .append('tailable', BsonBoolean.valueOf(tailable))
-                        .append('awaitData', BsonBoolean.valueOf(awaitData))
+            def findCommand = new BsonDocument('find', new BsonString(getCollectionName()))
+                    .append('filter', filter)
+                    .append('tailable', BsonBoolean.valueOf(tailable))
+                    .append('awaitData', BsonBoolean.valueOf(awaitData))
 
-                findCommand.append('limit', new BsonInt32(Math.abs(limit)))
+            findCommand.append('limit', new BsonInt32(Math.abs(limit)))
 
-                if (limit >= 0) {
-                    if (batchSize < 0 && Math.abs(batchSize) < limit) {
-                        findCommand.append('limit', new BsonInt32(Math.abs(batchSize)))
-                    } else {
-                        findCommand.append('batchSize', new BsonInt32(Math.abs(batchSize)))
-                    }
+            if (limit >= 0) {
+                if (batchSize < 0 && Math.abs(batchSize) < limit) {
+                    findCommand.append('limit', new BsonInt32(Math.abs(batchSize)))
+                } else {
+                    findCommand.append('batchSize', new BsonInt32(Math.abs(batchSize)))
                 }
-
-                def response = connection.command(getDatabaseName(), findCommand,
-                        NO_OP_FIELD_NAME_VALIDATOR, readPreference,
-                        CommandResultDocumentCodec.create(new DocumentCodec(), 'firstBatch'),
-                        connectionSource.sessionContext, connectionSource.getServerApi(), IgnorableRequestContext.INSTANCE)
-                cursorDocumentToQueryResult(response.getDocument('cursor'), connection.getDescription().getServerAddress())
-            } else {
-                connection.query(getNamespace(), filter, null, 0, limit, batchSize,
-                        readPreference.isSecondaryOk(), tailable, awaitData, false, false, false,
-                        new DocumentCodec(), IgnorableRequestContext.INSTANCE);
             }
+
+            def response = connection.command(getDatabaseName(), findCommand,
+                    NO_OP_FIELD_NAME_VALIDATOR, readPreference,
+                    CommandResultDocumentCodec.create(new DocumentCodec(), 'firstBatch'),
+                        connectionSource.sessionContext, connectionSource.getServerApi(), IgnorableRequestContext.INSTANCE)
+            cursorDocumentToQueryResult(response.getDocument('cursor'), connection.getDescription().getServerAddress())
         } finally {
             connection.release();
         }
+    }
+
+    private void makeAdditionalGetMoreCall(ServerCursor serverCursor) {
+        def connection = connectionSource.getConnection()
+        try {
+            makeAdditionalGetMoreCall(serverCursor, connection)
+        } finally {
+            connection.release()
+        }
+    }
+
+    private void makeAdditionalGetMoreCall(ServerCursor serverCursor, Connection connection) {
+        connection.command(getNamespace().databaseName,
+                new BsonDocument('getMore', new BsonInt64(serverCursor.getId()))
+                        .append('collection', new BsonString(namespace.getCollectionName())),
+                NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.getSessionContext(),
+                connectionSource.getServerApi());
     }
 }

@@ -78,10 +78,6 @@ abstract class RequestMessage {
         return REQUEST_ID.get();
     }
 
-    RequestMessage(final OpCode opCode, final MessageSettings settings) {
-        this(null, opCode, settings);
-    }
-
     RequestMessage(final OpCode opCode, final int requestId, final MessageSettings settings) {
         this(null, opCode, requestId, settings);
     }

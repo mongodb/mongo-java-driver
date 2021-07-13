@@ -17,7 +17,6 @@
 package com.mongodb.internal.connection
 
 import com.mongodb.MongoNamespace
-import com.mongodb.MongoSocketReadException
 import com.mongodb.MongoSocketWriteException
 import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterId
@@ -27,7 +26,6 @@ import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.bulk.DeleteRequest
 import org.bson.BsonDocument
 import org.bson.BsonInt32
-import org.bson.codecs.DocumentCodec
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -61,42 +59,8 @@ class   CommandEventOnConnectionFailureSpecification extends Specification {
 
         where:
         [protocolInfo, async] << [[
-                                          ['killCursors',
-                                    new KillCursorProtocol(namespace, [42L], IgnorableRequestContext.INSTANCE)],
-                                          ['getMore',
-                                    new GetMoreProtocol(namespace, 42L, 1, new DocumentCodec(), IgnorableRequestContext.INSTANCE)],
-                                          ['find',
-                                    new QueryProtocol(namespace, 0, 1, 1, new BsonDocument(), new BsonDocument(), new DocumentCodec(),
-                                           IgnorableRequestContext.INSTANCE)],
-                                          ['delete',
+                                   ['delete',
                                     new DeleteProtocol(namespace, true, new DeleteRequest(new BsonDocument('_id', new BsonInt32(1))),
-                                            IgnorableRequestContext.INSTANCE)],
-                                  ],
-                                  [false, true]].combinations()
-    }
-
-    def 'should publish failed command event when receiveMessage throws exception'() {
-        String commandName = protocolInfo[0]
-        LegacyProtocol protocol = protocolInfo[1]
-
-        def commandListener = new TestCommandListener()
-        protocol.commandListener = commandListener
-        connection.enqueueReceiveMessageException(new MongoSocketReadException('Failure', new ServerAddress(), new IOException()));
-
-        when:
-        execute(protocol, connection, async)
-
-        then:
-        def e = thrown(MongoSocketReadException)
-        commandListener.events.size() == 2
-        commandListener.eventWasDelivered(new CommandFailedEvent(1, connection.getDescription(), commandName, 0, e), 1)
-
-        where:
-        [protocolInfo, async] << [[
-                                          ['getMore',
-                                    new GetMoreProtocol(namespace, 42L, 1, new DocumentCodec(), IgnorableRequestContext.INSTANCE)],
-                                          ['find',
-                                    new QueryProtocol(namespace, 0, 1, 1, new BsonDocument(), new BsonDocument(), new DocumentCodec(),
                                             IgnorableRequestContext.INSTANCE)],
                                   ],
                                   [false, true]].combinations()

@@ -28,7 +28,6 @@ import com.mongodb.internal.bulk.InsertRequest;
 import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.MessageSettings;
-import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.internal.connection.SplittablePayload;
 import com.mongodb.internal.connection.SplittablePayloadBsonWriter;
 import com.mongodb.internal.session.SessionContext;
@@ -52,14 +51,12 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.io.BasicOutputBuffer;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotTwo;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 // because this class implements deprecated methods
-@SuppressWarnings("deprecation")
 class CryptConnection implements Connection {
     private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());
     private static final int MAX_SPLITTABLE_DOCUMENT_SIZE = 2097152;
@@ -178,25 +175,6 @@ class CryptConnection implements Connection {
     @Override
     public WriteConcernResult delete(final MongoNamespace namespace, final boolean ordered, final DeleteRequest deleteRequest,
             final RequestContext requestContext) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <T> QueryResult<T> query(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
-            final int skip, final int limit, final int batchSize, final boolean secondaryOk,
-            final boolean tailableCursor, final boolean awaitData, final boolean noCursorTimeout,
-            final boolean partial, final boolean oplogReplay, final Decoder<T> resultDecoder, final RequestContext requestContext) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <T> QueryResult<T> getMore(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
-            final Decoder<T> resultDecoder, final RequestContext requestContext) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void killCursor(final MongoNamespace namespace, final List<Long> cursors, final RequestContext requestContext) {
         throw new UnsupportedOperationException();
     }
 

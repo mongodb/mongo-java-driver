@@ -102,7 +102,6 @@ public class FindPublisherImplTest extends TestHelper {
                 .returnKey(false)
                 .showRecordId(false)
                 .skip(10)
-                .secondaryOk(false)
                 .sort(new BsonDocument("sort", new BsonInt32(1)));
 
         configureBatchCursor();

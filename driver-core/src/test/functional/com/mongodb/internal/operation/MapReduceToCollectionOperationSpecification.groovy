@@ -301,8 +301,6 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         [3, 4, 0]     | true                    | true                | true             | false
         [3, 2, 0]     | true                    | false               | false            | true
         [3, 2, 0]     | true                    | false               | false            | false
-        [3, 0, 0]     | false                   | false               | false            | true
-        [3, 0, 0]     | false                   | false               | false            | false
     }
 
     def 'should throw an exception when passing an unsupported collation'() {

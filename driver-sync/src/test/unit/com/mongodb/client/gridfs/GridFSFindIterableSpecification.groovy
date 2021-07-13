@@ -67,7 +67,7 @@ class GridFSFindIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new FindOperation<GridFSFile>(namespace, gridFSFileCodec)
-                .filter(new BsonDocument()).secondaryOk(true).retryReads(true))
+                .filter(new BsonDocument()).retryReads(true))
         readPreference == secondary()
 
         when: 'overriding initial options'
@@ -92,7 +92,6 @@ class GridFSFindIterableSpecification extends Specification {
                 .limit(99)
                 .skip(9)
                 .noCursorTimeout(true)
-                .secondaryOk(true)
                 .collation(collation)
                 .retryReads(true)
         )
@@ -116,7 +115,6 @@ class GridFSFindIterableSpecification extends Specification {
                 .filter(new BsonDocument('filter', new BsonInt32(1)))
                 .sort(new BsonDocument('sort', new BsonInt32(1)))
                 .cursorType(CursorType.NonTailable)
-                .secondaryOk(true)
                 .retryReads(true)
         )
     }

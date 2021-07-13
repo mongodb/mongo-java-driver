@@ -235,22 +235,6 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         async << [false, false]
     }
 
-
-    def 'should throw an exception when using an unsupported ReadConcern'() {
-        given:
-        def operation = new DistinctOperation(helper.namespace, 'name', helper.decoder)
-
-        when:
-        testOperationThrows(operation, [3, 0, 0], readConcern, async)
-
-        then:
-        def exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('ReadConcern not supported by wire version:')
-
-        where:
-        [async, readConcern] << [[true, false], [ReadConcern.MAJORITY, ReadConcern.LOCAL]].combinations()
-    }
-
     def 'should throw an exception when using an unsupported Collation'() {
         def operation = new DistinctOperation(helper.namespace, 'name', helper.decoder)
                 .collation(defaultCollation)

@@ -409,34 +409,6 @@ class DefaultServerSpecification extends Specification {
         0 * serverMonitor.connect()
     }
 
-    def 'should enable command listener'() {
-        given:
-        def protocol = new TestLegacyProtocol()
-        def commandListener = Mock(CommandListener)
-        def server = defaultServer(Mock(ConnectionPool), Mock(ServerMonitor), Mock(ServerListener), Mock(SdamServerDescriptionManager),
-                commandListener)
-        def testConnection = (TestConnection) server.getConnection()
-
-        testConnection.enqueueProtocol(protocol)
-
-        when:
-        if (async) {
-            CountDownLatch latch = new CountDownLatch(1)
-            testConnection.killCursorAsync(new MongoNamespace('test.test'), [], IgnorableRequestContext.INSTANCE) {
-                BsonDocument result, Throwable t -> latch.countDown()
-            }
-            latch.await()
-        } else {
-            testConnection.killCursor(new MongoNamespace('test.test'), [], IgnorableRequestContext.INSTANCE)
-        }
-
-        then:
-        protocol.commandListener == commandListener
-
-        where:
-        async << [false, true]
-    }
-
     def 'should propagate cluster time'() {
         given:
         def clusterClock = new ClusterClock()

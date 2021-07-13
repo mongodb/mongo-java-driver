@@ -45,7 +45,6 @@ import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
 
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
@@ -356,26 +355,6 @@ class DefaultServer implements ClusterableServer {
         }
 
         @Override
-        public <T> QueryResult<T> query(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
-                final int skip, final int limit, final int batchSize, final boolean secondaryOk, final boolean tailableCursor,
-                final boolean awaitData, final boolean noCursorTimeout, final boolean partial, final boolean oplogReplay,
-                final Decoder<T> resultDecoder, final RequestContext requestContext) {
-            return wrapped.query(namespace, queryDocument, fields, skip, limit, batchSize, secondaryOk, tailableCursor, awaitData,
-                    noCursorTimeout, partial, oplogReplay, resultDecoder, requestContext);
-        }
-
-        @Override
-        public <T> QueryResult<T> getMore(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
-                final Decoder<T> resultDecoder, final RequestContext requestContext) {
-            return wrapped.getMore(namespace, cursorId, numberToReturn, resultDecoder, requestContext);
-        }
-
-        @Override
-        public void killCursor(final MongoNamespace namespace, final List<Long> cursors, final RequestContext requestContext) {
-            wrapped.killCursor(namespace, cursors, requestContext);
-        }
-
-        @Override
         public void markAsPinned(final PinningMode pinningMode) {
             wrapped.markAsPinned(pinningMode);
         }
@@ -455,27 +434,6 @@ class DefaultServer implements ClusterableServer {
                 final SingleResultCallback<T> callback) {
             wrapped.commandAsync(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, sessionContext,
                     serverApi, requestContext, responseExpected, payload, payloadFieldNameValidator, callback);
-        }
-
-        @Override
-        public <T> void queryAsync(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
-                final int skip, final int limit, final int batchSize, final boolean secondaryOk, final boolean tailableCursor,
-                final boolean awaitData, final boolean noCursorTimeout, final boolean partial, final boolean oplogReplay,
-                final Decoder<T> resultDecoder, final RequestContext requestContext, final SingleResultCallback<QueryResult<T>> callback) {
-            wrapped.queryAsync(namespace, queryDocument, fields, skip, limit, batchSize, secondaryOk, tailableCursor, awaitData,
-                    noCursorTimeout, partial, oplogReplay, resultDecoder, requestContext, callback);
-        }
-
-        @Override
-        public <T> void getMoreAsync(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
-                final Decoder<T> resultDecoder, final RequestContext requestContext, final SingleResultCallback<QueryResult<T>> callback) {
-            wrapped.getMoreAsync(namespace, cursorId, numberToReturn, resultDecoder, requestContext, callback);
-        }
-
-        @Override
-        public void killCursorAsync(final MongoNamespace namespace, final List<Long> cursors,
-                final RequestContext requestContext, final SingleResultCallback<Void> callback) {
-            wrapped.killCursorAsync(namespace, cursors, requestContext, callback);
         }
 
         @Override

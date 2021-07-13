@@ -65,7 +65,6 @@ import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.OperationHelper.getMoreCursorDocumentToQueryResult;
 import static com.mongodb.internal.operation.QueryHelper.translateCommandException;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionFourDotFour;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 
@@ -285,22 +284,16 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         ServerCursor serverCursor = assertNotNull(resourceManager.serverCursor());
         resourceManager.executeWithConnection(connection -> {
             ServerCursor nextServerCursor;
-            if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
-                try {
-                    nextServerCursor = initFromCommandResult(connection.command(namespace.getDatabaseName(),
-                            asGetMoreCommandDocument(serverCursor.getId(), connection.getDescription()),
-                            NO_OP_FIELD_NAME_VALIDATOR,
-                            ReadPreference.primary(),
-                            CommandResultDocumentCodec.create(decoder, "nextBatch"),
-                            resourceManager.sessionContext(),
-                            serverApi, resourceManager.requestContext()));
-                } catch (MongoCommandException e) {
-                    throw translateCommandException(e, serverCursor);
-                }
-            } else {
-                QueryResult<T> getMore = connection.getMore(namespace, serverCursor.getId(),
-                        getNumberToReturn(limit, batchSize, count), decoder, resourceManager.requestContext());
-                nextServerCursor = initFromQueryResult(getMore);
+            try {
+                nextServerCursor = initFromCommandResult(connection.command(namespace.getDatabaseName(),
+                        asGetMoreCommandDocument(serverCursor.getId(), connection.getDescription()),
+                        NO_OP_FIELD_NAME_VALIDATOR,
+                        ReadPreference.primary(),
+                        CommandResultDocumentCodec.create(decoder, "nextBatch"),
+                        resourceManager.sessionContext(),
+                        serverApi, resourceManager.requestContext()));
+            } catch (MongoCommandException e) {
+                throw translateCommandException(e, serverCursor);
             }
             resourceManager.setServerCursor(nextServerCursor);
             if (limitReached()) {
@@ -602,14 +595,9 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         private void killServerCursor(final MongoNamespace namespace, final ServerCursor serverCursor,
                 @Nullable final SessionContext sessionContext, final RequestContext requestContext, @Nullable final ServerApi serverApi,
                 final Connection connection) {
-            long cursorId = serverCursor.getId();
-            if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
-                connection.command(namespace.getDatabaseName(), asKillCursorsCommandDocument(namespace, serverCursor),
-                        NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(), sessionContext, serverApi,
-                        requestContext);
-            } else {
-                connection.killCursor(namespace, singletonList(cursorId), requestContext);
-            }
+            connection.command(namespace.getDatabaseName(), asKillCursorsCommandDocument(namespace, serverCursor),
+                    NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(), sessionContext, serverApi,
+                    requestContext);
         }
 
         private BsonDocument asKillCursorsCommandDocument(final MongoNamespace namespace, final ServerCursor serverCursor) {
