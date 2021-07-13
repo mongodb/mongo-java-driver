@@ -18,22 +18,20 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
-import com.mongodb.ReadPreference;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.async.function.AsyncCallbackSupplier;
+import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.connection.QueryResult;
-import com.mongodb.internal.async.function.AsyncCallbackSupplier;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformer;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformerAsync;
-import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt64;
@@ -45,9 +43,7 @@ import org.bson.codecs.Decoder;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.CommandOperationHelper.createReadCommandAndExecute;
@@ -67,7 +63,6 @@ import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToAsy
 import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToBatchCursor;
 import static com.mongodb.internal.operation.OperationHelper.withAsyncSourceAndConnection;
 import static com.mongodb.internal.operation.OperationHelper.withSourceAndConnection;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotZero;
 
 /**
  * An operation that lists the indexes that have been created on a collection.  For flexibility, the type of each document returned is
@@ -199,20 +194,12 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
             return withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection) -> {
                 retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), connection.getDescription(),
                         binding.getSessionContext()));
-                if (serverIsAtLeastVersionThreeDotZero(connection.getDescription())) {
-                    try {
-                        return createReadCommandAndExecute(retryState, binding, source, namespace.getDatabaseName(), getCommandCreator(),
-                                createCommandDecoder(), transformer(), connection);
-                    } catch (MongoCommandException e) {
-                        return rethrowIfNotNamespaceError(e, createEmptyBatchCursor(namespace, decoder,
-                                source.getServerDescription().getAddress(), batchSize));
-                    }
-                } else {
-                    retryState.markAsLastAttempt();
-                    return new QueryBatchCursor<>(connection.query(getIndexNamespace(),
-                            asQueryDocument(connection.getDescription(), binding.getReadPreference()), null, 0, 0, batchSize,
-                            binding.getReadPreference().isSecondaryOk(), false, false, false, false, false, decoder,
-                            binding.getRequestContext()), 0, batchSize, decoder, comment, source);
+                try {
+                    return createReadCommandAndExecute(retryState, binding, source, namespace.getDatabaseName(), getCommandCreator(),
+                            createCommandDecoder(), transformer(), connection);
+                } catch (MongoCommandException e) {
+                    return rethrowIfNotNamespaceError(e, createEmptyBatchCursor(namespace, decoder,
+                            source.getServerDescription().getAddress(), batchSize));
                 }
             });
         });
@@ -225,61 +212,28 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
         binding.retain();
         AsyncCallbackSupplier<AsyncBatchCursor<T>> asyncRead = CommandOperationHelper.<AsyncBatchCursor<T>>decorateReadWithRetries(
                 retryState, funcCallback -> {
-            logRetryExecute(retryState);
-            withAsyncSourceAndConnection(binding::getReadConnectionSource, false, funcCallback,
-                    (source, connection, releasingCallback) -> {
-                if (retryState.breakAndCompleteIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), connection.getDescription(),
-                        binding.getSessionContext()), releasingCallback)) {
-                    return;
-                }
-                if (serverIsAtLeastVersionThreeDotZero(connection.getDescription())) {
-                    createReadCommandAndExecuteAsync(retryState, binding, source, namespace.getDatabaseName(), getCommandCreator(),
-                            createCommandDecoder(), asyncTransformer(), connection, (result, t) -> {
-                                if (t != null && !isNamespaceError(t)) {
-                                    releasingCallback.onResult(null, t);
-                                } else {
-                                    releasingCallback.onResult(result != null ? result : emptyAsyncCursor(source), null);
+                    logRetryExecute(retryState);
+                    withAsyncSourceAndConnection(binding::getReadConnectionSource, false, funcCallback,
+                            (source, connection, releasingCallback) -> {
+                                if (retryState.breakAndCompleteIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), connection.getDescription(),
+                                        binding.getSessionContext()), releasingCallback)) {
+                                    return;
                                 }
+                                createReadCommandAndExecuteAsync(retryState, binding, source, namespace.getDatabaseName(), getCommandCreator(),
+                                        createCommandDecoder(), asyncTransformer(), connection, (result, t) -> {
+                                            if (t != null && !isNamespaceError(t)) {
+                                                releasingCallback.onResult(null, t);
+                                            } else {
+                                                releasingCallback.onResult(result != null ? result : emptyAsyncCursor(source), null);
+                                            }
+                                        });
                             });
-                } else {
-                    retryState.markAsLastAttempt();
-                    connection.queryAsync(getIndexNamespace(),
-                            asQueryDocument(connection.getDescription(), binding.getReadPreference()), null, 0, 0, batchSize,
-                            binding.getReadPreference().isSecondaryOk(), false, false, false, false, false, decoder,
-                                binding.getRequestContext(), new SingleResultCallback<QueryResult<T>>() {
-                                @Override
-                                public void onResult(final QueryResult<T> result, final Throwable t) {
-                                    if (t != null) {
-                                        releasingCallback.onResult(null, t);
-                                    } else {
-                                        releasingCallback.onResult(new AsyncQueryBatchCursor<T>(result, 0, batchSize, 0, decoder,
-                                                                                                comment, source, connection), null);
-                                    }
-                                }
-                            });
-                }
-            });
-        }).whenComplete(binding::release);
+                }).whenComplete(binding::release);
         asyncRead.get(errorHandlingCallback(callback, LOGGER));
     }
 
     private AsyncBatchCursor<T> emptyAsyncCursor(final AsyncConnectionSource source) {
         return createEmptyAsyncBatchCursor(namespace, source.getServerDescription().getAddress());
-    }
-
-    private BsonDocument asQueryDocument(final ConnectionDescription connectionDescription, final ReadPreference readPreference) {
-        BsonDocument document = new BsonDocument("$query", new BsonDocument("ns", new BsonString(namespace.getFullName())));
-        if (maxTimeMS > 0) {
-            document.put("$maxTimeMS", new BsonInt64(maxTimeMS));
-        }
-        if (connectionDescription.getServerType() == SHARD_ROUTER && !readPreference.equals(primary())) {
-            document.put("$readPreference", readPreference.toDocument());
-        }
-        return document;
-    }
-
-    private MongoNamespace getIndexNamespace() {
-        return new MongoNamespace(namespace.getDatabaseName(), "system.indexes");
     }
 
     private CommandCreator getCommandCreator() {
