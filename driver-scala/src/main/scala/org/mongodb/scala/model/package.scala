@@ -16,7 +16,10 @@
 
 package org.mongodb.scala
 
+import com.mongodb.annotations.Beta
+
 import scala.collection.JavaConverters._
+import com.mongodb.client.model.{ MongoTimeUnit => JMongoTimeUnit }
 import org.mongodb.scala.bson.conversions.Bson
 
 // scalastyle:off number.of.methods number.of.types
@@ -768,6 +771,55 @@ package object model {
       new com.mongodb.client.model.Variable[TExpression](name, value)
 
   }
+
+  /**
+   * Units for specifying time-based bounds for [[Window windows]] and output units for some time-based
+   * [[WindowedComputation windowed computations]].
+   *
+   * @since 4.3
+   * @note Requires MongoDB 5.0 or greater.
+   */
+  @Beta
+  object MongoTimeUnit {
+
+    val YEAR = JMongoTimeUnit.YEAR
+
+    val QUARTER = JMongoTimeUnit.QUARTER
+
+    val MONTH = JMongoTimeUnit.MONTH
+
+    val WEEK = JMongoTimeUnit.WEEK
+
+    val DAY = JMongoTimeUnit.DAY
+
+    val HOUR = JMongoTimeUnit.HOUR
+
+    val MINUTE = JMongoTimeUnit.MINUTE
+
+    val SECOND = JMongoTimeUnit.SECOND
+
+    val MILLISECOND = JMongoTimeUnit.MILLISECOND
+  }
+
+  /**
+   * A subset of documents within a partition in the [[Aggregates.setWindowFields \$setWindowFields]] pipeline stage
+   * of an aggregation pipeline (see `partitionBy` in [[Aggregates.setWindowFields]]).
+   *
+   * @see [[Windows]]
+   * @since 4.3
+   */
+  @Beta
+  type Window = com.mongodb.client.model.Window
+
+  /**
+   * The core part of the [[Aggregates.setWindowFields \$setWindowFields]] pipeline stage of an aggregation pipeline.
+   * A triple of a window function, a [[Window window]] and a path to a field to be computed by the window function over the window.
+   *
+   * @see [[WindowedComputations]]
+   * @since 4.3
+   */
+  @Beta
+  type WindowedComputation = com.mongodb.client.model.WindowedComputation
 }
 
 // scalastyle:on number.of.methods number.of.types

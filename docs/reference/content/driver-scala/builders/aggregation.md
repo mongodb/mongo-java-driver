@@ -10,8 +10,9 @@ title = "Aggregation"
 
 ## Aggregation
 
-The [`Aggregates`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/model/Aggregates$" >}}) class provides static factory methods that build [aggregation 
-pipeline operators]({{< docsref "reference/operator/aggregation/" >}}).  Each method returns an instance of the 
+The [`Aggregates`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/model/Aggregates$" >}}) class provides static factory methods
+that build [aggregation pipeline stages]({{< docsref "meta/aggregation-quick-reference/#stages" >}}).
+Each method returns an instance of the 
 [`Bson`]({{< relref "bson/documents.md#bson" >}}) type, which can in turn be passed to the `aggregate` method of `MongoCollection`.
 
 For brevity, you may choose to import the methods of the `Aggregates` class statically:
@@ -129,9 +130,9 @@ expression and outputs to the next stage a document for each distinct grouping. 
 expression on which to group, and zero or more 
 [accumulators]({{< docsref "reference/operator/aggregation/group/#accumulator-operator" >}}) which are evaluated for each 
 grouping.  To simplify the expression of accumulators, the driver includes an 
-[`Accumulators`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/model/Aggregates$" >}}) class with static factory methods for each of the supported 
-accumulators. In the example below, it's assumed that the `sum` and `avg` methods of the `Accumulators` class have been statically 
-imported. 
+[`Accumulators`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/model/Accumulators$" >}}) singleton object with factory methods 
+for each of the supported accumulators.
+In the example below, it's assumed that the `sum` and `avg` methods of the `Accumulators` class have been statically imported.
  
 This example groups documents by the value of the `customerId` field, and for each group accumulates the sum and average of the values of 
 the `quantity` field into the `totalQuantity` and `averageQuantity` fields, respectively. 
@@ -173,6 +174,31 @@ This example writes the pipeline to the `authors` collection:
      
 ```scala
 out("authors")
+```
+
+### SetWindowFields
+
+{{% note class="important" %}}
+Support for `$setWindowFields` is in beta. Backwards-breaking changes may be made before the final release.
+{{% /note %}}
+
+The [`$setWindowFields`](https://dochub.mongodb.org/core/window-functions-set-window-fields) pipeline stage
+allows using window operators. This stage partitions the input documents similarly to the [`$group`](#group) pipeline stage,
+optionally sorts them, computes fields in the documents by computing window functions over windows specified per function
+(a window is a subset of a partition), and outputs the documents. The important difference from the `$group` pipeline stage is that
+documents belonging to the same partition or window are not folded into a single document.
+
+The driver includes the [`WindowedComputations`]({{< apiref "mongo-scala-driver" "org/mongodb/scala/model/WindowedComputations$" >}})
+singleton object with factory methods for supported window operators.
+
+This example computes the accumulated rainfall and the average temperature over the past month per each locality
+from more fine-grained measurements presented via the `rainfall` and `temperature` fields:
+
+```scala
+val pastMonth: Window = Windows.timeRange(-1, Windows.Bound.CURRENT, MongoTimeUnit.MONTH)
+setWindowFields("$localityId", Sorts.ascending("measurementDateTime"),
+  WindowedComputations.sum("monthlyRainfall", "$rainfall", pastMonth),
+  WindowedComputations.avg("monthlyAvgTemp", "$temperature", pastMonth))
 ```
 
 ### Creating a Pipeline
