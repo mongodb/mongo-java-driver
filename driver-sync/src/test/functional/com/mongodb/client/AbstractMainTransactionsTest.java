@@ -31,8 +31,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static com.mongodb.ClusterFixture.isSharded;
+import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.JsonTestServerVersionChecker.skipTest;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
+import static org.junit.Assume.assumeFalse;
 
 // See https://github.com/mongodb/specifications/tree/master/source/transactions/tests
 @RunWith(Parameterized.class)
@@ -41,6 +44,17 @@ public abstract class AbstractMainTransactionsTest extends AbstractUnifiedTest {
                                         final String collectionName, final BsonArray data,
                                         final BsonDocument definition, final boolean skipTest) {
         super(filename, description, databaseName, collectionName, data, definition, skipTest);
+        // Tests of distinct in transactions can fail with a StaleDbVersion error.  See
+        // https://github.com/mongodb/specifications/blob/master/source/transactions/tests/README.rst
+        // #why-do-tests-that-run-distinct-sometimes-fail-with-staledbversion
+        // But in the Java driver test suite the tests are only failing on 4.2 sharded clusters, so rather than implement the workaround
+        // suggested in the specification, we just skip the tests on 4.2.
+        assumeFalse((
+                description.equals("only first distinct includes readConcern")
+                        || description.equals("distinct ignores collection readConcern")
+                        || description.equals("distinct"))
+                && isSharded()
+                && serverVersionLessThan(4, 4));
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
