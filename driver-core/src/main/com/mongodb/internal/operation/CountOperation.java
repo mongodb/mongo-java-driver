@@ -39,7 +39,7 @@ import static com.mongodb.internal.operation.CommandOperationHelper.executeRetry
 import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableReadAsync;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
-import static com.mongodb.internal.operation.OperationHelper.validateReadConcernAndCollation;
+import static com.mongodb.internal.operation.OperationHelper.validateCollation;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 
 public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
@@ -144,7 +144,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
 
     private CommandCreator getCommandCreator(final SessionContext sessionContext) {
         return (serverDescription, connectionDescription) -> {
-            validateReadConcernAndCollation(connectionDescription, sessionContext.getReadConcern(), collation);
+            validateCollation(connectionDescription, collation);
             return getCommand(sessionContext, connectionDescription);
         };
     }

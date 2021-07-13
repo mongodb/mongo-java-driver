@@ -18,7 +18,6 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoNamespace;
-import com.mongodb.ReadConcern;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
@@ -56,7 +55,6 @@ import org.bson.conversions.Bson;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -65,12 +63,10 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotFour;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotFour;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotTwo;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionThreeDotFour;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionThreeDotSix;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionThreeDotTwo;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 
@@ -95,37 +91,6 @@ final class OperationHelper {
 
     interface AsyncCallableWithConnectionAndSource {
         void call(AsyncConnectionSource source, AsyncConnection connection, Throwable t);
-    }
-
-    static void validateReadConcern(final Connection connection, final ReadConcern readConcern) {
-        validateReadConcern(connection.getDescription(), readConcern);
-    }
-
-    static void validateReadConcern(final ConnectionDescription description, final ReadConcern readConcern) {
-        if (!serverIsAtLeastVersionThreeDotTwo(description) && !readConcern.isServerDefault()) {
-            throw new IllegalArgumentException(format("ReadConcern not supported by wire version: %s",
-                    description.getMaxWireVersion()));
-        }
-    }
-
-    static void validateReadConcern(final AsyncConnection connection, final ReadConcern readConcern,
-                                    final AsyncCallableWithConnection callable) {
-        Throwable throwable = null;
-        if (!serverIsAtLeastVersionThreeDotTwo(connection.getDescription()) && !readConcern.isServerDefault()) {
-            throwable = new IllegalArgumentException(format("ReadConcern not supported by wire version: %s",
-                    connection.getDescription().getMaxWireVersion()));
-        }
-        callable.call(connection, throwable);
-    }
-
-    static void validateReadConcern(final AsyncConnectionSource source, final AsyncConnection connection, final ReadConcern readConcern,
-                                    final AsyncCallableWithConnectionAndSource callable) {
-        validateReadConcern(connection, readConcern, new AsyncCallableWithConnection(){
-            @Override
-            public void call(final AsyncConnection connection, final Throwable t) {
-                callable.call(source, connection, t);
-            }
-        });
     }
 
     static void validateCollation(final Connection connection, final Collation collation) {
@@ -187,18 +152,6 @@ final class OperationHelper {
         }
     }
 
-    static void validateAllowDiskUse(final Connection connection, final Boolean allowDiskUse) {
-        validateAllowDiskUse(connection.getDescription(), allowDiskUse).ifPresent(throwable -> {
-            throw new IllegalArgumentException(throwable.getMessage());
-        });
-    }
-
-    static void validateAllowDiskUse(final AsyncConnection connection, final Boolean allowDiskUse,
-                                     final AsyncCallableWithConnection callable) {
-        Optional<Throwable> throwable = validateAllowDiskUse(connection.getDescription(), allowDiskUse);
-        callable.call(connection, throwable.isPresent() ? throwable.get() : null);
-    }
-
     static void validateCollation(final AsyncConnection connection, final Collation collation,
                                   final AsyncCallableWithConnection callable) {
         Throwable throwable = null;
@@ -207,16 +160,6 @@ final class OperationHelper {
                     connection.getDescription().getMaxWireVersion()));
         }
         callable.call(connection, throwable);
-    }
-
-    static void validateCollation(final AsyncConnectionSource source, final AsyncConnection connection,
-                                  final Collation collation, final AsyncCallableWithConnectionAndSource callable) {
-        validateCollation(connection, collation, new AsyncCallableWithConnection(){
-            @Override
-            public void call(final AsyncConnection connection, final Throwable t) {
-                callable.call(source, connection, t);
-            }
-        });
     }
 
     static void validateWriteRequestCollations(final ConnectionDescription connectionDescription,
@@ -270,7 +213,7 @@ final class OperationHelper {
 
     static void validateWriteRequests(final ConnectionDescription connectionDescription, final Boolean bypassDocumentValidation,
                                       final List<? extends WriteRequest> requests, final WriteConcern writeConcern) {
-        checkBypassDocumentValidationIsSupported(connectionDescription, bypassDocumentValidation, writeConcern);
+        checkBypassDocumentValidationIsSupported(bypassDocumentValidation, writeConcern);
         validateWriteRequestCollations(connectionDescription, requests, writeConcern);
         validateUpdateRequestArrayFilters(connectionDescription, requests, writeConcern);
         validateWriteRequestHints(connectionDescription, requests, writeConcern);
@@ -317,51 +260,23 @@ final class OperationHelper {
         }
     }
 
-    static void validateFindOptions(final Connection connection, final ReadConcern readConcern, final Collation collation,
-                                    final Boolean allowDiskUse) {
-        validateReadConcernAndCollation(connection, readConcern, collation);
-        validateAllowDiskUse(connection, allowDiskUse);
+    static void validateFindOptions(final ConnectionDescription connectionDescription, final Collation collation) {
+        validateCollation(connectionDescription, collation);
     }
 
-    static void validateFindOptions(final ConnectionDescription description, final ReadConcern readConcern,
-                                    final Collation collation, final Boolean allowDiskUse) {
-        validateReadConcernAndCollation(description, readConcern, collation);
-        validateAllowDiskUse(description, allowDiskUse).ifPresent(throwable -> {
-            throw new IllegalArgumentException(throwable.getMessage());
-        });
-    }
-
-    static void validateReadConcernAndCollation(final Connection connection, final ReadConcern readConcern,
-                                                final Collation collation) {
-        validateReadConcern(connection, readConcern);
-        validateCollation(connection, collation);
-    }
-
-    static void validateReadConcernAndCollation(final ConnectionDescription description, final ReadConcern readConcern,
-                                                final Collation collation) {
-        validateReadConcern(description, readConcern);
-        validateCollation(description, collation);
-    }
-
-    static void validateFindOptions(final AsyncConnection connection, final ReadConcern readConcern,
-                                    final Collation collation, final Boolean allowDiskUse,
-                                    final AsyncCallableWithConnection callable) {
-        validateReadConcernAndCollation(connection, readConcern, collation, new AsyncCallableWithConnection() {
+    static void validateFindOptions(final AsyncConnection connection, final Collation collation,
+            final AsyncCallableWithConnection callable) {
+        validateCollation(connection, collation, new AsyncCallableWithConnection() {
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
-                if (t != null) {
-                    callable.call(connection, t);
-                } else {
-                    validateAllowDiskUse(connection, allowDiskUse, callable);
-                }
+                callable.call(connection, t);
             }
         });
     }
 
-    static void validateFindOptions(final AsyncConnectionSource source, final AsyncConnection connection, final ReadConcern readConcern,
-                                    final Collation collation, final Boolean allowDiskUse,
-                                    final AsyncCallableWithConnectionAndSource callable) {
-        validateFindOptions(connection, readConcern, collation, allowDiskUse, new AsyncCallableWithConnection() {
+    static void validateFindOptions(final AsyncConnectionSource source, final AsyncConnection connection, final Collation collation,
+            final AsyncCallableWithConnectionAndSource callable) {
+        validateFindOptions(connection, collation, new AsyncCallableWithConnection() {
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
                 callable.call(source, connection, t);
@@ -369,24 +284,9 @@ final class OperationHelper {
         });
     }
 
-    static void validateReadConcernAndCollation(final AsyncConnection connection, final ReadConcern readConcern,
-                                                final Collation collation, final AsyncCallableWithConnection callable) {
-        validateReadConcern(connection, readConcern, new AsyncCallableWithConnection() {
-            @Override
-            public void call(final AsyncConnection connection, final Throwable t) {
-                if (t != null) {
-                    callable.call(connection, t);
-                } else {
-                    validateCollation(connection, collation, callable);
-                }
-            }
-        });
-    }
-
-    static void validateReadConcernAndCollation(final AsyncConnectionSource source, final AsyncConnection connection,
-                                                final ReadConcern readConcern, final Collation collation,
-                                                final AsyncCallableWithConnectionAndSource callable) {
-        validateReadConcernAndCollation(connection, readConcern, collation, new AsyncCallableWithConnection(){
+    static void validateCollation(final AsyncConnectionSource source, final AsyncConnection connection, final Collation collation,
+            final AsyncCallableWithConnectionAndSource callable) {
+        validateCollation(connection, collation, new AsyncCallableWithConnection(){
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
                 callable.call(source, connection, t);
@@ -394,10 +294,8 @@ final class OperationHelper {
         });
     }
 
-    static void checkBypassDocumentValidationIsSupported(final ConnectionDescription connectionDescription,
-                                                         final Boolean bypassDocumentValidation, final WriteConcern writeConcern) {
-        if (bypassDocumentValidation != null && serverIsAtLeastVersionThreeDotTwo(connectionDescription)
-                && !writeConcern.isAcknowledged()) {
+    static void checkBypassDocumentValidationIsSupported(final Boolean bypassDocumentValidation, final WriteConcern writeConcern) {
+        if (bypassDocumentValidation != null && !writeConcern.isAcknowledged()) {
             throw new MongoClientException("Specifying bypassDocumentValidation with an unacknowledged WriteConcern is not supported");
         }
     }
@@ -719,15 +617,6 @@ final class OperationHelper {
                 withAsyncConnectionSource(source, callable);
             }
         }
-    }
-
-    private static Optional<Throwable> validateAllowDiskUse(final ConnectionDescription description, final Boolean allowDiskUse) {
-        Optional<Throwable> throwable = Optional.empty();
-        if (allowDiskUse != null && serverIsLessThanVersionThreeDotTwo(description)) {
-            throwable = Optional.of(new IllegalArgumentException(format("allowDiskUse not supported by wire version: %s",
-                    description.getMaxWireVersion())));
-        }
-        return throwable;
     }
 
     private OperationHelper() {

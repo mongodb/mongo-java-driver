@@ -40,7 +40,6 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfTrue;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
 
 /**
  * An operation that atomically finds and updates a single document.
@@ -271,7 +270,7 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
         } else {
             putIfNotNull(commandDocument, "update", getUpdate());
         }
-        if (bypassDocumentValidation != null && serverIsAtLeastVersionThreeDotTwo(connectionDescription)) {
+        if (bypassDocumentValidation != null) {
             commandDocument.put("bypassDocumentValidation", BsonBoolean.valueOf(bypassDocumentValidation));
         }
         if (arrayFilters != null) {

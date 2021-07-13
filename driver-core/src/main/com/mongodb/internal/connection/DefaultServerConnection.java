@@ -35,9 +35,6 @@ import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
 
-import java.util.List;
-
-import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 
 public class DefaultServerConnection extends AbstractReferenceCounted implements Connection, AsyncConnection {
@@ -152,70 +149,8 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
     }
 
     @Override
-    public <T> QueryResult<T> query(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
-            final int skip, final int limit, final int batchSize,
-            final boolean secondaryOk, final boolean tailableCursor,
-            final boolean awaitData, final boolean noCursorTimeout,
-            final boolean partial, final boolean oplogReplay,
-            final Decoder<T> resultDecoder, final RequestContext requestContext) {
-        return executeProtocol(new QueryProtocol<T>(namespace, skip, limit, batchSize, queryDocument, fields, resultDecoder,
-                requestContext)
-                               .tailableCursor(tailableCursor)
-                               .secondaryOk(getSecondaryOk(secondaryOk))
-                               .oplogReplay(oplogReplay)
-                               .noCursorTimeout(noCursorTimeout)
-                               .awaitData(awaitData)
-                               .partial(partial));
-    }
-
-    @Override
-    public <T> void queryAsync(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields, final int skip,
-                               final int limit, final int batchSize, final boolean secondaryOk, final boolean tailableCursor,
-                               final boolean awaitData, final boolean noCursorTimeout, final boolean partial, final boolean oplogReplay,
-                               final Decoder<T> resultDecoder, final RequestContext requestContext,
-                               final SingleResultCallback<QueryResult<T>> callback) {
-        executeProtocolAsync(new QueryProtocol<T>(namespace, skip, limit, batchSize, queryDocument, fields, resultDecoder, requestContext)
-                             .tailableCursor(tailableCursor)
-                             .secondaryOk(getSecondaryOk(secondaryOk))
-                             .oplogReplay(oplogReplay)
-                             .noCursorTimeout(noCursorTimeout)
-                             .awaitData(awaitData)
-                             .partial(partial), callback);
-    }
-
-    @Override
-    public <T> QueryResult<T> getMore(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
-            final Decoder<T> resultDecoder, final RequestContext requestContext) {
-        return executeProtocol(new GetMoreProtocol<T>(namespace, cursorId, numberToReturn, resultDecoder,
-                requestContext));
-    }
-
-    @Override
-    public <T> void getMoreAsync(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
-                                 final Decoder<T> resultDecoder, final RequestContext requestContext,
-                                 final SingleResultCallback<QueryResult<T>> callback) {
-        executeProtocolAsync(new GetMoreProtocol<T>(namespace, cursorId, numberToReturn, resultDecoder, requestContext), callback);
-    }
-
-    @Override
-    public void killCursor(final MongoNamespace namespace, final List<Long> cursors, final RequestContext requestContext) {
-        executeProtocol(new KillCursorProtocol(namespace, cursors, requestContext));
-    }
-
-    @Override
     public void markAsPinned(final PinningMode pinningMode) {
         wrapped.markAsPinned(pinningMode);
-    }
-
-    @Override
-    public void killCursorAsync(final MongoNamespace namespace, final List<Long> cursors, final RequestContext requestContext,
-                                final SingleResultCallback<Void> callback) {
-        executeProtocolAsync(new KillCursorProtocol(namespace, cursors, requestContext), callback);
-    }
-
-    private boolean getSecondaryOk(final boolean secondaryOk) {
-        return secondaryOk
-               || (clusterConnectionMode == ClusterConnectionMode.SINGLE && wrapped.getDescription().getServerType() != SHARD_ROUTER);
     }
 
     private <T> T executeProtocol(final LegacyProtocol<T> protocol) {

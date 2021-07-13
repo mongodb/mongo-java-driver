@@ -37,8 +37,14 @@ import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.internal.thread.DaemonThreadFactory;
+import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonArray;
+import org.bson.BsonDocument;
+import org.bson.BsonInt64;
+import org.bson.BsonString;
 import org.bson.Document;
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -833,7 +839,11 @@ public class MongoClient implements Closeable {
                 try {
                     Connection connection = source.getConnection();
                     try {
-                        connection.killCursor(cur.namespace, singletonList(cur.serverCursor.getId()), source.getRequestContext());
+                        BsonDocument killCursorsCommand = new BsonDocument("killCursors", new BsonString(cur.namespace.getCollectionName()))
+                                .append("cursors", new BsonArray(singletonList(new BsonInt64(cur.serverCursor.getId()))));
+                        connection.command(cur.namespace.getDatabaseName(), killCursorsCommand, new NoOpFieldNameValidator(),
+                                ReadPreference.primary(), new BsonDocumentCodec(), source.getSessionContext(), source.getServerApi(),
+                                source.getRequestContext());
                     } finally {
                         connection.release();
                     }

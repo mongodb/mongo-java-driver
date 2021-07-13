@@ -26,14 +26,11 @@ import com.mongodb.internal.bulk.InsertRequest;
 import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.internal.connection.SplittablePayload;
 import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
-
-import java.util.List;
 
 public final class SyncConnection implements Connection {
     private final AsyncConnection wrapped;
@@ -106,32 +103,6 @@ public final class SyncConnection implements Connection {
         wrapped.commandAsync(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, sessionContext,
                 serverApi, requestContext, responseExpected, payload, payloadFieldNameValidator, callback);
         return callback.get();
-    }
-
-    @Override
-    public <T> QueryResult<T> query(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
-            final int skip, final int limit, final int batchSize, final boolean secondaryOk, final boolean tailableCursor,
-            final boolean awaitData, final boolean noCursorTimeout, final boolean partial, final boolean oplogReplay,
-            final Decoder<T> resultDecoder, final RequestContext requestContext) {
-        SupplyingCallback<QueryResult<T>> callback = new SupplyingCallback<>();
-        wrapped.queryAsync(namespace, queryDocument, fields, skip, limit, batchSize, secondaryOk, tailableCursor, awaitData,
-                noCursorTimeout, partial, oplogReplay, resultDecoder, requestContext, callback);
-        return callback.get();
-    }
-
-    @Override
-    public <T> QueryResult<T> getMore(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
-            final Decoder<T> resultDecoder, final RequestContext requestContext) {
-        SupplyingCallback<QueryResult<T>> callback = new SupplyingCallback<>();
-        wrapped.getMoreAsync(namespace, cursorId, numberToReturn, resultDecoder, requestContext, callback);
-        return callback.get();
-    }
-
-    @Override
-    public void killCursor(final MongoNamespace namespace, final List<Long> cursors, final RequestContext requestContext) {
-        SupplyingCallback<Void> callback = new SupplyingCallback<>();
-        wrapped.killCursorAsync(namespace, cursors, requestContext, callback);
-        callback.get();
     }
 
     @Override

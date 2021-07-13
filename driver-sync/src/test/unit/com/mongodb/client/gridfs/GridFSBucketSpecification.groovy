@@ -594,7 +594,7 @@ class GridFSBucketSpecification extends Specification {
         then:
         executor.getReadPreference() == secondary()
         expect executor.getReadOperation(), isTheSameAs(new FindOperation<GridFSFile>(new MongoNamespace('test.fs.files'), decoder)
-                .filter(filter).secondaryOk(true))
+                .filter(filter))
     }
 
     def 'should throw an exception if file not found when opening by name'() {

@@ -30,7 +30,6 @@ import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.MessageSettings;
-import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.internal.connection.SplittablePayload;
 import com.mongodb.internal.connection.SplittablePayloadBsonWriter;
 import com.mongodb.internal.session.SessionContext;
@@ -55,7 +54,6 @@ import org.bson.io.BasicOutputBuffer;
 import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -189,28 +187,6 @@ class CryptConnection implements AsyncConnection {
     @Override
     public void deleteAsync(final MongoNamespace namespace, final boolean ordered, final DeleteRequest deleteRequest,
                             final RequestContext requestContext, final SingleResultCallback<WriteConcernResult> callback) {
-        callback.onResult(null, new UnsupportedOperationException());
-    }
-
-    @Override
-    public <T> void queryAsync(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
-                               final int skip, final int limit, final int batchSize, final boolean secondaryOk,
-                               final boolean tailableCursor, final boolean awaitData, final boolean noCursorTimeout, final boolean partial,
-                               final boolean oplogReplay, final Decoder<T> resultDecoder,
-                               final RequestContext requestContext, final SingleResultCallback<QueryResult<T>> callback) {
-        callback.onResult(null, new UnsupportedOperationException());
-    }
-
-    @Override
-    public <T> void getMoreAsync(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
-                                 final Decoder<T> resultDecoder, final RequestContext requestContext,
-                                 final SingleResultCallback<QueryResult<T>> callback) {
-        callback.onResult(null, new UnsupportedOperationException());
-    }
-
-    @Override
-    public void killCursorAsync(final MongoNamespace namespace, final List<Long> cursors, final RequestContext requestContext,
-                                final SingleResultCallback<Void> callback) {
         callback.onResult(null, new UnsupportedOperationException());
     }
 
