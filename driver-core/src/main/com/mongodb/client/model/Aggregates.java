@@ -17,6 +17,7 @@
 package com.mongodb.client.model;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.annotations.Beta;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -28,6 +29,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.List;
+import java.util.Objects;
 
 import static java.util.Arrays.asList;
 import static org.bson.assertions.Assertions.notNull;
@@ -592,6 +594,60 @@ public final class Aggregates {
      */
     public static Bson sample(final int size) {
         return new BsonDocument("$sample", new BsonDocument("size", new BsonInt32(size)));
+    }
+
+    /**
+     * Creates a {@code $setWindowFields} pipeline stage, which allows using window operators.
+     * This stage partitions the input documents similarly to the {@link #group(Object, List) $group} pipeline stage,
+     * optionally sorts them, computes fields in the documents by computing window functions over {@linkplain Window windows} specified per
+     * function, and outputs the documents. The important difference from the {@code $group} pipeline stage is that
+     * documents belonging to the same partition or window are not folded into a single document.
+     *
+     * @param partitionBy Optional partitioning of data specified like {@code id} in {@link #group(Object, List)}.
+     *                    If {@code null}, then all documents belong to the same partition.
+     * @param sortBy Fields to sort by. The syntax is identical to {@code sort} in {@link #sort(Bson)} (see {@link Sorts}).
+     *               Sorting is required by certain functions and may be required by some windows (see {@link Windows} for more details).
+     *               Sorting is used only for the purpose of computing window functions and does not guarantee ordering
+     *               of the output documents.
+     * @param output A nonempty array of {@linkplain WindowedComputation windowed computations}.
+     * @param <TExpression> The {@code partitionBy} expression type.
+     * @return The {@code $setWindowFields} pipeline stage.
+     * @mongodb.driver.dochub core/window-functions-set-window-fields $setWindowFields
+     * @mongodb.server.release 5.0
+     * @since 4.3
+     */
+    @Beta
+    public static <TExpression> Bson setWindowFields(@Nullable final TExpression partitionBy, @Nullable final Bson sortBy,
+                                                     final WindowedComputation... output) {
+        notNull("output", output);
+        return setWindowFields(partitionBy, sortBy, asList(output));
+    }
+
+    /**
+     * Creates a {@code $setWindowFields} pipeline stage, which allows using window operators.
+     * This stage partitions the input documents similarly to the {@link #group(Object, List) $group} pipeline stage,
+     * optionally sorts them, computes fields in the documents by computing window functions over {@linkplain Window windows} specified per
+     * function, and outputs the documents. The important difference from the {@code $group} pipeline stage is that
+     * documents belonging to the same partition or window are not folded into a single document.
+     *
+     * @param partitionBy Optional partitioning of data specified like {@code id} in {@link #group(Object, List)}.
+     *                    If {@code null}, then all documents belong to the same partition.
+     * @param sortBy Fields to sort by. The syntax is identical to {@code sort} in {@link #sort(Bson)} (see {@link Sorts}).
+     *               Sorting is required by certain functions and may be required by some windows (see {@link Windows} for more details).
+     *               Sorting is used only for the purpose of computing window functions and does not guarantee ordering
+     *               of the output documents.
+     * @param output A nonempty list of {@linkplain WindowedComputation windowed computations}.
+     * @param <TExpression> The {@code partitionBy} expression type.
+     * @return The {@code $setWindowFields} pipeline stage.
+     * @mongodb.driver.dochub core/window-functions-set-window-fields $setWindowFields
+     * @mongodb.server.release 5.0
+     * @since 4.3
+     */
+    @Beta
+    public static <TExpression> Bson setWindowFields(@Nullable final TExpression partitionBy, @Nullable final Bson sortBy,
+                                                     final List<WindowedComputation> output) {
+        notNull("output", output);
+        return new SetWindowFieldsStage<>(partitionBy, sortBy, output);
     }
 
     static void writeBucketOutput(final CodecRegistry codecRegistry, final BsonDocumentWriter writer,
@@ -1486,6 +1542,72 @@ public final class Aggregates {
                     + "name='$unionWith'"
                     + ", collection='" + collection + '\''
                     + ", pipeline=" + pipeline
+                    + '}';
+        }
+    }
+
+    private static final class SetWindowFieldsStage<TExpression> implements Bson {
+        @Nullable
+        private final TExpression partitionBy;
+        @Nullable
+        private final Bson sortBy;
+        private final List<WindowedComputation> output;
+
+        SetWindowFieldsStage(@Nullable final TExpression partitionBy, @Nullable final Bson sortBy, final List<WindowedComputation> output) {
+            this.partitionBy = partitionBy;
+            this.sortBy = sortBy;
+            this.output = output;
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
+            BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+            writer.writeStartDocument();
+            writer.writeStartDocument("$setWindowFields");
+            if (partitionBy != null) {
+                writer.writeName("partitionBy");
+                BuildersHelper.encodeValue(writer, partitionBy, codecRegistry);
+            }
+            if (sortBy != null) {
+                writer.writeName("sortBy");
+                BuildersHelper.encodeValue(writer, sortBy, codecRegistry);
+            }
+            writer.writeStartDocument("output");
+            for (WindowedComputation windowedComputation : output) {
+                BsonField field = windowedComputation.toBsonField();
+                writer.writeName(field.getName());
+                BuildersHelper.encodeValue(writer, field.getValue(), codecRegistry);
+            }
+            writer.writeEndDocument(); // end output
+            writer.writeEndDocument(); // end $setWindowFields
+            writer.writeEndDocument();
+            return writer.getDocument();
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final SetWindowFieldsStage<?> that = (SetWindowFieldsStage<?>) o;
+            return Objects.equals(partitionBy, that.partitionBy) && Objects.equals(sortBy, that.sortBy) && output.equals(that.output);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(partitionBy, sortBy, output);
+        }
+
+        @Override
+        public String toString() {
+            return "Stage{"
+                    + "name='$setWindowFields'"
+                    + ", partitionBy=" + partitionBy
+                    + ", sortBy=" + sortBy
+                    + ", output=" + output
                     + '}';
         }
     }
