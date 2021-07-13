@@ -1515,10 +1515,6 @@ axes:
         display_name: "3.0"
         variables:
            VERSION: "3.0"
-      - id: "2.6"
-        display_name: "2.6"
-        variables:
-           VERSION: "2.6"
   - id: os
     display_name: OS
     values:
@@ -1728,7 +1724,7 @@ buildvariants:
     - name: "test"
 
 - matrix_name: "tests-jdk8-unsecure"
-  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk8", version: ["2.6", "3.0", "3.2", "3.4"], topology: "*", os: "linux" }
+  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk8", version: ["3.0", "3.2", "3.4"], topology: "*", os: "linux" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
