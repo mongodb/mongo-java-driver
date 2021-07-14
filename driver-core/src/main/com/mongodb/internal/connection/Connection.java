@@ -131,7 +131,7 @@ public interface Connection extends ReferenceCounted {
      * @param skip            the number of documents to skip
      * @param limit           the maximum number of documents to return in all batches
      * @param batchSize       the maximum number of documents to return in this batch
-     * @param slaveOk         whether the query can run on a secondary
+     * @param secondaryOk     whether the query can run on a secondary
      * @param tailableCursor  whether to return a tailable cursor
      * @param awaitData       whether a tailable cursor should wait before returning if no documents are available
      * @param noCursorTimeout whether the cursor should not timeout
@@ -145,7 +145,7 @@ public interface Connection extends ReferenceCounted {
      */
     <T> QueryResult<T> query(MongoNamespace namespace, BsonDocument queryDocument, BsonDocument fields,
                              int skip, int limit, int batchSize,
-                             boolean slaveOk, boolean tailableCursor, boolean awaitData, boolean noCursorTimeout,
+                             boolean secondaryOk, boolean tailableCursor, boolean awaitData, boolean noCursorTimeout,
                              boolean partial, boolean oplogReplay,
                              Decoder<T> resultDecoder);
 

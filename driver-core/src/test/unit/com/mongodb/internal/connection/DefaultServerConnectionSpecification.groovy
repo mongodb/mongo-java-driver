@@ -116,7 +116,7 @@ class DefaultServerConnectionSpecification extends Specification {
         def executor = Mock(ProtocolExecutor) {
             1 * execute({
                 compare(new QueryProtocol(namespace, 2, 10, 5, query, fields, decoder)
-                    .slaveOk(slaveOk)
+                    .secondaryOk(slaveOk)
                     .tailableCursor(false)
                     .awaitData(true)
                     .noCursorTimeout(false)
@@ -146,7 +146,7 @@ class DefaultServerConnectionSpecification extends Specification {
         def executor = Mock(ProtocolExecutor) {
             1 * execute({
                 compare(new QueryProtocol(namespace, 2, 10, 5, query, fields, decoder)
-                    .slaveOk(expectedSlaveOk)
+                    .secondaryOk(expectedSlaveOk)
                     .tailableCursor(false)
                     .awaitData(true)
                     .noCursorTimeout(false)
@@ -274,7 +274,7 @@ class DefaultServerConnectionSpecification extends Specification {
         then:
         1 * executor.executeAsync({
                                       compare(new QueryProtocol(namespace, 2, 10, 5, query, fields, decoder)
-                                               .slaveOk(slaveOk)
+                                               .secondaryOk(slaveOk)
                                                .tailableCursor(false)
                                                .awaitData(true)
                                                .noCursorTimeout(false)
@@ -302,7 +302,7 @@ class DefaultServerConnectionSpecification extends Specification {
         then:
         1 * executor.executeAsync({
                                       compare(new QueryProtocol(namespace, 2, 10, 5, query, fields, decoder)
-                                               .slaveOk(expectedSlaveOk)
+                                               .secondaryOk(expectedSlaveOk)
                                                .tailableCursor(false)
                                                .awaitData(true)
                                                .noCursorTimeout(false)

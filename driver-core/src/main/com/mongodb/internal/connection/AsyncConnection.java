@@ -21,8 +21,8 @@ import com.mongodb.ReadPreference;
 import com.mongodb.ServerApi;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.annotations.ThreadSafe;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.ReferenceCounted;
 import com.mongodb.internal.bulk.DeleteRequest;
 import com.mongodb.internal.bulk.InsertRequest;
@@ -135,7 +135,7 @@ public interface AsyncConnection extends ReferenceCounted {
      * @param skip            the number of documents to skip
      * @param limit           the maximum number of documents to return in all batches
      * @param batchSize       the maximum number of documents to return in this batch
-     * @param slaveOk         whether the query can run on a secondary
+     * @param secondaryOk     whether the query can run on a secondary
      * @param tailableCursor  whether to return a tailable cursor
      * @param awaitData       whether a tailable cursor should wait before returning if no documents are available
      * @param noCursorTimeout whether the cursor should not timeout
@@ -147,7 +147,7 @@ public interface AsyncConnection extends ReferenceCounted {
      * @since 3.1
      */
     <T> void queryAsync(MongoNamespace namespace, BsonDocument queryDocument, BsonDocument fields,
-                        int skip, int limit, int batchSize, boolean slaveOk, boolean tailableCursor, boolean awaitData,
+                        int skip, int limit, int batchSize, boolean secondaryOk, boolean tailableCursor, boolean awaitData,
                         boolean noCursorTimeout, boolean partial, boolean oplogReplay, Decoder<T> resultDecoder,
                         SingleResultCallback<QueryResult<T>> callback);
 
