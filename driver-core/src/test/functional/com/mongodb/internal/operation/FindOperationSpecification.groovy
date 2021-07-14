@@ -96,7 +96,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         !operation.isNoCursorTimeout()
         !operation.isOplogReplay()
         !operation.isPartial()
-        !operation.isSlaveOk()
+        !operation.isSecondaryOk()
         operation.isAllowDiskUse() == null
     }
 
@@ -119,7 +119,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
                 .cursorType(Tailable)
                 .collation(defaultCollation)
                 .partial(true)
-                .slaveOk(true)
+                .secondaryOk(true)
                 .oplogReplay(true)
                 .noCursorTimeout(true)
                 .allowDiskUse(true)
@@ -137,7 +137,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         operation.isNoCursorTimeout()
         operation.isOplogReplay()
         operation.isPartial()
-        operation.isSlaveOk()
+        operation.isSecondaryOk()
         operation.isAllowDiskUse()
     }
 

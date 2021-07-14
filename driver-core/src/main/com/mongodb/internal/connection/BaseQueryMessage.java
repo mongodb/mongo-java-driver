@@ -27,7 +27,7 @@ abstract class BaseQueryMessage extends LegacyMessage {
     private final int skip;
     private final int numberToReturn;
     private boolean tailableCursor;
-    private boolean slaveOk;
+    private boolean secondaryOk;
     private boolean oplogReplay;
     private boolean noCursorTimeout;
     private boolean awaitData;
@@ -75,19 +75,19 @@ abstract class BaseQueryMessage extends LegacyMessage {
      * @return true if set to allowed to query non-primary replica set members.
      * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
      */
-    public boolean isSlaveOk() {
-        return slaveOk;
+    public boolean isSecondaryOk() {
+        return secondaryOk;
     }
 
     /**
      * Sets if allowed to query non-primary replica set members.
      *
-     * @param slaveOk true if allowed to query non-primary replica set members.
+     * @param secondaryOk true if allowed to query non-primary replica set members.
      * @return this
      * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
      */
-    public BaseQueryMessage slaveOk(final boolean slaveOk) {
-        this.slaveOk = slaveOk;
+    public BaseQueryMessage secondaryOk(final boolean secondaryOk) {
+        this.secondaryOk = secondaryOk;
         return this;
     }
 
@@ -192,7 +192,7 @@ abstract class BaseQueryMessage extends LegacyMessage {
         if (isTailableCursor()) {
             cursorFlag |= 1 << 1;
         }
-        if (isSlaveOk()){
+        if (isSecondaryOk()){
             cursorFlag |= 1 << 2;
         }
         if (isOplogReplay()){
