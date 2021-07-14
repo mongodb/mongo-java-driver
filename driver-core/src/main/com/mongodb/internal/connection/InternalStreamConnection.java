@@ -210,6 +210,7 @@ public class InternalStreamConnection implements InternalConnection {
 
                 @Override
                 public void failed(final Throwable t) {
+                    close();
                     callback.onResult(null, t);
                 }
             });
