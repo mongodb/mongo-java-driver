@@ -254,12 +254,12 @@ public final class ClusterFixture {
         Cluster cluster = createCluster(new ConnectionString(DEFAULT_URI),
                 new SocketStreamFactory(SocketSettings.builder().build(), SslSettings.builder().build()));
         try {
-            BsonDocument isMasterResult = new CommandReadOperation<BsonDocument>("admin",
+            BsonDocument helloResult = new CommandReadOperation<BsonDocument>("admin",
                     new BsonDocument("ismaster", new BsonInt32(1)), new BsonDocumentCodec()).execute(new ClusterBinding(cluster,
                     ReadPreference.nearest(), ReadConcern.DEFAULT, getServerApi()));
-            if (isMasterResult.containsKey("setName")) {
+            if (helloResult.containsKey("setName")) {
                 connectionString = new ConnectionString(DEFAULT_URI + "/?replicaSet="
-                        + isMasterResult.getString("setName").getValue());
+                        + helloResult.getString("setName").getValue());
             } else {
                 connectionString = new ConnectionString(DEFAULT_URI);
                 ClusterFixture.cluster = cluster;

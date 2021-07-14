@@ -39,7 +39,7 @@ public final class ServerHeartbeatSucceededEvent {
      * Construct an instance.
      *
      * @param connectionId the non-null connectionId
-     * @param reply the non-null reply to an isMaster command
+     * @param reply the non-null reply to an hello command
      * @param elapsedTimeNanos the non-negative elapsed time in nanoseconds
      * @deprecated Prefer {@link #ServerHeartbeatSucceededEvent(ConnectionId, BsonDocument, long, boolean)}
      */
@@ -52,7 +52,7 @@ public final class ServerHeartbeatSucceededEvent {
      * Construct an instance.
      *
      * @param connectionId the non-null connectionId
-     * @param reply the non-null reply to an isMaster command
+     * @param reply the non-null reply to an hello command
      * @param elapsedTimeNanos the non-negative elapsed time in nanoseconds
      * @param awaited true if the response was awaited
      * @since 4.1
@@ -76,7 +76,7 @@ public final class ServerHeartbeatSucceededEvent {
     }
 
     /**
-     * Gets the reply to the isMaster command executed for this heartbeat.
+     * Gets the reply to the hello command executed for this heartbeat.
      *
      * @return the reply
      */

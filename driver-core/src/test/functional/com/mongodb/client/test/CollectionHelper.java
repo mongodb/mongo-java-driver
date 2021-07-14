@@ -88,7 +88,7 @@ public final class CollectionHelper<T> {
         this.namespace = namespace;
     }
 
-    public T isMaster() {
+    public T hello() {
         return new CommandReadOperation<T>("admin", BsonDocument.parse("{isMaster: 1}"), codec).execute(getBinding());
     }
 
