@@ -243,7 +243,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                     try {
                         return new ProjectingBatchCursor(new QueryBatchCursor<BsonDocument>(connection.query(getNamespace(),
                                 asQueryDocument(connection.getDescription(), binding.getReadPreference()), null, 0, 0, batchSize,
-                                binding.getReadPreference().isSlaveOk(), false, false, false, false, false,
+                                binding.getReadPreference().isSecondaryOk(), false, false, false, false, false,
                                 new BsonDocumentCodec()), 0, batchSize, new BsonDocumentCodec(), source));
                     } finally {
                         connection.release();
@@ -279,7 +279,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                         final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = releasingCallback(errHandlingCallback,
                                 source, connection);
                         connection.queryAsync(getNamespace(), asQueryDocument(connection.getDescription(), binding.getReadPreference()),
-                                null, 0, 0, batchSize, binding.getReadPreference().isSlaveOk(), false, false, false, false, false,
+                                null, 0, 0, batchSize, binding.getReadPreference().isSecondaryOk(), false, false, false, false, false,
                                 new BsonDocumentCodec(), new SingleResultCallback<QueryResult<BsonDocument>>() {
                                     @Override
                                     public void onResult(final QueryResult<BsonDocument> result, final Throwable t) {

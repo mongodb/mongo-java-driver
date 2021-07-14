@@ -83,7 +83,13 @@ public abstract class TaggableReadPreference extends ReadPreference {
     public abstract TaggableReadPreference withHedgeOptions(ReadPreferenceHedgeOptions hedgeOptions);
 
     @Override
+    @Deprecated
     public boolean isSlaveOk() {
+        return true;
+    }
+
+    @Override
+    public boolean isSecondaryOk() {
         return true;
     }
 
