@@ -105,8 +105,18 @@ public abstract class ReadPreference {
      * True if this read preference allows reading from a secondary member of a replica set.
      *
      * @return if reading from a secondary is ok
+     * @deprecated Prefer {@link #isSecondaryOk()}
      */
+    @Deprecated
     public abstract boolean isSlaveOk();
+
+    /**
+     * True if this read preference allows reading from a secondary member of a replica set.
+     *
+     * @return if reading from a secondary is ok
+     * @since 4.4
+     */
+    public abstract boolean isSecondaryOk();
 
     /**
      * Gets the name of this read preference.
@@ -676,6 +686,11 @@ public abstract class ReadPreference {
 
         @Override
         public boolean isSlaveOk() {
+            return false;
+        }
+
+        @Override
+        public boolean isSecondaryOk() {
             return false;
         }
 

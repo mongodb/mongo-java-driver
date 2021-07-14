@@ -19,10 +19,10 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
-import com.mongodb.internal.async.AsyncBatchCursor;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.async.AsyncBatchCursor;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ConnectionSource;
@@ -178,8 +178,8 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
                     try {
                         return new QueryBatchCursor<T>(connection.query(getIndexNamespace(),
                                 asQueryDocument(connection.getDescription(), binding.getReadPreference()), null, 0, 0, batchSize,
-                                binding.getReadPreference().isSlaveOk(), false, false, false, false, false, decoder), 0, batchSize, decoder,
-                                source);
+                                binding.getReadPreference().isSecondaryOk(), false, false, false, false, false, decoder), 0, batchSize,
+                                decoder, source);
                     } finally {
                         connection.release();
                     }
@@ -216,7 +216,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
                                 source, connection);
                         connection.queryAsync(getIndexNamespace(),
                                 asQueryDocument(connection.getDescription(), binding.getReadPreference()), null, 0, 0, batchSize,
-                                binding.getReadPreference().isSlaveOk(), false, false, false, false, false, decoder,
+                                binding.getReadPreference().isSecondaryOk(), false, false, false, false, false, decoder,
                                 new SingleResultCallback<QueryResult<T>>() {
                                     @Override
                                     public void onResult(final QueryResult<T> result, final Throwable t) {
