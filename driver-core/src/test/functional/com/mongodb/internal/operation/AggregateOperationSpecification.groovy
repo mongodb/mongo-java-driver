@@ -525,12 +525,12 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         ]
     }
 
-    def 'should use the ReadBindings readPreference to set slaveOK'() {
+    def 'should use the ReadBindings readPreference to set secondaryOk'() {
         when:
         def operation = new AggregateOperation(helper.namespace, [], new BsonDocumentCodec())
 
         then:
-        testOperationSlaveOk(operation, [2, 6, 0], readPreference, async, helper.cursorResult)
+        testOperationSecondaryOk(operation, [2, 6, 0], readPreference, async, helper.cursorResult)
 
         where:
         [async, readPreference] << [[true, false], [ReadPreference.primary(), ReadPreference.secondary()]].combinations()

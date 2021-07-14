@@ -20,11 +20,11 @@ import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
-import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerId
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
 import com.mongodb.internal.binding.ConnectionSource
@@ -84,7 +84,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
 
         then:
         1 * connection.query(namespace, new BsonDocument(), operation.getProjection(), operation.getSkip(), operation.getLimit(),
-                operation.getBatchSize(), readPreference.isSlaveOk(), false, false, false, false, false, decoder) >> queryResult
+                operation.getBatchSize(), readPreference.isSecondaryOk(), false, false, false, false, false, decoder) >> queryResult
         1 * connection.release()
 
         // Overrides
@@ -111,7 +111,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
 
         then:
         1 * connection.query(namespace, expectedQueryWithOverrides, operation.getProjection(), operation.getSkip(), operation.getLimit(),
-                operation.getBatchSize(), readPreference.isSlaveOk(), true, true, true, true, true, decoder) >> queryResult
+                operation.getBatchSize(), readPreference.isSecondaryOk(), true, true, true, true, true, decoder) >> queryResult
         1 * connection.release()
     }
 
@@ -190,7 +190,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
         version << [[3, 2, 0]] * 10 + [[3, 4, 0]] * 10
     }
 
-    def 'should use the ReadBindings readPreference to set slaveOK'() {
+    def 'should use the ReadBindings readPreference to set secondaryOk'() {
         given:
         def dbName = 'db'
         def collectionName = 'coll'
@@ -206,7 +206,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
                 getConnection() >> connection
             }
             getReadPreference() >> Stub(ReadPreference) {
-                isSlaveOk() >> slaveOk
+                isSecondaryOk() >> secondaryOk
             }
             getSessionContext() >> Stub(SessionContext) {
                 getReadConcern() >> ReadConcern.DEFAULT
@@ -222,14 +222,14 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
         operation.execute(readBinding)
 
         then:
-        1 * connection.query(namespace, _, _, _, _, _, slaveOk, _, _, _, _, _, _) >> queryResult
+        1 * connection.query(namespace, _, _, _, _, _, secondaryOk, _, _, _, _, _, _) >> queryResult
         1 * connection.release()
 
         where:
-        slaveOk << [true, false]
+        secondaryOk << [true, false]
     }
 
-    def 'should use the AsyncReadBindings readPreference to set slaveOK'() {
+    def 'should use the AsyncReadBindings readPreference to set secondaryOk'() {
         given:
         def dbName = 'db'
         def collectionName = 'coll'
@@ -247,7 +247,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
         def readBinding = Stub(AsyncReadBinding) {
             getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
             getReadPreference() >> Stub(ReadPreference) {
-                isSlaveOk() >> slaveOk
+                isSecondaryOk() >> secondaryOk
             }
             getSessionContext() >> Stub(SessionContext) {
                 getReadConcern() >> ReadConcern.DEFAULT
@@ -263,20 +263,20 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
         operation.executeAsync(readBinding, Stub(SingleResultCallback))
 
         then:
-        1 * connection.queryAsync(namespace, _, _, _, _, _, slaveOk, _, _, _, _, _, _, _) >> { it[13].onResult(queryResult, null) }
+        1 * connection.queryAsync(namespace, _, _, _, _, _, secondaryOk, _, _, _, _, _, _, _) >> { it[13].onResult(queryResult, null) }
         1 * connection.release()
 
         where:
-        slaveOk << [true, false]
+        secondaryOk << [true, false]
     }
 
 
-    def 'should use the readPreference to set slaveOK for commands'() {
+    def 'should use the readPreference to set secondaryOk for commands'() {
         when:
         def operation = new FindOperation<Document>(namespace, new DocumentCodec())
 
         then:
-        testOperationSlaveOk(operation, [3, 2, 0], readPreference, async, commandResult)
+        testOperationSecondaryOk(operation, [3, 2, 0], readPreference, async, commandResult)
 
         where:
         [async, readPreference] << [[true, false], [ReadPreference.primary(), ReadPreference.secondary()]].combinations()

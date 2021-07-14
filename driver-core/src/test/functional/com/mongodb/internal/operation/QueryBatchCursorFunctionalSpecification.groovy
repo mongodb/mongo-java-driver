@@ -598,7 +598,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
                 cursorDocumentToQueryResult(response.getDocument('cursor'), connection.getDescription().getServerAddress())
             } else {
                 connection.query(getNamespace(), filter, null, 0, limit, batchSize,
-                                 readPreference.isSlaveOk(), tailable, awaitData, false, false, false,
+                                 readPreference.isSecondaryOk(), tailable, awaitData, false, false, false,
                                  new DocumentCodec());
             }
         } finally {

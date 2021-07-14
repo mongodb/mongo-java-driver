@@ -218,13 +218,13 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
         async << [true, false]
     }
 
-    def 'should use the ReadBindings readPreference to set slaveOK'() {
+    def 'should use the ReadBindings readPreference to set secondaryOk'() {
         when:
         def operation = new CountDocumentsOperation(helper.namespace)
                 .filter(BsonDocument.parse('{a: 1}'))
 
         then:
-        testOperationSlaveOk(operation, [3, 4, 0], readPreference, async, helper.cursorResult)
+        testOperationSecondaryOk(operation, [3, 4, 0], readPreference, async, helper.cursorResult)
 
         where:
         [async, readPreference] << [[true, false], [ReadPreference.primary(), ReadPreference.secondary()]].combinations()

@@ -200,8 +200,8 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.write(_) >> { throw new IOException('Something went wrong') }
 
         def connection = getOpenedConnection()
-        def (buffers1, messageId1) = helper.isMaster()
-        def (buffers2, messageId2) = helper.isMaster()
+        def (buffers1, messageId1) = helper.hello()
+        def (buffers2, messageId2) = helper.hello()
 
         when:
         connection.sendMessage(buffers1, messageId1)
@@ -220,8 +220,8 @@ class InternalStreamConnectionSpecification extends Specification {
 
     def 'should close the stream when writing a message throws an exception asynchronously'() {
         given:
-        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1) = helper.isMasterAsync()
-        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2) = helper.isMasterAsync()
+        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1) = helper.helloAsync()
+        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2) = helper.helloAsync()
         int seen = 0
 
         stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
@@ -255,8 +255,8 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.read(16, 0) >> { throw new IOException('Something went wrong') }
 
         def connection = getOpenedConnection()
-        def (buffers1, messageId1) = helper.isMaster()
-        def (buffers2, messageId2) = helper.isMaster()
+        def (buffers1, messageId1) = helper.hello()
+        def (buffers2, messageId2) = helper.hello()
 
         when:
         connection.sendMessage(buffers1, messageId1)
@@ -310,8 +310,8 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'should close the stream when reading the message header throws an exception asynchronously'() {
         given:
         int seen = 0
-        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1) = helper.isMasterAsync()
-        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2) = helper.isMasterAsync()
+        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1) = helper.helloAsync()
+        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2) = helper.helloAsync()
         def headers = helper.generateHeaders([messageId1, messageId2])
 
         stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
@@ -371,8 +371,8 @@ class InternalStreamConnectionSpecification extends Specification {
 
     def 'should close the stream when reading the message body throws an exception asynchronously'() {
         given:
-        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1) = helper.isMasterAsync()
-        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2) = helper.isMasterAsync()
+        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1) = helper.helloAsync()
+        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2) = helper.helloAsync()
         def headers = helper.generateHeaders([messageId1, messageId2])
 
         stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
@@ -455,7 +455,7 @@ class InternalStreamConnectionSpecification extends Specification {
         int numberOfOperations = 3
         ExecutorService streamPool = Executors.newFixedThreadPool(1)
 
-        def messages = (1..numberOfOperations).collect { helper.isMasterAsync() }
+        def messages = (1..numberOfOperations).collect { helper.helloAsync() }
 
         def streamLatch = new CountDownLatch(1)
         stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
