@@ -251,7 +251,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
     }
 
 
-    def 'should use the ReadBindings readPreference to set slaveOK'() {
+    def 'should use the ReadBindings readPreference to set secondaryOk'() {
         given:
         def connection = Mock(Connection)
         def connectionSource = Stub(ConnectionSource) {
@@ -270,7 +270,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
         then:
         _ * connection.getDescription() >> helper.twoSixConnectionDescription
-        1 * connection.query(_, _, _, _, _, _, readPreference.isSlaveOk(), _, _, _, _, _, _) >> helper.queryResult
+        1 * connection.query(_, _, _, _, _, _, readPreference.isSecondaryOk(), _, _, _, _, _, _) >> helper.queryResult
         1 * connection.release()
 
         when: '3.0.0'
@@ -285,7 +285,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
     }
 
-    def 'should use the AsyncReadBindings readPreference to set slaveOK'() {
+    def 'should use the AsyncReadBindings readPreference to set secondaryOk'() {
         given:
         def connection = Mock(AsyncConnection)
         def connectionSource = Stub(AsyncConnectionSource) {
@@ -303,7 +303,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
         then:
         _ * connection.getDescription() >> helper.twoSixConnectionDescription
-        1 * connection.queryAsync(_, _, _, _, _, _, readPreference.isSlaveOk(), _, _, _, _, _, _, _) >> {
+        1 * connection.queryAsync(_, _, _, _, _, _, readPreference.isSecondaryOk(), _, _, _, _, _, _, _) >> {
             it[13].onResult(helper.queryResult, null) }
 
         when: '3.0.0'

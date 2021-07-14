@@ -139,13 +139,13 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         async << [true, false]
     }
 
-    def 'should use the ReadBindings readPreference to set slaveOK'() {
+    def 'should use the ReadBindings readPreference to set secondaryOk'() {
         when:
         def operation = new MapReduceWithInlineResultsOperation<Document>(helper.namespace, new BsonJavaScript('function(){ }'),
                 new BsonJavaScript('function(key, values){ }'), bsonDocumentCodec)
 
         then:
-        testOperationSlaveOk(operation, [3, 4, 0], readPreference, async, helper.commandResult)
+        testOperationSecondaryOk(operation, [3, 4, 0], readPreference, async, helper.commandResult)
 
         where:
         [async, readPreference] << [[true, false], [ReadPreference.primary(), ReadPreference.secondary()]].combinations()

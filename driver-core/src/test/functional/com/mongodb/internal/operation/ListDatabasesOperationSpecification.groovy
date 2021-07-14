@@ -112,7 +112,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
         disableMaxTimeFailPoint()
     }
 
-    def 'should use the ReadBindings readPreference to set slaveOK'() {
+    def 'should use the ReadBindings readPreference to set secondaryOk'() {
         given:
         def connection = Mock(Connection)
         def connectionSource = Stub(ConnectionSource) {
@@ -138,7 +138,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
         readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
     }
 
-    def 'should use the AsyncReadBindings readPreference to set slaveOK'() {
+    def 'should use the AsyncReadBindings readPreference to set secondaryOk'() {
         given:
         def connection = Mock(AsyncConnection)
         def connectionSource = Stub(AsyncConnectionSource) {
