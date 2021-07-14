@@ -11,7 +11,7 @@ title = "Upgrade Considerations"
 Please note that the 3.x series of releases (which includes support through MongoDB 4.2) will be the last releases that are compatible
 with *Java 6 or Java 7*.  The 4.0 Java driver will require a minimum of Java 8. 
 
-Please note that 3.12.x is tested against MongoDB 4.4, however support for all the new features is only available via a 4.x driver.
+Please note that 3.12.x is tested against MongoDB 5.0, however support for all the new features is only available via a 4.x driver.
 {{% /note %}}
 
 ## Upgrading from 3.11.x
