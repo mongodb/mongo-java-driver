@@ -93,7 +93,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     private int skip;
     private BsonDocument sort;
     private CursorType cursorType = CursorType.NonTailable;
-    private boolean slaveOk;
+    private boolean secondaryOk;
     private boolean oplogReplay;
     private boolean noCursorTimeout;
     private boolean partial;
@@ -357,19 +357,19 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      * @return true if set to allowed to query non-primary replica set members.
      * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
      */
-    public boolean isSlaveOk() {
-        return slaveOk;
+    public boolean isSecondaryOk() {
+        return secondaryOk;
     }
 
     /**
      * Sets if allowed to query non-primary replica set members.
      *
-     * @param slaveOk true if allowed to query non-primary replica set members.
+     * @param secondaryOk true if allowed to query non-primary replica set members.
      * @return this
      * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
      */
-    public FindOperation<T> slaveOk(final boolean slaveOk) {
-        this.slaveOk = slaveOk;
+    public FindOperation<T> secondaryOk(final boolean secondaryOk) {
+        this.secondaryOk = secondaryOk;
         return this;
     }
 
@@ -671,7 +671,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                                 skip,
                                 limit,
                                 batchSize,
-                                isSlaveOk() || binding.getReadPreference().isSlaveOk(),
+                                isSecondaryOk() || binding.getReadPreference().isSlaveOk(),
                                 isTailableCursor(),
                                 isAwaitData(),
                                 isNoCursorTimeout(),
@@ -716,7 +716,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                                         } else {
                                             connection.queryAsync(namespace, asDocument(connection.getDescription(),
                                                     binding.getReadPreference()), projection, skip, limit, batchSize,
-                                                    isSlaveOk() || binding.getReadPreference().isSlaveOk(),
+                                                    isSecondaryOk() || binding.getReadPreference().isSlaveOk(),
                                                     isTailableCursor(), isAwaitData(), isNoCursorTimeout(), isPartial(), isOplogReplay(),
                                                     decoder, new SingleResultCallback<QueryResult<T>>() {
                                                         @Override

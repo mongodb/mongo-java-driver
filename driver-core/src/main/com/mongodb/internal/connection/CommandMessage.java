@@ -236,18 +236,18 @@ public final class CommandMessage extends RequestMessage {
     }
 
     private int getOpQueryFlagBits() {
-        return getOpQuerySlaveOkFlagBit();
+        return getOpQuerySecondaryOkFlagBit();
     }
 
-    private int getOpQuerySlaveOkFlagBit() {
-        if (isSlaveOk()) {
+    private int getOpQuerySecondaryOkFlagBit() {
+        if (isSecondaryOk()) {
             return 1 << 2;
         } else {
             return 0;
         }
     }
 
-    private boolean isSlaveOk() {
+    private boolean isSecondaryOk() {
         return (readPreference != null && readPreference.isSlaveOk()) || isDirectConnectionToReplicaSetMember();
     }
 

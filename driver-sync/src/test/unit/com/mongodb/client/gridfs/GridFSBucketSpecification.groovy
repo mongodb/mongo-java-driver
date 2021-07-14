@@ -33,8 +33,6 @@ import com.mongodb.client.internal.OperationExecutor
 import com.mongodb.client.internal.TestOperationExecutor
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
-import com.mongodb.operation.BatchCursor
-import com.mongodb.operation.FindOperation
 import com.mongodb.internal.operation.BatchCursor
 import com.mongodb.internal.operation.FindOperation
 import org.bson.BsonDocument
@@ -595,7 +593,7 @@ class GridFSBucketSpecification extends Specification {
         then:
         executor.getReadPreference() == secondary()
         expect executor.getReadOperation(), isTheSameAs(new FindOperation<GridFSFile>(new MongoNamespace('test.fs.files'), decoder)
-                .filter(filter).slaveOk(true))
+                .filter(filter).secondaryOk(true))
     }
 
     def 'should throw an exception if file not found when opening by name'() {
