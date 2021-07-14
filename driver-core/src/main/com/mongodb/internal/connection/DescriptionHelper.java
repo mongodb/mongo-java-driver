@@ -67,22 +67,22 @@ public final class DescriptionHelper {
     }
 
     static ConnectionDescription createConnectionDescription(final ClusterConnectionMode clusterConnectionMode,
-                                                             final ConnectionId connectionId, final BsonDocument isMasterResult) {
+                                                             final ConnectionId connectionId, final BsonDocument helloResult) {
         ConnectionDescription connectionDescription = new ConnectionDescription(connectionId,
-                getMaxWireVersion(isMasterResult), getServerType(isMasterResult), getMaxWriteBatchSize(isMasterResult),
-                getMaxBsonObjectSize(isMasterResult), getMaxMessageSizeBytes(isMasterResult), getCompressors(isMasterResult),
-                isMasterResult.getArray("saslSupportedMechs", null));
-        if (isMasterResult.containsKey("connectionId")) {
+                getMaxWireVersion(helloResult), getServerType(helloResult), getMaxWriteBatchSize(helloResult),
+                getMaxBsonObjectSize(helloResult), getMaxMessageSizeBytes(helloResult), getCompressors(helloResult),
+                helloResult.getArray("saslSupportedMechs", null));
+        if (helloResult.containsKey("connectionId")) {
             ConnectionId newConnectionId =
-                    connectionDescription.getConnectionId().withServerValue(isMasterResult.getNumber("connectionId").intValue());
+                    connectionDescription.getConnectionId().withServerValue(helloResult.getNumber("connectionId").intValue());
             connectionDescription = connectionDescription.withConnectionId(newConnectionId);
         }
         if (clusterConnectionMode == ClusterConnectionMode.LOAD_BALANCED) {
-            ObjectId serviceId = getServiceId(isMasterResult);
+            ObjectId serviceId = getServiceId(helloResult);
             if (serviceId != null) {
                 connectionDescription = connectionDescription.withServiceId(serviceId);
             } else if (manufactureServiceId) {
-                TopologyVersion topologyVersion = getTopologyVersion(isMasterResult);
+                TopologyVersion topologyVersion = getTopologyVersion(helloResult);
                 assertNotNull(topologyVersion);
                 connectionDescription = connectionDescription.withServiceId(topologyVersion.getProcessId());
             } else {
@@ -93,80 +93,80 @@ public final class DescriptionHelper {
         return connectionDescription;
     }
 
-    public static ServerDescription createServerDescription(final ServerAddress serverAddress, final BsonDocument isMasterResult,
+    public static ServerDescription createServerDescription(final ServerAddress serverAddress, final BsonDocument helloResult,
                                                             final long roundTripTime) {
         return ServerDescription.builder()
                                 .state(CONNECTED)
                                 .address(serverAddress)
-                                .type(getServerType(isMasterResult))
-                                .canonicalAddress(isMasterResult.containsKey("me") ? isMasterResult.getString("me").getValue() : null)
-                                .hosts(listToSet(isMasterResult.getArray("hosts", new BsonArray())))
-                                .passives(listToSet(isMasterResult.getArray("passives", new BsonArray())))
-                                .arbiters(listToSet(isMasterResult.getArray("arbiters", new BsonArray())))
-                                .primary(getString(isMasterResult, "primary"))
-                                .maxDocumentSize(getMaxBsonObjectSize(isMasterResult))
-                                .tagSet(getTagSetFromDocument(isMasterResult.getDocument("tags", new BsonDocument())))
-                                .setName(getString(isMasterResult, "setName"))
-                                .minWireVersion(getMinWireVersion(isMasterResult))
-                                .maxWireVersion(getMaxWireVersion(isMasterResult))
-                                .electionId(getElectionId(isMasterResult))
-                                .setVersion(getSetVersion(isMasterResult))
-                                .topologyVersion(getTopologyVersion(isMasterResult))
-                                .lastWriteDate(getLastWriteDate(isMasterResult))
+                                .type(getServerType(helloResult))
+                                .canonicalAddress(helloResult.containsKey("me") ? helloResult.getString("me").getValue() : null)
+                                .hosts(listToSet(helloResult.getArray("hosts", new BsonArray())))
+                                .passives(listToSet(helloResult.getArray("passives", new BsonArray())))
+                                .arbiters(listToSet(helloResult.getArray("arbiters", new BsonArray())))
+                                .primary(getString(helloResult, "primary"))
+                                .maxDocumentSize(getMaxBsonObjectSize(helloResult))
+                                .tagSet(getTagSetFromDocument(helloResult.getDocument("tags", new BsonDocument())))
+                                .setName(getString(helloResult, "setName"))
+                                .minWireVersion(getMinWireVersion(helloResult))
+                                .maxWireVersion(getMaxWireVersion(helloResult))
+                                .electionId(getElectionId(helloResult))
+                                .setVersion(getSetVersion(helloResult))
+                                .topologyVersion(getTopologyVersion(helloResult))
+                                .lastWriteDate(getLastWriteDate(helloResult))
                                 .roundTripTime(roundTripTime, NANOSECONDS)
-                                .logicalSessionTimeoutMinutes(getLogicalSessionTimeoutMinutes(isMasterResult))
-                                .helloOk(isMasterResult.getBoolean("helloOk", BsonBoolean.FALSE).getValue())
-                                .ok(CommandHelper.isCommandOk(isMasterResult)).build();
+                                .logicalSessionTimeoutMinutes(getLogicalSessionTimeoutMinutes(helloResult))
+                                .helloOk(helloResult.getBoolean("helloOk", BsonBoolean.FALSE).getValue())
+                                .ok(CommandHelper.isCommandOk(helloResult)).build();
     }
 
-    private static int getMinWireVersion(final BsonDocument isMasterResult) {
-        return isMasterResult.getInt32("minWireVersion", new BsonInt32(getDefaultMinWireVersion())).getValue();
+    private static int getMinWireVersion(final BsonDocument helloResult) {
+        return helloResult.getInt32("minWireVersion", new BsonInt32(getDefaultMinWireVersion())).getValue();
     }
 
-    private static int getMaxWireVersion(final BsonDocument isMasterResult) {
-        return isMasterResult.getInt32("maxWireVersion", new BsonInt32(getDefaultMaxWireVersion())).getValue();
+    private static int getMaxWireVersion(final BsonDocument helloResult) {
+        return helloResult.getInt32("maxWireVersion", new BsonInt32(getDefaultMaxWireVersion())).getValue();
     }
 
-    private static Date getLastWriteDate(final BsonDocument isMasterResult) {
-        if (!isMasterResult.containsKey("lastWrite")) {
+    private static Date getLastWriteDate(final BsonDocument helloResult) {
+        if (!helloResult.containsKey("lastWrite")) {
             return null;
         }
-        return new Date(isMasterResult.getDocument("lastWrite").getDateTime("lastWriteDate").getValue());
+        return new Date(helloResult.getDocument("lastWrite").getDateTime("lastWriteDate").getValue());
     }
 
-    private static ObjectId getElectionId(final BsonDocument isMasterResult) {
-        return isMasterResult.containsKey("electionId") ? isMasterResult.getObjectId("electionId").getValue() : null;
+    private static ObjectId getElectionId(final BsonDocument helloResult) {
+        return helloResult.containsKey("electionId") ? helloResult.getObjectId("electionId").getValue() : null;
     }
 
-    private static Integer getSetVersion(final BsonDocument isMasterResult) {
-        return isMasterResult.containsKey("setVersion") ? isMasterResult.getNumber("setVersion").intValue() : null;
+    private static Integer getSetVersion(final BsonDocument helloResult) {
+        return helloResult.containsKey("setVersion") ? helloResult.getNumber("setVersion").intValue() : null;
     }
 
-    private static TopologyVersion getTopologyVersion(final BsonDocument isMasterResult) {
-        return isMasterResult.containsKey("topologyVersion") && isMasterResult.get("topologyVersion").isDocument()
-                ? new TopologyVersion(isMasterResult.getDocument("topologyVersion")) : null;
+    private static TopologyVersion getTopologyVersion(final BsonDocument helloResult) {
+        return helloResult.containsKey("topologyVersion") && helloResult.get("topologyVersion").isDocument()
+                ? new TopologyVersion(helloResult.getDocument("topologyVersion")) : null;
     }
 
-    private static ObjectId getServiceId(final BsonDocument isMasterResult) {
-        return isMasterResult.containsKey("serviceId") && isMasterResult.get("serviceId").isObjectId()
-                ? isMasterResult.getObjectId("serviceId").getValue() : null;
+    private static ObjectId getServiceId(final BsonDocument helloResult) {
+        return helloResult.containsKey("serviceId") && helloResult.get("serviceId").isObjectId()
+                ? helloResult.getObjectId("serviceId").getValue() : null;
     }
 
-    private static int getMaxMessageSizeBytes(final BsonDocument isMasterResult) {
-        return isMasterResult.getInt32("maxMessageSizeBytes", new BsonInt32(getDefaultMaxMessageSize())).getValue();
+    private static int getMaxMessageSizeBytes(final BsonDocument helloResult) {
+        return helloResult.getInt32("maxMessageSizeBytes", new BsonInt32(getDefaultMaxMessageSize())).getValue();
     }
 
-    private static int getMaxBsonObjectSize(final BsonDocument isMasterResult) {
-        return isMasterResult.getInt32("maxBsonObjectSize", new BsonInt32(getDefaultMaxDocumentSize())).getValue();
+    private static int getMaxBsonObjectSize(final BsonDocument helloResult) {
+        return helloResult.getInt32("maxBsonObjectSize", new BsonInt32(getDefaultMaxDocumentSize())).getValue();
     }
 
-    private static int getMaxWriteBatchSize(final BsonDocument isMasterResult) {
-        return isMasterResult.getInt32("maxWriteBatchSize", new BsonInt32(getDefaultMaxWriteBatchSize())).getValue();
+    private static int getMaxWriteBatchSize(final BsonDocument helloResult) {
+        return helloResult.getInt32("maxWriteBatchSize", new BsonInt32(getDefaultMaxWriteBatchSize())).getValue();
     }
 
-    private static Integer getLogicalSessionTimeoutMinutes(final BsonDocument isMasterResult) {
-        return isMasterResult.isNumber("logicalSessionTimeoutMinutes")
-                       ? isMasterResult.getNumber("logicalSessionTimeoutMinutes").intValue() : null;
+    private static Integer getLogicalSessionTimeoutMinutes(final BsonDocument helloResult) {
+        return helloResult.isNumber("logicalSessionTimeoutMinutes")
+                       ? helloResult.getNumber("logicalSessionTimeoutMinutes").intValue() : null;
     }
 
     private static String getString(final BsonDocument response, final String key) {
@@ -189,50 +189,50 @@ public final class DescriptionHelper {
         }
     }
 
-    private static ServerType getServerType(final BsonDocument isMasterResult) {
+    private static ServerType getServerType(final BsonDocument helloResult) {
 
-        if (!CommandHelper.isCommandOk(isMasterResult)) {
+        if (!CommandHelper.isCommandOk(helloResult)) {
             return UNKNOWN;
         }
 
-        if (isReplicaSetMember(isMasterResult)) {
+        if (isReplicaSetMember(helloResult)) {
 
-            if (isMasterResult.getBoolean("hidden", BsonBoolean.FALSE).getValue()) {
+            if (helloResult.getBoolean("hidden", BsonBoolean.FALSE).getValue()) {
                 return REPLICA_SET_OTHER;
             }
 
-            if (isMasterResult.getBoolean("isWritablePrimary", BsonBoolean.FALSE).getValue()) {
+            if (helloResult.getBoolean("isWritablePrimary", BsonBoolean.FALSE).getValue()) {
                 return REPLICA_SET_PRIMARY;
             }
 
-            if (isMasterResult.getBoolean("ismaster", BsonBoolean.FALSE).getValue()) {
+            if (helloResult.getBoolean("ismaster", BsonBoolean.FALSE).getValue()) {
                 return REPLICA_SET_PRIMARY;
             }
 
-            if (isMasterResult.getBoolean("secondary", BsonBoolean.FALSE).getValue()) {
+            if (helloResult.getBoolean("secondary", BsonBoolean.FALSE).getValue()) {
                 return REPLICA_SET_SECONDARY;
             }
 
-            if (isMasterResult.getBoolean("arbiterOnly", BsonBoolean.FALSE).getValue()) {
+            if (helloResult.getBoolean("arbiterOnly", BsonBoolean.FALSE).getValue()) {
                 return REPLICA_SET_ARBITER;
             }
 
-            if (isMasterResult.containsKey("setName") && isMasterResult.containsKey("hosts")) {
+            if (helloResult.containsKey("setName") && helloResult.containsKey("hosts")) {
                 return ServerType.REPLICA_SET_OTHER;
             }
 
             return ServerType.REPLICA_SET_GHOST;
         }
 
-        if (isMasterResult.containsKey("msg") && isMasterResult.get("msg").equals(new BsonString("isdbgrid"))) {
+        if (helloResult.containsKey("msg") && helloResult.get("msg").equals(new BsonString("isdbgrid"))) {
             return SHARD_ROUTER;
         }
 
         return STANDALONE;
     }
 
-    private static boolean isReplicaSetMember(final BsonDocument isMasterResult) {
-        return isMasterResult.containsKey("setName") || isMasterResult.getBoolean("isreplicaset", BsonBoolean.FALSE).getValue();
+    private static boolean isReplicaSetMember(final BsonDocument helloResult) {
+        return helloResult.containsKey("setName") || helloResult.getBoolean("isreplicaset", BsonBoolean.FALSE).getValue();
     }
 
     private static TagSet getTagSetFromDocument(final BsonDocument tagsDocuments) {
@@ -243,9 +243,9 @@ public final class DescriptionHelper {
         return new TagSet(tagList);
     }
 
-    private static List<String> getCompressors(final BsonDocument isMasterResult) {
+    private static List<String> getCompressors(final BsonDocument helloResult) {
         List<String> compressorList = new ArrayList<String>();
-        for (BsonValue compressor : isMasterResult.getArray("compression", new BsonArray())) {
+        for (BsonValue compressor : helloResult.getArray("compression", new BsonArray())) {
             compressorList.add(compressor.asString().getValue());
         }
         return compressorList;

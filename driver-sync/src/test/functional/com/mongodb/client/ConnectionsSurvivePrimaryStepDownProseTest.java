@@ -110,7 +110,7 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
     }
 
     @Test
-    public void testNotMasterKeepConnectionPool() {
+    public void testNotPrimaryKeepConnectionPool() {
         assumeTrue(serverVersionAtLeast(asList(4, 1, 10)));
 
         collectionHelper.runAdminCommand("{configureFailPoint: 'failCommand',  mode: {times: 1}, data: {failCommands: ['insert'], "
@@ -129,7 +129,7 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
     }
 
     @Test
-    public void testNotMasterClearConnectionPool() {
+    public void testNotPrimaryClearConnectionPool() {
         assumeFalse(serverVersionAtLeast(asList(4, 1, 0)));
 
         collectionHelper.runAdminCommand("{configureFailPoint: 'failCommand',  mode: {times: 1}, data: {failCommands: ['insert'], "

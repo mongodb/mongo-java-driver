@@ -128,7 +128,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
      * and shouldn't be used to try to select "up-to-date" secondaries.
      * </p>
      * <p>
-     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses,
      * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
      * </p>
      * @param timeUnit the time unit in which to return the value

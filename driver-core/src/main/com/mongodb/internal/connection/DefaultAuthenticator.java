@@ -73,7 +73,7 @@ class DefaultAuthenticator extends Authenticator implements SpeculativeAuthentic
 
     @Override
     public BsonDocument createSpeculativeAuthenticateCommand(final InternalConnection connection) {
-        delegate = getAuthenticatorForIsMaster();
+        delegate = getAuthenticatorForHello();
         return ((SpeculativeAuthenticator) delegate).createSpeculativeAuthenticateCommand(connection);
     }
 
@@ -98,7 +98,7 @@ class DefaultAuthenticator extends Authenticator implements SpeculativeAuthentic
         }
     }
 
-    Authenticator getAuthenticatorForIsMaster() {
+    Authenticator getAuthenticatorForHello() {
         return new ScramShaAuthenticator(getMongoCredentialWithCache().withMechanism(SCRAM_SHA_256), getServerApi());
     }
 
