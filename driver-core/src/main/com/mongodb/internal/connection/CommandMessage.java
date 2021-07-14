@@ -248,7 +248,7 @@ public final class CommandMessage extends RequestMessage {
     }
 
     private boolean isSecondaryOk() {
-        return (readPreference != null && readPreference.isSlaveOk()) || isDirectConnectionToReplicaSetMember();
+        return (readPreference != null && readPreference.isSecondaryOk()) || isDirectConnectionToReplicaSetMember();
     }
 
     private boolean isDirectConnectionToReplicaSetMember() {

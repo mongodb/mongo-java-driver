@@ -671,7 +671,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                                 skip,
                                 limit,
                                 batchSize,
-                                isSecondaryOk() || binding.getReadPreference().isSlaveOk(),
+                                isSecondaryOk() || binding.getReadPreference().isSecondaryOk(),
                                 isTailableCursor(),
                                 isAwaitData(),
                                 isNoCursorTimeout(),
@@ -716,7 +716,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                                         } else {
                                             connection.queryAsync(namespace, asDocument(connection.getDescription(),
                                                     binding.getReadPreference()), projection, skip, limit, batchSize,
-                                                    isSecondaryOk() || binding.getReadPreference().isSlaveOk(),
+                                                    isSecondaryOk() || binding.getReadPreference().isSecondaryOk(),
                                                     isTailableCursor(), isAwaitData(), isNoCursorTimeout(), isPartial(), isOplogReplay(),
                                                     decoder, new SingleResultCallback<QueryResult<T>>() {
                                                         @Override
