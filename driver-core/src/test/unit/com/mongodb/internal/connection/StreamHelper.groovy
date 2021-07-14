@@ -161,7 +161,7 @@ class StreamHelper {
         headers
     }
 
-    static isMaster() {
+    static hello() {
         CommandMessage command = new CommandMessage(new MongoNamespace('admin', COMMAND_COLLECTION_NAME),
                 new BsonDocument('ismaster', new BsonInt32(1)), new NoOpFieldNameValidator(), ReadPreference.primary(),
                 MessageSettings.builder().build(), null)
@@ -171,7 +171,7 @@ class StreamHelper {
         [outputBuffer.byteBuffers, nextMessageId]
     }
 
-    static isMasterAsync() {
-        isMaster() + [new FutureResultCallback<Void>(), new FutureResultCallback<ResponseBuffers>()]
+    static helloAsync() {
+        hello() + [new FutureResultCallback<Void>(), new FutureResultCallback<ResponseBuffers>()]
     }
 }

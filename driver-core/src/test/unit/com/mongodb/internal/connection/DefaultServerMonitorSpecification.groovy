@@ -110,7 +110,7 @@ class DefaultServerMonitorSpecification extends Specification {
                 .state(ServerConnectionState.CONNECTED)
                 .build()
 
-        def isMasterResponse = '{' +
+        def helloResponse = '{' +
                 'ismaster : true, ' +
                 'maxBsonObjectSize : 16777216, ' +
                 'maxMessageSizeBytes : 48000000, ' +
@@ -143,7 +143,7 @@ class DefaultServerMonitorSpecification extends Specification {
                     send(_, _, _) >> { }
 
                     receive(_, _) >> {
-                        BsonDocument.parse(isMasterResponse)
+                        BsonDocument.parse(helloResponse)
                     }
                 }
             }
@@ -160,7 +160,7 @@ class DefaultServerMonitorSpecification extends Specification {
         failedEvent == null
         startedEvent.connectionId == connectionDescription.connectionId
         succeededEvent.connectionId == connectionDescription.connectionId
-        succeededEvent.reply == BsonDocument.parse(isMasterResponse)
+        succeededEvent.reply == BsonDocument.parse(helloResponse)
         succeededEvent.getElapsedTime(TimeUnit.NANOSECONDS) > 0
 
         cleanup:

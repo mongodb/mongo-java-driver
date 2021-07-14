@@ -141,13 +141,13 @@ class CommandMessageSpecification extends Specification {
                 responseExpected, null, null, clusterConnectionMode, null)
         def output = new BasicOutputBuffer()
         def expectedFlagBits = 0
-        if (readPreference.isSlaveOk()) {
+        if (readPreference.isSecondaryOk()) {
             expectedFlagBits = 4
         } else if (clusterConnectionMode == ClusterConnectionMode.SINGLE && serverType != ServerType.SHARD_ROUTER) {
             expectedFlagBits = 4
         }
         BsonDocument expectedCommand
-        if (readPreference.isSlaveOk()) {
+        if (readPreference.isSecondaryOk()) {
             expectedCommand = new BsonDocument('$query', command).append('$readPreference', readPreference.toDocument())
         } else {
             expectedCommand = command

@@ -199,35 +199,36 @@ class OperationFunctionalSpecification extends Specification {
         params.async = params.async != null ? params.async : false
         params.result = params.result != null ? params.result : null
         params.checkCommand = params.checkCommand != null ? params.checkCommand : true
-        params.checkSlaveOk = params.checkSlaveOk != null ? params.checkSlaveOk : false
+        params.checkSecondaryOk = params.checkSecondaryOk != null ? params.checkSecondaryOk : false
         params.readPreference = params.readPreference != null ? params.readPreference : ReadPreference.primary()
         params.retryable = params.retryable != null ? params.retryable : false
         params.serverType = params.serverType != null ? params.serverType : ServerType.STANDALONE
         testOperation(params.operation, params.serverVersion, params.expectedCommand, params.async, params.result, params.checkCommand,
-                params.checkSlaveOk, params.readPreference, params.retryable, params.serverType)
+                params.checkSecondaryOk, params.readPreference, params.retryable, params.serverType)
     }
 
     void testOperationInTransaction(operation, List<Integer> serverVersion, BsonDocument expectedCommand, boolean async, result = null,
-                                    boolean checkCommand = true, boolean checkSlaveOk = false,
+                                    boolean checkCommand = true, boolean checkSecondaryOk = false,
                                     ReadPreference readPreference = ReadPreference.primary(), boolean retryable = false,
                                     ServerType serverType = ServerType.STANDALONE) {
-        testOperation(operation, serverVersion, ReadConcern.DEFAULT, expectedCommand, async, result, checkCommand, checkSlaveOk,
+        testOperation(operation, serverVersion, ReadConcern.DEFAULT, expectedCommand, async, result, checkCommand, checkSecondaryOk,
                 readPreference, retryable, serverType, true)
     }
 
     void testOperation(operation, List<Integer> serverVersion, BsonDocument expectedCommand, boolean async, result = null,
-                       boolean checkCommand = true, boolean checkSlaveOk = false, ReadPreference readPreference = ReadPreference.primary(),
-                       boolean retryable = false, ServerType serverType = ServerType.STANDALONE, Boolean activeTransaction = false) {
-        testOperation(operation, serverVersion, ReadConcern.DEFAULT, expectedCommand, async, result, checkCommand, checkSlaveOk,
+                       boolean checkCommand = true, boolean checkSecondaryOk = false,
+                       ReadPreference readPreference = ReadPreference.primary(), boolean retryable = false,
+                       ServerType serverType = ServerType.STANDALONE, Boolean activeTransaction = false) {
+        testOperation(operation, serverVersion, ReadConcern.DEFAULT, expectedCommand, async, result, checkCommand, checkSecondaryOk,
         readPreference, retryable, serverType, activeTransaction)
     }
 
     void testOperation(operation, List<Integer> serverVersion, ReadConcern readConcern, BsonDocument expectedCommand, boolean async,
-                       result = null, boolean checkCommand = true, boolean checkSlaveOk = false,
+                       result = null, boolean checkCommand = true, boolean checkSecondaryOk = false,
                        ReadPreference readPreference = ReadPreference.primary(), boolean retryable = false,
                        ServerType serverType = ServerType.STANDALONE, Boolean activeTransaction = false) {
         def test = async ? this.&testAsyncOperation : this.&testSyncOperation
-        test(operation, serverVersion, readConcern, result, checkCommand, expectedCommand, checkSlaveOk, readPreference, retryable,
+        test(operation, serverVersion, readConcern, result, checkCommand, expectedCommand, checkSecondaryOk, readPreference, retryable,
                 serverType, activeTransaction)
     }
 
@@ -243,7 +244,7 @@ class OperationFunctionalSpecification extends Specification {
         test(operation, serverVersions as Queue, serverTypes as Queue, exception)
     }
 
-    void testOperationSlaveOk(operation, List<Integer> serverVersion, ReadPreference readPreference, boolean async, result = null) {
+    void testOperationSecondaryOk(operation, List<Integer> serverVersion, ReadPreference readPreference, boolean async, result = null) {
         def test = async ? this.&testAsyncOperation : this.&testSyncOperation
         test(operation, serverVersion, ReadConcern.DEFAULT, result, false, null, true, readPreference)
     }
@@ -259,7 +260,7 @@ class OperationFunctionalSpecification extends Specification {
     }
 
     def testSyncOperation(operation, List<Integer> serverVersion, ReadConcern readConcern, result, Boolean checkCommand=true,
-                          BsonDocument expectedCommand=null, Boolean checkSlaveOk=false,
+                          BsonDocument expectedCommand=null, Boolean checkSecondaryOk=false,
                           ReadPreference readPreference=ReadPreference.primary(), Boolean retryable = false,
                           ServerType serverType = ServerType.STANDALONE, Boolean activeTransaction = false) {
         def connection = Mock(Connection) {
@@ -315,7 +316,7 @@ class OperationFunctionalSpecification extends Specification {
                 }
                 result
             }
-        } else if (checkSlaveOk) {
+        } else if (checkSecondaryOk) {
             1 * connection.command(*_) >> {
                 it[4] == readPreference
                 result
@@ -340,7 +341,7 @@ class OperationFunctionalSpecification extends Specification {
     }
 
     def testAsyncOperation(operation = operation, List<Integer> serverVersion = serverVersion, ReadConcern readConcern, result = null,
-                           Boolean checkCommand = true, BsonDocument expectedCommand = null, Boolean checkSlaveOk = false,
+                           Boolean checkCommand = true, BsonDocument expectedCommand = null, Boolean checkSecondaryOk = false,
                            ReadPreference readPreference = ReadPreference.primary(), Boolean retryable = false,
                            ServerType serverType = ServerType.STANDALONE, Boolean activeTransaction = false) {
         def connection = Mock(AsyncConnection) {
@@ -397,7 +398,7 @@ class OperationFunctionalSpecification extends Specification {
                 }
                 it.last().onResult(result, null)
             }
-        } else if (checkSlaveOk) {
+        } else if (checkSecondaryOk) {
             1 * connection.commandAsync(*_) >> {
                 it[4] == readPreference
                 it.last().onResult(result, null)

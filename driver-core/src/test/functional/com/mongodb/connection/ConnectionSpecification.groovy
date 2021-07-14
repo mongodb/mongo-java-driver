@@ -44,7 +44,7 @@ class ConnectionSpecification extends OperationFunctionalSpecification {
 
     def 'should have description'() {
         when:
-        def commandResult = getIsMasterResult()
+        def commandResult = getHelloResult()
         def expectedMaxMessageSize = commandResult.getNumber('maxMessageSizeBytes',
                                                              new BsonInt32(getDefaultMaxMessageSize())).intValue()
         def expectedMaxBatchCount = commandResult.getNumber('maxWriteBatchSize',
@@ -63,7 +63,7 @@ class ConnectionSpecification extends OperationFunctionalSpecification {
         connection?.release()
         source?.release()
     }
-   private static BsonDocument getIsMasterResult() {
+   private static BsonDocument getHelloResult() {
         new CommandReadOperation<BsonDocument>('admin', new BsonDocument('ismaster', new BsonInt32(1)),
                                                new BsonDocumentCodec()).execute(getBinding())
     }

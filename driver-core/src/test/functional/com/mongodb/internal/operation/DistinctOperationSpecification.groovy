@@ -204,12 +204,12 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    def 'should use the ReadBindings readPreference to set slaveOK'() {
+    def 'should use the ReadBindings readPreference to set secondaryOk'() {
         when:
         def operation = new DistinctOperation(helper.namespace, 'name', helper.decoder)
 
         then:
-        testOperationSlaveOk(operation, [3, 4, 0], readPreference, async, helper.commandResult)
+        testOperationSecondaryOk(operation, [3, 4, 0], readPreference, async, helper.commandResult)
 
         where:
         [async, readPreference] << [[true, false], [ReadPreference.primary(), ReadPreference.secondary()]].combinations()

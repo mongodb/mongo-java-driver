@@ -50,7 +50,7 @@ class DescriptionHelperSpecification extends Specification {
         Time.makeTimeMove()
     }
 
-    def 'connection description should reflect ismaster result'() {
+    def 'connection description should reflect hello result'() {
         def connectionId = new ConnectionId(new ServerId(new ClusterId(), serverAddress))
         expect:
         createConnectionDescription(ClusterConnectionMode.SINGLE, connectionId,
