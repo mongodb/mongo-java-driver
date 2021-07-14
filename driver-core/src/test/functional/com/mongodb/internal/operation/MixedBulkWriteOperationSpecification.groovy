@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation
 
-import util.spock.annotations.Slow
 import com.mongodb.MongoBulkWriteException
 import com.mongodb.MongoClientException
 import com.mongodb.MongoNamespace
@@ -47,6 +46,7 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import org.bson.types.ObjectId
 import spock.lang.IgnoreIf
+import util.spock.annotations.Slow
 
 import static com.mongodb.ClusterFixture.configureFailPoint
 import static com.mongodb.ClusterFixture.disableFailPoint
@@ -626,7 +626,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'should split the number of writes is larger than the match write batch size'() {
         given:
         def binding = async ? getAsyncSingleConnectionBinding() : getSingleConnectionBinding()
-        def maxWriteBatchSize = getCollectionHelper().isMaster().getInteger('maxWriteBatchSize').intValue()
+        def maxWriteBatchSize = getCollectionHelper().hello().getInteger('maxWriteBatchSize').intValue()
         def numberOfWrites = maxWriteBatchSize + 100
         def writes = []
 

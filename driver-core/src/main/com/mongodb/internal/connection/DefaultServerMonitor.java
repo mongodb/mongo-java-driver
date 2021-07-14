@@ -207,31 +207,31 @@ class DefaultServerMonitor implements ServerMonitor {
                 try {
                     SessionContext sessionContext = new ClusterClockAdvancingSessionContext(NoOpSessionContext.INSTANCE, clusterClock);
                     if (!connection.hasMoreToCome()) {
-                        BsonDocument ismaster = new BsonDocument(getHandshakeCommandName(currentServerDescription), new BsonInt32(1))
+                        BsonDocument helloDocument = new BsonDocument(getHandshakeCommandName(currentServerDescription), new BsonInt32(1))
                                 .append("helloOk", BsonBoolean.TRUE);
                         if (shouldStreamResponses(currentServerDescription)) {
-                            ismaster.append("topologyVersion", currentServerDescription.getTopologyVersion().asDocument());
-                            ismaster.append("maxAwaitTimeMS", new BsonInt64(serverSettings.getHeartbeatFrequency(MILLISECONDS)));
+                            helloDocument.append("topologyVersion", currentServerDescription.getTopologyVersion().asDocument());
+                            helloDocument.append("maxAwaitTimeMS", new BsonInt64(serverSettings.getHeartbeatFrequency(MILLISECONDS)));
                         }
 
-                        connection.send(createCommandMessage(ismaster, connection, currentServerDescription), new BsonDocumentCodec(),
+                        connection.send(createCommandMessage(helloDocument, connection, currentServerDescription), new BsonDocumentCodec(),
                                 sessionContext);
                     }
 
-                    BsonDocument isMasterResult;
+                    BsonDocument helloResult;
                     if (shouldStreamResponses(currentServerDescription)) {
-                        isMasterResult = connection.receive(new BsonDocumentCodec(), sessionContext,
+                        helloResult = connection.receive(new BsonDocumentCodec(), sessionContext,
                                 Math.toIntExact(serverSettings.getHeartbeatFrequency(MILLISECONDS)));
                     } else {
-                        isMasterResult = connection.receive(new BsonDocumentCodec(), sessionContext);
+                        helloResult = connection.receive(new BsonDocumentCodec(), sessionContext);
                     }
 
                     long elapsedTimeNanos = System.nanoTime() - start;
                     serverMonitorListener.serverHeartbeatSucceeded(
-                            new ServerHeartbeatSucceededEvent(connection.getDescription().getConnectionId(), isMasterResult,
+                            new ServerHeartbeatSucceededEvent(connection.getDescription().getConnectionId(), helloResult,
                                     elapsedTimeNanos, currentServerDescription.getTopologyVersion() != null));
 
-                    return createServerDescription(serverId.getAddress(), isMasterResult, averageRoundTripTime.getAverage());
+                    return createServerDescription(serverId.getAddress(), helloResult, averageRoundTripTime.getAverage());
                 } catch (RuntimeException e) {
                     serverMonitorListener.serverHeartbeatFailed(
                             new ServerHeartbeatFailedEvent(connection.getDescription().getConnectionId(), System.nanoTime() - start,
