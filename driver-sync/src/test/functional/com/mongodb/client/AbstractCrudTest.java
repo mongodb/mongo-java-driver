@@ -45,7 +45,6 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
-import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.JsonTestServerVersionChecker.skipTest;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
