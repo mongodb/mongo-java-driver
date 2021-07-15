@@ -40,8 +40,6 @@ There is a separate jar file containing`libmongocrypt` bindings.
 `libmongocrypt` requires the `mongocryptd` daemon / process to be running. A specific daemon / process uri can be configured in the 
 `AutoEncryptionSettings` class by setting `mongocryptdURI` in the `extraOptions`.
 
-More information about mongocryptd will soon be available from the official documentation.
-
 
 ### Examples
 
