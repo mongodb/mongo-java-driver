@@ -88,7 +88,6 @@ public abstract class AbstractCrudTest {
     @Before
     public void setUp() {
         assumeFalse(skipTest);
-        assumeFalse(isSharded());
 
         collectionHelper = new CollectionHelper<>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
 
