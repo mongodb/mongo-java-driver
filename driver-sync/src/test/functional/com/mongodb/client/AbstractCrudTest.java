@@ -90,7 +90,6 @@ public abstract class AbstractCrudTest {
 
         collectionHelper = new CollectionHelper<>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
 
-        collectionHelper.killAllSessions();
         collectionHelper.create(collectionName, new CreateCollectionOptions(), WriteConcern.ACKNOWLEDGED);
 
         createMongoClient(commandListener);
@@ -104,7 +103,6 @@ public abstract class AbstractCrudTest {
                 documents.add(document.asDocument());
             }
 
-            collectionHelper.drop();
             if (documents.size() > 0) {
                 collectionHelper.insertDocuments(documents, WriteConcern.MAJORITY);
             }
