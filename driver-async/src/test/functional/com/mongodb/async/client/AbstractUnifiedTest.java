@@ -62,6 +62,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
 import static com.mongodb.async.client.Fixture.getConnectionString;
+import static com.mongodb.async.client.Fixture.getStreamFactoryFactory;
 import static com.mongodb.async.client.Fixture.isSharded;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
@@ -164,6 +165,7 @@ public abstract class AbstractUnifiedTest {
                         builder.readTimeout(5, TimeUnit.SECONDS);
                     }
                 })
+                .streamFactoryFactory(getStreamFactoryFactory())
                 .retryWrites(clientOptions.getBoolean("retryWrites", BsonBoolean.FALSE).getValue())
                 .writeConcern(getWriteConcern(clientOptions))
                 .readConcern(getReadConcern(clientOptions))
