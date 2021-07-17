@@ -18,6 +18,8 @@ package org.mongodb.scala.internal
 
 import org.mongodb.scala._
 
+import java.util.concurrent.atomic.AtomicBoolean
+
 private[scala] case class FlatMapObservable[T, S](observable: Observable[T], f: T => Observable[S])
     extends Observable[S] {
 
@@ -33,8 +35,7 @@ private[scala] case class FlatMapObservable[T, S](observable: Observable[T], f: 
           private var nestedSubscription: Option[Subscription] = None
           @volatile
           private var demand: Long = 0
-          @volatile
-          private var onCompleteCalled: Boolean = false
+          private val onCompleteCalled = new AtomicBoolean(false)
 
           override def onSubscribe(subscription: Subscription): Unit = {
             val masterSub = new Subscription() {
@@ -55,8 +56,7 @@ private[scala] case class FlatMapObservable[T, S](observable: Observable[T], f: 
           }
 
           override def onComplete(): Unit = {
-            if (!onCompleteCalled) {
-              onCompleteCalled = true
+            if (onCompleteCalled.compareAndSet(false, true)) {
               if (nestedSubscription.isEmpty) observer.onComplete()
             }
           }
@@ -78,7 +78,7 @@ private[scala] case class FlatMapObservable[T, S](observable: Observable[T], f: 
 
                 override def onComplete(): Unit = {
                   nestedSubscription = None
-                  onCompleteCalled match {
+                  onCompleteCalled.get() match {
                     case true => observer.onComplete()
                     case false if demand > 0 =>
                       addDemand(-1) // reduce demand by 1 as it will be incremented by the outerSubscription
