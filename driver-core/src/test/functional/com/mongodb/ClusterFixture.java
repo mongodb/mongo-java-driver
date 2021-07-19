@@ -108,6 +108,7 @@ public final class ClusterFixture {
     private static final int COMMAND_NOT_FOUND_ERROR_CODE = 59;
     public static final long TIMEOUT = 60L;
     public static final Duration TIMEOUT_DURATION = Duration.ofMinutes(1);
+    public static final String LEGACY_HELLO = "isMaster";
 
     private static ConnectionString connectionString;
     private static Cluster cluster;
@@ -255,7 +256,7 @@ public final class ClusterFixture {
                 new SocketStreamFactory(SocketSettings.builder().build(), SslSettings.builder().build()));
         try {
             BsonDocument helloResult = new CommandReadOperation<BsonDocument>("admin",
-                    new BsonDocument("ismaster", new BsonInt32(1)), new BsonDocumentCodec()).execute(new ClusterBinding(cluster,
+                    new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), new BsonDocumentCodec()).execute(new ClusterBinding(cluster,
                     ReadPreference.nearest(), ReadConcern.DEFAULT, getServerApi()));
             if (helloResult.containsKey("setName")) {
                 connectionString = new ConnectionString(DEFAULT_URI + "/?replicaSet="

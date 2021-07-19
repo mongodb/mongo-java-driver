@@ -44,6 +44,7 @@ import static com.mongodb.CustomMatchers.compare
 import static com.mongodb.connection.ServerType.SHARD_ROUTER
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback
+import static com.mongodb.internal.connection.MessageHelper.LEGACY_HELLO_LOWER
 
 class DefaultServerConnectionSpecification extends Specification {
     def namespace = new MongoNamespace('test', 'test')
@@ -244,7 +245,7 @@ class DefaultServerConnectionSpecification extends Specification {
 
     def 'should execute command protocol asynchronously'() {
         given:
-        def command = new BsonDocument('ismaster', new BsonInt32(1))
+        def command = new BsonDocument(LEGACY_HELLO_LOWER, new BsonInt32(1))
         def validator = new NoOpFieldNameValidator()
         def codec = new BsonDocumentCodec()
         def executor = Mock(ProtocolExecutor)

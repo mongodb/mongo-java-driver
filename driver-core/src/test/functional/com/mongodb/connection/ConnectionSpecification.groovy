@@ -24,6 +24,7 @@ import org.bson.BsonInt32
 import org.bson.codecs.BsonDocumentCodec
 
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.LEGACY_HELLO
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageSize
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxWriteBatchSize
 
@@ -64,7 +65,7 @@ class ConnectionSpecification extends OperationFunctionalSpecification {
         source?.release()
     }
    private static BsonDocument getHelloResult() {
-        new CommandReadOperation<BsonDocument>('admin', new BsonDocument('ismaster', new BsonInt32(1)),
+        new CommandReadOperation<BsonDocument>('admin', new BsonDocument(LEGACY_HELLO, new BsonInt32(1)),
                                                new BsonDocumentCodec()).execute(getBinding())
     }
 }

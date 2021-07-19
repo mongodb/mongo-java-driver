@@ -37,6 +37,8 @@ import java.nio.ByteBuffer
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
+import static com.mongodb.internal.connection.MessageHelper.LEGACY_HELLO_LOWER
+
 @SuppressWarnings('BusyWait')
 class DefaultServerMonitorSpecification extends Specification {
 
@@ -111,7 +113,7 @@ class DefaultServerMonitorSpecification extends Specification {
                 .build()
 
         def helloResponse = '{' +
-                'ismaster : true, ' +
+                "$LEGACY_HELLO_LOWER: true," +
                 'maxBsonObjectSize : 16777216, ' +
                 'maxMessageSizeBytes : 48000000, ' +
                 'maxWriteBatchSize : 1000, ' +
