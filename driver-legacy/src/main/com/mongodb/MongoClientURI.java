@@ -146,8 +146,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * <p>Read preference configuration:</p>
  * <ul>
- * <li>{@code slaveOk=true|false}: Whether a driver connected to a replica set will send reads to slaves/secondaries.</li>
- * <li>{@code readPreference=enum}: The read preference for this connection.  If set, it overrides any slaveOk value.
+ * <li>{@code readPreference=enum}: The read preference for this connection.
  * <ul>
  * <li>Enumerated values:
  * <ul>
