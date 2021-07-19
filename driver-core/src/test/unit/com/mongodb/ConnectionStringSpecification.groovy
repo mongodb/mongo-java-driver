@@ -523,6 +523,8 @@ class ConnectionStringSpecification extends Specification {
         thrown(IllegalArgumentException)
     }
 
+    private static final LEGACY_SECONDARY_OK = 'slaveOk'
+
     @Unroll
     def 'should correct parse read preference for #readPreference'() {
         expect:
@@ -537,9 +539,9 @@ class ConnectionStringSpecification extends Specification {
                 '?readPreference=secondary')                             | secondary()
         new ConnectionString('mongodb://localhost/' +
                                    '?readPreference=secondaryPreferred') | secondaryPreferred()
-        new ConnectionString('mongodb://localhost/?slaveOk=true')        | secondaryPreferred()
-        new ConnectionString('mongodb://localhost/?slaveOk=false')       | primary()
-        new ConnectionString('mongodb://localhost/?slaveOk=foo')         | primary()
+        new ConnectionString("mongodb://localhost/?${LEGACY_SECONDARY_OK}=true")  | secondaryPreferred()
+        new ConnectionString("mongodb://localhost/?${LEGACY_SECONDARY_OK}=false") | primary()
+        new ConnectionString("mongodb://localhost/?${LEGACY_SECONDARY_OK}=foo")   | primary()
         new ConnectionString('mongodb://localhost/' +
                                    '?readPreference=secondaryPreferred' +
                                    '&readPreferenceTags=dc:ny,rack:1' +
