@@ -873,14 +873,15 @@ public class ConnectionString {
                 LOGGER.warn("Uri option 'wtimeout' has been deprecated, use 'wtimeoutms' instead.");
             }
         }
-        // handle legacy slaveok settings
-        String slaveok = getLastValue(optionsMap, "slaveok");
-        if (slaveok != null && !optionsMap.containsKey("readpreference")) {
-            String readPreference = Boolean.TRUE.equals(parseBoolean(slaveok, "slaveok"))
+        String legacySecondaryOkOption = "slaveok";
+        // handle legacy secondary ok settings
+        String legacySecondaryOk = getLastValue(optionsMap, legacySecondaryOkOption);
+        if (legacySecondaryOk != null && !optionsMap.containsKey("readpreference")) {
+            String readPreference = Boolean.TRUE.equals(parseBoolean(legacySecondaryOk, legacySecondaryOkOption))
                                     ? "secondaryPreferred" : "primary";
             optionsMap.put("readpreference", singletonList(readPreference));
             if (LOGGER.isWarnEnabled()) {
-                LOGGER.warn("Uri option 'slaveok' has been deprecated, use 'readpreference' instead.");
+                LOGGER.warn(String.format("Uri option '%s' has been deprecated, use 'readpreference' instead.", legacySecondaryOkOption));
             }
         }
         // handle legacy j settings
