@@ -51,7 +51,7 @@
     <suppress checks="Regexp" files="SubscriberHelpers"/>
 
     <!-- Allow printStackTrace in this file -->
-    <suppress checks="Regexp" files="CallbackResultHolder"/>
+    <suppress checks="Regexp" files="CallbackResultHolder|Debugger"/>
 
     <!--Do not check documentation tests classes -->
     <suppress checks="Javadoc*" files=".*documentation.*"/>
