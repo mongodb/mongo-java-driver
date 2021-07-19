@@ -1272,7 +1272,8 @@ public class JsonPoweredCrudTestHelper {
         return document;
     }
 
+    public static final Document LEGACY_HELLO_COMMAND = Document.parse("{isMaster: 1}");
     boolean isSharded() {
-        return database.runCommand(Document.parse("{isMaster: 1}")).get("msg", "").equals("isdbgrid");
+        return database.runCommand(LEGACY_HELLO_COMMAND).get("msg", "").equals("isdbgrid");
     }
 }

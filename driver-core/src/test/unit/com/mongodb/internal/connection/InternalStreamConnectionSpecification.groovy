@@ -60,6 +60,8 @@ import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageSize
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxWriteBatchSize
 import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize
+import static com.mongodb.internal.connection.MessageHelper.LEGACY_HELLO
+import static com.mongodb.internal.connection.MessageHelper.LEGACY_HELLO_LOWER
 import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION
 import static java.util.concurrent.TimeUnit.NANOSECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
@@ -676,8 +678,8 @@ class InternalStreamConnectionSpecification extends Specification {
                 new BsonDocument('copydbsaslstart', new BsonInt32(1)),
                 new BsonDocument('copydb', new BsonInt32(1)),
                 new BsonDocument('hello', new BsonInt32(1)).append('speculativeAuthenticate', new BsonDocument()),
-                new BsonDocument('ismaster', new BsonInt32(1)).append('speculativeAuthenticate', new BsonDocument()),
-                new BsonDocument('isMaster', new BsonInt32(1)).append('speculativeAuthenticate', new BsonDocument())
+                new BsonDocument(LEGACY_HELLO_LOWER, new BsonInt32(1)).append('speculativeAuthenticate', new BsonDocument()),
+                new BsonDocument(LEGACY_HELLO, new BsonInt32(1)).append('speculativeAuthenticate', new BsonDocument())
         ]
     }
 
@@ -712,8 +714,8 @@ class InternalStreamConnectionSpecification extends Specification {
                 new BsonDocument('copydbsaslstart', new BsonInt32(1)),
                 new BsonDocument('copydb', new BsonInt32(1)),
                 new BsonDocument('hello', new BsonInt32(1)).append('speculativeAuthenticate', new BsonDocument()),
-                new BsonDocument('ismaster', new BsonInt32(1)).append('speculativeAuthenticate', new BsonDocument()),
-                new BsonDocument('isMaster', new BsonInt32(1)).append('speculativeAuthenticate', new BsonDocument())
+                new BsonDocument(LEGACY_HELLO_LOWER, new BsonInt32(1)).append('speculativeAuthenticate', new BsonDocument()),
+                new BsonDocument(LEGACY_HELLO, new BsonInt32(1)).append('speculativeAuthenticate', new BsonDocument())
         ]
     }
 
@@ -902,8 +904,8 @@ class InternalStreamConnectionSpecification extends Specification {
                 new BsonDocument('copydbsaslstart', new BsonInt32(1)),
                 new BsonDocument('copydb', new BsonInt32(1)),
                 new BsonDocument('hello', new BsonInt32(1)).append('speculativeAuthenticate', new BsonDocument()),
-                new BsonDocument('ismaster', new BsonInt32(1)).append('speculativeAuthenticate', new BsonDocument()),
-                new BsonDocument('isMaster', new BsonInt32(1)).append('speculativeAuthenticate', new BsonDocument())
+                new BsonDocument(LEGACY_HELLO_LOWER, new BsonInt32(1)).append('speculativeAuthenticate', new BsonDocument()),
+                new BsonDocument(LEGACY_HELLO, new BsonInt32(1)).append('speculativeAuthenticate', new BsonDocument())
         ]
     }
 
