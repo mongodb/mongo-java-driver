@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2021-07-02T16:15:58.3">
+<meta name="date" content="2021-07-13T14:35:01.04">
 <link rel="shortcut icon" href="/mongo-java-driver/4.3/img/favicon.png">
 
     <title>Aggregates</title><link rel="stylesheet" href="/mongo-java-driver/4.3/lib/bootstrap.css" type="text/css" />
@@ -309,6 +309,13 @@
               <div class="documentwrapper">
                 <div class="bodywrapper">
                   <div class="body">
+                    <div style="padding: 15px; margin: 20px 0px; border-width: 1px 1px 1px 0px; border-style: solid; border-radius: 6px; font-size: 14px; line-height: 20px; color: rgb(17, 97, 73); border-color: rgb(195, 231, 202) rgb(195, 231, 202) rgb(195, 231, 202) rgb(19, 170, 82); background-color: rgb(228, 244, 228);">
+  This reference documentation site is for versions of the MongoDB Java synchronous driver up to 4.3-beta.
+  <br/>
+  See the <a style="font-weight: bold" href="https://docs.mongodb.com/drivers/java/sync/current/">MongoDB Java Driver documentation site</a> for version 4.3 and later versions of the reference documentation.
+</div>
+
+
  
 <a class="edit-link" href="https://github.com/mongodb/mongo-java-driver/blob/master/docs/reference/content/builders/aggregation.md" target="_blank" title="Edit builders/aggregation.md on GitHub"><i class="fa fa-pencil-square-o"></i></a><div class="bc">
 <ul><li><a href="/mongo-java-driver/4.3/builders/">Builders</a> <i class="fa fa-angle-right"></i></li><li>Aggregates</li>
@@ -318,9 +325,10 @@
 <h2 id="aggregates">Aggregates</h2>
 
 <p>The <a href="/mongo-java-driver/4.3/apidocs/mongodb-driver-core/com/mongodb/client/model/Aggregates.html
-"><code>Aggregates</code></a> class provides static factory methods that build <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/
-">aggregation
-pipeline operators</a>.  Each method returns an instance of the
+"><code>Aggregates</code></a> class provides static factory methods
+that build <a href="http://docs.mongodb.org/manual/meta/aggregation-quick-reference/#stages
+">aggregation pipeline stages</a>.
+Each method returns an instance of the
 <a href="/mongo-java-driver/4.3/bson/documents/#bson"><code>Bson</code></a> type, which can in turn be passed to the <code>aggregate</code> method of <code>MongoCollection</code>.</p>
 
 <p>For brevity, you may choose to import the methods of the <code>Aggregates</code> class statically:</p>
@@ -720,9 +728,37 @@ collection.  It must be the last stage in any aggregate pipeline:</p>
 
 </code></pre>
 
+<h3 id="setwindowfields">SetWindowFields</h3>
+
+<div class="admonition important">
+<h5 class="admonition-title">important</h5>
+<p>Support for <code>$setWindowFields</code> is in beta. Backwards-breaking changes may be made before the final release.</p>
+
+</div>
+
+
+<p>The <a href="https://dochub.mongodb.org/core/window-functions-set-window-fields"><code>$setWindowFields</code></a> pipeline stage
+allows using window operators. This stage partitions the input documents similarly to the <a href="#group"><code>$group</code></a> pipeline stage,
+optionally sorts them, computes fields in the documents by computing window functions over windows specified per function
+(a window is a subset of a partition), and outputs the documents. The important difference from the <code>$group</code> pipeline stage is that
+documents belonging to the same partition or window are not folded into a single document.</p>
+
+<p>The driver includes the <a href="/mongo-java-driver/4.3/apidocs/mongodb-driver-core/com/mongodb/client/model/WindowedComputations.html
+"><code>WindowedComputations</code></a>
+class with factory methods for supported window operators.</p>
+
+<p>This example computes the accumulated rainfall and the average temperature over the past month per each locality
+from more fine-grained measurements presented via the <code>rainfall</code> and <code>temperature</code> fields:</p>
+
+<pre><code class="language-java">Window pastMonth = Windows.timeRange(-1, Windows.Bound.CURRENT, MongoTimeUnit.MONTH);
+setWindowFields(&quot;$localityId&quot;, Sorts.ascending(&quot;measurementDateTime&quot;),
+        WindowedComputations.sum(&quot;monthlyRainfall&quot;, &quot;$rainfall&quot;, pastMonth),
+        WindowedComputations.avg(&quot;monthlyAvgTemp&quot;, &quot;$temperature&quot;, pastMonth));
+</code></pre>
+
 <h3 id="creating-a-pipeline">Creating a Pipeline</h3>
 
-<p>The above pipeline operators are typically combined into a list and passed to the <code>aggregate</code> method of a <code>MongoCollection</code>.  For instance:</p>
+<p>The above pipeline stages are typically combined into a list and passed to the <code>aggregate</code> method of a <code>MongoCollection</code>.  For instance:</p>
 
 <pre><code class="language-java">collection.aggregate(Arrays.asList(match(eq(&quot;author&quot;, &quot;Dave&quot;)),
                                    group(&quot;$customerId&quot;, sum(&quot;totalQuantity&quot;, &quot;$quantity&quot;),
@@ -767,6 +803,7 @@ collection.  It must be the last stage in any aggregate pipeline:</p>
 <li><a href="#bucket">Bucket</a></li>
 <li><a href="#bucketauto">BucketAuto</a></li>
 <li><a href="#facet">Facet</a></li>
+<li><a href="#setwindowfields">SetWindowFields</a></li>
 <li><a href="#creating-a-pipeline">Creating a Pipeline</a></li>
 </ul></li>
 </ul></li>
