@@ -56,6 +56,7 @@ import static com.mongodb.connection.ServerType.REPLICA_SET_SECONDARY;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.connection.ServerType.STANDALONE;
 import static com.mongodb.connection.ServerType.UNKNOWN;
+import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO_LOWER;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 public final class DescriptionHelper {
@@ -205,7 +206,7 @@ public final class DescriptionHelper {
                 return REPLICA_SET_PRIMARY;
             }
 
-            if (helloResult.getBoolean("ismaster", BsonBoolean.FALSE).getValue()) {
+            if (helloResult.getBoolean(LEGACY_HELLO_LOWER, BsonBoolean.FALSE).getValue()) {
                 return REPLICA_SET_PRIMARY;
             }
 

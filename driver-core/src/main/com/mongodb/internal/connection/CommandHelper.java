@@ -27,10 +27,17 @@ import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
 
+import java.util.Locale;
+
 import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.ReadPreference.primary;
 
 public final class CommandHelper {
+
+    static final String HELLO = "hello";
+    static final String LEGACY_HELLO = "isMaster";
+    static final String LEGACY_HELLO_LOWER = LEGACY_HELLO.toLowerCase(Locale.ROOT);
+
     static BsonDocument executeCommand(final String database, final BsonDocument command, final @Nullable ServerApi serverApi,
                                        final InternalConnection internalConnection) {
         return sendAndReceive(database, command, null, serverApi, internalConnection);

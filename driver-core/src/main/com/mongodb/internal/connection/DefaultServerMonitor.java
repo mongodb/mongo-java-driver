@@ -49,6 +49,8 @@ import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.connection.ServerType.UNKNOWN;
+import static com.mongodb.internal.connection.CommandHelper.HELLO;
+import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
 import static com.mongodb.internal.connection.CommandHelper.executeCommand;
 import static com.mongodb.internal.connection.DescriptionHelper.createServerDescription;
 import static com.mongodb.internal.event.EventListenerHelper.getServerMonitorListener;
@@ -256,9 +258,9 @@ class DefaultServerMonitor implements ServerMonitor {
             return currentServerDescription.getTopologyVersion() != null && connection.supportsAdditionalTimeout();
         }
 
-        private CommandMessage createCommandMessage(final BsonDocument ismaster, final InternalConnection connection,
+        private CommandMessage createCommandMessage(final BsonDocument command, final InternalConnection connection,
                                                     final ServerDescription currentServerDescription) {
-            return new CommandMessage(new MongoNamespace("admin", COMMAND_COLLECTION_NAME), ismaster,
+            return new CommandMessage(new MongoNamespace("admin", COMMAND_COLLECTION_NAME), command,
                     new NoOpFieldNameValidator(), primary(),
                     MessageSettings.builder()
                             .maxWireVersion(connection.getDescription().getMaxWireVersion())
@@ -449,6 +451,6 @@ class DefaultServerMonitor implements ServerMonitor {
     }
 
     private String getHandshakeCommandName(final ServerDescription serverDescription) {
-        return serverDescription.isHelloOk() ? "hello" : "ismaster";
+        return serverDescription.isHelloOk() ? HELLO : LEGACY_HELLO;
     }
 }
