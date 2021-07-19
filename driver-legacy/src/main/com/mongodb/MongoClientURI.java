@@ -169,7 +169,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * </ul>
  * </li>
  * <li>{@code maxStalenessSeconds=seconds}. The maximum staleness in seconds. For use with any non-primary read preference, the driver
- * estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses, and selects only those
+ * estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses, and selects only those
  * secondaries whose staleness is less than or equal to maxStalenessSeconds.  Not providing the parameter or explicitly setting it to -1
  * indicates that there should be no max staleness check.  The maximum staleness feature is designed to prevent badly-lagging servers from
  * being selected. The staleness estimate is imprecise and shouldn't be used to try to select "up-to-date" secondaries.  The minimum value

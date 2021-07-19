@@ -37,6 +37,8 @@ import org.bson.BsonString;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.connection.CommandHelper.HELLO;
+import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
 import static com.mongodb.internal.connection.CommandHelper.executeCommand;
 import static com.mongodb.internal.connection.CommandHelper.executeCommandAsync;
 import static com.mongodb.internal.connection.CommandHelper.executeCommandWithoutCheckingForFailure;
@@ -255,6 +257,6 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
     }
 
     private String getHandshakeCommandName() {
-        return serverApi == null ? "ismaster" : "hello";
+        return serverApi == null ? LEGACY_HELLO : HELLO;
     }
 }
