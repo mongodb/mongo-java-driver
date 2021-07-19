@@ -64,6 +64,9 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.connection.CommandHelper.HELLO;
+import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
+import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO_LOWER;
 import static com.mongodb.internal.connection.MessageHeader.MESSAGE_HEADER_LENGTH;
 import static com.mongodb.internal.connection.OpCode.OP_COMPRESSED;
 import static com.mongodb.internal.connection.ProtocolHelper.createSpecialWriteConcernException;
@@ -92,9 +95,9 @@ public class InternalStreamConnection implements InternalConnection {
             "copydb"));
 
     private static final Set<String> SECURITY_SENSITIVE_HELLO_COMMANDS = new HashSet<String>(asList(
-            "hello",
-            "ismaster",
-            "isMaster"));
+            HELLO,
+            LEGACY_HELLO,
+            LEGACY_HELLO_LOWER));
 
     private static final Logger LOGGER = Loggers.getLogger("connection");
 
