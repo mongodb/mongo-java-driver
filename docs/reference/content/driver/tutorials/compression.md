@@ -19,7 +19,7 @@ release.
 * [Zstandard](https://github.com/facebook/zstd/): Zstandard compression can be used when connecting to MongoDB servers starting with the 4.2 release.
 
 The driver will negotiate which, if any, compression algorithm is used based on capabilities advertised by the server in
-the [ismaster]({{<docsref "reference/command/isMaster/" >}}) command response. 
+the [hello]({{<docsref "reference/command/hello/" >}}) command response. 
 
 ### Specify compression via `ConnectionString`
 
@@ -119,4 +119,3 @@ As the JDK has no built-in support for Snappy or Zstandard, the driver takes a d
 [snappy-java Github repository](https://github.com/xerial/snappy-java) and the
 [zstd-java Github repository](https://github.com/luben/zstd-jni) for details.
 
- 
