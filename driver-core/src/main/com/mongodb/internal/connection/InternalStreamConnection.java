@@ -21,11 +21,13 @@ import com.mongodb.MongoCompressor;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
+import com.mongodb.MongoNamespace;
 import com.mongodb.MongoSocketClosedException;
 import com.mongodb.MongoSocketReadException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoSocketWriteException;
 import com.mongodb.ServerAddress;
+import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.ClusterConnectionMode;
@@ -41,7 +43,10 @@ import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.CommandListener;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.connection.debug.InternalConnectionDebugger;
+import com.mongodb.internal.connection.debug.InternalConnectionDebugger.CommandEventSenderDebugger;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
 import org.bson.ByteBuf;
@@ -98,6 +103,7 @@ public class InternalStreamConnection implements InternalConnection {
 
     private static final Logger LOGGER = Loggers.getLogger("connection");
 
+    private final InternalConnectionDebugger debugger;
     private final ClusterConnectionMode clusterConnectionMode;
     private final ServerId serverId;
     private final ConnectionGenerationSupplier connectionGenerationSupplier;
@@ -114,7 +120,7 @@ public class InternalStreamConnection implements InternalConnection {
     private final List<MongoCompressor> compressorList;
     private final CommandListener commandListener;
     private volatile Compressor sendCompressor;
-    private volatile Map<Byte, Compressor> compressorMap;
+    private final Map<Byte, Compressor> compressorMap;
     private volatile boolean hasMoreToCome;
     private volatile int responseTo;
     private int generation = NOT_INITIALIZED_GENERATION;
@@ -123,10 +129,11 @@ public class InternalStreamConnection implements InternalConnection {
                                     final ConnectionGenerationSupplier connectionGenerationSupplier,
                                     final StreamFactory streamFactory, final List<MongoCompressor> compressorList,
                                     final CommandListener commandListener, final InternalConnectionInitializer connectionInitializer) {
+        debugger = new InternalConnectionDebugger();
         this.clusterConnectionMode = clusterConnectionMode;
         this.serverId = notNull("serverId", serverId);
         this.connectionGenerationSupplier = notNull("connectionGeneration", connectionGenerationSupplier);
-        this.streamFactory = notNull("streamFactory", streamFactory);
+        this.streamFactory = debugger.debuggableStreamFactory(notNull("streamFactory", streamFactory));
         this.compressorList = notNull("compressorList", compressorList);
         this.compressorMap = createCompressorMap(compressorList);
         this.commandListener = commandListener;
@@ -234,6 +241,7 @@ public class InternalStreamConnection implements InternalConnection {
         initialServerDescription = initializationDescription.getServerDescription();
         opened.set(true);
         sendCompressor = findSendCompressor(description);
+        debugger.dataCollector().ifPresent(dataCollector -> dataCollector.connectionOpened(description, initialServerDescription));
         if (LOGGER.isInfoEnabled()) {
             LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
         }
@@ -689,7 +697,7 @@ public class InternalStreamConnection implements InternalConnection {
         ByteBuf messageHeaderBuffer = stream.read(MESSAGE_HEADER_LENGTH, additionalTimeout);
         MessageHeader messageHeader;
         try {
-            messageHeader = new MessageHeader(messageHeaderBuffer, description.getMaxMessageSize());
+            messageHeader = new MessageHeader(messageHeaderBuffer, description.getMaxMessageSize(), debugger);
         } finally {
             messageHeaderBuffer.release();
         }
@@ -705,9 +713,9 @@ public class InternalStreamConnection implements InternalConnection {
             compressor.uncompress(messageBuffer, buffer);
 
             buffer.flip();
-            return new ResponseBuffers(new ReplyHeader(buffer, compressedHeader), buffer);
+            return new ResponseBuffers(new ReplyHeader(buffer, compressedHeader, debugger), buffer);
         } else {
-            return new ResponseBuffers(new ReplyHeader(messageBuffer, messageHeader), messageBuffer);
+            return new ResponseBuffers(new ReplyHeader(messageBuffer, messageHeader, debugger), messageBuffer);
         }
     }
 
@@ -739,7 +747,7 @@ public class InternalStreamConnection implements InternalConnection {
                 return;
             }
             try {
-                MessageHeader messageHeader = new MessageHeader(result, description.getMaxMessageSize());
+                MessageHeader messageHeader = new MessageHeader(result, description.getMaxMessageSize(), debugger);
                 readAsync(messageHeader.getMessageLength() - MESSAGE_HEADER_LENGTH, new MessageCallback(messageHeader));
             } catch (Throwable localThrowable) {
                 callback.onResult(null, localThrowable);
@@ -774,13 +782,13 @@ public class InternalStreamConnection implements InternalConnection {
                             compressor.uncompress(result, buffer);
 
                             buffer.flip();
-                            replyHeader = new ReplyHeader(buffer, compressedHeader);
+                            replyHeader = new ReplyHeader(buffer, compressedHeader, debugger);
                             responseBuffer = buffer;
                         } finally {
                             result.release();
                         }
                     } else {
-                        replyHeader = new ReplyHeader(result, messageHeader);
+                        replyHeader = new ReplyHeader(result, messageHeader, debugger);
                         responseBuffer = result;
                     }
                     callback.onResult(new ResponseBuffers(replyHeader, responseBuffer), null);
@@ -796,9 +804,98 @@ public class InternalStreamConnection implements InternalConnection {
     private CommandEventSender createCommandEventSender(final CommandMessage message, final ByteBufferBsonOutput bsonOutput) {
         if (opened() && (commandListener != null || COMMAND_PROTOCOL_LOGGER.isDebugEnabled())) {
             return new LoggingCommandEventSender(SECURITY_SENSITIVE_COMMANDS, SECURITY_SENSITIVE_HELLO_COMMANDS, description,
-                    commandListener, message, bsonOutput, COMMAND_PROTOCOL_LOGGER);
+                    commandListener, message, bsonOutput, COMMAND_PROTOCOL_LOGGER, debugger);
+        } else if (opened()) {
+            return debugger.commandEventSenderDebugger()
+                    .<CommandEventSender>map(commandEventSenderDebugger ->
+                            new DebuggingCommandEventSender(new CommandMessageData(message), commandEventSenderDebugger))
+                    .orElseGet(NoOpCommandEventSender::new);
         } else {
             return new NoOpCommandEventSender();
+        }
+    }
+
+    static final class DebuggingCommandEventSender implements CommandEventSender {
+        private final CommandMessageData commandMessageData;
+        private final CommandEventSenderDebugger commandEventSenderDebugger;
+
+        DebuggingCommandEventSender(final CommandMessageData commandMessageData,
+                final CommandEventSenderDebugger commandEventSenderDebugger) {
+            this.commandMessageData = commandMessageData;
+            this.commandEventSenderDebugger = assertNotNull(commandEventSenderDebugger);
+        }
+
+        @Override
+        public void sendStartedEvent() {
+            commandEventSenderDebugger.sendStartedEvent(commandMessageData);
+        }
+
+        @Override
+        public void sendFailedEvent(final Throwable t) {
+            commandEventSenderDebugger.sendFailedEvent(t, commandMessageData);
+        }
+
+        @Override
+        public void sendSucceededEvent(final ResponseBuffers responseBuffers) {
+            commandEventSenderDebugger.sendSucceededEvent(commandMessageData);
+        }
+
+        @Override
+        public void sendSucceededEventForOneWayCommand() {
+            commandEventSenderDebugger.sendSucceededEventForOneWayCommand(commandMessageData);
+        }
+    }
+
+    @Immutable
+    public static final class CommandMessageData {
+        private final int id;
+        private final boolean containsPayload;
+        private final boolean responseExpected;
+        private final MongoNamespace namespace;
+        @Nullable
+        private final FineDetails fineDetails;
+
+        CommandMessageData(final CommandMessage message) {
+            this(message, null);
+        }
+
+        CommandMessageData(final CommandMessage message,
+                final String name, final boolean speculativeAuthenticate, final boolean redactionRequired) {
+            this(message, new FineDetails(name, speculativeAuthenticate, redactionRequired));
+        }
+
+        private CommandMessageData(final CommandMessage message, @Nullable final FineDetails fineDetails) {
+            id = message.getId();
+            responseExpected = message.isResponseExpected();
+            containsPayload = message.containsPayload();
+            namespace = message.getNamespace();
+            this.fineDetails = fineDetails;
+        }
+
+        @Override
+        public String toString() {
+            return "CommandMessageData{"
+                    + "id=" + id
+                    + (fineDetails == null ? "" : ", name=" + fineDetails.name)
+                    + ", containsPayload=" + containsPayload
+                    + ", responseExpected=" + responseExpected
+                    + ", namespace=" + namespace
+                    + (fineDetails == null ? "" : ", speculativeAuthenticate=" + fineDetails.speculativeAuthenticate)
+                    + (fineDetails == null ? "" : ", redactionRequired=" + fineDetails.redactionRequired)
+                    + '}';
+        }
+
+        @Immutable
+        private static final class FineDetails {
+            private final String name;
+            private final boolean speculativeAuthenticate;
+            private final boolean redactionRequired;
+
+            private FineDetails(final String name, final boolean speculativeAuthenticate, final boolean redactionRequired) {
+                this.name = name;
+                this.speculativeAuthenticate = speculativeAuthenticate;
+                this.redactionRequired = redactionRequired;
+            }
         }
     }
 }

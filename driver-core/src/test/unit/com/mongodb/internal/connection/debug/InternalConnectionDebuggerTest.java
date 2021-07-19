@@ -34,15 +34,15 @@ import static org.mockito.Mockito.verify;
 
 final class InternalConnectionDebuggerTest {
     @Test
-    void wrapStreamFactory() {
+    void debuggableStreamFactory() {
         StreamFactory streamFactory = new SocketStreamFactory(SocketSettings.builder().build(), SslSettings.builder().build());
         assertAll(
                 () -> assertSame(streamFactory, new InternalConnectionDebugger(Debugger.ReportingMode.OFF)
-                        .wrap(streamFactory)),
+                        .debuggableStreamFactory(streamFactory)),
                 () -> assertNotSame(streamFactory, new InternalConnectionDebugger(Debugger.ReportingMode.LOG)
-                        .wrap(streamFactory)),
+                        .debuggableStreamFactory(streamFactory)),
                 () -> assertNotSame(streamFactory, new InternalConnectionDebugger(Debugger.ReportingMode.LOG_AND_THROW)
-                        .wrap(streamFactory))
+                        .debuggableStreamFactory(streamFactory))
         );
     }
 

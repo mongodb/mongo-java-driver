@@ -17,6 +17,8 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoInternalException;
+import com.mongodb.internal.connection.debug.InternalConnectionDebugger;
+import com.mongodb.lang.Nullable;
 import org.bson.ByteBuf;
 
 // Contains the details of an OP_COMPRESSED reply from a MongoDB server.
@@ -32,14 +34,29 @@ class MessageHeader {
     private final int opCode;
 
     MessageHeader(final ByteBuf header, final int maxMessageLength) {
+        this(header, maxMessageLength, null);
+    }
+
+    MessageHeader(final ByteBuf header, final int maxMessageLength, @Nullable final InternalConnectionDebugger debugger) {
         messageLength = header.getInt();
         requestId = header.getInt();
         responseTo = header.getInt();
         opCode = header.getInt();
 
         if (messageLength > maxMessageLength) {
-            throw new MongoInternalException(String.format("The reply message length %d is greater than the maximum message length %d",
-                    messageLength, maxMessageLength));
+            MongoInternalException e = new MongoInternalException(String.format(
+                    "The reply message length %d is greater than the maximum message length %d", messageLength, maxMessageLength));
+            if (debugger != null) {
+                debugger.dataCollector().ifPresent(dataCollector -> dataCollector.internalConnectionOperationCollector()
+                        .failed(e, null, InternalConnectionDebugger.InternalConnectionOperationCode.DECODE_MESSAGE_HEADER,
+                                dataCollector.ioCollector().streamReadPosition(), this));
+            }
+            throw e;
+        }
+        if (debugger != null) {
+            debugger.dataCollector().ifPresent(dataCollector -> dataCollector.internalConnectionOperationCollector()
+                    .succeeded(null, InternalConnectionDebugger.InternalConnectionOperationCode.DECODE_MESSAGE_HEADER,
+                            dataCollector.ioCollector().streamReadPosition(), this));
         }
     }
 
@@ -78,5 +95,15 @@ class MessageHeader {
      */
     public int getOpCode() {
         return opCode;
+    }
+
+    @Override
+    public String toString() {
+        return "MessageHeader{"
+                + "messageLength=" + messageLength
+                + ", requestId=" + requestId
+                + ", responseTo=" + responseTo
+                + ", opCode=" + opCode
+                + '}';
     }
 }

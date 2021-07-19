@@ -40,6 +40,7 @@ export JAVA_HOME="/opt/java/jdk11"
 if [ "${SSL}" = "ssl" ] && [ "${STREAM_TYPE}" = "netty" ] && [ "${NETTY_SSL_PROVIDER}" != "" ]; then
   readonly JAVA_SYSPROP_NETTY_SSL_PROVIDER="-Dorg.mongodb.test.netty.ssl.provider=${NETTY_SSL_PROVIDER}"
 fi
+readonly JAVA_SYSPROP_MONGODB_DRIVER_DEBUGGER="-Dorg.mongodb.driver.connection.debugger=LOG_AND_THROW"
 
 ############################################
 #            Functions                     #
@@ -131,6 +132,7 @@ if [ "$SLOW_TESTS_ONLY" == "true" ]; then
     ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} \
               ${TRANSACTION_URI} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} \
               ${JAVA_SYSPROP_NETTY_SSL_PROVIDER} \
+              ${JAVA_SYSPROP_MONGODB_DRIVER_DEBUGGER} \
               --stacktrace --info testSlowOnly
 else
     ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} \
@@ -140,5 +142,6 @@ else
               -Dorg.mongodb.test.gcpEmail=${GCP_EMAIL} -Dorg.mongodb.test.gcpPrivateKey=${GCP_PRIVATE_KEY} \
               ${TRANSACTION_URI} ${API_VERSION} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} \
               ${JAVA_SYSPROP_NETTY_SSL_PROVIDER} \
+              ${JAVA_SYSPROP_MONGODB_DRIVER_DEBUGGER} \
               --stacktrace --info --continue test
 fi

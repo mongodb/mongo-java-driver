@@ -15,9 +15,11 @@ export JAVA_HOME="/opt/java/jdk11"
 
 export TEST_PATH="${PROJECT_DIRECTORY}/driver-performance-test-data/"
 export OUTPUT_FILE="${PROJECT_DIRECTORY}/results.json"
+readonly JAVA_SYSPROP_MONGODB_DRIVER_DEBUGGER="-Dorg.mongodb.driver.connection.debugger=LOG_AND_THROW"
 
 start_time=$(date +%s)
-./gradlew -Dorg.mongodb.benchmarks.data=${TEST_PATH} -Dorg.mongodb.benchmarks.output=${OUTPUT_FILE} driver-benchmarks:run
+./gradlew -Dorg.mongodb.benchmarks.data=${TEST_PATH} \
+  ${JAVA_SYSPROP_MONGODB_DRIVER_DEBUGGER} \
+  -Dorg.mongodb.benchmarks.output=${OUTPUT_FILE} driver-benchmarks:run
 end_time=$(date +%s)
 elapsed_secs=$((end_time-start_time))
-

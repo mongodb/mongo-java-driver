@@ -9,6 +9,7 @@ set -o errexit  # Exit the script with error if any of the commands fail
 #                               "jdk5", "jdk6", "jdk7", "jdk8", "jdk9"
 
 JDK=${JDK:-jdk8}
+readonly JAVA_SYSPROP_MONGODB_DRIVER_DEBUGGER="-Dorg.mongodb.driver.connection.debugger=LOG_AND_THROW"
 
 ############################################
 #            Main Program                  #
@@ -20,4 +21,6 @@ export JAVA_HOME="/opt/java/jdk11"
 
 echo "Running tests with ${JDK}"
 ./gradlew -version
-./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --info driver-core:test --tests PlainAuthenticationSpecification
+./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} \
+  ${JAVA_SYSPROP_MONGODB_DRIVER_DEBUGGER} \
+  --stacktrace --info driver-core:test --tests PlainAuthenticationSpecification

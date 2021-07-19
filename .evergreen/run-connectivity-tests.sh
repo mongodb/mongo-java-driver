@@ -10,6 +10,7 @@ set -o errexit  # Exit the script with error if any of the commands fail
 #       Pass as many MongoDB URIS as arguments to this script as required
 
 JDK=${JDK:-jdk8}
+readonly JAVA_SYSPROP_MONGODB_DRIVER_DEBUGGER="-Dorg.mongodb.driver.connection.debugger=LOG_AND_THROW"
 
 ############################################
 #            Main Program                  #
@@ -23,9 +24,12 @@ export JAVA_HOME="/opt/java/jdk11"
 
 for MONGODB_URI in $@; do
     ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --info \
+        ${JAVA_SYSPROP_MONGODB_DRIVER_DEBUGGER} \
         --no-build-cache driver-sync:cleanTest driver-sync:test --tests ConnectivityTest
     ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --info \
+        ${JAVA_SYSPROP_MONGODB_DRIVER_DEBUGGER} \
         --no-build-cache driver-legacy:cleanTest driver-legacy:test --tests ConnectivityTest
     ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --info \
+        ${JAVA_SYSPROP_MONGODB_DRIVER_DEBUGGER} \
         --no-build-cache driver-reactive-streams:cleanTest driver-reactive-streams:test --tests ConnectivityTest
 done

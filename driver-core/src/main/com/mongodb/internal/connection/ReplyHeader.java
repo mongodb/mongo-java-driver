@@ -17,7 +17,11 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoInternalException;
+import com.mongodb.internal.connection.debug.InternalConnectionDebugger;
+import com.mongodb.lang.Nullable;
 import org.bson.ByteBuf;
+
+import java.util.BitSet;
 
 import static com.mongodb.internal.connection.MessageHeader.MESSAGE_HEADER_LENGTH;
 import static com.mongodb.internal.connection.OpCode.OP_MSG;
@@ -53,44 +57,60 @@ public final class ReplyHeader {
     private final int opMsgFlagBits;
 
     ReplyHeader(final ByteBuf header, final MessageHeader messageHeader) {
-        this(messageHeader.getMessageLength(), messageHeader.getOpCode(), messageHeader, header);
+        this(header, messageHeader, null);
+    }
+
+    ReplyHeader(final ByteBuf header, final MessageHeader messageHeader, @Nullable final InternalConnectionDebugger debugger) {
+        this(messageHeader.getMessageLength(), messageHeader.getOpCode(), messageHeader, header, debugger);
     }
 
     ReplyHeader(final ByteBuf header, final CompressedHeader compressedHeader) {
-        this(compressedHeader.getUncompressedSize() + MESSAGE_HEADER_LENGTH, compressedHeader.getOriginalOpcode(),
-                compressedHeader.getMessageHeader(), header);
+        this(header, compressedHeader, null);
     }
 
-    private ReplyHeader(final int messageLength, final int opCode, final MessageHeader messageHeader, final ByteBuf header) {
-        this.messageLength = messageLength;
-        this.requestId = messageHeader.getRequestId();
-        this.responseTo = messageHeader.getResponseTo();
-        if (opCode == OP_MSG.getValue()) {
-            responseFlags = 0;
-            cursorId = 0;
-            startingFrom = 0;
-            numberReturned = 1;
+    ReplyHeader(final ByteBuf header, final CompressedHeader compressedHeader, @Nullable final InternalConnectionDebugger debugger) {
+        this(compressedHeader.getUncompressedSize() + MESSAGE_HEADER_LENGTH, compressedHeader.getOriginalOpcode(),
+                compressedHeader.getMessageHeader(), header, debugger);
+    }
 
-            opMsgFlagBits = header.getInt();
-            header.get();  // ignore payload type
-        } else if (opCode == OP_REPLY.getValue()) {
-            if (messageLength < TOTAL_REPLY_HEADER_LENGTH) {
-                throw new MongoInternalException(format("The reply message length %d is less than the mimimum message length %d",
-                        messageLength, TOTAL_REPLY_HEADER_LENGTH));
+    private ReplyHeader(final int messageLength, final int opCode, final MessageHeader messageHeader, final ByteBuf header,
+            @Nullable final InternalConnectionDebugger debugger) {
+        try {
+            this.messageLength = messageLength;
+            this.requestId = messageHeader.getRequestId();
+            this.responseTo = messageHeader.getResponseTo();
+            if (opCode == OP_MSG.getValue()) {
+                responseFlags = 0;
+                cursorId = 0;
+                startingFrom = 0;
+                numberReturned = 1;
+
+                opMsgFlagBits = header.getInt();
+                header.get();  // ignore payload type
+            } else if (opCode == OP_REPLY.getValue()) {
+                if (messageLength < TOTAL_REPLY_HEADER_LENGTH) {
+                    throw new MongoInternalException(format("The reply message length %d is less than the mimimum message length %d",
+                            messageLength, TOTAL_REPLY_HEADER_LENGTH));
+                }
+
+                responseFlags = header.getInt();
+                cursorId = header.getLong();
+                startingFrom = header.getInt();
+                numberReturned = header.getInt();
+                opMsgFlagBits = 0;
+
+                if (numberReturned < 0) {
+                    throw new MongoInternalException(format("The reply message number of returned documents, %d, is less than 0",
+                            numberReturned));
+                }
+            } else {
+                throw new MongoInternalException(format("Unexpected reply message opCode %d", opCode));
             }
-
-            responseFlags = header.getInt();
-            cursorId = header.getLong();
-            startingFrom = header.getInt();
-            numberReturned = header.getInt();
-            opMsgFlagBits = 0;
-
-            if (numberReturned < 0) {
-                throw new MongoInternalException(format("The reply message number of returned documents, %d, is less than 0",
-                        numberReturned));
+        } catch (final MongoInternalException e) {
+            if (debugger != null) {
+                debugger.invalidReplyHeader(e, this);
             }
-        } else {
-            throw new MongoInternalException(format("Unexpected reply message opCode %d", opCode));
+            throw e;
         }
     }
 
@@ -196,5 +216,19 @@ public final class ReplyHeader {
 
     public boolean hasMoreToCome() {
         return (opMsgFlagBits & (1 << 1)) != 0;
+    }
+
+    @Override
+    public String toString() {
+        return "ReplyHeader{"
+                + "messageLength=" + messageLength
+                + ", requestId=" + requestId
+                + ", responseTo=" + responseTo
+                + ", responseFlags=" + BitSet.valueOf(new long[] {responseFlags})
+                + ", cursorId=" + cursorId
+                + ", startingFrom=" + startingFrom
+                + ", numberReturned=" + numberReturned
+                + ", opMsgFlagBits=" + BitSet.valueOf(new long[] {opMsgFlagBits})
+                + '}';
     }
 }

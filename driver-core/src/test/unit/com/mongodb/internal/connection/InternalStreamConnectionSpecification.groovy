@@ -40,6 +40,7 @@ import com.mongodb.connection.StreamFactory
 import com.mongodb.event.CommandFailedEvent
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.event.CommandSucceededEvent
+import com.mongodb.internal.connection.debug.Debugger
 import com.mongodb.internal.session.SessionContext
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
@@ -51,9 +52,6 @@ import org.bson.codecs.BsonDocumentCodec
 import spock.lang.Specification
 
 import java.nio.ByteBuffer
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
@@ -276,12 +274,18 @@ class InternalStreamConnectionSpecification extends Specification {
 
     def 'should throw MongoInternalException when reply header message length > max message length'() {
         given:
-        stream.read(36, 0) >> { helper.headerWithMessageSizeGreaterThanMax(1) }
+        Debugger.OverridingReportingMode debuggerReportingMode = Debugger.useReportingMode(Debugger.ReportingMode.LOG)
+        stream.read(_, _) >> { helper.headerWithMessageSizeGreaterThanMax(1, connectionDescription.maxMessageSize) }
 
         def connection = getOpenedConnection()
 
         when:
-        connection.receiveMessage(1)
+        try {
+            connection.receiveMessage(1)
+        } finally {
+            debuggerReportingMode.remove()
+        }
+
 
         then:
         thrown(MongoInternalException)
@@ -290,7 +294,8 @@ class InternalStreamConnectionSpecification extends Specification {
 
     def 'should throw MongoInternalException when reply header message length > max message length asynchronously'() {
         given:
-        stream.readAsync(16, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
+        Debugger.OverridingReportingMode debuggerReportingMode = Debugger.useReportingMode(Debugger.ReportingMode.OFF)
+        stream.readAsync(_, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
             handler.completed(helper.headerWithMessageSizeGreaterThanMax(1, connectionDescription.maxMessageSize))
         }
 
@@ -298,8 +303,13 @@ class InternalStreamConnectionSpecification extends Specification {
         def callback = new FutureResultCallback()
 
         when:
-        connection.receiveMessageAsync(1, callback)
-        callback.get()
+        try {
+            connection.receiveMessageAsync(1, callback)
+            callback.get()
+        } finally {
+            debuggerReportingMode.remove()
+        }
+
 
         then:
         thrown(MongoInternalException)
@@ -448,40 +458,6 @@ class InternalStreamConnectionSpecification extends Specification {
         then:
         thrown(MongoCommandException)
         !connection.isClosed()
-    }
-
-    def 'should notify all asynchronous writers of an exception'() {
-        given:
-        int numberOfOperations = 3
-        ExecutorService streamPool = Executors.newFixedThreadPool(1)
-
-        def messages = (1..numberOfOperations).collect { helper.isMasterAsync() }
-
-        def streamLatch = new CountDownLatch(1)
-        stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
-            streamPool.submit {
-                streamLatch.await()
-                callback.failed(new IOException())
-            }
-        }
-
-        when:
-        def connection = getOpenedConnection()
-        def callbacks = []
-        (1..numberOfOperations).each { n ->
-            def (buffers, messageId, sndCallbck, rcvdCallbck) = messages.pop()
-            connection.sendMessageAsync(buffers, messageId, sndCallbck)
-            callbacks.add(sndCallbck)
-        }
-        streamLatch.countDown()
-
-        then:
-        expectException(callbacks.pop())
-        expectException(callbacks.pop())
-        expectException(callbacks.pop())
-
-        cleanup:
-        streamPool.shutdown()
     }
 
     def 'should send events for successful command'() {
@@ -905,14 +881,5 @@ class InternalStreamConnectionSpecification extends Specification {
                 new BsonDocument('ismaster', new BsonInt32(1)).append('speculativeAuthenticate', new BsonDocument()),
                 new BsonDocument('isMaster', new BsonInt32(1)).append('speculativeAuthenticate', new BsonDocument())
         ]
-    }
-
-    private static boolean expectException(rcvdCallbck) {
-        try {
-            rcvdCallbck.get()
-            false
-        } catch (MongoSocketWriteException) {
-            true
-        }
     }
 }

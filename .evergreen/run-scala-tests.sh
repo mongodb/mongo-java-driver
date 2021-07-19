@@ -10,6 +10,7 @@ MONGODB_URI=${MONGODB_URI:-}
 JDK=${JDK:-jdk11}
 TOPOLOGY=${TOPOLOGY:-standalone}
 SAFE_FOR_MULTI_MONGOS=${SAFE_FOR_MULTI_MONGOS:-}
+readonly JAVA_SYSPROP_MONGODB_DRIVER_DEBUGGER="-Dorg.mongodb.driver.connection.debugger=LOG_AND_THROW"
 
 export JAVA_HOME="/opt/java/${JDK}"
 
@@ -34,4 +35,6 @@ fi
 echo "Running scala tests with Scala $SCALA"
 
 ./gradlew -version
-./gradlew -PscalaVersion=$SCALA --stacktrace --info :bson-scala:test :driver-scala:test :driver-scala:integrationTest -Dorg.mongodb.test.uri=${MONGODB_URI} ${TRANSACTION_URI}
+./gradlew -PscalaVersion=$SCALA \
+  ${JAVA_SYSPROP_MONGODB_DRIVER_DEBUGGER} \
+  --stacktrace --info :bson-scala:test :driver-scala:test :driver-scala:integrationTest -Dorg.mongodb.test.uri=${MONGODB_URI} ${TRANSACTION_URI}

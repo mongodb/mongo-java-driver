@@ -9,6 +9,8 @@ set -o errexit  # Exit the script with error if any of the commands fail
 #       JDK                     Set the version of java to be used.  Java versions can be set from the java toolchain /opt/java
 #                               "jdk5", "jdk6", "jdk7", "jdk8", "jdk9", "jdk11"
 
+readonly JAVA_SYSPROP_MONGODB_DRIVER_DEBUGGER="-Dorg.mongodb.driver.connection.debugger=LOG_AND_THROW"
+
 ############################################
 #            Main Program                  #
 ############################################
@@ -37,5 +39,7 @@ cd src
 ./gradlew -version
 
 echo "Running tests..."
-./gradlew -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --debug --info driver-core:test --tests AwsAuthenticationSpecification
+./gradlew -Dorg.mongodb.test.uri=${MONGODB_URI} \
+  ${JAVA_SYSPROP_MONGODB_DRIVER_DEBUGGER} \
+  --stacktrace --debug --info driver-core:test --tests AwsAuthenticationSpecification
 cd -

@@ -16,6 +16,7 @@ MONGODB_URI=${MONGODB_URI:-}
 JDK=${JDK:-jdk8}
 
 export JAVA_HOME="/opt/java/jdk11"
+readonly JAVA_SYSPROP_MONGODB_DRIVER_DEBUGGER="-Dorg.mongodb.driver.connection.debugger=LOG_AND_THROW"
 
 ############################################
 #            Main Program                  #
@@ -49,6 +50,7 @@ set +o errexit
 ./gradlew -PjdkHome=/opt/java/${JDK} \
   -Dorg.mongodb.test.uri=${SINGLE_MONGOS_LB_URI} \
   -Dorg.mongodb.test.transaction.uri=${MULTI_MONGOS_LB_URI} \
+  ${JAVA_SYSPROP_MONGODB_DRIVER_DEBUGGER} \
   ${GRADLE_EXTRA_VARS} --stacktrace --info --continue driver-sync:test \
   --tests LoadBalancerTest \
   --tests RetryableReadsTest \
@@ -64,6 +66,7 @@ echo $first
 ./gradlew -PjdkHome=/opt/java/${JDK} \
   -Dorg.mongodb.test.uri=${SINGLE_MONGOS_LB_URI} \
   -Dorg.mongodb.test.transaction.uri=${MULTI_MONGOS_LB_URI} \
+  ${JAVA_SYSPROP_MONGODB_DRIVER_DEBUGGER} \
   ${GRADLE_EXTRA_VARS} --stacktrace --info --continue driver-reactive-stream:test \
   --tests LoadBalancerTest \
   --tests RetryableReadsTest \

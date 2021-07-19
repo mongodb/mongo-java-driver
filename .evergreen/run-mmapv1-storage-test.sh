@@ -8,6 +8,7 @@ set -o errexit  # Exit the script with error if any of the commands fail
 #                               "jdk5", "jdk6", "jdk7", "jdk8", "jdk9"
 
 JDK=${JDK:-jdk8}
+readonly JAVA_SYSPROP_MONGODB_DRIVER_DEBUGGER="-Dorg.mongodb.driver.connection.debugger=LOG_AND_THROW"
 
 ############################################
 #            Main Program                  #
@@ -24,6 +25,7 @@ echo "Running tests with ${JDK}"
 ./gradlew -version
 for PACKAGE in driver-sync driver-reactive-streams ; do
     ./gradlew -PjdkHome=/opt/java/${JDK} --stacktrace --info \
+              ${JAVA_SYSPROP_MONGODB_DRIVER_DEBUGGER} \
               -Dorg.mongodb.test.uri=${MONGODB_URI} \
               ${PACKAGE}:test --tests RetryableWritesProseTest
 done

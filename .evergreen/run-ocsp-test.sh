@@ -10,6 +10,7 @@ set -o errexit  # Exit the script with error if any of the commands fail
 JDK=${JDK:-jdk11}
 OCSP_MUST_STAPLE=${OCSP_MUST_STAPLE:-}
 OCSP_TLS_SHOULD_SUCCEED=${OCSP_TLS_SHOULD_SUCCEED:-}
+readonly JAVA_SYSPROP_MONGODB_DRIVER_DEBUGGER="-Dorg.mongodb.driver.connection.debugger=LOG_AND_THROW"
 
 ############################################
 #            Functions                     #
@@ -40,5 +41,6 @@ provision_ssl
 
 echo "Running OCSP tests with ${JDK}"
 ./gradlew -version
-./gradlew -PjdkHome=${JAVA_HOME} ${GRADLE_EXTRA_VARS} --stacktrace --debug --info driver-sync:test --tests OcspTest
-
+./gradlew -PjdkHome=${JAVA_HOME} ${GRADLE_EXTRA_VARS} \
+  ${JAVA_SYSPROP_MONGODB_DRIVER_DEBUGGER} \
+  --stacktrace --debug --info driver-sync:test --tests OcspTest

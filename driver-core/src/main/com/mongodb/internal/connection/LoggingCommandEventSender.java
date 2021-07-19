@@ -17,9 +17,14 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoCommandException;
+import com.mongodb.MongoInternalException;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.connection.InternalStreamConnection.CommandMessageData;
+import com.mongodb.internal.connection.InternalStreamConnection.DebuggingCommandEventSender;
+import com.mongodb.internal.connection.debug.InternalConnectionDebugger;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonReader;
@@ -47,11 +52,23 @@ class LoggingCommandEventSender implements CommandEventSender {
     private final String commandName;
     private volatile BsonDocument commandDocument;
     private final boolean redactionRequired;
+    @Nullable
+    private final InternalConnectionDebugger internalConnectionDebugger;
+    private final CommandEventSender debuggingCommandEventSender;
+
+    LoggingCommandEventSender(final Set<String> securitySensitiveCommands, final Set<String> securitySensitiveHelloCommands,
+            final ConnectionDescription description,
+            final CommandListener commandListener, final CommandMessage message,
+            final ByteBufferBsonOutput bsonOutput, final Logger logger) {
+        this(securitySensitiveCommands, securitySensitiveHelloCommands, description, commandListener, message,
+                 bsonOutput, logger, null);
+    }
 
     LoggingCommandEventSender(final Set<String> securitySensitiveCommands, final Set<String> securitySensitiveHelloCommands,
                               final ConnectionDescription description,
                               final CommandListener commandListener, final CommandMessage message,
-                              final ByteBufferBsonOutput bsonOutput, final Logger logger) {
+                              final ByteBufferBsonOutput bsonOutput, final Logger logger,
+                              @Nullable final InternalConnectionDebugger internalConnectionDebugger) {
         this.description = description;
         this.commandListener = commandListener;
         this.logger = logger;
@@ -61,10 +78,20 @@ class LoggingCommandEventSender implements CommandEventSender {
         this.commandName = commandDocument.getFirstKey();
         this.redactionRequired = securitySensitiveCommands.contains(commandName)
                 || (securitySensitiveHelloCommands.contains(commandName) && commandDocument.containsKey("speculativeAuthenticate"));
+        this.internalConnectionDebugger = internalConnectionDebugger;
+        debuggingCommandEventSender = internalConnectionDebugger == null
+                ? new NoOpCommandEventSender()
+                : internalConnectionDebugger.commandEventSenderDebugger()
+                        .map(commandEventSenderDebugger -> new DebuggingCommandEventSender(
+                                new CommandMessageData(message, commandName,
+                                        commandDocument.containsKey("speculativeAuthenticate"), redactionRequired),
+                                commandEventSenderDebugger))
+                .orElse(null);
     }
 
     @Override
     public void sendStartedEvent() {
+        debuggingCommandEventSender.sendStartedEvent();
         if (loggingRequired()) {
             String commandString = redactionRequired ? String.format("{\"%s\": ...", commandName) : getTruncatedJsonCommand();
             logger.debug(
@@ -107,11 +134,12 @@ class LoggingCommandEventSender implements CommandEventSender {
 
     @Override
     public void sendFailedEvent(final Throwable t) {
+        long elapsedTimeNanos = System.nanoTime() - startTimeNanos;
+        debuggingCommandEventSender.sendFailedEvent(t);
         Throwable commandEventException = t;
         if (t instanceof MongoCommandException && redactionRequired) {
             commandEventException = new MongoCommandException(new BsonDocument(), description.getServerAddress());
         }
-        long elapsedTimeNanos = System.nanoTime() - startTimeNanos;
 
         if (loggingRequired()) {
             logger.debug(
@@ -130,27 +158,32 @@ class LoggingCommandEventSender implements CommandEventSender {
     @Override
     public void sendSucceededEvent(final ResponseBuffers responseBuffers) {
         long elapsedTimeNanos = System.nanoTime() - startTimeNanos;
-
+        debuggingCommandEventSender.sendSucceededEvent(responseBuffers);
         if (loggingRequired()) {
             logger.debug(
                     format("Execution of command with request id %d completed successfully in %s ms on connection [%s] to server %s",
                             message.getId(), getElapsedTimeFormattedInMilliseconds(elapsedTimeNanos), description.getConnectionId(),
                             description.getServerAddress()));
         }
-
-        if (eventRequired()) {
-            BsonDocument responseDocumentForEvent = redactionRequired
-                    ? new BsonDocument()
-                    : responseBuffers.getResponseDocument(message.getId(), new RawBsonDocumentCodec());
-            sendCommandSucceededEvent(message, commandName, responseDocumentForEvent, description,
-                    elapsedTimeNanos, commandListener);
+        try {
+            if (eventRequired()) {
+                BsonDocument responseDocumentForEvent = redactionRequired
+                        ? new BsonDocument()
+                        : responseBuffers.getResponseDocument(message.getId(), new RawBsonDocumentCodec());
+                sendCommandSucceededEvent(message, commandName, responseDocumentForEvent, description,
+                        elapsedTimeNanos, commandListener);
+            }
+        } catch (MongoInternalException e) {
+            if (internalConnectionDebugger != null) {
+                internalConnectionDebugger.invalidReply(e);
+            }
         }
     }
 
     @Override
     public void sendSucceededEventForOneWayCommand() {
         long elapsedTimeNanos = System.nanoTime() - startTimeNanos;
-
+        debuggingCommandEventSender.sendSucceededEventForOneWayCommand();
         if (loggingRequired()) {
             logger.debug(
                     format("Execution of one-way command with request id %d completed successfully in %s ms on connection [%s] "
