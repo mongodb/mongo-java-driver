@@ -36,6 +36,7 @@ import java.nio.ByteOrder
 import java.security.SecureRandom
 
 import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME
+import static com.mongodb.internal.connection.MessageHelper.LEGACY_HELLO
 
 class StreamHelper {
     private static int nextMessageId = 900000 // Generates a message then adds one to the id
@@ -118,7 +119,7 @@ class StreamHelper {
             putInt(messageId)           // responseTo
             putInt(1)             // opCode
             putInt(0)             // responseFlags
-            putLong(0)            // cursorId
+            putLong(0)            // cursoimport static com.mongodb.rId
             putInt(0)             // starting from
             putInt(1)             // number returned
         }
@@ -163,7 +164,7 @@ class StreamHelper {
 
     static hello() {
         CommandMessage command = new CommandMessage(new MongoNamespace('admin', COMMAND_COLLECTION_NAME),
-                new BsonDocument('ismaster', new BsonInt32(1)), new NoOpFieldNameValidator(), ReadPreference.primary(),
+                new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), new NoOpFieldNameValidator(), ReadPreference.primary(),
                 MessageSettings.builder().build(), null)
         OutputBuffer outputBuffer = new BasicOutputBuffer()
         command.encode(outputBuffer, NoOpSessionContext.INSTANCE)

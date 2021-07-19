@@ -37,6 +37,7 @@ import java.util.concurrent.CountDownLatch
 import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getServerApi
+import static com.mongodb.ClusterFixture.LEGACY_HELLO
 import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.internal.connection.CommandHelper.executeCommand
 import static com.mongodb.internal.connection.CommandHelper.executeCommandAsync
@@ -66,7 +67,7 @@ class CommandHelperSpecification extends Specification {
         clusterClock.advance(new BsonDocument('clusterTime', new BsonTimestamp(42L)))
 
         when:
-        executeCommand('admin', new BsonDocument('ismaster', new BsonInt32(1)), clusterClock, getServerApi(), connection)
+        executeCommand('admin', new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), clusterClock, getServerApi(), connection)
 
         then:
         1 * connection.sendAndReceive(_, _, ) { it instanceof ClusterClockAdvancingSessionContext }
@@ -78,7 +79,7 @@ class CommandHelperSpecification extends Specification {
         BsonDocument receivedDocument = null
         Throwable receivedException = null
         def latch1 = new CountDownLatch(1)
-        executeCommandAsync('admin', new BsonDocument('ismaster', new BsonInt32(1)), getServerApi(), connection)
+        executeCommandAsync('admin', new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), getServerApi(), connection)
                 { document, exception -> receivedDocument = document; receivedException = exception; latch1.countDown() }
         latch1.await()
 

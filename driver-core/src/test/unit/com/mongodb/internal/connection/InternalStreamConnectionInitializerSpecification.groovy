@@ -45,6 +45,7 @@ import static com.mongodb.MongoCredential.createScramSha1Credential
 import static com.mongodb.MongoCredential.createScramSha256Credential
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.internal.connection.ClientMetadataHelperSpecification.createExpectedClientMetadataDocument
+import static com.mongodb.internal.connection.MessageHelper.LEGACY_HELLO
 import static com.mongodb.internal.connection.MessageHelper.buildSuccessfulReply
 import static com.mongodb.internal.connection.MessageHelper.decodeCommand
 
@@ -225,7 +226,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
      def 'should add client metadata document to hello command'() {
         given:
         def initializer = new InternalStreamConnectionInitializer(SINGLE, null, clientMetadataDocument, [], null)
-           def expectedHelloCommandDocument = new BsonDocument('ismaster', new BsonInt32(1)).append('helloOk', BsonBoolean.TRUE)
+           def expectedHelloCommandDocument = new BsonDocument(LEGACY_HELLO, new BsonInt32(1)).append('helloOk', BsonBoolean.TRUE)
         if (clientMetadataDocument != null) {
              expectedHelloCommandDocument.append('client', clientMetadataDocument)
         }
@@ -255,7 +256,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
     def 'should add compression to hello command'() {
         given:
         def initializer = new InternalStreamConnectionInitializer(SINGLE, null, null, compressors, null)
-        def expectedHelloCommandDocument = new BsonDocument('ismaster', new BsonInt32(1)).append('helloOk', BsonBoolean.TRUE)
+        def expectedHelloCommandDocument = new BsonDocument(LEGACY_HELLO, new BsonInt32(1)).append('helloOk', BsonBoolean.TRUE)
 
         def compressionArray = new BsonArray()
         for (def compressor : compressors) {
@@ -423,7 +424,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         ((SpeculativeAuthenticator) authenticator).getSpeculativeAuthenticateResponse() == null
         ((SpeculativeAuthenticator) authenticator)
                 .createSpeculativeAuthenticateCommand(internalConnection) == null
-        BsonDocument.parse('{ismaster: 1, helloOk: true}') == decodeCommand(internalConnection.getSent()[0])
+        BsonDocument.parse("{$LEGACY_HELLO: 1, helloOk: true}") == decodeCommand(internalConnection.getSent()[0])
 
         where:
         async << [true, false]
@@ -501,7 +502,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
                                                              final String finalServerResponse) {
         internalConnection.enqueueReply(buildSuccessfulReply(
                 '{ok: 1, maxWireVersion: 9, ' +
-                        'ismaster: true, ' +
+                        "$LEGACY_HELLO: true," +
                         'speculativeAuthenticate: { conversationId: 1, done: false, ' +
                         "payload: BinData(0, '${encode64(initialServerResponse)}')}}"))
         internalConnection.enqueueReply(buildSuccessfulReply(
@@ -513,7 +514,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
     def enqueueSpeculativeAuthenticationResponsesForX509() {
         internalConnection.enqueueReply(buildSuccessfulReply(
-                '{ok: 1, maxWireVersion: 9, ismaster: true, conversationId: 1, ' +
+                "{ok: 1, maxWireVersion: 9, $LEGACY_HELLO: true, conversationId: 1, " +
                         'speculativeAuthenticate: { dbname: \"$external\", ' +
                         'user: \"CN=client,OU=KernelUser,O=MongoDB,L=New York City,ST=New York,C=US\" }}'))
         internalConnection.enqueueReply(buildSuccessfulReply('{ok: 1}'))
@@ -521,7 +522,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
     def enqueueSpeculativeAuthenticationResponsesForPlain() {
         internalConnection.enqueueReply(buildSuccessfulReply(
-                '{ok: 1, maxWireVersion: 9, ismaster: true, conversationId: 1}'))
+                "{ok: 1, maxWireVersion: 9, $LEGACY_HELLO: true, conversationId: 1}"))
         internalConnection.enqueueReply(buildSuccessfulReply(
                 '{ok: 1, done: true, conversationId: 1}'))
         internalConnection.enqueueReply(buildSuccessfulReply('{ok: 1}'))
@@ -533,7 +534,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
     def createHelloCommand(final String firstClientChallenge, final String mechanism,
                               final boolean hasSaslSupportedMechs) {
-        String hello = '{ismaster: 1, helloOk: true, ' +
+        String hello = "{$LEGACY_HELLO: 1, helloOk: true, " +
                 (hasSaslSupportedMechs ? 'saslSupportedMechs: "database.user", ' : '') +
                 (mechanism == 'MONGODB-X509' ?
                         'speculativeAuthenticate: { authenticate: 1, ' +
