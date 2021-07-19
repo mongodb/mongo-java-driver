@@ -36,7 +36,7 @@ class LazyPropertyModelCodec<T> implements Codec<T> {
     private final PropertyCodecRegistry propertyCodecRegistry;
     private final DiscriminatorLookup discriminatorLookup;
 
-    private Codec<T> codec;
+    private volatile Codec<T> codec;
 
     LazyPropertyModelCodec(final PropertyModel<T> propertyModel, final CodecRegistry registry,
                                   final PropertyCodecRegistry propertyCodecRegistry, final DiscriminatorLookup discriminatorLookup) {
@@ -61,17 +61,25 @@ class LazyPropertyModelCodec<T> implements Codec<T> {
         return propertyModel.getTypeData().getType();
     }
 
-    private synchronized Codec<T> getPropertyModelCodec() {
+    private Codec<T> getPropertyModelCodec() {
         if (codec == null) {
-            Codec<T> localCodec = getCodecFromPropertyRegistry(propertyModel);
-            if (localCodec instanceof PojoCodec) {
-                PojoCodec<T> pojoCodec = (PojoCodec<T>) localCodec;
-                ClassModel<T> specialized = getSpecializedClassModel(pojoCodec.getClassModel(), propertyModel);
-                localCodec = new PojoCodecImpl<>(specialized, registry, propertyCodecRegistry, pojoCodec.getDiscriminatorLookup(), true);
+            synchronized (this) {
+                if (codec == null) {
+                    codec = createCodec();
+                }
             }
-            codec = localCodec;
         }
         return codec;
+    }
+
+    private Codec<T> createCodec() {
+        Codec<T> localCodec = getCodecFromPropertyRegistry(propertyModel);
+        if (localCodec instanceof PojoCodec) {
+            PojoCodec<T> pojoCodec = (PojoCodec<T>) localCodec;
+            ClassModel<T> specialized = getSpecializedClassModel(pojoCodec.getClassModel(), propertyModel);
+            localCodec = new PojoCodecImpl<>(specialized, registry, propertyCodecRegistry, pojoCodec.getDiscriminatorLookup(), true);
+        }
+        return localCodec;
     }
 
     @SuppressWarnings("unchecked")
