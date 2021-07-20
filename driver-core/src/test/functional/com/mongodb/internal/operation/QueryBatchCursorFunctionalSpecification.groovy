@@ -52,6 +52,7 @@ import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToQueryResult
+import static com.mongodb.internal.operation.QueryOperationHelper.makeAdditionalGetMoreCall
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo
 import static java.util.Arrays.asList
 import static java.util.Collections.singletonList
@@ -363,7 +364,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         cursor = new QueryBatchCursor<Document>(firstBatch, 5, 0, 0, new DocumentCodec(), connectionSource, connection)
 
         when:
-        makeAdditionalGetMoreCall(firstBatch.cursor, connection)
+        makeAdditionalGetMoreCall(getNamespace(), firstBatch.cursor, connection)
 
         then:
         thrown(MongoCursorNotFoundException)
@@ -386,7 +387,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
 
         Thread.sleep(1000) //Note: waiting for some time for killCursor operation to be performed on a server.
         when:
-        makeAdditionalGetMoreCall(serverCursor)
+        makeAdditionalGetMoreCall(getNamespace(), serverCursor, connectionSource)
 
         then:
         thrown(MongoCursorNotFoundException)
@@ -607,18 +608,5 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         } finally {
             connection.release();
         }
-    }
-
-    private void makeAdditionalGetMoreCall(ServerCursor serverCursor) {
-        def connection = connectionSource.getConnection()
-        try {
-            makeAdditionalGetMoreCall(serverCursor, connection)
-        } finally {
-            connection.release()
-        }
-    }
-
-    private void makeAdditionalGetMoreCall(ServerCursor serverCursor, Connection connection) {
-        connection.getMore(getNamespace(), serverCursor.getId(), 1, new DocumentCodec())
     }
 }
