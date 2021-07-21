@@ -47,7 +47,7 @@ import static com.mongodb.ClusterFixture.disableFailPoint
 import static com.mongodb.ClusterFixture.disableOnPrimaryTransactionalWriteFailPoint
 import static com.mongodb.ClusterFixture.enableOnPrimaryTransactionalWriteFailPoint
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.WriteConcern.W1
@@ -195,7 +195,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
+    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def 'should support bypassDocumentValidation'() {
         given:
         def namespace = new MongoNamespace(getDatabaseName(), 'collectionOut')
@@ -234,7 +234,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ serverVersionLessThan(3, 2) || !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
         given:
         CollectionHelper<Document> helper = new CollectionHelper<Document>(documentCodec, getNamespace())
@@ -275,7 +275,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
     }
 
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 8) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ serverVersionLessThan(3, 8) || !isDiscoverableReplicaSet() })
     def 'should throw on write concern error on multiple failpoint'() {
         CollectionHelper<Document> helper = new CollectionHelper<Document>(documentCodec, getNamespace())
         Document pete = new Document('name', 'Pete').append('job', 'handyman')
@@ -375,7 +375,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         ].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ serverVersionLessThan(3, 6) || !isDiscoverableReplicaSet() })
     def 'should support retryable writes'() {
         given:
         CollectionHelper<Document> helper = new CollectionHelper<Document>(documentCodec, getNamespace())
@@ -472,7 +472,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         async << [false, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should support collation'() {
         given:
         def document = Document.parse('{_id: 1, str: "foo"}')

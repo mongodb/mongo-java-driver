@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation
 
-import util.spock.annotations.Slow
 import com.mongodb.MongoClientException
 import com.mongodb.MongoException
 import com.mongodb.OperationFunctionalSpecification
@@ -30,9 +29,11 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import org.bson.types.ObjectId
 import spock.lang.IgnoreIf
+import util.spock.annotations.Slow
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE
@@ -245,7 +246,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         ].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should support collation'() {
         given:
         getCollectionHelper().insertDocuments(Document.parse('{str: "foo"}'))
@@ -263,7 +264,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should throw if collation is set and write is unacknowledged'() {
         given:
         def requests = [new UpdateRequest(BsonDocument.parse('{str: "FOO"}}'), BsonDocument.parse('{$set: {str: "bar"}}'), UPDATE)
@@ -280,7 +281,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ serverVersionLessThan(3, 6) || !isDiscoverableReplicaSet() })
     def 'should support retryable writes'() {
         given:
         def id = new ObjectId()
@@ -301,7 +302,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(4, 2) })
+    @IgnoreIf({ serverVersionLessThan(4, 2) })
     def 'should support hint'() {
         given:
         getCollectionHelper().insertDocuments(Document.parse('{str: "foo"}'))

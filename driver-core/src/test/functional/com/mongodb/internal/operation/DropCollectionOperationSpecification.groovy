@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation
 
-
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
@@ -28,7 +27,7 @@ import spock.lang.IgnoreIf
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 
 class DropCollectionOperationSpecification extends OperationFunctionalSpecification {
 
@@ -80,7 +79,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
         !collectionNameExists('nonExistingCollection')
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ serverVersionLessThan(3, 4) || !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentTo', 'createTheCollection'))

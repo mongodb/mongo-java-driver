@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation
 
-
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoNamespace
@@ -47,7 +46,7 @@ import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.client.model.Filters.gte
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -145,7 +144,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(4, 2) })
+    @IgnoreIf({ serverVersionLessThan(4, 2) })
     def 'should be able to merge into a collection'() {
         when:
         AggregateToCollectionOperation operation =
@@ -199,7 +198,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ serverVersionLessThan(3, 4) || !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
         given:
         AggregateToCollectionOperation operation =
@@ -219,7 +218,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
+    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def 'should support bypassDocumentValidation'() {
         given:
         def collectionOutHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'collectionOut'))
@@ -311,7 +310,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         async << [false, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should support collation'() {
         given:
         getCollectionHelper().insertDocuments(BsonDocument.parse('{_id: 1, str: "foo"}'))
@@ -330,7 +329,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         async << [true, false]
     }
 
-    @IgnoreIf({ isSharded() || !serverVersionAtLeast(3, 6) })
+    @IgnoreIf({ isSharded() || serverVersionLessThan(3, 6) })
     def 'should apply comment'() {
         given:
         def profileCollectionHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'system.profile'))
