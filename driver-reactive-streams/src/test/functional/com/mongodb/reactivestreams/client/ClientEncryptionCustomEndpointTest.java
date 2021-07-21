@@ -80,7 +80,7 @@ public class ClientEncryptionCustomEndpointTest {
 
     @Before
     public void setUp() {
-        assumeTrue(serverVersionAtLeast(4, 1));
+        assumeTrue(serverVersionAtLeast(4, 2));
         assumeTrue("Custom Endpoint tests disables", hasEncryptionTestsEnabled());
 
         Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{

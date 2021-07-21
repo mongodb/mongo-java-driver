@@ -55,6 +55,7 @@ import static com.mongodb.ClusterFixture.getAsyncCluster
 import static com.mongodb.ClusterFixture.getCluster
 import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.internal.connection.ServerHelper.waitForLastRelease
 import static com.mongodb.internal.operation.OperationUnitSpecification.getMaxWireVersionForServerVersion
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -315,7 +316,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         waitForLastRelease(getCluster())
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([4, 0, 1]) })
+    @IgnoreIf({ serverVersionLessThan(4, 0) })
     def 'should decode drop to ChangeStreamDocument '() {
         given:
         def helper = getHelper()
@@ -343,7 +344,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         waitForLastRelease(getCluster())
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([4, 0, 1]) })
+    @IgnoreIf({ serverVersionLessThan(4, 0) })
     def 'should decode dropDatabase to ChangeStreamDocument '() {
         given:
         def helper = getHelper()
@@ -372,7 +373,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         waitForLastRelease(getCluster())
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([4, 0, 1]) })
+    @IgnoreIf({ serverVersionLessThan(4, 0) })
     def 'should decode rename to ChangeStreamDocument '() {
         given:
         def helper = getHelper()
@@ -491,7 +492,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([4, 0, 0]) })
+    @IgnoreIf({ serverVersionLessThan(4, 0) })
     def 'should work with a startAtOperationTime'() {
         given:
         def helper = getHelper()
@@ -562,7 +563,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([4, 1, 0]) })
+    @IgnoreIf({ serverVersionLessThan(4, 2) })
     def 'should work with a startAfter resumeToken'() {
         given:
         def helper = getHelper()
