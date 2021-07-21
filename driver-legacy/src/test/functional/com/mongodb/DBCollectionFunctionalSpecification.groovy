@@ -32,6 +32,7 @@ import spock.lang.Unroll
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static org.hamcrest.Matchers.contains
 import static org.hamcrest.Matchers.containsInAnyOrder
 import static spock.util.matcher.HamcrestSupport.that
@@ -417,7 +418,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         QueryBuilder.start('x').lessThan(2).get() | [y: -1] as BasicDBObject      | 5
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ serverVersionLessThan(3, 4) || !isDiscoverableReplicaSet() })
     def 'should throw WriteConcernException on write concern error for rename'() {
         given:
         assert database.getCollectionNames().contains(collectionName)
@@ -434,7 +435,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.setWriteConcern(null)
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ serverVersionLessThan(3, 4) || !isDiscoverableReplicaSet() })
     def 'should throw WriteConcernException on write concern error for drop'() {
         given:
         assert database.getCollectionNames().contains(collectionName)
@@ -451,7 +452,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.setWriteConcern(null)
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ serverVersionLessThan(3, 4) || !isDiscoverableReplicaSet() })
     def 'should throw WriteConcernException on write concern error for createIndex'() {
         given:
         assert database.getCollectionNames().contains(collectionName)
@@ -468,7 +469,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.setWriteConcern(null)
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ serverVersionLessThan(3, 4) || !isDiscoverableReplicaSet() })
     def 'should throw WriteConcernException on write concern error for dropIndex'() {
         given:
         assert database.getCollectionNames().contains(collectionName)
@@ -486,7 +487,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.setWriteConcern(null)
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should support creating an index with collation options'() {
         given:
         def collation = Collation.builder()
@@ -520,7 +521,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         indexCollation == collation.asDocument()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should find with collation'() {
         given:
         def document = BasicDBObject.parse('{_id: 1, str: "foo"}')
@@ -540,7 +541,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         ++result == document
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should aggregate with collation'() {
         given:
         def document = BasicDBObject.parse('{_id: 1, str: "foo"}')
@@ -561,7 +562,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         ++result == document
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should count with collation'() {
         given:
         collection.insert(BasicDBObject.parse('{_id: 1, str: "foo"}'))
@@ -579,7 +580,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         result == 1L
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should update with collation'() {
         given:
         collection.insert(BasicDBObject.parse('{_id: 1, str: "foo"}'))
@@ -598,7 +599,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         result.getN() == 1
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should remove with collation'() {
         given:
         collection.insert(BasicDBObject.parse('{_id: 1, str: "foo"}'))
@@ -616,7 +617,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         result.getN() == 1
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should find and modify with collation'() {
         given:
         def document = BasicDBObject.parse('{_id: 1, str: "foo"}')

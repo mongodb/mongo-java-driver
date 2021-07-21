@@ -51,7 +51,7 @@ public class ClientSideEncryptionBypassAutoEncryptionTest {
 
     @Before
     public void setUp() {
-        assumeTrue(serverVersionAtLeast(4, 1));
+        assumeTrue(serverVersionAtLeast(4, 2));
 
         MongoClient mongoClient = getMongoClient();
 

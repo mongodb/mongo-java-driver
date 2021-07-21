@@ -24,6 +24,7 @@ import spock.lang.IgnoreIf
 import spock.lang.Subject
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 
 class DBCursorFunctionalSpecification extends FunctionalSpecification {
 
@@ -51,7 +52,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         1 * decoder.decode(_ as byte[], collection)
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 0) })
+    @IgnoreIf({ serverVersionLessThan(3, 0) })
     def 'should use provided hints for queries mongod > 3.0'() {
         given:
         collection.createIndex(new BasicDBObject('a', 1))
@@ -249,7 +250,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         exception.getMessage().startsWith('Collation not supported by wire version:')
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should support collation'() {
         when:
         def document = BasicDBObject.parse('{_id: 1, str: "foo"}')

@@ -40,7 +40,6 @@ import spock.lang.IgnoreIf
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static com.mongodb.ClusterFixture.serverVersionGreaterThan
 import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.client.model.Filters.gte
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -141,7 +140,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         operation.getCollation() == defaultCollation
     }
 
-    @IgnoreIf({ serverVersionGreaterThan('4.2') })
+    @IgnoreIf({ serverVersionAtLeast(4, 4) })
     def 'should return the correct statistics and save the results'() {
         when:
         MapReduceStatistics results = execute(mapReduceOperation, async)
@@ -157,7 +156,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan('4.3') })
+    @IgnoreIf({ serverVersionLessThan(4, 4) })
     def 'should return zero-valued statistics and save the results'() {
         when:
         MapReduceStatistics results = execute(mapReduceOperation, async)
@@ -174,7 +173,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
     }
 
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
+    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def 'should support bypassDocumentValidation'() {
         given:
         def collectionOutHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'collectionOut'))
@@ -213,7 +212,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ serverVersionLessThan(3, 4) || !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
         given:
         getCollectionHelper().insertDocuments(new BsonDocument())
@@ -321,7 +320,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         async << [false, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should support collation'() {
         given:
         def outCollectionHelper = getCollectionHelper(new MongoNamespace(mapReduceInputNamespace.getDatabaseName(), 'collectionOut'))

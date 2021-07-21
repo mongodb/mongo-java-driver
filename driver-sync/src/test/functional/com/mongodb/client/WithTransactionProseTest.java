@@ -17,7 +17,6 @@
 package com.mongodb.client;
 
 import com.mongodb.MongoException;
-
 import com.mongodb.client.internal.ClientSessionClock;
 import org.bson.Document;
 import org.junit.Before;
@@ -190,7 +189,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
 
     private boolean canRunTests() {
         if (isSharded()) {
-            return serverVersionAtLeast(4, 1);
+            return serverVersionAtLeast(4, 2);
         } else if (isDiscoverableReplicaSet()) {
             return serverVersionAtLeast(4, 0);
         } else {

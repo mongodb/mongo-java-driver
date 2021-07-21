@@ -128,7 +128,7 @@ public class TransactionProseTest {
 
     private boolean canRunTests() {
         if (isSharded()) {
-            return serverVersionAtLeast(4, 1);
+            return serverVersionAtLeast(4, 2);
         } else {
             return false;
         }

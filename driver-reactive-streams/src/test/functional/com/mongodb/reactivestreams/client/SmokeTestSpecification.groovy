@@ -152,7 +152,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         !run('the collection name is no longer in the collectionNames list', database.&listCollectionNames).contains(collectionName)
     }
 
-    @IgnoreIf({ !(serverVersionAtLeast(3, 7) && isReplicaSet()) })
+    @IgnoreIf({ !(serverVersionAtLeast(4, 0) && isReplicaSet()) })
     def 'should commit a transaction'() {
         given:
         run('create collection', database.&createCollection, collection.namespace.collectionName)
@@ -170,7 +170,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         session?.close()
     }
 
-    @IgnoreIf({ !(serverVersionAtLeast(3, 7) && isReplicaSet()) })
+    @IgnoreIf({ !(serverVersionAtLeast(4, 0) && isReplicaSet()) })
     def 'should abort a transaction'() {
         given:
         run('create collection', database.&createCollection, collection.namespace.collectionName)

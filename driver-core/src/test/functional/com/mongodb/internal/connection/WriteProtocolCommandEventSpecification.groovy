@@ -40,13 +40,13 @@ import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ClusterFixture.getSslSettings
-import static com.mongodb.ClusterFixture.serverVersionGreaterThan
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.internal.bulk.WriteRequest.Type.REPLACE
 import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE
 import static com.mongodb.internal.connection.ProtocolTestHelper.execute
 
-@IgnoreIf({ serverVersionGreaterThan('5.0') })
+@IgnoreIf({ serverVersionAtLeast(5, 1) })
 class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecification {
     @Shared
     InternalStreamConnection connection

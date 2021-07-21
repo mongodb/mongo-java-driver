@@ -25,7 +25,8 @@ import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import static BucketGranularity.R5
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static MongoTimeUnit.DAY
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.client.model.Accumulators.accumulator
 import static com.mongodb.client.model.Accumulators.addToSet
 import static com.mongodb.client.model.Accumulators.avg
@@ -68,7 +69,6 @@ import static com.mongodb.client.model.Projections.fields
 import static com.mongodb.client.model.Projections.include
 import static com.mongodb.client.model.Sorts.ascending
 import static com.mongodb.client.model.Sorts.descending
-import static MongoTimeUnit.DAY
 import static com.mongodb.client.model.Windows.Bound.CURRENT
 import static com.mongodb.client.model.Windows.Bound.UNBOUNDED
 import static com.mongodb.client.model.Windows.documents
@@ -77,7 +77,7 @@ import static org.bson.BsonDocument.parse
 
 class AggregatesSpecification extends Specification {
 
-    @IgnoreIf({ !serverVersionAtLeast(4, 3) })
+    @IgnoreIf({ serverVersionLessThan(4, 4) })
     def 'should render $accumulator'() {
         given:
         def initFunction = 'function() { return { count : 0, sum : 0 } }';
@@ -870,7 +870,7 @@ class AggregatesSpecification extends Specification {
                 addFields(asList(new Field('b', 3), new Field('c', 5))).hashCode()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(4, 3) })
+    @IgnoreIf({ serverVersionLessThan(4, 4) })
     def 'should test equals for accumulator operator'() {
         given:
         def initFunction = 'function() { return { count : 0, sum : 0 } }';
@@ -895,7 +895,7 @@ class AggregatesSpecification extends Specification {
                         finalizeFunction, 'js'))
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(4, 3) })
+    @IgnoreIf({ serverVersionLessThan(4, 4) })
     def 'should test hashCode for accumulator operator'() {
         given:
         def initFunction = 'function() { return { count : 0, sum : 0 } }';

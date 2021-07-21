@@ -76,6 +76,6 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
 
         return ((isSharded() || isDiscoverableReplicaSet())
                 && storageEngine != null && storageEngine.get("name").equals("mmapv1")
-                && serverVersionAtLeast(3, 6) && serverVersionLessThan(4, 1));
+                && serverVersionAtLeast(3, 6) && serverVersionLessThan(4, 2));
     }
 }
