@@ -333,7 +333,9 @@ class DefaultConnectionPool implements ConnectionPool {
         }
     }
 
-
+    /**
+     * Is package-access for the purpose of testing and must not be used for any other purpose outside of this class.
+     */
     ConcurrentPool<UsageTrackingInternalConnection> getPool() {
         return pool;
     }

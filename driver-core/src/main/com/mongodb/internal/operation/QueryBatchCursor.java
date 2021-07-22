@@ -22,12 +22,16 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
+import com.mongodb.ServerApi;
 import com.mongodb.ServerCursor;
+import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ServerType;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.QueryResult;
+import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -40,8 +44,13 @@ import org.bson.codecs.Decoder;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.StampedLock;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.assertNull;
+import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.CursorHelper.getNumberToReturn;
@@ -62,17 +71,13 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     private final Decoder<T> decoder;
     private final long maxTimeMS;
     private int batchSize;
-    private ConnectionSource connectionSource;
-    private Connection connection;
-    private ServerCursor serverCursor;
     private List<T> nextBatch;
     private int count;
-    private volatile boolean closed;
     private BsonDocument postBatchResumeToken;
     private BsonTimestamp operationTime;
     private final boolean firstBatchEmpty;
     private int maxWireVersion = 0;
-    private boolean killCursorOnClose = true;
+    private final CloseableState closeableState;
 
     QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize, final Decoder<T> decoder) {
         this(firstQueryResult, limit, batchSize, decoder, null);
@@ -102,37 +107,43 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             this.operationTime = result.getTimestamp(OPERATION_TIME, null);
             this.postBatchResumeToken = getPostBatchResumeTokenFromResponse(result);
         }
-        if (firstQueryResult.getCursor() != null) {
+        ServerCursor serverCursor = initFromQueryResult(firstQueryResult);
+        if (serverCursor != null) {
             notNull("connectionSource", connectionSource);
         }
-        if (connectionSource != null) {
-            this.connectionSource = connectionSource.retain();
-        }
-
-        initFromQueryResult(firstQueryResult);
         firstBatchEmpty = firstQueryResult.getResults().isEmpty();
-
+        Connection connectionToPin = null;
+        boolean releaseServerAndResources = false;
         if (connection != null) {
             this.maxWireVersion = connection.getDescription().getMaxWireVersion();
             if (limitReached()) {
-                killCursor(connection);
+                releaseServerAndResources = true;
             } else {
                 assertNotNull(connectionSource);
                 if (connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER) {
-                    this.connection = connection.retain();
-                    this.connection.markAsPinned(Connection.PinningMode.CURSOR);
+                    connectionToPin = connection;
                 }
             }
         }
-        releaseConnectionAndSourceIfNoServerCursor();
+        closeableState = new CloseableState(namespace, connectionSource, connectionToPin, serverCursor);
+        if (releaseServerAndResources) {
+            closeableState.releaseServerAndClientResources(assertNotNull(connection));
+        }
     }
 
     @Override
     public boolean hasNext() {
-        if (closed) {
+        if (!closeableState.startOperation()) {
             throw new IllegalStateException("Cursor has been closed");
         }
+        try {
+            return doHasNext();
+        } finally {
+            closeableState.endOperation();
+        }
+    }
 
+    private boolean doHasNext() {
         if (nextBatch != null) {
             return true;
         }
@@ -141,9 +152,11 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             return false;
         }
 
+        ServerCursor serverCursor = closeableState.serverCursor();
         while (serverCursor != null) {
-            getMore();
-            if (closed) {
+            getMore(serverCursor);
+            serverCursor = closeableState.serverCursor();
+            if (!closeableState.operable()) {
                 throw new IllegalStateException("Cursor has been closed");
             }
             if (nextBatch != null) {
@@ -156,11 +169,18 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
     @Override
     public List<T> next() {
-        if (closed) {
+        if (!closeableState.startOperation()) {
             throw new IllegalStateException("Iterator has been closed");
         }
+        try {
+            return doNext();
+        } finally {
+            closeableState.endOperation();
+        }
+    }
 
-        if (!hasNext()) {
+    private List<T> doNext() {
+        if (!doHasNext()) {
             throw new NoSuchElementException();
         }
 
@@ -186,29 +206,25 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
     @Override
     public void close() {
-        if (!closed) {
-            closed = true;
-            try {
-                killCursor();
-            } finally {
-                releaseConnectionAndSource();
-            }
-        }
+        closeableState.close();
     }
 
     @Override
     public List<T> tryNext() {
-        if (closed) {
+        if (!closeableState.startOperation()) {
             throw new IllegalStateException("Cursor has been closed");
         }
-
-        if (!tryHasNext()) {
-            return null;
+        try {
+            if (!tryHasNext()) {
+                return null;
+            }
+            return doNext();
+        } finally {
+            closeableState.endOperation();
         }
-        return next();
     }
 
-    boolean tryHasNext() {
+    private boolean tryHasNext() {
         if (nextBatch != null) {
             return true;
         }
@@ -217,25 +233,27 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             return false;
         }
 
+        ServerCursor serverCursor = closeableState.serverCursor();
         if (serverCursor != null) {
-            getMore();
+            getMore(serverCursor);
         }
 
         return nextBatch != null;
     }
 
     @Override
+    @Nullable
     public ServerCursor getServerCursor() {
-        if (closed) {
+        if (!closeableState.operable()) {
             throw new IllegalStateException("Iterator has been closed");
         }
 
-        return serverCursor;
+        return closeableState.serverCursor();
     }
 
     @Override
     public ServerAddress getServerAddress() {
-        if (closed) {
+        if (!closeableState.operable()) {
             throw new IllegalStateException("Iterator has been closed");
         }
 
@@ -262,50 +280,43 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         return maxWireVersion;
     }
 
-    private void getMore() {
-        Connection connection = getConnection();
+    private void getMore(final ServerCursor serverCursor) {
+        Connection connection = closeableState.getConnection();
         try {
             if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
                 try {
-                    initFromCommandResult(connection.command(namespace.getDatabaseName(),
-                            asGetMoreCommandDocument(),
+                    ServerCursor nextServerCursor = initFromCommandResult(connection.command(namespace.getDatabaseName(),
+                            asGetMoreCommandDocument(serverCursor),
                             NO_OP_FIELD_NAME_VALIDATOR,
                             ReadPreference.primary(),
                             CommandResultDocumentCodec.create(decoder, "nextBatch"),
-                            connectionSource.getSessionContext(),
-                            connectionSource.getServerApi()));
+                            closeableState.sessionContext(),
+                            closeableState.serverApi()));
+                    closeableState.setServerCursor(nextServerCursor);
                 } catch (MongoCommandException e) {
                     throw translateCommandException(e, serverCursor);
                 }
             } else {
                 QueryResult<T> getMore = connection.getMore(namespace, serverCursor.getId(),
                         getNumberToReturn(limit, batchSize, count), decoder);
-                initFromQueryResult(getMore);
+                ServerCursor nextServerCursor = initFromQueryResult(getMore);
+                closeableState.setServerCursor(nextServerCursor);
             }
             if (limitReached()) {
-                killCursor(connection);
+                closeableState.releaseServerAndClientResources(connection);
             }
         } catch (MongoSocketException e) {
-            // If connection is pinned, don't attempt to kill the cursor on close, since the connection is in a bad state
-            if (this.connection != null) {
-                killCursorOnClose = false;
-            }
+            closeableState.onCorruptedConnection(connection);
             throw e;
         } finally {
             connection.release();
-            releaseConnectionAndSourceIfNoServerCursor();
+            if (closeableState.serverCursor() == null) {
+                closeableState.releaseClientResources();
+            }
         }
     }
 
-    private Connection getConnection() {
-        if (connection == null) {
-            return connectionSource.getConnection();
-        } else {
-            return connection.retain();
-        }
-    }
-
-    private BsonDocument asGetMoreCommandDocument() {
+    private BsonDocument asGetMoreCommandDocument(final ServerCursor serverCursor) {
         BsonDocument document = new BsonDocument("getMore", new BsonInt64(serverCursor.getId()))
                                 .append("collection", new BsonString(namespace.getCollectionName()));
 
@@ -320,76 +331,23 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         return document;
     }
 
-    private void initFromQueryResult(final QueryResult<T> queryResult) {
-        serverCursor = queryResult.getCursor();
+    @Nullable
+    private ServerCursor initFromQueryResult(final QueryResult<T> queryResult) {
         nextBatch = queryResult.getResults().isEmpty() ? null : queryResult.getResults();
         count += queryResult.getResults().size();
+        return queryResult.getCursor();
     }
 
-    private void initFromCommandResult(final BsonDocument getMoreCommandResultDocument) {
-        QueryResult<T> queryResult = getMoreCursorDocumentToQueryResult(getMoreCommandResultDocument.getDocument(CURSOR),
-                                                                        connectionSource.getServerDescription().getAddress());
+    @Nullable
+    private ServerCursor initFromCommandResult(final BsonDocument getMoreCommandResultDocument) {
+        QueryResult<T> queryResult = getMoreCursorDocumentToQueryResult(getMoreCommandResultDocument.getDocument(CURSOR), serverAddress);
         postBatchResumeToken = getPostBatchResumeTokenFromResponse(getMoreCommandResultDocument);
         operationTime = getMoreCommandResultDocument.getTimestamp(OPERATION_TIME, null);
-        initFromQueryResult(queryResult);
+        return initFromQueryResult(queryResult);
     }
 
     private boolean limitReached() {
         return Math.abs(limit) != 0 && count >= Math.abs(limit);
-    }
-
-    private void killCursor() {
-        if (serverCursor != null && killCursorOnClose) {
-            try {
-                Connection connection = getConnection();
-                try {
-                    killCursor(connection);
-                } finally {
-                    connection.release();
-                }
-            } catch (MongoException e) {
-                // Ignore exceptions from calling killCursor
-            }
-        }
-    }
-
-    private void killCursor(final Connection connection) {
-        if (serverCursor != null) {
-            notNull("connection", connection);
-            try {
-                if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
-                    connection.command(namespace.getDatabaseName(), asKillCursorsCommandDocument(), NO_OP_FIELD_NAME_VALIDATOR,
-                            ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.getSessionContext(),
-                            connectionSource.getServerApi());
-                } else {
-                    connection.killCursor(namespace, singletonList(serverCursor.getId()));
-                }
-            } finally {
-                serverCursor = null;
-            }
-        }
-    }
-
-    private void releaseConnectionAndSourceIfNoServerCursor() {
-        if (serverCursor == null) {
-            releaseConnectionAndSource();
-        }
-    }
-
-    private void releaseConnectionAndSource() {
-        if (connectionSource != null) {
-            connectionSource.release();
-            connectionSource = null;
-        }
-        if (connection != null) {
-            connection.release();
-            connection = null;
-        }
-    }
-
-    private BsonDocument asKillCursorsCommandDocument() {
-        return new BsonDocument("killCursors", new BsonString(namespace.getCollectionName()))
-                       .append("cursors", new BsonArray(singletonList(new BsonInt64(serverCursor.getId()))));
     }
 
     private BsonDocument getPostBatchResumeTokenFromResponse(final BsonDocument result) {
@@ -398,5 +356,268 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             return cursor.getDocument(POST_BATCH_RESUME_TOKEN, null);
         }
         return null;
+    }
+
+    /**
+     * This class maintains all resources that must be released in {@link QueryBatchCursor#close()}.
+     * It also implements a {@linkplain #doClose() deferred close action} such that it is totally ordered with other operations of
+     * {@link QueryBatchCursor} (methods {@link #startOperation()}/{@link #endOperation()} must be used properly to enforce the order)
+     * despite the method {@link QueryBatchCursor#close()} being called concurrently with those operations.
+     * This total order induces the happens-before order.
+     * <p>
+     * The deferred close action does not violate externally observable idempotence of {@link QueryBatchCursor#close()},
+     * because {@link QueryBatchCursor#close()} is allowed to release resources "eventually".
+     * <p>
+     * Of all package-access methods, only those explicitly documented as thread-safe are thread-safe,
+     * others are not and rely on the total order mentioned above.
+     */
+    @ThreadSafe
+    private static final class CloseableState {
+        private final MongoNamespace namespace;
+        private final Lock lock;
+        private volatile State state;
+        @Nullable
+        private volatile ConnectionSource connectionSource;
+        @Nullable
+        private volatile Connection pinnedConnection;
+        @Nullable
+        private volatile ServerCursor serverCursor;
+        private volatile boolean skipReleasingServerResourcesOnClose;
+
+        CloseableState(final MongoNamespace namespace, @Nullable final ConnectionSource connectionSource,
+                @Nullable final Connection connectionToPin, @Nullable final ServerCursor serverCursor) {
+            this.namespace = namespace;
+            lock = new StampedLock().asWriteLock();
+            state = State.IDLE;
+            if (serverCursor != null) {
+                this.connectionSource = (assertNotNull(connectionSource)).retain();
+                if (connectionToPin != null) {
+                    this.pinnedConnection = connectionToPin.retain();
+                    connectionToPin.markAsPinned(Connection.PinningMode.CURSOR);
+                }
+            }
+            skipReleasingServerResourcesOnClose = false;
+            this.serverCursor = serverCursor;
+        }
+
+        /**
+         * Thread-safe.
+         */
+        boolean operable() {
+            return state.operable();
+        }
+
+        /**
+         * Thread-safe.
+         * Returns {@code true} iff started an operation.
+         * If {@linkplain #operable() closed}, then returns false, otherwise completes abruptly.
+         * @throws IllegalStateException Iff another operation is in progress.
+         */
+        boolean startOperation() throws IllegalStateException {
+            lock.lock();
+            try {
+                State localState = state;
+                if (!localState.operable()) {
+                    return false;
+                } else if (localState == State.IDLE) {
+                    state = State.OPERATION_IN_PROGRESS;
+                    return true;
+                } else if (localState == State.OPERATION_IN_PROGRESS) {
+                    throw new IllegalStateException("Another operation is currently in progress, concurrent operations are not supported");
+                } else {
+                    throw fail(state.toString());
+                }
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        /**
+         * Thread-safe.
+         */
+        void endOperation() {
+            boolean doClose = false;
+            lock.lock();
+            try {
+                State localState = state;
+                if (localState == State.OPERATION_IN_PROGRESS) {
+                    state = State.IDLE;
+                } else if (localState == State.CLOSE_PENDING) {
+                    state = State.CLOSED;
+                    doClose = true;
+                } else {
+                    fail(localState.toString());
+                }
+            } finally {
+                lock.unlock();
+            }
+            if (doClose) {
+                doClose();
+            }
+        }
+
+        void close() {
+            boolean doClose = false;
+            lock.lock();
+            try {
+                State localState = state;
+                if (localState == State.OPERATION_IN_PROGRESS) {
+                    state = State.CLOSE_PENDING;
+                } else if (localState != State.CLOSED) {
+                    state = State.CLOSED;
+                    doClose = true;
+                }
+            } finally {
+                lock.unlock();
+            }
+            if (doClose) {
+                doClose();
+            }
+        }
+
+        /**
+         * This method is never executed concurrently with either itself or other operations
+         * demarcated by {@link #startOperation()}/{@link #endOperation()}.
+         */
+        private void doClose() {
+            try {
+                if (skipReleasingServerResourcesOnClose) {
+                    serverCursor = null;
+                } else if (serverCursor != null) {
+                    Connection connection = getConnection();
+                    try {
+                        releaseServerResources(connection);
+                    } finally {
+                        connection.release();
+                    }
+                }
+            } catch (MongoException e) {
+                // ignore exceptions when releasing server resources
+            } finally {
+                // guarantee that regardless of exceptions, `serverCursor` is null and client resources are released
+                serverCursor = null;
+                releaseClientResources();
+            }
+        }
+
+        void onCorruptedConnection(final Connection corruptedConnection) {
+            assertTrue(state.inProgress());
+            // if `pinnedConnection` is corrupted, then we cannot kill `serverCursor` via such a connection
+            Connection localPinnedConnection = pinnedConnection;
+            if (localPinnedConnection != null) {
+                assertTrue(corruptedConnection == localPinnedConnection);
+                skipReleasingServerResourcesOnClose = true;
+            }
+        }
+
+        Connection getConnection() {
+            assertTrue(state != State.IDLE);
+            if (pinnedConnection == null) {
+                return assertNotNull(connectionSource).getConnection();
+            } else {
+                return assertNotNull(pinnedConnection).retain();
+            }
+        }
+
+        /**
+         * Thread-safe.
+         */
+        @Nullable
+        ServerCursor serverCursor() {
+            return serverCursor;
+        }
+
+        void setServerCursor(@Nullable final ServerCursor serverCursor) {
+            assertTrue(state.inProgress());
+            assertNotNull(this.serverCursor);
+            // without `connectionSource` we will not be able to kill `serverCursor` later
+            assertNotNull(connectionSource);
+            this.serverCursor = serverCursor;
+        }
+
+        @Nullable
+        SessionContext sessionContext() {
+            return assertNotNull(connectionSource).getSessionContext();
+        }
+
+        @Nullable
+        ServerApi serverApi() {
+            return assertNotNull(connectionSource).getServerApi();
+        }
+
+        void releaseServerAndClientResources(final Connection connection) {
+            try {
+                releaseServerResources(assertNotNull(connection));
+            } finally {
+                releaseClientResources();
+            }
+        }
+
+        private void releaseServerResources(final Connection connection) {
+            try {
+                ServerCursor localServerCursor = serverCursor;
+                if (localServerCursor != null) {
+                    killServerCursor(namespace, localServerCursor, sessionContext(), serverApi(), assertNotNull(connection));
+                }
+            } finally {
+                serverCursor = null;
+            }
+        }
+
+        private static void killServerCursor(final MongoNamespace namespace, final ServerCursor serverCursor,
+                @Nullable final SessionContext sessionContext, @Nullable final ServerApi serverApi, final Connection connection) {
+            long cursorId = serverCursor.getId();
+            if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
+                connection.command(namespace.getDatabaseName(), asKillCursorsCommandDocument(namespace, serverCursor),
+                        NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(), sessionContext, serverApi);
+            } else {
+                connection.killCursor(namespace, singletonList(cursorId));
+            }
+        }
+
+        private static BsonDocument asKillCursorsCommandDocument(final MongoNamespace namespace, final ServerCursor serverCursor) {
+            return new BsonDocument("killCursors", new BsonString(namespace.getCollectionName()))
+                    .append("cursors", new BsonArray(singletonList(new BsonInt64(serverCursor.getId()))));
+        }
+
+        private void releaseClientResources() {
+            assertNull(serverCursor);
+            ConnectionSource localConnectionSource = connectionSource;
+            if (localConnectionSource != null) {
+                localConnectionSource.release();
+                connectionSource = null;
+            }
+            Connection localPinnedConnection = pinnedConnection;
+            if (localPinnedConnection != null) {
+                localPinnedConnection.release();
+                pinnedConnection = null;
+            }
+        }
+
+        private enum State {
+            IDLE(true, false),
+            OPERATION_IN_PROGRESS(true, true),
+            /**
+             * Implies {@link #OPERATION_IN_PROGRESS}.
+             */
+            CLOSE_PENDING(false, true),
+            CLOSED(false, false);
+
+            private final boolean operable;
+            private final boolean inProgress;
+
+            State(final boolean operable, final boolean inProgress) {
+                this.operable = operable;
+                this.inProgress = inProgress;
+            }
+
+            boolean operable() {
+                return operable;
+            }
+
+            boolean inProgress() {
+                return inProgress;
+            }
+        }
     }
 }

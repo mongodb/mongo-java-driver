@@ -179,9 +179,21 @@ public final class Assertions {
 
     /**
      * @throws AssertionError Always
+     * @return Never completes normally. The return type is {@link AssertionError} to allow writing {@code throws fail()}.
+     * This may be helpful in non-{@code void} methods.
      */
-    public static void fail() throws AssertionError {
+    public static AssertionError fail() throws AssertionError {
         throw new AssertionError();
+    }
+
+    /**
+     * @param msg The failure message.
+     * @throws AssertionError Always
+     * @return Never completes normally. The return type is {@link AssertionError} to allow writing {@code throws fail("failure message")}.
+     * This may be helpful in non-{@code void} methods.
+     */
+    public static AssertionError fail(final String msg) throws AssertionError {
+        throw new AssertionError(assertNotNull(msg));
     }
 
     private Assertions() {
