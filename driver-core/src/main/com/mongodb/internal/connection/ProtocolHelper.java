@@ -32,6 +32,7 @@ import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonArray;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -264,7 +265,9 @@ public final class ProtocolHelper {
         } else if (isNotPrimaryError(errorCode, errorMessage)) {
             return new MongoNotPrimaryException(response, serverAddress);
         } else if (response.containsKey("writeConcernError")) {
-            return createSpecialException(response.getDocument("writeConcernError"), serverAddress, "errmsg");
+            return createSpecialException(response.getDocument("writeConcernError").clone()
+                    .append("errorLabels", response.getArray("errorLabels", new BsonArray())),
+                    serverAddress, "errmsg");
         } else {
             return null;
         }
