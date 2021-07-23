@@ -33,6 +33,8 @@ import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.internal.crypt.Crypt;
 import com.mongodb.reactivestreams.client.internal.crypt.CryptBinding;
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Mono;
 
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
@@ -52,7 +54,8 @@ public class OperationExecutorImpl implements OperationExecutor {
     }
 
     @Override
-    public <T> Mono<T> execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern,
+    public <T> Publisher<T> execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference,
+            final ReadConcern readConcern,
             @Nullable final ClientSession session) {
         notNull("operation", operation);
         notNull("readPreference", readPreference);
@@ -62,31 +65,38 @@ public class OperationExecutorImpl implements OperationExecutor {
             session.notifyOperationInitiated(operation);
         }
 
-          return clientSessionHelper.withClientSession(session, this)
-                .map(clientSession -> getReadWriteBinding(readPreference, readConcern, clientSession,
-                                                              session == null && clientSession != null))
-                .switchIfEmpty(Mono.fromCallable(() -> getReadWriteBinding(readPreference, readConcern, session, false)))
-                .flatMap(binding -> {
-                    if (session != null && session.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
-                        binding.release();
-                        return Mono.error(new MongoClientException("Read preference in a transaction must be primary"));
-                    } else {
-                        return Mono.<T>create(sink -> operation.executeAsync(binding, (result, t) -> {
-                            try {
+        return new Publisher<T>() {
+            @Override
+            public void subscribe(final Subscriber<? super T> s) {
+                // TODO: Extract a request context from the subscriber and add it to the binding
+
+                clientSessionHelper.withClientSession(session, OperationExecutorImpl.this)
+                        .map(clientSession -> getReadWriteBinding(readPreference, readConcern, clientSession,
+                                session == null && clientSession != null))
+                        .switchIfEmpty(Mono.fromCallable(() -> getReadWriteBinding(readPreference, readConcern, session, false)))
+                        .flatMap(binding -> {
+                            if (session != null && session.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
                                 binding.release();
-                            } finally {
-                                sinkToCallback(sink).onResult(result, t);
+                                return Mono.error(new MongoClientException("Read preference in a transaction must be primary"));
+                            } else {
+                                return Mono.<T>create(sink -> operation.executeAsync(binding, (result, t) -> {
+                                    try {
+                                        binding.release();
+                                    } finally {
+                                        sinkToCallback(sink).onResult(result, t);
+                                    }
+                                })).doOnError((t) -> {
+                                    labelException(session, t);
+                                    unpinServerAddressOnTransientTransactionError(session, t);
+                                });
                             }
-                        })).doOnError((t) -> {
-                            labelException(session, t);
-                            unpinServerAddressOnTransientTransactionError(session, t);
-                        });
-                    }
-                });
+                        }).subscribe(s);
+            }
+        };
     }
 
     @Override
-    public <T> Mono<T> execute(final AsyncWriteOperation<T> operation, final ReadConcern readConcern,
+    public <T> Publisher<T> execute(final AsyncWriteOperation<T> operation, final ReadConcern readConcern,
             @Nullable final ClientSession session) {
         notNull("operation", operation);
         notNull("readConcern", readConcern);
@@ -95,22 +105,29 @@ public class OperationExecutorImpl implements OperationExecutor {
             session.notifyOperationInitiated(operation);
         }
 
-        return clientSessionHelper.withClientSession(session, this)
-                .map(clientSession -> getReadWriteBinding(ReadPreference.primary(), readConcern, clientSession,
-                                                              session == null && clientSession != null))
-                .switchIfEmpty(Mono.fromCallable(() -> getReadWriteBinding(ReadPreference.primary(), readConcern, session, false)))
-                .flatMap(binding ->
-                        Mono.<T>create(sink -> operation.executeAsync(binding, (result, t) -> {
-                            try {
-                                binding.release();
-                            } finally {
-                                sinkToCallback(sink).onResult(result, t);
-                            }
-                        })).doOnError((t) -> {
-                            labelException(session, t);
-                            unpinServerAddressOnTransientTransactionError(session, t);
-                        })
-                );
+        return new Publisher<T>() {
+            @Override
+            public void subscribe(final Subscriber<? super T> s) {
+                // TODO: Extract a request context from the subscriber and add it to the binding
+
+                clientSessionHelper.withClientSession(session, OperationExecutorImpl.this)
+                        .map(clientSession -> getReadWriteBinding(ReadPreference.primary(), readConcern, clientSession,
+                                session == null && clientSession != null))
+                        .switchIfEmpty(Mono.fromCallable(() -> getReadWriteBinding(ReadPreference.primary(), readConcern, session, false)))
+                        .flatMap(binding ->
+                                Mono.<T>create(sink -> operation.executeAsync(binding, (result, t) -> {
+                                    try {
+                                        binding.release();
+                                    } finally {
+                                        sinkToCallback(sink).onResult(result, t);
+                                    }
+                                })).doOnError((t) -> {
+                                    labelException(session, t);
+                                    unpinServerAddressOnTransientTransactionError(session, t);
+                                })
+                        ).subscribe(s);
+            }
+        };
     }
 
     private void labelException(@Nullable final ClientSession session, @Nullable final Throwable t) {

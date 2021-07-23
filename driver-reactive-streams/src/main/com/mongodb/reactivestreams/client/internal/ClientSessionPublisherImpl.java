@@ -167,11 +167,11 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
             boolean alreadyCommitted = commitInProgress || transactionState == TransactionState.COMMITTED;
             commitInProgress = true;
 
-            return executor.execute(
+            return Mono.from(executor.execute(
                     new CommitTransactionOperation(transactionOptions.getWriteConcern(), alreadyCommitted)
                             .recoveryToken(getRecoveryToken())
                             .maxCommitTime(transactionOptions.getMaxCommitTime(MILLISECONDS), MILLISECONDS),
-                    readConcern, this)
+                    readConcern, this))
                     .doOnTerminate(() -> {
                         commitInProgress = false;
                         transactionState = TransactionState.COMMITTED;
@@ -199,10 +199,10 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
             if (readConcern == null) {
                 throw new MongoInternalException("Invariant violated. Transaction options read concern can not be null");
             }
-            return executor.execute(
+            return Mono.from(executor.execute(
                     new AbortTransactionOperation(transactionOptions.getWriteConcern())
                             .recoveryToken(getRecoveryToken()),
-                    readConcern, this)
+                    readConcern, this))
                     .onErrorResume(Throwable.class, (e) -> Mono.empty())
                     .doOnTerminate(() -> {
                         clearTransactionContext();
