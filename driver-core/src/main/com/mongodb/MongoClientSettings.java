@@ -97,6 +97,8 @@ public final class MongoClientSettings {
     private final boolean heartbeatSocketTimeoutSetExplicitly;
     private final boolean heartbeatConnectTimeoutSetExplicitly;
 
+    private final ContextProvider contextProvider;
+
     /**
      * Gets the default codec registry.  It includes the following providers:
      *
@@ -784,6 +786,11 @@ public final class MongoClientSettings {
         return serverSettings;
     }
 
+    @Nullable
+    public ContextProvider getContextProvider() {
+        return contextProvider;
+    }
+
     private MongoClientSettings(final Builder builder) {
         readPreference = builder.readPreference;
         writeConcern = builder.writeConcern;
@@ -814,5 +821,6 @@ public final class MongoClientSettings {
                 .build();
         heartbeatSocketTimeoutSetExplicitly = builder.heartbeatSocketTimeoutMS != 0;
         heartbeatConnectTimeoutSetExplicitly = builder.heartbeatConnectTimeoutMS != 0;
+        contextProvider = null;
     }
 }

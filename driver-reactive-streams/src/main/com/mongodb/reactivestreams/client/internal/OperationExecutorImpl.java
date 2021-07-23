@@ -15,6 +15,7 @@
  */
 package com.mongodb.reactivestreams.client.internal;
 
+import com.mongodb.ContextProvider;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
@@ -23,6 +24,7 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.RequestContext;
 import com.mongodb.internal.async.client.ClientSessionBinding;
 import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.AsyncClusterBinding;
@@ -31,6 +33,7 @@ import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.internal.operation.AsyncWriteOperation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
+import com.mongodb.reactivestreams.client.ReactiveContextProvider;
 import com.mongodb.reactivestreams.client.internal.crypt.Crypt;
 import com.mongodb.reactivestreams.client.internal.crypt.CryptBinding;
 import org.reactivestreams.Publisher;
@@ -47,10 +50,16 @@ public class OperationExecutorImpl implements OperationExecutor {
 
     private final MongoClientImpl mongoClient;
     private final ClientSessionHelper clientSessionHelper;
+    private final ReactiveContextProvider contextProvider;
 
     OperationExecutorImpl(final MongoClientImpl mongoClient, final ClientSessionHelper clientSessionHelper) {
         this.mongoClient = mongoClient;
         this.clientSessionHelper = clientSessionHelper;
+        ContextProvider contextProvider = mongoClient.getSettings().getContextProvider();
+        if (contextProvider != null && !(contextProvider instanceof ReactiveContextProvider)) {
+            throw new IllegalArgumentException("...");    // TODO: make it a nicer message.  Perhaps move the check higher up
+        }
+        this.contextProvider = (ReactiveContextProvider) contextProvider;
     }
 
     @Override
@@ -68,7 +77,8 @@ public class OperationExecutorImpl implements OperationExecutor {
         return new Publisher<T>() {
             @Override
             public void subscribe(final Subscriber<? super T> s) {
-                // TODO: Extract a request context from the subscriber and add it to the binding
+                RequestContext requestContext = getContext(s);
+                // TODO: add the context to the binding
 
                 clientSessionHelper.withClientSession(session, OperationExecutorImpl.this)
                         .map(clientSession -> getReadWriteBinding(readPreference, readConcern, clientSession,
@@ -108,7 +118,8 @@ public class OperationExecutorImpl implements OperationExecutor {
         return new Publisher<T>() {
             @Override
             public void subscribe(final Subscriber<? super T> s) {
-                // TODO: Extract a request context from the subscriber and add it to the binding
+                RequestContext requestContext = getContext(s);
+                // TODO: add the context to the binding
 
                 clientSessionHelper.withClientSession(session, OperationExecutorImpl.this)
                         .map(clientSession -> getReadWriteBinding(ReadPreference.primary(), readConcern, clientSession,
@@ -128,6 +139,10 @@ public class OperationExecutorImpl implements OperationExecutor {
                         ).subscribe(s);
             }
         };
+    }
+
+    private <T> RequestContext getContext(final Subscriber<T> subscriber) {
+        return contextProvider == null ? null : contextProvider.getContext(subscriber);
     }
 
     private void labelException(@Nullable final ClientSession session, @Nullable final Throwable t) {
