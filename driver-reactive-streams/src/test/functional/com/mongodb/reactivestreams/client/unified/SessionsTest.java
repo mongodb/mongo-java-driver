@@ -16,12 +16,7 @@
 
 package com.mongodb.reactivestreams.client.unified;
 
-import com.mongodb.MongoClientSettings;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.unified.UnifiedTest;
 import com.mongodb.lang.Nullable;
-import com.mongodb.reactivestreams.client.MongoClients;
-import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.junit.runners.Parameterized;
@@ -30,16 +25,11 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-public class SessionsTest extends UnifiedTest {
+public class SessionsTest extends UnifiedReactiveStreamsTest {
     public SessionsTest(@SuppressWarnings("unused") final String fileDescription, @SuppressWarnings("unused") final String testDescription,
                         final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
                         final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
-    }
-
-    @Override
-    protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return new SyncMongoClient(MongoClients.create(settings));
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
