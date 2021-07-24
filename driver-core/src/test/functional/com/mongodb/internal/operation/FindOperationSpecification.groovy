@@ -474,7 +474,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         collectionHelper.insertDocuments(new DocumentCodec(), new Document())
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
         def syncBinding = new ClusterBinding(getCluster(), ReadPreference.secondary(), ReadConcern.DEFAULT, null)
-        def asyncBinding = new AsyncClusterBinding(getAsyncCluster(), ReadPreference.secondary(), ReadConcern.DEFAULT, null)
+        def asyncBinding = new AsyncClusterBinding(getAsyncCluster(), ReadPreference.secondary(), ReadConcern.DEFAULT, null, requestContext)
 
         when:
         def result = async ? executeAsync(operation, asyncBinding) : executeSync(operation, syncBinding)
@@ -499,7 +499,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
                 ReadPreferenceHedgeOptions.builder().enabled(isHedgeEnabled as boolean).build() : null
         def readPreference = ReadPreference.primaryPreferred().withHedgeOptions(hedgeOptions)
         def syncBinding = new ClusterBinding(getCluster(), readPreference, ReadConcern.DEFAULT, null)
-        def asyncBinding = new AsyncClusterBinding(getAsyncCluster(), readPreference, ReadConcern.DEFAULT, null)
+        def asyncBinding = new AsyncClusterBinding(getAsyncCluster(), readPreference, ReadConcern.DEFAULT, null, requestContext)
         def cursor = async ? executeAsync(operation, asyncBinding) : executeSync(operation, syncBinding)
         def firstBatch = {
             if (async) {

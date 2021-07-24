@@ -19,6 +19,7 @@ package com.mongodb.internal.binding;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadPreference;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ServerDescription;
@@ -170,6 +171,12 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
     @Nullable
     public ServerApi getServerApi() {
         return serverApi;
+    }
+
+    @Override
+    @Nullable
+    public RequestContext getRequestContext() {
+        return null;
     }
 
     @Override

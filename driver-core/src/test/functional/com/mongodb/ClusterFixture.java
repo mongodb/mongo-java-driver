@@ -328,7 +328,7 @@ public final class ClusterFixture {
     }
 
     public static AsyncReadWriteBinding getAsyncBinding(final Cluster cluster) {
-        return new AsyncClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, getServerApi());
+        return new AsyncClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, getServerApi(), null);
     }
 
     public static AsyncReadWriteBinding getAsyncBinding() {
@@ -341,7 +341,7 @@ public final class ClusterFixture {
 
     public static AsyncReadWriteBinding getAsyncBinding(final Cluster cluster, final ReadPreference readPreference) {
         if (!asyncBindingMap.containsKey(readPreference)) {
-            AsyncReadWriteBinding binding = new AsyncClusterBinding(cluster, readPreference, ReadConcern.DEFAULT, getServerApi());
+            AsyncReadWriteBinding binding = new AsyncClusterBinding(cluster, readPreference, ReadConcern.DEFAULT, getServerApi(), null);
             if (serverVersionAtLeast(3, 6)) {
                 binding = new AsyncSessionBinding(binding);
             }

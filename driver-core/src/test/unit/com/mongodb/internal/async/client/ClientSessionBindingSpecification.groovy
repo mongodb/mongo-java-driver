@@ -193,6 +193,6 @@ class ClientSessionBindingSpecification extends Specification {
                 new ClusterDescription(ClusterConnectionMode.MULTIPLE, ClusterType.REPLICA_SET, [])
             }
         }
-        new AsyncClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, null)
+        new AsyncClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, null, requestContext)
     }
 }

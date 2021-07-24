@@ -17,6 +17,7 @@
 package com.mongodb.internal.binding;
 
 import com.mongodb.ReadPreference;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ServerDescription;
@@ -64,6 +65,12 @@ public final class AsyncSessionBinding implements AsyncReadWriteBinding {
     @Nullable
     public ServerApi getServerApi() {
         return wrapped.getServerApi();
+    }
+
+    @Override
+    @Nullable
+    public RequestContext getRequestContext() {
+        return wrapped.getRequestContext();
     }
 
     @Override

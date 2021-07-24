@@ -18,6 +18,7 @@ package com.mongodb.internal.binding;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ServerDescription;
@@ -48,6 +49,7 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
     private final ReadConcern readConcern;
     @Nullable
     private final ServerApi serverApi;
+    private final RequestContext requestContext;
 
     /**
      * Creates an instance.
@@ -56,14 +58,16 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
      * @param readPreference a non-null ReadPreference for read operations
      * @param readConcern    a non-null read concern
      * @param serverApi      a server API, which may be null
+     * @param requestContext
      * @since 3.8
      */
     public AsyncClusterBinding(final Cluster cluster, final ReadPreference readPreference, final ReadConcern readConcern,
-                               @Nullable final ServerApi serverApi) {
+            @Nullable final ServerApi serverApi, final RequestContext requestContext) {
         this.cluster = notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
         this.readConcern = (notNull("readConcern", readConcern));
         this.serverApi = serverApi;
+        this.requestContext = requestContext;
     }
 
     @Override
@@ -91,6 +95,12 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
     @Nullable
     public ServerApi getServerApi() {
         return serverApi;
+    }
+
+    @Override
+    @Nullable
+    public RequestContext getRequestContext() {
+        return requestContext;
     }
 
     @Override

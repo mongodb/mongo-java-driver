@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.binding;
 
+import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
@@ -46,6 +47,9 @@ public interface AsyncWriteBinding extends ReferenceCounted {
 
     @Nullable
     ServerApi getServerApi();
+
+    @Nullable
+    RequestContext getRequestContext();
 
     @Override
     AsyncWriteBinding retain();

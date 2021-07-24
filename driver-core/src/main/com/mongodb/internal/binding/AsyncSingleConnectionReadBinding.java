@@ -17,6 +17,7 @@
 package com.mongodb.internal.binding;
 
 import com.mongodb.ReadPreference;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ServerDescription;
@@ -68,6 +69,11 @@ public class AsyncSingleConnectionReadBinding extends AbstractReferenceCounted i
     @Nullable
     public ServerApi getServerApi() {
         return serverApi;
+    }
+
+    @Override
+    public RequestContext getRequestContext() {
+        return null;
     }
 
     @Override
