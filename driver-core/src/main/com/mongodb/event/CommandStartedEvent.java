@@ -16,6 +16,7 @@
 
 package com.mongodb.event;
 
+import com.mongodb.RequestContext;
 import com.mongodb.connection.ConnectionDescription;
 import org.bson.BsonDocument;
 
@@ -28,18 +29,20 @@ public final class CommandStartedEvent extends CommandEvent {
     private final String databaseName;
     private final BsonDocument command;
 
+    // TODO: overload constructors to avoid binary breaking change
     /**
      * Construct an instance.
      *
+     * @param requestContext
      * @param requestId             the request id
      * @param connectionDescription the connection description
      * @param databaseName          the database name
      * @param commandName           the command name
      * @param command the command as a BSON document
      */
-    public CommandStartedEvent(final int requestId, final ConnectionDescription connectionDescription,
-                               final String databaseName, final String commandName, final BsonDocument command) {
-        super(requestId, connectionDescription, commandName);
+    public CommandStartedEvent(final RequestContext requestContext, final int requestId, final ConnectionDescription connectionDescription,
+            final String databaseName, final String commandName, final BsonDocument command) {
+        super(requestContext, requestId, connectionDescription, commandName);
         this.command = command;
         this.databaseName = databaseName;
     }

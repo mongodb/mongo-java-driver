@@ -300,7 +300,7 @@ class QueryProtocol<T> implements LegacyProtocol<QueryResult<T>> {
         } catch (RuntimeException e) {
             if (commandListener != null) {
                 sendCommandFailedEvent(message, FIND_COMMAND_NAME, connection.getDescription(), System.nanoTime() - startTimeNanos, e,
-                        commandListener);
+                        commandListener, null);
             }
             throw e;
         }
@@ -330,7 +330,7 @@ class QueryProtocol<T> implements LegacyProtocol<QueryResult<T>> {
         } catch (Throwable t) {
             if (commandListener != null) {
                 sendCommandFailedEvent(message, FIND_COMMAND_NAME, connection.getDescription(), System.nanoTime() - startTimeNanos, t,
-                        commandListener);
+                        commandListener, null);
             }
             callback.onResult(null, t);
         }
@@ -345,7 +345,7 @@ class QueryProtocol<T> implements LegacyProtocol<QueryResult<T>> {
             sendCommandStartedEvent(message, namespace.getDatabaseName(),
                     getCommandName(isExplainEvent),
                     command,
-                    connection.getDescription(), commandListener);
+                    connection.getDescription(), commandListener, null);
         }
         return isExplainEvent;
     }
@@ -361,7 +361,7 @@ class QueryProtocol<T> implements LegacyProtocol<QueryResult<T>> {
         if (commandListener != null) {
             BsonDocument response = asFindCommandResponseDocument(responseBuffers, queryResult, isExplainEvent);
             sendCommandSucceededEvent(message, getCommandName(isExplainEvent), response, connectionDescription,
-                    System.nanoTime() - startTimeNanos, commandListener);
+                    System.nanoTime() - startTimeNanos, commandListener, null);
         }
     }
 
@@ -538,7 +538,7 @@ class QueryProtocol<T> implements LegacyProtocol<QueryResult<T>> {
             } catch (Throwable t) {
                 if (commandListener != null) {
                     sendCommandFailedEvent(message, FIND_COMMAND_NAME, connectionDescription, System.nanoTime() - startTimeNanos, t,
-                            commandListener);
+                            commandListener, null);
                 }
                 callback.onResult(null, t);
             } finally {

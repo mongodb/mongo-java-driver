@@ -133,7 +133,7 @@ abstract class WriteProtocol implements LegacyProtocol<WriteConcernResult> {
         if (commandListener != null) {
             sendCommandStartedEvent(message, namespace.getDatabaseName(), getCommandName(message),
                     getAsWriteCommand(bsonOutput, encodingMetadata.getFirstDocumentPosition()),
-                    connection.getDescription(), commandListener);
+                    connection.getDescription(), commandListener, null);
         }
     }
 
@@ -148,7 +148,7 @@ abstract class WriteProtocol implements LegacyProtocol<WriteConcernResult> {
                                     final BsonDocument responseDocument, final long startTimeNanos) {
         if (commandListener != null) {
             sendCommandSucceededEvent(message, getCommandName(message), responseDocument, connection.getDescription(),
-                    System.nanoTime() - startTimeNanos, commandListener);
+                    System.nanoTime() - startTimeNanos, commandListener, null);
         }
     }
 
@@ -156,7 +156,7 @@ abstract class WriteProtocol implements LegacyProtocol<WriteConcernResult> {
                                  final boolean sentCommandStartedEvent, final Throwable t, final long startTimeNanos) {
         if (commandListener != null && sentCommandStartedEvent) {
             sendCommandFailedEvent(message, getCommandName(message), connection.getDescription(), System.nanoTime() - startTimeNanos, t,
-                    commandListener);
+                    commandListener, null);
         }
     }
 

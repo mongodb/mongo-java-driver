@@ -16,7 +16,9 @@
 
 package com.mongodb.event;
 
+import com.mongodb.RequestContext;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.lang.Nullable;
 
 /**
  * An event representing a MongoDB database command.
@@ -24,18 +26,21 @@ import com.mongodb.connection.ConnectionDescription;
  * @since 3.1
  */
 public abstract class CommandEvent {
+    private final RequestContext requestContext;
     private final int requestId;
     private final ConnectionDescription connectionDescription;
     private final String commandName;
 
     /**
      * Construct an instance.
+     * @param requestContext
      * @param requestId the request id
      * @param connectionDescription the connection description
      * @param commandName the command name
      */
-    public CommandEvent(final int requestId, final ConnectionDescription connectionDescription,
-                        final String commandName) {
+    public CommandEvent(final RequestContext requestContext, final int requestId, final ConnectionDescription connectionDescription,
+            final String commandName) {
+        this.requestContext = requestContext;
         this.requestId = requestId;
         this.connectionDescription = connectionDescription;
         this.commandName = commandName;
@@ -66,6 +71,11 @@ public abstract class CommandEvent {
      */
     public String getCommandName() {
         return commandName;
+    }
+
+    @Nullable
+    public RequestContext getRequestContext() {
+        return requestContext;
     }
 }
 

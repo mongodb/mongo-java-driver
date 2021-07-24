@@ -84,13 +84,13 @@ class GetMoreProtocolCommandEventSpecification extends OperationFunctionalSpecif
                                                 .append('ns', new BsonString(getNamespace().getFullName()))
                                                 .append('nextBatch', new BsonArray(documents.subList(3, 5))))
                 .append('ok', new BsonDouble(1.0))
-        commandListener.eventsWereDelivered([new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'getMore',
-                                                                     new BsonDocument('getMore', new BsonInt64(result.cursor.id))
-                                                                             .append('collection', new BsonString(getCollectionName()))
-                                                                             .append('batchSize', new BsonInt32(2))),
-                                             new CommandSucceededEvent(1, connection.getDescription(), 'getMore',
-                                                                       response,
-                                                                       0)])
+        commandListener.eventsWereDelivered([new CommandStartedEvent(requestContext, 1, connection.getDescription(), getDatabaseName(), 'getMore',
+                new BsonDocument('getMore', new BsonInt64(result.cursor.id))
+                        .append('collection', new BsonString(getCollectionName()))
+                        .append('batchSize', new BsonInt32(2))),
+                                             new CommandSucceededEvent(requestContext, 1, connection.getDescription(), 'getMore',
+                                                     response,
+                                                     0)])
 
         where:
         async << [false, true]
@@ -112,11 +112,11 @@ class GetMoreProtocolCommandEventSpecification extends OperationFunctionalSpecif
 
         then:
         def e = thrown(MongoQueryException)
-        commandListener.eventsWereDelivered([new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'getMore',
-                                                                     new BsonDocument('getMore', new BsonInt64(result.cursor.id))
-                                                                             .append('collection', new BsonString(getCollectionName()))
-                                                                             .append('batchSize', new BsonInt32(2))),
-                                             new CommandFailedEvent(1, connection.getDescription(), 'getMore', 0, e)
+        commandListener.eventsWereDelivered([new CommandStartedEvent(requestContext, 1, connection.getDescription(), getDatabaseName(), 'getMore',
+                new BsonDocument('getMore', new BsonInt64(result.cursor.id))
+                        .append('collection', new BsonString(getCollectionName()))
+                        .append('batchSize', new BsonInt32(2))),
+                                             new CommandFailedEvent(requestContext, 1, connection.getDescription(), 'getMore', 0, e)
         ])
 
         where:

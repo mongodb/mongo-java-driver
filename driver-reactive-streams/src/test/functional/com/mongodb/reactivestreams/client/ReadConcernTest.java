@@ -71,7 +71,8 @@ public class ReadConcernTest {
                 .append("readConcern", ReadConcern.LOCAL.asDocument())
                 .append("filter", new BsonDocument());
 
-        assertEventsEquality(singletonList(new CommandStartedEvent(1, null, getDefaultDatabaseName(), "find", commandDocument)), events);
+        assertEventsEquality(singletonList(new CommandStartedEvent(null, 1, null, getDefaultDatabaseName(), "find", commandDocument)),
+                events);
     }
 
     private boolean canRunTests() {

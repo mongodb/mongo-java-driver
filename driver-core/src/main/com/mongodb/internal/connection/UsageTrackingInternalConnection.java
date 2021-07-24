@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.RequestContext;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.diagnostics.logging.Logger;
@@ -148,7 +149,8 @@ class UsageTrackingInternalConnection implements InternalConnection {
 
     @Override
     public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
-                                        final SessionContext sessionContext, final SingleResultCallback<T> callback) {
+                                        final SessionContext sessionContext,
+            final RequestContext requestContext, final SingleResultCallback<T> callback) {
         SingleResultCallback<T> errHandlingCallback = errorHandlingCallback(new SingleResultCallback<T>() {
             @Override
             public void onResult(final T result, final Throwable t) {
@@ -156,7 +158,7 @@ class UsageTrackingInternalConnection implements InternalConnection {
                 callback.onResult(result, t);
             }
         }, LOGGER);
-        wrapped.sendAndReceiveAsync(message, decoder, sessionContext, errHandlingCallback);
+        wrapped.sendAndReceiveAsync(message, decoder, sessionContext, requestContext, errHandlingCallback);
     }
 
     @Override

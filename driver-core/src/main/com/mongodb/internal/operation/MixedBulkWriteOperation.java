@@ -438,7 +438,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                                      final SingleResultCallback<BsonDocument> commandCallback) {
         try {
             connection.commandAsync(namespace.getDatabaseName(), batch.getCommand(), NO_OP_FIELD_NAME_VALIDATOR,
-                    null, batch.getDecoder(), binding.getSessionContext(), binding.getServerApi(),
+                    null, batch.getDecoder(), binding.getSessionContext(), binding.getServerApi(), binding.getRequestContext(),
                     shouldAcknowledge(batch, binding.getSessionContext()),
                     batch.getPayload(), batch.getFieldNameValidator(), commandCallback);
         } catch (Throwable t) {

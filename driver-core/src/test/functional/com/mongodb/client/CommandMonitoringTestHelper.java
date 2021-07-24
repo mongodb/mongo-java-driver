@@ -96,14 +96,14 @@ public final class CommandMonitoringTestHelper {
                         commandDocument.put("$readPreference", operation.getDocument("read_preference"));
                     }
                 }
-                commandEvent = new CommandStartedEvent(1, null, actualDatabaseName, commandName,
+                commandEvent = new CommandStartedEvent(null, 1, null, actualDatabaseName, commandName,
                         commandDocument);
             } else if (eventType.equals("command_succeeded_event")) {
                 BsonDocument replyDocument = eventDescriptionDocument.get("reply").asDocument();
-                commandEvent = new CommandSucceededEvent(1, null, commandName, replyDocument, 1);
+                commandEvent = new CommandSucceededEvent(null, 1, null, commandName, replyDocument, 1);
 
             } else if (eventType.equals("command_failed_event")) {
-                commandEvent = new CommandFailedEvent(1, null, commandName, 1, null);
+                commandEvent = new CommandFailedEvent(null, 1, null, commandName, 1, null);
             } else {
                 throw new UnsupportedOperationException("Unsupported command event type: " + eventType);
             }
@@ -217,7 +217,7 @@ public final class CommandMonitoringTestHelper {
                 response.remove("nModified");
             }
         }
-        return new CommandSucceededEvent(actual.getRequestId(), actual.getConnectionDescription(), actual.getCommandName(), response,
+        return new CommandSucceededEvent(null, actual.getRequestId(), actual.getConnectionDescription(), actual.getCommandName(), response,
                 actual.getElapsedTime(TimeUnit.NANOSECONDS));
     }
 
@@ -241,7 +241,7 @@ public final class CommandMonitoringTestHelper {
         }
         massageActualCommand(command, expectedCommandStartedEvent.getCommand());
 
-        return new CommandStartedEvent(event.getRequestId(), event.getConnectionDescription(), event.getDatabaseName(),
+        return new CommandStartedEvent(null, event.getRequestId(), event.getConnectionDescription(), event.getDatabaseName(),
                 event.getCommandName(), command);
     }
 
@@ -341,7 +341,7 @@ public final class CommandMonitoringTestHelper {
 
         replaceTypeAssertionWithActual(command, actualEvent.getCommand());
 
-        return new CommandStartedEvent(event.getRequestId(), event.getConnectionDescription(), event.getDatabaseName(),
+        return new CommandStartedEvent(null, event.getRequestId(), event.getConnectionDescription(), event.getDatabaseName(),
                 event.getCommandName(), command);
     }
 

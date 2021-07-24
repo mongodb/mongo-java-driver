@@ -199,7 +199,7 @@ public class TestCommandListener implements CommandListener {
         }
         lock.lock();
         try {
-            events.add(new CommandStartedEvent(event.getRequestId(), event.getConnectionDescription(), event.getDatabaseName(),
+            events.add(new CommandStartedEvent(null, event.getRequestId(), event.getConnectionDescription(), event.getDatabaseName(),
                     event.getCommandName(),
                     event.getCommand() == null ? null : getWritableClone(event.getCommand())));
         } finally {
@@ -214,7 +214,7 @@ public class TestCommandListener implements CommandListener {
         }
         lock.lock();
         try {
-            events.add(new CommandSucceededEvent(event.getRequestId(), event.getConnectionDescription(), event.getCommandName(),
+            events.add(new CommandSucceededEvent(null, event.getRequestId(), event.getConnectionDescription(), event.getCommandName(),
                     event.getResponse() == null ? null : event.getResponse().clone(),
                     event.getElapsedTime(TimeUnit.NANOSECONDS)));
             commandCompletedCondition.signal();

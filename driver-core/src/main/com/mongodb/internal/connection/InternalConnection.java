@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.RequestContext;
 import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
@@ -112,7 +113,7 @@ public interface InternalConnection extends BufferProvider {
      * @param sessionContext the session context
      * @param callback the callback
      */
-    <T> void sendAndReceiveAsync(CommandMessage message, Decoder<T> decoder, SessionContext sessionContext,
+    <T> void sendAndReceiveAsync(CommandMessage message, Decoder<T> decoder, SessionContext sessionContext, RequestContext requestContext,
                                  SingleResultCallback<T> callback);
 
     /**

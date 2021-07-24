@@ -56,7 +56,7 @@ class CommandEventOnConnectionFailureSpecification extends Specification {
         then:
         def e = thrown(MongoSocketWriteException)
         commandListener.events.size() == 2
-        commandListener.eventWasDelivered(new CommandFailedEvent(1, connection.getDescription(), commandName, 0, e), 1)
+        commandListener.eventWasDelivered(new CommandFailedEvent(requestContext, 1, connection.getDescription(), commandName, 0, e), 1)
 
         where:
         [protocolInfo, async] << [[
@@ -86,7 +86,7 @@ class CommandEventOnConnectionFailureSpecification extends Specification {
         then:
         def e = thrown(MongoSocketReadException)
         commandListener.events.size() == 2
-        commandListener.eventWasDelivered(new CommandFailedEvent(1, connection.getDescription(), commandName, 0, e), 1)
+        commandListener.eventWasDelivered(new CommandFailedEvent(requestContext, 1, connection.getDescription(), commandName, 0, e), 1)
 
         where:
         [protocolInfo, async] << [[

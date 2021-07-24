@@ -98,12 +98,12 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                                 .append('ns', new BsonString(getNamespace().getFullName()))
                                                 .append('firstBatch', new BsonArray(documents.subList(1, 3))))
                 .append('ok', new BsonDouble(1.0))
-        commandListener.eventsWereDelivered([new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'find',
-                                                                     new BsonDocument('find', new BsonString(getCollectionName()))
-                                                                             .append('filter', filter)
-                                                                             .append('projection', projection)
-                                                                             .append('skip', new BsonInt32(skip))),
-                                             new CommandSucceededEvent(1, connection.getDescription(), 'find', response, 0)])
+        commandListener.eventsWereDelivered([new CommandStartedEvent(requestContext, 1, connection.getDescription(), getDatabaseName(), 'find',
+                new BsonDocument('find', new BsonString(getCollectionName()))
+                        .append('filter', filter)
+                        .append('projection', projection)
+                        .append('skip', new BsonInt32(skip))),
+                                             new CommandSucceededEvent(requestContext, 1, connection.getDescription(), 'find', response, 0)])
 
         where:
         [async, connection] << [[false, true], [nettyConnection, nioConnection]].combinations()
@@ -137,14 +137,14 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                                 .append('ns', new BsonString(getNamespace().getFullName()))
                                                 .append('firstBatch', new BsonArray(documents.subList(1, 3))))
                 .append('ok', new BsonDouble(1.0))
-        commandListener.eventsWereDelivered([new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'find',
-                                                                     new BsonDocument('find', new BsonString(getCollectionName()))
-                                                                             .append('filter', filter)
-                                                                             .append('projection', projection)
-                                                                             .append('skip', new BsonInt32(skip))
-                                                                             .append('limit', new BsonInt32(limit))
-                                                                             .append('batchSize', new BsonInt32(batchSize))),
-                                             new CommandSucceededEvent(1, connection.getDescription(), 'find', response, 0)])
+        commandListener.eventsWereDelivered([new CommandStartedEvent(requestContext, 1, connection.getDescription(), getDatabaseName(), 'find',
+                new BsonDocument('find', new BsonString(getCollectionName()))
+                        .append('filter', filter)
+                        .append('projection', projection)
+                        .append('skip', new BsonInt32(skip))
+                        .append('limit', new BsonInt32(limit))
+                        .append('batchSize', new BsonInt32(batchSize))),
+                                             new CommandSucceededEvent(requestContext, 1, connection.getDescription(), 'find', response, 0)])
 
         where:
         [async, connection] << [[false, true], [nettyConnection, nioConnection]].combinations()
@@ -171,10 +171,10 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                                 .append('ns', new BsonString(getNamespace().getFullName()))
                                                 .append('firstBatch', new BsonArray()))
                 .append('ok', new BsonDouble(1.0))
-        commandListener.eventsWereDelivered([new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'find',
-                                                                     new BsonDocument('find', new BsonString(getCollectionName()))
-                                                                             .append('filter', filter)),
-                                             new CommandSucceededEvent(1, connection.getDescription(), 'find', response, 0)])
+        commandListener.eventsWereDelivered([new CommandStartedEvent(requestContext, 1, connection.getDescription(), getDatabaseName(), 'find',
+                new BsonDocument('find', new BsonString(getCollectionName()))
+                        .append('filter', filter)),
+                                             new CommandSucceededEvent(requestContext, 1, connection.getDescription(), 'find', response, 0)])
 
         where:
         [async, connection] << [[false, true], [nettyConnection, nioConnection]].combinations()
@@ -208,15 +208,15 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                                 .append('ns', new BsonString(getNamespace().getFullName()))
                                                 .append('firstBatch', new BsonArray()))
                 .append('ok', new BsonDouble(1.0))
-        commandListener.eventsWereDelivered([new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'find',
-                                                                     new BsonDocument('find', new BsonString(getCollectionName()))
-                                                                             .append('filter', filter)
-                                                                             .append('tailable', BsonBoolean.TRUE)
-                                                                             .append('oplogReplay', BsonBoolean.TRUE)
-                                                                             .append('noCursorTimeout', BsonBoolean.TRUE)
-                                                                             .append('awaitData', BsonBoolean.TRUE)
-                                                                             .append('allowPartialResults', BsonBoolean.TRUE)),
-                                             new CommandSucceededEvent(1, connection.getDescription(), 'find', response, 0)])
+        commandListener.eventsWereDelivered([new CommandStartedEvent(requestContext, 1, connection.getDescription(), getDatabaseName(), 'find',
+                new BsonDocument('find', new BsonString(getCollectionName()))
+                        .append('filter', filter)
+                        .append('tailable', BsonBoolean.TRUE)
+                        .append('oplogReplay', BsonBoolean.TRUE)
+                        .append('noCursorTimeout', BsonBoolean.TRUE)
+                        .append('awaitData', BsonBoolean.TRUE)
+                        .append('allowPartialResults', BsonBoolean.TRUE)),
+                                             new CommandSucceededEvent(requestContext, 1, connection.getDescription(), 'find', response, 0)])
 
         where:
         [async, connection] << [[false, true], [nettyConnection, nioConnection]].combinations()
@@ -272,24 +272,24 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                                 .append('ns', new BsonString(getNamespace().getFullName()))
                                                 .append('firstBatch', new BsonArray([documents[3], documents[2]])))
                 .append('ok', new BsonDouble(1.0))
-        commandListener.eventsWereDelivered([new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'find',
-                                                                     new BsonDocument('find', new BsonString(getCollectionName()))
-                                                                             .append('filter', filter)
-                                                                             .append('sort', sort)
-                                                                             .append('comment', comment)
-                                                                             .append('hint', hint)
-                                                                             .append('maxTimeMS', maxTimeMS)
-                                                                             .append('maxScan', maxScan)
-                                                                             .append('min', min)
-                                                                             .append('max', max)
-                                                                             .append('returnKey', returnKey)
-                                                                             .append('showRecordId', showDiskLoc)
-                                                                             .append('snapshot', snapshot)
-                                                                             .append('projection', projection)
-                                                                             .append('skip', new BsonInt32(skip))
-                                                                             .append('limit', new BsonInt32(limit))
-                                                                             .append('batchSize', new BsonInt32(batchSize))),
-                                             new CommandSucceededEvent(1, connection.getDescription(), 'find', response, 0)])
+        commandListener.eventsWereDelivered([new CommandStartedEvent(requestContext, 1, connection.getDescription(), getDatabaseName(), 'find',
+                new BsonDocument('find', new BsonString(getCollectionName()))
+                        .append('filter', filter)
+                        .append('sort', sort)
+                        .append('comment', comment)
+                        .append('hint', hint)
+                        .append('maxTimeMS', maxTimeMS)
+                        .append('maxScan', maxScan)
+                        .append('min', min)
+                        .append('max', max)
+                        .append('returnKey', returnKey)
+                        .append('showRecordId', showDiskLoc)
+                        .append('snapshot', snapshot)
+                        .append('projection', projection)
+                        .append('skip', new BsonInt32(skip))
+                        .append('limit', new BsonInt32(limit))
+                        .append('batchSize', new BsonInt32(batchSize))),
+                                             new CommandSucceededEvent(requestContext, 1, connection.getDescription(), 'find', response, 0)])
 
         where:
         [async, connection] << [[false, true], [nettyConnection, nioConnection]].combinations()
@@ -314,15 +314,15 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
         expectedResponse.putAll(response.results[0]);
 
         then:
-        commandListener.eventsWereDelivered([new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'explain',
-                                                                     new BsonDocument('explain',
-                                                                                      new BsonDocument('find',
-                                                                                                       new BsonString(getCollectionName()))
-                                                                                              .append('filter', filter)
-                                                                                              .append('skip', new BsonInt32(skip))
-                                                                                              .append('limit', new BsonInt32(limit))
-                                                                                              .append('projection', projection))),
-                                             new CommandSucceededEvent(1, connection.getDescription(), 'explain', expectedResponse, 0)])
+        commandListener.eventsWereDelivered([new CommandStartedEvent(requestContext, 1, connection.getDescription(), getDatabaseName(), 'explain',
+                new BsonDocument('explain',
+                        new BsonDocument('find',
+                                new BsonString(getCollectionName()))
+                                .append('filter', filter)
+                                .append('skip', new BsonInt32(skip))
+                                .append('limit', new BsonInt32(limit))
+                                .append('projection', projection))),
+                                             new CommandSucceededEvent(requestContext, 1, connection.getDescription(), 'explain', expectedResponse, 0)])
 
         where:
         [async, connection] << [[false, true], [nettyConnection, nioConnection]].combinations()
@@ -343,12 +343,12 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
 
         then:
         def e = thrown(MongoQueryException)
-        commandListener.eventsWereDelivered([new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'find',
-                                                                     new BsonDocument('find', new BsonString(getCollectionName()))
-                                                                             .append('filter', filter)
-                                                                             .append('projection', projection)
-                                                                             .append('skip', new BsonInt32(skip))),
-                                             new CommandFailedEvent(1, connection.getDescription(), 'find', 0, e)])
+        commandListener.eventsWereDelivered([new CommandStartedEvent(requestContext, 1, connection.getDescription(), getDatabaseName(), 'find',
+                new BsonDocument('find', new BsonString(getCollectionName()))
+                        .append('filter', filter)
+                        .append('projection', projection)
+                        .append('skip', new BsonInt32(skip))),
+                                             new CommandFailedEvent(requestContext, 1, connection.getDescription(), 'find', 0, e)])
 
         where:
         [async, connection] << [[false, true], [nettyConnection, nioConnection]].combinations()

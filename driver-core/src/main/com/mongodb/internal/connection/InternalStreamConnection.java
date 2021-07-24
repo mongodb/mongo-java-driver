@@ -25,6 +25,7 @@ import com.mongodb.MongoSocketClosedException;
 import com.mongodb.MongoSocketReadException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoSocketWriteException;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.connection.AsyncCompletionHandler;
@@ -309,7 +310,7 @@ public class InternalStreamConnection implements InternalConnection {
 
         try {
             message.encode(bsonOutput, sessionContext);
-            commandEventSender = createCommandEventSender(message, bsonOutput);
+            commandEventSender = createCommandEventSender(message, bsonOutput, /* TODO */ null);
             commandEventSender.sendStartedEvent();
         } catch (RuntimeException e) {
             bsonOutput.close();
@@ -420,7 +421,7 @@ public class InternalStreamConnection implements InternalConnection {
 
     @Override
     public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
-                                        final SingleResultCallback<T> callback) {
+                                        final RequestContext requestContext, final SingleResultCallback<T> callback) {
         notNull("stream is open", stream, callback);
 
         if (isClosed()) {
@@ -433,7 +434,7 @@ public class InternalStreamConnection implements InternalConnection {
 
         try {
             message.encode(bsonOutput, sessionContext);
-            CommandEventSender commandEventSender = createCommandEventSender(message, bsonOutput);
+            CommandEventSender commandEventSender = createCommandEventSender(message, bsonOutput, requestContext);
             commandEventSender.sendStartedEvent();
 
             if (sendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(message.getCommandDocument(bsonOutput).getFirstKey())) {
@@ -795,10 +796,11 @@ public class InternalStreamConnection implements InternalConnection {
 
     private static final Logger COMMAND_PROTOCOL_LOGGER = Loggers.getLogger("protocol.command");
 
-    private CommandEventSender createCommandEventSender(final CommandMessage message, final ByteBufferBsonOutput bsonOutput) {
+    private CommandEventSender createCommandEventSender(final CommandMessage message, final ByteBufferBsonOutput bsonOutput,
+            final RequestContext requestContext) {
         if (opened() && (commandListener != null || COMMAND_PROTOCOL_LOGGER.isDebugEnabled())) {
             return new LoggingCommandEventSender(SECURITY_SENSITIVE_COMMANDS, SECURITY_SENSITIVE_HELLO_COMMANDS, description,
-                    commandListener, message, bsonOutput, COMMAND_PROTOCOL_LOGGER);
+                    commandListener, requestContext, message, bsonOutput, COMMAND_PROTOCOL_LOGGER);
         } else {
             return new NoOpCommandEventSender();
         }

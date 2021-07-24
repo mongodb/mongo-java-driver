@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.annotations.ThreadSafe;
@@ -101,8 +102,8 @@ public interface AsyncConnection extends ReferenceCounted {
      * @since 3.6
      */
     <T> void commandAsync(String database, BsonDocument command, FieldNameValidator fieldNameValidator, ReadPreference readPreference,
-                          Decoder<T> commandResultDecoder, SessionContext sessionContext, ServerApi serverApi,
-                          SingleResultCallback<T> callback);
+            Decoder<T> commandResultDecoder, SessionContext sessionContext, ServerApi serverApi, RequestContext requestContext,
+            SingleResultCallback<T> callback);
 
     /**
      * Executes the command, consuming as much of the {@code SplittablePayload} as possible.
@@ -123,7 +124,7 @@ public interface AsyncConnection extends ReferenceCounted {
      */
     <T> void commandAsync(String database, BsonDocument command, FieldNameValidator commandFieldNameValidator,
                           ReadPreference readPreference, Decoder<T> commandResultDecoder, SessionContext sessionContext,
-                          ServerApi serverApi, boolean responseExpected, SplittablePayload payload,
+                          ServerApi serverApi, RequestContext requestContext, boolean responseExpected, SplittablePayload payload,
                           FieldNameValidator payloadFieldNameValidator, SingleResultCallback<T> callback);
 
     /**

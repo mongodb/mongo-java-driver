@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.connection.ClusterConnectionMode;
@@ -121,26 +122,29 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
                          final boolean responseExpected, final SplittablePayload payload,
                          final FieldNameValidator payloadFieldNameValidator) {
         return executeProtocol(new CommandProtocolImpl<T>(database, command, commandFieldNameValidator, readPreference,
-                commandResultDecoder, responseExpected, payload, payloadFieldNameValidator, clusterConnectionMode, serverApi),
+                commandResultDecoder, responseExpected, payload, payloadFieldNameValidator, clusterConnectionMode, serverApi, null),
                 sessionContext);
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
                                  final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                                 final SessionContext sessionContext, final ServerApi serverApi, final SingleResultCallback<T> callback) {
-        commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi,
+                                 final SessionContext sessionContext, final ServerApi serverApi, RequestContext requestContext,
+                                 final SingleResultCallback<T> callback) {
+        commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi, requestContext,
                 true, null, null, callback);
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                                  final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                                 final SessionContext sessionContext, final ServerApi serverApi, final boolean responseExpected,
+                                 final SessionContext sessionContext, final ServerApi serverApi, RequestContext requestContext,
+                                 final boolean responseExpected,
                                  final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
                                  final SingleResultCallback<T> callback) {
         executeProtocolAsync(new CommandProtocolImpl<T>(database, command, commandFieldNameValidator, readPreference,
-                commandResultDecoder, responseExpected, payload,  payloadFieldNameValidator, clusterConnectionMode, serverApi),
+                commandResultDecoder, responseExpected, payload,  payloadFieldNameValidator, clusterConnectionMode, serverApi,
+                        requestContext),
                 sessionContext, callback);
     }
 

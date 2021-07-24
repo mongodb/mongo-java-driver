@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
+import com.mongodb.RequestContext;
 import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ConnectionId;
@@ -205,7 +206,8 @@ class TestInternalConnection implements InternalConnection {
 
     @Override
     public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
-                                        final SessionContext sessionContext, final SingleResultCallback<T> callback) {
+                                        final SessionContext sessionContext, final RequestContext requestContext,
+            final SingleResultCallback<T> callback) {
         try {
             T result = sendAndReceive(message, decoder, sessionContext);
             callback.onResult(result, null);

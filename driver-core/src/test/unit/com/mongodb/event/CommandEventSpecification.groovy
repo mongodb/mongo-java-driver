@@ -27,7 +27,7 @@ import spock.lang.Specification
 class CommandEventSpecification extends Specification {
     def 'should fail if elapsed time is negative'() {
         when:
-        new CommandSucceededEvent(1, new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress())), 'ping',
+        new CommandSucceededEvent(requestContext, 1, new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress())), 'ping',
                 new BsonDocument('ok', new BsonInt32(1)), -1)
 
         then:
@@ -35,7 +35,7 @@ class CommandEventSpecification extends Specification {
         e.getMessage() == 'state should be: elapsed time is not negative'
 
         when:
-        new CommandFailedEvent(1, new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress())), 'ping', -1,
+        new CommandFailedEvent(requestContext, 1, new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress())), 'ping', -1,
                 new Throwable())
 
         then:

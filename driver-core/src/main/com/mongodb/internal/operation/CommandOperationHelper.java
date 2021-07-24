@@ -24,6 +24,7 @@ import com.mongodb.MongoNodeIsRecoveringException;
 import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ReadPreference;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
@@ -430,7 +431,7 @@ final class CommandOperationHelper {
         try {
             BsonDocument command = commandCreator.create(source.getServerDescription(), connection.getDescription());
             connection.commandAsync(database, command, new NoOpFieldNameValidator(), binding.getReadPreference(), decoder,
-                    binding.getSessionContext(), binding.getServerApi(),
+                    binding.getSessionContext(), binding.getServerApi(), binding.getRequestContext(),
                     createCommandCallback(binding, source, connection, database, binding.getReadPreference(),
                             command, commandCreator, new NoOpFieldNameValidator(), decoder, transformer, retryReads, callback));
         } catch (IllegalArgumentException e) {
@@ -491,7 +492,8 @@ final class CommandOperationHelper {
                         logRetryExecute(retryCommand.getFirstKey(), originalError);
                         connection.commandAsync(database, retryCommand, fieldNameValidator, readPreference,
                                 commandResultDecoder, binding.getSessionContext(),
-                                binding.getServerApi(), new TransformingReadResultCallback<>(transformer, source, connection,
+                                binding.getServerApi(), binding.getRequestContext(),
+                                new TransformingReadResultCallback<>(transformer, source, connection,
                                         releasingCallback(callback, source, connection)));
                     }
                 });
@@ -546,7 +548,7 @@ final class CommandOperationHelper {
                                         final SingleResultCallback<T> callback) {
         notNull("binding", binding);
         executeCommandAsync(database, command, new BsonDocumentCodec(), connection, primary(), transformer,
-                binding.getSessionContext(), binding.getServerApi(), callback);
+                binding.getSessionContext(), binding.getServerApi(), binding.getRequestContext(), callback);
     }
 
     /* Async Connection Helpers */
@@ -555,9 +557,10 @@ final class CommandOperationHelper {
                                                    final ReadPreference readPreference,
                                                    final CommandWriteTransformerAsync<D, T> transformer,
                                                    final SessionContext sessionContext,
-                                                   final ServerApi serverApi, final SingleResultCallback<T> callback) {
+                                                   final ServerApi serverApi,
+            final RequestContext requestContext, final SingleResultCallback<T> callback) {
         connection.commandAsync(database, command, new NoOpFieldNameValidator(), readPreference, decoder, sessionContext,
-                serverApi, (result, t) -> {
+                serverApi, requestContext, (result, t) -> {
                     if (t != null) {
                         callback.onResult(null, t);
                     } else {
@@ -659,7 +662,8 @@ final class CommandOperationHelper {
                                     connection.getDescription());
                             connection.commandAsync(database, command, fieldNameValidator, readPreference,
                                     commandResultDecoder, binding.getSessionContext(),
-                                    binding.getServerApi(), createCommandCallback(binding, source, connection, database, readPreference,
+                                    binding.getServerApi(), binding.getRequestContext(),
+                                    createCommandCallback(binding, source, connection, database, readPreference,
                                             command, fieldNameValidator, commandResultDecoder, transformer,
                                             retryCommandModifier, errorHandlingCallback));
                         } catch (Throwable t1) {
@@ -726,7 +730,8 @@ final class CommandOperationHelper {
                     } else {
                         connection.commandAsync(database, retryCommand, fieldNameValidator, readPreference,
                                 commandResultDecoder, binding.getSessionContext(),
-                                binding.getServerApi(), new TransformingWriteResultCallback<>(transformer, connection,
+                                binding.getServerApi(), binding.getRequestContext(),
+                                new TransformingWriteResultCallback<>(transformer, connection,
                                         releasingCallback(callback, source, connection)));
                     }
                 });

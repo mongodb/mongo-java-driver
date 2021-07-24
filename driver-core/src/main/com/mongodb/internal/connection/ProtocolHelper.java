@@ -23,6 +23,7 @@ import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoNodeIsRecoveringException;
 import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.MongoQueryException;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.diagnostics.logging.Logger;
@@ -281,10 +282,10 @@ public final class ProtocolHelper {
     }
 
     static void sendCommandStartedEvent(final RequestMessage message, final String databaseName, final String commandName,
-                                        final BsonDocument command, final ConnectionDescription connectionDescription,
-                                        final CommandListener commandListener) {
+            final BsonDocument command, final ConnectionDescription connectionDescription,
+            final CommandListener commandListener, final RequestContext requestContext) {
         try {
-            commandListener.commandStarted(new CommandStartedEvent(message.getId(), connectionDescription,
+            commandListener.commandStarted(new CommandStartedEvent(requestContext, message.getId(), connectionDescription,
                                                                    databaseName, commandName, command));
         } catch (Exception e) {
             if (PROTOCOL_EVENT_LOGGER.isWarnEnabled()) {
@@ -294,11 +295,11 @@ public final class ProtocolHelper {
     }
 
     static void sendCommandSucceededEvent(final RequestMessage message, final String commandName, final BsonDocument response,
-                                          final ConnectionDescription connectionDescription, final long elapsedTimeNanos,
-                                          final CommandListener commandListener) {
+            final ConnectionDescription connectionDescription, final long elapsedTimeNanos,
+            final CommandListener commandListener, final RequestContext requestContext) {
         try {
-            commandListener.commandSucceeded(new CommandSucceededEvent(message.getId(), connectionDescription, commandName, response,
-                    elapsedTimeNanos));
+            commandListener.commandSucceeded(new CommandSucceededEvent(requestContext, message.getId(), connectionDescription, commandName,
+                    response, elapsedTimeNanos));
         } catch (Exception e) {
             if (PROTOCOL_EVENT_LOGGER.isWarnEnabled()) {
                 PROTOCOL_EVENT_LOGGER.warn(format("Exception thrown raising command succeeded event to listener %s", commandListener), e);
@@ -307,11 +308,11 @@ public final class ProtocolHelper {
     }
 
     static void sendCommandFailedEvent(final RequestMessage message, final String commandName,
-                                       final ConnectionDescription connectionDescription, final long elapsedTimeNanos,
-                                       final Throwable throwable, final CommandListener commandListener) {
+            final ConnectionDescription connectionDescription, final long elapsedTimeNanos,
+            final Throwable throwable, final CommandListener commandListener, final RequestContext requestContext) {
         try {
-            commandListener.commandFailed(new CommandFailedEvent(message.getId(), connectionDescription, commandName, elapsedTimeNanos,
-                    throwable));
+            commandListener.commandFailed(new CommandFailedEvent(requestContext, message.getId(), connectionDescription, commandName,
+                    elapsedTimeNanos, throwable));
         } catch (Exception e) {
             if (PROTOCOL_EVENT_LOGGER.isWarnEnabled()) {
                 PROTOCOL_EVENT_LOGGER.warn(format("Exception thrown raising command failed event to listener %s", commandListener), e);

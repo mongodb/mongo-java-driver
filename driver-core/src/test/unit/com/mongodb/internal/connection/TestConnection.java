@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.connection.ConnectionDescription;
@@ -118,14 +119,16 @@ class TestConnection implements Connection, AsyncConnection {
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
                                  final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                                 final SessionContext sessionContext, final ServerApi serverApi, final SingleResultCallback<T> callback) {
+                                 final SessionContext sessionContext, final ServerApi serverApi, RequestContext requestContext,
+            final SingleResultCallback<T> callback) {
         executeEnqueuedCommandBasedProtocolAsync(sessionContext, callback);
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                                  final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                                 final SessionContext sessionContext, final ServerApi serverApi, final boolean responseExpected,
+                                 final SessionContext sessionContext, final ServerApi serverApi, RequestContext requestContext,
+            final boolean responseExpected,
                                  final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
                                  final SingleResultCallback<T> callback) {
         executeEnqueuedCommandBasedProtocolAsync(sessionContext, callback);

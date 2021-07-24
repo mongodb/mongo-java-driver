@@ -66,20 +66,20 @@ class KillCursorProtocol implements LegacyProtocol<Void> {
             message = new KillCursorsMessage(cursors);
             if (commandListener != null && namespace != null) {
                 sendCommandStartedEvent(message, namespace.getDatabaseName(), COMMAND_NAME, asCommandDocument(),
-                                        connection.getDescription(), commandListener);
+                                        connection.getDescription(), commandListener, null);
             }
             message.encode(bsonOutput, NoOpSessionContext.INSTANCE);
             connection.sendMessage(bsonOutput.getByteBuffers(), message.getId());
             if (commandListener != null && namespace != null) {
                 sendCommandSucceededEvent(message, COMMAND_NAME, asCommandResponseDocument(),
                                           connection.getDescription(),
-                                          System.nanoTime() - startTimeNanos, commandListener);
+                                          System.nanoTime() - startTimeNanos, commandListener, null);
             }
             return null;
         } catch (RuntimeException e) {
             if (commandListener != null && namespace != null) {
                 sendCommandFailedEvent(message, COMMAND_NAME, connection.getDescription(), System.nanoTime() - startTimeNanos, e,
-                        commandListener);
+                        commandListener, null);
             }
             throw e;
         }
@@ -102,7 +102,7 @@ class KillCursorProtocol implements LegacyProtocol<Void> {
 
             if (commandListener != null && namespace != null) {
                 sendCommandStartedEvent(message, namespace.getDatabaseName(), COMMAND_NAME, asCommandDocument(),
-                        connection.getDescription(), commandListener);
+                        connection.getDescription(), commandListener, null);
                 startEventSent = true;
             }
 
@@ -113,11 +113,11 @@ class KillCursorProtocol implements LegacyProtocol<Void> {
                     if (commandListener != null && namespace != null) {
                         if (t != null) {
                             sendCommandFailedEvent(message, COMMAND_NAME, connection.getDescription(),
-                                    System.nanoTime() - startTimeNanos, t, commandListener);
+                                    System.nanoTime() - startTimeNanos, t, commandListener, null);
                         } else {
                             sendCommandSucceededEvent(message, COMMAND_NAME, asCommandResponseDocument(),
                                     connection.getDescription(),
-                                    System.nanoTime() - startTimeNanos, commandListener);
+                                    System.nanoTime() - startTimeNanos, commandListener, null);
                         }
                     }
 
@@ -128,7 +128,7 @@ class KillCursorProtocol implements LegacyProtocol<Void> {
         } catch (Throwable t) {
             if (startEventSent) {
                 sendCommandFailedEvent(message, COMMAND_NAME, connection.getDescription(), System.nanoTime() - startTimeNanos,
-                        t, commandListener);
+                        t, commandListener, null);
             }
             callback.onResult(null, t);
         }

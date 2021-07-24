@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
+import com.mongodb.RequestContext;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -80,7 +81,8 @@ public class TestConnectionPool implements ConnectionPool {
 
             @Override
             public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
-                                                final SessionContext sessionContext, final SingleResultCallback<T> callback) {
+                                                final SessionContext sessionContext, final RequestContext requestContext,
+                    final SingleResultCallback<T> callback) {
                 throw new UnsupportedOperationException("Not implemented yet!");
             }
 
