@@ -17,11 +17,11 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.async.SingleResultCallback;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -67,7 +67,7 @@ class QueryProtocol<T> implements LegacyProtocol<QueryResult<T>> {
     private final Decoder<T> resultDecoder;
     private final MongoNamespace namespace;
     private boolean tailableCursor;
-    private boolean slaveOk;
+    private boolean secondaryOk;
     private boolean oplogReplay;
     private boolean noCursorTimeout;
     private boolean awaitData;
@@ -144,19 +144,19 @@ class QueryProtocol<T> implements LegacyProtocol<QueryResult<T>> {
      * @return true if set to allowed to query non-primary replica set members.
      * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
      */
-    public boolean isSlaveOk() {
-        return slaveOk;
+    public boolean isSecondaryOk() {
+        return secondaryOk;
     }
 
     /**
      * Sets if allowed to query non-primary replica set members.
      *
-     * @param slaveOk true if allowed to query non-primary replica set members.
+     * @param secondaryOk true if allowed to query non-primary replica set members.
      * @return this
      * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
      */
-    public QueryProtocol<T> slaveOk(final boolean slaveOk) {
-        this.slaveOk = slaveOk;
+    public QueryProtocol<T> secondaryOk(final boolean secondaryOk) {
+        this.secondaryOk = secondaryOk;
         return this;
     }
 
@@ -369,7 +369,7 @@ class QueryProtocol<T> implements LegacyProtocol<QueryResult<T>> {
         return (QueryMessage) new QueryMessage(namespace.getFullName(), skip, getNumberToReturn(), queryDocument, fields,
                                                getMessageSettings(connectionDescription))
                                   .tailableCursor(isTailableCursor())
-                                  .slaveOk(isSlaveOk())
+                                  .secondaryOk(isSecondaryOk())
                                   .oplogReplay(isOplogReplay())
                                   .noCursorTimeout(isNoCursorTimeout())
                                   .awaitData(isAwaitData())

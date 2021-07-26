@@ -118,7 +118,7 @@ public class ServerDescription {
 
     /**
      * Gets the string representing the host name and port that this member of a replica set was configured with,
-     * e.g. {@code "somehost:27019"}. This is typically derived from the "me" field from the "isMaster" command response.
+     * e.g. {@code "somehost:27019"}. This is typically derived from the "me" field from the "hello" command response.
      *
      * @return the host name and port that this replica set member is configured with.
      */
@@ -220,7 +220,7 @@ public class ServerDescription {
         }
 
         /**
-         * Sets the canonical host name and port of this server. This is typically derived from the "me" field contained in the "isMaster"
+         * Sets the canonical host name and port of this server. This is typically derived from the "me" field contained in the "hello"
          * command. response.
          *
          * @param canonicalAddress the host name and port as a string

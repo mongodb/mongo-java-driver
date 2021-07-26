@@ -318,9 +318,9 @@ class AggregatesSpecification extends Specification {
             as: "socialNetwork", maxDepth: 1 } }''')
 
         // with depthField
-        toBson(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions().depthField('master'))) ==
+        toBson(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions().depthField('depth'))) ==
                 parse('''{ $graphLookup: { from: "contacts", startWith: "$friends", connectFromField: "friends", connectToField: "name",
-            as: "socialNetwork", depthField: "master" } }''')
+            as: "socialNetwork", depthField: "depth" } }''')
 
         // with restrictSearchWithMatch
         toBson(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
@@ -330,15 +330,15 @@ class AggregatesSpecification extends Specification {
 
         // with maxDepth and depthField
         toBson(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
-                .maxDepth(1).depthField('master'))) ==
+                .maxDepth(1).depthField('depth'))) ==
         parse('''{ $graphLookup: { from: "contacts", startWith: "$friends", connectFromField: "friends", connectToField: "name",
-            as: "socialNetwork", maxDepth: 1, depthField: "master" } }''')
+            as: "socialNetwork", maxDepth: 1, depthField: "depth" } }''')
 
         // with all options
         toBson(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
-                .maxDepth(1).depthField('master').restrictSearchWithMatch(eq('hobbies', 'golf')))) ==
+                .maxDepth(1).depthField('depth').restrictSearchWithMatch(eq('hobbies', 'golf')))) ==
                 parse('''{ $graphLookup: { from: "contacts", startWith: "$friends", connectFromField: "friends", connectToField: "name",
-            as: "socialNetwork", maxDepth: 1, depthField: "master", restrictSearchWithMatch : { "hobbies" : "golf" } } }''')
+            as: "socialNetwork", maxDepth: 1, depthField: "depth", restrictSearchWithMatch : { "hobbies" : "golf" } } }''')
     }
 
     def 'should render $skip'() {
@@ -663,9 +663,9 @@ class AggregatesSpecification extends Specification {
                 .equals(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork',
                 new GraphLookupOptions().maxDepth(1)))
 
-        graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions().depthField('master'))
+        graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions().depthField('depth'))
                 .equals(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork',
-                new GraphLookupOptions().depthField('master')))
+                new GraphLookupOptions().depthField('depth')))
 
         graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
                 .restrictSearchWithMatch(eq('hobbies', 'golf')))
@@ -673,14 +673,14 @@ class AggregatesSpecification extends Specification {
                 .restrictSearchWithMatch(eq('hobbies', 'golf'))))
 
         graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
-                .maxDepth(1).depthField('master'))
+                .maxDepth(1).depthField('depth'))
                 .equals(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
-                .maxDepth(1).depthField('master')))
+                .maxDepth(1).depthField('depth')))
 
         graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
-                .maxDepth(1).depthField('master').restrictSearchWithMatch(eq('hobbies', 'golf')))
+                .maxDepth(1).depthField('depth').restrictSearchWithMatch(eq('hobbies', 'golf')))
                 .equals(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
-                .maxDepth(1).depthField('master').restrictSearchWithMatch(eq('hobbies', 'golf'))))
+                .maxDepth(1).depthField('depth').restrictSearchWithMatch(eq('hobbies', 'golf'))))
     }
 
     def 'should test hashCode for GraphLookupStage'() {
@@ -693,10 +693,10 @@ class AggregatesSpecification extends Specification {
                 graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork',
                 new GraphLookupOptions().maxDepth(1)).hashCode()
 
-        graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions().depthField('master'))
+        graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions().depthField('depth'))
                 .hashCode() ==
                 graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork',
-                new GraphLookupOptions().depthField('master')).hashCode()
+                new GraphLookupOptions().depthField('depth')).hashCode()
 
         graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
                 .restrictSearchWithMatch(eq('hobbies', 'golf'))).hashCode() ==
@@ -704,14 +704,14 @@ class AggregatesSpecification extends Specification {
                 .restrictSearchWithMatch(eq('hobbies', 'golf'))).hashCode()
 
         graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
-                .maxDepth(1).depthField('master')).hashCode() ==
+                .maxDepth(1).depthField('depth')).hashCode() ==
                 graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
-                .maxDepth(1).depthField('master')).hashCode()
+                .maxDepth(1).depthField('depth')).hashCode()
 
         graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
-                .maxDepth(1).depthField('master').restrictSearchWithMatch(eq('hobbies', 'golf'))).hashCode() ==
+                .maxDepth(1).depthField('depth').restrictSearchWithMatch(eq('hobbies', 'golf'))).hashCode() ==
                 graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
-                .maxDepth(1).depthField('master').restrictSearchWithMatch(eq('hobbies', 'golf'))).hashCode()
+                .maxDepth(1).depthField('depth').restrictSearchWithMatch(eq('hobbies', 'golf'))).hashCode()
     }
 
     def 'should test equals for GroupStage'() {

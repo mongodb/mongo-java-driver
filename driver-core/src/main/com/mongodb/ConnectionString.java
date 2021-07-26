@@ -181,7 +181,7 @@ import static java.util.Collections.unmodifiableList;
  * </ul>
  * </li>
  * <li>{@code maxStalenessSeconds=seconds}. The maximum staleness in seconds. For use with any non-primary read preference, the driver
- * estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses, and selects only those
+ * estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses, and selects only those
  * secondaries whose staleness is less than or equal to maxStalenessSeconds.  Not providing the parameter or explicitly setting it to -1
  * indicates that there should be no max staleness check. The maximum staleness feature is designed to prevent badly-lagging servers from
  * being selected. The staleness estimate is imprecise and shouldn't be used to try to select "up-to-date" secondaries.  The minimum value
@@ -873,14 +873,15 @@ public class ConnectionString {
                 LOGGER.warn("Uri option 'wtimeout' has been deprecated, use 'wtimeoutms' instead.");
             }
         }
-        // handle legacy slaveok settings
-        String slaveok = getLastValue(optionsMap, "slaveok");
-        if (slaveok != null && !optionsMap.containsKey("readpreference")) {
-            String readPreference = Boolean.TRUE.equals(parseBoolean(slaveok, "slaveok"))
+        String legacySecondaryOkOption = "slaveok";
+        // handle legacy secondary ok settings
+        String legacySecondaryOk = getLastValue(optionsMap, legacySecondaryOkOption);
+        if (legacySecondaryOk != null && !optionsMap.containsKey("readpreference")) {
+            String readPreference = Boolean.TRUE.equals(parseBoolean(legacySecondaryOk, legacySecondaryOkOption))
                                     ? "secondaryPreferred" : "primary";
             optionsMap.put("readpreference", singletonList(readPreference));
             if (LOGGER.isWarnEnabled()) {
-                LOGGER.warn("Uri option 'slaveok' has been deprecated, use 'readpreference' instead.");
+                LOGGER.warn(String.format("Uri option '%s' has been deprecated, use 'readpreference' instead.", legacySecondaryOkOption));
             }
         }
         // handle legacy j settings

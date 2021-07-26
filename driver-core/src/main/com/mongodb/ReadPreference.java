@@ -105,8 +105,18 @@ public abstract class ReadPreference {
      * True if this read preference allows reading from a secondary member of a replica set.
      *
      * @return if reading from a secondary is ok
+     * @deprecated Prefer {@link #isSecondaryOk()}
      */
+    @Deprecated
     public abstract boolean isSlaveOk();
+
+    /**
+     * True if this read preference allows reading from a secondary member of a replica set.
+     *
+     * @return if reading from a secondary is ok
+     * @since 4.4
+     */
+    public abstract boolean isSecondaryOk();
 
     /**
      * Gets the name of this read preference.
@@ -211,7 +221,7 @@ public abstract class ReadPreference {
      * Gets a read preference that forces reads to a secondary that is less stale than the given maximum.
      *
      * <p>
-     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses,
      * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
      * </p>
      *
@@ -231,7 +241,7 @@ public abstract class ReadPreference {
      * otherwise to the primary.
      *
      * <p>
-     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses,
      * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
      * </p>     *
      * @param maxStaleness the max allowable staleness of secondaries. The minimum value is either 90 seconds, or the heartbeat frequency
@@ -249,7 +259,7 @@ public abstract class ReadPreference {
      * Gets a read preference that forces reads to a primary or a secondary that is less stale than the given maximum.
      *
      * <p>
-     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses,
      * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
      * </p>
      *
@@ -313,7 +323,7 @@ public abstract class ReadPreference {
      * that is less stale than the given maximum.
      *
      * <p>
-     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses,
      * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
      * </p>
      *
@@ -334,7 +344,7 @@ public abstract class ReadPreference {
      * Gets a read preference that forces reads to a secondary with the given set of tags that is less stale than the given maximum.
      *
      * <p>
-     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses,
      * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
      * </p>
      *
@@ -356,7 +366,7 @@ public abstract class ReadPreference {
      * or the primary is none are available.
      *
      * <p>
-     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses,
      * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
      * </p>     *
      * @param tagSet the set of tags to limit the list of secondaries to
@@ -377,7 +387,7 @@ public abstract class ReadPreference {
      * given maximum.
      *
      * <p>
-     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses,
      * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
      * </p>
      *
@@ -457,7 +467,7 @@ public abstract class ReadPreference {
      * </p>
      *
      * <p>
-     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses,
      * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
      * </p>
      *
@@ -484,7 +494,7 @@ public abstract class ReadPreference {
      * </p>
      *
      * <p>
-     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses,
      * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
      * </p>
      *
@@ -511,7 +521,7 @@ public abstract class ReadPreference {
      * </p>
      *
      * <p>
-     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses,
      * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
      * </p>
      *
@@ -538,7 +548,7 @@ public abstract class ReadPreference {
      * </p>
      *
      * <p>
-     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses,
      * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
      * </p>
      *
@@ -601,7 +611,7 @@ public abstract class ReadPreference {
      * Creates a taggable read preference from the given read preference name, list of tag sets, and max allowable staleness of secondaries.
      *
      * <p>
-     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses,
      * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
      * </p>
      *
@@ -676,6 +686,11 @@ public abstract class ReadPreference {
 
         @Override
         public boolean isSlaveOk() {
+            return false;
+        }
+
+        @Override
+        public boolean isSecondaryOk() {
             return false;
         }
 

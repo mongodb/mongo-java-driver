@@ -21,7 +21,6 @@ import com.mongodb.MongoException
 import com.mongodb.MongoTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
-import com.mongodb.ServerCursor
 import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.client.model.CreateCollectionOptions
@@ -61,6 +60,7 @@ import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.internal.connection.ServerHelper.waitForLastRelease
 import static com.mongodb.internal.connection.ServerHelper.waitForRelease
 import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToQueryResult
+import static com.mongodb.internal.operation.QueryOperationHelper.makeAdditionalGetMoreCall
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo
 import static java.util.Arrays.asList
 import static java.util.Collections.singletonList
@@ -357,7 +357,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         while (connection.getCount() > 1) {
             Thread.sleep(5)
         }
-        makeAdditionalGetMoreCall(firstBatch.cursor, connection)
+        makeAdditionalGetMoreCall(getNamespace(), firstBatch.cursor, connection as Connection)
 
         then:
         thrown(MongoCursorNotFoundException)
@@ -446,9 +446,5 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
                                   new DocumentCodec(), futureResultCallback);
             futureResultCallback.get();
         }
-    }
-
-    private void makeAdditionalGetMoreCall(ServerCursor serverCursor, Connection connection) {
-        connection.getMore(getNamespace(), serverCursor.getId(), 1, new DocumentCodec())
     }
 }

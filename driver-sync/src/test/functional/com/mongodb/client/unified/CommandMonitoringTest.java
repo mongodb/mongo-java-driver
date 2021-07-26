@@ -16,9 +16,6 @@
 
 package com.mongodb.client.unified;
 
-import com.mongodb.MongoClientSettings;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -28,7 +25,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-public class CommandMonitoringTest extends UnifiedTest {
+public class CommandMonitoringTest extends UnifiedSyncTest {
 
 
     public CommandMonitoringTest(@SuppressWarnings("unused") final String fileDescription,
@@ -37,11 +34,6 @@ public class CommandMonitoringTest extends UnifiedTest {
                                  @Nullable final BsonArray runOnRequirements, final BsonArray entities, final BsonArray initialData,
                                  final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
-    }
-
-    @Override
-    protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return MongoClients.create(settings);
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")

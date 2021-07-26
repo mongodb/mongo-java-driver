@@ -16,12 +16,7 @@
 
 package com.mongodb.reactivestreams.client.unified;
 
-import com.mongodb.MongoClientSettings;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.unified.UnifiedTest;
 import com.mongodb.lang.Nullable;
-import com.mongodb.reactivestreams.client.MongoClients;
-import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.junit.After;
@@ -38,7 +33,7 @@ import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.ena
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.enableSleepAfterCursorOpen;
 import static org.junit.Assume.assumeFalse;
 
-public class LoadBalancerTest extends UnifiedTest {
+public class LoadBalancerTest extends UnifiedReactiveStreamsTest {
 
     private static final List<String> CURSOR_OPEN_TIMING_SENSITIVE_TESTS =
             Arrays.asList(
@@ -83,11 +78,6 @@ public class LoadBalancerTest extends UnifiedTest {
     public void cleanUp() {
         super.cleanUp();
         disableSleep();
-    }
-
-    @Override
-    protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return new SyncMongoClient(MongoClients.create(settings));
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")

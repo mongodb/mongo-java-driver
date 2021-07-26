@@ -142,7 +142,7 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     }
 
     //
-    // Test that the ChangeStream will automatically resume one time on a resumable error (including not master)
+    // Test that the ChangeStream will automatically resume one time on a resumable error (including not primary)
     // with the initial pipeline and options, except for the addition/update of a resumeToken.
     //
     @Test

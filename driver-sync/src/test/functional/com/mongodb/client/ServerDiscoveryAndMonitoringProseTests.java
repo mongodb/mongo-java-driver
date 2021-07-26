@@ -36,6 +36,7 @@ import static com.mongodb.ClusterFixture.disableFailPoint;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static java.lang.String.format;
 import static java.util.Collections.synchronizedList;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.bson.BsonDocument.parse;
@@ -44,6 +45,9 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 public class ServerDiscoveryAndMonitoringProseTests {
+
+    static final String HELLO = "hello";
+    static final String LEGACY_HELLO = "isMaster";
 
     @Test
     @SuppressWarnings("try")
@@ -96,16 +100,16 @@ public class ServerDiscoveryAndMonitoringProseTests {
             events.forEach(event ->
                            assertTrue(event.getNewDescription().getRoundTripTimeNanos() > 0));
 
-            configureFailPoint(parse("{"
+            configureFailPoint(parse(format("{"
                                      + "configureFailPoint: \"failCommand\","
                                      + "mode: {times: 1000},"
                                      + " data: {"
-                                     + "   failCommands: [\"isMaster\", \"hello\"],"
+                                     + "   failCommands: [\"%s\", \"%s\"],"
                                      + "   blockConnection: true,"
                                      + "   blockTimeMS: 100,"
                                      + "   appName: \"streamingRttTest\""
                                      + "  }"
-                                     + "}"));
+                                     + "}", LEGACY_HELLO, HELLO)));
 
             long startTime = System.currentTimeMillis();
             while (true) {

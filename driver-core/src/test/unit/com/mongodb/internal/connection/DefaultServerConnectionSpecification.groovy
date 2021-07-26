@@ -44,6 +44,7 @@ import static com.mongodb.CustomMatchers.compare
 import static com.mongodb.connection.ServerType.SHARD_ROUTER
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback
+import static com.mongodb.internal.connection.MessageHelper.LEGACY_HELLO_LOWER
 
 class DefaultServerConnectionSpecification extends Specification {
     def namespace = new MongoNamespace('test', 'test')
@@ -116,7 +117,7 @@ class DefaultServerConnectionSpecification extends Specification {
         def executor = Mock(ProtocolExecutor) {
             1 * execute({
                 compare(new QueryProtocol(namespace, 2, 10, 5, query, fields, decoder)
-                    .slaveOk(slaveOk)
+                    .secondaryOk(secondaryOk)
                     .tailableCursor(false)
                     .awaitData(true)
                     .noCursorTimeout(false)
@@ -128,16 +129,16 @@ class DefaultServerConnectionSpecification extends Specification {
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
 
         when:
-        def result = connection.query(namespace, query, fields, 2, 10, 5, slaveOk, false, true, false, true, false, decoder)
+        def result = connection.query(namespace, query, fields, 2, 10, 5, secondaryOk, false, true, false, true, false, decoder)
 
         then:
         result == expectedResult
 
         where:
-        slaveOk << [true, false]
+        secondaryOk << [true, false]
     }
 
-    def 'should set slaveOk when executing query protocol on connection in SINGLE connection mode'() {
+    def 'should set secondaryOk when executing query protocol on connection in SINGLE connection mode'() {
         given:
         def decoder = new BsonDocumentCodec()
         def query = new BsonDocument('x', BsonBoolean.TRUE)
@@ -146,7 +147,7 @@ class DefaultServerConnectionSpecification extends Specification {
         def executor = Mock(ProtocolExecutor) {
             1 * execute({
                 compare(new QueryProtocol(namespace, 2, 10, 5, query, fields, decoder)
-                    .slaveOk(expectedSlaveOk)
+                    .secondaryOk(expectedSecondaryOk)
                     .tailableCursor(false)
                     .awaitData(true)
                     .noCursorTimeout(false)
@@ -165,7 +166,7 @@ class DefaultServerConnectionSpecification extends Specification {
         result == expectedResult
 
         where:
-        connectionDescription           | expectedSlaveOk
+        connectionDescription           | expectedSecondaryOk
         standaloneConnectionDescription | true
         mongosConnectionDescription     | false
     }
@@ -244,7 +245,7 @@ class DefaultServerConnectionSpecification extends Specification {
 
     def 'should execute command protocol asynchronously'() {
         given:
-        def command = new BsonDocument('ismaster', new BsonInt32(1))
+        def command = new BsonDocument(LEGACY_HELLO_LOWER, new BsonInt32(1))
         def validator = new NoOpFieldNameValidator()
         def codec = new BsonDocumentCodec()
         def executor = Mock(ProtocolExecutor)
@@ -269,12 +270,12 @@ class DefaultServerConnectionSpecification extends Specification {
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
 
         when:
-        connection.queryAsync(namespace, query, fields, 2, 10, 5, slaveOk, false, true, false, true, false, decoder, callback)
+        connection.queryAsync(namespace, query, fields, 2, 10, 5, secondaryOk, false, true, false, true, false, decoder, callback)
 
         then:
         1 * executor.executeAsync({
                                       compare(new QueryProtocol(namespace, 2, 10, 5, query, fields, decoder)
-                                               .slaveOk(slaveOk)
+                                               .secondaryOk(secondaryOk)
                                                .tailableCursor(false)
                                                .awaitData(true)
                                                .noCursorTimeout(false)
@@ -284,10 +285,10 @@ class DefaultServerConnectionSpecification extends Specification {
                              }, internalConnection, callback)
 
         where:
-        slaveOk << [true, false]
+        secondaryOk << [true, false]
     }
 
-    def 'should set slaveOk when executing query protocol on connection in SINGLE connection mode asynchronously'() {
+    def 'should set secondaryOk when executing query protocol on connection in SINGLE connection mode asynchronously'() {
         given:
         def decoder = new BsonDocumentCodec()
         def query = new BsonDocument('x', BsonBoolean.TRUE)
@@ -302,7 +303,7 @@ class DefaultServerConnectionSpecification extends Specification {
         then:
         1 * executor.executeAsync({
                                       compare(new QueryProtocol(namespace, 2, 10, 5, query, fields, decoder)
-                                               .slaveOk(expectedSlaveOk)
+                                               .secondaryOk(expectedSecondaryOk)
                                                .tailableCursor(false)
                                                .awaitData(true)
                                                .noCursorTimeout(false)
@@ -312,7 +313,7 @@ class DefaultServerConnectionSpecification extends Specification {
                              }, internalConnection, callback)
 
         where:
-        connectionDescription           | expectedSlaveOk
+        connectionDescription           | expectedSecondaryOk
         standaloneConnectionDescription | true
         mongosConnectionDescription     | false
     }

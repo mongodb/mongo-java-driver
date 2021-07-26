@@ -37,6 +37,7 @@ import java.util.concurrent.TimeUnit
 import static com.mongodb.internal.connection.DescriptionHelper.createConnectionDescription
 import static com.mongodb.internal.connection.DescriptionHelper.createServerDescription
 import static org.bson.BsonDocument.parse
+import static com.mongodb.internal.connection.MessageHelper.LEGACY_HELLO_LOWER
 
 class DescriptionHelperSpecification extends Specification {
     private final ServerAddress serverAddress = new ServerAddress('localhost', 27018)
@@ -50,12 +51,12 @@ class DescriptionHelperSpecification extends Specification {
         Time.makeTimeMove()
     }
 
-    def 'connection description should reflect ismaster result'() {
+    def 'connection description should reflect hello result'() {
         def connectionId = new ConnectionId(new ServerId(new ClusterId(), serverAddress))
         expect:
         createConnectionDescription(ClusterConnectionMode.SINGLE, connectionId,
-                parse('''{
-                                          ismaster : true,
+                parse("""{
+                                          $LEGACY_HELLO_LOWER: true,
                                           maxBsonObjectSize : 16777216,
                                           maxMessageSizeBytes : 48000000,
                                           maxWriteBatchSize : 1000,
@@ -63,12 +64,12 @@ class DescriptionHelperSpecification extends Specification {
                                           maxWireVersion : 6,
                                           minWireVersion : 0,
                                           ok : 1
-                                          }''')) ==
+                                          }""")) ==
         new ConnectionDescription(connectionId, 6, ServerType.STANDALONE, 1000, 16777216, 48000000, [])
 
         createConnectionDescription(ClusterConnectionMode.SINGLE, connectionId,
-                parse('''{
-                                          ismaster : true,
+                parse("""{
+                                          $LEGACY_HELLO_LOWER: true,
                                           maxBsonObjectSize : 16777216,
                                           maxMessageSizeBytes : 48000000,
                                           maxWriteBatchSize : 1000,
@@ -77,13 +78,13 @@ class DescriptionHelperSpecification extends Specification {
                                           minWireVersion : 0,
                                           connectionId : 1004
                                           ok : 1
-                                          }''')) ==
+                                          }""")) ==
                 new ConnectionDescription(connectionId, 6, ServerType.STANDALONE, 1000, 16777216, 48000000, [])
                         .withConnectionId(connectionId.withServerValue(1004))
     }
 
 
-    def 'connection description should reflect ismaster result from load balancer'() {
+    def 'connection description should reflect legacy hello result from load balancer'() {
         given:
         def connectionId = new ConnectionId(new ServerId(new ClusterId(), serverAddress))
         ObjectId serviceId = new ObjectId()
@@ -91,7 +92,7 @@ class DescriptionHelperSpecification extends Specification {
         expect:
         createConnectionDescription(ClusterConnectionMode.LOAD_BALANCED, connectionId,
                 parse("""{
-                        ismaster : true,
+                        $LEGACY_HELLO_LOWER: true,
                         msg : "isdbgrid",
                         maxBsonObjectSize : 16777216,
                         maxMessageSizeBytes : 48000000,
@@ -109,8 +110,8 @@ class DescriptionHelperSpecification extends Specification {
 
         when:
         createConnectionDescription(ClusterConnectionMode.LOAD_BALANCED, connectionId,
-                parse('''{
-                        ismaster : true,
+                parse("""{
+                        $LEGACY_HELLO_LOWER: true,
                         msg : "isdbgrid",
                         maxBsonObjectSize : 16777216,
                         maxMessageSizeBytes : 48000000,
@@ -120,19 +121,19 @@ class DescriptionHelperSpecification extends Specification {
                         minWireVersion : 0,
                         connectionId : 1004,
                         ok : 1
-                        }'''))
+                        }"""))
 
         then:
         def e = thrown(MongoClientException)
         e.getMessage() == 'Driver attempted to initialize in load balancing mode, but the server does not support this mode'
     }
 
-    def 'connection description should reflect ismaster result with compressors'() {
+    def 'connection description should reflect legacy hello result with compressors'() {
         def connectionId = new ConnectionId(new ServerId(new ClusterId(), serverAddress))
         expect:
         createConnectionDescription(ClusterConnectionMode.SINGLE, connectionId,
-                parse('''{
-                                          ismaster : true,
+                parse("""{
+                                          $LEGACY_HELLO_LOWER: true,
                                           maxBsonObjectSize : 16777216,
                                           maxMessageSizeBytes : 48000000,
                                           maxWriteBatchSize : 1000,
@@ -141,12 +142,12 @@ class DescriptionHelperSpecification extends Specification {
                                           minWireVersion : 0,
                                           compression : ["zlib", "snappy"],
                                           ok : 1
-                                          }''')) ==
+                                          }""")) ==
         new ConnectionDescription(connectionId, 6, ServerType.STANDALONE, 1000, 16777216, 48000000,
                 ['zlib', 'snappy'])
     }
 
-    def 'server description should reflect not ok ismaster result'() {
+    def 'server description should reflect not ok legacy hello result'() {
         expect:
         createServerDescription(serverAddress,
                                 parse('{ok : 0}'), roundTripTime) ==
@@ -167,8 +168,8 @@ class DescriptionHelperSpecification extends Specification {
     def 'server description should reflect roundTripNanos'() {
         expect:
         createServerDescription(serverAddress,
-                                parse('''{
-                                      ismaster : true,
+                                parse("""{
+                                      $LEGACY_HELLO_LOWER: true,
                                       maxBsonObjectSize : 16777216,
                                       maxMessageSizeBytes : 48000000,
                                       maxWriteBatchSize : 1000,
@@ -176,7 +177,7 @@ class DescriptionHelperSpecification extends Specification {
                                       maxWireVersion : 3,
                                       minWireVersion : 0,
                                       ok : 1
-                                      }'''), roundTripTime).roundTripTimeNanos ==
+                                      }"""), roundTripTime).roundTripTimeNanos ==
         ServerDescription.builder()
                          .ok(true)
                          .address(serverAddress)
@@ -188,11 +189,11 @@ class DescriptionHelperSpecification extends Specification {
                          .build().roundTripTimeNanos
     }
 
-    def 'server description should reflect ismaster result from standalone'() {
+    def 'server description should reflect legacy hello result from standalone'() {
         expect:
         createServerDescription(serverAddress,
-                parse('''{
-                        ismaster : true,
+                parse("""{
+                        $LEGACY_HELLO_LOWER: true,
                         maxBsonObjectSize : 16777216,
                         maxMessageSizeBytes : 48000000,
                         maxWriteBatchSize : 1000,
@@ -200,7 +201,7 @@ class DescriptionHelperSpecification extends Specification {
                         maxWireVersion : 3,
                         minWireVersion : 0,
                         ok : 1
-                        }'''), roundTripTime) ==
+                        }"""), roundTripTime) ==
         ServerDescription.builder()
                          .ok(true)
                          .address(serverAddress)
@@ -211,12 +212,12 @@ class DescriptionHelperSpecification extends Specification {
                          .build()
     }
 
-    def 'server description should reflect ismaster result from secondary'() {
+    def 'server description should reflect legacy hello result from secondary'() {
         expect:
         createServerDescription(new ServerAddress('localhost', 27018),
-                parse('''{
+                parse("""{
                         "setName" : "replset",
-                        "ismaster" : false,
+                        "$LEGACY_HELLO_LOWER": false,
                         "secondary" : true,
                         "hosts" : [
                         "localhost:27017",
@@ -234,7 +235,7 @@ class DescriptionHelperSpecification extends Specification {
                         "maxWireVersion" : 3,
                         "minWireVersion" : 0,
                         "ok" : 1
-                        }'''), roundTripTime) ==
+                        }"""), roundTripTime) ==
         ServerDescription.builder()
                          .ok(true)
                          .address(new ServerAddress('localhost', 27018))
@@ -249,12 +250,12 @@ class DescriptionHelperSpecification extends Specification {
                          .build()
     }
 
-    def 'server description should reflect ismaster result with lastWriteDate'() {
+    def 'server description should reflect legacy hello result with lastWriteDate'() {
         expect:
         createServerDescription(new ServerAddress('localhost', 27018),
-                parse('''{
+                parse("""{
                         "setName" : "replset",
-                        "ismaster" : false,
+                        "$LEGACY_HELLO_LOWER" : false,
                         "secondary" : true,
                         "hosts" : [
                         "localhost:27017",
@@ -273,7 +274,7 @@ class DescriptionHelperSpecification extends Specification {
                         "minWireVersion" : 0,
                         "lastWrite" : { "lastWriteDate" : ISODate("2016-03-04T23:14:07.338Z") }
                         "ok" : 1
-                        }'''), roundTripTime) ==
+                        }"""), roundTripTime) ==
                 ServerDescription.builder()
                         .ok(true)
                         .address(new ServerAddress('localhost', 27018))
@@ -289,7 +290,7 @@ class DescriptionHelperSpecification extends Specification {
                         .build()
     }
 
-    def 'server description should reflect ismaster result from primary'() {
+    def 'server description should reflect legacy hello result from primary'() {
         given:
         ObjectId electionId = new ObjectId()
         ObjectId topologyVersionProcessId = new ObjectId()
@@ -299,7 +300,7 @@ class DescriptionHelperSpecification extends Specification {
                 parse("""{
                         "setName" : "replset",
                         "setVersion" : 1,
-                        "ismaster" : true,
+                        "$LEGACY_HELLO_LOWER" : true,
                         "secondary" : false,
                         "hosts" : [
                         "localhost:27017",
@@ -348,12 +349,12 @@ class DescriptionHelperSpecification extends Specification {
                          .build()
     }
 
-    def 'server description should reflect ismaster result from arbiter'() {
+    def 'server description should reflect legacy hello result from arbiter'() {
         expect:
         createServerDescription(serverAddress,
-                parse('''{
+                parse("""{
                         "setName" : "replset",
-                        "ismaster" : false,
+                        "$LEGACY_HELLO_LOWER": false,
                         "secondary" : false,
                         "hosts" : [
                         "localhost:27019",
@@ -373,7 +374,7 @@ class DescriptionHelperSpecification extends Specification {
                         "maxWireVersion" : 3,
                         "minWireVersion" : 0,
                         "ok" : 1
-                        }'''), roundTripTime) ==
+                        }"""), roundTripTime) ==
         ServerDescription.builder()
                          .ok(true)
                          .address(serverAddress)
@@ -389,15 +390,15 @@ class DescriptionHelperSpecification extends Specification {
                          .build()
     }
 
-    def 'server description should reflect ismaster result from other'() {
+    def 'server description should reflect legacy hello result from other'() {
         given:
         def serverAddressOfHidden = new ServerAddress('localhost', 27020)
 
         when:
         def serverDescription = createServerDescription(serverAddressOfHidden,
-                parse('''{
+                parse("""{
                         "setName" : "replset",
-                        "ismaster" : false,
+                        "$LEGACY_HELLO_LOWER": false,
                         "secondary" : false,
                         "hosts" : [
                         "localhost:27019",
@@ -417,7 +418,7 @@ class DescriptionHelperSpecification extends Specification {
                         "maxWireVersion" : 3,
                         "minWireVersion" : 0,
                         "ok" : 1
-                        }'''), roundTripTime)
+                        }"""), roundTripTime)
 
         then:
         serverDescription ==
@@ -436,15 +437,15 @@ class DescriptionHelperSpecification extends Specification {
                          .build()
     }
 
-    def 'server description should reflect ismaster result from hidden'() {
+    def 'server description should reflect legacy hello result from hidden'() {
         given:
         def serverAddressOfHidden = new ServerAddress('localhost', 27020)
 
         expect:
         createServerDescription(serverAddressOfHidden,
-                parse('''{
+                parse("""{
                         "setName" : "replset",
-                        "ismaster" : false,
+                        "$LEGACY_HELLO_LOWER": false,
                         "secondary" : true,
                         "hidden" : true,
                         "hosts" : [
@@ -465,7 +466,7 @@ class DescriptionHelperSpecification extends Specification {
                         "maxWireVersion" : 3,
                         "minWireVersion" : 0,
                         "ok" : 1
-                        }'''), roundTripTime) ==
+                        }"""), roundTripTime) ==
         ServerDescription.builder()
                          .ok(true)
                          .address(serverAddressOfHidden)
@@ -482,12 +483,12 @@ class DescriptionHelperSpecification extends Specification {
     }
 
 
-    def 'server description should reflect ismaster result from ghost'() {
+    def 'server description should reflect legacy hello result from ghost'() {
         expect:
         createServerDescription(serverAddress,
-                parse('''{
+                parse("""{
                         "setName" : "replset",
-                        "ismaster" : false,
+                        "$LEGACY_HELLO_LOWER": false,
                         "secondary" : false,
                         "arbiterOnly" : false,
                         "me" : "localhost:27020",
@@ -498,7 +499,7 @@ class DescriptionHelperSpecification extends Specification {
                         "maxWireVersion" : 3,
                         "minWireVersion" : 0,
                         "ok" : 1
-                        }'''), roundTripTime) ==
+                        }"""), roundTripTime) ==
         ServerDescription.builder()
                          .ok(true)
                          .address(serverAddress)
@@ -511,11 +512,11 @@ class DescriptionHelperSpecification extends Specification {
                          .build()
     }
 
-    def 'server description should reflect ismaster result from shard router'() {
+    def 'server description should reflect legacy hello result from shard router'() {
         expect:
         createServerDescription(serverAddress,
-                parse('''{
-                        "ismaster" : true,
+                parse("""{
+                        "$LEGACY_HELLO_LOWER": true,
                         "msg" : "isdbgrid",
                         "maxBsonObjectSize" : 16777216,
                         "maxMessageSizeBytes" : 48000000,
@@ -524,7 +525,7 @@ class DescriptionHelperSpecification extends Specification {
                         "maxWireVersion" : 3,
                         "minWireVersion" : 0,
                         "ok" : 1
-                        }'''), roundTripTime) ==
+                        }"""), roundTripTime) ==
         ServerDescription.builder()
                          .ok(true)
                          .address(serverAddress)

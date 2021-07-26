@@ -73,7 +73,7 @@ class OperationUnitSpecification extends Specification {
         test(operation, serverVersion, result, true, expectedCommand)
     }
 
-    void testOperationSlaveOk(operation, List<Integer> serverVersion, ReadPreference readPreference, boolean async, result = null) {
+    void testOperationSecondaryOk(operation, List<Integer> serverVersion, ReadPreference readPreference, boolean async, result = null) {
         def test = async ? this.&testAsyncOperation : this.&testSyncOperation
         test(operation, serverVersion, result, false, null, true, readPreference)
     }
@@ -85,7 +85,7 @@ class OperationUnitSpecification extends Specification {
 
     def testSyncOperation(operation, List<Integer> serverVersion, result, Boolean checkCommand=true,
                           BsonDocument expectedCommand=null,
-                          Boolean checkSlaveOk=false, ReadPreference readPreference=ReadPreference.primary()) {
+                          Boolean checkSecondaryOk=false, ReadPreference readPreference=ReadPreference.primary()) {
         def connection = Mock(Connection) {
             _ * getDescription() >> Stub(ConnectionDescription) {
                 getMaxWireVersion() >> getMaxWireVersionForServerVersion(serverVersion)
@@ -115,7 +115,7 @@ class OperationUnitSpecification extends Specification {
                 assert(it[1] == expectedCommand)
                 result
             }
-        } else if (checkSlaveOk) {
+        } else if (checkSecondaryOk) {
             1 * connection.command(*_) >> {
                 assert(it[3] == readPreference)
                 result
@@ -138,7 +138,7 @@ class OperationUnitSpecification extends Specification {
 
     def testAsyncOperation(operation, List<Integer> serverVersion, result = null,
                            Boolean checkCommand=true, BsonDocument expectedCommand=null,
-                           Boolean checkSlaveOk=false, ReadPreference readPreference=ReadPreference.primary()) {
+                           Boolean checkSecondaryOk=false, ReadPreference readPreference=ReadPreference.primary()) {
         def connection = Mock(AsyncConnection) {
             _ * getDescription() >> Stub(ConnectionDescription) {
                 getMaxWireVersion() >> getMaxWireVersionForServerVersion(serverVersion)
@@ -169,7 +169,7 @@ class OperationUnitSpecification extends Specification {
                 assert(it[1] == expectedCommand)
                 it.last().onResult(result, null)
             }
-        } else if (checkSlaveOk) {
+        } else if (checkSecondaryOk) {
             1 * connection.commandAsync(*_) >> {
                 assert(it[3] == readPreference)
                 it.last().onResult(result, null)
