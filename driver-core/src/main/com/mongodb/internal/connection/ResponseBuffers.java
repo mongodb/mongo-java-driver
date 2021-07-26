@@ -16,6 +16,9 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.MongoInternalException;
+import com.mongodb.internal.connection.debug.InternalConnectionDebugger;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
@@ -43,8 +46,17 @@ public class ResponseBuffers implements Closeable {
         return replyHeader;
     }
 
-    <T extends BsonDocument> T getResponseDocument(final int messageId, final Decoder<T> decoder) {
-        ReplyMessage<T> replyMessage = new ReplyMessage<T>(this, decoder, messageId);
+    <T extends BsonDocument> T getResponseDocument(final int messageId, final Decoder<T> decoder,
+            @Nullable final InternalConnectionDebugger debugger) {
+        ReplyMessage<T> replyMessage;
+        try {
+            replyMessage = new ReplyMessage<T>(this, decoder, messageId);
+        } catch (MongoInternalException e) {
+            if (debugger != null) {
+                debugger.invalidReply(e);
+            }
+            throw e;
+        }
         reset();
         return replyMessage.getDocuments().get(0);
     }

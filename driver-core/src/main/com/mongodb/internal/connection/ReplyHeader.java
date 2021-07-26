@@ -106,7 +106,7 @@ public final class ReplyHeader {
             } else {
                 throw new MongoInternalException(format("Unexpected reply message opCode %d", opCode));
             }
-        } catch (final MongoInternalException e) {
+        } catch (MongoInternalException e) {
             if (debugger != null) {
                 debugger.invalidReplyHeader(e, this);
             }

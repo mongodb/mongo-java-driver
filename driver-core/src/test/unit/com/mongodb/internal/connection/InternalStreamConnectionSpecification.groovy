@@ -296,7 +296,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
     def 'should throw MongoInternalException when reply header message length > max message length asynchronously'() {
         given:
-        Debugger.OverridingReportingMode debuggerReportingMode = Debugger.useReportingMode(Debugger.ReportingMode.OFF)
+        Debugger.OverridingReportingMode debuggerReportingMode = Debugger.useReportingMode(Debugger.ReportingMode.LOG)
         stream.readAsync(_, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
             handler.completed(helper.headerWithMessageSizeGreaterThanMax(1, connectionDescription.maxMessageSize))
         }

@@ -47,16 +47,12 @@ class MessageHeader {
             MongoInternalException e = new MongoInternalException(String.format(
                     "The reply message length %d is greater than the maximum message length %d", messageLength, maxMessageLength));
             if (debugger != null) {
-                debugger.dataCollector().ifPresent(dataCollector -> dataCollector.internalConnectionOperationCollector()
-                        .failed(e, null, InternalConnectionDebugger.InternalConnectionOperationCode.DECODE_MESSAGE_HEADER,
-                                dataCollector.ioCollector().streamReadPosition(), this));
+                debugger.invalidMessageHeader(e, this);
             }
             throw e;
         }
         if (debugger != null) {
-            debugger.dataCollector().ifPresent(dataCollector -> dataCollector.internalConnectionOperationCollector()
-                    .succeeded(null, InternalConnectionDebugger.InternalConnectionOperationCode.DECODE_MESSAGE_HEADER,
-                            dataCollector.ioCollector().streamReadPosition(), this));
+            debugger.validMessageHeader(this, messageLength);
         }
     }
 

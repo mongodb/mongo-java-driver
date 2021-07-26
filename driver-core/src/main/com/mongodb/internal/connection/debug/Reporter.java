@@ -45,12 +45,12 @@ interface Reporter {
      * @throws MongoDebuggingException If completes abruptly in synchronous mode.
      */
     /* Alternatively to returning a value and burdening the caller with handling it, the method could have accepted one more callback
-     * of type `SuccessCallback`. While this approach would result in writing prettier/simpler debugging code, it would increase the effect
+     * of type `SuccessCallback`. While this approach could result in writing prettier/simpler debugging code, it would increase the effect
      * from debugger presence on stack traces in happy paths. I think reducing this effect is more important than making the debugging
      * code prettier. */
-    boolean report(MongoDebuggingException t, @Nullable FailureCallback callback) throws MongoDebuggingException;
+    boolean report(MongoDebuggingException e, @Nullable FailureCallback callback) throws MongoDebuggingException;
 
     interface FailureCallback {
-        void execute(RuntimeException t);
+        void execute(RuntimeException e);
     }
 }

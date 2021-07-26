@@ -17,7 +17,6 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoCommandException;
-import com.mongodb.MongoInternalException;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.event.CommandListener;
@@ -57,9 +56,9 @@ class LoggingCommandEventSender implements CommandEventSender {
     private final CommandEventSender debuggingCommandEventSender;
 
     LoggingCommandEventSender(final Set<String> securitySensitiveCommands, final Set<String> securitySensitiveHelloCommands,
-            final ConnectionDescription description,
-            final CommandListener commandListener, final CommandMessage message,
-            final ByteBufferBsonOutput bsonOutput, final Logger logger) {
+                              final ConnectionDescription description,
+                              final CommandListener commandListener, final CommandMessage message,
+                              final ByteBufferBsonOutput bsonOutput, final Logger logger) {
         this(securitySensitiveCommands, securitySensitiveHelloCommands, description, commandListener, message,
                  bsonOutput, logger, null);
     }
@@ -165,18 +164,13 @@ class LoggingCommandEventSender implements CommandEventSender {
                             message.getId(), getElapsedTimeFormattedInMilliseconds(elapsedTimeNanos), description.getConnectionId(),
                             description.getServerAddress()));
         }
-        try {
-            if (eventRequired()) {
-                BsonDocument responseDocumentForEvent = redactionRequired
-                        ? new BsonDocument()
-                        : responseBuffers.getResponseDocument(message.getId(), new RawBsonDocumentCodec());
-                sendCommandSucceededEvent(message, commandName, responseDocumentForEvent, description,
-                        elapsedTimeNanos, commandListener);
-            }
-        } catch (MongoInternalException e) {
-            if (internalConnectionDebugger != null) {
-                internalConnectionDebugger.invalidReply(e);
-            }
+
+        if (eventRequired()) {
+            BsonDocument responseDocumentForEvent = redactionRequired
+                    ? new BsonDocument()
+                    : responseBuffers.getResponseDocument(message.getId(), new RawBsonDocumentCodec(), internalConnectionDebugger);
+            sendCommandSucceededEvent(message, commandName, responseDocumentForEvent, description,
+                    elapsedTimeNanos, commandListener);
         }
     }
 

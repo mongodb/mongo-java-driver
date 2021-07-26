@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -49,7 +50,7 @@ final class InternalConnectionDebuggerTest {
     @Test
     void report() {
         MongoDebuggingException e = new MongoDebuggingException();
-        Reporter.FailureCallback mustNotBeCalled = t -> fail();
+        Reporter.FailureCallback mustNotBeCalled = ignored -> fail();
         assertAll(
                 () -> assertFalse(new InternalConnectionDebugger(Debugger.ReportingMode.OFF)
                         .report(e, null)),
@@ -73,14 +74,18 @@ final class InternalConnectionDebuggerTest {
     }
 
     @Test
-    void dataCollector() {
+    void ringBufferIdx() {
         assertAll(
-                () -> assertFalse(new InternalConnectionDebugger(Debugger.ReportingMode.OFF)
-                        .dataCollector().isPresent()),
-                () -> assertTrue(new InternalConnectionDebugger(Debugger.ReportingMode.LOG)
-                        .dataCollector().isPresent()),
-                () -> assertTrue(new InternalConnectionDebugger(Debugger.ReportingMode.LOG_AND_THROW)
-                        .dataCollector().isPresent())
-        );
+                () -> assertEquals(1, InternalConnectionDebugger.ringBufferIdx(-5, 3)),
+                () -> assertEquals(2, InternalConnectionDebugger.ringBufferIdx(-4, 3)),
+                () -> assertEquals(0, InternalConnectionDebugger.ringBufferIdx(-3, 3)),
+                () -> assertEquals(1, InternalConnectionDebugger.ringBufferIdx(-2, 3)),
+                () -> assertEquals(2, InternalConnectionDebugger.ringBufferIdx(-1, 3)),
+                () -> assertEquals(0, InternalConnectionDebugger.ringBufferIdx(0, 3)),
+                () -> assertEquals(1, InternalConnectionDebugger.ringBufferIdx(1, 3)),
+                () -> assertEquals(2, InternalConnectionDebugger.ringBufferIdx(2, 3)),
+                () -> assertEquals(0, InternalConnectionDebugger.ringBufferIdx(3, 3)),
+                () -> assertEquals(1, InternalConnectionDebugger.ringBufferIdx(4, 3)),
+                () -> assertEquals(2, InternalConnectionDebugger.ringBufferIdx(5, 3)));
     }
 }

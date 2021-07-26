@@ -244,7 +244,7 @@ public class InternalStreamConnection implements InternalConnection {
         initialServerDescription = initializationDescription.getServerDescription();
         opened.set(true);
         sendCompressor = findSendCompressor(description);
-        debugger.dataCollector().ifPresent(dataCollector -> dataCollector.connectionOpened(description, initialServerDescription));
+        debugger.connectionOpened(description, initialServerDescription);
         if (LOGGER.isInfoEnabled()) {
             LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
         }
@@ -407,7 +407,7 @@ public class InternalStreamConnection implements InternalConnection {
         try (ResponseBuffers responseBuffers = receiveMessageWithAdditionalTimeout(additionalTimeout)) {
             updateSessionContext(sessionContext, responseBuffers);
             if (!isCommandOk(responseBuffers)) {
-                throw getCommandFailureException(responseBuffers.getResponseDocument(responseTo, new BsonDocumentCodec()),
+                throw getCommandFailureException(responseBuffers.getResponseDocument(responseTo, new BsonDocumentCodec(), debugger),
                         description.getServerAddress());
             }
 
@@ -503,7 +503,7 @@ public class InternalStreamConnection implements InternalConnection {
                                 responseBuffers.reset();
                                 if (!commandOk) {
                                     MongoException commandFailureException = getCommandFailureException(
-                                            responseBuffers.getResponseDocument(messageId, new BsonDocumentCodec()),
+                                            responseBuffers.getResponseDocument(messageId, new BsonDocumentCodec(), debugger),
                                             description.getServerAddress());
                                     commandEventSender.sendFailedEvent(commandFailureException);
                                     throw commandFailureException;

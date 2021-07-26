@@ -41,6 +41,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.StampedLock;
 import java.util.stream.Collectors;
 
+import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.internal.connection.debug.Debugger.LOGGER;
@@ -82,10 +83,6 @@ public final class InternalConnectionDebugger implements Reporter {
         commandEventSenderDebugger = dataCollector == null ? null : new CommandEventSenderDebugger(dataCollector);
     }
 
-    public Optional<DataCollector> dataCollector() {
-        return Optional.ofNullable(dataCollector);
-    }
-
     public Optional<CommandEventSenderDebugger> commandEventSenderDebugger() {
         return Optional.ofNullable(commandEventSenderDebugger);
     }
@@ -94,33 +91,67 @@ public final class InternalConnectionDebugger implements Reporter {
         return mode.on() ? new DebuggableStreamFactory(factory) : factory;
     }
 
-    /**
-     * Reacts on errors like "Unexpected reply message opCode 50361199".
-     */
-    public void invalidReplyHeader(final MongoInternalException t, final ReplyHeader replyHeader) {
+    public void connectionOpened(final ConnectionDescription connectionDescription, final ServerDescription initialServerDescription) {
         if (mode.on()) {
-            report(new MongoDebuggingException("Detected an invalid reply header, header=" + replyHeader, t), null);
+            assertNotNull(dataCollector).connectionOpened(connectionDescription, initialServerDescription);
+        }
+    }
+
+    public void validMessageHeader(final Object messageHeader, final int messageLength) {
+        if (mode.on()) {
+            assertNotNull(dataCollector);
+            dataCollector.ioCollector().succeededMessageHeader(messageLength);
+            dataCollector.internalConnectionOperationCollector()
+                    .succeeded(null, InternalConnectionOperationCode.DECODE_MESSAGE_HEADER,
+                            dataCollector.ioCollector().streamReadPosition(), messageHeader);
         }
     }
 
     /**
-     * Reacts on errors like "response does not match the requestId".
+     * Reacts to errors like "message length 1953853033 is greater than the maximum message length 48000000".
      */
-    public void invalidReply(final MongoInternalException t) {
+    public void invalidMessageHeader(final MongoInternalException e, final Object messageHeader) {
         if (mode.on()) {
-            report(new MongoDebuggingException("Detected an invalid reply", t), null);
+            assertNotNull(dataCollector).internalConnectionOperationCollector()
+                    .failed(new MongoDebuggingException("Detected an invalid reply message header " + messageHeader, e), null,
+                            InternalConnectionOperationCode.DECODE_MESSAGE_HEADER,
+                            dataCollector.ioCollector().streamReadPosition(), messageHeader);
+        }
+    }
+
+    /**
+     * Reacts to errors like "Unexpected reply message opCode 50361199".
+     */
+    public void invalidReplyHeader(final MongoInternalException e, final ReplyHeader replyHeader) {
+        if (mode.on()) {
+            assertNotNull(dataCollector).internalConnectionOperationCollector()
+                    .failed(new MongoDebuggingException("Detected an invalid reply header " + replyHeader, e), null,
+                            InternalConnectionOperationCode.DECODE_REPLY_HEADER,
+                            dataCollector.ioCollector().streamReadPosition(), replyHeader);
+        }
+    }
+
+    /**
+     * Reacts to errors like "response does not match the requestId".
+     */
+    public void invalidReply(final MongoInternalException e) {
+        if (mode.on()) {
+            assertNotNull(dataCollector).internalConnectionOperationCollector()
+                    .failed(new MongoDebuggingException("Detected an invalid reply", e), null,
+                            InternalConnectionOperationCode.DECODE_REPLY,
+                            dataCollector.ioCollector().streamReadPosition());
         }
     }
 
     @Override
-    public boolean report(final MongoDebuggingException t, @Nullable final FailureCallback callback) {
+    public boolean report(final MongoDebuggingException e, @Nullable final FailureCallback callback) {
         switch (mode) {
             case LOG: {
-                LOGGER.error("", exception(t));
+                LOGGER.error("", exception(e));
                 return false;
             }
             case LOG_AND_THROW: {
-                MongoDebuggingException reported = exception(t);
+                MongoDebuggingException reported = exception(e);
                 LOGGER.error("", reported);
                 if (callback == null) {
                     throw reported;
@@ -153,22 +184,29 @@ public final class InternalConnectionDebugger implements Reporter {
                 + ", " + assertNotNull(dataCollector).toString();
     }
 
+    @VisibleForTesting(otherwise = PRIVATE)
+    static int ringBufferIdx(final long linearElementIdx, final int ringBufferSize) {
+        return Math.toIntExact(linearElementIdx >= 0
+                ? linearElementIdx % ringBufferSize
+                : (ringBufferSize + linearElementIdx % ringBufferSize) % ringBufferSize);
+    }
+
     private enum StreamOperationCode {
         OPEN,
         READ,
-        WRITE
+        WRITE,
+        CLOSE
     }
 
-    public enum InternalConnectionOperationCode {
+    private enum InternalConnectionOperationCode {
         COMMAND,
-        /**
-         * Reacts on errors like "message length 1953853033 is greater than the maximum message length 48000000".
-         */
-        DECODE_MESSAGE_HEADER
+        DECODE_MESSAGE_HEADER,
+        DECODE_REPLY_HEADER,
+        DECODE_REPLY
     }
 
     @ThreadSafe
-    public static final class DataCollector {
+    static final class DataCollector {
         @Nullable
         private volatile Instant openedInstant;
         @Nullable
@@ -183,11 +221,11 @@ public final class InternalConnectionDebugger implements Reporter {
 
         private DataCollector(final Reporter reporter) {
             ioCollector = new IoCollector();
-            streamOperationCollector = new OperationCollector<>(reporter, 6, true, true);
-            internalConnectionOperationCollector = new OperationCollector<>(reporter, 6, false, false);
+            streamOperationCollector = new OperationCollector<>(reporter, 8, true, true);
+            internalConnectionOperationCollector = new OperationCollector<>(reporter, 8, false, false);
         }
 
-        public void connectionOpened(final ConnectionDescription connectionDescription, final ServerDescription initialServerDescription) {
+        void connectionOpened(final ConnectionDescription connectionDescription, final ServerDescription initialServerDescription) {
             openedInstant = Instant.now();
             openedThreadName = Thread.currentThread().getName();
             this.connectionDescription = connectionDescription.toString();
@@ -198,11 +236,11 @@ public final class InternalConnectionDebugger implements Reporter {
             return streamOperationCollector;
         }
 
-        public OperationCollector<InternalConnectionOperationCode> internalConnectionOperationCollector() {
+        OperationCollector<InternalConnectionOperationCode> internalConnectionOperationCollector() {
             return internalConnectionOperationCollector;
         }
 
-        public IoCollector ioCollector() {
+        IoCollector ioCollector() {
             return ioCollector;
         }
 
@@ -222,9 +260,14 @@ public final class InternalConnectionDebugger implements Reporter {
         @NotThreadSafe
         private static final class IoData {
             private long successReads;
-            private long successBytes;
+            private long successReadBytes;
+            private long msgHeaders;
+            /**
+             * The sum of {@code MessageHeader.messageLength} for all successfully decoded message headers.
+             */
+            private long msgHeaderMessageLengthBytes;
             private long failReads;
-            private long failBytes;
+            private long failReadBytes;
             private long failNegativeReads;
             private long successWrites;
             private long failWrites;
@@ -234,9 +277,11 @@ public final class InternalConnectionDebugger implements Reporter {
 
             IoData(final IoData o) {
                 successReads = o.successReads;
-                successBytes = o.successBytes;
+                successReadBytes = o.successReadBytes;
+                msgHeaders = o.msgHeaders;
+                msgHeaderMessageLengthBytes = o.msgHeaderMessageLengthBytes;
                 failReads = o.failReads;
-                failBytes = o.failBytes;
+                failReadBytes = o.failReadBytes;
                 failNegativeReads = o.failNegativeReads;
                 successWrites = o.successWrites;
                 failWrites = o.failWrites;
@@ -246,9 +291,11 @@ public final class InternalConnectionDebugger implements Reporter {
             public String toString() {
                 return "IoData{"
                         + "successReads=" + successReads
-                        + ", successBytes=" + successBytes
+                        + ", successReadBytes=" + successReadBytes
+                        + ", msgHeaders=" + msgHeaders
+                        + ", msgHeaderMessageLengthBytes=" + msgHeaderMessageLengthBytes
                         + ", failReads=" + failReads
-                        + ", failBytes=" + failBytes
+                        + ", failReadBytes=" + failReadBytes
                         + ", failNegativeReads=" + failNegativeReads
                         + ", successWrites=" + successWrites
                         + ", failWrites=" + failWrites
@@ -257,23 +304,26 @@ public final class InternalConnectionDebugger implements Reporter {
         }
 
         @Immutable
-        public static final class StreamReadPosition {
-            private final long successBytes;
+        static final class StreamReadPosition {
+            private final long successReadBytes;
+            private final long msgHeaderMessageLengthBytes;
 
-            StreamReadPosition(final long successBytes) {
-                this.successBytes = successBytes;
+            StreamReadPosition(final long successReadBytes, final long msgHeaderMessageLengthBytes) {
+                this.successReadBytes = successReadBytes;
+                this.msgHeaderMessageLengthBytes = msgHeaderMessageLengthBytes;
             }
 
             @Override
             public String toString() {
                 return "StreamReadPosition{"
-                        + "successBytes=" + successBytes
+                        + "successReadBytes=" + successReadBytes
+                        + ", msgHeaderMessageLengthBytes=" + msgHeaderMessageLengthBytes
                         + '}';
             }
         }
 
         @ThreadSafe
-        public static final class IoCollector {
+        static final class IoCollector {
             private final Lock lock;
             private final IoData data;
 
@@ -291,10 +341,10 @@ public final class InternalConnectionDebugger implements Reporter {
                 }
             }
 
-            public StreamReadPosition streamReadPosition() {
+            StreamReadPosition streamReadPosition() {
                 lock.lock();
                 try {
-                    return new StreamReadPosition(data.successBytes);
+                    return new StreamReadPosition(data.successReadBytes, data.msgHeaderMessageLengthBytes);
                 } finally {
                     lock.unlock();
                 }
@@ -304,12 +354,15 @@ public final class InternalConnectionDebugger implements Reporter {
                 lock.lock();
                 try {
                     data.successReads++;
-                    data.successBytes += numberOfBytes;
+                    data.successReadBytes += numberOfBytes;
                 } finally {
                     lock.unlock();
                 }
             }
 
+            /**
+             * @return  A {@link MongoDebuggingException} to {@link #report(MongoDebuggingException, FailureCallback)}.
+             */
             @Nullable
             MongoDebuggingException failedRead(final int numberOfBytes) {
                 boolean negativeRead = false;
@@ -317,7 +370,7 @@ public final class InternalConnectionDebugger implements Reporter {
                 try {
                     if (numberOfBytes >= 0) {
                         data.failReads++;
-                        data.failBytes += numberOfBytes;
+                        data.failReadBytes += numberOfBytes;
                     } else {
                         data.failNegativeReads++;
                         negativeRead = true;
@@ -348,6 +401,16 @@ public final class InternalConnectionDebugger implements Reporter {
                 lock.lock();
                 try {
                     data.failWrites++;
+                } finally {
+                    lock.unlock();
+                }
+            }
+
+            void succeededMessageHeader(final int messageLengthBytes) {
+                lock.lock();
+                try {
+                    data.msgHeaders++;
+                    data.msgHeaderMessageLengthBytes += messageLengthBytes;
                 } finally {
                     lock.unlock();
                 }
@@ -399,30 +462,46 @@ public final class InternalConnectionDebugger implements Reporter {
             }
 
             boolean canBeFollowedBy(final OperationEvent<C> event) {
-                if (type == null) {
+                if (code == StreamOperationCode.CLOSE) {
+                    // `CLOSE` can be followed by any event because `CLOSE` is allowed to run concurrently with other operations
+                    return true;
+                } else if (event.code == StreamOperationCode.CLOSE) {
+                    // any event can be followed by `CLOSE` because `CLOSE` is allowed to run concurrently with other operations
+                    return true;
+                } else if (type == null) {
+                    // `this` (the current event) is not initialized, i.e., `event` must be the very first event
                     return event.type == Type.BEGIN;
-                }
-                switch (type) {
-                    case BEGIN: {
-                        return (event.type == Type.END_SUCCESS || event.type == Type.END_FAILURE) && code == event.code;
-                    }
-                    case END_SUCCESS:
-                    case END_FAILURE: {
-                        return event.type == Type.BEGIN;
-                    }
-                    default: {
-                        throw new AssertionError();
+                } else {
+                    switch (type) {
+                        case BEGIN: {
+                            // `BEGIN` can be followed only by `END_...` with the same `code`
+                            return (event.type == Type.END_SUCCESS || event.type == Type.END_FAILURE) && code == event.code;
+                        }
+                        case END_SUCCESS: {
+                            // `END_SUCCESS` can be followed only by `BEGIN`
+                            return event.type == Type.BEGIN;
+                        }
+                        case END_FAILURE: {
+                            // `END_FAILURE` can be followed only by `CLOSE`, which was handled above
+                            //noinspection ConstantConditions
+                            return assertFalse(event.code == StreamOperationCode.CLOSE);
+                        }
+                        default: {
+                            throw new AssertionError();
+                        }
                     }
                 }
             }
 
             private String attachmentsToString() {
                 return '[' + attachments.stream().map(attachment -> {
+                    String strAttachment;
                     if (attachment instanceof Throwable) {
-                        return Debugger.toString((Throwable) attachment);
+                        strAttachment = Debugger.toString((Throwable) attachment);
                     } else {
-                        return String.valueOf(attachment);
+                        strAttachment = String.valueOf(attachment);
                     }
+                    return "a{" + strAttachment + '}';
                 }).collect(Collectors.joining(", ")) + ']';
             }
 
@@ -472,7 +551,7 @@ public final class InternalConnectionDebugger implements Reporter {
         }
 
         @ThreadSafe
-        public static final class OperationCollector<C> {
+        static final class OperationCollector<C> {
             private final Lock lock;
             private final Reporter reporter;
             private long lastEventIdx;
@@ -484,6 +563,7 @@ public final class InternalConnectionDebugger implements Reporter {
                     final boolean autodetectOperationMode, final boolean checkEventOrder) {
                 this.lock = new StampedLock().asWriteLock();
                 this.reporter = reporter;
+                lastEventIdx = -1;
                 /* Since we reuse event objects, we need at least 2 events in the history to be able to access
                  * both the new and the last event. */
                 assertTrue(eventsInHistory >= 2);
@@ -499,7 +579,7 @@ public final class InternalConnectionDebugger implements Reporter {
              * @param attachments See {@link OperationEvent#addAttachments(Object...)}.
              * @return See {@link Reporter#report(MongoDebuggingException, FailureCallback)}.
              */
-            public boolean started(@Nullable final FailureCallback callback, final C code, final Object... attachments) {
+            boolean started(@Nullable final FailureCallback callback, final C code, final Object... attachments) {
                 MongoDebuggingException debuggingException = registerEvent(
                         callback == null ? OperationEvent.Mode.SYNC : OperationEvent.Mode.ASYNC,
                         code, OperationEvent.Type.BEGIN, null, attachments);
@@ -514,7 +594,7 @@ public final class InternalConnectionDebugger implements Reporter {
              * @param attachments See {@link OperationEvent#addAttachments(Object...)}.
              * @return See {@link Reporter#report(MongoDebuggingException, FailureCallback)}.
              */
-            public boolean succeeded(@Nullable final FailureCallback callback, final C code, final Object... attachments) {
+            boolean succeeded(@Nullable final FailureCallback callback, final C code, final Object... attachments) {
                 MongoDebuggingException debuggingException = registerEvent(
                         callback == null ? OperationEvent.Mode.SYNC : OperationEvent.Mode.ASYNC,
                         code, OperationEvent.Type.END_SUCCESS, null, attachments);
@@ -529,7 +609,7 @@ public final class InternalConnectionDebugger implements Reporter {
              * @param attachments See {@link OperationEvent#addAttachments(Object...)}.
              * @return See {@link Reporter#report(MongoDebuggingException, FailureCallback)}.
              */
-            public boolean failed(final Throwable t, @Nullable final FailureCallback callback, final C code, final Object... attachments) {
+            boolean failed(final Throwable t, @Nullable final FailureCallback callback, final C code, final Object... attachments) {
                 MongoDebuggingException debuggingException = registerEvent(
                         callback == null ? OperationEvent.Mode.SYNC : OperationEvent.Mode.ASYNC,
                         code, OperationEvent.Type.END_FAILURE, t, attachments);
@@ -542,6 +622,9 @@ public final class InternalConnectionDebugger implements Reporter {
                 }
             }
 
+            /**
+             * @return A {@link MongoDebuggingException} to {@link #report(MongoDebuggingException, FailureCallback)}.
+             */
             @Nullable
             private MongoDebuggingException registerEvent(final OperationEvent.Mode mode, final C code, final OperationEvent.Type type,
                     @Nullable final Throwable t, final Object... attachments) {
@@ -566,20 +649,11 @@ public final class InternalConnectionDebugger implements Reporter {
                 }
                 MongoDebuggingException result = null;
                 if (invalidEventOrder) {
-                    result = new MongoDebuggingException("Detected a concurrent operation"
+                    result = new MongoDebuggingException("Detected either concurrent usage or usage after error"
                             + ", eventIdx=" + newEventIdx
                             + ", mode=" + mode
                             + ", code=" + code
                             + ", type=" + type);
-                }
-                if (code == InternalConnectionOperationCode.DECODE_MESSAGE_HEADER && type == OperationEvent.Type.END_FAILURE) {
-                    MongoDebuggingException invalidMessageHeaderException = new MongoDebuggingException(
-                            "Detected an invalid reply message header");
-                    if (result == null) {
-                        result = invalidMessageHeaderException;
-                    } else {
-                        result.addSuppressed(invalidMessageHeaderException);
-                    }
                 }
                 if (result != null && t != null) {
                     result.addSuppressed(t);
@@ -588,11 +662,7 @@ public final class InternalConnectionDebugger implements Reporter {
             }
 
             private OperationEvent<C> event(final long eventIdx) {
-                return eventHistoryRingBuffer.get(ringBufferIdx(eventIdx));
-            }
-
-            private int ringBufferIdx(final long eventIdx) {
-                return Math.toIntExact(eventIdx % eventHistoryRingBuffer.size());
+                return eventHistoryRingBuffer.get(ringBufferIdx(eventIdx, eventHistoryRingBuffer.size()));
             }
 
             private String eventHistoryToString() {
@@ -657,7 +727,7 @@ public final class InternalConnectionDebugger implements Reporter {
             try {
                 wrapped.open();
                 succeededOpen(null);
-            } catch (final Throwable t) {
+            } catch (Throwable t) {
                 failedOpen(t, null);
                 throw t;
             }
@@ -693,7 +763,7 @@ public final class InternalConnectionDebugger implements Reporter {
             try {
                 wrapped.write(buffers);
                 succeededWrite(null);
-            } catch (final Throwable t) {
+            } catch (Throwable t) {
                 failedWrite(t, null);
                 throw t;
             }
@@ -706,7 +776,7 @@ public final class InternalConnectionDebugger implements Reporter {
                 ByteBuf result = wrapped.read(numBytes);
                 succeededRead(numBytes, null);
                 return result;
-            } catch (final Throwable t) {
+            } catch (Throwable t) {
                 failedRead(t, null, numBytes);
                 throw t;
             }
@@ -725,7 +795,7 @@ public final class InternalConnectionDebugger implements Reporter {
                 dataCollector.ioCollector().succeededRead(numBytes);
                 succeededRead(numBytes, null);
                 return result;
-            } catch (final Throwable t) {
+            } catch (Throwable t) {
                 failedRead(t, null, numBytes);
                 throw t;
             }
@@ -867,7 +937,17 @@ public final class InternalConnectionDebugger implements Reporter {
 
         @Override
         public void close() {
-            wrapped.close();
+            dataCollector.streamOperationCollector().started(null,
+                    StreamOperationCode.CLOSE, dataCollector.ioCollector().data());
+            try {
+                wrapped.close();
+                dataCollector.streamOperationCollector().succeeded(null,
+                        StreamOperationCode.CLOSE, dataCollector.ioCollector().data());
+            } catch (Throwable t) {
+                dataCollector.streamOperationCollector().failed(t, null,
+                        StreamOperationCode.CLOSE, dataCollector.ioCollector().data());
+                throw t;
+            }
         }
 
         @Override
@@ -880,7 +960,7 @@ public final class InternalConnectionDebugger implements Reporter {
     public static final class CommandEventSenderDebugger {
         private final DataCollector dataCollector;
 
-        private CommandEventSenderDebugger(final DataCollector dataCollector) {
+        CommandEventSenderDebugger(final DataCollector dataCollector) {
             this.dataCollector = assertNotNull(dataCollector);
         }
 

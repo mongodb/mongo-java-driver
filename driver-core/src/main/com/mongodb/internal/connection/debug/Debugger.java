@@ -125,8 +125,10 @@ public final class Debugger {
         if (expectedMode == mode && expectedOverriding == overriding) {
             return true;
         } else if (PREV_REPORTING_MODE.compareAndSet(expectedMode, mode, expectedOverriding, overriding)) {
-            LOGGER.info("Reporting mode changed from " + expectedMode + " to " + mode
-                    + (mode == ReportingMode.LOG_AND_THROW ? " (must not be used in production)" : ""));
+            if (expectedMode != mode) {
+                LOGGER.info("Reporting mode changed from " + expectedMode + " to " + mode
+                        + (mode == ReportingMode.LOG_AND_THROW ? " (must not be used in production)" : ""));
+            }
             return true;
         } else {
             return false;
