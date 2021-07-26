@@ -265,9 +265,16 @@ public final class ProtocolHelper {
         } else if (isNotPrimaryError(errorCode, errorMessage)) {
             return new MongoNotPrimaryException(response, serverAddress);
         } else if (response.containsKey("writeConcernError")) {
-            return createSpecialException(response.getDocument("writeConcernError").clone()
-                    .append("errorLabels", response.getArray("errorLabels", new BsonArray())),
-                    serverAddress, "errmsg");
+            BsonDocument writeConcernError = response.getDocument("writeConcernError");
+            // Copy error labels from top-level response into write concern error response, so that they are considered in the recursive
+            // call
+            if (writeConcernError.getArray("errorLabels", new BsonArray()).isEmpty()
+                    && !response.getArray("errorLabels", new BsonArray()).isEmpty()) {
+                // clone so as not to mutate the caller's document
+                writeConcernError = writeConcernError.clone()
+                        .append("errorLabels", response.getArray("errorLabels"));
+            }
+            return createSpecialException(writeConcernError, serverAddress, "errmsg");
         } else {
             return null;
         }
