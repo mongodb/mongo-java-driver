@@ -133,6 +133,7 @@ class QueryBatchCursorSpecification extends Specification {
         }
         def connectionSource = Stub(ConnectionSource) {
             getConnection() >> { throw new MongoSocketOpenException("can't open socket", SERVER_ADDRESS, new IOException()) }
+            getServerApi() >> null
         }
         connectionSource.retain() >> connectionSource
 

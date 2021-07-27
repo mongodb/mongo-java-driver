@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.StampedLock;
+import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertNull;
@@ -64,6 +65,8 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     private static final String CURSOR = "cursor";
     private static final String POST_BATCH_RESUME_TOKEN = "postBatchResumeToken";
     private static final String OPERATION_TIME = "operationTime";
+    private static final String MESSAGE_IF_CLOSED_AS_CURSOR = "Cursor has been closed";
+    private static final String MESSAGE_IF_CLOSED_AS_ITERATOR = "Iterator has been closed";
 
     private final MongoNamespace namespace;
     private final ServerAddress serverAddress;
@@ -77,7 +80,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     private BsonTimestamp operationTime;
     private final boolean firstBatchEmpty;
     private int maxWireVersion = 0;
-    private final CloseableState closeableState;
+    private final ResourceManager resourceManager;
 
     QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize, final Decoder<T> decoder) {
         this(firstQueryResult, limit, batchSize, decoder, null);
@@ -125,22 +128,15 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
                 }
             }
         }
-        closeableState = new CloseableState(namespace, connectionSource, connectionToPin, serverCursor);
+        resourceManager = new ResourceManager(namespace, connectionSource, connectionToPin, serverCursor);
         if (releaseServerAndResources) {
-            closeableState.releaseServerAndClientResources(assertNotNull(connection));
+            resourceManager.releaseServerAndClientResources(assertNotNull(connection));
         }
     }
 
     @Override
     public boolean hasNext() {
-        if (!closeableState.startOperation()) {
-            throw new IllegalStateException("Cursor has been closed");
-        }
-        try {
-            return doHasNext();
-        } finally {
-            closeableState.endOperation();
-        }
+        return resourceManager.execute(MESSAGE_IF_CLOSED_AS_CURSOR, this::doHasNext);
     }
 
     private boolean doHasNext() {
@@ -152,12 +148,10 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             return false;
         }
 
-        ServerCursor serverCursor = closeableState.serverCursor();
-        while (serverCursor != null) {
-            getMore(serverCursor);
-            serverCursor = closeableState.serverCursor();
-            if (!closeableState.operable()) {
-                throw new IllegalStateException("Cursor has been closed");
+        while (resourceManager.serverCursor() != null) {
+            getMore();
+            if (!resourceManager.operable()) {
+                throw new IllegalStateException(MESSAGE_IF_CLOSED_AS_CURSOR);
             }
             if (nextBatch != null) {
                 return true;
@@ -169,14 +163,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
     @Override
     public List<T> next() {
-        if (!closeableState.startOperation()) {
-            throw new IllegalStateException("Iterator has been closed");
-        }
-        try {
-            return doNext();
-        } finally {
-            closeableState.endOperation();
-        }
+        return resourceManager.execute(MESSAGE_IF_CLOSED_AS_ITERATOR, this::doNext);
     }
 
     private List<T> doNext() {
@@ -206,22 +193,17 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
     @Override
     public void close() {
-        closeableState.close();
+        resourceManager.close();
     }
 
     @Override
     public List<T> tryNext() {
-        if (!closeableState.startOperation()) {
-            throw new IllegalStateException("Cursor has been closed");
-        }
-        try {
+        return resourceManager.execute(MESSAGE_IF_CLOSED_AS_CURSOR, () -> {
             if (!tryHasNext()) {
                 return null;
             }
             return doNext();
-        } finally {
-            closeableState.endOperation();
-        }
+        });
     }
 
     private boolean tryHasNext() {
@@ -233,9 +215,8 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             return false;
         }
 
-        ServerCursor serverCursor = closeableState.serverCursor();
-        if (serverCursor != null) {
-            getMore(serverCursor);
+        if (resourceManager.serverCursor() != null) {
+            getMore();
         }
 
         return nextBatch != null;
@@ -244,17 +225,17 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     @Override
     @Nullable
     public ServerCursor getServerCursor() {
-        if (!closeableState.operable()) {
-            throw new IllegalStateException("Iterator has been closed");
+        if (!resourceManager.operable()) {
+            throw new IllegalStateException(MESSAGE_IF_CLOSED_AS_ITERATOR);
         }
 
-        return closeableState.serverCursor();
+        return resourceManager.serverCursor();
     }
 
     @Override
     public ServerAddress getServerAddress() {
-        if (!closeableState.operable()) {
-            throw new IllegalStateException("Iterator has been closed");
+        if (!resourceManager.operable()) {
+            throw new IllegalStateException(MESSAGE_IF_CLOSED_AS_ITERATOR);
         }
 
         return serverAddress;
@@ -280,38 +261,43 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         return maxWireVersion;
     }
 
-    private void getMore(final ServerCursor serverCursor) {
-        Connection connection = closeableState.getConnection();
+    private void getMore() {
+        ServerCursor serverCursor = assertNotNull(resourceManager.serverCursor());
+        Connection connection = resourceManager.connection();
         try {
+            ServerCursor nextServerCursor;
             if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
                 try {
-                    ServerCursor nextServerCursor = initFromCommandResult(connection.command(namespace.getDatabaseName(),
+                    nextServerCursor = initFromCommandResult(connection.command(namespace.getDatabaseName(),
                             asGetMoreCommandDocument(serverCursor),
                             NO_OP_FIELD_NAME_VALIDATOR,
                             ReadPreference.primary(),
                             CommandResultDocumentCodec.create(decoder, "nextBatch"),
-                            closeableState.sessionContext(),
-                            closeableState.serverApi()));
-                    closeableState.setServerCursor(nextServerCursor);
+                            resourceManager.sessionContext(),
+                            resourceManager.serverApi()));
                 } catch (MongoCommandException e) {
                     throw translateCommandException(e, serverCursor);
                 }
             } else {
                 QueryResult<T> getMore = connection.getMore(namespace, serverCursor.getId(),
                         getNumberToReturn(limit, batchSize, count), decoder);
-                ServerCursor nextServerCursor = initFromQueryResult(getMore);
-                closeableState.setServerCursor(nextServerCursor);
+                nextServerCursor = initFromQueryResult(getMore);
             }
+            resourceManager.setServerCursor(nextServerCursor);
             if (limitReached()) {
-                closeableState.releaseServerAndClientResources(connection);
+                resourceManager.releaseServerAndClientResources(connection);
             }
         } catch (MongoSocketException e) {
-            closeableState.onCorruptedConnection(connection);
+            try {
+                resourceManager.onCorruptedConnection(connection);
+            } catch (RuntimeException suppressed) {
+                e.addSuppressed(suppressed);
+            }
             throw e;
         } finally {
             connection.release();
-            if (closeableState.serverCursor() == null) {
-                closeableState.releaseClientResources();
+            if (resourceManager.serverCursor() == null) {
+                resourceManager.releaseClientResources();
             }
         }
     }
@@ -361,18 +347,18 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     /**
      * This class maintains all resources that must be released in {@link QueryBatchCursor#close()}.
      * It also implements a {@linkplain #doClose() deferred close action} such that it is totally ordered with other operations of
-     * {@link QueryBatchCursor} (methods {@link #startOperation()}/{@link #endOperation()} must be used properly to enforce the order)
+     * {@link QueryBatchCursor} (methods {@link #tryStartOperation()}/{@link #endOperation()} must be used properly to enforce the order)
      * despite the method {@link QueryBatchCursor#close()} being called concurrently with those operations.
      * This total order induces the happens-before order.
      * <p>
      * The deferred close action does not violate externally observable idempotence of {@link QueryBatchCursor#close()},
      * because {@link QueryBatchCursor#close()} is allowed to release resources "eventually".
      * <p>
-     * Of all package-access methods, only those explicitly documented as thread-safe are thread-safe,
+     * Only methods explicitly documented as thread-safe are thread-safe,
      * others are not and rely on the total order mentioned above.
      */
     @ThreadSafe
-    private static final class CloseableState {
+    private static final class ResourceManager {
         private final MongoNamespace namespace;
         private final Lock lock;
         private volatile State state;
@@ -384,7 +370,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         private volatile ServerCursor serverCursor;
         private volatile boolean skipReleasingServerResourcesOnClose;
 
-        CloseableState(final MongoNamespace namespace, @Nullable final ConnectionSource connectionSource,
+        ResourceManager(final MongoNamespace namespace, @Nullable final ConnectionSource connectionSource,
                 @Nullable final Connection connectionToPin, @Nullable final ServerCursor serverCursor) {
             this.namespace = namespace;
             lock = new StampedLock().asWriteLock();
@@ -409,11 +395,28 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
         /**
          * Thread-safe.
+         * Executes {@code operation} within the {@link #tryStartOperation()}/{@link #endOperation()} bounds.
+         *
+         * @throws IllegalStateException If {@linkplain QueryBatchCursor#close() closed}.
+         */
+        <T> T execute(final String exceptionMessageIfClosed, final Supplier<T> operation) throws IllegalStateException {
+            if (!tryStartOperation()) {
+                throw new IllegalStateException(exceptionMessageIfClosed);
+            }
+            try {
+                return operation.get();
+            } finally {
+                endOperation();
+            }
+        }
+
+        /**
+         * Thread-safe.
          * Returns {@code true} iff started an operation.
          * If {@linkplain #operable() closed}, then returns false, otherwise completes abruptly.
          * @throws IllegalStateException Iff another operation is in progress.
          */
-        boolean startOperation() throws IllegalStateException {
+        private boolean tryStartOperation() throws IllegalStateException {
             lock.lock();
             try {
                 State localState = state;
@@ -435,7 +438,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         /**
          * Thread-safe.
          */
-        void endOperation() {
+        private void endOperation() {
             boolean doClose = false;
             lock.lock();
             try {
@@ -456,6 +459,9 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             }
         }
 
+        /**
+         * Thread-safe.
+         */
         void close() {
             boolean doClose = false;
             lock.lock();
@@ -477,14 +483,14 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
         /**
          * This method is never executed concurrently with either itself or other operations
-         * demarcated by {@link #startOperation()}/{@link #endOperation()}.
+         * demarcated by {@link #tryStartOperation()}/{@link #endOperation()}.
          */
         private void doClose() {
             try {
                 if (skipReleasingServerResourcesOnClose) {
                     serverCursor = null;
                 } else if (serverCursor != null) {
-                    Connection connection = getConnection();
+                    Connection connection = connection();
                     try {
                         releaseServerResources(connection);
                     } finally {
@@ -510,7 +516,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             }
         }
 
-        Connection getConnection() {
+        Connection connection() {
             assertTrue(state != State.IDLE);
             if (pinnedConnection == null) {
                 return assertNotNull(connectionSource).getConnection();
