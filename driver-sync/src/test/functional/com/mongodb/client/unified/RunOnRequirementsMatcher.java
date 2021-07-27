@@ -28,6 +28,7 @@ import java.util.Objects;
 import static com.mongodb.ClusterFixture.getServerParameters;
 import static com.mongodb.JsonTestServerVersionChecker.getMaxServerVersionForField;
 import static com.mongodb.JsonTestServerVersionChecker.getMinServerVersion;
+import static com.mongodb.JsonTestServerVersionChecker.serverlessMatches;
 import static com.mongodb.JsonTestServerVersionChecker.topologyMatches;
 
 final class RunOnRequirementsMatcher {
@@ -59,6 +60,12 @@ final class RunOnRequirementsMatcher {
                             break requirementLoop;
                         }
                         break;
+                    case "serverless":
+                        if (!serverlessMatches(curRequirement.getValue().asString().getValue())) {
+                             requirementMet = false;
+                             break requirementLoop;
+                        }
+                        break;
                     case "auth":
                         if (curRequirement.getValue().asBoolean().getValue() == (clientSettings.getCredential() == null)) {
                             requirementMet = false;
@@ -73,9 +80,6 @@ final class RunOnRequirementsMatcher {
                                 break requirementLoop;
                             }
                         }
-                        break;
-                    case "serverless":
-                        // TODO: Implement support in scope of JAVA-3987
                         break;
                     default:
                         throw new UnsupportedOperationException("Unsupported runOnRequirement: " + curRequirement.getKey());

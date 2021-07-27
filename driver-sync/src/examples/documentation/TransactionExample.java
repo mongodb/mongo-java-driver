@@ -36,7 +36,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import static com.mongodb.ClusterFixture.isDataLakeTest;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
+import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
@@ -164,7 +166,9 @@ public class TransactionExample {
     }
 
     private boolean canRunTest() {
-        if (isSharded()) {
+        if (isServerlessTest() || isDataLakeTest()) {
+            return false;
+        } else if (isSharded()) {
             return serverVersionAtLeast(4, 2);
         } else if (isDiscoverableReplicaSet()) {
             return serverVersionAtLeast(4, 0);

@@ -249,12 +249,39 @@ functions:
       params:
         file: lb-expansion.yml
 
+  "run serverless":
+    - command: shell.exec
+      params:
+        shell: "bash"
+        script: |
+          ${PREPARE_SHELL}
+          set +o xtrace
+          SERVERLESS_DRIVERS_GROUP=${SERVERLESS_DRIVERS_GROUP} \
+          SERVERLESS_API_PUBLIC_KEY=${SERVERLESS_API_PUBLIC_KEY} \
+          SERVERLESS_API_PRIVATE_KEY=${SERVERLESS_API_PRIVATE_KEY} \
+            bash ${DRIVERS_TOOLS}/.evergreen/serverless/create-instance.sh
+    - command: expansions.update
+      params:
+        file: serverless-expansion.yml
+
   "stop load-balancer":
     - command: shell.exec
       params:
         script: |
           cd ${DRIVERS_TOOLS}/.evergreen
           DRIVERS_TOOLS=${DRIVERS_TOOLS} bash ${DRIVERS_TOOLS}/.evergreen/run-load-balancer.sh stop
+
+  "stop serverless":
+    - command: shell.exec
+      params:
+        script: |
+          ${PREPARE_SHELL}
+          set +o xtrace
+          SERVERLESS_DRIVERS_GROUP=${SERVERLESS_DRIVERS_GROUP} \
+          SERVERLESS_API_PUBLIC_KEY=${SERVERLESS_API_PUBLIC_KEY} \
+          SERVERLESS_API_PRIVATE_KEY=${SERVERLESS_API_PRIVATE_KEY} \
+          SERVERLESS_INSTANCE_NAME=${SERVERLESS_INSTANCE_NAME} \
+            bash ${DRIVERS_TOOLS}/.evergreen/serverless/delete-instance.sh
 
   "run tests":
     - command: shell.exec
@@ -289,6 +316,19 @@ functions:
           SINGLE_MONGOS_LB_URI="${SINGLE_MONGOS_LB_URI}" \
           MULTI_MONGOS_LB_URI="${MULTI_MONGOS_LB_URI}" \
           .evergreen/run-load-balancer-tests.sh
+
+  "run serverless tests":
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          JDK="${JDK}" \
+          MONGODB_URI="${MONGODB_URI}" \
+          SERVERLESS_ATLAS_USER="${SERVERLESS_ATLAS_USER}" \
+          SERVERLESS_ATLAS_PASSWORD="${SERVERLESS_ATLAS_PASSWORD}" \
+            .evergreen/run-serverless-tests.sh
 
   "run reactive streams tck tests":
     - command: shell.exec
@@ -726,6 +766,7 @@ post:
   - func: "upload working dir logs"
   - func: "upload test results"
   - func: "stop load-balancer"
+  - func: "stop serverless"
   - func: "cleanup"
 
 tasks:
@@ -748,6 +789,11 @@ tasks:
         - func: "bootstrap mongo-orchestration"
         - func: "run load-balancer"
         - func: "run load-balancer tests"
+
+    - name: serverless-test
+      commands:
+        - func: "run serverless"
+        - func: "run serverless tests"
 
     - name: "scala-tests"
       commands:
@@ -1488,6 +1534,12 @@ buildvariants:
   display_name: "Load Balancer ${version} ${auth} ${ssl} ${jdk} ${os}"
   tasks:
     - name: "load-balancer-test"
+
+- matrix_name: "tests-serverless"
+  matrix_spec: { jdk: ["jdk11"], os: "ubuntu" }
+  display_name: "Serverless"
+  tasks:
+    - name: "serverless-test"
 
 - matrix_name: "tests-slow"
   matrix_spec: { auth: "noauth", ssl: "*", jdk: "jdk8", version: ["4.2"], topology: "*", os: "linux" }

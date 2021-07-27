@@ -27,6 +27,7 @@ import com.mongodb.internal.connection.TestCommandListener
 import org.bson.BsonDocument
 import org.bson.BsonString
 
+import static com.mongodb.ClusterFixture.isClientSideEncryptionTest
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.Fixture.getDefaultDatabaseName
 import static com.mongodb.client.Fixture.getMongoClient
@@ -56,9 +57,7 @@ class ClientSideEncryptionBsonSizeLimitsSpecification extends FunctionalSpecific
 
     def setup() {
         assumeTrue(serverVersionAtLeast(4, 2))
-        assumeTrue('Client encryption tests disabled',
-                System.getProperty('org.mongodb.test.awsAccessKeyId') != null
-                        && !System.getProperty('org.mongodb.test.awsAccessKeyId').isEmpty())
+        assumeTrue(isClientSideEncryptionTest())
         dataKeyCollection.drop()
         dataCollection.drop()
 
