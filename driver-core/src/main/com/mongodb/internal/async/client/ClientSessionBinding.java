@@ -166,6 +166,11 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
         }
 
         @Override
+        public RequestContext getRequestContext() {
+            return wrapped.getRequestContext();
+        }
+
+        @Override
         public void getConnection(final SingleResultCallback<AsyncConnection> callback) {
             TransactionContext<AsyncConnection> transactionContext = TransactionContext.get(session);
             if (transactionContext != null && transactionContext.isConnectionPinningRequired()) {

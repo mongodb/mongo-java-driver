@@ -159,6 +159,11 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
         }
 
         @Override
+        public RequestContext getRequestContext() {
+            return requestContext;
+        }
+
+        @Override
         public void getConnection(final SingleResultCallback<AsyncConnection> callback) {
             server.getConnectionAsync(callback);
         }

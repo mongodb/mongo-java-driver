@@ -127,6 +127,11 @@ public final class AsyncSessionBinding implements AsyncReadWriteBinding {
         }
 
         @Override
+        public RequestContext getRequestContext() {
+            return wrapped.getRequestContext();
+        }
+
+        @Override
         public void getConnection(final SingleResultCallback<AsyncConnection> callback) {
             wrapped.getConnection(callback);
         }

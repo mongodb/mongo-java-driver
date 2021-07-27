@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.binding;
 
+import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ServerDescription;
@@ -48,6 +49,9 @@ public interface AsyncConnectionSource extends ReferenceCounted {
 
     @Nullable
     ServerApi getServerApi();
+
+    @Nullable
+    RequestContext getRequestContext();
 
     /**
      * Gets a connection from this source.

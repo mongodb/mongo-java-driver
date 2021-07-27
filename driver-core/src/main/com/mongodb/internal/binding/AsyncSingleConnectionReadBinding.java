@@ -117,6 +117,11 @@ public class AsyncSingleConnectionReadBinding extends AbstractReferenceCounted i
         }
 
         @Override
+        public RequestContext getRequestContext() {
+            return null;
+        }
+
+        @Override
         public void getConnection(final SingleResultCallback<AsyncConnection> callback) {
             callback.onResult(connection.retain(), null);
         }

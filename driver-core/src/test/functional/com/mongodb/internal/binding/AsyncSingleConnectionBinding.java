@@ -232,6 +232,11 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
         }
 
         @Override
+        public RequestContext getRequestContext() {
+            return null;
+        }
+
+        @Override
         public void getConnection(final SingleResultCallback<AsyncConnection> callback) {
             isTrue("open", super.getCount() > 0);
             callback.onResult(connection.retain(), null);
