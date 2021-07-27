@@ -32,7 +32,6 @@ import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.lang.Nullable;
-import org.bson.BsonArray;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -265,16 +264,14 @@ public final class ProtocolHelper {
         } else if (isNotPrimaryError(errorCode, errorMessage)) {
             return new MongoNotPrimaryException(response, serverAddress);
         } else if (response.containsKey("writeConcernError")) {
-            BsonDocument writeConcernError = response.getDocument("writeConcernError");
-            // Copy error labels from top-level response into write concern error response, so that they are considered in the recursive
-            // call
-            if (writeConcernError.getArray("errorLabels", new BsonArray()).isEmpty()
-                    && !response.getArray("errorLabels", new BsonArray()).isEmpty()) {
-                // clone so as not to mutate the caller's document
-                writeConcernError = writeConcernError.clone()
-                        .append("errorLabels", response.getArray("errorLabels"));
+            MongoException writeConcernException = createSpecialException(response.getDocument("writeConcernError"), serverAddress,
+                    "errmsg");
+            if (writeConcernException != null && response.isArray("errorLabels")) {
+                for (BsonValue errorLabel : response.getArray("errorLabels")) {
+                    writeConcernException.addLabel(errorLabel.asString().getValue());
+                }
             }
-            return createSpecialException(writeConcernError, serverAddress, "errmsg");
+            return writeConcernException;
         } else {
             return null;
         }
