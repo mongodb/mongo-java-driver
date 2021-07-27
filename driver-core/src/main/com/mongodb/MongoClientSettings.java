@@ -173,6 +173,8 @@ public final class MongoClientSettings {
         private int heartbeatConnectTimeoutMS;
         private int heartbeatSocketTimeoutMS;
 
+        private ContextProvider contextProvider;
+
         private Builder() {
         }
 
@@ -192,6 +194,7 @@ public final class MongoClientSettings {
             serverApi = settings.getServerApi();
             streamFactoryFactory = settings.getStreamFactoryFactory();
             autoEncryptionSettings = settings.getAutoEncryptionSettings();
+            contextProvider = settings.getContextProvider();
             clusterSettingsBuilder.applySettings(settings.getClusterSettings());
             serverSettingsBuilder.applySettings(settings.getServerSettings());
             socketSettingsBuilder.applySettings(settings.getSocketSettings());
@@ -519,6 +522,12 @@ public final class MongoClientSettings {
             return this;
         }
 
+        public Builder contextProvider(@Nullable final ContextProvider contextProvider) {
+            this.contextProvider = contextProvider;
+            return this;
+        }
+
+
         // Package-private to provide interop with MongoClientOptions
         Builder heartbeatConnectTimeoutMS(final int heartbeatConnectTimeoutMS) {
             this.heartbeatConnectTimeoutMS = heartbeatConnectTimeoutMS;
@@ -821,6 +830,6 @@ public final class MongoClientSettings {
                 .build();
         heartbeatSocketTimeoutSetExplicitly = builder.heartbeatSocketTimeoutMS != 0;
         heartbeatConnectTimeoutSetExplicitly = builder.heartbeatConnectTimeoutMS != 0;
-        contextProvider = null;
+        contextProvider = builder.contextProvider;
     }
 }
