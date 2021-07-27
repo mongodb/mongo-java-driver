@@ -194,7 +194,7 @@ class AggregateIterableSpecification extends Specification {
                 .comment('this is a comment'))
     }
 
-    def 'should build the expected AggregateToCollectionOperation for $merge'() {
+    def 'should build the expected AggregateToCollectionOperation for $merge document'() {
         given:
         def executor = new TestOperationExecutor([null, null, null, null, null, null, null])
         def collectionName = 'collectionName'
@@ -329,6 +329,31 @@ class AggregateIterableSpecification extends Specification {
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))
                 .comment('this is a comment'))
+    }
+
+    def 'should build the expected AggregateToCollectionOperation for $merge string'() {
+        given:
+        def executor = new TestOperationExecutor([null, null, null, null, null, null, null])
+        def collectionName = 'collectionName'
+        def collectionNamespace = new MongoNamespace(namespace.getDatabaseName(), collectionName)
+        def pipeline = [new BsonDocument('$match', new BsonDocument()), new BsonDocument('$merge', new BsonString(collectionName))]
+
+        when:
+        new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
+                pipeline, AggregationLevel.COLLECTION, false)
+                .iterator()
+
+        def operation = executor.getWriteOperation() as AggregateToCollectionOperation
+
+        then:
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace, pipeline, readConcern, writeConcern,
+                AggregationLevel.COLLECTION))
+
+        when:
+        operation = executor.getReadOperation() as FindOperation<Document>
+
+        then:
+        operation.getNamespace() == collectionNamespace
     }
 
     def 'should build the expected AggregateToCollectionOperation for $out as a document'() {
