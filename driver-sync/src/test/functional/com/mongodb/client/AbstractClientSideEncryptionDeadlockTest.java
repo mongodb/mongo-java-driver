@@ -55,6 +55,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import static com.mongodb.ClusterFixture.isClientSideEncryptionTest;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
@@ -76,6 +77,7 @@ public abstract class AbstractClientSideEncryptionDeadlockTest {
     @BeforeEach
     public void setUp() throws IOException, URISyntaxException {
         assumeTrue(serverVersionAtLeast(4, 2));
+        assumeTrue(isClientSideEncryptionTest());
 
         MongoDatabase keyVaultDatabase = getMongoClient().getDatabase("keyvault");
         MongoCollection<BsonDocument> dataKeysCollection = keyVaultDatabase.getCollection("datakeys", BsonDocument.class)

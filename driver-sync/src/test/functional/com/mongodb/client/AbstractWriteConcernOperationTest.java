@@ -31,8 +31,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.JsonTestServerVersionChecker.skipTest;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
+import static org.junit.Assume.assumeFalse;
 
 // See https://github.com/mongodb/specifications/tree/master/source/read-write-concern/tests/operation
 @RunWith(Parameterized.class)
@@ -41,6 +43,7 @@ public abstract class AbstractWriteConcernOperationTest extends AbstractUnifiedT
                                              final String collectionName, final BsonArray data, final BsonDocument definition,
                                              final boolean skipTest) {
         super(filename, description, databaseName, collectionName, data, definition, skipTest);
+        assumeFalse(isServerlessTest());
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")

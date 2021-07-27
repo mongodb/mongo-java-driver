@@ -25,6 +25,9 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
+import static com.mongodb.ClusterFixture.isServerlessTest;
+import static org.junit.Assume.assumeFalse;
+
 public class CommandMonitoringTest extends UnifiedSyncTest {
 
 
@@ -34,6 +37,7 @@ public class CommandMonitoringTest extends UnifiedSyncTest {
                                  @Nullable final BsonArray runOnRequirements, final BsonArray entities, final BsonArray initialData,
                                  final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
+        assumeFalse(isServerlessTest());
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
