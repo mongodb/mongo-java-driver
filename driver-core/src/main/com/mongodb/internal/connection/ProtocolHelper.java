@@ -264,7 +264,14 @@ public final class ProtocolHelper {
         } else if (isNotPrimaryError(errorCode, errorMessage)) {
             return new MongoNotPrimaryException(response, serverAddress);
         } else if (response.containsKey("writeConcernError")) {
-            return createSpecialException(response.getDocument("writeConcernError"), serverAddress, "errmsg");
+            MongoException writeConcernException = createSpecialException(response.getDocument("writeConcernError"), serverAddress,
+                    "errmsg");
+            if (writeConcernException != null && response.isArray("errorLabels")) {
+                for (BsonValue errorLabel : response.getArray("errorLabels")) {
+                    writeConcernException.addLabel(errorLabel.asString().getValue());
+                }
+            }
+            return writeConcernException;
         } else {
             return null;
         }
