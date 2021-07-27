@@ -16,9 +16,6 @@
 
 package com.mongodb.client.unified;
 
-import com.mongodb.MongoClientSettings;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -31,7 +28,7 @@ import java.util.Collection;
 import static com.mongodb.ClusterFixture.isServerlessTest;
 import static org.junit.Assume.assumeFalse;
 
-public class CommandMonitoringTest extends UnifiedTest {
+public class CommandMonitoringTest extends UnifiedSyncTest {
 
 
     public CommandMonitoringTest(@SuppressWarnings("unused") final String fileDescription,
@@ -41,11 +38,6 @@ public class CommandMonitoringTest extends UnifiedTest {
                                  final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
         assumeFalse(isServerlessTest());
-    }
-
-    @Override
-    protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return MongoClients.create(settings);
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")

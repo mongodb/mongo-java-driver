@@ -64,7 +64,7 @@ public class ClientSideEncryptionExternalKeyVaultTest {
 
     @Before
     public void setUp() throws IOException, URISyntaxException {
-        assumeTrue(serverVersionAtLeast(4, 1));
+        assumeTrue(serverVersionAtLeast(4, 2));
         assumeTrue("Encryption test with external keyVault is disabled", isClientSideEncryptionTest());
 
         /* Step 1: get unencrypted client and recreate keys collection */

@@ -16,9 +16,6 @@
 
 package com.mongodb.client.unified;
 
-import com.mongodb.MongoClientSettings;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -28,16 +25,12 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-public final class ChangeStreamsTest extends UnifiedTest {
-    public ChangeStreamsTest(final String fileDescription, final String testDescription,
+public final class ChangeStreamsTest extends UnifiedSyncTest {
+    public ChangeStreamsTest(@SuppressWarnings("unused") final String fileDescription,
+                             @SuppressWarnings("unused") final String testDescription,
                              final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
                              final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
-    }
-
-    @Override
-    protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return MongoClients.create(settings);
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")

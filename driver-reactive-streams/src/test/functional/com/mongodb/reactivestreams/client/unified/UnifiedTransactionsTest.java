@@ -16,11 +16,6 @@
 
 package com.mongodb.reactivestreams.client.unified;
 
-import com.mongodb.MongoClientSettings;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.unified.UnifiedTest;
-import com.mongodb.reactivestreams.client.MongoClients;
-import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.junit.runners.Parameterized;
@@ -29,17 +24,12 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-public class UnifiedTransactionsTest extends UnifiedTest {
+public class UnifiedTransactionsTest extends UnifiedReactiveStreamsTest {
     public UnifiedTransactionsTest(@SuppressWarnings("unused") final String fileDescription,
                                    @SuppressWarnings("unused") final String testDescription,
                                    final String schemaVersion, final BsonArray runOnRequirements, final BsonArray entitiesArray,
                                    final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entitiesArray, initialData, definition);
-    }
-
-    @Override
-    protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return new SyncMongoClient(MongoClients.create(settings));
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")

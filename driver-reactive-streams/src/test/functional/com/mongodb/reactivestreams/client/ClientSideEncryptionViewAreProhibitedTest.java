@@ -45,7 +45,7 @@ public class ClientSideEncryptionViewAreProhibitedTest {
 
     @Before
     public void setUp() {
-        assumeTrue(serverVersionAtLeast(4, 1));
+        assumeTrue(serverVersionAtLeast(4, 2));
         assumeTrue("Encryption test with external keyVault is disabled", isClientSideEncryptionTest());
 
         MongoClient client = getMongoClient();
