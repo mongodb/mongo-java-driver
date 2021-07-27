@@ -18,6 +18,7 @@ package com.mongodb;
 import com.mongodb.connection.ServerVersion;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.bson.BsonString;
 import org.bson.BsonValue;
 
 import java.util.List;
@@ -43,7 +44,7 @@ public final class JsonTestServerVersionChecker {
     }
 
     private static boolean canRunTest(final BsonDocument document, final ServerVersion serverVersion) {
-        if (document.containsKey("serverless") && (!serverlessMatches(document.getString("serverless").getValue()))) {
+        if ((!serverlessMatches(document.getString("serverless", new BsonString("allow")).getValue()))) {
             return false;
         }
 
@@ -108,7 +109,7 @@ public final class JsonTestServerVersionChecker {
         return false;
     }
 
-    private static boolean serverlessMatches(final String serverlessRequirement) {
+    public static boolean serverlessMatches(final String serverlessRequirement) {
         switch (serverlessRequirement) {
             case "require":
                 return ClusterFixture.isServerlessTest();

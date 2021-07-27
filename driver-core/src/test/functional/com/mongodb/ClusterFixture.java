@@ -222,8 +222,7 @@ public final class ClusterFixture {
     }
 
     public static boolean isServerlessTest() {
-        String isServerlessSystemProperty = System.getProperty(SERVERLESS_TEST_SYSTEM_PROPERTY_NAME);
-        return isServerlessSystemProperty != null && isServerlessSystemProperty.equals("true");
+        return System.getProperty(SERVERLESS_TEST_SYSTEM_PROPERTY_NAME, "").equals("true");
     }
 
     public static synchronized boolean isDataLakeTest() {
@@ -506,8 +505,7 @@ public final class ClusterFixture {
     }
 
     public static boolean isClientSideEncryptionTest() {
-        return System.getProperty("org.mongodb.test.awsAccessKeyId") != null
-                && !System.getProperty("org.mongodb.test.awsAccessKeyId").isEmpty();
+        return !System.getProperty("org.mongodb.test.awsAccessKeyId", "").isEmpty();
     }
 
     public static void enableMaxTimeFailPoint() {

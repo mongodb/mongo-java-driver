@@ -16,7 +16,6 @@
 
 package com.mongodb.client.unified;
 
-import com.mongodb.ClusterFixture;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.connection.ServerVersion;
 import org.bson.BsonArray;
@@ -29,6 +28,7 @@ import java.util.Objects;
 import static com.mongodb.ClusterFixture.getServerParameters;
 import static com.mongodb.JsonTestServerVersionChecker.getMaxServerVersionForField;
 import static com.mongodb.JsonTestServerVersionChecker.getMinServerVersion;
+import static com.mongodb.JsonTestServerVersionChecker.serverlessMatches;
 import static com.mongodb.JsonTestServerVersionChecker.topologyMatches;
 
 final class RunOnRequirementsMatcher {
@@ -91,19 +91,6 @@ final class RunOnRequirementsMatcher {
             }
         }
         return false;
-    }
-
-    private static boolean serverlessMatches(final String serverlessRequirement) {
-        switch (serverlessRequirement) {
-            case "require":
-                return ClusterFixture.isServerlessTest();
-            case "forbid":
-                return !ClusterFixture.isServerlessTest();
-            case "allow":
-                return true;
-            default:
-                throw new UnsupportedOperationException("Unsupported serverless requirement value: " + serverlessRequirement);
-        }
     }
 
     private RunOnRequirementsMatcher() {
