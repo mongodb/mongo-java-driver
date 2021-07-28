@@ -71,12 +71,12 @@ class KillCursorProtocolCommandEventSpecification extends OperationFunctionalSpe
         execute(protocol, connection, async)
 
         then:
-        commandListener.eventsWereDelivered([new CommandStartedEvent(requestContext, 1, connection.getDescription(), getDatabaseName(), 'killCursors',
+        commandListener.eventsWereDelivered([new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'killCursors',
                 new BsonDocument('killCursors', new BsonString(getCollectionName()))
                         .append('cursors',
                                 new BsonArray([new BsonInt64(result.cursor
                                         .id)]))),
-                                             new CommandSucceededEvent(requestContext, 1, connection.getDescription(), 'killCursors',
+                                             new CommandSucceededEvent(1, connection.getDescription(), 'killCursors',
                                                      new BsonDocument('ok', new BsonDouble(1.0))
                                                              .append('cursorsUnknown',
                                                                      new BsonArray([new BsonInt64(result.cursor.id)])),

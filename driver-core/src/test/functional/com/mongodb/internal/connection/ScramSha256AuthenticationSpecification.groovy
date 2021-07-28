@@ -125,7 +125,8 @@ class ScramSha256AuthenticationSpecification extends Specification {
         // make this synchronous
         new CommandReadOperation<Document>('admin',
                 new BsonDocumentWrapper<Document>(new Document('dbstats', 1), new DocumentCodec()), new DocumentCodec())
-                .executeAsync(new AsyncClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, getServerApi(), requestContext), callback)
+                .executeAsync(new AsyncClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, getServerApi(), null),
+                        callback)
         callback.get()
 
         then:
@@ -165,7 +166,8 @@ class ScramSha256AuthenticationSpecification extends Specification {
         when:
         new CommandReadOperation<Document>('admin',
                 new BsonDocumentWrapper<Document>(new Document('dbstats', 1), new DocumentCodec()), new DocumentCodec())
-                .executeAsync(new AsyncClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, getServerApi(), requestContext), callback)
+                .executeAsync(new AsyncClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, getServerApi(), null),
+                        callback)
         callback.get()
 
         then:
@@ -205,7 +207,8 @@ class ScramSha256AuthenticationSpecification extends Specification {
         when:
         new CommandReadOperation<Document>('admin',
                 new BsonDocumentWrapper<Document>(new Document('dbstats', 1), new DocumentCodec()), new DocumentCodec())
-                .executeAsync(new AsyncClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, getServerApi(), requestContext), callback)
+                .executeAsync(new AsyncClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, getServerApi(), null),
+                        callback)
         callback.get()
 
         then:
