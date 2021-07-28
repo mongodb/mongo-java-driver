@@ -33,6 +33,7 @@ import static java.lang.reflect.Modifier.isStatic;
 import static java.lang.reflect.Modifier.isTransient;
 
 final class PropertyMetadata<T> {
+    private static final TypeData<Void> VOID_TYPE_DATA = TypeData.builder(Void.class).build();
     private final String name;
     private final String declaringClassName;
     private final TypeData<T> typeData;
@@ -146,6 +147,9 @@ final class PropertyMetadata<T> {
     }
 
     public boolean isSerializable() {
+        if (isVoidType()) {
+            return false;
+        }
         if (getter != null) {
             return field == null || notStaticOrTransient(field.getModifiers());
         } else {
@@ -154,11 +158,18 @@ final class PropertyMetadata<T> {
     }
 
     public boolean isDeserializable() {
+        if (isVoidType()) {
+            return false;
+        }
         if (setter != null) {
             return field == null || !isFinal(field.getModifiers()) && notStaticOrTransient(field.getModifiers());
         } else {
             return field != null && !isFinal(field.getModifiers()) && isPublicAndNotStaticOrTransient(field.getModifiers());
         }
+    }
+
+    private boolean isVoidType() {
+        return VOID_TYPE_DATA.equals(typeData);
     }
 
     private boolean notStaticOrTransient(final int modifiers) {

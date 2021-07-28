@@ -49,9 +49,11 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.configureFailPoint;
 import static com.mongodb.ClusterFixture.disableFailPoint;
+import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.synchronizedList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -60,8 +62,9 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.bson.BsonDocument.parse;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
+import static org.junit.Assert.fail;
 
 /**
  * See
@@ -73,9 +76,14 @@ public class ServerDiscoveryAndMonitoringProseTests {
     private static final Logger LOGGER = Loggers.getLogger(ServerDiscoveryAndMonitoringProseTests.class.getSimpleName());
     private static final long TEST_WAIT_TIMEOUT_MILLIS = SECONDS.toMillis(5);
 
+    static final String HELLO = "hello";
+    static final String LEGACY_HELLO = "isMaster";
+
     @Test
     @SuppressWarnings("try")
     public void testHeartbeatFrequency() throws InterruptedException {
+        assumeFalse(isServerlessTest());
+
         CountDownLatch latch = new CountDownLatch(5);
         MongoClientSettings settings = getMongoClientSettingsBuilder()
                                        .applyToServerSettings(new Block<ServerSettings.Builder>() {
@@ -124,16 +132,16 @@ public class ServerDiscoveryAndMonitoringProseTests {
             events.forEach(event ->
                            assertTrue(event.getNewDescription().getRoundTripTimeNanos() > 0));
 
-            configureFailPoint(parse("{"
+            configureFailPoint(parse(format("{"
                                      + "configureFailPoint: \"failCommand\","
                                      + "mode: {times: 1000},"
                                      + " data: {"
-                                     + "   failCommands: [\"isMaster\", \"hello\"],"
+                                     + "   failCommands: [\"%s\", \"%s\"],"
                                      + "   blockConnection: true,"
                                      + "   blockTimeMS: 100,"
                                      + "   appName: \"streamingRttTest\""
                                      + "  }"
-                                     + "}"));
+                                     + "}", LEGACY_HELLO, HELLO)));
 
             long startTime = System.currentTimeMillis();
             while (true) {

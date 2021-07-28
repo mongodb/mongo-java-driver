@@ -110,7 +110,10 @@ public class SslSettings {
         /**
          * Sets the SSLContext for use when SSL is enabled.
          *
-         * @param context the SSLContext to use for connections.  Ignored if SSL is not enabled.
+         * @param context the SSLContext to use for connections. Ignored if TLS/SSL is not {@linkplain #enabled(boolean) enabled},
+         *                or if a {@link StreamFactory} {@linkplain StreamFactoryFactory#create(SocketSettings, SslSettings) created}
+         *                by the {@linkplain com.mongodb.MongoClientSettings.Builder#streamFactoryFactory(StreamFactoryFactory) specified}
+         *                {@link StreamFactoryFactory} does not use {@link SSLContext}.
          * @return this
          * @since 3.5
          */

@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation
 
-import util.spock.annotations.Slow
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.internal.bulk.InsertRequest
 import com.mongodb.internal.bulk.UpdateRequest
@@ -26,9 +25,10 @@ import org.bson.BsonInt32
 import org.bson.BsonSerializationException
 import org.bson.codecs.BsonDocumentCodec
 import spock.lang.IgnoreIf
+import util.spock.annotations.Slow
 
 import static com.mongodb.ClusterFixture.getBinding
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.internal.bulk.WriteRequest.Type.REPLACE
 import static java.util.Arrays.asList
@@ -77,7 +77,7 @@ class UpdateOperationForReplacementSpecification extends OperationFunctionalSpec
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(4, 2) })
+    @IgnoreIf({ serverVersionLessThan(4, 2) })
     def 'should support hint'() {
         given:
         def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))

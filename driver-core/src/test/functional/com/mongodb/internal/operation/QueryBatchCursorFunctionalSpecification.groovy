@@ -24,14 +24,18 @@ import com.mongodb.ServerCursor
 import com.mongodb.WriteConcern
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.internal.binding.ConnectionSource
-import com.mongodb.internal.connection.Connection
+import com.mongodb.internal.connection.NoOpSessionContext
 import com.mongodb.internal.connection.QueryResult
+import com.mongodb.internal.validator.NoOpFieldNameValidator
+import org.bson.BsonArray
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.BsonInt64
 import org.bson.BsonString
 import org.bson.BsonTimestamp
 import org.bson.Document
+import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 import util.spock.annotations.Slow
@@ -41,12 +45,15 @@ import java.util.concurrent.TimeUnit
 
 import static com.mongodb.ClusterFixture.checkReferenceCountReachesTarget
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToQueryResult
+import static com.mongodb.internal.operation.QueryOperationHelper.makeAdditionalGetMoreCall
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo
 import static java.util.Arrays.asList
+import static java.util.Collections.singletonList
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.fail
 
@@ -284,7 +291,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         latch.await(5, TimeUnit.SECONDS)  // wait for cursor.close to complete
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) || isSharded() })
+    @IgnoreIf({ serverVersionLessThan(3, 2) || isSharded() })
     @Slow
     def 'test maxTimeMS'() {
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
@@ -352,7 +359,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         cursor = new QueryBatchCursor<Document>(firstBatch, 5, 0, 0, new DocumentCodec(), connectionSource, connection)
 
         when:
-        makeAdditionalGetMoreCall(firstBatch.cursor, connection)
+        makeAdditionalGetMoreCall(getNamespace(), firstBatch.cursor, connection)
 
         then:
         thrown(MongoCursorNotFoundException)
@@ -375,7 +382,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
 
         Thread.sleep(1000) //Note: waiting for some time for killCursor operation to be performed on a server.
         when:
-        makeAdditionalGetMoreCall(serverCursor)
+        makeAdditionalGetMoreCall(getNamespace(), serverCursor, connectionSource)
 
         then:
         thrown(MongoCursorNotFoundException)
@@ -519,7 +526,15 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), connectionSource)
         def serverCursor = cursor.getServerCursor()
         def connection = connectionSource.getConnection()
-        connection.killCursor(getNamespace(), asList(cursor.getServerCursor().id))
+        if (serverVersionLessThan(3, 6)) {
+            connection.killCursor(getNamespace(), asList(cursor.getServerCursor().id))
+        } else {
+            connection.command(getNamespace().databaseName,
+                    new BsonDocument('killCursors', new BsonString(namespace.getCollectionName()))
+                            .append('cursors', new BsonArray(singletonList(new BsonInt64(serverCursor.getId())))),
+                    new NoOpFieldNameValidator(), ReadPreference.primary(),
+                    new BsonDocumentCodec(), new NoOpSessionContext(), getServerApi())
+        }
         connection.release()
         cursor.next()
 
@@ -582,24 +597,11 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
                 cursorDocumentToQueryResult(response.getDocument('cursor'), connection.getDescription().getServerAddress())
             } else {
                 connection.query(getNamespace(), filter, null, 0, limit, batchSize,
-                                 readPreference.isSlaveOk(), tailable, awaitData, false, false, false,
+                                 readPreference.isSecondaryOk(), tailable, awaitData, false, false, false,
                                  new DocumentCodec());
             }
         } finally {
             connection.release();
         }
-    }
-
-    private void makeAdditionalGetMoreCall(ServerCursor serverCursor) {
-        def connection = connectionSource.getConnection()
-        try {
-            makeAdditionalGetMoreCall(serverCursor, connection)
-        } finally {
-            connection.release()
-        }
-    }
-
-    private void makeAdditionalGetMoreCall(ServerCursor serverCursor, Connection connection) {
-        connection.getMore(getNamespace(), serverCursor.getId(), 1, new DocumentCodec())
     }
 }

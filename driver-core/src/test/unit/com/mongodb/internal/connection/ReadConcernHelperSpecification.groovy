@@ -24,12 +24,13 @@ import org.bson.BsonTimestamp
 import spock.lang.Specification
 
 import static com.mongodb.internal.connection.ReadConcernHelper.getReadConcernDocument
+import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSION
 
 class ReadConcernHelperSpecification extends Specification {
 
     def 'should throw IllegalArgumentException if session context is null'() {
         when:
-        getReadConcernDocument(null)
+        getReadConcernDocument(null, MIN_WIRE_VERSION)
 
         then:
         thrown(IllegalArgumentException)
@@ -45,7 +46,7 @@ class ReadConcernHelperSpecification extends Specification {
         }
 
         expect:
-        getReadConcernDocument(sessionContext) == new BsonDocument('level', new BsonString('majority'))
+        getReadConcernDocument(sessionContext, MIN_WIRE_VERSION) == new BsonDocument('level', new BsonString('majority'))
                 .append('afterClusterTime', operationTime)
     }
 
@@ -59,7 +60,7 @@ class ReadConcernHelperSpecification extends Specification {
         }
 
         expect:
-        getReadConcernDocument(sessionContext) == new BsonDocument(new BsonDocument('afterClusterTime', operationTime))
+        getReadConcernDocument(sessionContext, MIN_WIRE_VERSION) == new BsonDocument(new BsonDocument('afterClusterTime', operationTime))
     }
 
     def 'should not add afterClusterTime to ReadConcern when session is not causally consistent'() {
@@ -71,7 +72,7 @@ class ReadConcernHelperSpecification extends Specification {
         }
 
         expect:
-        getReadConcernDocument(sessionContext) == new BsonDocument('level', new BsonString('majority'))
+        getReadConcernDocument(sessionContext, MIN_WIRE_VERSION) == new BsonDocument('level', new BsonString('majority'))
     }
 
     def 'should not add afterClusterTime to ReadConcern when operation time is null'() {
@@ -83,6 +84,6 @@ class ReadConcernHelperSpecification extends Specification {
         }
 
         expect:
-        getReadConcernDocument(sessionContext) == new BsonDocument('level', new BsonString('majority'))
+        getReadConcernDocument(sessionContext, MIN_WIRE_VERSION) == new BsonDocument('level', new BsonString('majority'))
     }
 }

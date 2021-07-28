@@ -40,11 +40,11 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.isA;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
@@ -310,7 +310,7 @@ public class MapReduceTest extends DatabaseTestCase {
         MapReduceOutput output = collection.mapReduce(command);
 
         //then
-        if (serverVersionLessThan(4, 3)) {
+        if (serverVersionLessThan(4, 4)) {
             assertThat(output.getEmitCount(), is(6));
             assertThat(output.getInputCount(), is(3));
             assertThat(output.getOutputCount(), is(4));
@@ -334,7 +334,7 @@ public class MapReduceTest extends DatabaseTestCase {
         MapReduceOutput output = collection.mapReduce(command);
 
         //then
-        if (serverVersionLessThan(4, 3)) {
+        if (serverVersionLessThan(4, 4)) {
             assertThat(output.getDuration(), is(greaterThanOrEqualTo(0)));
             assertThat(output.getEmitCount(), is(6));
             assertThat(output.getInputCount(), is(3));

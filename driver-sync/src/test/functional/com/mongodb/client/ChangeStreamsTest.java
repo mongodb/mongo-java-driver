@@ -20,10 +20,14 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import org.bson.BsonDocument;
 
+import static com.mongodb.ClusterFixture.isServerlessTest;
+import static org.junit.Assume.assumeFalse;
+
 public class ChangeStreamsTest extends AbstractChangeStreamsTest {
     public ChangeStreamsTest(final String filename, final String description, final MongoNamespace namespace,
                              final MongoNamespace namespace2, final BsonDocument definition, final boolean skipTest) {
         super(filename, description, namespace, namespace2, definition, skipTest);
+        assumeFalse(isServerlessTest());
     }
 
     @Override

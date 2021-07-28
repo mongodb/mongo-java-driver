@@ -16,9 +16,6 @@
 
 package com.mongodb.client.unified;
 
-import com.mongodb.MongoClientSettings;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -29,26 +26,17 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-public class UnifiedTestValidator extends UnifiedTest {
-    private final String fileDescription;
-    private final String testDescription;
-
-    public UnifiedTestValidator(final String fileDescription, final String testDescription, final String schemaVersion,
-                                @Nullable final BsonArray runOnRequirements, final BsonArray entities, final BsonArray initialData,
-                                final BsonDocument definition) {
+public class UnifiedTestValidator extends UnifiedSyncTest {
+    public UnifiedTestValidator(@SuppressWarnings("unused") final String fileDescription,
+                                @SuppressWarnings("unused") final String testDescription,
+                                final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
+                                final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
-        this.fileDescription = fileDescription;
-        this.testDescription = testDescription;
     }
 
     @Before
     public void setUp() {
         super.setUp();
-    }
-
-    @Override
-    protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return MongoClients.create(settings);
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")

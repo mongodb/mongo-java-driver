@@ -25,7 +25,12 @@ import org.bson.Document
 import org.bson.conversions.Bson
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.client.model.Accumulators.accumulator
 import static com.mongodb.client.model.Accumulators.addToSet
 import static com.mongodb.client.model.Accumulators.avg
@@ -53,6 +58,8 @@ import static com.mongodb.client.model.Aggregates.project
 import static com.mongodb.client.model.Aggregates.replaceRoot
 import static com.mongodb.client.model.Aggregates.replaceWith
 import static com.mongodb.client.model.Aggregates.sample
+import static com.mongodb.client.model.Aggregates.set
+import static com.mongodb.client.model.Aggregates.setWindowFields
 import static com.mongodb.client.model.Aggregates.skip
 import static com.mongodb.client.model.Aggregates.sort
 import static com.mongodb.client.model.Aggregates.sortByCount
@@ -68,7 +75,13 @@ import static com.mongodb.client.model.Projections.fields
 import static com.mongodb.client.model.Projections.include
 import static com.mongodb.client.model.Sorts.ascending
 import static com.mongodb.client.model.Sorts.descending
+import static com.mongodb.client.model.Windows.Bound.CURRENT
+import static com.mongodb.client.model.Windows.Bound.UNBOUNDED
+import static com.mongodb.client.model.Windows.documents
+import static com.mongodb.client.model.Windows.range
+import static com.mongodb.client.model.Windows.timeRange
 import static java.util.Arrays.asList
+import static java.util.stream.Collectors.toList
 import static org.spockframework.util.CollectionUtil.containsAny
 
 class AggregatesFunctionalSpecification extends OperationFunctionalSpecification {
@@ -110,7 +123,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                                                                             new Document('_id', 3).append('x', 3).append('c', 'c')]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def '$project an exclusion'() {
         expect:
         aggregate([project(exclude('a', 'a1', 'z'))]) == [new Document('_id', 1).append('x', 1).append('y', 'a'),
@@ -144,7 +157,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                                                                                   new Document('a', 6)]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
+    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def '$unwind with UnwindOptions'() {
         given:
         getCollectionHelper().drop()
@@ -203,7 +216,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).find() == [a, b, c]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(4, 3) })
+    @IgnoreIf({ serverVersionLessThan(4, 4) })
     def '$out to specified database'() {
         given:
         def outDatabaseName = getDatabaseName() + '_out'
@@ -217,7 +230,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         getCollectionHelper(new MongoNamespace(outDatabaseName, outCollectionName)).find() == [a, b, c]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(4, 2) })
+    @IgnoreIf({ serverVersionLessThan(4, 2) })
     def '$merge'() {
         given:
         def outCollectionName = getCollectionName() + '.out'
@@ -303,7 +316,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).find() == [a, b, c]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
+    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def '$stdDev'() {
         when:
         def results = aggregate([group(null, stdDevPop('stdDevPop', '$x'), stdDevSamp('stdDevSamp', '$x'))]).first()
@@ -315,14 +328,14 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         results.get('stdDevSamp') == 1.0
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
+    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def '$sample'() {
         expect:
         containsAny([a, b, c], aggregate([sample(1)]).first())
     }
 
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
+    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def '$lookup'() {
         given:
         def fromCollectionName = 'lookupCollection'
@@ -350,7 +363,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         fromHelper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    @IgnoreIf({ serverVersionLessThan(3, 6) })
     def '$lookup with pipeline'() {
         given:
         def fromCollectionName = 'warehouses'
@@ -395,7 +408,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         fromHelper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    @IgnoreIf({ serverVersionLessThan(3, 6) })
     def '$lookup with pipeline without variables'() {
         given:
         def fromCollectionName = 'holidays'
@@ -450,7 +463,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         fromCollection?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def '$facet'() {
         given:
         def helper = getCollectionHelper()
@@ -507,7 +520,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def '$graphLookup'() {
         given:
         def fromCollectionName = 'contacts'
@@ -546,7 +559,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         fromHelper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def '$graphLookup with depth options'() {
         given:
         def fromCollectionName = 'contacts'
@@ -587,7 +600,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         fromHelper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def '$graphLookup with query filter option'() {
         given:
         def fromCollectionName = 'contacts'
@@ -638,7 +651,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         fromHelper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def '$bucket'() {
         given:
         def helper = getCollectionHelper()
@@ -672,7 +685,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def '$bucketAuto'() {
         given:
         def helper = getCollectionHelper()
@@ -706,7 +719,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def '$bucketAuto with options'() {
         given:
         def helper = getCollectionHelper()
@@ -732,7 +745,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def '$count'() {
         given:
         def helper = getCollectionHelper()
@@ -768,7 +781,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def '$sortByCount'() {
         given:
         def helper = getCollectionHelper()
@@ -803,7 +816,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(4, 3) })
+    @IgnoreIf({ serverVersionLessThan(4, 4) })
     def '$accumulator'() {
         given:
         def helper = getCollectionHelper()
@@ -847,7 +860,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def '$addFields'() {
         given:
         def helper = getCollectionHelper()
@@ -921,7 +934,15 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(4, 2) })
+    def '$set'() {
+        expect:
+        aggregate([set(new Field('c', '$y'))]) == [new Document(a).append('c', 'a'),
+                                                   new Document(b).append('c', 'b'),
+                                                   new Document(c).append('c', 'c')]
+    }
+
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def '$replaceRoot'() {
         given:
         def helper = getCollectionHelper()
@@ -952,7 +973,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         results == [Document.parse('{b: 1, _id: 7}')]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(4, 2) })
+    @IgnoreIf({ serverVersionLessThan(4, 2) })
     def '$replaceWith'() {
         given:
         def helper = getCollectionHelper()
@@ -983,7 +1004,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         results == [Document.parse('{b: 1, _id: 7}')]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(4, 3) })
+    @IgnoreIf({ serverVersionLessThan(4, 4) })
     def '$unionWith'() {
         given:
         def coll1Helper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'coll1'))
@@ -1018,5 +1039,127 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         cleanup:
         coll1Helper?.drop()
         coll2Helper?.drop()
+    }
+
+    @IgnoreIf({ serverVersionLessThan(5, 0) })
+    def '$setWindowFields'(Object partitionBy, Bson sortBy, WindowedComputation output, List<Object> expectedFieldValues) {
+        given:
+        ZoneId utc = ZoneId.of(ZoneOffset.UTC.getId())
+        getCollectionHelper().drop()
+        Document[] original = [
+                new Document('partitionId', 1)
+                        .append('num1', 1)
+                        .append('num2', -1)
+                        .append('date', LocalDateTime.ofInstant(Instant.ofEpochSecond(1), utc)),
+                new Document('partitionId', 1)
+                        .append('num1', 2)
+                        .append('num2', -2)
+                        .append('date', LocalDateTime.ofInstant(Instant.ofEpochSecond(2), utc)),
+                new Document('partitionId', 2)
+                        .append('num1', 3)
+                        .append('num2', -3)
+                        .append('date', LocalDateTime.ofInstant(Instant.ofEpochSecond(3), utc))]
+        getCollectionHelper().insertDocuments(original)
+        List<Document> actual = aggregate([
+                setWindowFields(partitionBy, sortBy, output),
+                // guarantee ordering of the output documents
+                sort(ascending('num1'))])
+        List<Object> actualFieldValues = actual.stream()
+                .map { doc -> doc.get('result') }
+                .collect(toList())
+
+        expect:
+        actualFieldValues == expectedFieldValues
+
+        where:
+        partitionBy | sortBy | output | expectedFieldValues
+        null | null | WindowedComputations
+                .sum('result', '$num1', null) | [6, 6, 6]
+        null | null | WindowedComputations
+                .sum('result', '$num1', documents(UNBOUNDED, UNBOUNDED)) | [6, 6, 6]
+        '$partitionId' | ascending('num1') | WindowedComputations
+                .sum('result', '$num1', range(0, UNBOUNDED)) | [3, 2, 3]
+        null | ascending('num1') | WindowedComputations
+                .sum('result', '$num1', range(CURRENT, Integer.MAX_VALUE)) | [6, 5, 3]
+        null | ascending('num1') | WindowedComputations
+                .of(new BsonField('result', new Document('$sum', '$num1')
+                        .append('window', Windows.of(
+                                new Document('range', asList('current', Integer.MAX_VALUE))).toBsonDocument()))) | [6, 5, 3]
+        null | ascending('date') | WindowedComputations
+                .avg('result', '$num1', timeRange(-1, 0, MongoTimeUnit.QUARTER)) | [1, 1.5, 2]
+        null | null | WindowedComputations
+                .stdDevSamp('result', '$num1', documents(UNBOUNDED, UNBOUNDED)) | [1.0, 1.0, 1.0]
+        null | ascending('num1') | WindowedComputations
+                .stdDevPop('result', '$num1', documents(CURRENT, CURRENT)) | [0, 0, 0]
+        null | ascending('num1') | WindowedComputations
+                .min('result', '$num1', documents(-1, 0)) | [1, 1, 2]
+        null | null | WindowedComputations
+                .max('result', '$num1', null) | [3, 3, 3]
+        '$partitionId' | null | WindowedComputations
+                .count('result', null) | [2, 2, 1]
+        null | ascending('num1') | WindowedComputations
+                .derivative('result', '$num2', documents(UNBOUNDED, UNBOUNDED)) | [-1, -1, -1]
+        null | ascending('date') | WindowedComputations
+                .timeDerivative('result', '$num2', documents(UNBOUNDED, UNBOUNDED), MongoTimeUnit.MILLISECOND) | [-0.001, -0.001, -0.001]
+        null | ascending('num1') | WindowedComputations
+                .integral('result', '$num2', documents(UNBOUNDED, UNBOUNDED)) | [-4, -4, -4]
+        null | ascending('date') | WindowedComputations
+                .timeIntegral('result', '$num2', documents(UNBOUNDED, UNBOUNDED), MongoTimeUnit.SECOND) | [-4, -4, -4]
+        null | null | WindowedComputations
+                .covarianceSamp('result', '$num1', '$num2', documents(UNBOUNDED, UNBOUNDED)) | [-1.0, -1.0, -1.0]
+        null | ascending('num1') | WindowedComputations
+                .covariancePop('result', '$num1', '$num2', documents(CURRENT, CURRENT)) | [0, 0, 0]
+        null | ascending('num1') | WindowedComputations
+                .expMovingAvg('result', '$num1', 1) | [1, 2, 3]
+        null | ascending('num1') | WindowedComputations
+                .expMovingAvg('result', '$num1', 0.5) | [1.0, 1.5, 2.25]
+        null | descending('num1') | WindowedComputations
+                .push('result', '$num1', documents(UNBOUNDED, CURRENT)) |[ [3, 2, 1], [3, 2], [3] ]
+        null | ascending('num1') | WindowedComputations
+                .addToSet('result', '$partitionId', documents(UNBOUNDED, -1)) |[ [], [1], [1] ]
+        null | ascending('num1') | WindowedComputations
+                .first('result', '$num1', documents(UNBOUNDED, UNBOUNDED)) |[ 1, 1, 1 ]
+        null | ascending('num1') | WindowedComputations
+                .last('result', '$num1', documents(UNBOUNDED, UNBOUNDED)) |[ 3, 3, 3 ]
+        null | ascending('num1') | WindowedComputations
+                .shift('result', '$num1', -3, 1) |[ 2, 3, -3 ]
+        null | ascending('num1') | WindowedComputations
+                .documentNumber('result') |[ 1, 2, 3 ]
+        null | ascending('partitionId') | WindowedComputations
+                .rank('result') |[ 1, 1, 3 ]
+        null | ascending('partitionId') | WindowedComputations
+                .denseRank('result') |[ 1, 1, 2 ]
+    }
+
+    @IgnoreIf({ serverVersionLessThan(5, 0) })
+    def '$setWindowFields with multiple output'() {
+        given:
+        getCollectionHelper().drop()
+        Document[] original = [new Document('num', 1)]
+        getCollectionHelper().insertDocuments(original)
+        List<Document> actual = aggregate([
+                setWindowFields(null, null, [
+                        WindowedComputations.count('count', null),
+                        WindowedComputations.max('max', '$num', null)]),
+                project(fields(excludeId()))])
+
+        expect:
+        actual.size() == 1
+        actual.get(0) == original[0].append('count', 1).append('max', 1)
+    }
+
+    @IgnoreIf({ serverVersionLessThan(5, 0) })
+    def '$setWindowFields with empty output'() {
+        given:
+        getCollectionHelper().drop()
+        Document[] original = [new Document('num', 1)]
+        getCollectionHelper().insertDocuments(original)
+        List<Document> actual = aggregate([
+                setWindowFields(null, null),
+                project(fields(excludeId()))])
+
+        expect:
+        actual.size() == 1
+        actual.get(0) == original[0]
     }
 }

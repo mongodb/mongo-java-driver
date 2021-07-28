@@ -32,10 +32,11 @@ import spock.lang.IgnoreIf
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 
 class CreateViewOperationSpecification extends OperationFunctionalSpecification {
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should create view'() {
         given:
         def viewOn = getCollectionName();
@@ -68,7 +69,7 @@ class CreateViewOperationSpecification extends OperationFunctionalSpecification 
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should create view with collation'() {
         given:
         def viewOn = getCollectionName();
@@ -112,7 +113,7 @@ class CreateViewOperationSpecification extends OperationFunctionalSpecification 
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ serverVersionLessThan(3, 4) || !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
         given:
         def viewName = getCollectionName() + '-view'

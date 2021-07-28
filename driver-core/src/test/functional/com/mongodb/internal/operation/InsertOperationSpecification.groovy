@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation
 
-import util.spock.annotations.Slow
 import com.mongodb.DuplicateKeyException
 import com.mongodb.MongoClientException
 import com.mongodb.OperationFunctionalSpecification
@@ -27,11 +26,12 @@ import org.bson.BsonInt32
 import org.bson.BsonSerializationException
 import org.bson.codecs.BsonDocumentCodec
 import spock.lang.IgnoreIf
+import util.spock.annotations.Slow
 
 import static com.mongodb.ClusterFixture.getAsyncSingleConnectionBinding
 import static com.mongodb.ClusterFixture.getSingleConnectionBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static java.util.Arrays.asList
@@ -214,7 +214,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
+    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def 'should throw if bypassDocumentValidation is set and write is unacknowledged'() {
         given:
         def operation = new InsertOperation(getNamespace(), true,  UNACKNOWLEDGED, false, [new InsertRequest(new BsonDocument())])
@@ -230,7 +230,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         [async, bypassDocumentValidation] << [[true, false], [true, false]].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ serverVersionLessThan(3, 6) || !isDiscoverableReplicaSet() })
     def 'should support retryable writes'() {
         given:
         def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))

@@ -20,12 +20,20 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.StreamFactoryFactory;
+import com.mongodb.lang.Nullable;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.ssl.ReferenceCountedOpenSslClientContext;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslProvider;
 
+import java.security.Security;
+
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -38,6 +46,8 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
     private final EventLoopGroup eventLoopGroup;
     private final Class<? extends SocketChannel> socketChannelClass;
     private final ByteBufAllocator allocator;
+    @Nullable
+    private final SslContext sslContext;
 
     /**
      * Gets a builder for an instance of {@code NettyStreamFactoryFactory}.
@@ -57,6 +67,8 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
         private ByteBufAllocator allocator;
         private Class<? extends SocketChannel> socketChannelClass;
         private EventLoopGroup eventLoopGroup;
+        @Nullable
+        private SslContext sslContext;
 
         private Builder() {
             allocator(ByteBufAllocator.DEFAULT);
@@ -100,6 +112,43 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
         }
 
         /**
+         * Sets a {@linkplain SslContextBuilder#forClient() client-side} {@link SslContext io.netty.handler.ssl.SslContext},
+         * which overrides the standard {@link SslSettings#getContext()}.
+         * By default it is {@code null} and {@link SslSettings#getContext()} is at play.
+         * <p>
+         * This option may be used as a convenient way to utilize
+         * <a href="https://www.openssl.org/">OpenSSL</a> as an alternative to the TLS/SSL protocol implementation in a JDK.
+         * To achieve this, specify {@link SslProvider#OPENSSL} TLS/SSL protocol provider via
+         * {@link SslContextBuilder#sslProvider(SslProvider)}. Note that doing so adds a runtime dependency on
+         * <a href="https://netty.io/wiki/forked-tomcat-native.html">netty-tcnative</a>, which you must satisfy.
+         * <p>
+         * Notes:
+         * <ul>
+         *    <li>Netty {@link SslContext} may not examine some
+         *    {@linkplain Security security}/{@linkplain System#getProperties() system} properties that are used to
+         *    <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/JSSERefGuide.html#Customization">
+         *    customize JSSE</a>. Therefore, instead of using them you may have to apply the equivalent configuration programmatically,
+         *    if both the {@link SslContextBuilder} and the TLS/SSL protocol provider of choice support it.
+         *    </li>
+         *    <li>Only {@link SslProvider#JDK} and {@link SslProvider#OPENSSL} TLS/SSL protocol providers are supported.
+         *    </li>
+         * </ul>
+         *
+         * @param sslContext The Netty {@link SslContext}, which must be created via {@linkplain SslContextBuilder#forClient()}.
+         * @return {@code this}.
+         *
+         * @since 4.3
+         */
+        public Builder sslContext(final SslContext sslContext) {
+            this.sslContext = notNull("sslContext", sslContext);
+            isTrueArgument("sslContext must be client-side", sslContext.isClient());
+            isTrueArgument("sslContext must use either SslProvider.JDK or SslProvider.OPENSSL TLS/SSL protocol provider",
+                    !(sslContext instanceof ReferenceCountedOpenSslClientContext));
+
+            return this;
+        }
+
+        /**
          * Build an instance of {@code NettyStreamFactoryFactory}.
          * @return factory of the netty stream factory
          */
@@ -110,7 +159,7 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
 
     @Override
     public StreamFactory create(final SocketSettings socketSettings, final SslSettings sslSettings) {
-        return new NettyStreamFactory(socketSettings, sslSettings, eventLoopGroup, socketChannelClass, allocator);
+        return new NettyStreamFactory(socketSettings, sslSettings, eventLoopGroup, socketChannelClass, allocator, sslContext);
     }
 
     @Override
@@ -119,6 +168,7 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
                 + "eventLoopGroup=" + eventLoopGroup
                 + ", socketChannelClass=" + socketChannelClass
                 + ", allocator=" + allocator
+                + ", sslContext=" + sslContext
                 + '}';
     }
 
@@ -130,5 +180,6 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
         } else {
             eventLoopGroup = new NioEventLoopGroup();
         }
+        sslContext = builder.sslContext;
     }
 }

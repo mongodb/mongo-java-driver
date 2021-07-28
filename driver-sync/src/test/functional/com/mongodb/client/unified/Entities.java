@@ -30,7 +30,6 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
-import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionId;
@@ -82,11 +81,16 @@ import static com.mongodb.client.unified.EventMatcher.getReasonString;
 import static com.mongodb.client.unified.UnifiedCrudHelper.asReadConcern;
 import static com.mongodb.client.unified.UnifiedCrudHelper.asReadPreference;
 import static com.mongodb.client.unified.UnifiedCrudHelper.asWriteConcern;
+import static java.util.Arrays.asList;
 import static java.util.Collections.synchronizedList;
 import static java.util.Objects.requireNonNull;
 import static org.junit.Assume.assumeTrue;
 
 public final class Entities {
+    private static final Set<String> SUPPORTED_CLIENT_ENTITY_OPTIONS = new HashSet<>(
+            asList(
+                    "id", "uriOptions", "serverApi", "useMultipleMongoses", "storeEventsAsEntities",
+                    "observeEvents", "observeSensitiveCommands", "ignoreCommandMonitoringEvents"));
     private final Set<String> entityNames = new HashSet<>();
     private final Map<String, BsonValue> results = new HashMap<>();
     private final Map<String, MongoClient> clients = new HashMap<>();
@@ -248,7 +252,8 @@ public final class Entities {
         entities.put(id, entity);
     }
 
-    public void init(final BsonArray entitiesArray, final Function<MongoClientSettings, MongoClient> mongoClientSupplier) {
+    public void init(final BsonArray entitiesArray, final Function<MongoClientSettings, MongoClient> mongoClientSupplier,
+                     final Function<MongoDatabase, GridFSBucket> gridFSBucketSupplier) {
         for (BsonValue cur : entitiesArray.getValues()) {
             String entityType = cur.asDocument().getFirstKey();
             BsonDocument entity = cur.asDocument().getDocument(entityType);
@@ -270,7 +275,7 @@ public final class Entities {
                     break;
                 }
                 case "bucket": {
-                    initBucket(entity, id);
+                    initBucket(entity, id, gridFSBucketSupplier);
                     break;
                 }
                 default:
@@ -281,6 +286,10 @@ public final class Entities {
 
     private void initClient(final BsonDocument entity, final String id,
                             final Function<MongoClientSettings, MongoClient> mongoClientSupplier) {
+        if (!SUPPORTED_CLIENT_ENTITY_OPTIONS.containsAll(entity.keySet())) {
+            throw new UnsupportedOperationException("Client entity contains unsupported options: " + entity.keySet()
+                    + ". Supported options are " + SUPPORTED_CLIENT_ENTITY_OPTIONS);
+        }
         MongoClientSettings.Builder clientSettingsBuilder = getMongoClientSettingsBuilder();
         if (entity.getBoolean("useMultipleMongoses", BsonBoolean.FALSE).getValue()) {
             assumeTrue("Multiple mongos connection string not available for sharded cluster",
@@ -448,10 +457,12 @@ public final class Entities {
         ClientSessionOptions.Builder optionsBuilder = ClientSessionOptions.builder();
         if (entity.containsKey("sessionOptions")) {
             for (Map.Entry<String, BsonValue> entry : entity.getDocument("sessionOptions").entrySet()) {
-                //noinspection SwitchStatementWithTooFewBranches
                 switch (entry.getKey()) {
                     case "defaultTransactionOptions":
                         optionsBuilder.defaultTransactionOptions(getTransactionOptions(entry.getValue().asDocument()));
+                        break;
+                    case "snapshot":
+                        optionsBuilder.snapshot(entry.getValue().asBoolean().getValue());
                         break;
                     default:
                         throw new UnsupportedOperationException("Unsupported session option: " + entry.getKey());
@@ -463,12 +474,12 @@ public final class Entities {
         putEntity(id + "-identifier", session.getServerSession().getIdentifier(), sessionIdentifiers);
     }
 
-    private void initBucket(final BsonDocument entity, final String id) {
+    private void initBucket(final BsonDocument entity, final String id, final Function<MongoDatabase, GridFSBucket> gridFSBucketSupplier) {
         MongoDatabase database = databases.get(entity.getString("database").getValue());
         if (entity.containsKey("bucketOptions")) {
             throw new UnsupportedOperationException("Unsupported session specification: bucketOptions");
         }
-        putEntity(id, GridFSBuckets.create(database), buckets);
+        putEntity(id, gridFSBucketSupplier.apply(database), buckets);
     }
 
     private TransactionOptions getTransactionOptions(final BsonDocument options) {

@@ -132,7 +132,7 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
         } catch (MongoChangeStreamException e) {
             exceptionFound = true;
         } catch (MongoQueryException e) {
-            if (serverVersionAtLeast(4, 1)) {
+            if (serverVersionAtLeast(4, 2)) {
                 exceptionFound = true;
             }
         } finally {
@@ -142,7 +142,7 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     }
 
     //
-    // Test that the ChangeStream will automatically resume one time on a resumable error (including not master)
+    // Test that the ChangeStream will automatically resume one time on a resumable error (including not primary)
     // with the initial pipeline and options, except for the addition/update of a resumeToken.
     //
     @Test
@@ -199,7 +199,7 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     //
     @Test
     public void testGetResumeTokenReturnsPostBatchResumeToken() throws NoSuchFieldException, IllegalAccessException {
-        assumeTrue(serverVersionAtLeast(asList(4, 0, 7)));
+        assumeTrue(serverVersionAtLeast(4, 0));
 
         MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch().cursor();
         assertNull(cursor.getResumeToken());
@@ -226,7 +226,7 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     //
     @Test
     public void testGetResumeTokenShouldWorkAsExpectedForEmptyAndIteratedBatch() {
-        assumeTrue(serverVersionLessThan(asList(4, 0, 7)));
+        assumeTrue(serverVersionLessThan(4, 0));
 
         BsonDocument resumeAfterToken;
         MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch().cursor();
@@ -287,7 +287,7 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     //
     @Test
     public void testGetResumeTokenReturnsStartAfter() {
-        assumeTrue(serverVersionAtLeast(asList(4, 1, 11)));
+        assumeTrue(serverVersionAtLeast(4, 2));
 
         BsonDocument resumeToken;
         MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch().cursor();
@@ -362,7 +362,7 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     @Test
     public void testGetResumeTokenReturnsPostBatchResumeTokenAfterGetMore()
             throws NoSuchFieldException, IllegalAccessException {
-        assumeTrue(serverVersionAtLeast(asList(4, 0, 7)));
+        assumeTrue(serverVersionAtLeast(4, 0));
 
         MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch().cursor();
         collection.insertOne(Document.parse("{ _id: 42, x: 1 }"));
@@ -395,7 +395,7 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     //
     @Test
     public void testGetResumeTokenReturnsIdOfPreviousDocument() {
-        assumeTrue(serverVersionLessThan(asList(4, 0, 7)));
+        assumeTrue(serverVersionLessThan(4, 0));
 
         BsonDocument resumeToken;
         MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch().cursor();

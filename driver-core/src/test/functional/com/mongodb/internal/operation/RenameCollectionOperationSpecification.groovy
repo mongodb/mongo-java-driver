@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation
 
-
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoServerException
 import com.mongodb.MongoWriteConcernException
@@ -30,7 +29,7 @@ import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 
 @IgnoreIf( { isSharded() } )  // these tests don't reliably pass against mongos
 class RenameCollectionOperationSpecification extends OperationFunctionalSpecification {
@@ -93,7 +92,7 @@ class RenameCollectionOperationSpecification extends OperationFunctionalSpecific
         collectionNameExists(getCollectionName())
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ serverVersionLessThan(3, 4) || !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))

@@ -18,7 +18,6 @@ package org.mongodb.scala.vault
 
 import java.io.Closeable
 
-import com.mongodb.annotations.Beta
 import com.mongodb.reactivestreams.client.vault.{ ClientEncryption => JClientEncryption }
 import org.bson.{ BsonBinary, BsonValue }
 import org.mongodb.scala.SingleObservable
@@ -29,11 +28,8 @@ import org.mongodb.scala.model.vault.{ DataKeyOptions, EncryptOptions }
  *
  * Used to create data encryption keys, and to explicitly encrypt and decrypt values when auto-encryption is not an option.
  *
- * @note support for client-side encryption should be considered as beta.  Backwards-breaking changes may be made before the final
- * release.
  * @since 2.7
  */
-@Beta
 case class ClientEncryption(private val wrapped: JClientEncryption) extends Closeable {
 
   /**

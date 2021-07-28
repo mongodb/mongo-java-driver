@@ -55,7 +55,8 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def logger = Stub(Logger) {
             isDebugEnabled() >> debugLoggingEnabled
         }
-        def sender = new LoggingCommandEventSender([] as Set, connectionDescription, commandListener, message, bsonOutput, logger)
+        def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, commandListener, message, bsonOutput,
+                logger)
 
         when:
         sender.sendStartedEvent()
@@ -94,7 +95,8 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def logger = Mock(Logger) {
             isDebugEnabled() >> true
         }
-        def sender = new LoggingCommandEventSender([] as Set, connectionDescription, commandListener, message, bsonOutput, logger)
+        def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, commandListener, message, bsonOutput,
+                logger)
         when:
         sender.sendStartedEvent()
         sender.sendSucceededEventForOneWayCommand()
@@ -140,7 +142,7 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def logger = Mock(Logger) {
             isDebugEnabled() >> true
         }
-        def sender = new LoggingCommandEventSender([] as Set, connectionDescription, null, message, bsonOutput, logger)
+        def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, null, message, bsonOutput, logger)
 
         when:
         sender.sendStartedEvent()
@@ -148,6 +150,34 @@ class LoggingCommandEventSenderSpecification extends Specification {
         then:
         1 * logger.debug {
             it == "Sending command \'{\"fake\": {\"\$binary\": {\"base64\": \"${'A' * 967} ...\' " +
+                    "with request id ${message.getId()} to database test " +
+                    "on connection [connectionId{localValue:${connectionDescription.connectionId.localValue}}] " +
+                    'to server 127.0.0.1:27017'
+        }
+    }
+
+    def 'should log redacted command with ellipses'() {
+        given:
+        def connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()))
+        def namespace = new MongoNamespace('test.driver')
+        def messageSettings = MessageSettings.builder().maxWireVersion(THREE_DOT_SIX_WIRE_VERSION).build()
+        def commandDocument = new BsonDocument('createUser', new BsonString('private'))
+        def message = new CommandMessage(namespace, commandDocument, new NoOpFieldNameValidator(), ReadPreference.primary(),
+                messageSettings, null)
+        def bsonOutput = new ByteBufferBsonOutput(new SimpleBufferProvider())
+        message.encode(bsonOutput, NoOpSessionContext.INSTANCE)
+        def logger = Mock(Logger) {
+            isDebugEnabled() >> true
+        }
+        def sender = new LoggingCommandEventSender(['createUser'] as Set, [] as Set, connectionDescription, null, message, bsonOutput,
+                logger)
+
+        when:
+        sender.sendStartedEvent()
+
+        then:
+        1 * logger.debug {
+            it == "Sending command \'{\"createUser\": ...\' " +
                     "with request id ${message.getId()} to database test " +
                     "on connection [connectionId{localValue:${connectionDescription.connectionId.localValue}}] " +
                     'to server 127.0.0.1:27017'

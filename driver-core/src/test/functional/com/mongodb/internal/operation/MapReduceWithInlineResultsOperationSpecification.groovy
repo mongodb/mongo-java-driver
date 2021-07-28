@@ -47,9 +47,10 @@ import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.executeAsync
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand
+import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSION
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class MapReduceWithInlineResultsOperationSpecification extends OperationFunctionalSpecification {
@@ -138,13 +139,13 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         async << [true, false]
     }
 
-    def 'should use the ReadBindings readPreference to set slaveOK'() {
+    def 'should use the ReadBindings readPreference to set secondaryOk'() {
         when:
         def operation = new MapReduceWithInlineResultsOperation<Document>(helper.namespace, new BsonJavaScript('function(){ }'),
                 new BsonJavaScript('function(key, values){ }'), bsonDocumentCodec)
 
         then:
-        testOperationSlaveOk(operation, [3, 4, 0], readPreference, async, helper.commandResult)
+        testOperationSecondaryOk(operation, [3, 4, 0], readPreference, async, helper.commandResult)
 
         where:
         [async, readPreference] << [[true, false], [ReadPreference.primary(), ReadPreference.secondary()]].combinations()
@@ -230,7 +231,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         async << [false, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should support collation'() {
         given:
         def document = Document.parse('{_id: 1, str: "foo"}')
@@ -270,7 +271,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
               "reduce" : { "$code" : "function(key, values){ }" },
               "out" : { "inline" : 1 },
               }''')
-        appendReadConcernToCommand(sessionContext, commandDocument)
+        appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
 
         def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(helper.namespace, new BsonJavaScript('function(){ }'),
                 new BsonJavaScript('function(key, values){ }'), bsonDocumentCodec)
@@ -319,7 +320,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
               "reduce" : { "$code" : "function(key, values){ }" },
               "out" : { "inline" : 1 },
               }''')
-        appendReadConcernToCommand(sessionContext, commandDocument)
+        appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
 
         def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(helper.namespace, new BsonJavaScript('function(){ }'),
                 new BsonJavaScript('function(key, values){ }'), bsonDocumentCodec)

@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation
 
-import util.spock.annotations.Slow
 import com.mongodb.MongoClientException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcernResult
@@ -28,9 +27,11 @@ import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
+import util.spock.annotations.Slow
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 
@@ -102,7 +103,7 @@ class DeleteOperationSpecification extends OperationFunctionalSpecification {
         ].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should support collation'() {
         given:
         getCollectionHelper().insertDocuments(Document.parse('{str: "foo"}'))
@@ -119,7 +120,7 @@ class DeleteOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should throw if collation is set and write is unacknowledged'() {
         given:
         def requests = [new DeleteRequest(BsonDocument.parse('{str: "FOO"}}')).collation(caseInsensitiveCollation)]
@@ -135,7 +136,7 @@ class DeleteOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ serverVersionLessThan(3, 6) || !isDiscoverableReplicaSet() })
     def 'should support retryable writes'() {
         given:
         getCollectionHelper().insertDocuments(Document.parse('{str: "foo"}'))

@@ -27,6 +27,8 @@ import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
 import org.junit.Test;
 
+import java.util.Locale;
+
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.getBinding;
@@ -53,6 +55,8 @@ import static org.junit.Assume.assumeTrue;
 
 @SuppressWarnings("deprecation")
 public class DBTest extends DatabaseTestCase {
+    static final String LEGACY_HELLO = "isMaster";
+    static final String LEGACY_HELLO_LOWER = LEGACY_HELLO.toLowerCase(Locale.ROOT);
     @Test
     public void shouldGetDefaultWriteConcern() {
         assertEquals(WriteConcern.ACKNOWLEDGED, database.getWriteConcern());
@@ -202,8 +206,8 @@ public class DBTest extends DatabaseTestCase {
 
     @Test
     public void shouldExecuteCommand() {
-        CommandResult commandResult = database.command(new BasicDBObject("isMaster", 1));
-        assertThat(commandResult, hasFields(new String[]{"ismaster", "maxBsonObjectSize", "ok"}));
+        CommandResult commandResult = database.command(new BasicDBObject(LEGACY_HELLO, 1));
+        assertThat(commandResult, hasFields(new String[]{LEGACY_HELLO_LOWER, "maxBsonObjectSize", "ok"}));
     }
 
     @Test(expected = MongoExecutionTimeoutException.class)
@@ -211,7 +215,7 @@ public class DBTest extends DatabaseTestCase {
         assumeThat(isSharded(), is(false));
         enableMaxTimeFailPoint();
         try {
-            database.command(new BasicDBObject("isMaster", 1).append("maxTimeMS", 1));
+            database.command(new BasicDBObject(LEGACY_HELLO, 1).append("maxTimeMS", 1));
         } finally {
             disableMaxTimeFailPoint();
         }
@@ -273,11 +277,11 @@ public class DBTest extends DatabaseTestCase {
     @Test
     public void shouldReturnOKWhenASimpleCommandExecutesSuccessfully() {
         // When
-        CommandResult commandResult = database.command(new BasicDBObject("isMaster", 1));
+        CommandResult commandResult = database.command(new BasicDBObject(LEGACY_HELLO, 1));
 
         // Then
         assertThat(commandResult.ok(), is(true));
-        assertThat((Boolean) commandResult.get("ismaster"), is(true));
+        assertThat((Boolean) commandResult.get(LEGACY_HELLO_LOWER), is(true));
     }
 
     @Test

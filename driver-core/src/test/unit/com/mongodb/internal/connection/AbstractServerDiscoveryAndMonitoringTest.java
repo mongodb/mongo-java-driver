@@ -67,13 +67,13 @@ public class AbstractServerDiscoveryAndMonitoringTest {
 
     protected void applyResponse(final BsonArray response) {
         ServerAddress serverAddress = new ServerAddress(response.get(0).asString().getValue());
-        BsonDocument isMasterResult = response.get(1).asDocument();
+        BsonDocument helloResult = response.get(1).asDocument();
         ServerDescription serverDescription;
 
-        if (isMasterResult.isEmpty()) {
+        if (helloResult.isEmpty()) {
             serverDescription = ServerDescription.builder().type(ServerType.UNKNOWN).state(CONNECTING).address(serverAddress).build();
         } else {
-            serverDescription = createServerDescription(serverAddress, isMasterResult, 5000000);
+            serverDescription = createServerDescription(serverAddress, helloResult, 5000000);
         }
         factory.sendNotification(serverAddress, serverDescription);
     }

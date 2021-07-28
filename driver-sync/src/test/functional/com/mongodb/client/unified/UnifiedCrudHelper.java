@@ -28,6 +28,7 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.DistinctIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.ListCollectionsIterable;
+import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.ListIndexesIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -107,7 +108,11 @@ final class UnifiedCrudHelper {
         if (writeConcernDocument.size() > 1) {
             throw new UnsupportedOperationException("Unsupported write concern properties");
         }
-        return new WriteConcern(writeConcernDocument.getInt32("w").intValue());
+        if (writeConcernDocument.isString("w")) {
+            return new WriteConcern(writeConcernDocument.getString("w").getValue());
+        } else {
+            return new WriteConcern(writeConcernDocument.getInt32("w").intValue());
+        }
     }
 
     public static ReadPreference asReadPreference(final BsonDocument readPreferenceDocument) {
@@ -138,21 +143,38 @@ final class UnifiedCrudHelper {
     OperationResult executeListDatabases(final BsonDocument operation) {
         MongoClient client = entities.getClient(operation.getString("object").getValue());
 
-        if (operation.containsKey("arguments")) {
-            throw new UnsupportedOperationException("Unexpected arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+        ClientSession session = getSession(arguments);
+        ListDatabasesIterable<BsonDocument> iterable = session == null
+                ? client.listDatabases(BsonDocument.class)
+                : client.listDatabases(session, BsonDocument.class);
+
+        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
+            //noinspection SwitchStatementWithTooFewBranches
+            switch (cur.getKey()) {
+                case "session":
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+            }
         }
 
         return resultOf(() ->
-                new BsonArray(client.listDatabases(BsonDocument.class).into(new ArrayList<>())));
+                new BsonArray(iterable.into(new ArrayList<>())));
     }
 
     OperationResult executeListCollections(final BsonDocument operation) {
         MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
 
         BsonDocument arguments = operation.getDocument("arguments");
-        ListCollectionsIterable<BsonDocument> iterable = database.listCollections(BsonDocument.class);
+        ClientSession session = getSession(arguments);
+        ListCollectionsIterable<BsonDocument> iterable = session == null
+                ? database.listCollections(BsonDocument.class)
+                : database.listCollections(session, BsonDocument.class);
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
+                case "session":
+                    break;
                 case "filter":
                     iterable.filter(cur.getValue().asDocument());
                     break;
@@ -171,10 +193,14 @@ final class UnifiedCrudHelper {
     OperationResult executeListIndexes(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments");
-        ListIndexesIterable<BsonDocument> iterable = collection.listIndexes(BsonDocument.class);
+        ClientSession session = getSession(arguments);
+        ListIndexesIterable<BsonDocument> iterable = session == null
+                ? collection.listIndexes(BsonDocument.class)
+                : collection.listIndexes(session, BsonDocument.class);
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
-            //noinspection SwitchStatementWithTooFewBranches
             switch (cur.getKey()) {
+                case "session":
+                    break;
                 case "batchSize":
                     iterable.batchSize(cur.getValue().asNumber().intValue());
                     break;
@@ -235,13 +261,17 @@ final class UnifiedCrudHelper {
     OperationResult executeDistinct(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments");
+        ClientSession session = getSession(arguments);
 
         BsonString fieldName = arguments.getString("fieldName");
-        DistinctIterable<BsonValue> iterable = collection.distinct(fieldName.getValue(), BsonValue.class);
+        DistinctIterable<BsonValue> iterable = session == null
+                ? collection.distinct(fieldName.getValue(), BsonValue.class)
+                : collection.distinct(session, fieldName.getValue(), BsonValue.class);
 
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
                 case "fieldName":
+                case "session":
                     break;
                 case "filter":
                     iterable.filter(cur.getValue().asDocument());
@@ -261,12 +291,14 @@ final class UnifiedCrudHelper {
 
         BsonDocument filter = arguments.getDocument("filter").asDocument();
         BsonValue update = arguments.get("update");
+        ClientSession session = getSession(arguments);
         FindOneAndUpdateOptions options = new FindOneAndUpdateOptions();
 
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
                 case "filter":
                 case "update":
+                case "session":
                     break;
                 case "returnDocument":
                     switch (cur.getValue().asString().getValue()) {
@@ -292,11 +324,20 @@ final class UnifiedCrudHelper {
             }
         }
 
-        return resultOf(() ->
-                update.isArray()
+        return resultOf(() -> {
+            if (session == null) {
+                return update.isArray()
                         ? collection.findOneAndUpdate(filter, update.asArray().stream().map(BsonValue::asDocument).collect(toList()),
                         options)
-                        : collection.findOneAndUpdate(filter, update.asDocument(), options));
+                        : collection.findOneAndUpdate(filter, update.asDocument(), options);
+            } else {
+                return update.isArray()
+                        ? collection.findOneAndUpdate(session, filter,
+                        update.asArray().stream().map(BsonValue::asDocument).collect(toList()), options)
+                        : collection.findOneAndUpdate(session, filter, update.asDocument(), options);
+
+            }
+        });
     }
 
     OperationResult executeFindOneAndReplace(final BsonDocument operation) {
@@ -371,18 +412,24 @@ final class UnifiedCrudHelper {
         String entityName = operation.getString("object").getValue();
 
         BsonDocument arguments = operation.getDocument("arguments");
+        ClientSession session = getSession(arguments);
         List<BsonDocument> pipeline = arguments.getArray("pipeline").stream().map(BsonValue::asDocument).collect(toList());
         AggregateIterable<BsonDocument> iterable;
         if (entities.hasDatabase(entityName)) {
-            iterable = entities.getDatabase(entityName).aggregate(requireNonNull(pipeline), BsonDocument.class);
+            iterable = session == null
+                    ? entities.getDatabase(entityName).aggregate(requireNonNull(pipeline), BsonDocument.class)
+                    : entities.getDatabase(entityName).aggregate(session, requireNonNull(pipeline), BsonDocument.class);
         } else if (entities.hasCollection(entityName)) {
-            iterable = entities.getCollection(entityName).aggregate(requireNonNull(pipeline));
+            iterable = session == null
+                    ? entities.getCollection(entityName).aggregate(requireNonNull(pipeline))
+                    : entities.getCollection(entityName).aggregate(session, requireNonNull(pipeline));
         } else {
             throw new UnsupportedOperationException("Unsupported entity type with name: " + entityName);
         }
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
                 case "pipeline":
+                case "session":
                     break;
                 case "batchSize":
                     iterable.batchSize(cur.getValue().asNumber().intValue());
@@ -414,20 +461,32 @@ final class UnifiedCrudHelper {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments");
         BsonDocument filter = arguments.getDocument("filter");
+        ClientSession session = getSession(arguments);
         DeleteOptions options = getDeleteOptions(arguments);
 
-        return resultOf(() ->
-                toExpected(collection.deleteOne(filter, options)));
+        return resultOf(() -> {
+            if (session == null) {
+                return toExpected(collection.deleteOne(filter, options));
+            } else {
+                return toExpected(collection.deleteOne(session, filter, options));
+            }
+        });
     }
 
     OperationResult executeDeleteMany(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments");
         BsonDocument filter = arguments.getDocument("filter");
+        ClientSession session = getSession(arguments);
         DeleteOptions options = getDeleteOptions(arguments);
 
-        return resultOf(() ->
-                toExpected(collection.deleteMany(filter, options)));
+        return resultOf(() -> {
+            if (session == null) {
+                return toExpected(collection.deleteMany(filter, options));
+            } else {
+                return toExpected(collection.deleteMany(session, filter, options));
+            }
+        });
     }
 
     private BsonDocument toExpected(final DeleteResult result) {
@@ -467,14 +526,22 @@ final class UnifiedCrudHelper {
         BsonDocument arguments = operation.getDocument("arguments");
         BsonDocument filter = arguments.getDocument("filter");
         BsonValue update = arguments.get("update");
+        ClientSession session = getSession(arguments);
         UpdateOptions options = getUpdateOptions(arguments);
 
-        return resultOf(() ->
-                update.isArray()
+        return resultOf(() -> {
+            if (session == null) {
+                return update.isArray()
                         ? toExpected(collection.updateMany(filter, update.asArray().stream().map(BsonValue::asDocument).collect(toList()),
                         options))
-                        : toExpected(collection.updateMany(filter, update.asDocument(), options)));
-
+                        : toExpected(collection.updateMany(filter, update.asDocument(), options));
+            } else {
+                return update.isArray()
+                        ? toExpected(collection.updateMany(session, filter,
+                        update.asArray().stream().map(BsonValue::asDocument).collect(toList()), options))
+                        : toExpected(collection.updateMany(session, filter, update.asDocument(), options));
+            }
+        });
     }
 
     OperationResult executeReplaceOne(final BsonDocument operation) {
@@ -529,8 +596,7 @@ final class UnifiedCrudHelper {
 
     private BsonDocument toExpected(final InsertOneResult result) {
         if (result.wasAcknowledged()) {
-            return new BsonDocument("insertedId", result.getInsertedId())
-                    .append("insertedCount", new BsonInt32(1));
+            return new BsonDocument("insertedId", result.getInsertedId());
         } else {
             return new BsonDocument();
         }
@@ -540,11 +606,13 @@ final class UnifiedCrudHelper {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments");
         List<BsonDocument> documents = arguments.getArray("documents").stream().map(BsonValue::asDocument).collect(toList());
+        ClientSession session = getSession(arguments);
         InsertManyOptions options = new InsertManyOptions();
 
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
                 case "documents":
+                case "session":
                     break;
                 case "ordered":
                     options.ordered(cur.getValue().asBoolean().getValue());
@@ -554,15 +622,19 @@ final class UnifiedCrudHelper {
             }
         }
 
-        return resultOf(() ->
-                toExpected(collection.insertMany(documents, options)));
+        return resultOf(() -> {
+            if (session == null) {
+                return toExpected(collection.insertMany(documents, options));
+            } else {
+                return toExpected(collection.insertMany(session, documents, options));
+            }
+        });
     }
 
     private BsonDocument toExpected(final InsertManyResult result) {
         if (result.wasAcknowledged()) {
             return new BsonDocument("insertedIds", new BsonDocument(result.getInsertedIds().entrySet().stream()
-                    .map(value -> new BsonElement(value.getKey().toString(), value.getValue())).collect(toList())))
-                    .append("insertedCount", new BsonInt32(result.getInsertedIds().size()));
+                    .map(value -> new BsonElement(value.getKey().toString(), value.getValue())).collect(toList())));
         } else {
             return new BsonDocument();
         }
@@ -971,37 +1043,50 @@ final class UnifiedCrudHelper {
     public OperationResult executeRunCommand(final BsonDocument operation) {
         MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+        ClientSession session = getSession(arguments);
         BsonDocument command = arguments.getDocument("command");
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
                 case "command":
                 case "commandName":
+                case "session":
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
 
-        return resultOf(() ->
-                database.runCommand(command, BsonDocument.class));
+        return resultOf(() -> {
+            if (session == null) {
+                return database.runCommand(command, BsonDocument.class);
+            } else {
+                return database.runCommand(session, command, BsonDocument.class);
+            }
+        });
     }
 
     public OperationResult executeCountDocuments(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments");
         BsonDocument filter = arguments.getDocument("filter");
+        ClientSession session = getSession(arguments);
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
-            //noinspection SwitchStatementWithTooFewBranches
             switch (cur.getKey()) {
                 case "filter":
+                case "session":
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
 
-        return resultOf(() ->
-                new BsonInt64(collection.countDocuments(filter)));
+        return resultOf(() -> {
+            if (session == null) {
+                return new BsonInt64(collection.countDocuments(filter));
+            } else {
+                return new BsonInt64(collection.countDocuments(session, filter));
+            }
+        });
     }
 
     public OperationResult executeEstimatedDocumentCount(final BsonDocument operation) {

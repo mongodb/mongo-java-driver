@@ -19,7 +19,7 @@ package org.bson;
 import org.bson.types.Decimal128;
 
 /**
- * Base class for the three numeric BSON types.  This class mirrors the functionality provided by {@code java.lang.Number}.
+ * Base class for the numeric BSON types. This class mirrors the functionality provided by {@code java.lang.Number}.
  *
  * @since 3.0
  */

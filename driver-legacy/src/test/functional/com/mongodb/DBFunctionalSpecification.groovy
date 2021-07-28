@@ -22,10 +22,11 @@ import spock.lang.IgnoreIf
 import static com.mongodb.ClusterFixture.configureFailPoint
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 
 class DBFunctionalSpecification extends FunctionalSpecification {
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ serverVersionLessThan(3, 4) || !isDiscoverableReplicaSet() })
     def 'should throw WriteConcernException on write concern error for drop'() {
         given:
         database.createCollection('ctest', new BasicDBObject())
@@ -51,7 +52,7 @@ class DBFunctionalSpecification extends FunctionalSpecification {
         database.setWriteConcern(null)
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ serverVersionLessThan(3, 4) || !isDiscoverableReplicaSet() })
     def 'should throw WriteConcernException on write concern error for create collection'() {
         given:
         database.setWriteConcern(new WriteConcern(5))
@@ -67,7 +68,7 @@ class DBFunctionalSpecification extends FunctionalSpecification {
         database.setWriteConcern(null)
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ serverVersionLessThan(3, 4) || !isDiscoverableReplicaSet() })
     def 'should throw WriteConcernException on write concern error for create view'() {
         given:
         database.setWriteConcern(new WriteConcern(5))

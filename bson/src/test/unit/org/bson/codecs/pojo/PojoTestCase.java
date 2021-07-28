@@ -29,6 +29,7 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.jsr310.Jsr310CodecProvider;
 import org.bson.codecs.pojo.entities.CollectionNestedPojoModel;
 import org.bson.codecs.pojo.entities.ConcreteCollectionsModel;
 import org.bson.codecs.pojo.entities.ConventionModel;
@@ -222,7 +223,7 @@ abstract class PojoTestCase {
     }
 
     CodecRegistry getCodecRegistry(final PojoCodecProvider.Builder builder) {
-        return fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider(), builder.build());
+        return fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider(), new Jsr310CodecProvider(), builder.build());
     }
 
     static SimpleModel getSimpleModel() {

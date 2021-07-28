@@ -62,11 +62,13 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getCluster
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.CursorType.NonTailable
 import static com.mongodb.CursorType.Tailable
 import static com.mongodb.CursorType.TailableAwait
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand
+import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSION
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assert.assertEquals
@@ -95,7 +97,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         !operation.isNoCursorTimeout()
         !operation.isOplogReplay()
         !operation.isPartial()
-        !operation.isSlaveOk()
+        !operation.isSecondaryOk()
         operation.isAllowDiskUse() == null
     }
 
@@ -118,7 +120,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
                 .cursorType(Tailable)
                 .collation(defaultCollation)
                 .partial(true)
-                .slaveOk(true)
+                .secondaryOk(true)
                 .oplogReplay(true)
                 .noCursorTimeout(true)
                 .allowDiskUse(true)
@@ -136,7 +138,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         operation.isNoCursorTimeout()
         operation.isOplogReplay()
         operation.isPartial()
-        operation.isSlaveOk()
+        operation.isSecondaryOk()
         operation.isAllowDiskUse()
     }
 
@@ -396,7 +398,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
+    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def 'should apply $hint'() {
         given:
         def index = new BsonDocument('a', new BsonInt32(1))
@@ -485,7 +487,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(4, 3) || ClusterFixture.isStandalone() })
+    @IgnoreIf({ serverVersionLessThan(4, 4) || ClusterFixture.isStandalone() })
     def 'should read from a secondary when hedge is specified'() {
         given:
         def documents = [new Document('_id', 3), new Document('_id', 1), new Document('_id', 2), new Document('_id', 5),
@@ -529,7 +531,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         source.connection >> connection
         source.retain() >> source
         def commandDocument = new BsonDocument('find', new BsonString(getCollectionName()))
-        appendReadConcernToCommand(sessionContext, commandDocument)
+        appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
 
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
 
@@ -569,7 +571,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         source.getConnection(_) >> { it[0].onResult(connection, null) }
         source.retain() >> source
         def commandDocument = new BsonDocument('find', new BsonString(getCollectionName()))
-        appendReadConcernToCommand(sessionContext, commandDocument)
+        appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
 
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
 
@@ -609,7 +611,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         source.connection >> connection
         source.retain() >> source
         def commandDocument = new BsonDocument('find', new BsonString(getCollectionName())).append('allowDiskUse', BsonBoolean.TRUE)
-        appendReadConcernToCommand(sessionContext, commandDocument)
+        appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
 
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec()).allowDiskUse(true)
 
@@ -649,7 +651,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         source.getConnection(_) >> { it[0].onResult(connection, null) }
         source.retain() >> source
         def commandDocument = new BsonDocument('find', new BsonString(getCollectionName())).append('allowDiskUse', BsonBoolean.TRUE)
-        appendReadConcernToCommand(sessionContext, commandDocument)
+        appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
 
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec()).allowDiskUse(true)
 
@@ -748,7 +750,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should support collation'() {
         given:
         def document = BsonDocument.parse('{_id: 1, str: "foo"}')

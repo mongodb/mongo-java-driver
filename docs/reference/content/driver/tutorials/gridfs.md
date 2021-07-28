@@ -119,7 +119,7 @@ try {
                        .metadata(new Document("type", "presentation"));
 
     GridFSUploadStream uploadStream = gridFSFilesBucket.openUploadStream("mongodb-tutorial-2", options);
-    byte[] data = Files.readAllBytes(new File("/tmp/MongoDB-manual-master.pdf").toPath());
+    byte[] data = Files.readAllBytes(new File("/tmp/MongoDB-manual.pdf").toPath());
 
     uploadStream.write(data);
     uploadStream.close();

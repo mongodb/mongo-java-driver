@@ -42,6 +42,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.mongodb.ClusterFixture.isServerlessTest;
 import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
@@ -50,6 +51,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 public class MongoCollectionTest extends DatabaseTestCase {
 
@@ -142,6 +144,8 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testMapReduceWithGenerics() {
+        assumeFalse(isServerlessTest());
+
         // given
         CodecRegistry codecRegistry = fromProviders(asList(new DocumentCodecProvider(), new NameCodecProvider()));
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document("name", "Pete").append("job", "handyman"),
@@ -166,6 +170,8 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testAggregationToACollection() {
+        assumeFalse(isServerlessTest());
+
         // given
         List<Document> documents = asList(new Document("_id", 1), new Document("_id", 2));
 

@@ -17,6 +17,7 @@
 package com.mongodb.client.model.geojson;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -40,7 +41,19 @@ public final class PolygonCoordinates {
      * @param holes    optional interior rings of the polygon
      */
     @SafeVarargs
+    @SuppressWarnings("varargs")
     public PolygonCoordinates(final List<Position> exterior, final List<Position>... holes) {
+        this(exterior, Arrays.asList(holes));
+    }
+
+    /**
+     * Construct an instance.
+     *
+     * @param exterior the exterior ring of the polygon
+     * @param holes    optional interior rings of the polygon
+     * @since 4.3
+     */
+    public PolygonCoordinates(final List<Position> exterior, final List<List<Position>> holes) {
         notNull("exteriorRing", exterior);
         doesNotContainNull("exterior", exterior);
         isTrueArgument("ring must contain at least four positions", exterior.size() >= 4);
@@ -48,7 +61,7 @@ public final class PolygonCoordinates {
 
         this.exterior = Collections.unmodifiableList(exterior);
 
-        List<List<Position>> holesList = new ArrayList<List<Position>>(holes.length);
+        List<List<Position>> holesList = new ArrayList<List<Position>>(holes.size());
         for (List<Position> hole : holes) {
             notNull("interiorRing", hole);
             doesNotContainNull("hole", hole);

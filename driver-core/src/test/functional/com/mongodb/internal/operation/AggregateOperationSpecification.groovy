@@ -62,10 +62,12 @@ import static com.mongodb.ClusterFixture.getCluster
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.ExplainVerbosity.QUERY_PLANNER
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.internal.connection.ServerHelper.waitForLastRelease
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand
+import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSION
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 
@@ -194,7 +196,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should support collation'() {
         given:
         def document = BsonDocument.parse('{_id: 1, str: "foo"}')
@@ -256,7 +258,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should be able to aggregate on a view'() {
         given:
         def viewSuffix = '-view'
@@ -339,7 +341,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    @IgnoreIf({ serverVersionLessThan(3, 6) })
     def 'should be able to explain an empty pipeline'() {
         given:
         def operation = new AggregateOperation(getNamespace(), [], new BsonDocumentCodec())
@@ -356,7 +358,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should be able to aggregate with collation'() {
         when:
         AggregateOperation operation = new AggregateOperation<Document>(getNamespace(),
@@ -374,7 +376,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     }
 
     // Explain output keeps changing so only testing this in the range where the assertion still works
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) || serverVersionAtLeast(4, 1) })
+    @IgnoreIf({ serverVersionLessThan(3, 6) || serverVersionAtLeast(4, 2) })
     def 'should apply $hint'() {
         given:
         def index = new BsonDocument('a', new BsonInt32(1))
@@ -394,7 +396,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         [async, hint] << [[true, false], [BsonDocument.parse('{a: 1}'), new BsonString('a_1')]].combinations()
     }
 
-    @IgnoreIf({ isSharded() || !serverVersionAtLeast(3, 6) })
+    @IgnoreIf({ isSharded() || serverVersionLessThan(3, 6) })
     def 'should apply comment'() {
         given:
         def profileCollectionHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'system.profile'))
@@ -420,7 +422,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ isSharded() || !serverVersionAtLeast(3, 2) })
+    @IgnoreIf({ isSharded() || serverVersionLessThan(3, 2) })
     def 'should be able to respect maxTime with pipeline'() {
         given:
         enableMaxTimeFailPoint()
@@ -454,7 +456,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         def commandDocument = new BsonDocument('aggregate', new BsonString(getCollectionName()))
                 .append('pipeline', new BsonArray())
                 .append('cursor', new BsonDocument())
-        appendReadConcernToCommand(sessionContext, commandDocument)
+        appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
 
         def operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec())
 
@@ -496,7 +498,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         def commandDocument = new BsonDocument('aggregate', new BsonString(getCollectionName()))
                 .append('pipeline', new BsonArray())
                 .append('cursor', new BsonDocument())
-        appendReadConcernToCommand(sessionContext, commandDocument)
+        appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
 
         def operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec())
 
@@ -524,12 +526,12 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         ]
     }
 
-    def 'should use the ReadBindings readPreference to set slaveOK'() {
+    def 'should use the ReadBindings readPreference to set secondaryOk'() {
         when:
         def operation = new AggregateOperation(helper.namespace, [], new BsonDocumentCodec())
 
         then:
-        testOperationSlaveOk(operation, [2, 6, 0], readPreference, async, helper.cursorResult)
+        testOperationSecondaryOk(operation, [2, 6, 0], readPreference, async, helper.cursorResult)
 
         where:
         [async, readPreference] << [[true, false], [ReadPreference.primary(), ReadPreference.secondary()]].combinations()

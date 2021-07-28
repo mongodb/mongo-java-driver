@@ -32,15 +32,12 @@ See the [installation]({{< relref "driver-reactive/getting-started/installation.
 
 There is a separate jar file containing`libmongocrypt` bindings.
 
-{{< install artifactId="mongodb-crypt" version="1.2.0">}}
+{{< install artifactId="mongodb-crypt" version="1.2.1">}}
 
 ### mongocryptd configuration
 
 `libmongocrypt` requires the `mongocryptd` daemon / process to be running. A specific daemon / process uri can be configured in the 
 `AutoEncryptionSettings` class by setting `mongocryptdURI` in the `extraOptions`.
-
-More information about mongocryptd will soon be available from the official documentation.
-
 
 ### Examples
 

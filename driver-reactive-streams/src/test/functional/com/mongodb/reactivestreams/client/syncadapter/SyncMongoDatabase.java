@@ -38,11 +38,15 @@ import java.util.List;
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static java.util.Objects.requireNonNull;
 
-class SyncMongoDatabase implements MongoDatabase {
+public class SyncMongoDatabase implements MongoDatabase {
     private final com.mongodb.reactivestreams.client.MongoDatabase wrapped;
 
     SyncMongoDatabase(final com.mongodb.reactivestreams.client.MongoDatabase wrapped) {
         this.wrapped = wrapped;
+    }
+
+    public com.mongodb.reactivestreams.client.MongoDatabase getWrapped() {
+        return wrapped;
     }
 
     @Override
@@ -174,12 +178,12 @@ class SyncMongoDatabase implements MongoDatabase {
 
     @Override
     public ListCollectionsIterable<Document> listCollections(final ClientSession clientSession) {
-        throw new UnsupportedOperationException();
+        return listCollections(clientSession, Document.class);
     }
 
     @Override
     public <TResult> ListCollectionsIterable<TResult> listCollections(final ClientSession clientSession, final Class<TResult> resultClass) {
-        throw new UnsupportedOperationException();
+        return new SyncListCollectionsIterable<TResult>(wrapped.listCollections(unwrap(clientSession), resultClass));
     }
 
     @Override

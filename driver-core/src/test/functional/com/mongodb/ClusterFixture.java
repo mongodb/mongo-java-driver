@@ -31,7 +31,6 @@ import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.connection.TlsChannelStreamFactoryFactory;
-import com.mongodb.connection.netty.NettyStreamFactory;
 import com.mongodb.connection.netty.NettyStreamFactoryFactory;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -59,6 +58,9 @@ import com.mongodb.internal.operation.DropDatabaseOperation;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.lang.Nullable;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslProvider;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
@@ -67,6 +69,7 @@ import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DocumentCodec;
 
+import javax.net.ssl.SSLException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -74,6 +77,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.connection.ClusterConnectionMode.LOAD_BALANCED;
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static com.mongodb.connection.ClusterType.REPLICA_SET;
@@ -100,12 +104,14 @@ public final class ClusterFixture {
     public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
     public static final String MONGODB_API_VERSION = "org.mongodb.test.api.version";
     public static final String MONGODB_TRANSACTION_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.transaction.uri";
+    public static final String SERVERLESS_TEST_SYSTEM_PROPERTY_NAME = "org.mongodb.test.serverless";
     public static final String DATA_LAKE_TEST_SYSTEM_PROPERTY_NAME = "org.mongodb.test.data.lake";
     private static final String MONGODB_OCSP_SHOULD_SUCCEED = "org.mongodb.test.ocsp.tls.should.succeed";
     private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
     private static final int COMMAND_NOT_FOUND_ERROR_CODE = 59;
     public static final long TIMEOUT = 60L;
     public static final Duration TIMEOUT_DURATION = Duration.ofMinutes(1);
+    public static final String LEGACY_HELLO = "isMaster";
 
     private static ConnectionString connectionString;
     private static Cluster cluster;
@@ -158,28 +164,12 @@ public final class ClusterFixture {
                 versionArray.get(2).asInt32().getValue()));
     }
 
-    public static boolean serverVersionAtLeast(final List<Integer> versionArray) {
-        return getServerVersion().compareTo(new ServerVersion(versionArray)) >= 0;
-    }
-
     public static boolean serverVersionAtLeast(final int majorVersion, final int minorVersion) {
-        return serverVersionAtLeast(asList(majorVersion, minorVersion, 0));
-    }
-
-    public static boolean serverVersionLessThan(final List<Integer> versionArray) {
-        return getServerVersion().compareTo(new ServerVersion(versionArray)) < 0;
+        return getServerVersion().compareTo(new ServerVersion(asList(majorVersion, minorVersion, 0))) >= 0;
     }
 
     public static boolean serverVersionLessThan(final int majorVersion, final int minorVersion) {
-        return serverVersionLessThan(asList(majorVersion, minorVersion, 0));
-    }
-
-    public static boolean serverVersionLessThan(final String versionString) {
-        return getServerVersion().compareTo(new ServerVersion(getVersionList(versionString).subList(0, 3))) < 0;
-    }
-
-    public static boolean serverVersionGreaterThan(final String versionString) {
-        return getServerVersion().compareTo(new ServerVersion(getVersionList(versionString).subList(0, 3))) > 0;
+        return getServerVersion().compareTo(new ServerVersion(asList(majorVersion, minorVersion, 0))) < 0;
     }
 
     public static List<Integer> getVersionList(final String versionString) {
@@ -233,6 +223,10 @@ public final class ClusterFixture {
         return getConnectionStringFromSystemProperty(MONGODB_TRANSACTION_URI_SYSTEM_PROPERTY_NAME);
     }
 
+    public static boolean isServerlessTest() {
+        return System.getProperty(SERVERLESS_TEST_SYSTEM_PROPERTY_NAME, "").equals("true");
+    }
+
     public static synchronized boolean isDataLakeTest() {
         String isDataLakeSystemProperty = System.getProperty(DATA_LAKE_TEST_SYSTEM_PROPERTY_NAME);
         return isDataLakeSystemProperty != null && isDataLakeSystemProperty.equals("true");
@@ -252,12 +246,12 @@ public final class ClusterFixture {
         Cluster cluster = createCluster(new ConnectionString(DEFAULT_URI),
                 new SocketStreamFactory(SocketSettings.builder().build(), SslSettings.builder().build()));
         try {
-            BsonDocument isMasterResult = new CommandReadOperation<BsonDocument>("admin",
-                    new BsonDocument("ismaster", new BsonInt32(1)), new BsonDocumentCodec()).execute(new ClusterBinding(cluster,
+            BsonDocument helloResult = new CommandReadOperation<BsonDocument>("admin",
+                    new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), new BsonDocumentCodec()).execute(new ClusterBinding(cluster,
                     ReadPreference.nearest(), ReadConcern.DEFAULT, getServerApi()));
-            if (isMasterResult.containsKey("setName")) {
+            if (helloResult.containsKey("setName")) {
                 connectionString = new ConnectionString(DEFAULT_URI + "/?replicaSet="
-                        + isMasterResult.getString("setName").getValue());
+                        + helloResult.getString("setName").getValue());
             } else {
                 connectionString = new ConnectionString(DEFAULT_URI);
                 ClusterFixture.cluster = cluster;
@@ -398,18 +392,15 @@ public final class ClusterFixture {
     }
 
     public static StreamFactory getAsyncStreamFactory() {
-        String streamType = System.getProperty("org.mongodb.test.async.type", "nio2");
-
-        if (streamType.equals("netty")) {
-            return new NettyStreamFactory(getSocketSettings(), getSslSettings());
-        } else if (streamType.equals("nio2")) {
+        StreamFactoryFactory overriddenStreamFactoryFactory = getOverriddenStreamFactoryFactory();
+        if (overriddenStreamFactoryFactory == null) { // use NIO2
             if (getSslSettings().isEnabled()) {
                 return new TlsChannelStreamFactoryFactory().create(getSocketSettings(), getSslSettings());
             } else {
                 return new AsynchronousSocketChannelStreamFactory(getSocketSettings(), getSslSettings());
             }
         } else {
-            throw new IllegalArgumentException("Unsupported stream type " + streamType);
+            return assertNotNull(overriddenStreamFactoryFactory).create(getSocketSettings(), getSslSettings());
         }
     }
 
@@ -417,13 +408,23 @@ public final class ClusterFixture {
     public static StreamFactoryFactory getOverriddenStreamFactoryFactory() {
         String streamType = System.getProperty("org.mongodb.test.async.type", "nio2");
 
-        if (streamType.equals("netty")) {
-            if (nettyStreamFactoryFactory == null) {
-                nettyStreamFactoryFactory = NettyStreamFactoryFactory.builder().build();
+        if (nettyStreamFactoryFactory == null && streamType.equals("netty")) {
+            NettyStreamFactoryFactory.Builder builder = NettyStreamFactoryFactory.builder();
+            String sslProvider = System.getProperty("org.mongodb.test.netty.ssl.provider");
+            if (sslProvider != null) {
+                SslContext sslContext;
+                try {
+                    sslContext = SslContextBuilder.forClient()
+                            .sslProvider(SslProvider.valueOf(sslProvider))
+                            .build();
+                } catch (SSLException e) {
+                    throw new MongoClientException("Unable to create Netty SslContext", e);
+                }
+                builder.sslContext(sslContext);
             }
-            return nettyStreamFactoryFactory;
+            nettyStreamFactoryFactory = builder.build();
         }
-        return null;
+        return nettyStreamFactoryFactory;
     }
 
     private static SocketSettings getSocketSettings() {
@@ -503,6 +504,10 @@ public final class ClusterFixture {
 
     public static boolean isAuthenticated() {
         return getConnectionString().getCredential() != null;
+    }
+
+    public static boolean isClientSideEncryptionTest() {
+        return !System.getProperty("org.mongodb.test.awsAccessKeyId", "").isEmpty();
     }
 
     public static void enableMaxTimeFailPoint() {

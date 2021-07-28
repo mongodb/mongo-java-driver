@@ -20,11 +20,15 @@ import com.mongodb.MongoClientSettings;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 
+import static com.mongodb.ClusterFixture.isServerlessTest;
+import static org.junit.Assume.assumeFalse;
+
 public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAndMonitoringTest {
     public ServerDiscoveryAndMonitoringTest(final String filename, final String description, final String databaseName,
                                             final String collectionName, final BsonArray data, final BsonDocument definition,
                                             final boolean skipTest) {
         super(filename, description, databaseName, collectionName, data, definition, skipTest);
+        assumeFalse(isServerlessTest());
     }
 
     @Override

@@ -21,6 +21,8 @@ import org.junit.Test;
 
 public class ConnectivityTest {
 
+    static final Document LEGACY_HELLO_COMMAND = new Document("ismaster", 1);
+
     // the test succeeds if no exception is thrown, and fail otherwise
     @Test
     public void testConnectivity() {
@@ -28,7 +30,7 @@ public class ConnectivityTest {
 
         try {
             // test that a command that doesn't require auth completes normally
-            client.getDatabase("admin").runCommand(new Document("ismaster", 1));
+            client.getDatabase("admin").runCommand(LEGACY_HELLO_COMMAND);
 
             // test that a command that requires auth completes normally
             client.getDatabase("test").getCollection("test").estimatedDocumentCount();

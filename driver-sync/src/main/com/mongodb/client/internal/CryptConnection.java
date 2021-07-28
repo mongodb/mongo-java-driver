@@ -179,7 +179,7 @@ class CryptConnection implements Connection {
 
     @Override
     public <T> QueryResult<T> query(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
-                                    final int skip, final int limit, final int batchSize, final boolean slaveOk,
+                                    final int skip, final int limit, final int batchSize, final boolean secondaryOk,
                                     final boolean tailableCursor, final boolean awaitData, final boolean noCursorTimeout,
                                     final boolean partial, final boolean oplogReplay, final Decoder<T> resultDecoder) {
         throw new UnsupportedOperationException();

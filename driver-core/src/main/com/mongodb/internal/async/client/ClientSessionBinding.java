@@ -30,6 +30,7 @@ import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.session.ClientSessionContext;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonTimestamp;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ClusterType.LOAD_BALANCED;
@@ -218,6 +219,23 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
         }
 
         @Override
+        public boolean isSnapshot() {
+            Boolean snapshot = clientSession.getOptions().isSnapshot();
+            return snapshot != null && snapshot;
+        }
+
+        @Override
+        public void setSnapshotTimestamp(final BsonTimestamp snapshotTimestamp) {
+            clientSession.setSnapshotTimestamp(snapshotTimestamp);
+        }
+
+        @Override
+        @Nullable
+        public BsonTimestamp getSnapshotTimestamp() {
+            return clientSession.getSnapshotTimestamp();
+        }
+
+        @Override
         public boolean hasActiveTransaction() {
             return clientSession.hasActiveTransaction();
         }
@@ -226,6 +244,8 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
         public ReadConcern getReadConcern() {
             if (clientSession.hasActiveTransaction()) {
                 return clientSession.getTransactionOptions().getReadConcern();
+            } else if (isSnapshot()) {
+                return ReadConcern.SNAPSHOT;
             } else {
                 return wrapped.getSessionContext().getReadConcern();
             }

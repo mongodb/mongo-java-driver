@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
 import junit.framework.TestCase;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -87,19 +88,20 @@ public abstract class AbstractConnectionStringTest extends TestCase {
         try {
             connectionString = new ConnectionString(input);
         } catch (Throwable t) {
-            assertTrue(String.format("Connection string '%s' should not have thrown an exception: %s", input, t.toString()), false);
+            fail(String.format("Connection string '%s' should not have thrown an exception: %s", input, t));
         }
 
         assertExpectedHosts(connectionString.getHosts());
     }
 
+    @SuppressWarnings("ConstantConditions")
     protected void testValidOptions() {
         ConnectionString connectionString = null;
 
         try {
             connectionString = new ConnectionString(input);
         } catch (Throwable t) {
-            assertTrue(String.format("Connection string '%s' should not have thrown an exception: %s", input, t.toString()), false);
+            fail(String.format("Connection string '%s' should not have thrown an exception: %s", input, t));
         }
 
         for (Map.Entry<String, BsonValue> option : definition.getDocument("options").entrySet()) {
@@ -116,43 +118,43 @@ public abstract class AbstractConnectionStringTest extends TestCase {
                     String actual = connectionString.getCredential().getAuthenticationMechanism().getMechanismName();
                     assertEquals(expected, actual);
                 }
-            } else if (option.getKey().toLowerCase().equals("retrywrites")) {
+            } else if (option.getKey().equalsIgnoreCase("retrywrites")) {
                 boolean expected = option.getValue().asBoolean().getValue();
                 assertEquals(expected, connectionString.getRetryWritesValue().booleanValue());
-            } else if (option.getKey().toLowerCase().equals("replicaset")) {
+            } else if (option.getKey().equalsIgnoreCase("replicaset")) {
                 String expected = option.getValue().asString().getValue();
                 assertEquals(expected, connectionString.getRequiredReplicaSetName());
-            } else if (option.getKey().toLowerCase().equals("serverselectiontimeoutms")) {
+            } else if (option.getKey().equalsIgnoreCase("serverselectiontimeoutms")) {
                 int expected = option.getValue().asInt32().getValue();
                 assertEquals(expected, connectionString.getServerSelectionTimeout().intValue());
-            } else if (option.getKey().toLowerCase().equals("sockettimeoutms")) {
+            } else if (option.getKey().equalsIgnoreCase("sockettimeoutms")) {
                 int expected = option.getValue().asInt32().getValue();
                 assertEquals(expected, connectionString.getSocketTimeout().intValue());
-            } else if (option.getKey().equals("wtimeoutms")) {
+            } else if (option.getKey().equalsIgnoreCase("wtimeoutms")) {
                 int expected = option.getValue().asInt32().getValue();
                 assertEquals(expected, connectionString.getWriteConcern().getWTimeout(TimeUnit.MILLISECONDS).intValue());
-            } else if (option.getKey().toLowerCase().equals("connecttimeoutms")) {
+            } else if (option.getKey().equalsIgnoreCase("connecttimeoutms")) {
                 int expected = option.getValue().asInt32().getValue();
                 assertEquals(expected, connectionString.getConnectTimeout().intValue());
-            } else if (option.getKey().toLowerCase().equals("heartbeatfrequencyms")) {
+            } else if (option.getKey().equalsIgnoreCase("heartbeatfrequencyms")) {
                 int expected = option.getValue().asInt32().getValue();
                 assertEquals(expected, connectionString.getHeartbeatFrequency().intValue());
-            } else if (option.getKey().toLowerCase().equals("localthresholdms")) {
+            } else if (option.getKey().equalsIgnoreCase("localthresholdms")) {
                 int expected = option.getValue().asInt32().getValue();
                 assertEquals(expected, connectionString.getLocalThreshold().intValue());
-            } else if (option.getKey().toLowerCase().equals("maxidletimems")) {
+            } else if (option.getKey().equalsIgnoreCase("maxidletimems")) {
                 int expected = option.getValue().asInt32().getValue();
                 assertEquals(expected, connectionString.getMaxConnectionIdleTime().intValue());
-            } else if (option.getKey().toLowerCase().equals("tls")) {
+            } else if (option.getKey().equalsIgnoreCase("tls")) {
                 boolean expected = option.getValue().asBoolean().getValue();
                 assertEquals(expected, connectionString.getSslEnabled().booleanValue());
-            } else if (option.getKey().toLowerCase().equals("tlsinsecure")) {
+            } else if (option.getKey().equalsIgnoreCase("tlsinsecure")) {
                 boolean expected = option.getValue().asBoolean().getValue();
                 assertEquals(expected, connectionString.getSslInvalidHostnameAllowed().booleanValue());
-            } else if (option.getKey().toLowerCase().equals("readconcernlevel")) {
+            } else if (option.getKey().equalsIgnoreCase("readconcernlevel")) {
                 String expected = option.getValue().asString().getValue();
                 assertEquals(expected, connectionString.getReadConcern().getLevel().getValue());
-            } else if (option.getKey().toLowerCase().equals("w")) {
+            } else if (option.getKey().equalsIgnoreCase("w")) {
                 if (option.getValue().isString()) {
                     String expected = option.getValue().asString().getValue();
                     assertEquals(expected, connectionString.getWriteConcern().getWString());
@@ -160,19 +162,16 @@ public abstract class AbstractConnectionStringTest extends TestCase {
                     int expected = option.getValue().asNumber().intValue();
                     assertEquals(expected, connectionString.getWriteConcern().getW());
                 }
-            } else if (option.getKey().toLowerCase().equals("wtimeoutms")) {
-                int expected = option.getValue().asInt32().getValue();
-                assertEquals(expected, connectionString.getWriteConcern().getWTimeout(TimeUnit.MILLISECONDS).intValue());
-            } else if (option.getKey().toLowerCase().equals("journal")) {
+            } else if (option.getKey().equalsIgnoreCase("journal")) {
                 boolean expected = option.getValue().asBoolean().getValue();
                 assertEquals(expected, connectionString.getWriteConcern().getJournal().booleanValue());
-            } else if (option.getKey().toLowerCase().equals("readpreference")) {
+            } else if (option.getKey().equalsIgnoreCase("readpreference")) {
                 String expected = option.getValue().asString().getValue();
                 assertEquals(expected, connectionString.getReadPreference().getName());
-            } else if (option.getKey().toLowerCase().equals("readpreferencetags")) {
+            } else if (option.getKey().equalsIgnoreCase("readpreferencetags")) {
                 BsonArray expected = option.getValue().asArray();
                 assertEquals(expected, connectionString.getReadPreference().toDocument().getArray("tags"));
-            } else if (option.getKey().toLowerCase().equals("maxstalenessseconds")) {
+            } else if (option.getKey().equalsIgnoreCase("maxstalenessseconds")) {
                 int expected = option.getValue().asNumber().intValue();
                 assertEquals(expected, connectionString.getReadPreference().toDocument().getNumber("maxStalenessSeconds").intValue());
             } else if (option.getKey().equals("compressors")) {
@@ -182,19 +181,19 @@ public abstract class AbstractConnectionStringTest extends TestCase {
                     String expected = expectedCompressorList.get(i).asString().getValue();
                     assertEquals(expected, connectionString.getCompressorList().get(i).getName());
                 }
-            } else if (option.getKey().toLowerCase().equals("zlibcompressionlevel")) {
+            } else if (option.getKey().equalsIgnoreCase("zlibcompressionlevel")) {
                 int expected = option.getValue().asNumber().intValue();
                 assertEquals(expected, connectionString.getCompressorList().get(0).getProperty("level", 0).intValue());
-            } else if (option.getKey().toLowerCase().equals("appname")) {
+            } else if (option.getKey().equalsIgnoreCase("appname")) {
                 String expected = option.getValue().asString().getValue();
                 assertEquals(expected, connectionString.getApplicationName());
-            } else if (option.getKey().toLowerCase().equals("authmechanism")) {
+            } else if (option.getKey().equalsIgnoreCase("authmechanism")) {
                 String expected = option.getValue().asString().getValue();
                 assertEquals(expected, connectionString.getCredential().getMechanism());
-            } else if (option.getKey().toLowerCase().equals("authsource")) {
+            } else if (option.getKey().equalsIgnoreCase("authsource")) {
                 String expected = option.getValue().asString().getValue();
                 assertEquals(expected, connectionString.getCredential().getSource());
-            } else if (option.getKey().toLowerCase().equals("authmechanismproperties")) {
+            } else if (option.getKey().equalsIgnoreCase("authmechanismproperties")) {
                 BsonDocument properties = option.getValue().asDocument();
                 for (String cur : properties.keySet()) {
                     if (properties.get(cur).isString()) {
@@ -205,14 +204,20 @@ public abstract class AbstractConnectionStringTest extends TestCase {
                         assertEquals(expected, connectionString.getCredential().getMechanismProperty(cur, (Boolean) null).booleanValue());
                     }
                 }
-            } else if (option.getKey().toLowerCase().equals("loadbalanced")) {
+            } else if (option.getKey().equalsIgnoreCase("loadbalanced")) {
                 Boolean expected = option.getValue().asBoolean().getValue();
                 assertEquals(expected, connectionString.isLoadBalanced());
-            } else if (option.getKey().toLowerCase().equals("directconnection")) {
+            } else if (option.getKey().equalsIgnoreCase("directconnection")) {
                 Boolean expected = option.getValue().asBoolean().getValue();
                 assertEquals(expected, connectionString.isDirectConnection());
+            } else if (option.getKey().equalsIgnoreCase("maxpoolsize")) {
+                Integer expected = option.getValue().asNumber().intValue();
+                assertEquals(expected, connectionString.getMaxConnectionPoolSize());
+            } else if (option.getKey().equalsIgnoreCase("minpoolsize")) {
+                Integer expected = option.getValue().asNumber().intValue();
+                assertEquals(expected, connectionString.getMinConnectionPoolSize());
             } else {
-                assertTrue(String.format("Unsupported option '%s' in '%s'", option.getKey(), input), false);
+                fail(String.format("Unsupported option '%s' in '%s'", option.getKey(), input));
             }
         }
     }
@@ -227,7 +232,7 @@ public abstract class AbstractConnectionStringTest extends TestCase {
                 // We don't allow null passwords without setting the authentication mechanism.
                 return;
             } else {
-                assertTrue(String.format("Connection string '%s' should not have throw an exception: %s", input, t.toString()), false);
+                fail(String.format("Connection string '%s' should not have throw an exception: %s", input, t));
             }
         }
 
@@ -260,7 +265,7 @@ public abstract class AbstractConnectionStringTest extends TestCase {
         }
     }
 
-    private void assertString(final String key, final String actual) {
+    private void assertString(final String key, @Nullable final String actual) {
         BsonValue expected = definition;
         if (key.contains(".")) {
             for (String subKey : key.split("\\.")) {
@@ -271,12 +276,12 @@ public abstract class AbstractConnectionStringTest extends TestCase {
         }
 
         if (expected.isNull()) {
-            assertTrue(String.format("%s should be null", key), actual == null);
+            assertNull(String.format("%s should be null", key), actual);
         } else if (expected.isString()) {
             String expectedString = expected.asString().getValue();
-            assertTrue(String.format("%s should be %s but was %s", key, actual, expectedString), actual.equals(expectedString));
+            assertEquals(String.format("%s should be %s but was %s", key, actual, expectedString), actual, expectedString);
         } else {
-            assertTrue(String.format("%s should be %s but was %s", key, actual, expected), false);
+            fail(String.format("%s should be %s but was %s", key, actual, expected));
         }
     }
 
@@ -306,6 +311,7 @@ public abstract class AbstractConnectionStringTest extends TestCase {
         assertEquals(expectedHosts, cleanedHosts);
     }
 
+    @SuppressWarnings("ConstantConditions")
     private String getAuthDB(final ConnectionString connectionString) {
         if (connectionString.getCollection() != null) {
             return connectionString.getDatabase() + "." + connectionString.getCollection();

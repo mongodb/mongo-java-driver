@@ -45,7 +45,6 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
-import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.JsonTestServerVersionChecker.skipTest;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
@@ -88,11 +87,9 @@ public abstract class AbstractCrudTest {
     @Before
     public void setUp() {
         assumeFalse(skipTest);
-        assumeFalse(isSharded());
 
         collectionHelper = new CollectionHelper<>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
 
-        collectionHelper.killAllSessions();
         collectionHelper.create(collectionName, new CreateCollectionOptions(), WriteConcern.ACKNOWLEDGED);
 
         createMongoClient(commandListener);
@@ -106,7 +103,6 @@ public abstract class AbstractCrudTest {
                 documents.add(document.asDocument());
             }
 
-            collectionHelper.drop();
             if (documents.size() > 0) {
                 collectionHelper.insertDocuments(documents, WriteConcern.MAJORITY);
             }

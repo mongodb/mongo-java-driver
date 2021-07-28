@@ -30,15 +30,18 @@ import org.bson.BsonInt64
 import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
+import spock.lang.IgnoreIf
 import spock.lang.Shared
 
 import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ClusterFixture.getSslSettings
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.internal.connection.ProtocolTestHelper.execute
 
+@IgnoreIf({ serverVersionAtLeast(5, 1) })
 class KillCursorProtocolCommandEventSpecification extends OperationFunctionalSpecification {
     @Shared
     InternalStreamConnection connection;

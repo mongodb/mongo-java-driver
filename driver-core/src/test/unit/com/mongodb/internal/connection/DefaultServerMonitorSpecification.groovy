@@ -38,6 +38,8 @@ import java.nio.ByteBuffer
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
+import static com.mongodb.internal.connection.MessageHelper.LEGACY_HELLO_LOWER
+
 @SuppressWarnings('BusyWait')
 class DefaultServerMonitorSpecification extends Specification {
 
@@ -126,8 +128,8 @@ class DefaultServerMonitorSpecification extends Specification {
                 .state(ServerConnectionState.CONNECTED)
                 .build()
 
-        def isMasterResponse = '{' +
-                'ismaster : true, ' +
+        def helloResponse = '{' +
+                "$LEGACY_HELLO_LOWER: true," +
                 'maxBsonObjectSize : 16777216, ' +
                 'maxMessageSizeBytes : 48000000, ' +
                 'maxWriteBatchSize : 1000, ' +
@@ -159,7 +161,7 @@ class DefaultServerMonitorSpecification extends Specification {
                     send(_, _, _) >> { }
 
                     receive(_, _) >> {
-                        BsonDocument.parse(isMasterResponse)
+                        BsonDocument.parse(helloResponse)
                     }
                 }
             }
@@ -176,7 +178,7 @@ class DefaultServerMonitorSpecification extends Specification {
         failedEvent == null
         startedEvent.connectionId == connectionDescription.connectionId
         succeededEvent.connectionId == connectionDescription.connectionId
-        succeededEvent.reply == BsonDocument.parse(isMasterResponse)
+        succeededEvent.reply == BsonDocument.parse(helloResponse)
         succeededEvent.getElapsedTime(TimeUnit.NANOSECONDS) > 0
 
         cleanup:

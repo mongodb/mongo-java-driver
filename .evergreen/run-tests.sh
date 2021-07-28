@@ -6,6 +6,7 @@ set -o errexit  # Exit the script with error if any of the commands fail
 # Supported/used environment variables:
 #       AUTH                        Set to enable authentication. Values are: "auth" / "noauth" (default)
 #       SSL                         Set to enable SSL. Values are "ssl" / "nossl" (default)
+#       NETTY_SSL_PROVIDER          The Netty TLS/SSL protocol provider. Ignored unless SSL is "ssl" and STREAM_TYPE is "netty". Values are "JDK", "OPENSSL", null (a.k.a. "" or '') (default).
 #       MONGODB_URI                 Set the suggested connection MONGODB_URI (including credentials and topology info)
 #       TOPOLOGY                    Allows you to modify variables and the MONGODB_URI based on test topology
 #                                   Supported values: "server", "replica_set", "sharded_cluster"
@@ -36,7 +37,9 @@ SLOW_TESTS_ONLY=${SLOW_TESTS_ONLY:-false}
 export ASYNC_TYPE="-Dorg.mongodb.test.async.type=${STREAM_TYPE}"
 
 export JAVA_HOME="/opt/java/jdk11"
-
+if [ "${SSL}" = "ssl" ] && [ "${STREAM_TYPE}" = "netty" ] && [ "${NETTY_SSL_PROVIDER}" != "" ]; then
+  readonly JAVA_SYSPROP_NETTY_SSL_PROVIDER="-Dorg.mongodb.test.netty.ssl.provider=${NETTY_SSL_PROVIDER}"
+fi
 
 ############################################
 #            Functions                     #
@@ -126,12 +129,16 @@ echo "Running tests with ${JDK}"
 
 if [ "$SLOW_TESTS_ONLY" == "true" ]; then
     ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} \
-              ${TRANSACTION_URI} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} --stacktrace --info testSlowOnly
+              ${TRANSACTION_URI} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} \
+              ${JAVA_SYSPROP_NETTY_SSL_PROVIDER} \
+              --stacktrace --info testSlowOnly
 else
     ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} \
               -Dorg.mongodb.test.awsAccessKeyId=${AWS_ACCESS_KEY_ID} -Dorg.mongodb.test.awsSecretAccessKey=${AWS_SECRET_ACCESS_KEY} \
               -Dorg.mongodb.test.tmpAwsAccessKeyId=${AWS_TEMP_ACCESS_KEY_ID} -Dorg.mongodb.test.tmpAwsSecretAccessKey=${AWS_TEMP_SECRET_ACCESS_KEY} -Dorg.mongodb.test.tmpAwsSessionToken=${AWS_TEMP_SESSION_TOKEN} \
               -Dorg.mongodb.test.azureTenantId=${AZURE_TENANT_ID} -Dorg.mongodb.test.azureClientId=${AZURE_CLIENT_ID} -Dorg.mongodb.test.azureClientSecret=${AZURE_CLIENT_SECRET} \
               -Dorg.mongodb.test.gcpEmail=${GCP_EMAIL} -Dorg.mongodb.test.gcpPrivateKey=${GCP_PRIVATE_KEY} \
-              ${TRANSACTION_URI} ${API_VERSION} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} --stacktrace --info --continue test
+              ${TRANSACTION_URI} ${API_VERSION} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} \
+              ${JAVA_SYSPROP_NETTY_SSL_PROVIDER} \
+              --stacktrace --info --continue test
 fi

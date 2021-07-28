@@ -31,6 +31,7 @@ import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -89,40 +90,49 @@ public final class ProtocolHelper {
     }
 
     static BsonTimestamp getOperationTime(final ResponseBuffers responseBuffers) {
-        try {
-            BsonValue operationTime = getField(createBsonReader(responseBuffers), "operationTime");
-            if (operationTime == null) {
-                return null;
-            }
-            return operationTime.asTimestamp();
-        } finally {
-            responseBuffers.reset();
-        }
+        return getFieldValueAsTimestamp(responseBuffers, "operationTime");
     }
 
     static BsonDocument getClusterTime(final ResponseBuffers responseBuffers) {
-        return getFieldDocument(responseBuffers, "$clusterTime");
+        return getFieldValueAsDocument(responseBuffers, "$clusterTime");
     }
 
-    static BsonDocument getClusterTime(final BsonDocument response) {
-        BsonValue clusterTime = response.get("$clusterTime");
-        if (clusterTime == null) {
-            return null;
+    @Nullable
+    static BsonTimestamp getSnapshotTimestamp(final ResponseBuffers responseBuffers) {
+        BsonValue atClusterTimeValue = getNestedFieldValue(responseBuffers, "cursor", "atClusterTime");
+        if (atClusterTimeValue == null) {
+            atClusterTimeValue = getFieldValue(responseBuffers, "atClusterTime");
         }
-        return clusterTime.asDocument();
+        if (atClusterTimeValue != null && atClusterTimeValue.isTimestamp()) {
+            return atClusterTimeValue.asTimestamp();
+        }
+        return null;
     }
 
     static BsonDocument getRecoveryToken(final ResponseBuffers responseBuffers) {
-        return getFieldDocument(responseBuffers, "recoveryToken");
+        return getFieldValueAsDocument(responseBuffers, "recoveryToken");
     }
 
-    private static BsonDocument getFieldDocument(final ResponseBuffers responseBuffers, final String fieldName) {
+    @SuppressWarnings("SameParameterValue")
+    private static BsonTimestamp getFieldValueAsTimestamp(final ResponseBuffers responseBuffers, final String fieldName) {
+        BsonValue value = getFieldValue(responseBuffers, fieldName);
+        if (value == null) {
+            return null;
+        }
+        return value.asTimestamp();
+    }
+
+    private static BsonDocument getFieldValueAsDocument(final ResponseBuffers responseBuffers, final String fieldName) {
+        BsonValue value = getFieldValue(responseBuffers, fieldName);
+        if (value == null) {
+            return null;
+        }
+        return value.asDocument();
+    }
+
+    private static BsonValue getFieldValue(final ResponseBuffers responseBuffers, final String fieldName) {
         try {
-            BsonValue fieldValue = getField(createBsonReader(responseBuffers), fieldName);
-            if (fieldValue == null) {
-                return null;
-            }
-            return fieldValue.asDocument();
+            return getField(createBsonReader(responseBuffers), fieldName);
         } finally {
             responseBuffers.reset();
         }
@@ -144,6 +154,25 @@ public final class ProtocolHelper {
         }
         bsonReader.readEndDocument();
         return null;
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private static BsonValue getNestedFieldValue(final ResponseBuffers responseBuffers, final String topLevelFieldName,
+                                                 final String nestedFieldName) {
+        try {
+            BsonReader bsonReader = createBsonReader(responseBuffers);
+            bsonReader.readStartDocument();
+            while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+                if (bsonReader.readName().equals(topLevelFieldName)) {
+                    return getField(bsonReader, nestedFieldName);
+                }
+                bsonReader.skipValue();
+            }
+            bsonReader.readEndDocument();
+            return null;
+        } finally {
+            responseBuffers.reset();
+        }
     }
 
     private static boolean isCommandOk(final BsonValue okValue) {
@@ -235,7 +264,14 @@ public final class ProtocolHelper {
         } else if (isNotPrimaryError(errorCode, errorMessage)) {
             return new MongoNotPrimaryException(response, serverAddress);
         } else if (response.containsKey("writeConcernError")) {
-            return createSpecialException(response.getDocument("writeConcernError"), serverAddress, "errmsg");
+            MongoException writeConcernException = createSpecialException(response.getDocument("writeConcernError"), serverAddress,
+                    "errmsg");
+            if (writeConcernException != null && response.isArray("errorLabels")) {
+                for (BsonValue errorLabel : response.getArray("errorLabels")) {
+                    writeConcernException.addLabel(errorLabel.asString().getValue());
+                }
+            }
+            return writeConcernException;
         } else {
             return null;
         }

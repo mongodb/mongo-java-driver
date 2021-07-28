@@ -16,7 +16,24 @@
 
 package com.mongodb.internal.operation
 
+import com.mongodb.MongoCommandException
+import com.mongodb.MongoCursorNotFoundException
+import com.mongodb.MongoNamespace
+import com.mongodb.MongoQueryException
+import com.mongodb.ReadPreference
+import com.mongodb.ServerCursor
+import com.mongodb.internal.binding.ConnectionSource
+import com.mongodb.internal.connection.Connection
+import com.mongodb.internal.connection.NoOpSessionContext
+import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
+import org.bson.BsonInt64
+import org.bson.BsonString
+import org.bson.codecs.BsonDocumentCodec
+import org.bson.codecs.DocumentCodec
+
+import static com.mongodb.ClusterFixture.getServerApi
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 
 class QueryOperationHelper {
     static BsonDocument sanitizeExplainResult(BsonDocument document) {
@@ -42,6 +59,36 @@ class QueryOperationHelper {
         } else if (winningPlan.containsKey('shards')) {
             // recurse on shards[0] to get its query plan
             return getKeyPattern(new BsonDocument('queryPlanner', winningPlan.getArray('shards')[0].asDocument()))
+        }
+    }
+
+    static void makeAdditionalGetMoreCall(MongoNamespace namespace, ServerCursor serverCursor,
+            ConnectionSource connectionSource) {
+        def connection = connectionSource.getConnection()
+        try {
+            makeAdditionalGetMoreCall(namespace, serverCursor, connection)
+        } finally {
+            connection.release()
+        }
+    }
+
+    static void makeAdditionalGetMoreCall(MongoNamespace namespace, ServerCursor serverCursor, Connection connection) {
+        if (serverVersionLessThan(3, 6)) {
+            connection.getMore(namespace, serverCursor.getId(), 1, new DocumentCodec())
+        } else {
+            try {
+                connection.command(namespace.databaseName,
+                        new BsonDocument('getMore', new BsonInt64(serverCursor.getId()))
+                                .append('collection', new BsonString(namespace.getCollectionName())),
+                        new NoOpFieldNameValidator(), ReadPreference.primary(),
+                        new BsonDocumentCodec(), new NoOpSessionContext(), getServerApi())
+            } catch (MongoCommandException e) {
+                if (e.getErrorCode() == 43) {
+                    throw new MongoCursorNotFoundException(serverCursor.getId(), serverCursor.getAddress())
+                } else {
+                    throw new MongoQueryException(e)
+                }
+            }
         }
     }
 }

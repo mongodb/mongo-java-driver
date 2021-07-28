@@ -27,6 +27,7 @@ dependencies {
     testImplementation project(':driver-sync').sourceSets.test.output
     testImplementation project(':driver-core').sourceSets.test.output
     testImplementation project(':driver-reactive-streams').sourceSets.test.output
+    testRuntimeOnly project(path: ':driver-core', configuration: 'consumableTestRuntimeOnly')
 }
 
 

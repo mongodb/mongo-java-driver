@@ -147,13 +147,13 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
     @Override
     public <T> QueryResult<T> query(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
                                     final int skip, final int limit, final int batchSize,
-                                    final boolean slaveOk, final boolean tailableCursor,
+                                    final boolean secondaryOk, final boolean tailableCursor,
                                     final boolean awaitData, final boolean noCursorTimeout,
                                     final boolean partial, final boolean oplogReplay,
                                     final Decoder<T> resultDecoder) {
         return executeProtocol(new QueryProtocol<T>(namespace, skip, limit, batchSize, queryDocument, fields, resultDecoder)
                                .tailableCursor(tailableCursor)
-                               .slaveOk(getSlaveOk(slaveOk))
+                               .secondaryOk(getSecondaryOk(secondaryOk))
                                .oplogReplay(oplogReplay)
                                .noCursorTimeout(noCursorTimeout)
                                .awaitData(awaitData)
@@ -162,12 +162,12 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
 
     @Override
     public <T> void queryAsync(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields, final int skip,
-                               final int limit, final int batchSize, final boolean slaveOk, final boolean tailableCursor,
+                               final int limit, final int batchSize, final boolean secondaryOk, final boolean tailableCursor,
                                final boolean awaitData, final boolean noCursorTimeout, final boolean partial, final boolean oplogReplay,
                                final Decoder<T> resultDecoder, final SingleResultCallback<QueryResult<T>> callback) {
         executeProtocolAsync(new QueryProtocol<T>(namespace, skip, limit, batchSize, queryDocument, fields, resultDecoder)
                              .tailableCursor(tailableCursor)
-                             .slaveOk(getSlaveOk(slaveOk))
+                             .secondaryOk(getSecondaryOk(secondaryOk))
                              .oplogReplay(oplogReplay)
                              .noCursorTimeout(noCursorTimeout)
                              .awaitData(awaitData)
@@ -201,8 +201,8 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
         executeProtocolAsync(new KillCursorProtocol(namespace, cursors), callback);
     }
 
-    private boolean getSlaveOk(final boolean slaveOk) {
-        return slaveOk
+    private boolean getSecondaryOk(final boolean secondaryOk) {
+        return secondaryOk
                || (clusterConnectionMode == ClusterConnectionMode.SINGLE && wrapped.getDescription().getServerType() != SHARD_ROUTER);
     }
 

@@ -224,14 +224,14 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
             @Override
             public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
                 validateReadConcernAndCollation(connectionDescription, sessionContext.getReadConcern(), collation);
-                return getCommand(sessionContext);
+                return getCommand(sessionContext, connectionDescription);
             }
         };
     }
 
-    private BsonDocument getCommand(final SessionContext sessionContext) {
+    private BsonDocument getCommand(final SessionContext sessionContext, final ConnectionDescription connectionDescription) {
         BsonDocument commandDocument = new BsonDocument("distinct", new BsonString(namespace.getCollectionName()));
-        appendReadConcernToCommand(sessionContext, commandDocument);
+        appendReadConcernToCommand(sessionContext, connectionDescription.getMaxWireVersion(), commandDocument);
         commandDocument.put("key", new BsonString(fieldName));
         putIfNotNullOrEmpty(commandDocument, "query", filter);
         putIfNotZero(commandDocument, "maxTimeMS", maxTimeMS);

@@ -64,6 +64,9 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.connection.CommandHelper.HELLO;
+import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
+import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO_LOWER;
 import static com.mongodb.internal.connection.MessageHeader.MESSAGE_HEADER_LENGTH;
 import static com.mongodb.internal.connection.OpCode.OP_COMPRESSED;
 import static com.mongodb.internal.connection.ProtocolHelper.createSpecialWriteConcernException;
@@ -72,6 +75,7 @@ import static com.mongodb.internal.connection.ProtocolHelper.getCommandFailureEx
 import static com.mongodb.internal.connection.ProtocolHelper.getMessageSettings;
 import static com.mongodb.internal.connection.ProtocolHelper.getOperationTime;
 import static com.mongodb.internal.connection.ProtocolHelper.getRecoveryToken;
+import static com.mongodb.internal.connection.ProtocolHelper.getSnapshotTimestamp;
 import static com.mongodb.internal.connection.ProtocolHelper.isCommandOk;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -89,6 +93,11 @@ public class InternalStreamConnection implements InternalConnection {
             "copydbgetnonce",
             "copydbsaslstart",
             "copydb"));
+
+    private static final Set<String> SECURITY_SENSITIVE_HELLO_COMMANDS = new HashSet<String>(asList(
+            HELLO,
+            LEGACY_HELLO,
+            LEGACY_HELLO_LOWER));
 
     private static final Logger LOGGER = Loggers.getLogger("connection");
 
@@ -637,6 +646,7 @@ public class InternalStreamConnection implements InternalConnection {
     private void updateSessionContext(final SessionContext sessionContext, final ResponseBuffers responseBuffers) {
         sessionContext.advanceOperationTime(getOperationTime(responseBuffers));
         sessionContext.advanceClusterTime(getClusterTime(responseBuffers));
+        sessionContext.setSnapshotTimestamp(getSnapshotTimestamp(responseBuffers));
         if (sessionContext.hasActiveTransaction()) {
             BsonDocument recoveryToken = getRecoveryToken(responseBuffers);
             if (recoveryToken != null) {
@@ -787,8 +797,8 @@ public class InternalStreamConnection implements InternalConnection {
 
     private CommandEventSender createCommandEventSender(final CommandMessage message, final ByteBufferBsonOutput bsonOutput) {
         if (opened() && (commandListener != null || COMMAND_PROTOCOL_LOGGER.isDebugEnabled())) {
-            return new LoggingCommandEventSender(SECURITY_SENSITIVE_COMMANDS, description, commandListener, message, bsonOutput,
-                    COMMAND_PROTOCOL_LOGGER);
+            return new LoggingCommandEventSender(SECURITY_SENSITIVE_COMMANDS, SECURITY_SENSITIVE_HELLO_COMMANDS, description,
+                    commandListener, message, bsonOutput, COMMAND_PROTOCOL_LOGGER);
         } else {
             return new NoOpCommandEventSender();
         }

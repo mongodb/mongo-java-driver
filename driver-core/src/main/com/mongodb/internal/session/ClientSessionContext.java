@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.session;
 
+import com.mongodb.lang.Nullable;
 import com.mongodb.session.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
@@ -77,6 +78,23 @@ public abstract class ClientSessionContext implements SessionContext {
     @Override
     public void advanceClusterTime(final BsonDocument clusterTime) {
         clientSession.advanceClusterTime(clusterTime);
+    }
+
+    @Override
+    public boolean isSnapshot() {
+        Boolean snapshot = clientSession.getOptions().isSnapshot();
+        return snapshot != null && snapshot;
+    }
+
+    @Override
+    public void setSnapshotTimestamp(final BsonTimestamp snapshotTimestamp) {
+        clientSession.setSnapshotTimestamp(snapshotTimestamp);
+    }
+
+    @Override
+    @Nullable
+    public BsonTimestamp getSnapshotTimestamp() {
+        return clientSession.getSnapshotTimestamp();
     }
 
     @Override

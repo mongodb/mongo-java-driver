@@ -52,6 +52,7 @@ import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class ListCollectionsOperationSpecification extends OperationFunctionalSpecification {
@@ -161,7 +162,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         !names.contains(collectionName)
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || serverVersionAtLeast(4, 0) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) || serverVersionAtLeast(4, 0) })
     def 'should get all fields when nameOnly is not requested'() {
         given:
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
@@ -175,7 +176,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         collection.size() > 2
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(4, 0) })
+    @IgnoreIf({ serverVersionLessThan(4, 0) })
     def 'should only get collection names when nameOnly is requested'() {
         given:
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
@@ -190,7 +191,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         collection.size() == 2
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || serverVersionAtLeast(4, 0) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) || serverVersionAtLeast(4, 0) })
     def 'should only get all field names when nameOnly is requested on server versions that do not support nameOnly'() {
         given:
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
@@ -419,7 +420,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         disableMaxTimeFailPoint()
     }
 
-    def 'should use the ReadBindings readPreference to set slaveOK'() {
+    def 'should use the ReadBindings readPreference to set secondaryOk'() {
         given:
         def connection = Mock(Connection)
         def connectionSource = Stub(ConnectionSource) {
@@ -438,7 +439,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
         then:
         _ * connection.getDescription() >> helper.twoSixConnectionDescription
-        1 * connection.query(_, _, _, _, _, _, readPreference.isSlaveOk(), _, _, _, _, _, _) >> helper.queryResult
+        1 * connection.query(_, _, _, _, _, _, readPreference.isSecondaryOk(), _, _, _, _, _, _) >> helper.queryResult
         1 * connection.release()
 
         when: '3.0.0'
@@ -453,7 +454,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
     }
 
-    def 'should use the AsyncReadBindings readPreference to set slaveOK'() {
+    def 'should use the AsyncReadBindings readPreference to set secondaryOk'() {
         given:
         def connection = Mock(AsyncConnection)
         def connectionSource = Stub(AsyncConnectionSource) {
@@ -472,7 +473,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
         then:
         _ * connection.getDescription() >> helper.twoSixConnectionDescription
-        1 * connection.queryAsync(_, _, _, _, _, _, readPreference.isSlaveOk(), _, _, _, _, _, _, _) >> {
+        1 * connection.queryAsync(_, _, _, _, _, _, readPreference.isSecondaryOk(), _, _, _, _, _, _, _) >> {
             it[13].onResult(helper.queryResult, null) }
 
         when: '3.0.0'

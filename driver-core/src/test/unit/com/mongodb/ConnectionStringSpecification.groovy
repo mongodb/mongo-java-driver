@@ -53,14 +53,14 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://10.0.0.1')       | 1   | ['10.0.0.1']       | null     | null       | null     | null
         new ConnectionString('mongodb://[::1]')          | 1   | ['[::1]']          | null     | null       | null     | null
         new ConnectionString('mongodb://%2Ftmp%2Fmongo'
-                + 'db-27017.sock')                       | 1   | ['/tmp/mongodb'
-                                                                  + '-27017.sock']  | null     | null       | null     | null
+                + 'db-27017.sock')                       | 1   | ['/tmp/mongodb' +
+                                                                  '-27017.sock']    | null     | null       | null     | null
         new ConnectionString('mongodb://foo/bar')        | 1   | ['foo']            | 'bar'    | null       | null     | null
         new ConnectionString('mongodb://10.0.0.1/bar')   | 1   | ['10.0.0.1']       | 'bar'    | null       | null     | null
         new ConnectionString('mongodb://[::1]/bar')      | 1   | ['[::1]']          | 'bar'    | null       | null     | null
         new ConnectionString('mongodb://%2Ftmp%2Fmongo'
-                + 'db-27017.sock/bar')                   | 1   | ['/tmp/mongodb'
-                                                                  + '-27017.sock']  | 'bar'    | null       | null     | null
+                + 'db-27017.sock/bar')                   | 1   | ['/tmp/mongodb' +
+                                                                  '-27017.sock']    | 'bar'    | null       | null     | null
         new ConnectionString('mongodb://localhost/' +
                                    'test.my.coll')       | 1   | ['localhost']      | 'test'   | 'my.coll'  | null     | null
         new ConnectionString('mongodb://foo/bar.goo')    | 1   | ['foo']            | 'bar'    | 'goo'      | null     | null
@@ -523,6 +523,8 @@ class ConnectionStringSpecification extends Specification {
         thrown(IllegalArgumentException)
     }
 
+    private static final LEGACY_SECONDARY_OK = 'slaveOk'
+
     @Unroll
     def 'should correct parse read preference for #readPreference'() {
         expect:
@@ -537,9 +539,9 @@ class ConnectionStringSpecification extends Specification {
                 '?readPreference=secondary')                             | secondary()
         new ConnectionString('mongodb://localhost/' +
                                    '?readPreference=secondaryPreferred') | secondaryPreferred()
-        new ConnectionString('mongodb://localhost/?slaveOk=true')        | secondaryPreferred()
-        new ConnectionString('mongodb://localhost/?slaveOk=false')       | primary()
-        new ConnectionString('mongodb://localhost/?slaveOk=foo')         | primary()
+        new ConnectionString("mongodb://localhost/?${LEGACY_SECONDARY_OK}=true")  | secondaryPreferred()
+        new ConnectionString("mongodb://localhost/?${LEGACY_SECONDARY_OK}=false") | primary()
+        new ConnectionString("mongodb://localhost/?${LEGACY_SECONDARY_OK}=foo")   | primary()
         new ConnectionString('mongodb://localhost/' +
                                    '?readPreference=secondaryPreferred' +
                                    '&readPreferenceTags=dc:ny,rack:1' +

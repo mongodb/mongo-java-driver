@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation
 
-import util.spock.annotations.Slow
 import com.mongodb.MongoBulkWriteException
 import com.mongodb.MongoClientException
 import com.mongodb.MongoNamespace
@@ -47,6 +46,7 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import org.bson.types.ObjectId
 import spock.lang.IgnoreIf
+import util.spock.annotations.Slow
 
 import static com.mongodb.ClusterFixture.configureFailPoint
 import static com.mongodb.ClusterFixture.disableFailPoint
@@ -56,6 +56,7 @@ import static com.mongodb.ClusterFixture.getAsyncSingleConnectionBinding
 import static com.mongodb.ClusterFixture.getSingleConnectionBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.client.model.Filters.eq
@@ -626,7 +627,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'should split the number of writes is larger than the match write batch size'() {
         given:
         def binding = async ? getAsyncSingleConnectionBinding() : getSingleConnectionBinding()
-        def maxWriteBatchSize = getCollectionHelper().isMaster().getInteger('maxWriteBatchSize').intValue()
+        def maxWriteBatchSize = getCollectionHelper().hello().getInteger('maxWriteBatchSize').intValue()
         def numberOfWrites = maxWriteBatchSize + 100
         def writes = []
 
@@ -803,7 +804,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 8) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ serverVersionLessThan(3, 8) || !isDiscoverableReplicaSet() })
     def 'should throw on write concern error on multiple failpoint'() {
         given:
         getCollectionHelper().insertDocuments(getTestInserts())
@@ -848,7 +849,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         ordered << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
+    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def 'should throw if bypassDocumentValidation is set and writeConcern is UNACKNOWLEDGED'() {
         given:
         def operation = new MixedBulkWriteOperation(getNamespace(),
@@ -865,7 +866,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         [async, bypassDocumentValidation] << [[false, false], [true, false]].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should throw if collation is set and write is UNACKNOWLEDGED'() {
         given:
         def operation = new MixedBulkWriteOperation(getNamespace(),
@@ -881,7 +882,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         [async, bypassDocumentValidation] << [[true, false], [true, false]].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
+    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def 'should honour the bypass validation flag for inserts'() {
         given:
         def namespace = new MongoNamespace(getDatabaseName(), 'collection')
@@ -915,7 +916,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
+    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def 'should honour the bypass validation flag for updates'() {
         given:
         def namespace = new MongoNamespace(getDatabaseName(), 'collection')
@@ -976,7 +977,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         ].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should support collation'() {
         given:
         getCollectionHelper().insertDocuments(Document.parse('{str: "foo"}'), Document.parse('{str: "bar"}'))
@@ -1039,7 +1040,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         ].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ serverVersionLessThan(3, 6) || !isDiscoverableReplicaSet() })
     def 'should fail as expected with retryWrites and failPoints'() {
         given:
         def testWrites = getTestWrites()
@@ -1064,7 +1065,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         ].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ serverVersionLessThan(3, 6) || !isDiscoverableReplicaSet() })
     def 'should not fail with unacknowledged writes, retryWrites and failPoints'() {
         given:
         def testWrites = getTestWrites()
@@ -1089,7 +1090,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         ].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    @IgnoreIf({ serverVersionLessThan(3, 6) })
     def 'should retry if the connection initially fails'() {
         when:
         def cannedResult = BsonDocument.parse('{ok: 1.0, n: 1}')
@@ -1140,7 +1141,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    @IgnoreIf({ serverVersionLessThan(3, 6) })
     def 'should not request retryable write for multi updates or deletes'() {
         given:
         def operation = new MixedBulkWriteOperation(getNamespace(), writes, true, ACKNOWLEDGED, true)
@@ -1178,7 +1179,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         ].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    @IgnoreIf({ serverVersionLessThan(3, 6) })
     def 'should support array filters'() {
         given:
         def documentOne = BsonDocument.parse('{_id: 1, y: [ {b: 3}, {b: 1}]}')
@@ -1225,7 +1226,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    @IgnoreIf({ serverVersionLessThan(3, 6) })
     def 'should throw if array filters is set and write concern is UNACKNOWLEDGED'() {
         given:
         def requests = [
@@ -1263,7 +1264,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || serverVersionAtLeast(4, 2) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) || serverVersionAtLeast(4, 2) })
     def 'should throw if hint is set and write concern is UNACKNOWLEDGED'() {
         given:
         def requests = [

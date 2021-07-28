@@ -146,8 +146,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * <p>Read preference configuration:</p>
  * <ul>
- * <li>{@code slaveOk=true|false}: Whether a driver connected to a replica set will send reads to slaves/secondaries.</li>
- * <li>{@code readPreference=enum}: The read preference for this connection.  If set, it overrides any slaveOk value.
+ * <li>{@code readPreference=enum}: The read preference for this connection.
  * <ul>
  * <li>Enumerated values:
  * <ul>
@@ -170,7 +169,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * </ul>
  * </li>
  * <li>{@code maxStalenessSeconds=seconds}. The maximum staleness in seconds. For use with any non-primary read preference, the driver
- * estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses, and selects only those
+ * estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses, and selects only those
  * secondaries whose staleness is less than or equal to maxStalenessSeconds.  Not providing the parameter or explicitly setting it to -1
  * indicates that there should be no max staleness check.  The maximum staleness feature is designed to prevent badly-lagging servers from
  * being selected. The staleness estimate is imprecise and shouldn't be used to try to select "up-to-date" secondaries.  The minimum value

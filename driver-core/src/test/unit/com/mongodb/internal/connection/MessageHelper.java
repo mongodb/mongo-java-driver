@@ -32,6 +32,7 @@ import org.bson.json.JsonReader;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Locale;
 
 import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageSize;
@@ -41,6 +42,10 @@ final class MessageHelper {
 
     private MessageHelper() {
     }
+
+    public static final String LEGACY_HELLO = "isMaster";
+    public static final String LEGACY_HELLO_LOWER = LEGACY_HELLO.toLowerCase(Locale.ROOT);
+
 
     public static ResponseBuffers buildSuccessfulReply(final String json) {
         return buildSuccessfulReply(0, json);

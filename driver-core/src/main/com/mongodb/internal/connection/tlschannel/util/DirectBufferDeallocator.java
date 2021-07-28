@@ -19,8 +19,8 @@
 
 package com.mongodb.internal.connection.tlschannel.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -33,7 +33,7 @@ import java.nio.ByteBuffer;
  */
 public class DirectBufferDeallocator {
 
-  private static Logger logger = LoggerFactory.getLogger(DirectBufferDeallocator.class);
+  private static final Logger LOGGER = Loggers.getLogger("connection.tls");
 
   private interface Deallocator {
     void free(ByteBuffer bb);
@@ -109,10 +109,10 @@ public class DirectBufferDeallocator {
   public DirectBufferDeallocator() {
     if (Util.getJavaMajorVersion() >= 9) {
       deallocator = new Java9Deallocator();
-      logger.debug("initialized direct buffer deallocator for java >= 9");
+      LOGGER.debug("initialized direct buffer deallocator for java >= 9");
     } else {
       deallocator = new Java8Deallocator();
-      logger.debug("initialized direct buffer deallocator for java < 9");
+      LOGGER.debug("initialized direct buffer deallocator for java < 9");
     }
   }
 
