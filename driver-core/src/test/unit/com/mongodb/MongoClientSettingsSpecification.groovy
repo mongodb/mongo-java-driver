@@ -457,7 +457,7 @@ class MongoClientSettingsSpecification extends Specification {
         // A regression test so that if anymore fields are added then the builder(final MongoClientSettings settings) should be updated
         def actual = MongoClientSettings.Builder.declaredFields.grep {  !it.synthetic } *.name.sort()
         def expected = ['applicationName', 'autoEncryptionSettings', 'clusterSettingsBuilder', 'codecRegistry', 'commandListeners',
-                        'compressorList', 'connectionPoolSettingsBuilder', 'credential',
+                        'compressorList', 'connectionPoolSettingsBuilder', 'contextProvider', 'credential',
                         'heartbeatConnectTimeoutMS', 'heartbeatSocketTimeoutMS',
                         'readConcern', 'readPreference', 'retryReads',
                         'retryWrites', 'serverApi', 'serverSettingsBuilder', 'socketSettingsBuilder', 'sslSettingsBuilder',
@@ -473,9 +473,9 @@ class MongoClientSettingsSpecification extends Specification {
         def actual = MongoClientSettings.Builder.declaredMethods.grep {  !it.synthetic } *.name.sort()
         def expected = ['addCommandListener', 'applicationName', 'applyConnectionString', 'applyToClusterSettings',
                         'applyToConnectionPoolSettings', 'applyToServerSettings', 'applyToSocketSettings', 'applyToSslSettings',
-                        'autoEncryptionSettings', 'build', 'codecRegistry', 'commandListenerList', 'compressorList', 'credential',
-                        'heartbeatConnectTimeoutMS', 'heartbeatSocketTimeoutMS', 'readConcern', 'readPreference', 'retryReads',
-                        'retryWrites', 'serverApi', 'streamFactoryFactory', 'uuidRepresentation',
+                        'autoEncryptionSettings', 'build', 'codecRegistry', 'commandListenerList', 'compressorList', 'contextProvider',
+                        'credential', 'heartbeatConnectTimeoutMS', 'heartbeatSocketTimeoutMS', 'readConcern', 'readPreference',
+                        'retryReads', 'retryWrites', 'serverApi', 'streamFactoryFactory', 'uuidRepresentation',
                         'writeConcern']
         then:
         actual == expected
