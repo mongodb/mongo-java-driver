@@ -35,7 +35,7 @@ public final class CommandFailedEvent extends CommandEvent {
 
     /**
      * Construct an instance.
-     * @param requestContext
+     * @param requestContext the request context
      * @param requestId the requestId
      * @param connectionDescription the connection description
      * @param commandName the command name
@@ -50,6 +50,18 @@ public final class CommandFailedEvent extends CommandEvent {
         this.throwable = throwable;
     }
 
+    /**
+     * Construct an instance.
+     * @param requestId the requestId
+     * @param connectionDescription the connection description
+     * @param commandName the command name
+     * @param elapsedTimeNanos the non-negative elapsed time in nanoseconds for the operation to complete
+     * @param throwable the throwable cause of the failure
+     */
+    public CommandFailedEvent(final int requestId, final ConnectionDescription connectionDescription,
+            final String commandName, final long elapsedTimeNanos, final Throwable throwable) {
+        this(null, requestId, connectionDescription, commandName, elapsedTimeNanos, throwable);
+    }
     /**
      * Gets the elapsed time in the given unit of time.
      *

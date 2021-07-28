@@ -33,7 +33,7 @@ public abstract class CommandEvent {
 
     /**
      * Construct an instance.
-     * @param requestContext
+     * @param requestContext the request context
      * @param requestId the request id
      * @param connectionDescription the connection description
      * @param commandName the command name
@@ -44,6 +44,16 @@ public abstract class CommandEvent {
         this.requestId = requestId;
         this.connectionDescription = connectionDescription;
         this.commandName = commandName;
+    }
+
+    /**
+     * Construct an instance.
+     * @param requestId the request id
+     * @param connectionDescription the connection description
+     * @param commandName the command name
+     */
+    public CommandEvent(final int requestId, final ConnectionDescription connectionDescription, final String commandName) {
+        this(null, requestId, connectionDescription, commandName);
     }
 
     /**
@@ -73,6 +83,11 @@ public abstract class CommandEvent {
         return commandName;
     }
 
+    /**
+     * Gets the request context associated with this event.
+     *
+     * @return the request context
+     */
     @Nullable
     public RequestContext getRequestContext() {
         return requestContext;

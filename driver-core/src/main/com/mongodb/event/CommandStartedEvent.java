@@ -29,11 +29,10 @@ public final class CommandStartedEvent extends CommandEvent {
     private final String databaseName;
     private final BsonDocument command;
 
-    // TODO: overload constructors to avoid binary breaking change
     /**
      * Construct an instance.
      *
-     * @param requestContext
+     * @param requestContext the request context
      * @param requestId             the request id
      * @param connectionDescription the connection description
      * @param databaseName          the database name
@@ -45,6 +44,20 @@ public final class CommandStartedEvent extends CommandEvent {
         super(requestContext, requestId, connectionDescription, commandName);
         this.command = command;
         this.databaseName = databaseName;
+    }
+
+    /**
+     * Construct an instance.
+     *
+     * @param requestId             the request id
+     * @param connectionDescription the connection description
+     * @param databaseName          the database name
+     * @param commandName           the command name
+     * @param command the command as a BSON document
+     */
+    public CommandStartedEvent(final int requestId, final ConnectionDescription connectionDescription,
+            final String databaseName, final String commandName, final BsonDocument command) {
+        this(null, requestId, connectionDescription, databaseName, commandName, command);
     }
 
     /**

@@ -35,21 +35,34 @@ public final class CommandSucceededEvent extends CommandEvent {
 
     /**
      * Construct an instance.
-     * @param requestContext
+     * @param requestContext the request context
      * @param requestId the request id
      * @param connectionDescription the connection description
      * @param commandName the command name
      * @param response the command response
      * @param elapsedTimeNanos the non-negative elapsed time in nanoseconds for the operation to complete
      */
-    public CommandSucceededEvent(final RequestContext requestContext, final int requestId, final ConnectionDescription connectionDescription,
-            final String commandName, final BsonDocument response, final long elapsedTimeNanos) {
+    public CommandSucceededEvent(final RequestContext requestContext, final int requestId,
+            final ConnectionDescription connectionDescription, final String commandName, final BsonDocument response,
+            final long elapsedTimeNanos) {
         super(requestContext, requestId, connectionDescription, commandName);
         this.response = response;
         isTrueArgument("elapsed time is not negative", elapsedTimeNanos >= 0);
         this.elapsedTimeNanos = elapsedTimeNanos;
     }
 
+    /**
+     * Construct an instance.
+     * @param requestId the request id
+     * @param connectionDescription the connection description
+     * @param commandName the command name
+     * @param response the command response
+     * @param elapsedTimeNanos the non-negative elapsed time in nanoseconds for the operation to complete
+     */
+    public CommandSucceededEvent(final int requestId, final ConnectionDescription connectionDescription, final String commandName,
+            final BsonDocument response, final long elapsedTimeNanos) {
+        this(null, requestId, connectionDescription, commandName, response, elapsedTimeNanos);
+    }
     /**
      * Gets the elapsed time in the given unit of time.
      *
