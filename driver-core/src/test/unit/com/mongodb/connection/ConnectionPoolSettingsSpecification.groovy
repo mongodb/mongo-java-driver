@@ -100,6 +100,12 @@ class ConnectionPoolSettingsSpecification extends Specification {
         thrown(IllegalStateException)
 
         when:
+        ConnectionPoolSettings.builder().maxSize(-1).build()
+
+        then:
+        thrown(IllegalStateException)
+
+        when:
         ConnectionPoolSettings.builder().maintenanceInitialDelay(-1, MILLISECONDS).build()
 
         then:
@@ -204,5 +210,10 @@ class ConnectionPoolSettingsSpecification extends Specification {
         expect:
         ConnectionPoolSettings.builder().maxWaitTime(5, SECONDS).build().hashCode() !=
         ConnectionPoolSettings.builder().maxWaitTime(3, SECONDS).build().hashCode()
+    }
+
+    def 'should allow 0 (infinite) maxSize'() {
+        expect:
+        ConnectionPoolSettings.builder().maxSize(0).build().getMaxSize() == 0
     }
 }

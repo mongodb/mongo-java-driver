@@ -1164,13 +1164,13 @@ public class MongoClientOptions {
         /**
          * Sets the maximum number of connections per host.
          *
-         * @param connectionsPerHost maximum number of connections
+         * @param connectionsPerHost the maximum size of the connection pool per host; if 0, then there is no limit.
          * @return {@code this}
-         * @throws IllegalArgumentException if {@code connectionsPerHost < 1}
+         * @throws IllegalArgumentException if {@code connectionsPerHost < 0}
          * @see MongoClientOptions#getConnectionsPerHost()
          */
         public Builder connectionsPerHost(final int connectionsPerHost) {
-            isTrueArgument("connectionPerHost must be > 0", connectionsPerHost > 0);
+            isTrueArgument("connectionPerHost must be >= 0", connectionsPerHost >= 0);
             this.maxConnectionsPerHost = connectionsPerHost;
             return this;
         }
