@@ -80,7 +80,8 @@ public class OperationExecutorImpl implements OperationExecutor {
                 clientSessionHelper.withClientSession(session, OperationExecutorImpl.this)
                         .map(clientSession -> getReadWriteBinding(getContext(s), readPreference, readConcern, clientSession,
                                 session == null && clientSession != null))
-                        .switchIfEmpty(Mono.fromCallable(() -> getReadWriteBinding(getContext(s), readPreference, readConcern, session, false)))
+                        .switchIfEmpty(Mono.fromCallable(() ->
+                                getReadWriteBinding(getContext(s), readPreference, readConcern, session, false)))
                         .flatMap(binding -> {
                             if (session != null && session.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
                                 binding.release();
@@ -118,7 +119,8 @@ public class OperationExecutorImpl implements OperationExecutor {
                 clientSessionHelper.withClientSession(session, OperationExecutorImpl.this)
                         .map(clientSession -> getReadWriteBinding(getContext(s), ReadPreference.primary(), readConcern, clientSession,
                                 session == null && clientSession != null))
-                        .switchIfEmpty(Mono.fromCallable(() -> getReadWriteBinding(getContext(s), ReadPreference.primary(), readConcern, session, false)))
+                        .switchIfEmpty(Mono.fromCallable(() ->
+                                getReadWriteBinding(getContext(s), ReadPreference.primary(), readConcern, session, false)))
                         .flatMap(binding ->
                                 Mono.<T>create(sink -> operation.executeAsync(binding, (result, t) -> {
                                     try {
@@ -135,6 +137,7 @@ public class OperationExecutorImpl implements OperationExecutor {
         };
     }
 
+    @Nullable
     private <T> RequestContext getContext(final Subscriber<T> subscriber) {
         return contextProvider == null ? null : contextProvider.getContext(subscriber);
     }

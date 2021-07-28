@@ -22,8 +22,15 @@ import org.reactivestreams.Subscriber;
 
 /**
  * Putting this in reactive-streams module so there is no API dependency on reactive streams in driver-core
+ * @since 4.4
  */
 public interface ReactiveContextProvider extends ContextProvider {
-    @SuppressWarnings("rawtypes")
+    /**
+     * Get the request context from the subscriber.
+     *
+     * @param subscriber the subscriber for the operation
+     * @return the request context
+     */
+    @SuppressWarnings("rawtypes") // TODO: a bit weird to have to take a raw type and suppress warnings
     RequestContext getContext(Subscriber subscriber);
 }
