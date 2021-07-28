@@ -18,6 +18,7 @@ package com.mongodb;
 
 /**
  * Just a marker interface so one can be added to the settings.  A bit awkward
+ * @since 4.4
  */
 public interface ContextProvider {
 }

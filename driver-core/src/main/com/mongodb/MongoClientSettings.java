@@ -522,6 +522,13 @@ public final class MongoClientSettings {
             return this;
         }
 
+        /**
+         * Sets the context provider
+         *
+         * @param contextProvider the context provider
+         * @return this
+         * @since 4.4
+         */
         public Builder contextProvider(@Nullable final ContextProvider contextProvider) {
             this.contextProvider = contextProvider;
             return this;
@@ -795,6 +802,12 @@ public final class MongoClientSettings {
         return serverSettings;
     }
 
+    /**
+     * Get the context provider
+     *
+     * @return the context provider
+     * @since 4.4
+     */
     @Nullable
     public ContextProvider getContextProvider() {
         return contextProvider;

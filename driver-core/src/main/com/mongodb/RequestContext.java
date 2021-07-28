@@ -23,6 +23,11 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+/**
+ * The request context
+ *
+ * @since 4.4
+ */
 public interface RequestContext {
     /**
      * Resolve a value given a key that exists within the {@link RequestContext}, or throw
@@ -61,6 +66,7 @@ public interface RequestContext {
      * Resolve a value given a key within the {@link RequestContext}. If unresolved return the
      * passed default value.
      *
+     * @param <T> an unchecked casted generic for fluent typing convenience
      * @param key          a lookup key to resolve the value within the context
      * @param defaultValue a fallback value if key doesn't resolve
      * @return the value resolved for this key, or the given default if not present
@@ -76,6 +82,7 @@ public interface RequestContext {
     /**
      * Resolve a value given a key within the {@link RequestContext}.
      *
+     * @param <T> an unchecked casted generic for fluent typing convenience
      * @param key a lookup key to resolve the value within the context
      * @return an {@link Optional} of the value for that key.
      */
