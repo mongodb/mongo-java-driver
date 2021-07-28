@@ -99,27 +99,6 @@ public interface AsyncConnection extends ReferenceCounted {
      * @param sessionContext       the session context
      * @param serverApi            the server api, which may be null
      * @param callback             the callback to be passed the write result
-     * @since 3.6
-     */
-    default <T> void commandAsync(String database, BsonDocument command, FieldNameValidator fieldNameValidator,
-            ReadPreference readPreference, Decoder<T> commandResultDecoder, SessionContext sessionContext, ServerApi serverApi,
-            SingleResultCallback<T> callback) {
-        commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder,
-                sessionContext, serverApi, null, callback);
-    }
-
-    /**
-     * Execute the command.
-     *
-     * @param <T>                  the type of the result
-     * @param database             the database to execute the command in
-     * @param command              the command document
-     * @param fieldNameValidator   the field name validator for the command document
-     * @param readPreference       the read preference that was applied to get this connection, or null if this is a write operation
-     * @param commandResultDecoder the decoder for the result
-     * @param sessionContext       the session context
-     * @param serverApi            the server api, which may be null
-     * @param callback             the callback to be passed the write result
      * @since 4.4
      */
     <T> void commandAsync(String database, BsonDocument command, FieldNameValidator fieldNameValidator, ReadPreference readPreference,

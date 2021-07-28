@@ -253,7 +253,7 @@ class DefaultServerConnectionSpecification extends Specification {
 
         when:
         connection.commandAsync('test', command, validator, ReadPreference.primary(), codec, NoOpSessionContext.INSTANCE,
-                getServerApi(), callback)
+                getServerApi(), null, callback)
 
         then:
         1 * executor.executeAsync({
