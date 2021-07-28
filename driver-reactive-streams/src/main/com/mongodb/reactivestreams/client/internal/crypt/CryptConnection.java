@@ -99,7 +99,7 @@ class CryptConnection implements AsyncConnection {
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
                                  final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                                 final SessionContext sessionContext, final ServerApi serverApi, RequestContext requestContext,
+                                 final SessionContext sessionContext, final ServerApi serverApi, final RequestContext requestContext,
             final SingleResultCallback<T> callback) {
         commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi, requestContext,
                 true, null, null, callback);
@@ -108,7 +108,7 @@ class CryptConnection implements AsyncConnection {
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                                  final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                                 final SessionContext sessionContext, final ServerApi serverApi, RequestContext requestContext,
+                                 final SessionContext sessionContext, final ServerApi serverApi, final RequestContext requestContext,
             final boolean responseExpected,
                                  @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator,
                                  final SingleResultCallback<T> callback) {
