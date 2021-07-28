@@ -35,7 +35,7 @@ import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class DropIndexOperationSpecification extends OperationFunctionalSpecification {
@@ -161,7 +161,7 @@ class DropIndexOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ serverVersionLessThan(3, 4) || !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
         given:
         collectionHelper.createIndex(new BsonDocument('theField', new BsonInt32(1)))

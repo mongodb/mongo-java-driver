@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.configureFailPoint;
 import static com.mongodb.ClusterFixture.disableFailPoint;
+import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
@@ -42,6 +43,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.bson.BsonDocument.parse;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 public class ServerDiscoveryAndMonitoringProseTests {
@@ -52,6 +54,8 @@ public class ServerDiscoveryAndMonitoringProseTests {
     @Test
     @SuppressWarnings("try")
     public void testHeartbeatFrequency() throws InterruptedException {
+        assumeFalse(isServerlessTest());
+
         CountDownLatch latch = new CountDownLatch(5);
         MongoClientSettings settings = getMongoClientSettingsBuilder()
                                        .applyToServerSettings(new Block<ServerSettings.Builder>() {

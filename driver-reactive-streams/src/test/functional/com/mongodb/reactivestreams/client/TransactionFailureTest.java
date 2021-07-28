@@ -56,6 +56,6 @@ public class TransactionFailureTest extends DatabaseTestCase {
     }
 
     private boolean canRunTests() {
-        return serverVersionLessThan("4.0") || (serverVersionLessThan("4.1.0") && isSharded());
+        return serverVersionLessThan(4, 0) || (serverVersionLessThan(4, 2) && isSharded());
     }
 }

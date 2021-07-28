@@ -40,11 +40,11 @@ import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ClusterFixture.getSslSettings
-import static com.mongodb.ClusterFixture.serverVersionGreaterThan
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.internal.connection.ProtocolTestHelper.execute
 
-@IgnoreIf({ serverVersionGreaterThan('5.0') })
+@IgnoreIf({ serverVersionAtLeast(5, 1) })
 class GetMoreProtocolCommandEventSpecification extends OperationFunctionalSpecification {
     @Shared
     InternalStreamConnection connection

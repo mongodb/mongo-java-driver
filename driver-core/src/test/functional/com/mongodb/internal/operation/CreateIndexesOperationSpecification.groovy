@@ -41,7 +41,7 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static com.mongodb.ClusterFixture.serverVersionGreaterThan
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class CreateIndexesOperationSpecification extends OperationFunctionalSpecification {
@@ -101,8 +101,8 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionAtLeast(4, 3) })
-    def 'should throw exception if commit quorum is set where server < 4.3'() {
+    @IgnoreIf({ serverVersionAtLeast(4, 4) })
+    def 'should throw exception if commit quorum is set where server < 4.4'() {
         given:
         def keys = new BsonDocument('field', new BsonInt32(1))
         def operation = new CreateIndexesOperation(getNamespace(), [new IndexRequest(keys)])
@@ -118,7 +118,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !isDiscoverableReplicaSet() || !serverVersionAtLeast(4, 3) })
+    @IgnoreIf({ !isDiscoverableReplicaSet() || serverVersionLessThan(4, 4) })
     def 'should create index with commit quorum'() {
         given:
         def keys = new BsonDocument('field', new BsonInt32(1))
@@ -334,7 +334,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionGreaterThan('4.4') })
+    @IgnoreIf({ serverVersionAtLeast(5, 0) })
     def 'should be able to create a geoHaystack indexes'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(),
@@ -434,7 +434,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 0) })
+    @IgnoreIf({ serverVersionLessThan(3, 0) })
     def 'should pass through storage engine options'() {
         given:
         def storageEngineOptions = new Document('wiredTiger', new Document('configString', 'block_compressor=zlib'))
@@ -452,7 +452,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
+    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def 'should be able to create a partially filtered index'() {
         given:
         def partialFilterExpression = new Document('a', new Document('$gte', 10))
@@ -470,7 +470,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ serverVersionLessThan(3, 4) || !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
         given:
         def keys = new BsonDocument('field', new BsonInt32(1))
@@ -508,7 +508,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         ].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should be able to create an index with collation'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(),
@@ -526,7 +526,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(4, 1) })
+    @IgnoreIf({ serverVersionLessThan(4, 2) })
     def 'should be able to create wildcard indexes'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(),
@@ -544,7 +544,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(4, 1) })
+    @IgnoreIf({ serverVersionLessThan(4, 2) })
     def 'should be able to create wildcard index with projection'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(),
@@ -562,7 +562,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(4, 4) })
+    @IgnoreIf({ serverVersionLessThan(4, 4) })
     def 'should be able to set hidden index'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(), [new IndexRequest(new BsonDocument('field', new BsonInt32(1)))])
