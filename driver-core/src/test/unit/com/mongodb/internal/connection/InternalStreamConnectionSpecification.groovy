@@ -444,7 +444,7 @@ class InternalStreamConnectionSpecification extends Specification {
         }
 
         when:
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, callback)
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, null, callback)
         callback.get()
 
         then:
@@ -500,9 +500,9 @@ class InternalStreamConnectionSpecification extends Specification {
 
         then:
         commandListener.eventsWereDelivered([
-                new CommandStartedEvent(requestContext, 1, connection.getDescription(), 'admin', 'ping',
+                new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
                         pingCommandDocument.append('$db', new BsonString('admin'))),
-                new CommandSucceededEvent(requestContext, 1, connection.getDescription(), 'ping',
+                new CommandSucceededEvent(1, connection.getDescription(), 'ping',
                         new BsonDocument('ok', new BsonInt32(1)), 1000)])
     }
 
@@ -560,7 +560,7 @@ class InternalStreamConnectionSpecification extends Specification {
         }
 
         when:
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), sessionContext, callback)
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), sessionContext, null, callback)
         callback.get()
 
         then:
@@ -581,9 +581,9 @@ class InternalStreamConnectionSpecification extends Specification {
         then:
         def e = thrown(MongoSocketWriteException)
         commandListener.eventsWereDelivered([
-                new CommandStartedEvent(requestContext, 1, connection.getDescription(), 'admin', 'ping',
+                new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
                         pingCommandDocument.append('$db', new BsonString('admin'))),
-                new CommandFailedEvent(requestContext, 1, connection.getDescription(), 'ping', 0, e)])
+                new CommandFailedEvent(1, connection.getDescription(), 'ping', 0, e)])
     }
 
     def 'should send events for command failure with exception reading header'() {
@@ -600,9 +600,9 @@ class InternalStreamConnectionSpecification extends Specification {
         then:
         def e = thrown(MongoSocketReadException)
         commandListener.eventsWereDelivered([
-                new CommandStartedEvent(requestContext, 1, connection.getDescription(), 'admin', 'ping',
+                new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
                         pingCommandDocument.append('$db', new BsonString('admin'))),
-                new CommandFailedEvent(requestContext, 1, connection.getDescription(), 'ping', 0, e)])
+                new CommandFailedEvent(1, connection.getDescription(), 'ping', 0, e)])
     }
 
     def 'should send events for command failure with exception reading body'() {
@@ -620,9 +620,9 @@ class InternalStreamConnectionSpecification extends Specification {
         then:
         def e = thrown(MongoSocketException)
         commandListener.eventsWereDelivered([
-                new CommandStartedEvent(requestContext, 1, connection.getDescription(), 'admin', 'ping',
+                new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
                         pingCommandDocument.append('$db', new BsonString('admin'))),
-                new CommandFailedEvent(requestContext, 1, connection.getDescription(), 'ping', 0, e)])
+                new CommandFailedEvent(1, connection.getDescription(), 'ping', 0, e)])
     }
 
     def 'should send events for command failure with exception from failed command'() {
@@ -641,9 +641,9 @@ class InternalStreamConnectionSpecification extends Specification {
         then:
         def e = thrown(MongoCommandException)
         commandListener.eventsWereDelivered([
-                new CommandStartedEvent(requestContext, 1, connection.getDescription(), 'admin', 'ping',
+                new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
                         pingCommandDocument.append('$db', new BsonString('admin'))),
-                new CommandFailedEvent(requestContext, 1, connection.getDescription(), 'ping', 0, e)])
+                new CommandFailedEvent(1, connection.getDescription(), 'ping', 0, e)])
     }
 
     def 'should send events with elided command and response in successful security-sensitive commands'() {
@@ -661,9 +661,9 @@ class InternalStreamConnectionSpecification extends Specification {
 
         then:
         commandListener.eventsWereDelivered([
-                new CommandStartedEvent(requestContext, 1, connection.getDescription(), 'admin', securitySensitiveCommandName,
+                new CommandStartedEvent(1, connection.getDescription(), 'admin', securitySensitiveCommandName,
                         new BsonDocument()),
-                new CommandSucceededEvent(requestContext, 1, connection.getDescription(), securitySensitiveCommandName,
+                new CommandSucceededEvent(1, connection.getDescription(), securitySensitiveCommandName,
                         new BsonDocument(), 1)])
 
         where:
@@ -738,14 +738,14 @@ class InternalStreamConnectionSpecification extends Specification {
         }
 
         when:
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, callback)
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, null, callback)
         callback.get()
 
         then:
         commandListener.eventsWereDelivered([
-                new CommandStartedEvent(requestContext, 1, connection.getDescription(), 'admin', 'ping',
+                new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
                         pingCommandDocument.append('$db', new BsonString('admin'))),
-                new CommandSucceededEvent(requestContext, 1, connection.getDescription(), 'ping',
+                new CommandSucceededEvent(1, connection.getDescription(), 'ping',
                         new BsonDocument('ok', new BsonInt32(1)), 1000)])
     }
 
@@ -763,15 +763,15 @@ class InternalStreamConnectionSpecification extends Specification {
         }
 
         when:
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, callback)
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, null, callback)
         callback.get()
 
         then:
         def e = thrown(MongoSocketWriteException)
         commandListener.eventsWereDelivered([
-                new CommandStartedEvent(requestContext, 1, connection.getDescription(), 'admin', 'ping',
+                new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
                         pingCommandDocument.append('$db', new BsonString('admin'))),
-                new CommandFailedEvent(requestContext, 1, connection.getDescription(), 'ping', 0, e)])
+                new CommandFailedEvent(1, connection.getDescription(), 'ping', 0, e)])
     }
 
     def 'should send events for asynchronous command failure with exception reading header'() {
@@ -790,15 +790,15 @@ class InternalStreamConnectionSpecification extends Specification {
         }
 
         when:
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, callback)
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, null, callback)
         callback.get()
 
         then:
         def e = thrown(MongoSocketReadException)
         commandListener.eventsWereDelivered([
-                new CommandStartedEvent(requestContext, 1, connection.getDescription(), 'admin', 'ping',
+                new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
                         pingCommandDocument.append('$db', new BsonString('admin'))),
-                new CommandFailedEvent(requestContext, 1, connection.getDescription(), 'ping', 0, e)])
+                new CommandFailedEvent(1, connection.getDescription(), 'ping', 0, e)])
     }
 
     def 'should send events for asynchronous command failure with exception reading body'() {
@@ -820,15 +820,15 @@ class InternalStreamConnectionSpecification extends Specification {
         }
 
         when:
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, callback)
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, null, callback)
         callback.get()
 
         then:
         def e = thrown(MongoSocketReadException)
         commandListener.eventsWereDelivered([
-                new CommandStartedEvent(requestContext, 1, connection.getDescription(), 'admin', 'ping',
+                new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
                         pingCommandDocument.append('$db', new BsonString('admin'))),
-                new CommandFailedEvent(requestContext, 1, connection.getDescription(), 'ping', 0, e)])
+                new CommandFailedEvent(1, connection.getDescription(), 'ping', 0, e)])
     }
 
     def 'should send events for asynchronous command failure with exception from failed command'() {
@@ -851,15 +851,15 @@ class InternalStreamConnectionSpecification extends Specification {
         }
 
         when:
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, callback)
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, null, callback)
         callback.get()
 
         then:
         def e = thrown(MongoCommandException)
         commandListener.eventsWereDelivered([
-                new CommandStartedEvent(requestContext, 1, connection.getDescription(), 'admin', 'ping',
+                new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
                         pingCommandDocument.append('$db', new BsonString('admin'))),
-                new CommandFailedEvent(requestContext, 1, connection.getDescription(), 'ping', 0, e)])
+                new CommandFailedEvent(1, connection.getDescription(), 'ping', 0, e)])
     }
 
     def 'should send events with elided command and response in successful security-sensitive asynchronous commands'() {
@@ -882,14 +882,14 @@ class InternalStreamConnectionSpecification extends Specification {
         }
 
         when:
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, callback)
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, null, callback)
         callback.get()
 
         then:
         commandListener.eventsWereDelivered([
-                new CommandStartedEvent(requestContext, 1, connection.getDescription(), 'admin', securitySensitiveCommandName,
+                new CommandStartedEvent(1, connection.getDescription(), 'admin', securitySensitiveCommandName,
                         new BsonDocument()),
-                new CommandSucceededEvent(requestContext, 1, connection.getDescription(), securitySensitiveCommandName,
+                new CommandSucceededEvent(1, connection.getDescription(), securitySensitiveCommandName,
                         new BsonDocument(), 1)])
 
         where:

@@ -55,7 +55,7 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def logger = Stub(Logger) {
             isDebugEnabled() >> debugLoggingEnabled
         }
-        def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, commandListener, requestContext, message, bsonOutput,
+        def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, commandListener, null, message, bsonOutput,
                 logger)
 
         when:
@@ -67,13 +67,13 @@ class LoggingCommandEventSenderSpecification extends Specification {
         then:
         commandListener.eventsWereDelivered(
                 [
-                        new CommandStartedEvent(requestContext, message.getId(), connectionDescription, namespace.databaseName,
+                        new CommandStartedEvent(message.getId(), connectionDescription, namespace.databaseName,
                                 commandDocument.getFirstKey(), commandDocument.append('$db', new BsonString(namespace.databaseName))),
-                        new CommandSucceededEvent(requestContext, message.getId(), connectionDescription, commandDocument.getFirstKey(),
+                        new CommandSucceededEvent(message.getId(), connectionDescription, commandDocument.getFirstKey(),
                                 new BsonDocument(), 1),
-                        new CommandSucceededEvent(requestContext, message.getId(), connectionDescription, commandDocument.getFirstKey(),
+                        new CommandSucceededEvent(message.getId(), connectionDescription, commandDocument.getFirstKey(),
                                 replyDocument, 1),
-                        new CommandFailedEvent(requestContext, message.getId(), connectionDescription, commandDocument.getFirstKey(), 1, failureException)
+                        new CommandFailedEvent(message.getId(), connectionDescription, commandDocument.getFirstKey(), 1, failureException)
                 ])
 
         where:
@@ -95,7 +95,7 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def logger = Mock(Logger) {
             isDebugEnabled() >> true
         }
-        def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, commandListener, requestContext, message, bsonOutput,
+        def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, commandListener, null, message, bsonOutput,
                 logger)
         when:
         sender.sendStartedEvent()
@@ -142,7 +142,7 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def logger = Mock(Logger) {
             isDebugEnabled() >> true
         }
-        def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, null, requestContext, message, bsonOutput, logger)
+        def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, null, null, message, bsonOutput, logger)
 
         when:
         sender.sendStartedEvent()
@@ -169,7 +169,7 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def logger = Mock(Logger) {
             isDebugEnabled() >> true
         }
-        def sender = new LoggingCommandEventSender(['createUser'] as Set, [] as Set, connectionDescription, null, requestContext, message, bsonOutput,
+        def sender = new LoggingCommandEventSender(['createUser'] as Set, [] as Set, connectionDescription, null, null, message, bsonOutput,
                 logger)
 
         when:
