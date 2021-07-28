@@ -311,7 +311,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
         then:
         _ * connection.getDescription() >> helper.threeZeroConnectionDescription
-        1 * connection.commandAsync(helper.dbName, _, _, readPreference, _, _, _, _) >> { it.last().onResult(helper.commandResult, null) }
+        1 * connection.commandAsync(helper.dbName, _, _, readPreference, *_) >> { it.last().onResult(helper.commandResult, null) }
 
         where:
         readPreference << [ReadPreference.primary(), ReadPreference.secondary()]

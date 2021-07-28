@@ -392,8 +392,8 @@ class OperationFunctionalSpecification extends Specification {
         if (checkCommand) {
             1 * connection.commandAsync(*_) >> {
                 assert it[1] == expectedCommand
-                if (it.size() == 11) {
-                    SplittablePayload payload = it[8]
+                if (it.size() == 12) {
+                    SplittablePayload payload = it[9]
                     payload.setPosition(payload.size())
                 }
                 it.last().onResult(result, null)
@@ -405,9 +405,9 @@ class OperationFunctionalSpecification extends Specification {
             }
         }
 
-        0 * connection.commandAsync(_, _, _, _, _, _, _) >> {
+        0 * connection.commandAsync(*_) >> {
             // Unexpected Command
-            it[5].onResult(result, null)
+            it.last().onResult(result, null)
         }
 
         if (retryable) {
