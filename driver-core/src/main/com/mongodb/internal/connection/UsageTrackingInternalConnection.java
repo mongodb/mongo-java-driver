@@ -149,8 +149,8 @@ class UsageTrackingInternalConnection implements InternalConnection {
 
     @Override
     public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
-                                        final SessionContext sessionContext,
-            final RequestContext requestContext, final SingleResultCallback<T> callback) {
+            final SessionContext sessionContext, final RequestContext requestContext,
+            final SingleResultCallback<T> callback) {
         SingleResultCallback<T> errHandlingCallback = errorHandlingCallback(new SingleResultCallback<T>() {
             @Override
             public void onResult(final T result, final Throwable t) {

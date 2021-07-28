@@ -633,8 +633,7 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
-        public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
-                                            final SessionContext sessionContext,
+        public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
                 final RequestContext requestContext, final SingleResultCallback<T> callback) {
             isTrue("open", !isClosed.get());
             wrapped.sendAndReceiveAsync(message, decoder, sessionContext, requestContext, new SingleResultCallback<T>() {

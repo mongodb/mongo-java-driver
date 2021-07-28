@@ -461,7 +461,6 @@ public final class MongoOperationPublisher<T> {
 
     <R> Mono<R> createWriteOperationMono(final Supplier<AsyncWriteOperation<R>> operation,
             @Nullable final ClientSession clientSession) {
-        // TODO: is this kosher to wrap a custom Publisher which wraps a Mono
         return Mono.from(executor.execute(operation.get(), getReadConcern(), clientSession));
     }
 
