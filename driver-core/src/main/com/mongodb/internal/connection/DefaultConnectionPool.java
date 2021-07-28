@@ -58,6 +58,7 @@ import org.bson.types.ObjectId;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -116,8 +117,10 @@ class DefaultConnectionPool implements ConnectionPool {
      * @param sdamProvider For handling exceptions via the
      *                     <a href="https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring.rst">
      *                     SDAM</a> machinery as specified
-     *                     <a href="https://github.com/stIncMale/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst#populating-the-pool-with-a-connection-internal-implementation">
+     *                     <a href="https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst#populating-the-pool-with-a-connection-internal-implementation">
      *                     here</a>.
+     *                     Must provide an {@linkplain Optional#isPresent() empty} {@link Optional} if created in load-balanced mode,
+     *                     otherwise must provide a non-empty {@link Optional}.
      */
     DefaultConnectionPool(final ServerId serverId, final InternalConnectionFactory internalConnectionFactory,
                           final ConnectionPoolSettings settings, final OptionalProvider<SdamServerDescriptionManager> sdamProvider) {
@@ -242,7 +245,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
     @Override
     public void invalidate(@Nullable final Throwable cause) {
-        assertTrue(sdamProvider.optional().isPresent());
+        assertFalse(isLoadBalanced());
         if (stateAndGeneration.pauseAndIncrementGeneration(cause)) {
             LOGGER.debug("Invalidating the connection pool for " + serverId + " and marking it as 'paused'"
                     + (cause == null ? "" : " due to " + cause.toString()));
@@ -263,7 +266,7 @@ class DefaultConnectionPool implements ConnectionPool {
     }
 
     public void invalidate(final ObjectId serviceId, final int generation) {
-        assertFalse(sdamProvider.optional().isPresent());
+        assertTrue(isLoadBalanced());
         if (generation == InternalConnection.NOT_INITIALIZED_GENERATION) {
             return;
         }
@@ -492,6 +495,10 @@ class DefaultConnectionPool implements ConnectionPool {
      */
     private ConnectionId getId(final InternalConnection internalConnection) {
         return internalConnection.getDescription().getConnectionId();
+    }
+
+    private boolean isLoadBalanced() {
+        return !sdamProvider.optional().isPresent();
     }
 
     private class PooledConnection implements InternalConnection {

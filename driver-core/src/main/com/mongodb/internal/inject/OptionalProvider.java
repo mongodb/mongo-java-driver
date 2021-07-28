@@ -15,6 +15,8 @@
  */
 package com.mongodb.internal.inject;
 
+import com.mongodb.annotations.ThreadSafe;
+
 import java.util.Optional;
 
 /**
@@ -23,10 +25,12 @@ import java.util.Optional;
  * @param <T> The type of provided objects.
  * @see Provider
  */
+@ThreadSafe
 public interface OptionalProvider<T> {
     /**
-     * Provides either a fully constructed and injected object or an {@linkplain Optional#isEmpty() empty} {@link Optional}
-     * to signify that the provider does not provide an object.
+     * Provides either a fully constructed and injected object or an {@linkplain Optional#isPresent() empty} {@link Optional}
+     * to signify that the provider does not provide an object. This method may be called multiple times and must provide the same object.
+     * This method must not be called by a constructor that got this provider as its argument.
      */
     Optional<T> optional();
 }

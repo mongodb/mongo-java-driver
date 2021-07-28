@@ -15,6 +15,8 @@
  */
 package com.mongodb.internal.inject;
 
+import com.mongodb.annotations.ThreadSafe;
+
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -23,14 +25,16 @@ import java.util.function.Supplier;
  *
  * @param <T> The type of provided objects.
  */
+@ThreadSafe
 public interface Provider<T> extends OptionalProvider<T>, Supplier<T> {
     /**
      * Provides a fully constructed and injected object.
+     * Calling this method is equivalent to calling {@link #optional() optional()}{@code .}{@link Optional#get() get()}.
      */
     T get();
 
     /**
-     * Provides a fully constructed and injected object, never returns an {@linkplain Optional#isEmpty() empty} {@link Optional}.
+     * Provides a fully constructed and injected object, never returns an {@linkplain Optional#isPresent() empty} {@link Optional}.
      *
      * @see #get()
      */
