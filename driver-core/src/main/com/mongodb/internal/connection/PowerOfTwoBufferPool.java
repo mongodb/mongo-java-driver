@@ -27,6 +27,8 @@ import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.mongodb.internal.connection.ConcurrentPool.INFINITE_SIZE;
+
 /**
  * Power-of-two buffer pool implementation.
  *
@@ -52,7 +54,7 @@ public class PowerOfTwoBufferPool implements BufferProvider {
         int powerOfTwo = 1;
         for (int i = 0; i <= highestPowerOfTwo; i++) {
             final int size = powerOfTwo;
-            powerOfTwoToPoolMap.put(i, new ConcurrentPool<ByteBuffer>(Integer.MAX_VALUE,
+            powerOfTwoToPoolMap.put(i, new ConcurrentPool<>(INFINITE_SIZE,
                                                                          new ConcurrentPool.ItemFactory<ByteBuffer>() {
                                                                              @Override
                                                                              public ByteBuffer create() {

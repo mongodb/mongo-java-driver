@@ -303,7 +303,7 @@ public class MongoClientOptions {
      *
      * <p>Default is 100.</p>
      *
-     * @return the maximum size of the connection pool per host
+     * @return the maximum size of the connection pool per host; if 0, then there is no limit.
      */
     public int getConnectionsPerHost() {
         return maxConnectionsPerHost;

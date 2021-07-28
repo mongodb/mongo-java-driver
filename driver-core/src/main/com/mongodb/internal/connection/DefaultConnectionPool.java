@@ -78,6 +78,8 @@ import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.connection.ConcurrentPool.INFINITE_SIZE;
+import static com.mongodb.internal.connection.ConcurrentPool.sizeToString;
 import static com.mongodb.internal.event.EventListenerHelper.getConnectionPoolListener;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -111,7 +113,7 @@ class DefaultConnectionPool implements ConnectionPool {
         this.settings = notNull("settings", settings);
         UsageTrackingInternalConnectionItemFactory connectionItemFactory =
                 new UsageTrackingInternalConnectionItemFactory(internalConnectionFactory);
-        pool = new ConcurrentPool<UsageTrackingInternalConnection>(settings.getMaxSize(), connectionItemFactory);
+        pool = new ConcurrentPool<>(maxSize(settings), connectionItemFactory);
         this.connectionPoolListener = getConnectionPoolListener(settings);
         maintenanceTask = createMaintenanceTask();
         sizeMaintenanceTimer = createMaintenanceTimer();
@@ -298,7 +300,7 @@ class DefaultConnectionPool implements ConnectionPool {
             return new MongoTimeoutException(format("Timed out after %s while waiting for a connection to server %s.",
                     timeout.toUserString(), serverId.getAddress()));
         } else {
-            int maxSize = settings.getMaxSize();
+            int maxSize = pool.getMaxSize();
             int numInUse = pool.getInUseCount();
             /* At this point in an execution we consider at least one of `numPinnedToCursor`, `numPinnedToTransaction` to be positive.
              * `numPinnedToCursor`, `numPinnedToTransaction` and `numInUse` are not a snapshot view,
@@ -326,10 +328,11 @@ class DefaultConnectionPool implements ConnectionPool {
             assertTrue(numOtherInUse >= 0);
             assertTrue(numPinnedToCursor + numPinnedToTransaction + numOtherInUse <= maxSize);
             return new MongoTimeoutException(format("Timed out after %s while waiting for a connection to server %s. Details: "
-                            + "maxPoolSize: %d, connections in use by cursors: %d, connections in use by transactions: %d, "
+                            + "maxPoolSize: %s, connections in use by cursors: %d, connections in use by transactions: %d, "
                             + "connections in use by other operations: %d",
                     timeout.toUserString(), serverId.getAddress(),
-                    maxSize, numPinnedToCursor, numPinnedToTransaction, numOtherInUse));
+                    sizeToString(maxSize), numPinnedToCursor, numPinnedToTransaction,
+                    numOtherInUse));
         }
     }
 
@@ -469,6 +472,13 @@ class DefaultConnectionPool implements ConnectionPool {
      */
     private ConnectionId getId(final InternalConnection internalConnection) {
         return internalConnection.getDescription().getConnectionId();
+    }
+
+    /**
+     * @return {@link ConnectionPoolSettings#getMaxSize()} if it is not 0, otherwise returns {@link ConcurrentPool#INFINITE_SIZE}.
+     */
+    private static int maxSize(final ConnectionPoolSettings settings) {
+        return settings.getMaxSize() == 0 ? INFINITE_SIZE : settings.getMaxSize();
     }
 
     private class PooledConnection implements InternalConnection {
