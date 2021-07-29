@@ -46,13 +46,14 @@ import java.util.List;
 import java.util.UUID;
 
 import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.internal.connection.ConcurrentPool.INFINITE_SIZE;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
 public class ServerSessionPool {
     private static final int END_SESSIONS_BATCH_SIZE = 10000;
 
     private final ConcurrentPool<ServerSessionImpl> serverSessionPool =
-            new ConcurrentPool<ServerSessionImpl>(Integer.MAX_VALUE, new ServerSessionItemFactory());
+            new ConcurrentPool<>(INFINITE_SIZE, new ServerSessionItemFactory());
     private final Cluster cluster;
     private final ServerSessionPool.Clock clock;
     private volatile boolean closing;
