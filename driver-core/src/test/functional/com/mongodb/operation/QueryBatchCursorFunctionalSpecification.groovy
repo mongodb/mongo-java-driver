@@ -351,7 +351,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         seen == 1
     }
 
-    @IgnoreIf({ isSharded() })
+    @IgnoreIf({ isSharded() || serverVersionAtLeast(5, 1) })
     def 'should kill cursor if limit is reached on initial query'() throws InterruptedException {
         given:
         def firstBatch = executeQuery(5)

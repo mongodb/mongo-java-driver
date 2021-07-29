@@ -56,6 +56,7 @@ import static com.mongodb.ClusterFixture.getReadConnectionSource
 import static com.mongodb.ClusterFixture.getReferenceCountAfterTimeout
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.internal.connection.ServerHelper.waitForLastRelease
 import static com.mongodb.internal.connection.ServerHelper.waitForRelease
@@ -320,7 +321,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         !nextBatch()
     }
 
-    @IgnoreIf({ isSharded() })
+    @IgnoreIf({ isSharded() || serverVersionAtLeast(5, 1) })
     def 'should kill cursor if limit is reached on initial query'() throws InterruptedException {
         given:
         def firstBatch = executeQuery(5)
