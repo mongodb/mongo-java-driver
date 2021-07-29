@@ -41,6 +41,10 @@ import static com.mongodb.assertions.Assertions.assertTrue;
  * <p>This class should not be considered a part of the public API.</p>
  */
 public class ConcurrentPool<T> implements Pool<T> {
+    /**
+     * {@link Integer#MAX_VALUE}.
+     */
+    public static final int INFINITE_SIZE = Integer.MAX_VALUE;
     private static final String POOL_CLOSED_MESSAGE = "The pool is closed";
 
     private final int maxSize;
@@ -79,10 +83,11 @@ public class ConcurrentPool<T> implements Pool<T> {
     /**
      * Initializes a new pool of objects.
      *
-     * @param maxSize     max to hold to at any given time. if < 0 then no limit
+     * @param maxSize     max to hold to at any given time, must be positive.
      * @param itemFactory factory used to create and close items in the pool
      */
     public ConcurrentPool(final int maxSize, final ItemFactory<T> itemFactory) {
+        assertTrue(maxSize > 0);
         this.maxSize = maxSize;
         this.itemFactory = itemFactory;
         stateAndPermits = new StateAndPermits(maxSize);
@@ -255,7 +260,7 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
     }
 
-    public int getMaxSize() {
+    int getMaxSize() {
         return maxSize;
     }
 
@@ -274,7 +279,7 @@ public class ConcurrentPool<T> implements Pool<T> {
     public String toString() {
         StringBuilder buf = new StringBuilder();
         buf.append("pool: ")
-           .append(" maxSize: ").append(maxSize)
+           .append(" maxSize: ").append(sizeToString(maxSize))
            .append(" availableCount ").append(getAvailableCount())
            .append(" inUseCount ").append(getInUseCount());
         return buf.toString();
@@ -477,5 +482,12 @@ public class ConcurrentPool<T> implements Pool<T> {
         boolean closed() {
             return closed;
         }
+    }
+
+    /**
+     * @return {@link Integer#toString()} if {@code size} is not {@link #INFINITE_SIZE}, otherwise returns {@code "infinite"}.
+     */
+    static String sizeToString(final int size) {
+        return size == INFINITE_SIZE ? "infinite" : Integer.toString(size);
     }
 }
