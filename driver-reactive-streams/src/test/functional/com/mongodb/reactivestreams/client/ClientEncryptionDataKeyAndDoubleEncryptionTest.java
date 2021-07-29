@@ -69,7 +69,7 @@ public class ClientEncryptionDataKeyAndDoubleEncryptionTest {
 
     @Before
     public void setUp() {
-        assumeTrue(serverVersionAtLeast(4, 1));
+        assumeTrue(serverVersionAtLeast(4, 2));
         assumeTrue("Has encryption tests", hasEncryptionTestsEnabled());
 
         // Step 1: create unencrypted client

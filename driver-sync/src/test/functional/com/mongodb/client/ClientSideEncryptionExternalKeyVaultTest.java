@@ -44,6 +44,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.mongodb.ClusterFixture.isClientSideEncryptionTest;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
@@ -63,10 +64,8 @@ public class ClientSideEncryptionExternalKeyVaultTest {
 
     @Before
     public void setUp() throws IOException, URISyntaxException {
-        assumeTrue(serverVersionAtLeast(4, 1));
-        assumeTrue("Encryption test with external keyVault is disabled",
-                System.getProperty("org.mongodb.test.awsAccessKeyId") != null
-                    && !System.getProperty("org.mongodb.test.awsAccessKeyId").isEmpty());
+        assumeTrue(serverVersionAtLeast(4, 2));
+        assumeTrue("Encryption test with external keyVault is disabled", isClientSideEncryptionTest());
 
         /* Step 1: get unencrypted client and recreate keys collection */
         client = getMongoClient();

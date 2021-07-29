@@ -93,7 +93,7 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
 
     @Test
     public void testGetMoreIteration() {
-        assumeTrue(serverVersionAtLeast(asList(4, 1, 10)));
+        assumeTrue(serverVersionAtLeast(4, 2));
 
         List<Document> documents = asList(Document.parse("{_id: 1}"), Document.parse("{_id: 2}"), Document.parse("{_id: 3}"),
                 Document.parse("{_id: 4}"), Document.parse("{_id: 5}"));
@@ -111,7 +111,7 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
 
     @Test
     public void testNotPrimaryKeepConnectionPool() {
-        assumeTrue(serverVersionAtLeast(asList(4, 1, 10)));
+        assumeTrue(serverVersionAtLeast(4, 2));
 
         collectionHelper.runAdminCommand("{configureFailPoint: 'failCommand',  mode: {times: 1}, data: {failCommands: ['insert'], "
                 + "errorCode: 10107}}");
@@ -130,7 +130,7 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
 
     @Test
     public void testNotPrimaryClearConnectionPool() {
-        assumeFalse(serverVersionAtLeast(asList(4, 1, 0)));
+        assumeFalse(serverVersionAtLeast(4, 2));
 
         collectionHelper.runAdminCommand("{configureFailPoint: 'failCommand',  mode: {times: 1}, data: {failCommands: ['insert'], "
                 + "errorCode: 10107}}");

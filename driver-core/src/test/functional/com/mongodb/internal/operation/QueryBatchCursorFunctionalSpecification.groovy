@@ -48,7 +48,6 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToQueryResult
 import static com.mongodb.internal.operation.QueryOperationHelper.makeAdditionalGetMoreCall
@@ -292,7 +291,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         latch.await(5, TimeUnit.SECONDS)  // wait for cursor.close to complete
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) || isSharded() })
+    @IgnoreIf({ serverVersionLessThan(3, 2) || isSharded() })
     @Slow
     def 'test maxTimeMS'() {
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))

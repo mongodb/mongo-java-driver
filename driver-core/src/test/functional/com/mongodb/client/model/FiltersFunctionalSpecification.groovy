@@ -25,7 +25,7 @@ import spock.lang.IgnoreIf
 
 import java.util.regex.Pattern
 
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.client.model.Filters.all
 import static com.mongodb.client.model.Filters.and
 import static com.mongodb.client.model.Filters.bitsAllClear
@@ -33,6 +33,7 @@ import static com.mongodb.client.model.Filters.bitsAllSet
 import static com.mongodb.client.model.Filters.bitsAnyClear
 import static com.mongodb.client.model.Filters.bitsAnySet
 import static com.mongodb.client.model.Filters.elemMatch
+import static com.mongodb.client.model.Filters.empty
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Filters.exists
 import static com.mongodb.client.model.Filters.expr
@@ -41,7 +42,6 @@ import static com.mongodb.client.model.Filters.gte
 import static com.mongodb.client.model.Filters.jsonSchema
 import static com.mongodb.client.model.Filters.lt
 import static com.mongodb.client.model.Filters.lte
-import static com.mongodb.client.model.Filters.empty
 import static com.mongodb.client.model.Filters.mod
 import static com.mongodb.client.model.Filters.ne
 import static com.mongodb.client.model.Filters.nin
@@ -227,7 +227,7 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(size('a', 4)) == [b]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
+    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def 'should render $bitsAllClear'() {
         when:
         def bitDoc = Document.parse('{_id: 1, bits: 20}')
@@ -238,7 +238,7 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(bitsAllClear('bits', 35)) == [bitDoc]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
+    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def 'should render $bitsAllSet'() {
         when:
         def bitDoc = Document.parse('{_id: 1, bits: 54}')
@@ -249,7 +249,7 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(bitsAllSet('bits', 50)) == [bitDoc]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
+    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def 'should render $bitsAnyClear'() {
         when:
         def bitDoc = Document.parse('{_id: 1, bits: 50}')
@@ -260,7 +260,7 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(bitsAnyClear('bits', 20)) == [bitDoc]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
+    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def 'should render $bitsAnySet'() {
         when:
         def bitDoc = Document.parse('{_id: 1, bits: 20}')
@@ -277,7 +277,7 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(type('x', BsonType.ARRAY)) == []
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
+    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def 'should render $type with a string type representation'() {
         expect:
         find(type('x', 'number')) == [a, b, c]
@@ -298,7 +298,7 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(text('GIANT', new TextSearchOptions().language('english'))) == [textDocument]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
+    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def 'should render $text with 3.2 options'() {
         given:
         collectionHelper.drop()
@@ -330,14 +330,14 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(where('Array.isArray(this.a)')) == [a, b]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    @IgnoreIf({ serverVersionLessThan(3, 6) })
     def '$expr'() {
         expect:
         find(expr(Document.parse('{ $eq: [ "$x" , 3 ] } '))) == [c]
     }
 
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    @IgnoreIf({ serverVersionLessThan(3, 6) })
     def '$jsonSchema'() {
         expect:
         find(jsonSchema(Document.parse('{ bsonType : "object", properties: { x : {type : "number", minimum : 2} } } '))) == [b, c]
