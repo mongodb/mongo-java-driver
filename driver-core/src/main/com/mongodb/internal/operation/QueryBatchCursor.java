@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.StampedLock;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
@@ -69,6 +70,8 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     private static final String MESSAGE_IF_CLOSED_AS_ITERATOR = "Iterator has been closed";
 
     private final MongoNamespace namespace;
+    @Nullable
+    private final ServerApi serverApi;
     private final ServerAddress serverAddress;
     private final int limit;
     private final Decoder<T> decoder;
@@ -102,6 +105,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         isTrueArgument("maxTimeMS >= 0", maxTimeMS >= 0);
         this.maxTimeMS = maxTimeMS;
         this.namespace = firstQueryResult.getNamespace();
+        this.serverApi = connectionSource == null ? null : connectionSource.getServerApi();
         this.serverAddress = firstQueryResult.getAddress();
         this.limit = limit;
         this.batchSize = batchSize;
@@ -128,7 +132,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
                 }
             }
         }
-        resourceManager = new ResourceManager(namespace, connectionSource, connectionToPin, serverCursor);
+        resourceManager = new ResourceManager(connectionSource, connectionToPin, serverCursor);
         if (releaseServerAndResources) {
             resourceManager.releaseServerAndClientResources(assertNotNull(connection));
         }
@@ -136,7 +140,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
     @Override
     public boolean hasNext() {
-        return resourceManager.execute(MESSAGE_IF_CLOSED_AS_CURSOR, this::doHasNext);
+        return assertNotNull(resourceManager.execute(MESSAGE_IF_CLOSED_AS_CURSOR, this::doHasNext));
     }
 
     private boolean doHasNext() {
@@ -163,7 +167,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
     @Override
     public List<T> next() {
-        return resourceManager.execute(MESSAGE_IF_CLOSED_AS_ITERATOR, this::doNext);
+        return assertNotNull(resourceManager.execute(MESSAGE_IF_CLOSED_AS_ITERATOR, this::doNext));
     }
 
     private List<T> doNext() {
@@ -263,8 +267,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
     private void getMore() {
         ServerCursor serverCursor = assertNotNull(resourceManager.serverCursor());
-        Connection connection = resourceManager.connection();
-        try {
+        resourceManager.executeWithConnection(connection -> {
             ServerCursor nextServerCursor;
             if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
                 try {
@@ -274,7 +277,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
                             ReadPreference.primary(),
                             CommandResultDocumentCodec.create(decoder, "nextBatch"),
                             resourceManager.sessionContext(),
-                            resourceManager.serverApi()));
+                            serverApi));
                 } catch (MongoCommandException e) {
                     throw translateCommandException(e, serverCursor);
                 }
@@ -287,19 +290,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             if (limitReached()) {
                 resourceManager.releaseServerAndClientResources(connection);
             }
-        } catch (MongoSocketException e) {
-            try {
-                resourceManager.onCorruptedConnection(connection);
-            } catch (RuntimeException suppressed) {
-                e.addSuppressed(suppressed);
-            }
-            throw e;
-        } finally {
-            connection.release();
-            if (resourceManager.serverCursor() == null) {
-                resourceManager.releaseClientResources();
-            }
-        }
+        });
     }
 
     private BsonDocument asGetMoreCommandDocument(final ServerCursor serverCursor) {
@@ -358,8 +349,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
      * others are not and rely on the total order mentioned above.
      */
     @ThreadSafe
-    private static final class ResourceManager {
-        private final MongoNamespace namespace;
+    private final class ResourceManager {
         private final Lock lock;
         private volatile State state;
         @Nullable
@@ -370,9 +360,8 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         private volatile ServerCursor serverCursor;
         private volatile boolean skipReleasingServerResourcesOnClose;
 
-        ResourceManager(final MongoNamespace namespace, @Nullable final ConnectionSource connectionSource,
+        ResourceManager(@Nullable final ConnectionSource connectionSource,
                 @Nullable final Connection connectionToPin, @Nullable final ServerCursor serverCursor) {
-            this.namespace = namespace;
             lock = new StampedLock().asWriteLock();
             state = State.IDLE;
             if (serverCursor != null) {
@@ -399,7 +388,8 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
          *
          * @throws IllegalStateException If {@linkplain QueryBatchCursor#close() closed}.
          */
-        <T> T execute(final String exceptionMessageIfClosed, final Supplier<T> operation) throws IllegalStateException {
+        @Nullable
+        <R> R execute(final String exceptionMessageIfClosed, final Supplier<R> operation) throws IllegalStateException {
             if (!tryStartOperation()) {
                 throw new IllegalStateException(exceptionMessageIfClosed);
             }
@@ -516,7 +506,23 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             }
         }
 
-        Connection connection() {
+        void executeWithConnection(final Consumer<Connection> action) {
+            Connection connection = connection();
+            try {
+                action.accept(connection);
+            } catch (MongoSocketException e) {
+                try {
+                    onCorruptedConnection(connection);
+                } catch (RuntimeException suppressed) {
+                    e.addSuppressed(suppressed);
+                }
+                throw e;
+            } finally {
+                connection.release();
+            }
+        }
+
+        private Connection connection() {
             assertTrue(state != State.IDLE);
             if (pinnedConnection == null) {
                 return assertNotNull(connectionSource).getConnection();
@@ -539,16 +545,14 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             // without `connectionSource` we will not be able to kill `serverCursor` later
             assertNotNull(connectionSource);
             this.serverCursor = serverCursor;
+            if (serverCursor == null) {
+                releaseClientResources();
+            }
         }
 
         @Nullable
         SessionContext sessionContext() {
             return assertNotNull(connectionSource).getSessionContext();
-        }
-
-        @Nullable
-        ServerApi serverApi() {
-            return assertNotNull(connectionSource).getServerApi();
         }
 
         void releaseServerAndClientResources(final Connection connection) {
@@ -563,14 +567,14 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             try {
                 ServerCursor localServerCursor = serverCursor;
                 if (localServerCursor != null) {
-                    killServerCursor(namespace, localServerCursor, sessionContext(), serverApi(), assertNotNull(connection));
+                    killServerCursor(namespace, localServerCursor, sessionContext(), serverApi, assertNotNull(connection));
                 }
             } finally {
                 serverCursor = null;
             }
         }
 
-        private static void killServerCursor(final MongoNamespace namespace, final ServerCursor serverCursor,
+        private void killServerCursor(final MongoNamespace namespace, final ServerCursor serverCursor,
                 @Nullable final SessionContext sessionContext, @Nullable final ServerApi serverApi, final Connection connection) {
             long cursorId = serverCursor.getId();
             if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
@@ -581,7 +585,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             }
         }
 
-        private static BsonDocument asKillCursorsCommandDocument(final MongoNamespace namespace, final ServerCursor serverCursor) {
+        private BsonDocument asKillCursorsCommandDocument(final MongoNamespace namespace, final ServerCursor serverCursor) {
             return new BsonDocument("killCursors", new BsonString(namespace.getCollectionName()))
                     .append("cursors", new BsonArray(singletonList(new BsonInt64(serverCursor.getId()))));
         }
@@ -599,31 +603,31 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
                 pinnedConnection = null;
             }
         }
+    }
 
-        private enum State {
-            IDLE(true, false),
-            OPERATION_IN_PROGRESS(true, true),
-            /**
-             * Implies {@link #OPERATION_IN_PROGRESS}.
-             */
-            CLOSE_PENDING(false, true),
-            CLOSED(false, false);
+    private enum State {
+        IDLE(true, false),
+        OPERATION_IN_PROGRESS(true, true),
+        /**
+         * Implies {@link #OPERATION_IN_PROGRESS}.
+         */
+        CLOSE_PENDING(false, true),
+        CLOSED(false, false);
 
-            private final boolean operable;
-            private final boolean inProgress;
+        private final boolean operable;
+        private final boolean inProgress;
 
-            State(final boolean operable, final boolean inProgress) {
-                this.operable = operable;
-                this.inProgress = inProgress;
-            }
+        State(final boolean operable, final boolean inProgress) {
+            this.operable = operable;
+            this.inProgress = inProgress;
+        }
 
-            boolean operable() {
-                return operable;
-            }
+        boolean operable() {
+            return operable;
+        }
 
-            boolean inProgress() {
-                return inProgress;
-            }
+        boolean inProgress() {
+            return inProgress;
         }
     }
 }

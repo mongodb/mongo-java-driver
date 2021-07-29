@@ -295,6 +295,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         binding.sessionContext >> sessionContext
         source.connection >> connection
         source.retain() >> source
+        source.getServerApi() >> null
         def commandDocument = new BsonDocument('distinct', new BsonString(getCollectionName()))
                 .append('key', new BsonString('str'))
         appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)

@@ -529,6 +529,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         binding.sessionContext >> sessionContext
         source.connection >> connection
         source.retain() >> source
+        source.getServerApi() >> null
         def commandDocument = new BsonDocument('find', new BsonString(getCollectionName()))
         appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
 
@@ -609,6 +610,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         binding.sessionContext >> sessionContext
         source.connection >> connection
         source.retain() >> source
+        source.getServerApi() >> null
         def commandDocument = new BsonDocument('find', new BsonString(getCollectionName())).append('allowDiskUse', BsonBoolean.TRUE)
         appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
 
@@ -694,6 +696,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         binding.readConnectionSource >> source
         source.connection >> connection
         source.retain() >> source
+        source.getServerApi() >> null
 
         when:
         operation.execute(binding)
