@@ -187,13 +187,19 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         if (lastStageDocument.containsKey("$out")) {
             return new MongoNamespace(namespace.getDatabaseName(), lastStageDocument.getString("$out").getValue());
         } else if (lastStageDocument.containsKey("$merge")) {
-            BsonDocument mergeDocument = lastStageDocument.getDocument("$merge");
-            if (mergeDocument.isDocument("into")) {
-                BsonDocument intoDocument = mergeDocument.getDocument("into");
-                return new MongoNamespace(intoDocument.getString("db", new BsonString(namespace.getDatabaseName())).getValue(),
-                        intoDocument.getString("coll").getValue());
-            } else if (mergeDocument.isString("into")) {
-                return new MongoNamespace(namespace.getDatabaseName(), mergeDocument.getString("into").getValue());
+            if (lastStageDocument.isString("$merge")) {
+                return new MongoNamespace(namespace.getDatabaseName(), lastStageDocument.getString("$merge").getValue());
+            } else if (lastStageDocument.isDocument("$merge")) {
+                BsonDocument mergeDocument = lastStageDocument.getDocument("$merge");
+                if (mergeDocument.isDocument("into")) {
+                    BsonDocument intoDocument = mergeDocument.getDocument("into");
+                    return new MongoNamespace(intoDocument.getString("db", new BsonString(namespace.getDatabaseName())).getValue(),
+                            intoDocument.getString("coll").getValue());
+                } else if (mergeDocument.isString("into")) {
+                    return new MongoNamespace(namespace.getDatabaseName(), mergeDocument.getString("into").getValue());
+                }
+            } else {
+                throw new IllegalStateException("Cannot return a cursor when the value for $merge stage is not a string or a document");
             }
         }
 

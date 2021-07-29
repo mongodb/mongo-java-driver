@@ -209,7 +209,7 @@ class AggregateIterableSpecification extends Specification {
                 .comment('this is a comment'))
     }
 
-    def 'should build the expected AggregateToCollectionOperation for $merge'() {
+    def 'should build the expected AggregateToCollectionOperation for $merge document'() {
         given:
         def cursor = Stub(AsyncBatchCursor) {
             next(_) >> {
@@ -356,6 +356,38 @@ class AggregateIterableSpecification extends Specification {
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))
                 .comment('this is a comment'))
+    }
+
+    def 'should build the expected AggregateToCollectionOperation for $merge string'() {
+        given:
+        def cursor = Stub(AsyncBatchCursor) {
+            next(_) >> {
+                it[0].onResult(null, null)
+            }
+        }
+        def executor = new TestOperationExecutor([cursor, cursor, cursor, cursor, cursor, cursor, cursor]);
+        def collectionName = 'collectionName'
+        def collectionNamespace = new MongoNamespace(namespace.getDatabaseName(), collectionName)
+        def pipeline = [new Document('$match', 1), new Document('$merge', new Document('into', collectionName))]
+
+        when: 'aggregation includes $merge'
+        new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
+                pipeline, AggregationLevel.COLLECTION, true)
+                .into([]) { result, t -> }
+
+        def operation = executor.getReadOperation() as WriteOperationThenCursorReadOperation
+
+        then:
+        expect operation.getAggregateToCollectionOperation(), isTheSameAs(new AggregateToCollectionOperation(namespace,
+                [new BsonDocument('$match', new BsonInt32(1)),
+                 new BsonDocument('$merge', new BsonDocument('into', new BsonString(collectionName)))],
+                readConcern, writeConcern))
+
+        when:
+        operation = operation.getReadOperation() as FindOperation
+
+        then:
+        operation.getNamespace() == collectionNamespace
     }
 
     def 'should handle exceptions correctly'() {
