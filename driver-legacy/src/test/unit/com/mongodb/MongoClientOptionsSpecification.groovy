@@ -118,7 +118,7 @@ class MongoClientOptionsSpecification extends Specification {
         thrown(IllegalArgumentException)
 
         when:
-        builder.connectionsPerHost(0)
+        builder.connectionsPerHost(-1)
         then:
         thrown(IllegalArgumentException)
 
@@ -742,6 +742,11 @@ class MongoClientOptionsSpecification extends Specification {
 
         then:
         actual == expected
+    }
+
+    def 'should allow 0 (infinite) connectionsPerHost'() {
+        expect:
+        MongoClientOptions.builder().connectionsPerHost(0).build().getConnectionsPerHost() == 0
     }
 
     private static class MyDBEncoderFactory implements DBEncoderFactory {
