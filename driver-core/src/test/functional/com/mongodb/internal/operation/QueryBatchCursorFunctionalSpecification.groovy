@@ -24,6 +24,7 @@ import com.mongodb.ServerCursor
 import com.mongodb.WriteConcern
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.internal.binding.ConnectionSource
+import com.mongodb.internal.connection.Connection
 import com.mongodb.internal.connection.NoOpSessionContext
 import com.mongodb.internal.connection.QueryResult
 import com.mongodb.internal.validator.NoOpFieldNameValidator
@@ -267,18 +268,19 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
 
     @Slow
     def 'hasNext should throw when cursor is closed in another thread'() {
+        Connection conn = connectionSource.getConnection()
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
         def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, true);
-        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, 0, new DocumentCodec(), connectionSource, conn)
         cursor.next()
-        def latch = new CountDownLatch(1)
+        def closeCompleted = new CountDownLatch(1)
 
         // wait a second then close the cursor
         new Thread({
             sleep(1000)
             cursor.close()
-            latch.countDown()
+            closeCompleted.countDown()
         } as Runnable).start()
 
         when:
@@ -286,9 +288,11 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
 
         then:
         thrown(Exception)
+        closeCompleted.await(5, TimeUnit.SECONDS)
+        conn.getCount() == 1
 
         cleanup:
-        latch.await(5, TimeUnit.SECONDS)  // wait for cursor.close to complete
+        conn.release()
     }
 
     @IgnoreIf({ serverVersionLessThan(3, 2) || isSharded() })

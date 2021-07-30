@@ -26,6 +26,7 @@ import com.mongodb.internal.selector.ServerAddressSelector;
 
 import static com.mongodb.ClusterFixture.getAsyncCluster;
 import static com.mongodb.ClusterFixture.getCluster;
+import static com.mongodb.assertions.Assertions.fail;
 import static java.lang.Thread.sleep;
 
 public final class ServerHelper {
@@ -43,10 +44,8 @@ public final class ServerHelper {
     }
 
     public static void waitForLastRelease(final ServerAddress address, final Cluster cluster) {
-        DefaultServer server = (DefaultServer) cluster.selectServer(new ServerAddressSelector(address))
-                .getServer();
-        DefaultConnectionPool connectionProvider = (DefaultConnectionPool) server.getConnectionPool();
-        ConcurrentPool<UsageTrackingInternalConnection> pool = connectionProvider.getPool();
+        ConcurrentPool<UsageTrackingInternalConnection> pool = connectionPool(
+                cluster.selectServer(new ServerAddressSelector(address)).getServer());
         long startTime = System.currentTimeMillis();
         while (pool.getInUseCount() > 0) {
             try {
@@ -62,13 +61,23 @@ public final class ServerHelper {
     }
 
     private static void checkPool(final ServerAddress address, final Cluster cluster) {
-        DefaultServer server = (DefaultServer) cluster.selectServer(new ServerAddressSelector(address))
-                .getServer();
-        DefaultConnectionPool connectionProvider = (DefaultConnectionPool) server.getConnectionPool();
-        ConcurrentPool<UsageTrackingInternalConnection> pool = connectionProvider.getPool();
+        ConcurrentPool<UsageTrackingInternalConnection> pool = connectionPool(
+                cluster.selectServer(new ServerAddressSelector(address)).getServer());
         if (pool.getInUseCount() > 0) {
             throw new IllegalStateException("Connection pool in use count is " + pool.getInUseCount());
         }
+    }
+
+    private static ConcurrentPool<UsageTrackingInternalConnection> connectionPool(final Server server) {
+        ConnectionPool connectionPool;
+        if (server instanceof DefaultServer) {
+            connectionPool = ((DefaultServer) server).getConnectionPool();
+        } else if (server instanceof LoadBalancedServer) {
+            connectionPool = ((LoadBalancedServer) server).getConnectionPool();
+        } else {
+            throw fail(server.getClass().toString());
+        }
+        return ((DefaultConnectionPool) connectionPool).getPool();
     }
 
     public static void waitForRelease(final AsyncConnectionSource connectionSource, final int expectedCount) {

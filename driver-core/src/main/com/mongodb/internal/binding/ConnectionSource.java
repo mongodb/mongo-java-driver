@@ -20,6 +20,7 @@ import com.mongodb.ServerApi;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 
 /**
  * A source of connections to a single MongoDB server.
@@ -42,8 +43,10 @@ public interface ConnectionSource extends ReferenceCounted {
      *
      * @since 3.6
      */
+    @Nullable
     SessionContext getSessionContext();
 
+    @Nullable
     ServerApi getServerApi();
 
     /**
