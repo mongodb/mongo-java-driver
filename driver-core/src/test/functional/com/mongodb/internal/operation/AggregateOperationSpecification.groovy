@@ -452,6 +452,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         binding.sessionContext >> sessionContext
         source.connection >> connection
         source.retain() >> source
+        source.getServerApi() >> null
         def commandDocument = new BsonDocument('aggregate', new BsonString(getCollectionName()))
                 .append('pipeline', new BsonArray())
                 .append('cursor', new BsonDocument())

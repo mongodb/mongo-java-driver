@@ -265,6 +265,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         binding.sessionContext >> sessionContext
         source.connection >> connection
         source.retain() >> source
+        source.getServerApi() >> null
         def commandDocument = BsonDocument.parse('''
             { "mapreduce" : "coll",
               "map" : { "$code" : "function(){ }" },

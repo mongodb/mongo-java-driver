@@ -29,20 +29,25 @@ import java.util.Iterator;
  * <p>
  * An application should ensure that a cursor is closed in all circumstances, e.g. using a try-with-resources statement:
  *
- * <blockquote><pre>
- * try (MongoCursor&lt;Document&gt; cursor = collection.find().iterator()) {
+ * <pre>{@code
+ * try (MongoCursor<Document> cursor = collection.find().cursor()) {
  *     while (cursor.hasNext()) {
  *         System.out.println(cursor.next());
  *     }
  * }
- * </pre></blockquote>
+ * }</pre>
  *
  * @since 3.0
  * @param <TResult> The type of documents the cursor contains
  */
 @NotThreadSafe
 public interface MongoCursor<TResult> extends Iterator<TResult>, Closeable {
-
+    /**
+     * Despite this interface being {@linkplain NotThreadSafe non-thread-safe},
+     * {@link #close()} is allowed to be called concurrently with any method of the cursor, including itself.
+     * This is useful to cancel blocked {@link #hasNext()}, {@link #next()}.
+     * This method is idempotent.
+     */
     @Override
     void close();
 

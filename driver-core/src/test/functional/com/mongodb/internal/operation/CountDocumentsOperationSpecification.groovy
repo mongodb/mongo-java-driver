@@ -324,6 +324,7 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
         binding.sessionContext >> sessionContext
         source.connection >> connection
         source.retain() >> source
+        source.getServerApi() >> null
         def pipeline = new BsonArray([BsonDocument.parse('{ $match: {}}'), BsonDocument.parse('{$group: {_id: 1, n: {$sum: 1}}}')])
         def commandDocument = new BsonDocument('aggregate', new BsonString(getCollectionName()))
                 .append('pipeline', pipeline)

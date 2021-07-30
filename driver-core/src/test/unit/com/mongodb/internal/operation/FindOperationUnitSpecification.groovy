@@ -58,6 +58,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
         }
         def connectionSource = Stub(ConnectionSource) {
             getConnection() >> connection
+            getServerApi() >> null
         }
         def readBinding = Stub(ReadBinding) {
             getReadPreference() >> readPreference
@@ -204,6 +205,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
         def readBinding = Stub(ReadBinding) {
             getReadConnectionSource() >> Stub(ConnectionSource) {
                 getConnection() >> connection
+                getServerApi() >> null
             }
             getReadPreference() >> Stub(ReadPreference) {
                 isSlaveOk() >> slaveOk

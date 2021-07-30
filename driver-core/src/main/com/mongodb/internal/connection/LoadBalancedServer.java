@@ -144,6 +144,13 @@ public class LoadBalancedServer implements ClusterableServer {
         });
     }
 
+    /**
+     * Is package-access for the purpose of testing and must not be used for any other purpose outside of this class.
+     */
+    ConnectionPool getConnectionPool() {
+        return connectionPool;
+    }
+
     private class LoadBalancedServerProtocolExecutor implements ProtocolExecutor {
         @SuppressWarnings("unchecked")
         @Override
