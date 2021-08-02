@@ -27,6 +27,7 @@ import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
 import com.mongodb.connection.ServerVersion
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.connection.AsyncConnection
 import com.mongodb.internal.connection.QueryResult
@@ -365,8 +366,11 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         given:
         def connectionA = referenceCountedAsyncConnection(serverVersion)
         def connectionB = referenceCountedAsyncConnection(serverVersion)
-        def connectionSource = getAsyncConnectionSource(connectionA, connectionB)
+        def connectionSource = getAsyncConnectionSource(serverType, connectionA, connectionB)
         def initialResult = queryResult()
+        Object getMoreResponse = useCommand
+                ? documentResponse([], getMoreResponseHasCursor ? 42 : 0)
+                : queryResult([], getMoreResponseHasCursor ? 42 : 0)
 
         when:
         def cursor = new AsyncQueryBatchCursor<Document>(initialResult, 0, 0, 0, CODEC, connectionSource, connectionA)
@@ -379,21 +383,24 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         nextBatch(cursor)
 
         then:
-        if (commandAsync) {
-            _ * connectionA.commandAsync(*_) >> {
-                // Simulate the user calling close while the getMore is in flight
+        // simulate the user calling `close` while `getMore` is in flight
+        if (useCommand) {
+            // in LB mode the same connection is used to execute both `getMore` and `killCursors`
+            int numberOfInvocations = serverType == ServerType.LOAD_BALANCER
+                    ? getMoreResponseHasCursor ? 2 : 1
+                    : 1
+            numberOfInvocations * connectionA.commandAsync(*_) >> {
+                // `getMore` command
                 cursor.close()
-                it.last().onResult(response, null)
+                ((SingleResultCallback<?>) it.last()).onResult(getMoreResponse, null)
             } >> {
-                it.last().onResult(response2, null)
+                // `killCursors` command
+                ((SingleResultCallback<?>) it.last()).onResult(null, null)
             }
         } else {
-            _ * connectionA.getMoreAsync(*_) >> {
-                // Simulate the user calling close while the getMore is in flight
+            1 * connectionA.getMoreAsync(*_) >> {
                 cursor.close()
-                it.last().onResult(response, null)
-            } >> {
-                it.last().onResult(response2, null)
+                ((SingleResultCallback<?>) it.last()).onResult(getMoreResponse, null)
             }
         }
 
@@ -402,25 +409,23 @@ class AsyncQueryBatchCursorSpecification extends Specification {
 
         then:
         connectionA.getCount() == 0
-        if (response2 == null) { //otherwise connectionSource is released asynchronously, which is not easy to verify
-            connectionSource.getCount() == 0
-        }
         cursor.isClosed()
 
         where:
-        serverVersion                | commandAsync  | response                | response2
-        new ServerVersion([3, 2, 0]) | true          | documentResponse([])    | documentResponse([], 0)
-        new ServerVersion([3, 2, 0]) | true          | documentResponse([], 0) | null
-        new ServerVersion([3, 0, 0]) | false         | new QueryResult(NAMESPACE, [], 42, SERVER_ADDRESS) |
-                new QueryResult(NAMESPACE, [], 0, SERVER_ADDRESS)
-        new ServerVersion([3, 0, 0]) | false         | new QueryResult(NAMESPACE, [], 0, SERVER_ADDRESS) | null
+        serverVersion                | useCommand  | getMoreResponseHasCursor | serverType
+        new ServerVersion([5, 0, 0]) | true          | true                     | ServerType.LOAD_BALANCER
+        new ServerVersion([5, 0, 0]) | true          | false                    | ServerType.LOAD_BALANCER
+        new ServerVersion([3, 2, 0]) | true          | true                     | ServerType.STANDALONE
+        new ServerVersion([3, 2, 0]) | true          | false                    | ServerType.STANDALONE
+        new ServerVersion([3, 0, 0]) | false         | true                     | ServerType.STANDALONE
+        new ServerVersion([3, 0, 0]) | false         | false                    | ServerType.STANDALONE
     }
 
     def 'should close cursor after getMore finishes if cursor was closed while getMore was in progress and getMore throws exception'() {
         given:
         def connectionA = referenceCountedAsyncConnection(serverVersion)
         def connectionB = referenceCountedAsyncConnection(serverVersion)
-        def connectionSource = getAsyncConnectionSource(connectionA, connectionB)
+        def connectionSource = getAsyncConnectionSource(serverType, connectionA, connectionB)
         def initialResult = queryResult()
 
         when:
@@ -434,17 +439,22 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         nextBatch(cursor)
 
         then:
+        // simulate the user calling `close` while `getMore` is throwing a `MongoException`
         if (commandAsync) {
-            1 * connectionA.commandAsync(*_) >> {
-                // Simulate the user calling close while the getMore is throwing a MongoException
+            // in LB mode the same connection is used to execute both `getMore` and `killCursors`
+            int numberOfInvocations = serverType == ServerType.LOAD_BALANCER ? 2 : 1
+            numberOfInvocations * connectionA.commandAsync(*_) >> {
+                // `getMore` command
                 cursor.close()
-                it.last().onResult(null, MONGO_EXCEPTION)
+                ((SingleResultCallback<?>) it.last()).onResult(null, MONGO_EXCEPTION)
+            } >> {
+                // `killCursors` command
+                ((SingleResultCallback<?>) it.last()).onResult(null, null)
             }
         } else {
             1 * connectionA.getMoreAsync(*_) >> {
-                // Simulate the user calling close while the getMore is throwing a MongoException
                 cursor.close()
-                it.last().onResult(null, MONGO_EXCEPTION)
+                ((SingleResultCallback<?>) it.last()).onResult(null, MONGO_EXCEPTION)
             }
         }
 
@@ -456,15 +466,16 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         cursor.isClosed()
 
         where:
-        serverVersion                | commandAsync
-        new ServerVersion([3, 2, 0]) | true
-        new ServerVersion([3, 0, 0]) | false
+        serverVersion                | commandAsync | serverType
+        new ServerVersion([5, 0, 0]) | true         | ServerType.LOAD_BALANCER
+        new ServerVersion([3, 2, 0]) | true         | ServerType.STANDALONE
+        new ServerVersion([3, 0, 0]) | false        | ServerType.STANDALONE
     }
 
     def 'should handle errors when calling close'() {
         given:
         def connection = referenceCountedAsyncConnection()
-        def connectionSource = getAsyncConnectionSourceWithResult { [null, MONGO_EXCEPTION] }
+        def connectionSource = getAsyncConnectionSourceWithResult(ServerType.STANDALONE) { [null, MONGO_EXCEPTION] }
         def cursor = new AsyncQueryBatchCursor<Document>(queryResult(), 0, 0, 0, CODEC, connectionSource, connection)
 
         when:
@@ -484,7 +495,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
     def 'should handle errors when getting a connection for getMore'() {
         given:
         def connection = referenceCountedAsyncConnection()
-        def connectionSource = getAsyncConnectionSourceWithResult { [null, MONGO_EXCEPTION] }
+        def connectionSource = getAsyncConnectionSourceWithResult(ServerType.STANDALONE) { [null, MONGO_EXCEPTION] }
 
         when:
         def cursor = new AsyncQueryBatchCursor<Document>(queryResult(), 0, 0, 0, CODEC, connectionSource, connection)
@@ -576,14 +587,14 @@ class AsyncQueryBatchCursorSpecification extends Specification {
     private static final COMMAND_EXCEPTION = new MongoCommandException(BsonDocument.parse('{"ok": false, "errmsg": "error"}'),
             SERVER_ADDRESS)
 
-    def documentResponse(results, cursorId = 42) {
+    private static BsonDocument documentResponse(results, cursorId = 42) {
         new BsonDocument('ok', new BsonInt32(1)).append('cursor',
                 new BsonDocument('id', new BsonInt64(cursorId)).append('ns',
                         new BsonString(NAMESPACE.getFullName()))
                         .append('nextBatch', new BsonArrayWrapper(results)))
     }
 
-    def queryResult(results = FIRST_BATCH, cursorId = 42) {
+    private static QueryResult<?> queryResult(results = FIRST_BATCH, cursorId = 42) {
         new QueryResult(NAMESPACE, results, cursorId, SERVER_ADDRESS)
     }
 
@@ -619,19 +630,23 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         mock
     }
 
-    def getAsyncConnectionSource(AsyncConnection... connections) {
-        def index = -1
-        getAsyncConnectionSourceWithResult { index += 1; [connections.toList().get(index).retain(), null] }
+    AsyncConnectionSource getAsyncConnectionSource(AsyncConnection... connections) {
+        getAsyncConnectionSource(ServerType.STANDALONE, connections)
     }
 
-    def getAsyncConnectionSourceWithResult(connectionCallbackResults) {
+    AsyncConnectionSource getAsyncConnectionSource(ServerType serverType, AsyncConnection... connections) {
+        def index = -1
+        getAsyncConnectionSourceWithResult(serverType) { index += 1; [connections.toList().get(index).retain(), null] }
+    }
+
+    def getAsyncConnectionSourceWithResult(ServerType serverType, Closure<?> connectionCallbackResults) {
         def released = false
         int counter = 0
         def mock = Mock(AsyncConnectionSource)
         mock.getServerDescription() >> {
             ServerDescription.builder()
                     .address(new ServerAddress())
-                    .type(ServerType.STANDALONE)
+                    .type(serverType)
                     .state(ServerConnectionState.CONNECTED)
                     .build()
         }

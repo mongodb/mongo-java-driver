@@ -209,6 +209,9 @@ class DefaultServer implements ClusterableServer {
         serverMonitor.connect();
     }
 
+    /**
+     * Is package-access for the purpose of testing and must not be used for any other purpose outside of this class.
+     */
     ConnectionPool getConnectionPool() {
         return connectionPool;
     }
