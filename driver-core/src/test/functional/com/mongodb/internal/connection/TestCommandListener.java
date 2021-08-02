@@ -37,25 +37,45 @@ import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.ClusterFixture.TIMEOUT;
+import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class TestCommandListener implements CommandListener {
+    private static final Set<String> SENSITIVE_COMMANDS = new HashSet<>(
+            asList(
+                    "authenticate",
+                    "saslStart",
+                    "saslContinue",
+                    "getnonce",
+                    "createUser",
+                    "updateUser",
+                    "copydbgetnonce",
+                    "copydbsaslstart",
+                    "copydb"));
+    private static final Set<String> SENSITIVE_HANDSHAKE_COMMANDS = new HashSet<>(
+            asList(
+                    "ismaster",
+                    "isMaster",
+                    "hello"));
     private final List<String> eventTypes;
     private final List<String> ignoredCommandMonitoringEvents;
     private final List<CommandEvent> events = new ArrayList<>();
     private final Lock lock = new ReentrantLock();
     private final Condition commandCompletedCondition = lock.newCondition();
-
+    private final boolean observeSensitiveCommands;
+    private boolean ignoreNextSucceededOrFailedEvent;
     private static final CodecRegistry CODEC_REGISTRY_HACK;
 
     static {
@@ -78,8 +98,14 @@ public class TestCommandListener implements CommandListener {
     }
 
     public TestCommandListener(final List<String> eventTypes, final List<String> ignoredCommandMonitoringEvents) {
+        this(eventTypes, ignoredCommandMonitoringEvents, true);
+    }
+
+    public TestCommandListener(final List<String> eventTypes, final List<String> ignoredCommandMonitoringEvents,
+            final boolean observeSensitiveCommands) {
         this.eventTypes = eventTypes;
         this.ignoredCommandMonitoringEvents = ignoredCommandMonitoringEvents;
+        this.observeSensitiveCommands = observeSensitiveCommands;
     }
 
     public void reset() {
@@ -197,6 +223,14 @@ public class TestCommandListener implements CommandListener {
         if (!eventTypes.contains("commandStartedEvent") || ignoredCommandMonitoringEvents.contains(event.getCommandName())) {
             return;
         }
+        else if (!observeSensitiveCommands) {
+            if (SENSITIVE_COMMANDS.contains(event.getCommandName())) {
+                return;
+            } else if (SENSITIVE_HANDSHAKE_COMMANDS.contains(event.getCommandName()) && event.getCommand().isEmpty()) {
+                ignoreNextSucceededOrFailedEvent = true;
+                return;
+            }
+        }
         lock.lock();
         try {
             events.add(new CommandStartedEvent(event.getRequestId(), event.getConnectionDescription(), event.getDatabaseName(),
@@ -211,6 +245,14 @@ public class TestCommandListener implements CommandListener {
     public void commandSucceeded(final CommandSucceededEvent event) {
         if (!eventTypes.contains("commandSucceededEvent") || ignoredCommandMonitoringEvents.contains(event.getCommandName())) {
             return;
+        }
+        else if (!observeSensitiveCommands) {
+            if (SENSITIVE_COMMANDS.contains(event.getCommandName())) {
+                return;
+            } else if (SENSITIVE_HANDSHAKE_COMMANDS.contains(event.getCommandName()) && ignoreNextSucceededOrFailedEvent) {
+                ignoreNextSucceededOrFailedEvent = false;
+                return;
+            }
         }
         lock.lock();
         try {
@@ -227,6 +269,14 @@ public class TestCommandListener implements CommandListener {
     public void commandFailed(final CommandFailedEvent event) {
         if (!eventTypes.contains("commandFailedEvent") || ignoredCommandMonitoringEvents.contains(event.getCommandName())) {
             return;
+        }
+        else if (!observeSensitiveCommands) {
+            if (SENSITIVE_COMMANDS.contains(event.getCommandName())) {
+                return;
+            } else if (SENSITIVE_HANDSHAKE_COMMANDS.contains(event.getCommandName()) && ignoreNextSucceededOrFailedEvent) {
+                ignoreNextSucceededOrFailedEvent = false;
+                return;
+            }
         }
         lock.lock();
         try {
