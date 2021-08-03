@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2021-07-14T13:42:41.01">
+<meta name="date" content="2021-08-03T14:56:32.04">
 <link rel="shortcut icon" href="/mongo-java-driver/3.12/img/favicon.png">
 
     <title>Installation</title><link rel="stylesheet" href="/mongo-java-driver/3.12/lib/bootstrap.css" type="text/css" />
@@ -254,7 +254,6 @@
               <div class="documentwrapper">
                 <div class="bodywrapper">
                   <div class="body">
-<div style="padding: 15px; margin: 20px 0px; border-width: 1px 1px 1px 0px; border-style: solid; border-radius: 6px; font-size: 14px; line-height: 20px; color: rgb(17, 97, 73); border-color: rgb(195, 231, 202) rgb(195, 231, 202) rgb(195, 231, 202) rgb(19, 170, 82); background-color: rgb(228, 244, 228);">You are currently viewing an older version of the Java driver documentation.<br>For the most recent version of the reference documentation, see our <a style="font-weight: bold" href="https://docs.mongodb.com/drivers/java/sync">MongoDB Java Driver documentation site</a>.</div>
  
 <a class="edit-link" href="https://github.com/mongodb/mongo-java-driver/blob/master/docs/reference/content/driver/getting-started/installation.md" target="_blank" title="Edit driver/getting-started/installation.md on GitHub"><i class="fa fa-pencil-square-o"></i></a><div class="bc">
 <ul><li><a href="/mongo-java-driver/3.12/driver/">MongoDB Driver</a> <i class="fa fa-angle-right"></i></li><li>Installation</li>
@@ -294,7 +293,7 @@ complies with a new cross-driver CRUD specification.  It does <em>not</em> inclu
     &lt;dependency&gt;
         &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
         &lt;artifactId&gt;mongodb-driver-sync&lt;/artifactId&gt;
-        &lt;version&gt;3.12.9&lt;/version&gt;
+        &lt;version&gt;3.12.10&lt;/version&gt;
     &lt;/dependency&gt;
 &lt;/dependencies&gt;
 
@@ -303,19 +302,19 @@ complies with a new cross-driver CRUD specification.  It does <em>not</em> inclu
 <section class="gradle hidden">
 <pre><code>
   dependencies {
-      compile 'org.mongodb:mongodb-driver-sync:3.12.9'
+      compile 'org.mongodb:mongodb-driver-sync:3.12.10'
   }
 
 </code></pre>
 </section>
 <section class="downloadInfo small">
     <p><strong>Note:</strong> You can also download the <code>mongodb-driver-sync</code> jar
-        <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongodb-driver-sync/3.12.9" target="_blank">directly</a>
+        <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongodb-driver-sync/3.12.10" target="_blank">directly</a>
         from sonatype.</a></p><p>
         If downloading <code>mongodb-driver-sync</code> manually,
         you must also download its dependencies:
-        <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/bson/3.12.9" target="_blank"><code>bson</code></a> and
-        <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongodb-driver-core/3.12.9" target="_blank"><code>mongodb-driver-core</code></a>
+        <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/bson/3.12.10" target="_blank"><code>bson</code></a> and
+        <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongodb-driver-core/3.12.10" target="_blank"><code>mongodb-driver-core</code></a>
     </p></section>
 
 <h2 id="mongodb-driver-legacy">MongoDB Driver Legacy</h2>
@@ -336,7 +335,7 @@ and central classes include <code>com.mongodb.DB</code>, <code>com.mongodb.DBCol
     &lt;dependency&gt;
         &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
         &lt;artifactId&gt;mongodb-driver-legacy&lt;/artifactId&gt;
-        &lt;version&gt;3.12.9&lt;/version&gt;
+        &lt;version&gt;3.12.10&lt;/version&gt;
     &lt;/dependency&gt;
 &lt;/dependencies&gt;
 
@@ -345,19 +344,19 @@ and central classes include <code>com.mongodb.DB</code>, <code>com.mongodb.DBCol
 <section class="gradle hidden">
 <pre><code>
   dependencies {
-      compile 'org.mongodb:mongodb-driver-legacy:3.12.9'
+      compile 'org.mongodb:mongodb-driver-legacy:3.12.10'
   }
 
 </code></pre>
 </section>
 <section class="downloadInfo small">
     <p><strong>Note:</strong> You can also download the <code>mongodb-driver-legacy</code> jar
-        <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongodb-driver-legacy/3.12.9" target="_blank">directly</a>
+        <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongodb-driver-legacy/3.12.10" target="_blank">directly</a>
         from sonatype.</a></p><p>
         If downloading <code>mongodb-driver-legacy</code> manually,
         you must also download its dependencies:
-        <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/bson/3.12.9" target="_blank"><code>bson</code></a> and
-        <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongodb-driver-core/3.12.9" target="_blank"><code>mongodb-driver-core</code></a>
+        <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/bson/3.12.10" target="_blank"><code>bson</code></a> and
+        <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongodb-driver-core/3.12.10" target="_blank"><code>mongodb-driver-core</code></a>
     </p></section>
 
 <h2 id="mongodb-driver">MongoDB Driver</h2>
@@ -383,7 +382,7 @@ and central classes include <code>com.mongodb.DB</code>, <code>com.mongodb.DBCol
     &lt;dependency&gt;
         &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
         &lt;artifactId&gt;mongodb-driver&lt;/artifactId&gt;
-        &lt;version&gt;3.12.9&lt;/version&gt;
+        &lt;version&gt;3.12.10&lt;/version&gt;
     &lt;/dependency&gt;
 &lt;/dependencies&gt;
 
@@ -392,19 +391,19 @@ and central classes include <code>com.mongodb.DB</code>, <code>com.mongodb.DBCol
 <section class="gradle hidden">
 <pre><code>
   dependencies {
-      compile 'org.mongodb:mongodb-driver:3.12.9'
+      compile 'org.mongodb:mongodb-driver:3.12.10'
   }
 
 </code></pre>
 </section>
 <section class="downloadInfo small">
     <p><strong>Note:</strong> You can also download the <code>mongodb-driver</code> jar
-        <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongodb-driver/3.12.9" target="_blank">directly</a>
+        <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongodb-driver/3.12.10" target="_blank">directly</a>
         from sonatype.</a></p><p>
         If downloading <code>mongodb-driver</code> manually,
         you must also download its dependencies:
-        <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/bson/3.12.9" target="_blank"><code>bson</code></a> and
-        <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongodb-driver-core/3.12.9" target="_blank"><code>mongodb-driver-core</code></a>
+        <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/bson/3.12.10" target="_blank"><code>bson</code></a> and
+        <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongodb-driver-core/3.12.10" target="_blank"><code>mongodb-driver-core</code></a>
     </p></section>
 
 <h2 id="uber-jar-legacy">Uber Jar (Legacy)</h2>
@@ -430,7 +429,7 @@ jar is still available.  The uber jar contains: the BSON library, the core libra
     &lt;dependency&gt;
         &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
         &lt;artifactId&gt;mongo-java-driver&lt;/artifactId&gt;
-        &lt;version&gt;3.12.9&lt;/version&gt;
+        &lt;version&gt;3.12.10&lt;/version&gt;
     &lt;/dependency&gt;
 &lt;/dependencies&gt;
 
@@ -439,14 +438,14 @@ jar is still available.  The uber jar contains: the BSON library, the core libra
 <section class="gradle hidden">
 <pre><code>
   dependencies {
-      compile 'org.mongodb:mongo-java-driver:3.12.9'
+      compile 'org.mongodb:mongo-java-driver:3.12.10'
   }
 
 </code></pre>
 </section>
 <section class="downloadInfo small">
     <p><strong>Note:</strong> You can also download the <code>mongo-java-driver</code> jar
-        <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongo-java-driver/3.12.9" target="_blank">directly</a>
+        <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongo-java-driver/3.12.10" target="_blank">directly</a>
         from sonatype.</a></p></section>
 
 </div>
