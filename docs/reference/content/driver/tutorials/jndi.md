@@ -28,7 +28,7 @@ The configuration of the `MongoClientFactory` differs depending on the applicati
 
         <module xmlns="urn:jboss:module:1.3" name="org.mongodb">
            <resources>
-               <resource-root path="mongo-java-driver-3.12.9.jar"/>
+               <resource-root path="mongo-java-driver-3.12.10.jar"/>
            </resources>
            <dependencies>
                <module name="javax.api"/>
