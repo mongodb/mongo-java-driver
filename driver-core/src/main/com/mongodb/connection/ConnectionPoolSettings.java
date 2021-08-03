@@ -112,7 +112,7 @@ public class ConnectionPoolSettings {
          *
          * <p>Default is 100.</p>
          *
-         * @param maxSize the maximum number of connections in the pool.
+         * @param maxSize the maximum number of connections in the pool; if 0, then there is no limit.
          * @return this
          */
         public Builder maxSize(final int maxSize) {
@@ -261,7 +261,7 @@ public class ConnectionPoolSettings {
      *
      * <p>Default is 100.</p>
      *
-     * @return the maximum number of connections in the pool.
+     * @return the maximum number of connections in the pool; if 0, then there is no limit.
      */
     public int getMaxSize() {
         return maxSize;
@@ -410,7 +410,7 @@ public class ConnectionPoolSettings {
     }
 
     ConnectionPoolSettings(final Builder builder) {
-        isTrue("maxSize > 0", builder.maxSize > 0);
+        isTrue("maxSize >= 0", builder.maxSize >= 0);
         isTrue("minSize >= 0", builder.minSize >= 0);
         isTrue("maintenanceInitialDelayMS >= 0", builder.maintenanceInitialDelayMS >= 0);
         isTrue("maxConnectionLifeTime >= 0", builder.maxConnectionLifeTimeMS >= 0);

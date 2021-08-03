@@ -77,11 +77,22 @@ echo $first
   --tests UnifiedTransactionsTest \
   --tests InitialDnsSeedlistDiscoveryTest
 second=$?
+echo $second
+
+./gradlew -PjdkHome=/opt/java/${JDK} \
+  -Dorg.mongodb.test.uri=${SINGLE_MONGOS_LB_URI} \
+  -Dorg.mongodb.test.transaction.uri=${MULTI_MONGOS_LB_URI} \
+  ${GRADLE_EXTRA_VARS} --stacktrace --info --continue driver-core:test \
+  --tests QueryBatchCursorFunctionalSpecification
+third=$?
+echo $third
 
 if [ $first -ne 0 ]; then
    exit $first
 elif [ $second -ne 0 ]; then
    exit $second
+elif [ $third -ne 0 ]; then
+   exit $third
 else
    exit 0
 fi

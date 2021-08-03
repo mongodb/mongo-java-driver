@@ -244,6 +244,27 @@ public class DefaultConnectionPoolTest {
         assertTrue(connectionFactory.getCreatedConnections().get(0).isClosed());
     }
 
+    @Test
+    void infiniteMaxSize() {
+        int defaultMaxSize = ConnectionPoolSettings.builder().build().getMaxSize();
+        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
+                ConnectionPoolSettings.builder().maxSize(0).build());
+        List<InternalConnection> connections = new ArrayList<>();
+        try {
+            for (int i = 0; i < 2 * defaultMaxSize; i++) {
+                connections.add(provider.get());
+            }
+        } finally {
+            connections.forEach(connection -> {
+                try {
+                    connection.close();
+                } catch (RuntimeException e) {
+                    // ignore
+                }
+            });
+        }
+    }
+
     @ParameterizedTest
     @MethodSource("concurrentUsageArguments")
     public void concurrentUsage(final int minSize, final int maxSize, final int concurrentUsersCount,

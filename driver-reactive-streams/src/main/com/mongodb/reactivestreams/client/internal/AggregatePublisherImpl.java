@@ -214,13 +214,19 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
                                                         + "is not a string or namespace document");
             }
         } else if (lastPipelineStage.containsKey("$merge")) {
-            BsonDocument mergeDocument = lastPipelineStage.getDocument("$merge");
-            if (mergeDocument.isDocument("into")) {
-                BsonDocument intoDocument = mergeDocument.getDocument("into");
-                return new MongoNamespace(intoDocument.getString("db", new BsonString(databaseName)).getValue(),
-                                          intoDocument.getString("coll").getValue());
-            } else if (mergeDocument.isString("into")) {
-                return new MongoNamespace(databaseName, mergeDocument.getString("into").getValue());
+            if (lastPipelineStage.isString("$merge")) {
+                return new MongoNamespace(databaseName, lastPipelineStage.getString("$merge").getValue());
+            } else if (lastPipelineStage.isDocument("$merge")) {
+                BsonDocument mergeDocument = lastPipelineStage.getDocument("$merge");
+                if (mergeDocument.isDocument("into")) {
+                    BsonDocument intoDocument = mergeDocument.getDocument("into");
+                    return new MongoNamespace(intoDocument.getString("db", new BsonString(databaseName)).getValue(),
+                            intoDocument.getString("coll").getValue());
+                } else if (mergeDocument.isString("into")) {
+                    return new MongoNamespace(databaseName, mergeDocument.getString("into").getValue());
+                }
+            } else {
+                throw new IllegalStateException("Cannot return a cursor when the value for $merge stage is not a string or a document");
             }
         }
 

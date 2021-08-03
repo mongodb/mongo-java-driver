@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import com.mongodb.MongoChangeStreamException;
 import com.mongodb.MongoException;
@@ -44,7 +45,7 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
 
     private AggregateResponseBatchCursor<RawBsonDocument> wrapped;
     private BsonDocument resumeToken;
-    private volatile boolean closed;
+    private final AtomicBoolean closed;
 
     ChangeStreamBatchCursor(final ChangeStreamOperation<T> changeStreamOperation,
                             final AggregateResponseBatchCursor<RawBsonDocument> wrapped,
@@ -56,6 +57,7 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
         this.wrapped = wrapped;
         this.resumeToken = resumeToken;
         this.maxWireVersion = maxWireVersion;
+        closed = new AtomicBoolean();
     }
 
     AggregateResponseBatchCursor<RawBsonDocument> getWrapped() {
@@ -108,8 +110,7 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
 
     @Override
     public void close() {
-        if (!closed) {
-            closed = true;
+        if (!closed.getAndSet(true)) {
             wrapped.close();
             binding.release();
         }
