@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2021-07-13T14:35:01.15">
+<meta name="date" content="2021-08-03T15:00:43.62">
 <link rel="shortcut icon" href="/mongo-java-driver/4.3/img/favicon.png">
 
     <title>Quick Start</title><link rel="stylesheet" href="/mongo-java-driver/4.3/lib/bootstrap.css" type="text/css" />
@@ -409,41 +409,35 @@ import static java.util.Collections.singletonList;
 <p>To connect to a single MongoDB instance:</p>
 
 <ul>
-<li>You can instantiate a MongoClient object without any parameters to connect to a MongoDB instance running on localhost on port <code>27017</code>:</li>
-</ul>
+<li><p>You can instantiate a MongoClient object without any parameters to connect to a MongoDB instance running on localhost on port <code>27017</code>:</p>
 
 <pre><code class="language-java">MongoClient mongoClient = MongoClients.create();
-</code></pre>
+</code></pre></li>
 
-<ul>
-<li>You can explicitly specify the hostname to connect to a MongoDB instance running on the specified host on port <code>27017</code>:</li>
-</ul>
+<li><p>You can explicitly specify the hostname to connect to a MongoDB instance running on the specified host on port <code>27017</code>:</p>
 
 <pre><code class="language-java">MongoClient mongoClient = MongoClients.create(
-        MongoClientSettings.builder()
-                .applyToClusterSettings(builder -&gt;
-                        builder.hosts(Arrays.asList(new ServerAddress(&quot;hostOne&quot;))))
-                .build());
-</code></pre>
+    MongoClientSettings.builder()
+            .applyToClusterSettings(builder -&gt;
+                    builder.hosts(Arrays.asList(new ServerAddress(&quot;hostOne&quot;))))
+            .build());
+</code></pre></li>
 
-<ul>
-<li>You can explicitly specify the hostname and the port:</li>
-</ul>
+<li><p>You can explicitly specify the hostname and the port:</p>
 
 <pre><code class="language-java">MongoClient mongoClient = MongoClients.create(
-        MongoClientSettings.builder()
-                .applyToClusterSettings(builder -&gt;
-                        builder.hosts(Arrays.asList(new ServerAddress(&quot;hostOne&quot;, 27018))))
-                .build());
-</code></pre>
+    MongoClientSettings.builder()
+            .applyToClusterSettings(builder -&gt;
+                    builder.hosts(Arrays.asList(new ServerAddress(&quot;hostOne&quot;, 27018))))
+            .build());
+</code></pre></li>
 
-<ul>
-<li>You can specify the <a href="/mongo-java-driver/4.3/apidocs/mongodb-driver-core/com/mongodb/ConnectionString.html
-"><code>ConnectionString</code></a>:</li>
-</ul>
+<li><p>You can specify the <a href="/mongo-java-driver/4.3/apidocs/mongodb-driver-core/com/mongodb/ConnectionString.html
+"><code>ConnectionString</code></a>:</p>
 
 <pre><code class="language-java">MongoClient mongoClient = MongoClients.create(&quot;mongodb://hostOne:27017&quot;);
-</code></pre>
+</code></pre></li>
+</ul>
 
 <h2 id="access-a-database">Access a Database</h2>
 

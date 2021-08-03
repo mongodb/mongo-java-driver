@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2021-07-13T14:35:01.01">
+<meta name="date" content="2021-08-03T15:00:43.49">
 <link rel="shortcut icon" href="/mongo-java-driver/4.3/img/favicon.png">
 
     <title>Connect to MongoDB</title><link rel="stylesheet" href="/mongo-java-driver/4.3/lib/bootstrap.css" type="text/css" />
@@ -359,8 +359,7 @@ documentation for more information.</p>
 
 <li><p>The MongoDB Driver.  See <a href="/mongo-java-driver/4.3/driver/getting-started/installation/">Installation</a> for instructions on how to install the MongoDB driver.</p></li>
 
-<li><p>The following import statements:</p></li>
-</ul>
+<li><p>The following import statements:</p>
 
 <pre><code class="language-java">import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoClient;
@@ -371,7 +370,8 @@ import com.mongodb.MongoCredential;
 import com.mongodb.MongoClientSettings;
 
 import java.util.Arrays;
-</code></pre>
+</code></pre></li>
+</ul>
 
 <p>or for the legacy MongoClient API:</p>
 
@@ -408,22 +408,18 @@ to the database; you will only need one instance of class <code>MongoClient</cod
 <p>To connect to a standalone MongoDB instance:</p>
 
 <ul>
-<li>You can create a <code>MongoClient</code> object without any parameters to
-connect to a MongoDB instance running on localhost on port <code>27017</code>:</li>
-</ul>
+<li><p>You can create a <code>MongoClient</code> object without any parameters to
+connect to a MongoDB instance running on localhost on port <code>27017</code>:</p>
 
-<pre><code class="language-java">    MongoClient mongoClient = MongoClients.create()
-</code></pre>
+<pre><code class="language-java">MongoClient mongoClient = MongoClients.create()
+</code></pre></li>
 
-<ul>
-<li>You can explicitly specify the hostname to connect to a MongoDB
-instance running on the specified host on port <code>27017</code>:</li>
-</ul>
+<li><p>You can explicitly specify the hostname to connect to a MongoDB
+instance running on the specified host on port <code>27017</code>:</p>
 
-<pre><code class="language-java">    MongoClient mongoClient = MongoClients.create(&quot;mongodb://host1&quot;);
-</code></pre>
+<pre><code class="language-java">MongoClient mongoClient = MongoClients.create(&quot;mongodb://host1&quot;);
+</code></pre></li>
 
-<ul>
 <li><p>You can explicitly specify the hostname and the port:</p>
 
 <pre><code class="language-java">MongoClient mongoClient = MongoClients.create(&quot;mongodb://host1:27017&quot;);
@@ -447,34 +443,30 @@ instance running on the specified host on port <code>27017</code>:</li>
 "><code>ConnectionString</code></a>:</p>
 
 <ul>
-<li>To specify at least two members of the replica set:</li>
+<li><p>To specify at least two members of the replica set:</p>
+
+<pre><code class="language-java">MongoClient mongoClient = MongoClients.create(&quot;mongodb://host1:27017,host2:27017,host3:27017&quot;);
+</code></pre></li>
+
+<li><p>With at least one member of the replica set and the <code>replicaSet</code> option specifying the replica set name:</p>
+
+<pre><code class="language-java">MongoClient mongoClient = MongoClients.create(&quot;mongodb://host1:27017,host2:27017,host3:27017/?replicaSet=myReplicaSet&quot;);
+</code></pre></li>
 </ul></li>
+
+<li><p>You can specify a list of the all the replica set members&rsquo; <a href="/mongo-java-driver/4.3/apidocs/mongodb-driver-core/com/mongodb/ServerAddress.html
+"><code>ServerAddress</code></a>:</p>
+
+<pre><code class="language-java">MongoClient mongoClient = MongoClients.create(
+        MongoClientSettings.builder()
+                .applyToClusterSettings(builder -&gt;
+                        builder.hosts(Arrays.asList(
+                                new ServerAddress(&quot;host1&quot;, 27017),
+                                new ServerAddress(&quot;host2&quot;, 27017),
+                                new ServerAddress(&quot;host3&quot;, 27017))))
+                .build());
+</code></pre></li>
 </ul>
-
-<pre><code class="language-java">    MongoClient mongoClient = MongoClients.create(&quot;mongodb://host1:27017,host2:27017,host3:27017&quot;);
-</code></pre>
-
-<ul>
-<li>With at least one member of the replica set and the <code>replicaSet</code> option specifying the replica set name:</li>
-</ul>
-
-<pre><code class="language-java">    MongoClient mongoClient = MongoClients.create(&quot;mongodb://host1:27017,host2:27017,host3:27017/?replicaSet=myReplicaSet&quot;);
-</code></pre>
-
-<ul>
-<li>You can specify a list of the all the replica set members&rsquo; <a href="/mongo-java-driver/4.3/apidocs/mongodb-driver-core/com/mongodb/ServerAddress.html
-"><code>ServerAddress</code></a>:</li>
-</ul>
-
-<pre><code class="language-java">    MongoClient mongoClient = MongoClients.create(
-            MongoClientSettings.builder()
-                    .applyToClusterSettings(builder -&gt;
-                            builder.hosts(Arrays.asList(
-                                    new ServerAddress(&quot;host1&quot;, 27017),
-                                    new ServerAddress(&quot;host2&quot;, 27017),
-                                    new ServerAddress(&quot;host3&quot;, 27017))))
-                    .build());
-</code></pre>
 
 <h2 id="connect-to-a-sharded-cluster">Connect to a Sharded Cluster</h2>
 
@@ -485,12 +477,12 @@ or instances to a <code>MongoClients</code> create method.</p>
 <p>To connect to a single <code>mongos</code> instance:</p>
 
 <ul>
-<li>You can specify the hostname and the port in a <a href="/mongo-java-driver/4.3/apidocs/mongodb-driver-core/com/mongodb/ConnectionString.html
-"><code>ConnectionString</code></a></li>
-</ul>
+<li><p>You can specify the hostname and the port in a <a href="/mongo-java-driver/4.3/apidocs/mongodb-driver-core/com/mongodb/ConnectionString.html
+"><code>ConnectionString</code></a></p>
 
-<pre><code class="language-java">    MongoClient mongoClient = MongoClients.create( &quot;mongodb://localhost:27017&quot; );
-</code></pre>
+<pre><code class="language-java">MongoClient mongoClient = MongoClients.create( &quot;mongodb://localhost:27017&quot; );
+</code></pre></li>
+</ul>
 
 <p>or leave the connection string out if the <code>mongos</code> is running on localhost:27017:</p>
 
@@ -507,17 +499,17 @@ or instances to a <code>MongoClients</code> create method.</p>
 </code></pre></li>
 
 <li><p>You can specify a list of the <code>mongos</code> instances&rsquo; <a href="/mongo-java-driver/4.3/apidocs/mongodb-driver-core/com/mongodb/ServerAddress.html
-"><code>ServerAddress</code></a>:</p></li>
-</ul>
+"><code>ServerAddress</code></a>:</p>
 
-<pre><code class="language-java">    MongoClient mongoClient = MongoClients.create(
-            MongoClientSettings.builder()
-                    .applyToClusterSettings(builder -&gt;
-                            builder.hosts(Arrays.asList(
-                                    new ServerAddress(&quot;host1&quot;, 27017),
-                                    new ServerAddress(&quot;host2&quot;, 27017))))
-                    .build());
-</code></pre>
+<pre><code class="language-java">MongoClient mongoClient = MongoClients.create(
+        MongoClientSettings.builder()
+                .applyToClusterSettings(builder -&gt;
+                        builder.hosts(Arrays.asList(
+                                new ServerAddress(&quot;host1&quot;, 27017),
+                                new ServerAddress(&quot;host2&quot;, 27017))))
+                .build());
+</code></pre></li>
+</ul>
 
 <h2 id="connection-options">Connection Options</h2>
 

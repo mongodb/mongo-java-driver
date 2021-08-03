@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2021-07-13T14:35:00.92">
+<meta name="date" content="2021-08-03T15:00:43.4">
 <link rel="shortcut icon" href="/mongo-java-driver/4.3/img/favicon.png">
 
     <title>Read Operations</title><link rel="stylesheet" href="/mongo-java-driver/4.3/lib/bootstrap.css" type="text/css" />
@@ -403,13 +403,13 @@ val collection: MongoCollection[Document] = database.getCollection(&quot;restaur
 <ul>
 <li><p>the <code>stars</code> field is greater than or equal to 2 and less than 5, <em>AND</em></p></li>
 
-<li><p>the <code>categories</code> field equals <code>&quot;Bakery&quot;</code> (or if <code>categories</code> is an array, contains the string <code>&quot;Bakery&quot;</code> as an element):</p></li>
-</ul>
+<li><p>the <code>categories</code> field equals <code>&quot;Bakery&quot;</code> (or if <code>categories</code> is an array, contains the string <code>&quot;Bakery&quot;</code> as an element):</p>
 
 <pre><code class="language-scala">collection.find(
-     Document(&quot;stars&quot; -&gt; Document(&quot;$gte&quot; -&gt; 2, &quot;$lt&quot;-&gt; 5, &quot;categories&quot; -&gt; &quot;Bakery&quot;)))
-    .printResults()
-</code></pre>
+ Document(&quot;stars&quot; -&gt; Document(&quot;$gte&quot; -&gt; 2, &quot;$lt&quot;-&gt; 5, &quot;categories&quot; -&gt; &quot;Bakery&quot;)))
+.printResults()
+</code></pre></li>
+</ul>
 
 <p>The following example specifies the same filter condition using the <a href="/mongo-java-driver/4.3/apidocs/mongo-scala-driver/org/mongodb/scala/model/Filters$.html
 "><code>Filters</code></a> helper methods:</p>
@@ -509,23 +509,21 @@ method:</p>
 "><code>MongoClient()</code></a></p>
 
 <ul>
-<li>Via <a href="/mongo-java-driver/4.3/apidocs/mongo-scala-driver/org/mongodb/scala/MongoClientSettings$.html
-"><code>MongoClientSettings</code></a>:</li>
-</ul>
+<li><p>Via <a href="/mongo-java-driver/4.3/apidocs/mongo-scala-driver/org/mongodb/scala/MongoClientSettings$.html
+"><code>MongoClientSettings</code></a>:</p>
 
-<pre><code class="language-scala">  val mongoClient = MongoClient(MongoClientSettings.builder()
-                                     .applyConnectionString(ConnectionString(&quot;mongodb://host1,host2&quot;))
-                                     .readPreference(ReadPreference.secondary())
-                                     .build())
-</code></pre>
-
-<ul>
-<li>Via <a href="/mongo-java-driver/4.3/apidocs/mongo-scala-driver/org/mongodb/scala/package$$ConnectionString$.html
-"><code>ConnectionString</code></a>, as in the following example:</li>
-</ul>
-
-<pre><code class="language-scala">  val mongoClient = MongoClient(&quot;mongodb://host1:27017,host2:27017/?readPreference=secondary&quot;)
+<pre><code class="language-scala">val mongoClient = MongoClient(MongoClientSettings.builder()
+                                 .applyConnectionString(ConnectionString(&quot;mongodb://host1,host2&quot;))
+                                 .readPreference(ReadPreference.secondary())
+                                 .build())
 </code></pre></li>
+
+<li><p>Via <a href="/mongo-java-driver/4.3/apidocs/mongo-scala-driver/org/mongodb/scala/package$$ConnectionString$.html
+"><code>ConnectionString</code></a>, as in the following example:</p>
+
+<pre><code class="language-scala">val mongoClient = MongoClient(&quot;mongodb://host1:27017,host2:27017/?readPreference=secondary&quot;)
+</code></pre></li>
+</ul></li>
 
 <li><p>In a <a href="/mongo-java-driver/4.3/apidocs/mongo-scala-driver/org/mongodb/scala/MongoDatabase.html
 "><code>MongoDatabase</code></a> via its <a href="/mongo-java-driver/4.3/apidocs/mongo-scala-driver/org/mongodb/scala/MongoDatabase.html#withReadPreference(readPreference:org.mongodb.scala.ReadPreference):org.mongodb.scala.MongoDatabase
@@ -563,23 +561,21 @@ method:</p>
 "><code>MongoClient()</code></a></p>
 
 <ul>
-<li>Via <a href="/mongo-java-driver/4.3/apidocs/mongo-scala-driver/org/mongodb/scala/MongoClientSettings$.html
-"><code>MongoClientSettings</code></a>:</li>
-</ul>
+<li><p>Via <a href="/mongo-java-driver/4.3/apidocs/mongo-scala-driver/org/mongodb/scala/MongoClientSettings$.html
+"><code>MongoClientSettings</code></a>:</p>
 
-<pre><code class="language-scala">  val mongoClient = MongoClient(MongoClientSettings.builder()
-                                 .applyConnectionString(ConnectionString(&quot;mongodb://host1,host2&quot;))
-                                 .readConcern(ReadConcern.MAJORITY)
-                                 .build())
-</code></pre>
-
-<ul>
-<li>Via <a href="/mongo-java-driver/4.3/apidocs/mongo-scala-driver/org/mongodb/scala/package$$ConnectionString$.html
-"><code>ConnectionString</code></a>, as in the following example:</li>
-</ul>
-
-<pre><code class="language-scala">  val mongoClient = MongoClient(&quot;mongodb://host1:27017,host2:27017/?readConcernLevel=majority&quot;)
+<pre><code class="language-scala">val mongoClient = MongoClient(MongoClientSettings.builder()
+                             .applyConnectionString(ConnectionString(&quot;mongodb://host1,host2&quot;))
+                             .readConcern(ReadConcern.MAJORITY)
+                             .build())
 </code></pre></li>
+
+<li><p>Via <a href="/mongo-java-driver/4.3/apidocs/mongo-scala-driver/org/mongodb/scala/package$$ConnectionString$.html
+"><code>ConnectionString</code></a>, as in the following example:</p>
+
+<pre><code class="language-scala">val mongoClient = MongoClient(&quot;mongodb://host1:27017,host2:27017/?readConcernLevel=majority&quot;)
+</code></pre></li>
+</ul></li>
 
 <li><p>In a <a href="/mongo-java-driver/4.3/apidocs/mongo-scala-driver/org/mongodb/scala/MongoDatabase.html
 "><code>MongoDatabase</code></a> via its <a href="/mongo-java-driver/4.3/apidocs/mongo-scala-driver/org/mongodb/scala/MongoDatabase.html#withReadConcern(readConcern:org.mongodb.scala.ReadConcern):org.mongodb.scala.MongoDatabase

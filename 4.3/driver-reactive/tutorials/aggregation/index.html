@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2021-07-13T14:35:00.94">
+<meta name="date" content="2021-08-03T15:00:43.41">
 <link rel="shortcut icon" href="/mongo-java-driver/4.3/img/favicon.png">
 
     <title>Aggregation</title><link rel="stylesheet" href="/mongo-java-driver/4.3/lib/bootstrap.css" type="text/css" />
@@ -381,16 +381,16 @@ The Java driver provides the <a href="/mongo-java-driver/4.3/apidocs/mongodb-dri
 ">accumulator expression</a>.  For the <a href="http://docs.mongodb.org/manual/reference/operator/aggregation-group/
 ">accumulator expressions</a> for use within the <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/group/
 "><code>$group</code></a> stage, the Java driver provides <a href="/mongo-java-driver/4.3/apidocs/mongodb-driver-core/com/mongodb/client/model/Accumulators.html
-"><code>Accumulators</code></a> helper class.</p></li>
-</ul>
+"><code>Accumulators</code></a> helper class.</p>
 
 <pre><code class="language-java">collection.aggregate(
-      Arrays.asList(
-              Aggregates.match(Filters.eq(&quot;categories&quot;, &quot;Bakery&quot;)),
-              Aggregates.group(&quot;$stars&quot;, Accumulators.sum(&quot;count&quot;, 1))
-      )
+  Arrays.asList(
+          Aggregates.match(Filters.eq(&quot;categories&quot;, &quot;Bakery&quot;)),
+          Aggregates.group(&quot;$stars&quot;, Accumulators.sum(&quot;count&quot;, 1))
+  )
 ).subscribe(new PrintDocumentSubscriber());
-</code></pre>
+</code></pre></li>
+</ul>
 
 <h3 id="use-aggregation-expressions">Use Aggregation Expressions</h3>
 

@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2021-07-13T14:35:00.89">
+<meta name="date" content="2021-08-03T15:00:43.37">
 <link rel="shortcut icon" href="/mongo-java-driver/4.3/img/favicon.png">
 
     <title>Quick Start - POJOs</title><link rel="stylesheet" href="/mongo-java-driver/4.3/lib/bootstrap.css" type="text/css" />
@@ -343,8 +343,7 @@ that can be found with the driver source on github.</p>
 
 <li><p>Quick Start. This guide follows on from the <a href="/mongo-java-driver/4.3/driver/getting-started/quick-start/">Quick Start</a>.</p></li>
 
-<li><p>The following import statements:</p></li>
-</ul>
+<li><p>The following import statements:</p>
 
 <pre><code class="language-java">import com.mongodb.MongoClient;
 import com.mongodb.MongoClientSettings;
@@ -362,94 +361,93 @@ import static com.mongodb.client.model.Updates.*;
 import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
-</code></pre>
+</code></pre></li>
 
-<ul>
-<li>The following POJO classes. The full source is available on github for the <a href="https://github.com/mongodb/mongo-java-driver/blob/master/driver-sync/src/examples/tour/Person.java
+<li><p>The following POJO classes. The full source is available on github for the <a href="https://github.com/mongodb/mongo-java-driver/blob/master/driver-sync/src/examples/tour/Person.java
 ">Person</a> and <a href="https://github.com/mongodb/mongo-java-driver/blob/master/driver-sync/src/examples/tour/Address.java
 ">Address</a>
-POJOs. Here are the main implementation details:</li>
-</ul>
+POJOs. Here are the main implementation details:</p>
 
 <pre><code class="language-java">public final class Person {
-    private ObjectId id;
-    private String name;
-    private int age;
-    private Address address;
+private ObjectId id;
+private String name;
+private int age;
+private Address address;
 
-    public Person() {
-    }
+public Person() {
+}
 
-    public ObjectId getId() {
-        return id;
-    }
+public ObjectId getId() {
+    return id;
+}
 
-    public void setId(final ObjectId id) {
-        this.id = id;
-    }
+public void setId(final ObjectId id) {
+    this.id = id;
+}
 
-    public String getName() {
-        return name;
-    }
+public String getName() {
+    return name;
+}
 
-    public void setName(final String name) {
-        this.name = name;
-    }
+public void setName(final String name) {
+    this.name = name;
+}
 
-    public int getAge() {
-        return age;
-    }
+public int getAge() {
+    return age;
+}
 
-    public void setAge(final int age) {
-        this.age = age;
-    }
+public void setAge(final int age) {
+    this.age = age;
+}
 
-    public Address getAddress() {
-        return address;
-    }
+public Address getAddress() {
+    return address;
+}
 
-    public void setAddress(final Address address) {
-        this.address = address;
-    }
+public void setAddress(final Address address) {
+    this.address = address;
+}
     
-    // Rest of implementation
+// Rest of implementation
 }
 
 public final class Address {
-    private String street;
-    private String city;
-    private String zip;
+private String street;
+private String city;
+private String zip;
 
-    public Address() {
-    }
-
-    public String getStreet() {
-        return street;
-    }
-
-    public void setStreet(final String street) {
-        this.street = street;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(final String city) {
-        this.city = city;
-    }
-
-    public String getZip() {
-        return zip;
-    }
-
-    public void setZip(final String zip) {
-        this.zip = zip;
-    }
-    
-    // Rest of implementation
+public Address() {
 }
-</code></pre>
+
+public String getStreet() {
+    return street;
+}
+
+public void setStreet(final String street) {
+    this.street = street;
+}
+
+public String getCity() {
+    return city;
+}
+
+public void setCity(final String city) {
+    this.city = city;
+}
+
+public String getZip() {
+    return zip;
+}
+
+public void setZip(final String zip) {
+    this.zip = zip;
+}
+    
+// Rest of implementation
+}
+</code></pre></li>
+</ul>
 
 <h2 id="creating-a-custom-codecregistry">Creating a Custom CodecRegistry</h2>
 
@@ -478,28 +476,24 @@ The <code>DefaultCodecRegistry</code> should be first in the list, and the <code
 <p>There are multiple ways to set the <code>pojoCodecRegistry</code> for use:</p>
 
 <ul>
-<li>You can set it when instantiating a MongoClient object:</li>
-</ul>
+<li><p>You can set it when instantiating a MongoClient object:</p>
 
 <pre><code class="language-java">MongoClientSettings settings = MongoClientSettings.builder()
-        .codecRegistry(pojoCodecRegistry)
-        .build();
+    .codecRegistry(pojoCodecRegistry)
+    .build();
 MongoClient mongoClient = MongoClients.create(settings);
-</code></pre>
+</code></pre></li>
 
-<ul>
-<li>You can use an alternative <code>CodecRegistry</code> with a <code>MongoDatabase</code>:</li>
-</ul>
+<li><p>You can use an alternative <code>CodecRegistry</code> with a <code>MongoDatabase</code>:</p>
 
 <pre><code class="language-java">database = database.withCodecRegistry(pojoCodecRegistry);
-</code></pre>
+</code></pre></li>
 
-<ul>
-<li>You can use an alternative <code>CodecRegistry</code> with a <code>MongoCollection</code>:</li>
-</ul>
+<li><p>You can use an alternative <code>CodecRegistry</code> with a <code>MongoCollection</code>:</p>
 
 <pre><code class="language-java">collection = collection.withCodecRegistry(pojoCodecRegistry);
-</code></pre>
+</code></pre></li>
+</ul>
 
 <h2 id="inserting-a-pojo-into-mongodb">Inserting a POJO into MongoDB</h2>
 

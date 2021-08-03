@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2021-07-13T14:35:00.93">
+<meta name="date" content="2021-08-03T15:00:43.41">
 <link rel="shortcut icon" href="/mongo-java-driver/4.3/img/favicon.png">
 
     <title>Write Operations</title><link rel="stylesheet" href="/mongo-java-driver/4.3/lib/bootstrap.css" type="text/css" />
@@ -636,23 +636,21 @@ collection.insertMany(documents).subscribe(new ObservableSubscriber&lt;Void&gt;(
 "><code>MongoClient()</code></a></p>
 
 <ul>
-<li>Via <a href="/mongo-java-driver/4.3/apidocs/mongodb-driver-core/com/mongodb/MongoClientSettings.html
-"><code>MongoClientSettings</code></a>:</li>
-</ul>
+<li><p>Via <a href="/mongo-java-driver/4.3/apidocs/mongodb-driver-core/com/mongodb/MongoClientSettings.html
+"><code>MongoClientSettings</code></a>:</p>
 
-<pre><code class="language-java">  MongoClient mongoClient = MongoClients.create(MongoClientSettings.builder()
-                                                .applyConnectionString(new ConnectionString(&quot;mongodb://host1,host2&quot;))
-                                                .writeConcern(WriteConcern.MAJORITY)
-                                                .build());
-</code></pre>
-
-<ul>
-<li>Via <a href="/mongo-java-driver/4.3/apidocs/mongodb-driver-core/com/mongodb/ConnectionString.html
-"><code>ConnectionString</code></a>, as in the following example:</li>
-</ul>
-
-<pre><code class="language-java">  MongoClient mongoClient = MongoClients.create(&quot;mongodb://host1:27017,host2:27017/?w=majority&quot;);
+<pre><code class="language-java">MongoClient mongoClient = MongoClients.create(MongoClientSettings.builder()
+                                            .applyConnectionString(new ConnectionString(&quot;mongodb://host1,host2&quot;))
+                                            .writeConcern(WriteConcern.MAJORITY)
+                                            .build());
 </code></pre></li>
+
+<li><p>Via <a href="/mongo-java-driver/4.3/apidocs/mongodb-driver-core/com/mongodb/ConnectionString.html
+"><code>ConnectionString</code></a>, as in the following example:</p>
+
+<pre><code class="language-java">MongoClient mongoClient = MongoClients.create(&quot;mongodb://host1:27017,host2:27017/?w=majority&quot;);
+</code></pre></li>
+</ul></li>
 
 <li><p>In a <a href="/mongo-java-driver/4.3/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoDatabase.html
 "><code>MongoDatabase</code></a> via its <a href="/mongo-java-driver/4.3/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoDatabase.html#withWriteConcern(com.mongodb.WriteConcern)

@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2021-07-13T14:35:00.85">
+<meta name="date" content="2021-08-03T15:00:43.33">
 <link rel="shortcut icon" href="/mongo-java-driver/4.3/img/favicon.png">
 
     <title>Client Side Encryption</title><link rel="stylesheet" href="/mongo-java-driver/4.3/lib/bootstrap.css" type="text/css" />
@@ -353,7 +353,7 @@ See the <a href="/mongo-java-driver/4.3/driver-scala/getting-started/installatio
     &lt;dependency&gt;
         &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
         &lt;artifactId&gt;mongodb-crypt&lt;/artifactId&gt;
-        &lt;version&gt;1.2.0&lt;/version&gt;
+        &lt;version&gt;1.2.1&lt;/version&gt;
     &lt;/dependency&gt;
 &lt;/dependencies&gt;
 
@@ -362,22 +362,20 @@ See the <a href="/mongo-java-driver/4.3/driver-scala/getting-started/installatio
 <section class="gradle hidden">
 <pre><code>
   dependencies {
-      compile 'org.mongodb:mongodb-crypt:1.2.0'
+      compile 'org.mongodb:mongodb-crypt:1.2.1'
   }
 
 </code></pre>
 </section>
 <section class="sbt hidden">
 <pre><code>
-  libraryDependencies += "org.mongodb" %% "mongodb-crypt" % "1.2.0"</code></pre>
+  libraryDependencies += "org.mongodb" %% "mongodb-crypt" % "1.2.1"</code></pre>
 </section>
 
 <h3 id="mongocryptd-configuration">mongocryptd configuration</h3>
 
 <p><code>libmongocrypt</code> requires the <code>mongocryptd</code> daemon / process to be running. A specific daemon / process uri can be configured in the
 <code>AutoEncryptionSettings</code> class by setting <code>mongocryptdURI</code> in the <code>extraOptions</code>.</p>
-
-<p>More information about mongocryptd will soon be available from the official documentation.</p>
 
 <h3 id="examples">Examples</h3>
 
