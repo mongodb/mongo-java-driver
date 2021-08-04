@@ -280,7 +280,8 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                                 source, connection);
                         connection.queryAsync(getNamespace(), asQueryDocument(connection.getDescription(), binding.getReadPreference()),
                                 null, 0, 0, batchSize, binding.getReadPreference().isSecondaryOk(), false, false, false, false, false,
-                                new BsonDocumentCodec(), new SingleResultCallback<QueryResult<BsonDocument>>() {
+                                new BsonDocumentCodec(), binding.getRequestContext(),
+                                new SingleResultCallback<QueryResult<BsonDocument>>() {
                                     @Override
                                     public void onResult(final QueryResult<BsonDocument> result, final Throwable t) {
                                         if (t != null) {

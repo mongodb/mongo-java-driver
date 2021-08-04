@@ -265,7 +265,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
         operation.executeAsync(readBinding, Stub(SingleResultCallback))
 
         then:
-        1 * connection.queryAsync(namespace, _, _, _, _, _, secondaryOk, _, _, _, _, _, _, _) >> { it[13].onResult(queryResult, null) }
+        1 * connection.queryAsync(namespace, _, _, _, _, _, secondaryOk, *_) >> { it.last().onResult(queryResult, null) }
         1 * connection.release()
 
         where:

@@ -18,6 +18,7 @@ package com.mongodb.event;
 
 import com.mongodb.RequestContext;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
 import java.util.concurrent.TimeUnit;
@@ -43,7 +44,7 @@ public final class CommandSucceededEvent extends CommandEvent {
      * @param elapsedTimeNanos the non-negative elapsed time in nanoseconds for the operation to complete
      * @since 4.4
      */
-    public CommandSucceededEvent(final RequestContext requestContext, final int requestId,
+    public CommandSucceededEvent(@Nullable final RequestContext requestContext, final int requestId,
             final ConnectionDescription connectionDescription, final String commandName, final BsonDocument response,
             final long elapsedTimeNanos) {
         super(requestContext, requestId, connectionDescription, commandName);

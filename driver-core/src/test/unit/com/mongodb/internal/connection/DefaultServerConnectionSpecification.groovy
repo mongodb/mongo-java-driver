@@ -61,7 +61,7 @@ class DefaultServerConnectionSpecification extends Specification {
         given:
         def insertRequest = new InsertRequest(new BsonDocument())
         def executor = Mock(ProtocolExecutor) {
-            1 * execute({ compare(new InsertProtocol(namespace, true, insertRequest), it) }, internalConnection) >> {
+            1 * execute({ compare(new InsertProtocol(namespace, true, insertRequest, requestContext), it) }, internalConnection) >> {
                 WriteConcernResult.unacknowledged()
             }
         }
@@ -78,7 +78,7 @@ class DefaultServerConnectionSpecification extends Specification {
         given:
         def updateRequest = new UpdateRequest(new BsonDocument(), new BsonDocument(), WriteRequest.Type.REPLACE)
         def executor = Mock(ProtocolExecutor) {
-            1 * execute({ compare(new UpdateProtocol(namespace, true, updateRequest), it) }, internalConnection) >> {
+            1 * execute({ compare(new UpdateProtocol(namespace, true, updateRequest, requestContext), it) }, internalConnection) >> {
                 WriteConcernResult.unacknowledged()
             }
         }
@@ -95,7 +95,7 @@ class DefaultServerConnectionSpecification extends Specification {
         given:
         def deleteRequest = new DeleteRequest(new BsonDocument())
         def executor = Mock(ProtocolExecutor) {
-            1 * execute({ compare(new DeleteProtocol(namespace, true, deleteRequest), it) }, internalConnection) >> {
+            1 * execute({ compare(new DeleteProtocol(namespace, true, deleteRequest, null), it) }, internalConnection) >> {
                 WriteConcernResult.unacknowledged()
             }
         }
@@ -176,7 +176,7 @@ class DefaultServerConnectionSpecification extends Specification {
         def codec = new BsonDocumentCodec()
         def expectedResult = new QueryResult<>(namespace, [], 0, new ServerAddress())
         def executor = Mock(ProtocolExecutor) {
-            1 * execute({ compare(new GetMoreProtocol(namespace, 1000L, 1, codec), it) }, internalConnection) >> {
+            1 * execute({ compare(new GetMoreProtocol(namespace, 1000L, 1, codec, null), it) }, internalConnection) >> {
                 expectedResult
             }
         }
@@ -198,7 +198,7 @@ class DefaultServerConnectionSpecification extends Specification {
         connection.killCursor(namespace, [5])
 
         then:
-        1 * executor.execute({ compare(new KillCursorProtocol(namespace, [5]), it) }, internalConnection)
+        1 * executor.execute({ compare(new KillCursorProtocol(namespace, [5], null), it) }, internalConnection)
     }
 
     def 'should execute insert protocol asynchronously'() {
@@ -208,10 +208,10 @@ class DefaultServerConnectionSpecification extends Specification {
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
 
         when:
-        connection.insertAsync(namespace, true, insertRequest, callback)
+        connection.insertAsync(namespace, true, insertRequest, null, callback)
 
         then:
-        1 * executor.executeAsync({ compare(new InsertProtocol(namespace, true, insertRequest), it) }, internalConnection,
+        1 * executor.executeAsync({ compare(new InsertProtocol(namespace, true, insertRequest, requestContext), it) }, internalConnection,
                 callback)
     }
 
@@ -222,10 +222,10 @@ class DefaultServerConnectionSpecification extends Specification {
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
 
         when:
-        connection.updateAsync(namespace, true, updateRequest, callback)
+        connection.updateAsync(namespace, true, updateRequest, null, callback)
 
         then:
-        1 * executor.executeAsync({ compare(new UpdateProtocol(namespace, true, updateRequest), it) },
+        1 * executor.executeAsync({ compare(new UpdateProtocol(namespace, true, updateRequest, requestContext), it) },
                                   internalConnection, callback)
     }
 
@@ -236,10 +236,10 @@ class DefaultServerConnectionSpecification extends Specification {
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
 
         when:
-        connection.deleteAsync(namespace, true, deleteRequest, callback)
+        connection.deleteAsync(namespace, true, deleteRequest, null, callback)
 
         then:
-        1 * executor.executeAsync({ compare(new DeleteProtocol(namespace, true, deleteRequest), it) }, internalConnection,
+        1 * executor.executeAsync({ compare(new DeleteProtocol(namespace, true, deleteRequest, null), it) }, internalConnection,
                 callback)
     }
 
@@ -270,7 +270,7 @@ class DefaultServerConnectionSpecification extends Specification {
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
 
         when:
-        connection.queryAsync(namespace, query, fields, 2, 10, 5, secondaryOk, false, true, false, true, false, decoder, callback)
+        connection.queryAsync(namespace, query, fields, 2, 10, 5, secondaryOk, false, true, false, true, false, decoder, null, callback)
 
         then:
         1 * executor.executeAsync({
@@ -298,7 +298,7 @@ class DefaultServerConnectionSpecification extends Specification {
         internalConnection.description >> connectionDescription
 
         when:
-        connection.queryAsync(namespace, query, fields, 2, 10, 5, false, false, true, false, true, false, decoder, callback)
+        connection.queryAsync(namespace, query, fields, 2, 10, 5, false, false, true, false, true, false, decoder, null, callback)
 
         then:
         1 * executor.executeAsync({
@@ -325,10 +325,10 @@ class DefaultServerConnectionSpecification extends Specification {
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
 
         when:
-        connection.getMoreAsync(namespace, 1000L, 1, codec, callback)
+        connection.getMoreAsync(namespace, 1000L, 1, codec, null, callback)
 
         then:
-        1 * executor.executeAsync({ compare(new GetMoreProtocol(namespace, 1000L, 1, codec), it) }, internalConnection, callback)
+        1 * executor.executeAsync({ compare(new GetMoreProtocol(namespace, 1000L, 1, codec, null), it) }, internalConnection, callback)
     }
 
     def 'should execute kill cursor protocol asynchronously'() {
@@ -337,9 +337,9 @@ class DefaultServerConnectionSpecification extends Specification {
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
 
         when:
-        connection.killCursorAsync(namespace, [5], callback)
+        connection.killCursorAsync(namespace, [5], null, callback)
 
         then:
-        1 * executor.executeAsync({ compare(new KillCursorProtocol(namespace, [5]), it) }, internalConnection, callback)
+        1 * executor.executeAsync({ compare(new KillCursorProtocol(namespace, [5], null), it) }, internalConnection, callback)
     }
 }

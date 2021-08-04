@@ -26,6 +26,7 @@ import com.mongodb.lang.Nullable;
  * @since 3.1
  */
 public abstract class CommandEvent {
+    @Nullable
     private final RequestContext requestContext;
     private final int requestId;
     private final ConnectionDescription connectionDescription;
@@ -39,8 +40,8 @@ public abstract class CommandEvent {
      * @param commandName the command name
      * @since 4.4
      */
-    public CommandEvent(final RequestContext requestContext, final int requestId, final ConnectionDescription connectionDescription,
-            final String commandName) {
+    public CommandEvent(@Nullable final RequestContext requestContext, final int requestId,
+            final ConnectionDescription connectionDescription, final String commandName) {
         this.requestContext = requestContext;
         this.requestId = requestId;
         this.connectionDescription = connectionDescription;

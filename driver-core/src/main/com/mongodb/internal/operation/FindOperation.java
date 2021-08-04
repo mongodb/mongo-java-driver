@@ -718,7 +718,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                                                     binding.getReadPreference()), projection, skip, limit, batchSize,
                                                     isSecondaryOk() || binding.getReadPreference().isSecondaryOk(),
                                                     isTailableCursor(), isAwaitData(), isNoCursorTimeout(), isPartial(), isOplogReplay(),
-                                                    decoder, new SingleResultCallback<QueryResult<T>>() {
+                                                    decoder, binding.getRequestContext(), new SingleResultCallback<QueryResult<T>>() {
                                                         @Override
                                                         public void onResult(final QueryResult<T> result, final Throwable t) {
                                                             if (t != null) {

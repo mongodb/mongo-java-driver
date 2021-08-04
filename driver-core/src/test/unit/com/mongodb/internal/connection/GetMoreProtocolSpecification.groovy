@@ -30,7 +30,7 @@ import static com.mongodb.internal.connection.ProtocolTestHelper.execute
 
 // unit test failure cases that are difficult to reproduce in integration tests
 class GetMoreProtocolSpecification extends Specification {
-    def protocol = new GetMoreProtocol(new MongoNamespace('test.test'), 42L, 0, new BsonDocumentCodec())
+    def protocol = new GetMoreProtocol(new MongoNamespace('test.test'), 42L, 0, new BsonDocumentCodec(), null)
     def connection = new TestInternalConnection(new ServerId(new ClusterId(), new ServerAddress()))
 
     def 'when query failure bit is set then MongoQueryException should be generated'() {

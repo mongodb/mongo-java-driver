@@ -473,8 +473,8 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
         then:
         _ * connection.getDescription() >> helper.twoSixConnectionDescription
-        1 * connection.queryAsync(_, _, _, _, _, _, readPreference.isSecondaryOk(), _, _, _, _, _, _, _) >> {
-            it[13].onResult(helper.queryResult, null) }
+        1 * connection.queryAsync(_, _, _, _, _, _, readPreference.isSecondaryOk(), *_) >> {
+            it.last().onResult(helper.queryResult, null) }
 
         when: '3.0.0'
         operation.executeAsync(readBinding, Stub(SingleResultCallback))

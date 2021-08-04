@@ -69,7 +69,7 @@ class GetMoreProtocolCommandEventSpecification extends OperationFunctionalSpecif
                          new BsonDocument('_id', new BsonInt32(5))]
         collectionHelper.insertDocuments(documents)
         def result = new QueryProtocol(getNamespace(), 1, 2, new BsonDocument(), null, new BsonDocumentCodec()).execute(connection)
-        def protocol = new GetMoreProtocol(getNamespace(), result.cursor.id, 2, new BsonDocumentCodec())
+        def protocol = new GetMoreProtocol(getNamespace(), result.cursor.id, 2, new BsonDocumentCodec(), null)
 
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
@@ -101,8 +101,8 @@ class GetMoreProtocolCommandEventSpecification extends OperationFunctionalSpecif
         collectionHelper.insertDocuments(new Document(), new Document(), new Document(), new Document(), new Document())
         def result = new QueryProtocol(getNamespace(), 1, 2, new BsonDocument(), null, new BsonDocumentCodec())
                 .execute(connection)
-        new KillCursorProtocol(getNamespace(), [result.cursor.id]).execute(connection)
-        def protocol = new GetMoreProtocol(getNamespace(), result.cursor.id, 2, new BsonDocumentCodec())
+        new KillCursorProtocol(getNamespace(), [result.cursor.id], null).execute(connection)
+        def protocol = new GetMoreProtocol(getNamespace(), result.cursor.id, 2, new BsonDocumentCodec(), null)
 
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener

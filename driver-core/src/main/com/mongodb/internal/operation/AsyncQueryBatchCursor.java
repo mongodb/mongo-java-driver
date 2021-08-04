@@ -248,8 +248,8 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
                     new CommandResultSingleResultCallback(connection, cursor, callback));
 
         } else {
-            connection.getMoreAsync(namespace, cursor.getId(), getNumberToReturn(limit, batchSize, count.get()),
-                                    decoder, new QueryResultSingleResultCallback(connection, callback));
+            connection.getMoreAsync(namespace, cursor.getId(), getNumberToReturn(limit, batchSize, count.get()), decoder,
+                    connectionSource.getRequestContext(), new QueryResultSingleResultCallback(connection, callback));
         }
     }
 
@@ -310,13 +310,14 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
                         }
                     });
         } else {
-            connection.killCursorAsync(namespace, singletonList(localCursor.getId()), new SingleResultCallback<Void>() {
-                @Override
-                public void onResult(final Void result, final Throwable t) {
-                    connection.release();
-                    connectionSource.release();
-                }
-            });
+            connection.killCursorAsync(namespace, singletonList(localCursor.getId()), connectionSource.getRequestContext(),
+                    new SingleResultCallback<Void>() {
+                        @Override
+                        public void onResult(final Void result, final Throwable t) {
+                            connection.release();
+                            connectionSource.release();
+                        }
+                    });
         }
     }
 

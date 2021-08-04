@@ -102,12 +102,11 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         then:
         if (firstBatch.getCursor() != null) {
             if (serverVersion.compareTo(new ServerVersion(3, 2)) >= 0) {
-                1 * connection.commandAsync(NAMESPACE.databaseName, createKillCursorsDocument(firstBatch.cursor), _, primary(),
-                        _, _, _, _, _) >> {
+                1 * connection.commandAsync(NAMESPACE.databaseName, createKillCursorsDocument(firstBatch.cursor), _, primary(), *_) >> {
                     it.last().onResult(null, null)
                 }
             } else {
-                1 * connection.killCursorAsync(NAMESPACE, [42], _) >> {
+                1 * connection.killCursorAsync(NAMESPACE, [42], *_) >> {
                     it.last().onResult(null, null)
                 }
             }

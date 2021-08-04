@@ -58,7 +58,7 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
         given:
         def documentOne = new BsonDocument('_id', new BsonInt32(1))
 
-        def protocol = new InsertProtocol(getNamespace(), true, new InsertRequest(documentOne))
+        def protocol = new InsertProtocol(getNamespace(), true, new InsertRequest(documentOne), requestContext)
 
         getCollectionHelper().insertDocuments(documentOne)
 

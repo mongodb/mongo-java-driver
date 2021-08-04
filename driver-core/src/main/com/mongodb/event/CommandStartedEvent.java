@@ -18,6 +18,7 @@ package com.mongodb.event;
 
 import com.mongodb.RequestContext;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
 /**
@@ -40,8 +41,9 @@ public final class CommandStartedEvent extends CommandEvent {
      * @param command the command as a BSON document
      * @since 4.4
      */
-    public CommandStartedEvent(final RequestContext requestContext, final int requestId, final ConnectionDescription connectionDescription,
-            final String databaseName, final String commandName, final BsonDocument command) {
+    public CommandStartedEvent(@Nullable final RequestContext requestContext, final int requestId,
+            final ConnectionDescription connectionDescription, final String databaseName, final String commandName,
+            final BsonDocument command) {
         super(requestContext, requestId, connectionDescription, commandName);
         this.command = command;
         this.databaseName = databaseName;

@@ -56,6 +56,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.compressorList == []
         settings.credential == null
         settings.uuidRepresentation == UuidRepresentation.UNSPECIFIED
+        settings.contextProvider == null
     }
 
     @SuppressWarnings('UnnecessaryObjectReferences')
@@ -116,6 +117,7 @@ class MongoClientSettingsSpecification extends Specification {
         def codecRegistry = Stub(CodecRegistry)
         def commandListener = Stub(CommandListener)
         def clusterSettings = ClusterSettings.builder().hosts([new ServerAddress('localhost')]).requiredReplicaSetName('test').build()
+        def contextProvider = Stub(ContextProvider)
 
         when:
         def settings = MongoClientSettings.builder()
@@ -137,6 +139,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .streamFactoryFactory(streamFactoryFactory)
                 .compressorList([MongoCompressor.createZlibCompressor()])
                 .uuidRepresentation(UuidRepresentation.STANDARD)
+                .contextProvider(contextProvider)
                 .build()
 
         then:
@@ -155,6 +158,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.getStreamFactoryFactory() == streamFactoryFactory
         settings.getCompressorList() == [MongoCompressor.createZlibCompressor()]
         settings.getUuidRepresentation() == UuidRepresentation.STANDARD
+        settings.getContextProvider() == contextProvider
     }
 
     def 'should be easy to create new settings from existing'() {
@@ -169,6 +173,7 @@ class MongoClientSettingsSpecification extends Specification {
         def codecRegistry = Stub(CodecRegistry)
         def commandListener = Stub(CommandListener)
         def compressorList = [MongoCompressor.createZlibCompressor()]
+        def contextProvider = Stub(ContextProvider)
 
         settings = MongoClientSettings.builder()
                 .heartbeatConnectTimeoutMS(24000)
@@ -190,6 +195,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .credential(credential)
                 .codecRegistry(codecRegistry)
                 .compressorList(compressorList)
+                .contextProvider(contextProvider)
                 .build()
 
         then:

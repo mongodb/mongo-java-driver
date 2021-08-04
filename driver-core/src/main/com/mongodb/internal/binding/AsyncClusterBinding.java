@@ -49,6 +49,7 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
     private final ReadConcern readConcern;
     @Nullable
     private final ServerApi serverApi;
+    @Nullable
     private final RequestContext requestContext;
 
     /**

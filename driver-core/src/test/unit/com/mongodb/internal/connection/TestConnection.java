@@ -72,7 +72,8 @@ class TestConnection implements Connection, AsyncConnection {
 
     @Override
     public void insertAsync(final MongoNamespace namespace, final boolean ordered,
-                            final InsertRequest insertRequest, final SingleResultCallback<WriteConcernResult> callback) {
+                            final InsertRequest insertRequest, final RequestContext requestContext,
+                            final SingleResultCallback<WriteConcernResult> callback) {
         executeEnqueuedLegacyProtocolAsync(callback);
     }
 
@@ -84,7 +85,8 @@ class TestConnection implements Connection, AsyncConnection {
 
     @Override
     public void updateAsync(final MongoNamespace namespace, final boolean ordered,
-                            final UpdateRequest updateRequest, final SingleResultCallback<WriteConcernResult> callback) {
+                            final UpdateRequest updateRequest, final RequestContext requestContext,
+                            final SingleResultCallback<WriteConcernResult> callback) {
         executeEnqueuedLegacyProtocolAsync(callback);
     }
 
@@ -96,7 +98,7 @@ class TestConnection implements Connection, AsyncConnection {
 
     @Override
     public void deleteAsync(final MongoNamespace namespace, final boolean ordered,
-                            final DeleteRequest deleteRequest,
+                            final DeleteRequest deleteRequest, final RequestContext requestContext,
                             final SingleResultCallback<WriteConcernResult> callback) {
         executeEnqueuedLegacyProtocolAsync(callback);
     }
@@ -149,7 +151,7 @@ class TestConnection implements Connection, AsyncConnection {
                                final int batchSize, final boolean secondaryOk, final boolean tailableCursor, final boolean awaitData,
                                final boolean noCursorTimeout,
                                final boolean partial, final boolean oplogReplay, final Decoder<T> resultDecoder,
-                               final SingleResultCallback<QueryResult<T>> callback) {
+                               final RequestContext requestContext, final SingleResultCallback<QueryResult<T>> callback) {
         executeEnqueuedLegacyProtocolAsync(callback);
     }
 
@@ -162,7 +164,7 @@ class TestConnection implements Connection, AsyncConnection {
     @Override
     public <T> void getMoreAsync(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
                                  final Decoder<T> resultDecoder,
-                                 final SingleResultCallback<QueryResult<T>> callback) {
+                                 final RequestContext requestContext, final SingleResultCallback<QueryResult<T>> callback) {
         executeEnqueuedLegacyProtocolAsync(callback);
     }
 
@@ -177,7 +179,8 @@ class TestConnection implements Connection, AsyncConnection {
     }
 
     @Override
-    public void killCursorAsync(final MongoNamespace namespace, final List<Long> cursors, final SingleResultCallback<Void> callback) {
+    public void killCursorAsync(final MongoNamespace namespace, final List<Long> cursors, final RequestContext requestContext,
+                                final SingleResultCallback<Void> callback) {
         executeEnqueuedLegacyProtocolAsync(callback);
     }
 

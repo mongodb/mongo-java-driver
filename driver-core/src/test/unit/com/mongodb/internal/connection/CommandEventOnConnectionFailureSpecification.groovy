@@ -32,7 +32,7 @@ import spock.lang.Specification
 
 import static com.mongodb.internal.connection.ProtocolTestHelper.execute
 
-class CommandEventOnConnectionFailureSpecification extends Specification {
+class   CommandEventOnConnectionFailureSpecification extends Specification {
 
     @Shared
     def namespace = new MongoNamespace('test.test')
@@ -60,14 +60,15 @@ class CommandEventOnConnectionFailureSpecification extends Specification {
 
         where:
         [protocolInfo, async] << [[
-                                   ['killCursors',
-                                    new KillCursorProtocol(namespace, [42L])],
-                                   ['getMore',
-                                    new GetMoreProtocol(namespace, 42L, 1, new DocumentCodec())],
-                                   ['find',
+                                          ['killCursors',
+                                    new KillCursorProtocol(namespace, [42L], null)],
+                                          ['getMore',
+                                    new GetMoreProtocol(namespace, 42L, 1, new DocumentCodec(), null)],
+                                          ['find',
                                     new QueryProtocol(namespace, 0, 1, 1, new BsonDocument(), new BsonDocument(), new DocumentCodec())],
-                                   ['delete',
-                                    new DeleteProtocol(namespace, true, new DeleteRequest(new BsonDocument('_id', new BsonInt32(1))))],
+                                          ['delete',
+                                    new DeleteProtocol(namespace, true, new DeleteRequest(new BsonDocument('_id', new BsonInt32(1))),
+                                            null)],
                                   ],
                                   [false, true]].combinations()
     }
@@ -90,9 +91,9 @@ class CommandEventOnConnectionFailureSpecification extends Specification {
 
         where:
         [protocolInfo, async] << [[
-                                   ['getMore',
-                                    new GetMoreProtocol(namespace, 42L, 1, new DocumentCodec())],
-                                   ['find',
+                                          ['getMore',
+                                    new GetMoreProtocol(namespace, 42L, 1, new DocumentCodec(), null)],
+                                          ['find',
                                     new QueryProtocol(namespace, 0, 1, 1, new BsonDocument(), new BsonDocument(), new DocumentCodec())],
                                   ],
                                   [false, true]].combinations()

@@ -217,7 +217,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
                         connection.queryAsync(getIndexNamespace(),
                                 asQueryDocument(connection.getDescription(), binding.getReadPreference()), null, 0, 0, batchSize,
                                 binding.getReadPreference().isSecondaryOk(), false, false, false, false, false, decoder,
-                                new SingleResultCallback<QueryResult<T>>() {
+                                binding.getRequestContext(), new SingleResultCallback<QueryResult<T>>() {
                                     @Override
                                     public void onResult(final QueryResult<T> result, final Throwable t) {
                                         if (t != null) {

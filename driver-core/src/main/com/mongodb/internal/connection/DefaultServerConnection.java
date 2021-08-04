@@ -76,35 +76,35 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
 
     @Override
     public WriteConcernResult insert(final MongoNamespace namespace, final boolean ordered, final InsertRequest insertRequest) {
-        return executeProtocol(new InsertProtocol(namespace, ordered, insertRequest));
+        return executeProtocol(new InsertProtocol(namespace, ordered, insertRequest, null));
     }
 
     @Override
     public void insertAsync(final MongoNamespace namespace, final boolean ordered, final InsertRequest insertRequest,
-                            final SingleResultCallback<WriteConcernResult> callback) {
-        executeProtocolAsync(new InsertProtocol(namespace, ordered, insertRequest), callback);
+                            final RequestContext requestContext, final SingleResultCallback<WriteConcernResult> callback) {
+        executeProtocolAsync(new InsertProtocol(namespace, ordered, insertRequest, requestContext), callback);
     }
 
     @Override
     public WriteConcernResult update(final MongoNamespace namespace, final boolean ordered, final UpdateRequest updateRequest) {
-        return executeProtocol(new UpdateProtocol(namespace, ordered, updateRequest));
+        return executeProtocol(new UpdateProtocol(namespace, ordered, updateRequest, null));
     }
 
     @Override
     public void updateAsync(final MongoNamespace namespace, final boolean ordered, final UpdateRequest updateRequest,
-                            final SingleResultCallback<WriteConcernResult> callback) {
-        executeProtocolAsync(new UpdateProtocol(namespace, ordered, updateRequest), callback);
+                            final RequestContext requestContext, final SingleResultCallback<WriteConcernResult> callback) {
+        executeProtocolAsync(new UpdateProtocol(namespace, ordered, updateRequest, requestContext), callback);
     }
 
     @Override
     public WriteConcernResult delete(final MongoNamespace namespace, final boolean ordered, final DeleteRequest deleteRequest) {
-        return executeProtocol(new DeleteProtocol(namespace, ordered, deleteRequest));
+        return executeProtocol(new DeleteProtocol(namespace, ordered, deleteRequest, null));
     }
 
     @Override
     public void deleteAsync(final MongoNamespace namespace, final boolean ordered, final DeleteRequest deleteRequest,
-                            final SingleResultCallback<WriteConcernResult> callback) {
-        executeProtocolAsync(new DeleteProtocol(namespace, ordered, deleteRequest), callback);
+                            final RequestContext requestContext, final SingleResultCallback<WriteConcernResult> callback) {
+        executeProtocolAsync(new DeleteProtocol(namespace, ordered, deleteRequest, requestContext), callback);
     }
 
     @Override
@@ -155,7 +155,7 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
                                     final boolean awaitData, final boolean noCursorTimeout,
                                     final boolean partial, final boolean oplogReplay,
                                     final Decoder<T> resultDecoder) {
-        return executeProtocol(new QueryProtocol<T>(namespace, skip, limit, batchSize, queryDocument, fields, resultDecoder)
+        return executeProtocol(new QueryProtocol<T>(namespace, skip, limit, batchSize, queryDocument, fields, resultDecoder, null)
                                .tailableCursor(tailableCursor)
                                .secondaryOk(getSecondaryOk(secondaryOk))
                                .oplogReplay(oplogReplay)
@@ -168,8 +168,9 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
     public <T> void queryAsync(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields, final int skip,
                                final int limit, final int batchSize, final boolean secondaryOk, final boolean tailableCursor,
                                final boolean awaitData, final boolean noCursorTimeout, final boolean partial, final boolean oplogReplay,
-                               final Decoder<T> resultDecoder, final SingleResultCallback<QueryResult<T>> callback) {
-        executeProtocolAsync(new QueryProtocol<T>(namespace, skip, limit, batchSize, queryDocument, fields, resultDecoder)
+                               final Decoder<T> resultDecoder, final RequestContext requestContext,
+                               final SingleResultCallback<QueryResult<T>> callback) {
+        executeProtocolAsync(new QueryProtocol<T>(namespace, skip, limit, batchSize, queryDocument, fields, resultDecoder, requestContext)
                              .tailableCursor(tailableCursor)
                              .secondaryOk(getSecondaryOk(secondaryOk))
                              .oplogReplay(oplogReplay)
@@ -181,18 +182,19 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
     @Override
     public <T> QueryResult<T> getMore(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
                                       final Decoder<T> resultDecoder) {
-        return executeProtocol(new GetMoreProtocol<T>(namespace, cursorId, numberToReturn, resultDecoder));
+        return executeProtocol(new GetMoreProtocol<T>(namespace, cursorId, numberToReturn, resultDecoder, null));
     }
 
     @Override
     public <T> void getMoreAsync(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
-                                 final Decoder<T> resultDecoder, final SingleResultCallback<QueryResult<T>> callback) {
-        executeProtocolAsync(new GetMoreProtocol<T>(namespace, cursorId, numberToReturn, resultDecoder), callback);
+                                 final Decoder<T> resultDecoder, final RequestContext requestContext,
+                                 final SingleResultCallback<QueryResult<T>> callback) {
+        executeProtocolAsync(new GetMoreProtocol<T>(namespace, cursorId, numberToReturn, resultDecoder, requestContext), callback);
     }
 
     @Override
     public void killCursor(final MongoNamespace namespace, final List<Long> cursors) {
-        executeProtocol(new KillCursorProtocol(namespace, cursors));
+        executeProtocol(new KillCursorProtocol(namespace, cursors, null));
     }
 
     @Override
@@ -201,8 +203,9 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
     }
 
     @Override
-    public void killCursorAsync(final MongoNamespace namespace, final List<Long> cursors, final SingleResultCallback<Void> callback) {
-        executeProtocolAsync(new KillCursorProtocol(namespace, cursors), callback);
+    public void killCursorAsync(final MongoNamespace namespace, final List<Long> cursors, final RequestContext requestContext,
+                                final SingleResultCallback<Void> callback) {
+        executeProtocolAsync(new KillCursorProtocol(namespace, cursors, requestContext), callback);
     }
 
     private boolean getSecondaryOk(final boolean secondaryOk) {

@@ -62,7 +62,7 @@ class KillCursorProtocolCommandEventSpecification extends OperationFunctionalSpe
         collectionHelper.insertDocuments(new Document(), new Document(), new Document(), new Document(), new Document())
         def result = new QueryProtocol(getNamespace(), 1, 2, new BsonDocument(), null, new BsonDocumentCodec())
                 .execute(connection)
-        def protocol = new KillCursorProtocol(getNamespace(), [result.cursor.id])
+        def protocol = new KillCursorProtocol(getNamespace(), [result.cursor.id], null)
 
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
@@ -91,7 +91,7 @@ class KillCursorProtocolCommandEventSpecification extends OperationFunctionalSpe
         collectionHelper.insertDocuments(new Document(), new Document(), new Document(), new Document(), new Document())
         def result = new QueryProtocol(getNamespace(), 1, 2, new BsonDocument(), null, new BsonDocumentCodec())
                 .execute(connection)
-        def protocol = new KillCursorProtocol(null, [result.cursor.id])
+        def protocol = new KillCursorProtocol(null, [result.cursor.id], null)
 
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener

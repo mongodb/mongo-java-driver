@@ -18,6 +18,7 @@ package com.mongodb.event;
 
 import com.mongodb.RequestContext;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
@@ -43,8 +44,9 @@ public final class CommandFailedEvent extends CommandEvent {
      * @param throwable the throwable cause of the failure
      * @since 4.4
      */
-    public CommandFailedEvent(final RequestContext requestContext, final int requestId, final ConnectionDescription connectionDescription,
-            final String commandName, final long elapsedTimeNanos, final Throwable throwable) {
+    public CommandFailedEvent(@Nullable final RequestContext requestContext, final int requestId,
+            final ConnectionDescription connectionDescription, final String commandName, final long elapsedTimeNanos,
+            final Throwable throwable) {
         super(requestContext, requestId, connectionDescription, commandName);
         isTrueArgument("elapsed time is not negative", elapsedTimeNanos >= 0);
         this.elapsedTimeNanos = elapsedTimeNanos;
