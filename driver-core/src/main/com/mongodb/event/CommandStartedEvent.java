@@ -38,6 +38,7 @@ public final class CommandStartedEvent extends CommandEvent {
      * @param databaseName          the database name
      * @param commandName           the command name
      * @param command the command as a BSON document
+     * @since 4.4
      */
     public CommandStartedEvent(final RequestContext requestContext, final int requestId, final ConnectionDescription connectionDescription,
             final String databaseName, final String commandName, final BsonDocument command) {

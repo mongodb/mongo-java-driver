@@ -21,7 +21,8 @@ import com.mongodb.RequestContext;
 import org.reactivestreams.Subscriber;
 
 /**
- * Putting this in reactive-streams module so there is no API dependency on reactive streams in driver-core
+ * A {@code ContextProvider} for reactive clients.
+ *
  * @since 4.4
  */
 public interface ReactiveContextProvider extends ContextProvider {

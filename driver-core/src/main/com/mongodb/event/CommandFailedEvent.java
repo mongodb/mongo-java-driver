@@ -41,6 +41,7 @@ public final class CommandFailedEvent extends CommandEvent {
      * @param commandName the command name
      * @param elapsedTimeNanos the non-negative elapsed time in nanoseconds for the operation to complete
      * @param throwable the throwable cause of the failure
+     * @since 4.4
      */
     public CommandFailedEvent(final RequestContext requestContext, final int requestId, final ConnectionDescription connectionDescription,
             final String commandName, final long elapsedTimeNanos, final Throwable throwable) {

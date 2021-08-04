@@ -24,8 +24,9 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
- * The request context
+ * The request context, useful for implementing distributed tracing.
  *
+ * @see MongoClientSettings#getContextProvider()
  * @since 4.4
  */
 public interface RequestContext {

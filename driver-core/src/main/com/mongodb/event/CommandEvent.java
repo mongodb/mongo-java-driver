@@ -37,6 +37,7 @@ public abstract class CommandEvent {
      * @param requestId the request id
      * @param connectionDescription the connection description
      * @param commandName the command name
+     * @since 4.4
      */
     public CommandEvent(final RequestContext requestContext, final int requestId, final ConnectionDescription connectionDescription,
             final String commandName) {
@@ -87,6 +88,7 @@ public abstract class CommandEvent {
      * Gets the request context associated with this event.
      *
      * @return the request context
+     * @since 4.4
      */
     @Nullable
     public RequestContext getRequestContext() {

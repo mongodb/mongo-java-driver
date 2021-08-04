@@ -126,7 +126,7 @@ abstract class BatchCursorPublisher<T> implements Publisher<T> {
     }
 
     Mono<BatchCursor<T>> batchCursor(final Supplier<AsyncReadOperation<AsyncBatchCursor<T>>> supplier) {
-        return Mono.from(mongoOperationPublisher.createReadOperationMono(supplier, clientSession)).map(BatchCursor::new);
+        return mongoOperationPublisher.createReadOperationMono(supplier, clientSession).map(BatchCursor::new);
     }
 
 }

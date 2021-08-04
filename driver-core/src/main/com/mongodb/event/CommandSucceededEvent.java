@@ -41,6 +41,7 @@ public final class CommandSucceededEvent extends CommandEvent {
      * @param commandName the command name
      * @param response the command response
      * @param elapsedTimeNanos the non-negative elapsed time in nanoseconds for the operation to complete
+     * @since 4.4
      */
     public CommandSucceededEvent(final RequestContext requestContext, final int requestId,
             final ConnectionDescription connectionDescription, final String commandName, final BsonDocument response,

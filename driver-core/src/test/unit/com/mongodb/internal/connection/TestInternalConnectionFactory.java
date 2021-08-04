@@ -124,8 +124,7 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
 
         @Override
         public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
-                                            final SessionContext sessionContext, final RequestContext requestContext,
-                final SingleResultCallback<T> callback) {
+                final SessionContext sessionContext, final RequestContext requestContext, final SingleResultCallback<T> callback) {
             callback.onResult(null, null);
         }
 

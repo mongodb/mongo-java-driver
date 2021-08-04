@@ -232,7 +232,7 @@ class CommandOperationHelperSpecification extends Specification {
                 commandCreator, FindAndModifyHelper.asyncTransformer(), callback)
 
         then:
-        2 * connection.commandAsync(dbName, command, _, primary(), decoder, _, _, _, _) >> { it.last().onResult(results.poll(), null) }
+        2 * connection.commandAsync(dbName, command, _, primary(), decoder, *_) >> { it.last().onResult(results.poll(), null) }
 
         then:
         callback.throwable instanceof MongoWriteConcernException
@@ -290,7 +290,7 @@ class CommandOperationHelperSpecification extends Specification {
 
         then:
         _ * connection.getDescription() >> connectionDescription
-        1 * connection.commandAsync(dbName, command, _, primary(), _, _, _, _, _) >> { it.last().onResult(1, null) }
+        1 * connection.commandAsync(dbName, command, _, primary(), *_) >> { it.last().onResult(1, null) }
 //        1 * connection.release()
     }
 

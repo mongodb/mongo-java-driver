@@ -62,7 +62,7 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
      * @since 3.8
      */
     public AsyncClusterBinding(final Cluster cluster, final ReadPreference readPreference, final ReadConcern readConcern,
-            @Nullable final ServerApi serverApi, final RequestContext requestContext) {
+            @Nullable final ServerApi serverApi, final @Nullable RequestContext requestContext) {
         this.cluster = notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
         this.readConcern = (notNull("readConcern", readConcern));
@@ -159,6 +159,7 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
         }
 
         @Override
+        @Nullable
         public RequestContext getRequestContext() {
             return requestContext;
         }

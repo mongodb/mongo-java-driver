@@ -17,7 +17,10 @@
 package com.mongodb;
 
 /**
- * Just a marker interface so one can be added to the settings.  A bit awkward
+ * A marker interface for providers of {@code RequestContext}.  Sub-interfaces in higher-level modules define methods that actually
+ * return instances of {@code RequestContext}, depending on whether the client is synchronous or reactive.
+ * @see RequestContext
+ * @see MongoClientSettings#getContextProvider()
  * @since 4.4
  */
 public interface ContextProvider {

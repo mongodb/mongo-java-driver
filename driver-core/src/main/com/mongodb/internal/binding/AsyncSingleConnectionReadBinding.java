@@ -72,6 +72,7 @@ public class AsyncSingleConnectionReadBinding extends AbstractReferenceCounted i
     }
 
     @Override
+    @Nullable
     public RequestContext getRequestContext() {
         return null;
     }
@@ -117,6 +118,7 @@ public class AsyncSingleConnectionReadBinding extends AbstractReferenceCounted i
         }
 
         @Override
+        @Nullable
         public RequestContext getRequestContext() {
             return null;
         }
