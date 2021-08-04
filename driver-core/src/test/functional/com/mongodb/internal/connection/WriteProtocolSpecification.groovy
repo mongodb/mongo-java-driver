@@ -22,6 +22,7 @@ import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.netty.NettyStreamFactory
+import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.bulk.InsertRequest
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -58,7 +59,7 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
         given:
         def documentOne = new BsonDocument('_id', new BsonInt32(1))
 
-        def protocol = new InsertProtocol(getNamespace(), true, new InsertRequest(documentOne), requestContext)
+        def protocol = new InsertProtocol(getNamespace(), true, new InsertRequest(documentOne), IgnorableRequestContext.INSTANCE)
 
         getCollectionHelper().insertDocuments(documentOne)
 

@@ -48,7 +48,6 @@ public interface AsyncWriteBinding extends ReferenceCounted {
     @Nullable
     ServerApi getServerApi();
 
-    @Nullable
     RequestContext getRequestContext();
 
     @Override

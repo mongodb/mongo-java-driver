@@ -30,6 +30,7 @@ import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.io.OutputBuffer;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.ProtocolHelper.encodeMessageWithMetadata;
 import static com.mongodb.internal.connection.ProtocolHelper.getMessageSettings;
 import static com.mongodb.internal.connection.ProtocolHelper.sendCommandFailedEvent;
@@ -49,7 +50,7 @@ abstract class WriteProtocol implements LegacyProtocol<WriteConcernResult> {
     WriteProtocol(final MongoNamespace namespace, final boolean ordered, final RequestContext requestContext) {
         this.namespace = namespace;
         this.ordered = ordered;
-        this.requestContext = requestContext;
+        this.requestContext = notNull("requestContext", requestContext);
     }
 
     @Override

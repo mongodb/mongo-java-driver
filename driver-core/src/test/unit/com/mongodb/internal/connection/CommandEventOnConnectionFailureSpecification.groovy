@@ -23,6 +23,7 @@ import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ServerId
 import com.mongodb.event.CommandFailedEvent
+import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.bulk.DeleteRequest
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -61,14 +62,15 @@ class   CommandEventOnConnectionFailureSpecification extends Specification {
         where:
         [protocolInfo, async] << [[
                                           ['killCursors',
-                                    new KillCursorProtocol(namespace, [42L], null)],
+                                    new KillCursorProtocol(namespace, [42L], IgnorableRequestContext.INSTANCE)],
                                           ['getMore',
-                                    new GetMoreProtocol(namespace, 42L, 1, new DocumentCodec(), null)],
+                                    new GetMoreProtocol(namespace, 42L, 1, new DocumentCodec(), IgnorableRequestContext.INSTANCE)],
                                           ['find',
-                                    new QueryProtocol(namespace, 0, 1, 1, new BsonDocument(), new BsonDocument(), new DocumentCodec())],
+                                    new QueryProtocol(namespace, 0, 1, 1, new BsonDocument(), new BsonDocument(), new DocumentCodec(),
+                                           IgnorableRequestContext.INSTANCE)],
                                           ['delete',
                                     new DeleteProtocol(namespace, true, new DeleteRequest(new BsonDocument('_id', new BsonInt32(1))),
-                                            null)],
+                                            IgnorableRequestContext.INSTANCE)],
                                   ],
                                   [false, true]].combinations()
     }
@@ -92,9 +94,10 @@ class   CommandEventOnConnectionFailureSpecification extends Specification {
         where:
         [protocolInfo, async] << [[
                                           ['getMore',
-                                    new GetMoreProtocol(namespace, 42L, 1, new DocumentCodec(), null)],
+                                    new GetMoreProtocol(namespace, 42L, 1, new DocumentCodec(), IgnorableRequestContext.INSTANCE)],
                                           ['find',
-                                    new QueryProtocol(namespace, 0, 1, 1, new BsonDocument(), new BsonDocument(), new DocumentCodec())],
+                                    new QueryProtocol(namespace, 0, 1, 1, new BsonDocument(), new BsonDocument(), new DocumentCodec(),
+                                            IgnorableRequestContext.INSTANCE)],
                                   ],
                                   [false, true]].combinations()
     }

@@ -26,6 +26,7 @@ import com.mongodb.connection.ClusterType
 import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
+import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding
 import com.mongodb.internal.binding.AsyncClusterBinding
 import com.mongodb.internal.binding.AsyncConnectionSource
@@ -193,6 +194,6 @@ class ClientSessionBindingSpecification extends Specification {
                 new ClusterDescription(ClusterConnectionMode.MULTIPLE, ClusterType.REPLICA_SET, [])
             }
         }
-        new AsyncClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, null, null)
+        new AsyncClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, null, IgnorableRequestContext.INSTANCE)
     }
 }

@@ -31,6 +31,7 @@ import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.connection.TlsChannelStreamFactoryFactory;
 import com.mongodb.connection.netty.NettyStreamFactoryFactory;
+import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncClusterBinding;
@@ -330,7 +331,8 @@ public final class ClusterFixture {
 
     public static AsyncReadWriteBinding getAsyncBinding(final Cluster cluster, final ReadPreference readPreference) {
         if (!asyncBindingMap.containsKey(readPreference)) {
-            AsyncReadWriteBinding binding = new AsyncClusterBinding(cluster, readPreference, ReadConcern.DEFAULT, getServerApi(), null);
+            AsyncReadWriteBinding binding = new AsyncClusterBinding(cluster, readPreference, ReadConcern.DEFAULT, getServerApi(),
+                    IgnorableRequestContext.INSTANCE);
             if (serverVersionAtLeast(3, 6)) {
                 binding = new AsyncSessionBinding(binding);
             }

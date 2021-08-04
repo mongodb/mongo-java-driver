@@ -25,6 +25,7 @@ import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.bulk.DeleteRequest;
 import com.mongodb.internal.bulk.InsertRequest;
@@ -76,7 +77,7 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
 
     @Override
     public WriteConcernResult insert(final MongoNamespace namespace, final boolean ordered, final InsertRequest insertRequest) {
-        return executeProtocol(new InsertProtocol(namespace, ordered, insertRequest, null));
+        return executeProtocol(new InsertProtocol(namespace, ordered, insertRequest, IgnorableRequestContext.INSTANCE));
     }
 
     @Override
@@ -87,7 +88,7 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
 
     @Override
     public WriteConcernResult update(final MongoNamespace namespace, final boolean ordered, final UpdateRequest updateRequest) {
-        return executeProtocol(new UpdateProtocol(namespace, ordered, updateRequest, null));
+        return executeProtocol(new UpdateProtocol(namespace, ordered, updateRequest, IgnorableRequestContext.INSTANCE));
     }
 
     @Override
@@ -98,7 +99,7 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
 
     @Override
     public WriteConcernResult delete(final MongoNamespace namespace, final boolean ordered, final DeleteRequest deleteRequest) {
-        return executeProtocol(new DeleteProtocol(namespace, ordered, deleteRequest, null));
+        return executeProtocol(new DeleteProtocol(namespace, ordered, deleteRequest, IgnorableRequestContext.INSTANCE));
     }
 
     @Override
@@ -122,7 +123,8 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
                          final boolean responseExpected, final SplittablePayload payload,
                          final FieldNameValidator payloadFieldNameValidator) {
         return executeProtocol(new CommandProtocolImpl<T>(database, command, commandFieldNameValidator, readPreference,
-                commandResultDecoder, responseExpected, payload, payloadFieldNameValidator, clusterConnectionMode, serverApi, null),
+                commandResultDecoder, responseExpected, payload, payloadFieldNameValidator, clusterConnectionMode, serverApi,
+                        IgnorableRequestContext.INSTANCE),
                 sessionContext);
     }
 
@@ -155,7 +157,8 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
                                     final boolean awaitData, final boolean noCursorTimeout,
                                     final boolean partial, final boolean oplogReplay,
                                     final Decoder<T> resultDecoder) {
-        return executeProtocol(new QueryProtocol<T>(namespace, skip, limit, batchSize, queryDocument, fields, resultDecoder, null)
+        return executeProtocol(new QueryProtocol<T>(namespace, skip, limit, batchSize, queryDocument, fields, resultDecoder,
+                IgnorableRequestContext.INSTANCE)
                                .tailableCursor(tailableCursor)
                                .secondaryOk(getSecondaryOk(secondaryOk))
                                .oplogReplay(oplogReplay)
@@ -182,7 +185,8 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
     @Override
     public <T> QueryResult<T> getMore(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
                                       final Decoder<T> resultDecoder) {
-        return executeProtocol(new GetMoreProtocol<T>(namespace, cursorId, numberToReturn, resultDecoder, null));
+        return executeProtocol(new GetMoreProtocol<T>(namespace, cursorId, numberToReturn, resultDecoder,
+                IgnorableRequestContext.INSTANCE));
     }
 
     @Override
@@ -194,7 +198,7 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
 
     @Override
     public void killCursor(final MongoNamespace namespace, final List<Long> cursors) {
-        executeProtocol(new KillCursorProtocol(namespace, cursors, null));
+        executeProtocol(new KillCursorProtocol(namespace, cursors, IgnorableRequestContext.INSTANCE));
     }
 
     @Override

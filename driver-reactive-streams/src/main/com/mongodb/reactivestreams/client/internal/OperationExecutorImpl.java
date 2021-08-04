@@ -25,6 +25,7 @@ import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.RequestContext;
+import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.async.client.ClientSessionBinding;
 import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.AsyncClusterBinding;
@@ -137,9 +138,12 @@ public class OperationExecutorImpl implements OperationExecutor {
         });
     }
 
-    @Nullable
     private <T> RequestContext getContext(final Subscriber<T> subscriber) {
-        return contextProvider == null ? null : contextProvider.getContext(subscriber);
+        RequestContext context = null;
+        if (contextProvider != null) {
+            context = contextProvider.getContext(subscriber);
+        }
+        return context == null ? IgnorableRequestContext.INSTANCE : context;
     }
 
     private void labelException(@Nullable final ClientSession session, @Nullable final Throwable t) {

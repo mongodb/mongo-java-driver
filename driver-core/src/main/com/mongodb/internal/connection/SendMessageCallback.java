@@ -21,6 +21,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.event.CommandListener;
 import org.bson.io.OutputBuffer;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.ProtocolHelper.sendCommandFailedEvent;
 
 class SendMessageCallback<T> implements SingleResultCallback<Void> {
@@ -45,7 +46,7 @@ class SendMessageCallback<T> implements SingleResultCallback<Void> {
         this.commandName = commandName;
         this.commandListener = commandListener;
         this.startTimeNanos = startTimeNanos;
-        this.requestContext = requestContext;
+        this.requestContext = notNull("requestContext", requestContext);
         this.callback = callback;
         this.receiveMessageCallback = receiveMessageCallback;
         this.requestId = message.getId();

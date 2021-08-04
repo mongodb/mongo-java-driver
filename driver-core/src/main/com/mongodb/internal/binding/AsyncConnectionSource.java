@@ -50,7 +50,6 @@ public interface AsyncConnectionSource extends ReferenceCounted {
     @Nullable
     ServerApi getServerApi();
 
-    @Nullable
     RequestContext getRequestContext();
 
     /**

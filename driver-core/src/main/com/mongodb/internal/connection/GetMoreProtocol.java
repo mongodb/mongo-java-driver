@@ -36,6 +36,7 @@ import org.bson.codecs.Decoder;
 import java.util.Collections;
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.ProtocolHelper.getQueryFailureException;
 import static com.mongodb.internal.connection.ProtocolHelper.sendCommandFailedEvent;
 import static com.mongodb.internal.connection.ProtocolHelper.sendCommandStartedEvent;
@@ -66,7 +67,7 @@ class GetMoreProtocol<T> implements LegacyProtocol<QueryResult<T>> {
         this.cursorId = cursorId;
         this.numberToReturn = numberToReturn;
         this.resultDecoder = resultDecoder;
-        this.requestContext = requestContext;
+        this.requestContext = notNull("requestContext", requestContext);
     }
 
     @Override
@@ -111,7 +112,7 @@ class GetMoreProtocol<T> implements LegacyProtocol<QueryResult<T>> {
         } catch (RuntimeException e) {
             if (commandListener != null) {
                 sendCommandFailedEvent(message, COMMAND_NAME, connection.getDescription(), System.nanoTime() - startTimeNanos, e,
-                        commandListener, null);
+                        commandListener, requestContext);
             }
             throw e;
         }

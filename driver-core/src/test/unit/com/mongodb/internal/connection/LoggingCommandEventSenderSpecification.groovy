@@ -28,6 +28,7 @@ import com.mongodb.event.CommandFailedEvent
 import com.mongodb.event.CommandListener
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.event.CommandSucceededEvent
+import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonBinary
 import org.bson.BsonDocument
@@ -55,8 +56,8 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def logger = Stub(Logger) {
             isDebugEnabled() >> debugLoggingEnabled
         }
-        def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, commandListener, null, message, bsonOutput,
-                logger)
+        def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, commandListener,
+                IgnorableRequestContext.INSTANCE, message, bsonOutput, logger)
 
         when:
         sender.sendStartedEvent()
@@ -95,7 +96,8 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def logger = Mock(Logger) {
             isDebugEnabled() >> true
         }
-        def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, commandListener, null, message, bsonOutput,
+        def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, commandListener,
+                IgnorableRequestContext.INSTANCE, message, bsonOutput,
                 logger)
         when:
         sender.sendStartedEvent()

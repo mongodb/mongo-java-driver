@@ -24,6 +24,7 @@ import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.netty.NettyStreamFactory
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.event.CommandSucceededEvent
+import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.bulk.DeleteRequest
 import com.mongodb.internal.bulk.InsertRequest
 import com.mongodb.internal.bulk.UpdateRequest
@@ -67,7 +68,7 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         def document = new BsonDocument('_id', new BsonInt32(1))
 
         def insertRequest = new InsertRequest(document)
-        def protocol = new InsertProtocol(getNamespace(), true, insertRequest, requestContext)
+        def protocol = new InsertProtocol(getNamespace(), true, insertRequest, IgnorableRequestContext.INSTANCE)
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
 
@@ -104,7 +105,7 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         def filter = new BsonDocument('_id', new BsonInt32(1))
         def update = new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1)))
         def updateRequest = new UpdateRequest(filter, update, UPDATE).multi(true).upsert(true)
-        def protocol = new UpdateProtocol(getNamespace(), true, updateRequest, requestContext)
+        def protocol = new UpdateProtocol(getNamespace(), true, updateRequest, IgnorableRequestContext.INSTANCE)
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
 
@@ -141,7 +142,7 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         def filter = new BsonDocument('_id', new BsonInt32(1))
         def update = new BsonDocument('x', new BsonInt32(1))
         def updateRequest = new UpdateRequest(filter, update, REPLACE).multi(false).upsert(true)
-        def protocol = new UpdateProtocol(getNamespace(), true, updateRequest, requestContext)
+        def protocol = new UpdateProtocol(getNamespace(), true, updateRequest, IgnorableRequestContext.INSTANCE)
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
 
@@ -176,7 +177,7 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         given:
         def filter = new BsonDocument('_id', new BsonInt32(1))
         def deleteRequest = new DeleteRequest(filter).multi(true)
-        def protocol = new DeleteProtocol(getNamespace(), true, deleteRequest, null)
+        def protocol = new DeleteProtocol(getNamespace(), true, deleteRequest, IgnorableRequestContext.INSTANCE)
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
 
@@ -205,7 +206,7 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
     def 'should not deliver any events if encoding fails'() {
         given:
         def updateRequest = new UpdateRequest(new BsonDocument(), new BsonDocument('$set', new BsonInt32(1)), REPLACE)
-        def protocol = new UpdateProtocol(getNamespace(), true, updateRequest, requestContext)
+        def protocol = new UpdateProtocol(getNamespace(), true, updateRequest, IgnorableRequestContext.INSTANCE)
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
 

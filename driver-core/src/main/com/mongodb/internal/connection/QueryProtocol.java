@@ -22,6 +22,7 @@ import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -39,6 +40,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.ProtocolHelper.encodeMessageWithMetadata;
 import static com.mongodb.internal.connection.ProtocolHelper.getMessageSettings;
 import static com.mongodb.internal.connection.ProtocolHelper.getQueryFailureException;
@@ -87,7 +89,7 @@ class QueryProtocol<T> implements LegacyProtocol<QueryResult<T>> {
         this.queryDocument = queryDocument;
         this.fields = fields;
         this.resultDecoder = resultDecoder;
-        this.requestContext = null;
+        this.requestContext = IgnorableRequestContext.INSTANCE;
     }
 
     QueryProtocol(final MongoNamespace namespace, final int skip, final int limit, final int batchSize,
@@ -95,7 +97,7 @@ class QueryProtocol<T> implements LegacyProtocol<QueryResult<T>> {
                   final RequestContext requestContext) {
         this.namespace = namespace;
         this.skip = skip;
-        this.requestContext = requestContext;
+        this.requestContext = notNull("requestContext", requestContext);
         this.withLimitAndBatchSize = true;
         this.numberToReturn = 0;
         this.limit = limit;

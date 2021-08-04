@@ -25,6 +25,7 @@ import com.mongodb.connection.netty.NettyStreamFactory
 import com.mongodb.event.CommandFailedEvent
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.event.CommandSucceededEvent
+import com.mongodb.internal.IgnorableRequestContext
 import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonDouble
@@ -69,7 +70,7 @@ class GetMoreProtocolCommandEventSpecification extends OperationFunctionalSpecif
                          new BsonDocument('_id', new BsonInt32(5))]
         collectionHelper.insertDocuments(documents)
         def result = new QueryProtocol(getNamespace(), 1, 2, new BsonDocument(), null, new BsonDocumentCodec()).execute(connection)
-        def protocol = new GetMoreProtocol(getNamespace(), result.cursor.id, 2, new BsonDocumentCodec(), null)
+        def protocol = new GetMoreProtocol(getNamespace(), result.cursor.id, 2, new BsonDocumentCodec(), IgnorableRequestContext.INSTANCE)
 
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
@@ -101,8 +102,8 @@ class GetMoreProtocolCommandEventSpecification extends OperationFunctionalSpecif
         collectionHelper.insertDocuments(new Document(), new Document(), new Document(), new Document(), new Document())
         def result = new QueryProtocol(getNamespace(), 1, 2, new BsonDocument(), null, new BsonDocumentCodec())
                 .execute(connection)
-        new KillCursorProtocol(getNamespace(), [result.cursor.id], null).execute(connection)
-        def protocol = new GetMoreProtocol(getNamespace(), result.cursor.id, 2, new BsonDocumentCodec(), null)
+        new KillCursorProtocol(getNamespace(), [result.cursor.id], IgnorableRequestContext.INSTANCE).execute(connection)
+        def protocol = new GetMoreProtocol(getNamespace(), result.cursor.id, 2, new BsonDocumentCodec(), IgnorableRequestContext.INSTANCE)
 
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener

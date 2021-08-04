@@ -47,7 +47,6 @@ public interface AsyncReadBinding extends ReferenceCounted {
     @Nullable
     ServerApi getServerApi();
 
-    @Nullable
     RequestContext getRequestContext();
 
     /**

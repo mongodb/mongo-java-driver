@@ -31,6 +31,7 @@ import org.bson.BsonString;
 
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.ProtocolHelper.sendCommandFailedEvent;
 import static com.mongodb.internal.connection.ProtocolHelper.sendCommandStartedEvent;
 import static com.mongodb.internal.connection.ProtocolHelper.sendCommandSucceededEvent;
@@ -53,7 +54,7 @@ class KillCursorProtocol implements LegacyProtocol<Void> {
     KillCursorProtocol(final MongoNamespace namespace, final List<Long> cursors, final RequestContext requestContext) {
         this.namespace = namespace;
         this.cursors = cursors;
-        this.requestContext = requestContext;
+        this.requestContext = notNull("requestContext", requestContext);
     }
 
     @Override
@@ -116,7 +117,7 @@ class KillCursorProtocol implements LegacyProtocol<Void> {
                     if (commandListener != null && namespace != null) {
                         if (t != null) {
                             sendCommandFailedEvent(message, COMMAND_NAME, connection.getDescription(),
-                                    System.nanoTime() - startTimeNanos, t, commandListener, null);
+                                    System.nanoTime() - startTimeNanos, t, commandListener, requestContext);
                         } else {
                             sendCommandSucceededEvent(message, COMMAND_NAME, asCommandResponseDocument(),
                                     connection.getDescription(),
@@ -131,7 +132,7 @@ class KillCursorProtocol implements LegacyProtocol<Void> {
         } catch (Throwable t) {
             if (startEventSent) {
                 sendCommandFailedEvent(message, COMMAND_NAME, connection.getDescription(), System.nanoTime() - startTimeNanos,
-                        t, commandListener, null);
+                        t, commandListener, requestContext);
             }
             callback.onResult(null, t);
         }
