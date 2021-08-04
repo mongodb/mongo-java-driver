@@ -63,7 +63,7 @@ public class OperationExecutorImpl implements OperationExecutor {
     }
 
     @Override
-    public <T> Publisher<T> execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference,
+    public <T> Mono<T> execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference,
             final ReadConcern readConcern,
             @Nullable final ClientSession session) {
         notNull("operation", operation);
@@ -74,7 +74,7 @@ public class OperationExecutorImpl implements OperationExecutor {
             session.notifyOperationInitiated(operation);
         }
 
-        return new Publisher<T>() {
+        return Mono.from(new Publisher<T>() {
             @Override
             public void subscribe(final Subscriber<? super T> s) {
                 clientSessionHelper.withClientSession(session, OperationExecutorImpl.this)
@@ -100,11 +100,11 @@ public class OperationExecutorImpl implements OperationExecutor {
                             }
                         }).subscribe(s);
             }
-        };
+        });
     }
 
     @Override
-    public <T> Publisher<T> execute(final AsyncWriteOperation<T> operation, final ReadConcern readConcern,
+    public <T> Mono<T> execute(final AsyncWriteOperation<T> operation, final ReadConcern readConcern,
             @Nullable final ClientSession session) {
         notNull("operation", operation);
         notNull("readConcern", readConcern);
@@ -113,7 +113,7 @@ public class OperationExecutorImpl implements OperationExecutor {
             session.notifyOperationInitiated(operation);
         }
 
-        return new Publisher<T>() {
+        return Mono.from(new Publisher<T>() {
             @Override
             public void subscribe(final Subscriber<? super T> s) {
                 clientSessionHelper.withClientSession(session, OperationExecutorImpl.this)
@@ -134,7 +134,7 @@ public class OperationExecutorImpl implements OperationExecutor {
                                 })
                         ).subscribe(s);
             }
-        };
+        });
     }
 
     @Nullable

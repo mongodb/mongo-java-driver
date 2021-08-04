@@ -31,6 +31,5 @@ public interface ReactiveContextProvider extends ContextProvider {
      * @param subscriber the subscriber for the operation
      * @return the request context
      */
-    @SuppressWarnings("rawtypes") // TODO: a bit weird to have to take a raw type and suppress warnings
-    RequestContext getContext(Subscriber subscriber);
+    RequestContext getContext(Subscriber<?> subscriber);
 }

@@ -22,7 +22,7 @@ import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.internal.operation.AsyncWriteOperation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
-import org.reactivestreams.Publisher;
+import reactor.core.publisher.Mono;
 
 /**
  * An interface describing the execution of a read or a write operation.
@@ -38,7 +38,7 @@ public interface OperationExecutor {
      * @param session the session to associate this operation with
      * @param <T> the operations result type.
      */
-    <T> Publisher<T> execute(AsyncReadOperation<T> operation, ReadPreference readPreference, ReadConcern readConcern,
+    <T> Mono<T> execute(AsyncReadOperation<T> operation, ReadPreference readPreference, ReadConcern readConcern,
             @Nullable ClientSession session);
 
     /**
@@ -49,5 +49,5 @@ public interface OperationExecutor {
      * @param readConcern the read concern
      * @param <T> the operations result type.
      */
-    <T> Publisher<T> execute(AsyncWriteOperation<T> operation, ReadConcern readConcern, @Nullable ClientSession session);
+    <T> Mono<T> execute(AsyncWriteOperation<T> operation, ReadConcern readConcern, @Nullable ClientSession session);
 }

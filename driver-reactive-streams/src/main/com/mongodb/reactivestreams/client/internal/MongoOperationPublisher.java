@@ -445,23 +445,22 @@ public final class MongoOperationPublisher<T> {
                                         clientSession);
     }
 
-    <R> Publisher<R> createReadOperationMono(
+    <R> Mono<R> createReadOperationMono(
             final Supplier<AsyncReadOperation<R>> operation,
             @Nullable final ClientSession clientSession) {
         return createReadOperationMono(operation, clientSession, getReadPreference());
     }
 
-    <R> Publisher<R> createReadOperationMono(
+    <R> Mono<R> createReadOperationMono(
             final Supplier<AsyncReadOperation<R>> operation,
             @Nullable final ClientSession clientSession,
             final ReadPreference readPreference) {
-        AsyncReadOperation<R> readOperation = operation.get();
-        return executor.execute(readOperation, readPreference, getReadConcern(), clientSession);
+        return executor.execute(operation.get(), readPreference, getReadConcern(), clientSession);
     }
 
     <R> Mono<R> createWriteOperationMono(final Supplier<AsyncWriteOperation<R>> operation,
             @Nullable final ClientSession clientSession) {
-        return Mono.from(executor.execute(operation.get(), getReadConcern(), clientSession));
+        return executor.execute(operation.get(), getReadConcern(), clientSession);
     }
 
     private Mono<BulkWriteResult> createSingleWriteRequestMono(
