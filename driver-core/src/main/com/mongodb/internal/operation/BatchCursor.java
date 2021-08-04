@@ -19,6 +19,7 @@ package com.mongodb.internal.operation;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.lang.Nullable;
 
 import java.io.Closeable;
 import java.util.Iterator;
@@ -37,6 +38,15 @@ import java.util.List;
  */
 @NotThreadSafe
 public interface BatchCursor<T> extends Iterator<List<T>>, Closeable {
+    /**
+     * Despite this interface being {@linkplain NotThreadSafe non-thread-safe},
+     * {@link #close()} is allowed to be called concurrently with any method of the cursor, including itself.
+     * This is useful to cancel blocked {@link #hasNext()}, {@link #next()}.
+     * This method is idempotent.
+     * <p>
+     * Another quirk is that this method is allowed to release resources "eventually",
+     * i.e., not before (in the happens-before order) returning.
+     */
     @Override
     void close();
 
@@ -85,6 +95,7 @@ public interface BatchCursor<T> extends Iterator<List<T>>, Closeable {
      *
      * @return ServerCursor
      */
+    @Nullable
     ServerCursor getServerCursor();
 
     /**

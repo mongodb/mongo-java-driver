@@ -16,6 +16,7 @@
 
 package com.mongodb.client;
 
+import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
@@ -24,17 +25,18 @@ import org.bson.BsonDocument;
  * <p>
  * An application should ensure that a cursor is closed in all circumstances, e.g. using a try-with-resources statement:
  * </p>
- * <blockquote><pre>
- * try (MongoChangeStreamCursor&lt;Document&gt; cursor = collection.find().cursor()) {
+ * <pre>{@code
+ * try (MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch().cursor()) {
  *     while (cursor.hasNext()) {
  *         System.out.println(cursor.next());
  *     }
  * }
- * </pre></blockquote>
+ * }</pre>
  *
  * @since 3.11
  * @param <TResult> The type of documents the cursor contains
  */
+@NotThreadSafe
 public interface MongoChangeStreamCursor<TResult> extends MongoCursor<TResult> {
     /**
      * Returns the resume token. If a batch has been iterated to the last change stream document in the batch
