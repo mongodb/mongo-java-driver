@@ -230,7 +230,7 @@ configure(javaCodeCheckedProjects) {
         testImplementation('org.junit.jupiter:junit-jupiter')
         testImplementation('org.junit.vintage:junit-vintage-engine')
 
-        testImplementation platform('org.spockframework:spock-bom:2.0-M3-groovy-2.5')
+        testImplementation platform('org.spockframework:spock-bom:2.0-groovy-2.5')
         testImplementation 'org.spockframework:spock-core'
         testImplementation 'org.spockframework:spock-junit4'
         testImplementation("org.mockito:mockito-core:3.8.0")
@@ -274,9 +274,16 @@ configure(javaCodeCheckedProjects) {
     }
 
     task testSlowOnly(type: Test) {
+        dependsOn('testSlowGroovy')
         useJUnitPlatform {
-            includeEngines('junit-jupiter', 'junit-vintage', 'spock')
+            includeEngines('junit-jupiter', 'junit-vintage')
             includeTags('Slow')
+        }
+    }
+
+    task testSlowGroovy(type: Test) {
+        useJUnitPlatform {
+            includeEngines( 'spock')
         }
         systemProperty('spock.configuration', "${configDir}/spock/OnlySlow.groovy")
     }
