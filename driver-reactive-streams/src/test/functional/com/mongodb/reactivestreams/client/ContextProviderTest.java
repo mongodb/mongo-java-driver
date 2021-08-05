@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.client;
+package com.mongodb.reactivestreams.client;
 
 import com.mongodb.MongoClientSettings;
 import com.mongodb.RequestContext;
@@ -26,6 +26,9 @@ import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.lang.Nullable;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
+import org.reactivestreams.Subscriber;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import static com.mongodb.ClusterFixture.getConnectionString;
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
@@ -49,12 +52,12 @@ public class ContextProviderTest {
             // given
             MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName())
                     .getCollection("ContextProviderTest");
-            collection.drop();
-            collection.insertMany(asList(new Document(), new Document(), new Document(), new Document()));
+            Mono.from(collection.drop()).block();
+            Mono.from(collection.insertMany(asList(new Document(), new Document(), new Document(), new Document()))).block();
             commandListener.reset();
 
             // when
-            collection.countDocuments();
+            Mono.from(collection.countDocuments()).block();
 
             // then
             assertEquals(1, commandListener.numCommandStartedEventsWithExpectedContext);
@@ -69,9 +72,9 @@ public class ContextProviderTest {
         TestCommandListener commandListener = new TestCommandListener(requestContext);
         try (MongoClient client = MongoClients.create(MongoClientSettings.builder()
                 .applyConnectionString(getConnectionString())
-                .contextProvider(new SynchronousContextProvider() {
+                .contextProvider(new ReactiveContextProvider() {
                     @Override
-                    public RequestContext getContext() {
+                    public RequestContext getContext(final Subscriber<?> subscriber) {
                         return requestContext;
                     }
                 })
@@ -81,12 +84,12 @@ public class ContextProviderTest {
             // given
             MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName())
                     .getCollection("ContextProviderTest");
-            collection.drop();
-            collection.insertMany(asList(new Document(), new Document(), new Document(), new Document()));
+            Mono.from(collection.drop()).block();
+            Mono.from(collection.insertMany(asList(new Document(), new Document(), new Document(), new Document()))).block();
             commandListener.reset();
 
             // when
-            collection.countDocuments();
+            Mono.from(collection.countDocuments()).block();
 
             // then
             assertEquals(1, commandListener.numCommandStartedEventsWithExpectedContext);
@@ -97,7 +100,7 @@ public class ContextProviderTest {
             Document document = new Document();
 
             // when
-            collection.insertOne(document);
+            Mono.from(collection.insertOne(document)).block();
 
             // then
             assertEquals(1, commandListener.numCommandStartedEventsWithExpectedContext);
@@ -107,7 +110,7 @@ public class ContextProviderTest {
             commandListener.reset();
 
             // when
-            collection.updateOne(document, inc("x", 1));
+            Mono.from(collection.updateOne(document, inc("x", 1))).block();
 
             // then
             assertEquals(1, commandListener.numCommandStartedEventsWithExpectedContext);
@@ -118,7 +121,7 @@ public class ContextProviderTest {
             Document documentTwo = new Document();
 
             // when
-            collection.withWriteConcern(WriteConcern.UNACKNOWLEDGED).insertOne(documentTwo);
+            Mono.from(collection.withWriteConcern(WriteConcern.UNACKNOWLEDGED).insertOne(documentTwo)).block();
 
             // then
             assertEquals(1, commandListener.numCommandStartedEventsWithExpectedContext);
@@ -128,7 +131,8 @@ public class ContextProviderTest {
             commandListener.reset();
 
             // when
-            collection.withWriteConcern(WriteConcern.UNACKNOWLEDGED).updateOne(documentTwo, inc("x", 1));
+            Mono.from(collection.withWriteConcern(WriteConcern.UNACKNOWLEDGED).updateOne(documentTwo, inc("x", 1)))
+                    .block();
 
             // then
             assertEquals(1, commandListener.numCommandStartedEventsWithExpectedContext);
@@ -138,7 +142,7 @@ public class ContextProviderTest {
             commandListener.reset();
 
             // when
-            collection.withWriteConcern(WriteConcern.UNACKNOWLEDGED).deleteOne(documentTwo);
+            Mono.from(collection.withWriteConcern(WriteConcern.UNACKNOWLEDGED).deleteOne(documentTwo)).block();
 
             // then
             assertEquals(1, commandListener.numCommandStartedEventsWithExpectedContext);
@@ -148,40 +152,19 @@ public class ContextProviderTest {
             commandListener.reset();
 
             // when
-            MongoCursor<Document> cursor = collection.find().batchSize(2).cursor();
-            cursor.next();
+            Flux<Document> findFlux = Flux.from(collection.find().batchSize(4));
+            findFlux.blockLast();
 
             // then
-            assertEquals(1, commandListener.numCommandStartedEventsWithExpectedContext);
-            assertEquals(1, commandListener.numCommandSucceededEventsWithExpectedContext);
-
-            // given
-            commandListener.reset();
-
-            // when
-            cursor.next();
-            cursor.next();
-
-            // then
-            assertEquals(1, commandListener.numCommandStartedEventsWithExpectedContext);
-            assertEquals(1, commandListener.numCommandSucceededEventsWithExpectedContext);
-
-            // given
-            commandListener.reset();
-
-            // when
-            cursor.close();
-
-            // then
-            assertEquals(1, commandListener.numCommandStartedEventsWithExpectedContext);
-            assertEquals(1, commandListener.numCommandSucceededEventsWithExpectedContext);
+            assertEquals(2, commandListener.numCommandStartedEventsWithExpectedContext);
+            assertEquals(2, commandListener.numCommandSucceededEventsWithExpectedContext);
 
             // given
             commandListener.reset();
 
             // when
             try {
-                client.getDatabase("admin").runCommand(new Document("notRealCommand", 1));
+                Mono.from(client.getDatabase("admin").runCommand(new Document("notRealCommand", 1))).block();
                 fail();
             } catch (Exception e) {
                 // then
