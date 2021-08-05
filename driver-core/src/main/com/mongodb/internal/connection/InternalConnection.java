@@ -85,11 +85,11 @@ public interface InternalConnection extends BufferProvider {
 
     /**
      * Send a command message to the server.
-     *
-     * @param message   the command message to send
+     *  @param message   the command message to send
      * @param sessionContext the session context
+     * @param requestContext the request context
      */
-    <T> T sendAndReceive(CommandMessage message, Decoder<T> decoder, SessionContext sessionContext);
+    <T> T sendAndReceive(CommandMessage message, Decoder<T> decoder, SessionContext sessionContext, RequestContext requestContext);
 
     <T> void send(CommandMessage message, Decoder<T> decoder, SessionContext sessionContext);
 

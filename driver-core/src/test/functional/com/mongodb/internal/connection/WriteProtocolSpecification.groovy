@@ -18,6 +18,7 @@ package com.mongodb.internal.connection
 
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
+import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.SocketSettings
@@ -72,7 +73,8 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
         cleanup:
         // force acknowledgement
         new CommandProtocolImpl(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
-                NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(), getServerApi())
+                NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(), true, null, null,
+                ClusterConnectionMode.MULTIPLE, getServerApi(), IgnorableRequestContext.INSTANCE)
                 .sessionContext(NoOpSessionContext.INSTANCE)
                 .execute(connection)
 

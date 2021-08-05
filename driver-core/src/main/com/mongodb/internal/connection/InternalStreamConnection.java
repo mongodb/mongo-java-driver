@@ -41,7 +41,6 @@ import com.mongodb.connection.StreamFactory;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.CommandListener;
-import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonBinaryReader;
@@ -305,13 +304,14 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     @Override
-    public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
+    public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
+            final RequestContext requestContext) {
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this);
         CommandEventSender commandEventSender;
 
         try {
             message.encode(bsonOutput, sessionContext);
-            commandEventSender = createCommandEventSender(message, bsonOutput, IgnorableRequestContext.INSTANCE);
+            commandEventSender = createCommandEventSender(message, bsonOutput, requestContext);
             commandEventSender.sendStartedEvent();
         } catch (RuntimeException e) {
             bsonOutput.close();

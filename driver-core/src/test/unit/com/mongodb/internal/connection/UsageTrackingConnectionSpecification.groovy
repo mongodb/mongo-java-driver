@@ -22,6 +22,7 @@ import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ServerId
+import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -173,7 +174,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         connection.sendAndReceive(new CommandMessage(new MongoNamespace('test.coll'),
                 new BsonDocument('ping', new BsonInt32(1)), new NoOpFieldNameValidator(), primary(),
                 MessageSettings.builder().build(), null),
-                new BsonDocumentCodec(), NoOpSessionContext.INSTANCE)
+                new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE)
 
         then:
         connection.lastUsedAt >= openedLastUsedAt

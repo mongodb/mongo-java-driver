@@ -111,8 +111,9 @@ class UsageTrackingInternalConnection implements InternalConnection {
     }
 
     @Override
-    public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
-        T result = wrapped.sendAndReceive(message, decoder, sessionContext);
+    public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
+            final RequestContext requestContext) {
+        T result = wrapped.sendAndReceive(message, decoder, sessionContext, requestContext);
         lastUsedAt = System.currentTimeMillis();
         return result;
     }

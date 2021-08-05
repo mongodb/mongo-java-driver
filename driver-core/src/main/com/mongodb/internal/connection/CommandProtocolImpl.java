@@ -23,7 +23,6 @@ import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
-import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
@@ -47,18 +46,6 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
     private final ServerApi serverApi;
 
     CommandProtocolImpl(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-                        final ReadPreference readPreference, final Decoder<T> commandResultDecoder) {
-        this(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, true, null, null,
-                ClusterConnectionMode.MULTIPLE, null, null);
-    }
-
-    CommandProtocolImpl(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-                        final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final @Nullable ServerApi serverApi) {
-        this(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, true, null, null,
-                ClusterConnectionMode.MULTIPLE, serverApi, null);
-    }
-
-    CommandProtocolImpl(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
             final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final boolean responseExpected,
             final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
             final ClusterConnectionMode clusterConnectionMode, final ServerApi serverApi, final RequestContext requestContext) {
@@ -73,7 +60,7 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
         this.payloadFieldNameValidator = payloadFieldNameValidator;
         this.clusterConnectionMode = notNull("clusterConnectionMode", clusterConnectionMode);
         this.serverApi = serverApi;
-        this.requestContext = requestContext;
+        this.requestContext = notNull("requestContext", requestContext);
 
         isTrueArgument("payloadFieldNameValidator cannot be null if there is a payload.",
                 payload == null || payloadFieldNameValidator != null);
@@ -81,7 +68,7 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
 
     @Override
     public T execute(final InternalConnection connection) {
-        return connection.sendAndReceive(getCommandMessage(connection), commandResultDecoder, sessionContext);
+        return connection.sendAndReceive(getCommandMessage(connection), commandResultDecoder, sessionContext, requestContext);
     }
 
     @Override

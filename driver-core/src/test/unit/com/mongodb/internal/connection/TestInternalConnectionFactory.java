@@ -104,7 +104,8 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
         }
 
         @Override
-        public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
+        public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
+                final RequestContext requestContext) {
             return null;
         }
 

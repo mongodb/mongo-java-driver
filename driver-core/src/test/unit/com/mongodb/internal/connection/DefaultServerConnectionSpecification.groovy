@@ -269,11 +269,12 @@ class DefaultServerConnectionSpecification extends Specification {
 
         when:
         connection.commandAsync('test', command, validator, ReadPreference.primary(), codec, NoOpSessionContext.INSTANCE,
-                getServerApi(), null, callback)
+                getServerApi(), IgnorableRequestContext.INSTANCE, callback)
 
         then:
         1 * executor.executeAsync({
-            compare(new CommandProtocolImpl('test', command, validator, ReadPreference.primary(), codec, getServerApi()), it)
+            compare(new CommandProtocolImpl('test', command, validator, ReadPreference.primary(), codec, true, null, null,
+                    ClusterConnectionMode.MULTIPLE, getServerApi(), IgnorableRequestContext.INSTANCE), it)
         }, internalConnection, NoOpSessionContext.INSTANCE, callback)
     }
 

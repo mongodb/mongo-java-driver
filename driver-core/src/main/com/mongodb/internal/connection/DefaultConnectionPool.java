@@ -609,9 +609,10 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
-        public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
+        public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
+                final RequestContext requestContext) {
             isTrue("open", !isClosed.get());
-            return wrapped.sendAndReceive(message, decoder, sessionContext);
+            return wrapped.sendAndReceive(message, decoder, sessionContext, requestContext);
         }
 
         @Override
