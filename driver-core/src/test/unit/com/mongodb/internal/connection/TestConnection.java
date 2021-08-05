@@ -66,7 +66,7 @@ class TestConnection implements Connection, AsyncConnection {
 
     @Override
     public WriteConcernResult insert(final MongoNamespace namespace, final boolean ordered,
-                                     final InsertRequest insertRequest) {
+                                     final InsertRequest insertRequest, final RequestContext requestContext) {
         return executeEnqueuedLegacyProtocol();
     }
 
@@ -79,7 +79,7 @@ class TestConnection implements Connection, AsyncConnection {
 
     @Override
     public WriteConcernResult update(final MongoNamespace namespace, final boolean ordered,
-                                     final UpdateRequest updateRequest) {
+            final UpdateRequest updateRequest, final RequestContext requestContext) {
         return executeEnqueuedLegacyProtocol();
     }
 
@@ -92,7 +92,7 @@ class TestConnection implements Connection, AsyncConnection {
 
     @Override
     public WriteConcernResult delete(final MongoNamespace namespace, final boolean ordered,
-                                     final DeleteRequest deleteRequest) {
+            final DeleteRequest deleteRequest, final RequestContext requestContext) {
         return executeEnqueuedLegacyProtocol();
     }
 
@@ -105,16 +105,16 @@ class TestConnection implements Connection, AsyncConnection {
 
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-                         final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-                         final ServerApi serverApi) {
+            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
+            final ServerApi serverApi, final RequestContext requestContext) {
         return executeEnqueuedCommandBasedProtocol(sessionContext);
     }
 
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-                         final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-                         final ServerApi serverApi, final boolean responseExpected, final SplittablePayload payload,
-                         final FieldNameValidator payloadFieldNameValidator) {
+            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
+            final ServerApi serverApi, final RequestContext requestContext, final boolean responseExpected, final SplittablePayload payload,
+            final FieldNameValidator payloadFieldNameValidator) {
         return executeEnqueuedCommandBasedProtocol(sessionContext);
     }
 
@@ -138,10 +138,10 @@ class TestConnection implements Connection, AsyncConnection {
 
     @Override
     public <T> QueryResult<T> query(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
-                                    final int skip, final int limit,
-                                    final int batchSize, final boolean secondaryOk, final boolean tailableCursor, final boolean awaitData,
-                                    final boolean noCursorTimeout,
-                                    final boolean partial, final boolean oplogReplay, final Decoder<T> resultDecoder) {
+            final int skip, final int limit,
+            final int batchSize, final boolean secondaryOk, final boolean tailableCursor, final boolean awaitData,
+            final boolean noCursorTimeout,
+            final boolean partial, final boolean oplogReplay, final Decoder<T> resultDecoder, final RequestContext requestContext) {
         return executeEnqueuedLegacyProtocol();
     }
 
@@ -157,7 +157,7 @@ class TestConnection implements Connection, AsyncConnection {
 
     @Override
     public <T> QueryResult<T> getMore(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
-                                      final Decoder<T> resultDecoder) {
+            final Decoder<T> resultDecoder, final RequestContext requestContext) {
         return executeEnqueuedLegacyProtocol();
     }
 
@@ -169,7 +169,7 @@ class TestConnection implements Connection, AsyncConnection {
     }
 
     @Override
-    public void killCursor(final MongoNamespace namespace, final List<Long> cursors) {
+    public void killCursor(final MongoNamespace namespace, final List<Long> cursors, final RequestContext requestContext) {
         executeEnqueuedLegacyProtocol();
     }
 

@@ -475,7 +475,8 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         given:
         collectionHelper.insertDocuments(new DocumentCodec(), new Document())
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
-        def syncBinding = new ClusterBinding(getCluster(), ReadPreference.secondary(), ReadConcern.DEFAULT, null)
+        def syncBinding = new ClusterBinding(getCluster(), ReadPreference.secondary(), ReadConcern.DEFAULT, null,
+                IgnorableRequestContext.INSTANCE)
         def asyncBinding = new AsyncClusterBinding(getAsyncCluster(), ReadPreference.secondary(), ReadConcern.DEFAULT, null,
                 IgnorableRequestContext.INSTANCE)
 
@@ -501,7 +502,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def hedgeOptions = isHedgeEnabled != null ?
                 ReadPreferenceHedgeOptions.builder().enabled(isHedgeEnabled as boolean).build() : null
         def readPreference = ReadPreference.primaryPreferred().withHedgeOptions(hedgeOptions)
-        def syncBinding = new ClusterBinding(getCluster(), readPreference, ReadConcern.DEFAULT, null)
+        def syncBinding = new ClusterBinding(getCluster(), readPreference, ReadConcern.DEFAULT, null, IgnorableRequestContext.INSTANCE)
         def asyncBinding = new AsyncClusterBinding(getAsyncCluster(), readPreference, ReadConcern.DEFAULT, null,
                 IgnorableRequestContext.INSTANCE)
         def cursor = async ? executeAsync(operation, asyncBinding) : executeSync(operation, syncBinding)
@@ -545,7 +546,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                  6, STANDALONE, 1000, 100000, 100000, [])
-        1 * connection.command(_, commandDocument, _, _, _, sessionContext, null) >>
+        1 * connection.command(_, commandDocument, _, _, _, sessionContext, null, _) >>
                 new BsonDocument('cursor', new BsonDocument('id', new BsonInt64(1))
                         .append('ns', new BsonString(getNamespace().getFullName()))
                         .append('firstBatch', new BsonArrayWrapper([])))
@@ -626,7 +627,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                 6, STANDALONE, 1000, 100000, 100000, [])
-        1 * connection.command(_, commandDocument, _, _, _, sessionContext, null) >>
+        1 * connection.command(_, commandDocument, _, _, _, sessionContext, null, _) >>
                 new BsonDocument('cursor', new BsonDocument('id', new BsonInt64(1))
                         .append('ns', new BsonString(getNamespace().getFullName()))
                         .append('firstBatch', new BsonArrayWrapper([])))
@@ -711,7 +712,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
 
         1 * connection.query(getNamespace(), operation.filter, operation.projection, 0, 0, 0, false, false, false, false,
-                false, false, _) >> new QueryResult(getNamespace(), [new BsonDocument('n', new BsonInt32(1))], 0, new ServerAddress())
+                false, false, *_) >> new QueryResult(getNamespace(), [new BsonDocument('n', new BsonInt32(1))], 0, new ServerAddress())
         1 * connection.release()
     }
 

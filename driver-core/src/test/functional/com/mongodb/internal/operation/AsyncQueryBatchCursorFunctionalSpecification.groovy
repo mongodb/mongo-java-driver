@@ -376,13 +376,13 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         def connection = getConnection(connectionSource)
         def serverCursor = cursor.cursor.get()
         if (serverVersionLessThan(3, 6)) {
-            connection.killCursor(getNamespace(), asList(cursor.getServerCursor().id))
+            connection.killCursor(getNamespace(), asList(cursor.getServerCursor().id), IgnorableRequestContext.INSTANCE)
         } else {
             connection.command(getNamespace().databaseName,
                     new BsonDocument('killCursors', new BsonString(namespace.getCollectionName()))
                             .append('cursors', new BsonArray(singletonList(new BsonInt64(serverCursor.getId())))),
                     new NoOpFieldNameValidator(), ReadPreference.primary(),
-                    new BsonDocumentCodec(), new NoOpSessionContext(), getServerApi())
+                    new BsonDocumentCodec(), new NoOpSessionContext(), getServerApi(), IgnorableRequestContext.INSTANCE)
         }
         connection.release()
         nextBatch()

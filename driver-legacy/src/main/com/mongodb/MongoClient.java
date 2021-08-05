@@ -28,6 +28,7 @@ import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.event.ClusterListener;
+import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadWriteBinding;
 import com.mongodb.internal.binding.SingleServerBinding;
@@ -832,7 +833,7 @@ public class MongoClient implements Closeable {
                 try {
                     Connection connection = source.getConnection();
                     try {
-                        connection.killCursor(cur.namespace, singletonList(cur.serverCursor.getId()));
+                        connection.killCursor(cur.namespace, singletonList(cur.serverCursor.getId()), IgnorableRequestContext.INSTANCE);
                     } finally {
                         connection.release();
                     }

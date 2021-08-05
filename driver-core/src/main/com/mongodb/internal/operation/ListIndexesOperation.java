@@ -178,8 +178,8 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
                     try {
                         return new QueryBatchCursor<T>(connection.query(getIndexNamespace(),
                                 asQueryDocument(connection.getDescription(), binding.getReadPreference()), null, 0, 0, batchSize,
-                                binding.getReadPreference().isSecondaryOk(), false, false, false, false, false, decoder), 0, batchSize,
-                                decoder, source);
+                                binding.getReadPreference().isSecondaryOk(), false, false, false, false, false, decoder,
+                                binding.getRequestContext()), 0, batchSize, decoder, source);
                     } finally {
                         connection.release();
                     }

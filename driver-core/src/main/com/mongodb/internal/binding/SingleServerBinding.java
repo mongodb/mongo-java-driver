@@ -17,9 +17,11 @@
 package com.mongodb.internal.binding;
 
 import com.mongodb.ReadPreference;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.NoOpSessionContext;
@@ -80,6 +82,11 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
     }
 
     @Override
+    public RequestContext getRequestContext() {
+        return IgnorableRequestContext.INSTANCE;
+    }
+
+    @Override
     public SingleServerBinding retain() {
         super.retain();
         return this;
@@ -107,6 +114,11 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
         @Override
         public ServerApi getServerApi() {
             return serverApi;
+        }
+
+        @Override
+        public RequestContext getRequestContext() {
+            return IgnorableRequestContext.INSTANCE;
         }
 
         @Override

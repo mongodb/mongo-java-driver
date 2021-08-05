@@ -243,6 +243,7 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "MongoObservable",
       "Name",
       "NameCodecProvider",
+      "SynchronousContextProvider",
       "TransactionBody"
     )
 

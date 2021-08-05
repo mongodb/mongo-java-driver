@@ -30,6 +30,7 @@ import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.client.SynchronousContextProvider;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SocketStreamFactory;
@@ -69,9 +70,13 @@ public final class MongoClientImpl implements MongoClient {
         this.settings = notNull("settings", settings);
         this.mongoDriverInformation = mongoDriverInformation;
         AutoEncryptionSettings autoEncryptionSettings = settings.getAutoEncryptionSettings();
+        if (settings.getContextProvider() != null && !(settings.getContextProvider() instanceof SynchronousContextProvider)) {
+            throw new IllegalArgumentException("contextProvider must be an instance of SynchronousContextProvider");
+        }
         this.delegate = new MongoClientDelegate(notNull("cluster", cluster),
                 createRegistry(settings.getCodecRegistry(), settings.getUuidRepresentation()), this, operationExecutor,
-                autoEncryptionSettings == null ? null : createCrypt(this, autoEncryptionSettings), settings.getServerApi());
+                autoEncryptionSettings == null ? null : createCrypt(this, autoEncryptionSettings), settings.getServerApi(),
+                (SynchronousContextProvider) settings.getContextProvider());
     }
 
     @Override

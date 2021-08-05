@@ -439,7 +439,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
         then:
         _ * connection.getDescription() >> helper.twoSixConnectionDescription
-        1 * connection.query(_, _, _, _, _, _, readPreference.isSecondaryOk(), _, _, _, _, _, _) >> helper.queryResult
+        1 * connection.query(_, _, _, _, _, _, readPreference.isSecondaryOk(), *_) >> helper.queryResult
         1 * connection.release()
 
         when: '3.0.0'
@@ -447,7 +447,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
         then:
         _ * connection.getDescription() >> helper.threeZeroConnectionDescription
-        1 * connection.command(_, _, _, readPreference, _, _, null) >> helper.commandResult
+        1 * connection.command(_, _, _, readPreference, _, _, null, _) >> helper.commandResult
         1 * connection.release()
 
         where:

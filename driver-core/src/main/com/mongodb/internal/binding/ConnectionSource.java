@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.binding;
 
+import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.Connection;
@@ -48,6 +49,8 @@ public interface ConnectionSource extends ReferenceCounted {
 
     @Nullable
     ServerApi getServerApi();
+
+    RequestContext getRequestContext();
 
     /**
      * Gets a connection from this source.

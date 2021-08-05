@@ -308,7 +308,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                 6, STANDALONE, 1000, 100000, 100000, [])
-        1 * connection.command(_, commandDocument, _, _, _, sessionContext, null) >>
+        1 * connection.command(_, commandDocument, _, _, _, sessionContext, null, _) >>
                 new BsonDocument('values', new BsonArrayWrapper([]))
         1 * connection.release()
 

@@ -23,6 +23,7 @@ import com.mongodb.ReadPreference
 import com.mongodb.ServerCursor
 import com.mongodb.WriteConcern
 import com.mongodb.client.model.CreateCollectionOptions
+import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.binding.ConnectionSource
 import com.mongodb.internal.connection.Connection
 import com.mongodb.internal.connection.NoOpSessionContext
@@ -531,13 +532,13 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def serverCursor = cursor.getServerCursor()
         def connection = connectionSource.getConnection()
         if (serverVersionLessThan(3, 6)) {
-            connection.killCursor(getNamespace(), asList(cursor.getServerCursor().id))
+            connection.killCursor(getNamespace(), asList(cursor.getServerCursor().id), IgnorableRequestContext.INSTANCE)
         } else {
             connection.command(getNamespace().databaseName,
                     new BsonDocument('killCursors', new BsonString(namespace.getCollectionName()))
                             .append('cursors', new BsonArray(singletonList(new BsonInt64(serverCursor.getId())))),
                     new NoOpFieldNameValidator(), ReadPreference.primary(),
-                    new BsonDocumentCodec(), new NoOpSessionContext(), getServerApi())
+                    new BsonDocumentCodec(), new NoOpSessionContext(), getServerApi(), IgnorableRequestContext.INSTANCE)
         }
         connection.release()
         cursor.next()
@@ -595,14 +596,14 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
                 }
 
                 def response = connection.command(getDatabaseName(), findCommand,
-                        OperationFunctionalSpecification.NO_OP_FIELD_NAME_VALIDATOR, readPreference,
+                        NO_OP_FIELD_NAME_VALIDATOR, readPreference,
                         CommandResultDocumentCodec.create(new DocumentCodec(), 'firstBatch'),
-                        connectionSource.sessionContext, connectionSource.getServerApi())
+                        connectionSource.sessionContext, connectionSource.getServerApi(), IgnorableRequestContext.INSTANCE)
                 cursorDocumentToQueryResult(response.getDocument('cursor'), connection.getDescription().getServerAddress())
             } else {
                 connection.query(getNamespace(), filter, null, 0, limit, batchSize,
-                                 readPreference.isSecondaryOk(), tailable, awaitData, false, false, false,
-                                 new DocumentCodec());
+                        readPreference.isSecondaryOk(), tailable, awaitData, false, false, false,
+                        new DocumentCodec(), IgnorableRequestContext.INSTANCE);
             }
         } finally {
             connection.release();

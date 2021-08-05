@@ -71,7 +71,7 @@ class DefaultServerConnectionSpecification extends Specification {
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
 
         when:
-        def result = connection.insert(namespace, true, insertRequest)
+        def result = connection.insert(namespace, true, insertRequest, IgnorableRequestContext.INSTANCE)
 
         then:
         result == WriteConcernResult.unacknowledged()
@@ -90,7 +90,7 @@ class DefaultServerConnectionSpecification extends Specification {
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
 
         when:
-        def result = connection.update(namespace, true,  updateRequest)
+        def result = connection.update(namespace, true, updateRequest, IgnorableRequestContext.INSTANCE)
 
         then:
         result == WriteConcernResult.unacknowledged()
@@ -109,7 +109,7 @@ class DefaultServerConnectionSpecification extends Specification {
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
 
         when:
-        def result = connection.delete(namespace, true, deleteRequest)
+        def result = connection.delete(namespace, true, deleteRequest, IgnorableRequestContext.INSTANCE)
 
         then:
         result == WriteConcernResult.unacknowledged()
@@ -136,7 +136,8 @@ class DefaultServerConnectionSpecification extends Specification {
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
 
         when:
-        def result = connection.query(namespace, query, fields, 2, 10, 5, secondaryOk, false, true, false, true, false, decoder)
+        def result = connection.query(namespace, query, fields, 2, 10, 5, secondaryOk, false, true, false, true, false, decoder,
+                IgnorableRequestContext.INSTANCE)
 
         then:
         result == expectedResult
@@ -167,7 +168,8 @@ class DefaultServerConnectionSpecification extends Specification {
         internalConnection.description >> connectionDescription
 
         when:
-        def result = connection.query(namespace, query, fields, 2, 10, 5, false, false, true, false, true, false, decoder)
+        def result = connection.query(namespace, query, fields, 2, 10, 5, false, false, true, false, true, false, decoder,
+                IgnorableRequestContext.INSTANCE)
 
         then:
         result == expectedResult
@@ -192,7 +194,7 @@ class DefaultServerConnectionSpecification extends Specification {
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
 
         when:
-        def result = connection.getMore(namespace, 1000L, 1, codec)
+        def result = connection.getMore(namespace, 1000L, 1, codec, IgnorableRequestContext.INSTANCE)
 
         then:
         result == expectedResult
@@ -204,7 +206,7 @@ class DefaultServerConnectionSpecification extends Specification {
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
 
         when:
-        connection.killCursor(namespace, [5])
+        connection.killCursor(namespace, [5], IgnorableRequestContext.INSTANCE)
 
         then:
         1 * executor.execute({

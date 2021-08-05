@@ -24,6 +24,7 @@ import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerId
+import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
@@ -59,6 +60,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
         def connectionSource = Stub(ConnectionSource) {
             getConnection() >> connection
             getServerApi() >> null
+            getRequestContext() >> IgnorableRequestContext.INSTANCE
         }
         def readBinding = Stub(ReadBinding) {
             getReadPreference() >> readPreference
@@ -66,6 +68,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
             getSessionContext() >> Stub(SessionContext) {
                 getReadConcern() >> ReadConcern.DEFAULT
             }
+            getRequestContext() >> IgnorableRequestContext.INSTANCE
         }
         def queryResult = new QueryResult(namespace, [], 0, new ServerAddress())
         def expectedQueryWithOverrides = BsonDocument.parse('''{
@@ -85,7 +88,8 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
 
         then:
         1 * connection.query(namespace, new BsonDocument(), operation.getProjection(), operation.getSkip(), operation.getLimit(),
-                operation.getBatchSize(), readPreference.isSecondaryOk(), false, false, false, false, false, decoder) >> queryResult
+                operation.getBatchSize(), readPreference.isSecondaryOk(), false, false, false, false, false, decoder,
+                IgnorableRequestContext.INSTANCE) >> queryResult
         1 * connection.release()
 
         // Overrides
@@ -112,7 +116,8 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
 
         then:
         1 * connection.query(namespace, expectedQueryWithOverrides, operation.getProjection(), operation.getSkip(), operation.getLimit(),
-                operation.getBatchSize(), readPreference.isSecondaryOk(), true, true, true, true, true, decoder) >> queryResult
+                operation.getBatchSize(), readPreference.isSecondaryOk(), true, true, true, true, true, decoder,
+                IgnorableRequestContext.INSTANCE) >> queryResult
         1 * connection.release()
     }
 
@@ -224,7 +229,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
         operation.execute(readBinding)
 
         then:
-        1 * connection.query(namespace, _, _, _, _, _, secondaryOk, _, _, _, _, _, _) >> queryResult
+        1 * connection.query(namespace, _, _, _, _, _, secondaryOk, *_) >> queryResult
         1 * connection.release()
 
         where:

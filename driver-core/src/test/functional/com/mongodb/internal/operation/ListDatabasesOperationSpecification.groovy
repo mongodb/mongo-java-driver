@@ -131,7 +131,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         _ * connection.getDescription() >> helper.connectionDescription
-        1 * connection.command(_, _, _, readPreference, _, _, null) >> helper.commandResult
+        1 * connection.command(_, _, _, readPreference, _, _, null, _) >> helper.commandResult
         1 * connection.release()
 
         where:

@@ -18,6 +18,7 @@ package com.mongodb.client.internal;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.client.ClientSession;
 import com.mongodb.connection.ClusterType;
@@ -106,6 +107,11 @@ public class ClientSessionBinding implements ReadWriteBinding {
         return wrapped.getServerApi();
     }
 
+    @Override
+    public RequestContext getRequestContext() {
+        return wrapped.getRequestContext();
+    }
+
     private boolean isConnectionSourcePinningRequired() {
         ClusterType clusterType = wrapped.getCluster().getDescription().getType();
         return session.hasActiveTransaction() && (clusterType == ClusterType.SHARDED || clusterType == LOAD_BALANCED);
@@ -145,6 +151,11 @@ public class ClientSessionBinding implements ReadWriteBinding {
         @Override
         public ServerApi getServerApi() {
             return wrapped.getServerApi();
+        }
+
+        @Override
+        public RequestContext getRequestContext() {
+            return wrapped.getRequestContext();
         }
 
         @Override

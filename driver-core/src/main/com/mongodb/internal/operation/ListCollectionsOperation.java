@@ -244,7 +244,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                         return new ProjectingBatchCursor(new QueryBatchCursor<BsonDocument>(connection.query(getNamespace(),
                                 asQueryDocument(connection.getDescription(), binding.getReadPreference()), null, 0, 0, batchSize,
                                 binding.getReadPreference().isSecondaryOk(), false, false, false, false, false,
-                                new BsonDocumentCodec()), 0, batchSize, new BsonDocumentCodec(), source));
+                                new BsonDocumentCodec(), binding.getRequestContext()), 0, batchSize, new BsonDocumentCodec(), source));
                     } finally {
                         connection.release();
                     }

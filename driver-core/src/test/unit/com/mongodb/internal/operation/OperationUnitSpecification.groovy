@@ -122,7 +122,7 @@ class OperationUnitSpecification extends Specification {
             }
         }
 
-        0 * connection.command(_, _, _, _, _, _) >> {
+        0 * connection.command(*_) >> {
             // Unexpected Command
             result
         }

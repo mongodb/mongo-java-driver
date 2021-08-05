@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.annotations.ThreadSafe;
@@ -62,9 +63,10 @@ public interface Connection extends ReferenceCounted {
      * @param namespace    the namespace
      * @param ordered      whether the writes are ordered
      * @param insertRequest the insert request
+     * @param requestContext the request context
      * @return the write concern result
      */
-    WriteConcernResult insert(MongoNamespace namespace, boolean ordered, InsertRequest insertRequest);
+    WriteConcernResult insert(MongoNamespace namespace, boolean ordered, InsertRequest insertRequest, RequestContext requestContext);
 
     /**
      * Update the documents using the update wire protocol and apply the write concern.
@@ -72,9 +74,10 @@ public interface Connection extends ReferenceCounted {
      * @param namespace    the namespace
      * @param ordered      whether the writes are ordered
      * @param updateRequest the update request
+     * @param requestContext the request context
      * @return the write concern result
      */
-    WriteConcernResult update(MongoNamespace namespace, boolean ordered, UpdateRequest updateRequest);
+    WriteConcernResult update(MongoNamespace namespace, boolean ordered, UpdateRequest updateRequest, RequestContext requestContext);
 
     /**
      * Delete the documents using the delete wire protocol and apply the write concern.
@@ -82,9 +85,10 @@ public interface Connection extends ReferenceCounted {
      * @param namespace    the namespace
      * @param ordered      whether the writes are ordered
      * @param deleteRequest the delete request
+     * @param requestContext the request context
      * @return the write concern result
      */
-    WriteConcernResult delete(MongoNamespace namespace, boolean ordered, DeleteRequest deleteRequest);
+    WriteConcernResult delete(MongoNamespace namespace, boolean ordered, DeleteRequest deleteRequest, RequestContext requestContext);
 
     /**
      * Execute the command.
@@ -96,11 +100,12 @@ public interface Connection extends ReferenceCounted {
      * @param readPreference       the read preference that was applied to get this connection, or null if this is a write operation
      * @param commandResultDecoder the decoder for the result
      * @param sessionContext       the session context
+     * @param requestContext       the request context
      * @return the command result
      * @since 3.6
      */
     <T> T command(String database, BsonDocument command, FieldNameValidator fieldNameValidator, ReadPreference readPreference,
-                  Decoder<T> commandResultDecoder, SessionContext sessionContext, ServerApi serverApi);
+            Decoder<T> commandResultDecoder, SessionContext sessionContext, ServerApi serverApi, RequestContext requestContext);
 
     /**
      * Executes the command, consuming as much of the {@code SplittablePayload} as possible.
@@ -112,6 +117,7 @@ public interface Connection extends ReferenceCounted {
      * @param readPreference            the read preference that was applied to get this connection, or null if this is a write operation
      * @param commandResultDecoder      the decoder for the result
      * @param sessionContext            the session context
+     * @param requestContext            the request context
      * @param responseExpected          true if a response from the server is expected
      * @param payload                   the splittable payload to incorporate with the command
      * @param payloadFieldNameValidator the field name validator for the payload documents
@@ -119,12 +125,13 @@ public interface Connection extends ReferenceCounted {
      * @since 3.6
      */
     <T> T command(String database, BsonDocument command, FieldNameValidator commandFieldNameValidator, ReadPreference readPreference,
-                  Decoder<T> commandResultDecoder, SessionContext sessionContext, ServerApi serverApi, boolean responseExpected,
-                  SplittablePayload payload, FieldNameValidator payloadFieldNameValidator);
+            Decoder<T> commandResultDecoder, SessionContext sessionContext, ServerApi serverApi, RequestContext requestContext,
+            boolean responseExpected, SplittablePayload payload, FieldNameValidator payloadFieldNameValidator);
 
     /**
      * Execute the query.
      *
+     * @param <T>             the query result document type
      * @param namespace       the namespace to query
      * @param queryDocument   the query document
      * @param fields          the field to include or exclude
@@ -138,36 +145,38 @@ public interface Connection extends ReferenceCounted {
      * @param partial         whether partial results from sharded clusters are acceptable
      * @param oplogReplay     whether to replay the oplog
      * @param resultDecoder   the decoder for the query result documents
-     * @param <T>             the query result document type
+     * @param requestContext  the request context
      * @return the query results
      *
      * @since 3.1
      */
     <T> QueryResult<T> query(MongoNamespace namespace, BsonDocument queryDocument, BsonDocument fields,
-                             int skip, int limit, int batchSize,
-                             boolean secondaryOk, boolean tailableCursor, boolean awaitData, boolean noCursorTimeout,
-                             boolean partial, boolean oplogReplay,
-                             Decoder<T> resultDecoder);
+            int skip, int limit, int batchSize,
+            boolean secondaryOk, boolean tailableCursor, boolean awaitData, boolean noCursorTimeout,
+            boolean partial, boolean oplogReplay,
+            Decoder<T> resultDecoder, RequestContext requestContext);
 
     /**
      * Get more result documents from a cursor.
      *
+     * @param <T>            the type of the query result documents
      * @param namespace      the namespace to get more documents from
      * @param cursorId       the cursor id
      * @param numberToReturn the number of documents to return
      * @param resultDecoder  the decoder for the query results
-     * @param <T>            the type of the query result documents
+     * @param requestContext the request context
      * @return the query results
      */
-    <T> QueryResult<T> getMore(MongoNamespace namespace, long cursorId, int numberToReturn, Decoder<T> resultDecoder);
+    <T> QueryResult<T> getMore(MongoNamespace namespace, long cursorId, int numberToReturn, Decoder<T> resultDecoder,
+            RequestContext requestContext);
 
     /**
      * Kills the given list of cursors.
-     *
-     * @param namespace the namespace to in which the cursors live
+     *  @param namespace the namespace to in which the cursors live
      * @param cursors   the cursors
+     * @param requestContext the request context
      */
-    void killCursor(MongoNamespace namespace, List<Long> cursors);
+    void killCursor(MongoNamespace namespace, List<Long> cursors, RequestContext requestContext);
 
 
     enum PinningMode {

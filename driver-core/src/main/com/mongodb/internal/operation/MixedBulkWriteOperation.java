@@ -193,7 +193,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                             writeRequests, binding.getSessionContext());
                     return executeBulkWriteBatch(binding, connection, bulkWriteBatch);
                 } else {
-                    return executeLegacyBatches(connection);
+                    return executeLegacyBatches(connectionSource, connection);
                 }
             }
         });
@@ -326,15 +326,15 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         });
     }
 
-    private BulkWriteResult executeLegacyBatches(final Connection connection) {
+    private BulkWriteResult executeLegacyBatches(final ConnectionSource connectionSource, final Connection connection) {
         try {
             for (WriteRequest writeRequest : getWriteRequests()) {
                 if (writeRequest.getType() == INSERT) {
-                    connection.insert(getNamespace(), isOrdered(), (InsertRequest) writeRequest);
+                    connection.insert(getNamespace(), isOrdered(), (InsertRequest) writeRequest, connectionSource.getRequestContext());
                 } else if (writeRequest.getType() == UPDATE || writeRequest.getType() == REPLACE) {
-                    connection.update(getNamespace(), isOrdered(), (UpdateRequest) writeRequest);
+                    connection.update(getNamespace(), isOrdered(), (UpdateRequest) writeRequest, connectionSource.getRequestContext());
                 } else {
-                    connection.delete(getNamespace(), isOrdered(), (DeleteRequest) writeRequest);
+                    connection.delete(getNamespace(), isOrdered(), (DeleteRequest) writeRequest, connectionSource.getRequestContext());
                 }
             }
             return BulkWriteResult.unacknowledged();
@@ -433,7 +433,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
     private BsonDocument executeCommand(final Connection connection, final BulkWriteBatch batch, final WriteBinding binding) {
         return connection.command(namespace.getDatabaseName(), batch.getCommand(), NO_OP_FIELD_NAME_VALIDATOR,
                 null, batch.getDecoder(), binding.getSessionContext(), binding.getServerApi(),
-                shouldAcknowledge(batch, binding.getSessionContext()), batch.getPayload(), batch.getFieldNameValidator());
+                binding.getRequestContext(), shouldAcknowledge(batch, binding.getSessionContext()), batch.getPayload(),
+                batch.getFieldNameValidator());
     }
 
     private void executeCommandAsync(final AsyncWriteBinding binding, final AsyncConnection connection, final BulkWriteBatch batch,

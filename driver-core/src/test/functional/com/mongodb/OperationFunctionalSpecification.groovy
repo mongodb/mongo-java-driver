@@ -310,8 +310,8 @@ class OperationFunctionalSpecification extends Specification {
         if (checkCommand) {
             1 * connection.command(*_) >> {
                 assert it[1] == expectedCommand
-                if (it.size() == 10) {
-                    SplittablePayload payload = it[8]
+                if (it.size() == 11) {
+                    SplittablePayload payload = it[9]
                     payload.setPosition(payload.size())
                 }
                 result
@@ -323,7 +323,7 @@ class OperationFunctionalSpecification extends Specification {
             }
         }
 
-        0 * connection.command(_, _, _, _, _, _, null) >> {
+        0 * connection.command(*_) >> {
             // Unexpected Command
             result
         }

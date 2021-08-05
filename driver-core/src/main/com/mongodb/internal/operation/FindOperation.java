@@ -677,7 +677,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                                 isNoCursorTimeout(),
                                 isPartial(),
                                 isOplogReplay(),
-                                decoder);
+                                decoder, binding.getRequestContext());
                         return new QueryBatchCursor<T>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, source, connection);
                     } finally {
                         connection.release();
