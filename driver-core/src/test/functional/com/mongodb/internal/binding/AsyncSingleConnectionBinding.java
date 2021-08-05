@@ -21,6 +21,7 @@ import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadPreference;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
+import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.AsyncConnection;
@@ -174,9 +175,8 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
     }
 
     @Override
-    @Nullable
     public RequestContext getRequestContext() {
-        return null;
+        return IgnorableRequestContext.INSTANCE;
     }
 
     @Override
@@ -233,7 +233,7 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
 
         @Override
         public RequestContext getRequestContext() {
-            return null;
+            return IgnorableRequestContext.INSTANCE;
         }
 
         @Override

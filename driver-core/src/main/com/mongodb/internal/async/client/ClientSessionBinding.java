@@ -83,7 +83,6 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
         return wrapped.getServerApi();
     }
 
-    @Nullable
     @Override
     public RequestContext getRequestContext() {
         return wrapped.getRequestContext();

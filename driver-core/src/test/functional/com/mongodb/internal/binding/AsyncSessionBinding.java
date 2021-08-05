@@ -68,7 +68,6 @@ public final class AsyncSessionBinding implements AsyncReadWriteBinding {
     }
 
     @Override
-    @Nullable
     public RequestContext getRequestContext() {
         return wrapped.getRequestContext();
     }
