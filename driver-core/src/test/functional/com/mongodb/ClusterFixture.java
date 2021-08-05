@@ -318,7 +318,8 @@ public final class ClusterFixture {
     }
 
     public static AsyncReadWriteBinding getAsyncBinding(final Cluster cluster) {
-        return new AsyncClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, getServerApi(), null);
+        return new AsyncClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, getServerApi(),
+                IgnorableRequestContext.INSTANCE);
     }
 
     public static AsyncReadWriteBinding getAsyncBinding() {

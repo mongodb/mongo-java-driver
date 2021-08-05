@@ -31,6 +31,7 @@ import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerId
+import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.binding.AsyncClusterBinding
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
@@ -475,7 +476,8 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         collectionHelper.insertDocuments(new DocumentCodec(), new Document())
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
         def syncBinding = new ClusterBinding(getCluster(), ReadPreference.secondary(), ReadConcern.DEFAULT, null)
-        def asyncBinding = new AsyncClusterBinding(getAsyncCluster(), ReadPreference.secondary(), ReadConcern.DEFAULT, null, null)
+        def asyncBinding = new AsyncClusterBinding(getAsyncCluster(), ReadPreference.secondary(), ReadConcern.DEFAULT, null,
+                IgnorableRequestContext.INSTANCE)
 
         when:
         def result = async ? executeAsync(operation, asyncBinding) : executeSync(operation, syncBinding)
@@ -500,7 +502,8 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
                 ReadPreferenceHedgeOptions.builder().enabled(isHedgeEnabled as boolean).build() : null
         def readPreference = ReadPreference.primaryPreferred().withHedgeOptions(hedgeOptions)
         def syncBinding = new ClusterBinding(getCluster(), readPreference, ReadConcern.DEFAULT, null)
-        def asyncBinding = new AsyncClusterBinding(getAsyncCluster(), readPreference, ReadConcern.DEFAULT, null, null)
+        def asyncBinding = new AsyncClusterBinding(getAsyncCluster(), readPreference, ReadConcern.DEFAULT, null,
+                IgnorableRequestContext.INSTANCE)
         def cursor = async ? executeAsync(operation, asyncBinding) : executeSync(operation, syncBinding)
         def firstBatch = {
             if (async) {

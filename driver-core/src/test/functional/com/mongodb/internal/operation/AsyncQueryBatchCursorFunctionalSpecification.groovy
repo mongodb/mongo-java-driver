@@ -24,6 +24,7 @@ import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.client.model.CreateCollectionOptions
+import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
 import com.mongodb.internal.connection.AsyncConnection
@@ -436,14 +437,14 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
             def futureResultCallback = new FutureResultCallback<BsonDocument>();
             connection.commandAsync(getDatabaseName(), findCommand, NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(),
                     CommandResultDocumentCodec.create(new DocumentCodec(), 'firstBatch'),
-                    connectionSource.sessionContext, binding.getServerApi(), null, futureResultCallback)
+                    connectionSource.sessionContext, binding.getServerApi(), IgnorableRequestContext.INSTANCE, futureResultCallback)
             def response = futureResultCallback.get()
             cursorDocumentToQueryResult(response.getDocument('cursor'), connection.getDescription().getServerAddress())
         } else {
             def futureResultCallback = new FutureResultCallback<QueryResult<Document>>();
             connection.queryAsync(getNamespace(), filter, null, 0, limit, batchSize,
                                   true, tailable, awaitData, false, false, false,
-                                  new DocumentCodec(), futureResultCallback);
+                                  new DocumentCodec(), IgnorableRequestContext.INSTANCE, futureResultCallback);
             futureResultCallback.get();
         }
     }
