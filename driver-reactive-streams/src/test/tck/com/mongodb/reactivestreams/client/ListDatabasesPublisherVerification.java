@@ -28,6 +28,7 @@ import static com.mongodb.reactivestreams.client.MongoFixture.cleanDatabases;
 import static com.mongodb.reactivestreams.client.MongoFixture.getDefaultDatabaseName;
 import static com.mongodb.reactivestreams.client.MongoFixture.getMongoClient;
 import static com.mongodb.reactivestreams.client.MongoFixture.run;
+import static java.lang.String.format;
 
 public class ListDatabasesPublisherVerification extends PublisherVerification<Document> {
 
@@ -45,8 +46,7 @@ public class ListDatabasesPublisherVerification extends PublisherVerification<Do
         for (long i = 0; i < elements; i++) {
             run(client.getDatabase(getDefaultDatabaseName() + i).createCollection("test" + i));
         }
-
-        return client.listDatabases().filter(Filters.nin("name", "admin", "config", "local"));
+        return client.listDatabases().filter(Filters.regex("name", format("^%s.*", getDefaultDatabaseName())));
     }
 
     @Override
