@@ -39,10 +39,10 @@ import static util.JsonPoweredTestHelper.getTestDocument
 
 class ClientSideEncryptionBsonSizeLimitsSpecification extends FunctionalSpecification {
 
-    private final String collectionName = 'ClientSideEncryptionBsonSizeLimitsSpecification'
+    private final String collName = 'ClientSideEncryptionBsonSizeLimitsSpecification'
     private final MongoNamespace keyVaultNamespace = new MongoNamespace('test.datakeys')
     private final MongoNamespace autoEncryptingCollectionNamespace = new MongoNamespace(getDefaultDatabaseName(),
-            collectionName)
+            collName)
     private final MongoCollection dataKeyCollection = getMongoClient()
             .getDatabase(keyVaultNamespace.databaseName).getCollection(keyVaultNamespace.collectionName, BsonDocument)
             .withWriteConcern(WriteConcern.MAJORITY)
