@@ -50,7 +50,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         given:
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                                          builder().maxSize(1).build())
-        pool.start();
+        pool.start()
 
         expect:
         pool.get() != null
@@ -60,7 +60,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         given:
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                                          builder().maxSize(1).build())
-        pool.start();
+        pool.start()
 
         when:
         pool.get().close()
@@ -74,7 +74,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         given:
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                                          builder().maxSize(1).build())
-        pool.start();
+        pool.start()
 
         when:
         pool.get().close()
@@ -87,7 +87,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         given:
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                                          builder().maxSize(1).maxWaitTime(1, MILLISECONDS).build())
-        pool.start();
+        pool.start()
 
         when:
         def first = pool.get()
@@ -106,7 +106,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         given:
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                                          builder().maxSize(1).maxWaitTime(50, MILLISECONDS).build())
-        pool.start();
+        pool.start()
 
         pool.get()
 
@@ -124,7 +124,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         given:
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                                          builder().maxSize(10).maintenanceInitialDelay(5, MINUTES).build())
-        pool.start();
+        pool.start()
 
         when:
         pool.doMaintenance()
@@ -138,7 +138,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         given:
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                                          builder().maxSize(10).minSize(5).maintenanceInitialDelay(5, MINUTES).build())
-        pool.start();
+        pool.start()
 
         when: 'the maintenance tasks runs'
         pool.doMaintenance()
@@ -156,7 +156,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         Thread.sleep(500)
 
         then: 'it prunes the existing connections and again ensures the minimum size of the pool'
-        connectionFactory.createdConnections.size() == 10
+        connectionFactory.createdConnections.size() == 5
         connectionFactory.createdConnections.get(0).opened()  // if the first one is opened, they all should be
     }
 
