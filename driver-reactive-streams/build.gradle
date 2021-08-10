@@ -37,6 +37,7 @@ dependencies {
 
 sourceSets {
     test.groovy.srcDirs += ['src/examples']
+    test.java.srcDirs += ['src/test/tck']
 }
 
 test {
@@ -51,10 +52,10 @@ task tckTest(type: Test) {
     classpath = sourceSets.test.runtimeClasspath
     testClassesDirs = sourceSets.test.output.classesDirs
 
-    binResultsDir = file("$buildDir/$name-results/binary")
+    binaryResultsDirectory.set(file("$buildDir/$name-results/binary"))
     reports {
         html.destination = file("$buildDir/reports/$name")
-        junitXml.destination = binResultsDir.parentFile
+        junitXml.destination = file("$buildDir/$name-results")
     }
 
     maxParallelForks = 1
