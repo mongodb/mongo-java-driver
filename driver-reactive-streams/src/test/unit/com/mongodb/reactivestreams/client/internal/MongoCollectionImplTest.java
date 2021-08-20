@@ -51,7 +51,6 @@ import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.DistinctPublisher;
 import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.ListIndexesPublisher;
-import com.mongodb.reactivestreams.client.MapReducePublisher;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -807,6 +806,7 @@ public class MongoCollectionImplTest extends TestHelper {
         );
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     public void testMapReduce() {
         String map = "map";
@@ -828,24 +828,24 @@ public class MongoCollectionImplTest extends TestHelper {
                                                      () -> collection.mapReduce(null, map, reduce, Document.class))
                   ),
                   () -> {
-                      MapReducePublisher<Document> expected =
+                      com.mongodb.reactivestreams.client.MapReducePublisher<Document> expected =
                               new MapReducePublisherImpl<>(null, mongoOperationPublisher, map, reduce);
                       assertPublisherIsTheSameAs(expected, collection.mapReduce(map, reduce), "Default");
                   },
                   () -> {
-                      MapReducePublisher<BsonDocument> expected =
+                      com.mongodb.reactivestreams.client.MapReducePublisher<BsonDocument> expected =
                               new MapReducePublisherImpl<>(null, mongoOperationPublisher.withDocumentClass(BsonDocument.class),
                                                            map, reduce);
                       assertPublisherIsTheSameAs(expected, collection.mapReduce(map, reduce, BsonDocument.class),
                                                  "With result class");
                   },
                   () -> {
-                      MapReducePublisher<Document> expected =
+                      com.mongodb.reactivestreams.client.MapReducePublisher<Document> expected =
                               new MapReducePublisherImpl<>(clientSession, mongoOperationPublisher, map, reduce);
                       assertPublisherIsTheSameAs(expected, collection.mapReduce(clientSession, map, reduce), "With client session");
                   },
                   () -> {
-                      MapReducePublisher<BsonDocument> expected =
+                      com.mongodb.reactivestreams.client.MapReducePublisher<BsonDocument> expected =
                               new MapReducePublisherImpl<>(clientSession, mongoOperationPublisher.withDocumentClass(BsonDocument.class),
                                                            map, reduce);
                       assertPublisherIsTheSameAs(expected, collection.mapReduce(clientSession, map, reduce, BsonDocument.class),

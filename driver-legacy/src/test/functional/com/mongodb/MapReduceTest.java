@@ -50,6 +50,7 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
+@SuppressWarnings("deprecation")
 public class MapReduceTest extends DatabaseTestCase {
 
     private static final String MR_DATABASE = "output-" + System.nanoTime();

@@ -25,7 +25,6 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.ListCollectionsIterable;
 import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.ListIndexesIterable;
-import com.mongodb.client.MapReduceIterable;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSFindIterable;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBuckets;
@@ -46,6 +45,7 @@ import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
 public class PublisherApiTest {
 
+    @SuppressWarnings("deprecation")
     @TestFactory
     @DisplayName("test that publisher apis matches sync")
     List<DynamicTest> testPublisherApiMatchesSyncApi() {
@@ -61,7 +61,7 @@ public class PublisherApiTest {
                 dynamicTest("List Collections Api", () -> assertApis(ListCollectionsIterable.class, ListCollectionsPublisher.class)),
                 dynamicTest("List Databases Api", () -> assertApis(ListDatabasesIterable.class, ListDatabasesPublisher.class)),
                 dynamicTest("List Indexes Api", () -> assertApis(ListIndexesIterable.class, ListIndexesPublisher.class)),
-                dynamicTest("Map Reduce Api", () -> assertApis(MapReduceIterable.class, MapReducePublisher.class)),
+                dynamicTest("Map Reduce Api", () -> assertApis(com.mongodb.client.MapReduceIterable.class, MapReducePublisher.class)),
                 dynamicTest("GridFS Buckets Api", () -> assertApis(com.mongodb.client.gridfs.GridFSBuckets.class, GridFSBuckets.class)),
                 dynamicTest("GridFS Find Api", () -> assertApis(GridFSFindIterable.class, GridFSFindPublisher.class))
         );

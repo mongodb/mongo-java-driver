@@ -552,6 +552,7 @@ public class JsonPoweredCrudTestHelper {
         return iterable;
     }
 
+    @SuppressWarnings("deprecation")
     BsonDocument getMapReduceResult(final BsonDocument collectionOptions, final BsonDocument arguments,
                                     @Nullable final ClientSession clientSession) {
         MapReduceIterable<BsonDocument> iterable;

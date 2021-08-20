@@ -17,7 +17,6 @@
 package com.mongodb.client;
 
 import com.mongodb.client.model.Collation;
-import com.mongodb.client.model.MapReduceAction;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
@@ -31,7 +30,9 @@ import java.util.concurrent.TimeUnit;
  *
  * @param <TResult> The type of the result.
  * @since 3.0
+ * @deprecated Superseded by aggregate
  */
+@Deprecated
 public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
 
     /**
@@ -131,10 +132,11 @@ public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
     /**
      * Specify the {@code MapReduceAction} to be used when writing to a collection.
      *
-     * @param action an {@link MapReduceAction} to perform on the collection
+     * @param action an {@link com.mongodb.client.model.MapReduceAction} to perform on the collection
      * @return this
      */
-    MapReduceIterable<TResult> action(MapReduceAction action);
+    @SuppressWarnings("deprecation")
+    MapReduceIterable<TResult> action(com.mongodb.client.model.MapReduceAction action);
 
     /**
      * Sets the name of the database to output into.
