@@ -37,38 +37,21 @@ import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.ClusterFixture.TIMEOUT;
-import static java.util.Arrays.asList;
+import static com.mongodb.internal.connection.InternalStreamConnection.getSecuritySensitiveCommands;
+import static com.mongodb.internal.connection.InternalStreamConnection.getSecuritySensitiveHelloCommands;
 import static java.util.Collections.emptyList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class TestCommandListener implements CommandListener {
-    private static final Set<String> SENSITIVE_COMMANDS = new HashSet<>(
-            asList(
-                    "authenticate",
-                    "saslStart",
-                    "saslContinue",
-                    "getnonce",
-                    "createUser",
-                    "updateUser",
-                    "copydbgetnonce",
-                    "copydbsaslstart",
-                    "copydb"));
-    private static final Set<String> SENSITIVE_HANDSHAKE_COMMANDS = new HashSet<>(
-            asList(
-                    "ismaster",
-                    "isMaster",
-                    "hello"));
     private final List<String> eventTypes;
     private final List<String> ignoredCommandMonitoringEvents;
     private final List<CommandEvent> events = new ArrayList<>();
@@ -224,9 +207,9 @@ public class TestCommandListener implements CommandListener {
             return;
         }
         else if (!observeSensitiveCommands) {
-            if (SENSITIVE_COMMANDS.contains(event.getCommandName())) {
+            if (getSecuritySensitiveCommands().contains(event.getCommandName())) {
                 return;
-            } else if (SENSITIVE_HANDSHAKE_COMMANDS.contains(event.getCommandName()) && event.getCommand().isEmpty()) {
+            } else if (getSecuritySensitiveHelloCommands().contains(event.getCommandName()) && event.getCommand().isEmpty()) {
                 ignoreNextSucceededOrFailedEvent = true;
                 return;
             }
@@ -247,9 +230,9 @@ public class TestCommandListener implements CommandListener {
             return;
         }
         else if (!observeSensitiveCommands) {
-            if (SENSITIVE_COMMANDS.contains(event.getCommandName())) {
+            if (getSecuritySensitiveCommands().contains(event.getCommandName())) {
                 return;
-            } else if (SENSITIVE_HANDSHAKE_COMMANDS.contains(event.getCommandName()) && ignoreNextSucceededOrFailedEvent) {
+            } else if (getSecuritySensitiveHelloCommands().contains(event.getCommandName()) && ignoreNextSucceededOrFailedEvent) {
                 ignoreNextSucceededOrFailedEvent = false;
                 return;
             }
@@ -271,9 +254,9 @@ public class TestCommandListener implements CommandListener {
             return;
         }
         else if (!observeSensitiveCommands) {
-            if (SENSITIVE_COMMANDS.contains(event.getCommandName())) {
+            if (getSecuritySensitiveCommands().contains(event.getCommandName())) {
                 return;
-            } else if (SENSITIVE_HANDSHAKE_COMMANDS.contains(event.getCommandName()) && ignoreNextSucceededOrFailedEvent) {
+            } else if (getSecuritySensitiveHelloCommands().contains(event.getCommandName()) && ignoreNextSucceededOrFailedEvent) {
                 ignoreNextSucceededOrFailedEvent = false;
                 return;
             }
