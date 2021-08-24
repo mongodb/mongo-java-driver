@@ -53,6 +53,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.SocketTimeoutException;
 import java.nio.channels.ClosedByInterruptException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -121,6 +122,16 @@ public class InternalStreamConnection implements InternalConnection {
     private volatile boolean hasMoreToCome;
     private volatile int responseTo;
     private int generation = NOT_INITIALIZED_GENERATION;
+
+    // Package-level access provided to avoid duplicating the list in test code
+    static Set<String> getSecuritySensitiveCommands() {
+        return Collections.unmodifiableSet(SECURITY_SENSITIVE_COMMANDS);
+    }
+
+    // Package-level access provided to avoid duplicating the list in test code
+    static Set<String> getSecuritySensitiveHelloCommands() {
+        return Collections.unmodifiableSet(SECURITY_SENSITIVE_HELLO_COMMANDS);
+    }
 
     public InternalStreamConnection(final ClusterConnectionMode clusterConnectionMode, final ServerId serverId,
                                     final ConnectionGenerationSupplier connectionGenerationSupplier,
