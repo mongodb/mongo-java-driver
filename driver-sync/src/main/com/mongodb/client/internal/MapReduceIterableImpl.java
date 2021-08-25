@@ -59,7 +59,6 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     private boolean jsMode;
     private boolean verbose = true;
     private long maxTimeMS;
-    @SuppressWarnings("deprecation")
     private com.mongodb.client.model.MapReduceAction action = com.mongodb.client.model.MapReduceAction.REPLACE;
     private String databaseName;
     private boolean sharded;
@@ -145,7 +144,6 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         return this;
     }
 
-    @SuppressWarnings("deprecation")
     @Override
     public com.mongodb.client.MapReduceIterable<TResult> action(final com.mongodb.client.model.MapReduceAction action) {
         this.action = action;
