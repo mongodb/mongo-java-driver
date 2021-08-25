@@ -23,7 +23,6 @@ import com.mongodb.client.model.Sorts;
 import com.mongodb.internal.operation.MapReduceStatistics;
 import com.mongodb.internal.operation.MapReduceToCollectionOperation;
 import com.mongodb.internal.operation.MapReduceWithInlineResultsOperation;
-import com.mongodb.reactivestreams.client.MapReducePublisher;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonJavaScript;
@@ -42,7 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@SuppressWarnings({"rawtypes"})
+@SuppressWarnings({"rawtypes", "deprecation"})
 public class MapReducePublisherImplTest extends TestHelper {
 
     private static final String MAP_FUNCTION = "mapFunction(){}";
@@ -55,7 +54,7 @@ public class MapReducePublisherImplTest extends TestHelper {
         configureBatchCursor();
 
         TestOperationExecutor executor = createOperationExecutor(asList(getBatchCursor(), getBatchCursor()));
-        MapReducePublisher<Document> publisher =
+        com.mongodb.reactivestreams.client.MapReducePublisher<Document> publisher =
                 new MapReducePublisherImpl<>(null, createMongoOperationPublisher(executor), MAP_FUNCTION, REDUCE_FUNCTION);
 
         MapReduceWithInlineResultsOperation<Document> expectedOperation =
@@ -110,7 +109,7 @@ public class MapReducePublisherImplTest extends TestHelper {
         MapReduceStatistics stats = Mockito.mock(MapReduceStatistics.class);
 
         TestOperationExecutor executor = createOperationExecutor(asList(stats, stats));
-        MapReducePublisher<Document> publisher =
+        com.mongodb.reactivestreams.client.MapReducePublisher<Document> publisher =
                 new MapReducePublisherImpl<>(null, createMongoOperationPublisher(executor), MAP_FUNCTION, REDUCE_FUNCTION)
                         .collectionName(NAMESPACE.getCollectionName());
 
@@ -159,7 +158,7 @@ public class MapReducePublisherImplTest extends TestHelper {
         TestOperationExecutor executor = createOperationExecutor(asList(new MongoException("Failure"), null, null));
 
         // Operation fails
-        MapReducePublisher<Document> publisher =
+        com.mongodb.reactivestreams.client.MapReducePublisher<Document> publisher =
                 new MapReducePublisherImpl<>(null, createMongoOperationPublisher(executor), MAP_FUNCTION, REDUCE_FUNCTION);
         assertThrows(MongoException.class, () -> Flux.from(publisher).blockFirst());
 

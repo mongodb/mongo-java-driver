@@ -50,7 +50,6 @@ import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.DistinctPublisher;
 import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.ListIndexesPublisher;
-import com.mongodb.reactivestreams.client.MapReducePublisher;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import org.bson.BsonDocument;
 import org.bson.Document;
@@ -300,27 +299,31 @@ final class MongoCollectionImpl<T> implements MongoCollection<T> {
                                                pipeline, ChangeStreamLevel.COLLECTION);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
-    public MapReducePublisher<T> mapReduce(final String mapFunction, final String reduceFunction) {
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> mapReduce(final String mapFunction, final String reduceFunction) {
         return mapReduce(mapFunction, reduceFunction, getDocumentClass());
     }
 
+    @SuppressWarnings("deprecation")
     @Override
-    public <TResult> MapReducePublisher<TResult> mapReduce(final String mapFunction, final String reduceFunction,
-                                                           final Class<TResult> resultClass) {
+    public <TResult> com.mongodb.reactivestreams.client.MapReducePublisher<TResult> mapReduce(final String mapFunction,
+            final String reduceFunction, final Class<TResult> resultClass) {
         return new MapReducePublisherImpl<>(null, mongoOperationPublisher.withDocumentClass(resultClass), mapFunction,
                                             reduceFunction);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
-    public MapReducePublisher<T> mapReduce(final ClientSession clientSession, final String mapFunction,
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> mapReduce(final ClientSession clientSession, final String mapFunction,
                                            final String reduceFunction) {
         return mapReduce(clientSession, mapFunction, reduceFunction, getDocumentClass());
     }
 
+    @SuppressWarnings("deprecation")
     @Override
-    public <TResult> MapReducePublisher<TResult> mapReduce(final ClientSession clientSession, final String mapFunction,
-                                                           final String reduceFunction, final Class<TResult> resultClass) {
+    public <TResult> com.mongodb.reactivestreams.client.MapReducePublisher<TResult> mapReduce(final ClientSession clientSession,
+            final String mapFunction, final String reduceFunction, final Class<TResult> resultClass) {
         return new MapReducePublisherImpl<>(notNull("clientSession", clientSession),
                                             mongoOperationPublisher.withDocumentClass(resultClass), mapFunction, reduceFunction);
     }

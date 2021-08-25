@@ -28,7 +28,9 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * This class groups the argument for a map/reduce operation and can build the underlying command object
  *
  * @mongodb.driver.manual applications/map-reduce Map-Reduce
+ * @deprecated Superseded by aggregate
  */
+@Deprecated
 public class MapReduceCommand {
 
     private final String mapReduce;

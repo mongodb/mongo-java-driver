@@ -35,7 +35,7 @@ public class MapReducePublisherVerification extends PublisherVerification<Docume
         super(new TestEnvironment(DEFAULT_TIMEOUT_MILLIS), PUBLISHER_REFERENCE_CLEANUP_TIMEOUT_MILLIS);
     }
 
-
+    @SuppressWarnings("deprecation")
     @Override
     public Publisher<Document> createPublisher(final long elements) {
         assert (elements <= maxElementsFromPublisher());

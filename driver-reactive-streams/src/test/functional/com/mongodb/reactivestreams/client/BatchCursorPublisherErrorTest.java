@@ -65,6 +65,7 @@ public class BatchCursorPublisherErrorTest {
         }
     }
 
+    @SuppressWarnings("deprecation")
     @TestFactory
     @DisplayName("test batch cursors close the cursor if onNext throws an error")
     List<DynamicTest> testBatchCursorThrowsAnError() {
