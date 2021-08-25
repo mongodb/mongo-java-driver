@@ -142,6 +142,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         assertThat(listOfObjectIds.get(0), is(firstItem.getId()));
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     public void testMapReduceWithGenerics() {
         assumeFalse(isServerlessTest());

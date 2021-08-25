@@ -27,7 +27,6 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.DistinctIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.ListIndexesIterable;
-import com.mongodb.client.MapReduceIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
@@ -293,25 +292,30 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
     }
 
     @Override
-    public MapReduceIterable<T> mapReduce(final String mapFunction, final String reduceFunction) {
+    @SuppressWarnings("deprecation")
+    public com.mongodb.client.MapReduceIterable<T> mapReduce(final String mapFunction, final String reduceFunction) {
         return new SyncMapReduceIterable<>(wrapped.mapReduce(mapFunction, reduceFunction, wrapped.getDocumentClass()));
     }
 
     @Override
-    public <TResult> MapReduceIterable<TResult> mapReduce(
+    @SuppressWarnings("deprecation")
+    public <TResult> com.mongodb.client.MapReduceIterable<TResult> mapReduce(
             final String mapFunction, final String reduceFunction,
             final Class<TResult> resultClass) {
         return new SyncMapReduceIterable<>(wrapped.mapReduce(mapFunction, reduceFunction, resultClass));
     }
 
     @Override
-    public MapReduceIterable<T> mapReduce(final ClientSession clientSession, final String mapFunction, final String reduceFunction) {
+    @SuppressWarnings("deprecation")
+    public com.mongodb.client.MapReduceIterable<T> mapReduce(final ClientSession clientSession, final String mapFunction,
+            final String reduceFunction) {
         return new SyncMapReduceIterable<>(wrapped.mapReduce(unwrap(clientSession), mapFunction, reduceFunction,
                                                              wrapped.getDocumentClass()));
     }
 
     @Override
-    public <TResult> MapReduceIterable<TResult> mapReduce(
+    @SuppressWarnings("deprecation")
+    public <TResult> com.mongodb.client.MapReduceIterable<TResult> mapReduce(
             final ClientSession clientSession, final String mapFunction,
             final String reduceFunction, final Class<TResult> resultClass) {
         return new SyncMapReduceIterable<>(wrapped.mapReduce(unwrap(clientSession), mapFunction, reduceFunction, resultClass));

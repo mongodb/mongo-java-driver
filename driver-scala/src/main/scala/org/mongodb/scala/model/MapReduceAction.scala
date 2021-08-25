@@ -26,6 +26,7 @@ import com.mongodb.client.model.{ MapReduceAction => JMapReduceAction }
  *
  * @since 1.0
  */
+@deprecated("Superseded by aggregate")
 object MapReduceAction {
 
   /**
