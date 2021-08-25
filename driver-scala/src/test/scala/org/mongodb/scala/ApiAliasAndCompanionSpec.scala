@@ -78,7 +78,8 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "RemovePrimer",
       "SyncMongoClient",
       "SyncGridFSBucket",
-      "SyncMongoDatabase"
+      "SyncMongoDatabase",
+      "SyncClientEncryption"
     )
     val scalaExclusions = Set(
       "BuildInfo",
