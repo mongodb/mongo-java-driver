@@ -42,14 +42,26 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
             Class<?> getExpectedExceptionClass() {
                 return CertificateExpiredException.class;
             }
+
+            @Override
+            String getExpectedExcepionMessageSubstring() {
+                return "NotAfter";
+            }
         },
         INVALID_HOSTNAME() {
             @Override
             Class<?> getExpectedExceptionClass() {
                 return CertificateException.class;
             }
+
+            @Override
+            String getExpectedExcepionMessageSubstring() {
+                return "No subject alternative names present";
+            }
         };
         abstract Class<?> getExpectedExceptionClass();
+
+        abstract String getExpectedExcepionMessageSubstring();
     }
 
     private static final TlsErrorType EXPECTED_KMS_TLS_ERROR;
@@ -94,6 +106,8 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
             fail();
         } catch (MongoClientException e) {
             assertTrue(containsCauseOfClass(e, EXPECTED_KMS_TLS_ERROR.getExpectedExceptionClass()));
+            assertTrue(getCauseOfClass(e, EXPECTED_KMS_TLS_ERROR.getExpectedExceptionClass())
+                    .getMessage().contains(EXPECTED_KMS_TLS_ERROR.getExpectedExcepionMessageSubstring()));
         }
     }
 
@@ -106,6 +120,17 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
             cause = cause.getCause();
         }
         return false;
+    }
+
+    private Throwable getCauseOfClass(final MongoClientException e, final Class<?> causeType) {
+        Throwable cause = e.getCause();
+        while (cause != null) {
+            if (cause.getClass().equals(causeType)) {
+                return cause;
+            }
+            cause = cause.getCause();
+        }
+        throw new IllegalStateException();
     }
 }
 
