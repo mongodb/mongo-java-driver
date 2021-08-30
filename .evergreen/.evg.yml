@@ -551,6 +551,16 @@ functions:
           ${PREPARE_SHELL}
           JDK=${JDK} .evergreen/run-atlas-data-lake-test.sh
 
+  "run atlas search test":
+    - command: shell.exec
+      type: test
+      params:
+        silent: true
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          MONGODB_ATLAS_SEARCH_URI="${atlas_search_uri}" .evergreen/run-atlas-search-tests.sh
+
   "run-ocsp-test":
     - command: shell.exec
       type: test
@@ -1260,6 +1270,11 @@ tasks:
         - func: "bootstrap mongohoused"
         - func: "run atlas data lake test"
 
+    - name: "atlas-search-test"
+      commands:
+        - func: "bootstrap mongo-orchestration"
+        - func: "run atlas search test"
+
     - name: "gssapi-auth-test"
       commands:
         - func: "run gssapi auth test"
@@ -1731,3 +1746,9 @@ buildvariants:
   display_name: "CSFLE KMS TLS"
   tasks:
     - name: ".kms-tls"
+
+- matrix_name: "atlas-search-test"
+  matrix_spec: { os: "linux", version: [ "5.0" ], topology: ["standalone"] }
+  display_name: "Atlas Search Test"
+  tasks:
+    - name: "atlas-search-test"

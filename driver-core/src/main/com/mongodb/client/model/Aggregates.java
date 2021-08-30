@@ -18,6 +18,7 @@ package com.mongodb.client.model;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.annotations.Beta;
+import com.mongodb.client.model.search.SearchOperator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -648,6 +649,22 @@ public final class Aggregates {
                                                      final List<WindowedComputation> output) {
         notNull("output", output);
         return new SetWindowFieldsStage<>(partitionBy, sortBy, output);
+    }
+
+    /**
+     * Creates a {@code $search} pipeline stage, for use with Atlas search.
+     *
+     * <p>
+     * The $search stage performs a full-text search on the specified field or fields, which must be covered by an Atlas Search index.
+     * </p>
+     *
+     * @return The {@code $search} pipeline stage
+     * @since 4.4
+     * @mongodb.driver.manual.atlas reference/atlas-search/searching/
+     * @mongodb.driver.manual.atlas reference/atlas-search/query-syntax/
+     */
+    public static Bson search(SearchOperator searchOperator) {
+        return new SimplePipelineStage("$search", searchOperator);
     }
 
     static void writeBucketOutput(final CodecRegistry codecRegistry, final BsonDocumentWriter writer,

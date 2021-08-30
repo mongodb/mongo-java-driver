@@ -32,6 +32,7 @@ import com.mongodb.internal.bulk.IndexRequest;
 import com.mongodb.internal.bulk.InsertRequest;
 import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.bulk.WriteRequest;
+import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.operation.AggregateOperation;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.CommandReadOperation;
@@ -69,27 +70,34 @@ import java.util.List;
 
 import static com.mongodb.ClusterFixture.executeAsync;
 import static com.mongodb.ClusterFixture.getBinding;
+import static com.mongodb.ClusterFixture.getCluster;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
 public final class CollectionHelper<T> {
 
-    private Codec<T> codec;
-    private CodecRegistry registry = CodecRegistries.fromProviders(new BsonValueCodecProvider(),
+    private final Codec<T> codec;
+    private final CodecRegistry registry = CodecRegistries.fromProviders(new BsonValueCodecProvider(),
                                                                    new IterableCodecProvider(),
                                                                    new ValueCodecProvider(),
                                                                    new DocumentCodecProvider(),
                                                                    new GeoJsonCodecProvider(),
                                                                    new Jsr310CodecProvider());
-    private MongoNamespace namespace;
+    private final Cluster cluster;
+    private final MongoNamespace namespace;
 
-    public CollectionHelper(final Codec<T> codec, final MongoNamespace namespace) {
+    public CollectionHelper(final Codec<T> codec, final Cluster cluster, final MongoNamespace namespace) {
         this.codec = codec;
+        this.cluster = cluster;
         this.namespace = namespace;
     }
 
+    public CollectionHelper(final Codec<T> codec, final MongoNamespace namespace) {
+        this(codec, getCluster(), namespace);
+    }
+
     public T hello() {
-        return new CommandReadOperation<T>("admin", BsonDocument.parse("{isMaster: 1}"), codec).execute(getBinding());
+        return new CommandReadOperation<T>("admin", BsonDocument.parse("{isMaster: 1}"), codec).execute(getBinding(cluster));
     }
 
     public static void drop(final MongoNamespace namespace) {
@@ -162,7 +170,7 @@ public final class CollectionHelper<T> {
         if (validationOptions.getValidationAction() != null) {
             operation.validationAction(validationOptions.getValidationAction());
         }
-        operation.execute(getBinding());
+        operation.execute(getBinding(cluster));
     }
 
     public void killCursor(final MongoNamespace namespace, final ServerCursor serverCursor) {
@@ -171,7 +179,7 @@ public final class CollectionHelper<T> {
                     .append("cursors", new BsonArray(singletonList(new BsonInt64(serverCursor.getId()))));
             try {
                 new CommandReadOperation<>(namespace.getDatabaseName(), command, new BsonDocumentCodec())
-                        .execute(getBinding());
+                        .execute(getBinding(cluster));
             } catch (Exception e) {
                 // Ignore any exceptions killing old cursors
             }
@@ -183,11 +191,11 @@ public final class CollectionHelper<T> {
     }
 
     public void insertDocuments(final List<BsonDocument> documents) {
-        insertDocuments(documents, getBinding());
+        insertDocuments(documents, getBinding(cluster));
     }
 
     public void insertDocuments(final List<BsonDocument> documents, final WriteConcern writeConcern) {
-        insertDocuments(documents, writeConcern, getBinding());
+        insertDocuments(documents, writeConcern, getBinding(cluster));
     }
 
     public void insertDocuments(final List<BsonDocument> documents, final WriteBinding binding) {
@@ -219,7 +227,7 @@ public final class CollectionHelper<T> {
     }
 
     public <I> void insertDocuments(final Codec<I> iCodec, final List<I> documents) {
-        insertDocuments(iCodec, getBinding(), documents);
+        insertDocuments(iCodec, getBinding(cluster), documents);
     }
 
     public <I> void insertDocuments(final Codec<I> iCodec, final WriteBinding binding, final List<I> documents) {
@@ -237,7 +245,7 @@ public final class CollectionHelper<T> {
     public <D> List<D> find(final Codec<D> codec) {
         BatchCursor<D> cursor = new FindOperation<D>(namespace, codec)
                 .sort(new BsonDocument("_id", new BsonInt32(1)))
-                .execute(getBinding());
+                .execute(getBinding(cluster));
         List<D> results = new ArrayList<D>();
         while (cursor.hasNext()) {
             results.addAll(cursor.next());
@@ -256,7 +264,7 @@ public final class CollectionHelper<T> {
                                                                     WriteRequest.Type.UPDATE)
                                                   .upsert(isUpsert)),
                                     true, WriteConcern.ACKNOWLEDGED, false)
-        .execute(getBinding());
+        .execute(getBinding(cluster));
     }
 
     public void replaceOne(final Bson filter, final Bson update, final boolean isUpsert) {
@@ -266,14 +274,14 @@ public final class CollectionHelper<T> {
                         WriteRequest.Type.REPLACE)
                         .upsert(isUpsert)),
                 true, WriteConcern.ACKNOWLEDGED, false)
-                .execute(getBinding());
+                .execute(getBinding(cluster));
     }
 
     public void deleteOne(final Bson filter) {
         new MixedBulkWriteOperation(namespace,
                 singletonList(new DeleteRequest(filter.toBsonDocument(Document.class, registry))),
                 true, WriteConcern.ACKNOWLEDGED, false)
-                .execute(getBinding());
+                .execute(getBinding(cluster));
     }
 
     public List<T> find(final Bson filter) {
@@ -290,7 +298,7 @@ public final class CollectionHelper<T> {
             bsonDocumentPipeline.add(cur.toBsonDocument(Document.class, registry));
         }
         BatchCursor<D> cursor = new AggregateOperation<D>(namespace, bsonDocumentPipeline, decoder)
-                                .execute(getBinding());
+                                .execute(getBinding(cluster));
         List<D> results = new ArrayList<D>();
         while (cursor.hasNext()) {
             results.addAll(cursor.next());
@@ -325,7 +333,7 @@ public final class CollectionHelper<T> {
 
     public <D> List<D> find(final BsonDocument filter, final BsonDocument sort, final BsonDocument projection, final Decoder<D> decoder) {
         BatchCursor<D> cursor = new FindOperation<D>(namespace, decoder).filter(filter).sort(sort).projection(projection)
-                                                                        .execute(getBinding());
+                                                                        .execute(getBinding(cluster));
         List<D> results = new ArrayList<D>();
         while (cursor.hasNext()) {
             results.addAll(cursor.next());
@@ -334,7 +342,7 @@ public final class CollectionHelper<T> {
     }
 
     public long count() {
-        return count(getBinding());
+        return count(getBinding(cluster));
     }
 
     public long count(final ReadBinding binding) {
@@ -346,7 +354,7 @@ public final class CollectionHelper<T> {
     }
 
     public long count(final Bson filter) {
-        return new CountDocumentsOperation(namespace).filter(toBsonDocument(filter)).execute(getBinding());
+        return new CountDocumentsOperation(namespace).filter(toBsonDocument(filter)).execute(getBinding(cluster));
     }
 
     public BsonDocument wrap(final Document document) {
@@ -358,37 +366,37 @@ public final class CollectionHelper<T> {
     }
 
     public void createIndex(final BsonDocument key) {
-        new CreateIndexesOperation(namespace, asList(new IndexRequest(key)), WriteConcern.ACKNOWLEDGED).execute(getBinding());
+        new CreateIndexesOperation(namespace, asList(new IndexRequest(key)), WriteConcern.ACKNOWLEDGED).execute(getBinding(cluster));
     }
 
     public void createIndex(final Document key) {
-        new CreateIndexesOperation(namespace, asList(new IndexRequest(wrap(key))), WriteConcern.ACKNOWLEDGED).execute(getBinding());
+        new CreateIndexesOperation(namespace, asList(new IndexRequest(wrap(key))), WriteConcern.ACKNOWLEDGED).execute(getBinding(cluster));
     }
 
     public void createUniqueIndex(final Document key) {
         new CreateIndexesOperation(namespace, asList(new IndexRequest(wrap(key)).unique(true)), WriteConcern.ACKNOWLEDGED)
-                .execute(getBinding());
+                .execute(getBinding(cluster));
     }
 
     public void createIndex(final Document key, final String defaultLanguage) {
         new CreateIndexesOperation(namespace, asList(new IndexRequest(wrap(key)).defaultLanguage(defaultLanguage)),
-                                          WriteConcern.ACKNOWLEDGED).execute(getBinding());
+                                          WriteConcern.ACKNOWLEDGED).execute(getBinding(cluster));
     }
 
     public void createIndex(final Bson key) {
         new CreateIndexesOperation(namespace, asList(new IndexRequest(key.toBsonDocument(Document.class, registry))),
-                                          WriteConcern.ACKNOWLEDGED).execute(getBinding());
+                                          WriteConcern.ACKNOWLEDGED).execute(getBinding(cluster));
     }
 
     @SuppressWarnings("deprecation")
     public void createIndex(final Bson key, final Double bucketSize) {
         new CreateIndexesOperation(namespace, asList(new IndexRequest(key.toBsonDocument(Document.class, registry))
-                .bucketSize(bucketSize)), WriteConcern.ACKNOWLEDGED).execute(getBinding());
+                .bucketSize(bucketSize)), WriteConcern.ACKNOWLEDGED).execute(getBinding(cluster));
     }
 
     public List<BsonDocument> listIndexes(){
         List<BsonDocument> indexes = new ArrayList<BsonDocument>();
-        BatchCursor<BsonDocument> cursor = new ListIndexesOperation<BsonDocument>(namespace, new BsonDocumentCodec()).execute(getBinding());
+        BatchCursor<BsonDocument> cursor = new ListIndexesOperation<BsonDocument>(namespace, new BsonDocumentCodec()).execute(getBinding(cluster));
         while (cursor.hasNext()) {
             indexes.addAll(cursor.next());
         }
@@ -398,7 +406,7 @@ public final class CollectionHelper<T> {
     public void killAllSessions() {
         try {
             new CommandReadOperation<>("admin", new BsonDocument("killAllSessions", new BsonArray()),
-                    new BsonDocumentCodec()).execute(getBinding());
+                    new BsonDocumentCodec()).execute(getBinding(cluster));
         } catch (MongoCommandException e) {
             // ignore exception caused by killing the implicit session that the killAllSessions command itself is running in
         }
@@ -409,7 +417,7 @@ public final class CollectionHelper<T> {
             new CommandReadOperation<>("admin",
                     new BsonDocument("renameCollection", new BsonString(getNamespace().getFullName()))
                                 .append("to", new BsonString(newNamespace.getFullName())),
-                    new BsonDocumentCodec()).execute(getBinding());
+                    new BsonDocumentCodec()).execute(getBinding(cluster));
         } catch (MongoCommandException e) {
             // do nothing
         }
@@ -420,6 +428,6 @@ public final class CollectionHelper<T> {
     }
 
     public void runAdminCommand(final BsonDocument command) {
-        new CommandReadOperation<>("admin", command, new BsonDocumentCodec()).execute(getBinding());
+        new CommandReadOperation<>("admin", command, new BsonDocumentCodec()).execute(getBinding(cluster));
     }
 }

@@ -357,6 +357,9 @@ public final class ClusterFixture {
         return createCluster(getConnectionString(), streamFactory);
     }
 
+    public static Cluster createCluster(ConnectionString connectionString) {
+        return createCluster(connectionString, getStreamFactory(connectionString));
+    }
 
     public static Cluster createCluster(final MongoCredential credential) {
         return createCluster(credential, getStreamFactory());
@@ -383,6 +386,10 @@ public final class ClusterFixture {
                 connectionString.getCredential(),
                 null, null, null,
                 connectionString.getCompressorList(), getServerApi());
+    }
+
+    public static StreamFactory getStreamFactory(ConnectionString connectionString) {
+        return new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings(connectionString));
     }
 
     public static StreamFactory getStreamFactory() {
