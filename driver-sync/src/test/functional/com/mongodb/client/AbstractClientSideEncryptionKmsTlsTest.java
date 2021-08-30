@@ -21,6 +21,7 @@ import com.mongodb.MongoClientException;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.lang.NonNull;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -31,6 +32,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.mongodb.client.Fixture.getMongoClientSettings;
+import static java.util.Objects.requireNonNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -51,12 +54,20 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
             this.expectedExceptionMessageSubstring = expectedExceptionMessageSubstring;
         }
 
-        Class<? extends Exception> getExpectedExceptionClass() {
-            return expectedExceptionClass;
+        @Nullable
+        Throwable getCauseOfExpectedClass(final MongoClientException e) {
+            Throwable cause = e.getCause();
+            while (cause != null) {
+                if (cause.getClass().equals(expectedExceptionClass)) {
+                    return cause;
+                }
+                cause = cause.getCause();
+            }
+            return null;
         }
 
-        String getExpectedExceptionMessageSubstring() {
-            return expectedExceptionMessageSubstring;
+        boolean causeContainsExpectedMessage(final MongoClientException e) {
+            return requireNonNull(getCauseOfExpectedClass(e)).getMessage().contains(expectedExceptionMessageSubstring);
         }
 
         static TlsErrorType fromSystemPropertyValue(final String value) {
@@ -101,32 +112,9 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
                             + "endpoint: \"mongodb://127.0.0.1:8000\"}")));
             fail();
         } catch (MongoClientException e) {
-            assertTrue(containsCauseOfClass(e, expectedKmsTlsError.getExpectedExceptionClass()));
-            assertTrue(getCauseOfClass(e, expectedKmsTlsError.getExpectedExceptionClass())
-                    .getMessage().contains(expectedKmsTlsError.getExpectedExceptionMessageSubstring()));
+            assertNotNull(expectedKmsTlsError.getCauseOfExpectedClass(e));
+            assertTrue(expectedKmsTlsError.causeContainsExpectedMessage(e));
         }
-    }
-
-    private boolean containsCauseOfClass(final MongoClientException e, final Class<?> causeType) {
-        Throwable cause = e.getCause();
-        while (cause != null) {
-            if (cause.getClass().equals(causeType)) {
-                return true;
-            }
-            cause = cause.getCause();
-        }
-        return false;
-    }
-
-    private Throwable getCauseOfClass(final MongoClientException e, final Class<?> causeType) {
-        Throwable cause = e.getCause();
-        while (cause != null) {
-            if (cause.getClass().equals(causeType)) {
-                return cause;
-            }
-            cause = cause.getCause();
-        }
-        throw new IllegalStateException();
     }
 }
 
