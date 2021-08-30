@@ -22,6 +22,7 @@ import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.lang.NonNull;
 import org.bson.BsonDocument;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.security.cert.CertificateException;
@@ -36,49 +37,45 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public abstract class AbstractClientSideEncryptionKmsTlsTest {
 
+    private static final String SYSTEM_PROPERTY_KEY = "org.mongodb.test.kms.tls.error.type";
+
     enum TlsErrorType {
-        EXPIRED() {
-            @Override
-            Class<?> getExpectedExceptionClass() {
-                return CertificateExpiredException.class;
-            }
+        EXPIRED(CertificateExpiredException.class, "NotAfter"),
+        INVALID_HOSTNAME(CertificateException.class, "No subject alternative names present");
 
-            @Override
-            String getExpectedExcepionMessageSubstring() {
-                return "NotAfter";
-            }
-        },
-        INVALID_HOSTNAME() {
-            @Override
-            Class<?> getExpectedExceptionClass() {
-                return CertificateException.class;
-            }
+        private final Class<? extends Exception> expectedExceptionClass;
+        private final String expectedExceptionMessageSubstring;
 
-            @Override
-            String getExpectedExcepionMessageSubstring() {
-                return "No subject alternative names present";
-            }
-        };
-        abstract Class<?> getExpectedExceptionClass();
+        TlsErrorType(final Class<? extends Exception> expectedExceptionClass, final String expectedExceptionMessageSubstring) {
+            this.expectedExceptionClass = expectedExceptionClass;
+            this.expectedExceptionMessageSubstring = expectedExceptionMessageSubstring;
+        }
 
-        abstract String getExpectedExcepionMessageSubstring();
+        Class<? extends Exception> getExpectedExceptionClass() {
+            return expectedExceptionClass;
+        }
+
+        String getExpectedExceptionMessageSubstring() {
+            return expectedExceptionMessageSubstring;
+        }
+
+        static TlsErrorType fromSystemPropertyValue(final String value) {
+            if (value.equals("expired")) {
+                return TlsErrorType.EXPIRED;
+            } else if (value.equals("invalidHostname")) {
+                return TlsErrorType.INVALID_HOSTNAME;
+            } else {
+                throw new IllegalArgumentException("Unsupported value for " + SYSTEM_PROPERTY_KEY + " system property: " + value);
+            }
+        }
     }
 
-    private static final TlsErrorType EXPECTED_KMS_TLS_ERROR;
+    private static TlsErrorType expectedKmsTlsError;
 
-    static {
-        if (System.getProperties().containsKey("org.mongodb.test.kms.tls.error.type")) {
-            String value = System.getProperty("org.mongodb.test.kms.tls.error.type");
-            if (value.equals("expired")) {
-                EXPECTED_KMS_TLS_ERROR = TlsErrorType.EXPIRED;
-            } else if (value.equals("invalidHostname")) {
-                EXPECTED_KMS_TLS_ERROR = TlsErrorType.INVALID_HOSTNAME;
-            } else {
-                throw new UnsupportedOperationException("Unsupported value: " + value);
-            }
-        } else {
-            EXPECTED_KMS_TLS_ERROR = null;
-        }
+    @BeforeAll
+    public static void beforeAll() {
+        assumeTrue(System.getProperties().containsKey(SYSTEM_PROPERTY_KEY));
+        expectedKmsTlsError = TlsErrorType.fromSystemPropertyValue(System.getProperty(SYSTEM_PROPERTY_KEY));
     }
 
     @NonNull
@@ -86,7 +83,6 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
 
     @Test
     public void testInvalidKmsCertificate() {
-        assumeTrue(EXPECTED_KMS_TLS_ERROR != null);
         ClientEncryptionSettings clientEncryptionSettings = ClientEncryptionSettings.builder()
                 .keyVaultMongoClientSettings(getMongoClientSettings())
                 .keyVaultNamespace("keyvault.datakeys")
@@ -105,9 +101,9 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
                             + "endpoint: \"mongodb://127.0.0.1:8000\"}")));
             fail();
         } catch (MongoClientException e) {
-            assertTrue(containsCauseOfClass(e, EXPECTED_KMS_TLS_ERROR.getExpectedExceptionClass()));
-            assertTrue(getCauseOfClass(e, EXPECTED_KMS_TLS_ERROR.getExpectedExceptionClass())
-                    .getMessage().contains(EXPECTED_KMS_TLS_ERROR.getExpectedExcepionMessageSubstring()));
+            assertTrue(containsCauseOfClass(e, expectedKmsTlsError.getExpectedExceptionClass()));
+            assertTrue(getCauseOfClass(e, expectedKmsTlsError.getExpectedExceptionClass())
+                    .getMessage().contains(expectedKmsTlsError.getExpectedExceptionMessageSubstring()));
         }
     }
 
