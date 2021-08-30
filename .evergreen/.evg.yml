@@ -672,6 +672,30 @@ functions:
           '${atlas_sharded_uri_srv}' '${atlas_tls_v11_uri_srv}' '${atlas_tls_v12_uri_srv}' \
           '${atlas_serverless_uri}' '${atlas_serverless_uri_srv}'
 
+  start-kms-mock-server:
+    - command: shell.exec
+      params:
+        script: |
+          ${PREPARE_SHELL}
+          cd ${DRIVERS_TOOLS}/.evergreen/csfle
+          . ./activate_venv.sh
+    - command: shell.exec
+      params:
+        background: true
+        script: |
+          cd ${DRIVERS_TOOLS}/.evergreen/csfle
+          ./kmstlsvenv/bin/python3 -u kms_http_server.py -v --ca_file ../x509gen/ca.pem --cert_file ../x509gen/${CERT_FILE} --port 8000
+
+  "run-kms-tls-test":
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          set +o xtrace
+          MONGODB_URI="${MONGODB_URI}" KMS_TLS_ERROR_TYPE=${KMS_TLS_ERROR_TYPE} .evergreen/run-kms-tls-tests.sh
+
   "publish snapshot":
     - command: shell.exec
       type: test
@@ -1295,6 +1319,41 @@ tasks:
         - func: "bootstrap mongo-orchestration"
         - func: "run mmapv1 storage test"
 
+    - name: "test-kms-tls-invalid-cert"
+      tags: ["kms-tls"]
+      commands:
+        - func: "bootstrap mongo-orchestration"
+          vars:
+            TOPOLOGY: "server"
+            AUTH: "noauth"
+            SSL: "nossl"
+        - func: start-kms-mock-server
+          vars:
+            CERT_FILE: "expired.pem"
+        - func: run-kms-tls-test
+          vars:
+            KMS_TLS_ERROR_TYPE: expired
+            TOPOLOGY: "server"
+            AUTH: "noauth"
+            SSL: "nossl"
+
+    - name: "test-kms-tls-invalid-hostname"
+      tags: ["kms-tls"]
+      commands:
+        - func: "bootstrap mongo-orchestration"
+          vars:
+            TOPOLOGY: "server"
+            AUTH: "noauth"
+            SSL: "nossl"
+        - func: start-kms-mock-server
+          vars:
+            CERT_FILE: "wrong-host.pem"
+        - func: run-kms-tls-test
+          vars:
+            KMS_TLS_ERROR_TYPE: invalidHostname
+            TOPOLOGY: "server"
+            AUTH: "noauth"
+            SSL: "nossl"
 axes:
   - id: version
     display_name: MongoDB Version
@@ -1666,3 +1725,9 @@ buildvariants:
   display_name: "${version} Storage ${storage-engine} ${jdk} ${os} ${topology}"
   tasks:
     - name: "mmapv1-storage-test"
+
+- matrix_name: "kms-tls-test"
+  matrix_spec: { os: "linux", version: [ "5.0" ], topology: ["standalone"] }
+  display_name: "CSFLE KMS TLS"
+  tasks:
+    - name: ".kms-tls"
