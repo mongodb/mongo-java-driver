@@ -19,11 +19,9 @@ package com.mongodb.client;
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.client.vault.ClientEncryptions;
-import org.jetbrains.annotations.NotNull;
 
 public class ClientSideEncryptionKmsTlsTest extends AbstractClientSideEncryptionKmsTlsTest {
     @Override
-    @NotNull
     public ClientEncryption getClientEncryption(final ClientEncryptionSettings settings) {
         return ClientEncryptions.create(settings);
     }

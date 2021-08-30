@@ -20,8 +20,8 @@ import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoClientException;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.vault.ClientEncryption;
+import com.mongodb.lang.NonNull;
 import org.bson.BsonDocument;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import java.security.cert.CertificateException;
@@ -81,7 +81,7 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
         }
     }
 
-    @NotNull
+    @NonNull
     public abstract ClientEncryption getClientEncryption(ClientEncryptionSettings settings);
 
     @Test
