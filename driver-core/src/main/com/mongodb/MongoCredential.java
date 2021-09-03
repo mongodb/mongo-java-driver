@@ -152,6 +152,31 @@ public final class MongoCredential {
     public static final String JAVA_SUBJECT_KEY = "JAVA_SUBJECT";
 
     /**
+     * Mechanism property key for specifying the AWS session token.  The type of the value must be {@link String}.
+     *
+     * @see #createAwsCredential(String, char[])
+     * @since 4.4
+     */
+    public static final String AWS_SESSION_TOKEN_KEY = "AWS_SESSION_TOKEN";
+
+    /**
+     * Mechanism property key for specifying a provider for an AWS credential, useful for refreshing a credential that could expire
+     * during the lifetime of the {@code MongoClient} with which it is associated.  The type of the value must be a
+     * {@code java.util.function.Supplier<com.mongodb.AwsCredential>}
+     *
+     * <p>
+     * If this key is added to an AWS MongoCredential, the userName (i.e. accessKeyId), password (i.e. secretAccessKey), and
+     * {@link MongoCredential#AWS_SESSION_TOKEN_KEY} value must all be null.
+     * </p>
+     *
+     * @see #createAwsCredential(String, char[])
+     * @see java.util.function.Supplier
+     * @see AwsCredential
+     * @since 4.4
+     */
+    public static final String AWS_CREDENTIAL_PROVIDER_KEY = "AWS_CREDENTIAL_PROVIDER";
+
+    /**
      * Creates a MongoCredential instance with an unspecified mechanism.  The client will negotiate the best mechanism based on the
      * version of the server that the client is authenticating to.
      *
@@ -287,14 +312,13 @@ public final class MongoCredential {
     /**
      * Creates a MongoCredential instance for the MONGODB-AWS mechanism.
      *
-     * @param userName the user name
-     * @param password the user password
+     * @param userName the user name, which may be null.  This maps to the AWS accessKeyId
+     * @param password the user password, which may be null if the userName is also null.  This maps to the AWS secretAccessKey.
      * @return the credential
      * @since 4.1
      * @mongodb.server.release 4.4
-     * @see #createCredential(String, String, char[])
      */
-    public static MongoCredential createAwsCredential(final String userName, final char[] password) {
+    public static MongoCredential createAwsCredential(@Nullable final String userName, @Nullable final char[] password) {
         return new MongoCredential(MONGODB_AWS, userName, "$external", password);
     }
 

@@ -1,8 +1,10 @@
 package com.mongodb.internal.connection
 
+import com.mongodb.AwsCredential
 import com.mongodb.ClusterFixture
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoCredential
+import com.mongodb.MongoSecurityException
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactory
@@ -15,6 +17,8 @@ import org.bson.BsonDocument
 import org.bson.BsonString
 import spock.lang.IgnoreIf
 import spock.lang.Specification
+
+import java.util.function.Supplier
 
 import static com.mongodb.AuthenticationMechanism.MONGODB_AWS
 import static com.mongodb.ClusterFixture.getConnectionString
@@ -54,6 +58,64 @@ class AwsAuthenticationSpecification extends Specification {
 
         then:
         true
+
+        cleanup:
+        connection?.close()
+
+        where:
+        async << [true, false]
+    }
+
+    @IgnoreIf({ System.getenv('AWS_SESSION_TOKEN') == null || System.getenv('AWS_SESSION_TOKEN') == '' })
+    def 'should authorize when successfully authenticated using provider'() {
+        given:
+        def connection = createConnection(async,
+                getCredential().withMechanismProperty(MongoCredential.AWS_CREDENTIAL_PROVIDER_KEY,
+                    new Supplier<AwsCredential>() {
+                        @Override
+                        AwsCredential get() {
+                            new AwsCredential(
+                                    System.getenv('AWS_ACCESS_KEY_ID'),
+                                    System.getenv('AWS_SECRET_ACCESS_KEY'),
+                                    System.getenv('AWS_SESSION_TOKEN'))
+                        }
+                    }))
+
+        when:
+        openConnection(connection, async)
+        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), null, connection)
+
+        then:
+        true
+
+        cleanup:
+        connection?.close()
+
+        where:
+        async << [true, false]
+    }
+
+    // This test is just proving that the credential provider is not being totally ignored
+    @IgnoreIf({ System.getenv('AWS_SESSION_TOKEN') == null || System.getenv('AWS_SESSION_TOKEN') == '' })
+    def 'should not authenticate when provider gives invalid session token'() {
+        given:
+        def connection = createConnection(async,
+                getCredential().withMechanismProperty(MongoCredential.AWS_CREDENTIAL_PROVIDER_KEY,
+                        new Supplier<AwsCredential>() {
+                            @Override
+                            AwsCredential get() {
+                                new AwsCredential(
+                                        System.getenv('AWS_ACCESS_KEY_ID'),
+                                        System.getenv('AWS_SECRET_ACCESS_KEY'),
+                                        'fake-session-token')
+                            }
+                        }))
+
+        when:
+        openConnection(connection, async)
+
+        then:
+        thrown(MongoSecurityException)
 
         cleanup:
         connection?.close()
