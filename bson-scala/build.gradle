@@ -48,4 +48,7 @@ test {
     maxParallelForks = 1
 }
 
-jar.manifest.attributes['Import-Package'] = 'org.bson.*'
+jar.manifest.attributes['Import-Package'] =  [
+        '!scala.*',
+        '*'
+].join(',')
