@@ -51,6 +51,15 @@ object Updates {
   def set[TItem](fieldName: String, value: TItem): Bson = JUpdates.set(fieldName, value)
 
   /**
+   * Creates an update that sets the value for the document.
+   *
+   * @param value     the value
+   * @return the update
+   * @see [[http://docs.mongodb.com/manual/reference/operator/update/set/ \$set]]
+   */
+  def set(value: Bson): Bson = JUpdates.set(value)
+
+  /**
    * Creates an update that deletes the field with the given name.
    *
    * @param fieldName the non-null field name
@@ -71,6 +80,16 @@ object Updates {
    * @see UpdateOptions#upsert(boolean)
    */
   def setOnInsert[TItem](fieldName: String, value: TItem): Bson = JUpdates.setOnInsert(fieldName, value)
+
+  /**
+   * Creates an update that sets the values for the document, but only if the update is an upsert that results in an insert of a document.
+   *
+   * @param value     the value
+   * @return the update
+   * @see [[http://docs.mongodb.com/manual/reference/operator/update/setOnInsert/ \$setOnInsert]]
+   * @see UpdateOptions#upsert(boolean)
+   */
+  def setOnInsert(value: Bson): Bson = JUpdates.setOnInsert(value)
 
   /**
    * Creates an update that renames a field.

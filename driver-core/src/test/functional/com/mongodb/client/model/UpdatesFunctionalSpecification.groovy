@@ -63,6 +63,12 @@ class UpdatesFunctionalSpecification extends OperationFunctionalSpecification {
 
         then:
         find() == [new Document('_id', 1).append('x', 5)]
+
+        when:
+        updateOne(set(Document.parse('{x: 6, y: 4}')))
+
+        then:
+        find() == [new Document('_id', 1).append('x', 6).append('y', 4)]
     }
 
     def 'setOnInsert'() {

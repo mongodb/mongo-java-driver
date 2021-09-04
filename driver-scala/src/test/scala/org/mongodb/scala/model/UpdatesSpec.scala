@@ -43,6 +43,7 @@ class UpdatesSpec extends BaseSpec {
   it should "should render $set" in {
     toBson(set("x", 1)) should equal(Document("""{$set : { x : 1} }"""))
     toBson(set("x", null)) should equal(Document("""{$set : { x : null } }"""))
+    toBson(set(Document("""{x: 1, y: { key: [1, 2, 3] } }"""))) should equal(Document("""{$set : { x : 1, y: { key: [1, 2, 3] } } }"""))
   }
 
   it should "should render $setOnInsert" in {

@@ -79,6 +79,17 @@ public final class Updates {
     }
 
     /**
+     * Creates an update that sets the value of the field with the given name to the given value.
+     *
+     * @param value     the value
+     * @return the update
+     * @mongodb.driver.manual reference/operator/update/set/ $set
+     */
+    public static Bson set(final Bson value) {
+        return new SimpleBsonKeyValue("$set", value);
+    }
+
+    /**
      * Creates an update that deletes the field with the given name.
      *
      * @param fieldName the non-null field name
