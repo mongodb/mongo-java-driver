@@ -64,20 +64,14 @@ afterEvaluate {
     jar.manifest.attributes['Automatic-Module-Name'] = 'org.mongodb.driver.core'
     jar.manifest.attributes['Bundle-SymbolicName'] = 'org.mongodb.driver-core'
     jar.manifest.attributes['Import-Package'] = [
-        'org.bson.*', // unfortunate that this is necessary, but if it's left out then it's not included
-        'javax.crypto.*',
-        'javax.management.*',
-        'javax.naming.*',
-        'javax.net.*',
-        'jdk.net.*',
-        'javax.security.sasl.*',
-        'javax.security.auth.callback.*',
-        'org.ietf.jgss.*',
-        'io.netty.*;resolution:=optional',
-        'org.xerial.snappy.*;resolution:=optional',
-        'com.github.luben.zstd.*;resolution:=optional',
-        'org.slf4j.*;resolution:=optional',
-        'jnr.unixsocket.*;resolution:=optional',
-        'com.mongodb.crypt.capi.*;resolution:=optional'
+            '!sun.misc.*',  // Used by DirectBufferDeallocator only for java 8
+            '!sun.nio.ch.*',  // Used by DirectBufferDeallocator only for java 8
+            'io.netty.*;resolution:=optional',
+            'org.xerial.snappy.*;resolution:=optional',
+            'com.github.luben.zstd.*;resolution:=optional',
+            'org.slf4j.*;resolution:=optional',
+            'jnr.unixsocket.*;resolution:=optional',
+            'com.mongodb.crypt.capi.*;resolution:=optional',
+            '*' // import all that is not excluded or modified before
     ].join(',')
 }
