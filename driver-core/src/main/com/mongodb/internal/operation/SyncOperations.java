@@ -34,7 +34,6 @@ import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneOptions;
-import com.mongodb.client.model.MapReduceAction;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.UpdateOptions;
@@ -129,11 +128,13 @@ public final class SyncOperations<TDocument> {
                 variables, aggregationLevel);
     }
 
+    @SuppressWarnings("deprecation")
     public WriteOperation<MapReduceStatistics> mapReduceToCollection(final String databaseName, final String collectionName,
                                                                      final String mapFunction, final String reduceFunction,
                                                                      final String finalizeFunction, final Bson filter, final int limit,
                                                                      final long maxTimeMS, final boolean jsMode, final Bson scope,
-                                                                     final Bson sort, final boolean verbose, final MapReduceAction action,
+                                                                     final Bson sort, final boolean verbose,
+                                                                     final com.mongodb.client.model.MapReduceAction action,
                                                                      final boolean nonAtomic, final boolean sharded,
                                                                      final Boolean bypassDocumentValidation, final Collation collation) {
         return operations.mapReduceToCollection(databaseName, collectionName, mapFunction, reduceFunction, finalizeFunction, filter, limit,

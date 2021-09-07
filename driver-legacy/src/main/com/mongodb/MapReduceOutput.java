@@ -28,7 +28,9 @@ import java.util.List;
  * by interacting directly with the collection the results were input into.
  *
  * @mongodb.driver.manual applications/map-reduce Map-Reduce
+ * @deprecated Superseded by aggregate
  */
+@Deprecated
 public class MapReduceOutput {
 
     private final DBCollection collection;

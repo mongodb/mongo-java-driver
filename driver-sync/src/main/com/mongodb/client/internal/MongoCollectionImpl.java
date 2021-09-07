@@ -34,7 +34,6 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.DistinctIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.ListIndexesIterable;
-import com.mongodb.client.MapReduceIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.client.result.InsertOneResult;
@@ -378,31 +377,36 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                 pipeline, resultClass, ChangeStreamLevel.COLLECTION, retryReads);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
-    public MapReduceIterable<TDocument> mapReduce(final String mapFunction, final String reduceFunction) {
+    public com.mongodb.client.MapReduceIterable<TDocument> mapReduce(final String mapFunction, final String reduceFunction) {
         return mapReduce(mapFunction, reduceFunction, documentClass);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
-    public <TResult> MapReduceIterable<TResult> mapReduce(final String mapFunction, final String reduceFunction,
+    public <TResult> com.mongodb.client.MapReduceIterable<TResult> mapReduce(final String mapFunction, final String reduceFunction,
                                                           final Class<TResult> resultClass) {
         return createMapReduceIterable(null, mapFunction, reduceFunction, resultClass);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
-    public MapReduceIterable<TDocument> mapReduce(final ClientSession clientSession, final String mapFunction,
+    public com.mongodb.client.MapReduceIterable<TDocument> mapReduce(final ClientSession clientSession, final String mapFunction,
                                                   final String reduceFunction) {
         return mapReduce(clientSession, mapFunction, reduceFunction, documentClass);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
-    public <TResult> MapReduceIterable<TResult> mapReduce(final ClientSession clientSession, final String mapFunction,
+    public <TResult> com.mongodb.client.MapReduceIterable<TResult> mapReduce(final ClientSession clientSession, final String mapFunction,
                                                           final String reduceFunction, final Class<TResult> resultClass) {
         notNull("clientSession", clientSession);
         return createMapReduceIterable(clientSession, mapFunction, reduceFunction, resultClass);
     }
 
-    private <TResult> MapReduceIterable<TResult> createMapReduceIterable(@Nullable final ClientSession clientSession,
+    @SuppressWarnings("deprecation")
+    private <TResult> com.mongodb.client.MapReduceIterable<TResult> createMapReduceIterable(@Nullable final ClientSession clientSession,
                                                                          final String mapFunction, final String reduceFunction,
                                                                          final Class<TResult> resultClass) {
         return new MapReduceIterableImpl<>(clientSession, namespace, documentClass, resultClass, codecRegistry,

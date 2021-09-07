@@ -44,6 +44,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.ClusterFixture.TIMEOUT;
+import static com.mongodb.internal.connection.InternalStreamConnection.getSecuritySensitiveCommands;
+import static com.mongodb.internal.connection.InternalStreamConnection.getSecuritySensitiveHelloCommands;
 import static java.util.Collections.emptyList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -55,7 +57,8 @@ public class TestCommandListener implements CommandListener {
     private final List<CommandEvent> events = new ArrayList<>();
     private final Lock lock = new ReentrantLock();
     private final Condition commandCompletedCondition = lock.newCondition();
-
+    private final boolean observeSensitiveCommands;
+    private boolean ignoreNextSucceededOrFailedEvent;
     private static final CodecRegistry CODEC_REGISTRY_HACK;
 
     static {
@@ -78,8 +81,14 @@ public class TestCommandListener implements CommandListener {
     }
 
     public TestCommandListener(final List<String> eventTypes, final List<String> ignoredCommandMonitoringEvents) {
+        this(eventTypes, ignoredCommandMonitoringEvents, true);
+    }
+
+    public TestCommandListener(final List<String> eventTypes, final List<String> ignoredCommandMonitoringEvents,
+            final boolean observeSensitiveCommands) {
         this.eventTypes = eventTypes;
         this.ignoredCommandMonitoringEvents = ignoredCommandMonitoringEvents;
+        this.observeSensitiveCommands = observeSensitiveCommands;
     }
 
     public void reset() {
@@ -197,6 +206,14 @@ public class TestCommandListener implements CommandListener {
         if (!eventTypes.contains("commandStartedEvent") || ignoredCommandMonitoringEvents.contains(event.getCommandName())) {
             return;
         }
+        else if (!observeSensitiveCommands) {
+            if (getSecuritySensitiveCommands().contains(event.getCommandName())) {
+                return;
+            } else if (getSecuritySensitiveHelloCommands().contains(event.getCommandName()) && event.getCommand().isEmpty()) {
+                ignoreNextSucceededOrFailedEvent = true;
+                return;
+            }
+        }
         lock.lock();
         try {
             events.add(new CommandStartedEvent(event.getRequestId(), event.getConnectionDescription(), event.getDatabaseName(),
@@ -211,6 +228,14 @@ public class TestCommandListener implements CommandListener {
     public void commandSucceeded(final CommandSucceededEvent event) {
         if (!eventTypes.contains("commandSucceededEvent") || ignoredCommandMonitoringEvents.contains(event.getCommandName())) {
             return;
+        }
+        else if (!observeSensitiveCommands) {
+            if (getSecuritySensitiveCommands().contains(event.getCommandName())) {
+                return;
+            } else if (getSecuritySensitiveHelloCommands().contains(event.getCommandName()) && ignoreNextSucceededOrFailedEvent) {
+                ignoreNextSucceededOrFailedEvent = false;
+                return;
+            }
         }
         lock.lock();
         try {
@@ -227,6 +252,14 @@ public class TestCommandListener implements CommandListener {
     public void commandFailed(final CommandFailedEvent event) {
         if (!eventTypes.contains("commandFailedEvent") || ignoredCommandMonitoringEvents.contains(event.getCommandName())) {
             return;
+        }
+        else if (!observeSensitiveCommands) {
+            if (getSecuritySensitiveCommands().contains(event.getCommandName())) {
+                return;
+            } else if (getSecuritySensitiveHelloCommands().contains(event.getCommandName()) && ignoreNextSucceededOrFailedEvent) {
+                ignoreNextSucceededOrFailedEvent = false;
+                return;
+            }
         }
         lock.lock();
         try {

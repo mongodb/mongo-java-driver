@@ -21,6 +21,7 @@ import org.bson.types.ObjectId;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.tck.PublisherVerification;
 import org.reactivestreams.tck.TestEnvironment;
+import reactor.core.publisher.Flux;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -30,7 +31,6 @@ import java.util.stream.LongStream;
 import static com.mongodb.reactivestreams.client.MongoFixture.DEFAULT_TIMEOUT_MILLIS;
 import static com.mongodb.reactivestreams.client.MongoFixture.PUBLISHER_REFERENCE_CLEANUP_TIMEOUT_MILLIS;
 import static com.mongodb.reactivestreams.client.MongoFixture.run;
-import static com.mongodb.reactivestreams.client.internal.Publishers.publishAndFlatten;
 
 public class GridFSUploadPublisherVerification extends PublisherVerification<ObjectId> {
 
@@ -53,7 +53,7 @@ public class GridFSUploadPublisherVerification extends PublisherVerification<Obj
         List<ByteBuffer> byteBuffers = LongStream.rangeClosed(1, elements).boxed()
                 .map(i -> ByteBuffer.wrap("test".getBytes())).collect(Collectors.toList());
 
-        Publisher<ByteBuffer> uploader = publishAndFlatten(callback -> callback.onResult(byteBuffers, null));
+        Publisher<ByteBuffer> uploader = Flux.fromIterable(byteBuffers);
 
         return bucket.uploadFromPublisher("test", uploader);
     }

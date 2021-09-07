@@ -100,7 +100,7 @@ ext {
 afterEvaluate {
     jar.manifest.attributes['Automatic-Module-Name'] = 'org.mongodb.scala.mongo-scala-driver'
     jar.manifest.attributes['Import-Package'] = [
-            'org.bson.*',
-            'com.mongodb.*',
+            '!scala.*',
+            '*'
     ].join(',')
 }
