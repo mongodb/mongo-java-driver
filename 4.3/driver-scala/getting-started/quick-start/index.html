@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2021-08-03T15:00:43.62">
+<meta name="date" content="2021-09-07T17:13:21.44">
 <link rel="shortcut icon" href="/mongo-java-driver/4.3/img/favicon.png">
 
     <title>Quick Start</title><link rel="stylesheet" href="/mongo-java-driver/4.3/lib/bootstrap.css" type="text/css" />
@@ -386,33 +386,39 @@ import scala.collection.JavaConverters._
 <p>To connect to a single MongoDB instance:</p>
 
 <ul>
-<li><p>You can instantiate a MongoClient object without any parameters to connect to a MongoDB instance running on localhost on port <code>27017</code>:</p>
+<li>You can instantiate a MongoClient object without any parameters to connect to a MongoDB instance running on localhost on port <code>27017</code>:</li>
+</ul>
 
 <pre><code class="language-scala">val mongoClient: MongoClient = MongoClient()
-</code></pre></li>
+</code></pre>
 
-<li><p>You can explicitly specify the hostname to connect to a MongoDB instance running on the specified host on port <code>27017</code>:</p>
-
-<pre><code class="language-scala">val mongoClient: MongoClient = MongoClient(
-MongoClientSettings.builder()
-.applyToClusterSettings((builder: ClusterSettings.Builder) =&gt; builder.hosts(List(new ServerAddress(&quot;hostOne&quot;)).asJava))
-.build())
-</code></pre></li>
-
-<li><p>You can explicitly specify the hostname and the port:</p>
+<ul>
+<li>You can explicitly specify the hostname to connect to a MongoDB instance running on the specified host on port <code>27017</code>:</li>
+</ul>
 
 <pre><code class="language-scala">val mongoClient: MongoClient = MongoClient(
-MongoClientSettings.builder()
-.applyToClusterSettings((builder: ClusterSettings.Builder) =&gt; builder.hosts(List(new ServerAddress(&quot;hostOne&quot;, 27017)).asJava))
-.build())
-</code></pre></li>
+  MongoClientSettings.builder()
+    .applyToClusterSettings((builder: ClusterSettings.Builder) =&gt; builder.hosts(List(new ServerAddress(&quot;hostOne&quot;)).asJava))
+    .build())
+</code></pre>
 
-<li><p>You can specify the <a href="/mongo-java-driver/4.3/apidocs/mongo-scala-driver/org/mongodb/scala/package$$ConnectionString$.html
-"><code>ConnectionString</code></a>:</p>
+<ul>
+<li>You can explicitly specify the hostname and the port:</li>
+</ul>
+
+<pre><code class="language-scala">val mongoClient: MongoClient = MongoClient(
+  MongoClientSettings.builder()
+    .applyToClusterSettings((builder: ClusterSettings.Builder) =&gt; builder.hosts(List(new ServerAddress(&quot;hostOne&quot;, 27017)).asJava))
+    .build())
+</code></pre>
+
+<ul>
+<li>You can specify the <a href="/mongo-java-driver/4.3/apidocs/mongo-scala-driver/org/mongodb/scala/package$$ConnectionString$.html
+"><code>ConnectionString</code></a>:</li>
+</ul>
 
 <pre><code class="language-scala">val mongoClient: MongoClient = MongoClient(&quot;mongodb://hostOne:27017&quot;)
-</code></pre></li>
-</ul>
+</code></pre>
 
 <h2 id="access-a-database">Access a Database</h2>
 

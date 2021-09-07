@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2021-08-03T15:00:43.41">
+<meta name="date" content="2021-09-07T17:13:21.13">
 <link rel="shortcut icon" href="/mongo-java-driver/4.3/img/favicon.png">
 
     <title>Write Operations</title><link rel="stylesheet" href="/mongo-java-driver/4.3/lib/bootstrap.css" type="text/css" />
@@ -616,21 +616,23 @@ collection.insertMany(Seq(doc1, doc2)).printResults()
 "><code>MongoClient()</code></a></p>
 
 <ul>
-<li><p>Via <a href="/mongo-java-driver/4.3/apidocs/mongo-scala-driver/org/mongodb/scala/MongoClientSettings$.html
-"><code>MongoClientSettings</code></a>:</p>
+<li>Via <a href="/mongo-java-driver/4.3/apidocs/mongo-scala-driver/org/mongodb/scala/MongoClientSettings$.html
+"><code>MongoClientSettings</code></a>:</li>
+</ul>
 
-<pre><code class="language-scala">val mongoClient: MongoClient = MongoClient(MongoClientSettings.builder()
-                                            .applyConnectionString(ConnectionString(&quot;mongodb://host1,host2&quot;))
-                                            .writeConcern(WriteConcern.MAJORITY)
-                                            .build())
+<pre><code class="language-scala">  val mongoClient: MongoClient = MongoClient(MongoClientSettings.builder()
+                                                .applyConnectionString(ConnectionString(&quot;mongodb://host1,host2&quot;))
+                                                .writeConcern(WriteConcern.MAJORITY)
+                                                .build())
+</code></pre>
+
+<ul>
+<li>Via <a href="/mongo-java-driver/4.3/apidocs/mongo-scala-driver/org/mongodb/scala/package$$ConnectionString$.html
+"><code>ConnectionString</code></a>, as in the following example:</li>
+</ul>
+
+<pre><code class="language-scala">  val mongoClientt = MongoClient(&quot;mongodb://host1:27017,host2:27017/?w=majority&quot;)
 </code></pre></li>
-
-<li><p>Via <a href="/mongo-java-driver/4.3/apidocs/mongo-scala-driver/org/mongodb/scala/package$$ConnectionString$.html
-"><code>ConnectionString</code></a>, as in the following example:</p>
-
-<pre><code class="language-scala">val mongoClientt = MongoClient(&quot;mongodb://host1:27017,host2:27017/?w=majority&quot;)
-</code></pre></li>
-</ul></li>
 
 <li><p>In a <a href="/mongo-java-driver/4.3/apidocs/mongo-scala-driver/org/mongodb/scala/MongoDatabase.html
 "><code>MongoDatabase</code></a> via its <a href="/mongo-java-driver/4.3/apidocs/mongo-scala-driver/org/mongodb/scala/MongoDatabase.html#withWriteConcern(writeConcern:org.mongodb.scala.WriteConcern):org.mongodb.scala.MongoDatabase

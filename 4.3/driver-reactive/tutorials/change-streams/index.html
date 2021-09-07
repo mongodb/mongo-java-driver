@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2021-08-03T15:00:43.34">
+<meta name="date" content="2021-09-07T17:13:21.05">
 <link rel="shortcut icon" href="/mongo-java-driver/4.3/img/favicon.png">
 
     <title>Change Streams</title><link rel="stylesheet" href="/mongo-java-driver/4.3/lib/bootstrap.css" type="text/css" />
@@ -330,7 +330,8 @@ to resume if it encounters a potentially recoverable error.</p>
 <ul>
 <li><p>The example below requires a <code>restaurants</code> collection in the <code>test</code> database. To create and populate the collection, follow the directions in <a href="https://github.com/mongodb/docs-assets/tree/drivers">github</a>.</p></li>
 
-<li><p>Include the following import statements:</p>
+<li><p>Include the following import statements:</p></li>
+</ul>
 
 <pre><code class="language-java">import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoClient;
@@ -343,8 +344,7 @@ import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 
 import org.bson.Document;
-</code></pre></li>
-</ul>
+</code></pre>
 
 <div class="admonition important">
 <h5 class="admonition-title">important</h5>
@@ -417,12 +417,12 @@ is either an <code>insert</code>, <code>update</code>, <code>replace</code> or <
 
 <li><p>Then, it sets the <code>fullDocument</code> to <a href="/mongo-java-driver/4.3/apidocs/mongodb-driver-core/com/mongodb/client/model/changestream/FullDocument.html#UPDATE_LOOKUP
 "><code>FullDocument.UPDATE_LOOKUP</code></a>,
-so that the document after the update is included in the results.</p>
+so that the document after the update is included in the results.</p></li>
+</ul>
 
 <pre><code class="language-java">collection.watch(asList(Aggregates.match(Filters.in(&quot;operationType&quot;, asList(&quot;insert&quot;, &quot;update&quot;, &quot;replace&quot;, &quot;delete&quot;)))))
-    .fullDocument(FullDocument.UPDATE_LOOKUP).subscribe(new PrintDocumentSubscriber());
-</code></pre></li>
-</ul>
+        .fullDocument(FullDocument.UPDATE_LOOKUP).subscribe(new PrintDocumentSubscriber());
+</code></pre>
 <div id="btnv"><div class="pull-left">
   <a class="navigation prev" href="/mongo-java-driver/4.3/driver-reactive/tutorials/aggregation/">
       <i class="fa fa-long-arrow-left"> </i> Aggregation
