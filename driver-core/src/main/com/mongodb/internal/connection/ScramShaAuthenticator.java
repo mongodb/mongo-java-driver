@@ -99,7 +99,7 @@ class ScramShaAuthenticator extends SaslAuthenticator {
         try {
             speculativeSaslClient = createSaslClient(connection.getDescription().getServerAddress());
             BsonDocument startDocument = createSaslStartCommandDocument(speculativeSaslClient.evaluateChallenge(new byte[0]))
-                    .append("db", new BsonString("admin"));
+                    .append("db", new BsonString(getMongoCredential().getSource()));
             appendSaslStartOptions(startDocument);
             return startDocument;
         } catch (Exception e) {
