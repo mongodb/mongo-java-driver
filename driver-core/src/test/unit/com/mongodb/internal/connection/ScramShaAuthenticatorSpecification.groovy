@@ -78,7 +78,7 @@ class ScramShaAuthenticatorSpecification extends Specification {
         def firstClientChallenge = 'n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL'
         def expectedSpeculativeAuthenticateCommand = BsonDocument.parse('{ saslStart: 1, mechanism: "SCRAM-SHA-1", '
                 + "payload: BinData(0, '${encode64(firstClientChallenge)}'), "
-                + 'db: "admin", options: { skipEmptyExchange: true }}')
+                + 'db: "database", options: { skipEmptyExchange: true }}')
         def serverResponse = 'r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096'
         def speculativeAuthenticateResponse =
                 BsonDocument.parse("{ conversationId: 1, payload: BinData(0, '${encode64(serverResponse)}'), done: false }")
@@ -132,7 +132,7 @@ class ScramShaAuthenticatorSpecification extends Specification {
         def firstClientChallenge = 'n,,n=user,r=rOprNGfwEbeRWgbNEkqO'
         def expectedSpeculativeAuthenticateCommand = BsonDocument.parse('{ saslStart: 1, mechanism: "SCRAM-SHA-256", '
                 + "payload: BinData(0, '${encode64(firstClientChallenge)}'), "
-                + 'db: "admin", options: { skipEmptyExchange: true }}')
+                + 'db: "database", options: { skipEmptyExchange: true }}')
         def serverResponse = 'r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096'
         def speculativeAuthenticateResponse =
                 BsonDocument.parse("{ conversationId: 1, payload: BinData(0, '${encode64(serverResponse)}'), done: false }")

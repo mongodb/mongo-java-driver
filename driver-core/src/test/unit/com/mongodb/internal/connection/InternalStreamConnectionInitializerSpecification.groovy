@@ -540,7 +540,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
                                 "mechanism: '${mechanism}', db: \"\$external\" } }" :
                         'speculativeAuthenticate: { saslStart: 1, ' +
                                 "mechanism: '${mechanism}', payload: BinData(0, '${encode64(firstClientChallenge)}'), " +
-                                'db: "admin", options: { skipEmptyExchange: true } } }')
+                                'db: "database", options: { skipEmptyExchange: true } } }')
 
         BsonDocument.parse(isMaster)
     }
