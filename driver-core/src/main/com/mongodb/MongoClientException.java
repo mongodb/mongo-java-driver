@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
+
 /**
  * A base class for exceptions indicating a failure condition with the MongoClient.
  *
@@ -40,7 +42,7 @@ public class MongoClientException extends MongoException {
      * @param message the message
      * @param cause the cause
      */
-    public MongoClientException(final String message, final Throwable cause) {
+    public MongoClientException(final String message, @Nullable final Throwable cause) {
         super(message, cause);
     }
 }

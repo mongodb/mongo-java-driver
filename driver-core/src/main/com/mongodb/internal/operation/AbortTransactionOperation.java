@@ -22,8 +22,6 @@ import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import org.bson.BsonDocument;
 
-import static com.mongodb.internal.operation.CommandOperationHelper.noOpRetryCommandModifier;
-
 /**
  * An operation that aborts a transaction.
  *
@@ -74,6 +72,6 @@ public class AbortTransactionOperation extends TransactionOperation {
 
     @Override
     protected Function<BsonDocument, BsonDocument> getRetryCommandModifier() {
-        return noOpRetryCommandModifier();
+        return cmd -> cmd;
     }
 }

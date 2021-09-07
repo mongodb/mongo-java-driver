@@ -31,7 +31,8 @@ import org.bson.codecs.Decoder;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableCommand;
+import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableWrite;
+import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableWriteAsync;
 import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
 
@@ -66,17 +67,18 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
 
     @Override
     public T execute(final WriteBinding binding) {
-        return executeRetryableCommand(binding, getDatabaseName(), null, getFieldNameValidator(),
+        return executeRetryableWrite(binding, getDatabaseName(), null, getFieldNameValidator(),
                 CommandResultDocumentCodec.create(getDecoder(), "value"),
                 getCommandCreator(binding.getSessionContext()),
-                FindAndModifyHelper.<T>transformer());
+                FindAndModifyHelper.transformer(),
+                cmd -> cmd);
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<T> callback) {
-        executeRetryableCommand(binding, getDatabaseName(), null, getFieldNameValidator(),
+        executeRetryableWriteAsync(binding, getDatabaseName(), null, getFieldNameValidator(),
                 CommandResultDocumentCodec.create(getDecoder(), "value"),
-                getCommandCreator(binding.getSessionContext()), FindAndModifyHelper.<T>asyncTransformer(), callback);
+                getCommandCreator(binding.getSessionContext()), FindAndModifyHelper.asyncTransformer(), cmd -> cmd, callback);
     }
 
     protected abstract String getDatabaseName();

@@ -119,7 +119,7 @@
         <!-- See http://checkstyle.sf.net/config_sizes.html -->
         <module name="LineLength">
             <property name="max" value="140"/>
-            <property name="ignorePattern" value="^.*a\s*href\s*=.*$"/>
+            <property name="ignorePattern" value="^.*[(http://|https://)|{@see|{@link].*$"/>
         </module>
 
         <module name="MethodLength"/>

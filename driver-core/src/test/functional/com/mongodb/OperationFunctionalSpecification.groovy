@@ -239,9 +239,9 @@ class OperationFunctionalSpecification extends Specification {
     }
 
     void testRetryableOperationThrowsOriginalError(operation, List<List<Integer>> serverVersions, List<ServerType> serverTypes,
-                                                   Throwable exception, boolean async) {
+                                                   Throwable exception, boolean async, int expectedConnectionReleaseCount = 2) {
         def test = async ? this.&testAyncRetryableOperationThrows : this.&testSyncRetryableOperationThrows
-        test(operation, serverVersions as Queue, serverTypes as Queue, exception)
+        test(operation, serverVersions as Queue, serverTypes as Queue, exception, expectedConnectionReleaseCount)
     }
 
     void testOperationSecondaryOk(operation, List<Integer> serverVersion, ReadPreference readPreference, boolean async, result = null) {
@@ -429,8 +429,7 @@ class OperationFunctionalSpecification extends Specification {
     }
 
     def testSyncRetryableOperationThrows(operation, Queue<List<Integer>> serverVersions, Queue<ServerType> serverTypes,
-                                         Throwable exception) {
-        def serverVersionSize = serverVersions.size()
+                                         Throwable exception, int expectedConnectionReleaseCount) {
         def connection = Mock(Connection) {
             _ * getDescription() >> Stub(ConnectionDescription) {
                 getMaxWireVersion() >> {
@@ -466,17 +465,12 @@ class OperationFunctionalSpecification extends Specification {
             throw exception
         }
 
-        if (serverVersionSize == 2) {
-            1 * connection.release()
-        } else {
-            2 * connection.release()
-        }
+        expectedConnectionReleaseCount * connection.release()
         operation.execute(writeBinding)
     }
 
     def testAyncRetryableOperationThrows(operation, Queue<List<Integer>> serverVersions, Queue<ServerType> serverTypes,
-                                         Throwable exception) {
-        def serverVersionSize = serverVersions.size()
+                                         Throwable exception, int expectedConnectionReleaseCount) {
         def connection = Mock(AsyncConnection) {
             _ * getDescription() >> Stub(ConnectionDescription) {
                 getMaxWireVersion() >> {
@@ -512,11 +506,7 @@ class OperationFunctionalSpecification extends Specification {
         def callback = new FutureResultCallback()
 
         1 * connection.commandAsync(*_) >> { it.last().onResult(null, exception) }
-        if (serverVersionSize == 2) {
-            1 * connection.release()
-        } else {
-            2 * connection.release()
-        }
+        expectedConnectionReleaseCount * connection.release()
 
         operation.executeAsync(writeBinding, callback)
         callback.get(1000, TimeUnit.MILLISECONDS)

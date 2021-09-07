@@ -23,13 +23,13 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 /* This exception is our way to deal with a race condition existing due to threads concurrently
  * checking out connections from ConnectionPool and invalidating it.*/
 /**
- * An exception that may happen usually as a result of another thread clearing a connection pool.
+ * An exception that may usually happen as a result of another thread clearing a connection pool.
  * Such clearing usually itself happens as a result of an exception,
  * in which case it may be specified via the {@link #getCause()} method.
  * <p>
  * It is always safe to retry an operation that failed with this exception.
  */
-public final class MongoConnectionPoolClearedException extends MongoException {
+public final class MongoConnectionPoolClearedException extends MongoClientException {
     private static final long serialVersionUID = 1;
 
     /**
