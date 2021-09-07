@@ -159,7 +159,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         Thread.sleep(500)
 
         then: 'it prunes the existing connections and again ensures the minimum size of the pool'
-        connectionFactory.createdConnections.size() == 5
+        connectionFactory.createdConnections.size() == 10
         connectionFactory.createdConnections.get(0).opened()  // if the first one is opened, they all should be
     }
 
