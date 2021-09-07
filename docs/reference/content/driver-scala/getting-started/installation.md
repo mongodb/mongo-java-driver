@@ -20,8 +20,8 @@ The Reactive Streams based Scala implementation for asynchronous stream processi
 
 ### Scala 2.12
 
-{{< install artifactId="mongo-scala-driver" version="4.3.1" groupId="org.mongodb.scala" scalaVersion="2.12">}}
+{{< install artifactId="mongo-scala-driver" version="4.3.2" groupId="org.mongodb.scala" scalaVersion="2.12">}}
 
 ### Scala 2.11
 
-{{< install artifactId="mongo-scala-driver" version="4.3.1" groupId="org.mongodb.scala" scalaVersion="2.11">}}
+{{< install artifactId="mongo-scala-driver" version="4.3.2" groupId="org.mongodb.scala" scalaVersion="2.11">}}
