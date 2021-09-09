@@ -57,8 +57,8 @@ public final class LoopState {
         if (broken) {
             return false;
         } else {
-            removeAutoRemovableAttachments();
             iteration++;
+            removeAutoRemovableAttachments();
             return true;
         }
     }

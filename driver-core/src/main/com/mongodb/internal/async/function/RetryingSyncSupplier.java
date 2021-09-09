@@ -35,7 +35,7 @@ import java.util.function.Supplier;
 public final class RetryingSyncSupplier<R> implements Supplier<R> {
     private final RetryState retryState;
     private final BiPredicate<RetryState, Throwable> retryPredicate;
-    private final BiFunction<Throwable, Throwable, Throwable> failedResultChooser;
+    private final BiFunction<Throwable, Throwable, Throwable> failedResultTransformer;
     private final Supplier<R> syncFunction;
 
     /**
@@ -54,7 +54,7 @@ public final class RetryingSyncSupplier<R> implements Supplier<R> {
             final Supplier<R> syncFunction) {
         this.retryState = retryState;
         this.retryPredicate = retryPredicate;
-        this.failedResultChooser = failedResultTransformer;
+        this.failedResultTransformer = failedResultTransformer;
         this.syncFunction = syncFunction;
     }
 
@@ -64,7 +64,7 @@ public final class RetryingSyncSupplier<R> implements Supplier<R> {
             try {
                 return syncFunction.get();
             } catch (RuntimeException attemptException) {
-                retryState.advanceOrThrow(attemptException, failedResultChooser, retryPredicate);
+                retryState.advanceOrThrow(attemptException, failedResultTransformer, retryPredicate);
             }
         }
     }

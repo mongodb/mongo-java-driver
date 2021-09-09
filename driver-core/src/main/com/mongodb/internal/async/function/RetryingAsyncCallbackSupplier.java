@@ -39,7 +39,7 @@ import java.util.function.Supplier;
 public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupplier<R> {
     private final RetryState retryState;
     private final BiPredicate<RetryState, Throwable> retryPredicate;
-    private final BiFunction<Throwable, Throwable, Throwable> failedResultChooser;
+    private final BiFunction<Throwable, Throwable, Throwable> failedResultTransformer;
     private final AsyncCallbackSupplier<R> asyncFunction;
 
     /**
@@ -63,7 +63,7 @@ public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupp
      * is used as a failed result of this {@link RetryingAsyncCallbackSupplier}. The {@code retryPredicate} is called not more than once
      * per attempt and only if all the following is true:
      * <ul>
-     *     <li>{@code exceptionChooser} completed normally;</li>
+     *     <li>{@code failedResultTransformer} completed normally;</li>
      *     <li>retrying was broken via
      *     {@link RetryState#breakAndThrowIfRetryAnd(Supplier)} /
      *     {@link RetryState#breakAndCompleteIfRetryAnd(Supplier, SingleResultCallback)} /
@@ -81,7 +81,7 @@ public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupp
             final AsyncCallbackSupplier<R> asyncFunction) {
         this.retryState = retryState;
         this.retryPredicate = retryPredicate;
-        this.failedResultChooser = failedResultTransformer;
+        this.failedResultTransformer = failedResultTransformer;
         this.asyncFunction = asyncFunction;
     }
 
@@ -107,7 +107,7 @@ public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupp
         public void onResult(@Nullable final R result, @Nullable final Throwable t) {
             if (t != null) {
                 try {
-                    retryState.advanceOrThrow(t, failedResultChooser, retryPredicate);
+                    retryState.advanceOrThrow(t, failedResultTransformer, retryPredicate);
                 } catch (Throwable failedResult) {
                     wrapped.onResult(null, failedResult);
                     return;

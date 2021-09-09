@@ -107,9 +107,6 @@ public final class RetryState {
      * <ul>
      *     <li>the {@code exceptionTransformer} completed abruptly;</li>
      *     <li>the most recent attempt is the {@linkplain #lastAttempt() last} one;</li>
-     *     <li>retrying was broken via
-     *     {@link #breakAndThrowIfRetryAnd(Supplier)} / {@link #breakAndCompleteIfRetryAnd(Supplier, SingleResultCallback)} /
-     *     {@link #markAsLastAttempt()};</li>
      *     <li>the {@code retryPredicate} completed abruptly;</li>
      *     <li>the {@code retryPredicate} is {@code false}.</li>
      * </ul>
@@ -134,9 +131,9 @@ public final class RetryState {
      *
      * @see #advanceOrThrow(RuntimeException, BiFunction, BiPredicate)
      */
-    void advanceOrThrow(final Throwable attemptException, final BiFunction<Throwable, Throwable, Throwable> exceptionChooser,
+    void advanceOrThrow(final Throwable attemptException, final BiFunction<Throwable, Throwable, Throwable> exceptionTransformer,
             final BiPredicate<RetryState, Throwable> retryPredicate) throws Throwable {
-        doAdvanceOrThrow(attemptException, exceptionChooser, retryPredicate, false);
+        doAdvanceOrThrow(attemptException, exceptionTransformer, retryPredicate, false);
     }
 
     /**
@@ -184,15 +181,15 @@ public final class RetryState {
             if (onlyRuntimeExceptions) {
                 assertTrue(isRuntime(result));
             }
-        } catch (Throwable exceptionChooserException) {
-            if (onlyRuntimeExceptions && !isRuntime(exceptionChooserException)) {
-                throw exceptionChooserException;
+        } catch (Throwable exceptionTransformerException) {
+            if (onlyRuntimeExceptions && !isRuntime(exceptionTransformerException)) {
+                throw exceptionTransformerException;
             }
             if (previouslyChosenException != null) {
-                exceptionChooserException.addSuppressed(previouslyChosenException);
+                exceptionTransformerException.addSuppressed(previouslyChosenException);
             }
-            exceptionChooserException.addSuppressed(attemptException);
-            throw exceptionChooserException;
+            exceptionTransformerException.addSuppressed(attemptException);
+            throw exceptionTransformerException;
         }
         return result;
     }
@@ -233,7 +230,7 @@ public final class RetryState {
      * <p>
      * If this method is called from
      * {@linkplain RetryingSyncSupplier#RetryingSyncSupplier(RetryState, BiFunction, BiPredicate, Supplier)
-     * retry predicate / failed result chooser}, the behavior is unspecified.
+     * retry predicate / failed result transformer}, the behavior is unspecified.
      *
      * @param predicate {@code true} iff retrying needs to be broken.
      * The {@code predicate} is not called during the {@linkplain #firstAttempt() first attempt}.
@@ -271,7 +268,7 @@ public final class RetryState {
      * <p>
      * If this method is called from
      * {@linkplain RetryingAsyncCallbackSupplier#RetryingAsyncCallbackSupplier(RetryState, BiFunction, BiPredicate, com.mongodb.internal.async.function.AsyncCallbackSupplier)
-     * retry predicate / failed result chooser}, the behavior is unspecified.
+     * retry predicate / failed result transformer}, the behavior is unspecified.
      *
      * @return {@code true} iff the {@code callback} was completed, which happens in the same situations in which
      * {@link #breakAndThrowIfRetryAnd(Supplier)} throws an exception. If {@code true} is returned, the caller must complete
@@ -315,7 +312,7 @@ public final class RetryState {
      *
      * @see #attempts()
      */
-    public boolean lastAttempt() {
+    boolean lastAttempt() {
         return attempt() == attempts - 1 || loopState.lastIteration();
     }
 
