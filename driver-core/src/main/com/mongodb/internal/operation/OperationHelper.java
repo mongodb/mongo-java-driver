@@ -47,7 +47,7 @@ import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.internal.async.function.AsyncCallbackBiFunction;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
 import com.mongodb.internal.session.SessionContext;
-import com.mongodb.lang.Nullable;
+import com.mongodb.lang.NonNull;
 import org.bson.BsonDocument;
 import org.bson.BsonInt64;
 import org.bson.codecs.Decoder;
@@ -60,6 +60,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotFour;
@@ -551,16 +552,14 @@ final class OperationHelper {
      * Gets a {@link ConnectionSource} and a {@link Connection} from the {@code sourceSupplier} and executes the {@code function} with them.
      * Guarantees to {@linkplain ReferenceCounted#release() release} the source and the connection after completion of the {@code function}.
      *
-     * @param overrideSourceConnectionException An optional exception to use instead of an exception that may happen when trying to get
-     * either a {@link ConnectionSource} and a {@link Connection} before applying the {@code function}. This exception does not override
-     * an exception that the {@code function} may produce.
-     * @see #withAsyncSourceAndConnection(AsyncCallbackSupplier, Throwable, SingleResultCallback, AsyncCallbackBiFunction)
+     * @param wrapSourceConnectionException See {@link #withSuppliedResource(Supplier, boolean, Function)}.
+     * @see #withAsyncSourceAndConnection(AsyncCallbackSupplier, boolean, SingleResultCallback, AsyncCallbackBiFunction)
      */
     static <R> R withSourceAndConnection(final Supplier<ConnectionSource> sourceSupplier,
-            @Nullable final RuntimeException overrideSourceConnectionException,
-            final BiFunction<ConnectionSource, Connection, R> function) {
-        return withSuppliedResource(sourceSupplier, overrideSourceConnectionException, source ->
-                withSuppliedResource(source::getConnection, overrideSourceConnectionException, connection ->
+            final boolean wrapSourceConnectionException,
+            final BiFunction<ConnectionSource, Connection, R> function) throws SourceOrConnectionInternalException {
+        return withSuppliedResource(sourceSupplier, wrapSourceConnectionException, source ->
+                withSuppliedResource(source::getConnection, wrapSourceConnectionException, connection ->
                         function.apply(source, connection)));
     }
 
@@ -568,21 +567,20 @@ final class OperationHelper {
      * Gets a {@link ReferenceCounted} resource from the {@code resourceSupplier} and applies the {@code function} to it.
      * Guarantees to {@linkplain ReferenceCounted#release() release} the resource after completion of the {@code function}.
      *
-     * @param overrideSupplierException An optional exception to use instead of an exception that may happen when trying to get
-     * a resource before applying the {@code function}. This exception does not override an exception that the {@code function}
-     * may produce.
-     * @see #withAsyncSuppliedResource(AsyncCallbackSupplier, Throwable, SingleResultCallback, AsyncCallbackFunction)
+     * @param wrapSupplierException If {@code true} and {@code resourceSupplier} completes abruptly, then the exception is wrapped
+     * into {@link SourceOrConnectionInternalException}, such that it can be accessed
+     * via {@link SourceOrConnectionInternalException#getCause()}.
+     * @see #withAsyncSuppliedResource(AsyncCallbackSupplier, boolean, SingleResultCallback, AsyncCallbackFunction)
      */
     static <R, T extends ReferenceCounted> R withSuppliedResource(final Supplier<T> resourceSupplier,
-            @Nullable final RuntimeException overrideSupplierException, final Function<T, R> function) {
+            final boolean wrapSupplierException, final Function<T, R> function) throws SourceOrConnectionInternalException {
         T resource = null;
         try {
             try {
                 resource = resourceSupplier.get();
             } catch (RuntimeException supplierException) {
-                if (overrideSupplierException != null) {
-                    overrideSupplierException.addSuppressed(supplierException);
-                    throw overrideSupplierException;
+                if (wrapSupplierException) {
+                    throw new SourceOrConnectionInternalException(supplierException);
                 } else {
                     throw supplierException;
                 }
@@ -608,32 +606,31 @@ final class OperationHelper {
     }
 
     /**
-     * @see #withSourceAndConnection(Supplier, RuntimeException, BiFunction)
+     * @see #withSourceAndConnection(Supplier, boolean, BiFunction)
      */
     static <R> void withAsyncSourceAndConnection(final AsyncCallbackSupplier<AsyncConnectionSource> sourceAsyncSupplier,
-            @Nullable final Throwable overrideSourceConnectionException,
+            final boolean wrapSourceConnectionException,
             final SingleResultCallback<R> callback,
-            final AsyncCallbackBiFunction<AsyncConnectionSource, AsyncConnection, R> asyncFunction) {
+            final AsyncCallbackBiFunction<AsyncConnectionSource, AsyncConnection, R> asyncFunction) throws SourceOrConnectionInternalException {
         SingleResultCallback<R> errorHandlingCallback = errorHandlingCallback(callback, LOGGER);
-        withAsyncSuppliedResource(sourceAsyncSupplier, overrideSourceConnectionException, errorHandlingCallback,
+        withAsyncSuppliedResource(sourceAsyncSupplier, wrapSourceConnectionException, errorHandlingCallback,
                 (source, sourceReleasingCallback) ->
-                        withAsyncSuppliedResource(source::getConnection, overrideSourceConnectionException, sourceReleasingCallback,
+                        withAsyncSuppliedResource(source::getConnection, wrapSourceConnectionException, sourceReleasingCallback,
                                 (connection, connectionAndSourceReleasingCallback) ->
                                         asyncFunction.apply(source, connection, connectionAndSourceReleasingCallback)));
     }
 
     /**
-     * @see #withSuppliedResource(Supplier, RuntimeException, Function)
+     * @see #withSuppliedResource(Supplier, boolean, Function)
      */
     static <R, T extends ReferenceCounted> void withAsyncSuppliedResource(final AsyncCallbackSupplier<T> resourceSupplier,
-            @Nullable final Throwable overrideSupplierException, final SingleResultCallback<R> callback,
+            final boolean wrapSourceConnectionException, final SingleResultCallback<R> callback,
             final AsyncCallbackFunction<T, R> function) {
         SingleResultCallback<R> errorHandlingCallback = errorHandlingCallback(callback, LOGGER);
         resourceSupplier.get((resource, supplierException) -> {
             if (supplierException != null) {
-                if (overrideSupplierException != null) {
-                    overrideSupplierException.addSuppressed(supplierException);
-                    supplierException = overrideSupplierException;
+                if (wrapSourceConnectionException) {
+                    supplierException = new SourceOrConnectionInternalException(supplierException);
                 }
                 errorHandlingCallback.onResult(null, supplierException);
             } else {
@@ -729,5 +726,31 @@ final class OperationHelper {
     }
 
     private OperationHelper() {
+    }
+
+    /**
+     * This internal exception is used to
+     * <ul>
+     *     <li>on one hand allow propagating exceptions from {@link #withSourceAndConnection(Supplier, boolean, BiFunction)} /
+     *     {@link #withAsyncSourceAndConnection(AsyncCallbackSupplier, boolean, SingleResultCallback, AsyncCallbackBiFunction)}
+     *     so that they can be properly retried, which is useful, e.g., for {@link com.mongodb.MongoConnectionPoolClearedException};</li>
+     *     <li>on the other hand to prevent them from propagation once the retry decision is made.</li>
+     * </ul>
+     *
+     * @see #withSourceAndConnection(Supplier, boolean, BiFunction)
+     * @see #withAsyncSourceAndConnection(AsyncCallbackSupplier, boolean, SingleResultCallback, AsyncCallbackBiFunction)
+     */
+    static final class SourceOrConnectionInternalException extends RuntimeException {
+        private static final long serialVersionUID = 0;
+
+        private SourceOrConnectionInternalException(final Throwable cause) {
+            super(assertNotNull(cause));
+        }
+
+        @NonNull
+        @Override
+        public Throwable getCause() {
+            return assertNotNull(super.getCause());
+        }
     }
 }

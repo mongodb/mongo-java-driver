@@ -41,6 +41,7 @@ import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
 import com.mongodb.internal.operation.MixedBulkWriteOperation.BulkWriteTracker;
 import com.mongodb.internal.async.function.RetryState;
+import com.mongodb.internal.operation.OperationHelper.SourceOrConnectionInternalException;
 import com.mongodb.internal.operation.retry.AttachmentKeys;
 import com.mongodb.internal.async.function.RetryingAsyncCallbackSupplier;
 import com.mongodb.internal.async.function.RetryingSyncSupplier;
@@ -155,7 +156,16 @@ final class CommandOperationHelper {
 
     static Throwable chooseAndMutateRetryableWriteException(
             @Nullable final Throwable previouslyChosenException, final Throwable mostRecentAttemptException) {
-        return mostRecentAttemptException;
+        if (previouslyChosenException == null) {
+            if (mostRecentAttemptException instanceof SourceOrConnectionInternalException) {
+                return mostRecentAttemptException.getCause();
+            }
+            return mostRecentAttemptException;
+        } else if (mostRecentAttemptException instanceof SourceOrConnectionInternalException) {
+            return previouslyChosenException;
+        } else {
+            return mostRecentAttemptException;
+        }
     }
 
     /* Read Binding Helpers */
@@ -185,7 +195,7 @@ final class CommandOperationHelper {
         RetryState retryState = initialRetryState(retryReads);
         Supplier<T> read = decorateReadWithRetries(retryState, () -> {
             logRetryExecute(retryState, () -> null);
-            return withSourceAndConnection(binding::getReadConnectionSource, null, (source, connection) -> {
+            return withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection) -> {
                 retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), connection.getDescription(),
                         binding.getSessionContext()));
                 return createReadCommandAndExecute(retryState, binding, source, database, commandCreator, decoder, transformer, connection);
@@ -217,7 +227,7 @@ final class CommandOperationHelper {
      */
     static <D, T> T executeCommand(final WriteBinding binding, final String database, final BsonDocument command,
                                    final Decoder<D> decoder, final CommandWriteTransformer<D, T> transformer) {
-        return withSourceAndConnection(binding::getWriteConnectionSource, null, (source, connection) ->
+        return withSourceAndConnection(binding::getWriteConnectionSource, false, (source, connection) ->
             transformer.apply(
                     connection.command(database, command, new NoOpFieldNameValidator(), primary(), decoder, source.getSessionContext(),
                             source.getServerApi()), connection));
@@ -244,7 +254,7 @@ final class CommandOperationHelper {
         binding.retain();
         AsyncCallbackSupplier<T> asyncRead = CommandOperationHelper.<T>decorateReadWithRetries(retryState, funcCallback -> {
             logRetryExecute(retryState, () -> null);
-            withAsyncSourceAndConnection(binding::getReadConnectionSource, null, funcCallback,
+            withAsyncSourceAndConnection(binding::getReadConnectionSource, false, funcCallback,
                 (source, connection, releasingCallback) -> {
                     if (retryState.breakAndCompleteIfRetryAnd(() -> !canRetryRead(source.getServerDescription(),
                             connection.getDescription(), binding.getSessionContext()), releasingCallback)) {
@@ -360,8 +370,7 @@ final class CommandOperationHelper {
             if (!firstAttempt && binding.getSessionContext().hasActiveTransaction()) {
                 binding.getSessionContext().clearTransactionContext();
             }
-            RuntimeException prospectiveFailedResult = (RuntimeException) retryState.exception().orElse(null);
-            return withSourceAndConnection(binding::getWriteConnectionSource, prospectiveFailedResult, (source, connection) -> {
+            return withSourceAndConnection(binding::getWriteConnectionSource, true, (source, connection) -> {
                 int maxWireVersion = connection.getDescription().getMaxWireVersion();
                 try {
                     retryState.breakAndThrowIfRetryAnd(() -> !canRetryWrite(source.getServerDescription(), connection.getDescription(),
@@ -410,8 +419,7 @@ final class CommandOperationHelper {
             if (!firstAttempt && binding.getSessionContext().hasActiveTransaction()) {
                 binding.getSessionContext().clearTransactionContext();
             }
-            Throwable prospectiveFailedResult = retryState.exception().orElse(null);
-            withAsyncSourceAndConnection(binding::getWriteConnectionSource, prospectiveFailedResult, funcCallback,
+            withAsyncSourceAndConnection(binding::getWriteConnectionSource, true, funcCallback,
                     (source, connection, releasingCallback) -> {
                 int maxWireVersion = connection.getDescription().getMaxWireVersion();
                 SingleResultCallback<R> addingRetryableLabelCallback = firstAttempt
@@ -494,19 +502,21 @@ final class CommandOperationHelper {
     }
 
     private static boolean shouldAttemptToRetryRead(final RetryState retryState, final Throwable attemptFailure) {
-        boolean decision = isRetryableException(attemptFailure);
+        Throwable failure = attemptFailure instanceof SourceOrConnectionInternalException ? attemptFailure.getCause() : attemptFailure;
+        boolean decision = isRetryableException(failure);
         if (!decision) {
-            logUnableToRetry(retryState.attachment(AttachmentKeys.operationName()).orElse(null), attemptFailure);
+            logUnableToRetry(retryState.attachment(AttachmentKeys.operationName()).orElse(null), failure);
         }
         return decision;
     }
 
     static boolean shouldAttemptToRetryWrite(final RetryState retryState, final Throwable attemptFailure) {
+        Throwable failure = attemptFailure instanceof SourceOrConnectionInternalException ? attemptFailure.getCause() : attemptFailure;
         boolean decision = false;
         MongoException exceptionRetryableRegardlessOfCommand = null;
-        if (attemptFailure instanceof MongoConnectionPoolClearedException) {
+        if (failure instanceof MongoConnectionPoolClearedException) {
             decision = true;
-            exceptionRetryableRegardlessOfCommand = (MongoException) attemptFailure;
+            exceptionRetryableRegardlessOfCommand = (MongoException) failure;
         }
         BsonDocument writeCommand = retryState.attachment(AttachmentKeys.command()).orElse(null);
         BulkWriteTracker bulkWriteTracker = retryState.attachment(AttachmentKeys.bulkWriteTracker()).orElse(null);
@@ -525,7 +535,7 @@ final class CommandOperationHelper {
                 /* We are going to retry even if `retryableCommand` is false,
                  * but we add the retryable label only if `retryableCommand` is true. */
                 exceptionRetryableRegardlessOfCommand.addLabel(RETRYABLE_WRITE_ERROR_LABEL);
-            } else if (decideRetryableAndAddRetryableWriteErrorLabel(attemptFailure, retryState.attachment(AttachmentKeys.maxWireVersion())
+            } else if (decideRetryableAndAddRetryableWriteErrorLabel(failure, retryState.attachment(AttachmentKeys.maxWireVersion())
                     .orElse(null))) {
                 decision = true;
             } else {
@@ -536,7 +546,7 @@ final class CommandOperationHelper {
                     commandDescription = bulkWriteTracker.batch().map(batch -> batch.getPayload().getPayloadType().toString())
                             .orElseThrow(Assertions::fail);
                 }
-                logUnableToRetry(commandDescription, attemptFailure);
+                logUnableToRetry(commandDescription, failure);
             }
         }
         return decision;

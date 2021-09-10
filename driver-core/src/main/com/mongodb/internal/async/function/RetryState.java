@@ -96,7 +96,7 @@ public final class RetryState {
      * per attempt and only if all the following is true:
      * <ul>
      *     <li>{@code exceptionTransformer} completed normally;</li>
-     *     <li>retrying was broken via
+     *     <li>retrying was not broken via
      *     {@link #breakAndThrowIfRetryAnd(Supplier)} / {@link #breakAndCompleteIfRetryAnd(Supplier, SingleResultCallback)} /
      *     {@link #markAsLastAttempt()};</li>
      *     <li>there is at least one more {@linkplain #attempts() attempt} left.</li>

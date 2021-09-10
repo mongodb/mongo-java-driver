@@ -142,7 +142,7 @@ public final class LoopState {
     /**
      * @see #attach(AttachmentKey, Object, boolean)
      */
-    public <V> Optional<V> attachment(final LoopState.AttachmentKey<V> key) {
+    public <V> Optional<V> attachment(final AttachmentKey<V> key) {
         final AttachmentValueContainer valueContainer = attachments().get(assertNotNull(key));
         @SuppressWarnings("unchecked")
         final V value = valueContainer == null ? null : (V) valueContainer.value();

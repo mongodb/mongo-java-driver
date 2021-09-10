@@ -33,7 +33,7 @@ import java.util.function.Supplier;
  */
 @NotThreadSafe
 public final class RetryingSyncSupplier<R> implements Supplier<R> {
-    private final RetryState retryState;
+    private final RetryState state;
     private final BiPredicate<RetryState, Throwable> retryPredicate;
     private final BiFunction<Throwable, Throwable, Throwable> failedResultTransformer;
     private final Supplier<R> syncFunction;
@@ -48,11 +48,11 @@ public final class RetryingSyncSupplier<R> implements Supplier<R> {
      * only {@link RuntimeException}s are passed to it.
      */
     public RetryingSyncSupplier(
-            final RetryState retryState,
+            final RetryState state,
             final BiFunction<Throwable, Throwable, Throwable> failedResultTransformer,
             final BiPredicate<RetryState, Throwable> retryPredicate,
             final Supplier<R> syncFunction) {
-        this.retryState = retryState;
+        this.state = state;
         this.retryPredicate = retryPredicate;
         this.failedResultTransformer = failedResultTransformer;
         this.syncFunction = syncFunction;
@@ -64,7 +64,7 @@ public final class RetryingSyncSupplier<R> implements Supplier<R> {
             try {
                 return syncFunction.get();
             } catch (RuntimeException attemptException) {
-                retryState.advanceOrThrow(attemptException, failedResultTransformer, retryPredicate);
+                state.advanceOrThrow(attemptException, failedResultTransformer, retryPredicate);
             }
         }
     }

@@ -229,8 +229,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         BulkWriteTracker.attachNew(retryState, retryWrites);
         Supplier<BulkWriteResult> retryingBulkWrite = decorateWriteWithRetries(retryState, () -> {
             logRetryExecute(retryState, () -> null);
-            RuntimeException prospectiveFailedResult = (RuntimeException) retryState.exception().orElse(null);
-            return withSourceAndConnection(binding::getWriteConnectionSource, prospectiveFailedResult, (source, connection) -> {
+            return withSourceAndConnection(binding::getWriteConnectionSource, true, (source, connection) -> {
                 ConnectionDescription connectionDescription = connection.getDescription();
                 int maxWireVersion = connectionDescription.getMaxWireVersion();
                 // attach `maxWireVersion` ASAP because it is used to check whether we can retry
@@ -241,6 +240,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 WriteConcern writeConcern = getAppliedWriteConcern(sessionContext);
                 if (!retryState.firstAttempt() && !isRetryableWrite(retryWrites, writeConcern, source.getServerDescription(),
                         connectionDescription, sessionContext)) {
+                    RuntimeException prospectiveFailedResult = (RuntimeException) retryState.exception().orElse(null);
                     retryState.breakAndThrowIfRetryAnd(() -> !(prospectiveFailedResult instanceof MongoWriteConcernWithResponseException));
                     bulkWriteTracker.batch().ifPresent(bulkWriteBatch -> {
                         assertTrue(prospectiveFailedResult instanceof MongoWriteConcernWithResponseException);
@@ -279,8 +279,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         AsyncCallbackSupplier<BulkWriteResult> retryingBulkWrite = this.<BulkWriteResult>decorateWriteWithRetries(retryState,
                 funcCallback -> {
             logRetryExecute(retryState, () -> null);
-            Throwable prospectiveFailedResult = retryState.exception().orElse(null);
-            withAsyncSourceAndConnection(binding::getWriteConnectionSource, prospectiveFailedResult, funcCallback,
+            withAsyncSourceAndConnection(binding::getWriteConnectionSource, true, funcCallback,
                     (source, connection, releasingCallback) -> {
                 ConnectionDescription connectionDescription = connection.getDescription();
                 int maxWireVersion = connectionDescription.getMaxWireVersion();
@@ -292,6 +291,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 WriteConcern writeConcern = getAppliedWriteConcern(sessionContext);
                 if (!retryState.firstAttempt() && !isRetryableWrite(retryWrites, writeConcern, source.getServerDescription(),
                         connectionDescription, sessionContext)) {
+                    Throwable prospectiveFailedResult = retryState.exception().orElse(null);
                     if (retryState.breakAndCompleteIfRetryAnd(() ->
                             !(prospectiveFailedResult instanceof MongoWriteConcernWithResponseException), releasingCallback)) {
                         return;

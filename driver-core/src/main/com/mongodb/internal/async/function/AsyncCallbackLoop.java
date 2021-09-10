@@ -41,6 +41,10 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
     private final LoopState state;
     private final AsyncCallbackRunnable body;
 
+    /**
+     * @param state The {@link LoopState} to be deemed as initial for the purpose of the new {@link AsyncCallbackLoop}.
+     * @param body The body of the loop.
+     */
     public AsyncCallbackLoop(final LoopState state, final AsyncCallbackRunnable body) {
         this.state = state;
         this.body = body;

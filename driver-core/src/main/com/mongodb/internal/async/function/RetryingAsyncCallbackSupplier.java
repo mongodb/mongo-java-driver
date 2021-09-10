@@ -37,13 +37,13 @@ import java.util.function.Supplier;
  */
 @NotThreadSafe
 public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupplier<R> {
-    private final RetryState retryState;
+    private final RetryState state;
     private final BiPredicate<RetryState, Throwable> retryPredicate;
     private final BiFunction<Throwable, Throwable, Throwable> failedResultTransformer;
     private final AsyncCallbackSupplier<R> asyncFunction;
 
     /**
-     * @param retryState The {@link RetryState} to be deemed as initial for the purpose of the new {@link RetryingAsyncCallbackSupplier}.
+     * @param state The {@link RetryState} to be deemed as initial for the purpose of the new {@link RetryingAsyncCallbackSupplier}.
      * @param failedResultTransformer A function that chooses which failed result of the {@code asyncFunction} to preserve as a prospective
      * failed result of this {@link RetryingAsyncCallbackSupplier} and may also transform or mutate the exceptions.
      * The choice is between
@@ -64,7 +64,7 @@ public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupp
      * per attempt and only if all the following is true:
      * <ul>
      *     <li>{@code failedResultTransformer} completed normally;</li>
-     *     <li>retrying was broken via
+     *     <li>retrying was not broken via
      *     {@link RetryState#breakAndThrowIfRetryAnd(Supplier)} /
      *     {@link RetryState#breakAndCompleteIfRetryAnd(Supplier, SingleResultCallback)} /
      *     {@link RetryState#markAsLastAttempt()};</li>
@@ -75,11 +75,11 @@ public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupp
      * @param asyncFunction The retryable {@link AsyncCallbackSupplier} to be decorated.
      */
     public RetryingAsyncCallbackSupplier(
-            final RetryState retryState,
+            final RetryState state,
             final BiFunction<Throwable, Throwable, Throwable> failedResultTransformer,
             final BiPredicate<RetryState, Throwable> retryPredicate,
             final AsyncCallbackSupplier<R> asyncFunction) {
-        this.retryState = retryState;
+        this.state = state;
         this.retryPredicate = retryPredicate;
         this.failedResultTransformer = failedResultTransformer;
         this.asyncFunction = asyncFunction;
@@ -107,7 +107,7 @@ public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupp
         public void onResult(@Nullable final R result, @Nullable final Throwable t) {
             if (t != null) {
                 try {
-                    retryState.advanceOrThrow(t, failedResultTransformer, retryPredicate);
+                    state.advanceOrThrow(t, failedResultTransformer, retryPredicate);
                 } catch (Throwable failedResult) {
                     wrapped.onResult(null, failedResult);
                     return;
