@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import com.mongodb.annotations.ThreadSafe;
+
 /**
  * A marker interface for providers of {@code RequestContext}.  Sub-interfaces in higher-level modules define methods that actually
  * return instances of {@code RequestContext}, depending on whether the client is synchronous or reactive.
@@ -23,5 +25,6 @@ package com.mongodb;
  * @see MongoClientSettings#getContextProvider()
  * @since 4.4
  */
+@ThreadSafe
 public interface ContextProvider {
 }

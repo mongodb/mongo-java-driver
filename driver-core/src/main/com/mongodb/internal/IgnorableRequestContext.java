@@ -22,8 +22,8 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 /**
- * A {@code RequestContext} that can be ignored by the driver.  Useful to ensure that we always
- * have a non-null {@code RequestContext} to pass around the driver.
+ * A {@link RequestContext} that can be ignored by the driver.  Useful to ensure that we always
+ * have a non-null {@link RequestContext} to pass around the driver.
  */
 public final class IgnorableRequestContext implements RequestContext {
 

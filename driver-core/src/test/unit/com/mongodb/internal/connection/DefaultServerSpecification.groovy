@@ -336,7 +336,7 @@ class DefaultServerSpecification extends Specification {
         when:
         def futureResultCallback = new FutureResultCallback()
         testConnection.insertAsync(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
-                null, futureResultCallback);
+                IgnorableRequestContext.INSTANCE, futureResultCallback);
         futureResultCallback.get()
 
         then:
@@ -347,7 +347,7 @@ class DefaultServerSpecification extends Specification {
         when:
         futureResultCallback = new FutureResultCallback()
         testConnection.insertAsync(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
-                null, futureResultCallback);
+                IgnorableRequestContext.INSTANCE, futureResultCallback);
         futureResultCallback.get()
 
         then:
@@ -423,7 +423,7 @@ class DefaultServerSpecification extends Specification {
         when:
         def futureResultCallback = new FutureResultCallback<WriteConcernResult>()
         testConnection.insertAsync(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
-                null, futureResultCallback)
+                IgnorableRequestContext.INSTANCE, futureResultCallback)
         futureResultCallback.get()
 
         then:
@@ -467,7 +467,7 @@ class DefaultServerSpecification extends Specification {
         when:
         def futureResultCallback = new FutureResultCallback<WriteConcernResult>()
         testConnection.insertAsync(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
-                null, futureResultCallback)
+                IgnorableRequestContext.INSTANCE, futureResultCallback)
         futureResultCallback.get()
 
         then:
@@ -499,7 +499,7 @@ class DefaultServerSpecification extends Specification {
         when:
         if (async) {
             CountDownLatch latch = new CountDownLatch(1)
-            testConnection.killCursorAsync(new MongoNamespace('test.test'), [], null) {
+            testConnection.killCursorAsync(new MongoNamespace('test.test'), [], IgnorableRequestContext.INSTANCE) {
                 BsonDocument result, Throwable t -> latch.countDown()
             }
             latch.await()

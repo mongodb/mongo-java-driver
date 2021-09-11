@@ -20,13 +20,13 @@ import com.mongodb.ContextProvider;
 import com.mongodb.RequestContext;
 
 /**
- * A {@code ContextProvider} for reactive clients.
+ * A {@code ContextProvider} for synchronous clients.
  *
  * @since 4.4
  */
 public interface SynchronousContextProvider extends ContextProvider {
     /**
-     * Get the request context from the subscriber.
+     * Get the request context.
      *
      * @return the request context
      */

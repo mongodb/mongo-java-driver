@@ -572,7 +572,8 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             try {
                 ServerCursor localServerCursor = serverCursor;
                 if (localServerCursor != null) {
-                    killServerCursor(namespace, localServerCursor, sessionContext(), serverApi, assertNotNull(connection));
+                    killServerCursor(namespace, localServerCursor, sessionContext(), requestContext(), serverApi,
+                            assertNotNull(connection));
                 }
             } finally {
                 serverCursor = null;
@@ -580,14 +581,15 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         }
 
         private void killServerCursor(final MongoNamespace namespace, final ServerCursor serverCursor,
-                @Nullable final SessionContext sessionContext, @Nullable final ServerApi serverApi, final Connection connection) {
+                @Nullable final SessionContext sessionContext, final RequestContext requestContext, @Nullable final ServerApi serverApi,
+                final Connection connection) {
             long cursorId = serverCursor.getId();
             if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
                 connection.command(namespace.getDatabaseName(), asKillCursorsCommandDocument(namespace, serverCursor),
                         NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(), sessionContext, serverApi,
-                        requestContext());
+                        requestContext);
             } else {
-                connection.killCursor(namespace, singletonList(cursorId), requestContext());
+                connection.killCursor(namespace, singletonList(cursorId), requestContext);
             }
         }
 

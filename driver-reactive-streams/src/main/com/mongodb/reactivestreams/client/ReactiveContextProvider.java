@@ -18,6 +18,7 @@ package com.mongodb.reactivestreams.client;
 
 import com.mongodb.ContextProvider;
 import com.mongodb.RequestContext;
+import com.mongodb.annotations.ThreadSafe;
 import org.reactivestreams.Subscriber;
 
 /**
@@ -25,6 +26,7 @@ import org.reactivestreams.Subscriber;
  *
  * @since 4.4
  */
+@ThreadSafe
 public interface ReactiveContextProvider extends ContextProvider {
     /**
      * Get the request context from the subscriber.

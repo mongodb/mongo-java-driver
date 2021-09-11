@@ -21,7 +21,6 @@ import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.NoOpSessionContext;
@@ -42,17 +41,21 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
     private final ServerAddress serverAddress;
     @Nullable
     private final ServerApi serverApi;
+    private final RequestContext requestContext;
 
     /**
      * Creates an instance, defaulting to {@link com.mongodb.ReadPreference#primary()} for reads.
      * @param cluster       a non-null  Cluster which will be used to select a server to bind to
      * @param serverAddress a non-null  address of the server to bind to
      * @param serverApi     the server API, which may be null
+     * @param requestContext the request context, which may not be null
      */
-    public SingleServerBinding(final Cluster cluster, final ServerAddress serverAddress, @Nullable final ServerApi serverApi) {
+    public SingleServerBinding(final Cluster cluster, final ServerAddress serverAddress, @Nullable final ServerApi serverApi,
+            final RequestContext requestContext) {
         this.cluster = notNull("cluster", cluster);
         this.serverAddress = notNull("serverAddress", serverAddress);
         this.serverApi = serverApi;
+        this.requestContext = notNull("requestContext", requestContext);
     }
 
     @Override
@@ -83,7 +86,7 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
 
     @Override
     public RequestContext getRequestContext() {
-        return IgnorableRequestContext.INSTANCE;
+        return requestContext;
     }
 
     @Override
@@ -118,7 +121,7 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
 
         @Override
         public RequestContext getRequestContext() {
-            return IgnorableRequestContext.INSTANCE;
+            return requestContext;
         }
 
         @Override

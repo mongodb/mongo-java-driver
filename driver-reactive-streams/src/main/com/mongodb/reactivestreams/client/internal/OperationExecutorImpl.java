@@ -37,7 +37,6 @@ import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.ReactiveContextProvider;
 import com.mongodb.reactivestreams.client.internal.crypt.Crypt;
 import com.mongodb.reactivestreams.client.internal.crypt.CryptBinding;
-import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Mono;
 
@@ -58,14 +57,14 @@ public class OperationExecutorImpl implements OperationExecutor {
         this.clientSessionHelper = clientSessionHelper;
         ContextProvider contextProvider = mongoClient.getSettings().getContextProvider();
         if (contextProvider != null && !(contextProvider instanceof ReactiveContextProvider)) {
-            throw new IllegalArgumentException("...");    // TODO: make it a nicer message.  Perhaps move the check higher up
+            throw new IllegalArgumentException("The contextProvider must be an instance of "
+                    + "com.mongodb.reactivestreams.client.ReactiveContextProvider when using the Reactive Streams driver");
         }
         this.contextProvider = (ReactiveContextProvider) contextProvider;
     }
 
     @Override
-    public <T> Mono<T> execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference,
-            final ReadConcern readConcern,
+    public <T> Mono<T> execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern,
             @Nullable final ClientSession session) {
         notNull("operation", operation);
         notNull("readPreference", readPreference);
@@ -75,14 +74,12 @@ public class OperationExecutorImpl implements OperationExecutor {
             session.notifyOperationInitiated(operation);
         }
 
-        return Mono.from(new Publisher<T>() {
-            @Override
-            public void subscribe(final Subscriber<? super T> s) {
+        return Mono.from(subscriber ->
                 clientSessionHelper.withClientSession(session, OperationExecutorImpl.this)
-                        .map(clientSession -> getReadWriteBinding(getContext(s), readPreference, readConcern, clientSession,
+                        .map(clientSession -> getReadWriteBinding(getContext(subscriber), readPreference, readConcern, clientSession,
                                 session == null && clientSession != null))
                         .switchIfEmpty(Mono.fromCallable(() ->
-                                getReadWriteBinding(getContext(s), readPreference, readConcern, session, false)))
+                                getReadWriteBinding(getContext(subscriber), readPreference, readConcern, session, false)))
                         .flatMap(binding -> {
                             if (session != null && session.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
                                 binding.release();
@@ -99,9 +96,8 @@ public class OperationExecutorImpl implements OperationExecutor {
                                     unpinServerAddressOnTransientTransactionError(session, t);
                                 });
                             }
-                        }).subscribe(s);
-            }
-        });
+                        }).subscribe(subscriber)
+        );
     }
 
     @Override
@@ -114,14 +110,12 @@ public class OperationExecutorImpl implements OperationExecutor {
             session.notifyOperationInitiated(operation);
         }
 
-        return Mono.from(new Publisher<T>() {
-            @Override
-            public void subscribe(final Subscriber<? super T> s) {
+        return Mono.from(subscriber ->
                 clientSessionHelper.withClientSession(session, OperationExecutorImpl.this)
-                        .map(clientSession -> getReadWriteBinding(getContext(s), ReadPreference.primary(), readConcern, clientSession,
-                                session == null && clientSession != null))
+                        .map(clientSession -> getReadWriteBinding(getContext(subscriber), ReadPreference.primary(), readConcern,
+                                clientSession, session == null && clientSession != null))
                         .switchIfEmpty(Mono.fromCallable(() ->
-                                getReadWriteBinding(getContext(s), ReadPreference.primary(), readConcern, session, false)))
+                                getReadWriteBinding(getContext(subscriber), ReadPreference.primary(), readConcern, session, false)))
                         .flatMap(binding ->
                                 Mono.<T>create(sink -> operation.executeAsync(binding, (result, t) -> {
                                     try {
@@ -133,9 +127,8 @@ public class OperationExecutorImpl implements OperationExecutor {
                                     labelException(session, t);
                                     unpinServerAddressOnTransientTransactionError(session, t);
                                 })
-                        ).subscribe(s);
-            }
-        });
+                        ).subscribe(subscriber)
+        );
     }
 
     private <T> RequestContext getContext(final Subscriber<T> subscriber) {

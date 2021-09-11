@@ -192,7 +192,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         connection.sendAndReceiveAsync(new CommandMessage(new MongoNamespace('test.coll'),
                 new BsonDocument('ping', new BsonInt32(1)), new NoOpFieldNameValidator(), primary(),
                 MessageSettings.builder().build(), null),
-                new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, null, futureResultCallback)
+                new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE, futureResultCallback)
         futureResultCallback.get()
 
         then:

@@ -171,8 +171,8 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def logger = Mock(Logger) {
             isDebugEnabled() >> true
         }
-        def sender = new LoggingCommandEventSender(['createUser'] as Set, [] as Set, connectionDescription, null, null, message, bsonOutput,
-                logger)
+        def sender = new LoggingCommandEventSender(['createUser'] as Set, [] as Set, connectionDescription, null,
+                IgnorableRequestContext.INSTANCE, message, bsonOutput, logger)
 
         when:
         sender.sendStartedEvent()

@@ -110,8 +110,7 @@ public interface RequestContext {
     boolean isEmpty();
 
     /**
-     * Modifies this instance with the given key and value.
-     * If that key existed in the current RequestContext, its associated
+     * Modifies this instance with the given key and value. If that key existed in the current {@link RequestContext}, its associated
      * value is replaced.
      *
      * @param key   the key to add/update
@@ -121,12 +120,11 @@ public interface RequestContext {
     void put(Object key, Object value);
 
     /**
-     * Create a new {@link RequestContext} that contains all current key/value pairs plus the
-     * given key/value pair <strong>only if the value is not {@literal null}</strong>. If that key existed in the
-     * current Context, its associated value is replaced in the resulting {@link RequestContext}.
+     * Modifies this instance with the given key and value <strong>only if the value is not {@literal null}</strong>. If that key existed
+     * in the current Context, its associated value is replaced in the resulting {@link RequestContext}.
      *
-     * @param key         the key to add/update in the new {@link RequestContext}
-     * @param valueOrNull the value to associate to the key in the new {@link RequestContext}, null to ignore the operation
+     * @param key         the key to add/update
+     * @param valueOrNull the value to associate to the key, null to ignore the operation
      * @throws NullPointerException if the key is null
      */
     default void putNonNull(Object key, @Nullable Object valueOrNull) {
@@ -143,7 +141,7 @@ public interface RequestContext {
     void delete(Object key);
 
     /**
-     * Return the size of this {@link RequestContext}, the number of immutable key/value pairs stored inside it.
+     * Return the size of this {@link RequestContext}, the number of key/value pairs stored inside it.
      *
      * @return the size of the {@link RequestContext}
      */
