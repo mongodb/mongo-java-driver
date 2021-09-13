@@ -224,10 +224,12 @@ public class InternalStreamConnection implements InternalConnection {
 
                 @Override
                 public void failed(final Throwable t) {
+                    close();
                     callback.onResult(null, t);
                 }
             });
         } catch (Throwable t) {
+            close();
             callback.onResult(null, t);
         }
     }
@@ -583,18 +585,23 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     private void writeAsync(final List<ByteBuf> byteBuffers, final SingleResultCallback<Void> callback) {
-        stream.writeAsync(byteBuffers, new AsyncCompletionHandler<Void>() {
-            @Override
-            public void completed(final Void v) {
-                callback.onResult(null, null);
-            }
+        try {
+            stream.writeAsync(byteBuffers, new AsyncCompletionHandler<Void>() {
+                @Override
+                public void completed(final Void v) {
+                    callback.onResult(null, null);
+                }
 
-            @Override
-            public void failed(final Throwable t) {
-                close();
-                callback.onResult(null, translateWriteException(t));
-            }
-        });
+                @Override
+                public void failed(final Throwable t) {
+                    close();
+                    callback.onResult(null, translateWriteException(t));
+                }
+            });
+        } catch (Throwable t) {
+            close();
+            callback.onResult(null, t);
+        }
     }
 
     @Override
@@ -642,6 +649,7 @@ public class InternalStreamConnection implements InternalConnection {
                 }
             });
         } catch (Exception e) {
+            close();
             callback.onResult(null, translateReadException(e));
         }
     }
