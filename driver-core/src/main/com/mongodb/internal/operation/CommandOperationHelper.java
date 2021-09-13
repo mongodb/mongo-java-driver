@@ -41,7 +41,7 @@ import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
 import com.mongodb.internal.operation.MixedBulkWriteOperation.BulkWriteTracker;
 import com.mongodb.internal.async.function.RetryState;
-import com.mongodb.internal.operation.OperationHelper.SourceOrConnectionInternalException;
+import com.mongodb.internal.operation.OperationHelper.ResourceSupplierInternalException;
 import com.mongodb.internal.operation.retry.AttachmentKeys;
 import com.mongodb.internal.async.function.RetryingAsyncCallbackSupplier;
 import com.mongodb.internal.async.function.RetryingSyncSupplier;
@@ -157,11 +157,11 @@ final class CommandOperationHelper {
     static Throwable chooseAndMutateRetryableWriteException(
             @Nullable final Throwable previouslyChosenException, final Throwable mostRecentAttemptException) {
         if (previouslyChosenException == null) {
-            if (mostRecentAttemptException instanceof SourceOrConnectionInternalException) {
+            if (mostRecentAttemptException instanceof ResourceSupplierInternalException) {
                 return mostRecentAttemptException.getCause();
             }
             return mostRecentAttemptException;
-        } else if (mostRecentAttemptException instanceof SourceOrConnectionInternalException) {
+        } else if (mostRecentAttemptException instanceof ResourceSupplierInternalException) {
             return previouslyChosenException;
         } else {
             return mostRecentAttemptException;
@@ -502,7 +502,7 @@ final class CommandOperationHelper {
     }
 
     private static boolean shouldAttemptToRetryRead(final RetryState retryState, final Throwable attemptFailure) {
-        Throwable failure = attemptFailure instanceof SourceOrConnectionInternalException ? attemptFailure.getCause() : attemptFailure;
+        Throwable failure = attemptFailure instanceof ResourceSupplierInternalException ? attemptFailure.getCause() : attemptFailure;
         boolean decision = isRetryableException(failure);
         if (!decision) {
             logUnableToRetry(retryState.attachment(AttachmentKeys.operationName()).orElse(null), failure);
@@ -511,7 +511,7 @@ final class CommandOperationHelper {
     }
 
     static boolean shouldAttemptToRetryWrite(final RetryState retryState, final Throwable attemptFailure) {
-        Throwable failure = attemptFailure instanceof SourceOrConnectionInternalException ? attemptFailure.getCause() : attemptFailure;
+        Throwable failure = attemptFailure instanceof ResourceSupplierInternalException ? attemptFailure.getCause() : attemptFailure;
         boolean decision = false;
         MongoException exceptionRetryableRegardlessOfCommand = null;
         if (failure instanceof MongoConnectionPoolClearedException) {
