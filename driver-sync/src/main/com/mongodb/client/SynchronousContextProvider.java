@@ -18,12 +18,14 @@ package com.mongodb.client;
 
 import com.mongodb.ContextProvider;
 import com.mongodb.RequestContext;
+import com.mongodb.annotations.ThreadSafe;
 
 /**
  * A {@code ContextProvider} for synchronous clients.
  *
  * @since 4.4
  */
+@ThreadSafe
 public interface SynchronousContextProvider extends ContextProvider {
     /**
      * Get the request context.
