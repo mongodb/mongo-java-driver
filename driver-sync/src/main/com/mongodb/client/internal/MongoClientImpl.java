@@ -72,7 +72,7 @@ public final class MongoClientImpl implements MongoClient {
         AutoEncryptionSettings autoEncryptionSettings = settings.getAutoEncryptionSettings();
         if (settings.getContextProvider() != null && !(settings.getContextProvider() instanceof SynchronousContextProvider)) {
             throw new IllegalArgumentException("The contextProvider must be an instance of "
-                    + "com.mongodb.client.SynchronousContextProvider when using the synchronous driver");
+                    + SynchronousContextProvider.class.getName() + " when using the synchronous driver");
         }
         this.delegate = new MongoClientDelegate(notNull("cluster", cluster),
                 createRegistry(settings.getCodecRegistry(), settings.getUuidRepresentation()), this, operationExecutor,

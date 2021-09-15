@@ -58,7 +58,7 @@ public class OperationExecutorImpl implements OperationExecutor {
         ContextProvider contextProvider = mongoClient.getSettings().getContextProvider();
         if (contextProvider != null && !(contextProvider instanceof ReactiveContextProvider)) {
             throw new IllegalArgumentException("The contextProvider must be an instance of "
-                    + "com.mongodb.reactivestreams.client.ReactiveContextProvider when using the Reactive Streams driver");
+                    + ReactiveContextProvider.class.getName() + " when using the Reactive Streams driver");
         }
         this.contextProvider = (ReactiveContextProvider) contextProvider;
     }
