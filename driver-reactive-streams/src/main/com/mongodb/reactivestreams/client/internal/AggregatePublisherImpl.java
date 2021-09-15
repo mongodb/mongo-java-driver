@@ -24,7 +24,6 @@ import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.operation.AggregateOperation;
 import com.mongodb.internal.operation.AsyncReadOperation;
-import com.mongodb.internal.operation.AsyncWriteOperation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
 import com.mongodb.reactivestreams.client.ClientSession;
@@ -123,7 +122,7 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
         if (lastPipelineStage == null || !lastPipelineStage.containsKey("$out") && !lastPipelineStage.containsKey("$merge")) {
             throw new IllegalStateException("The last stage of the aggregation pipeline must be $out or $merge");
         }
-        return getMongoOperationPublisher().createWriteOperationMono(this::getAggregateToCollectionOperation, getClientSession());
+        return getMongoOperationPublisher().createReadOperationMono(this::getAggregateToCollectionOperation, getClientSession());
     }
 
     @Override
@@ -159,14 +158,14 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
         MongoNamespace outNamespace = getOutNamespace();
 
         if (outNamespace != null) {
-            AsyncWriteOperation<Void> aggregateToCollectionOperation = getAggregateToCollectionOperation();
+            AsyncReadOperation<Void> aggregateToCollectionOperation = getAggregateToCollectionOperation();
 
             FindOptions findOptions = new FindOptions().collation(collation).batchSize(initialBatchSize);
 
             AsyncReadOperation<AsyncBatchCursor<T>> findOperation =
                     getOperations().find(outNamespace, new BsonDocument(), getDocumentClass(), findOptions);
 
-            return new WriteOperationThenCursorReadOperation<>(aggregateToCollectionOperation, findOperation);
+            return new VoidReadOperationThenCursorReadOperation<>(aggregateToCollectionOperation, findOperation);
         } else {
             return asAggregateOperation(initialBatchSize);
         }
@@ -178,7 +177,7 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
                            initialBatchSize, collation, hint, comment, variables, allowDiskUse, aggregationLevel);
     }
 
-    private AsyncWriteOperation<Void> getAggregateToCollectionOperation() {
+    private AsyncReadOperation<Void> getAggregateToCollectionOperation() {
         return getOperations().aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint, comment,
                                                      variables, aggregationLevel);
     }

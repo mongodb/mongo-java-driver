@@ -413,12 +413,17 @@ public final class Entities {
     private void initDatabase(final BsonDocument entity, final String id) {
         MongoClient client = clients.get(entity.getString("client").getValue());
         MongoDatabase database = client.getDatabase(entity.getString("databaseName").getValue());
-        if (entity.containsKey("collectionOptions")) {
-            for (Map.Entry<String, BsonValue> entry : entity.getDocument("collectionOptions").entrySet()) {
-                //noinspection SwitchStatementWithTooFewBranches
+        if (entity.containsKey("databaseOptions")) {
+            for (Map.Entry<String, BsonValue> entry : entity.getDocument("databaseOptions").entrySet()) {
                 switch (entry.getKey()) {
                     case "readConcern":
                         database = database.withReadConcern(asReadConcern(entry.getValue().asDocument()));
+                        break;
+                    case "readPreference":
+                        database = database.withReadPreference(asReadPreference(entry.getValue().asDocument()));
+                        break;
+                    case "writeConcern":
+                        database = database.withWriteConcern(asWriteConcern(entry.getValue().asDocument()));
                         break;
                     default:
                         throw new UnsupportedOperationException("Unsupported database option: " + entry.getKey());

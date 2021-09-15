@@ -243,7 +243,7 @@ class CommandOperationHelperSpecification extends Specification {
         callback.throwable.writeConcernError.code == -1
     }
 
-    def 'should use the ReadBindings readPreference'() {
+    def 'should use the ConnectionSource readPreference'() {
         given:
         def dbName = 'db'
         def command = new BsonDocument('fakeCommandName', BsonNull.VALUE)
@@ -253,10 +253,10 @@ class CommandOperationHelperSpecification extends Specification {
         def connection = Mock(Connection)
         def connectionSource = Stub(ConnectionSource) {
             getConnection() >> connection
+            getReadPreference() >> readPreference
         }
         def readBinding = Stub(ReadBinding) {
             getReadConnectionSource() >> connectionSource
-            getReadPreference() >> readPreference
             getServerApi() >> null
         }
         def connectionDescription = Stub(ConnectionDescription)
@@ -298,7 +298,7 @@ class CommandOperationHelperSpecification extends Specification {
 //        1 * connection.release()
     }
 
-    def 'should use the AsyncReadBindings readPreference'() {
+    def 'should use the AsyncConnectionSource readPreference'() {
         given:
         def dbName = 'db'
         def command = new BsonDocument('fakeCommandName', BsonNull.VALUE)
@@ -310,11 +310,11 @@ class CommandOperationHelperSpecification extends Specification {
         def connectionSource = Stub(AsyncConnectionSource) {
             getServerApi() >> null
             getConnection(_) >> { it[0].onResult(connection, null) }
+            getReadPreference() >> readPreference
         }
         def asyncReadBinding = Stub(AsyncReadBinding) {
             getServerApi() >> null
             getReadConnectionSource(_)  >> { it[0].onResult(connectionSource, null) }
-            getReadPreference() >> readPreference
         }
         def connectionDescription = Stub(ConnectionDescription)
 

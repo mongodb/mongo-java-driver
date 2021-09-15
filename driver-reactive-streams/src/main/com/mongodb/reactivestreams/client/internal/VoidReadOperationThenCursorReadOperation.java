@@ -19,36 +19,33 @@ package com.mongodb.reactivestreams.client.internal;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
-import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.operation.AsyncReadOperation;
-import com.mongodb.internal.operation.AsyncWriteOperation;
 
-class WriteOperationThenCursorReadOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>> {
-    private final AsyncWriteOperation<Void> aggregateToCollectionOperation;
-    private final AsyncReadOperation<AsyncBatchCursor<T>> readOperation;
+class VoidReadOperationThenCursorReadOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>> {
+    private final AsyncReadOperation<Void> readOperation;
+    private final AsyncReadOperation<AsyncBatchCursor<T>> cursorReadOperation;
 
-    WriteOperationThenCursorReadOperation(final AsyncWriteOperation<Void> aggregateToCollectionOperation,
-                                                 final AsyncReadOperation<AsyncBatchCursor<T>> readOperation) {
-        this.aggregateToCollectionOperation = aggregateToCollectionOperation;
+    VoidReadOperationThenCursorReadOperation(final AsyncReadOperation<Void> readOperation,
+            final AsyncReadOperation<AsyncBatchCursor<T>> cursorReadOperation) {
         this.readOperation = readOperation;
+        this.cursorReadOperation = cursorReadOperation;
     }
 
-    public AsyncWriteOperation<Void> getAggregateToCollectionOperation() {
-        return aggregateToCollectionOperation;
-    }
-
-    public AsyncReadOperation<AsyncBatchCursor<T>> getReadOperation() {
+    public AsyncReadOperation<Void> getReadOperation() {
         return readOperation;
     }
 
+    public AsyncReadOperation<AsyncBatchCursor<T>> getCursorReadOperation() {
+        return cursorReadOperation;
+    }
+
     @Override
-    @SuppressWarnings("unchecked")
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        aggregateToCollectionOperation.executeAsync((AsyncWriteBinding) binding, (result, t) -> {
+        readOperation.executeAsync(binding, (result, t) -> {
             if (t != null) {
                 callback.onResult(null, t);
             } else {
-                readOperation.executeAsync(binding, callback);
+                cursorReadOperation.executeAsync(binding, callback);
             }
         });
     }

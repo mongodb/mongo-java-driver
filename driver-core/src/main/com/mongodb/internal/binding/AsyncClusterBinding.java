@@ -29,6 +29,7 @@ import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
 import com.mongodb.internal.connection.Server;
 import com.mongodb.internal.connection.ServerTuple;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
+import com.mongodb.internal.selector.ReadPreferenceWithFallbackServerSelector;
 import com.mongodb.internal.selector.ServerAddressSelector;
 import com.mongodb.internal.selector.WritableServerSelector;
 import com.mongodb.internal.session.SessionContext;
@@ -108,6 +109,24 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
     }
 
     @Override
+    public void getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference,
+            final SingleResultCallback<AsyncConnectionSource> callback) {
+        ReadPreferenceWithFallbackServerSelector readPreferenceWithFallbackServerSelector
+                = new ReadPreferenceWithFallbackServerSelector(readPreference, minWireVersion, fallbackReadPreference);
+        cluster.selectServerAsync(readPreferenceWithFallbackServerSelector, new SingleResultCallback<ServerTuple>() {
+            @Override
+            public void onResult(final ServerTuple result, final Throwable t) {
+                if (t != null) {
+                    callback.onResult(null, t);
+                } else {
+                    callback.onResult(new AsyncClusterBindingConnectionSource(result.getServer(), result.getServerDescription(),
+                            readPreferenceWithFallbackServerSelector.getAppliedReadPreference()), null);
+                }
+            }
+        });
+    }
+
+    @Override
     public void getWriteConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
         getAsyncClusterBindingConnectionSource(new WritableServerSelector(), callback);
     }
@@ -125,7 +144,8 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
                 if (t != null) {
                     callback.onResult(null, t);
                 } else {
-                    callback.onResult(new AsyncClusterBindingConnectionSource(result.getServer(), result.getServerDescription()), null);
+                    callback.onResult(new AsyncClusterBindingConnectionSource(result.getServer(), result.getServerDescription(),
+                            readPreference), null);
                 }
             }
         });
@@ -134,10 +154,13 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
     private final class AsyncClusterBindingConnectionSource extends AbstractReferenceCounted implements AsyncConnectionSource {
         private final Server server;
         private final ServerDescription serverDescription;
+        private final ReadPreference appliedReadPreference;
 
-        private AsyncClusterBindingConnectionSource(final Server server, final ServerDescription serverDescription) {
+        private AsyncClusterBindingConnectionSource(final Server server, final ServerDescription serverDescription,
+                final ReadPreference appliedReadPreference) {
             this.server = server;
             this.serverDescription = serverDescription;
+            this.appliedReadPreference = appliedReadPreference;
             AsyncClusterBinding.this.retain();
         }
 
@@ -160,6 +183,11 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
         @Override
         public RequestContext getRequestContext() {
             return requestContext;
+        }
+
+        @Override
+        public ReadPreference getReadPreference() {
+            return appliedReadPreference;
         }
 
         @Override

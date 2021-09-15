@@ -275,6 +275,7 @@ class OperationFunctionalSpecification extends Specification {
                 connection
             }
             getServerApi() >> null
+            getReadPreference() >> readPreference
             getServerDescription() >> {
                 def builder = ServerDescription.builder().address(Stub(ServerAddress)).state(ServerConnectionState.CONNECTED)
                 if (new ServerVersion(serverVersion).compareTo(new ServerVersion(3, 6)) >= 0) {
@@ -284,7 +285,7 @@ class OperationFunctionalSpecification extends Specification {
             }
         }
         def readBinding = Stub(ReadBinding) {
-            getReadConnectionSource() >> connectionSource
+            getReadConnectionSource(*_) >> connectionSource
             getReadPreference() >> readPreference
             getServerApi() >> null
             getSessionContext() >> Stub(SessionContext) {
@@ -353,6 +354,7 @@ class OperationFunctionalSpecification extends Specification {
 
         def connectionSource = Stub(AsyncConnectionSource) {
             getConnection(_) >> { it[0].onResult(connection, null) }
+            getReadPreference() >> readPreference
             getServerApi() >> null
             getServerDescription() >> {
                 def builder = ServerDescription.builder().address(Stub(ServerAddress)).state(ServerConnectionState.CONNECTED)
@@ -363,7 +365,7 @@ class OperationFunctionalSpecification extends Specification {
             }
         }
         def readBinding = Stub(AsyncReadBinding) {
-            getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+            getReadConnectionSource(*_) >> { it.last().onResult(connectionSource, null) }
             getReadPreference() >> readPreference
             getServerApi() >> null
             getSessionContext() >> Stub(SessionContext) {

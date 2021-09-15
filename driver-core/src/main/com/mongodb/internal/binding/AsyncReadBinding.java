@@ -50,10 +50,23 @@ public interface AsyncReadBinding extends ReferenceCounted {
     RequestContext getRequestContext();
 
     /**
-     * Returns a connection source to a server that satisfies the specified read preference.
+     * Returns a connection source to a server that satisfies the read preference with which this instance is configured.
      * @param callback the to be passed the connection source
      */
     void getReadConnectionSource(SingleResultCallback<AsyncConnectionSource> callback);
+
+    /**
+     * Return a connection source that satisfies the read preference with which this instance is configured, if all connected servers have
+     * a maxWireVersion >= the given minWireVersion.  Otherwise, return a connection source that satisfied the given
+     * fallbackReadPreference.
+     *
+     * This is useful for operations that are able to execute on a secondary on later server versions, but must execute on the primary on
+     * earlier server versions.
+     *
+     * @see com.mongodb.internal.operation.AggregateToCollectionOperation
+     */
+    void getReadConnectionSource(int minWireVersion, ReadPreference fallbackReadPreference,
+            SingleResultCallback<AsyncConnectionSource> callback);
 
     @Override
     AsyncReadBinding retain();

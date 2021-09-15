@@ -279,7 +279,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         }
 
         then:
-        testOperation(operation, serverVersion, expectedCommand, false, BsonDocument.parse('{ok: 1}'),
+        testOperation(operation, serverVersion, expectedCommand, async, BsonDocument.parse('{ok: 1}'),
                 true, false, ReadPreference.primary(), false)
 
         where:

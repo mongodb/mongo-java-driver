@@ -99,7 +99,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         }
 
         getExecutor().execute(operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint,
-                comment, variables, aggregationLevel), getReadConcern(), getClientSession());
+                comment, variables, aggregationLevel), getReadPreference(), getReadConcern(), getClientSession());
     }
 
     @Override
@@ -189,7 +189,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         MongoNamespace outNamespace = getOutNamespace();
         if (outNamespace != null) {
             getExecutor().execute(operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation,
-                    hint, comment, variables, aggregationLevel), getReadConcern(), getClientSession());
+                    hint, comment, variables, aggregationLevel), getReadPreference(), getReadConcern(), getClientSession());
 
             FindOptions findOptions = new FindOptions().collation(collation);
             Integer batchSize = getBatchSize();

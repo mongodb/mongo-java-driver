@@ -666,21 +666,21 @@ class DBCollectionSpecification extends Specification {
         collection.aggregate(pipeline, AggregationOptions.builder().build())
 
         then:
-        expect executor.getWriteOperation(), isTheSameAs(new AggregateToCollectionOperation(collection.getNamespace(),
+        expect executor.getReadOperation(), isTheSameAs(new AggregateToCollectionOperation(collection.getNamespace(),
                 bsonPipeline, collection.getReadConcern(), collection.getWriteConcern()))
 
         when: // Inherits from DB
         collection.aggregate(pipeline, AggregationOptions.builder().build())
 
         then:
-        expect executor.getWriteOperation(), isTheSameAs(new AggregateToCollectionOperation(collection.getNamespace(),
+        expect executor.getReadOperation(), isTheSameAs(new AggregateToCollectionOperation(collection.getNamespace(),
                 bsonPipeline, collection.getReadConcern(), collection.getWriteConcern()))
 
         when:
         collection.aggregate(pipeline, AggregationOptions.builder().collation(collation).build())
 
         then:
-        expect executor.getWriteOperation(), isTheSameAs(new AggregateToCollectionOperation(collection.getNamespace(),
+        expect executor.getReadOperation(), isTheSameAs(new AggregateToCollectionOperation(collection.getNamespace(),
                 bsonPipeline, collection.getReadConcern(), collection.getWriteConcern()).collation(collation))
     }
 

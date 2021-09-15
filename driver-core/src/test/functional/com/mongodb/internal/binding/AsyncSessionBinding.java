@@ -86,6 +86,22 @@ public final class AsyncSessionBinding implements AsyncReadWriteBinding {
         });
     }
 
+
+    @Override
+    public void getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference,
+            final SingleResultCallback<AsyncConnectionSource> callback) {
+        wrapped.getReadConnectionSource(minWireVersion, fallbackReadPreference, new SingleResultCallback<AsyncConnectionSource>() {
+            @Override
+            public void onResult(final AsyncConnectionSource result, final Throwable t) {
+                if (t != null) {
+                    callback.onResult(null, t);
+                } else {
+                    callback.onResult(new SessionBindingAsyncConnectionSource(result), null);
+                }
+            }
+        });
+    }
+
     @Override
     public int getCount() {
         return wrapped.getCount();
@@ -128,6 +144,11 @@ public final class AsyncSessionBinding implements AsyncReadWriteBinding {
         @Override
         public RequestContext getRequestContext() {
             return wrapped.getRequestContext();
+        }
+
+        @Override
+        public ReadPreference getReadPreference() {
+            return wrapped.getReadPreference();
         }
 
         @Override
