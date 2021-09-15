@@ -196,7 +196,7 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
             // initialBatchSize is ignored for map reduce operations.
             return createMapReduceInlineOperation();
         } else {
-            return new WriteOperationThenCursorReadOperation<>(createMapReduceToCollectionOperation(),
+            return new VoidWriteOperationThenCursorReadOperation<>(createMapReduceToCollectionOperation(),
                     createFindOperation(initialBatchSize));
         }
     }

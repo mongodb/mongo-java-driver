@@ -77,6 +77,7 @@ import org.bson.codecs.configuration.CodecRegistries;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -116,11 +117,14 @@ final class UnifiedCrudHelper {
     }
 
     public static ReadPreference asReadPreference(final BsonDocument readPreferenceDocument) {
-        if (readPreferenceDocument.size() > 1) {
-            throw new UnsupportedOperationException("Unsupported read preference properties");
+        if (readPreferenceDocument.size() == 1) {
+            return ReadPreference.valueOf(readPreferenceDocument.getString("mode").getValue());
+        } else if (readPreferenceDocument.size() == 2) {
+            return ReadPreference.valueOf(readPreferenceDocument.getString("mode").getValue(),
+                    Collections.emptyList(), readPreferenceDocument.getNumber("maxStalenessSeconds").intValue(), TimeUnit.SECONDS);
+        } else {
+            throw new UnsupportedOperationException("Unsupported read preference properties: " + readPreferenceDocument.toJson());
         }
-
-        return ReadPreference.valueOf(readPreferenceDocument.getString("mode").getValue());
     }
 
     private OperationResult resultOf(final Supplier<BsonValue> operationResult) {

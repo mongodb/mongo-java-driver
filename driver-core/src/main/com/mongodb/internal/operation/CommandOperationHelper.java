@@ -190,10 +190,21 @@ final class CommandOperationHelper {
             final Decoder<D> decoder,
             final CommandReadTransformer<D, T> transformer,
             final boolean retryReads) {
+        return executeRetryableRead(binding, binding::getReadConnectionSource, database, commandCreator, decoder, transformer, retryReads);
+    }
+
+    static <D, T> T executeRetryableRead(
+            final ReadBinding binding,
+            final Supplier<ConnectionSource> readConnectionSourceSupplier,
+            final String database,
+            final CommandCreator commandCreator,
+            final Decoder<D> decoder,
+            final CommandReadTransformer<D, T> transformer,
+            final boolean retryReads) {
         RetryState retryState = initialRetryState(retryReads);
         Supplier<T> read = decorateReadWithRetries(retryState, () -> {
             logRetryExecute(retryState);
-            return withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection) -> {
+            return withSourceAndConnection(readConnectionSourceSupplier, false, (source, connection) -> {
                 retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), connection.getDescription(),
                         binding.getSessionContext()));
                 return createReadCommandAndExecute(retryState, binding, source, database, commandCreator, decoder, transformer, connection);
@@ -214,7 +225,7 @@ final class CommandOperationHelper {
         BsonDocument command = commandCreator.create(source.getServerDescription(), connection.getDescription());
         retryState.attach(AttachmentKeys.commandDescriptionSupplier(), command::getFirstKey, false);
         logRetryExecute(retryState);
-        return transformer.apply(connection.command(database, command, new NoOpFieldNameValidator(), binding.getReadPreference(), decoder,
+        return transformer.apply(connection.command(database, command, new NoOpFieldNameValidator(), source.getReadPreference(), decoder,
                 binding.getSessionContext(), binding.getServerApi(), binding.getRequestContext()), source, connection);
     }
 
@@ -248,11 +259,24 @@ final class CommandOperationHelper {
             final CommandReadTransformerAsync<D, T> transformer,
             final boolean retryReads,
             final SingleResultCallback<T> callback) {
+        executeRetryableReadAsync(binding, binding::getReadConnectionSource, database, commandCreator, decoder, transformer, retryReads,
+                callback);
+    }
+
+    static <D, T> void executeRetryableReadAsync(
+            final AsyncReadBinding binding,
+            final AsyncCallbackSupplier<AsyncConnectionSource> sourceAsyncSupplier,
+            final String database,
+            final CommandCreator commandCreator,
+            final Decoder<D> decoder,
+            final CommandReadTransformerAsync<D, T> transformer,
+            final boolean retryReads,
+            final SingleResultCallback<T> callback) {
         RetryState retryState = initialRetryState(retryReads);
         binding.retain();
         AsyncCallbackSupplier<T> asyncRead = CommandOperationHelper.<T>decorateReadWithRetries(retryState, funcCallback -> {
             logRetryExecute(retryState);
-            withAsyncSourceAndConnection(binding::getReadConnectionSource, false, funcCallback,
+            withAsyncSourceAndConnection(sourceAsyncSupplier, false, funcCallback,
                 (source, connection, releasingCallback) -> {
                     if (retryState.breakAndCompleteIfRetryAnd(() -> !canRetryRead(source.getServerDescription(),
                             connection.getDescription(), binding.getSessionContext()), releasingCallback)) {
@@ -284,7 +308,7 @@ final class CommandOperationHelper {
             callback.onResult(null, e);
             return;
         }
-        connection.commandAsync(database, command, new NoOpFieldNameValidator(), binding.getReadPreference(), decoder,
+        connection.commandAsync(database, command, new NoOpFieldNameValidator(), source.getReadPreference(), decoder,
                 binding.getSessionContext(), binding.getServerApi(), binding.getRequestContext(),
                 transformingReadCallback(transformer, source, connection, callback));
     }

@@ -190,6 +190,12 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
     }
 
     @Override
+    public void getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference,
+            final SingleResultCallback<AsyncConnectionSource> callback) {
+        getReadConnectionSource(callback);
+    }
+
+    @Override
     public void getWriteConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
         isTrue("open", getCount() > 0);
         callback.onResult(new SingleAsyncConnectionSource(writeServerDescription, writeConnection), null);
@@ -234,6 +240,11 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
         @Override
         public RequestContext getRequestContext() {
             return IgnorableRequestContext.INSTANCE;
+        }
+
+        @Override
+        public ReadPreference getReadPreference() {
+            return readPreference;
         }
 
         @Override

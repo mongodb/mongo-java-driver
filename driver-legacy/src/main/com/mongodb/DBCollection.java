@@ -1225,7 +1225,7 @@ public class DBCollection {
                                                        .bypassDocumentValidation(options.getBypassDocumentValidation())
                                                        .collation(options.getCollation());
             try {
-                executor.execute(operation, getReadConcern());
+                executor.execute(operation, getReadPreference(), getReadConcern());
                 result = new DBCursor(database.getCollection(outCollection.asString().getValue()), new BasicDBObject(),
                         new DBCollectionFindOptions().readPreference(primary()).collation(options.getCollation()));
             } catch (MongoWriteConcernException e) {

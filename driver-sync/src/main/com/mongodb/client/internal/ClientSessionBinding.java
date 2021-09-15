@@ -88,6 +88,15 @@ public class ClientSessionBinding implements ReadWriteBinding {
         }
     }
 
+    @Override
+    public ConnectionSource getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference) {
+        if (isConnectionSourcePinningRequired()) {
+            return new SessionBindingConnectionSource(getPinnedConnectionSource(true));
+        } else {
+            return new SessionBindingConnectionSource(wrapped.getReadConnectionSource(minWireVersion, fallbackReadPreference));
+        }
+    }
+
     public ConnectionSource getWriteConnectionSource() {
         if (isConnectionSourcePinningRequired()) {
             return new SessionBindingConnectionSource(getPinnedConnectionSource(false));
@@ -156,6 +165,11 @@ public class ClientSessionBinding implements ReadWriteBinding {
         @Override
         public RequestContext getRequestContext() {
             return wrapped.getRequestContext();
+        }
+
+        @Override
+        public ReadPreference getReadPreference() {
+            return wrapped.getReadPreference();
         }
 
         @Override

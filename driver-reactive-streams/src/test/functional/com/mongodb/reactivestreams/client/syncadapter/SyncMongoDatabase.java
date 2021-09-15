@@ -81,17 +81,17 @@ public class SyncMongoDatabase implements MongoDatabase {
 
     @Override
     public MongoDatabase withReadPreference(final ReadPreference readPreference) {
-        throw new UnsupportedOperationException();
+        return new SyncMongoDatabase(wrapped.withReadPreference(readPreference));
     }
 
     @Override
     public MongoDatabase withWriteConcern(final WriteConcern writeConcern) {
-        throw new UnsupportedOperationException();
+        return new SyncMongoDatabase(wrapped.withWriteConcern(writeConcern));
     }
 
     @Override
     public MongoDatabase withReadConcern(final ReadConcern readConcern) {
-        throw new UnsupportedOperationException();
+        return new SyncMongoDatabase(wrapped.withReadConcern(readConcern));
     }
 
     @Override

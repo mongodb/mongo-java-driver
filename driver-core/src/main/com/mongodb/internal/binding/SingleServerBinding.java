@@ -74,6 +74,11 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
     }
 
     @Override
+    public ConnectionSource getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public SessionContext getSessionContext() {
         return NoOpSessionContext.INSTANCE;
     }
@@ -122,6 +127,11 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
         @Override
         public RequestContext getRequestContext() {
             return requestContext;
+        }
+
+        @Override
+        public ReadPreference getReadPreference() {
+            return ReadPreference.primary();
         }
 
         @Override
