@@ -32,7 +32,9 @@ import com.mongodb.event.ClusterClosedEvent;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ClusterOpeningEvent;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.lang.Nullable;
 import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.ServerSelector;
 import org.bson.BsonTimestamp;
@@ -42,20 +44,23 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerDescription.MAX_DRIVER_WIRE_VERSION;
 import static com.mongodb.connection.ServerDescription.MIN_DRIVER_SERVER_VERSION;
 import static com.mongodb.connection.ServerDescription.MIN_DRIVER_WIRE_VERSION;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.connection.EventHelper.wouldDescriptionsGenerateEquivalentEvents;
 import static com.mongodb.internal.event.EventListenerHelper.createServerListener;
 import static com.mongodb.internal.event.EventListenerHelper.getClusterListener;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.Comparator.comparingInt;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -65,7 +70,6 @@ abstract class BaseCluster implements Cluster {
 
     private final AtomicReference<CountDownLatch> phase = new AtomicReference<CountDownLatch>(new CountDownLatch(1));
     private final ClusterableServerFactory serverFactory;
-    private final ThreadLocal<Random> random = new ThreadLocal<Random>();
     private final ClusterId clusterId;
     private final ClusterSettings settings;
     private final ClusterListener clusterListener;
@@ -99,7 +103,7 @@ abstract class BaseCluster implements Cluster {
             CountDownLatch currentPhase = phase.get();
             ClusterDescription curDescription = description;
             ServerSelector compositeServerSelector = getCompositeServerSelector(serverSelector);
-            ServerTuple serverTuple = selectRandomServer(compositeServerSelector, curDescription);
+            ServerTuple serverTuple = selectServer(compositeServerSelector, curDescription);
 
             boolean selectionFailureLogged = false;
 
@@ -131,7 +135,7 @@ abstract class BaseCluster implements Cluster {
 
                 currentPhase = phase.get();
                 curDescription = description;
-                serverTuple = selectRandomServer(compositeServerSelector, curDescription);
+                serverTuple = selectServer(compositeServerSelector, curDescription);
             }
 
         } catch (InterruptedException e) {
@@ -286,7 +290,7 @@ abstract class BaseCluster implements Cluster {
                     return true;
                 }
 
-                ServerTuple serverTuple = selectRandomServer(request.compositeSelector, description);
+                ServerTuple serverTuple = selectServer(request.compositeSelector, description);
                 if (serverTuple != null) {
                     if (LOGGER.isTraceEnabled()) {
                         LOGGER.trace(format("Asynchronously selected server %s", serverTuple.getServerDescription().getAddress()));
@@ -326,14 +330,26 @@ abstract class BaseCluster implements Cluster {
         }
     }
 
+    @Nullable
+    private ServerTuple selectServer(final ServerSelector serverSelector, final ClusterDescription clusterDescription) {
+        return selectServer(serverSelector, clusterDescription, this::getServer);
+    }
 
-    private ServerTuple selectRandomServer(final ServerSelector serverSelector, final ClusterDescription clusterDescription) {
-        List<ServerDescription> serverDescriptions = serverSelector.select(clusterDescription);
-        if (!serverDescriptions.isEmpty()) {
-            return getRandomServer(new ArrayList<ServerDescription>(serverDescriptions));
-        } else {
-            return null;
-        }
+    @Nullable
+    @VisibleForTesting(otherwise = PRIVATE)
+    static ServerTuple selectServer(final ServerSelector serverSelector, final ClusterDescription clusterDescription,
+            final Function<ServerAddress, Server> serverCatalogue) {
+        List<ServerDescription> serverDescriptions = new ArrayList<>(serverSelector.select(clusterDescription));
+        Collections.shuffle(serverDescriptions);
+        return serverDescriptions.stream()
+                .map(serverDescription -> {
+                    Server server = serverCatalogue.apply(serverDescription.getAddress());
+                    return server == null ? null : new ServerTuple(server, serverDescription);
+                })
+                .filter(Objects::nonNull)
+                .limit(2)
+                .min(comparingInt(serverTuple -> serverTuple.getServer().operationCount()))
+                .orElse(null);
     }
 
     private ServerSelector getCompositeServerSelector(final ServerSelector serverSelector) {
@@ -342,32 +358,6 @@ abstract class BaseCluster implements Cluster {
         } else {
             return new CompositeServerSelector(asList(serverSelector, settings.getServerSelector()));
         }
-    }
-
-    // gets a random server that still exists in the cluster.  Returns null if there are none.
-    private ServerTuple getRandomServer(final List<ServerDescription> serverDescriptions) {
-        while (!serverDescriptions.isEmpty()) {
-            int serverPos = getRandom().nextInt(serverDescriptions.size());
-            ServerDescription serverDescription = serverDescriptions.get(serverPos);
-            Server server = getServer(serverDescription.getAddress());
-            if (server != null) {
-                return new ServerTuple(server, serverDescription);
-            } else {
-                serverDescriptions.remove(serverPos);
-            }
-        }
-        return null;
-    }
-
-    // it's important that Random instances are created in this way instead of via subclassing ThreadLocal and overriding the
-    // initialValue() method.
-    private Random getRandom() {
-        Random result = random.get();
-        if (result == null) {
-            result = new Random();
-            random.set(result);
-        }
-        return result;
     }
 
     protected ClusterableServer createServer(final ServerAddress serverAddress,

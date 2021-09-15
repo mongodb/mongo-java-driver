@@ -24,10 +24,10 @@ import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.client.model.CreateCollectionOptions
+import com.mongodb.client.syncadapter.SyncConnection
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
 import com.mongodb.internal.connection.AsyncConnection
-import com.mongodb.internal.connection.Connection
 import com.mongodb.internal.connection.NoOpSessionContext
 import com.mongodb.internal.connection.QueryResult
 import com.mongodb.internal.validator.NoOpFieldNameValidator
@@ -357,7 +357,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         while (connection.getCount() > 1) {
             Thread.sleep(5)
         }
-        makeAdditionalGetMoreCall(getNamespace(), firstBatch.cursor, connection as Connection)
+        makeAdditionalGetMoreCall(getNamespace(), firstBatch.cursor, new SyncConnection(connection))
 
         then:
         thrown(MongoCursorNotFoundException)
@@ -372,7 +372,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         when:
         cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 2, 0, new DocumentCodec(), connectionSource, connection)
 
-        def connection = getConnection(connectionSource)
+        def connection = new SyncConnection(getConnection(connectionSource))
         def serverCursor = cursor.cursor.get()
         if (serverVersionLessThan(3, 6)) {
             connection.killCursor(getNamespace(), asList(cursor.getServerCursor().id))

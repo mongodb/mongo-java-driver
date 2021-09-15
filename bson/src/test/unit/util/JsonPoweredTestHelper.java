@@ -27,9 +27,20 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+
+import static java.nio.file.Files.isDirectory;
+import static java.util.stream.Collectors.toMap;
 
 public final class JsonPoweredTestHelper {
 
@@ -39,6 +50,39 @@ public final class JsonPoweredTestHelper {
 
     public static BsonDocument getTestDocument(final String resourcePath) throws IOException, URISyntaxException {
         return getTestDocument(new File(JsonPoweredTestHelper.class.getResource(resourcePath).toURI()));
+    }
+
+    public static Path testDir(final String resourceName) {
+        URL res = JsonPoweredTestHelper.class.getResource(resourceName);
+        if (res == null) {
+            throw new AssertionError("Did not find " + resourceName);
+        }
+        try {
+            Path dir = Paths.get(res.toURI());
+            if (!isDirectory(dir)) {
+                throw new AssertionError(dir + " is not a directory");
+            }
+            return dir;
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static Map<Path, BsonDocument> testDocs(final Path dir) {
+        PathMatcher jsonMatcher = FileSystems.getDefault().getPathMatcher("glob:**.json");
+        try {
+            return Files.list(dir)
+                    .filter(jsonMatcher::matches)
+                    .collect(toMap(Function.identity(), path -> {
+                        try {
+                            return getTestDocument(path.toFile());
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static List<File> getTestFiles(final String resourcePath) throws URISyntaxException {

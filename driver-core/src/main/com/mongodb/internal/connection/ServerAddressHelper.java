@@ -34,6 +34,19 @@ public final class ServerAddressHelper {
         }
     }
 
+    /**
+     * @param address Either a host as in {@link ServerAddress#ServerAddress(String)} or both a host and a port separated with {@code ':'}.
+     */
+    public static ServerAddress parse(final String address) {
+        String[] parts = address.split(":", 2);
+        if (parts.length == 1) {
+            // `address` contains only a host
+            return new ServerAddress(address);
+        } else {
+            return new ServerAddress(parts[0], Integer.parseInt(parts[1]));
+        }
+    }
+
     private ServerAddressHelper() {
     }
 }

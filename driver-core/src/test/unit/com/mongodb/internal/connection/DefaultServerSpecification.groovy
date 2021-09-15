@@ -72,7 +72,7 @@ class DefaultServerSpecification extends Specification {
 
         connectionPool.get() >> { internalConnection }
         def server = new DefaultServer(serverId, mode, connectionPool, connectionFactory, Mock(ServerMonitor),
-                Mock(SdamServerDescriptionManager), Mock(ServerListener), Mock(CommandListener), new ClusterClock())
+                Mock(SdamServerDescriptionManager), Mock(ServerListener), Mock(CommandListener), new ClusterClock(), false)
 
         when:
         def receivedConnection = server.getConnection()
@@ -97,7 +97,7 @@ class DefaultServerSpecification extends Specification {
         }
 
         def server = new DefaultServer(serverId, mode, connectionPool, connectionFactory, Mock(ServerMonitor),
-                Mock(SdamServerDescriptionManager), Mock(ServerListener), Mock(CommandListener), new ClusterClock())
+                Mock(SdamServerDescriptionManager), Mock(ServerListener), Mock(CommandListener), new ClusterClock(), false)
 
         when:
         def latch = new CountDownLatch(1)
@@ -411,7 +411,7 @@ class DefaultServerSpecification extends Specification {
         def clusterClock = new ClusterClock()
         clusterClock.advance(clusterClockClusterTime)
         def server = new DefaultServer(serverId, SINGLE, Mock(ConnectionPool), new TestConnectionFactory(), Mock(ServerMonitor),
-                Mock(SdamServerDescriptionManager), Mock(ServerListener), Mock(CommandListener), clusterClock)
+                Mock(SdamServerDescriptionManager), Mock(ServerListener), Mock(CommandListener), clusterClock, false)
         def testConnection = (TestConnection) server.getConnection()
         def sessionContext = new TestSessionContext(initialClusterTime)
         def response = BsonDocument.parse(
@@ -480,7 +480,7 @@ class DefaultServerSpecification extends Specification {
                                         final SdamServerDescriptionManager sdam, final CommandListener commandListener) {
         serverMonitor.start()
         new DefaultServer(serverId, SINGLE, connectionPool, new TestConnectionFactory(), serverMonitor,
-                sdam, serverListener, commandListener, new ClusterClock())
+                sdam, serverListener, commandListener, new ClusterClock(), false)
     }
 
     class TestLegacyProtocol implements LegacyProtocol {

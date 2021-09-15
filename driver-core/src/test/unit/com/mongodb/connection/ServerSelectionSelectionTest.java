@@ -33,6 +33,7 @@ import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -67,7 +68,8 @@ public class ServerSelectionSelectionTest {
         this.definition = definition;
         this.heartbeatFrequencyMS = definition.getNumber("heartbeatFrequencyMS", new BsonInt64(10000)).longValue();
         this.error = definition.getBoolean("error", BsonBoolean.FALSE).getValue();
-        this.clusterDescription = buildClusterDescription(definition.getDocument("topology_description"));
+        this.clusterDescription = buildClusterDescription(definition.getDocument("topology_description"),
+                ServerSettings.builder().heartbeatFrequency(heartbeatFrequencyMS, TimeUnit.MILLISECONDS).build());
     }
 
     @Test
@@ -115,25 +117,24 @@ public class ServerSelectionSelectionTest {
         return root + "/" + file.getParentFile().getName() + "/" + file.getName();
     }
 
-    private ClusterDescription buildClusterDescription(final BsonDocument topologyDescription) {
+    public static ClusterDescription buildClusterDescription(final BsonDocument topologyDescription,
+            @Nullable final ServerSettings srvSettings) {
         ClusterType clusterType = getClusterType(topologyDescription.getString("type").getValue());
         ClusterConnectionMode connectionMode = getClusterConnectionMode(clusterType);
         List<ServerDescription> servers = buildServerDescriptions(topologyDescription.getArray("servers"));
         return new ClusterDescription(connectionMode, clusterType, servers, null,
-                                             ServerSettings.builder()
-                                                     .heartbeatFrequency(heartbeatFrequencyMS, TimeUnit.MILLISECONDS)
-                                                     .build());
+                srvSettings == null ? ServerSettings.builder().build() : srvSettings);
     }
 
     @NotNull
-    private ClusterConnectionMode getClusterConnectionMode(final ClusterType clusterType) {
+    private static ClusterConnectionMode getClusterConnectionMode(final ClusterType clusterType) {
         if (clusterType == ClusterType.LOAD_BALANCED) {
             return ClusterConnectionMode.LOAD_BALANCED;
         }
         return ClusterConnectionMode.MULTIPLE;
     }
 
-    private ClusterType getClusterType(final String type) {
+    private static ClusterType getClusterType(final String type) {
         if (type.equals("Single")) {
             return ClusterType.STANDALONE;
         } else if (type.startsWith("ReplicaSet")) {
@@ -149,7 +150,7 @@ public class ServerSelectionSelectionTest {
         throw new UnsupportedOperationException("Unknown topology type: " + type);
     }
 
-    private List<ServerDescription> buildServerDescriptions(final BsonArray serverDescriptions) {
+    private static List<ServerDescription> buildServerDescriptions(final BsonArray serverDescriptions) {
         List<ServerDescription> descriptions = new ArrayList<ServerDescription>();
         for (BsonValue document : serverDescriptions) {
             descriptions.add(buildServerDescription(document.asDocument()));
@@ -157,7 +158,7 @@ public class ServerSelectionSelectionTest {
         return descriptions;
     }
 
-    private ServerDescription buildServerDescription(final BsonDocument serverDescription) {
+    private static ServerDescription buildServerDescription(final BsonDocument serverDescription) {
         ServerDescription.Builder builder = ServerDescription.builder();
         builder.address(new ServerAddress(serverDescription.getString("address").getValue()));
         ServerType serverType = getServerType(serverDescription.getString("type").getValue());
@@ -184,7 +185,7 @@ public class ServerSelectionSelectionTest {
         return builder.build();
     }
 
-    private ServerType getServerType(final String serverTypeString) {
+    private static ServerType getServerType(final String serverTypeString) {
         ServerType serverType;
         if (serverTypeString.equals("RSPrimary")) {
             serverType = ServerType.REPLICA_SET_PRIMARY;
@@ -221,7 +222,7 @@ public class ServerSelectionSelectionTest {
     }
 
 
-    private TagSet buildTagSet(final BsonDocument tags) {
+    private static TagSet buildTagSet(final BsonDocument tags) {
         List<Tag> tagsSetTags = new ArrayList<Tag>();
         for (String key : tags.keySet()) {
             tagsSetTags.add(new Tag(key, tags.getString(key).getValue()));

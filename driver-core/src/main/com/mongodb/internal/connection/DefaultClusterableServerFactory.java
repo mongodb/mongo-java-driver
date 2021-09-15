@@ -92,7 +92,7 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
         sdamProvider.initialize(sdam);
         serverMonitor.start();
         return new DefaultServer(serverId, clusterSettings.getMode(), connectionPool, new DefaultConnectionFactory(), serverMonitor,
-                sdam, serverListener, commandListener, clusterClock);
+                sdam, serverListener, commandListener, clusterClock, true);
     }
 
     @Override
