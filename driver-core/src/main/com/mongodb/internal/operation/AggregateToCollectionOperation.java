@@ -18,15 +18,14 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
+import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.binding.AsyncWriteBinding;
-import com.mongodb.internal.binding.WriteBinding;
+import com.mongodb.internal.binding.AsyncReadBinding;
+import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.AggregationLevel;
-import com.mongodb.internal.connection.AsyncConnection;
-import com.mongodb.internal.connection.Connection;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -34,37 +33,35 @@ import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.bson.codecs.BsonDocumentCodec;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommand;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandAsync;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorTransformer;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorWriteTransformer;
-import static com.mongodb.internal.operation.OperationHelper.AsyncCallableWithConnection;
-import static com.mongodb.internal.operation.OperationHelper.CallableWithConnection;
-import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.OperationHelper.releasingCallback;
+import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableRead;
+import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableReadAsync;
 import static com.mongodb.internal.operation.OperationHelper.validateCollation;
-import static com.mongodb.internal.operation.OperationHelper.withAsyncConnection;
-import static com.mongodb.internal.operation.OperationHelper.withConnection;
+import static com.mongodb.internal.operation.ServerVersionHelper.FIVE_DOT_ZERO_WIRE_VERSION;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotFour;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotSix;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
+import static com.mongodb.internal.operation.WriteConcernHelper.throwOnWriteConcernError;
 
 /**
- * An operation that executes an aggregation that writes its results to a collection (which is what makes this a write operation rather than
- * a read operation).
+ * An operation that executes an aggregation that writes its results to a collection.
  *
+ * <p>Drivers are required to execute this operation on a secondary as of MongoDB 5.0, and otherwise execute it on a primary. That's why
+ * this is a ReadOperation, not a WriteOperation: because it now uses the read preference to select the server.
+ * </p>
+ *
+ * @see ReadBinding#getReadConnectionSource(int, com.mongodb.ReadPreference)
  * @mongodb.driver.manual reference/command/aggregate/ Aggregation
  * @since 3.0
  */
-public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
+public class AggregateToCollectionOperation implements AsyncReadOperation<Void>, ReadOperation<Void> {
     private final MongoNamespace namespace;
     private final List<BsonDocument> pipeline;
     private final WriteConcern writeConcern;
@@ -129,20 +126,6 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
     public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
                                           final ReadConcern readConcern, final WriteConcern writeConcern) {
         this(namespace, pipeline, readConcern, writeConcern, AggregationLevel.COLLECTION);
-    }
-
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace the database and collection namespace for the operation.
-     * @param pipeline the aggregation pipeline.
-     * @param writeConcern the write concern to apply
-     * @param aggregationLevel the aggregation level
-     * @since 3.10
-     */
-    public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
-                                          final WriteConcern writeConcern, final AggregationLevel aggregationLevel) {
-        this(namespace, pipeline, ReadConcern.DEFAULT, writeConcern, aggregationLevel);
     }
 
     /**
@@ -349,45 +332,35 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
     }
 
     @Override
-    public Void execute(final WriteBinding binding) {
-        return withConnection(binding, new CallableWithConnection<Void>() {
-            @Override
-            public Void call(final Connection connection) {
-                validateCollation(connection, collation);
-                return executeCommand(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
-                        connection, writeConcernErrorTransformer());
-            }
-        });
+    public Void execute(final ReadBinding binding) {
+        return executeRetryableRead(binding,
+                () -> binding.getReadConnectionSource(FIVE_DOT_ZERO_WIRE_VERSION, ReadPreference.primary()),
+                namespace.getDatabaseName(),
+                (serverDescription, connectionDescription) -> getCommand(connectionDescription),
+                new BsonDocumentCodec(), (result, source, connection) -> {
+                    throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),
+                            connection.getDescription().getMaxWireVersion());
+                    return null;
+                }, false);
     }
 
     @Override
-    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withAsyncConnection(binding, new AsyncCallableWithConnection() {
-            @Override
-            public void call(final AsyncConnection connection, final Throwable t) {
-                SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-                if (t != null) {
-                    errHandlingCallback.onResult(null, t);
-                } else {
-                    final SingleResultCallback<Void> wrappedCallback = releasingCallback(errHandlingCallback, connection);
-                    validateCollation(connection, collation, new AsyncCallableWithConnection() {
-                        @Override
-                        public void call(final AsyncConnection connection, final Throwable t) {
-                            if (t != null) {
-                                wrappedCallback.onResult(null, t);
-                            } else {
-                                executeCommandAsync(binding, namespace.getDatabaseName(),
-                                        getCommand(connection.getDescription()), connection, writeConcernErrorWriteTransformer(),
-                                        wrappedCallback);
-                            }
-                        }
-                    });
-                }
-            }
-        });
+    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Void> callback) {
+        executeRetryableReadAsync(binding,
+                (connectionSourceCallback) -> {
+                        binding.getReadConnectionSource(FIVE_DOT_ZERO_WIRE_VERSION, ReadPreference.primary(), connectionSourceCallback);
+                },
+                namespace.getDatabaseName(),
+                (serverDescription, connectionDescription) -> getCommand(connectionDescription),
+                new BsonDocumentCodec(), (result, source, connection) -> {
+                    throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),
+                            connection.getDescription().getMaxWireVersion());
+                    return null;
+                }, false, callback);
     }
 
     private BsonDocument getCommand(final ConnectionDescription description) {
+        validateCollation(description, collation);
         BsonValue aggregationTarget = (aggregationLevel == AggregationLevel.DATABASE)
                 ? new BsonInt32(1) : new BsonString(namespace.getCollectionName());
 

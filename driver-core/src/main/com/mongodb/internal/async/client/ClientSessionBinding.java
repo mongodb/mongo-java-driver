@@ -125,6 +125,12 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
     }
 
     @Override
+    public void getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference,
+            final SingleResultCallback<AsyncConnectionSource> callback) {
+        wrapped.getReadConnectionSource(minWireVersion, fallbackReadPreference, callback);
+    }
+
+    @Override
     public void release() {
         wrapped.release();
         closeSessionIfCountIsZero();
@@ -167,6 +173,11 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
         @Override
         public RequestContext getRequestContext() {
             return wrapped.getRequestContext();
+        }
+
+        @Override
+        public ReadPreference getReadPreference() {
+            return wrapped.getReadPreference();
         }
 
         @Override

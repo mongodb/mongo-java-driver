@@ -162,9 +162,9 @@ public class AggregatePublisherImplTest extends TestHelper {
         // default input should be as expected
         Flux.from(publisher).blockFirst();
 
-        WriteOperationThenCursorReadOperation operation = (WriteOperationThenCursorReadOperation) executor.getReadOperation();
+        VoidReadOperationThenCursorReadOperation operation = (VoidReadOperationThenCursorReadOperation) executor.getReadOperation();
         assertEquals(ReadPreference.primary(), executor.getReadPreference());
-        assertOperationIsTheSameAs(expectedOperation, operation.getAggregateToCollectionOperation());
+        assertOperationIsTheSameAs(expectedOperation, operation.getReadOperation());
 
         // Should apply settings
         publisher
@@ -187,8 +187,8 @@ public class AggregatePublisherImplTest extends TestHelper {
 
         Flux.from(publisher).blockFirst();
         assertEquals(ReadPreference.primary(), executor.getReadPreference());
-        operation = (WriteOperationThenCursorReadOperation) executor.getReadOperation();
-        assertOperationIsTheSameAs(expectedOperation, operation.getAggregateToCollectionOperation());
+        operation = (VoidReadOperationThenCursorReadOperation) executor.getReadOperation();
+        assertOperationIsTheSameAs(expectedOperation, operation.getReadOperation());
 
         FindOperation<Document> expectedFindOperation =
                 new FindOperation<>(collectionNamespace, getDefaultCodecRegistry().get(Document.class))
@@ -199,7 +199,7 @@ public class AggregatePublisherImplTest extends TestHelper {
                         .maxTime(0, SECONDS)
                         .retryReads(true);
 
-        assertOperationIsTheSameAs(expectedFindOperation, operation.getReadOperation());
+        assertOperationIsTheSameAs(expectedFindOperation, operation.getCursorReadOperation());
 
         // Should handle database level aggregations
         publisher = new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), pipeline, AggregationLevel.DATABASE);
@@ -207,9 +207,9 @@ public class AggregatePublisherImplTest extends TestHelper {
         expectedOperation = new AggregateToCollectionOperation(NAMESPACE, pipeline, ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED);
 
         Flux.from(publisher).blockFirst();
-        operation = (WriteOperationThenCursorReadOperation) executor.getReadOperation();
+        operation = (VoidReadOperationThenCursorReadOperation) executor.getReadOperation();
         assertEquals(ReadPreference.primary(), executor.getReadPreference());
-        assertOperationIsTheSameAs(expectedOperation, operation.getAggregateToCollectionOperation());
+        assertOperationIsTheSameAs(expectedOperation, operation.getReadOperation());
 
         // Should handle toCollection
         publisher = new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), pipeline, AggregationLevel.COLLECTION);
@@ -218,7 +218,7 @@ public class AggregatePublisherImplTest extends TestHelper {
 
         // default input should be as expected
         Flux.from(publisher.toCollection()).blockFirst();
-        assertOperationIsTheSameAs(expectedOperation, executor.getWriteOperation());
+        assertOperationIsTheSameAs(expectedOperation, executor.getReadOperation());
     }
 
     @DisplayName("Should build the expected AggregateOperation for $out with hint string")
@@ -245,8 +245,8 @@ public class AggregatePublisherImplTest extends TestHelper {
 
         Flux.from(publisher).blockFirst();
         assertEquals(ReadPreference.primary(), executor.getReadPreference());
-        WriteOperationThenCursorReadOperation operation = (WriteOperationThenCursorReadOperation) executor.getReadOperation();
-        assertOperationIsTheSameAs(expectedOperation, operation.getAggregateToCollectionOperation());
+        VoidReadOperationThenCursorReadOperation operation = (VoidReadOperationThenCursorReadOperation) executor.getReadOperation();
+        assertOperationIsTheSameAs(expectedOperation, operation.getReadOperation());
     }
 
     @DisplayName("Should build the expected AggregateOperation for $out when both hint and hint string are set")
@@ -274,8 +274,8 @@ public class AggregatePublisherImplTest extends TestHelper {
 
         Flux.from(publisher).blockFirst();
         assertEquals(ReadPreference.primary(), executor.getReadPreference());
-        WriteOperationThenCursorReadOperation operation = (WriteOperationThenCursorReadOperation) executor.getReadOperation();
-        assertOperationIsTheSameAs(expectedOperation, operation.getAggregateToCollectionOperation());
+        VoidReadOperationThenCursorReadOperation operation = (VoidReadOperationThenCursorReadOperation) executor.getReadOperation();
+        assertOperationIsTheSameAs(expectedOperation, operation.getReadOperation());
     }
 
     @DisplayName("Should build the expected AggregateOperation for $out as document")
@@ -299,7 +299,7 @@ public class AggregatePublisherImplTest extends TestHelper {
                                                                                               WriteConcern.ACKNOWLEDGED);
 
         Flux.from(toCollectionPublisher).blockFirst();
-        assertOperationIsTheSameAs(expectedOperation, executor.getWriteOperation());
+        assertOperationIsTheSameAs(expectedOperation, executor.getReadOperation());
 
         // Should handle database level
         toCollectionPublisher =
@@ -307,7 +307,7 @@ public class AggregatePublisherImplTest extends TestHelper {
                         .toCollection();
 
         Flux.from(toCollectionPublisher).blockFirst();
-        assertOperationIsTheSameAs(expectedOperation, executor.getWriteOperation());
+        assertOperationIsTheSameAs(expectedOperation, executor.getReadOperation());
 
         // Should handle $out with namespace
         List<BsonDocument> pipelineWithNamespace = asList(BsonDocument.parse("{'$match': 1}"),
@@ -320,7 +320,7 @@ public class AggregatePublisherImplTest extends TestHelper {
                                                                WriteConcern.ACKNOWLEDGED);
 
         Flux.from(toCollectionPublisher).blockFirst();
-        assertOperationIsTheSameAs(expectedOperation, executor.getWriteOperation());
+        assertOperationIsTheSameAs(expectedOperation, executor.getReadOperation());
     }
 
     @DisplayName("Should build the expected AggregateOperation for $merge document")
@@ -342,9 +342,9 @@ public class AggregatePublisherImplTest extends TestHelper {
         // default input should be as expected
         Flux.from(publisher).blockFirst();
 
-        WriteOperationThenCursorReadOperation operation = (WriteOperationThenCursorReadOperation) executor.getReadOperation();
+        VoidReadOperationThenCursorReadOperation operation = (VoidReadOperationThenCursorReadOperation) executor.getReadOperation();
         assertEquals(ReadPreference.primary(), executor.getReadPreference());
-        assertOperationIsTheSameAs(expectedOperation, operation.getAggregateToCollectionOperation());
+        assertOperationIsTheSameAs(expectedOperation, operation.getReadOperation());
 
         // Should apply settings
         publisher
@@ -367,8 +367,8 @@ public class AggregatePublisherImplTest extends TestHelper {
 
         Flux.from(publisher).blockFirst();
         assertEquals(ReadPreference.primary(), executor.getReadPreference());
-        operation = (WriteOperationThenCursorReadOperation) executor.getReadOperation();
-        assertOperationIsTheSameAs(expectedOperation, operation.getAggregateToCollectionOperation());
+        operation = (VoidReadOperationThenCursorReadOperation) executor.getReadOperation();
+        assertOperationIsTheSameAs(expectedOperation, operation.getReadOperation());
 
         FindOperation<Document> expectedFindOperation =
                 new FindOperation<>(collectionNamespace, getDefaultCodecRegistry().get(Document.class))
@@ -379,7 +379,7 @@ public class AggregatePublisherImplTest extends TestHelper {
                         .maxTime(0, SECONDS)
                         .retryReads(true);
 
-        assertOperationIsTheSameAs(expectedFindOperation, operation.getReadOperation());
+        assertOperationIsTheSameAs(expectedFindOperation, operation.getCursorReadOperation());
 
         // Should handle database level aggregations
         publisher = new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), pipeline, AggregationLevel.DATABASE);
@@ -387,9 +387,9 @@ public class AggregatePublisherImplTest extends TestHelper {
         expectedOperation = new AggregateToCollectionOperation(NAMESPACE, pipeline, ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED);
 
         Flux.from(publisher).blockFirst();
-        operation = (WriteOperationThenCursorReadOperation) executor.getReadOperation();
+        operation = (VoidReadOperationThenCursorReadOperation) executor.getReadOperation();
         assertEquals(ReadPreference.primary(), executor.getReadPreference());
-        assertOperationIsTheSameAs(expectedOperation, operation.getAggregateToCollectionOperation());
+        assertOperationIsTheSameAs(expectedOperation, operation.getReadOperation());
 
         // Should handle toCollection
         publisher = new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), pipeline, AggregationLevel.COLLECTION);
@@ -398,7 +398,7 @@ public class AggregatePublisherImplTest extends TestHelper {
 
         // default input should be as expected
         Flux.from(publisher.toCollection()).blockFirst();
-        assertOperationIsTheSameAs(expectedOperation, executor.getWriteOperation());
+        assertOperationIsTheSameAs(expectedOperation, executor.getReadOperation());
     }
 
     @DisplayName("Should build the expected AggregateOperation for $merge string")
@@ -420,9 +420,9 @@ public class AggregatePublisherImplTest extends TestHelper {
         // default input should be as expected
         Flux.from(publisher).blockFirst();
 
-        WriteOperationThenCursorReadOperation operation = (WriteOperationThenCursorReadOperation) executor.getReadOperation();
+        VoidReadOperationThenCursorReadOperation operation = (VoidReadOperationThenCursorReadOperation) executor.getReadOperation();
         assertEquals(ReadPreference.primary(), executor.getReadPreference());
-        assertOperationIsTheSameAs(expectedOperation, operation.getAggregateToCollectionOperation());
+        assertOperationIsTheSameAs(expectedOperation, operation.getReadOperation());
 
         FindOperation<Document> expectedFindOperation =
                 new FindOperation<>(collectionNamespace, getDefaultCodecRegistry().get(Document.class))
@@ -430,7 +430,7 @@ public class AggregatePublisherImplTest extends TestHelper {
                 .batchSize(Integer.MAX_VALUE)
                 .retryReads(true);
 
-        assertOperationIsTheSameAs(expectedFindOperation, operation.getReadOperation());
+        assertOperationIsTheSameAs(expectedFindOperation, operation.getCursorReadOperation());
     }
 
     @DisplayName("Should handle error scenarios")

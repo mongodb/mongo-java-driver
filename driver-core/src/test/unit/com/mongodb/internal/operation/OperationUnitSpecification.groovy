@@ -95,6 +95,7 @@ class OperationUnitSpecification extends Specification {
 
         def connectionSource = Stub(ConnectionSource) {
             getConnection() >> connection
+            getReadPreference() >> readPreference
             getServerApi() >> null
         }
         def readBinding = Stub(ReadBinding) {
@@ -148,6 +149,7 @@ class OperationUnitSpecification extends Specification {
 
         def connectionSource = Stub(AsyncConnectionSource) {
             getServerApi() >> null
+            getReadPreference() >> readPreference
             getConnection(_) >> { it[0].onResult(connection, null) }
         }
         def readBinding = Stub(AsyncReadBinding) {

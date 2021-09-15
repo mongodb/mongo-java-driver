@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.binding;
 
+import com.mongodb.ReadPreference;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ServerDescription;
@@ -51,6 +52,13 @@ public interface ConnectionSource extends ReferenceCounted {
     ServerApi getServerApi();
 
     RequestContext getRequestContext();
+
+    /**
+     * Gets the read preference that was applied when selecting this source.
+     *
+     * @see ReadBinding#getReadConnectionSource(int, ReadPreference)
+     */
+    ReadPreference getReadPreference();
 
     /**
      * Gets a connection from this source.

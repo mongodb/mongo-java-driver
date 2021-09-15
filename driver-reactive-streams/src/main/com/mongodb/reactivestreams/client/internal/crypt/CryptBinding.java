@@ -84,6 +84,20 @@ public class CryptBinding implements AsyncClusterAwareReadWriteBinding {
         });
     }
 
+
+    @Override
+    public void getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference,
+            final SingleResultCallback<AsyncConnectionSource> callback) {
+        wrapped.getReadConnectionSource(minWireVersion, fallbackReadPreference, (result, t) -> {
+            if (t != null) {
+                callback.onResult(null, t);
+            } else {
+                callback.onResult(new CryptConnectionSource(result), null);
+            }
+        });
+    }
+
+
     @Override
     public void getConnectionSource(final ServerAddress serverAddress, final SingleResultCallback<AsyncConnectionSource> callback) {
         wrapped.getConnectionSource(serverAddress, (result, t) -> {
@@ -143,6 +157,11 @@ public class CryptBinding implements AsyncClusterAwareReadWriteBinding {
         @Override
         public RequestContext getRequestContext() {
             return wrapped.getRequestContext();
+        }
+
+        @Override
+        public ReadPreference getReadPreference() {
+            return wrapped.getReadPreference();
         }
 
         @Override

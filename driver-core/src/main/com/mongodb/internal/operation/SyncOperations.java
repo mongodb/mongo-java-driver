@@ -121,7 +121,7 @@ public final class SyncOperations<TDocument> {
                 variables, allowDiskUse, aggregationLevel);
     }
 
-    public WriteOperation<Void> aggregateToCollection(final List<? extends Bson> pipeline, final long maxTimeMS,
+    public ReadOperation<Void> aggregateToCollection(final List<? extends Bson> pipeline, final long maxTimeMS,
             final Boolean allowDiskUse, final Boolean bypassDocumentValidation,
             final Collation collation, final Bson hint, final String hintString, final String comment,
             final Bson variables, final AggregationLevel aggregationLevel) {

@@ -251,11 +251,12 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
     }
 
 
-    def 'should use the ReadBindings readPreference to set secondaryOk'() {
+    def 'should use the readPreference to set secondaryOk'() {
         given:
         def connection = Mock(Connection)
         def connectionSource = Stub(ConnectionSource) {
             getServerApi() >> null
+            getReadPreference() >> readPreference
             getConnection() >> connection
         }
         def readBinding = Stub(ReadBinding) {
@@ -285,10 +286,11 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
     }
 
-    def 'should use the AsyncReadBindings readPreference to set secondaryOk'() {
+    def 'should use the readPreference to set secondaryOk async'() {
         given:
         def connection = Mock(AsyncConnection)
         def connectionSource = Stub(AsyncConnectionSource) {
+            getReadPreference() >> readPreference
             getConnection(_) >> { it[0].onResult(connection, null) }
         }
         def readBinding = Stub(AsyncReadBinding) {

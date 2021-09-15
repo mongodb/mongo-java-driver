@@ -131,7 +131,7 @@ class AggregateIterableSpecification extends Specification {
                 .hint(new Document('a', 1))
                 .comment('this is a comment').iterator()
 
-        def operation = executor.getWriteOperation() as AggregateToCollectionOperation
+        def operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
@@ -164,7 +164,7 @@ class AggregateIterableSpecification extends Specification {
                 .hint(new Document('a', 1))
                 .comment('this is a comment').iterator()
 
-        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+        operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
@@ -198,7 +198,7 @@ class AggregateIterableSpecification extends Specification {
                 .comment('this is a comment')
                 .toCollection()
 
-        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+        operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then:
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
@@ -221,7 +221,7 @@ class AggregateIterableSpecification extends Specification {
                 pipeline, AggregationLevel.COLLECTION, false)
                 .hintString('x_1').iterator()
 
-        def operation = executor.getWriteOperation() as AggregateToCollectionOperation
+        def operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
@@ -230,12 +230,13 @@ class AggregateIterableSpecification extends Specification {
                 .hint(new BsonString('x_1')))
 
         when: 'aggregation includes $out and hint and hint string'
+        executor = new TestOperationExecutor([null, null, null, null, null])
         new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
                 pipeline, AggregationLevel.COLLECTION, false)
                 .hint(new BsonDocument('x', new BsonInt32(1)))
                 .hintString('x_1').iterator()
 
-        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+        operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then: 'should use the hint not the hint string'
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
@@ -263,7 +264,7 @@ class AggregateIterableSpecification extends Specification {
                 .hint(new Document('a', 1))
                 .comment('this is a comment').iterator()
 
-        def operation = executor.getWriteOperation() as AggregateToCollectionOperation
+        def operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
@@ -298,7 +299,7 @@ class AggregateIterableSpecification extends Specification {
                 .hint(new Document('a', 1))
                 .comment('this is a comment').iterator()
 
-        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+        operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
@@ -334,7 +335,7 @@ class AggregateIterableSpecification extends Specification {
                 .hint(new Document('a', 1))
                 .comment('this is a comment').iterator()
 
-        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+        operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
@@ -368,7 +369,7 @@ class AggregateIterableSpecification extends Specification {
                 .comment('this is a comment')
                 .toCollection()
 
-        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+        operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then:
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
@@ -393,7 +394,7 @@ class AggregateIterableSpecification extends Specification {
                 pipeline, AggregationLevel.COLLECTION, false)
                 .iterator()
 
-        def operation = executor.getWriteOperation() as AggregateToCollectionOperation
+        def operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then:
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace, pipeline, readConcern, writeConcern,
@@ -436,7 +437,7 @@ class AggregateIterableSpecification extends Specification {
                 readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION, false)
 
         aggregateIterable.toCollection()
-        def operation = executor.getWriteOperation() as AggregateToCollectionOperation
+        def operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then:
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
@@ -455,7 +456,7 @@ class AggregateIterableSpecification extends Specification {
                 readConcern, writeConcern, executor, pipeline, AggregationLevel.DATABASE, false)
         aggregateIterable.toCollection()
 
-        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+        operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then:
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
@@ -474,7 +475,7 @@ class AggregateIterableSpecification extends Specification {
                 readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION, false)
         aggregateIterable.toCollection()
 
-        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+        operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then:
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
@@ -492,7 +493,7 @@ class AggregateIterableSpecification extends Specification {
                 readConcern, writeConcern, executor, outWithDBpipeline, AggregationLevel.COLLECTION, false)
         aggregateIterable.toCollection()
 
-        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+        operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then:
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,

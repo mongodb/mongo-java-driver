@@ -35,10 +35,22 @@ public interface ReadBinding extends ReferenceCounted {
     ReadPreference getReadPreference();
 
     /**
-     * Returns a connection source to a server that satisfies the specified read preference.
+     * Returns a connection source to a server that satisfies the read preference with which this instance is configured.
      * @return the connection source
      */
     ConnectionSource getReadConnectionSource();
+
+    /**
+     * Return a connection source that satisfies the read preference with which this instance is configured, if all connected servers have
+     * a maxWireVersion >= the given minWireVersion.  Otherwise, return a connection source that satisfied the given
+     * fallbackReadPreference.
+     *
+     * This is useful for operations that are able to execute on a secondary on later server versions, but must execute on the primary on
+     * earlier server versions.
+     *
+     * @see com.mongodb.internal.operation.AggregateToCollectionOperation
+     */
+    ConnectionSource getReadConnectionSource(int minWireVersion, ReadPreference fallbackReadPreference);
 
     /**
      * Gets the session context for this binding.
