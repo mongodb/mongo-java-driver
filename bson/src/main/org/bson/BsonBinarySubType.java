@@ -53,6 +53,20 @@ public enum BsonBinarySubType {
     MD5((byte) 0x05),
 
     /**
+     * Encrypted data.
+     *
+     * @since 4.4
+     */
+    ENCRYPTED((byte) 0x06),
+
+    /**
+     * Columnar data
+     *
+     * @since 4.4
+     */
+    COLUMN((byte) 0x07),
+
+    /**
      * User defined binary data.
      */
     USER_DEFINED((byte) 0x80);
