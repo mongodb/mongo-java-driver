@@ -56,7 +56,12 @@ public class GenericBsonTest {
             "Bad $binary (type is number, not string)", // for backwards compat, JsonReader supports number for binary type
             "Bad $date (number, not string or hash)",   // for backwards compat, JsonReader supports numbers for $date
             "Bad DBRef (ref is number, not string)",    // JsonReader knows nothing of DBRef so these are not parse errors
-            "Bad DBRef (db is number, not string)");
+            "Bad DBRef (db is number, not string)",
+            "Null byte in document key",                // JsonReader does not check for null bytes.  That checking is deferred to
+                                                        // BsonBinaryWriter
+            "Null byte in sub-document key",
+            "Null byte in $regularExpression pattern",
+            "Null byte in $regularExpression options");
 
     enum TestCaseType {
         VALID,

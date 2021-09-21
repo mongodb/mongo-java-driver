@@ -355,6 +355,56 @@ public class BsonBinaryWriterTest {
     }
 
     @Test
+    public void testNullByteInTopLevelName() {
+        writer.writeStartDocument();
+        writer.writeName("a\u0000b");
+        try {
+            writer.writeBoolean(true);
+            fail();
+        } catch (BsonSerializationException e) {
+            // expected
+        }
+    }
+
+    @Test
+    public void testNullByteInNestedName() {
+        writer.writeStartDocument();
+        writer.writeName("nested");
+        writer.writeStartDocument();
+        writer.writeName("a\u0000b");
+        try {
+            writer.writeBoolean(true);
+            fail();
+        } catch (BsonSerializationException e) {
+            // expected
+        }
+    }
+
+    @Test
+    public void testNullByteInRegularExpressionPattern() {
+        writer.writeStartDocument();
+        writer.writeName("regex");
+        try {
+            writer.writeRegularExpression(new BsonRegularExpression("a\u0000b"));
+            fail();
+        } catch (BsonSerializationException e) {
+            // expected
+        }
+    }
+
+    @Test
+    public void testNullByteInRegularExpressionOptions() {
+        writer.writeStartDocument();
+        writer.writeName("regex");
+        try {
+            writer.writeRegularExpression(new BsonRegularExpression("a*", "i\u0000"));
+            fail();
+        } catch (BsonSerializationException e) {
+            // expected
+        }
+    }
+
+    @Test
     //CHECKSTYLE:OFF
     public void testWriteRead() throws IOException {
         ObjectId oid1 = new ObjectId();
