@@ -62,10 +62,10 @@ final class AsyncCallbackSupplierTest {
     }
 
     @Test
-    void andFinally() {
+    void whenComplete() {
         try {
             new PredefinedResultAsyncCallbackSupplier(RESULT)
-                    .andFinally(() -> {
+                    .whenComplete(() -> {
                         assertNull(finallyThread);
                         finallyThread = Thread.currentThread();
                     })
@@ -78,10 +78,10 @@ final class AsyncCallbackSupplierTest {
     }
 
     @Test
-    void andFinally2() {
+    void whenComplete2() {
         try {
             new PredefinedResultAsyncCallbackSupplier(exception)
-                    .andFinally(() -> {
+                    .whenComplete(() -> {
                         assertNull(finallyThread);
                         finallyThread = Thread.currentThread();
                     })
@@ -94,10 +94,10 @@ final class AsyncCallbackSupplierTest {
     }
 
     @Test
-    void andFinallyThrow() {
+    void whenCompleteThrow() {
         try {
             new PredefinedResultAsyncCallbackSupplier(RESULT)
-                    .andFinally(() -> {
+                    .whenComplete(() -> {
                         assertNull(finallyThread);
                         finallyThread = Thread.currentThread();
                         throw exception;
@@ -111,10 +111,10 @@ final class AsyncCallbackSupplierTest {
     }
 
     @Test
-    void andFinallyThrow2() {
+    void whenCompleteThrow2() {
         try {
             new PredefinedResultAsyncCallbackSupplier(exception)
-                    .andFinally(() -> {
+                    .whenComplete(() -> {
                         assertNull(finallyThread);
                         finallyThread = Thread.currentThread();
                         throw exception2;
@@ -130,11 +130,11 @@ final class AsyncCallbackSupplierTest {
     }
 
     @Test
-    void andFinallyCallbackThrows() {
+    void whenCompleteCallbackThrows() {
         PredefinedResultAsyncCallbackSupplier asyncSupplier = new PredefinedResultAsyncCallbackSupplier(RESULT);
         try {
             asyncSupplier
-                    .andFinally(() -> {
+                    .whenComplete(() -> {
                         assertNull(finallyThread);
                         finallyThread = Thread.currentThread();
                     })
@@ -153,11 +153,11 @@ final class AsyncCallbackSupplierTest {
     }
 
     @Test
-    void andFinallyCallbackThrowsSync() {
+    void whenCompleteCallbackThrowsSync() {
         try {
             assertThrows(exception.getClass(), () -> ((AsyncCallbackSupplier<Object>) callback ->
                     callback.onResult(RESULT, null))
-                    .andFinally(() -> {
+                    .whenComplete(() -> {
                         assertNull(finallyThread);
                         finallyThread = Thread.currentThread();
                     })
@@ -170,11 +170,11 @@ final class AsyncCallbackSupplierTest {
     }
 
     @Test
-    void andFinallyThrowCallbackThrows() {
+    void whenCompleteThrowCallbackThrows() {
         PredefinedResultAsyncCallbackSupplier asyncSupplier = new PredefinedResultAsyncCallbackSupplier(RESULT);
         try {
             asyncSupplier
-                    .andFinally(() -> {
+                    .whenComplete(() -> {
                         assertNull(finallyThread);
                         finallyThread = Thread.currentThread();
                         throw exception;
@@ -194,11 +194,11 @@ final class AsyncCallbackSupplierTest {
     }
 
     @Test
-    void andFinallyThrowCallbackThrowsSync() {
+    void whenCompleteThrowCallbackThrowsSync() {
         try {
             assertThrows(exception2.getClass(), () -> ((AsyncCallbackSupplier<Object>) callback ->
                     callback.onResult(RESULT, null))
-                    .andFinally(() -> {
+                    .whenComplete(() -> {
                         assertNull(finallyThread);
                         finallyThread = Thread.currentThread();
                         throw exception;
@@ -216,16 +216,16 @@ final class AsyncCallbackSupplierTest {
 
     /**
      * If {@link AsyncCallbackSupplier#get(SingleResultCallback)} does not throw an exception and also does not complete its
-     * callback, then it is impossible to execute the action supplied to {@link AsyncCallbackSupplier#andFinally(Runnable)}.
+     * callback, then it is impossible to execute the action supplied to {@link AsyncCallbackSupplier#whenComplete(Runnable)}.
      */
     @Test
-    void andFinallyGetThrows() {
+    void whenCompleteGetThrows() {
         PredefinedResultAsyncCallbackSupplier asyncSupplier = new PredefinedResultAsyncCallbackSupplier(callback -> {
             throw exception;
         });
         try {
             asyncSupplier
-                    .andFinally(() -> {
+                    .whenComplete(() -> {
                         assertNull(finallyThread);
                         finallyThread = Thread.currentThread();
                     })
@@ -241,12 +241,12 @@ final class AsyncCallbackSupplierTest {
     }
 
     @Test
-    void andFinallyGetThrowsSync() {
+    void whenCompleteGetThrowsSync() {
         try {
             assertThrows(exception.getClass(), () -> ((AsyncCallbackSupplier<Object>) callback -> {
                         throw exception;
                     })
-                    .andFinally(() -> {
+                    .whenComplete(() -> {
                         assertNull(finallyThread);
                         finallyThread = Thread.currentThread();
                     })
@@ -261,12 +261,12 @@ final class AsyncCallbackSupplierTest {
     }
 
     @Test
-    void andFinallyThrowGetThrowsSync() {
+    void whenCompleteThrowGetThrowsSync() {
         try {
             assertThrows(exception.getClass(), () -> ((AsyncCallbackSupplier<Object>) callback -> {
                         throw exception;
                     })
-                    .andFinally(() -> {
+                    .whenComplete(() -> {
                         assertNull(finallyThread);
                         finallyThread = Thread.currentThread();
                         throw exception2;

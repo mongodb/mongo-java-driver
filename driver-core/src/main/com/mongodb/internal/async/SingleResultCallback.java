@@ -16,17 +16,17 @@
 
 package com.mongodb.internal.async;
 
-import com.mongodb.internal.async.function.AsyncCallbackSupplier;
+import com.mongodb.internal.async.function.AsyncCallbackFunction;
 
 /**
- * An interface to describe the completion of an asynchronous function, which may be represented as {@link AsyncCallbackSupplier}.
+ * An interface to describe the completion of an asynchronous function, which may be represented as {@link AsyncCallbackFunction}.
  *
  * @param <T> The type of a successful result. A failed result is of the {@link Throwable} type.
- * @see AsyncCallbackSupplier
+ * @see AsyncCallbackFunction
  */
 public interface SingleResultCallback<T> {
     /**
-     * Called when the function completes. This method must not complete abruptly, see {@link AsyncCallbackSupplier} for more details.
+     * Called when the function completes. This method must not complete abruptly, see {@link AsyncCallbackFunction} for more details.
      *
      * @param result the result, which may be null.  Always null if e is not null.
      * @param t      the throwable, or null if the operation completed normally

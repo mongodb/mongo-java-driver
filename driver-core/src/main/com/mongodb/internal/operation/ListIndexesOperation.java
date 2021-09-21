@@ -232,7 +232,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
                             });
                 }
             });
-        }).andFinally(binding::release);
+        }).whenComplete(binding::release);
         asyncRead.get(errorHandlingCallback(callback, LOGGER));
     }
 

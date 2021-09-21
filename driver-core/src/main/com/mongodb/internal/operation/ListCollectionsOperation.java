@@ -298,7 +298,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                             });
                 }
             });
-        }).andFinally(binding::release);
+        }).whenComplete(binding::release);
         asyncRead.get(errorHandlingCallback(callback, LOGGER));
     }
 

@@ -638,7 +638,7 @@ final class OperationHelper {
                 errorHandlingCallback.onResult(null, supplierException);
             } else {
                 AsyncCallbackSupplier<R> curriedFunction = clbk -> function.apply(resource, clbk);
-                curriedFunction.andFinally(resource::release)
+                curriedFunction.whenComplete(resource::release)
                         .get(errorHandlingCallback);
             }
         });

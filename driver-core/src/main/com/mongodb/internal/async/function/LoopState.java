@@ -39,7 +39,7 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 @NotThreadSafe
 public final class LoopState {
     private int iteration;
-    private boolean broken;
+    private boolean lastIteration;
     @Nullable
     private Map<AttachmentKey<?>, AttachmentValueContainer> attachments;
 
@@ -54,7 +54,7 @@ public final class LoopState {
      * @return {@code true} if the next iteration must be executed; {@code false} iff the loop was {@link #lastIteration() broken}.
      */
     boolean advance() {
-        if (broken) {
+        if (lastIteration) {
             return false;
         } else {
             iteration++;
@@ -76,7 +76,7 @@ public final class LoopState {
      * Returns {@code true} iff {@link #breakAndCompleteIf(Supplier, SingleResultCallback)} / {@link #markAsLastIteration()} was called.
      */
     boolean lastIteration() {
-        return broken;
+        return lastIteration;
     }
 
     /**
@@ -100,14 +100,14 @@ public final class LoopState {
      * @see #lastIteration()
      */
     public boolean breakAndCompleteIf(final Supplier<Boolean> predicate, final SingleResultCallback<?> callback) {
-        assertFalse(broken);
+        assertFalse(lastIteration);
         try {
-            broken = predicate.get();
+            lastIteration = predicate.get();
         } catch (Throwable t) {
             callback.onResult(null, t);
             return true;
         }
-        if (broken) {
+        if (lastIteration) {
             callback.onResult(null, null);
             return true;
         } else {
@@ -122,15 +122,16 @@ public final class LoopState {
      * @see #lastIteration()
      */
     void markAsLastIteration() {
-        assertFalse(broken);
-        broken = true;
+        assertFalse(lastIteration);
+        lastIteration = true;
     }
 
     /**
+     * The associated loop may use this method to preserve a state between iterations.
+     *
      * @param autoRemove Specifies whether the attachment must be automatically removed before (in the happens-before order) the next
      * {@linkplain #iteration() iteration} as if this removal were the very first action of the iteration.
-     * Note that this parameter cannot be used to guarantee that the attachment is removed once
-     * the loop with this {@link LoopState} is completed.
+     * Note that there is no guarantee that the attachment is removed after the {@linkplain #lastIteration() last iteration}.
      * @return {@code this}.
      * @see #attachment(AttachmentKey)
      */

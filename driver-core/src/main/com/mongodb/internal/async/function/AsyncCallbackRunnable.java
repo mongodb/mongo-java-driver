@@ -38,9 +38,9 @@ public interface AsyncCallbackRunnable {
     }
 
     /**
-     * @see AsyncCallbackSupplier#andFinally(Runnable)
+     * @see AsyncCallbackSupplier#whenComplete(Runnable)
      */
-    default AsyncCallbackRunnable andFinally(final Runnable after) {
-        return callback -> asSupplier().andFinally(after).get(callback);
+    default AsyncCallbackRunnable whenComplete(final Runnable after) {
+        return callback -> asSupplier().whenComplete(after).get(callback);
     }
 }

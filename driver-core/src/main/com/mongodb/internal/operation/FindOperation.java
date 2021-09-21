@@ -741,7 +741,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                     });
                 }
             });
-        }).andFinally(binding::release);
+        }).whenComplete(binding::release);
         asyncRead.get(errorHandlingCallback(callback, LOGGER));
     }
 

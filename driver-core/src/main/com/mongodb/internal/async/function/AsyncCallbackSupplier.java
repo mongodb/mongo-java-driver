@@ -18,7 +18,6 @@ package com.mongodb.internal.async.function;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.internal.async.SingleResultCallback;
 
-import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
 
 /**
@@ -26,8 +25,6 @@ import java.util.function.Supplier;
  * This class is a callback-based counterpart of {@link Supplier}.
  * Any asynchronous callback function with parameters may be represented this way by partially applying the function to its parameters
  * until no parameters are left unapplied, and only a callback is left to be consumed.
- * <p>
- * This class provides some methods that facilitate composing functions, thus making it remotely similar to {@link CompletionStage}.
  *
  * @param <R> See {@link AsyncCallbackFunction}.
  * @see AsyncCallbackFunction
@@ -40,7 +37,9 @@ public interface AsyncCallbackSupplier<R> {
     void get(SingleResultCallback<R> callback);
 
     /**
-     * Returns a composed asynchronous function that executes this {@link AsyncCallbackSupplier} always<sup>(1)</sup> followed
+     * Returns a composed asynchronous function that provides a guarantee of executing the {@code after} action similar to that of the
+     * <a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html#jls-14.20.2">{@code finally} block</a>.
+     * The returned function that executes this {@link AsyncCallbackSupplier} always<sup>(1)</sup> followed
      * (in the happens-before order) by the synchronous {@code after} action, which is then followed (in the happens-before order)
      * by completing the callback of the composed asynchronous function.
      *
@@ -63,11 +62,10 @@ public interface AsyncCallbackSupplier<R> {
      * </ul>
      * In situations when {@code after} is executed despite
      * {@link AsyncCallbackSupplier#get(SingleResultCallback)} violating its
-     * contract by completing abruptly, the {@code after} action is executed synchronously by the {@link #andFinally(Runnable)} method.
-     * This is a price we have to pay to provide a guarantee similar to that of the
-     * <a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html#jls-14.20.2">{@code finally} block</a>.
+     * contract by completing abruptly, the {@code after} action is executed synchronously by the {@link #whenComplete(Runnable)} method.
+     * This is a price we have to pay to provide a guarantee similar to that of the {@code finally} block.
      */
-    default AsyncCallbackSupplier<R> andFinally(final Runnable after) {
+    default AsyncCallbackSupplier<R> whenComplete(final Runnable after) {
         @NotThreadSafe
         final class MutableBoolean {
             private boolean value;

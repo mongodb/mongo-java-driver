@@ -32,9 +32,9 @@ import java.util.function.BiFunction;
 @FunctionalInterface
 public interface AsyncCallbackBiFunction<P1, P2, R> {
     /**
-     * @param a The first {@code @}{@link Nullable} argument of the asynchronous function.
-     * @param b The second {@code @}{@link Nullable} argument of the asynchronous function.
+     * @param p1 The first {@code @}{@link Nullable} argument of the asynchronous function.
+     * @param p2 The second {@code @}{@link Nullable} argument of the asynchronous function.
      * @see AsyncCallbackFunction#apply(Object, SingleResultCallback)
      */
-    void apply(P1 a, P2 b, SingleResultCallback<R> callback);
+    void apply(P1 p1, P2 p2, SingleResultCallback<R> callback);
 }

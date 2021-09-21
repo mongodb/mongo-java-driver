@@ -50,14 +50,13 @@ public final class RetryState {
     private Throwable exception;
 
     /**
-     * @param retries A non-negative number of allowed retries.
+     * @param retries A non-negative number of allowed retries. {@link Integer#MAX_VALUE} is a special value interpreted as being unlimited.
      * @see #attempts()
      */
     public RetryState(final int retries) {
         assertTrue(retries >= 0);
-        assertTrue(retries < INFINITE_ATTEMPTS);
         loopState = new LoopState();
-        attempts = retries + 1;
+        attempts = retries == INFINITE_ATTEMPTS ? INFINITE_ATTEMPTS : retries + 1;
     }
 
     /**
@@ -65,8 +64,7 @@ public final class RetryState {
      * @see #attempts()
      */
     public RetryState() {
-        loopState = new LoopState();
-        attempts = INFINITE_ATTEMPTS;
+        this(INFINITE_ATTEMPTS);
     }
 
     /**
@@ -157,7 +155,7 @@ public final class RetryState {
             throw exception;
         } else {
             // note that we must not update the state, e.g, `exception`, `loopState`, before calling `retryPredicate`
-            boolean retry = decideRetry(this, attemptException, newlyChosenException, onlyRuntimeExceptions, retryPredicate);
+            boolean retry = shouldRetry(this, attemptException, newlyChosenException, onlyRuntimeExceptions, retryPredicate);
             exception = newlyChosenException;
             if (retry) {
                 assertTrue(loopState.advance());
@@ -198,7 +196,7 @@ public final class RetryState {
      * @param readOnlyRetryState Must not be mutated by this method.
      * @param onlyRuntimeExceptions See {@link #doAdvanceOrThrow(Throwable, BiFunction, BiPredicate, boolean)}.
      */
-    private boolean decideRetry(final RetryState readOnlyRetryState, final Throwable attemptException, final Throwable newlyChosenException,
+    private boolean shouldRetry(final RetryState readOnlyRetryState, final Throwable attemptException, final Throwable newlyChosenException,
             final boolean onlyRuntimeExceptions, final BiPredicate<RetryState, Throwable> retryPredicate) {
         try {
             return retryPredicate.test(readOnlyRetryState, attemptException);

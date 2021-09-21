@@ -308,24 +308,25 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                     return;
                 }
                 if (writeConcern.isAcknowledged() || serverIsAtLeastVersionThreeDotSix(connectionDescription)) {
+                    BulkWriteBatch bulkWriteBatch;
                     try {
-                        BulkWriteBatch bulkWriteBatch = bulkWriteTracker.batch()
+                        bulkWriteBatch = bulkWriteTracker.batch()
                                 .orElseGet(() -> BulkWriteTracker.attachNew(retryState, BulkWriteBatch.createBulkWriteBatch(namespace,
                                         source.getServerDescription(), connectionDescription, ordered, writeConcern,
                                         bypassDocumentValidation, retryWrites, writeRequests, sessionContext))
                                         .batch().orElseThrow(Assertions::fail));
-                        logRetryExecute(retryState, () -> bulkWriteBatch.getPayload().getPayloadType().toString());
                     } catch (Throwable t) {
                         releasingCallback.onResult(null, t);
                         return;
                     }
+                    logRetryExecute(retryState, () -> bulkWriteBatch.getPayload().getPayloadType().toString());
                     executeBulkWriteBatchAsync(retryState, binding, connection, maxWireVersion, releasingCallback);
                 } else {
                     retryState.markAsLastAttempt();
                     executeLegacyBatchesAsync(connection, releasingCallback);
                 }
             });
-        }).andFinally(binding::release);
+        }).whenComplete(binding::release);
         retryingBulkWrite.get(exceptionTransformingCallback(errorHandlingCallback(callback, LOGGER)));
     }
 
@@ -504,8 +505,6 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
     }
 
     public static final class BulkWriteTracker {
-        private static final int FIRST_ATTEMPT = 1;
-
         private int attempt;
         private final int attempts;
         @Nullable
@@ -529,13 +528,13 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         }
 
         private BulkWriteTracker(final boolean retry, @Nullable final BulkWriteBatch batch) {
-            attempt = FIRST_ATTEMPT;
+            attempt = 0;
             attempts = retry ? RetryState.RETRIES + 1 : 1;
             this.batch = batch;
         }
 
         boolean lastAttempt() {
-            return attempt == attempts;
+            return attempt == attempts - 1;
         }
 
         void advance() {

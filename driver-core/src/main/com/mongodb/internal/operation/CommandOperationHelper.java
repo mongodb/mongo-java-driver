@@ -263,7 +263,7 @@ final class CommandOperationHelper {
                     createReadCommandAndExecuteAsync(retryState, binding, source, database, commandCreator, decoder, transformer,
                             connection, releasingCallback);
                 });
-        }).andFinally(binding::release);
+        }).whenComplete(binding::release);
         asyncRead.get(errorHandlingCallback(callback, LOGGER));
     }
 
@@ -448,7 +448,7 @@ final class CommandOperationHelper {
                         commandResultDecoder, binding.getSessionContext(),
                         binding.getServerApi(), transformingWriteCallback(transformer, connection, addingRetryableLabelCallback));
             });
-        }).andFinally(binding::release);
+        }).whenComplete(binding::release);
         asyncWrite.get(exceptionTransformingCallback(errorHandlingCallback(callback, LOGGER)));
     }
 
