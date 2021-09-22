@@ -15,21 +15,13 @@
  */
 package com.mongodb.reactivestreams.client;
 
-import com.mongodb.client.DatabaseTestCase;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.client.AbstractServerSelectionProseTest;
+import com.mongodb.client.MongoClient;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
-import org.junit.Test;
 
-import java.util.concurrent.ExecutionException;
-
-/**
- * See prose tests in
- * <a href="https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection-tests.rst">
- * "Server Selection Test Plan"</a>.
- */
-public class ServerSelectionProseTest extends DatabaseTestCase {
-    @Test
-    public void operationCountBasedSelectionWithinLatencyWindow() throws ExecutionException, InterruptedException {
-        com.mongodb.client.ServerSelectionProseTest.operationCountBasedSelectionWithinLatencyWindow(
-                mongoClientSettings -> new SyncMongoClient(MongoClients.create(mongoClientSettings)));
+final class ServerSelectionProseTest extends AbstractServerSelectionProseTest {
+    protected MongoClient createClient(final MongoClientSettings settings) {
+        return new SyncMongoClient(MongoClients.create(settings));
     }
 }

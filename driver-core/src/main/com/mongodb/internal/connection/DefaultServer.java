@@ -92,16 +92,15 @@ class DefaultServer implements ClusterableServer {
     public Connection getConnection() {
         isTrue("open", !isClosed());
         SdamIssue.Context exceptionContext = sdam.context();
+        operationBegin();
         try {
-            operationBegin();
             return OperationCountTrackingConnection.decorate(this,
                     connectionFactory.create(connectionPool.get(), new DefaultServerProtocolExecutor(), clusterConnectionMode));
-        } catch (MongoException e) {
+        } catch (Throwable e) {
             operationEnd();
-            sdam.handleExceptionBeforeHandshake(SdamIssue.specific(e, exceptionContext));
-            throw e;
-        } catch (RuntimeException e) {
-            operationEnd();
+            if (e instanceof MongoException) {
+                sdam.handleExceptionBeforeHandshake(SdamIssue.specific(e, exceptionContext));
+            }
             throw e;
         }
     }

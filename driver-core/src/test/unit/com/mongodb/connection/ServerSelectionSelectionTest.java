@@ -118,12 +118,12 @@ public class ServerSelectionSelectionTest {
     }
 
     public static ClusterDescription buildClusterDescription(final BsonDocument topologyDescription,
-            @Nullable final ServerSettings srvSettings) {
+            @Nullable final ServerSettings serverSettings) {
         ClusterType clusterType = getClusterType(topologyDescription.getString("type").getValue());
         ClusterConnectionMode connectionMode = getClusterConnectionMode(clusterType);
         List<ServerDescription> servers = buildServerDescriptions(topologyDescription.getArray("servers"));
         return new ClusterDescription(connectionMode, clusterType, servers, null,
-                srvSettings == null ? ServerSettings.builder().build() : srvSettings);
+                serverSettings == null ? ServerSettings.builder().build() : serverSettings);
     }
 
     @NotNull

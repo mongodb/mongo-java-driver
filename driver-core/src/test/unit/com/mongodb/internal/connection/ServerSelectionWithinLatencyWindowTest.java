@@ -35,7 +35,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 
 import static com.mongodb.connection.ServerSelectionSelectionTest.buildClusterDescription;
@@ -55,7 +57,7 @@ import static util.JsonPoweredTestHelper.testDocs;
 @RunWith(Parameterized.class)
 public class ServerSelectionWithinLatencyWindowTest {
     private final ClusterDescription clusterDescription;
-    private final Map<ServerAddress, Server> serverCatalogue;
+    private final Map<ServerAddress, Server> serverCatalog;
     private final int iterations;
     private final Outcome outcome;
 
@@ -64,7 +66,7 @@ public class ServerSelectionWithinLatencyWindowTest {
             @SuppressWarnings("unused") final String description,
             final BsonDocument definition) {
         clusterDescription = buildClusterDescription(definition.getDocument("topology_description"), null);
-        serverCatalogue = serverCatalogue(definition.getArray("mocked_topology_state"));
+        serverCatalog = serverCatalog(definition.getArray("mocked_topology_state"));
         iterations = definition.getInt32("iterations").getValue();
         outcome = Outcome.parse(definition.getDocument("outcome"));
     }
@@ -72,11 +74,11 @@ public class ServerSelectionWithinLatencyWindowTest {
     @Test
     public void shouldPassAllOutcomes() {
         ServerSelector selector = new ReadPreferenceServerSelector(ReadPreference.nearest());
-        Map<ServerAddress, BigDecimal> selectionFrequencies = IntStream.range(0, iterations)
+        Map<ServerAddress, List<ServerTuple>> selectionResultsGroupedByServerAddress = IntStream.range(0, iterations)
                 .mapToObj(i -> BaseCluster.selectServer(selector, clusterDescription,
-                        address -> Assertions.assertNotNull(serverCatalogue.get(address))))
-                .collect(groupingBy(serverTuple -> serverTuple.getServerDescription().getAddress()))
-                .entrySet()
+                        address -> Assertions.assertNotNull(serverCatalog.get(address)), ThreadLocalRandom.current()))
+                .collect(groupingBy(serverTuple -> serverTuple.getServerDescription().getAddress()));
+        Map<ServerAddress, BigDecimal> selectionFrequencies = selectionResultsGroupedByServerAddress.entrySet()
                 .stream()
                 .collect(toMap(Map.Entry::getKey, entry -> BigDecimal.valueOf(entry.getValue().size())
                         .setScale(2, RoundingMode.UNNECESSARY)
@@ -96,7 +98,7 @@ public class ServerSelectionWithinLatencyWindowTest {
                 .collect(toList());
     }
 
-    private static Map<ServerAddress, Server> serverCatalogue(final BsonArray mockedTopologyState) {
+    private static Map<ServerAddress, Server> serverCatalog(final BsonArray mockedTopologyState) {
         return mockedTopologyState.stream()
                 .map(BsonValue::asDocument)
                 .collect(toMap(
