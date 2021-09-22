@@ -102,7 +102,7 @@ public class ServerSelectionWithinLatencyWindowTest {
         return mockedTopologyState.stream()
                 .map(BsonValue::asDocument)
                 .collect(toMap(
-                        el -> ServerAddressHelper.parse(el.getString("address").getValue()),
+                        el -> new ServerAddress(el.getString("address").getValue()),
                         el -> {
                             int operationCount = el.getInt32("operation_count").getValue();
                             Server server = Mockito.mock(Server.class);
@@ -127,7 +127,7 @@ public class ServerSelectionWithinLatencyWindowTest {
                             .entrySet()
                             .stream()
                             .collect(toMap(
-                                    entry -> ServerAddressHelper.parse(entry.getKey()),
+                                    entry -> new ServerAddress(entry.getKey()),
                                     entry -> {
                                         BsonNumber frequency = entry.getValue().asNumber();
                                         return frequency.isInt32()
