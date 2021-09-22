@@ -46,6 +46,7 @@ import java.util.List;
 import static java.lang.String.format;
 import static org.bson.BsonDocument.parse;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 // BSON tests powered by language-agnostic JSON-based tests included in test resources
@@ -56,12 +57,7 @@ public class GenericBsonTest {
             "Bad $binary (type is number, not string)", // for backwards compat, JsonReader supports number for binary type
             "Bad $date (number, not string or hash)",   // for backwards compat, JsonReader supports numbers for $date
             "Bad DBRef (ref is number, not string)",    // JsonReader knows nothing of DBRef so these are not parse errors
-            "Bad DBRef (db is number, not string)",
-            "Null byte in document key",                // JsonReader does not check for null bytes.  That checking is deferred to
-                                                        // BsonBinaryWriter
-            "Null byte in sub-document key",
-            "Null byte in $regularExpression pattern",
-            "Null byte in $regularExpression options");
+            "Bad DBRef (db is number, not string)");
 
     enum TestCaseType {
         VALID,
@@ -266,7 +262,10 @@ public class GenericBsonTest {
             }
         } else if (testDefinitionDescription.startsWith("Top-level") || testDefinitionDescription.startsWith("Binary type")) {
             try {
-                parse(str);
+                BsonDocument document = parse(str);
+                if (isTestOfNullByteInCString(description)) {
+                    encodeToHex(document);
+                }
                 fail("Should fail to parse JSON '" + str + "' with description '" + description + "'");
             } catch (JsonParseException e) {
                 // all good
@@ -275,13 +274,21 @@ public class GenericBsonTest {
                     fail("Should throw JsonParseException for '" + str + "' with description '" + description + "'");
                 }
                 // all good
+            } catch (BsonSerializationException e) {
+                if (isTestOfNullByteInCString(description)) {
+                    assertTrue(e.getMessage().contains("is not valid because it contains a null character"));
+                } else {
+                    fail("Unexpected BsonSerializationException");
+                }
             }
         } else {
             fail("Unrecognized test definition description: " + testDefinitionDescription);
         }
     }
 
-
+    private boolean isTestOfNullByteInCString(final String description) {
+        return description.startsWith("Null byte");
+    }
 
     // Working around the fact that the Java driver doesn't report an error for invalid UTF-8, but rather replaces the invalid
     // sequence with the replacement character
