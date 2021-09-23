@@ -96,7 +96,7 @@ public abstract class AbstractServerSelectionProseTest {
             MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName())
                     .getCollection("operationCountBasedSelectionWithinLatencyWindow");
             collection.drop();
-            try (FailPoint ignored = FailPoint.enable(configureFailPoint, clientSettings, serverWithFailPoint)) {
+            try (FailPoint ignored = FailPoint.enable(configureFailPoint, serverWithFailPoint)) {
                 Map<ServerAddress, Double> selectionRates = doSelections(
                         collection, commandListener, executor, tasks, opsPerTask, timeoutSeconds);
                 double expectedServerWithFpSelectionRateUpperBound = 0.25;

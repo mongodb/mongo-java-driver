@@ -18,16 +18,13 @@ package com.mongodb.client;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterConnectionMode;
-import com.mongodb.connection.ClusterSettings;
-import com.mongodb.connection.ConnectionPoolSettings;
-import com.mongodb.connection.ServerSettings;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.conversions.Bson;
 
 import java.util.Collections;
 
-import static java.util.Collections.emptyList;
+import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 
 public final class FailPoint implements AutoCloseable {
     private final BsonDocument failPointDocument;
@@ -44,33 +41,18 @@ public final class FailPoint implements AutoCloseable {
      * @param configureFailPointDoc A document representing {@code configureFailPoint} command to be issued as is via
      * {@link com.mongodb.client.MongoDatabase#runCommand(Bson)}.
      */
-    public static FailPoint enable(final BsonDocument configureFailPointDoc, final MongoClientSettings clientSettingsTemplate,
-            final ServerAddress serverAddress) {
-        MongoClientSettings.Builder clientSettingsBuilder = MongoClientSettings.builder(clientSettingsTemplate)
+    public static FailPoint enable(final BsonDocument configureFailPointDoc, final ServerAddress serverAddress) {
+        MongoClientSettings clientSettings = getMongoClientSettingsBuilder()
                 .applyToClusterSettings(builder -> builder
-                        .applySettings(ClusterSettings.builder()
-                                .mode(ClusterConnectionMode.SINGLE)
-                                .hosts(Collections.singletonList(serverAddress))
-                                .requiredClusterType(clientSettingsTemplate.getClusterSettings().getRequiredClusterType())
-                                .requiredReplicaSetName(clientSettingsTemplate.getClusterSettings().getRequiredReplicaSetName())
-                                .build()))
-                .applyToServerSettings(builder -> builder
-                        .applySettings(ServerSettings.builder()
-                                .build()))
-                .applyToConnectionPoolSettings(builder -> builder
-                        .applySettings(ConnectionPoolSettings.builder()
-                                .build()))
-                .applyToSslSettings(builder -> builder
-                        .enabled(clientSettingsTemplate.getSslSettings().isEnabled())
-                        .invalidHostNameAllowed(clientSettingsTemplate.getSslSettings().isInvalidHostNameAllowed())
-                        .context(clientSettingsTemplate.getSslSettings().getContext()))
-                .commandListenerList(emptyList());
-        MongoClient client = MongoClients.create(clientSettingsBuilder.build());
+                        .mode(ClusterConnectionMode.SINGLE)
+                        .hosts(Collections.singletonList(serverAddress)))
+                .build();
+        MongoClient client = MongoClients.create(clientSettings);
         return enable(configureFailPointDoc, client, true);
     }
 
     /**
-     * @see #enable(BsonDocument, MongoClientSettings, ServerAddress)
+     * @see #enable(BsonDocument, ServerAddress)
      */
     public static FailPoint enable(final BsonDocument configureFailPointDoc, final MongoClient client) {
         return enable(configureFailPointDoc, client, false);

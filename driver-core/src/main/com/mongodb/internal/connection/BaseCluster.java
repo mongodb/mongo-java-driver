@@ -44,9 +44,8 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
-import java.util.RandomAccess;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
@@ -71,7 +70,6 @@ abstract class BaseCluster implements Cluster {
 
     private final AtomicReference<CountDownLatch> phase = new AtomicReference<CountDownLatch>(new CountDownLatch(1));
     private final ClusterableServerFactory serverFactory;
-    private final ThreadLocal<Random> random = new ThreadLocal<Random>();
     private final ClusterId clusterId;
     private final ClusterSettings settings;
     private final ClusterListener clusterListener;
@@ -334,14 +332,14 @@ abstract class BaseCluster implements Cluster {
 
     @Nullable
     private ServerTuple selectServer(final ServerSelector serverSelector, final ClusterDescription clusterDescription) {
-        return selectServer(serverSelector, clusterDescription, this::getServer, getRandom());
+        return selectServer(serverSelector, clusterDescription, this::getServer);
     }
 
     @Nullable
     @VisibleForTesting(otherwise = PRIVATE)
     static ServerTuple selectServer(final ServerSelector serverSelector, final ClusterDescription clusterDescription,
-            final Function<ServerAddress, Server> serverCatalog, final Random random) {
-        return atMostNRandom(new ArrayList<>(serverSelector.select(clusterDescription)), 2, random, serverDescription -> {
+            final Function<ServerAddress, Server> serverCatalog) {
+        return atMostNRandom(new ArrayList<>(serverSelector.select(clusterDescription)), 2, serverDescription -> {
             Server server = serverCatalog.apply(serverDescription.getAddress());
             return server == null ? null : new ServerTuple(server, serverDescription);
         }).stream()
@@ -358,14 +356,15 @@ abstract class BaseCluster implements Cluster {
      * <p>
      * Note that this method may reorder the {@code list}.
      */
-    private static <A, B, L extends List<A> & RandomAccess> List<B> atMostNRandom(final L list, final int n, final Random random,
-            final Function<A, B> transformer) {
-        List<B> result = new ArrayList<>(n);
+    private static List<ServerTuple> atMostNRandom(final ArrayList<ServerDescription> list, final int n,
+            final Function<ServerDescription, ServerTuple> transformer) {
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        List<ServerTuple> result = new ArrayList<>(n);
         for (int i = list.size() - 1; i >= 0 && result.size() < n; i--) {
             Collections.swap(list, i, random.nextInt(i + 1));
-            B b = transformer.apply(list.get(i));
-            if (b != null) {
-                result.add(b);
+            ServerTuple serverTuple = transformer.apply(list.get(i));
+            if (serverTuple != null) {
+                result.add(serverTuple);
             }
         }
         return result;
@@ -377,17 +376,6 @@ abstract class BaseCluster implements Cluster {
         } else {
             return new CompositeServerSelector(asList(serverSelector, settings.getServerSelector()));
         }
-    }
-
-    // it's important that Random instances are created in this way instead of via subclassing ThreadLocal and overriding the
-    // initialValue() method.
-    private Random getRandom() {
-        Random result = random.get();
-        if (result == null) {
-            result = new Random();
-            random.set(result);
-        }
-        return result;
     }
 
     protected ClusterableServer createServer(final ServerAddress serverAddress,

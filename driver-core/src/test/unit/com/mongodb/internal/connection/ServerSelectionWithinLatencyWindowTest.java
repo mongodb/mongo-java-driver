@@ -37,7 +37,6 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 
 import static com.mongodb.connection.ServerSelectionSelectionTest.buildClusterDescription;
@@ -76,7 +75,7 @@ public class ServerSelectionWithinLatencyWindowTest {
         ServerSelector selector = new ReadPreferenceServerSelector(ReadPreference.nearest());
         Map<ServerAddress, List<ServerTuple>> selectionResultsGroupedByServerAddress = IntStream.range(0, iterations)
                 .mapToObj(i -> BaseCluster.selectServer(selector, clusterDescription,
-                        address -> Assertions.assertNotNull(serverCatalog.get(address)), ThreadLocalRandom.current()))
+                        address -> Assertions.assertNotNull(serverCatalog.get(address))))
                 .collect(groupingBy(serverTuple -> serverTuple.getServerDescription().getAddress()));
         Map<ServerAddress, BigDecimal> selectionFrequencies = selectionResultsGroupedByServerAddress.entrySet()
                 .stream()
