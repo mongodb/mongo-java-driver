@@ -216,7 +216,7 @@ public final class RetryState {
     /**
      * This method is similar to the semantics of the
      * <a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html#jls-14.15">{@code break} statement</a>, with the difference
-     * that breaking results in throwing an exception because the retry loop has more than one iteration iff the first iteration fails.
+     * that breaking results in throwing an exception because the retry loop has more than one iteration only if the first iteration fails.
      * Does nothing and completes normally if called during the {@linkplain #firstAttempt() first attempt}.
      * This method is useful when the associated retryable activity detects that a retry attempt should not happen
      * despite having been started. Must not be called more than once per {@link RetryState}.

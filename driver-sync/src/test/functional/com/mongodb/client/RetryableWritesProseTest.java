@@ -131,7 +131,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
                         /* We fake server's state by configuring a fail point. This breaks the mechanism of the
                          * streaming server monitoring protocol
                          * (https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-monitoring.rst#streaming-protocol)
-                         * that allows the server to determine whether or not it needs to send a new state to the client.
+                         * that allows the server to determine whether it needs to send a new state to the client.
                          * As a result, the client has to wait for at least its heartbeat delay until it hears back from a server
                          * (while it waits for a response, calling `ServerMonitor.connect` has no effect).
                          * Thus, we want to use small heartbeat delay to reduce delays in the test. */
