@@ -150,6 +150,13 @@ public interface RequestContext {
     /**
      * Stream key/value pairs from this {@link RequestContext}
      *
+     * <p>
+     * It is not specified whether modification of a {@code Map.Entry} instance in the {@code Stream} results in a modification of the
+     * state of the {@code RequestContext}, or whether the {@code Map.Entry} instances are modifiable. That is considered an
+     * implementation detail, so users of this method should not rely on the behavior one way or the other unless the implementing class
+     * has documented it.
+     * </p>
+     *
      * @return a {@link Stream} of key/value pairs held by this context
      */
     Stream<Map.Entry<Object, Object>> stream();
