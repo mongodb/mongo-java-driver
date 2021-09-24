@@ -54,11 +54,11 @@
     ],
     "decodeErrors": [
         {
-            "description": "embedded null in pattern",
+            "description": "Null byte in pattern",
             "bson": "0F0000000B610061006300696D0000"
         },
         {
-            "description": "embedded null in flags",
+            "description": "Null byte in flags",
             "bson": "100000000B61006162630069006D0000"
         }
     ]

@@ -304,7 +304,7 @@ class BsonWriterSpecification extends Specification {
         thrown(BSONException)
 
         where:
-        writer << [new BsonBinaryWriter(new BasicOutputBuffer()), new BsonDocumentWriter(new BsonDocument())]
+        writer << [new BsonBinaryWriter(new BasicOutputBuffer())]
     }
 
     def 'shouldNotThrowAnErrorIfValueContainsNullCharacter'() {
