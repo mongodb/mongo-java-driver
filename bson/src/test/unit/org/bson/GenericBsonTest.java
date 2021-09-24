@@ -263,9 +263,7 @@ public class GenericBsonTest {
         } else if (testDefinitionDescription.startsWith("Top-level") || testDefinitionDescription.startsWith("Binary type")) {
             try {
                 BsonDocument document = parse(str);
-                if (isTestOfNullByteInCString(description)) {
-                    encodeToHex(document);
-                }
+                encodeToHex(document);
                 fail("Should fail to parse JSON '" + str + "' with description '" + description + "'");
             } catch (JsonParseException e) {
                 // all good

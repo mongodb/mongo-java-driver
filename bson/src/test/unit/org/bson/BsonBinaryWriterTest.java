@@ -33,6 +33,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 
 public class BsonBinaryWriterTest {
@@ -358,12 +359,7 @@ public class BsonBinaryWriterTest {
     public void testNullByteInTopLevelName() {
         writer.writeStartDocument();
         writer.writeName("a\u0000b");
-        try {
-            writer.writeBoolean(true);
-            fail();
-        } catch (BsonSerializationException e) {
-            // expected
-        }
+        assertThrows(BsonSerializationException.class, () -> writer.writeBoolean(true));
     }
 
     @Test
@@ -372,36 +368,21 @@ public class BsonBinaryWriterTest {
         writer.writeName("nested");
         writer.writeStartDocument();
         writer.writeName("a\u0000b");
-        try {
-            writer.writeBoolean(true);
-            fail();
-        } catch (BsonSerializationException e) {
-            // expected
-        }
+        assertThrows(BsonSerializationException.class, () -> writer.writeBoolean(true));
     }
 
     @Test
     public void testNullByteInRegularExpressionPattern() {
         writer.writeStartDocument();
         writer.writeName("regex");
-        try {
-            writer.writeRegularExpression(new BsonRegularExpression("a\u0000b"));
-            fail();
-        } catch (BsonSerializationException e) {
-            // expected
-        }
+        assertThrows(BsonSerializationException.class, () -> writer.writeRegularExpression(new BsonRegularExpression("a\u0000b")));
     }
 
     @Test
     public void testNullByteInRegularExpressionOptions() {
         writer.writeStartDocument();
         writer.writeName("regex");
-        try {
-            writer.writeRegularExpression(new BsonRegularExpression("a*", "i\u0000"));
-            fail();
-        } catch (BsonSerializationException e) {
-            // expected
-        }
+        assertThrows(BsonSerializationException.class, () -> writer.writeRegularExpression(new BsonRegularExpression("a*", "i\u0000")));
     }
 
     @Test
