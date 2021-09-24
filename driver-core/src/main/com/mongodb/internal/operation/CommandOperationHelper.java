@@ -364,7 +364,7 @@ final class CommandOperationHelper {
         RetryState retryState = initialRetryState(true);
         Supplier<R> retryingWrite = decorateWriteWithRetries(retryState, () -> {
             logRetryExecute(retryState);
-            boolean firstAttempt = retryState.firstAttempt();
+            boolean firstAttempt = retryState.isFirstAttempt();
             if (!firstAttempt && binding.getSessionContext().hasActiveTransaction()) {
                 binding.getSessionContext().clearTransactionContext();
             }
@@ -415,7 +415,7 @@ final class CommandOperationHelper {
         binding.retain();
         AsyncCallbackSupplier<R> asyncWrite = CommandOperationHelper.<R>decorateWriteWithRetries(retryState, funcCallback -> {
             logRetryExecute(retryState);
-            boolean firstAttempt = retryState.firstAttempt();
+            boolean firstAttempt = retryState.isFirstAttempt();
             if (!firstAttempt && binding.getSessionContext().hasActiveTransaction()) {
                 binding.getSessionContext().clearTransactionContext();
             }
@@ -562,7 +562,7 @@ final class CommandOperationHelper {
     }
 
     static void logRetryExecute(final RetryState retryState) {
-        if (LOGGER.isDebugEnabled() && !retryState.firstAttempt()) {
+        if (LOGGER.isDebugEnabled() && !retryState.isFirstAttempt()) {
             String commandDescription = retryState.attachment(AttachmentKeys.commandDescriptionSupplier()).map(Supplier::get).orElse(null);
             Throwable exception = retryState.exception().orElseThrow(Assertions::fail);
             int oneBasedAttempt = retryState.attempt() + 1;

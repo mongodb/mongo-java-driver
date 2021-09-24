@@ -49,9 +49,9 @@ public final class LoopState {
 
     /**
      * Advances this {@link LoopState} such that it represents the state of a new iteration.
-     * Must not be called before the {@linkplain #firstIteration() first iteration}, must be called before each subsequent iteration.
+     * Must not be called before the {@linkplain #isFirstIteration() first iteration}, must be called before each subsequent iteration.
      *
-     * @return {@code true} if the next iteration must be executed; {@code false} iff the loop was {@link #lastIteration() broken}.
+     * @return {@code true} if the next iteration must be executed; {@code false} iff the loop was {@link #isLastIteration() broken}.
      */
     boolean advance() {
         if (lastIteration) {
@@ -68,14 +68,14 @@ public final class LoopState {
      *
      * @see #iteration()
      */
-    public boolean firstIteration() {
+    public boolean isFirstIteration() {
         return iteration == 0;
     }
 
     /**
      * Returns {@code true} iff {@link #breakAndCompleteIf(Supplier, SingleResultCallback)} / {@link #markAsLastIteration()} was called.
      */
-    boolean lastIteration() {
+    boolean isLastIteration() {
         return lastIteration;
     }
 
@@ -97,7 +97,7 @@ public final class LoopState {
      *     <li>this method broke the associated loop.</li>
      * </ul>
      * If {@code true} is returned, the caller must complete the ongoing attempt.
-     * @see #lastIteration()
+     * @see #isLastIteration()
      */
     public boolean breakAndCompleteIf(final Supplier<Boolean> predicate, final SingleResultCallback<?> callback) {
         assertFalse(lastIteration);
@@ -119,7 +119,7 @@ public final class LoopState {
      * This method is similar to {@link #breakAndCompleteIf(Supplier, SingleResultCallback)}.
      * The difference is that it allows the current iteration to continue, yet no more iterations will happen.
      *
-     * @see #lastIteration()
+     * @see #isLastIteration()
      */
     void markAsLastIteration() {
         assertFalse(lastIteration);
@@ -131,7 +131,7 @@ public final class LoopState {
      *
      * @param autoRemove Specifies whether the attachment must be automatically removed before (in the happens-before order) the next
      * {@linkplain #iteration() iteration} as if this removal were the very first action of the iteration.
-     * Note that there is no guarantee that the attachment is removed after the {@linkplain #lastIteration() last iteration}.
+     * Note that there is no guarantee that the attachment is removed after the {@linkplain #isLastIteration() last iteration}.
      * @return {@code this}.
      * @see #attachment(AttachmentKey)
      */

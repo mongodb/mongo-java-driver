@@ -70,7 +70,7 @@ public final class RetryState {
     /**
      * Advances this {@link RetryState} such that it represents the state of a new attempt.
      * If there is at least one more {@linkplain #attempts() attempt} left, it is consumed by this method.
-     * Must not be called before the {@linkplain #firstAttempt() first attempt}, must be called before each subsequent attempt.
+     * Must not be called before the {@linkplain #isFirstAttempt() first attempt}, must be called before each subsequent attempt.
      * <p>
      * This method is intended to be used by code that generally does not handle {@link Error}s explicitly,
      * which is usually synchronous code.
@@ -104,7 +104,7 @@ public final class RetryState {
      * @throws RuntimeException Iff any of the following is true:
      * <ul>
      *     <li>the {@code exceptionTransformer} completed abruptly;</li>
-     *     <li>the most recent attempt is the {@linkplain #lastAttempt() last} one;</li>
+     *     <li>the most recent attempt is the {@linkplain #isLastAttempt() last} one;</li>
      *     <li>the {@code retryPredicate} completed abruptly;</li>
      *     <li>the {@code retryPredicate} is {@code false}.</li>
      * </ul>
@@ -148,9 +148,9 @@ public final class RetryState {
         if (onlyRuntimeExceptions) {
             assertTrue(isRuntime(attemptException));
         }
-        assertTrue(!firstAttempt() || exception == null);
+        assertTrue(!isFirstAttempt() || exception == null);
         Throwable newlyChosenException = transformException(exception, attemptException, onlyRuntimeExceptions, exceptionTransformer);
-        if (lastAttempt()) {
+        if (isLastAttempt()) {
             exception = newlyChosenException;
             throw exception;
         } else {
@@ -217,7 +217,7 @@ public final class RetryState {
      * This method is similar to the semantics of the
      * <a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html#jls-14.15">{@code break} statement</a>, with the difference
      * that breaking results in throwing an exception because the retry loop has more than one iteration only if the first iteration fails.
-     * Does nothing and completes normally if called during the {@linkplain #firstAttempt() first attempt}.
+     * Does nothing and completes normally if called during the {@linkplain #isFirstAttempt() first attempt}.
      * This method is useful when the associated retryable activity detects that a retry attempt should not happen
      * despite having been started. Must not be called more than once per {@link RetryState}.
      * <p>
@@ -231,7 +231,7 @@ public final class RetryState {
      * retry predicate / failed result transformer}, the behavior is unspecified.
      *
      * @param predicate {@code true} iff retrying needs to be broken.
-     * The {@code predicate} is not called during the {@linkplain #firstAttempt() first attempt}.
+     * The {@code predicate} is not called during the {@linkplain #isFirstAttempt() first attempt}.
      * @throws RuntimeException Iff any of the following is true:
      * <ul>
      *     <li>the {@code predicate} completed abruptly;</li>
@@ -241,8 +241,8 @@ public final class RetryState {
      * @see #breakAndCompleteIfRetryAnd(Supplier, SingleResultCallback)
      */
     public void breakAndThrowIfRetryAnd(final Supplier<Boolean> predicate) throws RuntimeException {
-        assertFalse(loopState.lastIteration());
-        if (!firstAttempt()) {
+        assertFalse(loopState.isLastIteration());
+        if (!isFirstAttempt()) {
             assertNotNull(exception);
             assertTrue(exception instanceof RuntimeException);
             RuntimeException localException = (RuntimeException) exception;
@@ -254,7 +254,7 @@ public final class RetryState {
                 predicateException.addSuppressed(localException);
                 throw predicateException;
             }
-            if (loopState.lastIteration()) {
+            if (loopState.isLastIteration()) {
                 throw localException;
             }
         }
@@ -287,7 +287,7 @@ public final class RetryState {
      * This method is similar to
      * {@link RetryState#breakAndThrowIfRetryAnd(Supplier)} / {@link RetryState#breakAndCompleteIfRetryAnd(Supplier, SingleResultCallback)}.
      * The difference is that it allows the current attempt to continue, yet no more attempts will happen. Also, unlike the aforementioned
-     * methods, this method has effect even if called during the {@linkplain #firstAttempt() first attempt}.
+     * methods, this method has effect even if called during the {@linkplain #isFirstAttempt() first attempt}.
      */
     public void markAsLastAttempt() {
         loopState.markAsLastIteration();
@@ -298,8 +298,8 @@ public final class RetryState {
      *
      * @see #attempts()
      */
-    public boolean firstAttempt() {
-        return loopState.firstIteration();
+    public boolean isFirstAttempt() {
+        return loopState.isFirstIteration();
     }
 
     /**
@@ -310,8 +310,8 @@ public final class RetryState {
      *
      * @see #attempts()
      */
-    boolean lastAttempt() {
-        return attempt() == attempts - 1 || loopState.lastIteration();
+    boolean isLastAttempt() {
+        return attempt() == attempts - 1 || loopState.isLastIteration();
     }
 
     /**
@@ -332,8 +332,8 @@ public final class RetryState {
      * </ul>
      *
      * @see #attempt()
-     * @see #firstAttempt()
-     * @see #lastAttempt()
+     * @see #isFirstAttempt()
+     * @see #isLastAttempt()
      */
     public int attempts() {
         return attempts == INFINITE_ATTEMPTS ? 0 : attempts;
@@ -342,12 +342,12 @@ public final class RetryState {
     /**
      * Returns the exception that is currently deemed to be a prospective failed result of the associated retryable activity.
      * Note that this exception is not necessary the one from the most recent failed attempt.
-     * Returns an {@linkplain Optional#isEmpty() empty} {@link Optional} iff called during the {@linkplain #firstAttempt() first attempt}.
+     * Returns an {@linkplain Optional#isEmpty() empty} {@link Optional} iff called during the {@linkplain #isFirstAttempt() first attempt}.
      * <p>
      * In synchronous code the returned exception is of the type {@link RuntimeException}.
      */
     public Optional<Throwable> exception() {
-        assertTrue(exception == null || !firstAttempt());
+        assertTrue(exception == null || !isFirstAttempt());
         return Optional.ofNullable(exception);
     }
 

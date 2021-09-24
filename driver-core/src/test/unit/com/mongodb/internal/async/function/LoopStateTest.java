@@ -31,19 +31,19 @@ final class LoopStateTest {
     void iterationsAndAdvance() {
         LoopState loopState = new LoopState();
         assertAll(
-                () -> assertTrue(loopState.firstIteration()),
+                () -> assertTrue(loopState.isFirstIteration()),
                 () -> assertEquals(0, loopState.iteration()),
-                () -> assertFalse(loopState.lastIteration()),
+                () -> assertFalse(loopState.isLastIteration()),
                 () -> assertTrue(loopState.advance()),
-                () -> assertFalse(loopState.firstIteration()),
+                () -> assertFalse(loopState.isFirstIteration()),
                 () -> assertEquals(1, loopState.iteration()),
-                () -> assertFalse(loopState.lastIteration())
+                () -> assertFalse(loopState.isLastIteration())
         );
         loopState.markAsLastIteration();
         assertAll(
-                () -> assertFalse(loopState.firstIteration()),
+                () -> assertFalse(loopState.isFirstIteration()),
                 () -> assertEquals(1, loopState.iteration()),
-                () -> assertTrue(loopState.lastIteration()),
+                () -> assertTrue(loopState.isLastIteration()),
                 () -> assertFalse(loopState.advance())
         );
     }
@@ -52,7 +52,7 @@ final class LoopStateTest {
     void maskAsLastIteration() {
         LoopState loopState = new LoopState();
         loopState.markAsLastIteration();
-        assertTrue(loopState.lastIteration());
+        assertTrue(loopState.isLastIteration());
         assertFalse(loopState.advance());
     }
 

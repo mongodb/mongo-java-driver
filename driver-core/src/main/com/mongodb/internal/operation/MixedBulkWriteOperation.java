@@ -238,7 +238,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                         .orElseThrow(Assertions::fail);
                 SessionContext sessionContext = binding.getSessionContext();
                 WriteConcern writeConcern = getAppliedWriteConcern(sessionContext);
-                if (!retryState.firstAttempt() && !isRetryableWrite(retryWrites, writeConcern, source.getServerDescription(),
+                if (!retryState.isFirstAttempt() && !isRetryableWrite(retryWrites, writeConcern, source.getServerDescription(),
                         connectionDescription, sessionContext)) {
                     RuntimeException prospectiveFailedResult = (RuntimeException) retryState.exception().orElse(null);
                     retryState.breakAndThrowIfRetryAnd(() -> !(prospectiveFailedResult instanceof MongoWriteConcernWithResponseException));
@@ -289,7 +289,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                         .orElseThrow(Assertions::fail);
                 SessionContext sessionContext = binding.getSessionContext();
                 WriteConcern writeConcern = getAppliedWriteConcern(sessionContext);
-                if (!retryState.firstAttempt() && !isRetryableWrite(retryWrites, writeConcern, source.getServerDescription(),
+                if (!retryState.isFirstAttempt() && !isRetryableWrite(retryWrites, writeConcern, source.getServerDescription(),
                         connectionDescription, sessionContext)) {
                     Throwable prospectiveFailedResult = retryState.exception().orElse(null);
                     if (retryState.breakAndCompleteIfRetryAnd(() ->
@@ -353,7 +353,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 currentBulkWriteTracker = BulkWriteTracker.attachNext(retryState, currentBatch);
                 currentBatch = currentBulkWriteTracker.batch().orElseThrow(Assertions::fail);
             } catch (MongoException exception) {
-                if (!(retryState.firstAttempt() || (exception instanceof MongoWriteConcernWithResponseException))) {
+                if (!(retryState.isFirstAttempt() || (exception instanceof MongoWriteConcernWithResponseException))) {
                     addRetryableWriteErrorLabel(exception, maxWireVersion);
                 }
                 throw exception;
@@ -401,7 +401,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 } else {
                     if (t instanceof MongoException) {
                         MongoException exception = (MongoException) t;
-                        if (!(retryState.firstAttempt() || (exception instanceof MongoWriteConcernWithResponseException))) {
+                        if (!(retryState.isFirstAttempt() || (exception instanceof MongoWriteConcernWithResponseException))) {
                             addRetryableWriteErrorLabel(exception, maxWireVersion);
                         }
                     }

@@ -34,23 +34,23 @@ final class RetryStateTest {
     void unlimitedAttemptsAndAdvance() {
         RetryState retryState = new RetryState();
         assertAll(
-                () -> assertTrue(retryState.firstAttempt()),
+                () -> assertTrue(retryState.isFirstAttempt()),
                 () -> assertEquals(0, retryState.attempt()),
-                () -> assertFalse(retryState.lastAttempt()),
+                () -> assertFalse(retryState.isLastAttempt()),
                 () -> assertEquals(0, retryState.attempts())
         );
         advance(retryState);
         assertAll(
-                () -> assertFalse(retryState.firstAttempt()),
+                () -> assertFalse(retryState.isFirstAttempt()),
                 () -> assertEquals(1, retryState.attempt()),
-                () -> assertFalse(retryState.lastAttempt()),
+                () -> assertFalse(retryState.isLastAttempt()),
                 () -> assertEquals(0, retryState.attempts())
         );
         retryState.markAsLastAttempt();
         assertAll(
-                () -> assertFalse(retryState.firstAttempt()),
+                () -> assertFalse(retryState.isFirstAttempt()),
                 () -> assertEquals(1, retryState.attempt()),
-                () -> assertTrue(retryState.lastAttempt()),
+                () -> assertTrue(retryState.isLastAttempt()),
                 () -> assertEquals(0, retryState.attempts())
         );
     }
@@ -61,16 +61,16 @@ final class RetryStateTest {
         RuntimeException attemptException = new RuntimeException() {
         };
         assertAll(
-                () -> assertTrue(retryState.firstAttempt()),
+                () -> assertTrue(retryState.isFirstAttempt()),
                 () -> assertEquals(0, retryState.attempt()),
-                () -> assertTrue(retryState.lastAttempt()),
+                () -> assertTrue(retryState.isLastAttempt()),
                 () -> assertEquals(1, retryState.attempts()),
                 () -> assertThrows(attemptException.getClass(), () ->
                         retryState.advanceOrThrow(attemptException, (e1, e2) -> e2, (rs, e) -> true)),
                 // when there is only one attempt, it is both the first and the last one
-                () -> assertTrue(retryState.firstAttempt()),
+                () -> assertTrue(retryState.isFirstAttempt()),
                 () -> assertEquals(0, retryState.attempt()),
-                () -> assertTrue(retryState.lastAttempt()),
+                () -> assertTrue(retryState.isLastAttempt()),
                 () -> assertEquals(1, retryState.attempts())
         );
     }
@@ -79,7 +79,7 @@ final class RetryStateTest {
     void markAsLastAttemptAdvanceWithRuntimeException() {
         RetryState retryState = new RetryState();
         retryState.markAsLastAttempt();
-        assertTrue(retryState.lastAttempt());
+        assertTrue(retryState.isLastAttempt());
         RuntimeException attemptException = new RuntimeException() {
         };
         assertThrows(attemptException.getClass(),
@@ -90,7 +90,7 @@ final class RetryStateTest {
     void markAsLastAttemptAdvanceWithError() {
         RetryState retryState = new RetryState();
         retryState.markAsLastAttempt();
-        assertTrue(retryState.lastAttempt());
+        assertTrue(retryState.isLastAttempt());
         Error attemptException = new Error() {
         };
         assertThrows(attemptException.getClass(),
@@ -101,7 +101,7 @@ final class RetryStateTest {
     void breakAndThrowIfRetryAndFirstAttempt() {
         RetryState retryState = new RetryState();
         retryState.breakAndThrowIfRetryAnd(Assertions::fail);
-        assertFalse(retryState.lastAttempt());
+        assertFalse(retryState.isLastAttempt());
     }
 
     @Test
@@ -109,7 +109,7 @@ final class RetryStateTest {
         RetryState retryState = new RetryState();
         advance(retryState);
         retryState.breakAndThrowIfRetryAnd(() -> false);
-        assertFalse(retryState.lastAttempt());
+        assertFalse(retryState.isLastAttempt());
     }
 
     @Test
@@ -117,7 +117,7 @@ final class RetryStateTest {
         RetryState retryState = new RetryState();
         advance(retryState);
         assertThrows(RuntimeException.class, () -> retryState.breakAndThrowIfRetryAnd(() -> true));
-        assertTrue(retryState.lastAttempt());
+        assertTrue(retryState.isLastAttempt());
     }
 
     @Test
@@ -129,7 +129,7 @@ final class RetryStateTest {
         assertThrows(e.getClass(), () -> retryState.breakAndThrowIfRetryAnd(() -> {
             throw e;
         }));
-        assertFalse(retryState.lastAttempt());
+        assertFalse(retryState.isLastAttempt());
     }
 
     @Test
@@ -138,7 +138,7 @@ final class RetryStateTest {
         SupplyingCallback<?> callback = new SupplyingCallback<>();
         assertFalse(retryState.breakAndCompleteIfRetryAnd(Assertions::fail, callback));
         assertFalse(callback.completed());
-        assertFalse(retryState.lastAttempt());
+        assertFalse(retryState.isLastAttempt());
     }
 
     @Test
@@ -148,7 +148,7 @@ final class RetryStateTest {
         SupplyingCallback<?> callback = new SupplyingCallback<>();
         assertFalse(retryState.breakAndCompleteIfRetryAnd(() -> false, callback));
         assertFalse(callback.completed());
-        assertFalse(retryState.lastAttempt());
+        assertFalse(retryState.isLastAttempt());
     }
 
     @Test
@@ -158,7 +158,7 @@ final class RetryStateTest {
         SupplyingCallback<?> callback = new SupplyingCallback<>();
         assertTrue(retryState.breakAndCompleteIfRetryAnd(() -> true, callback));
         assertThrows(RuntimeException.class, callback::get);
-        assertTrue(retryState.lastAttempt());
+        assertTrue(retryState.isLastAttempt());
     }
 
     @Test
@@ -172,7 +172,7 @@ final class RetryStateTest {
             throw e;
         }, callback));
         assertThrows(e.getClass(), callback::get);
-        assertFalse(retryState.lastAttempt());
+        assertFalse(retryState.isLastAttempt());
     }
 
     @Test
@@ -199,7 +199,7 @@ final class RetryStateTest {
         RuntimeException attemptException = new RuntimeException() {
         };
         assertThrows(predicateException.getClass(), () -> retryState.advanceOrThrow(attemptException, (e1, e2) -> e2, (rs, e) -> {
-            assertTrue(rs.firstAttempt());
+            assertTrue(rs.isFirstAttempt());
             assertEquals(attemptException, e);
             throw predicateException;
         }));
