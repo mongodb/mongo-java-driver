@@ -33,6 +33,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 
 public class BsonBinaryWriterTest {
@@ -352,6 +353,36 @@ public class BsonBinaryWriterTest {
         assertEquals("pt", reader.readName());
         assertEquals(dbPointer, reader.readDBPointer());
         reader.readEndDocument();
+    }
+
+    @Test
+    public void testNullByteInTopLevelName() {
+        writer.writeStartDocument();
+        writer.writeName("a\u0000b");
+        assertThrows(BsonSerializationException.class, () -> writer.writeBoolean(true));
+    }
+
+    @Test
+    public void testNullByteInNestedName() {
+        writer.writeStartDocument();
+        writer.writeName("nested");
+        writer.writeStartDocument();
+        writer.writeName("a\u0000b");
+        assertThrows(BsonSerializationException.class, () -> writer.writeBoolean(true));
+    }
+
+    @Test
+    public void testNullByteInRegularExpressionPattern() {
+        writer.writeStartDocument();
+        writer.writeName("regex");
+        assertThrows(BsonSerializationException.class, () -> writer.writeRegularExpression(new BsonRegularExpression("a\u0000b")));
+    }
+
+    @Test
+    public void testNullByteInRegularExpressionOptions() {
+        writer.writeStartDocument();
+        writer.writeName("regex");
+        assertThrows(BsonSerializationException.class, () -> writer.writeRegularExpression(new BsonRegularExpression("a*", "i\u0000")));
     }
 
     @Test

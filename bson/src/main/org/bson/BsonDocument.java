@@ -735,10 +735,6 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, C
         if (value == null) {
             throw new IllegalArgumentException(format("The value for key %s can not be null", key));
         }
-        if (key.contains("\0")) {
-            throw new BSONException(format("BSON cstring '%s' is not valid because it contains a null character at index %d", key,
-                                           key.indexOf('\0')));
-        }
         return map.put(key, value);
     }
 

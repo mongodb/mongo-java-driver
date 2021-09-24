@@ -46,6 +46,7 @@ import java.util.List;
 import static java.lang.String.format;
 import static org.bson.BsonDocument.parse;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 // BSON tests powered by language-agnostic JSON-based tests included in test resources
@@ -261,7 +262,8 @@ public class GenericBsonTest {
             }
         } else if (testDefinitionDescription.startsWith("Top-level") || testDefinitionDescription.startsWith("Binary type")) {
             try {
-                parse(str);
+                BsonDocument document = parse(str);
+                encodeToHex(document);
                 fail("Should fail to parse JSON '" + str + "' with description '" + description + "'");
             } catch (JsonParseException e) {
                 // all good
@@ -270,13 +272,21 @@ public class GenericBsonTest {
                     fail("Should throw JsonParseException for '" + str + "' with description '" + description + "'");
                 }
                 // all good
+            } catch (BsonSerializationException e) {
+                if (isTestOfNullByteInCString(description)) {
+                    assertTrue(e.getMessage().contains("is not valid because it contains a null character"));
+                } else {
+                    fail("Unexpected BsonSerializationException");
+                }
             }
         } else {
             fail("Unrecognized test definition description: " + testDefinitionDescription);
         }
     }
 
-
+    private boolean isTestOfNullByteInCString(final String description) {
+        return description.startsWith("Null byte");
+    }
 
     // Working around the fact that the Java driver doesn't report an error for invalid UTF-8, but rather replaces the invalid
     // sequence with the replacement character
