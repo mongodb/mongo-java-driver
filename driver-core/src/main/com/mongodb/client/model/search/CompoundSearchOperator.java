@@ -24,48 +24,55 @@ import org.bson.BsonInt32;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.List;
-import java.util.Map;
-
-import static com.mongodb.assertions.Assertions.notNull;
-import static java.util.Collections.unmodifiableMap;
 
 @Immutable
 public final class CompoundSearchOperator extends SearchOperator {
 
-    private final Map<Clause, List<SearchOperator>> clauses;
+    @Nullable
+    private final List<SearchOperator> mustClause;
+    @Nullable
+    private final List<SearchOperator> mustNotClause;
+    @Nullable
+    private final List<SearchOperator> shouldClause;
+    @Nullable
+    private final List<SearchOperator> filterClause;
     @Nullable
     private final Integer minimumShouldMatch;
 
-
-    public enum Clause {
-        MUST("must"),
-
-        MUST_NOT("mustNot"),
-
-        SHOULD("should"),
-
-        FILTER("filter");
-
-        private final String key;
-
-        Clause(final String key) {
-            this.key = key;
-        }
-    }
-
-    CompoundSearchOperator(Map<Clause, List<SearchOperator>> clauses, @Nullable Integer minimumShouldMatch, @Nullable final String index) {
+    CompoundSearchOperator(@Nullable List<SearchOperator> mustClause, @Nullable List<SearchOperator> mustNotClause,
+            @Nullable List<SearchOperator> shouldClause, @Nullable List<SearchOperator> filterClause,
+            @Nullable Integer minimumShouldMatch, @Nullable final String index) {
         super(index);
-        this.clauses = unmodifiableMap(notNull("clauses", clauses));
+        this.mustClause = mustClause;
+        this.mustNotClause = mustNotClause;
+        this.shouldClause = shouldClause;
+        this.filterClause = filterClause;
         this.minimumShouldMatch = minimumShouldMatch;
     }
 
     @Override
     public CompoundSearchOperator index(final String index) {
-        return new CompoundSearchOperator(clauses, minimumShouldMatch, index);
+        return new CompoundSearchOperator(mustClause, mustNotClause, shouldClause, filterClause, minimumShouldMatch, index);
     }
 
     public CompoundSearchOperator minimumShouldMatch(final int value) {
-        return new CompoundSearchOperator(clauses, value, getIndex());
+        return new CompoundSearchOperator(mustClause, mustNotClause, shouldClause, filterClause, value, getIndex());
+    }
+
+    public CompoundSearchOperator must(final List<SearchOperator> mustClause) {
+        return new CompoundSearchOperator(mustClause, mustNotClause, shouldClause, filterClause, minimumShouldMatch, getIndex());
+    }
+
+    public CompoundSearchOperator mustNot(final List<SearchOperator> mustNotClause) {
+        return new CompoundSearchOperator(mustClause, mustNotClause, shouldClause, filterClause, minimumShouldMatch, getIndex());
+    }
+
+    public CompoundSearchOperator should(final List<SearchOperator> shouldClause) {
+        return new CompoundSearchOperator(mustClause, mustNotClause, shouldClause, filterClause, minimumShouldMatch, getIndex());
+    }
+
+    public CompoundSearchOperator filter(final List<SearchOperator> filterClause) {
+        return new CompoundSearchOperator(mustClause, mustNotClause, shouldClause, filterClause, minimumShouldMatch, getIndex());
     }
 
     @Override
@@ -74,11 +81,10 @@ public final class CompoundSearchOperator extends SearchOperator {
         appendCommonFields(searchStageDocument);
         BsonDocument compoundOperatorDocument = new BsonDocument();
 
-        clauses.forEach((key, value) -> {
-            compoundOperatorDocument.append(key.key,
-                    value.stream().map((operator) -> operator.toBsonDocument(documentClass, codecRegistry))
-                            .collect(BsonArray::new, BsonArray::add, BsonArray::addAll));
-        });
+        appendClause("must", mustClause, compoundOperatorDocument, documentClass, codecRegistry);
+        appendClause("mustNot", mustNotClause, compoundOperatorDocument, documentClass, codecRegistry);
+        appendClause("should", shouldClause, compoundOperatorDocument, documentClass, codecRegistry);
+        appendClause("filter", filterClause, compoundOperatorDocument, documentClass, codecRegistry);
 
         if (minimumShouldMatch != null) {
             compoundOperatorDocument.append("minimumShouldMatch", new BsonInt32(minimumShouldMatch));
@@ -87,5 +93,14 @@ public final class CompoundSearchOperator extends SearchOperator {
         searchStageDocument.append("compound", compoundOperatorDocument);
 
         return searchStageDocument;
+    }
+
+    private <TDocument> void appendClause(final String key, @Nullable final List<SearchOperator> clause,
+            final BsonDocument compoundOperatorDocument, final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+        if (clause != null) {
+            compoundOperatorDocument.append(key,
+                    clause.stream().map((operator) -> operator.toBsonDocument(documentClass, codecRegistry))
+                            .collect(BsonArray::new, BsonArray::add, BsonArray::addAll));
+        }
     }
 }

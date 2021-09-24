@@ -29,7 +29,7 @@ import static java.util.Collections.singletonList;
  * Builder API for Atlas search.
  *
  * @since 4.4
- * @mongodb.driver.manual.atlas/reference/atlas-search/query-syntax/
+ * @mongodb.driver.manual.atlas reference/atlas-search/query-syntax/
  */
 public interface SearchOperators {
 
@@ -90,7 +90,7 @@ public interface SearchOperators {
         return new AutoCompleteSearchOperator(query, path, null, null, null, null);
     }
 
-    static CompoundSearchOperator compound(final Map<CompoundSearchOperator.Clause, List<SearchOperator>> clauses) {
-         return new CompoundSearchOperator(clauses,null, null);
+    static CompoundSearchOperator compound() {
+        return new CompoundSearchOperator(null, null, null, null,null, null);
     }
 }
