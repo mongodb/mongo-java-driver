@@ -39,7 +39,6 @@ import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
-import com.mongodb.internal.operation.MixedBulkWriteOperation.BulkWriteTracker;
 import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.operation.OperationHelper.ResourceSupplierInternalException;
 import com.mongodb.internal.operation.retry.AttachmentKeys;
@@ -57,7 +56,6 @@ import java.util.function.Supplier;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.assertFalse;
-import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
@@ -194,7 +192,7 @@ final class CommandOperationHelper {
             final boolean retryReads) {
         RetryState retryState = initialRetryState(retryReads);
         Supplier<T> read = decorateReadWithRetries(retryState, () -> {
-            logRetryExecute(retryState, () -> null);
+            logRetryExecute(retryState);
             return withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection) -> {
                 retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), connection.getDescription(),
                         binding.getSessionContext()));
@@ -214,8 +212,8 @@ final class CommandOperationHelper {
             final CommandReadTransformer<D, T> transformer,
             final Connection connection) {
         BsonDocument command = commandCreator.create(source.getServerDescription(), connection.getDescription());
-        retryState.attach(AttachmentKeys.operationName(), command.getFirstKey(), false);
-        logRetryExecute(retryState, command::getFirstKey);
+        retryState.attach(AttachmentKeys.commandDescriptionSupplier(), command::getFirstKey, false);
+        logRetryExecute(retryState);
         return transformer.apply(connection.command(database, command, new NoOpFieldNameValidator(), binding.getReadPreference(), decoder,
                 binding.getSessionContext(), binding.getServerApi()), source, connection);
     }
@@ -253,7 +251,7 @@ final class CommandOperationHelper {
         RetryState retryState = initialRetryState(retryReads);
         binding.retain();
         AsyncCallbackSupplier<T> asyncRead = CommandOperationHelper.<T>decorateReadWithRetries(retryState, funcCallback -> {
-            logRetryExecute(retryState, () -> null);
+            logRetryExecute(retryState);
             withAsyncSourceAndConnection(binding::getReadConnectionSource, false, funcCallback,
                 (source, connection, releasingCallback) -> {
                     if (retryState.breakAndCompleteIfRetryAnd(() -> !canRetryRead(source.getServerDescription(),
@@ -280,8 +278,8 @@ final class CommandOperationHelper {
         BsonDocument command;
         try {
             command = commandCreator.create(source.getServerDescription(), connection.getDescription());
-            retryState.attach(AttachmentKeys.operationName(), command.getFirstKey(), false);
-            logRetryExecute(retryState, command::getFirstKey);
+            retryState.attach(AttachmentKeys.commandDescriptionSupplier(), command::getFirstKey, false);
+            logRetryExecute(retryState);
         } catch (IllegalArgumentException e) {
             callback.onResult(null, e);
             return;
@@ -365,7 +363,7 @@ final class CommandOperationHelper {
             final Function<BsonDocument, BsonDocument> retryCommandModifier) {
         RetryState retryState = initialRetryState(true);
         Supplier<R> retryingWrite = decorateWriteWithRetries(retryState, () -> {
-            logRetryExecute(retryState, () -> null);
+            logRetryExecute(retryState);
             boolean firstAttempt = retryState.firstAttempt();
             if (!firstAttempt && binding.getSessionContext().hasActiveTransaction()) {
                 binding.getSessionContext().clearTransactionContext();
@@ -380,10 +378,12 @@ final class CommandOperationHelper {
                                 assertFalse(firstAttempt);
                                 return retryCommandModifier.apply(previousAttemptCommand);
                             }).orElseGet(() -> commandCreator.create(source.getServerDescription(), connection.getDescription()));
-                    // attach `command` and `maxWireVersion` ASAP because they are used to check whether we should retry
+                    // attach `maxWireVersion`, `retryableCommandFlag` ASAP because they are used to check whether we should retry
                     retryState.attach(AttachmentKeys.maxWireVersion(), maxWireVersion, true)
+                            .attach(AttachmentKeys.retryableCommandFlag(), isRetryWritesEnabled(command), true)
+                            .attach(AttachmentKeys.commandDescriptionSupplier(), command::getFirstKey, true)
                             .attach(AttachmentKeys.command(), command, false);
-                    logRetryExecute(retryState, command::getFirstKey);
+                    logRetryExecute(retryState);
                     return transformer.apply(connection.command(database, command, fieldNameValidator, readPreference,
                             commandResultDecoder, binding.getSessionContext(), binding.getServerApi()), connection);
                 } catch (MongoException e) {
@@ -414,7 +414,7 @@ final class CommandOperationHelper {
         RetryState retryState = initialRetryState(true);
         binding.retain();
         AsyncCallbackSupplier<R> asyncWrite = CommandOperationHelper.<R>decorateWriteWithRetries(retryState, funcCallback -> {
-            logRetryExecute(retryState, () -> null);
+            logRetryExecute(retryState);
             boolean firstAttempt = retryState.firstAttempt();
             if (!firstAttempt && binding.getSessionContext().hasActiveTransaction()) {
                 binding.getSessionContext().clearTransactionContext();
@@ -436,10 +436,12 @@ final class CommandOperationHelper {
                                 assertFalse(firstAttempt);
                                 return retryCommandModifier.apply(previousAttemptCommand);
                             }).orElseGet(() -> commandCreator.create(source.getServerDescription(), connection.getDescription()));
-                    // attach `command` and `maxWireVersion` ASAP because they are used to check whether we should retry
+                    // attach `maxWireVersion`, `retryableCommandFlag` ASAP because they are used to check whether we should retry
                     retryState.attach(AttachmentKeys.maxWireVersion(), maxWireVersion, true)
+                            .attach(AttachmentKeys.retryableCommandFlag(), isRetryWritesEnabled(command), true)
+                            .attach(AttachmentKeys.commandDescriptionSupplier(), command::getFirstKey, true)
                             .attach(AttachmentKeys.command(), command, false);
-                    logRetryExecute(retryState, command::getFirstKey);
+                    logRetryExecute(retryState);
                 } catch (Throwable t) {
                     addingRetryableLabelCallback.onResult(null, t);
                     return;
@@ -505,7 +507,7 @@ final class CommandOperationHelper {
         Throwable failure = attemptFailure instanceof ResourceSupplierInternalException ? attemptFailure.getCause() : attemptFailure;
         boolean decision = isRetryableException(failure);
         if (!decision) {
-            logUnableToRetry(retryState.attachment(AttachmentKeys.operationName()).orElse(null), failure);
+            logUnableToRetry(retryState.attachment(AttachmentKeys.commandDescriptionSupplier()).orElse(null), failure);
         }
         return decision;
     }
@@ -518,19 +520,7 @@ final class CommandOperationHelper {
             decision = true;
             exceptionRetryableRegardlessOfCommand = (MongoException) failure;
         }
-        BsonDocument writeCommand = retryState.attachment(AttachmentKeys.command()).orElse(null);
-        BulkWriteTracker bulkWriteTracker = retryState.attachment(AttachmentKeys.bulkWriteTracker()).orElse(null);
-        boolean attemptFailedBeforeCommandIsKnown = writeCommand == null && bulkWriteTracker == null;
-        assertTrue(attemptFailedBeforeCommandIsKnown || (writeCommand != null ^ bulkWriteTracker != null));
-        boolean retryableCommand;
-        if (writeCommand != null) {
-            retryableCommand = isRetryWritesEnabled(writeCommand);
-        } else if (bulkWriteTracker != null) {
-            retryableCommand = bulkWriteTracker.batch().map(BulkWriteBatch::getRetryWrites).orElse(false);
-        } else {
-            retryableCommand = false;
-        }
-        if (retryableCommand) {
+        if (retryState.attachment(AttachmentKeys.retryableCommandFlag()).orElse(false)) {
             if (exceptionRetryableRegardlessOfCommand != null) {
                 /* We are going to retry even if `retryableCommand` is false,
                  * but we add the retryable label only if `retryableCommand` is true. */
@@ -539,14 +529,7 @@ final class CommandOperationHelper {
                     .orElse(null))) {
                 decision = true;
             } else {
-                String commandDescription;
-                if (writeCommand != null) {
-                    commandDescription = writeCommand.getFirstKey();
-                } else {
-                    commandDescription = bulkWriteTracker.batch().map(batch -> batch.getPayload().getPayloadType().toString())
-                            .orElseThrow(Assertions::fail);
-                }
-                logUnableToRetry(commandDescription, failure);
+                logUnableToRetry(retryState.attachment(AttachmentKeys.commandDescriptionSupplier()).orElse(null), failure);
             }
         }
         return decision;
@@ -578,9 +561,9 @@ final class CommandOperationHelper {
         }
     }
 
-    static void logRetryExecute(final RetryState retryState, final Supplier<String> commandDescriptionSupplier) {
+    static void logRetryExecute(final RetryState retryState) {
         if (LOGGER.isDebugEnabled() && !retryState.firstAttempt()) {
-            String commandDescription = commandDescriptionSupplier.get();
+            String commandDescription = retryState.attachment(AttachmentKeys.commandDescriptionSupplier()).map(Supplier::get).orElse(null);
             Throwable exception = retryState.exception().orElseThrow(Assertions::fail);
             int oneBasedAttempt = retryState.attempt() + 1;
             LOGGER.debug(commandDescription == null
@@ -590,11 +573,12 @@ final class CommandOperationHelper {
         }
     }
 
-    static void logUnableToRetry(@Nullable final String operation, final Throwable originalError) {
+    private static void logUnableToRetry(@Nullable final Supplier<String> commandDescriptionSupplier, final Throwable originalError) {
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(operation == null
+            String commandDescription = commandDescriptionSupplier == null ? null : commandDescriptionSupplier.get();
+            LOGGER.debug(commandDescription == null
                     ? format("Unable to retry an operation due to the error \"%s\"", originalError)
-                    : format("Unable to retry the operation %s due to the error \"%s\"", operation, originalError));
+                    : format("Unable to retry the operation %s due to the error \"%s\"", commandDescription, originalError));
         }
     }
 

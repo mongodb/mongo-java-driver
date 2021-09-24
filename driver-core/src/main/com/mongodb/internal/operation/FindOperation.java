@@ -657,7 +657,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     public BatchCursor<T> execute(final ReadBinding binding) {
         RetryState retryState = initialRetryState(retryReads);
         Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryState, () -> {
-            logRetryExecute(retryState, () -> null);
+            logRetryExecute(retryState);
             return withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection) -> {
                 retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), connection.getDescription(),
                         binding.getSessionContext()));
@@ -698,7 +698,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         binding.retain();
         AsyncCallbackSupplier<AsyncBatchCursor<T>> asyncRead = CommandOperationHelper.<AsyncBatchCursor<T>>decorateReadWithRetries(
                 retryState, funcCallback -> {
-            logRetryExecute(retryState, () -> null);
+            logRetryExecute(retryState);
             withAsyncSourceAndConnection(binding::getReadConnectionSource, false, funcCallback,
                     (source, connection, releasingCallback) -> {
                 if (retryState.breakAndCompleteIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), connection.getDescription(),

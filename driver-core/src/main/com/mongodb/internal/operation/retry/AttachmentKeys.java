@@ -23,6 +23,7 @@ import org.bson.BsonDocument;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.fail;
@@ -31,15 +32,13 @@ import static com.mongodb.assertions.Assertions.fail;
  * @see AttachmentKey
  */
 public final class AttachmentKeys {
-    private static final AttachmentKey<String> OPERATION_NAME = new DefaultAttachmentKey<>("operationName");
     private static final AttachmentKey<Integer> MAX_WIRE_VERSION = new DefaultAttachmentKey<>("maxWireVersion");
     private static final AttachmentKey<BsonDocument> COMMAND = new DefaultAttachmentKey<>("command");
+    private static final AttachmentKey<Boolean> RETRYABLE_COMMAND_FLAG = new DefaultAttachmentKey<>("retryableCommandFlag");
+    private static final AttachmentKey<Supplier<String>> COMMAND_DESCRIPTION_SUPPLIER = new DefaultAttachmentKey<>(
+            "commandDescriptionSupplier");
     private static final AttachmentKey<BulkWriteTracker> BULK_WRITE_TRACKER = new DefaultAttachmentKey<>("bulkWriteTracker");
     private static final AttachmentKey<BulkWriteResult> BULK_WRITE_RESULT = new DefaultAttachmentKey<>("bulkWriteResult");
-
-    public static AttachmentKey<String> operationName() {
-        return OPERATION_NAME;
-    }
 
     public static AttachmentKey<Integer> maxWireVersion() {
         return MAX_WIRE_VERSION;
@@ -47,6 +46,14 @@ public final class AttachmentKeys {
 
     public static AttachmentKey<BsonDocument> command() {
         return COMMAND;
+    }
+
+    public static AttachmentKey<Boolean> retryableCommandFlag() {
+        return RETRYABLE_COMMAND_FLAG;
+    }
+
+    public static AttachmentKey<Supplier<String>> commandDescriptionSupplier() {
+        return COMMAND_DESCRIPTION_SUPPLIER;
     }
 
     public static AttachmentKey<BulkWriteTracker> bulkWriteTracker() {

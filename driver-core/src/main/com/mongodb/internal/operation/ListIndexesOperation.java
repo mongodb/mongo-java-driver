@@ -168,7 +168,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
     public BatchCursor<T> execute(final ReadBinding binding) {
         RetryState retryState = initialRetryState(retryReads);
         Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryState, () -> {
-            logRetryExecute(retryState, () -> null);
+            logRetryExecute(retryState);
             return withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection) -> {
                 retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), connection.getDescription(),
                         binding.getSessionContext()));
@@ -198,7 +198,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
         binding.retain();
         AsyncCallbackSupplier<AsyncBatchCursor<T>> asyncRead = CommandOperationHelper.<AsyncBatchCursor<T>>decorateReadWithRetries(
                 retryState, funcCallback -> {
-            logRetryExecute(retryState, () -> null);
+            logRetryExecute(retryState);
             withAsyncSourceAndConnection(binding::getReadConnectionSource, false, funcCallback,
                     (source, connection, releasingCallback) -> {
                 if (retryState.breakAndCompleteIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), connection.getDescription(),

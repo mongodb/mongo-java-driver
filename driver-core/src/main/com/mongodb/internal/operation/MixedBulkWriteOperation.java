@@ -223,12 +223,12 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
          * - a counter that limits attempts to select server and checkout a connection before we created a batch;
          * - a counter per each batch that limits attempts to execute the specific batch.
          * Fortunately, these counters do not exist concurrently with each other. While maintaining the counters manually,
-         * we must adhere to the contract of `RetryingSyncSupplier`. When CSOT is implemented, there will be no counters, and the code
-         * related the attempt tracking in `BulkWriteTracker` will be removed. */
+         * we must adhere to the contract of `RetryingSyncSupplier`. When the retry timeout is implemented, there will be no counters,
+         * and the code related to the attempt tracking in `BulkWriteTracker` will be removed. */
         RetryState retryState = new RetryState();
         BulkWriteTracker.attachNew(retryState, retryWrites);
         Supplier<BulkWriteResult> retryingBulkWrite = decorateWriteWithRetries(retryState, () -> {
-            logRetryExecute(retryState, () -> null);
+            logRetryExecute(retryState);
             return withSourceAndConnection(binding::getWriteConnectionSource, true, (source, connection) -> {
                 ConnectionDescription connectionDescription = connection.getDescription();
                 int maxWireVersion = connectionDescription.getMaxWireVersion();
@@ -251,12 +251,12 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 }
                 validateWriteRequests(connectionDescription, bypassDocumentValidation, writeRequests, writeConcern);
                 if (writeConcern.isAcknowledged() || serverIsAtLeastVersionThreeDotSix(connectionDescription)) {
-                    BulkWriteBatch bulkWriteBatch = bulkWriteTracker.batch()
-                            .orElseGet(() -> BulkWriteTracker.attachNew(retryState, BulkWriteBatch.createBulkWriteBatch(namespace,
-                                    source.getServerDescription(), connectionDescription, ordered, writeConcern, bypassDocumentValidation,
-                                    retryWrites, writeRequests, sessionContext))
-                                    .batch().orElseThrow(Assertions::fail));
-                    logRetryExecute(retryState, () -> bulkWriteBatch.getPayload().getPayloadType().toString());
+                    if (!bulkWriteTracker.batch().isPresent()) {
+                        BulkWriteTracker.attachNew(retryState, BulkWriteBatch.createBulkWriteBatch(namespace,
+                                source.getServerDescription(), connectionDescription, ordered, writeConcern,
+                                bypassDocumentValidation, retryWrites, writeRequests, sessionContext));
+                    }
+                    logRetryExecute(retryState);
                     return executeBulkWriteBatch(retryState, binding, connection, maxWireVersion);
                 } else {
                     retryState.markAsLastAttempt();
@@ -278,7 +278,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         binding.retain();
         AsyncCallbackSupplier<BulkWriteResult> retryingBulkWrite = this.<BulkWriteResult>decorateWriteWithRetries(retryState,
                 funcCallback -> {
-            logRetryExecute(retryState, () -> null);
+            logRetryExecute(retryState);
             withAsyncSourceAndConnection(binding::getWriteConnectionSource, true, funcCallback,
                     (source, connection, releasingCallback) -> {
                 ConnectionDescription connectionDescription = connection.getDescription();
@@ -308,18 +308,17 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                     return;
                 }
                 if (writeConcern.isAcknowledged() || serverIsAtLeastVersionThreeDotSix(connectionDescription)) {
-                    BulkWriteBatch bulkWriteBatch;
                     try {
-                        bulkWriteBatch = bulkWriteTracker.batch()
-                                .orElseGet(() -> BulkWriteTracker.attachNew(retryState, BulkWriteBatch.createBulkWriteBatch(namespace,
-                                        source.getServerDescription(), connectionDescription, ordered, writeConcern,
-                                        bypassDocumentValidation, retryWrites, writeRequests, sessionContext))
-                                        .batch().orElseThrow(Assertions::fail));
+                        if (!bulkWriteTracker.batch().isPresent()) {
+                            BulkWriteTracker.attachNew(retryState, BulkWriteBatch.createBulkWriteBatch(namespace,
+                                    source.getServerDescription(), connectionDescription, ordered, writeConcern,
+                                    bypassDocumentValidation, retryWrites, writeRequests, sessionContext));
+                        }
                     } catch (Throwable t) {
                         releasingCallback.onResult(null, t);
                         return;
                     }
-                    logRetryExecute(retryState, () -> bulkWriteBatch.getPayload().getPayloadType().toString());
+                    logRetryExecute(retryState);
                     executeBulkWriteBatchAsync(retryState, binding, connection, maxWireVersion, releasingCallback);
                 } else {
                     retryState.markAsLastAttempt();
@@ -516,15 +515,24 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
         static BulkWriteTracker attachNew(final RetryState retryState, final BulkWriteBatch batch) {
             BulkWriteTracker tracker = new BulkWriteTracker(batch.getRetryWrites(), batch);
-            retryState.attach(AttachmentKeys.bulkWriteTracker(), tracker, false);
+            attach(retryState, tracker);
             return tracker;
         }
 
         static BulkWriteTracker attachNext(final RetryState retryState, final BulkWriteBatch batch) {
             BulkWriteBatch nextBatch = batch.getNextBatch();
             BulkWriteTracker nextTracker = new BulkWriteTracker(nextBatch.getRetryWrites(), nextBatch);
-            retryState.attach(AttachmentKeys.bulkWriteTracker(), nextTracker, false);
+            attach(retryState, nextTracker);
             return nextTracker;
+        }
+
+        private static void attach(final RetryState retryState, final BulkWriteTracker tracker) {
+            retryState.attach(AttachmentKeys.bulkWriteTracker(), tracker, false);
+            BulkWriteBatch batch = tracker.batch;
+            if (batch != null) {
+                retryState.attach(AttachmentKeys.retryableCommandFlag(), batch.getRetryWrites(), false)
+                        .attach(AttachmentKeys.commandDescriptionSupplier(), () -> batch.getPayload().getPayloadType().toString(), false);
+            }
         }
 
         private BulkWriteTracker(final boolean retry, @Nullable final BulkWriteBatch batch) {

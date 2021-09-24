@@ -293,8 +293,8 @@ final class RetryStateTest {
     @Test
     void attachAndAttachment() {
         RetryState retryState = new RetryState();
-        AttachmentKey<String> attachmentKey = AttachmentKeys.operationName();
-        String attachmentValue = "attachmentValue";
+        AttachmentKey<Integer> attachmentKey = AttachmentKeys.maxWireVersion();
+        int attachmentValue = 1;
         assertFalse(retryState.attachment(attachmentKey).isPresent());
         retryState.attach(attachmentKey, attachmentValue, false);
         assertEquals(attachmentValue, retryState.attachment(attachmentKey).get());

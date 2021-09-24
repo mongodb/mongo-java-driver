@@ -87,8 +87,8 @@ final class LoopStateTest {
     @Test
     void attachAndAttachment() {
         LoopState loopState = new LoopState();
-        AttachmentKey<String> attachmentKey = AttachmentKeys.operationName();
-        String attachmentValue = "attachmentValue";
+        AttachmentKey<Integer> attachmentKey = AttachmentKeys.maxWireVersion();
+        int attachmentValue = 1;
         assertFalse(loopState.attachment(attachmentKey).isPresent());
         loopState.attach(attachmentKey, attachmentValue, false);
         assertEquals(attachmentValue, loopState.attachment(attachmentKey).get());
