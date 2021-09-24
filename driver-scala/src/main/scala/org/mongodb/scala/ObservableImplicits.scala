@@ -153,21 +153,9 @@ trait ObservableImplicits {
     override def subscribe(observer: Observer[_ >: GridFSFile]): Unit = publisher.toSingle().subscribe(observer)
   }
 
-  implicit class ToSingleObservableVoid(pub: => Publisher[Void]) extends SingleObservable[Void] {
+  implicit class ToSingleObservableUnit(pub: => Publisher[Void]) extends SingleObservable[Unit] {
     val publisher = pub
-    override def subscribe(observer: Observer[_ >: Void]): Unit =
-      publisher
-        .toSingle()
-        .subscribe(new Observer[Void] {
-
-          override def onSubscribe(subscription: Subscription): Unit = observer.onSubscribe(subscription)
-
-          override def onNext(result: Void): Unit = {}
-
-          override def onError(e: Throwable): Unit = observer.onError(e)
-
-          override def onComplete(): Unit = observer.onComplete()
-        })
+    override def subscribe(observer: Observer[_ >: Unit]): Unit = SingleItemObservable(()).subscribe(observer)
   }
 
   implicit class ObservableFuture[T](obs: => Observable[T]) {

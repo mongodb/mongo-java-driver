@@ -19,6 +19,8 @@ package org.mongodb.scala
 import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
 import org.bson.codecs.configuration.CodecRegistries.{ fromProviders, fromRegistries }
 import org.bson.codecs.configuration.CodecRegistry
+import org.bson.conversions.Bson
+import org.mongodb.scala.model.Indexes
 
 class MongoCollectionCaseClassSpec extends RequiresMongoDBISpec with FuturesSpec {
 
@@ -84,5 +86,30 @@ class MongoCollectionCaseClassSpec extends RequiresMongoDBISpec with FuturesSpec
     val contact = Contact("555 232323")
     collection.find().first().futureValue should equal(contact)
   }
+
+  it should "allow composing operations that return Publisher[Void] from the underlying java driver with other operations" in
+    withDatabase(databaseName) { database =>
+      val collection = database.getCollection[Contact](collectionName).withCodecRegistry(codecRegistry)
+      val indexKey = "phone"
+      val index: Bson = Indexes.ascending(indexKey)
+
+      def dropIndex(indexName: String): SingleObservable[Unit] =
+        collection
+          .dropIndex(indexName)
+
+      def createIndex(index: Bson): SingleObservable[String] =
+        collection
+          .createIndex(index)
+
+      val resultObservable: Observable[String] = for {
+        createdIndex <- createIndex(index)
+        _ <- dropIndex(createdIndex)
+        createdAgain <- createIndex(index)
+      } yield createdAgain
+      val result = resultObservable.head().futureValue
+
+      assert(result === s"${indexKey}_1")
+
+    }
 
 }
