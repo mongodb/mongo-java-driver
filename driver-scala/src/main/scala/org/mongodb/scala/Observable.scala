@@ -226,6 +226,22 @@ trait Observable[T] extends Publisher[T] {
     FoldLeftObservable(this, ListBuffer[T](), (l: ListBuffer[T], v: T) => l += v).map(_.toSeq)
 
   /**
+   * Builds a new [[Observable]] by applying a partial function to all elements.
+   *
+   * Example:
+   * {{{
+   *  val justStrings = Observable(Iterable("this", 1, 2, "that")).collect{ case s: String => s }
+   * }}}
+   *
+   * @param  pf function that transforms each result of the receiver into an Observable and passes each result of that
+   *            Observable to the returned Observable.
+   * @tparam S the resulting type of each item in the Observable
+   * @return    an Observable with transformed results and / or error.
+   */
+  def collect[S](pf: PartialFunction[T, S]): Observable[S] =
+    CollectObservable(this, pf)
+
+  /**
    * Creates a new [[Observable]] that contains the single result of the applied accumulator function.
    *
    * The first item emitted by the Observable is passed to the supplied accumulator function alongside the initial value, then all other
