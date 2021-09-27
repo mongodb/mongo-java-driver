@@ -17,7 +17,6 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoClientException;
-import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ServerAddress;
@@ -30,6 +29,7 @@ import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.async.function.AsyncCallbackFunction;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.AsyncWriteBinding;
@@ -44,7 +44,10 @@ import com.mongodb.internal.bulk.WriteRequest;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.QueryResult;
+import com.mongodb.internal.async.function.AsyncCallbackBiFunction;
+import com.mongodb.internal.async.function.AsyncCallbackSupplier;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.NonNull;
 import org.bson.BsonDocument;
 import org.bson.BsonInt64;
 import org.bson.codecs.Decoder;
@@ -53,7 +56,11 @@ import org.bson.conversions.Bson;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotFour;
@@ -63,7 +70,6 @@ import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessTha
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionThreeDotSix;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionThreeDotTwo;
 import static java.lang.String.format;
-import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
 final class OperationHelper {
@@ -75,10 +81,6 @@ final class OperationHelper {
 
     interface CallableWithSource<T> {
         T call(ConnectionSource source);
-    }
-
-    interface CallableWithConnectionAndSource<T> {
-        T call(ConnectionSource source, Connection connection);
     }
 
     interface AsyncCallableWithConnection {
@@ -262,16 +264,18 @@ final class OperationHelper {
         validateWriteRequestHints(connectionDescription, requests, writeConcern);
     }
 
-    static void validateWriteRequests(final AsyncConnection connection, final Boolean bypassDocumentValidation,
-                                      final List<? extends WriteRequest> requests, final WriteConcern writeConcern,
-                                      final AsyncCallableWithConnection callable) {
+    static <R> boolean validateWriteRequestsAndCompleteIfInvalid(final ConnectionDescription connectionDescription,
+            final Boolean bypassDocumentValidation, final List<? extends WriteRequest> requests, final WriteConcern writeConcern,
+            final SingleResultCallback<R> callback) {
         try {
-            validateWriteRequests(connection.getDescription(), bypassDocumentValidation, requests, writeConcern);
-            callable.call(connection, null);
-        } catch (Throwable t) {
-            callable.call(connection, t);
+            validateWriteRequests(connectionDescription, bypassDocumentValidation, requests, writeConcern);
+            return false;
+        } catch (Throwable validationT) {
+            callback.onResult(null, validationT);
+            return true;
         }
     }
+
     static void validateIndexRequestCollations(final Connection connection, final List<IndexRequest> requests) {
         for (IndexRequest request : requests) {
             if (request.getCollation() != null) {
@@ -492,24 +496,8 @@ final class OperationHelper {
                 cursorId, serverAddress);
     }
 
-    static <T> SingleResultCallback<T> releasingCallback(final SingleResultCallback<T> wrapped, final AsyncConnectionSource source) {
-        return new ReferenceCountedReleasingWrappedCallback<T>(wrapped, singletonList(source));
-    }
-
     static <T> SingleResultCallback<T> releasingCallback(final SingleResultCallback<T> wrapped, final AsyncConnection connection) {
         return new ReferenceCountedReleasingWrappedCallback<T>(wrapped, singletonList(connection));
-    }
-
-    static <T> SingleResultCallback<T> releasingCallback(final SingleResultCallback<T> wrapped, final AsyncConnectionSource source,
-                                                         final AsyncConnection connection) {
-        return new ReferenceCountedReleasingWrappedCallback<T>(wrapped, asList(connection, source));
-    }
-
-    static <T> SingleResultCallback<T> releasingCallback(final SingleResultCallback<T> wrapped,
-                                                         final AsyncReadBinding readBinding,
-                                                         final AsyncConnectionSource source,
-                                                         final AsyncConnection connection) {
-        return new ReferenceCountedReleasingWrappedCallback<T>(wrapped, asList(readBinding, connection, source));
     }
 
     private static class ReferenceCountedReleasingWrappedCallback<T> implements SingleResultCallback<T> {
@@ -533,74 +521,10 @@ final class OperationHelper {
         }
     }
 
-    static class ConnectionReleasingWrappedCallback<T> implements SingleResultCallback<T> {
-        private final SingleResultCallback<T> wrapped;
-        private final AsyncConnectionSource source;
-        private final AsyncConnection connection;
-
-        ConnectionReleasingWrappedCallback(final SingleResultCallback<T> wrapped, final AsyncConnectionSource source,
-                                           final AsyncConnection connection) {
-            this.wrapped = wrapped;
-            this.source = notNull("source", source);
-            this.connection = notNull("connection", connection);
-        }
-
-        @Override
-        public void onResult(final T result, final Throwable t) {
-            connection.release();
-            source.release();
-            wrapped.onResult(result, t);
-        }
-
-        public SingleResultCallback<T> releaseConnectionAndGetWrapped() {
-            connection.release();
-            source.release();
-            return wrapped;
-        }
-    }
-
-    static <T> T withConnection(final ReadBinding binding, final CallableWithConnection<T> callable) {
-        ConnectionSource source = binding.getReadConnectionSource();
-        try {
-            return withConnectionSource(source, callable);
-        } finally {
-            source.release();
-        }
-    }
-
-    static <T> T withConnection(final ReadBinding binding, final CallableWithConnectionAndSource<T> callable) {
-        ConnectionSource source = binding.getReadConnectionSource();
-        try {
-            return withConnectionSource(source, callable);
-        } finally {
-            source.release();
-        }
-    }
-
     static <T> T withReadConnectionSource(final ReadBinding binding, final CallableWithSource<T> callable) {
         ConnectionSource source = binding.getReadConnectionSource();
         try {
             return callable.call(source);
-        } finally {
-            source.release();
-        }
-    }
-
-    static <T> T withReleasableConnection(final ReadBinding binding, final MongoException connectionException,
-                                          final CallableWithConnectionAndSource<T> callable) {
-        ConnectionSource source = null;
-        Connection connection;
-        try {
-            source = binding.getReadConnectionSource();
-            connection = source.getConnection();
-        } catch (Throwable t){
-            if (source != null) {
-                source.release();
-            }
-            throw connectionException;
-        }
-        try {
-            return callable.call(source, connection);
         } finally {
             source.release();
         }
@@ -615,35 +539,6 @@ final class OperationHelper {
         }
     }
 
-    static <T> T withReleasableConnection(final WriteBinding binding, final CallableWithConnectionAndSource<T> callable) {
-        ConnectionSource source = binding.getWriteConnectionSource();
-        try {
-            return callable.call(source, source.getConnection());
-        } finally {
-            source.release();
-        }
-    }
-
-    static <T> T withReleasableConnection(final WriteBinding binding, final MongoException connectionException,
-                                          final CallableWithConnectionAndSource<T> callable) {
-        ConnectionSource source = null;
-        Connection connection;
-        try {
-            source = binding.getWriteConnectionSource();
-            connection = source.getConnection();
-        } catch (Throwable t){
-            if (source != null) {
-                source.release();
-            }
-            throw connectionException;
-        }
-        try {
-            return callable.call(source, connection);
-        } finally {
-            source.release();
-        }
-    }
-
     static <T> T withConnectionSource(final ConnectionSource source, final CallableWithConnection<T> callable) {
         Connection connection = source.getConnection();
         try {
@@ -653,12 +548,49 @@ final class OperationHelper {
         }
     }
 
-    static <T> T withConnectionSource(final ConnectionSource source, final CallableWithConnectionAndSource<T> callable) {
-        Connection connection = source.getConnection();
+    /**
+     * Gets a {@link ConnectionSource} and a {@link Connection} from the {@code sourceSupplier} and executes the {@code function} with them.
+     * Guarantees to {@linkplain ReferenceCounted#release() release} the source and the connection after completion of the {@code function}.
+     *
+     * @param wrapSourceConnectionException See {@link #withSuppliedResource(Supplier, boolean, Function)}.
+     * @see #withSuppliedResource(Supplier, boolean, Function)
+     * @see #withAsyncSourceAndConnection(AsyncCallbackSupplier, boolean, SingleResultCallback, AsyncCallbackBiFunction)
+     */
+    static <R> R withSourceAndConnection(final Supplier<ConnectionSource> sourceSupplier,
+            final boolean wrapSourceConnectionException,
+            final BiFunction<ConnectionSource, Connection, R> function) throws ResourceSupplierInternalException {
+        return withSuppliedResource(sourceSupplier, wrapSourceConnectionException, source ->
+                withSuppliedResource(source::getConnection, wrapSourceConnectionException, connection ->
+                        function.apply(source, connection)));
+    }
+
+    /**
+     * Gets a {@link ReferenceCounted} resource from the {@code resourceSupplier} and applies the {@code function} to it.
+     * Guarantees to {@linkplain ReferenceCounted#release() release} the resource after completion of the {@code function}.
+     *
+     * @param wrapSupplierException If {@code true} and {@code resourceSupplier} completes abruptly, then the exception is wrapped
+     * into {@link ResourceSupplierInternalException}, such that it can be accessed
+     * via {@link ResourceSupplierInternalException#getCause()}.
+     * @see #withAsyncSuppliedResource(AsyncCallbackSupplier, boolean, SingleResultCallback, AsyncCallbackFunction)
+     */
+    static <R, T extends ReferenceCounted> R withSuppliedResource(final Supplier<T> resourceSupplier,
+            final boolean wrapSupplierException, final Function<T, R> function) throws ResourceSupplierInternalException {
+        T resource = null;
         try {
-            return callable.call(source, connection);
+            try {
+                resource = resourceSupplier.get();
+            } catch (RuntimeException supplierException) {
+                if (wrapSupplierException) {
+                    throw new ResourceSupplierInternalException(supplierException);
+                } else {
+                    throw supplierException;
+                }
+            }
+            return function.apply(resource);
         } finally {
-            connection.release();
+            if (resource != null) {
+                resource.release();
+            }
         }
     }
 
@@ -674,8 +606,42 @@ final class OperationHelper {
         binding.getReadConnectionSource(errorHandlingCallback(new AsyncCallableWithSourceCallback(callable), LOGGER));
     }
 
-    static void withAsyncReadConnection(final AsyncReadBinding binding, final AsyncCallableWithConnectionAndSource callable) {
-        binding.getReadConnectionSource(errorHandlingCallback(new AsyncCallableWithConnectionAndSourceCallback(callable), LOGGER));
+    /**
+     * @see #withAsyncSuppliedResource(AsyncCallbackSupplier, boolean, SingleResultCallback, AsyncCallbackFunction)
+     * @see #withSourceAndConnection(Supplier, boolean, BiFunction)
+     */
+    static <R> void withAsyncSourceAndConnection(final AsyncCallbackSupplier<AsyncConnectionSource> sourceAsyncSupplier,
+            final boolean wrapSourceConnectionException,
+            final SingleResultCallback<R> callback,
+            final AsyncCallbackBiFunction<AsyncConnectionSource, AsyncConnection, R> asyncFunction)
+            throws ResourceSupplierInternalException {
+        SingleResultCallback<R> errorHandlingCallback = errorHandlingCallback(callback, LOGGER);
+        withAsyncSuppliedResource(sourceAsyncSupplier, wrapSourceConnectionException, errorHandlingCallback,
+                (source, sourceReleasingCallback) ->
+                        withAsyncSuppliedResource(source::getConnection, wrapSourceConnectionException, sourceReleasingCallback,
+                                (connection, connectionAndSourceReleasingCallback) ->
+                                        asyncFunction.apply(source, connection, connectionAndSourceReleasingCallback)));
+    }
+
+    /**
+     * @see #withSuppliedResource(Supplier, boolean, Function)
+     */
+    static <R, T extends ReferenceCounted> void withAsyncSuppliedResource(final AsyncCallbackSupplier<T> resourceSupplier,
+            final boolean wrapSourceConnectionException, final SingleResultCallback<R> callback,
+            final AsyncCallbackFunction<T, R> function) throws ResourceSupplierInternalException {
+        SingleResultCallback<R> errorHandlingCallback = errorHandlingCallback(callback, LOGGER);
+        resourceSupplier.get((resource, supplierException) -> {
+            if (supplierException != null) {
+                if (wrapSourceConnectionException) {
+                    supplierException = new ResourceSupplierInternalException(supplierException);
+                }
+                errorHandlingCallback.onResult(null, supplierException);
+            } else {
+                AsyncCallbackSupplier<R> curriedFunction = clbk -> function.apply(resource, clbk);
+                curriedFunction.whenComplete(resource::release)
+                        .get(errorHandlingCallback);
+            }
+        });
     }
 
     private static class AsyncCallableWithConnectionCallback implements SingleResultCallback<AsyncConnectionSource> {
@@ -763,5 +729,32 @@ final class OperationHelper {
     }
 
     private OperationHelper() {
+    }
+
+    /**
+     * This internal exception is used to
+     * <ul>
+     *     <li>on one hand allow propagating exceptions from {@link #withSuppliedResource(Supplier, boolean, Function)} /
+     *     {@link #withAsyncSuppliedResource(AsyncCallbackSupplier, boolean, SingleResultCallback, AsyncCallbackFunction)} and similar
+     *     methods so that they can be properly retried, which is useful, e.g.,
+     *     for {@link com.mongodb.MongoConnectionPoolClearedException};</li>
+     *     <li>on the other hand to prevent them from propagation once the retry decision is made.</li>
+     * </ul>
+     *
+     * @see #withSuppliedResource(Supplier, boolean, Function)
+     * @see #withAsyncSuppliedResource(AsyncCallbackSupplier, boolean, SingleResultCallback, AsyncCallbackFunction)
+     */
+    static final class ResourceSupplierInternalException extends RuntimeException {
+        private static final long serialVersionUID = 0;
+
+        private ResourceSupplierInternalException(final Throwable cause) {
+            super(assertNotNull(cause));
+        }
+
+        @NonNull
+        @Override
+        public Throwable getCause() {
+            return assertNotNull(super.getCause());
+        }
     }
 }

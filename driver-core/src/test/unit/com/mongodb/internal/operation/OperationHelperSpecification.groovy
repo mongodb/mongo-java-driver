@@ -285,7 +285,7 @@ class OperationHelperSpecification extends Specification {
         def asyncConnection = Stub(AsyncConnection) {
             getDescription() >> connectionDescription
         }
-        validateWriteRequests(asyncConnection, bypassDocumentValidation, writeRequests, writeConcern, asyncCallableWithConnection)
+        validateWriteRequests(asyncConnection.getDescription(), bypassDocumentValidation, writeRequests, writeConcern)
 
         then:
         notThrown(IllegalArgumentException)
@@ -309,7 +309,7 @@ class OperationHelperSpecification extends Specification {
         def writeRequests = [new DeleteRequest(BsonDocument.parse('{a: "a"}}'))]
 
         when:
-        validateWriteRequests(asyncThreeTwoConnection, false, writeRequests, UNACKNOWLEDGED, asyncCallableWithConnection)
+        validateWriteRequests(asyncThreeTwoConnection.getDescription(), false, writeRequests, UNACKNOWLEDGED)
 
         then:
         thrown(MongoClientException)
@@ -317,7 +317,7 @@ class OperationHelperSpecification extends Specification {
         when:
         def writeRequestsWithCollation = [new DeleteRequest(BsonDocument.parse('{a: "a"}}'))
                                             .collation(enCollation)]
-        validateWriteRequests(asyncThreeTwoConnection, false, writeRequestsWithCollation, ACKNOWLEDGED, asyncCallableWithConnection)
+        validateWriteRequests(asyncThreeTwoConnection.getDescription(), false, writeRequestsWithCollation, ACKNOWLEDGED)
 
         then:
         thrown(IllegalArgumentException)
@@ -326,7 +326,7 @@ class OperationHelperSpecification extends Specification {
         def asyncThreeFourConnection = Stub(AsyncConnection) {
             getDescription() >> threeFourConnectionDescription
         }
-        validateWriteRequests(asyncThreeFourConnection, null, writeRequestsWithCollation, UNACKNOWLEDGED, asyncCallableWithConnection)
+        validateWriteRequests(asyncThreeFourConnection.getDescription(), null, writeRequestsWithCollation, UNACKNOWLEDGED)
 
         then:
         thrown(MongoClientException)

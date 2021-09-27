@@ -28,6 +28,7 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SocketStreamFactory;
+import com.mongodb.internal.selector.ServerAddressSelector;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.selector.ServerSelector;
@@ -122,7 +123,7 @@ public class SingleServerClusterTest {
         ServerAddress secondary = getSecondary();
         setUpCluster(secondary);
         String collectionName = getClass().getName();
-        Connection connection = cluster.getServer(secondary).getConnection();
+        Connection connection = cluster.selectServer(new ServerAddressSelector(secondary)).getServer().getConnection();
 
         // when
         BsonDocument result = connection.command(getDefaultDatabaseName(), new BsonDocument("count", new BsonString(collectionName)),

@@ -18,7 +18,6 @@ package com.mongodb.reactivestreams.client;
 
 
 import com.mongodb.client.model.Collation;
-import com.mongodb.client.model.MapReduceAction;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
@@ -30,7 +29,9 @@ import java.util.concurrent.TimeUnit;
  *
  * @param <TResult> The type of the result.
  * @since 1.0
+ * @deprecated Superseded by aggregate
  */
+@Deprecated
 public interface MapReducePublisher<TResult> extends Publisher<TResult> {
 
     /**
@@ -123,7 +124,7 @@ public interface MapReducePublisher<TResult> extends Publisher<TResult> {
      * @param action an {@link com.mongodb.client.model.MapReduceAction} to perform on the collection
      * @return this
      */
-    MapReducePublisher<TResult> action(MapReduceAction action);
+    MapReducePublisher<TResult> action(com.mongodb.client.model.MapReduceAction action);
 
     /**
      * Sets the name of the database to output into.

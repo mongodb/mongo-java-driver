@@ -16,6 +16,8 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.MongoConnectionPoolClearedException;
+import com.mongodb.MongoException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.RequestContext;
@@ -39,10 +41,13 @@ import com.mongodb.event.ConnectionPoolClearedEvent;
 import com.mongodb.event.ConnectionPoolClosedEvent;
 import com.mongodb.event.ConnectionPoolCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
+import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.event.ConnectionReadyEvent;
 import com.mongodb.internal.Timeout;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.ConcurrentPool.Prune;
+import com.mongodb.internal.connection.SdamServerDescriptionManager.SdamIssue;
+import com.mongodb.internal.inject.OptionalProvider;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import com.mongodb.lang.NonNull;
@@ -54,11 +59,13 @@ import org.bson.types.ObjectId;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -67,9 +74,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.StampedLock;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
@@ -96,35 +105,44 @@ class DefaultConnectionPool implements ConnectionPool {
 
     private final ConcurrentPool<UsageTrackingInternalConnection> pool;
     private final ConnectionPoolSettings settings;
-    private final AtomicInteger generation = new AtomicInteger(0);
-    private final ScheduledExecutorService sizeMaintenanceTimer;
+    private final BackgroundMaintenanceManager backgroundMaintenance;
     private final AsyncWorkManager asyncWorkManager;
-    private final Runnable maintenanceTask;
     private final ConnectionPoolListener connectionPoolListener;
     private final ServerId serverId;
     private final PinnedStatsManager pinnedStatsManager = new PinnedStatsManager();
     private final ServiceStateManager serviceStateManager = new ServiceStateManager();
     private final ConnectionGenerationSupplier connectionGenerationSupplier;
-    private volatile boolean closed;
     private final OpenConcurrencyLimiter openConcurrencyLimiter;
+    private final StateAndGeneration stateAndGeneration;
+    private final OptionalProvider<SdamServerDescriptionManager> sdamProvider;
 
+    /**
+     * @param sdamProvider For handling exceptions via the
+     *                     <a href="https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring.rst">
+     *                     SDAM</a> machinery as specified
+     *                     <a href="https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst#populating-the-pool-with-a-connection-internal-implementation">
+     *                     here</a>.
+     *                     Must provide an {@linkplain Optional#isPresent() empty} {@link Optional} if created in load-balanced mode,
+     *                     otherwise must provide a non-empty {@link Optional}.
+     */
     DefaultConnectionPool(final ServerId serverId, final InternalConnectionFactory internalConnectionFactory,
-                          final ConnectionPoolSettings settings) {
+                          final ConnectionPoolSettings settings, final OptionalProvider<SdamServerDescriptionManager> sdamProvider) {
         this.serverId = notNull("serverId", serverId);
         this.settings = notNull("settings", settings);
         UsageTrackingInternalConnectionItemFactory connectionItemFactory =
                 new UsageTrackingInternalConnectionItemFactory(internalConnectionFactory);
         pool = new ConcurrentPool<>(maxSize(settings), connectionItemFactory);
+        this.sdamProvider = assertNotNull(sdamProvider);
         this.connectionPoolListener = getConnectionPoolListener(settings);
-        maintenanceTask = createMaintenanceTask();
-        sizeMaintenanceTimer = createMaintenanceTimer();
+        backgroundMaintenance = new BackgroundMaintenanceManager();
         connectionPoolCreated(connectionPoolListener, serverId, settings);
         openConcurrencyLimiter = new OpenConcurrencyLimiter(MAX_CONNECTING);
         asyncWorkManager = new AsyncWorkManager();
+        stateAndGeneration = new StateAndGeneration();
         connectionGenerationSupplier = new ConnectionGenerationSupplier() {
             @Override
             public int getGeneration() {
-                return generation.get();
+                return stateAndGeneration.generation();
             }
 
             @Override
@@ -132,14 +150,6 @@ class DefaultConnectionPool implements ConnectionPool {
                 return serviceStateManager.getGeneration(serviceId);
             }
         };
-    }
-
-    @Override
-    public void start() {
-        if (sizeMaintenanceTimer != null) {
-            sizeMaintenanceTimer.scheduleAtFixedRate(maintenanceTask, settings.getMaintenanceInitialDelay(MILLISECONDS),
-                    settings.getMaintenanceFrequency(MILLISECONDS), MILLISECONDS);
-        }
     }
 
     @Override
@@ -152,6 +162,7 @@ class DefaultConnectionPool implements ConnectionPool {
         connectionPoolListener.connectionCheckOutStarted(new ConnectionCheckOutStartedEvent(serverId));
         Timeout timeout = Timeout.startNow(timeoutValue, timeUnit);
         try {
+            stateAndGeneration.throwIfClosedOrPaused();
             PooledConnection connection = getPooledConnection(timeout);
             if (!connection.opened()) {
                 connection = openConcurrencyLimiter.openOrGetAvailable(connection, timeout);
@@ -179,6 +190,12 @@ class DefaultConnectionPool implements ConnectionPool {
                 errHandlingCallback.onResult(null, checkOutFailed(failure));
             }
         };
+        try {
+            stateAndGeneration.throwIfClosedOrPaused();
+        } catch (RuntimeException e) {
+            eventSendingCallback.onResult(null, e);
+            return;
+        }
         asyncWorkManager.enqueue(new Task(timeout, t -> {
             if (t != null) {
                 eventSendingCallback.onResult(null, t);
@@ -218,8 +235,10 @@ class DefaultConnectionPool implements ConnectionPool {
             connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, Reason.TIMEOUT));
         } else if (t instanceof MongoOpenConnectionInternalException) {
             connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, Reason.CONNECTION_ERROR));
-            result = assertNotNull(t.getCause());
-        } else if (t instanceof IllegalStateException && t.getMessage().equals("The pool is closed")) {
+            result = t.getCause();
+        } else if (t instanceof MongoConnectionPoolClearedException) {
+            connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, Reason.CONNECTION_ERROR));
+        } else if (ConcurrentPool.isPoolClosedException(t)) {
             connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, Reason.POOL_CLOSED));
         } else {
             connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, Reason.UNKNOWN));
@@ -228,13 +247,29 @@ class DefaultConnectionPool implements ConnectionPool {
     }
 
     @Override
+    public void invalidate(@Nullable final Throwable cause) {
+        assertFalse(isLoadBalanced());
+        if (stateAndGeneration.pauseAndIncrementGeneration(cause)) {
+            LOGGER.debug("Invalidating the connection pool for " + serverId + " and marking it as 'paused'"
+                    + (cause == null ? "" : " due to " + cause.toString()));
+            openConcurrencyLimiter.signalClosedOrPaused();
+        }
+    }
+
+    @Override
     public void invalidate() {
-        LOGGER.debug("Invalidating the connection pool");
-        generation.incrementAndGet();
-        connectionPoolListener.connectionPoolCleared(new ConnectionPoolClearedEvent(serverId));
+        invalidate(null);
+    }
+
+    @Override
+    public void ready() {
+        if (stateAndGeneration.ready()) {
+            LOGGER.debug("Marking the connection pool for " + serverId +  " as 'ready'");
+        }
     }
 
     public void invalidate(final ObjectId serviceId, final int generation) {
+        assertTrue(isLoadBalanced());
         if (generation == InternalConnection.NOT_INITIALIZED_GENERATION) {
             return;
         }
@@ -246,29 +281,18 @@ class DefaultConnectionPool implements ConnectionPool {
 
     @Override
     public void close() {
-        if (!closed) {
+        if (stateAndGeneration.close()) {
             pool.close();
-            if (sizeMaintenanceTimer != null) {
-                sizeMaintenanceTimer.shutdownNow();
-            }
+            backgroundMaintenance.close();
             asyncWorkManager.close();
-            closed = true;
+            openConcurrencyLimiter.signalClosedOrPaused();
             connectionPoolListener.connectionPoolClosed(new ConnectionPoolClosedEvent(serverId));
         }
     }
 
     @Override
     public int getGeneration() {
-        return generation.get();
-    }
-
-    /**
-     * Synchronously prune idle connections and ensure the minimum pool size.
-     */
-    public void doMaintenance() {
-        if (maintenanceTask != null) {
-            maintenanceTask.run();
-        }
+        return stateAndGeneration.generation();
     }
 
     private PooledConnection getPooledConnection(final Timeout timeout) throws MongoTimeoutException {
@@ -285,11 +309,11 @@ class DefaultConnectionPool implements ConnectionPool {
     }
 
     @Nullable
-    private PooledConnection getPooledConnectionImmediately() {
-        UsageTrackingInternalConnection internalConnection = pool.getImmediately();
+    private PooledConnection getPooledConnectionImmediateUnfair() {
+        UsageTrackingInternalConnection internalConnection = pool.getImmediateUnfair();
         while (internalConnection != null && shouldPrune(internalConnection)) {
             pool.release(internalConnection, true);
-            internalConnection = pool.getImmediately();
+            internalConnection = pool.getImmediateUnfair();
         }
         return internalConnection == null ? null : new PooledConnection(internalConnection);
     }
@@ -344,51 +368,50 @@ class DefaultConnectionPool implements ConnectionPool {
         return pool;
     }
 
-    private Runnable createMaintenanceTask() {
-        Runnable newMaintenanceTask = null;
-        if (shouldPrune() || shouldEnsureMinSize()) {
-            newMaintenanceTask = new Runnable() {
-                @Override
-                public synchronized void run() {
-                    try {
-                        if (shouldPrune()) {
-                            if (LOGGER.isDebugEnabled()) {
-                                LOGGER.debug(format("Pruning pooled connections to %s", serverId.getAddress()));
-                            }
-                            pool.prune();
-                        }
-                        if (shouldEnsureMinSize()) {
-                            if (LOGGER.isDebugEnabled()) {
-                                LOGGER.debug(format("Ensuring minimum pooled connections to %s", serverId.getAddress()));
-                            }
-                            pool.ensureMinSize(settings.getMinSize(), newConnection ->
-                                    openConcurrencyLimiter.openImmediately(new PooledConnection(newConnection)));
-                        }
-                    } catch (MongoInterruptedException | MongoTimeoutException e) {
-                        //complete the maintenance task
-                    } catch (Exception e) {
-                        LOGGER.warn("Exception thrown during connection pool background maintenance task", e);
-                    }
+    /**
+     * Is package-access for the purpose of testing and must not be used for any other purpose outside of this class.
+     * <p>
+     * Synchronously prune idle connections and ensure the minimum pool size.
+     */
+    void doMaintenance() {
+        Predicate<RuntimeException> silentlyComplete = e ->
+                e instanceof MongoInterruptedException || e instanceof MongoTimeoutException
+                        || e instanceof MongoConnectionPoolClearedException || ConcurrentPool.isPoolClosedException(e);
+        try {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(format("Pruning pooled connections to %s", serverId.getAddress()));
+            }
+            pool.prune();
+            if (shouldEnsureMinSize()) {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug(format("Ensuring minimum pooled connections to %s", serverId.getAddress()));
                 }
-            };
-        }
-        return newMaintenanceTask;
-    }
-
-    private ScheduledExecutorService createMaintenanceTimer() {
-        if (maintenanceTask == null) {
-            return null;
-        } else {
-            return Executors.newSingleThreadScheduledExecutor(new DaemonThreadFactory("MaintenanceTimer"));
+                pool.ensureMinSize(settings.getMinSize(), newConnection -> {
+                    try {
+                        openConcurrencyLimiter.openImmediately(new PooledConnection(newConnection));
+                    } catch (MongoException | MongoOpenConnectionInternalException e) {
+                        RuntimeException actualException = e instanceof MongoOpenConnectionInternalException
+                                ? (RuntimeException) e.getCause()
+                                : e;
+                        sdamProvider.optional().ifPresent(sdam -> {
+                            if (!silentlyComplete.test(actualException)) {
+                                sdam.handleExceptionBeforeHandshake(SdamIssue.specific(actualException, sdam.context(newConnection)));
+                            }
+                        });
+                        throw actualException;
+                    }
+                });
+            }
+        } catch (RuntimeException e) {
+            if (!silentlyComplete.test(e)) {
+                LOGGER.warn("Exception thrown during connection pool background maintenance task", e);
+                throw e;
+            }
         }
     }
 
     private boolean shouldEnsureMinSize() {
         return settings.getMinSize() > 0;
-    }
-
-    private boolean shouldPrune() {
-        return settings.getMaxConnectionIdleTime(MILLISECONDS) > 0 || settings.getMaxConnectionLifeTime(MILLISECONDS) > 0;
     }
 
     private boolean shouldPrune(final UsageTrackingInternalConnection connection) {
@@ -412,7 +435,7 @@ class DefaultConnectionPool implements ConnectionPool {
         if (serviceId != null) {
             return serviceStateManager.getGeneration(serviceId) > generation;
         } else {
-            return this.generation.get() > generation;
+            return stateAndGeneration.generation() > generation;
         }
     }
 
@@ -475,6 +498,10 @@ class DefaultConnectionPool implements ConnectionPool {
      */
     private ConnectionId getId(final InternalConnection internalConnection) {
         return internalConnection.getDescription().getConnectionId();
+    }
+
+    private boolean isLoadBalanced() {
+        return !sdamProvider.optional().isPresent();
     }
 
     /**
@@ -724,7 +751,13 @@ class DefaultConnectionPool implements ConnectionPool {
         private static final long serialVersionUID = 1;
 
         MongoOpenConnectionInternalException(@NonNull final Throwable cause) {
-            super(null, cause);
+            super(cause);
+        }
+
+        @Override
+        @NonNull
+        public Throwable getCause() {
+            return assertNotNull(super.getCause());
         }
     }
 
@@ -800,14 +833,14 @@ class DefaultConnectionPool implements ConnectionPool {
     @ThreadSafe
     private final class OpenConcurrencyLimiter {
         private final Lock lock;
-        private final Condition condition;
+        private final Condition permitAvailableOrHandedOverOrClosedOrPausedCondition;
         private final int maxPermits;
         private int permits;
         private final Deque<MutableReference<PooledConnection>> desiredConnectionSlots;
 
         OpenConcurrencyLimiter(final int maxConnecting) {
             lock = new ReentrantLock(true);
-            condition = lock.newCondition();
+            permitAvailableOrHandedOverOrClosedOrPausedCondition = lock.newCondition();
             maxPermits = maxConnecting;
             permits = maxPermits;
             desiredConnectionSlots = new LinkedList<>();
@@ -913,10 +946,12 @@ class DefaultConnectionPool implements ConnectionPool {
          * if {@code tryGetAvailable} is {@code true} and an {@linkplain PooledConnection#opened() opened} one becomes available while
          * waiting for a permit.
          * @throws MongoTimeoutException If timed out.
+         * @throws MongoInterruptedException If the current thread has its {@linkplain Thread#interrupted() interrupted status}
+         * set on entry to this method or is interrupted while waiting to get an available opened connection.
          */
         @Nullable
         private PooledConnection acquirePermitOrGetAvailableOpenedConnection(final boolean tryGetAvailable, final Timeout timeout)
-                throws MongoTimeoutException {
+                throws MongoTimeoutException, MongoInterruptedException {
             PooledConnection availableConnection = null;
             boolean expressedDesireToGetAvailableConnection = false;
             lockInterruptibly(lock);
@@ -930,8 +965,11 @@ class DefaultConnectionPool implements ConnectionPool {
                      * 2. Thread#2 checks in a connection. Tries to hand it over, but there are no threads desiring to get one.
                      * 3. Thread#1 executes the current code. Expresses the desire to get a connection via the hand-over mechanism,
                      *   but thread#2 has already tried handing over and released its connection to the pool.
-                     * As a result, thread#1 is waiting for a permit to open a connection despite one being available in the pool.*/
-                    availableConnection = getPooledConnectionImmediately();
+                     * As a result, thread#1 is waiting for a permit to open a connection despite one being available in the pool.
+                     *
+                     * This attempt should be unfair because the current thread (Thread#1) has already waited for its turn fairly.
+                     * Waiting fairly again puts the current thread behind other threads, which is unfair to the current thread. */
+                    availableConnection = getPooledConnectionImmediateUnfair();
                     if (availableConnection != null) {
                         return availableConnection;
                     }
@@ -940,6 +978,7 @@ class DefaultConnectionPool implements ConnectionPool {
                 }
                 long remainingNanos = timeout.remainingOrInfinite(NANOSECONDS);
                 while (permits == 0) {
+                    stateAndGeneration.throwIfClosedOrPaused();
                     availableConnection = tryGetAvailable ? tryGetAvailableConnection() : null;
                     if (availableConnection != null) {
                         break;
@@ -947,7 +986,7 @@ class DefaultConnectionPool implements ConnectionPool {
                     if (Timeout.expired(remainingNanos)) {
                         throw createTimeoutException(timeout);
                     }
-                    remainingNanos = awaitNanos(condition, remainingNanos);
+                    remainingNanos = awaitNanos(permitAvailableOrHandedOverOrClosedOrPausedCondition, remainingNanos);
                 }
                 if (availableConnection == null) {
                     assertTrue(permits > 0);
@@ -970,7 +1009,7 @@ class DefaultConnectionPool implements ConnectionPool {
             try {
                 assertTrue(permits < maxPermits);
                 permits++;
-                condition.signal();
+                permitAvailableOrHandedOverOrClosedOrPausedCondition.signal();
             } finally {
                 lock.unlock();
             }
@@ -1013,7 +1052,7 @@ class DefaultConnectionPool implements ConnectionPool {
                         MutableReference<PooledConnection> desiredConnectionSlot : desiredConnectionSlots) {
                     if (desiredConnectionSlot.reference == null) {
                         desiredConnectionSlot.reference = new PooledConnection(openConnection);
-                        condition.signal();
+                        permitAvailableOrHandedOverOrClosedOrPausedCondition.signal();
                         if (LOGGER.isTraceEnabled()) {
                             LOGGER.trace(format("Handed over opened connection [%s] to server %s",
                                     getId(openConnection), serverId.getAddress()));
@@ -1027,11 +1066,19 @@ class DefaultConnectionPool implements ConnectionPool {
             }
         }
 
+        void signalClosedOrPaused() {
+            lock.lock();
+            try {
+                permitAvailableOrHandedOverOrClosedOrPausedCondition.signalAll();
+            } finally {
+                lock.unlock();
+            }
+        }
+
         private void lockInterruptibly(final Lock lock) throws MongoInterruptedException {
             try {
                 lock.lockInterruptibly();
             } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
                 throw new MongoInterruptedException(null, e);
             }
         }
@@ -1050,7 +1097,6 @@ class DefaultConnectionPool implements ConnectionPool {
                     return Math.max(0, condition.awaitNanos(timeoutNanos));
                 }
             } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
                 throw new MongoInterruptedException(null, e);
             }
         }
@@ -1322,6 +1368,153 @@ class DefaultConnectionPool implements ConnectionPool {
 
         Timeout timeout() {
             return timeout;
+        }
+    }
+
+    /**
+     * Methods {@link #start()} and {@link #runOnceAndStop()} must be called sequentially. Each {@link #start()} must be followed by
+     * {@link #runOnceAndStop()} unless {@link BackgroundMaintenanceManager} is {@linkplain #close() closed}.
+     * <p>
+     * This class implements
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst#background-thread">
+     * CMAP background thread</a>.
+     */
+    @NotThreadSafe
+    private final class BackgroundMaintenanceManager implements AutoCloseable {
+        @Nullable
+        private final ScheduledExecutorService maintainer;
+        @Nullable
+        private Future<?> cancellationHandle;
+        private boolean initialStart;
+
+        private BackgroundMaintenanceManager() {
+            maintainer = settings.getMaintenanceInitialDelay(NANOSECONDS) < Long.MAX_VALUE
+                    ? Executors.newSingleThreadScheduledExecutor(new DaemonThreadFactory("MaintenanceTimer"))
+                    : null;
+            cancellationHandle = null;
+            initialStart = true;
+        }
+
+        void start() {
+            if (maintainer != null) {
+                assertTrue(cancellationHandle == null);
+                cancellationHandle = maintainer.scheduleAtFixedRate(DefaultConnectionPool.this::doMaintenance,
+                        initialStart ? settings.getMaintenanceInitialDelay(MILLISECONDS) : 0,
+                        settings.getMaintenanceFrequency(MILLISECONDS), MILLISECONDS);
+                initialStart = false;
+            }
+        }
+
+        void runOnceAndStop() {
+            if (maintainer != null) {
+                assertNotNull(cancellationHandle).cancel(false);
+                cancellationHandle = null;
+                maintainer.execute(DefaultConnectionPool.this::doMaintenance);
+            }
+        }
+
+        @Override
+        public void close() {
+            if (maintainer != null) {
+                maintainer.shutdownNow();
+            }
+        }
+    }
+
+    @ThreadSafe
+    private final class StateAndGeneration {
+        private final ReadWriteLock lock;
+        private volatile boolean paused;
+        private final AtomicBoolean closed;
+        private volatile int generation;
+        @Nullable
+        private Throwable cause;
+
+        StateAndGeneration() {
+            lock = new StampedLock().asReadWriteLock();
+            paused = true;
+            closed = new AtomicBoolean();
+            generation = 0;
+            cause = null;
+        }
+
+        int generation() {
+            return generation;
+        }
+
+        /**
+         * @return {@code true} if and only if the state changed from ready to paused as a result of the operation.
+         * The generation is incremented regardless of the returned value.
+         */
+        boolean pauseAndIncrementGeneration(@Nullable final Throwable cause) {
+            boolean result = false;
+            lock.writeLock().lock();
+            try {
+                if (!paused) {
+                    paused = true;
+                    pool.pause(() -> new MongoConnectionPoolClearedException(serverId, cause));
+                    result = true;
+                }
+                this.cause = cause;
+                //noinspection NonAtomicOperationOnVolatileField
+                generation++;
+                if (result) {
+                    connectionPoolListener.connectionPoolCleared(new ConnectionPoolClearedEvent(serverId));
+                    // one additional run is required to guarantee that a paused pool releases resources
+                    backgroundMaintenance.runOnceAndStop();
+                }
+            } finally {
+                lock.writeLock().unlock();
+            }
+            return result;
+        }
+
+        boolean ready() {
+            boolean result = false;
+            if (paused) {
+                lock.writeLock().lock();
+                try {
+                    if (paused) {
+                        paused = false;
+                        cause = null;
+                        pool.ready();
+                        connectionPoolListener.connectionPoolReady(new ConnectionPoolReadyEvent(serverId));
+                        backgroundMaintenance.start();
+                        result = true;
+                    }
+                } finally {
+                    lock.writeLock().unlock();
+                }
+            }
+            return result;
+        }
+
+        /**
+         * @return {@code true} if and only if the state changed as a result of the operation.
+         */
+        boolean close() {
+            return closed.compareAndSet(false, true);
+        }
+
+        /**
+         * @throws IllegalStateException If and only if {@linkplain #close() closed}.
+         * @throws MongoConnectionPoolClearedException If and only if {@linkplain #pauseAndIncrementGeneration(Throwable) paused}
+         * and not {@linkplain #close() closed}.
+         */
+        void throwIfClosedOrPaused() {
+            if (closed.get()) {
+                throw ConcurrentPool.poolClosedException();
+            }
+            if (paused) {
+                lock.readLock().lock();
+                try {
+                    if (paused) {
+                        throw new MongoConnectionPoolClearedException(serverId, cause);
+                    }
+                } finally {
+                    lock.readLock().unlock();
+                }
+            }
         }
     }
 }

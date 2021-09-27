@@ -54,6 +54,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.SocketTimeoutException;
 import java.nio.channels.ClosedByInterruptException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -122,6 +123,16 @@ public class InternalStreamConnection implements InternalConnection {
     private volatile boolean hasMoreToCome;
     private volatile int responseTo;
     private int generation = NOT_INITIALIZED_GENERATION;
+
+    // Package-level access provided to avoid duplicating the list in test code
+    static Set<String> getSecuritySensitiveCommands() {
+        return Collections.unmodifiableSet(SECURITY_SENSITIVE_COMMANDS);
+    }
+
+    // Package-level access provided to avoid duplicating the list in test code
+    static Set<String> getSecuritySensitiveHelloCommands() {
+        return Collections.unmodifiableSet(SECURITY_SENSITIVE_HELLO_COMMANDS);
+    }
 
     public InternalStreamConnection(final ClusterConnectionMode clusterConnectionMode, final ServerId serverId,
                                     final ConnectionGenerationSupplier connectionGenerationSupplier,
@@ -214,10 +225,12 @@ public class InternalStreamConnection implements InternalConnection {
 
                 @Override
                 public void failed(final Throwable t) {
+                    close();
                     callback.onResult(null, t);
                 }
             });
         } catch (Throwable t) {
+            close();
             callback.onResult(null, t);
         }
     }
@@ -574,18 +587,23 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     private void writeAsync(final List<ByteBuf> byteBuffers, final SingleResultCallback<Void> callback) {
-        stream.writeAsync(byteBuffers, new AsyncCompletionHandler<Void>() {
-            @Override
-            public void completed(final Void v) {
-                callback.onResult(null, null);
-            }
+        try {
+            stream.writeAsync(byteBuffers, new AsyncCompletionHandler<Void>() {
+                @Override
+                public void completed(final Void v) {
+                    callback.onResult(null, null);
+                }
 
-            @Override
-            public void failed(final Throwable t) {
-                close();
-                callback.onResult(null, translateWriteException(t));
-            }
-        });
+                @Override
+                public void failed(final Throwable t) {
+                    close();
+                    callback.onResult(null, translateWriteException(t));
+                }
+            });
+        } catch (Throwable t) {
+            close();
+            callback.onResult(null, t);
+        }
     }
 
     @Override
@@ -633,6 +651,7 @@ public class InternalStreamConnection implements InternalConnection {
                 }
             });
         } catch (Exception e) {
+            close();
             callback.onResult(null, translateReadException(e));
         }
     }

@@ -43,7 +43,7 @@ public abstract class AbstractMainTransactionsTest extends AbstractUnifiedTest {
     public AbstractMainTransactionsTest(final String filename, final String description, final String databaseName,
                                         final String collectionName, final BsonArray data,
                                         final BsonDocument definition, final boolean skipTest) {
-        super(filename, description, databaseName, collectionName, data, definition, skipTest);
+        super(filename, description, databaseName, collectionName, data, definition, skipTest, true);
         // Tests of distinct in transactions can fail with a StaleDbVersion error.  See
         // https://github.com/mongodb/specifications/blob/master/source/transactions/tests/README.rst
         // #why-do-tests-that-run-distinct-sometimes-fail-with-staledbversion

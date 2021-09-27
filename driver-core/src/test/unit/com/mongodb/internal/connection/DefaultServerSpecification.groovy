@@ -30,6 +30,7 @@ import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcernResult
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
@@ -38,11 +39,12 @@ import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerType
 import com.mongodb.event.CommandListener
-import com.mongodb.event.ServerDescriptionChangedEvent
 import com.mongodb.event.ServerListener
 import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.bulk.InsertRequest
+import com.mongodb.internal.inject.SameObjectProvider
+import com.mongodb.internal.operation.ServerVersionHelper
 import com.mongodb.internal.session.SessionContext
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
@@ -57,15 +59,8 @@ import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
-import static com.mongodb.internal.event.EventListenerHelper.NO_OP_SERVER_LISTENER
 
 class DefaultServerSpecification extends Specification {
-    private static final ServerDescriptionChangedListener NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER =
-            new ServerDescriptionChangedListener() {
-                @Override
-                void serverDescriptionChanged(final ServerDescriptionChangedEvent event) {
-                }
-            }
     private static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator()
     def serverId = new ServerId(new ClusterId(), new ServerAddress())
 
@@ -73,16 +68,12 @@ class DefaultServerSpecification extends Specification {
         given:
         def connectionPool = Stub(ConnectionPool)
         def connectionFactory = Mock(ConnectionFactory)
-        def serverMonitorFactory = Stub(ServerMonitorFactory)
-        def serverMonitor = Stub(ServerMonitor)
         def internalConnection = Stub(InternalConnection)
         def connection = Stub(Connection)
-        def clusterTime = new ClusterClock()
 
-        serverMonitorFactory.create(_, _) >> { serverMonitor }
         connectionPool.get() >> { internalConnection }
-        def server = new DefaultServer(serverId, mode, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, NO_OP_SERVER_LISTENER, null, clusterTime)
+        def server = new DefaultServer(serverId, mode, connectionPool, connectionFactory, Mock(ServerMonitor),
+                Mock(SdamServerDescriptionManager), Mock(ServerListener), Mock(CommandListener), new ClusterClock())
 
         when:
         def receivedConnection = server.getConnection()
@@ -99,19 +90,15 @@ class DefaultServerSpecification extends Specification {
         given:
         def connectionPool = Stub(ConnectionPool)
         def connectionFactory = Mock(ConnectionFactory)
-        def serverMonitorFactory = Stub(ServerMonitorFactory)
-        def serverMonitor = Stub(ServerMonitor)
         def internalConnection = Stub(InternalConnection)
         def connection = Stub(AsyncConnection)
-        def clusterTime = new ClusterClock()
 
         connectionPool.getAsync(_) >> {
             it[0].onResult(internalConnection, null)
         }
-        serverMonitorFactory.create(_, _) >> { serverMonitor }
 
-        def server = new DefaultServer(serverId, mode, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, NO_OP_SERVER_LISTENER, null, clusterTime)
+        def server = new DefaultServer(serverId, mode, connectionPool, connectionFactory, Mock(ServerMonitor),
+                Mock(SdamServerDescriptionManager), Mock(ServerListener), Mock(CommandListener), new ClusterClock())
 
         when:
         def latch = new CountDownLatch(1)
@@ -132,12 +119,13 @@ class DefaultServerSpecification extends Specification {
     def 'invalidate should invoke server listeners'() {
         given:
         def serverListener = Mock(ServerListener)
-        def clusterTime = new ClusterClock()
-        def connectionFactory = Mock(ConnectionFactory)
-        def serverMonitorFactory = new TestServerMonitorFactory(serverId)
-        def server = new DefaultServer(serverId, SINGLE, new TestConnectionPool(), connectionFactory,
-                serverMonitorFactory, NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, serverListener, null, clusterTime)
-        serverMonitorFactory.sendNotification(ServerDescription.builder()
+        def connectionPool = Mock(ConnectionPool)
+        def sdamProvider = SameObjectProvider.<SdamServerDescriptionManager>uninitialized()
+        def serverMonitor = new TestServerMonitor(sdamProvider)
+        sdamProvider.initialize(new DefaultSdamServerDescriptionManager(serverId, Mock(ServerDescriptionChangedListener),
+                serverListener, serverMonitor, connectionPool, ClusterConnectionMode.MULTIPLE))
+        def server = defaultServer(Mock(ConnectionPool), serverMonitor, serverListener, sdamProvider.get(), Mock(CommandListener))
+        serverMonitor.updateServerDescription(ServerDescription.builder()
                 .address(serverId.getAddress())
                 .ok(true)
                 .state(ServerConnectionState.CONNECTED)
@@ -156,16 +144,11 @@ class DefaultServerSpecification extends Specification {
 
     def 'invalidate should do nothing when server is closed'() {
         given:
-        def clusterTime = new ClusterClock()
         def connectionPool = Mock(ConnectionPool)
-        def connectionFactory = Mock(ConnectionFactory)
-        def serverMonitorFactory = Stub(ServerMonitorFactory)
         def serverMonitor = Mock(ServerMonitor)
         connectionPool.get() >> { throw exceptionToThrow }
-        serverMonitorFactory.create(_) >> { serverMonitor }
 
-        def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, NO_OP_SERVER_LISTENER, null, clusterTime)
+        def server = defaultServer(connectionPool, serverMonitor)
         server.close()
 
         when:
@@ -178,16 +161,10 @@ class DefaultServerSpecification extends Specification {
 
     def 'failed open should invalidate the server'() {
         given:
-        def clusterTime = new ClusterClock()
         def connectionPool = Mock(ConnectionPool)
-        def connectionFactory = Mock(ConnectionFactory)
-        def serverMonitorFactory = Stub(ServerMonitorFactory)
-        def serverMonitor = Mock(ServerMonitor)
         connectionPool.get() >> { throw exceptionToThrow }
-        serverMonitorFactory.create(_) >> { serverMonitor }
-
-        def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, NO_OP_SERVER_LISTENER, null, clusterTime)
+        def serverMonitor = Mock(ServerMonitor)
+        def server = defaultServer(connectionPool, serverMonitor)
 
         when:
         server.getConnection()
@@ -195,7 +172,7 @@ class DefaultServerSpecification extends Specification {
         then:
         def e = thrown(MongoException)
         e.is(exceptionToThrow)
-        1 * connectionPool.invalidate()
+        1 * connectionPool.invalidate(exceptionToThrow)
         1 * serverMonitor.cancelCurrentCheck()
 
         where:
@@ -209,16 +186,10 @@ class DefaultServerSpecification extends Specification {
 
     def 'failed authentication should invalidate the connection pool'() {
         given:
-        def clusterTime = new ClusterClock()
         def connectionPool = Mock(ConnectionPool)
-        def connectionFactory = Mock(ConnectionFactory)
-        def serverMonitorFactory = Stub(ServerMonitorFactory)
-        def serverMonitor = Mock(ServerMonitor)
         connectionPool.get() >> { throw exceptionToThrow }
-        serverMonitorFactory.create(_) >> { serverMonitor }
-
-        def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, NO_OP_SERVER_LISTENER, null, clusterTime)
+        def serverMonitor = Mock(ServerMonitor)
+        def server = defaultServer(connectionPool, serverMonitor)
 
         when:
         server.getConnection()
@@ -226,7 +197,7 @@ class DefaultServerSpecification extends Specification {
         then:
         def e = thrown(MongoSecurityException)
         e.is(exceptionToThrow)
-        1 * connectionPool.invalidate()
+        1 * connectionPool.invalidate(exceptionToThrow)
         0 * serverMonitor.connect()
 
         where:
@@ -237,15 +208,10 @@ class DefaultServerSpecification extends Specification {
 
     def 'failed open should invalidate the server asynchronously'() {
         given:
-        def clusterTime = new ClusterClock()
         def connectionPool = Mock(ConnectionPool)
-        def connectionFactory = Mock(ConnectionFactory)
-        def serverMonitorFactory = Stub(ServerMonitorFactory)
-        def serverMonitor = Mock(ServerMonitor)
         connectionPool.getAsync(_) >> { it[0].onResult(null, exceptionToThrow) }
-        serverMonitorFactory.create(_) >> { serverMonitor }
-        def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory,
-                serverMonitorFactory, NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, NO_OP_SERVER_LISTENER, null, clusterTime)
+        def serverMonitor = Mock(ServerMonitor)
+        def server = defaultServer(connectionPool, serverMonitor)
 
         when:
         def latch = new CountDownLatch(1)
@@ -257,7 +223,7 @@ class DefaultServerSpecification extends Specification {
         then:
         !receivedConnection
         receivedThrowable.is(exceptionToThrow)
-        1 * connectionPool.invalidate()
+        1 * connectionPool.invalidate(exceptionToThrow)
         1 * serverMonitor.cancelCurrentCheck()
 
 
@@ -272,15 +238,10 @@ class DefaultServerSpecification extends Specification {
 
     def 'failed auth should invalidate the connection pool asynchronously'() {
         given:
-        def clusterTime = new ClusterClock()
         def connectionPool = Mock(ConnectionPool)
-        def connectionFactory = Mock(ConnectionFactory)
-        def serverMonitorFactory = Stub(ServerMonitorFactory)
-        def serverMonitor = Mock(ServerMonitor)
         connectionPool.getAsync(_) >> { it[0].onResult(null, exceptionToThrow) }
-        serverMonitorFactory.create(_) >> { serverMonitor }
-        def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory,
-                serverMonitorFactory, NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, NO_OP_SERVER_LISTENER, null, clusterTime)
+        def serverMonitor = Mock(ServerMonitor)
+        def server = defaultServer(connectionPool, serverMonitor)
 
         when:
         def latch = new CountDownLatch(1)
@@ -292,7 +253,7 @@ class DefaultServerSpecification extends Specification {
         then:
         !receivedConnection
         receivedThrowable.is(exceptionToThrow)
-        1 * connectionPool.invalidate()
+        1 * connectionPool.invalidate(exceptionToThrow)
         0 * serverMonitor.connect()
 
 
@@ -304,22 +265,15 @@ class DefaultServerSpecification extends Specification {
 
     def 'should invalidate on MongoNotPrimaryException'() {
         given:
-        def clusterTime = new ClusterClock()
-        def connectionPool = Mock(ConnectionPool)
-        def serverMonitorFactory = Stub(ServerMonitorFactory)
-        def serverMonitor = Mock(ServerMonitor)
         def internalConnection = Mock(InternalConnection) {
             getGeneration() >> 0
             getDescription() >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())), 6,
                     ServerType.STANDALONE, 1000, 16777216, 48000000, [])
         }
+        def connectionPool = Mock(ConnectionPool)
         connectionPool.get() >> { internalConnection }
-        serverMonitorFactory.create(_) >> { serverMonitor }
-
-        TestConnectionFactory connectionFactory = new TestConnectionFactory()
-
-        def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, NO_OP_SERVER_LISTENER, null, clusterTime)
+        def serverMonitor = Mock(ServerMonitor)
+        def server = defaultServer(connectionPool, serverMonitor)
         def testConnection = (TestConnection) server.getConnection()
 
         when:
@@ -330,7 +284,7 @@ class DefaultServerSpecification extends Specification {
 
         then:
         thrown(MongoNotPrimaryException)
-        1 * connectionPool.invalidate()
+        1 * connectionPool.invalidate { it instanceof MongoNotPrimaryException }
         1 * serverMonitor.connect()
 
         when:
@@ -341,39 +295,16 @@ class DefaultServerSpecification extends Specification {
 
         then:
         thrown(MongoNotPrimaryException)
-        1 * connectionPool.invalidate()
-        1 * serverMonitor.connect()
-
-        when:
-        futureResultCallback = new FutureResultCallback()
-        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
-                IgnorableRequestContext.INSTANCE, futureResultCallback);
-        futureResultCallback.get()
-
-        then:
-        thrown(MongoNotPrimaryException)
-        1 * connectionPool.invalidate()
+        1 * connectionPool.invalidate { it instanceof MongoNotPrimaryException }
         1 * serverMonitor.connect()
     }
 
     def 'should invalidate on MongoNodeIsRecoveringException'() {
         given:
-        def clusterTime = new ClusterClock()
         def connectionPool = Mock(ConnectionPool)
-        def serverMonitorFactory = Stub(ServerMonitorFactory)
+        connectionPool.get() >> { internalConnection() }
         def serverMonitor = Mock(ServerMonitor)
-        def internalConnection = Mock(InternalConnection) {
-            getGeneration() >> 0
-            getDescription() >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())), 6,
-                    ServerType.STANDALONE, 1000, 16777216, 48000000, [])
-        }
-        connectionPool.get() >> { internalConnection }
-        serverMonitorFactory.create(_) >> { serverMonitor }
-
-        TestConnectionFactory connectionFactory = new TestConnectionFactory()
-
-        def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, NO_OP_SERVER_LISTENER, null, clusterTime)
+        def server = defaultServer(connectionPool, serverMonitor)
         def testConnection = (TestConnection) server.getConnection()
 
         when:
@@ -384,29 +315,17 @@ class DefaultServerSpecification extends Specification {
 
         then:
         thrown(MongoNodeIsRecoveringException)
-        1 * connectionPool.invalidate()
+        1 * connectionPool.invalidate { it instanceof MongoNodeIsRecoveringException }
         1 * serverMonitor.connect()
     }
 
 
     def 'should invalidate on MongoSocketException'() {
         given:
-        def clusterTime = new ClusterClock()
         def connectionPool = Mock(ConnectionPool)
-        def serverMonitorFactory = Stub(ServerMonitorFactory)
+        connectionPool.get() >> { internalConnection() }
         def serverMonitor = Mock(ServerMonitor)
-        def internalConnection = Mock(InternalConnection) {
-            getGeneration() >> 0
-            getDescription() >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())), 6,
-                    ServerType.STANDALONE, 1000, 16777216, 48000000, [])
-        }
-        connectionPool.get() >> { internalConnection }
-        serverMonitorFactory.create(_) >> { serverMonitor }
-
-        TestConnectionFactory connectionFactory = new TestConnectionFactory()
-
-        def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, NO_OP_SERVER_LISTENER, null, clusterTime)
+        def server = defaultServer(connectionPool, serverMonitor)
         def testConnection = (TestConnection) server.getConnection()
 
         when:
@@ -417,7 +336,7 @@ class DefaultServerSpecification extends Specification {
 
         then:
         thrown(MongoSocketException)
-        1 * connectionPool.invalidate()
+        1 * connectionPool.invalidate { it instanceof MongoSocketException }
         1 * serverMonitor.cancelCurrentCheck()
 
         when:
@@ -428,28 +347,16 @@ class DefaultServerSpecification extends Specification {
 
         then:
         thrown(MongoSocketException)
-        1 * connectionPool.invalidate()
+        1 * connectionPool.invalidate { it instanceof MongoSocketException }
         1 * serverMonitor.cancelCurrentCheck()
     }
 
     def 'should not invalidate on MongoSocketReadTimeoutException'() {
         given:
-        def clusterTime = new ClusterClock()
         def connectionPool = Mock(ConnectionPool)
-        def serverMonitorFactory = Stub(ServerMonitorFactory)
+        connectionPool.get() >> { internalConnection() }
         def serverMonitor = Mock(ServerMonitor)
-        def internalConnection = Mock(InternalConnection) {
-            getGeneration() >> 0
-            getDescription() >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())), 6,
-                    ServerType.STANDALONE, 1000, 16777216, 48000000, [])
-        }
-        connectionPool.get() >> { internalConnection }
-        serverMonitorFactory.create(_, _) >> { serverMonitor }
-
-        TestConnectionFactory connectionFactory = new TestConnectionFactory()
-
-        def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, NO_OP_SERVER_LISTENER, null, clusterTime)
+        def server = defaultServer(connectionPool, serverMonitor)
         def testConnection = (TestConnection) server.getConnection()
 
         when:
@@ -461,7 +368,7 @@ class DefaultServerSpecification extends Specification {
 
         then:
         thrown(MongoSocketReadTimeoutException)
-        0 * connectionPool.invalidate()
+        0 * connectionPool.invalidate { it instanceof MongoSocketReadTimeoutException }
         0 * serverMonitor.connect()
 
         when:
@@ -472,26 +379,16 @@ class DefaultServerSpecification extends Specification {
 
         then:
         thrown(MongoSocketReadTimeoutException)
-        0 * connectionPool.invalidate()
+        0 * connectionPool.invalidate { it instanceof MongoSocketReadTimeoutException }
         0 * serverMonitor.connect()
     }
 
     def 'should enable command listener'() {
         given:
-        def clusterTime = new ClusterClock()
         def protocol = new TestLegacyProtocol()
-        def commandListener = Stub(CommandListener)
-        def connectionPool = Mock(ConnectionPool)
-        def serverMonitorFactory = Stub(ServerMonitorFactory)
-        def serverMonitor = Mock(ServerMonitor)
-        def internalConnection = Mock(InternalConnection)
-        connectionPool.get() >> { internalConnection }
-        serverMonitorFactory.create(_, _) >> { serverMonitor }
-
-        TestConnectionFactory connectionFactory = new TestConnectionFactory()
-
-        def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, NO_OP_SERVER_LISTENER, commandListener, clusterTime)
+        def commandListener = Mock(CommandListener)
+        def server = defaultServer(Mock(ConnectionPool), Mock(ServerMonitor), Mock(ServerListener), Mock(SdamServerDescriptionManager),
+                commandListener)
         def testConnection = (TestConnection) server.getConnection()
 
         testConnection.enqueueProtocol(protocol)
@@ -518,17 +415,8 @@ class DefaultServerSpecification extends Specification {
         given:
         def clusterClock = new ClusterClock()
         clusterClock.advance(clusterClockClusterTime)
-        def connectionPool = Mock(ConnectionPool)
-        def serverMonitorFactory = Stub(ServerMonitorFactory)
-        def serverMonitor = Mock(ServerMonitor)
-        def internalConnection = Mock(InternalConnection)
-        connectionPool.get() >> { internalConnection }
-        serverMonitorFactory.create(_) >> { serverMonitor }
-
-        TestConnectionFactory connectionFactory = new TestConnectionFactory()
-
-        def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_DESCRIPTION_CHANGED_LISTENER, NO_OP_SERVER_LISTENER, null, clusterClock)
+        def server = new DefaultServer(serverId, SINGLE, Mock(ConnectionPool), new TestConnectionFactory(), Mock(ServerMonitor),
+                Mock(SdamServerDescriptionManager), Mock(ServerListener), Mock(CommandListener), clusterClock)
         def testConnection = (TestConnection) server.getConnection()
         def sessionContext = new TestSessionContext(initialClusterTime)
         def response = BsonDocument.parse(
@@ -573,6 +461,31 @@ class DefaultServerSpecification extends Specification {
                         BsonDocument.parse('{clusterTime : {$timestamp : {"t" : 42, "i" : 11 } } }')
                 ]
         ].combinations()
+    }
+
+    private InternalConnection internalConnection() {
+        Mock(InternalConnection) {
+            getGeneration() >> 0
+            getDescription() >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
+                    ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION, ServerType.STANDALONE, 1000, 0xff_ff_ff, 48_000_000, [])
+        }
+    }
+
+    private DefaultServer defaultServer(final ConnectionPool connectionPool, final ServerMonitor serverMonitor) {
+        def serverListener = Mock(ServerListener)
+        defaultServer(connectionPool, serverMonitor, serverListener,
+                new DefaultSdamServerDescriptionManager(
+                        serverId, Mock(ServerDescriptionChangedListener), serverListener, serverMonitor, connectionPool,
+                        ClusterConnectionMode.MULTIPLE),
+                Mock(CommandListener))
+    }
+
+    private DefaultServer defaultServer(final ConnectionPool connectionPool, final ServerMonitor serverMonitor,
+                                        final ServerListener serverListener,
+                                        final SdamServerDescriptionManager sdam, final CommandListener commandListener) {
+        serverMonitor.start()
+        new DefaultServer(serverId, SINGLE, connectionPool, new TestConnectionFactory(), serverMonitor,
+                sdam, serverListener, commandListener, new ClusterClock())
     }
 
     class TestLegacyProtocol implements LegacyProtocol {

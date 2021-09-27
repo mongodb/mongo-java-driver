@@ -1288,6 +1288,7 @@ public class DBCollectionTest extends DatabaseTestCase {
         }
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     public void testBypassDocumentValidationForNonInlineMapReduce() {
         //given

@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.connection;
+package com.mongodb.client;
 
-import com.mongodb.connection.ServerDescription;
+import com.mongodb.ClientEncryptionSettings;
+import com.mongodb.client.vault.ClientEncryption;
+import com.mongodb.client.vault.ClientEncryptions;
 
-interface ServerMonitorFactory {
-
-    ServerMonitor create(ChangeListener<ServerDescription> serverStateListener);
-
+public class ClientSideEncryptionKmsTlsTest extends AbstractClientSideEncryptionKmsTlsTest {
+    @Override
+    public ClientEncryption getClientEncryption(final ClientEncryptionSettings settings) {
+        return ClientEncryptions.create(settings);
+    }
 }

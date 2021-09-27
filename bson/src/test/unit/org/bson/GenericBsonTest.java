@@ -37,7 +37,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -46,6 +46,7 @@ import java.util.List;
 import static java.lang.String.format;
 import static org.bson.BsonDocument.parse;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 // BSON tests powered by language-agnostic JSON-based tests included in test resources
@@ -68,8 +69,8 @@ public class GenericBsonTest {
     private final BsonDocument testCase;
     private final TestCaseType testCaseType;
 
-    public GenericBsonTest(final String description, final BsonDocument testDefinition, final BsonDocument testCase,
-                           final TestCaseType testCaseType) {
+    public GenericBsonTest(@SuppressWarnings("unused") final String description,
+            final BsonDocument testDefinition, final BsonDocument testCase, final TestCaseType testCaseType) {
         this.testDefinition = testDefinition;
         this.testCase = testCase;
         this.testCaseType = testCaseType;
@@ -261,7 +262,8 @@ public class GenericBsonTest {
             }
         } else if (testDefinitionDescription.startsWith("Top-level") || testDefinitionDescription.startsWith("Binary type")) {
             try {
-                parse(str);
+                BsonDocument document = parse(str);
+                encodeToHex(document);
                 fail("Should fail to parse JSON '" + str + "' with description '" + description + "'");
             } catch (JsonParseException e) {
                 // all good
@@ -270,34 +272,47 @@ public class GenericBsonTest {
                     fail("Should throw JsonParseException for '" + str + "' with description '" + description + "'");
                 }
                 // all good
+            } catch (BsonSerializationException e) {
+                if (isTestOfNullByteInCString(description)) {
+                    assertTrue(e.getMessage().contains("is not valid because it contains a null character"));
+                } else {
+                    fail("Unexpected BsonSerializationException");
+                }
             }
         } else {
             fail("Unrecognized test definition description: " + testDefinitionDescription);
         }
     }
 
+    private boolean isTestOfNullByteInCString(final String description) {
+        return description.startsWith("Null byte");
+    }
 
-
-    // TODO: Working around the fact that the Java driver doesn't report an error for invalid UTF-8, but rather replaces the invalid
+    // Working around the fact that the Java driver doesn't report an error for invalid UTF-8, but rather replaces the invalid
     // sequence with the replacement character
     private void throwIfValueIsStringContainingReplacementCharacter(final String description) {
         BsonDocument decodedDocument = decodeToDocument(testCase.getString("bson").getValue(), description);
-        String testKey = decodedDocument.keySet().iterator().next();
+        BsonValue value = decodedDocument.get(decodedDocument.getFirstKey());
 
-        if (decodedDocument.containsKey(testKey)) {
-            String decodedString = null;
-            if (decodedDocument.get(testKey).isString()) {
-                decodedString = decodedDocument.getString(testKey).getValue();
-            }
-            if (decodedDocument.get(testKey).isDBPointer()) {
-                decodedString = decodedDocument.get(testKey).asDBPointer().getNamespace();
-            }
-            if (decodedString != null && decodedString.contains(Charset.forName("UTF-8").newDecoder().replacement())) {
-                throw new BsonSerializationException("String contains replacement character");
-            }
-
+        String decodedString;
+        if (value.isString()) {
+            decodedString = value.asString().getValue();
+        } else if (value.isDBPointer()) {
+            decodedString = value.asDBPointer().getNamespace();
+        } else if (value.isJavaScript()) {
+            decodedString = value.asJavaScript().getCode();
+        } else if (value.isJavaScriptWithScope()) {
+            decodedString = value.asJavaScriptWithScope().getCode();
+        } else if (value.isSymbol()) {
+            decodedString = value.asSymbol().getSymbol();
+        } else {
+            throw new UnsupportedOperationException("Unsupported test for BSON type " + value.getBsonType());
         }
-    }
+
+        if (decodedString.contains(StandardCharsets.UTF_8.newDecoder().replacement())) {
+            throw new BsonSerializationException("String contains replacement character");
+        }
+   }
 
 
     @Parameterized.Parameters(name = "{0}")

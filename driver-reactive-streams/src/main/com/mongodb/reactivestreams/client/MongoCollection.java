@@ -601,7 +601,9 @@ public interface MongoCollection<TDocument> {
      * @param reduceFunction A JavaScript function that "reduces" to a single object all the values associated with a particular key.
      * @return an publisher containing the result of the map-reduce operation
      * @mongodb.driver.manual reference/command/mapReduce/ map-reduce
+     * @deprecated Superseded by aggregate
      */
+    @Deprecated
     MapReducePublisher<TDocument> mapReduce(String mapFunction, String reduceFunction);
 
     /**
@@ -613,7 +615,9 @@ public interface MongoCollection<TDocument> {
      * @param <TResult>      the target document type of the iterable.
      * @return a publisher containing the result of the map-reduce operation
      * @mongodb.driver.manual reference/command/mapReduce/ map-reduce
+     * @deprecated Superseded by aggregate
      */
+    @Deprecated
     <TResult> MapReducePublisher<TResult> mapReduce(String mapFunction, String reduceFunction, Class<TResult> clazz);
 
     /**
@@ -626,7 +630,9 @@ public interface MongoCollection<TDocument> {
      * @mongodb.driver.manual reference/command/mapReduce/ map-reduce
      * @mongodb.server.release 3.6
      * @since 1.7
+     * @deprecated Superseded by aggregate
      */
+    @Deprecated
     MapReducePublisher<TDocument> mapReduce(ClientSession clientSession, String mapFunction, String reduceFunction);
 
     /**
@@ -641,7 +647,9 @@ public interface MongoCollection<TDocument> {
      * @mongodb.driver.manual reference/command/mapReduce/ map-reduce
      * @mongodb.server.release 3.6
      * @since 1.7
+     * @deprecated Superseded by aggregate
      */
+    @Deprecated
     <TResult> MapReducePublisher<TResult> mapReduce(ClientSession clientSession, String mapFunction, String reduceFunction,
                                                     Class<TResult> clazz);
 

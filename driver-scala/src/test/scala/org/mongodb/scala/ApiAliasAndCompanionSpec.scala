@@ -81,7 +81,8 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "RemovePrimer",
       "SyncMongoClient",
       "SyncGridFSBucket",
-      "SyncMongoDatabase"
+      "SyncMongoDatabase",
+      "SyncClientEncryption"
     )
     val scalaExclusions = Set(
       "BuildInfo",
@@ -244,7 +245,8 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "Name",
       "NameCodecProvider",
       "SynchronousContextProvider",
-      "TransactionBody"
+      "TransactionBody",
+      "FailPoint"
     )
 
     val wrapped = new Reflections(packageName, new SubTypesScanner(false))

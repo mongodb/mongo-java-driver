@@ -42,7 +42,7 @@ public abstract class AbstractWriteConcernOperationTest extends AbstractUnifiedT
     public AbstractWriteConcernOperationTest(final String filename, final String description, final String databaseName,
                                              final String collectionName, final BsonArray data, final BsonDocument definition,
                                              final boolean skipTest) {
-        super(filename, description, databaseName, collectionName, data, definition, skipTest);
+        super(filename, description, databaseName, collectionName, data, definition, skipTest, true);
         assumeFalse(isServerlessTest());
     }
 

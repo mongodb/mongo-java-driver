@@ -38,6 +38,7 @@ import com.mongodb.internal.session.SessionContext
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.BsonNull
 import org.bson.BsonString
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.Decoder
@@ -45,8 +46,11 @@ import spock.lang.Specification
 
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.internal.operation.CommandOperationHelper.executeCommand
+import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableRead
 import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandAsync
-import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableCommand
+import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableReadAsync
+import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableWrite
+import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableWriteAsync
 import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceError
 import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNotNamespaceError
 import static com.mongodb.internal.operation.OperationUnitSpecification.getMaxWireVersionForServerVersion
@@ -173,8 +177,8 @@ class CommandOperationHelperSpecification extends Specification {
         }
 
         when:
-        executeRetryableCommand(writeBinding, dbName, primary(), new NoOpFieldNameValidator(), decoder, commandCreator,
-                FindAndModifyHelper.transformer())
+        executeRetryableWrite(writeBinding, dbName, primary(), new NoOpFieldNameValidator(), decoder, commandCreator,
+                FindAndModifyHelper.transformer()) { cmd -> cmd }
 
         then:
         2 * connection.command(dbName, command, _, primary(), decoder, _, null, _) >> { results.poll() }
@@ -228,8 +232,8 @@ class CommandOperationHelperSpecification extends Specification {
         }
 
         when:
-        executeRetryableCommand(asyncWriteBinding, dbName, primary(), new NoOpFieldNameValidator(), decoder,
-                commandCreator, FindAndModifyHelper.asyncTransformer(), callback)
+        executeRetryableWriteAsync(asyncWriteBinding, dbName, primary(), new NoOpFieldNameValidator(), decoder,
+                commandCreator, FindAndModifyHelper.asyncTransformer(), { cmd -> cmd }, callback)
 
         then:
         2 * connection.commandAsync(dbName, command, _, primary(), decoder, *_) >> { it.last().onResult(results.poll(), null) }
@@ -242,7 +246,7 @@ class CommandOperationHelperSpecification extends Specification {
     def 'should use the ReadBindings readPreference'() {
         given:
         def dbName = 'db'
-        def command = new BsonDocument()
+        def command = new BsonDocument('fakeCommandName', BsonNull.VALUE)
         def commandCreator = { serverDescription, connectionDescription -> command }
         def decoder = Stub(Decoder)
         def function = Stub(CommandOperationHelper.CommandReadTransformer)
@@ -258,7 +262,7 @@ class CommandOperationHelperSpecification extends Specification {
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeCommand(readBinding, dbName, commandCreator, decoder, function, false)
+        executeRetryableRead(readBinding, dbName, commandCreator, decoder, function, false)
 
         then:
         _ * connection.getDescription() >> connectionDescription
@@ -286,7 +290,7 @@ class CommandOperationHelperSpecification extends Specification {
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeCommandAsync(asyncWriteBinding, dbName, command, connection, callback)
+        executeCommandAsync(asyncWriteBinding, dbName, command, connection, { t, conn -> t }, callback)
 
         then:
         _ * connection.getDescription() >> connectionDescription
@@ -297,7 +301,7 @@ class CommandOperationHelperSpecification extends Specification {
     def 'should use the AsyncReadBindings readPreference'() {
         given:
         def dbName = 'db'
-        def command = new BsonDocument()
+        def command = new BsonDocument('fakeCommandName', BsonNull.VALUE)
         def commandCreator = { serverDescription, connectionDescription -> command }
         def decoder = Stub(Decoder)
         def callback = Stub(SingleResultCallback)
@@ -315,7 +319,7 @@ class CommandOperationHelperSpecification extends Specification {
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeCommandAsync(asyncReadBinding, dbName, commandCreator, decoder, function, false, callback)
+        executeRetryableReadAsync(asyncReadBinding, dbName, commandCreator, decoder, function, false, callback)
 
         then:
         _ * connection.getDescription() >> connectionDescription

@@ -30,6 +30,7 @@ import com.mongodb.internal.operation.OperationHelper.CallableWithConnection;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
+import org.bson.codecs.BsonDocumentCodec;
 
 import java.util.List;
 
@@ -152,7 +153,8 @@ public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOper
                 if (!serverIsAtLeastVersionThreeDotFour(connection.getDescription())) {
                     throw createExceptionForIncompatibleServerVersion();
                 }
-                executeCommand(binding, databaseName, getCommand(connection.getDescription()), writeConcernErrorTransformer());
+                executeCommand(binding, databaseName, getCommand(connection.getDescription()), new BsonDocumentCodec(),
+                        writeConcernErrorTransformer());
                 return null;
             }
         });

@@ -21,9 +21,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
-import com.mongodb.client.MapReduceIterable;
 import com.mongodb.client.model.Collation;
-import com.mongodb.client.model.MapReduceAction;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.operation.BatchCursor;
@@ -43,7 +41,8 @@ import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
 
 @SuppressWarnings("deprecation")
-class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements MapReduceIterable<TResult> {
+class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult>
+        implements com.mongodb.client.MapReduceIterable<TResult> {
     private final SyncOperations<TDocument> operations;
     private final MongoNamespace namespace;
     private final Class<TResult> resultClass;
@@ -60,7 +59,7 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     private boolean jsMode;
     private boolean verbose = true;
     private long maxTimeMS;
-    private MapReduceAction action = MapReduceAction.REPLACE;
+    private com.mongodb.client.model.MapReduceAction action = com.mongodb.client.model.MapReduceAction.REPLACE;
     private String databaseName;
     private boolean sharded;
     private boolean nonAtomic;
@@ -90,99 +89,99 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
-    public MapReduceIterable<TResult> collectionName(final String collectionName) {
+    public com.mongodb.client.MapReduceIterable<TResult> collectionName(final String collectionName) {
         this.collectionName = notNull("collectionName", collectionName);
         this.inline = false;
         return this;
     }
 
     @Override
-    public MapReduceIterable<TResult> finalizeFunction(@Nullable final String finalizeFunction) {
+    public com.mongodb.client.MapReduceIterable<TResult> finalizeFunction(@Nullable final String finalizeFunction) {
         this.finalizeFunction = finalizeFunction;
         return this;
     }
 
     @Override
-    public MapReduceIterable<TResult> scope(@Nullable final Bson scope) {
+    public com.mongodb.client.MapReduceIterable<TResult> scope(@Nullable final Bson scope) {
         this.scope = scope;
         return this;
     }
 
     @Override
-    public MapReduceIterable<TResult> sort(@Nullable final Bson sort) {
+    public com.mongodb.client.MapReduceIterable<TResult> sort(@Nullable final Bson sort) {
         this.sort = sort;
         return this;
     }
 
     @Override
-    public MapReduceIterable<TResult> filter(@Nullable final Bson filter) {
+    public com.mongodb.client.MapReduceIterable<TResult> filter(@Nullable final Bson filter) {
         this.filter = filter;
         return this;
     }
 
     @Override
-    public MapReduceIterable<TResult> limit(final int limit) {
+    public com.mongodb.client.MapReduceIterable<TResult> limit(final int limit) {
         this.limit = limit;
         return this;
     }
 
     @Override
-    public MapReduceIterable<TResult> jsMode(final boolean jsMode) {
+    public com.mongodb.client.MapReduceIterable<TResult> jsMode(final boolean jsMode) {
         this.jsMode = jsMode;
         return this;
     }
 
     @Override
-    public MapReduceIterable<TResult> verbose(final boolean verbose) {
+    public com.mongodb.client.MapReduceIterable<TResult> verbose(final boolean verbose) {
         this.verbose = verbose;
         return this;
     }
 
     @Override
-    public MapReduceIterable<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
+    public com.mongodb.client.MapReduceIterable<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
     @Override
-    public MapReduceIterable<TResult> action(final MapReduceAction action) {
+    public com.mongodb.client.MapReduceIterable<TResult> action(final com.mongodb.client.model.MapReduceAction action) {
         this.action = action;
         return this;
     }
 
     @Override
-    public MapReduceIterable<TResult> databaseName(@Nullable final String databaseName) {
+    public com.mongodb.client.MapReduceIterable<TResult> databaseName(@Nullable final String databaseName) {
         this.databaseName = databaseName;
         return this;
     }
 
     @Override
-    public MapReduceIterable<TResult> sharded(final boolean sharded) {
+    public com.mongodb.client.MapReduceIterable<TResult> sharded(final boolean sharded) {
         this.sharded = sharded;
         return this;
     }
 
     @Override
-    public MapReduceIterable<TResult> nonAtomic(final boolean nonAtomic) {
+    public com.mongodb.client.MapReduceIterable<TResult> nonAtomic(final boolean nonAtomic) {
         this.nonAtomic = nonAtomic;
         return this;
     }
 
     @Override
-    public MapReduceIterable<TResult> batchSize(final int batchSize) {
+    public com.mongodb.client.MapReduceIterable<TResult> batchSize(final int batchSize) {
         super.batchSize(batchSize);
         return this;
     }
 
     @Override
-    public MapReduceIterable<TResult> bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
+    public com.mongodb.client.MapReduceIterable<TResult> bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
 
     @Override
-    public MapReduceIterable<TResult> collation(@Nullable final Collation collation) {
+    public com.mongodb.client.MapReduceIterable<TResult> collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }

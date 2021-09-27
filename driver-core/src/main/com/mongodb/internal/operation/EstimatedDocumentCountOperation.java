@@ -37,8 +37,8 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommand;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandAsync;
+import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableRead;
+import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableReadAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceError;
 import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
@@ -73,7 +73,7 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
     @Override
     public Long execute(final ReadBinding binding) {
         try {
-            return executeCommand(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
+            return executeRetryableRead(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
                     CommandResultDocumentCodec.create(DECODER, singletonList("firstBatch")), transformer(), retryReads);
         } catch (MongoCommandException e) {
             return rethrowIfNotNamespaceError(e, 0L);
@@ -82,7 +82,7 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Long> callback) {
-        executeCommandAsync(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
+        executeRetryableReadAsync(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
                 CommandResultDocumentCodec.create(DECODER, singletonList("firstBatch")), asyncTransformer(), retryReads,
                 (result, t) -> {
                     if (isNamespaceError(t)) {
