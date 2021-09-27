@@ -27,6 +27,7 @@ import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerType;
 import com.mongodb.event.ClusterListener;
+import com.mongodb.internal.connection.SdamServerDescriptionManager.SdamIssue;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -42,8 +43,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
-import static com.mongodb.internal.connection.ClusterableServer.ConnectionState.AFTER_HANDSHAKE;
-import static com.mongodb.internal.connection.ClusterableServer.ConnectionState.BEFORE_HANDSHAKE;
 import static com.mongodb.internal.connection.DescriptionHelper.createServerDescription;
 import static com.mongodb.internal.connection.ProtocolHelper.getCommandFailureException;
 import static org.junit.Assert.assertEquals;
@@ -87,7 +86,7 @@ public class AbstractServerDiscoveryAndMonitoringTest {
         String when = applicationError.getString("when").getValue();
         String type = applicationError.getString("type").getValue();
 
-        ClusterableServer server = cluster.getServer(serverAddress);
+        DefaultServer server = (DefaultServer) cluster.getServer(serverAddress);
         RuntimeException exception;
 
         switch (type) {
@@ -106,10 +105,12 @@ public class AbstractServerDiscoveryAndMonitoringTest {
 
         switch (when) {
             case "beforeHandshakeCompletes":
-                server.invalidate(BEFORE_HANDSHAKE, exception, errorGeneration, maxWireVersion);
+                server.sdamServerDescriptionManager().handleExceptionBeforeHandshake(
+                        SdamIssue.specific(exception, new SdamIssue.Context(server.serverId(), errorGeneration, maxWireVersion)));
                 break;
             case "afterHandshakeCompletes":
-                server.invalidate(AFTER_HANDSHAKE, exception, errorGeneration, maxWireVersion);
+                server.sdamServerDescriptionManager().handleExceptionAfterHandshake(
+                        SdamIssue.specific(exception, new SdamIssue.Context(server.serverId(), errorGeneration, maxWireVersion)));
                 break;
             default:
                 throw new UnsupportedOperationException("Unsupported `when` value: " + when);
@@ -198,10 +199,6 @@ public class AbstractServerDiscoveryAndMonitoringTest {
         return (directConnection != null && directConnection)
                 || (directConnection == null && connectionString.getHosts().size() == 1
                 && connectionString.getRequiredReplicaSetName() == null);
-    }
-
-    protected DefaultTestClusterableServerFactory getFactory() {
-        return factory;
     }
 
     protected Cluster getCluster() {

@@ -27,11 +27,6 @@ interface ClusterableServer extends Server {
 
     List<Integer> SHUTDOWN_CODES = asList(91, 11600);
 
-    enum ConnectionState {
-        BEFORE_HANDSHAKE,
-        AFTER_HANDSHAKE
-    }
-
     /**
      * Reset server description to connecting state
      */
@@ -42,15 +37,6 @@ interface ClusterableServer extends Server {
      * attempt to connect with the server in order to determine its current status.
      */
     void invalidate();
-
-    /**
-     * Invalidate the description of this server due to the passed in reason.
-     * @param connectionState the connection state
-     * @param reason the reason for invalidation.
-     * @param connectionGeneration the connection pool's generation of the connection from which the error arose
-     * @param maxWireVersion the maxWireVersion from the connection from which the error arose
-     */
-    void invalidate(ConnectionState connectionState, Throwable reason, int connectionGeneration, int maxWireVersion);
 
     /**
      * <p>Closes the server.  Instances that have been closed will no longer be available for use.</p>

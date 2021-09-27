@@ -21,6 +21,7 @@ import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
 import org.bson.types.ObjectId;
@@ -35,14 +36,6 @@ public class TestConnectionPool implements ConnectionPool {
 
     public TestConnectionPool() {
         exceptionToThrow = null;
-    }
-
-    public TestConnectionPool(final MongoException exceptionToThrow) {
-        this.exceptionToThrow = exceptionToThrow;
-    }
-
-    @Override
-    public void start() {
     }
 
     @Override
@@ -160,13 +153,22 @@ public class TestConnectionPool implements ConnectionPool {
     }
 
     @Override
-    public void invalidate() {
+    public void invalidate(@Nullable final Throwable cause) {
         generation++;
+    }
+
+    @Override
+    public void invalidate() {
+        invalidate(null);
     }
 
     @Override
     public void invalidate(final ObjectId serviceId, final int generation) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void ready() {
     }
 
     @Override
