@@ -525,6 +525,13 @@ public final class MongoClientSettings {
         /**
          * Sets the context provider
          *
+         * <p>
+         * When used with the synchronous driver, this must be an instance of {@code com.mongodb.client.SynchronousContextProvider}.
+         * When used with the reactive streams driver, this must be an instance of
+         * {@code com.mongodb.reactivestreams.client.ReactiveContextProvider}.
+         *
+         * </p>
+         *
          * @param contextProvider the context provider
          * @return this
          * @since 4.4
