@@ -42,8 +42,8 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommand;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandAsync;
+import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableRead;
+import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableReadAsync;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNullOrEmpty;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
@@ -179,14 +179,14 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return executeCommand(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()), createCommandDecoder(),
-                transformer(), retryReads);
+        return executeRetryableRead(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
+                createCommandDecoder(), transformer(), retryReads);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        executeCommandAsync(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()), createCommandDecoder(),
-                asyncTransformer(), retryReads, errorHandlingCallback(callback, LOGGER));
+        executeRetryableReadAsync(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
+                createCommandDecoder(), asyncTransformer(), retryReads, errorHandlingCallback(callback, LOGGER));
     }
 
     private Codec<BsonDocument> createCommandDecoder() {

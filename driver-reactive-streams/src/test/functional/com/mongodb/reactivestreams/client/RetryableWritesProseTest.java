@@ -19,11 +19,15 @@ package com.mongodb.reactivestreams.client;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.client.test.CollectionHelper;
+import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
 import org.junit.Before;
 import org.junit.Test;
 import reactor.core.publisher.Mono;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static com.mongodb.ClusterFixture.getServerStatus;
@@ -34,13 +38,16 @@ import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
+/**
+ * See
+ * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-writes/tests/README.rst#prose-tests">Retryable Write Prose Tests</a>.
+ */
 public class RetryableWritesProseTest extends DatabaseTestCase {
     private CollectionHelper<Document> collectionHelper;
 
     @Before
     @Override
     public void setUp() {
-        assumeTrue(canRunTests());
         super.setUp();
 
         collectionHelper = new CollectionHelper<>(new DocumentCodec(), collection.getNamespace());
@@ -49,6 +56,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
 
     @Test
     public void testRetryWritesWithInsertOneAgainstMMAPv1RaisesError() {
+        assumeTrue(canRunTests());
         boolean exceptionFound = false;
 
         try {
@@ -65,6 +73,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
 
     @Test
     public void testRetryWritesWithFindOneAndDeleteAgainstMMAPv1RaisesError() {
+        assumeTrue(canRunTests());
         boolean exceptionFound = false;
 
         try {
@@ -77,6 +86,16 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
             exceptionFound = true;
         }
         assertTrue(exceptionFound);
+    }
+
+    /**
+     * Prose test #2.
+     */
+    @Test
+    public void poolClearedExceptionMustBeRetryable() throws InterruptedException, ExecutionException, TimeoutException {
+        com.mongodb.client.RetryableWritesProseTest.poolClearedExceptionMustBeRetryable(
+                mongoClientSettings -> new SyncMongoClient(MongoClients.create(mongoClientSettings)),
+                mongoCollection -> mongoCollection.insertOne(new Document()), "insert", true);
     }
 
     private boolean canRunTests() {
