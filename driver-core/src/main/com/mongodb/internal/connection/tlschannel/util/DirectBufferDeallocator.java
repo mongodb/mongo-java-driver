@@ -50,8 +50,7 @@ public class DirectBufferDeallocator {
 
     Java8Deallocator() {
       try {
-        cleanerAccessor =
-            Class.forName("sun.nio.ch.DirectBuffer").getMethod("cleaner", (Class<?>[]) null);
+        cleanerAccessor = Class.forName("sun.nio.ch.DirectBuffer").getMethod("cleaner");
         clean = Class.forName("sun.misc.Cleaner").getMethod("clean");
       } catch (NoSuchMethodException | ClassNotFoundException t) {
         throw new RuntimeException(t);
