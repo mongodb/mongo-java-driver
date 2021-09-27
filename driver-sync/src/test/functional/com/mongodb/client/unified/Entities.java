@@ -49,6 +49,7 @@ import com.mongodb.event.ConnectionPoolClearedEvent;
 import com.mongodb.event.ConnectionPoolClosedEvent;
 import com.mongodb.event.ConnectionPoolCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
+import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.event.ConnectionReadyEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
@@ -577,6 +578,13 @@ public final class Entities {
         public void connectionPoolCleared(final ConnectionPoolClearedEvent event) {
             if (enabledEvents.contains("PoolClearedEvent")) {
                 eventDocumentList.add(createEventDocument("PoolClearedEvent", event.getServerId()));
+            }
+        }
+
+        @Override
+        public void connectionPoolReady(final ConnectionPoolReadyEvent event) {
+            if (enabledEvents.contains("PoolReadyEvent")) {
+                eventDocumentList.add(createEventDocument("PoolReadyEvent", event.getServerId()));
             }
         }
 

@@ -28,6 +28,7 @@ import com.mongodb.connection.ServerSettings
 import com.mongodb.connection.ServerType
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SocketStreamFactory
+import com.mongodb.internal.inject.SameObjectProvider
 import org.bson.types.ObjectId
 
 import java.util.concurrent.CountDownLatch
@@ -189,20 +190,41 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
     }
 
     def initializeServerMonitor(ServerAddress address) {
+        SdamServerDescriptionManager sdam = new SdamServerDescriptionManager() {
+            @Override
+            void update(final ServerDescription candidateDescription) {
+                assert candidateDescription != null
+                newDescription = candidateDescription
+                latch.countDown()
+            }
+
+            @Override
+            void handleExceptionBeforeHandshake(final SdamServerDescriptionManager.SdamIssue sdamIssue) {
+                throw new UnsupportedOperationException()
+            }
+
+            @Override
+            void handleExceptionAfterHandshake(final SdamServerDescriptionManager.SdamIssue sdamIssue) {
+                throw new UnsupportedOperationException()
+            }
+
+            @Override
+            SdamServerDescriptionManager.SdamIssue.Context context() {
+                throw new UnsupportedOperationException()
+            }
+
+            @Override
+            SdamServerDescriptionManager.SdamIssue.Context context(final InternalConnection connection) {
+                throw new UnsupportedOperationException()
+            }
+        }
         serverMonitor = new DefaultServerMonitor(new ServerId(new ClusterId(), address), ServerSettings.builder().build(),
                 new ClusterClock(),
-                new ChangeListener<ServerDescription>() {
-                    @Override
-                    void stateChanged(final ChangeEvent<ServerDescription> event) {
-                        newDescription = event.newValue
-                        latch.countDown()
-                    }
-                },
                 new InternalStreamConnectionFactory(SINGLE, new SocketStreamFactory(SocketSettings.builder()
                         .connectTimeout(500, TimeUnit.MILLISECONDS)
                         .build(),
                         getSslSettings()), getCredentialWithCache(), null, null, [], null, getServerApi()),
-                new TestConnectionPool(), getServerApi())
+                getServerApi(), SameObjectProvider.initialized(sdam))
         serverMonitor.start()
         serverMonitor
     }

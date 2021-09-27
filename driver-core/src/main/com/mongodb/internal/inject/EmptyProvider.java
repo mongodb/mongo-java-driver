@@ -13,13 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.mongodb.internal.inject;
 
-package com.mongodb.internal.connection;
+import com.mongodb.annotations.Immutable;
 
-import com.mongodb.connection.ServerDescription;
+import java.util.Optional;
 
-interface ServerMonitorFactory {
+@Immutable
+public final class EmptyProvider<T> implements OptionalProvider<T> {
+    private static final EmptyProvider<?> INSTANCE = new EmptyProvider<>();
 
-    ServerMonitor create(ChangeListener<ServerDescription> serverStateListener);
+    private EmptyProvider() {
+    }
 
+    /**
+     * Returns {@link Optional#empty()}.
+     */
+    @Override
+    public Optional<T> optional() {
+        return Optional.empty();
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> EmptyProvider<T> instance() {
+        return (EmptyProvider<T>) INSTANCE;
+    }
 }

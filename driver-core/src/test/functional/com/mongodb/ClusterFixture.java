@@ -18,6 +18,7 @@ package com.mongodb;
 
 import com.mongodb.async.FutureResultCallback;
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ConnectionPoolSettings;
@@ -88,6 +89,7 @@ import static com.mongodb.internal.connection.DescriptionHelper.enableServiceIdM
 import static java.lang.String.format;
 import static java.lang.Thread.sleep;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assume.assumeThat;
@@ -713,5 +715,9 @@ public final class ClusterFixture {
             }
         }
         return count;
+    }
+
+    public static ClusterSettings.Builder setDirectConnection(final ClusterSettings.Builder builder) {
+        return builder.mode(ClusterConnectionMode.SINGLE).hosts(singletonList(getPrimary()));
     }
 }
