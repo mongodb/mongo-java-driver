@@ -32,7 +32,8 @@ import org.bson.codecs.BsonDocumentCodec;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableCommand;
+import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableWrite;
+import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableWriteAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorTransformer;
 import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorTransformerAsync;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
@@ -66,14 +67,14 @@ public abstract class TransactionOperation implements WriteOperation<Void>, Asyn
     @Override
     public Void execute(final WriteBinding binding) {
         isTrue("in transaction", binding.getSessionContext().hasActiveTransaction());
-        return executeRetryableCommand(binding, "admin", null, new NoOpFieldNameValidator(),
+        return executeRetryableWrite(binding, "admin", null, new NoOpFieldNameValidator(),
                 new BsonDocumentCodec(), getCommandCreator(), writeConcernErrorTransformer(), getRetryCommandModifier());
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
         isTrue("in transaction", binding.getSessionContext().hasActiveTransaction());
-        executeRetryableCommand(binding, "admin", null, new NoOpFieldNameValidator(),
+        executeRetryableWriteAsync(binding, "admin", null, new NoOpFieldNameValidator(),
                 new BsonDocumentCodec(), getCommandCreator(), writeConcernErrorTransformerAsync(), getRetryCommandModifier(),
                 errorHandlingCallback(callback, LOGGER));
     }

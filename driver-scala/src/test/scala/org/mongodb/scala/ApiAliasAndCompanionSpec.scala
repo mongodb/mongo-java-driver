@@ -241,7 +241,8 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "MongoObservable",
       "Name",
       "NameCodecProvider",
-      "TransactionBody"
+      "TransactionBody",
+      "FailPoint"
     )
 
     val wrapped = new Reflections(packageName, new SubTypesScanner(false))

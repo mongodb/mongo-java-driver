@@ -26,8 +26,8 @@ import org.bson.codecs.Decoder;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommand;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandAsync;
+import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableRead;
+import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableReadAsync;
 
 /**
  * An operation that executes an arbitrary command that reads from the server.
@@ -55,12 +55,13 @@ public class CommandReadOperation<T> implements AsyncReadOperation<T>, ReadOpera
 
     @Override
     public T execute(final ReadBinding binding) {
-        return executeCommand(binding, databaseName, getCommandCreator(), decoder, false);
+        return executeRetryableRead(binding, databaseName, getCommandCreator(), decoder, (result, source, connection) -> result, false);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<T> callback) {
-        executeCommandAsync(binding, databaseName, getCommandCreator(), decoder, false, callback);
+        executeRetryableReadAsync(binding, databaseName, getCommandCreator(), decoder, (result, source, connection) -> result,
+                false, callback);
     }
 
     private CommandCreator getCommandCreator() {

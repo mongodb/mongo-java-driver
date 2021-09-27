@@ -129,4 +129,3 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
         }
     }
 }
-

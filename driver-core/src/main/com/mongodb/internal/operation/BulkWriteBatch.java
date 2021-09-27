@@ -70,7 +70,7 @@ import static com.mongodb.internal.operation.WriteConcernHelper.createWriteConce
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 
-final class BulkWriteBatch {
+public final class BulkWriteBatch {
     private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());
     private static final Decoder<BsonDocument> DECODER = REGISTRY.get(BsonDocument.class);
     private static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator();
@@ -89,7 +89,7 @@ final class BulkWriteBatch {
     private final List<WriteRequestWithIndex> unprocessed;
     private final SessionContext sessionContext;
 
-    public static BulkWriteBatch createBulkWriteBatch(final MongoNamespace namespace,
+    static BulkWriteBatch createBulkWriteBatch(final MongoNamespace namespace,
                                                       final ServerDescription serverDescription,
                                                       final ConnectionDescription connectionDescription,
                                                       final boolean ordered, final WriteConcern writeConcern,
@@ -194,7 +194,7 @@ final class BulkWriteBatch {
         this.command = command;
     }
 
-    public void addResult(final BsonDocument result) {
+    void addResult(final BsonDocument result) {
         if (writeConcern.isAcknowledged()) {
             if (hasError(result)) {
                 MongoBulkWriteException bulkWriteException = getBulkWriteException(result);
@@ -205,43 +205,43 @@ final class BulkWriteBatch {
         }
     }
 
-    public boolean getRetryWrites() {
+    boolean getRetryWrites() {
         return retryWrites;
     }
 
-    public BsonDocument getCommand() {
+    BsonDocument getCommand() {
         return command;
     }
 
-    public SplittablePayload getPayload() {
+    SplittablePayload getPayload() {
         return payload;
     }
 
-    public Decoder<BsonDocument> getDecoder() {
+    Decoder<BsonDocument> getDecoder() {
         return DECODER;
     }
 
-    public BulkWriteResult getResult() {
+    BulkWriteResult getResult() {
         return bulkWriteBatchCombiner.getResult();
     }
 
-    public boolean hasErrors() {
+    boolean hasErrors() {
         return bulkWriteBatchCombiner.hasErrors();
     }
 
-    public MongoBulkWriteException getError() {
+    MongoBulkWriteException getError() {
         return bulkWriteBatchCombiner.getError();
     }
 
-    public boolean shouldProcessBatch() {
+    boolean shouldProcessBatch() {
         return !bulkWriteBatchCombiner.shouldStopSendingMoreBatches() && !payload.isEmpty();
     }
 
-    public boolean hasAnotherBatch() {
+    boolean hasAnotherBatch() {
         return !unprocessed.isEmpty();
     }
 
-    public BulkWriteBatch getNextBatch() {
+    BulkWriteBatch getNextBatch() {
         if (payload.hasAnotherSplit()) {
             IndexMap nextIndexMap = IndexMap.create();
             int newIndex = 0;
@@ -259,7 +259,7 @@ final class BulkWriteBatch {
         }
     }
 
-    public FieldNameValidator getFieldNameValidator() {
+    FieldNameValidator getFieldNameValidator() {
         if (batchType == UPDATE || batchType == REPLACE) {
             Map<String, FieldNameValidator> rootMap = new HashMap<String, FieldNameValidator>();
             if (batchType == WriteRequest.Type.REPLACE) {
