@@ -29,6 +29,8 @@ import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.fail;
 
 /**
+ * A class with {@code static} methods providing access to {@link AttachmentKey}s relevant when implementing retryable operations.
+ *
  * @see AttachmentKey
  */
 public final class AttachmentKeys {

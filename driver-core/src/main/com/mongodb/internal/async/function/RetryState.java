@@ -85,22 +85,20 @@ public final class RetryState {
      *     (the first argument of the {@code exceptionTransformer})</li>
      *     <li>and the exception from the most recent attempt (the second argument of the {@code exceptionTransformer}).</li>
      * </ul>
-     * The {@code exceptionTransformer} may either choose from its arguments, or return a different exception, but it must return
-     * a {@code @}{@link NonNull} value.
+     * The {@code exceptionTransformer} may either choose from its arguments, or return a different exception, a.k.a. transform,
+     * but it must return a {@code @}{@link NonNull} value.
      * The {@code exceptionTransformer} is called once before (in the happens-before order) the {@code retryPredicate},
      * regardless of whether the {@code retryPredicate} is called. The result of the {@code exceptionTransformer} does not affect
-     * the arguments passed to the {@code retryPredicate}, but they still may be mutated by the {@code exceptionTransformer}.
+     * what exception is passed to the {@code retryPredicate}.
      * @param retryPredicate {@code true} iff another attempt needs to be made. The {@code retryPredicate} is called not more than once
      * per attempt and only if all the following is true:
      * <ul>
      *     <li>{@code exceptionTransformer} completed normally;</li>
-     *     <li>retrying was not broken via
-     *     {@link #breakAndThrowIfRetryAnd(Supplier)} / {@link #breakAndCompleteIfRetryAnd(Supplier, SingleResultCallback)} /
-     *     {@link #markAsLastAttempt()};</li>
-     *     <li>there is at least one more {@linkplain #attempts() attempt} left.</li>
+     *     <li>the most recent attempt is not the {@linkplain #isLastAttempt() last} one.</li>
      * </ul>
-     * This {@linkplain RetryState} is updated after (in the happens-before order) testing the {@code retryPredicate},
-     * and only if the predicate completes normally.
+     * The {@code retryPredicate} accepts this {@link RetryState} and the exception from the most recent attempt,
+     * and may mutate the exception. The {@linkplain RetryState} advances to represent the state of a new attempt
+     * after (in the happens-before order) testing the {@code retryPredicate}, and only if the predicate completes normally.
      * @throws RuntimeException Iff any of the following is true:
      * <ul>
      *     <li>the {@code exceptionTransformer} completed abruptly;</li>
@@ -310,7 +308,7 @@ public final class RetryState {
      *
      * @see #attempts()
      */
-    boolean isLastAttempt() {
+    public boolean isLastAttempt() {
         return attempt() == attempts - 1 || loopState.isLastIteration();
     }
 

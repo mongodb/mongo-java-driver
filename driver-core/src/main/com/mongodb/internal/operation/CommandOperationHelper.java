@@ -141,7 +141,7 @@ final class CommandOperationHelper {
         BsonDocument create(ServerDescription serverDescription, ConnectionDescription connectionDescription);
     }
 
-    private static Throwable chooseAndMutateRetryableReadException(
+    private static Throwable chooseRetryableReadException(
             @Nullable final Throwable previouslyChosenException, final Throwable mostRecentAttemptException) {
         if (previouslyChosenException == null
                 || mostRecentAttemptException instanceof MongoSocketException
@@ -152,7 +152,7 @@ final class CommandOperationHelper {
         }
     }
 
-    static Throwable chooseAndMutateRetryableWriteException(
+    static Throwable chooseRetryableWriteException(
             @Nullable final Throwable previouslyChosenException, final Throwable mostRecentAttemptException) {
         if (previouslyChosenException == null) {
             if (mostRecentAttemptException instanceof ResourceSupplierInternalException) {
@@ -173,13 +173,13 @@ final class CommandOperationHelper {
     }
 
     static <R> Supplier<R> decorateReadWithRetries(final RetryState retryState, final Supplier<R> readFunction) {
-        return new RetryingSyncSupplier<>(retryState, CommandOperationHelper::chooseAndMutateRetryableReadException,
+        return new RetryingSyncSupplier<>(retryState, CommandOperationHelper::chooseRetryableReadException,
                 CommandOperationHelper::shouldAttemptToRetryRead, readFunction);
     }
 
     static <R> AsyncCallbackSupplier<R> decorateReadWithRetries(final RetryState retryState,
             final AsyncCallbackSupplier<R> asyncReadFunction) {
-        return new RetryingAsyncCallbackSupplier<>(retryState, CommandOperationHelper::chooseAndMutateRetryableReadException,
+        return new RetryingAsyncCallbackSupplier<>(retryState, CommandOperationHelper::chooseRetryableReadException,
                 CommandOperationHelper::shouldAttemptToRetryRead, asyncReadFunction);
     }
 
@@ -342,13 +342,13 @@ final class CommandOperationHelper {
     }
 
     static <R> Supplier<R> decorateWriteWithRetries(final RetryState retryState, final Supplier<R> writeFunction) {
-        return new RetryingSyncSupplier<>(retryState, CommandOperationHelper::chooseAndMutateRetryableWriteException,
+        return new RetryingSyncSupplier<>(retryState, CommandOperationHelper::chooseRetryableWriteException,
                 CommandOperationHelper::shouldAttemptToRetryWrite, writeFunction);
     }
 
     static <R> AsyncCallbackSupplier<R> decorateWriteWithRetries(final RetryState retryState,
             final AsyncCallbackSupplier<R> asyncWriteFunction) {
-        return new RetryingAsyncCallbackSupplier<>(retryState, CommandOperationHelper::chooseAndMutateRetryableWriteException,
+        return new RetryingAsyncCallbackSupplier<>(retryState, CommandOperationHelper::chooseRetryableWriteException,
                 CommandOperationHelper::shouldAttemptToRetryWrite, asyncWriteFunction);
     }
 

@@ -52,26 +52,23 @@ public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupp
      *     (the first argument of the {@code failedResultTransformer})</li>
      *     <li>and the failed result from the most recent attempt (the second argument of the {@code failedResultTransformer}).</li>
      * </ul>
-     * The {@code failedResultTransformer} may either choose from its arguments, or return a different exception, but it must return
-     * a {@code @}{@link NonNull} value.
+     * The {@code failedResultTransformer} may either choose from its arguments, or return a different exception, a.k.a. transform,
+     * but it must return a {@code @}{@link NonNull} value.
      * If it completes abruptly, then the {@code asyncFunction} cannot be retried and the exception thrown by
      * the {@code failedResultTransformer} is used as a failed result of this {@link RetryingAsyncCallbackSupplier}.
      * The {@code failedResultTransformer} is called before (in the happens-before order) the {@code retryPredicate}.
-     * The result of the {@code failedResultTransformer} does not affect the arguments passed to the {@code retryPredicate}.
+     * The result of the {@code failedResultTransformer} does not affect what exception is passed to the {@code retryPredicate}.
      * @param retryPredicate {@code true} iff another attempt needs to be made. If it completes abruptly,
      * then the {@code asyncFunction} cannot be retried and the exception thrown by the {@code retryPredicate}
      * is used as a failed result of this {@link RetryingAsyncCallbackSupplier}. The {@code retryPredicate} is called not more than once
      * per attempt and only if all the following is true:
      * <ul>
      *     <li>{@code failedResultTransformer} completed normally;</li>
-     *     <li>retrying was not broken via
-     *     {@link RetryState#breakAndThrowIfRetryAnd(Supplier)} /
-     *     {@link RetryState#breakAndCompleteIfRetryAnd(Supplier, SingleResultCallback)} /
-     *     {@link RetryState#markAsLastAttempt()};</li>
-     *     <li>there is at least one more {@linkplain RetryState#attempts() attempt} left.</li>
+     *     <li>the most recent attempt is not the {@linkplain RetryState#isLastAttempt() last} one.</li>
      * </ul>
-     * This {@linkplain RetryState} is updated after (in the happens-before order) testing the {@code retryPredicate},
-     * and only if the predicate completes normally.
+     * The {@code retryPredicate} accepts this {@link RetryState} and the exception from the most recent attempt,
+     * and may mutate the exception. The {@linkplain RetryState} advances to represent the state of a new attempt
+     * after (in the happens-before order) testing the {@code retryPredicate}, and only if the predicate completes normally.
      * @param asyncFunction The retryable {@link AsyncCallbackSupplier} to be decorated.
      */
     public RetryingAsyncCallbackSupplier(

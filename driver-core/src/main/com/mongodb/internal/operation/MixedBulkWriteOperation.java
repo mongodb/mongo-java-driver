@@ -182,13 +182,13 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
     }
 
     private <R> Supplier<R> decorateWriteWithRetries(final RetryState retryState, final Supplier<R> writeFunction) {
-        return new RetryingSyncSupplier<>(retryState, CommandOperationHelper::chooseAndMutateRetryableWriteException,
+        return new RetryingSyncSupplier<>(retryState, CommandOperationHelper::chooseRetryableWriteException,
                 this::shouldAttemptToRetryWrite, writeFunction);
     }
 
     private <R> AsyncCallbackSupplier<R> decorateWriteWithRetries(final RetryState retryState,
             final AsyncCallbackSupplier<R> writeFunction) {
-        return new RetryingAsyncCallbackSupplier<>(retryState, CommandOperationHelper::chooseAndMutateRetryableWriteException,
+        return new RetryingAsyncCallbackSupplier<>(retryState, CommandOperationHelper::chooseRetryableWriteException,
                 this::shouldAttemptToRetryWrite, writeFunction);
     }
 
