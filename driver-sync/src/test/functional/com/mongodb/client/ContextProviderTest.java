@@ -17,7 +17,6 @@
 package com.mongodb.client;
 
 import com.mongodb.ContextProvider;
-import com.mongodb.MongoClientSettings;
 import com.mongodb.RequestContext;
 import com.mongodb.WriteConcern;
 import com.mongodb.event.CommandFailedEvent;
@@ -30,8 +29,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 
-import static com.mongodb.ClusterFixture.getConnectionString;
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
+import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static com.mongodb.client.model.Updates.inc;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -43,16 +42,14 @@ public class ContextProviderTest {
 
     @Test
     public void shouldThrowIfContextProviderIsNotSynchronousContextProvider() {
-        assertThrows(IllegalArgumentException.class, () -> MongoClients.create(MongoClientSettings.builder()
-                .applyConnectionString(getConnectionString())
+        assertThrows(IllegalArgumentException.class, () -> MongoClients.create(getMongoClientSettingsBuilder()
                 .contextProvider(new ContextProvider() {})
                 .build()));
     }
 
     @Test
     public void shouldPropagateExceptionFromContextProvider() {
-            try (MongoClient client = MongoClients.create(MongoClientSettings.builder()
-                    .applyConnectionString(getConnectionString())
+            try (MongoClient client = MongoClients.create(getMongoClientSettingsBuilder()
                     .contextProvider(new SynchronousContextProvider() {
                         @Override
                         public RequestContext getContext() {
@@ -69,8 +66,7 @@ public class ContextProviderTest {
     public void contextShouldBeNullByDefaultInCommandEvents() {
 
         TestCommandListener commandListener = new TestCommandListener(null);
-        try (MongoClient client = MongoClients.create(MongoClientSettings.builder()
-                .applyConnectionString(getConnectionString())
+        try (MongoClient client = MongoClients.create(getMongoClientSettingsBuilder()
                 .addCommandListener(commandListener)
                 .build())) {
 
@@ -95,8 +91,7 @@ public class ContextProviderTest {
         RequestContext requestContext = mock(RequestContext.class);
 
         TestCommandListener commandListener = new TestCommandListener(requestContext);
-        try (MongoClient client = MongoClients.create(MongoClientSettings.builder()
-                .applyConnectionString(getConnectionString())
+        try (MongoClient client = MongoClients.create(getMongoClientSettingsBuilder()
                 .contextProvider(new SynchronousContextProvider() {
                     @Override
                     public RequestContext getContext() {
