@@ -19,6 +19,7 @@ package com.mongodb.client.internal;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.connection.ConnectionDescription;
@@ -94,9 +95,9 @@ class CryptConnection implements Connection {
 
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-                         final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-                         @Nullable final ServerApi serverApi, final boolean responseExpected, @Nullable final SplittablePayload payload,
-                         @Nullable final FieldNameValidator payloadFieldNameValidator) {
+            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
+            @Nullable final ServerApi serverApi, final RequestContext requestContext, final boolean responseExpected,
+            @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator) {
 
         if (serverIsLessThanVersionFourDotTwo(wrapped.getDescription())) {
             throw new MongoClientException("Auto-encryption requires a minimum MongoDB version of 4.2");
@@ -117,7 +118,7 @@ class CryptConnection implements Connection {
                 new RawBsonDocument(bsonOutput.getInternalBuffer(), 0, bsonOutput.getSize()));
 
         RawBsonDocument encryptedResponse = wrapped.command(database, encryptedCommand, commandFieldNameValidator, readPreference,
-                new RawBsonDocumentCodec(), sessionContext, serverApi, responseExpected, null, null);
+                new RawBsonDocumentCodec(), sessionContext, serverApi, requestContext, responseExpected, null, null);
 
         RawBsonDocument decryptedResponse = crypt.decrypt(encryptedResponse);
 
@@ -128,10 +129,10 @@ class CryptConnection implements Connection {
 
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-                         final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-                         @Nullable final ServerApi serverApi) {
-        return command(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi, true, null,
-                null);
+            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
+            @Nullable final ServerApi serverApi, final RequestContext requestContext) {
+        return command(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi,
+                requestContext, true, null, null);
     }
 
     @SuppressWarnings("unchecked")
@@ -163,36 +164,39 @@ class CryptConnection implements Connection {
     // UNSUPPORTED METHODS for encryption/decryption
 
     @Override
-    public WriteConcernResult insert(final MongoNamespace namespace, final boolean ordered, final InsertRequest insertRequest) {
+    public WriteConcernResult insert(final MongoNamespace namespace, final boolean ordered, final InsertRequest insertRequest,
+            final RequestContext requestContext) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public WriteConcernResult update(final MongoNamespace namespace, final boolean ordered, final UpdateRequest updateRequest) {
+    public WriteConcernResult update(final MongoNamespace namespace, final boolean ordered, final UpdateRequest updateRequest,
+            final RequestContext requestContext) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public WriteConcernResult delete(final MongoNamespace namespace, final boolean ordered, final DeleteRequest deleteRequest) {
+    public WriteConcernResult delete(final MongoNamespace namespace, final boolean ordered, final DeleteRequest deleteRequest,
+            final RequestContext requestContext) {
         throw new UnsupportedOperationException();
     }
 
     @Override
     public <T> QueryResult<T> query(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
-                                    final int skip, final int limit, final int batchSize, final boolean secondaryOk,
-                                    final boolean tailableCursor, final boolean awaitData, final boolean noCursorTimeout,
-                                    final boolean partial, final boolean oplogReplay, final Decoder<T> resultDecoder) {
+            final int skip, final int limit, final int batchSize, final boolean secondaryOk,
+            final boolean tailableCursor, final boolean awaitData, final boolean noCursorTimeout,
+            final boolean partial, final boolean oplogReplay, final Decoder<T> resultDecoder, final RequestContext requestContext) {
         throw new UnsupportedOperationException();
     }
 
     @Override
     public <T> QueryResult<T> getMore(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
-                                      final Decoder<T> resultDecoder) {
+            final Decoder<T> resultDecoder, final RequestContext requestContext) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void killCursor(final MongoNamespace namespace, final List<Long> cursors) {
+    public void killCursor(final MongoNamespace namespace, final List<Long> cursors, final RequestContext requestContext) {
         throw new UnsupportedOperationException();
     }
 

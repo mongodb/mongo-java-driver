@@ -16,7 +16,9 @@
 
 package com.mongodb.event;
 
+import com.mongodb.RequestContext;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.lang.Nullable;
 
 /**
  * An event representing a MongoDB database command.
@@ -24,9 +26,27 @@ import com.mongodb.connection.ConnectionDescription;
  * @since 3.1
  */
 public abstract class CommandEvent {
+    @Nullable
+    private final RequestContext requestContext;
     private final int requestId;
     private final ConnectionDescription connectionDescription;
     private final String commandName;
+
+    /**
+     * Construct an instance.
+     * @param requestContext the request context
+     * @param requestId the request id
+     * @param connectionDescription the connection description
+     * @param commandName the command name
+     * @since 4.4
+     */
+    public CommandEvent(@Nullable final RequestContext requestContext, final int requestId,
+            final ConnectionDescription connectionDescription, final String commandName) {
+        this.requestContext = requestContext;
+        this.requestId = requestId;
+        this.connectionDescription = connectionDescription;
+        this.commandName = commandName;
+    }
 
     /**
      * Construct an instance.
@@ -34,11 +54,8 @@ public abstract class CommandEvent {
      * @param connectionDescription the connection description
      * @param commandName the command name
      */
-    public CommandEvent(final int requestId, final ConnectionDescription connectionDescription,
-                        final String commandName) {
-        this.requestId = requestId;
-        this.connectionDescription = connectionDescription;
-        this.commandName = commandName;
+    public CommandEvent(final int requestId, final ConnectionDescription connectionDescription, final String commandName) {
+        this(null, requestId, connectionDescription, commandName);
     }
 
     /**
@@ -66,6 +83,17 @@ public abstract class CommandEvent {
      */
     public String getCommandName() {
         return commandName;
+    }
+
+    /**
+     * Gets the request context associated with this event.
+     *
+     * @return the request context
+     * @since 4.4
+     */
+    @Nullable
+    public RequestContext getRequestContext() {
+        return requestContext;
     }
 }
 

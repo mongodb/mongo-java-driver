@@ -23,6 +23,7 @@ import com.mongodb.ServerApiVersion
 import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
+import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.connection.Cluster
 import com.mongodb.internal.connection.Server
 import com.mongodb.internal.connection.ServerTuple
@@ -44,7 +45,7 @@ class SingleServerBindingSpecification extends Specification {
         def serverApi = ServerApi.builder().version(ServerApiVersion.V1).build()
 
         when:
-        def binding = new SingleServerBinding(cluster, address, serverApi)
+        def binding = new SingleServerBinding(cluster, address, serverApi, IgnorableRequestContext.INSTANCE)
 
         then:
         binding.readPreference == ReadPreference.primary()
@@ -76,7 +77,7 @@ class SingleServerBindingSpecification extends Specification {
         def address = new ServerAddress()
 
         when:
-        def binding = new SingleServerBinding(cluster, address, null)
+        def binding = new SingleServerBinding(cluster, address, null, IgnorableRequestContext.INSTANCE)
 
         then:
         binding.count == 1

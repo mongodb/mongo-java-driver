@@ -16,7 +16,7 @@
 
 package com.mongodb.client.internal;
 
-import com.mongodb.ClientSessionOptions;
+    import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
@@ -25,13 +25,16 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
+import com.mongodb.client.SynchronousContextProvider;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.ClusterBinding;
 import com.mongodb.internal.binding.ReadBinding;
@@ -65,13 +68,17 @@ final class MongoClientDelegate {
     @Nullable
     private final ServerApi serverApi;
     private final CodecRegistry codecRegistry;
+    @Nullable
+    private final SynchronousContextProvider contextProvider;
     private final AtomicBoolean closed;
 
     MongoClientDelegate(final Cluster cluster, final CodecRegistry codecRegistry,
                         final Object originator, @Nullable final OperationExecutor operationExecutor,
-                        @Nullable final Crypt crypt, @Nullable final ServerApi serverApi) {
+                        @Nullable final Crypt crypt, @Nullable final ServerApi serverApi,
+                        @Nullable final SynchronousContextProvider contextProvider) {
         this.cluster = cluster;
         this.codecRegistry = codecRegistry;
+        this.contextProvider = contextProvider;
         this.serverSessionPool = new ServerSessionPool(cluster, serverApi);
         this.originator = originator;
         this.operationExecutor = operationExecutor == null ? new DelegateOperationExecutor() : operationExecutor;
@@ -224,7 +231,7 @@ final class MongoClientDelegate {
         ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, final ReadConcern readConcern,
                                              @Nullable final ClientSession session, final boolean ownsSession) {
             ClusterAwareReadWriteBinding readWriteBinding = new ClusterBinding(cluster,
-                    getReadPreferenceForBinding(readPreference, session), readConcern, serverApi);
+                    getReadPreferenceForBinding(readPreference, session), readConcern, serverApi, getContext());
 
             if (crypt != null) {
                 readWriteBinding = new CryptBinding(readWriteBinding, crypt);
@@ -235,6 +242,14 @@ final class MongoClientDelegate {
             } else {
                 return readWriteBinding;
             }
+        }
+
+        private <T> RequestContext getContext() {
+            RequestContext context = null;
+            if (contextProvider != null) {
+                context = contextProvider.getContext();
+            }
+            return context == null ? IgnorableRequestContext.INSTANCE : context;
         }
 
         private void labelException(final @Nullable ClientSession session, final MongoException e) {

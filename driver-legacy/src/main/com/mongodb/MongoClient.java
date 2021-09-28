@@ -28,6 +28,7 @@ import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.event.ClusterListener;
+import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadWriteBinding;
 import com.mongodb.internal.binding.SingleServerBinding;
@@ -826,13 +827,13 @@ public class MongoClient implements Closeable {
         ServerCursorAndNamespace cur;
         while ((cur = orphanedCursors.poll()) != null) {
             ReadWriteBinding binding = new SingleServerBinding(delegate.getCluster(), cur.serverCursor.getAddress(),
-                    options.getServerApi());
+                    options.getServerApi(), IgnorableRequestContext.INSTANCE);
             try {
                 ConnectionSource source = binding.getReadConnectionSource();
                 try {
                     Connection connection = source.getConnection();
                     try {
-                        connection.killCursor(cur.namespace, singletonList(cur.serverCursor.getId()));
+                        connection.killCursor(cur.namespace, singletonList(cur.serverCursor.getId()), source.getRequestContext());
                     } finally {
                         connection.release();
                     }

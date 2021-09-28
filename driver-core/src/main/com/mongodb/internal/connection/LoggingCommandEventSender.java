@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoCommandException;
+import com.mongodb.RequestContext;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.event.CommandListener;
@@ -41,6 +42,7 @@ class LoggingCommandEventSender implements CommandEventSender {
 
     private final ConnectionDescription description;
     private final CommandListener commandListener;
+    private final RequestContext requestContext;
     private final Logger logger;
     private final long startTimeNanos;
     private final CommandMessage message;
@@ -49,11 +51,12 @@ class LoggingCommandEventSender implements CommandEventSender {
     private final boolean redactionRequired;
 
     LoggingCommandEventSender(final Set<String> securitySensitiveCommands, final Set<String> securitySensitiveHelloCommands,
-                              final ConnectionDescription description,
-                              final CommandListener commandListener, final CommandMessage message,
-                              final ByteBufferBsonOutput bsonOutput, final Logger logger) {
+            final ConnectionDescription description,
+            final CommandListener commandListener, final RequestContext requestContext, final CommandMessage message,
+            final ByteBufferBsonOutput bsonOutput, final Logger logger) {
         this.description = description;
         this.commandListener = commandListener;
+        this.requestContext = requestContext;
         this.logger = logger;
         this.startTimeNanos = System.nanoTime();
         this.message = message;
@@ -67,6 +70,7 @@ class LoggingCommandEventSender implements CommandEventSender {
     public void sendStartedEvent() {
         if (loggingRequired()) {
             String commandString = redactionRequired ? String.format("{\"%s\": ...", commandName) : getTruncatedJsonCommand();
+            // TODO: log RequestContext?
             logger.debug(
                     format("Sending command '%s' with request id %d to database %s on connection [%s] to server %s",
                             commandString, message.getId(),
@@ -78,7 +82,7 @@ class LoggingCommandEventSender implements CommandEventSender {
                     ? new BsonDocument() : commandDocument;
 
             sendCommandStartedEvent(message, message.getNamespace().getDatabaseName(),
-                    commandName, commandDocumentForEvent, description, commandListener);
+                    commandName, commandDocumentForEvent, description, commandListener, requestContext);
         }
         // the buffer underlying the command document may be released after the started event, so set to null to ensure it's not used
         // when sending the failed or succeeded event
@@ -123,7 +127,8 @@ class LoggingCommandEventSender implements CommandEventSender {
         }
 
         if (eventRequired()) {
-            sendCommandFailedEvent(message, commandName, description, elapsedTimeNanos, commandEventException, commandListener);
+            sendCommandFailedEvent(message, commandName, description, elapsedTimeNanos, commandEventException, commandListener,
+                    requestContext);
         }
     }
 
@@ -143,7 +148,7 @@ class LoggingCommandEventSender implements CommandEventSender {
                     ? new BsonDocument()
                     : responseBuffers.getResponseDocument(message.getId(), new RawBsonDocumentCodec());
             sendCommandSucceededEvent(message, commandName, responseDocumentForEvent, description,
-                    elapsedTimeNanos, commandListener);
+                    elapsedTimeNanos, commandListener, requestContext);
         }
     }
 
@@ -162,7 +167,7 @@ class LoggingCommandEventSender implements CommandEventSender {
         if (eventRequired()) {
             BsonDocument responseDocumentForEvent = new BsonDocument("ok", new BsonInt32(1));
             sendCommandSucceededEvent(message, commandName, responseDocumentForEvent, description,
-                    elapsedTimeNanos, commandListener);
+                    elapsedTimeNanos, commandListener, requestContext);
         }
     }
 

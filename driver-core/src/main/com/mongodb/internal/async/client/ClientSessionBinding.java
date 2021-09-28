@@ -18,6 +18,7 @@ package com.mongodb.internal.async.client;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
@@ -80,6 +81,11 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
     @Nullable
     public ServerApi getServerApi() {
         return wrapped.getServerApi();
+    }
+
+    @Override
+    public RequestContext getRequestContext() {
+        return wrapped.getRequestContext();
     }
 
     private void getPinnedConnectionSource(final boolean isRead, final SingleResultCallback<AsyncConnectionSource> callback) {
@@ -156,6 +162,11 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
         @Nullable
         public ServerApi getServerApi() {
             return wrapped.getServerApi();
+        }
+
+        @Override
+        public RequestContext getRequestContext() {
+            return wrapped.getRequestContext();
         }
 
         @Override

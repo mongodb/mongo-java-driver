@@ -81,7 +81,7 @@ class QueryBatchCursorSpecification extends Specification {
         cursor.hasNext()
 
         then:
-        1 * connection.command(NAMESPACE.getDatabaseName(), expectedCommand, _, _, _, _, null) >> {
+        1 * connection.command(NAMESPACE.getDatabaseName(), expectedCommand, _, _, _, _, null, _) >> {
             reply
         }
         1 * connection.release()
@@ -99,8 +99,8 @@ class QueryBatchCursorSpecification extends Specification {
             _ * getDescription() >> Stub(ConnectionDescription) {
                 getMaxWireVersion() >> 4
             }
-            _ * killCursor(_, _) >> { throw new MongoSocketException('No MongoD', SERVER_ADDRESS) }
-            _ * command(_, _, _, _, _) >> { throw new MongoSocketException('No MongoD', SERVER_ADDRESS) }
+            _ * killCursor(*_) >> { throw new MongoSocketException('No MongoD', SERVER_ADDRESS) }
+            _ * command(*_) >> { throw new MongoSocketException('No MongoD', SERVER_ADDRESS) }
         }
         def connectionSource = Stub(ConnectionSource) {
             getServerApi() >> null

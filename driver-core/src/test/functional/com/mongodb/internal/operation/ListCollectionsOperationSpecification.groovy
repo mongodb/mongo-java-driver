@@ -439,7 +439,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
         then:
         _ * connection.getDescription() >> helper.twoSixConnectionDescription
-        1 * connection.query(_, _, _, _, _, _, readPreference.isSecondaryOk(), _, _, _, _, _, _) >> helper.queryResult
+        1 * connection.query(_, _, _, _, _, _, readPreference.isSecondaryOk(), *_) >> helper.queryResult
         1 * connection.release()
 
         when: '3.0.0'
@@ -447,7 +447,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
         then:
         _ * connection.getDescription() >> helper.threeZeroConnectionDescription
-        1 * connection.command(_, _, _, readPreference, _, _, null) >> helper.commandResult
+        1 * connection.command(_, _, _, readPreference, _, _, null, _) >> helper.commandResult
         1 * connection.release()
 
         where:
@@ -473,15 +473,15 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
         then:
         _ * connection.getDescription() >> helper.twoSixConnectionDescription
-        1 * connection.queryAsync(_, _, _, _, _, _, readPreference.isSecondaryOk(), _, _, _, _, _, _, _) >> {
-            it[13].onResult(helper.queryResult, null) }
+        1 * connection.queryAsync(_, _, _, _, _, _, readPreference.isSecondaryOk(), *_) >> {
+            it.last().onResult(helper.queryResult, null) }
 
         when: '3.0.0'
         operation.executeAsync(readBinding, Stub(SingleResultCallback))
 
         then:
         _ * connection.getDescription() >> helper.threeZeroConnectionDescription
-        1 * connection.commandAsync(helper.dbName, _, _, readPreference, _, _, _, _) >> { it.last().onResult(helper.commandResult, null) }
+        1 * connection.commandAsync(helper.dbName, _, _, readPreference, *_) >> { it.last().onResult(helper.commandResult, null) }
 
         where:
         readPreference << [ReadPreference.primary(), ReadPreference.secondary()]

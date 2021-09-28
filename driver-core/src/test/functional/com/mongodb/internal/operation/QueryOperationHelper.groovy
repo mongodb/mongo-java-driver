@@ -22,6 +22,7 @@ import com.mongodb.MongoNamespace
 import com.mongodb.MongoQueryException
 import com.mongodb.ReadPreference
 import com.mongodb.ServerCursor
+import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.binding.ConnectionSource
 import com.mongodb.internal.connection.Connection
 import com.mongodb.internal.connection.NoOpSessionContext
@@ -74,14 +75,14 @@ class QueryOperationHelper {
 
     static void makeAdditionalGetMoreCall(MongoNamespace namespace, ServerCursor serverCursor, Connection connection) {
         if (serverVersionLessThan(3, 6)) {
-            connection.getMore(namespace, serverCursor.getId(), 1, new DocumentCodec())
+            connection.getMore(namespace, serverCursor.getId(), 1, new DocumentCodec(), IgnorableRequestContext.INSTANCE)
         } else {
             try {
                 connection.command(namespace.databaseName,
                         new BsonDocument('getMore', new BsonInt64(serverCursor.getId()))
                                 .append('collection', new BsonString(namespace.getCollectionName())),
                         new NoOpFieldNameValidator(), ReadPreference.primary(),
-                        new BsonDocumentCodec(), new NoOpSessionContext(), getServerApi())
+                        new BsonDocumentCodec(), new NoOpSessionContext(), getServerApi(), IgnorableRequestContext.INSTANCE)
             } catch (MongoCommandException e) {
                 if (e.getErrorCode() == 43) {
                     throw new MongoCursorNotFoundException(serverCursor.getId(), serverCursor.getAddress())

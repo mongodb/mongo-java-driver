@@ -40,6 +40,7 @@ import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerType
 import com.mongodb.event.CommandListener
 import com.mongodb.event.ServerListener
+import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.bulk.InsertRequest
 import com.mongodb.internal.inject.SameObjectProvider
@@ -278,7 +279,8 @@ class DefaultServerSpecification extends Specification {
         when:
         testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoNotPrimaryException(new BsonDocument(), serverId.address)))
 
-        testConnection.insert(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()))
+        testConnection.insert(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
+                IgnorableRequestContext.INSTANCE)
 
         then:
         thrown(MongoNotPrimaryException)
@@ -288,7 +290,7 @@ class DefaultServerSpecification extends Specification {
         when:
         def futureResultCallback = new FutureResultCallback()
         testConnection.insertAsync(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
-                futureResultCallback);
+                IgnorableRequestContext.INSTANCE, futureResultCallback);
         futureResultCallback.get()
 
         then:
@@ -308,7 +310,8 @@ class DefaultServerSpecification extends Specification {
         when:
         testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoNodeIsRecoveringException(new BsonDocument(), new ServerAddress())))
 
-        testConnection.insert(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()))
+        testConnection.insert(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
+                IgnorableRequestContext.INSTANCE)
 
         then:
         thrown(MongoNodeIsRecoveringException)
@@ -328,7 +331,8 @@ class DefaultServerSpecification extends Specification {
         when:
         testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoSocketException('socket error', new ServerAddress())))
 
-        testConnection.insert(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()))
+        testConnection.insert(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
+                IgnorableRequestContext.INSTANCE)
 
         then:
         thrown(MongoSocketException)
@@ -338,7 +342,7 @@ class DefaultServerSpecification extends Specification {
         when:
         def futureResultCallback = new FutureResultCallback<WriteConcernResult>()
         testConnection.insertAsync(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
-                futureResultCallback)
+                IgnorableRequestContext.INSTANCE, futureResultCallback)
         futureResultCallback.get()
 
         then:
@@ -359,7 +363,8 @@ class DefaultServerSpecification extends Specification {
         testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoSocketReadTimeoutException('socket timeout', new ServerAddress(),
                 new IOException())))
 
-        testConnection.insert(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()))
+        testConnection.insert(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
+                IgnorableRequestContext.INSTANCE)
 
         then:
         thrown(MongoSocketReadTimeoutException)
@@ -369,7 +374,7 @@ class DefaultServerSpecification extends Specification {
         when:
         def futureResultCallback = new FutureResultCallback<WriteConcernResult>()
         testConnection.insertAsync(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
-                futureResultCallback)
+                IgnorableRequestContext.INSTANCE, futureResultCallback)
         futureResultCallback.get()
 
         then:
@@ -391,12 +396,12 @@ class DefaultServerSpecification extends Specification {
         when:
         if (async) {
             CountDownLatch latch = new CountDownLatch(1)
-            testConnection.killCursorAsync(new MongoNamespace('test.test'), []) {
+            testConnection.killCursorAsync(new MongoNamespace('test.test'), [], IgnorableRequestContext.INSTANCE) {
                 BsonDocument result, Throwable t -> latch.countDown()
             }
             latch.await()
         } else {
-            testConnection.killCursor(new MongoNamespace('test.test'), [])
+            testConnection.killCursor(new MongoNamespace('test.test'), [], IgnorableRequestContext.INSTANCE)
         }
 
         then:
@@ -428,13 +433,13 @@ class DefaultServerSpecification extends Specification {
         if (async) {
             CountDownLatch latch = new CountDownLatch(1)
             testConnection.commandAsync('admin', new BsonDocument('ping', new BsonInt32(1)), NO_OP_FIELD_NAME_VALIDATOR,
-                    ReadPreference.primary(), new BsonDocumentCodec(), sessionContext, getServerApi()) {
+                    ReadPreference.primary(), new BsonDocumentCodec(), sessionContext, getServerApi(), null) {
                 BsonDocument result, Throwable t -> latch.countDown()
             }
             latch.await()
         } else {
             testConnection.command('admin', new BsonDocument('ping', new BsonInt32(1)), NO_OP_FIELD_NAME_VALIDATOR,
-                    ReadPreference.primary(), new BsonDocumentCodec(), sessionContext, getServerApi())
+                    ReadPreference.primary(), new BsonDocumentCodec(), sessionContext, getServerApi(), IgnorableRequestContext.INSTANCE)
         }
 
         then:

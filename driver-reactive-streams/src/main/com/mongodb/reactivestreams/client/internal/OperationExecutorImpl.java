@@ -15,6 +15,7 @@
  */
 package com.mongodb.reactivestreams.client.internal;
 
+import com.mongodb.ContextProvider;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
@@ -23,6 +24,8 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.RequestContext;
+import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.async.client.ClientSessionBinding;
 import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.AsyncClusterBinding;
@@ -31,8 +34,10 @@ import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.internal.operation.AsyncWriteOperation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
+import com.mongodb.reactivestreams.client.ReactiveContextProvider;
 import com.mongodb.reactivestreams.client.internal.crypt.Crypt;
 import com.mongodb.reactivestreams.client.internal.crypt.CryptBinding;
+import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Mono;
 
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
@@ -45,10 +50,17 @@ public class OperationExecutorImpl implements OperationExecutor {
 
     private final MongoClientImpl mongoClient;
     private final ClientSessionHelper clientSessionHelper;
+    private final ReactiveContextProvider contextProvider;
 
     OperationExecutorImpl(final MongoClientImpl mongoClient, final ClientSessionHelper clientSessionHelper) {
         this.mongoClient = mongoClient;
         this.clientSessionHelper = clientSessionHelper;
+        ContextProvider contextProvider = mongoClient.getSettings().getContextProvider();
+        if (contextProvider != null && !(contextProvider instanceof ReactiveContextProvider)) {
+            throw new IllegalArgumentException("The contextProvider must be an instance of "
+                    + ReactiveContextProvider.class.getName() + " when using the Reactive Streams driver");
+        }
+        this.contextProvider = (ReactiveContextProvider) contextProvider;
     }
 
     @Override
@@ -62,27 +74,30 @@ public class OperationExecutorImpl implements OperationExecutor {
             session.notifyOperationInitiated(operation);
         }
 
-          return clientSessionHelper.withClientSession(session, this)
-                .map(clientSession -> getReadWriteBinding(readPreference, readConcern, clientSession,
-                                                              session == null && clientSession != null))
-                .switchIfEmpty(Mono.fromCallable(() -> getReadWriteBinding(readPreference, readConcern, session, false)))
-                .flatMap(binding -> {
-                    if (session != null && session.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
-                        binding.release();
-                        return Mono.error(new MongoClientException("Read preference in a transaction must be primary"));
-                    } else {
-                        return Mono.<T>create(sink -> operation.executeAsync(binding, (result, t) -> {
-                            try {
+        return Mono.from(subscriber ->
+                clientSessionHelper.withClientSession(session, OperationExecutorImpl.this)
+                        .map(clientSession -> getReadWriteBinding(getContext(subscriber), readPreference, readConcern, clientSession,
+                                session == null && clientSession != null))
+                        .switchIfEmpty(Mono.fromCallable(() ->
+                                getReadWriteBinding(getContext(subscriber), readPreference, readConcern, session, false)))
+                        .flatMap(binding -> {
+                            if (session != null && session.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
                                 binding.release();
-                            } finally {
-                                sinkToCallback(sink).onResult(result, t);
+                                return Mono.error(new MongoClientException("Read preference in a transaction must be primary"));
+                            } else {
+                                return Mono.<T>create(sink -> operation.executeAsync(binding, (result, t) -> {
+                                    try {
+                                        binding.release();
+                                    } finally {
+                                        sinkToCallback(sink).onResult(result, t);
+                                    }
+                                })).doOnError((t) -> {
+                                    labelException(session, t);
+                                    unpinServerAddressOnTransientTransactionError(session, t);
+                                });
                             }
-                        })).doOnError((t) -> {
-                            labelException(session, t);
-                            unpinServerAddressOnTransientTransactionError(session, t);
-                        });
-                    }
-                });
+                        }).subscribe(subscriber)
+        );
     }
 
     @Override
@@ -95,22 +110,33 @@ public class OperationExecutorImpl implements OperationExecutor {
             session.notifyOperationInitiated(operation);
         }
 
-        return clientSessionHelper.withClientSession(session, this)
-                .map(clientSession -> getReadWriteBinding(ReadPreference.primary(), readConcern, clientSession,
-                                                              session == null && clientSession != null))
-                .switchIfEmpty(Mono.fromCallable(() -> getReadWriteBinding(ReadPreference.primary(), readConcern, session, false)))
-                .flatMap(binding ->
-                        Mono.<T>create(sink -> operation.executeAsync(binding, (result, t) -> {
-                            try {
-                                binding.release();
-                            } finally {
-                                sinkToCallback(sink).onResult(result, t);
-                            }
-                        })).doOnError((t) -> {
-                            labelException(session, t);
-                            unpinServerAddressOnTransientTransactionError(session, t);
-                        })
-                );
+        return Mono.from(subscriber ->
+                clientSessionHelper.withClientSession(session, OperationExecutorImpl.this)
+                        .map(clientSession -> getReadWriteBinding(getContext(subscriber), ReadPreference.primary(), readConcern,
+                                clientSession, session == null && clientSession != null))
+                        .switchIfEmpty(Mono.fromCallable(() ->
+                                getReadWriteBinding(getContext(subscriber), ReadPreference.primary(), readConcern, session, false)))
+                        .flatMap(binding ->
+                                Mono.<T>create(sink -> operation.executeAsync(binding, (result, t) -> {
+                                    try {
+                                        binding.release();
+                                    } finally {
+                                        sinkToCallback(sink).onResult(result, t);
+                                    }
+                                })).doOnError((t) -> {
+                                    labelException(session, t);
+                                    unpinServerAddressOnTransientTransactionError(session, t);
+                                })
+                        ).subscribe(subscriber)
+        );
+    }
+
+    private <T> RequestContext getContext(final Subscriber<T> subscriber) {
+        RequestContext context = null;
+        if (contextProvider != null) {
+            context = contextProvider.getContext(subscriber);
+        }
+        return context == null ? IgnorableRequestContext.INSTANCE : context;
     }
 
     private void labelException(@Nullable final ClientSession session, @Nullable final Throwable t) {
@@ -130,12 +156,11 @@ public class OperationExecutorImpl implements OperationExecutor {
         }
     }
 
-    private AsyncReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, final ReadConcern readConcern,
-            @Nullable final ClientSession session, final boolean ownsSession) {
+    private AsyncReadWriteBinding getReadWriteBinding(final RequestContext requestContext, final ReadPreference readPreference,
+            final ReadConcern readConcern, @Nullable final ClientSession session, final boolean ownsSession) {
         notNull("readPreference", readPreference);
         AsyncClusterAwareReadWriteBinding readWriteBinding = new AsyncClusterBinding(mongoClient.getCluster(),
-                                                                                     getReadPreferenceForBinding(readPreference, session),
-                                                                                     readConcern, mongoClient.getSettings().getServerApi());
+            getReadPreferenceForBinding(readPreference, session), readConcern, mongoClient.getSettings().getServerApi(), requestContext);
         Crypt crypt = mongoClient.getCrypt();
         if (crypt != null) {
             readWriteBinding = new CryptBinding(readWriteBinding, crypt);

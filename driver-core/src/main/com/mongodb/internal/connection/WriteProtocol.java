@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.RequestContext;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -29,6 +30,7 @@ import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.io.OutputBuffer;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.ProtocolHelper.encodeMessageWithMetadata;
 import static com.mongodb.internal.connection.ProtocolHelper.getMessageSettings;
 import static com.mongodb.internal.connection.ProtocolHelper.sendCommandFailedEvent;
@@ -42,11 +44,13 @@ abstract class WriteProtocol implements LegacyProtocol<WriteConcernResult> {
 
     private final MongoNamespace namespace;
     private final boolean ordered;
+    private final RequestContext requestContext;
     private CommandListener commandListener;
 
-    WriteProtocol(final MongoNamespace namespace, final boolean ordered) {
+    WriteProtocol(final MongoNamespace namespace, final boolean ordered, final RequestContext requestContext) {
         this.namespace = namespace;
         this.ordered = ordered;
+        this.requestContext = notNull("requestContext", requestContext);
     }
 
     @Override
@@ -133,7 +137,7 @@ abstract class WriteProtocol implements LegacyProtocol<WriteConcernResult> {
         if (commandListener != null) {
             sendCommandStartedEvent(message, namespace.getDatabaseName(), getCommandName(message),
                     getAsWriteCommand(bsonOutput, encodingMetadata.getFirstDocumentPosition()),
-                    connection.getDescription(), commandListener);
+                    connection.getDescription(), commandListener, requestContext);
         }
     }
 
@@ -148,7 +152,7 @@ abstract class WriteProtocol implements LegacyProtocol<WriteConcernResult> {
                                     final BsonDocument responseDocument, final long startTimeNanos) {
         if (commandListener != null) {
             sendCommandSucceededEvent(message, getCommandName(message), responseDocument, connection.getDescription(),
-                    System.nanoTime() - startTimeNanos, commandListener);
+                    System.nanoTime() - startTimeNanos, commandListener, requestContext);
         }
     }
 
@@ -156,7 +160,7 @@ abstract class WriteProtocol implements LegacyProtocol<WriteConcernResult> {
                                  final boolean sentCommandStartedEvent, final Throwable t, final long startTimeNanos) {
         if (commandListener != null && sentCommandStartedEvent) {
             sendCommandFailedEvent(message, getCommandName(message), connection.getDescription(), System.nanoTime() - startTimeNanos, t,
-                    commandListener);
+                    commandListener, requestContext);
         }
     }
 

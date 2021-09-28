@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoCursorNotFoundException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.RequestContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.diagnostics.logging.Logger;
@@ -35,6 +36,7 @@ import org.bson.codecs.Decoder;
 import java.util.Collections;
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.ProtocolHelper.getQueryFailureException;
 import static com.mongodb.internal.connection.ProtocolHelper.sendCommandFailedEvent;
 import static com.mongodb.internal.connection.ProtocolHelper.sendCommandStartedEvent;
@@ -53,16 +55,19 @@ class GetMoreProtocol<T> implements LegacyProtocol<QueryResult<T>> {
     private static final String COMMAND_NAME = "getMore";
 
     private final Decoder<T> resultDecoder;
+    private final RequestContext requestContext;
     private final MongoNamespace namespace;
     private final long cursorId;
     private final int numberToReturn;
     private CommandListener commandListener;
 
-    GetMoreProtocol(final MongoNamespace namespace, final long cursorId, final int numberToReturn, final Decoder<T> resultDecoder) {
+    GetMoreProtocol(final MongoNamespace namespace, final long cursorId, final int numberToReturn, final Decoder<T> resultDecoder,
+            final RequestContext requestContext) {
         this.namespace = namespace;
         this.cursorId = cursorId;
         this.numberToReturn = numberToReturn;
         this.resultDecoder = resultDecoder;
+        this.requestContext = notNull("requestContext", requestContext);
     }
 
     @Override
@@ -97,7 +102,7 @@ class GetMoreProtocol<T> implements LegacyProtocol<QueryResult<T>> {
                 if (commandListener != null) {
                     sendCommandSucceededEvent(message, COMMAND_NAME,
                                               asGetMoreCommandResponseDocument(result, responseBuffers), connection.getDescription(),
-                                              System.nanoTime() - startTimeNanos, commandListener);
+                                              System.nanoTime() - startTimeNanos, commandListener, requestContext);
                 }
             } finally {
                 responseBuffers.close();
@@ -107,7 +112,7 @@ class GetMoreProtocol<T> implements LegacyProtocol<QueryResult<T>> {
         } catch (RuntimeException e) {
             if (commandListener != null) {
                 sendCommandFailedEvent(message, COMMAND_NAME, connection.getDescription(), System.nanoTime() - startTimeNanos, e,
-                        commandListener);
+                        commandListener, requestContext);
             }
             throw e;
         }
@@ -129,7 +134,7 @@ class GetMoreProtocol<T> implements LegacyProtocol<QueryResult<T>> {
 
             if (commandListener != null) {
                 sendCommandStartedEvent(message, namespace.getDatabaseName(), COMMAND_NAME, asGetMoreCommandDocument(),
-                        connection.getDescription(), commandListener);
+                        connection.getDescription(), commandListener, requestContext);
                 sentStartedEvent = true;
             }
 
@@ -141,11 +146,11 @@ class GetMoreProtocol<T> implements LegacyProtocol<QueryResult<T>> {
                                                                                               commandListener, startTimeNanos);
             connection.sendMessageAsync(bsonOutput.getByteBuffers(), message.getId(),
                                         new SendMessageCallback<QueryResult<T>>(connection, bsonOutput, message, COMMAND_NAME,
-                                                startTimeNanos, commandListener, callback, receiveCallback));
+                                                startTimeNanos, commandListener, requestContext, callback, receiveCallback));
         } catch (Throwable t) {
             if (sentStartedEvent) {
                 sendCommandFailedEvent(message, COMMAND_NAME, connection.getDescription(), System.nanoTime() - startTimeNanos, t,
-                        commandListener);
+                        commandListener, requestContext);
             }
             callback.onResult(null, t);
         }
@@ -161,7 +166,7 @@ class GetMoreProtocol<T> implements LegacyProtocol<QueryResult<T>> {
         try {
             if (commandListener != null) {
                 sendCommandStartedEvent(message, namespace.getDatabaseName(), COMMAND_NAME, asGetMoreCommandDocument(),
-                                        connection.getDescription(), commandListener);
+                                        connection.getDescription(), commandListener, requestContext);
             }
             message.encode(bsonOutput, NoOpSessionContext.INSTANCE);
             connection.sendMessage(bsonOutput.getByteBuffers(), message.getId());
@@ -232,7 +237,7 @@ class GetMoreProtocol<T> implements LegacyProtocol<QueryResult<T>> {
                     if (commandListener != null) {
                         sendCommandSucceededEvent(message, COMMAND_NAME,
                                 asGetMoreCommandResponseDocument(result, responseBuffers), connectionDescription,
-                                System.nanoTime() - startTimeNanos, commandListener);
+                                System.nanoTime() - startTimeNanos, commandListener, requestContext);
                     }
 
                     if (LOGGER.isDebugEnabled()) {
@@ -245,7 +250,7 @@ class GetMoreProtocol<T> implements LegacyProtocol<QueryResult<T>> {
             } catch (Throwable t) {
                 if (commandListener != null) {
                     sendCommandFailedEvent(message, COMMAND_NAME, connectionDescription, System.nanoTime() - startTimeNanos, t,
-                            commandListener);
+                            commandListener, requestContext);
                 }
                 callback.onResult(null, t);
             } finally {

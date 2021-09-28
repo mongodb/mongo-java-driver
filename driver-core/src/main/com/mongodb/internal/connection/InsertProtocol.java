@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.RequestContext;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
@@ -38,8 +39,9 @@ class InsertProtocol extends WriteProtocol {
 
     private final InsertRequest insertRequest;
 
-    InsertProtocol(final MongoNamespace namespace, final boolean ordered, final InsertRequest insertRequest) {
-        super(namespace, ordered);
+    InsertProtocol(final MongoNamespace namespace, final boolean ordered, final InsertRequest insertRequest,
+            final RequestContext requestContext) {
+        super(namespace, ordered, requestContext);
         this.insertRequest = insertRequest;
     }
 

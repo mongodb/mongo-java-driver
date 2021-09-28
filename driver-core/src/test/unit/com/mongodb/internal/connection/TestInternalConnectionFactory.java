@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.RequestContext;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ServerDescription;
@@ -103,7 +104,8 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
         }
 
         @Override
-        public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
+        public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
+                final RequestContext requestContext) {
             return null;
         }
 
@@ -123,7 +125,7 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
 
         @Override
         public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
-                                            final SessionContext sessionContext, final SingleResultCallback<T> callback) {
+                final SessionContext sessionContext, final RequestContext requestContext, final SingleResultCallback<T> callback) {
             callback.onResult(null, null);
         }
 

@@ -70,7 +70,7 @@ class CommandHelperSpecification extends Specification {
         executeCommand('admin', new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), clusterClock, getServerApi(), connection)
 
         then:
-        1 * connection.sendAndReceive(_, _, ) { it instanceof ClusterClockAdvancingSessionContext }
+        1 * connection.sendAndReceive(_, _, _ as ClusterClockAdvancingSessionContext, _)
     }
 
 
