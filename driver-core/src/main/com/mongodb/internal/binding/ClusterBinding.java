@@ -18,6 +18,7 @@ package com.mongodb.internal.binding;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ServerDescription;
@@ -47,6 +48,7 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
     private final ReadConcern readConcern;
     @Nullable
     private final ServerApi serverApi;
+    private final RequestContext requestContext;
 
     /**
      * Creates an instance.
@@ -54,14 +56,16 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
      * @param readPreference a non-null ReadPreference for read operations
      * @param readConcern    a non-null read concern
      * @param serverApi      a server API, which may be null
+     * @param requestContext the request context
      * @since 3.8
      */
     public ClusterBinding(final Cluster cluster, final ReadPreference readPreference, final ReadConcern readConcern,
-                          final @Nullable ServerApi serverApi) {
+            final @Nullable ServerApi serverApi, final RequestContext requestContext) {
         this.cluster = notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
         this.readConcern = notNull("readConcern", readConcern);
         this.serverApi = serverApi;
+        this.requestContext = notNull("requestContext", requestContext);
     }
 
     /**
@@ -93,6 +97,11 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
     @Nullable
     public ServerApi getServerApi() {
         return serverApi;
+    }
+
+    @Override
+    public RequestContext getRequestContext() {
+        return requestContext;
     }
 
     @Override
@@ -134,6 +143,11 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
         @Override
         public ServerApi getServerApi() {
             return serverApi;
+        }
+
+        @Override
+        public RequestContext getRequestContext() {
+            return requestContext;
         }
 
         @Override

@@ -17,6 +17,7 @@
 package com.mongodb.internal.binding;
 
 import com.mongodb.ReadPreference;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
@@ -50,6 +51,8 @@ public interface ReadBinding extends ReferenceCounted {
 
     @Nullable
     ServerApi getServerApi();
+
+    RequestContext getRequestContext();
 
     @Override
     ReadBinding retain();

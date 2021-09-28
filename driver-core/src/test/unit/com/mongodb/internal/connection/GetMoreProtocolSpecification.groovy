@@ -22,6 +22,7 @@ import com.mongodb.MongoQueryException
 import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ServerId
+import com.mongodb.internal.IgnorableRequestContext
 import org.bson.codecs.BsonDocumentCodec
 import spock.lang.Specification
 
@@ -30,7 +31,7 @@ import static com.mongodb.internal.connection.ProtocolTestHelper.execute
 
 // unit test failure cases that are difficult to reproduce in integration tests
 class GetMoreProtocolSpecification extends Specification {
-    def protocol = new GetMoreProtocol(new MongoNamespace('test.test'), 42L, 0, new BsonDocumentCodec())
+    def protocol = new GetMoreProtocol(new MongoNamespace('test.test'), 42L, 0, new BsonDocumentCodec(), IgnorableRequestContext.INSTANCE)
     def connection = new TestInternalConnection(new ServerId(new ClusterId(), new ServerAddress()))
 
     def 'when query failure bit is set then MongoQueryException should be generated'() {

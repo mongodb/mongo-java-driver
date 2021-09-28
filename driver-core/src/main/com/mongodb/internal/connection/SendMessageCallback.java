@@ -16,10 +16,12 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.RequestContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.event.CommandListener;
 import org.bson.io.OutputBuffer;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.ProtocolHelper.sendCommandFailedEvent;
 
 class SendMessageCallback<T> implements SingleResultCallback<Void> {
@@ -30,17 +32,13 @@ class SendMessageCallback<T> implements SingleResultCallback<Void> {
     private final RequestMessage message;
     private final CommandListener commandListener;
     private final long startTimeNanos;
+    private final RequestContext requestContext;
     private final SingleResultCallback<T> callback;
     private final String commandName;
 
     SendMessageCallback(final InternalConnection connection, final OutputBuffer buffer, final RequestMessage message,
                         final String commandName, final long startTimeNanos, final CommandListener commandListener,
-                        final SingleResultCallback<T> callback, final SingleResultCallback<ResponseBuffers> receiveMessageCallback) {
-        this(connection, buffer, message, message.getId(), commandName, startTimeNanos, commandListener, callback, receiveMessageCallback);
-    }
-
-    SendMessageCallback(final InternalConnection connection, final OutputBuffer buffer, final RequestMessage message,
-                        final int requestId, final String commandName, final long startTimeNanos, final CommandListener commandListener,
+                        final RequestContext requestContext,
                         final SingleResultCallback<T> callback, final SingleResultCallback<ResponseBuffers> receiveMessageCallback) {
         this.buffer = buffer;
         this.connection = connection;
@@ -48,9 +46,10 @@ class SendMessageCallback<T> implements SingleResultCallback<Void> {
         this.commandName = commandName;
         this.commandListener = commandListener;
         this.startTimeNanos = startTimeNanos;
+        this.requestContext = notNull("requestContext", requestContext);
         this.callback = callback;
         this.receiveMessageCallback = receiveMessageCallback;
-        this.requestId = requestId;
+        this.requestId = message.getId();
     }
 
     @Override
@@ -59,7 +58,7 @@ class SendMessageCallback<T> implements SingleResultCallback<Void> {
         if (t != null) {
             if (commandListener != null){
                 sendCommandFailedEvent(message, commandName, connection.getDescription(), System.nanoTime() - startTimeNanos, t,
-                        commandListener);
+                        commandListener, requestContext);
             }
             callback.onResult(null, t);
         } else {

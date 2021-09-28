@@ -19,6 +19,7 @@ package com.mongodb.reactivestreams.client.internal.crypt;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.connection.ConnectionDescription;
@@ -97,16 +98,18 @@ class CryptConnection implements AsyncConnection {
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-                                 final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                                 final SessionContext sessionContext, final ServerApi serverApi, final SingleResultCallback<T> callback) {
-        commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi,
+            final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
+            final SessionContext sessionContext, final ServerApi serverApi, final RequestContext requestContext,
+            final SingleResultCallback<T> callback) {
+        commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi, requestContext,
                 true, null, null, callback);
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-                                 final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                                 final SessionContext sessionContext, final ServerApi serverApi, final boolean responseExpected,
+            final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
+            final SessionContext sessionContext, final ServerApi serverApi, final RequestContext requestContext,
+            final boolean responseExpected,
                                  @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator,
                                  final SingleResultCallback<T> callback) {
 
@@ -129,7 +132,7 @@ class CryptConnection implements AsyncConnection {
             crypt.encrypt(database, new RawBsonDocument(bsonOutput.getInternalBuffer(), 0, bsonOutput.getSize()))
                     .flatMap((Function<RawBsonDocument, Mono<RawBsonDocument>>) encryptedCommand ->
                             Mono.create(sink -> wrapped.commandAsync(database, encryptedCommand, commandFieldNameValidator, readPreference,
-                                                                     new RawBsonDocumentCodec(), sessionContext, serverApi,
+                                                                     new RawBsonDocumentCodec(), sessionContext, serverApi, requestContext,
                                                                      responseExpected, null,
                                                                      null, sinkToCallback(sink))))
                     .flatMap(crypt::decrypt)
@@ -173,19 +176,19 @@ class CryptConnection implements AsyncConnection {
 
     @Override
     public void insertAsync(final MongoNamespace namespace, final boolean ordered, final InsertRequest insertRequest,
-                            final SingleResultCallback<WriteConcernResult> callback) {
+                            final RequestContext requestContext, final SingleResultCallback<WriteConcernResult> callback) {
         callback.onResult(null, new UnsupportedOperationException());
     }
 
     @Override
     public void updateAsync(final MongoNamespace namespace, final boolean ordered, final UpdateRequest updateRequest,
-                            final SingleResultCallback<WriteConcernResult> callback) {
+                            final RequestContext requestContext, final SingleResultCallback<WriteConcernResult> callback) {
         callback.onResult(null, new UnsupportedOperationException());
     }
 
     @Override
     public void deleteAsync(final MongoNamespace namespace, final boolean ordered, final DeleteRequest deleteRequest,
-                            final SingleResultCallback<WriteConcernResult> callback) {
+                            final RequestContext requestContext, final SingleResultCallback<WriteConcernResult> callback) {
         callback.onResult(null, new UnsupportedOperationException());
     }
 
@@ -194,18 +197,20 @@ class CryptConnection implements AsyncConnection {
                                final int skip, final int limit, final int batchSize, final boolean secondaryOk,
                                final boolean tailableCursor, final boolean awaitData, final boolean noCursorTimeout, final boolean partial,
                                final boolean oplogReplay, final Decoder<T> resultDecoder,
-                               final SingleResultCallback<QueryResult<T>> callback) {
+                               final RequestContext requestContext, final SingleResultCallback<QueryResult<T>> callback) {
         callback.onResult(null, new UnsupportedOperationException());
     }
 
     @Override
     public <T> void getMoreAsync(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
-                                 final Decoder<T> resultDecoder, final SingleResultCallback<QueryResult<T>> callback) {
+                                 final Decoder<T> resultDecoder, final RequestContext requestContext,
+                                 final SingleResultCallback<QueryResult<T>> callback) {
         callback.onResult(null, new UnsupportedOperationException());
     }
 
     @Override
-    public void killCursorAsync(final MongoNamespace namespace, final List<Long> cursors, final SingleResultCallback<Void> callback) {
+    public void killCursorAsync(final MongoNamespace namespace, final List<Long> cursors, final RequestContext requestContext,
+                                final SingleResultCallback<Void> callback) {
         callback.onResult(null, new UnsupportedOperationException());
     }
 

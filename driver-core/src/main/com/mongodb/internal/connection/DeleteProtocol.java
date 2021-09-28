@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.RequestContext;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
@@ -40,8 +41,9 @@ class DeleteProtocol extends WriteProtocol {
 
     private final DeleteRequest deleteRequest;
 
-    DeleteProtocol(final MongoNamespace namespace, final boolean ordered, final DeleteRequest deleteRequest) {
-        super(namespace, ordered);
+    DeleteProtocol(final MongoNamespace namespace, final boolean ordered, final DeleteRequest deleteRequest,
+            final RequestContext requestContext) {
+        super(namespace, ordered, requestContext);
         this.deleteRequest = deleteRequest;
     }
 

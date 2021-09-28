@@ -244,12 +244,12 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
             connection.commandAsync(namespace.getDatabaseName(), asGetMoreCommandDocument(cursor.getId()), NO_OP_FIELD_NAME_VALIDATOR,
                     ReadPreference.primary(), CommandResultDocumentCodec.create(decoder, "nextBatch"),
-                    connectionSource.getSessionContext(), connectionSource.getServerApi(),
+                    connectionSource.getSessionContext(), connectionSource.getServerApi(), connectionSource.getRequestContext(),
                     new CommandResultSingleResultCallback(connection, cursor, callback));
 
         } else {
-            connection.getMoreAsync(namespace, cursor.getId(), getNumberToReturn(limit, batchSize, count.get()),
-                                    decoder, new QueryResultSingleResultCallback(connection, callback));
+            connection.getMoreAsync(namespace, cursor.getId(), getNumberToReturn(limit, batchSize, count.get()), decoder,
+                    connectionSource.getRequestContext(), new QueryResultSingleResultCallback(connection, callback));
         }
     }
 
@@ -302,7 +302,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
             connection.commandAsync(namespace.getDatabaseName(), asKillCursorsCommandDocument(localCursor), NO_OP_FIELD_NAME_VALIDATOR,
                     ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.getSessionContext(),
-                    connectionSource.getServerApi(), new SingleResultCallback<BsonDocument>() {
+                    connectionSource.getServerApi(), connectionSource.getRequestContext(), new SingleResultCallback<BsonDocument>() {
                         @Override
                         public void onResult(final BsonDocument result, final Throwable t) {
                             connection.release();
@@ -310,13 +310,14 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
                         }
                     });
         } else {
-            connection.killCursorAsync(namespace, singletonList(localCursor.getId()), new SingleResultCallback<Void>() {
-                @Override
-                public void onResult(final Void result, final Throwable t) {
-                    connection.release();
-                    connectionSource.release();
-                }
-            });
+            connection.killCursorAsync(namespace, singletonList(localCursor.getId()), connectionSource.getRequestContext(),
+                    new SingleResultCallback<Void>() {
+                        @Override
+                        public void onResult(final Void result, final Throwable t) {
+                            connection.release();
+                            connectionSource.release();
+                        }
+                    });
         }
     }
 

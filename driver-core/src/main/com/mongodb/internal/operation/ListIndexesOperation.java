@@ -184,8 +184,8 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
                     retryState.markAsLastAttempt();
                     return new QueryBatchCursor<>(connection.query(getIndexNamespace(),
                             asQueryDocument(connection.getDescription(), binding.getReadPreference()), null, 0, 0, batchSize,
-                            binding.getReadPreference().isSecondaryOk(), false, false, false, false, false, decoder), 0, batchSize,
-                            decoder, source);
+                            binding.getReadPreference().isSecondaryOk(), false, false, false, false, false, decoder,
+                            binding.getRequestContext()), 0, batchSize, decoder, source);
                 }
             });
         });
@@ -219,7 +219,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
                     connection.queryAsync(getIndexNamespace(),
                             asQueryDocument(connection.getDescription(), binding.getReadPreference()), null, 0, 0, batchSize,
                             binding.getReadPreference().isSecondaryOk(), false, false, false, false, false, decoder,
-                            new SingleResultCallback<QueryResult<T>>() {
+                                binding.getRequestContext(), new SingleResultCallback<QueryResult<T>>() {
                                 @Override
                                 public void onResult(final QueryResult<T> result, final Throwable t) {
                                     if (t != null) {

@@ -19,7 +19,9 @@ package com.mongodb.internal.binding;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadPreference;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
+import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.AsyncConnection;
@@ -173,6 +175,11 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
     }
 
     @Override
+    public RequestContext getRequestContext() {
+        return IgnorableRequestContext.INSTANCE;
+    }
+
+    @Override
     public void getReadConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
         isTrue("open", getCount() > 0);
         if (readPreference == primary()) {
@@ -222,6 +229,11 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
         @Nullable
         public ServerApi getServerApi() {
             return serverApi;
+        }
+
+        @Override
+        public RequestContext getRequestContext() {
+            return IgnorableRequestContext.INSTANCE;
         }
 
         @Override

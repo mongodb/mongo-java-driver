@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.annotations.ThreadSafe;
@@ -63,7 +64,7 @@ public interface AsyncConnection extends ReferenceCounted {
      * @param insertRequest the insert request
      * @param callback     the callback to be passed the write result
      */
-    void insertAsync(MongoNamespace namespace, boolean ordered, InsertRequest insertRequest,
+    void insertAsync(MongoNamespace namespace, boolean ordered, InsertRequest insertRequest, RequestContext requestContext,
                      SingleResultCallback<WriteConcernResult> callback);
 
     /**
@@ -73,7 +74,7 @@ public interface AsyncConnection extends ReferenceCounted {
      * @param updateRequest the update request
      * @param callback     the callback to be passed the write result
      */
-    void updateAsync(MongoNamespace namespace, boolean ordered, UpdateRequest updateRequest,
+    void updateAsync(MongoNamespace namespace, boolean ordered, UpdateRequest updateRequest, RequestContext requestContext,
                      SingleResultCallback<WriteConcernResult> callback);
 
     /**
@@ -83,7 +84,7 @@ public interface AsyncConnection extends ReferenceCounted {
      * @param deleteRequest the delete request
      * @param callback     the callback to be passed the write result
      */
-    void deleteAsync(MongoNamespace namespace, boolean ordered, DeleteRequest deleteRequest,
+    void deleteAsync(MongoNamespace namespace, boolean ordered, DeleteRequest deleteRequest, RequestContext requestContext,
                      SingleResultCallback<WriteConcernResult> callback);
 
     /**
@@ -98,11 +99,11 @@ public interface AsyncConnection extends ReferenceCounted {
      * @param sessionContext       the session context
      * @param serverApi            the server api, which may be null
      * @param callback             the callback to be passed the write result
-     * @since 3.6
+     * @since 4.4
      */
     <T> void commandAsync(String database, BsonDocument command, FieldNameValidator fieldNameValidator, ReadPreference readPreference,
-                          Decoder<T> commandResultDecoder, SessionContext sessionContext, ServerApi serverApi,
-                          SingleResultCallback<T> callback);
+            Decoder<T> commandResultDecoder, SessionContext sessionContext, ServerApi serverApi, RequestContext requestContext,
+            SingleResultCallback<T> callback);
 
     /**
      * Executes the command, consuming as much of the {@code SplittablePayload} as possible.
@@ -123,7 +124,7 @@ public interface AsyncConnection extends ReferenceCounted {
      */
     <T> void commandAsync(String database, BsonDocument command, FieldNameValidator commandFieldNameValidator,
                           ReadPreference readPreference, Decoder<T> commandResultDecoder, SessionContext sessionContext,
-                          ServerApi serverApi, boolean responseExpected, SplittablePayload payload,
+                          ServerApi serverApi, RequestContext requestContext, boolean responseExpected, SplittablePayload payload,
                           FieldNameValidator payloadFieldNameValidator, SingleResultCallback<T> callback);
 
     /**
@@ -149,7 +150,7 @@ public interface AsyncConnection extends ReferenceCounted {
     <T> void queryAsync(MongoNamespace namespace, BsonDocument queryDocument, BsonDocument fields,
                         int skip, int limit, int batchSize, boolean secondaryOk, boolean tailableCursor, boolean awaitData,
                         boolean noCursorTimeout, boolean partial, boolean oplogReplay, Decoder<T> resultDecoder,
-                        SingleResultCallback<QueryResult<T>> callback);
+                        RequestContext requestContext, SingleResultCallback<QueryResult<T>> callback);
 
     /**
      * Get more result documents from a cursor asynchronously.
@@ -162,7 +163,7 @@ public interface AsyncConnection extends ReferenceCounted {
      * @param <T>            the type of the query result documents
      */
     <T> void getMoreAsync(MongoNamespace namespace, long cursorId, int numberToReturn, Decoder<T> resultDecoder,
-                          SingleResultCallback<QueryResult<T>> callback);
+                          RequestContext requestContext, SingleResultCallback<QueryResult<T>> callback);
 
     /**
      * Asynchronously Kills the given list of cursors.
@@ -171,7 +172,7 @@ public interface AsyncConnection extends ReferenceCounted {
      * @param cursors   the cursors
      * @param callback  the callback that is called once the cursors have been killed
      */
-    void killCursorAsync(MongoNamespace namespace, List<Long> cursors, SingleResultCallback<Void> callback);
+    void killCursorAsync(MongoNamespace namespace, List<Long> cursors, RequestContext requestContext, SingleResultCallback<Void> callback);
 
     void markAsPinned(Connection.PinningMode pinningMode);
 }

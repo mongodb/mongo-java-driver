@@ -22,6 +22,7 @@ import com.mongodb.client.ClientSession
 import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ClusterDescription
 import com.mongodb.connection.ClusterType
+import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.binding.ClusterBinding
 import com.mongodb.internal.binding.ConnectionSource
 import com.mongodb.internal.binding.ReadWriteBinding
@@ -162,6 +163,6 @@ class ClientSessionBindingSpecification extends Specification {
 
     private ReadWriteBinding createStubBinding() {
         def cluster = Stub(Cluster)
-        new ClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, null)
+        new ClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, null, IgnorableRequestContext.INSTANCE)
     }
 }

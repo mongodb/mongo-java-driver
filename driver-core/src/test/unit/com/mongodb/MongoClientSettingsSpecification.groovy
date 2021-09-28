@@ -56,6 +56,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.compressorList == []
         settings.credential == null
         settings.uuidRepresentation == UuidRepresentation.UNSPECIFIED
+        settings.contextProvider == null
     }
 
     @SuppressWarnings('UnnecessaryObjectReferences')
@@ -116,6 +117,7 @@ class MongoClientSettingsSpecification extends Specification {
         def codecRegistry = Stub(CodecRegistry)
         def commandListener = Stub(CommandListener)
         def clusterSettings = ClusterSettings.builder().hosts([new ServerAddress('localhost')]).requiredReplicaSetName('test').build()
+        def contextProvider = Stub(ContextProvider)
 
         when:
         def settings = MongoClientSettings.builder()
@@ -137,6 +139,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .streamFactoryFactory(streamFactoryFactory)
                 .compressorList([MongoCompressor.createZlibCompressor()])
                 .uuidRepresentation(UuidRepresentation.STANDARD)
+                .contextProvider(contextProvider)
                 .build()
 
         then:
@@ -155,6 +158,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.getStreamFactoryFactory() == streamFactoryFactory
         settings.getCompressorList() == [MongoCompressor.createZlibCompressor()]
         settings.getUuidRepresentation() == UuidRepresentation.STANDARD
+        settings.getContextProvider() == contextProvider
     }
 
     def 'should be easy to create new settings from existing'() {
@@ -169,6 +173,7 @@ class MongoClientSettingsSpecification extends Specification {
         def codecRegistry = Stub(CodecRegistry)
         def commandListener = Stub(CommandListener)
         def compressorList = [MongoCompressor.createZlibCompressor()]
+        def contextProvider = Stub(ContextProvider)
 
         settings = MongoClientSettings.builder()
                 .heartbeatConnectTimeoutMS(24000)
@@ -190,6 +195,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .credential(credential)
                 .codecRegistry(codecRegistry)
                 .compressorList(compressorList)
+                .contextProvider(contextProvider)
                 .build()
 
         then:
@@ -457,7 +463,7 @@ class MongoClientSettingsSpecification extends Specification {
         // A regression test so that if anymore fields are added then the builder(final MongoClientSettings settings) should be updated
         def actual = MongoClientSettings.Builder.declaredFields.grep {  !it.synthetic } *.name.sort()
         def expected = ['applicationName', 'autoEncryptionSettings', 'clusterSettingsBuilder', 'codecRegistry', 'commandListeners',
-                        'compressorList', 'connectionPoolSettingsBuilder', 'credential',
+                        'compressorList', 'connectionPoolSettingsBuilder', 'contextProvider', 'credential',
                         'heartbeatConnectTimeoutMS', 'heartbeatSocketTimeoutMS',
                         'readConcern', 'readPreference', 'retryReads',
                         'retryWrites', 'serverApi', 'serverSettingsBuilder', 'socketSettingsBuilder', 'sslSettingsBuilder',
@@ -473,9 +479,9 @@ class MongoClientSettingsSpecification extends Specification {
         def actual = MongoClientSettings.Builder.declaredMethods.grep {  !it.synthetic } *.name.sort()
         def expected = ['addCommandListener', 'applicationName', 'applyConnectionString', 'applyToClusterSettings',
                         'applyToConnectionPoolSettings', 'applyToServerSettings', 'applyToSocketSettings', 'applyToSslSettings',
-                        'autoEncryptionSettings', 'build', 'codecRegistry', 'commandListenerList', 'compressorList', 'credential',
-                        'heartbeatConnectTimeoutMS', 'heartbeatSocketTimeoutMS', 'readConcern', 'readPreference', 'retryReads',
-                        'retryWrites', 'serverApi', 'streamFactoryFactory', 'uuidRepresentation',
+                        'autoEncryptionSettings', 'build', 'codecRegistry', 'commandListenerList', 'compressorList', 'contextProvider',
+                        'credential', 'heartbeatConnectTimeoutMS', 'heartbeatSocketTimeoutMS', 'readConcern', 'readPreference',
+                        'retryReads', 'retryWrites', 'serverApi', 'streamFactoryFactory', 'uuidRepresentation',
                         'writeConcern']
         then:
         actual == expected

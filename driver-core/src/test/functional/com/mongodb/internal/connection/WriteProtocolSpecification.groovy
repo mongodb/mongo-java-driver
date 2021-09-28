@@ -18,10 +18,12 @@ package com.mongodb.internal.connection
 
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
+import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.netty.NettyStreamFactory
+import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.bulk.InsertRequest
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -58,7 +60,7 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
         given:
         def documentOne = new BsonDocument('_id', new BsonInt32(1))
 
-        def protocol = new InsertProtocol(getNamespace(), true, new InsertRequest(documentOne))
+        def protocol = new InsertProtocol(getNamespace(), true, new InsertRequest(documentOne), IgnorableRequestContext.INSTANCE)
 
         getCollectionHelper().insertDocuments(documentOne)
 
@@ -71,7 +73,8 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
         cleanup:
         // force acknowledgement
         new CommandProtocolImpl(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
-                NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(), getServerApi())
+                NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(), true, null, null,
+                ClusterConnectionMode.MULTIPLE, getServerApi(), IgnorableRequestContext.INSTANCE)
                 .sessionContext(NoOpSessionContext.INSTANCE)
                 .execute(connection)
 
