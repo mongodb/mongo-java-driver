@@ -35,6 +35,7 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
     val packageName = "com.mongodb"
     val javaExclusions = Set(
       "Address",
+      "AwsCredential",
       "BasicDBList",
       "BasicDBObject",
       "BasicDBObjectBuilder",
