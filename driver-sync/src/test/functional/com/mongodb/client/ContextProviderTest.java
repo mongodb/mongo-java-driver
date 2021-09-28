@@ -16,6 +16,7 @@
 
 package com.mongodb.client;
 
+import com.mongodb.ContextProvider;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.RequestContext;
 import com.mongodb.WriteConcern;
@@ -27,15 +28,42 @@ import com.mongodb.lang.Nullable;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+
 import static com.mongodb.ClusterFixture.getConnectionString;
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.client.model.Updates.inc;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 
 public class ContextProviderTest {
+
+    @Test
+    public void shouldThrowIfContextProviderIsNotSynchronousContextProvider() {
+        assertThrows(IllegalArgumentException.class, () -> MongoClients.create(MongoClientSettings.builder()
+                .applyConnectionString(getConnectionString())
+                .contextProvider(new ContextProvider() {})
+                .build()));
+    }
+
+    @Test
+    public void shouldPropagateExceptionFromContextProvider() {
+            try (MongoClient client = MongoClients.create(MongoClientSettings.builder()
+                    .applyConnectionString(getConnectionString())
+                    .contextProvider(new SynchronousContextProvider() {
+                        @Override
+                        public RequestContext getContext() {
+                            throw new RuntimeException();
+                        }
+                    })
+                    .build())) {
+
+                assertThrows(RuntimeException.class, () -> client.listDatabaseNames().into(new ArrayList<>()));
+            }
+    }
 
     @Test
     public void contextShouldBeNullByDefaultInCommandEvents() {
