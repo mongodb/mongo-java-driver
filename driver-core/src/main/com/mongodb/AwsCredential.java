@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import com.mongodb.annotations.Beta;
+
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -25,6 +27,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @see MongoCredential#AWS_CREDENTIAL_PROVIDER_KEY
  * @since 4.4
  */
+@Beta
 public final class AwsCredential {
     private final String accessKeyId;
     private final String secretAccessKey;
