@@ -24,6 +24,8 @@ import com.mongodb.TagSet;
 import com.mongodb.internal.selector.LatencyMinimizingServerSelector;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.selector.WritableServerSelector;
+import com.mongodb.lang.NonNull;
+import com.mongodb.lang.Nullable;
 import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.ServerSelector;
 import org.bson.BsonArray;
@@ -32,8 +34,6 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonValue;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -126,7 +126,7 @@ public class ServerSelectionSelectionTest {
                 serverSettings == null ? ServerSettings.builder().build() : serverSettings);
     }
 
-    @NotNull
+    @NonNull
     private static ClusterConnectionMode getClusterConnectionMode(final ClusterType clusterType) {
         if (clusterType == ClusterType.LOAD_BALANCED) {
             return ClusterConnectionMode.LOAD_BALANCED;
