@@ -19,6 +19,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterId;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterSettings;
@@ -27,6 +28,8 @@ import com.mongodb.selector.ServerSelector;
 import org.bson.BsonTimestamp;
 
 import java.io.Closeable;
+
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 
 /**
  * Represents a cluster of MongoDB servers.  Implementations can define the behaviour depending upon the type of cluster.
@@ -54,9 +57,8 @@ public interface Cluster extends Closeable {
 
     ClusterId getClusterId();
 
-    /**
-     * For internal, unit testing use only
-     */
+    @Nullable
+    @VisibleForTesting(otherwise = PRIVATE)
     ClusterableServer getServer(ServerAddress serverAddress);
 
     /**

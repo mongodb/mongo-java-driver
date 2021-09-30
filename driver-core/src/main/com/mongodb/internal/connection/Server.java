@@ -48,4 +48,13 @@ public interface Server {
      * @param callback the callback to execute when the connection is available or an error occurs
      */
     void getConnectionAsync(SingleResultCallback<AsyncConnection> callback);
+
+    /**
+     * An approximation of the
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#operationcount">
+     * number of operations that this server is currently executing</a>.
+     *
+     * @return A negative value iff the server does not track its operation count.
+     */
+    int operationCount();
 }
