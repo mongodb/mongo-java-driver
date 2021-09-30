@@ -61,7 +61,7 @@ public class DefaultTestClusterableServerFactory implements ClusterableServerFac
             sdamProvider.initialize(sdam);
             serverMonitor.start();
             return new DefaultServer(serverId, clusterConnectionMode, connectionPool, new TestConnectionFactory(), serverMonitor, sdam,
-                    serverListener, null, clusterClock);
+                    serverListener, null, clusterClock, true);
         }
     }
 

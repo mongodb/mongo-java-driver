@@ -15,33 +15,65 @@
  */
 package com.mongodb.client;
 
+import com.mongodb.MongoClientSettings;
+import com.mongodb.ServerAddress;
+import com.mongodb.connection.ClusterConnectionMode;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.conversions.Bson;
 
+import java.util.Collections;
+
+import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+
 public final class FailPoint implements AutoCloseable {
     private final BsonDocument failPointDocument;
     private final MongoClient client;
+    private final boolean close;
 
-    private FailPoint(final BsonDocument failPointDocument, final MongoClient client) {
+    private FailPoint(final BsonDocument failPointDocument, final MongoClient client, final boolean close) {
         this.failPointDocument = failPointDocument.toBsonDocument();
         this.client = client;
+        this.close = close;
     }
 
     /**
-     * @param configureFailPointDocument A document representing {@code configureFailPoint} command to be issued as is via
+     * @param configureFailPointDoc A document representing {@code configureFailPoint} command to be issued as is via
      * {@link com.mongodb.client.MongoDatabase#runCommand(Bson)}.
      */
-    public static FailPoint enable(final BsonDocument configureFailPointDocument, final MongoClient client) {
-        FailPoint result = new FailPoint(configureFailPointDocument, client);
-        client.getDatabase("admin").runCommand(configureFailPointDocument);
+    public static FailPoint enable(final BsonDocument configureFailPointDoc, final ServerAddress serverAddress) {
+        MongoClientSettings clientSettings = getMongoClientSettingsBuilder()
+                .applyToClusterSettings(builder -> builder
+                        .mode(ClusterConnectionMode.SINGLE)
+                        .hosts(Collections.singletonList(serverAddress)))
+                .build();
+        MongoClient client = MongoClients.create(clientSettings);
+        return enable(configureFailPointDoc, client, true);
+    }
+
+    /**
+     * @see #enable(BsonDocument, ServerAddress)
+     */
+    public static FailPoint enable(final BsonDocument configureFailPointDoc, final MongoClient client) {
+        return enable(configureFailPointDoc, client, false);
+    }
+
+    private static FailPoint enable(final BsonDocument configureFailPointDoc, final MongoClient client, final boolean close) {
+        FailPoint result = new FailPoint(configureFailPointDoc, client, close);
+        client.getDatabase("admin").runCommand(configureFailPointDoc);
         return result;
     }
 
     @Override
     public void close() {
-        client.getDatabase("admin").runCommand(new BsonDocument()
-                .append("configureFailPoint", failPointDocument.getString("configureFailPoint"))
-                .append("mode", new BsonString("off")));
+        try {
+            client.getDatabase("admin").runCommand(new BsonDocument()
+                    .append("configureFailPoint", failPointDocument.getString("configureFailPoint"))
+                    .append("mode", new BsonString("off")));
+        } finally {
+            if (close) {
+                client.close();
+            }
+        }
     }
 }

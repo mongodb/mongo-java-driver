@@ -98,4 +98,8 @@ public class TestServer implements ClusterableServer {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public int operationCount() {
+        return -1;
+    }
 }
